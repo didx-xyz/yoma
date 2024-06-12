@@ -16,7 +16,7 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import { IoMdDownload, IoMdPerson } from "react-icons/io";
+import { IoIosLink, IoMdDownload, IoMdPerson } from "react-icons/io";
 import ReactModal from "react-modal";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
@@ -48,6 +48,7 @@ import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { PAGE_SIZE, PAGE_SIZE_MAXIMUM, THEME_BLUE } from "~/lib/constants";
 import { screenWidthAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
+import { toast } from "react-toastify";
 
 // 👇 SSG
 // This function gets called at build time on server-side.
@@ -192,7 +193,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             types != undefined
               ? types
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_types.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -204,7 +205,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             categories != undefined
               ? categories
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_categories?.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -215,7 +216,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             countries != undefined
               ? countries
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_countries?.find((y) => y.name === x);
                     return item ? item?.id : "";
@@ -237,7 +238,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             organizations != undefined
               ? organizations
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_organisations?.find(
                       (y) => y.name === x,
@@ -252,7 +253,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             statuses != undefined
               ? statuses
                   ?.toString()
-                  .split(",")
+                  .split("|")
                   .map((x) => {
                     const item = lookups_statuses.find((y) => y.label === x);
                     return item ? item?.value : "";
@@ -289,24 +290,24 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         valueContains: query ? decodeURIComponent(query.toString()) : null,
         featured: null,
-        types: types != undefined ? types?.toString().split(",") : null,
+        types: types != undefined ? types?.toString().split("|") : null,
         engagementTypes: null,
         categories:
-          categories != undefined ? categories?.toString().split(",") : null,
+          categories != undefined ? categories?.toString().split("|") : null,
         countries:
           countries != undefined && countries != null
-            ? countries?.toString().split(",")
+            ? countries?.toString().split("|")
             : null,
         languages:
           languages != undefined ? languages?.toString().split("|") : null, // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
         organizations:
           organizations != undefined
-            ? organizations?.toString().split(",")
+            ? organizations?.toString().split("|")
             : null,
         startDate: startDate != undefined ? startDate.toString() : null,
         endDate: endDate != undefined ? endDate.toString() : null,
         statuses:
-          statuses != undefined ? statuses?.toString().split(",") : null,
+          statuses != undefined ? statuses?.toString().split("|") : null,
       });
   }, [
     setOpportunitySearchFilter,
@@ -348,38 +349,38 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         searchFilter?.categories?.length !== undefined &&
         searchFilter.categories.length > 0
       )
-        params.append("categories", searchFilter.categories.join(","));
+        params.append("categories", searchFilter.categories.join("|"));
 
       if (
         searchFilter?.countries?.length !== undefined &&
         searchFilter.countries.length > 0
       )
-        params.append("countries", searchFilter.countries.join(","));
+        params.append("countries", searchFilter.countries.join("|"));
 
       if (
         searchFilter?.languages?.length !== undefined &&
         searchFilter.languages.length > 0
       )
-        params.append("languages", searchFilter.languages.join("|")); // use | delimiter as some languages contain ',' e.g (Catalan, Valencian)
+        params.append("languages", searchFilter.languages.join("|"));
 
       if (
         searchFilter?.types?.length !== undefined &&
         searchFilter.types.length > 0
       )
-        params.append("types", searchFilter.types.join(","));
+        params.append("types", searchFilter.types.join("|"));
 
       if (
         searchFilter?.organizations?.length !== undefined &&
         searchFilter.organizations.length > 0
       )
-        params.append("organizations", searchFilter.organizations.join(","));
+        params.append("organizations", searchFilter.organizations.join("|"));
 
       if (
         searchFilter?.statuses !== undefined &&
         searchFilter?.statuses !== null &&
         searchFilter?.statuses.length > 0
       )
-        params.append("statuses", searchFilter?.statuses.join(","));
+        params.append("statuses", searchFilter?.statuses.join("|"));
 
       if (
         searchFilter.startDate !== undefined &&
@@ -471,6 +472,11 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     }
   }, [searchFilter, setIsExportButtonLoading, setExportDialogOpen]);
 
+  const onClick_CopyToClipboard = useCallback((url: string) => {
+    navigator.clipboard.writeText(url);
+    toast.success("URL copied to clipboard!", { autoClose: 2000 });
+  }, []);
+
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(filterFullWindowVisible || exportDialogOpen);
 
@@ -491,9 +497,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        // className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll rounded-lg bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px]`}
-        // portalClassName={"fixed z-40"}
-        // overlayClassName="fixed inset-0 bg-overlay"
         className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
@@ -602,31 +605,13 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             Opportunities
           </h2>
 
-          <div className="flex h-fit gap-2 md:justify-end">
+          <div className="flex h-fit justify-center gap-2 md:justify-end">
             <SearchInputLarge
-              // className={
-              //   "bg-theme hover:bg-theme brightness-105 hover:brightness-110"
-              // }
               openFilter={setFilterFullWindowVisible}
               maxWidth={400}
               defaultValue={query ? decodeURIComponent(query.toString()) : null}
               onSearch={onSearchInputSubmit}
             />
-
-            {/* {currentOrganisationInactive ? (
-              <span className="flex w-56 cursor-not-allowed flex-row items-center justify-center whitespace-nowrap rounded-full bg-gray-dark p-1 text-xs text-white">
-                Add opportunity (disabled)
-              </span>
-            ) : (
-              <Link
-                href={`/organisations/${id}/opportunities/create`}
-                className="flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full bg-green-dark p-1 text-xs text-white"
-                id="btnCreateOpportunity" // e2e
-              >
-                <IoIosAdd className="mr-1 h-5 w-5" />
-                Add opportunity
-              </Link>
-            )} */}
           </div>
         </div>
 
@@ -672,28 +657,22 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         {/* SEARCH RESULTS */}
         {!isLoading && (
           <div id="results">
-            {/* <div className="mb-6 flex flex-row items-center justify-end"></div> */}
             <div className="rounded-lg bg-transparent md:bg-white md:p-4">
               {/* NO ROWS */}
               {(!searchResults || searchResults.items?.length === 0) &&
                 !isSearchPerformed && (
-                  <div className="mb-auto flex flex-col md:place-items-center md:py-52">
+                  <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
                     <NoRowsMessage
                       title={"You will find your opportunities here"}
                       description={
-                        "This is where you will find all the awesome opportunities that have been created"
+                        "This is where you will find all the awesome opportunities that have been created."
                       }
                     />
-                    {/* <Link href={`/organisations/${id}/opportunities/create`}>
-                <button className="btn btn-primary btn-sm mt-10 rounded-3xl px-16">
-                  Add opportunity
-                </button>
-              </Link> */}
                   </div>
                 )}
               {(!searchResults || searchResults.items?.length === 0) &&
                 isSearchPerformed && (
-                  <div className="flex flex-col place-items-center py-52">
+                  <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
                     <NoRowsMessage
                       title={"No opportunities found"}
                       description={"Please try refining your search query."}
@@ -701,20 +680,20 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   </div>
                 )}
 
-              {/* GRID */}
+              {/* RESULTS */}
               {searchResults && searchResults.items?.length > 0 && (
                 <div className="overflow-x-auto">
                   {/* MOBIlE */}
                   <div className="flex flex-col gap-4 md:hidden">
                     {searchResults.items.map((opportunity) => (
                       <Link
+                        key={`sm_${opportunity.id}`}
                         href={`/organisations/${
                           opportunity.organizationId
                         }/opportunities/${
                           opportunity.id
                         }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
                         className="flex flex-col justify-between gap-4 rounded-lg bg-white p-4 shadow-custom"
-                        key={opportunity.id}
                       >
                         <div className="flex flex-col gap-1">
                           <span className="line-clamp-2 font-semibold text-gray-dark">
@@ -724,7 +703,28 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
                         <div className="flex flex-col gap-2 text-gray-dark">
                           <div className="flex justify-between">
-                            <p className="text-sm tracking-wider">Reward</p>
+                            <p className="text-sm tracking-wider">URL</p>
+                            {opportunity.url && (
+                              <button
+                                onClick={() =>
+                                  onClick_CopyToClipboard(opportunity.url!)
+                                }
+                                className="badge bg-green-light text-green"
+                              >
+                                <IoIosLink className="h-4 w-4" />
+                              </button>
+                            )}
+                            {opportunity.yomaReward && (
+                              <span className="badge bg-orange-light text-orange">
+                                <span className="ml-1 text-xs">
+                                  {opportunity.yomaReward} Yoma
+                                </span>
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">ZLTO</p>
                             {opportunity.zltoReward && (
                               <span className="badge bg-orange-light text-orange">
                                 <Image
@@ -779,7 +779,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               </span>
                             )}
                             {opportunity?.status == "Deleted" && (
-                              <span className="badge bg-green-light  text-red-400">
+                              <span className="badge bg-green-light text-red-400">
                                 Deleted
                               </span>
                             )}
@@ -790,20 +790,30 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   </div>
 
                   {/* DESKTOP */}
-                  <table className="hidden md:table">
+                  <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table">
                     <thead>
                       <tr className="!border-gray-light text-gray-dark">
-                        <th>Opportunity title</th>
-                        <th>Reward</th>
-                        <th>Url</th>
-                        <th>Participants</th>
-                        <th className="text-center">Status</th>
+                        <th className="border-b-2 border-gray-light !py-4">
+                          Title
+                        </th>
+                        <th className="border-b-2 border-gray-light text-center">
+                          Url
+                        </th>
+                        <th className="border-b-2 border-gray-light text-center">
+                          ZLTO
+                        </th>
+                        <th className="border-b-2 border-gray-light text-center">
+                          Participants
+                        </th>
+                        <th className="border-b-2 border-gray-light text-center">
+                          Status
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {searchResults.items.map((opportunity) => (
-                        <tr key={opportunity.id} className="!border-gray-light">
-                          <td className="!py-4">
+                        <tr key={`md_${opportunity.id}`}>
+                          <td className="truncate border-b-2 border-gray-light md:max-w-[270px] lg:max-w-[580px]">
                             <Link
                               href={`/organisations/${
                                 opportunity.organizationId
@@ -812,30 +822,77 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               }/info?returnUrl=${encodeURIComponent(
                                 router.asPath,
                               )}`}
-                              className="line-clamp-1"
                             >
                               {opportunity.title}
                             </Link>
                           </td>
-                          <td className="w-28">
+                          <td className="border-b-2 border-gray-light text-center">
+                            {opportunity?.url && (
+                              <button
+                                onClick={() =>
+                                  onClick_CopyToClipboard(opportunity.url!)
+                                }
+                                className="badge bg-green-light text-green"
+                              >
+                                <IoIosLink className="h-4 w-4" />
+                              </button>
+                            )}
+                          </td>
+                          <td className="w-28 border-b-2 border-gray-light text-center">
                             <div className="flex flex-col">
                               {opportunity.zltoReward && (
-                                <span className="text-xs">
-                                  {opportunity.zltoReward} Zlto
+                                <span className="badge bg-orange-light px-4 text-orange">
+                                  <Image
+                                    src={iconZlto}
+                                    alt="Zlto icon"
+                                    width={16}
+                                    height={16}
+                                  />
+                                  <span className="ml-1 text-xs">
+                                    {opportunity?.zltoReward}
+                                  </span>
                                 </span>
                               )}
                               {opportunity.yomaReward && (
-                                <span className="text-xs">
-                                  {opportunity.yomaReward} Yoma
+                                <span className="badge bg-orange-light px-4 text-orange">
+                                  <span className="ml-1 text-xs">
+                                    {opportunity.yomaReward} Yoma
+                                  </span>
                                 </span>
                               )}
                             </div>
                           </td>
-                          <td>{opportunity.url}</td>
-                          <td className="text-center">
-                            {opportunity.participantCountTotal}
+                          <td className="border-b-2 border-gray-light text-center">
+                            <span className="badge bg-green-light text-green">
+                              <span className="text-xs">
+                                {opportunity.participantCountTotal}
+                              </span>
+                            </span>
                           </td>
-                          <td className="text-center">{opportunity.status}</td>
+                          <td className="border-b-2 border-gray-light text-center">
+                            {opportunity.status == "Active" && (
+                              <>
+                                <span className="badge bg-blue-light text-blue">
+                                  Active
+                                </span>
+                              </>
+                            )}
+                            {opportunity?.status == "Expired" && (
+                              <span className="badge bg-green-light text-yellow ">
+                                Expired
+                              </span>
+                            )}
+                            {opportunity?.status == "Inactive" && (
+                              <span className="badge bg-yellow-tint text-yellow ">
+                                Inactive
+                              </span>
+                            )}
+                            {opportunity?.status == "Deleted" && (
+                              <span className="badge bg-green-light  text-red-400">
+                                Deleted
+                              </span>
+                            )}
+                          </td>
                         </tr>
                       ))}
                     </tbody>

@@ -98,7 +98,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const theme = getThemeFromRole(session, id);
 
   try {
-    // NB: disabled as we getting 502 bat gateway error on stage
+    // NB: disabled as we getting 502 bad gateway error on stage
     // 👇 prefetch queries on server
     // const data = await searchLinks(
     //   {
@@ -106,9 +106,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     //     pageSize: PAGE_SIZE,
     //     entityType: type?.toString() ?? LinkEntityType.Opportunity,
     //     action: action?.toString() ?? LinkAction.Verify,
-    //     entities: entities ? entities.toString().split(",") : null,
+    //     entities: entities ? entities.toString().split("|") : null,
     //     organizations: [id],
-    //     statuses: statuses ? statuses.toString().split(",") : null,
+    //     statuses: statuses ? statuses.toString().split("|") : null,
     //   },
     //   context,
     // );
@@ -270,9 +270,9 @@ const Links: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         entityType: type?.toString() ?? LinkEntityType.Opportunity,
         action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split(",") : null,
+        entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
-        statuses: statuses ? statuses.toString().split(",") : null,
+        statuses: statuses ? statuses.toString().split("|") : null,
       }),
     enabled: !error,
   });
@@ -284,7 +284,7 @@ const Links: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         entityType: type?.toString() ?? LinkEntityType.Opportunity,
         action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split(",") : null,
+        entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: null,
       }).then((data) => data.totalCount ?? 0),
@@ -298,7 +298,7 @@ const Links: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         entityType: type?.toString() ?? LinkEntityType.Opportunity,
         action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split(",") : null,
+        entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.Active],
       }).then((data) => data.totalCount ?? 0),
@@ -312,7 +312,7 @@ const Links: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         entityType: type?.toString() ?? LinkEntityType.Opportunity,
         action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split(",") : null,
+        entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.Inactive],
       }).then((data) => data.totalCount ?? 0),
@@ -326,7 +326,7 @@ const Links: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         entityType: type?.toString() ?? LinkEntityType.Opportunity,
         action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split(",") : null,
+        entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.Expired],
       }).then((data) => data.totalCount ?? 0),
@@ -340,7 +340,7 @@ const Links: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         entityType: type?.toString() ?? LinkEntityType.Opportunity,
         action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split(",") : null,
+        entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.LimitReached],
       }).then((data) => data.totalCount ?? 0),
@@ -353,8 +353,8 @@ const Links: NextPageWithLayout<{
     pageSize: PAGE_SIZE,
     entityType: type ?? LinkEntityType.Opportunity,
     action: action ?? LinkAction.Verify,
-    entities: entities ? entities.toString().split(",") : null,
-    statuses: statuses ? statuses.toString().split(",") : null,
+    entities: entities ? entities.toString().split("|") : null,
+    statuses: statuses ? statuses.toString().split("|") : null,
     organizations: [id],
   });
 
@@ -370,14 +370,14 @@ const Links: NextPageWithLayout<{
         searchFilter?.entities?.length !== undefined &&
         searchFilter.entities.length > 0
       )
-        params.append("entities", searchFilter.entities.join(","));
+        params.append("entities", searchFilter.entities.join("|"));
 
       if (
         searchFilter?.statuses !== undefined &&
         searchFilter?.statuses !== null &&
         searchFilter?.statuses.length > 0
       )
-        params.append("statuses", searchFilter?.statuses.join(","));
+        params.append("statuses", searchFilter?.statuses.join("|"));
 
       if (
         searchFilter.pageNumber !== null &&

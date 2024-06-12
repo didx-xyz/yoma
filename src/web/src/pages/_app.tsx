@@ -102,9 +102,6 @@ const MyApp = ({
                   {getLayout(component)}
                   <ToastContainer
                     containerId="toastContainer"
-                    bodyClassName={"test1"}
-                    toastClassName={"test2"}
-                    className="mt-2 w-full md:mt-0 md:w-[340px]"
                     theme="colored"
                   />
                   <GoogleAnalytics />

@@ -43,7 +43,7 @@ export const YouthCompletedCard: React.FC<{
       href={`/organisations/${orgId}/opportunities/${
         opportunity.opportunityId
       }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
-      className="flex flex-col gap-2 overflow-hidden rounded-lg bg-white px-2 py-4 text-xs shadow"
+      className="flex w-full flex-col gap-2 overflow-hidden rounded-lg bg-white px-2 py-4 text-xs shadow"
     >
       <div className="mb-1 flex items-center gap-2 text-sm">
         <AvatarImage

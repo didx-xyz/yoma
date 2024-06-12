@@ -141,7 +141,7 @@ const OrganisationOverview: NextPageWithLayout<{
                 : ``
             }`}
             type="button"
-            className="btn btn-info btn-wide text-white"
+            className="bg-theme btn btn-wide text-white"
           >
             Edit Details
           </Link>

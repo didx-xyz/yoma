@@ -201,7 +201,7 @@ export const OpportunityFilterVertical: React.FC<{
     <>
       <form
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
-        className="flex flex-col"
+        className="flex h-full flex-col overflow-y-auto"
       >
         <div className="flex flex-row px-8 py-4">
           <h1 className="my-auto flex-grow text-2xl font-bold">Filter</h1>

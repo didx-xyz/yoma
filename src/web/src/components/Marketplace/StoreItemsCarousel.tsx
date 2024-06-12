@@ -181,7 +181,6 @@ const StoreItemsCarousel: React.FC<{
                     company={item.name}
                     name={item.name}
                     imageURL={item.imageURL}
-                    //summary={item.summary}
                     amount={item.amount}
                     count={item.count}
                     onClick={() => onClick(item)}

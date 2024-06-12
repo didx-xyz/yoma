@@ -220,7 +220,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       userId: null,
       action: Action.Verification,
       verificationStatuses: verificationStatus
-        ? verificationStatus.toString().split(",")
+        ? verificationStatus.toString().split("|")
         : [
             VerificationStatus.Pending,
             VerificationStatus.Completed,
@@ -247,7 +247,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       (
         await getOpportunitiesForVerification(
           [id],
-          verificationStatus ? verificationStatus.split(",") : null,
+          verificationStatus ? verificationStatus.split("|") : null,
         )
       ).map((x) => ({
         value: x.id,
@@ -397,7 +397,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       )
         params.append(
           "verificationStatus",
-          searchFilter?.verificationStatuses.join(","),
+          searchFilter?.verificationStatuses.join("|"),
         );
 
       if (
@@ -609,7 +609,7 @@ const OpportunityVerifications: NextPageWithLayout<{
     (verificationStatus: string) => {
       searchFilter.pageNumber = 1;
       searchFilter.verificationStatuses = verificationStatus
-        ? verificationStatus.split(",")
+        ? verificationStatus.split("|")
         : null;
       redirectWithSearchFilterParams(searchFilter);
     },
@@ -696,7 +696,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           <div className="flex flex-row place-items-center justify-center px-6 py-4 pt-2">
             <div className="flex flex-grow">
               <button
-                className="btn btn-sm flex-nowrap border-black bg-white py-5 text-black hover:bg-black hover:text-white"
+                className="btn btn-sm flex-nowrap border-black bg-white py-5 text-black md:btn-sm hover:bg-black hover:text-white"
                 onClick={onCloseVerificationModal}
               >
                 <IoMdClose className="h-6 w-6" />
@@ -1103,7 +1103,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             <div className="flex w-full flex-row justify-around gap-2 md:w-fit md:justify-end">
               <button
                 type="button"
-                className="btn btn-sm w-[150px] flex-nowrap border-green bg-green text-white hover:bg-green hover:text-white disabled:bg-green disabled:brightness-90"
+                className="btn btn-sm w-[120px] flex-nowrap border-green bg-green text-white hover:bg-green hover:text-white disabled:bg-green disabled:brightness-90"
                 onClick={() => {
                   // show dialog if the result set is too large
                   if ((data?.totalCount ?? 0) > PAGE_SIZE_MAXIMUM) {
@@ -1121,7 +1121,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                 {!isExportButtonLoading && (
                   <>
                     <IoMdDownload className="h-5 w-5 text-white" />
-                    <p className="text-white">Export to CSV</p>
+                    <p className="text-white">Export</p>
                   </>
                 )}
               </button>

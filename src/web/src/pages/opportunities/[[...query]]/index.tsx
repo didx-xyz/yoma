@@ -1107,26 +1107,24 @@ const Opportunities: NextPageWithLayout<{
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto">
-          {lookups_countries != undefined && lookups_languages != undefined && (
-            <OpportunityFilterVertical
-              searchFilter={searchFilter}
-              lookups_countries={lookups_countries}
-              lookups_languages={lookups_languages}
-              lookups_types={lookups_types}
-              lookups_engagementTypes={lookups_engagementTypes}
-              lookups_organisations={lookups_organisations}
-              lookups_timeIntervals={lookups_timeIntervals}
-              lookups_publishedStates={lookups_publishedStates}
-              submitButtonText="Apply Filters"
-              onCancel={onCloseFilter}
-              onSubmit={(e) => onSubmitFilter(e)}
-              onClear={onClearFilter}
-              clearButtonText="Clear All Filters"
-              session={session}
-            />
-          )}
-        </div>
+        {lookups_countries != undefined && lookups_languages != undefined && (
+          <OpportunityFilterVertical
+            searchFilter={searchFilter}
+            lookups_countries={lookups_countries}
+            lookups_languages={lookups_languages}
+            lookups_types={lookups_types}
+            lookups_engagementTypes={lookups_engagementTypes}
+            lookups_organisations={lookups_organisations}
+            lookups_timeIntervals={lookups_timeIntervals}
+            lookups_publishedStates={lookups_publishedStates}
+            submitButtonText="Apply Filters"
+            onCancel={onCloseFilter}
+            onSubmit={(e) => onSubmitFilter(e)}
+            onClear={onClearFilter}
+            clearButtonText="Clear All Filters"
+            session={session}
+          />
+        )}
       </ReactModal>
 
       <div className="container z-10 mt-12 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">

@@ -57,13 +57,13 @@ const SelectButtons: React.FC<SelectButtonsProps> = ({
           key={`${id}_${bt.id}`}
           type="button"
           onClick={() => handleButton(bt.id)}
-          className={`btn btn-sm text-xs text-gray-dark ${
+          className={`btn btn-sm max-w-[300px] text-xs text-gray-dark ${
             bt.selected
               ? "btn-secondary text-white"
               : "border-gray hover:border-gray-dark"
           }`}
         >
-          {bt.title}
+          <p className="truncate">{bt.title}</p>
         </button>
       ))}
 

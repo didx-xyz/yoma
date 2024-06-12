@@ -484,13 +484,6 @@ const OpportunityDetails: NextPageWithLayout<{
                     </span>
                   </div>
 
-                  {/* {opportunity?.type && (
-                    <div className="badge border-none bg-[#E7E8F5] text-[#5F65B9]">
-                      <IoIosBook />
-                      <span className="ml-1 text-xs">{opportunity.type}</span>
-                    </div>
-                  )} */}
-
                   {opportunity?.type && (
                     <>
                       {opportunity?.type === "Learning" && (
@@ -624,27 +617,27 @@ const OpportunityDetails: NextPageWithLayout<{
                     <div className="text-3xl font-bold text-gray-dark">
                       {opportunity?.participantCountTotal ?? 0}
                     </div>
-                    {opportunity?.participantCountPending &&
-                      opportunity?.participantCountPending > 0 && (
-                        <Link
-                          href={`/organisations/${id}/verifications?opportunity=${opportunityId}&verificationStatus=Pending${
-                            returnUrl
-                              ? `&returnUrl=${encodeURIComponent(
-                                  returnUrl.toString(),
-                                )}`
-                              : ""
-                          }`}
-                        >
-                          <div className="flex flex-row items-center gap-2 rounded-lg bg-yellow-light p-1">
-                            <div className="badge badge-warning rounded-lg bg-yellow text-white">
-                              {opportunity?.participantCountPending}
-                            </div>
-                            <div className="text-xs font-bold text-yellow">
-                              to be verified
-                            </div>
+
+                    {(opportunity?.participantCountPending ?? 0) > 0 && (
+                      <Link
+                        href={`/organisations/${id}/verifications?opportunity=${opportunityId}&verificationStatus=Pending${
+                          returnUrl
+                            ? `&returnUrl=${encodeURIComponent(
+                                returnUrl.toString(),
+                              )}`
+                            : ""
+                        }`}
+                      >
+                        <div className="flex flex-row items-center gap-2 rounded-lg bg-yellow-light p-1">
+                          <div className="badge badge-warning rounded-lg bg-yellow text-white">
+                            {opportunity?.participantCountPending}
                           </div>
-                        </Link>
-                      )}
+                          <div className="text-xs font-bold text-yellow">
+                            to be verified
+                          </div>
+                        </div>
+                      </Link>
+                    )}
                   </div>
                 </div>
                 <div className="flex flex-col gap-2 rounded-lg bg-white p-6">

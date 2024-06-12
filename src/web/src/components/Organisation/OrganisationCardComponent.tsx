@@ -119,7 +119,7 @@ export const OrganisationCardComponent: React.FC<{
   return (
     <div
       key={`orgCard_${key}`}
-      className="flex flex-row rounded-xl bg-white shadow-custom transition duration-300 dark:bg-neutral-700 md:max-w-7xl"
+      className="flex flex-row rounded-xl bg-white shadow-custom transition duration-300 dark:bg-neutral-700"
     >
       {isLoading && <Loading />}
 

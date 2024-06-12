@@ -292,7 +292,7 @@ const Organisations: NextPageWithLayout<{
               (status) =>
                 lookups_statuses.find((item) => item.value === status)?.label,
             )
-            .join(","),
+            .join("|"),
         );
 
       if (
@@ -581,7 +581,7 @@ const Organisations: NextPageWithLayout<{
           {/* RESULTS */}
           {searchResults && searchResults.items.length > 0 && (
             <div className="grid w-full place-items-center">
-              <div className="xs:grid-cols-1 grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              <div className="xs:grid-cols-1 grid w-full grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {searchResults.items.map((item: any) => (
                   <OrganisationCardComponent
                     key={`OrganisationCardComponent_${item.id}`}
