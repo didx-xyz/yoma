@@ -37,7 +37,6 @@ namespace Yoma.Core.Api.Controllers
      Description = "Optionally include a QR code")]
     [HttpPost("create/sharing")]
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [AllowAnonymous]
     public async Task<IActionResult> GetOrCreateLinkSharing([FromBody] LinkRequestCreateShare request)
     {
@@ -55,7 +54,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Create an instant-verify link")]
     [HttpPost("create/instantVerify")]
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> CreateLinkInstantVerify([FromBody] LinkRequestCreateVerify request)
     {
@@ -72,7 +70,6 @@ namespace Yoma.Core.Api.Controllers
       Description = "Optionally include a QR code")]
     [HttpGet("{linkId}")]
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult GetById([FromRoute] Guid linkId, [FromQuery] bool? includeQRCode)
     {
@@ -102,7 +99,6 @@ namespace Yoma.Core.Api.Controllers
       Description = "Activate an inactive link, provided the end date has not been reached or deactivate an active link")]
     [HttpPatch("{linkId}/status/{status}")]
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> UpdateStatus([FromRoute] Guid linkId, [FromRoute] LinkStatus status)
     {

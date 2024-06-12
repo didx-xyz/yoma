@@ -61,7 +61,16 @@ namespace Yoma.Core.Api.Middleware
 
         case HttpClientException:
           var httpClientException = (HttpClientException)ex;
-          context.Response.StatusCode = (int)httpClientException.StatusCode;
+
+          //ensure B2B codes reflects the codes supported by the API
+          context.Response.StatusCode = (int)httpClientException.StatusCode switch
+          {
+            (int)HttpStatusCode.Unauthorized => (int)HttpStatusCode.Unauthorized,
+            (int)HttpStatusCode.Forbidden => (int)HttpStatusCode.Unauthorized,
+            (int)HttpStatusCode.NotFound => (int)HttpStatusCode.NotFound,
+            >= 400 and < 500 => (int)HttpStatusCode.BadRequest,
+            _ => (int)HttpStatusCode.InternalServerError
+          };
           break;
       }
 

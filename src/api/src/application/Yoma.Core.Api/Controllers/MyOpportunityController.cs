@@ -35,7 +35,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Get 'my' opportunity by id (Admin or Organization Admin roles required)")]
     [HttpGet("{id}/admin")]
     [ProducesResponseType(typeof(MyOpportunity), (int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public IActionResult GetById([FromRoute] Guid id)
     {
@@ -98,7 +97,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Complete or reject manual verification for the specified 'my' opportunity batch (Admin or Organization Admin roles required)")]
     [HttpPatch("verification/finalize/batch")]
     [ProducesResponseType(typeof(MyOpportunityResponseVerifyFinalizeBatch), (int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> FinalizeVerificationManual([FromBody] MyOpportunityRequestVerifyFinalizeBatch request)
     {
@@ -114,7 +112,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Complete or reject manual verification for the specified 'my' opportunity (Admin or Organization Admin roles required)")]
     [HttpPatch("verification/finalize")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> FinalizeVerificationManual([FromBody] MyOpportunityRequestVerifyFinalize request)
     {
@@ -132,7 +129,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Get 'my' opportunity verification status for the specified opportunity (Authenticated User)")]
     [HttpPost("action/verify/status")]
     [ProducesResponseType(typeof(MyOpportunityResponseVerify), (int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public IActionResult GetVerificationStatus([FromQuery] Guid opportunityId)
     {
@@ -163,7 +159,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Track viewing of an opportunity (Authenticated User)")]
     [HttpPut("action/{opportunityId}/view")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionViewed([FromRoute] Guid opportunityId)
     {
@@ -179,7 +174,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Save an opportunity (Authenticated User)")]
     [HttpPut("action/{opportunityId}/save")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionSaved([FromRoute] Guid opportunityId)
     {
@@ -195,7 +189,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Track navigating to the external link of an opportunity (Authenticated User)")]
     [HttpPut("action/{opportunityId}/navigateExternalLink")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionNavigatedExternalLink([FromRoute] Guid opportunityId)
     {
@@ -211,7 +204,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Check if an opportunity is saved (Authenticated User)")]
     [HttpGet("action/{opportunityId}/saved")]
     [ProducesResponseType(typeof(bool), (int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult ActionedSaved([FromRoute] Guid opportunityId)
     {
@@ -227,7 +219,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Remove a saved opportunity (Authenticated User)")]
     [HttpDelete("action/{opportunityId}/save/remove")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionSavedRemove([FromRoute] Guid opportunityId)
     {
@@ -243,7 +234,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Complete an opportunity by applying for verification (Authenticated User)")]
     [HttpPut("action/{opportunityId}/verify")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionSendForVerificationManual([FromRoute] Guid opportunityId, [FromForm] MyOpportunityRequestVerify request)
     {
@@ -259,7 +249,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Complete an opportunity via an instant-verify link (Authenticated User)")]
     [HttpPut("action/link/{linkId}/verify")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionInstantVerificationManual([FromRoute] Guid linkId)
     {
@@ -275,7 +264,6 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Delete a pending verification request for an opportunity (Authenticated User)")]
     [HttpDelete("action/{opportunityId}/verify/delete")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
-    [ProducesResponseType((int)HttpStatusCode.NotFound)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> PerformActionSendForVerificationManualDelete([FromRoute] Guid opportunityId)
     {
