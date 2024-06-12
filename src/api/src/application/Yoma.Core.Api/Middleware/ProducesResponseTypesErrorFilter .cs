@@ -1,6 +1,7 @@
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Net;
+using System.Net.Mime;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Api.Middleware
@@ -13,7 +14,7 @@ namespace Yoma.Core.Api.Middleware
 
       var content = new Dictionary<string, OpenApiMediaType>
       {
-        ["application/json"] = new OpenApiMediaType { Schema = errorSchema }
+        [MediaTypeNames.Application.Json] = new OpenApiMediaType { Schema = errorSchema }
       };
 
       var errorResponses = new Dictionary<int, OpenApiResponse>
