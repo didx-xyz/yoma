@@ -178,7 +178,7 @@ export const OpportunityFilterVertical: React.FC<{
     let languages = searchFilter?.languages;
     if ((languages?.length ?? 0) == 0 && currentLanguage) {
       const languageLookup = lookups_languages.find(
-        (x) => x.codeAlpha2 === currentLanguage,
+        (x) => x.codeAlpha2.toLowerCase() === currentLanguage.toLowerCase(),
       );
       if (languageLookup) {
         languages = [languageLookup.name];

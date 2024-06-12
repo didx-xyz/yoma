@@ -235,10 +235,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
     [PublishedState.Active, PublishedState.NotStarted],
     context,
   );
-  // const lookups_languages = await getOpportunityLanguages(
-  //   [PublishedState.Active, PublishedState.NotStarted, PublishedState.Expired],
-  //   context,
-  // );
   const lookups_organisations = await getOpportunityOrganizations(
     [PublishedState.Active, PublishedState.NotStarted],
     context,
@@ -258,7 +254,6 @@ export const getStaticProps: GetStaticProps = async (context) => {
       opportunities_other,
       opportunities_allOpportunities,
       lookups_categories,
-      //lookups_languages,
       lookups_organisations,
       lookups_types,
       lookups_engagementTypes,
@@ -289,7 +284,6 @@ const Opportunities: NextPageWithLayout<{
   opportunities_other: OpportunitySearchResultsInfo;
   opportunities_allOpportunities: OpportunitySearchResultsInfo;
   lookups_categories: OpportunityCategory[];
-  //lookups_languages: Language[];
   lookups_organisations: OrganizationInfo[];
   lookups_types: OpportunityType[];
   lookups_engagementTypes: EngagementType[];
@@ -304,7 +298,6 @@ const Opportunities: NextPageWithLayout<{
   opportunities_other,
   opportunities_allOpportunities,
   lookups_categories,
-  //lookups_languages,
   lookups_organisations,
   lookups_types,
   lookups_engagementTypes,
