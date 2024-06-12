@@ -226,8 +226,8 @@ const OrganisationCreate: NextPageWithLayout<{
             <>
               <ul className="steps steps-horizontal mx-auto w-72">
                 <li className="step step-success"></li>
-                <li className="step"></li>
-                <li className="step"></li>
+                <li className="step before:!bg-gray after:!bg-gray"></li>
+                <li className="step before:!bg-gray after:!bg-gray"></li>
               </ul>
               <div className="my-4 flex flex-col text-center">
                 <h2 className="font-semibold tracking-wide">
@@ -253,7 +253,7 @@ const OrganisationCreate: NextPageWithLayout<{
               <ul className="steps steps-horizontal mx-auto w-72">
                 <li className="step step-success"></li>
                 <li className="step step-success"></li>
-                <li className="step"></li>
+                <li className="step before:!bg-gray after:!bg-gray"></li>
               </ul>
               <div className="my-4 flex flex-col text-center">
                 <h2 className="font-semibold tracking-wide">

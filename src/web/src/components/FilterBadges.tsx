@@ -8,7 +8,7 @@ const FilterBadges: React.FC<{
   onSubmit: (filter: any) => void;
 }> = ({ searchFilter, excludeKeys, resolveValue, onSubmit }) => {
   const filteredKeys = Object.entries(searchFilter).filter(
-    ([key, value]) => !excludeKeys.includes(key) && value != null,
+    ([key, value]) => !excludeKeys.includes(key) && value,
   );
 
   // function to handle removing an item from an array in the filter object

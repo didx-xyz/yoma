@@ -428,7 +428,7 @@ const Home: NextPageWithLayout = () => {
         </div>
 
         {/* HOW DO I EARN REWARDS? */}
-        <div className="mt-16 flex w-full max-w-5xl flex-col gap-10 py-8 lg:flex-row lg:pb-12">
+        <div className="mt-16 flex w-full max-w-5xl flex-col items-center gap-10 py-8 lg:flex-row lg:pb-12">
           <div className="flex flex-col text-center md:max-w-lg md:pb-8 lg:max-w-[500px] lg:text-left">
             <div className="flex flex-col gap-4">
               <h2 className="text-2xl font-semibold text-black">

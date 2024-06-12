@@ -491,9 +491,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        // className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll rounded-lg bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px]`}
-        // portalClassName={"fixed z-40"}
-        // overlayClassName="fixed inset-0 bg-overlay"
         className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
@@ -602,7 +599,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             Opportunities
           </h2>
 
-          <div className="flex h-fit gap-2 md:justify-end">
+          <div className="flex h-fit justify-center gap-2 md:justify-end">
             <SearchInputLarge
               // className={
               //   "bg-theme hover:bg-theme brightness-105 hover:brightness-110"

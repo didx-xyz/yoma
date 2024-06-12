@@ -9,7 +9,6 @@ interface InputProps {
   imageURL: string | null;
   company: string;
   name: string;
-  //summary: string;
   amount: number | null;
   count?: number;
   href?: string;
@@ -21,7 +20,6 @@ const ItemCardComponent: React.FC<InputProps> = ({
   imageURL,
   company,
   name,
-  //summary,
   amount,
   count,
   href,
@@ -47,11 +45,11 @@ const ItemCardComponent: React.FC<InputProps> = ({
       <div className="flex w-full flex-col items-start justify-start gap-2 md:scale-100">
         {/* HEADER & IMAGE */}
         <div className="flex w-full flex-grow flex-row items-start justify-between">
-          <div className="h-16x flex flex-col items-start justify-start gap-1">
-            <p className="h-6x mr-1 max-w-[170px] overflow-hidden text-ellipsis whitespace-nowrap text-xs font-medium text-gray-dark md:max-w-[250px]">
+          <div className="flex flex-col items-start justify-start gap-1">
+            <p className="mr-1 max-w-[170px] truncate text-xs font-medium text-gray-dark md:max-w-[250px]">
               {company}
             </p>
-            <p className="h-14x mr-1 max-w-[170px] overflow-hidden text-ellipsis whitespace-nowrap text-[18px] font-semibold md:max-w-[250px]">
+            <p className="mr-1 max-w-[170px] truncate text-[18px] font-semibold md:max-w-[250px]">
               {name}
             </p>
           </div>
@@ -84,7 +82,7 @@ const ItemCardComponent: React.FC<InputProps> = ({
 
         {/* DESCRIPTION */}
         <div className="my-2x h-[100px] max-w-[200px] overflow-hidden text-start text-sm font-light md:max-w-full">
-          {/* {summary} */}Click to purchase this item.
+          Click to purchase this item.
         </div>
 
         {/* BADGES */}

@@ -206,7 +206,7 @@ export const UserProfileForm: React.FC<{
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
-          toastId: "patchUserProfileError",
+          toastId: "patchUserProfile",
           autoClose: false,
           icon: false,
         });

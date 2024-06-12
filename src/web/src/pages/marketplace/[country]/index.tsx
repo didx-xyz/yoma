@@ -744,11 +744,11 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                     (storeImage, index2) => (
                       <div
                         className="relative -mr-4 overflow-hidden rounded-full shadow"
-                        // style={{
-                        //   zIndex:
-                        //     category_storeItems.category.storeImageURLs.length -
-                        //     index,
-                        // }}
+                        style={{
+                          zIndex:
+                            category_storeItems.category.storeImageURLs.length -
+                            index,
+                        }}
                         key={`storeItems_${category_storeItems.category.id}_${index}_${index2}`}
                       >
                         <span className="z-0">

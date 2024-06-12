@@ -312,9 +312,8 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   Well done for completing this opportunity!
                 </h4>
                 <div className="tracking-wide text-gray-dark">
-                  Upload the required documents below, and once
-                  <br className="hidden md:inline" />
-                  approved, we&apos;ll add the accreditation to your CV!
+                  Upload the required documents below, and once approved,
+                  we&apos;ll add the accreditation to your CV!
                 </div>
               </div>
 
