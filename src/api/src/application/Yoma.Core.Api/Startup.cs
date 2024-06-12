@@ -158,7 +158,7 @@ namespace Yoma.Core.Api
       {
         c.SpecUrl = Swagger_JsonUrl;
         c.RoutePrefix = "docs";
-        c.DocumentTitle = $"Yoma Core Api ({_environment.ToDescription()}) {Constants.Api_Version}";
+        c.DocumentTitle = $"Yoma Core Api ({_environment.ToDescription()}) ({Constants.Api_Version})";
       });
       #endregion 3rd Party
 
