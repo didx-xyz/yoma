@@ -15,7 +15,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     private readonly AppSettings _appSettings;
     private readonly IPartnerService _partnerService;
     private readonly IProcessingStatusService _processingStatusService;
-    private readonly IRepository<Models.ProcessingLog> _processingLogRepository;
+    private readonly IRepository<ProcessingLog> _processingLogRepository;
     #endregion
 
     #region Constructor
@@ -23,7 +23,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
        IOptions<AppSettings> appSettings,
        IPartnerService partnerService,
        IProcessingStatusService processingStatusService,
-       IRepository<Models.ProcessingLog> processingLogRepository)
+       IRepository<ProcessingLog> processingLogRepository)
     {
       _logger = logger;
       _appSettings = appSettings.Value;

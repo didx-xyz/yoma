@@ -98,7 +98,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Return a list of opportunity types (Anonymous)")]
     [HttpGet("type")]
-    [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityType>), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(List<OpportunityType>), (int)HttpStatusCode.OK)]
     [AllowAnonymous]
     public IActionResult ListOpportunityTypes()
     {
