@@ -1,27 +1,18 @@
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import type { OpportunityCategory } from "~/api/models/opportunity";
-import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
+import { useAtomValue } from "jotai";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ButtonBack,
   ButtonNext,
   Carousel,
+  OnSlideProps,
   Slide,
   Slider,
-  SliderBarLine,
   SliderBarDotGroup,
   renderDotsDynamicPill,
-  OnSlideProps,
 } from "react-scroll-snap-anime-slider";
-import { setOptions } from "filepond";
-import { useAtomValue } from "jotai";
+import type { OpportunityCategory } from "~/api/models/opportunity";
 import { screenWidthAtom } from "~/lib/store";
-import { IoMdArrowDropright } from "react-icons/io";
+import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
 
 const NavigationButtons: React.FC<{
   currentSlide: number;
@@ -71,9 +62,7 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
   onClick?: (item: OpportunityCategory) => void;
 }> = ({ lookups_categories, selected_categories, onClick }) => {
   const screenWidth = useAtomValue(screenWidthAtom);
-  //let visible = 8;
   const [visibleSlides, setVisibleSlides] = useState(1);
-  //let currentSlide = 1;
   const [currentSlide, setCurrentSlide] = useState(1);
   let totalSlides = lookups_categories.length;
 
@@ -99,7 +88,7 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
     }
   }, [screenWidth, setVisibleSlides]);
 
-  const lastSlideRef = useRef<number>(-1); // Initialize with -1 or any value that won't be a valid slide index
+  const lastSlideRef = useRef<number>(-1);
 
   const onSlide = useCallback(
     (props: OnSlideProps) => {
@@ -120,61 +109,45 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
   );
 
   return (
-    // <div className="flex justify-center gap-4 md:w-full">
-    //   {lookups_categories.map((item) => (
-    //     <OpportunityCategoryHorizontalCard
-    //       key={`categories_${item.id}`}
-    //       data={item}
-    //       selected={selected_categories?.includes(item.name)}
-    //       onClick={onClick}
-    //     />
-    //   ))}
-    // </div>
-    <>
-      currentSlide: {currentSlide}
-      visibleSlides: {visibleSlides}
-      totalSlides: {totalSlides}
-      <Carousel
+    <Carousel
+      id="categories-carousel"
+      totalSlides={totalSlides}
+      visibleSlides={visibleSlides}
+      onSlide={onSlide}
+      currentSlide={currentSlide}
+    >
+      <Slider>
+        {lookups_categories.map((item, i) => {
+          return (
+            <Slide key={`categories_${item.id}`}>
+              <div className="flex justify-center">
+                <OpportunityCategoryHorizontalCard
+                  key={`categories_${item.id}`}
+                  data={item}
+                  selected={selected_categories?.includes(item.name)}
+                  onClick={onClick}
+                />
+              </div>
+            </Slide>
+          );
+        })}
+      </Slider>
+
+      <SliderBarDotGroup
+        id="categories-carousel-slider-dot-group"
+        aria-label="slider bar"
+        dotGroupProps={{
+          id: "categories-carousel-slider-bar-dot-group",
+        }}
+        renderDots={renderDotsDynamicPill}
+      />
+
+      <NavigationButtons
+        currentSlide={currentSlide}
         totalSlides={totalSlides}
         visibleSlides={visibleSlides}
-        onSlide={onSlide}
-        currentSlide={currentSlide}
-      >
-        <Slider>
-          {lookups_categories.map((item, i) => {
-            return (
-              <Slide key={`categories_${item.id}`}>
-                <div className="flex justify-center">
-                  <OpportunityCategoryHorizontalCard
-                    key={`categories_${item.id}`}
-                    data={item}
-                    selected={selected_categories?.includes(item.name)}
-                    onClick={onClick}
-                  />
-                </div>
-              </Slide>
-            );
-          })}
-        </Slider>
-
-        {/* <SliderBarLine /> */}
-
-        <SliderBarDotGroup
-          id="my-slider-dot-group"
-          aria-label="slider bar"
-          dotGroupProps={{
-            id: "my-slider-bar-dot-group",
-          }}
-          renderDots={renderDotsDynamicPill}
-        />
-
-        <NavigationButtons
-          currentSlide={currentSlide}
-          totalSlides={totalSlides}
-          visibleSlides={visibleSlides}
-        />
-      </Carousel>
-    </>
+      />
+    </Carousel>
   );
 };
 
