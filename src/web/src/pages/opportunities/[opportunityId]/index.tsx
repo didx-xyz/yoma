@@ -578,7 +578,8 @@ const OpportunityDetails: NextPageWithLayout<{
                 <div className="rounded-lg p-4 text-center md:w-[450px]">
                   <strong>{opportunityInfo.organizationName}</strong> is busy
                   reviewing your submission. Once approved, the opportunity will
-                  be automatically added to your CV.
+                  be automatically added to your CV. This may take between 3-4
+                  business days.
                 </div>
                 <div className="mt-4 flex flex-grow gap-4">
                   <button

@@ -53,19 +53,21 @@ body {
   --secondary: theme("colors.gray-dark");
 }
 /* Firefox */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--secondary) var(--primary);
-}
+//NB: this class forces the scrollbars to always be visible on the carousels 🤷‍♂️
+// * {
+//   scrollbar-width: thin;
+//   scrollbar-color: var(--secondary) var(--primary);
+// }
 
 /* Chrome, Edge, and Safari */
 *::-webkit-scrollbar {
-  width: 15px;
+  width: 12px;
 }
 
 *::-webkit-scrollbar-track {
   background: var(--primary);
   border-radius: 5px;
+  background-color: var(--secondary) var(--primary); //
 }
 
 *::-webkit-scrollbar-thumb {
