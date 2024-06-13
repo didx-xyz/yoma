@@ -5,6 +5,7 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Exceptions;
+using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.PartnerSharing.Interfaces.Lookups;
 
 namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
@@ -14,16 +15,19 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
     #region Class Variables
     private readonly AppSettings _appSettings;
     private readonly IMemoryCache _memoryCache;
+    private readonly IOpportunityService _opportunityService;
     private readonly IRepository<Models.Lookups.Partner> _partnerRepository;
     #endregion
 
     #region Constructor
     public PartnerService(IOptions<AppSettings> appSettings,
         IMemoryCache memoryCache,
+        IOpportunityService opportunityService,
         IRepository<Models.Lookups.Partner> partnerRepository)
     {
       _appSettings = appSettings.Value;
       _memoryCache = memoryCache;
+      _opportunityService = opportunityService;
       _partnerRepository = partnerRepository;
     }
     #endregion
@@ -74,6 +78,41 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
 
       }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(Models.Lookups.Partner)}s'");
       return result;
+    }
+
+    public List<Models.Lookups.Partner> ListForScheduling(ProcessingAction action, EntityType entityType, Guid entityId)
+    {
+      //active partners that have the action enabled
+      var partners = List().Where(o => o.Active && o.ActionEnabledParsed[action]).ToList();
+      var results = new List<Models.Lookups.Partner>();
+
+      //filter based on partner and entity type inclusions
+      foreach (var item in partners)
+      {
+        var partner = Enum.Parse<Partner>(item.Name, true);
+        switch (entityType)
+        {
+          case EntityType.Opportunity:
+            switch (partner)
+            {
+              case Partner.SAYouth:
+                //only include learning opportunities
+                var opportunity = _opportunityService.GetById(entityId, false, false, false);
+                if (opportunity.Type != Opportunity.Type.Learning.ToString()) break;
+                results.Add(item);
+                break;
+
+              default:
+                throw new InvalidOperationException($"Partner of '{partner}' not supported");
+            }
+            break;
+
+          default:
+            throw new InvalidOperationException($"Entity type of '{entityType}' not supported");
+        }
+      }
+
+      return results;
     }
     #endregion
 

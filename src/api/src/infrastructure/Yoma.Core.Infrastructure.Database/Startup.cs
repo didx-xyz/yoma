@@ -151,7 +151,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepository<Domain.PartnerSharing.Models.Lookups.ProcessingStatus>, PartnerSharing.Repositories.Lookups.ProcessingStatusRepository>();
       #endregion Lookups
 
-      services.AddScoped<IRepository<Domain.PartnerSharing.Models.ProcessingLog>, PartnerSharing.Repositories.ProcessingLogRepository>();
+      services.AddScoped<IRepositoryBatched<Domain.PartnerSharing.Models.ProcessingLog>, PartnerSharing.Repositories.ProcessingLogRepository>();
       #endregion PartnerSharing
 
       #region Reward

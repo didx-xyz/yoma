@@ -30,7 +30,8 @@ namespace Yoma.Core.Domain.Opportunity
 
   public enum Type
   {
-    Other
+    Other,
+    Learning
   }
 
   public enum Category
