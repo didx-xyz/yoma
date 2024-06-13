@@ -101,11 +101,11 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
         renderDots={renderDotsDynamicPill}
       />
 
-      <NavigationButtons
+      {/* <NavigationButtons
         currentSlide={currentSlide}
         totalSlides={totalSlides}
         visibleSlides={visibleSlides}
-      />
+      /> */}
     </Carousel>
   );
 };
