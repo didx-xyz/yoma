@@ -86,7 +86,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
       var partners = List().Where(o => o.Active && o.ActionEnabledParsed[action]).ToList();
       var results = new List<Models.Lookups.Partner>();
 
-      //filter based on partner and entity type inclusions
+      //filter based on partner and entity type specific exclusions
       foreach (var item in partners)
       {
         var partner = Enum.Parse<Partner>(item.Name, true);
