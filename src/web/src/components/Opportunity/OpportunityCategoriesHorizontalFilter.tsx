@@ -1,8 +1,6 @@
 import { useAtomValue } from "jotai";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ButtonBack,
-  ButtonNext,
   Carousel,
   OnSlideProps,
   Slide,
@@ -13,7 +11,6 @@ import {
 import type { OpportunityCategory } from "~/api/models/opportunity";
 import { screenWidthAtom } from "~/lib/store";
 import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
-import { NavigationButtons } from "../Carousel/NavigationButtons";
 
 const OpportunityCategoriesHorizontalFilter: React.FC<{
   lookups_categories: OpportunityCategory[];
@@ -23,7 +20,7 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
   const screenWidth = useAtomValue(screenWidthAtom);
   const [visibleSlides, setVisibleSlides] = useState(1);
   const [currentSlide, setCurrentSlide] = useState(1);
-  let totalSlides = lookups_categories.length;
+  const totalSlides = lookups_categories.length;
 
   useEffect(() => {
     if (screenWidth < 480) {
@@ -76,9 +73,9 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
       currentSlide={currentSlide}
     >
       <Slider>
-        {lookups_categories.map((item, i) => {
+        {lookups_categories.map((item, index) => {
           return (
-            <Slide key={`categories_${item.id}`}>
+            <Slide key={`categories_${index}`}>
               <div className="flex justify-center">
                 <OpportunityCategoryHorizontalCard
                   key={`categories_${item.id}`}
