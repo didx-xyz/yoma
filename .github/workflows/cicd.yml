@@ -33,6 +33,8 @@ jobs:
       group: ${{ github.workflow }}-lint-${{ matrix.project }}-${{ github.ref }}
       cancel-in-progress: true
 
+    if: github.event_name != 'release'
+
     strategy:
       fail-fast: false
       matrix:
@@ -336,9 +338,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TAILSCALE_VERSION: 1.64.0
-      HELMFILE_VERSION: v0.163.1
-      HELM_VERSION: v3.14.4
+      TAILSCALE_VERSION: 1.68.0
+      HELMFILE_VERSION: v0.165.0
+      HELM_VERSION: v3.15.2
       TAG: ${{ needs.build.outputs.image_version }}
 
     concurrency:
