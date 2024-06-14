@@ -17,8 +17,9 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
   selected_categories: string[] | null | undefined;
   onClick?: (item: OpportunityCategory) => void;
 }> = ({ lookups_categories, selected_categories, onClick }) => {
+  const [isLoading, setIsLoading] = useState(true);
   const screenWidth = useAtomValue(screenWidthAtom);
-  const [visibleSlides, setVisibleSlides] = useState(1);
+  const [visibleSlides, setVisibleSlides] = useState(2);
   const [currentSlide, setCurrentSlide] = useState(0);
   const totalSlides = lookups_categories.length;
 
@@ -42,7 +43,8 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
       // Large desktop
       setVisibleSlides(8);
     }
-  }, [screenWidth, setVisibleSlides]);
+    setIsLoading(false);
+  }, [screenWidth, setVisibleSlides, setIsLoading]);
 
   const lastSlideRef = useRef<number>(-1);
 
@@ -68,22 +70,28 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
       currentSlide={currentSlide}
       freeScroll={true}
     >
-      <Slider>
-        {lookups_categories.map((item, index) => {
-          return (
-            <Slide key={`categories_${index}`}>
-              <div className="flex justify-center">
-                <OpportunityCategoryHorizontalCard
-                  key={`categories_${item.id}`}
-                  data={item}
-                  selected={selected_categories?.includes(item.name)}
-                  onClick={onClick}
-                />
-              </div>
-            </Slide>
-          );
-        })}
-      </Slider>
+      {isLoading ? (
+        <div className="flex h-[135px] items-center justify-center">
+          {/* prevents the carousels from showing all items before the screen width has been determined */}
+        </div>
+      ) : (
+        <Slider>
+          {lookups_categories.map((item, index) => {
+            return (
+              <Slide key={`categories_${index}`}>
+                <div className="flex justify-center">
+                  <OpportunityCategoryHorizontalCard
+                    key={`categories_${item.id}`}
+                    data={item}
+                    selected={selected_categories?.includes(item.name)}
+                    onClick={onClick}
+                  />
+                </div>
+              </Slide>
+            );
+          })}
+        </Slider>
+      )}
 
       <SliderBarDotGroup
         id="categories-carousel-slider-dot-group"

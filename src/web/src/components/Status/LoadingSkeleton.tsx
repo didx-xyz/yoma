@@ -1,6 +1,14 @@
-export const LoadingSkeleton: React.FC = () => {
+import React from "react";
+
+interface LoadingSkeletonProps {
+  className?: string;
+}
+
+export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
+  className = "w-64",
+}) => {
   return (
-    <div className="flex w-64 flex-col gap-4">
+    <div className={`flex flex-col gap-4 ${className}`}>
       <div className="flex items-center gap-4">
         <div className="skeleton h-16 w-20 shrink-0 rounded-full bg-gray"></div>
         <div className="flex flex-col gap-4">
