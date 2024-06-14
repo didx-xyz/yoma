@@ -1060,6 +1060,7 @@ const Opportunities: NextPageWithLayout<{
       }
 
       const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+      console.warn("loadDataFeatured", pageNumber, startRow);
 
       return fetchDataAndUpdateCache(["featured", pageNumber.toString()], {
         pageNumber: pageNumber,

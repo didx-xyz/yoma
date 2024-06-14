@@ -19,7 +19,7 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
 }> = ({ lookups_categories, selected_categories, onClick }) => {
   const screenWidth = useAtomValue(screenWidthAtom);
   const [visibleSlides, setVisibleSlides] = useState(1);
-  const [currentSlide, setCurrentSlide] = useState(1);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const totalSlides = lookups_categories.length;
 
   useEffect(() => {
@@ -52,11 +52,6 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
       if (lastSlideRef.current === props.currentSlide) return;
 
       setCurrentSlide(props.currentSlide);
-      console.log("currentSlide", props.currentSlide);
-
-      if (props.currentSlide + visibleSlides >= totalSlides) {
-        console.warn("Loading more...");
-      }
 
       // update the lastSlideRef with the new current slide
       lastSlideRef.current = props.currentSlide;
