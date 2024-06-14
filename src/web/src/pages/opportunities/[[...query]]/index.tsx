@@ -1089,7 +1089,7 @@ const Opportunities: NextPageWithLayout<{
         <title>Yoma | Opportunities</title>
       </Head>
 
-      <PageBackground className="h-[300px] lg:h-[392px]" />
+      <PageBackground className="h-[350px]" />
 
       {isSearchPerformed && isLoading && <Loading />}
 
@@ -1152,13 +1152,11 @@ const Opportunities: NextPageWithLayout<{
         </div>
 
         {/* FILTER: CATEGORIES */}
-        <div className="mt-8">
-          <OpportunityCategoriesHorizontalFilter
-            lookups_categories={lookups_categories}
-            selected_categories={searchFilter?.categories}
-            onClick={onClickCategoryFilter}
-          />
-        </div>
+        <OpportunityCategoriesHorizontalFilter
+          lookups_categories={lookups_categories}
+          selected_categories={searchFilter?.categories}
+          onClick={onClickCategoryFilter}
+        />
 
         {/* FILTER: BADGES */}
         <div className="mt-4">
