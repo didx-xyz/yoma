@@ -100,14 +100,14 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
               🏠🌐 {opportunity.engagementType}
             </div>
           )}
-          {opportunity?.type === "Offline" && (
+          {opportunity?.engagementType === "Offline" && (
             <div className="badge bg-yellow-tint text-[#5F65B9]">
-              🏠 {opportunity.type}
+              🏠 {opportunity.engagementType}
             </div>
           )}
-          {opportunity?.type === "Online" && (
+          {opportunity?.engagementType === "Online" && (
             <div className="badge bg-[#E7E8F5] text-[#5F65B9]">
-              🌐 {opportunity.type}
+              🌐 {opportunity.engagementType}
             </div>
           )}
         </>

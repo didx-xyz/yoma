@@ -2,7 +2,7 @@ import { useAtomValue } from "jotai";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Carousel,
-  OnSlideProps,
+  type OnSlideProps,
   Slide,
   Slider,
   SliderBarDotGroup,
