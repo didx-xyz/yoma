@@ -2,6 +2,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.PartnerSharing.Interfaces;
 using Yoma.Core.Domain.PartnerSharing.Interfaces.Lookups;
 using Yoma.Core.Domain.PartnerSharing.Models;
@@ -19,6 +20,10 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     private readonly IRepositoryBatched<ProcessingLog> _processingLogRepository;
 
     private readonly IExecutionStrategyService _executionStrategyService;
+
+    public static readonly Status[] Statuses_Opportunity_Creatable = [Status.Active, Status.Inactive];
+    public static readonly Status[] Statuses_Opportunity_Updatable = [Status.Active, Status.Inactive];
+    public static readonly Status[] Statuses_Opportunity_CanDelete = [Status.Active, Status.Inactive, Status.Expired];
     #endregion
 
     #region Constructor
@@ -189,7 +194,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
       {
         case ProcessingStatus.Processed:
           if (string.IsNullOrEmpty(item.EntityExternalId))
-            throw new ArgumentNullException(nameof(item), "Tenant id required");
+            throw new ArgumentNullException(nameof(item), "External id required");
           item.ErrorReason = null;
           item.RetryCount = null;
           break;

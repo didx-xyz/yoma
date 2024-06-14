@@ -21,6 +21,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Repositories
         EntityType = entity.EntityType,
         OpportunityId = entity.OpportunityId,
         PartnerId = entity.PartnerId,
+        Partner = Enum.Parse<Partner>(entity.Partner.Name, true),
         Action = entity.Action,
         StatusId = entity.StatusId,
         Status = Enum.Parse<ProcessingStatus>(entity.Status.Name, true),
