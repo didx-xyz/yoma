@@ -1,7 +1,7 @@
 export const PAGE_SIZE = 12;
 export const PAGE_SIZE_MEDIUM = 100;
 export const PAGE_SIZE_MAXIMUM = 1000;
-export const PAGE_SIZE_MINIMUM = 4;
+export const PAGE_SIZE_MINIMUM = 8;
 export const MAX_INT32 = 2147483647;
 export const DATE_FORMAT_HUMAN = "DD MMM YYYY";
 export const DATE_FORMAT_HUMAN_LONG = "dddd Do MMMM YYYY";
