@@ -110,7 +110,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                         // - IOpportunityService.Update (explicit)
                         // - IOpportunityService.UpdateStatus (explicit)
                         // - IOrganizationService.UpdateStatus (implicit)
-                        // - IOrganizationBackgroundService.ProcessDeclination (implicit)
+                        // - IOrganizationService.SendForReapproval (implicit)
 
                         //implicit alignment for sharing processing
                         //if organization is activated, opportunity is activated provided current status of active 
