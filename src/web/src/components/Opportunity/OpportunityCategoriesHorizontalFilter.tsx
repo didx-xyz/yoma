@@ -19,22 +19,22 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
 }> = ({ lookups_categories, selected_categories, onClick }) => {
   const screenWidth = useAtomValue(screenWidthAtom);
   const [visibleSlides, setVisibleSlides] = useState(1);
-  const [currentSlide, setCurrentSlide] = useState(1);
+  const [currentSlide, setCurrentSlide] = useState(0);
   const totalSlides = lookups_categories.length;
 
   useEffect(() => {
     if (screenWidth < 480) {
       // Very small screens
-      setVisibleSlides(1);
+      setVisibleSlides(2);
     } else if (screenWidth >= 480 && screenWidth < 600) {
       // Mobile
-      setVisibleSlides(2);
+      setVisibleSlides(3);
     } else if (screenWidth >= 600 && screenWidth < 768) {
       // Between mobile and tablet
-      setVisibleSlides(3);
+      setVisibleSlides(4);
     } else if (screenWidth >= 768 && screenWidth < 1024) {
       // Tablet
-      setVisibleSlides(4);
+      setVisibleSlides(5);
     } else if (screenWidth >= 1024 && screenWidth < 1440) {
       // Small desktop
       setVisibleSlides(6);
@@ -52,16 +52,11 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
       if (lastSlideRef.current === props.currentSlide) return;
 
       setCurrentSlide(props.currentSlide);
-      console.log("currentSlide", props.currentSlide);
-
-      if (props.currentSlide + visibleSlides >= totalSlides) {
-        console.warn("Loading more...");
-      }
 
       // update the lastSlideRef with the new current slide
       lastSlideRef.current = props.currentSlide;
     },
-    [setCurrentSlide, visibleSlides, totalSlides],
+    [setCurrentSlide],
   );
 
   return (
@@ -71,6 +66,7 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
       visibleSlides={visibleSlides}
       onSlide={onSlide}
       currentSlide={currentSlide}
+      freeScroll={true}
     >
       <Slider>
         {lookups_categories.map((item, index) => {
@@ -97,12 +93,6 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
         }}
         renderDots={renderDotsDynamicPill}
       />
-
-      {/* <NavigationButtons
-        currentSlide={currentSlide}
-        totalSlides={totalSlides}
-        visibleSlides={visibleSlides}
-      /> */}
     </Carousel>
   );
 };

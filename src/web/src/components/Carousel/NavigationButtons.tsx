@@ -6,7 +6,7 @@ export const NavigationButtons: React.FC<{
   visibleSlides: number;
 }> = ({ currentSlide, totalSlides, visibleSlides }) => {
   const isPrevDisabled = currentSlide <= 0;
-  const isNextDisabled = currentSlide + visibleSlides >= totalSlides;
+  const isNextDisabled = currentSlide + 1 + visibleSlides >= totalSlides;
 
   return (
     <div className="flex justify-center gap-2">
