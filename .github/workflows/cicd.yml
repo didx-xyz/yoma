@@ -33,8 +33,6 @@ jobs:
       group: ${{ github.workflow }}-lint-${{ matrix.project }}-${{ github.ref }}
       cancel-in-progress: true
 
-    if: github.event_name != 'release'
-
     strategy:
       fail-fast: false
       matrix:
