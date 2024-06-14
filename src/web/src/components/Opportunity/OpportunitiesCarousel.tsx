@@ -1,4 +1,3 @@
-import type { EmblaOptionsType } from "embla-carousel";
 import { useAtomValue } from "jotai";
 import Link from "next/link";
 import React, {
@@ -27,7 +26,6 @@ const OpportunitiesCarousel: React.FC<{
   viewAllUrl?: string;
   loadData: (startRow: number) => Promise<OpportunitySearchResultsInfo>;
   data: OpportunitySearchResultsInfo;
-  options?: EmblaOptionsType;
 }> = ({ id, title, description, viewAllUrl, loadData, data }) => {
   const [slides, setSlides] = useState(data.items);
   const screenWidth = useAtomValue(screenWidthAtom);
@@ -38,6 +36,11 @@ const OpportunitiesCarousel: React.FC<{
   const lastSlideRef = useRef(-1);
   const hasMoreToLoadRef = useRef(true);
   const loadingMoreRef = useRef(false);
+  const selectedSnap = useMemo(() => {
+    return slides.length <= visibleSlides
+      ? slides.length - 1
+      : currentSlide + visibleSlides - 1; //TODO: remove -1 when SelectedSnapDisplay has been fixed
+  }, [slides.length, visibleSlides, currentSlide]);
 
   useEffect(() => {
     if (screenWidth < 600) {
@@ -89,6 +92,15 @@ const OpportunitiesCarousel: React.FC<{
     [visibleSlides, totalSlides, loadData],
   );
 
+  const renderButtons = useCallback(() => {
+    return (
+      <NavigationButtons
+        prevDisabled={currentSlide === 0}
+        nextDisabled={selectedSnap + 1 >= totalAll && !loadingMoreRef.current} //TODO: remove +1 when SelectedSnapDisplay has been fixed
+      />
+    );
+  }, [currentSlide, selectedSnap, totalAll]);
+
   return (
     <Carousel
       id={`${id}-carousel`}
@@ -113,14 +125,10 @@ const OpportunitiesCarousel: React.FC<{
               <div className="flex items-center">
                 <div className="hidden w-full gap-4 md:flex">
                   <SelectedSnapDisplay
-                    selectedSnap={currentSlide + visibleSlides - 1}
+                    selectedSnap={selectedSnap}
                     snapCount={totalAll}
                   />
-                  <NavigationButtons
-                    currentSlide={currentSlide}
-                    totalSlides={totalAll}
-                    visibleSlides={visibleSlides}
-                  />
+                  {renderButtons()}
                 </div>
               </div>
 
@@ -150,21 +158,13 @@ const OpportunitiesCarousel: React.FC<{
             );
           })}
         </Slider>
-
         <div className="my-2 mt-2 flex w-full place-content-start md:mb-10 md:mt-1">
           <div className="mx-auto flex w-full justify-center gap-4 md:mx-0 md:mr-auto md:justify-start md:gap-6">
             {screenWidth < 768 && (
-              <>
-                <SelectedSnapDisplay
-                  selectedSnap={currentSlide + visibleSlides - 1}
-                  snapCount={totalAll}
-                />
-                <NavigationButtons
-                  currentSlide={currentSlide}
-                  totalSlides={totalAll}
-                  visibleSlides={visibleSlides}
-                />
-              </>
+              <SelectedSnapDisplay
+                selectedSnap={selectedSnap}
+                snapCount={totalAll}
+              />
             )}
           </div>
         </div>
