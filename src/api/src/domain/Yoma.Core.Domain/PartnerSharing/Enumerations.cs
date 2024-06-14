@@ -16,7 +16,8 @@ namespace Yoma.Core.Domain.PartnerSharing
   {
     Pending,
     Processed,
-    Error
+    Error,
+    Aborted //TODO: Seed
   }
 
   public enum Partner

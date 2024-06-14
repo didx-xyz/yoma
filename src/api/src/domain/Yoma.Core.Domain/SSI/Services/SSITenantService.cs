@@ -99,7 +99,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
       if (existingItem != null)
       {
-        _logger.LogInformation("Scheduling of tenant creation skipped: Already '{status}' for entity type '{entityType}' and entity id '{entityId}'", existingItem.Status, entityType, entityId);
+        _logger.LogInformation("Scheduling of tenant creation skipped: Already scheduled with status '{status}' for entity type '{entityType}' and entity id '{entityId}'", existingItem.Status, entityType, entityId);
         return;
       }
 

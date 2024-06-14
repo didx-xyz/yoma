@@ -10,6 +10,8 @@ namespace Yoma.Core.Domain.PartnerSharing.Models
 
     public Guid PartnerId { get; set; }
 
+    public Partner Partner { get; set; }
+
     public string Action { get; set; }
 
     public Guid StatusId { get; set; }
