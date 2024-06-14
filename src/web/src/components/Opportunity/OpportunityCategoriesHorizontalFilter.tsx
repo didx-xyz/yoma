@@ -25,16 +25,16 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
   useEffect(() => {
     if (screenWidth < 480) {
       // Very small screens
-      setVisibleSlides(1);
+      setVisibleSlides(2);
     } else if (screenWidth >= 480 && screenWidth < 600) {
       // Mobile
-      setVisibleSlides(2);
+      setVisibleSlides(3);
     } else if (screenWidth >= 600 && screenWidth < 768) {
       // Between mobile and tablet
-      setVisibleSlides(3);
+      setVisibleSlides(4);
     } else if (screenWidth >= 768 && screenWidth < 1024) {
       // Tablet
-      setVisibleSlides(4);
+      setVisibleSlides(5);
     } else if (screenWidth >= 1024 && screenWidth < 1440) {
       // Small desktop
       setVisibleSlides(6);
@@ -56,7 +56,7 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
       // update the lastSlideRef with the new current slide
       lastSlideRef.current = props.currentSlide;
     },
-    [setCurrentSlide, visibleSlides, totalSlides],
+    [setCurrentSlide],
   );
 
   return (
@@ -66,6 +66,7 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
       visibleSlides={visibleSlides}
       onSlide={onSlide}
       currentSlide={currentSlide}
+      freeScroll={true}
     >
       <Slider>
         {lookups_categories.map((item, index) => {
@@ -92,12 +93,6 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
         }}
         renderDots={renderDotsDynamicPill}
       />
-
-      {/* <NavigationButtons
-        currentSlide={currentSlide}
-        totalSlides={totalSlides}
-        visibleSlides={visibleSlides}
-      /> */}
     </Carousel>
   );
 };

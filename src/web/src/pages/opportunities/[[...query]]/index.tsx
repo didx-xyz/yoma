@@ -1060,7 +1060,6 @@ const Opportunities: NextPageWithLayout<{
       }
 
       const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
-      console.warn("loadDataFeatured", pageNumber, startRow);
 
       return fetchDataAndUpdateCache(["featured", pageNumber.toString()], {
         pageNumber: pageNumber,
@@ -1153,37 +1152,41 @@ const Opportunities: NextPageWithLayout<{
         </div>
 
         {/* FILTER: CATEGORIES */}
-        <OpportunityCategoriesHorizontalFilter
-          lookups_categories={lookups_categories}
-          selected_categories={searchFilter?.categories}
-          onClick={onClickCategoryFilter}
-        />
+        <div className="mt-8">
+          <OpportunityCategoriesHorizontalFilter
+            lookups_categories={lookups_categories}
+            selected_categories={searchFilter?.categories}
+            onClick={onClickCategoryFilter}
+          />
+        </div>
 
         {/* FILTER: BADGES */}
-        <FilterBadges
-          searchFilter={searchFilter}
-          excludeKeys={["pageNumber", "pageSize"]}
-          resolveValue={(key, value) => {
-            if (key === "commitmentInterval") {
-              const lookup = lookups_timeIntervals.find(
-                (interval) => interval.id === value.interval.id,
-              );
-              return `${value.interval.count} ${
-                value.interval.count > 1 ? lookup?.name + "s" : lookup?.name
-              }`;
-            } else if (key === "zltoReward") {
-              return "ZLTO Reward";
-            } else if (key === "mostViewed") {
-              return "Trending";
-            } else if (key === "mostCompleted") {
-              return "Most Completed";
-            } else if (key === "featured") {
-              return "Featured";
-            }
-            return value;
-          }}
-          onSubmit={(e) => onSubmitFilter(e)}
-        />
+        <div className="mt-4">
+          <FilterBadges
+            searchFilter={searchFilter}
+            excludeKeys={["pageNumber", "pageSize"]}
+            resolveValue={(key, value) => {
+              if (key === "commitmentInterval") {
+                const lookup = lookups_timeIntervals.find(
+                  (interval) => interval.id === value.interval.id,
+                );
+                return `${value.interval.count} ${
+                  value.interval.count > 1 ? lookup?.name + "s" : lookup?.name
+                }`;
+              } else if (key === "zltoReward") {
+                return "ZLTO Reward";
+              } else if (key === "mostViewed") {
+                return "Trending";
+              } else if (key === "mostCompleted") {
+                return "Most Completed";
+              } else if (key === "featured") {
+                return "Featured";
+              }
+              return value;
+            }}
+            onSubmit={(e) => onSubmitFilter(e)}
+          />
+        </div>
 
         {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
         {!isSearchPerformed && (

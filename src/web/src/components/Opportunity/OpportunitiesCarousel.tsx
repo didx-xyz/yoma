@@ -33,11 +33,11 @@ const OpportunitiesCarousel: React.FC<{
   const screenWidth = useAtomValue(screenWidthAtom);
   const [visibleSlides, setVisibleSlides] = useState(1);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [hasMoreToLoad, setHasMoreToLoad] = useState(true);
-  //const [totalSlides, setTotalSlides] = useState(slides.length);
   const totalSlides = useMemo(() => slides.length, [slides]);
-
   const totalAll = data.totalCount ?? 0;
+  const lastSlideRef = useRef(-1);
+  const hasMoreToLoadRef = useRef(true);
+  const loadingMoreRef = useRef(false);
 
   useEffect(() => {
     if (screenWidth < 600) {
@@ -52,10 +52,6 @@ const OpportunitiesCarousel: React.FC<{
     }
   }, [screenWidth, setVisibleSlides]);
 
-  const lastSlideRef = useRef(-1);
-  const hasMoreToLoadRef = useRef(true);
-  const loadingMoreRef = useRef(false);
-
   const onSlide = useCallback(
     (props: OnSlideProps) => {
       // prevent multiple calls if current slide remains unchanged during scroll
@@ -64,9 +60,9 @@ const OpportunitiesCarousel: React.FC<{
       // update the lastSlideRef with the new current slide
       lastSlideRef.current = props.currentSlide;
       setCurrentSlide(props.currentSlide);
-      console.warn(
-        `currentSlide: ${props.currentSlide} totalSlides: ${totalSlides}`,
-      );
+      // console.warn(
+      //   `currentSlide: ${props.currentSlide} totalSlides: ${totalSlides}`,
+      // );
 
       // check if more slides need to be loaded
       if (
@@ -75,10 +71,10 @@ const OpportunitiesCarousel: React.FC<{
         !loadingMoreRef.current
       ) {
         loadingMoreRef.current = true;
-        console.warn("Loading more...");
+        //console.warn("Loading more...");
 
         loadData(totalSlides + 1).then((data) => {
-          console.warn("Loaded more", data.items.length);
+          //console.warn("Loaded more", data.items.length);
 
           if (data.items.length === 0) {
             hasMoreToLoadRef.current = false;
@@ -90,180 +86,8 @@ const OpportunitiesCarousel: React.FC<{
         });
       }
     },
-    [visibleSlides, totalSlides],
+    [visibleSlides, totalSlides, loadData],
   );
-
-  // const onSlide = useCallback(
-  //   (props: OnSlideProps) => {
-  //     // prevent multiple calls if current slide remains unchanged during scroll
-  //     if (lastSlideRef.current === props.currentSlide) return;
-
-  //     // update the lastSlideRef with the new current slide
-  //     lastSlideRef.current = props.currentSlide;
-  //     setCurrentSlide(props.currentSlide);
-  //     console.warn("currentSlide", props.currentSlide);
-
-  //     if (
-  //       props.currentSlide + 1 + visibleSlides >= totalSlides &&
-  //       hasMoreToLoadRef.current &&
-  //       loadingMoreRef.current == false
-  //     ) {
-  //       loadingMoreRef.current = true;
-
-  //       console.warn("Loading more...");
-
-  //       loadData(totalSlides).then((data) => {
-  //         console.warn("Loaded more", data.items.length);
-
-  //         if (data.items.length == 0) {
-  //           //setHasMoreToLoad(false);
-  //           hasMoreToLoadRef.current = false;
-  //           //emblaApi.off("scroll", scrollListenerRef.current);
-  //         }
-
-  //         setSlides((prevSlides) => [...prevSlides, ...data.items]);
-
-  //         loadingMoreRef.current = false;
-  //       });
-  //     }
-  //   },
-  //   [visibleSlides, totalSlides, loadData, setCurrentSlide, setSlides],
-  // );
-
-  // const scrollListenerRef = useRef<() => void>(() => undefined);
-  // const listenForScrollRef = useRef(true);
-  // const hasMoreToLoadRef = useRef(true);
-  // const [slides, setSlides] = useState(propData.items);
-  // const [hasMoreToLoad, setHasMoreToLoad] = useState(true);
-  // const [loadingMore, setLoadingMore] = useState(false);
-  // const screenWidth = useAtomValue(screenWidthAtom);
-  // const [options, setOptions] = useState<EmblaOptionsType>({
-  //   dragFree: true,
-  //   containScroll: "trimSnaps",
-  //   watchSlides: true,
-  //   watchResize: true,
-  //   align: "start",
-  // });
-
-  // useEffect(() => {
-  //   if (screenWidth < 768) {
-  //     setOptions((prevOptions) => ({
-  //       ...prevOptions,
-  //       align: "center",
-  //     }));
-  //   } else {
-  //     setOptions((prevOptions) => ({
-  //       ...prevOptions,
-  //       align: "start",
-  //     }));
-  //   }
-  // }, [screenWidth]);
-
-  // const [emblaRef, emblaApi] = useEmblaCarousel({
-  //   ...options,
-  //   watchSlides: (emblaApi) => {
-  //     const reloadEmbla = (): void => {
-  //       const oldEngine = emblaApi.internalEngine();
-
-  //       emblaApi.reInit();
-  //       const newEngine = emblaApi.internalEngine();
-  //       const copyEngineModules: (keyof EngineType)[] = [
-  //         "location",
-  //         "target",
-  //         "scrollBody",
-  //       ];
-  //       copyEngineModules.forEach((engineModule) => {
-  //         Object.assign(newEngine[engineModule], oldEngine[engineModule]);
-  //       });
-
-  //       newEngine.translate.to(oldEngine.location.get());
-  //       const { index } = newEngine.scrollTarget.byDistance(0, false);
-  //       newEngine.index.set(index);
-  //       newEngine.animation.start();
-
-  //       setLoadingMore(false);
-  //       listenForScrollRef.current = true;
-  //     };
-
-  //     const reloadAfterPointerUp = (): void => {
-  //       emblaApi.off("pointerUp", reloadAfterPointerUp);
-  //       reloadEmbla();
-  //     };
-
-  //     const engine = emblaApi.internalEngine();
-
-  //     if (hasMoreToLoadRef.current && engine.dragHandler.pointerDown()) {
-  //       const boundsActive = engine.limit.reachedMax(engine.target.get());
-  //       engine.scrollBounds.toggleActive(boundsActive);
-  //       emblaApi.on("pointerUp", reloadAfterPointerUp);
-  //     } else {
-  //       reloadEmbla();
-  //     }
-  //   },
-  // });
-  // const { selectedSnap, snapCount } = useSelectedSnapDisplay(emblaApi);
-
-  // const {
-  //   prevBtnDisabled,
-  //   nextBtnDisabled,
-  //   onPrevButtonClick,
-  //   onNextButtonClick,
-  // } = usePrevNextButtons(emblaApi);
-
-  // const onScroll = useCallback(
-  //   (emblaApi: EmblaCarouselType) => {
-  //     if (!listenForScrollRef.current) return;
-
-  //     setLoadingMore((loadingMore) => {
-  //       const lastSlide = emblaApi.slideNodes().length - 1;
-  //       const lastSlideInView = emblaApi.slidesInView().includes(lastSlide);
-  //       let loadMore = !loadingMore && lastSlideInView;
-
-  //       if (emblaApi.slideNodes().length < PAGE_SIZE_MINIMUM) {
-  //         loadMore = false;
-  //       }
-
-  //       if (loadMore) {
-  //         listenForScrollRef.current = false;
-
-  //         loadData(emblaApi.slideNodes().length).then((data) => {
-  //           if (data.items.length == 0) {
-  //             setHasMoreToLoad(false);
-  //             emblaApi.off("scroll", scrollListenerRef.current);
-  //           }
-
-  //           setSlides((prevSlides) => [...prevSlides, ...data.items]);
-  //         });
-  //       }
-
-  //       return loadingMore || lastSlideInView;
-  //     });
-  //   },
-  //   [loadData],
-  // );
-
-  // const addScrollListener = useCallback(
-  //   (emblaApi: EmblaCarouselType) => {
-  //     scrollListenerRef.current = () => onScroll(emblaApi);
-  //     emblaApi.on("scroll", scrollListenerRef.current);
-  //   },
-  //   [onScroll],
-  // );
-
-  // useEffect(() => {
-  //   if (!emblaApi) return;
-  //   addScrollListener(emblaApi);
-
-  //   const onResize = () => emblaApi.reInit();
-  //   window.addEventListener("resize", onResize);
-  //   emblaApi.on("destroy", () =>
-  //     window.removeEventListener("resize", onResize),
-  //   );
-  // }, [emblaApi, addScrollListener]);
-
-  // useEffect(() => {
-  //   hasMoreToLoadRef.current = hasMoreToLoad;
-  // }, [hasMoreToLoad]);
 
   return (
     <Carousel
@@ -273,6 +97,7 @@ const OpportunitiesCarousel: React.FC<{
       onSlide={onSlide}
       currentSlide={currentSlide}
       step={visibleSlides}
+      freeScroll={true}
     >
       <div className="mb-12 md:mb-20">
         <div className="mb-2 flex flex-col gap-6">
@@ -287,9 +112,6 @@ const OpportunitiesCarousel: React.FC<{
             <div className="flex items-center gap-4">
               <div className="flex items-center">
                 <div className="hidden w-full gap-4 md:flex">
-                  currentSlide: {currentSlide}
-                  visibleSlides: {visibleSlides}
-                  totalSlides: {totalSlides}
                   <SelectedSnapDisplay
                     selectedSnap={currentSlide + visibleSlides - 1}
                     snapCount={totalAll}
@@ -312,11 +134,6 @@ const OpportunitiesCarousel: React.FC<{
               )}
             </div>
           </div>
-          {/* {slidePercentage <= 0 && (
-        <div className="flex items-center justify-center">
-          <LoadingSkeleton />
-        </div>
-      )} */}
         </div>
 
         <Slider>
