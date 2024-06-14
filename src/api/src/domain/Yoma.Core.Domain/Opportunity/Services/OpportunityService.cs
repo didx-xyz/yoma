@@ -801,7 +801,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (filter.EngagementTypes != null && filter.EngagementTypes.Count != 0)
       {
         filter.EngagementTypes = filter.EngagementTypes.Distinct().ToList();
-        query = query.Where(o => o.EngagementTypeId.HasValue && filter.EngagementTypes.Contains(o.EngagementTypeId.Value));
+        query = query.Where(o => !o.EngagementTypeId.HasValue || filter.EngagementTypes.Contains(o.EngagementTypeId.Value)); ///always included of not explcitly defined
       }
 
       //statuses
