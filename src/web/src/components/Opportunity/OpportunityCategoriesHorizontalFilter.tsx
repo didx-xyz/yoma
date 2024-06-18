@@ -75,18 +75,29 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
           {/* prevents the carousels from showing all items before the screen width has been determined */}
         </div>
       ) : (
-        <Slider>
+        <Slider
+          className=""
+          trayProps={{
+            // center align the slides when there's less than the visible slides available
+            className: `${
+              lookups_categories.length < visibleSlides
+                ? "flex justify-center"
+                : ""
+            }`,
+          }}
+        >
           {lookups_categories.map((item, index) => {
             return (
-              <Slide key={`categories_${index}`}>
-                <div className="flex justify-center">
-                  <OpportunityCategoryHorizontalCard
-                    key={`categories_${item.id}`}
-                    data={item}
-                    selected={selected_categories?.includes(item.name)}
-                    onClick={onClick}
-                  />
-                </div>
+              <Slide
+                key={`categories_${index}`}
+                className="flex justify-center"
+              >
+                <OpportunityCategoryHorizontalCard
+                  key={`categories_${item.id}`}
+                  data={item}
+                  selected={selected_categories?.includes(item.name)}
+                  onClick={onClick}
+                />
               </Slide>
             );
           })}
