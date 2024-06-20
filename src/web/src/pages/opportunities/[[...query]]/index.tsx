@@ -45,6 +45,7 @@ import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { SearchInputLarge } from "~/components/SearchInputLarge";
 import { Loading } from "~/components/Status/Loading";
+import FilterTab from "~/components/Opportunity/FilterTab";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   OPPORTUNITY_TYPES_EVENT,
@@ -1090,6 +1091,7 @@ const Opportunities: NextPageWithLayout<{
       </Head>
 
       <PageBackground className="h-[350px]" />
+      <FilterTab openFilter={setFilterFullWindowVisible} />
 
       {isSearchPerformed && isLoading && <Loading />}
 
@@ -1127,8 +1129,8 @@ const Opportunities: NextPageWithLayout<{
         )}
       </ReactModal>
 
-      <div className="container z-10 mt-12 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
-        <div className="mb-4 flex flex-col items-center justify-center gap-2 pt-12 text-white">
+      <div className="container z-10 mt-14 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
+        <div className="mb-5 flex flex-col items-center justify-center gap-2 pt-6 text-white md:mb-9">
           <h3 className="w-[300px] flex-grow flex-wrap text-center text-xl font-semibold md:w-full">
             Find <span className="mx-2 text-orange">opportunities</span> to
             <span className="mx-2 text-orange">unlock</span> your future.

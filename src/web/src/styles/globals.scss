@@ -164,3 +164,8 @@ body {
 .Toastify__close-button:focus {
   @apply scale-110;
 }
+
+// Opportunity horizontal filter carousel pill colour
+.rssas-circle {
+  background: theme("colors.purple") !important;
+}
