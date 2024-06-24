@@ -7,7 +7,7 @@
     "dev": "next dev",
     "lint": "next lint && prettier --check --ignore-path ../../../.gitignore --ignore-path .prettierignore .",
     "format": "prettier --write --ignore-path ../../../.gitignore --ignore-path .prettierignore .",
-    "start": "next start",
+    "start": "NODE_OPTIONS='--require=next-logger' next start",
     "analyze": "cross-env ANALYZE=true next build"
   },
   "dependencies": {
@@ -28,6 +28,7 @@
     "next": "^14.0.3",
     "next-auth": "^4.24.5",
     "next-i18next": "^15.2.0",
+    "next-logger": "^4.0.0",
     "next-themes": "^0.2.1",
     "nookies": "^2.5.2",
     "nprogress": "^0.2.0",

@@ -28,3 +28,4 @@ services:
       NEXT_PUBLIC_GA_MEASUREMENT_ID: secret
       SENTRY_AUTH_TOKEN: secret
       MARKETPLACE_ENABLED: true
+      NODE_OPTIONS: --require=next-logger
