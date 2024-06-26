@@ -33,6 +33,8 @@ using Yoma.Core.Infrastructure.SAYouth.Client;
 using Yoma.Core.Domain.PartnerSharing;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
+using Flurl.Http;
+using Flurl.Http.Newtonsoft;
 
 namespace Yoma.Core.Api
 {
@@ -110,6 +112,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_AuthenticationIdentityProvider(_configuration);
       ConfigureAuthorization(services, _configuration);
       ConfigureSwagger(services);
+      ConfigureFlurl();
       #endregion 3rd Party
 
       #region Services & Infrastructure
@@ -204,7 +207,7 @@ namespace Yoma.Core.Api
 
       //enabling sentry tracing causes endless information logs about 'Sentry trace header is null'
       //if (_environment != Domain.Core.Environment.Local) app.UseSentryTracing();
-      #endregion
+    #endregion
 
       #region 3rd Party
       app.UseSSIProvider();
@@ -226,6 +229,11 @@ namespace Yoma.Core.Api
     #endregion
 
     #region Private Members
+    private void ConfigureFlurl()
+    {
+      FlurlHttp.Clients.WithDefaults(builder => builder.Settings.JsonSerializer = new NewtonsoftJsonSerializer());
+    }
+
     private void ConfigureCORS(IServiceCollection services)
     {
       const string _config_Section = "AllowedOrigins";
