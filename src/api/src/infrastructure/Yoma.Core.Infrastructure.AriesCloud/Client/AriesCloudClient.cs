@@ -373,8 +373,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
         case ArtifactType.LD_Proof:
           var dids = await clientIssuer.GetDIDsAsync();
-          var did = dids.SingleOrDefault(o => o.Key_type == Key_type.Ed25519 && o.Posture == Posture.Posted)
-              ?? throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{Key_type.Ed25519}' and posture '{Posture.Posted}'");
+          var did = dids.SingleOrDefault(o => o.Key_type == DIDKey_type.Ed25519 && o.Posture == DIDPosture.Posted)
+              ?? throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{DIDKey_type.Ed25519}' and posture '{DIDPosture.Posted}'");
           var credentialSubject = new Dictionary<string, string> { { "type", request.SchemaType } };
           credentialSubject = credentialSubject.Concat(request.Attributes).ToDictionary(x => x.Key, x => x.Value);
 
@@ -392,7 +392,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
                 Issuer = did.Did,
                 CredentialSubject = JsonConvert.SerializeObject(credentialSubject),
               },
-              Options = new LDProofVCDetailOptions
+              Options = new LDProofVCOptions
               {
                 ProofType = "Ed25519Signature2018"
               }
@@ -458,13 +458,13 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Credentials}' and desired state '{CredentialExchangeState.OfferReceived}'");
 
       // request the credential by holder (aries cloud auto completes and store the credential in the holders wallet)
-      var credentialExchange = await clientHolder.RequestCredentialByIdAsync(sseEvent.Payload.Credential_id);
+      var credentialExchange = await clientHolder.RequestCredentialByIdAsync(sseEvent.Payload.Credential_exchange_id);
 
       await Task.Run(async () =>
       {
         // await sse event on holders side (in order to ensure credential issuance is done) 
         sseEvent = await _sseListenerService.Listen<CredentialExchange>(tenantHolder.Wallet_id,
-                Topic.Credentials, "credential_id", credentialExchange.Credential_id, CredentialExchangeState.Done.ToEnumMemberValue());
+                Topic.Credentials, "credential_id", credentialExchange.Credential_exchange_id, CredentialExchangeState.Done.ToEnumMemberValue());
       });
 
       if (sseEvent == null)
