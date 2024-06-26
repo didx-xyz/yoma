@@ -1,4 +1,3 @@
-import type { EmblaOptionsType } from "embla-carousel";
 import { useAtomValue } from "jotai";
 import Link from "next/link";
 import React, {
@@ -27,7 +26,6 @@ const OpportunitiesCarousel: React.FC<{
   viewAllUrl?: string;
   loadData: (startRow: number) => Promise<OpportunitySearchResultsInfo>;
   data: OpportunitySearchResultsInfo;
-  options?: EmblaOptionsType;
 }> = ({ id, title, description, viewAllUrl, loadData, data }) => {
   const [slides, setSlides] = useState(data.items);
   const screenWidth = useAtomValue(screenWidthAtom);
@@ -38,6 +36,11 @@ const OpportunitiesCarousel: React.FC<{
   const lastSlideRef = useRef(-1);
   const hasMoreToLoadRef = useRef(true);
   const loadingMoreRef = useRef(false);
+  const selectedSnap = useMemo(() => {
+    return slides.length <= visibleSlides
+      ? slides.length - 1
+      : currentSlide + visibleSlides - 1; //TODO: remove -1 when SelectedSnapDisplay has been fixed
+  }, [slides.length, visibleSlides, currentSlide]);
 
   useEffect(() => {
     if (screenWidth < 600) {
@@ -89,6 +92,15 @@ const OpportunitiesCarousel: React.FC<{
     [visibleSlides, totalSlides, loadData],
   );
 
+  const renderButtons = useCallback(() => {
+    return (
+      <NavigationButtons
+        prevDisabled={currentSlide === 0}
+        nextDisabled={selectedSnap + 1 >= totalAll && !loadingMoreRef.current} //TODO: remove +1 when SelectedSnapDisplay has been fixed
+      />
+    );
+  }, [currentSlide, selectedSnap, totalAll]);
+
   return (
     <Carousel
       id={`${id}-carousel`}
@@ -101,7 +113,7 @@ const OpportunitiesCarousel: React.FC<{
     >
       <div className="mb-12 md:mb-20">
         <div className="mb-2 flex flex-col gap-6">
-          <div className="flex max-w-full flex-row px-4 md:max-w-7xl md:px-0">
+          <div className="flex max-w-full flex-row px-0 md:max-w-7xl md:px-2">
             <div className="flex flex-grow flex-col">
               <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-black md:max-w-[800px]">
                 {title}
@@ -109,25 +121,21 @@ const OpportunitiesCarousel: React.FC<{
               <div className="text-gray-dark">{description}</div>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-end gap-4">
               <div className="flex items-center">
                 <div className="hidden w-full gap-4 md:flex">
                   <SelectedSnapDisplay
-                    selectedSnap={currentSlide + visibleSlides - 1}
+                    selectedSnap={selectedSnap}
                     snapCount={totalAll}
                   />
-                  <NavigationButtons
-                    currentSlide={currentSlide}
-                    totalSlides={totalAll}
-                    visibleSlides={visibleSlides}
-                  />
+                  {renderButtons()}
                 </div>
               </div>
 
               {viewAllUrl && (
                 <Link
                   href={viewAllUrl}
-                  className="flex w-14 select-none whitespace-nowrap border-b-2 border-transparent text-center text-sm tracking-wide text-gray-dark duration-300 xl:hover:border-purple xl:hover:text-purple"
+                  className="flex w-14 select-none whitespace-nowrap border-b-2 border-transparent text-center text-sm tracking-wide text-gray-dark duration-300 md:mb-[3.5px] xl:hover:border-purple xl:hover:text-purple"
                 >
                   View All
                 </Link>
@@ -139,32 +147,26 @@ const OpportunitiesCarousel: React.FC<{
         <Slider>
           {slides.map((item, index) => {
             return (
-              <Slide key={`categories_${index}`}>
-                <div className="flex justify-center">
-                  <OpportunityPublicSmallComponent
-                    key={`${id}_${item.id}_component`}
-                    data={item}
-                  />
-                </div>
+              <Slide
+                key={`categories_${index}`}
+                className="mt-2 flex justify-center"
+                id={`${id}_${item.id}`}
+              >
+                <OpportunityPublicSmallComponent
+                  key={`${id}_${item.id}_component`}
+                  data={item}
+                />
               </Slide>
             );
           })}
         </Slider>
-
         <div className="my-2 mt-2 flex w-full place-content-start md:mb-10 md:mt-1">
           <div className="mx-auto flex w-full justify-center gap-4 md:mx-0 md:mr-auto md:justify-start md:gap-6">
             {screenWidth < 768 && (
-              <>
-                <SelectedSnapDisplay
-                  selectedSnap={currentSlide + visibleSlides - 1}
-                  snapCount={totalAll}
-                />
-                <NavigationButtons
-                  currentSlide={currentSlide}
-                  totalSlides={totalAll}
-                  visibleSlides={visibleSlides}
-                />
-              </>
+              <SelectedSnapDisplay
+                selectedSnap={selectedSnap}
+                snapCount={totalAll}
+              />
             )}
           </div>
         </div>

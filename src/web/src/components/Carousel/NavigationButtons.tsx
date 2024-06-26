@@ -1,18 +1,24 @@
 import { ButtonBack, ButtonNext } from "react-scroll-snap-anime-slider";
 
 export const NavigationButtons: React.FC<{
-  currentSlide: number;
-  totalSlides: number;
-  visibleSlides: number;
-}> = ({ currentSlide, totalSlides, visibleSlides }) => {
-  const isPrevDisabled = currentSlide <= 0;
-  const isNextDisabled = currentSlide + 1 + visibleSlides >= totalSlides;
+  // currentSlide: number;
+  // totalSlides: number;
+  // visibleSlides: number;
+  prevDisabled?: boolean;
+  nextDisabled?: boolean;
+}> = ({
+  //currentSlide, totalSlides, visibleSlides
+  nextDisabled,
+  prevDisabled,
+}) => {
+  // const isPrevDisabled = currentSlide <= 0;
+  // const isNextDisabled = currentSlide + 1 + visibleSlides >= totalSlides;
 
   return (
     <div className="flex justify-center gap-2">
       <ButtonBack
         className="group btn btn-circle btn-sm h-10 w-10 transform-gpu cursor-pointer border-[1.5px] border-purple bg-transparent text-black transition-all duration-500 ease-bounce md:h-8 md:w-8 xl:hover:scale-110 xl:hover:border-purple xl:hover:bg-purple"
-        disabled={isPrevDisabled}
+        disabled={prevDisabled}
       >
         <svg
           className="mr-[2px] h-[45%] w-[45%] transform text-purple transition-all duration-500 ease-bounce group-disabled:text-gray xl:group-hover:scale-110 xl:group-hover:text-white"
@@ -26,7 +32,7 @@ export const NavigationButtons: React.FC<{
       </ButtonBack>
       <ButtonNext
         className="group btn btn-circle btn-sm h-10 w-10 transform-gpu cursor-pointer border-[1.5px] border-purple bg-transparent text-black transition-all duration-500 ease-bounce md:h-8 md:w-8 xl:hover:scale-110 xl:hover:border-purple xl:hover:bg-purple"
-        disabled={isNextDisabled}
+        disabled={nextDisabled}
       >
         <svg
           className="ml-[2px] h-[45%] w-[45%] transform text-purple transition-all duration-500 ease-bounce group-disabled:text-gray xl:group-hover:scale-110 xl:group-hover:text-white"

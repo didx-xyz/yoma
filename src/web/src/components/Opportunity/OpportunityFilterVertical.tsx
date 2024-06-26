@@ -222,7 +222,7 @@ export const OpportunityFilterVertical: React.FC<{
           />
 
           {/* TYPES */}
-          <div className="form-control">
+          <div className="form-control gap-1">
             <label className="label">
               <span className="label-text font-semibold">
                 What type of opportunity are you looking for?
@@ -260,7 +260,7 @@ export const OpportunityFilterVertical: React.FC<{
           </div>
 
           {/* ENGAGEMENT TYPES */}
-          <div className="form-control">
+          <div className="form-control gap-1">
             <label className="label">
               <span className="label-text font-semibold">
                 What type of engagement are you looking for?
@@ -298,14 +298,16 @@ export const OpportunityFilterVertical: React.FC<{
           </div>
 
           {/* COMMITMENT INTERVALS */}
-          <div className="form-control">
+          <div className="form-control gap-1">
             <label className="label">
               <span className="label-text font-semibold">
                 How much time would you like to invest?
               </span>
             </label>
-            <div className="flex w-full flex-row justify-center gap-4">
-              <span className="mt-1 text-xs">0</span>
+            <div className="flex w-full flex-row justify-start gap-4">
+              <span className="mt-1 text-xs font-semibold text-gray-dark">
+                0
+              </span>
 
               <Controller
                 name="commitmentInterval.interval.count"
@@ -317,13 +319,13 @@ export const OpportunityFilterVertical: React.FC<{
                   <div className="flex w-full flex-col justify-center text-center md:w-64">
                     <input
                       type="range"
-                      className="range range-secondary bg-gray"
+                      className="range range-warning bg-white"
                       min="0"
                       max={timeIntervalMax}
                       value={value}
                       onChange={(val) => onChange(val)}
                     />
-                    <span className="h-8 text-xs">
+                    <span className="-mb-3 mt-2 h-8 text-xs font-semibold text-gray-dark">
                       {value > 0 && watchIntervalId != null && (
                         <>
                           {`${value} ${
@@ -336,9 +338,11 @@ export const OpportunityFilterVertical: React.FC<{
                 )}
               />
 
-              <span className="mt-1 text-xs">{timeIntervalMax}</span>
+              <span className="mt-1 text-xs font-semibold text-gray-dark">
+                {timeIntervalMax}
+              </span>
             </div>
-            <div className="flex w-full flex-row justify-center gap-4">
+            <div className="flex w-full flex-row justify-start gap-4">
               <Controller
                 name="commitmentInterval.interval.id"
                 control={form.control}
@@ -361,7 +365,7 @@ export const OpportunityFilterVertical: React.FC<{
           </div>
 
           {/* ZLTO REWARD RANGES */}
-          <div className="form-control flex flex-row items-center gap-4">
+          <div className="form-control -mb-3 flex flex-row items-center gap-4">
             <label className="label">
               <span className="label-text font-semibold">ZLTO Reward</span>
             </label>
@@ -372,7 +376,7 @@ export const OpportunityFilterVertical: React.FC<{
               render={({ field: { onChange, value } }) => (
                 <input
                   type="checkbox"
-                  className="toggle toggle-secondary border-gray bg-gray"
+                  className="toggle toggle-warning border-gray-dark bg-gray-dark"
                   checked={value}
                   onChange={(val) => onChange(val)}
                 />
@@ -389,7 +393,7 @@ export const OpportunityFilterVertical: React.FC<{
           </div>
 
           {/* COUNTRIES */}
-          <div className="form-control">
+          <div className="form-control gap-1">
             <label className="label">
               <span className="label-text font-semibold">Country</span>
             </label>
@@ -425,7 +429,7 @@ export const OpportunityFilterVertical: React.FC<{
           </div>
 
           {/* LANGUAGES */}
-          <div className="form-control">
+          <div className="form-control gap-1">
             <label className="label">
               <span className="label-text font-semibold">Languages</span>
             </label>
@@ -461,7 +465,7 @@ export const OpportunityFilterVertical: React.FC<{
           </div>
 
           {/* ORGANIZATIONS */}
-          <div className="form-control">
+          <div className="form-control gap-1">
             <label className="label">
               <span className="label-text font-semibold">Providers</span>
             </label>
@@ -498,7 +502,7 @@ export const OpportunityFilterVertical: React.FC<{
           </div>
 
           {/* PUBLISHED STATES */}
-          <div className="form-control">
+          <div className="form-control gap-1">
             <label className="label">
               <span className="label-text font-semibold">
                 What status would you like to see?

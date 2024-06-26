@@ -59,8 +59,8 @@ const SelectButtons: React.FC<SelectButtonsProps> = ({
           onClick={() => handleButton(bt.id)}
           className={`btn btn-sm max-w-[300px] text-xs text-gray-dark ${
             bt.selected
-              ? "btn-secondary text-white"
-              : "border-gray hover:border-gray-dark"
+              ? "btn-primary text-white"
+              : "border-gray bg-white hover:border-gray-dark"
           }`}
         >
           <p className="truncate">{bt.title}</p>
