@@ -99,7 +99,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
     public async Task UpdateUser(User user, bool resetPassword, bool sendVerifyEmail)
     {
-      using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UserApi>(_httpClient);
+      using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
 
       var request = new UserRepresentation
       {
@@ -130,15 +130,15 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       try
       {
         // update user details
-        await userApi.PutUsersByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), request);
+        await userApi.PutUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), request);
 
         // send verify email
         if (sendVerifyEmail)
-          await userApi.PutUsersSendVerifyEmailByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString()); //admin initiated email (executeActions); same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
+          await userApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString()); //admin initiated email (executeActions); same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
 
         // send reset password email
         if (resetPassword)
-          await userApi.PutUsersExecuteActionsEmailByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); //admin initiated email (executeActions)
+          await userApi.PutUsersExecuteActionsEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); //admin initiated email (executeActions)
       }
       catch (Exception ex)
       {
@@ -158,13 +158,13 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (rolesInvalid.Any())
         throw new ArgumentOutOfRangeException(nameof(roles), $"Invalid role(s) specified: {string.Join(';', rolesInvalid)}");
 
-      using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleContainerApi>(_httpClient);
+      using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RolesApi>(_httpClient);
       using var rolesMapperApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleMapperApi>(_httpClient);
 
       var kcRoles = await rolesApi.GetRolesAsync(_keycloakAuthenticationOptions.Realm);
 
       var roleRepresentations = kcRoles.IntersectBy(roles.Select(o => o.ToLower()), o => o.Name.ToLower()).ToList();
-      await rolesMapperApi.PostUsersRoleMappingsRealmByIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), roleRepresentations);
+      await rolesMapperApi.PostUsersRoleMappingsRealmByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), roleRepresentations);
     }
 
     public async Task RemoveRoles(Guid id, List<string> roles)
@@ -179,14 +179,14 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (rolesInvalid.Any())
         throw new ArgumentOutOfRangeException(nameof(roles), $"Invalid role(s) specified: {string.Join(';', rolesInvalid)}");
 
-      using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleContainerApi>(_httpClient);
+      using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RolesApi>(_httpClient);
       using var rolesMapperApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleMapperApi>(_httpClient);
 
-      var roleRepresentationsExisting = await rolesMapperApi.GetUsersRoleMappingsByIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
+      var roleRepresentationsExisting = await rolesMapperApi.GetUsersRoleMappingsByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
 
       var roleRepresentations = roleRepresentationsExisting.RealmMappings.Where(o => roles.Contains(o.Name, StringComparer.InvariantCultureIgnoreCase)).ToList();
 
-      await rolesMapperApi.PostUsersRoleMappingsRealmByIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), roleRepresentations);
+      await rolesMapperApi.PostUsersRoleMappingsRealmByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), roleRepresentations);
     }
 
     public async Task<List<User>?> ListByRole(string role)
@@ -197,7 +197,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (!Constants.Roles_Supported.Contains(role, StringComparer.InvariantCultureIgnoreCase))
         throw new ArgumentOutOfRangeException(nameof(role), $"Role '{role}' is invalid");
 
-      using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleContainerApi>(_httpClient);
+      using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RolesApi>(_httpClient);
 
       var kcUsers = await rolesApi.GetRolesUsersByRoleNameAsync(_keycloakAuthenticationOptions.Realm, role);
       kcUsers = kcUsers?.Where(o => o.EmailVerified == true).ToList();
