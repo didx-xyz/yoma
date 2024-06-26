@@ -207,7 +207,7 @@ namespace Yoma.Core.Api
 
       //enabling sentry tracing causes endless information logs about 'Sentry trace header is null'
       //if (_environment != Domain.Core.Environment.Local) app.UseSentryTracing();
-    #endregion
+      #endregion
 
       #region 3rd Party
       app.UseSSIProvider();
