@@ -5,7 +5,9 @@ using FS.Keycloak.RestApiClient.Authentication.Flow;
 using FS.Keycloak.RestApiClient.Model;
 using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
+using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
 using Yoma.Core.Domain.Core;
@@ -21,15 +23,17 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
   public sealed class KeycloakClient : IDisposable, IIdentityProviderClient
   {
     #region Class Variables
+    private readonly ILogger<KeycloakClient> _logger;
     private readonly KeycloakAdminOptions _keycloakAdminOptions;
     private readonly KeycloakAuthenticationOptions _keycloakAuthenticationOptions;
     private readonly AuthenticationHttpClient _httpClient;
     #endregion
 
     #region Constructor
-    public KeycloakClient(KeycloakAdminOptions keycloakAdminOptions,
+    public KeycloakClient(ILogger<KeycloakClient> logger, KeycloakAdminOptions keycloakAdminOptions,
         KeycloakAuthenticationOptions keycloakAuthenticationOptions)
     {
+      _logger = logger;
       _keycloakAdminOptions = keycloakAdminOptions;
       _keycloakAuthenticationOptions = keycloakAuthenticationOptions;
 
@@ -40,6 +44,8 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         UserName = _keycloakAdminOptions.Admin.Username,
         Password = _keycloakAdminOptions.Admin.Password
       };
+
+      _logger.LogDebug("Admin credentials: {request}", credentials == null ? "Empty" : JsonConvert.SerializeObject(credentials));
 
       _httpClient = AuthenticationHttpClientFactory.Create(credentials);
     }
