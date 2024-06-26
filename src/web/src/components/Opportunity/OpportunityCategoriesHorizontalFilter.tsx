@@ -2,6 +2,8 @@ import { useAtomValue } from "jotai";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Carousel,
+  ButtonBack,
+  ButtonNext,
   type OnSlideProps,
   Slide,
   Slider,
@@ -17,10 +19,11 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
   selected_categories: string[] | null | undefined;
   onClick?: (item: OpportunityCategory) => void;
 }> = ({ lookups_categories, selected_categories, onClick }) => {
+  const [isLoading, setIsLoading] = useState(true);
   const screenWidth = useAtomValue(screenWidthAtom);
-  const [visibleSlides, setVisibleSlides] = useState(1);
+  const [visibleSlides, setVisibleSlides] = useState(2);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const totalSlides = lookups_categories.length;
+  const [totalSlides] = useState(lookups_categories?.length ?? 0);
 
   useEffect(() => {
     if (screenWidth < 480) {
@@ -42,7 +45,8 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
       // Large desktop
       setVisibleSlides(8);
     }
-  }, [screenWidth, setVisibleSlides]);
+    setIsLoading(false);
+  }, [screenWidth, setVisibleSlides, setIsLoading]);
 
   const lastSlideRef = useRef<number>(-1);
 
@@ -68,31 +72,75 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
       currentSlide={currentSlide}
       freeScroll={true}
     >
-      <Slider>
-        {lookups_categories.map((item, index) => {
-          return (
-            <Slide key={`categories_${index}`}>
-              <div className="flex justify-center">
+      {isLoading ? (
+        <div className="flex h-[135px] items-center justify-center">
+          {/* prevents the carousels from showing all items before the screen width has been determined */}
+        </div>
+      ) : (
+        <Slider
+          className="flex items-center justify-center"
+          trayProps={{
+            // center align the slides when there's less than the visible slides available
+            className: `${
+              totalSlides < visibleSlides ? "flex justify-center" : ""
+            }`,
+          }}
+        >
+          {lookups_categories.map((item, index) => {
+            return (
+              <Slide
+                key={`categories_${index}`}
+                className="flex justify-center"
+              >
                 <OpportunityCategoryHorizontalCard
                   key={`categories_${item.id}`}
                   data={item}
                   selected={selected_categories?.includes(item.name)}
                   onClick={onClick}
                 />
-              </div>
-            </Slide>
-          );
-        })}
-      </Slider>
+              </Slide>
+            );
+          })}
+        </Slider>
+      )}
+      <div className="flex items-center justify-center">
+        <ButtonBack className="group btn btn-circle btn-sm h-10 w-10 transform-gpu cursor-pointer border-none bg-transparent text-black shadow-none md:-mr-3 md:h-8 md:w-8">
+          <svg
+            className="mr-[2px] h-[45%] w-[45%] transform text-purple group-disabled:text-gray"
+            viewBox="0 0 532 532"
+          >
+            <path
+              fill="currentColor"
+              stroke="currentColor"
+              strokeWidth="45"
+              d="M355.66 11.354c13.793-13.805 36.208-13.805 50.001 0 13.785 13.804 13.785 36.238 0 50.034L201.22 266l204.442 204.61c13.785 13.805 13.785 36.239 0 50.044-13.793 13.796-36.208 13.796-50.002 0a5994246.277 5994246.277 0 0 0-229.332-229.454 35.065 35.065 0 0 1-10.326-25.126c0-9.2 3.393-18.26 10.326-25.2C172.192 194.973 332.731 34.31 355.66 11.354Z"
+            />
+          </svg>
+        </ButtonBack>
 
-      <SliderBarDotGroup
-        id="categories-carousel-slider-dot-group"
-        aria-label="slider bar"
-        dotGroupProps={{
-          id: "categories-carousel-slider-bar-dot-group",
-        }}
-        renderDots={renderDotsDynamicPill}
-      />
+        <SliderBarDotGroup
+          id="categories-carousel-slider-dot-group"
+          aria-label="slider bar"
+          dotGroupProps={{
+            id: "categories-carousel-slider-bar-dot-group",
+          }}
+          renderDots={renderDotsDynamicPill}
+        />
+
+        <ButtonNext className="group btn btn-circle btn-sm h-10 w-10 transform-gpu cursor-pointer border-none bg-transparent text-black shadow-none md:-ml-3 md:h-8 md:w-8">
+          <svg
+            className="ml-[2px] h-[45%] w-[45%] transform text-purple group-disabled:text-gray"
+            viewBox="0 0 532 532"
+          >
+            <path
+              fill="currentColor"
+              stroke="currentColor"
+              strokeWidth="45"
+              d="M176.34 520.646c-13.793 13.805-36.208 13.805-50.001 0-13.785-13.804-13.785-36.238 0-50.034L330.78 266 126.34 61.391c-13.785-13.805-13.785-36.239 0-50.044 13.793-13.796 36.208-13.796 50.002 0 22.928 22.947 206.395 206.507 229.332 229.454a35.065 35.065 0 0 1 10.326 25.126c0 9.2-3.393 18.26-10.326 25.2-45.865 45.901-206.404 206.564-229.332 229.52Z"
+            />
+          </svg>
+        </ButtonNext>
+      </div>
     </Carousel>
   );
 };

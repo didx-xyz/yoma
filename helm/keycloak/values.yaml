@@ -4,7 +4,7 @@ ingress:
   internal:
     enabled: false
     annotations:
-      nginx.ingress.kubernetes.io/proxy-buffer-size: 32k
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
       nginx.ingress.kubernetes.io/proxy-buffering: "on"
       nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
     className: nginx-internal
@@ -16,7 +16,7 @@ ingress:
     enabled: false
     annotations:
       nginx.ingress.kubernetes.io/app-root: /auth
-      nginx.ingress.kubernetes.io/proxy-buffer-size: 32k
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
       nginx.ingress.kubernetes.io/proxy-buffering: "on"
       nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
     className: nginx-internal
@@ -25,7 +25,7 @@ ingress:
   external:
     enabled: false
     annotations:
-      nginx.ingress.kubernetes.io/proxy-buffer-size: 32k
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
       nginx.ingress.kubernetes.io/proxy-buffering: "on"
       nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
     className: nginx-external

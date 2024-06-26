@@ -33,8 +33,6 @@ jobs:
       group: ${{ github.workflow }}-lint-${{ matrix.project }}-${{ github.ref }}
       cancel-in-progress: true
 
-    if: github.event_name != 'release'
-
     strategy:
       fail-fast: false
       matrix:
@@ -185,7 +183,7 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
-      - uses: docker/build-push-action@v5
+      - uses: docker/build-push-action@v6
         if: steps.should-run.outputs.run == 'true'
         with:
           platforms: linux/amd64 # linux/arm64/v8 is a little too slow right now
