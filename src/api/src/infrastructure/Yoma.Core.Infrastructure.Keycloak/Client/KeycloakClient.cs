@@ -39,15 +39,17 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
       var credentials = new PasswordGrantFlow
       {
-        KeycloakUrl = _keycloakAuthenticationOptions.AuthServerUrl,
+        KeycloakUrl = _keycloakAuthenticationOptions.AuthServerUrl?.TrimEnd('/'),
         Realm = _keycloakAdminOptions.Admin.Realm,
         UserName = _keycloakAdminOptions.Admin.Username,
         Password = _keycloakAdminOptions.Admin.Password
       };
 
-      _logger.LogDebug("Admin credentials: {request}", credentials == null ? "Empty" : JsonConvert.SerializeObject(credentials));
+      _logger.LogDebug("Admin credentials: {credentials}", credentials == null ? "Empty" : JsonConvert.SerializeObject(credentials));
 
       _httpClient = AuthenticationHttpClientFactory.Create(credentials);
+
+      _logger.LogDebug("AuthTokenUrl: {url}", _httpClient.AuthTokenUrl);
     }
     #endregion
 
