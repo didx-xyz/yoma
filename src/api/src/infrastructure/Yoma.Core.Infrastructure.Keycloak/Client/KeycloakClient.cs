@@ -45,8 +45,6 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         Password = _keycloakAdminOptions.Admin.Password
       };
 
-      _logger.LogDebug("Admin credentials: {credentials}", credentials == null ? "Empty" : JsonConvert.SerializeObject(credentials));
-
       _httpClient = AuthenticationHttpClientFactory.Create(credentials);
 
       _logger.LogDebug("AuthTokenUrl: {url}", _httpClient.AuthTokenUrl);
