@@ -14,6 +14,7 @@
     "@fontsource/open-sans": "^5.0.17",
     "@googlemaps/js-api-loader": "^1.16.2",
     "@hookform/resolvers": "^3.3.2",
+    "@mdxeditor/editor": "^3.8.0",
     "@react-google-maps/api": "^2.19.2",
     "@sentry/nextjs": "^7.82.0",
     "@t3-oss/env-nextjs": "^0.7.1",

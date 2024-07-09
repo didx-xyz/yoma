@@ -99,6 +99,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { IoMdWarning } from "react-icons/io";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { Editor } from "~/components/Editor/Editor";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -1541,11 +1542,19 @@ const OpportunityDetails: NextPageWithLayout<{
                           Description
                         </span>
                       </label>
-                      <textarea
+                      {/* <textarea
                         className="input textarea textarea-bordered h-32 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
                         // placeholder="Description"
                         {...registerStep1("description")}
+                      /> */}
+                      <Controller
+                        control={controlStep1}
+                        name="description"
+                        render={({ field: { onChange, value } }) => (
+                          <Editor value={value} onChange={onChange} />
+                        )}
                       />
+
                       {formStateStep1.errors.description && (
                         <label className="label">
                           <span className="label-text-alt italic text-red-500">
