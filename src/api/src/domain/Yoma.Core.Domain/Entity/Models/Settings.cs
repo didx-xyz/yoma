@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Entity.Models
 {
   public class Settings
   {
-    public List<SettingGroup> Groups { get; set; }  
+    public List<SettingGroup> Groups { get; set; }
   }
 
   public class SettingGroup

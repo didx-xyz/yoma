@@ -7,7 +7,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups
 {
   [Table("SettingsDefinition", Schema = "Entity")]
   [Index(nameof(EntityType), nameof(Key), IsUnique = true)]
-  public class SettingsDefinition : BaseEntity<Guid>  
+  public class SettingsDefinition : BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(25)")]
@@ -24,7 +24,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups
     [Required]
     [Column(TypeName = "varchar(500)")]
     public string Description { get; set; }
-    
+
     [Required]
     [Column(TypeName = "varchar(100)")]
     public string Group { get; set; }
