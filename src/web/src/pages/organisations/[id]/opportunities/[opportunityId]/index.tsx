@@ -286,6 +286,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const [formData, setFormData] = useState<OpportunityRequestBase>({
     id: opportunity?.id ?? null,
     title: opportunity?.title ?? "",
+    summary: opportunity?.summary ?? "",
     description: opportunity?.description ?? "",
     typeId: opportunity?.typeId ?? "",
     categories: opportunity?.categories?.map((x) => x.id) ?? [],
@@ -323,6 +324,7 @@ const OpportunityDetails: NextPageWithLayout<{
       .min(1, "Opportunity title is required.")
       .max(255, "Opportunity title cannot exceed 255 characters."),
     description: z.string().min(1, "Description is required."),
+    summary: z.string().optional(),
     typeId: z.string().min(1, "Opportunity type is required."),
     engagementTypeId: z.union([z.string(), z.null()]).optional(),
     categories: z
@@ -1531,6 +1533,25 @@ const OpportunityDetails: NextPageWithLayout<{
                         <label className="label -mb-5">
                           <span className="label-text-alt italic text-red-500">
                             {`${formStateStep1.errors.uRL.message}`}
+                          </span>
+                        </label>
+                      )}
+                    </div>
+
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text font-bold">Summary</span>
+                      </label>
+                      <textarea
+                        className="input textarea textarea-bordered h-16 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
+                        // placeholder="Summary"
+                        {...registerStep1("summary")}
+                      />
+
+                      {formStateStep1.errors.summary && (
+                        <label className="label">
+                          <span className="label-text-alt italic text-red-500">
+                            {`${formStateStep1.errors.summary.message}`}
                           </span>
                         </label>
                       )}

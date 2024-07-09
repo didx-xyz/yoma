@@ -169,3 +169,40 @@ body {
 .rssas-circle {
   background: theme("colors.purple") !important;
 }
+
+/* MDXEditor overrides */
+.mdxeditor-popup-container {
+  z-index: 2000 !important;
+}
+.mdxeditor {
+  border-style: dashed;
+  border-width: 1px;
+  border-color: theme("colors.gray");
+  border-radius: var(--radius-medium);
+}
+
+.mdxeditor ol,
+.mdxeditor ul {
+  list-style-type: disc !important;
+  margin-left: 1rem !important;
+  padding-left: 1rem !important;
+}
+.mdxeditor ul li {
+  text-indent: 1.2rem;
+}
+
+.mdxeditor ol {
+  list-style-type: decimal !important;
+}
+
+.mdxeditor :where(blockquote):not(:where([class~="not-prose"] *)) {
+  font-weight: 500 !important;
+  font-style: italic !important;
+  color: var(--tw-prose-quotes) !important;
+  border-left-width: 0.25rem !important;
+  border-left-color: theme("colors.gray") !important;
+  quotes: "201C" "201D" "2018" "2019" !important;
+  margin-top: 1.6em !important;
+  margin-bottom: 1.6em !important;
+  padding-left: 1em !important;
+}

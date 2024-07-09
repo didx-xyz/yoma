@@ -212,6 +212,7 @@ export interface OpportunityRequestBase {
   description: string;
   typeId: string;
   organizationId: string;
+  summary: string | null;
   instructions: string | null;
   uRL: string | null;
   zltoReward: number | null;
@@ -236,6 +237,11 @@ export interface OpportunityRequestBase {
   skills: string[];
   verificationTypes: OpportunityVerificationType[] | null;
   postAsActive: boolean;
+}
+
+export interface OpportunityRequestVerificationType {
+  type: VerificationType;
+  description: string | null;
 }
 
 export interface OpportunityCategory {

@@ -1,48 +1,35 @@
-import React, { useCallback, useState } from "react";
-import "@mdxeditor/editor/style.css";
 import {
   AdmonitionDirectiveDescriptor,
   BlockTypeSelect,
   BoldItalicUnderlineToggles,
   ChangeAdmonitionType,
-  ChangeCodeMirrorLanguage,
   CodeToggle,
   ConditionalContents,
   CreateLink,
-  DiffSourceToggleWrapper,
   DirectiveNode,
   EditorInFocus,
   InsertAdmonition,
-  InsertCodeBlock,
-  InsertFrontmatter,
   InsertImage,
-  InsertSandpack,
   InsertTable,
   InsertThematicBreak,
   ListsToggle,
   MDXEditor,
   Separator,
-  ShowSandpackInfo,
   StrikeThroughSupSubToggles,
   UndoRedo,
-  codeBlockPlugin,
-  codeMirrorPlugin,
-  diffSourcePlugin,
   directivesPlugin,
-  frontmatterPlugin,
   headingsPlugin,
-  imagePlugin,
+  //imagePlugin,
   linkDialogPlugin,
   linkPlugin,
   listsPlugin,
-  markdownShortcutPlugin,
   quotePlugin,
   tablePlugin,
   thematicBreakPlugin,
   toolbarPlugin,
 } from "@mdxeditor/editor";
-// import { AdmonitionKind } from "lexical";
-import "./Editor.css";
+import "@mdxeditor/editor/style.css";
+import React, { useState } from "react";
 
 export type AdmonitionKind = "note" | "tip" | "danger" | "info" | "caution";
 
@@ -57,21 +44,8 @@ function whenInAdmonition(editorInFocus: EditorInFocus | null) {
   );
 }
 
-export const KitchenSinkToolbar: React.FC = () => {
+export const Toolbar: React.FC = () => {
   return (
-    // <DiffSourceToggleWrapper>
-    //   <ConditionalContents
-    //     options={[
-    //       {
-    //         when: (editor) => editor?.editorType === "codeblock",
-    //         contents: () => <ChangeCodeMirrorLanguage />,
-    //       },
-    //       {
-    //         when: (editor) => editor?.editorType === "sandpack",
-    //         contents: () => <ShowSandpackInfo />,
-    //       },
-    //       {
-    //         fallback: () => (
     <>
       <UndoRedo />
       <Separator />
@@ -103,10 +77,6 @@ export const KitchenSinkToolbar: React.FC = () => {
       <InsertTable />
       <InsertThematicBreak />
 
-      {/* <Separator /> */}
-      {/* <InsertCodeBlock /> */}
-      {/* <InsertSandpack /> */}
-
       <ConditionalContents
         options={[
           {
@@ -120,15 +90,7 @@ export const KitchenSinkToolbar: React.FC = () => {
           },
         ]}
       />
-
-      {/* <Separator />
-      <InsertFrontmatter /> */}
     </>
-    //         ),
-    //       },
-    //     ]}
-    //   />
-    // </DiffSourceToggleWrapper>
   );
 };
 
@@ -141,72 +103,26 @@ export const Editor: React.FC<{
   return (
     <MDXEditor
       markdown={value}
-      // plugins={[
-      //   headingsPlugin(),
-      //   listsPlugin(),
-      //   quotePlugin(),
-      //   thematicBreakPlugin(),
-      //   toolbarPlugin({
-      //     toolbarContents: () => (
-      //       <>
-      //         {" "}
-      //         <UndoRedo />
-      //         <BoldItalicUnderlineToggles />
-      //         <BlockTypeSelect />
-      //         <ChangeAdmonitionType />
-      //         <ChangeCodeMirrorLanguage />
-      //         <CodeToggle />
-      //         <CreateLink />
-      //         {/* <DiffSourceToggleWrapper /> */}
-      //         <InsertAdmonition />
-      //         <InsertCodeBlock />
-      //         <InsertFrontmatter />
-      //         <InsertImage />
-      //         <InsertSandpack />
-      //         <InsertTable />
-      //         <InsertThematicBreak />
-      //         <ListsToggle />
-      //         <ShowSandpackInfo />
-      //       </>
-      //     ),
-      //   }),
-      // ]}
       plugins={[
-        toolbarPlugin({ toolbarContents: () => <KitchenSinkToolbar /> }),
+        toolbarPlugin({ toolbarContents: () => <Toolbar /> }),
         listsPlugin(),
         quotePlugin(),
-        headingsPlugin({ allowedHeadingLevels: [1, 2, 3] }),
+        headingsPlugin({ allowedHeadingLevels: [1, 2, 3, 4, 5, 6] }),
         linkPlugin(),
         linkDialogPlugin(),
-        imagePlugin({
-          imageAutocompleteSuggestions: [
-            "https://via.placeholder.com/150",
-            "https://via.placeholder.com/150",
-          ],
-          imageUploadHandler: async () =>
-            Promise.resolve("https://picsum.photos/200/300"),
-        }),
+        // imagePlugin({
+        //   imageAutocompleteSuggestions: [
+        //     "https://via.placeholder.com/150",
+        //     "https://via.placeholder.com/150",
+        //   ],
+        //   imageUploadHandler: async () =>
+        //     Promise.resolve("https://picsum.photos/200/300"),
+        // }),
         tablePlugin(),
         thematicBreakPlugin(),
-        frontmatterPlugin(),
-        // codeBlockPlugin({ defaultCodeBlockLanguage: "" }),
-        // codeMirrorPlugin({
-        //   codeBlockLanguages: {
-        //     js: "JavaScript",
-        //     css: "CSS",
-        //     txt: "Plain Text",
-        //     tsx: "TypeScript",
-        //     "": "Unspecified",
-        //   },
-        // }),
         directivesPlugin({
-          directiveDescriptors: [
-            //  YoutubeDirectiveDescriptor,
-            AdmonitionDirectiveDescriptor,
-          ],
+          directiveDescriptors: [AdmonitionDirectiveDescriptor],
         }),
-        //diffSourcePlugin({ viewMode: "rich-text", diffMarkdown: "boo" }),
-        // markdownShortcutPlugin(),
       ]}
       onChange={(val) => {
         setValueState(val);
