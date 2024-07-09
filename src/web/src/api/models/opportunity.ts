@@ -98,7 +98,7 @@ export interface OpportunityInfo {
   countViewed: number;
   countNavigatedExternalLink: number;
   statusId: string;
-  status: Status | string; //NB: comes back as string
+  status: Status | string; // HACK: string
   keywords: string[] | null;
   dateStart: string;
   dateEnd: string | null;

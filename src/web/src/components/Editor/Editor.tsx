@@ -96,15 +96,18 @@ export const Toolbar: React.FC = () => {
 
 export const Editor: React.FC<{
   value: string;
-  onChange: (value: string) => void;
-}> = ({ value, onChange }) => {
+  readonly: boolean;
+  onChange?: (value: string) => void;
+}> = ({ value, readonly, onChange }) => {
   const [valueState, setValueState] = useState(value);
 
   return (
     <MDXEditor
       markdown={value}
       plugins={[
-        toolbarPlugin({ toolbarContents: () => <Toolbar /> }),
+        toolbarPlugin({
+          toolbarContents: () => (readonly ? <></> : <Toolbar />),
+        }),
         listsPlugin(),
         quotePlugin(),
         headingsPlugin({ allowedHeadingLevels: [1, 2, 3, 4, 5, 6] }),
@@ -128,6 +131,7 @@ export const Editor: React.FC<{
         setValueState(val);
         onChange && onChange(val);
       }}
+      readOnly={readonly}
     />
   );
 };

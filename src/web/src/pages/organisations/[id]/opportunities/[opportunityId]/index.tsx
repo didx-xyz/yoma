@@ -108,6 +108,8 @@ import {
   IoInformationCircle,
   IoInformationCircleOutline,
 } from "react-icons/io5";
+import OpportunityDetails from "~/pages/opportunities/[opportunityId]";
+import OpportunityPublicDetails from "~/components/Opportunity/OpportunityPublicDetails";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -171,7 +173,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 // this page acts as a create (/opportunites/create) or edit page (/opportunities/:id) based on the [opportunityId] route param
 // this page is accessed from the /organisations/[id]/.. pages (OrgAdmin role)
 // or from the /admin/opportunities/.. pages (Admin role). the retunUrl query param is used to redirect back to the admin page
-const OpportunityDetails: NextPageWithLayout<{
+const OpportunityAdminDetails: NextPageWithLayout<{
   id: string;
   opportunityId: string;
   user: User;
@@ -964,6 +966,85 @@ const OpportunityDetails: NextPageWithLayout<{
     }
   }, [watchVerificationEnabled, setFormData]);
 
+  // this is used by the preview components
+  const opportunityInfo = useMemo<OpportunityInfo>(
+    () => ({
+      id: opportunityId,
+      title: formData.title,
+      description: formData.description,
+      type:
+        formData.typeId && opportunityTypes
+          ? opportunityTypes.find((x) => x.value == formData.typeId)?.label!
+          : "",
+      organizationId: id,
+      organizationName: organisation ? organisation.name : "",
+      organizationLogoURL: organisation ? organisation.logoURL : "",
+      summary: formData.summary,
+      instructions: formData.instructions,
+      url: formData.uRL,
+      zltoReward: formData.zltoReward,
+      zltoRewardCumulative: 0, //formData.zltoRewardCumulative,
+      yomaReward: formData.yomaReward,
+      yomaRewardCumulative: 0, //formData.yomaRewardCumulative,
+      verificationEnabled: formData.verificationEnabled ?? false,
+      verificationMethod: formData.verificationMethod,
+      difficulty:
+        formData.difficultyId && difficulties
+          ? difficulties.find((x) => x.value == formData.difficultyId)?.label!
+          : "",
+      commitmentInterval:
+        formData.commitmentIntervalId && timeIntervals
+          ? timeIntervals.find((x) => x.value == formData.commitmentIntervalId)
+              ?.label!
+          : "",
+      commitmentIntervalCount: formData.commitmentIntervalCount ?? 0,
+      commitmentIntervalDescription: "",
+      participantLimit: formData.participantLimit,
+      participantCountCompleted: 0,
+      participantCountPending: 0,
+      participantCountTotal: 0,
+      participantLimitReached: false,
+      countViewed: 0,
+      countNavigatedExternalLink: 0,
+      statusId: "",
+      status: "Active",
+      keywords: formData.keywords,
+      dateStart: formData.dateStart ?? "",
+      dateEnd: formData.dateEnd ?? "",
+      featured: false,
+      engagementType:
+        formData.engagementTypeId && engagementTypes
+          ? engagementTypes.find((x) => x.value == formData.engagementTypeId)
+              ?.label!
+          : "",
+      published: true,
+      yomaInfoURL: "",
+      categories:
+        formData.categories && categories
+          ? formData.categories?.map(
+              (x) => categories.find((y) => y.value == x)?.label!,
+            )
+          : [],
+      countries:
+        formData.countries && countries
+          ? formData.countries?.map(
+              (x) => countries.find((y) => y.value == x)?.label!,
+            )
+          : [],
+      languages:
+        formData.languages && languages
+          ? formData.languages?.map(
+              (x) => languages.find((y) => y.value == x)?.label!,
+            )
+          : [],
+      skills: [], //formData.skills as Skill[] | null,
+      verificationTypes: formData.verificationTypes as
+        | OpportunityVerificationType[]
+        | null,
+    }),
+    [formData, organisation, opportunityId, id, timeIntervals],
+  );
+
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -1583,7 +1664,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         control={controlStep1}
                         name="description"
                         render={({ field: { onChange, value } }) => (
-                          <Editor value={value} onChange={onChange} />
+                          <Editor value={value} readonly={false} onChange={onChange} />
                         )}
                       />
 
@@ -2803,113 +2884,58 @@ const OpportunityDetails: NextPageWithLayout<{
               {/* PREVIEW */}
               {step === 7 && (
                 <>
-                  <h5 className="mb-4 font-bold">Preview</h5>
+                  {/* <h5 className="mb-4 font-bold">Preview</h5> */}
+
+                  <div className="mb-4 flex flex-col">
+                    <h5 className="font-bold tracking-wider">Preview</h5>
+                    <p className="my-2 text-sm">
+                      Preview your opportunity before submitting.
+                    </p>
+                  </div>
 
                   <div className="flex flex-col gap-4">
                     {/* CARD PREVIEW */}
                     <div className="flex flex-col gap-2">
+                      <h6 className="text-sm font-bold">Search Results</h6>
+
                       <div className="flex flex-row items-center rounded-lg border-[1px] border-green p-2 shadow-lg">
                         <IoInformationCircleOutline className="mr-2 h-6 w-6 text-green" />
 
-                        <span className="text-xs md:text-sm">
-                          This is how your opportunity will appear on search
+                        <span className="text-xs">
+                          This is how your opportunity will appear on the search
                           results.
                         </span>
                       </div>
 
-                      <div className="flex justify-center">
+                      <div className="mt-4 flex justify-center">
                         <OpportunityPublicSmallComponent
                           key={`opportunity_card_preview`}
                           preview={true}
-                          data={{
-                            id: opportunityId,
-                            title: formData.title,
-                            description: formData.description,
-                            type: "",
-                            // formData.typeId && opportunityTypes
-                            //   ? opportunityTypes.find(
-                            //       (x) => x.value == formData.typeId,
-                            //     )?.label!
-                            //   : "",
-                            organizationId: id,
-                            organizationName: organisation
-                              ? organisation.name
-                              : "",
-                            organizationLogoURL: organisation
-                              ? organisation.logoURL
-                              : "",
-                            summary: formData.summary,
-                            instructions: formData.instructions,
-                            url: formData.uRL,
-                            zltoReward: formData.zltoReward,
-                            zltoRewardCumulative: null, //formData.zltoRewardCumulative,
-                            yomaReward: formData.yomaReward,
-                            yomaRewardCumulative: null, //formData.yomaRewardCumulative,
-                            verificationEnabled:
-                              formData.verificationEnabled ?? false,
-                            verificationMethod: formData.verificationMethod,
-                            difficulty: "",
-                            // formData.difficultyId && difficulties
-                            //   ? difficulties.find(
-                            //       (x) => x.value == formData.difficultyId,
-                            //     )?.label!
-                            //   : "",
-                            commitmentInterval:
-                              formData.commitmentIntervalId && timeIntervals
-                                ? timeIntervals.find(
-                                    (x) =>
-                                      x.value == formData.commitmentIntervalId,
-                                  )?.label!
-                                : "",
-                            commitmentIntervalCount:
-                              formData.commitmentIntervalCount ?? 0,
-                            commitmentIntervalDescription: "",
-                            participantLimit: formData.participantLimit,
-                            participantCountCompleted: 0,
-                            participantCountPending: 0,
-                            participantCountTotal: 0,
-                            participantLimitReached: false,
-                            countViewed: 0,
-                            countNavigatedExternalLink: 0,
-                            statusId: "",
-                            status: "Active",
-                            keywords: formData.keywords,
-                            dateStart: formData.dateStart ?? "",
-                            dateEnd: formData.dateEnd ?? "",
-                            featured: false,
-                            engagementType: "",
-                            // formData.engagementTypeId && engagementTypes
-                            //   ? engagementTypes.find(
-                            //       (x) => x.value == formData.engagementTypeId,
-                            //     )?.label!
-                            //   : "",
-                            published: true,
-                            yomaInfoURL: "",
-                            categories: [], //formData.categories && categories ?  formData.categories?.map((x) => categories.find((y)=>y.value==x)?.label!) : [],
-                            countries: [], // formData.countries && countries ?  formData.countries?.map((x) => countries.find((y)=>y.value==x)?.label!) : [],
-                            languages: [], //formData.languages && languages ?  formData.languages?.map((x) => languages.find((y)=>y.value==x)?.label!) : [],
-                            skills: [], //formData.skills as Skill[] | null,
-                            verificationTypes:
-                              [] /* formData.verificationTypes as
-                        | OpportunityVerificationType[]
-                        | null,*/,
-                          }}
+                          data={opportunityInfo}
                         />
                       </div>
                     </div>
 
                     {/* DETAILS PREVIEW */}
                     <div className="flex flex-col gap-2">
+                      <h6 className="text-sm font-bold">Details Page</h6>
+
                       <div className="flex flex-row items-center rounded-lg border-[1px] border-green p-2 shadow-lg">
                         <IoInformationCircleOutline className="mr-2 h-6 w-6 text-green" />
 
-                        <span className="text-xs md:text-sm">
+                        <span className="text-xs">
                           This is how your opportunity will appear on the
                           details page when clicked on from the search results.
                         </span>
                       </div>
 
-                      <div className="flex justify-center">todo</div>
+                      <div className="mt-4 flex justify-center">
+                        <OpportunityPublicDetails
+                          opportunityInfo={opportunityInfo}
+                          user={null}
+                          error={error}
+                        />
+                      </div>
                     </div>
                   </div>
 
@@ -2918,7 +2944,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </p> */}
 
                   <label className="label label-text pt-0 text-sm ">
-                    {formData.description}
+                    {/* {formData.description} */}
                   </label>
 
                   <form
@@ -3449,14 +3475,14 @@ const OpportunityDetails: NextPageWithLayout<{
   );
 };
 
-OpportunityDetails.getLayout = function getLayout(page: ReactElement) {
+OpportunityAdminDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-OpportunityDetails.theme = function getTheme(page: ReactElement) {
+OpportunityAdminDetails.theme = function getTheme(page: ReactElement) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };
 
-export default OpportunityDetails;
+export default OpportunityAdminDetails;
