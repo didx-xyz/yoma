@@ -85,6 +85,7 @@ namespace Yoma.Core.Domain
       #region Lookups
       services.AddScoped<IOrganizationStatusService, OrganizationStatusService>();
       services.AddScoped<IOrganizationProviderTypeService, OrganizationProviderTypeService>();
+      services.AddScoped<ISettingsDefinitionService, SettingsDefinitionService>();  
       #endregion Lookups
 
       services.AddScoped<IOrganizationService, OrganizationService>();

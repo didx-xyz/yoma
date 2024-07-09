@@ -33,12 +33,7 @@ namespace Yoma.Core.Infrastructure.Keycloak
 
     public static void ConfigureServices_AuthorizationIdentityProvider(this IServiceCollection services, IConfiguration configuration)
     {
-      services.AddAuthorization()
-                .AddKeycloakAuthorization(options =>
-                {
-                  configuration.GetSection(KeycloakAuthorizationOptions.Section).Bind(options);
-                });
-
+      services.AddAuthorization().AddKeycloakAuthorization(options => AuthorizationOptions(configuration));
       services.AddTransient<IClaimsTransformation, KeyCloakClaimsTransformer>();
     }
 

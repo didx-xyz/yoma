@@ -7,7 +7,6 @@ using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
-using Newtonsoft.Json;
 using System.Net.Http.Headers;
 using System.Text;
 using Yoma.Core.Domain.Core;

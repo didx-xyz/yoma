@@ -122,6 +122,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           table: "Status",
           column: "Name",
           unique: true);
+
+      ApplicationDb_PartnerSharing_Seeding.Seed(migrationBuilder);
     }
 
     /// <inheritdoc />

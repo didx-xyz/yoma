@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Newtonsoft.Json;
 using System.Security.Claims;
+using Yoma.Core.Domain.Core;
 
 namespace Yoma.Core.Infrastructure.Keycloak.Middleware
 {
@@ -24,7 +25,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Middleware
         {
           foreach (var role in realmAccessAsDict["roles"])
           {
-            claimsIdentity.AddClaim(new Claim("role", role));
+            claimsIdentity.AddClaim(new Claim(Constants.ClaimType_Role, role));
           }
         }
       }

@@ -82,6 +82,21 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Get the user's settings (Authenticated User)")]
+    [HttpGet("settings")]
+    [ProducesResponseType(typeof(Settings), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public IActionResult GetSettings()
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetSettings));
+
+      var result = _userProfileService.GetSettings();
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetSettings));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Update the user's profile (Authenticated User)",
       Description = "Updated within Yoma and the identity provider, optionally requesting a email verification and/or password reset")]
     [HttpPatch()]
@@ -109,6 +124,21 @@ namespace Yoma.Core.Api.Controllers
       var result = await _userProfileService.UpsertPhoto(file);
 
       _logger.LogInformation("Request {requestName} handled", nameof(UpsertPhoto));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Update the user's settings (Authenticated User)")]
+    [HttpPatch("settings")]
+    [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public async Task<IActionResult> UpdateSettings([FromBody] UserRequestSettings request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UpdateSettings));
+
+      var result = await _userProfileService.UpdateSettings(request);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UpdateSettings));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

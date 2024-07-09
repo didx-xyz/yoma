@@ -229,7 +229,7 @@ namespace Yoma.Core.Api
     #endregion
 
     #region Private Members
-    private void ConfigureFlurl()
+    private static void ConfigureFlurl()
     {
       FlurlHttp.Clients.WithDefaults(builder => builder.Settings.JsonSerializer = new NewtonsoftJsonSerializer());
     }

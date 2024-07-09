@@ -38,6 +38,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<Entity.Entities.Lookups.OrganizationStatus> OrganizationStatus { get; set; }
 
     public DbSet<Entity.Entities.Lookups.OrganizationProviderType> OrganizationProviderType { get; set; }
+
+    public DbSet<Entity.Entities.Lookups.SettingsDefinition> SettingsDefinition { get; set; } 
     #endregion Lookups
 
     public DbSet<Organization> Organization { get; set; }
