@@ -32,6 +32,7 @@ import z from "zod";
 import type { Skill, SelectOption } from "~/api/models/lookups";
 import { SchemaType } from "~/api/models/credential";
 import {
+  OpportunityInfo,
   VerificationMethod,
   type Opportunity,
   type OpportunityRequestBase,
@@ -100,6 +101,13 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { IoMdWarning } from "react-icons/io";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { Editor } from "~/components/Editor/Editor";
+import { OpportunityPublicSmallComponent } from "~/components/Opportunity/OpportunityPublicSmall";
+import { Organization } from "~/api/models/organisation";
+import { getOrganisationById } from "~/api/services/organisations";
+import {
+  IoInformationCircle,
+  IoInformationCircleOutline,
+} from "react-icons/io5";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -281,6 +289,11 @@ const OpportunityDetails: NextPageWithLayout<{
     queryKey: ["opportunity", opportunityId],
     queryFn: () => getOpportunityById(opportunityId),
     enabled: opportunityId !== "create" && !error,
+  });
+  const { data: organisation } = useQuery<Organization>({
+    queryKey: ["organisation", id],
+    queryFn: () => getOrganisationById(id),
+    enabled: !error,
   });
 
   const [formData, setFormData] = useState<OpportunityRequestBase>({
@@ -1254,7 +1267,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 >
                   5
                 </span>
-                Verification type
+                Verification
               </a>
             </li>
             <li onClick={() => onClick_Menu(6)}>
@@ -1275,35 +1288,33 @@ const OpportunityDetails: NextPageWithLayout<{
                 Credential
               </a>
             </li>
-            {/* only show preview when creating new opportunity */}
-            {opportunityId === "create" && (
-              <li onClick={() => onClick_Menu(7)}>
-                <a
-                  className={`${
-                    step === 7
-                      ? "bg-green-light text-green hover:bg-green-light"
-                      : "bg-gray-light text-gray-dark hover:bg-gray"
-                  } py-3`}
+
+            <li onClick={() => onClick_Menu(7)}>
+              <a
+                className={`${
+                  step === 7
+                    ? "bg-green-light text-green hover:bg-green-light"
+                    : "bg-gray-light text-gray-dark hover:bg-gray"
+                } py-3`}
+              >
+                <span
+                  className={`mr-2 rounded-full bg-gray-dark px-1.5 py-0.5 text-xs font-medium text-white ${
+                    formStateStep1.isValid &&
+                    formStateStep2.isValid &&
+                    formStateStep3.isValid &&
+                    formStateStep4.isValid &&
+                    formStateStep5.isValid &&
+                    formStateStep6.isValid &&
+                    formStateStep7.isValid
+                      ? "bg-green"
+                      : "bg-gray-dark"
+                  }`}
                 >
-                  <span
-                    className={`mr-2 rounded-full bg-gray-dark px-1.5 py-0.5 text-xs font-medium text-white ${
-                      formStateStep1.isValid &&
-                      formStateStep2.isValid &&
-                      formStateStep3.isValid &&
-                      formStateStep4.isValid &&
-                      formStateStep5.isValid &&
-                      formStateStep6.isValid &&
-                      formStateStep7.isValid
-                        ? "bg-green"
-                        : "bg-gray-dark"
-                    }`}
-                  >
-                    7
-                  </span>
-                  Preview opportunity
-                </a>
-              </li>
-            )}
+                  7
+                </span>
+                Preview
+              </a>
+            </li>
           </ul>
 
           {/* DROPDOWN MENU */}
@@ -1323,13 +1334,13 @@ const OpportunityDetails: NextPageWithLayout<{
                 case "Keywords":
                   onClick_Menu(4);
                   break;
-                case "Verification type":
+                case "Verification":
                   onClick_Menu(5);
                   break;
                 case "Credential":
                   onClick_Menu(6);
                   break;
-                case "Preview opportunity":
+                case "Preview":
                   onClick_Menu(7);
                   break;
                 default:
@@ -1342,9 +1353,9 @@ const OpportunityDetails: NextPageWithLayout<{
             <option>Opportunity details</option>
             <option>Rewards</option>
             <option>Keywords</option>
-            <option>Verification type</option>
+            <option>Verification</option>
             <option>Credential</option>
-            <option>Preview opportunity</option>
+            <option>Preview</option>
           </select>
 
           {/* FORMS */}
@@ -2789,15 +2800,126 @@ const OpportunityDetails: NextPageWithLayout<{
                 </>
               )}
 
-              {/* only show preview when creating new opportunity */}
-              {step === 7 && opportunityId === "create" && (
+              {/* PREVIEW */}
+              {step === 7 && (
                 <>
-                  <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold">Opportunity preview</h5>
-                    <p className="my-2 text-sm">
-                      Detailed particulars about the opportunity
-                    </p>
+                  <h5 className="mb-4 font-bold">Preview</h5>
+
+                  <div className="flex flex-col gap-4">
+                    {/* CARD PREVIEW */}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-row items-center rounded-lg border-[1px] border-green p-2 shadow-lg">
+                        <IoInformationCircleOutline className="mr-2 h-6 w-6 text-green" />
+
+                        <span className="text-xs md:text-sm">
+                          This is how your opportunity will appear on search
+                          results.
+                        </span>
+                      </div>
+
+                      <div className="flex justify-center">
+                        <OpportunityPublicSmallComponent
+                          key={`opportunity_card_preview`}
+                          preview={true}
+                          data={{
+                            id: opportunityId,
+                            title: formData.title,
+                            description: formData.description,
+                            type: "",
+                            // formData.typeId && opportunityTypes
+                            //   ? opportunityTypes.find(
+                            //       (x) => x.value == formData.typeId,
+                            //     )?.label!
+                            //   : "",
+                            organizationId: id,
+                            organizationName: organisation
+                              ? organisation.name
+                              : "",
+                            organizationLogoURL: organisation
+                              ? organisation.logoURL
+                              : "",
+                            summary: formData.summary,
+                            instructions: formData.instructions,
+                            url: formData.uRL,
+                            zltoReward: formData.zltoReward,
+                            zltoRewardCumulative: null, //formData.zltoRewardCumulative,
+                            yomaReward: formData.yomaReward,
+                            yomaRewardCumulative: null, //formData.yomaRewardCumulative,
+                            verificationEnabled:
+                              formData.verificationEnabled ?? false,
+                            verificationMethod: formData.verificationMethod,
+                            difficulty: "",
+                            // formData.difficultyId && difficulties
+                            //   ? difficulties.find(
+                            //       (x) => x.value == formData.difficultyId,
+                            //     )?.label!
+                            //   : "",
+                            commitmentInterval:
+                              formData.commitmentIntervalId && timeIntervals
+                                ? timeIntervals.find(
+                                    (x) =>
+                                      x.value == formData.commitmentIntervalId,
+                                  )?.label!
+                                : "",
+                            commitmentIntervalCount:
+                              formData.commitmentIntervalCount ?? 0,
+                            commitmentIntervalDescription: "",
+                            participantLimit: formData.participantLimit,
+                            participantCountCompleted: 0,
+                            participantCountPending: 0,
+                            participantCountTotal: 0,
+                            participantLimitReached: false,
+                            countViewed: 0,
+                            countNavigatedExternalLink: 0,
+                            statusId: "",
+                            status: "Active",
+                            keywords: formData.keywords,
+                            dateStart: formData.dateStart ?? "",
+                            dateEnd: formData.dateEnd ?? "",
+                            featured: false,
+                            engagementType: "",
+                            // formData.engagementTypeId && engagementTypes
+                            //   ? engagementTypes.find(
+                            //       (x) => x.value == formData.engagementTypeId,
+                            //     )?.label!
+                            //   : "",
+                            published: true,
+                            yomaInfoURL: "",
+                            categories: [], //formData.categories && categories ?  formData.categories?.map((x) => categories.find((y)=>y.value==x)?.label!) : [],
+                            countries: [], // formData.countries && countries ?  formData.countries?.map((x) => countries.find((y)=>y.value==x)?.label!) : [],
+                            languages: [], //formData.languages && languages ?  formData.languages?.map((x) => languages.find((y)=>y.value==x)?.label!) : [],
+                            skills: [], //formData.skills as Skill[] | null,
+                            verificationTypes:
+                              [] /* formData.verificationTypes as
+                        | OpportunityVerificationType[]
+                        | null,*/,
+                          }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* DETAILS PREVIEW */}
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-row items-center rounded-lg border-[1px] border-green p-2 shadow-lg">
+                        <IoInformationCircleOutline className="mr-2 h-6 w-6 text-green" />
+
+                        <span className="text-xs md:text-sm">
+                          This is how your opportunity will appear on the
+                          details page when clicked on from the search results.
+                        </span>
+                      </div>
+
+                      <div className="flex justify-center">todo</div>
+                    </div>
                   </div>
+
+                  {/* <p className="my-2 text-sm">
+
+                  </p> */}
+
+                  <label className="label label-text pt-0 text-sm ">
+                    {formData.description}
+                  </label>
 
                   <form
                     ref={formRef7}
@@ -2806,7 +2928,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       onSubmitStep(8, data),
                     )}
                   >
-                    <div className="form-control">
+                    {/* <div className="form-control">
                       <label className="label">
                         <span className="label-text font-semibold">
                           Opportunity title
@@ -3052,7 +3174,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           )}
                         </div>
                       </div>
-                    </div>
+                    </div> */}
                     {/* NB: yoma rewards has been disabled temporarily */}
                     {/* <div className="form-control">
                       <label className="label">
@@ -3089,7 +3211,7 @@ const OpportunityDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div> */}
-                    <div className="form-control">
+                    {/* <div className="form-control">
                       <label className="label">
                         <h5 className="font-bold">Participants</h5>
                       </label>
@@ -3211,10 +3333,10 @@ const OpportunityDetails: NextPageWithLayout<{
                           </span>
                         </label>
                       )}
-                    </div>
+                    </div> */}
 
                     {/* SCHEMA */}
-                    {formData.credentialIssuanceEnabled && (
+                    {/* {formData.credentialIssuanceEnabled && (
                       <>
                         <div className="form-control">
                           <label className="label">
@@ -3231,7 +3353,7 @@ const OpportunityDetails: NextPageWithLayout<{
                             </label>
                           )}
                         </div>
-                        {/* SCHEMA ATTRIBUTES */}
+                          SCHEMA ATTRIBUTES
                         <div className="flex flex-col gap-2">
                           <table className="table w-full">
                             <thead>
@@ -3259,9 +3381,9 @@ const OpportunityDetails: NextPageWithLayout<{
                           </table>
                         </div>
                       </>
-                    )}
-                    <div className="form-control">
-                      {/* checkbox label */}
+                    )} */}
+                    {/* <div className="form-control">
+                      checkbox label
                       <label
                         htmlFor="postAsActive"
                         className="label w-full cursor-pointer justify-normal"
@@ -3284,7 +3406,7 @@ const OpportunityDetails: NextPageWithLayout<{
                           </span>
                         </label>
                       )}
-                    </div>
+                    </div> */}
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       <button
@@ -3296,23 +3418,25 @@ const OpportunityDetails: NextPageWithLayout<{
                       >
                         Back
                       </button>
-                      <button
-                        type="submit"
-                        className="btn btn-success flex-grow disabled:bg-gray-light md:w-1/3 md:flex-grow-0"
-                        disabled={
-                          !(
-                            formStateStep1.isValid &&
-                            formStateStep2.isValid &&
-                            formStateStep3.isValid &&
-                            formStateStep4.isValid &&
-                            formStateStep5.isValid &&
-                            formStateStep6.isValid &&
-                            formStateStep7.isValid
-                          )
-                        }
-                      >
-                        Publish opportunity
-                      </button>
+                      {opportunityId == "create" && (
+                        <button
+                          type="submit"
+                          className="btn btn-success flex-grow disabled:bg-gray-light md:w-1/3 md:flex-grow-0"
+                          disabled={
+                            !(
+                              formStateStep1.isValid &&
+                              formStateStep2.isValid &&
+                              formStateStep3.isValid &&
+                              formStateStep4.isValid &&
+                              formStateStep5.isValid &&
+                              formStateStep6.isValid &&
+                              formStateStep7.isValid
+                            )
+                          }
+                        >
+                          Publish opportunity
+                        </button>
+                      )}
                     </div>
                   </form>
                 </>
