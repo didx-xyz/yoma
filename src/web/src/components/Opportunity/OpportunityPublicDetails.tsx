@@ -50,15 +50,17 @@ import {
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { type User } from "~/server/auth";
-import { Editor } from "../Editor/Editor";
+import { Editor } from "../RichText/Editor";
 
+// this component is used by the public opportunity page,
+// as well as the opportuntity preview on the Create/Edit Opportunity page
 const OpportunityPublicDetails: React.FC<{
-  user: User;
+  user: User | null;
   opportunityInfo: OpportunityInfo;
   error?: number;
-}> = ({ user, opportunityInfo, error }) => {
+  preview: boolean;
+}> = ({ user, opportunityInfo, error, preview }) => {
   const queryClient = useQueryClient();
-
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [gotoOpportunityDialogVisible, setGotoOpportunityDialogVisible] =
     useState(false);
@@ -99,7 +101,7 @@ const OpportunityPublicDetails: React.FC<{
           return getVerificationStatus(opportunityInfo.id);
         } else return null;
       },
-      enabled: !error,
+      enabled: !error && !preview,
     });
 
   useEffect(() => {
@@ -114,7 +116,7 @@ const OpportunityPublicDetails: React.FC<{
     });
   }, [user, isOppSaved, opportunityInfo]);
 
-  // CLICK HANDLERS
+  //#region Event Handlers
   const onUpdateSavedOpportunity = useCallback(() => {
     if (!user) {
       setLoginDialogVisible(true);
@@ -202,6 +204,7 @@ const OpportunityPublicDetails: React.FC<{
   const onShareOpportunity = useCallback(() => {
     setShareOpportunityDialogVisible(true);
   }, [setShareOpportunityDialogVisible]);
+  //#endregion Event Handlers
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -211,301 +214,307 @@ const OpportunityPublicDetails: React.FC<{
 
   return (
     <>
-      {/* LOGIN DIALOG */}
-      <ReactModal
-        isOpen={loginDialogVisible}
-        shouldCloseOnOverlayClick={false}
-        onRequestClose={() => {
-          setLoginDialogVisible(false);
-        }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[300px] md:w-[450px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
-      >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
-          <div className="flex flex-row bg-green p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
-            <button
-              type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
-              onClick={() => {
-                setLoginDialogVisible(false);
+      {!preview && (
+        <>
+          {/* LOGIN DIALOG */}
+          <ReactModal
+            isOpen={loginDialogVisible}
+            shouldCloseOnOverlayClick={false}
+            onRequestClose={() => {
+              setLoginDialogVisible(false);
+            }}
+            className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[300px] md:w-[450px] md:rounded-3xl`}
+            portalClassName={"fixed z-40"}
+            overlayClassName="fixed inset-0 bg-overlay"
+          >
+            <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+              <div className="flex flex-row bg-green p-4 shadow-lg">
+                <h1 className="flex-grow"></h1>
+                <button
+                  type="button"
+                  className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                  onClick={() => {
+                    setLoginDialogVisible(false);
+                  }}
+                >
+                  <IoMdClose className="h-6 w-6"></IoMdClose>
+                </button>
+              </div>
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                  <Image
+                    src={iconBell}
+                    alt="Icon Bell"
+                    width={28}
+                    height={28}
+                    sizes="100vw"
+                    priority={true}
+                    style={{ width: "28px", height: "28px" }}
+                  />
+                </div>
+
+                <h5>Please sign-in to continue</h5>
+
+                <div className="mt-4 flex flex-grow gap-4">
+                  <button
+                    type="button"
+                    className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
+                    onClick={() => setLoginDialogVisible(false)}
+                  >
+                    <IoMdClose className="h-5 w-5 text-purple" /> Cancel
+                  </button>
+
+                  <SignInButton className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light disabled:border-0 disabled:bg-purple-light md:w-[150px]" />
+                </div>
+              </div>
+            </div>
+          </ReactModal>
+
+          {/* GO-TO OPPORTUNITY DIALOG */}
+          <ReactModal
+            isOpen={gotoOpportunityDialogVisible}
+            shouldCloseOnOverlayClick={false}
+            onRequestClose={() => {
+              setGotoOpportunityDialogVisible(false);
+            }}
+            className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[440px] md:w-[600px] md:rounded-3xl`}
+            portalClassName={"fixed z-40"}
+            overlayClassName="fixed inset-0 bg-overlay"
+          >
+            <div className="flex h-full flex-col gap-2 overflow-y-auto pb-10">
+              <div className="flex flex-row bg-green p-4 shadow-lg">
+                <h1 className="flex-grow"></h1>
+                <button
+                  type="button"
+                  className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                  onClick={() => {
+                    setGotoOpportunityDialogVisible(false);
+                  }}
+                >
+                  <IoMdClose className="h-6 w-6"></IoMdClose>
+                </button>
+              </div>
+              <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
+                <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                  <Image
+                    src={iconBell}
+                    alt="Icon Bell"
+                    width={28}
+                    height={28}
+                    sizes="100vw"
+                    priority={true}
+                    style={{ width: "28px", height: "28px" }}
+                  />
+                </div>
+                <h3>You are now leaving Yoma</h3>
+                <div className="rounded-lg bg-gray p-4 text-center md:w-[450px]">
+                  Remember to{" "}
+                  <strong>upload your completion certificate</strong> on this
+                  page upon finishing to <strong>earn your ZLTO</strong>.
+                </div>
+
+                <div className="text-center md:w-[450px]">
+                  Be mindful of external sites&apos; privacy policy and keep
+                  your data private.
+                </div>
+
+                <div className="mt-4 flex w-full flex-grow flex-col justify-center gap-4 md:flex-row">
+                  <button
+                    type="button"
+                    className={
+                      "btn btn-outline rounded-full border-purple bg-white normal-case text-purple hover:text-purple md:w-[250px]" +
+                      `${
+                        isOppSaved
+                          ? " border-none bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow"
+                          : ""
+                      }`
+                    }
+                    onClick={onUpdateSavedOpportunity}
+                  >
+                    <IoMdBookmark style={{ width: "20px", height: "20px" }} />
+
+                    <span className="ml-1">
+                      {isOppSaved ? "Opportunty saved" : "Save opportunity"}
+                    </span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-primary normal-case text-white md:w-[250px]"
+                    onClick={onGoToOpportunity}
+                    disabled={!opportunityInfo.url}
+                  >
+                    <Image
+                      src={iconOpen}
+                      alt="Icon Open"
+                      width={20}
+                      height={20}
+                      sizes="100vw"
+                      priority={true}
+                      style={{ width: "20px", height: "20px" }}
+                    />
+
+                    <span className="ml-1">Proceed</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </ReactModal>
+
+          {/* UPLOAD/COMPLETE OPPORTUNITY DIALOG */}
+          <ReactModal
+            isOpen={completeOpportunityDialogVisible}
+            shouldCloseOnOverlayClick={false}
+            onRequestClose={() => {
+              setCompleteOpportunityDialogVisible(false);
+            }}
+            className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[650px] md:w-[600px] md:rounded-3xl`}
+            portalClassName={"fixed z-40"}
+            overlayClassName="fixed inset-0 bg-overlay"
+          >
+            <OpportunityCompletionEdit
+              id="op-complete"
+              opportunityInfo={opportunityInfo}
+              onClose={() => {
+                setCompleteOpportunityDialogVisible(false);
               }}
-            >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
-            </button>
-          </div>
-          <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                height={28}
-                sizes="100vw"
-                priority={true}
-                style={{ width: "28px", height: "28px" }}
-              />
+              onSave={onOpportunityCompleted}
+            />
+          </ReactModal>
+
+          {/* COMPLETE SUCCESS DIALOG */}
+          <ReactModal
+            isOpen={completeOpportunitySuccessDialogVisible}
+            shouldCloseOnOverlayClick={false}
+            onRequestClose={() => {
+              setCompleteOpportunitySuccessDialogVisible(false);
+            }}
+            className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-3xl`}
+            portalClassName={"fixed z-40"}
+            overlayClassName="fixed inset-0 bg-overlay"
+          >
+            <div className="flex w-full flex-col gap-2">
+              <div className="flex flex-row bg-green p-4 shadow-lg">
+                <h1 className="flex-grow"></h1>
+                <button
+                  type="button"
+                  className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                  onClick={() => {
+                    setCompleteOpportunitySuccessDialogVisible(false);
+                  }}
+                >
+                  <IoMdClose className="h-6 w-6"></IoMdClose>
+                </button>
+              </div>
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                  <Image
+                    src={iconSmiley}
+                    alt="Icon Smiley"
+                    width={28}
+                    height={28}
+                    sizes="100vw"
+                    priority={true}
+                    style={{ width: "28px", height: "28px" }}
+                  />
+                </div>
+                <h3>Submitted!</h3>
+                <div className="rounded-lg p-4 text-center md:w-[450px]">
+                  <strong>{opportunityInfo.organizationName}</strong> is busy
+                  reviewing your submission. Once approved, the opportunity will
+                  be automatically added to your CV. This may take between 3-4
+                  business days.
+                </div>
+                <div className="mt-4 flex flex-grow gap-4">
+                  <button
+                    type="button"
+                    className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[200px]"
+                    onClick={() =>
+                      setCompleteOpportunitySuccessDialogVisible(false)
+                    }
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
             </div>
+          </ReactModal>
 
-            <h5>Please sign-in to continue</h5>
-
-            <div className="mt-4 flex flex-grow gap-4">
-              <button
-                type="button"
-                className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
-                onClick={() => setLoginDialogVisible(false)}
-              >
-                <IoMdClose className="h-5 w-5 text-purple" /> Cancel
-              </button>
-
-              <SignInButton className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light disabled:border-0 disabled:bg-purple-light md:w-[150px]" />
+          {/* CANCEL OPPORTUNITY COMPLETION DIALOG */}
+          <ReactModal
+            isOpen={cancelOpportunityDialogVisible}
+            shouldCloseOnOverlayClick={false}
+            onRequestClose={() => {
+              setCancelOpportunityDialogVisible(false);
+            }}
+            className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:overflow-y-hidden md:rounded-3xl`}
+            portalClassName={"fixed z-40"}
+            overlayClassName="fixed inset-0 bg-overlay"
+          >
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-row bg-green p-4 shadow-lg">
+                <h1 className="flex-grow"></h1>
+                <button
+                  type="button"
+                  className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                  onClick={() => {
+                    setCancelOpportunityDialogVisible(false);
+                  }}
+                >
+                  <IoMdClose className="h-6 w-6"></IoMdClose>
+                </button>
+              </div>
+              <div className="flex flex-col items-center justify-center gap-4">
+                <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                  <Image
+                    src={iconBell}
+                    alt="Icon Bell"
+                    width={28}
+                    height={28}
+                    sizes="100vw"
+                    priority={true}
+                    style={{ width: "28px", height: "28px" }}
+                  />
+                </div>
+                <h3>Your application is pending verification.</h3>
+                <div className="rounded-lg p-4 text-center md:w-[450px]">
+                  <strong>{opportunityInfo.organizationName}</strong> is busy
+                  reviewing your submission. Once approved, the opportunity will
+                  be automatically added to your CV. If you would like to cancel
+                  your application and delete all uploaded files, click the
+                  button below.
+                </div>
+                <div className="mt-4 flex flex-grow gap-4">
+                  <button
+                    type="button"
+                    className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[200px]"
+                    onClick={onOpportunityCancel}
+                  >
+                    Cancel submission & Delete all files
+                  </button>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      </ReactModal>
+          </ReactModal>
 
-      {/* GO-TO OPPORTUNITY DIALOG */}
-      <ReactModal
-        isOpen={gotoOpportunityDialogVisible}
-        shouldCloseOnOverlayClick={false}
-        onRequestClose={() => {
-          setGotoOpportunityDialogVisible(false);
-        }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[440px] md:w-[600px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
-      >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-10">
-          <div className="flex flex-row bg-green p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
-            <button
-              type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
-              onClick={() => {
-                setGotoOpportunityDialogVisible(false);
+          {/* SHARE OPPORTUNITY DIALOG */}
+          {opportunityInfo && (
+            <ReactModal
+              isOpen={shareOpportunityDialogVisible}
+              shouldCloseOnOverlayClick={false}
+              onRequestClose={() => {
+                setShareOpportunityDialogVisible(false);
               }}
+              className={`fixed bottom-0 left-0 right-0 top-0 w-full flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[500px] md:w-[600px] md:rounded-3xl`}
+              portalClassName={"fixed z-40"}
+              overlayClassName="fixed inset-0 bg-overlay"
             >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
-            </button>
-          </div>
-          <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                height={28}
-                sizes="100vw"
-                priority={true}
-                style={{ width: "28px", height: "28px" }}
+              <Share
+                opportunity={opportunityInfo}
+                onClose={() => setShareOpportunityDialogVisible(false)}
               />
-            </div>
-            <h3>You are now leaving Yoma</h3>
-            <div className="rounded-lg bg-gray p-4 text-center md:w-[450px]">
-              Remember to <strong>upload your completion certificate</strong> on
-              this page upon finishing to <strong>earn your ZLTO</strong>.
-            </div>
-
-            <div className="text-center md:w-[450px]">
-              Be mindful of external sites&apos; privacy policy and keep your
-              data private.
-            </div>
-
-            <div className="mt-4 flex w-full flex-grow flex-col justify-center gap-4 md:flex-row">
-              <button
-                type="button"
-                className={
-                  "btn btn-outline rounded-full border-purple bg-white normal-case text-purple hover:text-purple md:w-[250px]" +
-                  `${
-                    isOppSaved
-                      ? " border-none bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow"
-                      : ""
-                  }`
-                }
-                onClick={onUpdateSavedOpportunity}
-              >
-                <IoMdBookmark style={{ width: "20px", height: "20px" }} />
-
-                <span className="ml-1">
-                  {isOppSaved ? "Opportunty saved" : "Save opportunity"}
-                </span>
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary normal-case text-white md:w-[250px]"
-                onClick={onGoToOpportunity}
-                disabled={!opportunityInfo.url}
-              >
-                <Image
-                  src={iconOpen}
-                  alt="Icon Open"
-                  width={20}
-                  height={20}
-                  sizes="100vw"
-                  priority={true}
-                  style={{ width: "20px", height: "20px" }}
-                />
-
-                <span className="ml-1">Proceed</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </ReactModal>
-
-      {/* UPLOAD/COMPLETE OPPORTUNITY DIALOG */}
-      <ReactModal
-        isOpen={completeOpportunityDialogVisible}
-        shouldCloseOnOverlayClick={false}
-        onRequestClose={() => {
-          setCompleteOpportunityDialogVisible(false);
-        }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[650px] md:w-[600px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
-      >
-        <OpportunityCompletionEdit
-          id="op-complete"
-          opportunityInfo={opportunityInfo}
-          onClose={() => {
-            setCompleteOpportunityDialogVisible(false);
-          }}
-          onSave={onOpportunityCompleted}
-        />
-      </ReactModal>
-
-      {/* COMPLETE SUCCESS DIALOG */}
-      <ReactModal
-        isOpen={completeOpportunitySuccessDialogVisible}
-        shouldCloseOnOverlayClick={false}
-        onRequestClose={() => {
-          setCompleteOpportunitySuccessDialogVisible(false);
-        }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
-      >
-        <div className="flex w-full flex-col gap-2">
-          <div className="flex flex-row bg-green p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
-            <button
-              type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
-              onClick={() => {
-                setCompleteOpportunitySuccessDialogVisible(false);
-              }}
-            >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
-            </button>
-          </div>
-          <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <Image
-                src={iconSmiley}
-                alt="Icon Smiley"
-                width={28}
-                height={28}
-                sizes="100vw"
-                priority={true}
-                style={{ width: "28px", height: "28px" }}
-              />
-            </div>
-            <h3>Submitted!</h3>
-            <div className="rounded-lg p-4 text-center md:w-[450px]">
-              <strong>{opportunityInfo.organizationName}</strong> is busy
-              reviewing your submission. Once approved, the opportunity will be
-              automatically added to your CV. This may take between 3-4 business
-              days.
-            </div>
-            <div className="mt-4 flex flex-grow gap-4">
-              <button
-                type="button"
-                className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[200px]"
-                onClick={() =>
-                  setCompleteOpportunitySuccessDialogVisible(false)
-                }
-              >
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      </ReactModal>
-
-      {/* CANCEL OPPORTUNITY COMPLETION DIALOG */}
-      <ReactModal
-        isOpen={cancelOpportunityDialogVisible}
-        shouldCloseOnOverlayClick={false}
-        onRequestClose={() => {
-          setCancelOpportunityDialogVisible(false);
-        }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:overflow-y-hidden md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
-      >
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-row bg-green p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
-            <button
-              type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
-              onClick={() => {
-                setCancelOpportunityDialogVisible(false);
-              }}
-            >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
-            </button>
-          </div>
-          <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                height={28}
-                sizes="100vw"
-                priority={true}
-                style={{ width: "28px", height: "28px" }}
-              />
-            </div>
-            <h3>Your application is pending verification.</h3>
-            <div className="rounded-lg p-4 text-center md:w-[450px]">
-              <strong>{opportunityInfo.organizationName}</strong> is busy
-              reviewing your submission. Once approved, the opportunity will be
-              automatically added to your CV. If you would like to cancel your
-              application and delete all uploaded files, click the button below.
-            </div>
-            <div className="mt-4 flex flex-grow gap-4">
-              <button
-                type="button"
-                className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[200px]"
-                onClick={onOpportunityCancel}
-              >
-                Cancel submission & Delete all files
-              </button>
-            </div>
-          </div>
-        </div>
-      </ReactModal>
-
-      {/* SHARE OPPORTUNITY DIALOG */}
-      {opportunityInfo && (
-        <ReactModal
-          isOpen={shareOpportunityDialogVisible}
-          shouldCloseOnOverlayClick={false}
-          onRequestClose={() => {
-            setShareOpportunityDialogVisible(false);
-          }}
-          className={`fixed bottom-0 left-0 right-0 top-0 w-full flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[500px] md:w-[600px] md:rounded-3xl`}
-          portalClassName={"fixed z-40"}
-          overlayClassName="fixed inset-0 bg-overlay"
-        >
-          <Share
-            opportunity={opportunityInfo}
-            onClose={() => setShareOpportunityDialogVisible(false)}
-          />
-        </ReactModal>
+            </ReactModal>
+          )}
+        </>
       )}
 
       {opportunityInfo && (
@@ -571,8 +580,9 @@ const OpportunityPublicDetails: React.FC<{
                       opportunityInfo.status !== "Expired" && (
                         <button
                           type="button"
-                          className="btn btn-sm h-10 w-full rounded-full bg-green normal-case text-white hover:bg-green-dark md:w-[250px]"
+                          className="disabledxx:border-white disabledxx:text-gray-dark btn btn-sm h-10 w-full rounded-full bg-green normal-case text-white hover:bg-green-dark disabled:border-0 disabled:bg-green disabled:text-white md:w-[250px]"
                           onClick={() => setGotoOpportunityDialogVisible(true)}
+                          disabled={preview}
                         >
                           <Image
                             src={iconOpen}
@@ -675,7 +685,7 @@ const OpportunityPublicDetails: React.FC<{
                         !(
                           opportunityInfo.published &&
                           opportunityInfo.status == "Active"
-                        )
+                        ) || preview
                       }
                     >
                       <IoMdBookmark className="mr-1 h-5 w-5" />
@@ -692,7 +702,7 @@ const OpportunityPublicDetails: React.FC<{
                         !(
                           opportunityInfo.published &&
                           opportunityInfo.status == "Active"
-                        )
+                        ) || preview
                       }
                     >
                       <IoMdShare className="mr-1 h-5 w-5" />
@@ -705,7 +715,7 @@ const OpportunityPublicDetails: React.FC<{
           </div>
 
           <div className="flex flex-col gap-4 md:flex-row">
-            <div className="flex-grow rounded-lg bg-white p-4 shadow-lg md:w-[66%] md:p-6">
+            <div className="md:p-6xx p-4xx flex-grow rounded-lg bg-white p-2 shadow-lg md:w-[66%]">
               {/* <div style={{ whiteSpace: "pre-wrap" }}>
                 {opportunityInfo.description}
               </div> */}

@@ -47,7 +47,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
         </div>
         <div className="mb-auto flex max-w-[280px] flex-row">
           <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-ellipsis text-sm font-light">
-            {data.description}
+            {data.summary}
           </p>
         </div>
 

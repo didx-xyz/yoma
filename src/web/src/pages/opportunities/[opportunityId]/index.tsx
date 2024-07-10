@@ -135,6 +135,7 @@ const OpportunityDetails: NextPageWithLayout<{
           opportunityInfo={opportunityInfo}
           user={user}
           error={error}
+          preview={false}
         />
       </div>
     </>

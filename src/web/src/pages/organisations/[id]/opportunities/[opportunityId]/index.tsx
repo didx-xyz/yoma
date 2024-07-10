@@ -100,7 +100,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { IoMdWarning } from "react-icons/io";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import { Editor } from "~/components/Editor/Editor";
+import { Editor } from "~/components/RichText/Editor";
 import { OpportunityPublicSmallComponent } from "~/components/Opportunity/OpportunityPublicSmall";
 import { Organization } from "~/api/models/organisation";
 import { getOrganisationById } from "~/api/services/organisations";
@@ -200,79 +200,132 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   const [loadingUpdateInactive, setLoadingUpdateInactive] = useState(false);
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [cacheSkills, setCacheSkills] = useState<Skill[]>([]);
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(oppExpiredModalVisible || saveChangesDialogVisible);
 
-  // 👇 use prefetched queries from server
-  const { data: categories } = useQuery<SelectOption[]>({
-    queryKey: ["categories", "selectOptions"],
-    queryFn: async () =>
-      (await getCategories()).map((c) => ({
+  //#region Queries
+
+  // Categories
+  const { data: categoriesData } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => getCategories(),
+    enabled: !error,
+  });
+  const categoriesOptions = useMemo<SelectOption[]>(
+    () =>
+      categoriesData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
+      })) ?? [],
+    [categoriesData],
+  );
+
+  // Countries
+  const { data: countriesData } = useQuery({
+    queryKey: ["countries"],
+    queryFn: async () => getCountries(),
     enabled: !error,
   });
-  const { data: countries } = useQuery<SelectOption[]>({
-    queryKey: ["countries", "selectOptions"],
-    queryFn: async () =>
-      (await getCountries()).map((c) => ({
+  const countriesOptions = useMemo<SelectOption[]>(
+    () =>
+      countriesData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
+      })) ?? [],
+    [countriesData],
+  );
+
+  // Languages
+  const { data: languagesData } = useQuery({
+    queryKey: ["languages"],
+    queryFn: async () => getLanguages(),
     enabled: !error,
   });
-  const { data: languages } = useQuery<SelectOption[]>({
-    queryKey: ["languages", "selectOptions"],
-    queryFn: async () =>
-      (await getLanguages()).map((c) => ({
+  const languagesOptions = useMemo<SelectOption[]>(
+    () =>
+      languagesData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
+      })) ?? [],
+    [languagesData],
+  );
+
+  // Opportunity Types
+  const { data: opportunityTypesData } = useQuery({
+    queryKey: ["opportunityTypes"],
+    queryFn: async () => getTypes(),
     enabled: !error,
   });
-  const { data: opportunityTypes } = useQuery<SelectOption[]>({
-    queryKey: ["opportunityTypes", "selectOptions"],
-    queryFn: async () =>
-      (await getTypes()).map((c) => ({
+  const opportunityTypesOptions = useMemo<SelectOption[]>(
+    () =>
+      opportunityTypesData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
+      })) ?? [],
+    [opportunityTypesData],
+  );
+
+  // Verification Types
+  const { data: verificationTypesData } = useQuery({
+    queryKey: ["verificationTypes"],
+    queryFn: async () => getVerificationTypes(),
     enabled: !error,
   });
-  const { data: verificationTypes } = useQuery<OpportunityVerificationType[]>({
-    queryKey: ["verificationTypes", "selectOptions"],
-    queryFn: async () => await getVerificationTypes(),
+
+  // Difficulties
+  const verificationTypesOptions = useMemo<OpportunityVerificationType[]>(
+    () => verificationTypesData ?? [],
+    [verificationTypesData],
+  );
+
+  // Difficulties
+  const { data: difficultiesData } = useQuery({
+    queryKey: ["difficulties"],
+    queryFn: async () => getDifficulties(),
     enabled: !error,
   });
-  const { data: difficulties } = useQuery<SelectOption[]>({
-    queryKey: ["difficulties", "selectOptions"],
-    queryFn: async () =>
-      (await getDifficulties()).map((c) => ({
+  const difficultiesOptions = useMemo<SelectOption[]>(
+    () =>
+      difficultiesData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
+      })) ?? [],
+    [difficultiesData],
+  );
+
+  // Time Intervals
+  const { data: timeIntervalsData } = useQuery({
+    queryKey: ["timeIntervals"],
+    queryFn: async () => getTimeIntervals(),
     enabled: !error,
   });
-  const { data: timeIntervals } = useQuery<SelectOption[]>({
-    queryKey: ["timeIntervals", "selectOptions"],
-    queryFn: async () =>
-      (await getTimeIntervals()).map((c) => ({
+  const timeIntervalsOptions = useMemo<SelectOption[]>(
+    () =>
+      timeIntervalsData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
+      })) ?? [],
+    [timeIntervalsData],
+  );
+
+  // Engagement Types
+  const { data: engagementTypesData } = useQuery({
+    queryKey: ["engagementTypes"],
+    queryFn: async () => getEngagementTypes(),
     enabled: !error,
   });
-  const { data: engagementTypes } = useQuery<SelectOption[]>({
-    queryKey: ["engagementTypes", "selectOptions"],
-    queryFn: async () =>
-      (await getEngagementTypes()).map((c) => ({
+  const engagementTypesOptions = useMemo<SelectOption[]>(
+    () =>
+      engagementTypesData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
-    enabled: !error,
-  });
+      })) ?? [],
+    [engagementTypesData],
+  );
+
+  // Schemas
   const { data: schemas } = useQuery({
     queryKey: ["schemas"],
     queryFn: async () => getSchemas(SchemaType.Opportunity),
@@ -287,17 +340,23 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     [schemas],
   );
 
+  // Opportunity
+  // 👇 use prefetched query from server
   const { data: opportunity } = useQuery<Opportunity>({
     queryKey: ["opportunity", opportunityId],
     queryFn: () => getOpportunityById(opportunityId),
     enabled: opportunityId !== "create" && !error,
   });
+
+  // Organisation
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
     queryFn: () => getOrganisationById(id),
     enabled: !error,
   });
+  //#endregion Queries
 
+  //#region Form
   const [formData, setFormData] = useState<OpportunityRequestBase>({
     id: opportunity?.id ?? null,
     title: opportunity?.title ?? "",
@@ -582,18 +641,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     defaultValues: formData,
   });
 
-  // scroll to top on step change
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [step]);
-
-  // on schema select, show the schema attributes
-  const schemaAttributes = useMemo(() => {
-    if (watcSSISchemaName) {
-      return schemas?.find((x) => x.name === watcSSISchemaName)?.entities ?? [];
-    } else return [];
-  }, [schemas, watcSSISchemaName]);
-
   // memo for dirty fields
   // because the "isDirty" property on useForm is not working as expected
   const isDirtyStep1 = useMemo(
@@ -624,44 +671,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     () => Object.keys(formStateStep7.dirtyFields).length > 0,
     [formStateStep7],
   );
+  //#endregion Form
 
-  //* SKILLS
-  // cache skills for name lookups
-  const [cacheSkills, setCacheSkills] = useState<Skill[]>([]);
-
-  // popuplate the cache with the skills from the opportunity
-  useEffect(() => {
-    if (opportunity?.skills) {
-      setCacheSkills((prev) => [...prev, ...(opportunity.skills ?? [])]);
-    }
-  }, [opportunity?.skills, setCacheSkills]);
-
-  // load data asynchronously for the skills dropdown
-  // debounce is used to prevent the API from being called too frequently
-  const loadSkills = debounce(
-    (inputValue: string, callback: (options: any) => void) => {
-      getSkills({
-        nameContains: (inputValue ?? []).length > 2 ? inputValue : null,
-        pageNumber: 1,
-        pageSize: PAGE_SIZE_MEDIUM,
-      }).then((data) => {
-        const options = data.items.map((item) => ({
-          value: item.id,
-          label: item.name,
-        }));
-        callback(options);
-        // add to cache
-        data.items.forEach((item) => {
-          if (!cacheSkills.some((x) => x.id === item.id)) {
-            setCacheSkills((prev) => [...prev, item]);
-          }
-        });
-      });
-    },
-    1000,
-  );
-
-  //* SAVE CHANGES DIALOG
+  //#region Event Handlers
   const onClick_Menu = useCallback(
     (nextStep: number) => {
       let isDirtyStep = false;
@@ -840,7 +852,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     [setIsLoading, id, opportunityId, opportunity, queryClient, router],
   );
 
-  // form submission handler
   const onSubmitStep = useCallback(
     async (step: number, data: FieldValues) => {
       // set form data
@@ -909,12 +920,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     ],
   );
 
-  useEffect(() => {
-    if ((opportunity?.status as any) == "Expired") {
-      setOppExpiredModalVisible(true);
-    }
-  }, [opportunity?.status, setOppExpiredModalVisible]);
-
   const updateStatus = useCallback(
     async (status: Status) => {
       setLoadingUpdateInactive(true);
@@ -953,6 +958,40 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     [opportunityId, queryClient],
   );
 
+  // load data asynchronously for the skills dropdown
+  // debounce is used to prevent the API from being called too frequently
+  const loadSkills = debounce(
+    (inputValue: string, callback: (options: any) => void) => {
+      getSkills({
+        nameContains: (inputValue ?? []).length > 2 ? inputValue : null,
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MEDIUM,
+      }).then((data) => {
+        const options = data.items.map((item) => ({
+          value: item.id,
+          label: item.name,
+        }));
+        callback(options);
+        // add to cache
+        data.items.forEach((item) => {
+          if (!cacheSkills.some((x) => x.id === item.id)) {
+            setCacheSkills((prev) => [...prev, item]);
+          }
+        });
+      });
+    },
+    1000,
+  );
+  //#endregion Event Handlers
+
+  //#region Form Behavior
+  useEffect(() => {
+    // show the expired modal if the opportunity is expired
+    if ((opportunity?.status as any) == "Expired") {
+      setOppExpiredModalVisible(true);
+    }
+  }, [opportunity?.status, setOppExpiredModalVisible]);
+
   useEffect(() => {
     // if verification is disabled, uncheck credential issuance, clear verification method, clear schema, clear participantLimit
     if (!watchVerificationEnabled) {
@@ -966,6 +1005,25 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     }
   }, [watchVerificationEnabled, setFormData]);
 
+  useEffect(() => {
+    // scroll to top on step change
+    window.scrollTo(0, 0);
+  }, [step]);
+
+  // on schema select, show the schema attributes
+  const schemaAttributes = useMemo(() => {
+    if (watcSSISchemaName) {
+      return schemas?.find((x) => x.name === watcSSISchemaName)?.entities ?? [];
+    } else return [];
+  }, [schemas, watcSSISchemaName]);
+
+  useEffect(() => {
+    // popuplate the cache with the skills from the opportunity
+    if (opportunity?.skills) {
+      setCacheSkills((prev) => [...prev, ...(opportunity.skills ?? [])]);
+    }
+  }, [opportunity?.skills, setCacheSkills]);
+
   // this is used by the preview components
   const opportunityInfo = useMemo<OpportunityInfo>(
     () => ({
@@ -973,8 +1031,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       title: formData.title,
       description: formData.description,
       type:
-        formData.typeId && opportunityTypes
-          ? opportunityTypes.find((x) => x.value == formData.typeId)?.label!
+        formData.typeId && opportunityTypesData
+          ? opportunityTypesData.find((x) => x.id == formData.typeId)?.name!
           : "",
       organizationId: id,
       organizationName: organisation ? organisation.name : "",
@@ -989,13 +1047,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       verificationEnabled: formData.verificationEnabled ?? false,
       verificationMethod: formData.verificationMethod,
       difficulty:
-        formData.difficultyId && difficulties
-          ? difficulties.find((x) => x.value == formData.difficultyId)?.label!
+        formData.difficultyId && difficultiesData
+          ? difficultiesData.find((x) => x.id == formData.difficultyId)?.name!
           : "",
       commitmentInterval:
-        formData.commitmentIntervalId && timeIntervals
-          ? timeIntervals.find((x) => x.value == formData.commitmentIntervalId)
-              ?.label!
+        formData.commitmentIntervalId && timeIntervalsData
+          ? timeIntervalsData.find((x) => x.id == formData.commitmentIntervalId)
+              ?.name!
           : "",
       commitmentIntervalCount: formData.commitmentIntervalCount ?? 0,
       commitmentIntervalDescription: "",
@@ -1013,37 +1071,54 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       dateEnd: formData.dateEnd ?? "",
       featured: false,
       engagementType:
-        formData.engagementTypeId && engagementTypes
-          ? engagementTypes.find((x) => x.value == formData.engagementTypeId)
-              ?.label!
+        formData.engagementTypeId && engagementTypesData
+          ? engagementTypesData.find((x) => x.id == formData.engagementTypeId)
+              ?.name!
           : "",
       published: true,
       yomaInfoURL: "",
       categories:
-        formData.categories && categories
+        formData.categories && categoriesData
           ? formData.categories?.map(
-              (x) => categories.find((y) => y.value == x)?.label!,
+              (x) => categoriesData.find((y) => y.id == x)!,
             )
           : [],
       countries:
-        formData.countries && countries
+        formData.countries && countriesData
           ? formData.countries?.map(
-              (x) => countries.find((y) => y.value == x)?.label!,
+              (x) => countriesData.find((y) => y.id == x)!,
             )
           : [],
       languages:
-        formData.languages && languages
+        formData.languages && languagesData
           ? formData.languages?.map(
-              (x) => languages.find((y) => y.value == x)?.label!,
+              (x) => languagesData.find((y) => y.id == x)!,
             )
           : [],
-      skills: [], //formData.skills as Skill[] | null,
+      skills:
+        formData.skills && cacheSkills
+          ? formData.skills?.map((x) => cacheSkills.find((y) => y.id == x)!)
+          : [],
       verificationTypes: formData.verificationTypes as
         | OpportunityVerificationType[]
         | null,
     }),
-    [formData, organisation, opportunityId, id, timeIntervals],
+    [
+      formData,
+      organisation,
+      opportunityId,
+      id,
+      opportunityTypesData,
+      difficultiesData,
+      timeIntervalsData,
+      engagementTypesData,
+      categoriesData,
+      countriesData,
+      languagesData,
+      cacheSkills,
+    ],
   );
+  //#endregion Form Behavior
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -1498,9 +1573,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             classNames={{
                               control: () => "input !border-gray",
                             }}
-                            options={opportunityTypes}
+                            options={opportunityTypesOptions}
                             onChange={(val) => onChange(val?.value)}
-                            value={opportunityTypes?.find(
+                            value={opportunityTypesOptions?.find(
                               (c) => c.value === value,
                             )}
                             styles={{
@@ -1538,9 +1613,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             classNames={{
                               control: () => "input !border-gray",
                             }}
-                            options={engagementTypes}
+                            options={engagementTypesOptions}
                             onChange={(val) => onChange(val ? val.value : null)}
-                            value={engagementTypes?.find(
+                            value={engagementTypesOptions?.find(
                               (c) => c.value === value,
                             )}
                             styles={{
@@ -1580,11 +1655,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               control: () => "input !border-gray py-1 h-fit",
                             }}
                             isMulti={true}
-                            options={categories}
+                            options={categoriesOptions}
                             onChange={(val) =>
                               onChange(val?.map((c) => c.value ?? ""))
                             }
-                            value={categories?.filter(
+                            value={categoriesOptions?.filter(
                               (c) => value?.includes(c.value),
                             )}
                             styles={{
@@ -1664,7 +1739,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         control={controlStep1}
                         name="description"
                         render={({ field: { onChange, value } }) => (
-                          <Editor value={value} readonly={false} onChange={onChange} />
+                          <Editor
+                            value={value}
+                            readonly={false}
+                            onChange={onChange}
+                          />
                         )}
                       />
 
@@ -1732,11 +1811,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               control: () => "input !border-gray h-fit py-1",
                             }}
                             isMulti={true}
-                            options={languages}
+                            options={languagesOptions}
                             onChange={(val) =>
                               onChange(val.map((c) => c.value))
                             }
-                            value={languages?.filter(
+                            value={languagesOptions?.filter(
                               (c) => value?.includes(c.value),
                             )}
                             styles={{
@@ -1775,11 +1854,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               control: () => "input !border-gray h-fit py-1",
                             }}
                             isMulti={true}
-                            options={countries}
+                            options={countriesOptions}
                             onChange={(val) =>
                               onChange(val.map((c) => c.value))
                             }
-                            value={countries?.filter(
+                            value={countriesOptions?.filter(
                               (c) => value?.includes(c.value),
                             )}
                             styles={{
@@ -1818,9 +1897,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               control: () => "input !border-gray",
                             }}
                             isMulti={false}
-                            options={difficulties}
+                            options={difficultiesOptions}
                             onChange={(val) => onChange(val?.value)}
-                            value={difficulties?.find((c) => c.value === value)}
+                            value={difficultiesOptions?.find(
+                              (c) => c.value === value,
+                            )}
                             styles={{
                               placeholder: (base) => ({
                                 ...base,
@@ -1876,9 +1957,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               classNames={{
                                 control: () => "input !border-gray",
                               }}
-                              options={timeIntervals}
+                              options={timeIntervalsOptions}
                               onChange={(val) => onChange(val?.value)}
-                              value={timeIntervals?.find(
+                              value={timeIntervalsOptions?.find(
                                 (c) => c.value === value,
                               )}
                               styles={{
@@ -2522,7 +2603,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           </label>
 
                           <div className="flex flex-col gap-1">
-                            {verificationTypes?.map((item) => (
+                            {verificationTypesOptions?.map((item) => (
                               <div
                                 className="flex flex-col"
                                 key={`verificationTypes_${item.id}`}
@@ -2898,7 +2979,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <div className="flex flex-col gap-2">
                       <h6 className="text-sm font-bold">Search Results</h6>
 
-                      <div className="flex flex-row items-center rounded-lg border-[1px] border-green p-2 shadow-lg">
+                      <div className="flex flex-row items-center rounded-lg border-[1px] border-gray p-2">
                         <IoInformationCircleOutline className="mr-2 h-6 w-6 text-green" />
 
                         <span className="text-xs">
@@ -2920,7 +3001,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <div className="flex flex-col gap-2">
                       <h6 className="text-sm font-bold">Details Page</h6>
 
-                      <div className="flex flex-row items-center rounded-lg border-[1px] border-green p-2 shadow-lg">
+                      <div className="flex flex-row items-center rounded-lg border-[1px] border-gray p-2">
                         <IoInformationCircleOutline className="mr-2 h-6 w-6 text-green" />
 
                         <span className="text-xs">
@@ -2934,6 +3015,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           opportunityInfo={opportunityInfo}
                           user={null}
                           error={error}
+                          preview={true}
                         />
                       </div>
                     </div>

@@ -1,5 +1,4 @@
 import {
-  AdmonitionDirectiveDescriptor,
   BlockTypeSelect,
   BoldItalicUnderlineToggles,
   ChangeAdmonitionType,
@@ -13,23 +12,11 @@ import {
   InsertTable,
   InsertThematicBreak,
   ListsToggle,
-  MDXEditor,
   Separator,
   StrikeThroughSupSubToggles,
   UndoRedo,
-  directivesPlugin,
-  headingsPlugin,
-  //imagePlugin,
-  linkDialogPlugin,
-  linkPlugin,
-  listsPlugin,
-  quotePlugin,
-  tablePlugin,
-  thematicBreakPlugin,
-  toolbarPlugin,
 } from "@mdxeditor/editor";
-import "@mdxeditor/editor/style.css";
-import React, { useState } from "react";
+import React from "react";
 
 export type AdmonitionKind = "note" | "tip" | "danger" | "info" | "caution";
 
@@ -91,47 +78,5 @@ export const Toolbar: React.FC = () => {
         ]}
       />
     </>
-  );
-};
-
-export const Editor: React.FC<{
-  value: string;
-  readonly: boolean;
-  onChange?: (value: string) => void;
-}> = ({ value, readonly, onChange }) => {
-  const [valueState, setValueState] = useState(value);
-
-  return (
-    <MDXEditor
-      markdown={value}
-      plugins={[
-        toolbarPlugin({
-          toolbarContents: () => (readonly ? <></> : <Toolbar />),
-        }),
-        listsPlugin(),
-        quotePlugin(),
-        headingsPlugin({ allowedHeadingLevels: [1, 2, 3, 4, 5, 6] }),
-        linkPlugin(),
-        linkDialogPlugin(),
-        // imagePlugin({
-        //   imageAutocompleteSuggestions: [
-        //     "https://via.placeholder.com/150",
-        //     "https://via.placeholder.com/150",
-        //   ],
-        //   imageUploadHandler: async () =>
-        //     Promise.resolve("https://picsum.photos/200/300"),
-        // }),
-        tablePlugin(),
-        thematicBreakPlugin(),
-        directivesPlugin({
-          directiveDescriptors: [AdmonitionDirectiveDescriptor],
-        }),
-      ]}
-      onChange={(val) => {
-        setValueState(val);
-        onChange && onChange(val);
-      }}
-      readOnly={readonly}
-    />
   );
 };
