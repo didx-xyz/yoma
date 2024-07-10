@@ -33,23 +33,23 @@ namespace Yoma.Core.Domain.EmailProvider.Services
       {
         try
         {
-          _logger.LogInformation("EmailType '{type}' | SettingKey '{settingKey}' | Email '{emailAddress}': Evaluating", type, settingKey, recipient.Email);
+          _logger.LogInformation("SettingKey '{settingKey}' | Email '{emailAddress}': Evaluating", settingKey, recipient.Email);
 
           var settingsInfo = _userService.GetSettingsInfoByEmail(recipient.Email);
           var settingValue = SettingsHelper.GetValue<bool>(settingsInfo, settingKey);
 
           if (settingValue == false)
           {
-            _logger.LogInformation("EmailType '{type}' | SettingKey '{settingKey}' | Email '{emailAddress}': Not sent", type, settingKey, recipient.Email);
+            _logger.LogInformation("SettingKey '{settingKey}' | Email '{emailAddress}': Not sent", settingKey, recipient.Email);
             continue;
           }
 
           result.Add(recipient);
-          _logger.LogInformation("EmailType '{type}' | SettingKey '{settingKey}' | Email '{emailAddress}': Sent", type, settingKey, recipient.Email);
+          _logger.LogInformation("SettingKey '{settingKey}' | Email '{emailAddress}': Sent", settingKey, recipient.Email);
         }
         catch (Exception ex)
         {
-          _logger.LogError(ex, "EmailType '{type}' | SettingKey '{settingKey}' | Email '{emailAddress}': Error, sent anyway", type, settingKey, recipient.Email);
+          _logger.LogError(ex, "SettingKey '{settingKey}' | Email '{emailAddress}': Error, sent anyway", settingKey, recipient.Email);
           result.Add(recipient);
         }
       }
