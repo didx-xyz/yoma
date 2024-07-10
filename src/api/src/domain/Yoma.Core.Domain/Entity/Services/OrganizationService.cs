@@ -38,6 +38,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IBlobService _blobService;
     private readonly ISSITenantService _ssiTenantService;
     private readonly IEmailURLFactory _emailURLFactory;
+    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly OrganizationRequestValidatorCreate _organizationCreateRequestValidator;
     private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
@@ -67,6 +68,7 @@ namespace Yoma.Core.Domain.Entity.Services
         IBlobService blobService,
         ISSITenantService ssiTenantService,
         IEmailURLFactory emailURLFactory,
+        IEmailPreferenceFilterService emailPreferenceFilterService,
         IEmailProviderClientFactory emailProviderClientFactory,
         OrganizationRequestValidatorCreate organizationCreateRequestValidator,
         OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
@@ -88,6 +90,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _blobService = blobService;
       _ssiTenantService = ssiTenantService;
       _emailURLFactory = emailURLFactory;
+      _emailPreferenceFilterService = emailPreferenceFilterService;
       _emailProviderClient = emailProviderClientFactory.CreateClient();
       _organizationCreateRequestValidator = organizationCreateRequestValidator;
       _organizationUpdateRequestValidator = organizationUpdateRequestValidator;
@@ -1204,6 +1207,7 @@ namespace Yoma.Core.Domain.Entity.Services
             throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
         }
 
+        recipients = _emailPreferenceFilterService.FilterRecipients(type, recipients);
         if (recipients == null || recipients.Count == 0) return;
 
         var data = new EmailOrganizationApproval

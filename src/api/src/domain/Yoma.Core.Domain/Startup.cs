@@ -78,6 +78,7 @@ namespace Yoma.Core.Domain
       #endregion Core
 
       #region EmailProvider
+      services.AddScoped<IEmailPreferenceFilterService, EmailPreferenceFilterService>();
       services.AddScoped<IEmailURLFactory, EmailURLFactory>();
       #endregion EmailProvider
 

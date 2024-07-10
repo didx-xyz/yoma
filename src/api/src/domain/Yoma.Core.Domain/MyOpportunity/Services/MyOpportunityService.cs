@@ -53,6 +53,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IRewardService _rewardService;
     private readonly ILinkService _linkService;
     private readonly IEmailURLFactory _emailURLFactory;
+    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
@@ -81,6 +82,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         IRewardService rewardService,
         ILinkService linkService,
         IEmailURLFactory emailURLFactory,
+        IEmailPreferenceFilterService emailPreferenceFilterService,
         IEmailProviderClientFactory emailProviderClientFactory,
         MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
@@ -105,6 +107,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _rewardService = rewardService;
       _linkService = linkService;
       _emailURLFactory = emailURLFactory;
+      _emailPreferenceFilterService = emailPreferenceFilterService;
       _emailProviderClient = emailProviderClientFactory.CreateClient();
       _myOpportunitySearchFilterValidator = myOpportunitySearchFilterValidator;
       _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
@@ -1013,8 +1016,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending);
 
       //sent to organization admins
-      //[REMOVED/TODO: Pending user settings]
-      //await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending_Admin);
+      await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending_Admin);
     }
 
     private async Task SendEmail(Models.MyOpportunity myOpportunity, EmailType type)
@@ -1031,6 +1033,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                           .Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList(),
           _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported"),
         };
+        
+        recipients = _emailPreferenceFilterService.FilterRecipients(type, recipients);
         if (recipients == null || recipients.Count == 0) return;
 
         var data = new EmailOpportunityVerification

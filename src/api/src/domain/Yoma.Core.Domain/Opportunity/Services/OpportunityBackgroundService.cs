@@ -24,6 +24,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly IUserService _userService;
     private readonly IEmailURLFactory _emailURLFactory;
+    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
     private readonly IDistributedLockService _distributedLockService;
     private static readonly Status[] Statuses_Expirable = [Status.Active];
@@ -38,6 +39,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IEmailProviderClientFactory emailProviderClientFactory,
         IUserService userService,
         IEmailURLFactory emailURLFactory,
+        IEmailPreferenceFilterService emailPreferenceFilterService,
         IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
         IDistributedLockService distributedLockService)
     {
@@ -48,6 +50,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _emailProviderClient = emailProviderClientFactory.CreateClient();
       _userService = userService;
       _emailURLFactory = emailURLFactory;
+      _emailPreferenceFilterService = emailPreferenceFilterService;
       _opportunityRepository = opportunityRepository;
       _distributedLockService = distributedLockService;
     }
@@ -247,6 +250,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
                         {
                             new() { Email = group.Key.Email, DisplayName = group.Key.DisplayName }
                         };
+
+          recipients = _emailPreferenceFilterService.FilterRecipients(type, recipients);
+          if (recipients == null || recipients.Count == 0) continue;
 
           var data = new EmailOpportunityExpiration
           {

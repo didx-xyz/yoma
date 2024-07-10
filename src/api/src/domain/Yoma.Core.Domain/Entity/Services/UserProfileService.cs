@@ -75,7 +75,7 @@ namespace Yoma.Core.Domain.Entity.Services
     public Settings GetSettings()
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      return SettingsHelper.FilterByRoles(_userService.GetByEmailSettings(username), HttpContextAccessorHelper.GetRoles(_httpContextAccessor));
+      return SettingsHelper.FilterByRoles(_userService.GetSettingsByEmail(username), HttpContextAccessorHelper.GetRoles(_httpContextAccessor));
     }
 
     public async Task<UserProfile> UpsertPhoto(IFormFile file)
@@ -168,9 +168,9 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       var result = user.ToProfile();
 
-      result.Settings = SettingsHelper.FilterByRoles(user.Settings, HttpContextAccessorHelper.GetRoles(_httpContextAccessor));
+      result.Settings = SettingsHelper.FilterByRoles(result.Settings, HttpContextAccessorHelper.GetRoles(_httpContextAccessor));
 
-      var (status, balance) = await _rewardWalletService.GetWalletStatusAndBalance(user.Id);
+      var (status, balance) = await _rewardWalletService.GetWalletStatusAndBalance(result.Id);
       result.Zlto = new UserProfileZlto
       {
         Pending = balance.Pending,

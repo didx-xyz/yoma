@@ -13,7 +13,11 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     User? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed);
 
-    Settings GetByEmailSettings(string? email);
+    Settings GetSettingsByEmail(string email);
+
+    SettingsInfo GetSettingsInfoByEmail(string email);
+
+    SettingsInfo GetSettingsInfoById(Guid id);
 
     List<User> Contains(string value, bool includeComputed);
 

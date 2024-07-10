@@ -51,6 +51,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IBlobService _blobService;
     private readonly IUserService _userService;
     private readonly IEmailURLFactory _emailURLFactory;
+    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly IIdentityProviderClient _identityProviderClient;
 
@@ -95,6 +96,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IBlobService blobService,
         IUserService userService,
         IEmailURLFactory emailURLFactory,
+        IEmailPreferenceFilterService emailPreferenceFilterService,
         IEmailProviderClientFactory emailProviderClientFactory,
         IIdentityProviderClientFactory identityProviderClientFactory,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
@@ -128,6 +130,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _blobService = blobService;
       _userService = userService;
       _emailURLFactory = emailURLFactory;
+      _emailPreferenceFilterService = emailPreferenceFilterService;
       _emailProviderClient = emailProviderClientFactory.CreateClient();
       _identityProviderClient = identityProviderClientFactory.CreateClient();
 
@@ -1551,6 +1554,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
         }
 
+        recipients = _emailPreferenceFilterService.FilterRecipients(type, recipients);
         if (recipients == null || recipients.Count == 0) return;
 
         var data = new EmailOpportunityPosted

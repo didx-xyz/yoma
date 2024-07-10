@@ -145,15 +145,22 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public Settings GetByEmailSettings(string? email)
+    public Settings GetSettingsByEmail(string email)
     {
-      if (string.IsNullOrWhiteSpace(email))
-        throw new ArgumentNullException(nameof(email));
+      var user = GetByEmail(email, false, false);
+      return SettingsHelper.Parse(_settingsDefinitionService.ListByEntityType(EntityType.User), user.SettingsRaw);
+    }
 
-      var result = GetByEmailOrNull(email, false, false)
-          ?? throw new EntityNotFoundException($"User with email '{email}' does not exist");
+    public SettingsInfo GetSettingsInfoByEmail(string email)
+    {
+      var user = GetByEmail(email, false, false);
+      return SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), user.SettingsRaw);
+    }
 
-      return SettingsHelper.Parse(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
+    public SettingsInfo GetSettingsInfoById(Guid id)
+    {
+      var user = GetById(id, false, false);
+      return SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), user.SettingsRaw);
     }
 
     public List<User> Contains(string value, bool includeComputed)
