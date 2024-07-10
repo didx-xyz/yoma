@@ -1033,7 +1033,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                           .Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList(),
           _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported"),
         };
-        
+
         recipients = _emailPreferenceFilterService.FilterRecipients(type, recipients);
         if (recipients == null || recipients.Count == 0) return;
 

@@ -50,7 +50,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
         catch (Exception ex)
         {
           _logger.LogError(ex, "EmailType '{emailType}' | SettingKey '{settingKey}' | Email '{emailAddress}': Error, sent anyway", type, settingKey, recipient.Email);
-          result.Add(recipient); 
+          result.Add(recipient);
         }
       }
 
