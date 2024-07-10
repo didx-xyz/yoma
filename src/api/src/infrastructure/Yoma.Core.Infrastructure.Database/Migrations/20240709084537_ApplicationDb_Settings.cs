@@ -89,7 +89,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           principalSchema: "PartnerSharing",
           principalTable: "ProcessingStatus",
           principalColumn: "Id",
-          onDelete: ReferentialAction.Cascade);
+          onDelete: ReferentialAction.NoAction);
 
       ApplicationDb_Settings_Seeding.Seed(migrationBuilder);
     }

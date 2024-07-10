@@ -75,14 +75,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       principalSchema: "PartnerSharing",
                       principalTable: "Partner",
                       principalColumn: "Id",
-                      onDelete: ReferentialAction.Cascade);
+                      onDelete: ReferentialAction.NoAction);
             table.ForeignKey(
                       name: "FK_ProcessingLog_Status_StatusId",
                       column: x => x.StatusId,
                       principalSchema: "PartnerSharing",
                       principalTable: "Status",
                       principalColumn: "Id",
-                      onDelete: ReferentialAction.Cascade);
+                      onDelete: ReferentialAction.NoAction);
           });
 
       migrationBuilder.CreateIndex(
