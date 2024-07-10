@@ -54,24 +54,21 @@ WHERE U."Email" = 'testuser@gmail.com';
 -- Set up random words
 DO $$
 DECLARE
-    V_Words VARCHAR(500) := 'The,A,An,Awesome,Incredible,Fantastic,Amazing,Wonderful,Exciting,Unbelievable,Great,Marvelous,Stunning,Impressive,Captivating,Extraordinary,Superb,Epic,Spectacular,Magnificent,Phenomenal,Outstanding,Brilliant,Enthralling,Enchanting,Mesmerizing,Riveting,Spellbinding,Unforgettable,Sublime';
-    V_RandomLengthName INT := ABS(FLOOR(RANDOM() * 5) + 5);
-    V_RandomLengthOther INT := ABS(FLOOR(RANDOM() * 101) + 100);
-    V_RandomNumber VARCHAR(10) := CAST(ABS(FLOOR(RANDOM() * 2147483647)) AS VARCHAR(10));
-    V_OrgName VARCHAR(100);
+    V_Words VARCHAR(500) := 'FutureTech,Global Innovators,Alpha Enterprises,BlueSky Ventures,Catalyst,Synergy Corp,Nexus Industries,Horizon Group,Dynamic Networks,Quantum Tech,Pinnacle Partners,Apex Solutions,Infinity Systems,Legacy Builders,Visionary Labs,Vanguard Services,Stellar Innovations,NextGen Enterprises,Prodigy Solutions,VentureWorks,Summit Strategies,Elevate Holdings,Titan Resources,Horizon Dynamics,Impact Ventures,Fusion Enterprises,Keystone Projects,Zenith Development,Insight Analytics,Bright Future';
+    V_OrgName VARCHAR(150);
 BEGIN
     -- Organizations
     FOR RowCount IN 1..10 LOOP
         -- Generate the organization name
-        SELECT INTO V_OrgName LEFT(V_RandomNumber || ' ' || (
+        SELECT INTO V_OrgName (
             SELECT STRING_AGG(Word, ' ')
             FROM (
                 SELECT word
                 FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
                 ORDER BY RANDOM()
-                LIMIT V_RandomLengthName
+                LIMIT 2 + FLOOR(RANDOM() * 4)  -- Generates a number between 2 and 5
             ) AS RandomNameWords
-        ), 100);
+        ) || ' ' || CAST(ABS(FLOOR(RANDOM() * 2147483647)) AS VARCHAR(10));
 
         -- Insert into the Organization table
         INSERT INTO "Entity"."Organization"(
@@ -102,7 +99,7 @@ BEGIN
                     SELECT word
                     FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
                     ORDER BY RANDOM()
-                    LIMIT V_RandomLengthOther
+                    LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
                 ) AS RandomTaglineWords
             ),
             (
@@ -111,7 +108,7 @@ BEGIN
                     SELECT word
                     FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
                     ORDER BY RANDOM()
-                    LIMIT V_RandomLengthOther
+                    LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
                 ) AS RandomBiographyWords
             ),
             (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active'),
@@ -153,9 +150,12 @@ SELECT gen_random_uuid(), O."Id" AS "OrganizationId", PT."Id" AS "ProviderTypeId
 /****opportunities****/
 DO $$
 DECLARE
-    V_Words VARCHAR(500) := 'The,A,An,Awesome,Incredible,Fantastic,Amazing,Wonderful,Exciting,Unbelievable,Great,Marvelous,Stunning,Impressive,Captivating,Extraordinary,Superb,Epic,Spectacular,Magnificent,Phenomenal,Outstanding,Brilliant,Enthralling,Enchanting,Mesmerizing,Riveting,Spellbinding,Unforgettable,Sublime';
-    V_RandomLengthName INT := ABS(FLOOR(RANDOM() * 5) + 5);
-    V_RandomLengthOther INT := ABS(FLOOR(RANDOM() * 101) + 100);
+    V_Words VARCHAR(500) := 'STEM,Internship,Digital,Transformation,Entrepreneurship,Skills,Scholarship,Employ,Paid,Work,Experience,Sales,Route-to-Market,Merchandising,Business,Development,Leadership,Analytics,Problem Solving,Collaboration,Technology,Creativity,Education,Training,Innovation,Management,Strategy,Marketing,Opportunity,Course,Program';
+    V_OppTitle VARCHAR(150);
+    V_OppDesc VARCHAR(2000);
+    V_OppSummary VARCHAR(150);
+    V_OppInstructions VARCHAR(2000);
+    V_OppKeywords VARCHAR(500);
     V_DateCreated TIMESTAMP := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
     V_DateStartRunning TIMESTAMP := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') - INTERVAL '2 day';
     V_Iterations INT := 5000;
@@ -170,6 +170,61 @@ DECLARE
 BEGIN
     -- Opportunities
 	WHILE V_RowCount < V_Iterations LOOP
+        -- Generate Opportunity Title (3 to 9 words, max 150 characters)
+        SELECT INTO V_OppTitle (
+            SELECT STRING_AGG(Word, ' ')
+            FROM (
+                SELECT word
+                FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
+                ORDER BY RANDOM()
+                LIMIT 3 + FLOOR(RANDOM() * 7)  -- Generates a number between 3 and 9
+            ) AS RandomTitleWords
+        ) || ' ' || CAST(ABS(FLOOR(RANDOM() * 2147483647)) AS VARCHAR(10));
+
+        -- Generate Opportunity Description (100 to 200 words, max 1000 characters)
+        SELECT INTO V_OppDesc (
+            SELECT STRING_AGG(Word, ' ')
+            FROM (
+                SELECT word
+                FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
+                ORDER BY RANDOM()
+                LIMIT 100 + FLOOR(RANDOM() * 101)  -- Generates a number between 100 and 200
+            ) AS RandomDescWords
+        );
+
+        -- Generate Opportunity Summary (3 to 9 words, max 150 characters)
+        SELECT INTO V_OppSummary (
+            SELECT STRING_AGG(Word, ' ')
+            FROM (
+                SELECT word
+                FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
+                ORDER BY RANDOM()
+                LIMIT 3 + FLOOR(RANDOM() * 7)  -- Generates a number between 3 and 9
+            ) AS RandomTitleWords
+        );
+
+        -- Generate Opportunity Instructions (100 to 200 words, max 1000 characters)
+        SELECT INTO V_OppInstructions (
+            SELECT STRING_AGG(Word, ' ')
+            FROM (
+                SELECT word
+                FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
+                ORDER BY RANDOM()
+                LIMIT 100 + FLOOR(RANDOM() * 101)  -- Generates a number between 100 and 200
+            ) AS RandomDescWords
+        );
+
+        -- Generate Opportunity Keywords (20 to 50 words, max 500 characters)
+        SELECT INTO V_OppKeywords (
+            SELECT ARRAY_TO_STRING(ARRAY_AGG(Word), ',')
+            FROM (
+                SELECT word
+                FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
+                ORDER BY RANDOM()
+                LIMIT 20 + FLOOR(RANDOM() * 31)  -- Generates a number between 20 and 50
+            ) AS RandomKeywordsWords
+        );
+
         V_VerificationEnabled := CAST(RANDOM() < 0.5 AS BOOLEAN);
 
         --commitment interval, count and end date
@@ -213,40 +268,12 @@ BEGIN
 	    )
 	    SELECT
 	        gen_random_uuid() as "Id",
-	        (
-	            SELECT ARRAY_TO_STRING(ARRAY_AGG(Word), ' ')
-	            FROM (
-	                SELECT unnest(string_to_array(V_Words, ',')) AS Word
-	                ORDER BY RANDOM()
-	                LIMIT ABS(FLOOR(RANDOM() * 10) + 5)
-	            ) AS RandomTitleWords
-	        ) || ' ' || CAST(ABS(FLOOR(RANDOM() * 2147483647)) AS VARCHAR(10)) as "Title",
-	        (
-	            SELECT ARRAY_TO_STRING(ARRAY_AGG(Word), ' ')
-	            FROM (
-	                SELECT unnest(string_to_array(V_Words, ',')) AS Word
-	                ORDER BY RANDOM()
-	                LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
-	            ) AS RandomDescriptionWords
-	        ) as "Description",
+          V_OppTitle as "Title",
+          V_OppDesc as "Description",
 	        (SELECT "Id" FROM "Opportunity"."OpportunityType" ORDER BY RANDOM() LIMIT 1) as "TypeId",
 	        (SELECT "Id" FROM "Entity"."Organization" ORDER BY RANDOM() LIMIT 1) as "OrganizationId",
-	        (
-	            SELECT ARRAY_TO_STRING(ARRAY_AGG(Word), ' ')
-	            FROM (
-	                SELECT unnest(string_to_array(V_Words, ',')) AS Word
-	                ORDER BY RANDOM()
-	                LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
-	            ) AS RandomSummaryWords
-	        ) as "Summary",
-	        (
-	            SELECT ARRAY_TO_STRING(ARRAY_AGG(Word), ' ')
-	            FROM (
-	                SELECT unnest(string_to_array(V_Words, ',')) AS Word
-	                ORDER BY RANDOM()
-	                LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
-	            ) AS RandomInstructionsWords
-	        ) as "Instructions",
+	        V_OppSummary as "Summary",
+	        V_OppInstructions as "Instructions",
 	        'https://www.google.com/' as "URL",
             (SELECT ROUND((100 + (350 - 100) * RANDOM()))::numeric) as "ZltoReward",
             (SELECT ROUND((1000 + (3500 - 1000) * RANDOM()))::numeric) as "ZltoRewardPool",
@@ -262,14 +289,7 @@ BEGIN
             CASE WHEN V_VerificationEnabled = true THEN 100 + ABS(FLOOR(RANDOM() * 901)) ELSE NULL END as "ParticipantLimit",
 	        NULL as "ParticipantCount",
 	        (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name" IN ('Active', 'Inactive') ORDER BY RANDOM() LIMIT 1) as "StatusId",
-	        (
-	            SELECT ARRAY_TO_STRING(ARRAY_AGG(Word), ',')
-	            FROM (
-	                SELECT unnest(string_to_array(V_Words, ',')) AS Word
-	                ORDER BY RANDOM()
-	                LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
-	            ) AS RandomKeywordsWords
-	        ) as "Keywords",
+	        V_OppKeywords as "Keywords",
 	        (V_DateStart::timestamp AT TIME ZONE 'UTC') as "DateStart",
 	        (V_DateEnd::timestamp AT TIME ZONE 'UTC') as "DateEnd",
             CASE
