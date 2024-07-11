@@ -18,8 +18,9 @@ import { Toolbar } from "./Toolbar";
 export const Editor: React.FC<{
   value: string;
   readonly: boolean;
+  onBlur?: () => void;
   onChange?: (value: string) => void;
-}> = ({ value, readonly, onChange }) => {
+}> = ({ value, readonly, onBlur, onChange }) => {
   const [valueState, setValueState] = useState(value);
 
   return (
@@ -41,6 +42,9 @@ export const Editor: React.FC<{
             directiveDescriptors: [AdmonitionDirectiveDescriptor],
           }),
         ]}
+        onBlur={() => {
+          onBlur && onBlur();
+        }}
         onChange={(val) => {
           setValueState(val);
           onChange && onChange(val);
