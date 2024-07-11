@@ -5,6 +5,7 @@ using FS.Keycloak.RestApiClient.Authentication.Flow;
 using FS.Keycloak.RestApiClient.Model;
 using Keycloak.AuthServices.Authentication;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Primitives;
 using System.Net.Http.Headers;
 using System.Text;
@@ -21,27 +22,31 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
   public sealed class KeycloakClient : IDisposable, IIdentityProviderClient
   {
     #region Class Variables
+    private readonly ILogger<KeycloakClient> _logger;
     private readonly KeycloakAdminOptions _keycloakAdminOptions;
     private readonly KeycloakAuthenticationOptions _keycloakAuthenticationOptions;
     private readonly AuthenticationHttpClient _httpClient;
     #endregion
 
     #region Constructor
-    public KeycloakClient(KeycloakAdminOptions keycloakAdminOptions,
+    public KeycloakClient(ILogger<KeycloakClient> logger, KeycloakAdminOptions keycloakAdminOptions,
         KeycloakAuthenticationOptions keycloakAuthenticationOptions)
     {
+      _logger = logger;
       _keycloakAdminOptions = keycloakAdminOptions;
       _keycloakAuthenticationOptions = keycloakAuthenticationOptions;
 
       var credentials = new PasswordGrantFlow
       {
-        KeycloakUrl = _keycloakAuthenticationOptions.AuthServerUrl,
+        KeycloakUrl = _keycloakAuthenticationOptions.AuthServerUrl?.TrimEnd('/'),
         Realm = _keycloakAdminOptions.Admin.Realm,
         UserName = _keycloakAdminOptions.Admin.Username,
         Password = _keycloakAdminOptions.Admin.Password
       };
 
       _httpClient = AuthenticationHttpClientFactory.Create(credentials);
+
+      _logger.LogDebug("AuthTokenUrl: {url}", _httpClient.AuthTokenUrl);
     }
     #endregion
 
@@ -99,7 +104,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
     public async Task UpdateUser(User user, bool resetPassword, bool sendVerifyEmail)
     {
-      using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UserApi>(_httpClient);
+      using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
 
       var request = new UserRepresentation
       {
@@ -130,15 +135,15 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       try
       {
         // update user details
-        await userApi.PutUsersByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), request);
+        await userApi.PutUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), request);
 
         // send verify email
         if (sendVerifyEmail)
-          await userApi.PutUsersSendVerifyEmailByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString()); //admin initiated email (executeActions); same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
+          await userApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString()); //admin initiated email (executeActions); same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
 
         // send reset password email
         if (resetPassword)
-          await userApi.PutUsersExecuteActionsEmailByIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); //admin initiated email (executeActions)
+          await userApi.PutUsersExecuteActionsEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); //admin initiated email (executeActions)
       }
       catch (Exception ex)
       {
@@ -158,13 +163,13 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (rolesInvalid.Any())
         throw new ArgumentOutOfRangeException(nameof(roles), $"Invalid role(s) specified: {string.Join(';', rolesInvalid)}");
 
-      using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleContainerApi>(_httpClient);
+      using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RolesApi>(_httpClient);
       using var rolesMapperApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleMapperApi>(_httpClient);
 
       var kcRoles = await rolesApi.GetRolesAsync(_keycloakAuthenticationOptions.Realm);
 
       var roleRepresentations = kcRoles.IntersectBy(roles.Select(o => o.ToLower()), o => o.Name.ToLower()).ToList();
-      await rolesMapperApi.PostUsersRoleMappingsRealmByIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), roleRepresentations);
+      await rolesMapperApi.PostUsersRoleMappingsRealmByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), roleRepresentations);
     }
 
     public async Task RemoveRoles(Guid id, List<string> roles)
@@ -179,14 +184,14 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (rolesInvalid.Any())
         throw new ArgumentOutOfRangeException(nameof(roles), $"Invalid role(s) specified: {string.Join(';', rolesInvalid)}");
 
-      using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleContainerApi>(_httpClient);
+      using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RolesApi>(_httpClient);
       using var rolesMapperApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleMapperApi>(_httpClient);
 
-      var roleRepresentationsExisting = await rolesMapperApi.GetUsersRoleMappingsByIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
+      var roleRepresentationsExisting = await rolesMapperApi.GetUsersRoleMappingsByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
 
       var roleRepresentations = roleRepresentationsExisting.RealmMappings.Where(o => roles.Contains(o.Name, StringComparer.InvariantCultureIgnoreCase)).ToList();
 
-      await rolesMapperApi.PostUsersRoleMappingsRealmByIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), roleRepresentations);
+      await rolesMapperApi.PostUsersRoleMappingsRealmByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), roleRepresentations);
     }
 
     public async Task<List<User>?> ListByRole(string role)
@@ -197,7 +202,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (!Constants.Roles_Supported.Contains(role, StringComparer.InvariantCultureIgnoreCase))
         throw new ArgumentOutOfRangeException(nameof(role), $"Role '{role}' is invalid");
 
-      using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RoleContainerApi>(_httpClient);
+      using var rolesApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<RolesApi>(_httpClient);
 
       var kcUsers = await rolesApi.GetRolesUsersByRoleNameAsync(_keycloakAuthenticationOptions.Realm, role);
       kcUsers = kcUsers?.Where(o => o.EmailVerified == true).ToList();

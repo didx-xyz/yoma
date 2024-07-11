@@ -49,6 +49,11 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public bool? YoIDOnboarded { get; set; }
 
+    [JsonIgnore]
+    public string? SettingsRaw { get; set; }
+
+    public SettingsInfo? Settings { get; set; }
+
     public DateTimeOffset? DateYoIDOnboarded { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }

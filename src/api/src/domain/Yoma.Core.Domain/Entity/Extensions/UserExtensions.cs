@@ -78,6 +78,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
         DateLastLogin = value.DateLastLogin,
         YoIDOnboarded = value.YoIDOnboarded,
         DateYoIDOnboarded = value.DateYoIDOnboarded,
+        Settings = value.Settings,
         Skills = value.Skills
       };
     }

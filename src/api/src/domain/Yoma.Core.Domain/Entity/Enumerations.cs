@@ -33,4 +33,10 @@ namespace Yoma.Core.Domain.Entity
     Reapproval,
     ReapprovalWithEmail
   }
+  public enum SettingType
+  {
+    Boolean,
+    Number,
+    String
+  }
 }

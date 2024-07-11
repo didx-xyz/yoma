@@ -30,6 +30,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IMyOpportunityActionService _myOpportunityActionService;
     private readonly IOpportunityService _opportunityService;
     private readonly IEmailURLFactory _emailURLFactory;
+    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
@@ -48,6 +49,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         IMyOpportunityActionService myOpportunityActionService,
         IOpportunityService opportunityService,
         IEmailURLFactory emailURLFactory,
+        IEmailPreferenceFilterService emailPreferenceFilterService,
         IEmailProviderClientFactory emailProviderClientFactory,
         IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
         IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
@@ -62,6 +64,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _myOpportunityActionService = myOpportunityActionService;
       _opportunityService = opportunityService;
       _emailURLFactory = emailURLFactory;
+      _emailPreferenceFilterService = emailPreferenceFilterService;
       _emailProviderClient = emailProviderClientFactory.CreateClient();
       _myOpportunityRepository = myOpportunityRepository;
       _myOpportunityVerificationRepository = myOpportunityVerificationRepository;
@@ -122,6 +125,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                         {
                             new() { Email = group.Key.UserEmail, DisplayName = group.Key.UserDisplayName }
                         };
+
+                recipients = _emailPreferenceFilterService.FilterRecipients(emailType, recipients);
+                if (recipients == null || recipients.Count == 0) continue;
 
                 var data = new EmailOpportunityVerification
                 {

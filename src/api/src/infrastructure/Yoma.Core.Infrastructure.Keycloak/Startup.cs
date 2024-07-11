@@ -18,6 +18,7 @@ namespace Yoma.Core.Infrastructure.Keycloak
     {
       services.Configure<KeycloakAdminOptions>(options => configuration.GetSection(KeycloakAdminOptions.Section).Bind(options));
       services.Configure<KeycloakAuthenticationOptions>(options => configuration.GetSection(KeycloakAuthenticationOptions.Section).Bind(options));
+      services.Configure<KeycloakAuthorizationOptions>(options => configuration.GetSection(KeycloakAuthorizationOptions.Section).Bind(options));
     }
 
     public static void ConfigureServices_InfrastructureIdentityProvider(this IServiceCollection services)
@@ -27,12 +28,12 @@ namespace Yoma.Core.Infrastructure.Keycloak
 
     public static void ConfigureServices_AuthenticationIdentityProvider(this IServiceCollection services, IConfiguration configuration)
     {
-      services.AddKeycloakAuthentication(AuthenticationOptions(configuration));
+      services.AddKeycloakWebApiAuthentication(configuration);
     }
 
     public static void ConfigureServices_AuthorizationIdentityProvider(this IServiceCollection services, IConfiguration configuration)
     {
-      services.AddKeycloakAuthorization(ProtectionClientOptions(configuration));
+      services.AddAuthorization().AddKeycloakAuthorization(options => AuthorizationOptions(configuration));
       services.AddTransient<IClaimsTransformation, KeyCloakClaimsTransformer>();
     }
 
@@ -68,16 +69,13 @@ namespace Yoma.Core.Infrastructure.Keycloak
     private static KeycloakAuthenticationOptions AuthenticationOptions(IConfiguration configuration)
     {
       var authenticationOptions = configuration.GetSection(KeycloakAuthenticationOptions.Section).Get<KeycloakAuthenticationOptions>();
-
       return authenticationOptions ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{KeycloakAuthenticationOptions.Section}'");
     }
 
-    private static KeycloakProtectionClientOptions ProtectionClientOptions(IConfiguration configuration)
+    private static KeycloakAuthorizationOptions AuthorizationOptions(IConfiguration configuration)
     {
-      var protectionClientOptions = configuration
-        .GetSection(KeycloakProtectionClientOptions.Section).Get<KeycloakProtectionClientOptions>()
-        ?? throw new InvalidOperationException($"Failed to retrieve config section '{KeycloakProtectionClientOptions.Section}.{nameof(KeycloakProtectionClientOptions)}'");
-      return protectionClientOptions;
+      var authorizationOptions = configuration.GetSection(KeycloakAuthorizationOptions.Section).Get<KeycloakAuthorizationOptions>();
+      return authorizationOptions ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{KeycloakAuthorizationOptions.Section}'");
     }
     #endregion
   }

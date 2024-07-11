@@ -13,6 +13,12 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     User? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed);
 
+    Settings GetSettingsByEmail(string email);
+
+    SettingsInfo GetSettingsInfoByEmail(string email);
+
+    SettingsInfo GetSettingsInfoById(Guid id);
+
     List<User> Contains(string value, bool includeComputed);
 
     UserSearchResults Search(UserSearchFilter filter);
@@ -20,6 +26,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
     Task<User> Upsert(UserRequest request);
 
     Task<User> UpsertPhoto(string? email, IFormFile? file);
+
+    Task<User> UpdateSettings(string? email, List<string> roles, UserRequestSettings request);
 
     Task AssignSkills(User user, Opportunity.Models.Opportunity opportunity);
 

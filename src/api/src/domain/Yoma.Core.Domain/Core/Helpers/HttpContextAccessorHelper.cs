@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.Core.Helpers
   {
     public static string GetUsernameSystem => Constants.ModifiedBy_System_Username;
 
+    public static HashSet<string> DefinedRoles => [Constants.Role_User, Constants.Role_Admin, Constants.Role_OrganizationAdmin];
+
     public static bool UserContextAvailable(IHttpContextAccessor? httpContextAccessor)
     {
       var claimsPrincipal = httpContextAccessor?.HttpContext?.User;
@@ -68,6 +70,19 @@ namespace Yoma.Core.Domain.Core.Helpers
 
       identity.AddClaim(new Claim("preferred_username", newEmail));
       identity.AddClaim(new Claim(ClaimTypes.Email, newEmail));
+    }
+
+    public static List<string> GetRoles(IHttpContextAccessor? httpContextAccessor)
+    {
+      var claimsPrincipal = httpContextAccessor?.HttpContext?.User;
+      ArgumentNullException.ThrowIfNull(claimsPrincipal, nameof(claimsPrincipal));
+
+      var results = claimsPrincipal.Claims
+          .Where(claim => claim.Type == Constants.ClaimType_Role && DefinedRoles.Contains(claim.Value))
+          .Select(claim => claim.Value)
+          .ToList();
+
+      return results;
     }
   }
 }

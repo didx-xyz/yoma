@@ -34,6 +34,8 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public DateTimeOffset? DateYoIDOnboarded { get; set; }
 
+    public SettingsInfo? Settings { get; set; }
+
     public List<UserSkillInfo>? Skills { get; set; }
 
     public List<OrganizationInfo> AdminsOf { get; set; }

@@ -5,6 +5,7 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Extensions;
+using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Validators;
@@ -71,10 +72,23 @@ namespace Yoma.Core.Domain.Entity.Services
       return ToProfile(user).Result;
     }
 
+    public Settings GetSettings()
+    {
+      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+      return SettingsHelper.FilterByRoles(_userService.GetSettingsByEmail(username), HttpContextAccessorHelper.GetRoles(_httpContextAccessor));
+    }
+
     public async Task<UserProfile> UpsertPhoto(IFormFile file)
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
       var user = await _userService.UpsertPhoto(username, file);
+      return await ToProfile(user);
+    }
+
+    public async Task<UserProfile> UpdateSettings(UserRequestSettings settings)
+    {
+      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+      var user = await _userService.UpdateSettings(username, HttpContextAccessorHelper.GetRoles(_httpContextAccessor), settings);
       return await ToProfile(user);
     }
 
@@ -154,7 +168,9 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       var result = user.ToProfile();
 
-      var (status, balance) = await _rewardWalletService.GetWalletStatusAndBalance(user.Id);
+      result.Settings = SettingsHelper.FilterByRoles(result.Settings, HttpContextAccessorHelper.GetRoles(_httpContextAccessor));
+
+      var (status, balance) = await _rewardWalletService.GetWalletStatusAndBalance(result.Id);
       result.Zlto = new UserProfileZlto
       {
         Pending = balance.Pending,

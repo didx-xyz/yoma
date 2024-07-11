@@ -121,14 +121,18 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
     public Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> Contains(Expression<Func<Domain.Opportunity.Models.Opportunity, bool>> predicate, string value)
     {
       //MS SQL: Contains
-      return predicate.Or(o => EF.Functions.ILike(o.Title, $"%{value}%") || (!string.IsNullOrEmpty(o.KeywordsFlatten) && EF.Functions.ILike(o.KeywordsFlatten, $"%{value}%"))
+      return predicate.Or(o => EF.Functions.ILike(o.Title, $"%{value}%")
+          || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
+          || (!string.IsNullOrEmpty(o.KeywordsFlatten) && EF.Functions.ILike(o.KeywordsFlatten, $"%{value}%"))
           || EF.Functions.ToTsVector("english", o.Description).Matches(value));
     }
 
     public IQueryable<Domain.Opportunity.Models.Opportunity> Contains(IQueryable<Domain.Opportunity.Models.Opportunity> query, string value)
     {
       //MS SQL: Contains
-      return query.Where(o => EF.Functions.ILike(o.Title, $"%{value}%") || (!string.IsNullOrEmpty(o.KeywordsFlatten) && EF.Functions.ILike(o.KeywordsFlatten, $"%{value}%"))
+      return query.Where(o => EF.Functions.ILike(o.Title, $"%{value}%")
+          || (!string.IsNullOrEmpty(o.Summary) && EF.Functions.ILike(o.Summary, $"%{value}%"))
+          || (!string.IsNullOrEmpty(o.KeywordsFlatten) && EF.Functions.ILike(o.KeywordsFlatten, $"%{value}%"))
           || EF.Functions.ToTsVector("english", o.Description).Matches(value));
     }
 

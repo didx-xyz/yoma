@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
@@ -9,7 +10,9 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Extensions;
+using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
@@ -29,8 +32,10 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly ISkillService _skillService;
     private readonly ISSITenantService _ssiTenantService;
     private readonly ISSICredentialService _ssiCredentialService;
+    private readonly ISettingsDefinitionService _settingsDefinitionService;
     private readonly UserRequestValidator _userRequestValidator;
     private readonly UserSearchFilterValidator _userSearchFilterValidator;
+    private readonly UserRequestSettingsValidator _userRequestSettingsValidator;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
     private readonly IRepository<UserSkill> _userSkillRepository;
     private readonly IRepository<UserSkillOrganization> _userSkillOrganizationRepository;
@@ -48,8 +53,10 @@ namespace Yoma.Core.Domain.Entity.Services
         ISkillService skillService,
         ISSITenantService ssiTenantService,
         ISSICredentialService ssiCredentialService,
+        ISettingsDefinitionService settingsDefinitionService,
         UserRequestValidator userValidator,
         UserSearchFilterValidator userSearchFilterValidator,
+        UserRequestSettingsValidator userRequestSettingsValidator,
         IRepositoryValueContainsWithNavigation<User> userRepository,
         IRepository<UserSkill> userSkillRepository,
         IRepository<UserSkillOrganization> userSkillOrganizationRepository,
@@ -64,8 +71,10 @@ namespace Yoma.Core.Domain.Entity.Services
       _skillService = skillService;
       _ssiTenantService = ssiTenantService;
       _ssiCredentialService = ssiCredentialService;
+      _settingsDefinitionService = settingsDefinitionService;
       _userRequestValidator = userValidator;
       _userSearchFilterValidator = userSearchFilterValidator;
+      _userRequestSettingsValidator = userRequestSettingsValidator;
       _userRepository = userRepository;
       _userSkillRepository = userSkillRepository;
       _userSkillOrganizationRepository = userSkillOrganizationRepository;
@@ -101,6 +110,7 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
         result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
+        result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
       }
 
       return result;
@@ -129,9 +139,28 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
         result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
+        result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
       }
 
       return result;
+    }
+
+    public Settings GetSettingsByEmail(string email)
+    {
+      var user = GetByEmail(email, false, false);
+      return SettingsHelper.Parse(_settingsDefinitionService.ListByEntityType(EntityType.User), user.SettingsRaw);
+    }
+
+    public SettingsInfo GetSettingsInfoByEmail(string email)
+    {
+      var user = GetByEmail(email, false, false);
+      return SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), user.SettingsRaw);
+    }
+
+    public SettingsInfo GetSettingsInfoById(Guid id)
+    {
+      var user = GetById(id, false, false);
+      return SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), user.SettingsRaw);
     }
 
     public List<User> Contains(string value, bool includeComputed)
@@ -146,6 +175,7 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         results.ForEach(o => o.PhotoURL = GetBlobObjectURL(o.PhotoStorageType, o.PhotoKey));
         results.ForEach(o => o.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey))));
+        results.ForEach(o => o.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), o.SettingsRaw));
       }
 
       return results;
@@ -186,7 +216,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       // check if user exists
       var isNew = !request.Id.HasValue;
-      var result = !request.Id.HasValue ? new User { Id = Guid.NewGuid() } : GetById(request.Id.Value, true, true);
+      var result = !request.Id.HasValue ? new User { Id = Guid.NewGuid() } : GetById(request.Id.Value, false, false);
 
       var existingByEmail = GetByEmailOrNull(request.Email, false, false);
       if (existingByEmail != null && (isNew || result.Id != existingByEmail.Id))
@@ -221,7 +251,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task<User> UpsertPhoto(string? email, IFormFile? file)
     {
-      var result = GetByEmail(email, true, false);
+      var result = GetByEmail(email, true, true);
 
       ArgumentNullException.ThrowIfNull(file, nameof(file));
 
@@ -256,6 +286,32 @@ namespace Yoma.Core.Domain.Entity.Services
 
       result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
 
+      return result;
+    }
+
+    public async Task<User> UpdateSettings(string? email, List<string>? roles, UserRequestSettings request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      await _userRequestSettingsValidator.ValidateAndThrowAsync(request);
+
+      var result = GetByEmail(email, false, false);
+
+      var definitions = _settingsDefinitionService.ListByEntityType(EntityType.User);
+
+      var currentSettings = SettingsHelper.ToDictionary(result.SettingsRaw);
+
+      SettingsHelper.Validate(definitions, roles, request.Settings, currentSettings);
+
+      var settings = request.Settings;
+      if (currentSettings != null)
+        settings = settings.Concat(currentSettings.Where(kv => !settings.ContainsKey(kv.Key)))
+          .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+      result.SettingsRaw = JsonConvert.SerializeObject(settings);
+      result = await _userRepository.Update(result);
+
+      result.Settings = SettingsHelper.ParseInfo(definitions, settings);
       return result;
     }
 
@@ -298,7 +354,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task<User> YoIDOnboard(string? email)
     {
-      var result = GetByEmail(email, false, false);
+      var result = GetByEmail(email, true, true);
 
       if (result.YoIDOnboarded.HasValue && result.YoIDOnboarded.Value)
         throw new ValidationException($"User with email '{email}' has already completed YoID onboarding");

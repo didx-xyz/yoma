@@ -26,6 +26,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly IUserService _userService;
     private readonly IEmailURLFactory _emailURLFactory;
+    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
     private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
     private readonly IDistributedLockService _distributedLockService;
@@ -43,6 +44,7 @@ namespace Yoma.Core.Domain.Entity.Services
         IEmailProviderClientFactory emailProviderClientFactory,
         IUserService userService,
         IEmailURLFactory emailURLFactory,
+        IEmailPreferenceFilterService emailPreferenceFilterService,
         IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
         IRepository<OrganizationDocument> organizationDocumentRepository,
         IDistributedLockService distributedLockService)
@@ -56,6 +58,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _emailProviderClient = emailProviderClientFactory.CreateClient();
       _userService = userService;
       _emailURLFactory = emailURLFactory;
+      _emailPreferenceFilterService = emailPreferenceFilterService;
       _organizationRepository = organizationRepository;
       _organizationDocumentRepository = organizationDocumentRepository;
       _distributedLockService = distributedLockService;
@@ -120,6 +123,9 @@ namespace Yoma.Core.Domain.Entity.Services
                         {
                             new() { Email = group.Key.Email, DisplayName = group.Key.DisplayName }
                         };
+
+                recipients = _emailPreferenceFilterService.FilterRecipients(emailType, recipients);
+                if (recipients == null || recipients.Count == 0) continue;
 
                 var data = new EmailOrganizationApproval
                 {
