@@ -24,6 +24,7 @@ serviceAccount:
   name: ""
 
 podAnnotations:
+  ad.datadoghq.com/yoma-web.logs: '[{ "service" : "yoma-web", "source" : "nodejs"}]'
   # gcr.io/datadoghq/dd-lib-js-init
   admission.datadoghq.com/js-lib.version: v5.10.0
 deploymentLabels:
@@ -121,6 +122,7 @@ affinity:
           topologyKey: kubernetes.io/zone
 
 env:
+  NODE_OPTIONS: --require=next-logger
   # https://docs.datadoghq.com/tracing/other_telemetry/connect_logs_and_traces/nodejs/
   DD_LOGS_INJECTION: true
   # https://docs.datadoghq.com/profiler/enabling/nodejs/?tab=environmentvariables

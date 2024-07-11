@@ -67,6 +67,11 @@ const config = {
     ],
   },
 
+  // https://github.com/sainsburys-tech/next-logger/issues/13#issuecomment-2113625702
+  experimental: {
+    serverComponentsExternalPackages: ['next-logger'],
+  },
+
   /**
    * If you have `experimental: { appDir: true }` set, then you must comment the below `i18n` config
    * out.
