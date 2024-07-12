@@ -18,9 +18,10 @@ import { Toolbar } from "./Toolbar";
 export const Editor: React.FC<{
   value: string;
   readonly: boolean;
+  placeholder?: string;
   onBlur?: () => void;
   onChange?: (value: string) => void;
-}> = ({ value, readonly, onBlur, onChange }) => {
+}> = ({ value, readonly, placeholder, onBlur, onChange }) => {
   const [valueState, setValueState] = useState(value);
 
   return (
@@ -50,6 +51,7 @@ export const Editor: React.FC<{
           onChange && onChange(val);
         }}
         readOnly={readonly}
+        placeholder={placeholder}
       />
     </div>
   );

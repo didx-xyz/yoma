@@ -3,36 +3,35 @@ import FormLabel from "./FormLabel";
 import FormError from "./FormError";
 
 const FormField: React.FC<{
-  label: string;
+  label?: string;
   subLabel?: string;
   tooltip?: string;
   showWarningIcon?: boolean;
-  // isTouched?: boolean;
-  // isSubmitted?: boolean;
   showError?: boolean;
-  error?: string /*| undefined*/;
+  error?: string;
   children: React.ReactNode;
 }> = ({
   label,
   subLabel,
   tooltip,
-  // isTouched,
-  // isSubmitted,
   showWarningIcon,
   showError,
   error,
   children,
 }) => {
   return (
-    <div className="form-control mb-2">
-      <FormLabel
-        label={label}
-        subLabel={subLabel}
-        tooltip={tooltip}
-        showWarningIcon={!!showWarningIcon}
-      />
-      {/* isTouched: {isTouched?.toString()} */}
+    <div className="form-control flex gap-2">
+      {label && (
+        <FormLabel
+          label={label}
+          subLabel={subLabel}
+          tooltip={tooltip}
+          showWarningIcon={!!showWarningIcon}
+        />
+      )}
+
       {children}
+
       {error && showError && <FormError label={error} />}
     </div>
   );

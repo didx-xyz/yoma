@@ -8,19 +8,19 @@ const FormLabel: React.FC<{
   showWarningIcon: boolean;
 }> = ({ label, subLabel, tooltip, showWarningIcon }) => {
   return (
-    <label className="mb-2 flex flex-col justify-start gap-0">
+    <label className="flex flex-col justify-start gap-0">
       <span className="flex flex-row items-center gap-2 text-sm font-bold">
         {label}
 
         {tooltip && (
-          <span className="mx-2x tooltip tooltip-secondary" data-tip={tooltip}>
+          <span className="tooltip tooltip-secondary" data-tip={tooltip}>
             <IoIosInformationCircleOutline className="h-5 w-5 text-green" />
           </span>
         )}
 
         {showWarningIcon && <IoMdAlert className="mr-2x h-5 w-5 text-yellow" />}
       </span>
-      <span className="text-xs"> {subLabel}</span>
+      <span className="text-xs">{subLabel}</span>
     </label>
   );
 };

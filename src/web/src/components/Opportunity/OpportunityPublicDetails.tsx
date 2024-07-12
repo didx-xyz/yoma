@@ -715,10 +715,7 @@ const OpportunityPublicDetails: React.FC<{
           </div>
 
           <div className="flex flex-col gap-4 md:flex-row">
-            <div className="md:p-6xx p-4xx flex-grow rounded-lg bg-white p-2 shadow-lg md:w-[66%]">
-              {/* <div style={{ whiteSpace: "pre-wrap" }}>
-                {opportunityInfo.description}
-              </div> */}
+            <div className="flex-grow rounded-lg bg-white p-2 shadow-lg md:w-[66%]">
               <Editor value={opportunityInfo.description} readonly={true} />
             </div>
             <div className="flex flex-col gap-2 rounded-lg shadow-lg md:w-[33%]">
@@ -762,7 +759,7 @@ const OpportunityPublicDetails: React.FC<{
 
                     <span className="ml-1">How much time you will need</span>
                   </div>
-                  {/* <div className="my-2 text-sm">{`This task should not take you more than ${opportunityInfo.commitmentIntervalCount} ${opportunityInfo.commitmentInterval}`}</div> */}
+
                   <div className="my-2 text-sm">
                     {`This task should not take you more than ${
                       opportunityInfo.commitmentIntervalCount

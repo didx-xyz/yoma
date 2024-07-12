@@ -6,117 +6,110 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { type AxiosError } from "axios";
+import axios, { type AxiosError } from "axios";
+import moment from "moment";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import iconBell from "public/images/icon-bell.webp";
 import { type ParsedUrlQuery } from "querystring";
 import {
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactElement,
-  useEffect,
-  useRef,
 } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
   Controller,
+  useFieldArray,
   useForm,
   type FieldValues,
-  useFieldArray,
 } from "react-hook-form";
+import {
+  IoIosCheckmarkCircle,
+  IoMdAlert,
+  IoMdArrowRoundBack,
+  IoMdClose,
+  IoMdImage,
+} from "react-icons/io";
+import ReactModal from "react-modal";
 import Select from "react-select";
+import Async from "react-select/async";
+import CreatableSelect from "react-select/creatable";
 import { toast } from "react-toastify";
 import z from "zod";
-import type { Skill, SelectOption } from "~/api/models/lookups";
 import { SchemaType } from "~/api/models/credential";
+import type { SelectOption, Skill } from "~/api/models/lookups";
 import {
   OpportunityInfo,
+  Status,
   VerificationMethod,
   type Opportunity,
   type OpportunityRequestBase,
   type OpportunityVerificationType,
 } from "~/api/models/opportunity";
+import { Organization } from "~/api/models/organisation";
+import { getSchemas } from "~/api/services/credentials";
 import {
   getCountries,
+  getEngagementTypes,
   getLanguages,
   getSkills,
   getTimeIntervals,
-  getEngagementTypes,
 } from "~/api/services/lookups";
 import {
-  updateOpportunity,
+  createOpportunity,
+  getCategories,
   getDifficulties,
   getOpportunityById,
   getTypes,
   getVerificationTypes,
-  createOpportunity,
-  getCategories,
+  updateOpportunity,
+  updateOpportunityStatus,
 } from "~/api/services/opportunities";
+import { getOrganisationById } from "~/api/services/organisations";
+import { AvatarImage } from "~/components/AvatarImage";
+import FormCheckbox from "~/components/Common/FormCheckbox";
+import FormError from "~/components/Common/FormError";
+import FormField from "~/components/Common/FormField";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
+import FormRadio from "~/components/Common/FormRadio";
+import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
 import MainLayout from "~/components/Layout/Main";
-import { ApiErrors } from "~/components/Status/ApiErrors";
-import { Loading } from "~/components/Status/Loading";
-import { authOptions, type User } from "~/server/auth";
+import OpportunityPublicDetails from "~/components/Opportunity/OpportunityPublicDetails";
+import { OpportunityPublicSmallComponent } from "~/components/Opportunity/OpportunityPublicSmall";
 import { PageBackground } from "~/components/PageBackground";
-import Link from "next/link";
+import { Editor } from "~/components/RichText/Editor";
+import { ApiErrors } from "~/components/Status/ApiErrors";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Loading } from "~/components/Status/Loading";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
-  IoMdAlert,
-  IoMdArrowRoundBack,
-  IoIosCheckmarkCircle,
-} from "react-icons/io";
-import CreatableSelect from "react-select/creatable";
-import type { NextPageWithLayout } from "~/pages/_app";
-import { getSchemas } from "~/api/services/credentials";
-import {
-  REGEX_URL_VALIDATION,
-  GA_CATEGORY_OPPORTUNITY,
-  GA_ACTION_OPPORTUNITY_CREATE,
-  GA_ACTION_OPPORTUNITY_UPDATE,
+  ACCEPTED_AUDIO_TYPES_LABEL,
+  ACCEPTED_DOC_TYPES_LABEL,
+  ACCEPTED_IMAGE_TYPES_LABEL,
   DATE_FORMAT_HUMAN,
   DATE_FORMAT_SYSTEM,
-  PAGE_SIZE_MEDIUM,
-  ACCEPTED_IMAGE_TYPES_LABEL,
-  ACCEPTED_DOC_TYPES_LABEL,
-  ACCEPTED_AUDIO_TYPES_LABEL,
+  GA_ACTION_OPPORTUNITY_CREATE,
+  GA_ACTION_OPPORTUNITY_UPDATE,
+  GA_CATEGORY_OPPORTUNITY,
   MAX_FILE_SIZE_LABEL,
+  PAGE_SIZE_MEDIUM,
+  REGEX_URL_VALIDATION,
 } from "~/lib/constants";
-import { Unauthorized } from "~/components/Status/Unauthorized";
-import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
-import Moment from "react-moment";
-import moment from "moment";
-import { getThemeFromRole, debounce, getSafeUrl } from "~/lib/utils";
-import Async from "react-select/async";
-import { useRouter } from "next/router";
-import ReactModal from "react-modal";
-import Image from "next/image";
-import iconBell from "public/images/icon-bell.webp";
-import { IoMdClose, IoMdImage } from "react-icons/io";
-import { AvatarImage } from "~/components/AvatarImage";
-import { updateOpportunityStatus } from "~/api/services/opportunities";
-import { Status } from "~/api/models/opportunity";
-import axios from "axios";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { IoMdWarning } from "react-icons/io";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import { Editor } from "~/components/RichText/Editor";
-import { OpportunityPublicSmallComponent } from "~/components/Opportunity/OpportunityPublicSmall";
-import { Organization } from "~/api/models/organisation";
-import { getOrganisationById } from "~/api/services/organisations";
-import {
-  IoInformationCircle,
-  IoInformationCircleOutline,
-  IoWarning,
-} from "react-icons/io5";
-import OpportunityDetails from "~/pages/opportunities/[opportunityId]";
-import OpportunityPublicDetails from "~/components/Opportunity/OpportunityPublicDetails";
-import FormLabel from "~/components/Common/FormLabel";
-import FormField from "~/components/Common/FormField";
-import FormRequiredFieldLabel from "~/components/Common/FormRequiredFieldLabel";
-import FormError from "~/components/Common/FormError";
-import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
+import { config } from "~/lib/react-query-config";
+import { debounce, getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import type { NextPageWithLayout } from "~/pages/_app";
+import { authOptions, type User } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -402,14 +395,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   const schemaStep1 = z.object({
     title: z
       .string()
-      .min(1, "Opportunity title is required.")
-      .max(150, "Opportunity title cannot exceed 150 characters."),
+      .min(1, "Title is required.")
+      .max(150, "Title cannot exceed 150 characters."),
     description: z.string().min(1, "Description is required."),
     summary: z
       .string()
       .min(1, "Summary is required.")
       .max(150, "Summary cannot exceed 150 characters."),
-    typeId: z.string().min(1, "Opportunity type is required."),
+    typeId: z.string().min(1, "Type is required."),
     engagementTypeId: z.union([z.string(), z.null()]).optional(),
     categories: z
       .array(z.string(), { required_error: "Category is required" })
@@ -434,13 +427,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     commitmentIntervalCount: z
       .union([z.nan(), z.null(), z.number()])
       .refine((val) => val != null && !isNaN(val), {
-        message: "Time Value is required.",
+        message: "Number is required.",
       }),
     commitmentIntervalId: z.string().min(1, "Time frame is required."),
     dateStart: z
       .union([z.null(), z.string(), z.date()])
       .refine((val) => val !== null, {
-        message: "Start Time is required.",
+        message: "Start date is required.",
       }),
     dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
     participantLimit: z.union([z.nan(), z.null(), z.number()]).optional(),
@@ -471,7 +464,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   });
 
   const schemaStep4 = z.object({
-    keywords: z.array(z.string()).min(1, "At least 1 keyword is required."),
+    keywords: z.array(z.string()).min(1, "Keyword is required."),
   });
 
   const schemaStep5 = z
@@ -495,7 +488,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       // verificationEnabled option is required
       if (values.verificationEnabled == null) {
         ctx.addIssue({
-          message: "Please select an option.",
+          message: "Verification type is required.",
           code: z.ZodIssueCode.custom,
           path: ["verificationEnabled"],
           fatal: true,
@@ -512,7 +505,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         values?.verificationTypes?.length === 0
       ) {
         ctx.addIssue({
-          message: "At least one verification type is required.",
+          message: "Verification proof is required.",
           code: z.ZodIssueCode.custom,
           path: ["verificationTypes"],
           fatal: true,
@@ -523,7 +516,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       for (const file of values.verificationTypes) {
         if (file?.type && !file.description) {
           ctx.addIssue({
-            message: "A description for each verification type is required .",
+            message: "A description for each verification proof is required.",
             code: z.ZodIssueCode.custom,
             path: ["verificationTypes"],
           });
@@ -547,7 +540,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     .superRefine((values, ctx) => {
       if (values.credentialIssuanceEnabled && !values.ssiSchemaName) {
         ctx.addIssue({
-          message: "Schema name is required.",
+          message: "Schema is required.",
           code: z.ZodIssueCode.custom,
           path: ["ssiSchemaName"],
         });
@@ -555,7 +548,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     });
 
   const schemaStep7 = z.object({
-    postAsActive: z.boolean(),
+    postAsActive: z.boolean().optional(),
   });
 
   const {
@@ -694,31 +687,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     () => Object.keys(formStateStep7.dirtyFields).length > 0,
     [formStateStep7],
   );
-
-  // triggers form validation when the component mounts
-  // this is needed to show the required field indicators (exclamation icon next to labels) on the first render
-  useEffect(() => {
-    const validate = async () => {
-      await triggerStep1();
-      await triggerStep2();
-      await triggerStep3();
-      await triggerStep4();
-      await triggerStep5();
-      await triggerStep6();
-      await triggerStep7();
-    };
-
-    validate();
-  }, [
-    triggerStep1,
-    triggerStep2,
-    triggerStep3,
-    triggerStep4,
-    triggerStep5,
-    triggerStep6,
-    triggerStep7,
-  ]);
-
   //#endregion Form
 
   //#region Form Behavior
@@ -739,8 +707,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           formStateStep3.isValid &&
           formStateStep4.isValid &&
           formStateStep5.isValid &&
-          formStateStep6.isValid &&
-          formStateStep7.isValid,
+          formStateStep6.isValid,
       },
     },
   ];
@@ -764,6 +731,16 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       }));
     }
   }, [watchVerificationEnabled, setFormData]);
+
+  useEffect(() => {
+    // trigger validation when watchVerificationEnabled & watchVerificationMethod changes (for required field indicators to refresh)
+    triggerStep5();
+  }, [watchVerificationEnabled, watchVerificationMethod, triggerStep5]);
+
+  useEffect(() => {
+    // trigger validation when credential issuance changed (for required field indicators to refresh)
+    triggerStep6();
+  }, [watchCredentialIssuanceEnabled, triggerStep6]);
 
   useEffect(() => {
     // scroll to top on step change
@@ -878,10 +855,39 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       cacheSkills,
     ],
   );
+
+  // validates the forms
+  // this is needed to show the required field indicators (exclamation icon next to labels) on the first render
+  const triggerValidation = useCallback(() => {
+    const validate = async () => {
+      await triggerStep1();
+      await triggerStep2();
+      await triggerStep3();
+      await triggerStep4();
+      await triggerStep5();
+      await triggerStep6();
+      await triggerStep7();
+    };
+
+    validate();
+  }, [
+    triggerStep1,
+    triggerStep2,
+    triggerStep3,
+    triggerStep4,
+    triggerStep5,
+    triggerStep6,
+    triggerStep7,
+  ]);
+
+  // validate forms on initial load
+  useEffect(() => {
+    triggerValidation();
+  }, [triggerValidation]);
   //#endregion Form Behavior
 
   //#region Event Handlers
-  const onClick_Menu = useCallback(
+  const onStep = useCallback(
     (nextStep: number) => {
       let isDirtyStep = false;
       if (step === 1 && isDirtyStep1) isDirtyStep = true;
@@ -890,7 +896,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       else if (step === 4 && isDirtyStep4) isDirtyStep = true;
       else if (step === 5 && isDirtyStep5) isDirtyStep = true;
       else if (step === 6 && isDirtyStep6) isDirtyStep = true;
-      else if (step === 7 && isDirtyStep7) isDirtyStep = true;
 
       if (isDirtyStep) {
         setLastStepBeforeSaveChangesDialog(nextStep);
@@ -923,6 +928,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     resetStep5(formData);
     resetStep6(formData);
     resetStep7(formData);
+    triggerValidation();
     setSaveChangesDialogVisible(false);
     lastStepBeforeSaveChangesDialog && setStep(lastStepBeforeSaveChangesDialog);
     setLastStepBeforeSaveChangesDialog(null);
@@ -935,6 +941,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     resetStep5,
     resetStep6,
     resetStep7,
+    triggerValidation,
     setSaveChangesDialogVisible,
     lastStepBeforeSaveChangesDialog,
     setLastStepBeforeSaveChangesDialog,
@@ -1019,11 +1026,28 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         // update api
         if (opportunity) {
           await updateOpportunity(data);
+
+          // 📊 GOOGLE ANALYTICS: track event
+          trackGAEvent(
+            GA_CATEGORY_OPPORTUNITY,
+            GA_ACTION_OPPORTUNITY_UPDATE,
+            `Updated Opportunity: ${data.title}`,
+          );
+
           message = "Opportunity updated";
         } else {
           await createOpportunity(data);
+
+          // 📊 GOOGLE ANALYTICS: track event
+          trackGAEvent(
+            GA_CATEGORY_OPPORTUNITY,
+            GA_ACTION_OPPORTUNITY_CREATE,
+            `Created Opportunity: ${data.title}`,
+          );
+
           message = "Opportunity created";
         }
+
         toast(message, {
           type: "success",
         });
@@ -1069,39 +1093,18 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
       setFormData(model);
 
-      if (opportunityId === "create") {
-        // submit on last page when creating new opportunity
-        if (step === 8) {
-          await onSubmit(model);
-
-          // 📊 GOOGLE ANALYTICS: track event
-          trackGAEvent(
-            GA_CATEGORY_OPPORTUNITY,
-            GA_ACTION_OPPORTUNITY_CREATE,
-            `Created Opportunity: ${model.title}`,
-          );
-        }
-        // move to next step
-        else setStep(step);
-      } else {
-        // submit on each page when updating opportunity
+      if (step === menuItems.length + 1) {
         await onSubmit(model);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY,
-          GA_ACTION_OPPORTUNITY_UPDATE,
-          `Updated Opportunity: ${model.title}`,
-        );
+        // // 📊 GOOGLE ANALYTICS: track event
+        // trackGAEvent(
+        //   GA_CATEGORY_OPPORTUNITY,
+        //   GA_ACTION_OPPORTUNITY_CREATE,
+        //   `Created Opportunity: ${model.title}`,
+        // );
       }
-
-      resetStep1(model);
-      resetStep2(model);
-      resetStep3(model);
-      resetStep4(model);
-      resetStep5(model);
-      resetStep6(model);
-      resetStep7(model);
+      // move to next step
+      else setStep(step);
 
       // go to last step before save changes dialog
       if (lastStepBeforeSaveChangesDialog)
@@ -1117,13 +1120,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       onSubmit,
       lastStepBeforeSaveChangesDialog,
       setLastStepBeforeSaveChangesDialog,
-      resetStep1,
-      resetStep2,
-      resetStep3,
-      resetStep4,
-      resetStep5,
-      resetStep6,
-      resetStep7,
     ],
   );
 
@@ -1408,11 +1404,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           </div>
         )}
 
+        {/* MAIN CONTENT */}
         <div className="flex flex-col gap-4 md:flex-row">
           {/* MD: LEFT VERTICAL MENU */}
           <ul className="menu hidden h-max w-64 flex-none gap-3 rounded-lg bg-white p-4 font-semibold shadow-custom md:flex md:justify-center">
             {menuItems.map((item) => (
-              <li key={item.step} onClick={() => onClick_Menu(item.step)}>
+              <li key={item.step} onClick={() => onStep(item.step)}>
                 <a
                   className={`${
                     item.step === step
@@ -1440,7 +1437,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                 (item) => item.label === selectedLabel,
               );
               if (selectedItem) {
-                onClick_Menu(selectedItem.step);
+                onStep(selectedItem.step);
               }
             }}
           >
@@ -1454,13 +1451,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             <div className="flex w-full flex-col px-2 py-4 md:p-8">
               {step === 1 && (
                 <>
-                  <div className="mb-4 flex flex-col">
+                  <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">General</h5>
-                    <p className="my-2 text-sm">
-                      Information about the opportunity that young people can
-                      explore.
+                    <p className="-mt-2 text-sm">
+                      Information about the opportunity that people can explore.
                     </p>
-                    {!formStateStep1.isValid && <FormRequiredFieldLabel />}
+                    <FormRequiredFieldMessage />
                   </div>
 
                   <form
@@ -1483,7 +1479,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       <input
                         type="text"
                         className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                        placeholder="Type title..."
+                        placeholder="Enter title..."
                         {...registerStep1("title")}
                         contentEditable
                       />
@@ -1506,7 +1502,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           <Select
                             instanceId="typeId"
                             classNames={{
-                              control: () => "input !border-gray",
+                              control: () => "input pr-0 pl-2 !border-gray",
                             }}
                             options={opportunityTypesOptions}
                             onBlur={onBlur} // mark the field as touched
@@ -1517,7 +1513,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             // fix menu z-index issue
                             menuPortalTarget={htmlRef.current}
                             styles={{
-                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
                               placeholder: (base) => ({
                                 ...base,
                                 color: "#A3A6AF",
@@ -1549,7 +1548,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           <Select
                             instanceId="engagementTypeId"
                             classNames={{
-                              control: () => "input !border-gray",
+                              control: () => "input !border-gray pr-0 pl-2",
                             }}
                             options={engagementTypesOptions}
                             onBlur={onBlur} // mark the field as touched
@@ -1560,7 +1559,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             // fix menu z-index issue
                             menuPortalTarget={htmlRef.current}
                             styles={{
-                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
                               placeholder: (base) => ({
                                 ...base,
                                 color: "#A3A6AF",
@@ -1593,7 +1595,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           <Select
                             instanceId="categories"
                             classNames={{
-                              control: () => "input !border-gray py-1 h-fit",
+                              control: () =>
+                                "input !border-gray pr-0 pl-2 py-1 h-fit",
                             }}
                             isMulti={true}
                             options={categoriesOptions}
@@ -1633,7 +1636,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       <input
                         type="text"
                         className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                        placeholder="Enter a Link..."
+                        placeholder="Enter link..."
                         {...registerStep1("uRL")}
                         contentEditable
                       />
@@ -1677,29 +1680,29 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             readonly={false}
                             onBlur={onBlur} // mark the field as touched
                             onChange={onChange}
+                            placeholder="Enter description..."
                           />
                         )}
                       />
                     </FormField>
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
-                      {opportunityId === "create" && (
-                        <Link
-                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          href={getSafeUrl(
-                            returnUrl?.toString(),
-                            `/organisations/${id}/opportunities`,
-                          )}
-                        >
-                          Cancel
-                        </Link>
-                      )}
+                    <div className="flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
+                      <Link
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        href={getSafeUrl(
+                          returnUrl?.toString(),
+                          `/organisations/${id}/opportunities`,
+                        )}
+                      >
+                        Cancel
+                      </Link>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
-                        {opportunityId === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
@@ -1707,14 +1710,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               )}
               {step === 2 && (
                 <>
-                  <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold tracking-wider">
-                      Opportunity detail
-                    </h5>
-                    <p className="my-2 text-sm">
+                  <div className="mb-4 flex flex-col gap-2">
+                    <h5 className="font-bold tracking-wider">Details</h5>
+                    <p className="-mt-2 text-sm">
                       Detailed particulars about the opportunity.
                     </p>
-                    {!formStateStep2.isValid && <FormRequiredFieldLabel />}
+                    <FormRequiredFieldMessage />
                   </div>
 
                   <form
@@ -1743,7 +1744,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           <Select
                             instanceId="languages"
                             classNames={{
-                              control: () => "input !border-gray h-fit py-1",
+                              control: () =>
+                                "input !border-gray pr-0 pl-2 h-fit py-1",
                             }}
                             isMulti={true}
                             options={languagesOptions}
@@ -1789,7 +1791,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           <Select
                             instanceId="countries"
                             classNames={{
-                              control: () => "input !border-gray h-fit py-1",
+                              control: () =>
+                                "input !border-gray pr-0 pl-2 h-fit py-1",
                             }}
                             isMulti={true}
                             options={countriesOptions}
@@ -1835,7 +1838,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           <Select
                             instanceId="difficultyId"
                             classNames={{
-                              control: () => "input !border-gray",
+                              control: () => "input !border-gray pr-0 pl-2",
                             }}
                             isMulti={false}
                             options={difficultiesOptions}
@@ -1870,7 +1873,17 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       }
                     >
                       <div className="grid gap-4 md:grid-cols-2">
-                        <div>
+                        <FormField
+                          showError={
+                            !!formStateStep2.touchedFields
+                              .commitmentIntervalCount ||
+                            formStateStep2.isSubmitted
+                          }
+                          error={
+                            formStateStep2.errors.commitmentIntervalCount
+                              ?.message
+                          }
+                        >
                           <input
                             type="number"
                             className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
@@ -1879,20 +1892,18 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               valueAsNumber: true,
                             })}
                           />
-                          {!!formStateStep2.errors.commitmentIntervalCount
-                            ?.message &&
-                            (!!formStateStep2.touchedFields
-                              .commitmentIntervalCount ||
-                              formStateStep2.isSubmitted) && (
-                              <FormError
-                                label={
-                                  formStateStep2.errors.commitmentIntervalCount
-                                    .message
-                                }
-                              />
-                            )}
-                        </div>
-                        <div>
+                        </FormField>
+
+                        <FormField
+                          showError={
+                            !!formStateStep2.touchedFields
+                              .commitmentIntervalId ||
+                            formStateStep2.isSubmitted
+                          }
+                          error={
+                            formStateStep2.errors.commitmentIntervalId?.message
+                          }
+                        >
                           <Controller
                             control={controlStep2}
                             name="commitmentIntervalId"
@@ -1902,7 +1913,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               <Select
                                 instanceId="commitmentIntervalId"
                                 classNames={{
-                                  control: () => "input !border-gray",
+                                  control: () => "input !border-gray pr-0 pl-2",
                                 }}
                                 options={timeIntervalsOptions}
                                 onBlur={onBlur} // mark the field as touched
@@ -1921,20 +1932,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               />
                             )}
                           />
-
-                          {!!formStateStep2.errors.commitmentIntervalId
-                            ?.message &&
-                            (!!formStateStep2.touchedFields
-                              .commitmentIntervalId ||
-                              formStateStep2.isSubmitted) && (
-                              <FormError
-                                label={
-                                  formStateStep2.errors.commitmentIntervalId
-                                    .message
-                                }
-                              />
-                            )}
-                        </div>
+                        </FormField>
                       </div>
                     </FormField>
 
@@ -1947,7 +1945,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       }
                     >
                       <div className="grid gap-4 md:grid-cols-2">
-                        <div>
+                        <FormField
+                          showError={
+                            !!formStateStep2.touchedFields.dateStart ||
+                            formStateStep2.isSubmitted
+                          }
+                          error={formStateStep2.errors.dateStart?.message}
+                        >
                           <Controller
                             control={controlStep2}
                             name="dateStart"
@@ -1965,15 +1969,15 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               />
                             )}
                           />
-                          {!!formStateStep2.errors.dateStart?.message &&
-                            (!!formStateStep2.touchedFields.dateStart ||
-                              formStateStep2.isSubmitted) && (
-                              <FormError
-                                label={formStateStep2.errors.dateStart.message}
-                              />
-                            )}
-                        </div>
-                        <div>
+                        </FormField>
+
+                        <FormField
+                          showError={
+                            !!formStateStep2.touchedFields.dateEnd ||
+                            formStateStep2.isSubmitted
+                          }
+                          error={formStateStep2.errors.dateEnd?.message}
+                        >
                           <Controller
                             control={controlStep2}
                             name="dateEnd"
@@ -1991,15 +1995,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               />
                             )}
                           />
-
-                          {!!formStateStep2.errors.dateEnd?.message &&
-                            (!!formStateStep2.touchedFields.dateEnd ||
-                              formStateStep2.isSubmitted) && (
-                              <FormError
-                                label={formStateStep2.errors.dateEnd.message}
-                              />
-                            )}
-                        </div>
+                        </FormField>
                       </div>
                     </FormField>
 
@@ -2031,21 +2027,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                               // default pool to limit & reward
                               const participantLimit = parseInt(e.target.value);
-                              // NB: yoma rewards has been disabled temporarily
                               //const yomaReward = getValuesStep3("yomaReward");
                               const zltoReward = getValuesStep3("zltoReward");
 
                               if (participantLimit !== null) {
-                                // if (
-                                //   yomaReward !== null &&
-                                //   yomaReward !== undefined &&
-                                //   !isNaN(yomaReward)
-                                // )
-                                //   setValueStep3(
-                                //     "yomaRewardPool",
-                                //     participantLimit * yomaReward,
-                                //   );
-
                                 if (
                                   zltoReward !== null &&
                                   zltoReward !== undefined &&
@@ -2063,23 +2048,22 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     </FormField>
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-2 md:justify-end md:gap-4">
-                      {opportunityId === "create" && (
-                        <button
-                          type="button"
-                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          onClick={() => {
-                            onClick_Menu(1);
-                          }}
-                        >
-                          Back
-                        </button>
-                      )}
+                    <div className="flex items-center justify-center gap-2 md:justify-end md:gap-4">
+                      <button
+                        type="button"
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        onClick={() => {
+                          onStep(1);
+                        }}
+                      >
+                        Back
+                      </button>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
-                        {opportunityId === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
@@ -2087,13 +2071,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               )}
               {step === 3 && (
                 <>
-                  <div className="mb-4 flex flex-col">
+                  <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Rewards</h5>
-                    <p className="my-2 text-sm">
+                    <p className="-mt-2 text-sm">
                       Choose the reward that participants will earn after
                       successfully completing the opportunity.
                     </p>
-                    {!formStateStep3.isValid && <FormRequiredFieldLabel />}
+                    <FormRequiredFieldMessage />
                   </div>
 
                   <form
@@ -2103,92 +2087,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       onSubmitStep(4, data),
                     )}
                   >
-                    {/* NB: yoma rewards has been disabled temporarily */}
-                    {/* <div className="grid grid-cols-2 gap-2">
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">Yoma Reward</span>
-                        </label>
-                        <input
-                          type="number"
-                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                          placeholder="Enter reward amount"
-                          {...registerStep3("yomaReward", {
-                            valueAsNumber: true,
-                          })}
-                          onBlur={(e) => {
-                            // default pool to limit & reward
-                            const participantLimit =
-                              getValuesStep2("participantLimit");
-                            const yomaReward = parseInt(e.target.value);
-
-                            if (
-                              participantLimit !== null &&
-                              !isNaN(yomaReward)
-                            ) {
-                              setValueStep3(
-                                "yomaRewardPool",
-                                participantLimit * yomaReward,
-                              );
-                            }
-                          }}
-                        />
-                        {formStateStep3.errors.yomaReward && (
-                          <label className="label">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep3.errors.yomaReward.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </div>
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">Yoma Reward Pool</span>{" "}
-                          <span className="font-gray-light label-text text-xs">
-                            (default limit * reward)
-                          </span>
-                        </label>
-                        <input
-                          type="number"
-                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                          placeholder="Enter reward pool amount"
-                          {...registerStep3("yomaRewardPool", {
-                            valueAsNumber: true,
-                          })}
-                          onBlur={(e) => {
-                            // default pool to limit & reward (when clearing the pool value)
-                            const participantLimit =
-                              getValuesStep2("participantLimit");
-                            const yomaReward = getValuesStep3("yomaReward");
-                            const yomaRewardPool = parseInt(e.target.value);
-
-                            if (participantLimit !== null) {
-                              if (
-                                yomaReward !== null &&
-                                yomaReward !== undefined &&
-                                !isNaN(yomaReward) &&
-                                (yomaRewardPool === null ||
-                                  yomaRewardPool === undefined ||
-                                  isNaN(yomaRewardPool))
-                              ) {
-                                setValueStep3(
-                                  "yomaRewardPool",
-                                  participantLimit * yomaReward,
-                                );
-                              }
-                            }
-                          }}
-                        />
-                        {formStateStep3.errors.yomaRewardPool && (
-                          <label className="label">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep3.errors.yomaRewardPool.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </div>
-                    </div> */}
-
                     <FormField
                       label="ZLTO Reward"
                       subLabel="Amount rewarded for completing the opportunity. Setting a pool will limit the rewards; once depleted, no ZLTO is awarded. If a participant limit is set, then the pool will default to the limit * reward. This can be changed."
@@ -2349,79 +2247,23 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       />
                     </FormField>
 
-                    {/* <div className="form-control">
-                      <label className="label font-bold">
-                        <span className="label-text">
-                          Which skills will the Youth be awarded with upon
-                          completion?
-                        </span>
-                      </label>
-                      <Controller
-                        control={controlStep3}
-                        name="skills"
-                        render={({ field: { onChange, value } }) => (
-                          <>
-                            <Async
-                              instanceId="skills"
-                              classNames={{
-                                control: () =>
-                                  "input input-xs text-[1rem] h-fit !border-gray",
-                              }}
-                              isMulti={true}
-                              defaultOptions={true} // calls loadSkills for initial results when clicking on the dropdown
-                              cacheOptions
-                              loadOptions={loadSkills}
-                              onChange={(val) => {
-                                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-                                onChange(val.map((c: any) => c.value));
-                              }}
-                              // for each value, look up the value and label from the cache
-                              value={value?.map((x: any) => ({
-                                value: x,
-                                label: cacheSkills.find((c) => c.id === x)
-                                  ?.name,
-                              }))}
-                              placeholder="Skill"
-                              inputId="input_skills" // e2e
-                              // fix menu z-index issue
-                              menuPortalTarget={htmlRef.current}
-                              styles={{
-                                menuPortal: (base) => ({
-                                  ...base,
-                                  zIndex: 9999,
-                                }),
-                              }}
-                            />
-                          </>
-                        )}
-                      />
-                      {formStateStep3.errors.skills && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep3.errors.skills.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div> */}
-
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
-                      {opportunityId === "create" && (
-                        <button
-                          type="button"
-                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          onClick={() => {
-                            onClick_Menu(2);
-                          }}
-                        >
-                          Back
-                        </button>
-                      )}
+                    <div className="flex items-center justify-center gap-4 md:justify-end">
+                      <button
+                        type="button"
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        onClick={() => {
+                          onStep(2);
+                        }}
+                      >
+                        Back
+                      </button>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
-                        {opportunityId === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
@@ -2429,13 +2271,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               )}
               {step === 4 && (
                 <>
-                  <div className="mb-4 flex flex-col">
+                  <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Keywords</h5>
-                    <p className="my-2 text-sm">
+                    <p className="-mt-2 text-sm">
                       Boost your chances of being found in searches by adding
                       keywords to your opportunity.
                     </p>
-                    {!formStateStep4.isValid && <FormRequiredFieldLabel />}
+                    <FormRequiredFieldMessage />
                   </div>
 
                   <form
@@ -2465,7 +2307,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             <CreatableSelect
                               instanceId="keywords"
                               classNames={{
-                                control: () => "input !border-gray h-fit py-1",
+                                control: () =>
+                                  "input !border-gray pr-0 pl-2 h-fit py-1",
                               }}
                               isMulti={true}
                               onBlur={onBlur} // mark the field as touched
@@ -2498,23 +2341,22 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     </FormField>
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
-                      {opportunityId === "create" && (
-                        <button
-                          type="button"
-                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          onClick={() => {
-                            onClick_Menu(3);
-                          }}
-                        >
-                          Back
-                        </button>
-                      )}
+                    <div className="flex items-center justify-center gap-4 md:justify-end">
+                      <button
+                        type="button"
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        onClick={() => {
+                          onStep(3);
+                        }}
+                      >
+                        Back
+                      </button>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
-                        {opportunityId === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
@@ -2522,12 +2364,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               )}
               {step === 5 && (
                 <>
-                  <div className="mb-4 flex flex-col">
+                  <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Verification</h5>
-                    <p className="my-2 text-sm">
-                      How can young participants confirm their involvement?
+                    <p className="-mt-2 text-sm">
+                      How can participants confirm their involvement?
                     </p>
-                    {!formStateStep5.isValid && <FormRequiredFieldLabel />}
+                    <FormRequiredFieldMessage />
                   </div>
 
                   <form
@@ -2537,52 +2379,33 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       onSubmitStep(6, data),
                     )}
                   >
-                    <div className="form-control">
+                    <FormField
+                      label="Verification type"
+                      subLabel="What type of verification is required for participants to complete the opportunity?"
+                      showWarningIcon={
+                        !!formStateStep5.errors.verificationEnabled?.message
+                      }
+                      showError={
+                        !!formStateStep5.touchedFields.verificationEnabled ||
+                        formStateStep5.isSubmitted
+                      }
+                      error={formStateStep5.errors.verificationEnabled?.message}
+                    >
                       <Controller
                         control={controlStep5}
                         name="verificationEnabled"
                         render={({ field: { onChange, value } }) => (
                           <>
-                            {/* AUTOMATIC */}
-                            {/* NB: automatic verification has been disabled temporarily */}
-                            {/* <label
-                              htmlFor="verificationEnabledAutomatic"
-                              className="label cursor-pointer justify-normal"
-                            >
-                              <input
-                                type="radio"
-                                className="radio-primary radio"
-                                id="verificationEnabledAutomatic"
-                                onChange={() => {
-                                  setValueStep5("verificationEnabled", true);
-                                  setValueStep5(
-                                    "verificationMethod",
-                                    VerificationMethod.Automatic,
-                                  );
-
-                                  onChange(true);
-                                }}
-                                checked={
+                            {/* MANUAL */}
+                            <FormRadio
+                              id="verificationEnabledManual"
+                              label="Youth should upload proof of completion"
+                              inputProps={{
+                                checked:
                                   value === true &&
                                   getValuesStep5("verificationMethod") ===
-                                    VerificationMethod.Automatic
-                                }
-                              />
-                              <span className="label-text ml-4">
-                                Youth verification happens automatically
-                              </span>
-                            </label> */}
-
-                            {/* MANUAL */}
-                            <label
-                              htmlFor="verificationEnabledManual"
-                              className="label cursor-pointer justify-normal"
-                            >
-                              <input
-                                type="radio"
-                                className="radio-primary radio"
-                                id="verificationEnabledManual"
-                                onChange={() => {
+                                    VerificationMethod.Manual,
+                                onChange: () => {
                                   setValueStep5("verificationEnabled", true);
                                   setValueStep5(
                                     "verificationMethod",
@@ -2590,106 +2413,70 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                   );
 
                                   onChange(true);
-                                }}
-                                checked={
-                                  value === true &&
-                                  getValuesStep5("verificationMethod") ===
-                                    VerificationMethod.Manual
-                                }
-                              />
-                              <span className="label-text ml-4">
-                                Youth should upload proof of completion
-                              </span>
-                            </label>
+                                },
+                              }}
+                            />
 
                             {/* NOT REQUIRED */}
-                            <label
-                              htmlFor="verificationEnabledNo"
-                              className="label cursor-pointer justify-normal"
-                            >
-                              <input
-                                type="radio"
-                                className="radio-primary radio"
-                                id="verificationEnabledNo"
-                                onChange={() => {
+                            <FormRadio
+                              id="verificationEnabledNo"
+                              label="No verification is required"
+                              inputProps={{
+                                checked: value === false,
+                                onChange: () => {
                                   setValueStep5("verificationEnabled", false);
                                   onChange(false);
-                                }}
-                                checked={value === false}
-                              />
-                              <span className="label-text ml-4">
-                                No verification is required
-                              </span>
-                            </label>
+                                },
+                              }}
+                            />
                           </>
                         )}
                       />
-                      {formStateStep5.errors.verificationEnabled && (
-                        <label className="label -mb-5 font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep5.errors.verificationEnabled.message}`}
-                          </span>
-                        </label>
-                      )}
-                      {formStateStep5.errors.verificationMethod && (
-                        <label className="label -mb-5 font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep5.errors.verificationMethod.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                    </FormField>
 
                     {watchVerificationEnabled &&
                       watchVerificationMethod === VerificationMethod.Manual && (
-                        <div className="form-control">
-                          <label className="label font-bold">
-                            <span className="label-text">
-                              Select the types of proof that participants need
-                              to upload as part of completing the opportuntity.
-                            </span>
-                          </label>
-
+                        <FormField
+                          label="Verification proof"
+                          subLabel="Select the types of proof that participants need to upload as part of completing the opportuntity."
+                          showWarningIcon={
+                            !!formStateStep5.errors.verificationTypes?.message
+                          }
+                          showError={
+                            !!formStateStep5.touchedFields.verificationTypes ||
+                            formStateStep5.isSubmitted
+                          }
+                          error={
+                            formStateStep5.errors.verificationTypes?.message
+                          }
+                        >
                           <div className="flex flex-col gap-1">
                             {verificationTypesOptions?.map((item) => (
                               <div
                                 className="flex flex-col"
                                 key={`verificationTypes_${item.id}`}
                               >
-                                {/* verification type: checkbox label */}
-                                <label
-                                  htmlFor={`chk_verificationType_${item.displayName}`}
-                                  className="label w-full cursor-pointer justify-normal"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    value={item.type}
-                                    // on change, add or remove the item from the verificationTypes array
-                                    onChange={(e) => {
+                                <FormCheckbox
+                                  id={`chk_verificationType_${item.displayName}`}
+                                  label={item.displayName}
+                                  inputProps={{
+                                    value: item.type,
+                                    checked: watchVerificationTypes?.some(
+                                      (x) => x.type === item.type,
+                                    ),
+                                    onChange: (e) => {
                                       if (e.target.checked) append(item);
                                       else {
                                         const index =
                                           watchVerificationTypes?.findIndex(
-                                            (x: OpportunityVerificationType) =>
-                                              x.type === item.type,
+                                            (x) => x.type === item.type,
                                           );
                                         remove(index);
                                       }
-                                    }}
-                                    id={`chk_verificationType_${item.displayName}`} // e2e
-                                    className="checkbox-primary checkbox"
-                                    disabled={!watchVerificationEnabled}
-                                    checked={
-                                      watchVerificationTypes?.find(
-                                        (x: OpportunityVerificationType) =>
-                                          x?.type === item.type,
-                                      ) !== undefined
-                                    }
-                                  />
-                                  <span className="label-text ml-4">
-                                    {item.displayName}
-                                  </span>
-                                </label>
+                                    },
+                                    disabled: !watchVerificationEnabled,
+                                  }}
+                                />
 
                                 {/* verification type: description input */}
                                 {watchVerificationTypes?.find(
@@ -2827,34 +2614,26 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               </div>
                             ))}
                           </div>
-                          {formStateStep5.errors.verificationTypes && (
-                            <label className="label -mb-5 font-bold">
-                              <span className="label-text-alt italic text-red-500">
-                                {`${formStateStep5.errors.verificationTypes.message}`}
-                              </span>
-                            </label>
-                          )}
-                        </div>
+                        </FormField>
                       )}
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
-                      {opportunityId === "create" && (
-                        <button
-                          type="button"
-                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          onClick={() => {
-                            onClick_Menu(4);
-                          }}
-                        >
-                          Back
-                        </button>
-                      )}
+                    <div className="flex items-center justify-center gap-4 md:justify-end">
+                      <button
+                        type="button"
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        onClick={() => {
+                          onStep(4);
+                        }}
+                      >
+                        Back
+                      </button>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
-                        {opportunityId === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
@@ -2862,13 +2641,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               )}
               {step === 6 && (
                 <>
-                  <div className="mb-4 flex flex-col">
+                  <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Credential</h5>
-                    <p className="my-2 text-sm">
-                      Information about the credential that Youth will receive
-                      upon completion of this opportunity
+                    <p className="-mt-2 text-sm">
+                      Information about the credential that participants will
+                      receive upon completion of this opportunity.
                     </p>
-                    {!formStateStep6.isValid && <FormRequiredFieldLabel />}
+                    <FormRequiredFieldMessage />
                   </div>
 
                   <form
@@ -2879,23 +2658,33 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     )}
                   >
                     <div className="form-control">
-                      {/* checkbox label */}
                       {watchVerificationEnabled === true && (
-                        <label
-                          htmlFor="credentialIssuanceEnabled"
-                          className="label w-full cursor-pointer justify-normal"
+                        <FormField
+                          label="Issuance"
+                          subLabel="Should a credential be issued upon completion of the opportunity?"
+                          showWarningIcon={
+                            !!formStateStep6.errors.credentialIssuanceEnabled
+                              ?.message
+                          }
+                          showError={
+                            !!formStateStep6.touchedFields
+                              .credentialIssuanceEnabled ||
+                            formStateStep6.isSubmitted
+                          }
+                          error={
+                            formStateStep6.errors.credentialIssuanceEnabled
+                              ?.message
+                          }
                         >
-                          <input
-                            {...registerStep6(`credentialIssuanceEnabled`)}
-                            type="checkbox"
+                          <FormCheckbox
                             id="credentialIssuanceEnabled"
-                            className="checkbox-primary checkbox"
-                            disabled={watchVerificationEnabled !== true}
+                            label="I want to issue a credential upon completion"
+                            inputProps={{
+                              ...registerStep6(`credentialIssuanceEnabled`),
+                              disabled: !watchVerificationEnabled,
+                            }}
                           />
-                          <span className="label-text ml-4">
-                            I want to issue a credential upon completion
-                          </span>
-                        </label>
+                        </FormField>
                       )}
 
                       {watchVerificationEnabled !== true && (
@@ -2904,6 +2693,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           is supported (see previous step).
                         </FormMessage>
                       )}
+
                       {formStateStep6.errors.credentialIssuanceEnabled && (
                         <label className="label -mb-5 font-bold">
                           <span className="label-text-alt italic text-red-500">
@@ -2917,7 +2707,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       <>
                         <FormField
                           label="Schema"
-                          subLabel="The information that will be used to issue the credential."
+                          subLabel="What information will be used to issue the credential?"
                           showWarningIcon={
                             !!formStateStep6.errors.ssiSchemaName?.message
                           }
@@ -2937,7 +2727,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                 instanceId="ssiSchemaName"
                                 classNames={{
                                   control: () =>
-                                    "input !border-gray h-fit py-1",
+                                    "input !border-gray pr-0 pl-2 h-fit py-1",
                                 }}
                                 options={schemasOptions}
                                 onBlur={onBlur} // mark the field as touched
@@ -2957,45 +2747,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             )}
                           />
                         </FormField>
-
-                        {/* <div className="form-control">
-                          <label className="label">
-                            <span className="label-text">Select schema</span>
-                          </label>
-
-                          <Controller
-                            control={controlStep6}
-                            name="ssiSchemaName"
-                            render={({ field: { onChange, value } }) => (
-                              <Select
-                                instanceId="ssiSchemaName"
-                                classNames={{
-                                  control: () =>
-                                    "input !border-gray h-fit py-1",
-                                }}
-                                options={schemasOptions}
-                                onChange={(val) => onChange(val?.value)}
-                                value={schemasOptions?.find(
-                                  (c) => c.value === value,
-                                )}
-                                styles={{
-                                  placeholder: (base) => ({
-                                    ...base,
-                                    color: "#A3A6AF",
-                                  }),
-                                }}
-                                inputId="input_ssiSchemaName" // e2e
-                              />
-                            )}
-                          />
-                          {formStateStep6.errors.ssiSchemaName && (
-                            <label className="label -mb-5">
-                              <span className="label-text-alt italic text-red-500">
-                                {`${formStateStep6.errors.ssiSchemaName.message}`}
-                              </span>
-                            </label>
-                          )}
-                        </div> */}
 
                         {/* SCHEMA ATTRIBUTES */}
                         {watcSSISchemaName && (
@@ -3032,23 +2783,22 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     )}
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
-                      {opportunityId === "create" && (
-                        <button
-                          type="button"
-                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          onClick={() => {
-                            onClick_Menu(5);
-                          }}
-                        >
-                          Back
-                        </button>
-                      )}
+                    <div className="flex items-center justify-center gap-4 md:justify-end">
+                      <button
+                        type="button"
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        onClick={() => {
+                          onStep(5);
+                        }}
+                      >
+                        Back
+                      </button>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
-                        {opportunityId === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
@@ -3056,25 +2806,26 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               )}
               {step === 7 && (
                 <>
-                  <div className="mb-4 flex flex-col">
+                  <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Preview</h5>
-                    <p className="my-2 text-sm">
+                    <p className="-mt-2 text-sm">
                       Preview your opportunity before submitting.
                     </p>
-                    {!(
-                      formStateStep1.isValid &&
-                      formStateStep2.isValid &&
-                      formStateStep3.isValid &&
-                      formStateStep4.isValid &&
-                      formStateStep5.isValid &&
-                      formStateStep6.isValid
-                    ) && (
-                      <FormMessage messageType={FormMessageType.Warning}>
-                        Please complete the previous steps to preview and submit
-                        the opportunity.
-                      </FormMessage>
-                    )}
                   </div>
+
+                  {!(
+                    formStateStep1.isValid &&
+                    formStateStep2.isValid &&
+                    formStateStep3.isValid &&
+                    formStateStep4.isValid &&
+                    formStateStep5.isValid &&
+                    formStateStep6.isValid
+                  ) && (
+                    <FormMessage messageType={FormMessageType.Warning}>
+                      Please complete the previous steps to preview and submit
+                      the opportunity.
+                    </FormMessage>
+                  )}
 
                   {/* PREVIEWS */}
                   {formStateStep1.isValid &&
@@ -3083,119 +2834,127 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     formStateStep4.isValid &&
                     formStateStep5.isValid &&
                     formStateStep6.isValid && (
-                      <>
-                        <div className="flex flex-col gap-4">
-                          {/* CARD PREVIEW */}
-                          <div className="flex flex-col gap-2">
-                            <h6 className="text-sm font-bold">
-                              Search Results
-                            </h6>
+                      <div className="flex flex-col gap-4">
+                        {/* CARD PREVIEW */}
+                        <div className="flex flex-col gap-2">
+                          <h6 className="text-sm font-bold">Search Results</h6>
 
-                            <FormMessage messageType={FormMessageType.Info}>
-                              This is how your opportunity will appear in search
-                              results.
-                            </FormMessage>
+                          <FormMessage messageType={FormMessageType.Info}>
+                            This is how your opportunity will appear in search
+                            results.
+                          </FormMessage>
 
-                            <div className="mt-4 flex justify-center">
-                              <OpportunityPublicSmallComponent
-                                key={`opportunity_card_preview`}
-                                preview={true}
-                                data={opportunityInfo}
-                              />
-                            </div>
-                          </div>
-
-                          {/* DETAILS PREVIEW */}
-                          <div className="flex flex-col gap-2">
-                            <h6 className="text-sm font-bold">
-                              Opportunity Page
-                            </h6>
-
-                            <FormMessage messageType={FormMessageType.Info}>
-                              This is how your opportunity will appear on the
-                              opportunity page when navigating from the search
-                              results.
-                            </FormMessage>
-
-                            <div className="mt-4 flex justify-center">
-                              <OpportunityPublicDetails
-                                opportunityInfo={opportunityInfo}
-                                user={null}
-                                error={error}
-                                preview={true}
-                              />
-                            </div>
+                          <div className="mt-4 flex justify-center">
+                            <OpportunityPublicSmallComponent
+                              key={`opportunity_card_preview`}
+                              preview={true}
+                              data={opportunityInfo}
+                            />
                           </div>
                         </div>
 
-                        <label className="label label-text pt-0 text-sm ">
-                          {/* {formData.description} */}
-                        </label>
-                      </>
+                        {/* DETAILS PREVIEW */}
+                        <div className="flex flex-col gap-2">
+                          <h6 className="text-sm font-bold">
+                            Opportunity Page
+                          </h6>
+
+                          <FormMessage messageType={FormMessageType.Info}>
+                            This is how your opportunity will appear on the
+                            opportunity page when navigating from the search
+                            results.
+                          </FormMessage>
+
+                          <div className="mt-4 flex justify-center">
+                            <OpportunityPublicDetails
+                              opportunityInfo={opportunityInfo}
+                              user={null}
+                              error={error}
+                              preview={true}
+                            />
+                          </div>
+                        </div>
+                      </div>
                     )}
 
                   <form
                     ref={formRef7}
-                    className="flex flex-col gap-4"
+                    className="mt-4 flex flex-col gap-4"
                     onSubmit={handleSubmitStep7((data) =>
                       onSubmitStep(8, data),
                     )}
                   >
-                    <div className="form-control">
-                      {/* POST AS ACTIVE */}
-                      <label
-                        htmlFor="postAsActive"
-                        className="label w-full cursor-pointer justify-normal"
-                      >
-                        <input
-                          {...registerStep7(`postAsActive`)}
-                          type="checkbox"
-                          id="postAsActive"
-                          className="checkbox-primary checkbox"
-                        />
-                        <span className="label-text ml-4">
-                          Make this opportunity active
-                        </span>
-                      </label>
-                      {formStateStep7.errors.postAsActive && (
-                        <label className="label -mb-5 font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep7.errors.postAsActive.message}`}
+                    {/* POST AS ACTIVE */}
+                    <FormField
+                      label="Visibility"
+                      subLabel="Make this opportunity active to be visible to the public. Inactive opportunities are only visible to you and your team members."
+                      showWarningIcon={
+                        !!formStateStep7.errors.postAsActive?.message
+                      }
+                      showError={
+                        !!formStateStep7.touchedFields.postAsActive ||
+                        formStateStep7.isSubmitted
+                      }
+                      error={formStateStep7.errors.postAsActive?.message}
+                    >
+                      <FormCheckbox
+                        id="postAsActive"
+                        label="Make this opportunity active"
+                        inputProps={{ ...registerStep7(`postAsActive`) }}
+                      />
+
+                      {/* <label
+                          htmlFor="postAsActive"
+                          className="label w-full cursor-pointer justify-normal"
+                        >
+                          <input
+                            {...registerStep7(`postAsActive`)}
+                            type="checkbox"
+                            id="postAsActive"
+                            className="checkbox-primary checkbox"
+                          />
+                          <span className="label-text ml-4">
+                            Make this opportunity active
                           </span>
-                        </label>
-                      )}
-                    </div>
+                        </label> */}
+
+                      {/* {!!formStateStep7.errors.postAsActive?.message &&
+                          (!!formStateStep7.touchedFields.postAsActive ||
+                            formStateStep7.isSubmitted) && (
+                            <FormError
+                              label={formStateStep7.errors.postAsActive.message}
+                            />
+                          )} */}
+                    </FormField>
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
+                    <div className="flex items-center justify-center gap-4 md:justify-end">
                       <button
                         type="button"
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
-                          onClick_Menu(6);
+                          onStep(6);
                         }}
                       >
                         Back
                       </button>
-                      {opportunityId == "create" && (
-                        <button
-                          type="submit"
-                          className="btn btn-success flex-grow disabled:bg-gray-light md:w-1/3 md:flex-grow-0"
-                          disabled={
-                            !(
-                              formStateStep1.isValid &&
-                              formStateStep2.isValid &&
-                              formStateStep3.isValid &&
-                              formStateStep4.isValid &&
-                              formStateStep5.isValid &&
-                              formStateStep6.isValid &&
-                              formStateStep7.isValid
-                            )
-                          }
-                        >
-                          Publish opportunity
-                        </button>
-                      )}
+
+                      <button
+                        type="submit"
+                        className="btn btn-success flex-grow disabled:bg-gray-light md:w-1/3 md:flex-grow-0"
+                        disabled={
+                          !(
+                            formStateStep1.isValid &&
+                            formStateStep2.isValid &&
+                            formStateStep3.isValid &&
+                            formStateStep4.isValid &&
+                            formStateStep5.isValid &&
+                            formStateStep6.isValid
+                          )
+                        }
+                      >
+                        Submit
+                      </button>
                     </div>
                   </form>
                 </>

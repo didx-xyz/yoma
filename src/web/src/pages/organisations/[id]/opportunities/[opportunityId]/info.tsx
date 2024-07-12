@@ -62,6 +62,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { Editor } from "~/components/RichText/Editor";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -602,10 +603,8 @@ const OpportunityDetails: NextPageWithLayout<{
             </div>
 
             <div className="flex flex-col gap-2 md:flex-row">
-              <div className="w-full flex-grow rounded-lg bg-white p-6 md:w-[66%]">
-                <div style={{ whiteSpace: "pre-wrap" }}>
-                  {opportunity?.description}
-                </div>
+              <div className="flex-grow rounded-lg bg-white p-2 shadow-lg md:w-[66%]">
+                <Editor value={opportunity.description} readonly={true} />
               </div>
               <div className="flex w-full flex-col gap-2 md:w-[33%]">
                 <div className="flex flex-col rounded-lg bg-white p-6">
