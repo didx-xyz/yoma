@@ -12,7 +12,7 @@ import {
   toolbarPlugin,
 } from "@mdxeditor/editor";
 import "@mdxeditor/editor/style.css";
-import React, { useState } from "react";
+import React from "react";
 import { Toolbar } from "./Toolbar";
 
 export const Editor: React.FC<{
@@ -22,8 +22,6 @@ export const Editor: React.FC<{
   onBlur?: () => void;
   onChange?: (value: string) => void;
 }> = ({ value, readonly, placeholder, onBlur, onChange }) => {
-  const [valueState, setValueState] = useState(value);
-
   return (
     <div className={`editor ${readonly ? "readonly" : "editable"}`}>
       <MDXEditor
@@ -47,7 +45,6 @@ export const Editor: React.FC<{
           onBlur && onBlur();
         }}
         onChange={(val) => {
-          setValueState(val);
           onChange && onChange(val);
         }}
         readOnly={readonly}

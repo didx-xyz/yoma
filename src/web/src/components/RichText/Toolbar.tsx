@@ -5,10 +5,9 @@ import {
   CodeToggle,
   ConditionalContents,
   CreateLink,
-  DirectiveNode,
-  EditorInFocus,
+  type DirectiveNode,
+  type EditorInFocus,
   InsertAdmonition,
-  InsertImage,
   InsertTable,
   InsertThematicBreak,
   ListsToggle,
@@ -57,7 +56,6 @@ export const Toolbar: React.FC = () => {
       <Separator />
 
       <CreateLink />
-      <InsertImage />
 
       <Separator />
 

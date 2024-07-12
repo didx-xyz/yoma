@@ -18,7 +18,14 @@ const FormLabel: React.FC<{
           </span>
         )}
 
-        {showWarningIcon && <IoMdAlert className="mr-2x h-5 w-5 text-yellow" />}
+        {showWarningIcon && (
+          <span
+            className="tooltip tooltip-secondary"
+            data-tip="This field is required."
+          >
+            <IoMdAlert className="mr-2x h-5 w-5 text-yellow" />
+          </span>
+        )}
       </span>
       <span className="text-xs">{subLabel}</span>
     </label>

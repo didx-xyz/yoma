@@ -47,14 +47,14 @@ import z from "zod";
 import { SchemaType } from "~/api/models/credential";
 import type { SelectOption, Skill } from "~/api/models/lookups";
 import {
-  OpportunityInfo,
   Status,
   VerificationMethod,
   type Opportunity,
+  type OpportunityInfo,
   type OpportunityRequestBase,
   type OpportunityVerificationType,
 } from "~/api/models/opportunity";
-import { Organization } from "~/api/models/organisation";
+import type { Organization } from "~/api/models/organisation";
 import { getSchemas } from "~/api/services/credentials";
 import {
   getCountries,
@@ -76,7 +76,6 @@ import {
 import { getOrganisationById } from "~/api/services/organisations";
 import { AvatarImage } from "~/components/AvatarImage";
 import FormCheckbox from "~/components/Common/FormCheckbox";
-import FormError from "~/components/Common/FormError";
 import FormField from "~/components/Common/FormField";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormRadio from "~/components/Common/FormRadio";
@@ -96,7 +95,6 @@ import {
   ACCEPTED_AUDIO_TYPES_LABEL,
   ACCEPTED_DOC_TYPES_LABEL,
   ACCEPTED_IMAGE_TYPES_LABEL,
-  DATE_FORMAT_HUMAN,
   DATE_FORMAT_SYSTEM,
   GA_ACTION_OPPORTUNITY_CREATE,
   GA_ACTION_OPPORTUNITY_UPDATE,
@@ -409,6 +407,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       .min(1, "Category is required."),
     uRL: z
       .string()
+      .max(2048, "Link cannot exceed 2048 characters.")
       .optional()
       .refine(
         (value) => (value ?? "") === "" || REGEX_URL_VALIDATION.test(value!),
@@ -428,6 +427,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       .union([z.nan(), z.null(), z.number()])
       .refine((val) => val != null && !isNaN(val), {
         message: "Number is required.",
+      })
+      .refine((val) => val != null && val > 0, {
+        message: "Number must be greater than 0.",
+      })
+      .refine((val) => val != null && val <= 32767, {
+        message: "Number must be less than or equal to 32767.",
       }),
     commitmentIntervalId: z.string().min(1, "Time frame is required."),
     dateStart: z
@@ -436,32 +441,88 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         message: "Start date is required.",
       }),
     dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
-    participantLimit: z.union([z.nan(), z.null(), z.number()]).optional(),
+    participantLimit: z
+      .union([z.nan(), z.null(), z.number()])
+      .optional()
+      .superRefine((val, ctx) => {
+        if (val != null) {
+          if (val <= 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Number must be greater than 0.",
+            });
+          }
+          if (val > 2147483647) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Number must be less than or equal to 2147483647.",
+            });
+          }
+        }
+      }),
   });
 
-  const schemaStep3 = z.object({
-    zltoReward: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
-      // eslint-disable-next-line
-      return val === null || Number.isNaN(val as any) ? null : val;
-    }),
-    zltoRewardPool: z
-      .union([z.nan(), z.null(), z.number()])
-      .transform((val) => {
-        // eslint-disable-next-line
-        return val === null || Number.isNaN(val as any) ? null : val;
-      }),
-    // yomaReward: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
-    //   // eslint-disable-next-line
-    //   return val === null || Number.isNaN(val as any) ? undefined : val;
-    // }),
-    // yomaRewardPool: z
-    //   .union([z.nan(), z.null(), z.number()])
-    //   .transform((val) => {
-    //     // eslint-disable-next-line
-    //     return val === null || Number.isNaN(val as any) ? undefined : val;
-    //   }),
-    skills: z.array(z.string()).optional(),
-  });
+  const schemaStep3 = z
+    .object({
+      zltoReward: z
+        .union([z.nan(), z.null(), z.number()])
+        .superRefine((val, ctx) => {
+          if (val != null) {
+            if (val <= 0) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Reward amount must be greater than 0.",
+              });
+            }
+            if (val > 2000) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Reward amount must be less than or equal to 2000.",
+              });
+            }
+          }
+        }),
+      zltoRewardPool: z
+        .union([z.nan(), z.null(), z.number()])
+        .superRefine((val, ctx) => {
+          if (val != null) {
+            if (val <= 0) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Reward pool must be greater than 0.",
+              });
+            }
+          }
+        }),
+      //   // eslint-disable-next-line
+      //   return val === null || Number.isNaN(val as any) ? undefined : val;
+      // }),
+      // yomaRewardPool: z
+      //   .union([z.nan(), z.null(), z.number()])
+      //   .transform((val) => {
+      //     // eslint-disable-next-line
+      //     return val === null || Number.isNaN(val as any) ? undefined : val;
+      //   }),
+      skills: z.array(z.string()).optional(),
+    })
+    .superRefine((val, ctx) => {
+      if (val == null) return;
+
+      if (
+        val.zltoRewardPool != null &&
+        val.zltoReward != null &&
+        val.zltoRewardPool < val.zltoReward
+      ) {
+        ctx.addIssue({
+          message:
+            "Reward pool must be greater than or equal to reward amount.",
+          code: z.ZodIssueCode.custom,
+          path: ["zltoRewardPool"],
+          fatal: true,
+        });
+        return z.NEVER;
+      }
+    });
 
   const schemaStep4 = z.object({
     keywords: z.array(z.string()).min(1, "Keyword is required."),
@@ -683,10 +744,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     () => Object.keys(formStateStep6.dirtyFields).length > 0,
     [formStateStep6],
   );
-  const isDirtyStep7 = useMemo(
-    () => Object.keys(formStateStep7.dirtyFields).length > 0,
-    [formStateStep7],
-  );
   //#endregion Form
 
   //#region Form Behavior
@@ -769,7 +826,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       description: formData.description,
       type:
         formData.typeId && opportunityTypesData
-          ? opportunityTypesData.find((x) => x.id == formData.typeId)?.name!
+          ? opportunityTypesData.find((x) => x.id == formData.typeId)?.name ??
+            ""
           : "",
       organizationId: id,
       organizationName: organisation ? organisation.name : "",
@@ -785,12 +843,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       verificationMethod: formData.verificationMethod,
       difficulty:
         formData.difficultyId && difficultiesData
-          ? difficultiesData.find((x) => x.id == formData.difficultyId)?.name!
+          ? difficultiesData.find((x) => x.id == formData.difficultyId)?.name ??
+            ""
           : "",
       commitmentInterval:
         formData.commitmentIntervalId && timeIntervalsData
           ? timeIntervalsData.find((x) => x.id == formData.commitmentIntervalId)
-              ?.name!
+              ?.name ?? ""
           : "",
       commitmentIntervalCount: formData.commitmentIntervalCount ?? 0,
       commitmentIntervalDescription: "",
@@ -810,7 +869,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       engagementType:
         formData.engagementTypeId && engagementTypesData
           ? engagementTypesData.find((x) => x.id == formData.engagementTypeId)
-              ?.name!
+              ?.name ?? ""
           : "",
       published: true,
       yomaInfoURL: "",
@@ -834,11 +893,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           : [],
       skills:
         formData.skills && cacheSkills
-          ? formData.skills?.map((x) => cacheSkills.find((y) => y.id == x)!)
+          ? formData.skills
+              .map((x) => cacheSkills.find((y) => y.id === x))
+              .filter((skill): skill is Skill => Boolean(skill))
           : [],
-      verificationTypes: formData.verificationTypes as
-        | OpportunityVerificationType[]
-        | null,
+      verificationTypes: formData.verificationTypes,
     }),
     [
       formData,
@@ -856,8 +915,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     ],
   );
 
-  // validates the forms
-  // this is needed to show the required field indicators (exclamation icon next to labels) on the first render
   const triggerValidation = useCallback(() => {
     const validate = async () => {
       await triggerStep1();
@@ -880,7 +937,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     triggerStep7,
   ]);
 
-  // validate forms on initial load
+  // validate the forms on initial load
+  // this is needed to show the required field indicators (exclamation icon next to labels) on the first render
   useEffect(() => {
     triggerValidation();
   }, [triggerValidation]);
@@ -912,7 +970,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       isDirtyStep4,
       isDirtyStep5,
       isDirtyStep6,
-      isDirtyStep7,
       step,
       setStep,
       setSaveChangesDialogVisible,
@@ -1106,6 +1163,18 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       // move to next step
       else setStep(step);
 
+      // forms needs to be reset in order to clear the dirty fields
+      resetStep1(model);
+      resetStep2(model);
+      resetStep3(model);
+      resetStep4(model);
+      resetStep5(model);
+      resetStep6(model);
+      resetStep7(model);
+
+      // trigger validation
+      triggerValidation();
+
       // go to last step before save changes dialog
       if (lastStepBeforeSaveChangesDialog)
         setStep(lastStepBeforeSaveChangesDialog);
@@ -1113,13 +1182,21 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       setLastStepBeforeSaveChangesDialog(null);
     },
     [
-      opportunityId,
+      menuItems.length,
       setStep,
       formData,
       setFormData,
       onSubmit,
       lastStepBeforeSaveChangesDialog,
       setLastStepBeforeSaveChangesDialog,
+      resetStep1,
+      resetStep2,
+      resetStep3,
+      resetStep4,
+      resetStep5,
+      resetStep6,
+      resetStep7,
+      triggerValidation,
     ],
   );
 
@@ -1456,7 +1533,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <p className="-mt-2 text-sm">
                       Information about the opportunity that people can explore.
                     </p>
-                    <FormRequiredFieldMessage />
+                    {!formStateStep1.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
@@ -1468,7 +1545,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                   >
                     <FormField
                       label="Title"
-                      subLabel="A short title of the opportunity (150 characters). This will be displayed on the search results and opportunity page."
+                      subLabel="A short title of the opportunity (max 150 characters). This will be displayed on the search results and opportunity page."
                       showWarningIcon={!!formStateStep1.errors.title?.message}
                       showError={
                         !!formStateStep1.touchedFields.title ||
@@ -1480,8 +1557,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         type="text"
                         className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                         placeholder="Enter title..."
+                        maxLength={150}
                         {...registerStep1("title")}
-                        contentEditable
                       />
                     </FormField>
 
@@ -1637,14 +1714,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         type="text"
                         className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                         placeholder="Enter link..."
+                        maxLength={2048}
                         {...registerStep1("uRL")}
-                        contentEditable
                       />
                     </FormField>
 
                     <FormField
                       label="Summary"
-                      subLabel="A short summary of the opportunity (150 characters). This will be displayed on the search results."
+                      subLabel="A short summary of the opportunity (max 150 characters). This will be displayed on the search results."
                       showWarningIcon={!!formStateStep1.errors.summary?.message}
                       showError={
                         !!formStateStep1.touchedFields.summary ||
@@ -1655,6 +1732,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       <textarea
                         className="input textarea textarea-bordered h-16 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
                         placeholder="Enter summary..."
+                        maxLength={150}
                         {...registerStep1("summary")}
                       />
                     </FormField>
@@ -1715,7 +1793,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <p className="-mt-2 text-sm">
                       Detailed particulars about the opportunity.
                     </p>
-                    <FormRequiredFieldMessage />
+                    {!formStateStep2.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
@@ -2077,7 +2155,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       Choose the reward that participants will earn after
                       successfully completing the opportunity.
                     </p>
-                    <FormRequiredFieldMessage />
+                    {!formStateStep3.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
@@ -2096,7 +2174,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       }
                     >
                       <div className="grid gap-4 md:grid-cols-2">
-                        <div>
+                        <FormField
+                          showError={
+                            !!formStateStep3.touchedFields.zltoReward ||
+                            formStateStep3.isSubmitted
+                          }
+                          error={formStateStep3.errors.zltoReward?.message}
+                        >
                           <Controller
                             control={controlStep3}
                             name="zltoReward"
@@ -2129,16 +2213,15 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               />
                             )}
                           />
+                        </FormField>
 
-                          {!!formStateStep3.errors.zltoReward?.message &&
-                            (!!formStateStep3.touchedFields.zltoReward ||
-                              formStateStep3.isSubmitted) && (
-                              <FormError
-                                label={formStateStep3.errors.zltoReward.message}
-                              />
-                            )}
-                        </div>
-                        <div>
+                        <FormField
+                          showError={
+                            !!formStateStep3.touchedFields.zltoRewardPool ||
+                            formStateStep3.isSubmitted
+                          }
+                          error={formStateStep3.errors.zltoRewardPool?.message}
+                        >
                           <Controller
                             control={controlStep3}
                             name="zltoRewardPool"
@@ -2181,17 +2264,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               />
                             )}
                           />
-
-                          {!!formStateStep3.errors.participantLimit?.message &&
-                            (!!formStateStep3.touchedFields.participantLimit ||
-                              formStateStep3.isSubmitted) && (
-                              <FormError
-                                label={
-                                  formStateStep3.errors.participantLimit.message
-                                }
-                              />
-                            )}
-                        </div>
+                        </FormField>
                       </div>
                     </FormField>
 
@@ -2277,7 +2350,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       Boost your chances of being found in searches by adding
                       keywords to your opportunity.
                     </p>
-                    <FormRequiredFieldMessage />
+                    {!formStateStep4.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
@@ -2369,7 +2442,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <p className="-mt-2 text-sm">
                       How can participants confirm their involvement?
                     </p>
-                    <FormRequiredFieldMessage />
+                    {!formStateStep5.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
@@ -2647,7 +2720,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       Information about the credential that participants will
                       receive upon completion of this opportunity.
                     </p>
-                    <FormRequiredFieldMessage />
+                    {!formStateStep6.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
