@@ -6,99 +6,108 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { type AxiosError } from "axios";
+import axios, { type AxiosError } from "axios";
+import moment from "moment";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import iconBell from "public/images/icon-bell.webp";
 import { type ParsedUrlQuery } from "querystring";
 import {
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactElement,
-  useEffect,
-  useRef,
 } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {
   Controller,
+  useFieldArray,
   useForm,
   type FieldValues,
-  useFieldArray,
 } from "react-hook-form";
+import {
+  IoIosCheckmarkCircle,
+  IoMdAlert,
+  IoMdArrowRoundBack,
+  IoMdClose,
+  IoMdImage,
+} from "react-icons/io";
+import ReactModal from "react-modal";
 import Select from "react-select";
+import Async from "react-select/async";
+import CreatableSelect from "react-select/creatable";
 import { toast } from "react-toastify";
 import z from "zod";
-import type { Skill, SelectOption } from "~/api/models/lookups";
 import { SchemaType } from "~/api/models/credential";
+import type { SelectOption, Skill } from "~/api/models/lookups";
 import {
+  Status,
   VerificationMethod,
   type Opportunity,
+  type OpportunityInfo,
   type OpportunityRequestBase,
   type OpportunityVerificationType,
 } from "~/api/models/opportunity";
+import type { Organization } from "~/api/models/organisation";
+import { getSchemas } from "~/api/services/credentials";
 import {
   getCountries,
+  getEngagementTypes,
   getLanguages,
   getSkills,
   getTimeIntervals,
-  getEngagementTypes,
 } from "~/api/services/lookups";
 import {
-  updateOpportunity,
+  createOpportunity,
+  getCategories,
   getDifficulties,
   getOpportunityById,
   getTypes,
   getVerificationTypes,
-  createOpportunity,
-  getCategories,
+  updateOpportunity,
+  updateOpportunityStatus,
 } from "~/api/services/opportunities";
+import { getOrganisationById } from "~/api/services/organisations";
+import { AvatarImage } from "~/components/AvatarImage";
+import FormCheckbox from "~/components/Common/FormCheckbox";
+import FormField from "~/components/Common/FormField";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
+import FormRadio from "~/components/Common/FormRadio";
+import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
 import MainLayout from "~/components/Layout/Main";
-import { ApiErrors } from "~/components/Status/ApiErrors";
-import { Loading } from "~/components/Status/Loading";
-import { authOptions, type User } from "~/server/auth";
+import OpportunityPublicDetails from "~/components/Opportunity/OpportunityPublicDetails";
+import { OpportunityPublicSmallComponent } from "~/components/Opportunity/OpportunityPublicSmall";
 import { PageBackground } from "~/components/PageBackground";
-import Link from "next/link";
+import { Editor } from "~/components/RichText/Editor";
+import { ApiErrors } from "~/components/Status/ApiErrors";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Loading } from "~/components/Status/Loading";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
-  IoIosInformationCircleOutline,
-  IoMdArrowRoundBack,
-} from "react-icons/io";
-import CreatableSelect from "react-select/creatable";
-import type { NextPageWithLayout } from "~/pages/_app";
-import { getSchemas } from "~/api/services/credentials";
-import {
-  REGEX_URL_VALIDATION,
-  GA_CATEGORY_OPPORTUNITY,
+  ACCEPTED_AUDIO_TYPES_LABEL,
+  ACCEPTED_DOC_TYPES_LABEL,
+  ACCEPTED_IMAGE_TYPES_LABEL,
+  DATE_FORMAT_SYSTEM,
   GA_ACTION_OPPORTUNITY_CREATE,
   GA_ACTION_OPPORTUNITY_UPDATE,
-  DATE_FORMAT_HUMAN,
-  DATE_FORMAT_SYSTEM,
-  PAGE_SIZE_MEDIUM,
-  ACCEPTED_IMAGE_TYPES_LABEL,
-  ACCEPTED_DOC_TYPES_LABEL,
-  ACCEPTED_AUDIO_TYPES_LABEL,
+  GA_CATEGORY_OPPORTUNITY,
   MAX_FILE_SIZE_LABEL,
+  PAGE_SIZE_MEDIUM,
+  REGEX_URL_VALIDATION,
 } from "~/lib/constants";
-import { Unauthorized } from "~/components/Status/Unauthorized";
-import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
-import Moment from "react-moment";
-import moment from "moment";
-import { getThemeFromRole, debounce, getSafeUrl } from "~/lib/utils";
-import Async from "react-select/async";
-import { useRouter } from "next/router";
-import ReactModal from "react-modal";
-import Image from "next/image";
-import iconBell from "public/images/icon-bell.webp";
-import { IoMdClose, IoMdImage } from "react-icons/io";
-import { AvatarImage } from "~/components/AvatarImage";
-import { updateOpportunityStatus } from "~/api/services/opportunities";
-import { Status } from "~/api/models/opportunity";
-import axios from "axios";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { IoMdWarning } from "react-icons/io";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { config } from "~/lib/react-query-config";
+import { debounce, getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import type { NextPageWithLayout } from "~/pages/_app";
+import { authOptions, type User } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -162,7 +171,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 // this page acts as a create (/opportunites/create) or edit page (/opportunities/:id) based on the [opportunityId] route param
 // this page is accessed from the /organisations/[id]/.. pages (OrgAdmin role)
 // or from the /admin/opportunities/.. pages (Admin role). the retunUrl query param is used to redirect back to the admin page
-const OpportunityDetails: NextPageWithLayout<{
+const OpportunityAdminDetails: NextPageWithLayout<{
   id: string;
   opportunityId: string;
   user: User;
@@ -172,15 +181,6 @@ const OpportunityDetails: NextPageWithLayout<{
   const router = useRouter();
   const { returnUrl } = router.query;
   const queryClient = useQueryClient();
-
-  const formRef1 = useRef<HTMLFormElement>(null);
-  const formRef2 = useRef<HTMLFormElement>(null);
-  const formRef3 = useRef<HTMLFormElement>(null);
-  const formRef4 = useRef<HTMLFormElement>(null);
-  const formRef5 = useRef<HTMLFormElement>(null);
-  const formRef6 = useRef<HTMLFormElement>(null);
-  const formRef7 = useRef<HTMLFormElement>(null);
-
   const [saveChangesDialogVisible, setSaveChangesDialogVisible] =
     useState(false);
   const [lastStepBeforeSaveChangesDialog, setLastStepBeforeSaveChangesDialog] =
@@ -189,79 +189,133 @@ const OpportunityDetails: NextPageWithLayout<{
   const [loadingUpdateInactive, setLoadingUpdateInactive] = useState(false);
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
+  const [cacheSkills, setCacheSkills] = useState<Skill[]>([]);
+  const htmlRef = useRef<HTMLDivElement>(null);
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(oppExpiredModalVisible || saveChangesDialogVisible);
 
-  // 👇 use prefetched queries from server
-  const { data: categories } = useQuery<SelectOption[]>({
-    queryKey: ["categories", "selectOptions"],
-    queryFn: async () =>
-      (await getCategories()).map((c) => ({
+  //#region Queries
+
+  // Categories
+  const { data: categoriesData } = useQuery({
+    queryKey: ["categories"],
+    queryFn: async () => getCategories(),
+    enabled: !error,
+  });
+  const categoriesOptions = useMemo<SelectOption[]>(
+    () =>
+      categoriesData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
+      })) ?? [],
+    [categoriesData],
+  );
+
+  // Countries
+  const { data: countriesData } = useQuery({
+    queryKey: ["countries"],
+    queryFn: async () => getCountries(),
     enabled: !error,
   });
-  const { data: countries } = useQuery<SelectOption[]>({
-    queryKey: ["countries", "selectOptions"],
-    queryFn: async () =>
-      (await getCountries()).map((c) => ({
+  const countriesOptions = useMemo<SelectOption[]>(
+    () =>
+      countriesData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
+      })) ?? [],
+    [countriesData],
+  );
+
+  // Languages
+  const { data: languagesData } = useQuery({
+    queryKey: ["languages"],
+    queryFn: async () => getLanguages(),
     enabled: !error,
   });
-  const { data: languages } = useQuery<SelectOption[]>({
-    queryKey: ["languages", "selectOptions"],
-    queryFn: async () =>
-      (await getLanguages()).map((c) => ({
+  const languagesOptions = useMemo<SelectOption[]>(
+    () =>
+      languagesData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
+      })) ?? [],
+    [languagesData],
+  );
+
+  // Opportunity Types
+  const { data: opportunityTypesData } = useQuery({
+    queryKey: ["opportunityTypes"],
+    queryFn: async () => getTypes(),
     enabled: !error,
   });
-  const { data: opportunityTypes } = useQuery<SelectOption[]>({
-    queryKey: ["opportunityTypes", "selectOptions"],
-    queryFn: async () =>
-      (await getTypes()).map((c) => ({
+  const opportunityTypesOptions = useMemo<SelectOption[]>(
+    () =>
+      opportunityTypesData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
+      })) ?? [],
+    [opportunityTypesData],
+  );
+
+  // Verification Types
+  const { data: verificationTypesData } = useQuery({
+    queryKey: ["verificationTypes"],
+    queryFn: async () => getVerificationTypes(),
     enabled: !error,
   });
-  const { data: verificationTypes } = useQuery<OpportunityVerificationType[]>({
-    queryKey: ["verificationTypes", "selectOptions"],
-    queryFn: async () => await getVerificationTypes(),
+
+  // Difficulties
+  const verificationTypesOptions = useMemo<OpportunityVerificationType[]>(
+    () => verificationTypesData ?? [],
+    [verificationTypesData],
+  );
+
+  // Difficulties
+  const { data: difficultiesData } = useQuery({
+    queryKey: ["difficulties"],
+    queryFn: async () => getDifficulties(),
     enabled: !error,
   });
-  const { data: difficulties } = useQuery<SelectOption[]>({
-    queryKey: ["difficulties", "selectOptions"],
-    queryFn: async () =>
-      (await getDifficulties()).map((c) => ({
+  const difficultiesOptions = useMemo<SelectOption[]>(
+    () =>
+      difficultiesData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
+      })) ?? [],
+    [difficultiesData],
+  );
+
+  // Time Intervals
+  const { data: timeIntervalsData } = useQuery({
+    queryKey: ["timeIntervals"],
+    queryFn: async () => getTimeIntervals(),
     enabled: !error,
   });
-  const { data: timeIntervals } = useQuery<SelectOption[]>({
-    queryKey: ["timeIntervals", "selectOptions"],
-    queryFn: async () =>
-      (await getTimeIntervals()).map((c) => ({
+  const timeIntervalsOptions = useMemo<SelectOption[]>(
+    () =>
+      timeIntervalsData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
+      })) ?? [],
+    [timeIntervalsData],
+  );
+
+  // Engagement Types
+  const { data: engagementTypesData } = useQuery({
+    queryKey: ["engagementTypes"],
+    queryFn: async () => getEngagementTypes(),
     enabled: !error,
   });
-  const { data: engagementTypes } = useQuery<SelectOption[]>({
-    queryKey: ["engagementTypes", "selectOptions"],
-    queryFn: async () =>
-      (await getEngagementTypes()).map((c) => ({
+  const engagementTypesOptions = useMemo<SelectOption[]>(
+    () =>
+      engagementTypesData?.map((c) => ({
         value: c.id,
         label: c.name,
-      })),
-    enabled: !error,
-  });
+      })) ?? [],
+    [engagementTypesData],
+  );
+
+  // Schemas
   const { data: schemas } = useQuery({
     queryKey: ["schemas"],
     queryFn: async () => getSchemas(SchemaType.Opportunity),
@@ -276,15 +330,35 @@ const OpportunityDetails: NextPageWithLayout<{
     [schemas],
   );
 
+  // Opportunity
+  // 👇 use prefetched query from server
   const { data: opportunity } = useQuery<Opportunity>({
     queryKey: ["opportunity", opportunityId],
     queryFn: () => getOpportunityById(opportunityId),
     enabled: opportunityId !== "create" && !error,
   });
 
+  // Organisation
+  const { data: organisation } = useQuery<Organization>({
+    queryKey: ["organisation", id],
+    queryFn: () => getOrganisationById(id),
+    enabled: !error,
+  });
+  //#endregion Queries
+
+  //#region Form
+  const formRef1 = useRef<HTMLFormElement>(null);
+  const formRef2 = useRef<HTMLFormElement>(null);
+  const formRef3 = useRef<HTMLFormElement>(null);
+  const formRef4 = useRef<HTMLFormElement>(null);
+  const formRef5 = useRef<HTMLFormElement>(null);
+  const formRef6 = useRef<HTMLFormElement>(null);
+  const formRef7 = useRef<HTMLFormElement>(null);
+
   const [formData, setFormData] = useState<OpportunityRequestBase>({
     id: opportunity?.id ?? null,
     title: opportunity?.title ?? "",
+    summary: opportunity?.summary ?? "",
     description: opportunity?.description ?? "",
     typeId: opportunity?.typeId ?? "",
     categories: opportunity?.categories?.map((x) => x.id) ?? [],
@@ -319,16 +393,21 @@ const OpportunityDetails: NextPageWithLayout<{
   const schemaStep1 = z.object({
     title: z
       .string()
-      .min(1, "Opportunity title is required.")
-      .max(255, "Opportunity title cannot exceed 255 characters."),
+      .min(1, "Title is required.")
+      .max(150, "Title cannot exceed 150 characters."),
     description: z.string().min(1, "Description is required."),
-    typeId: z.string().min(1, "Opportunity type is required."),
+    summary: z
+      .string()
+      .min(1, "Summary is required.")
+      .max(150, "Summary cannot exceed 150 characters."),
+    typeId: z.string().min(1, "Type is required."),
     engagementTypeId: z.union([z.string(), z.null()]).optional(),
     categories: z
       .array(z.string(), { required_error: "Category is required" })
       .min(1, "Category is required."),
     uRL: z
       .string()
+      .max(2048, "Link cannot exceed 2048 characters.")
       .optional()
       .refine(
         (value) => (value ?? "") === "" || REGEX_URL_VALIDATION.test(value!),
@@ -347,44 +426,106 @@ const OpportunityDetails: NextPageWithLayout<{
     commitmentIntervalCount: z
       .union([z.nan(), z.null(), z.number()])
       .refine((val) => val != null && !isNaN(val), {
-        message: "Time Value is required.",
+        message: "Number is required.",
+      })
+      .refine((val) => val != null && val > 0, {
+        message: "Number must be greater than 0.",
+      })
+      .refine((val) => val != null && val <= 32767, {
+        message: "Number must be less than or equal to 32767.",
       }),
     commitmentIntervalId: z.string().min(1, "Time frame is required."),
     dateStart: z
       .union([z.null(), z.string(), z.date()])
       .refine((val) => val !== null, {
-        message: "Start Time is required.",
+        message: "Start date is required.",
       }),
     dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
-    participantLimit: z.union([z.nan(), z.null(), z.number()]).optional(),
+    participantLimit: z
+      .union([z.nan(), z.null(), z.number()])
+      .optional()
+      .superRefine((val, ctx) => {
+        if (val != null) {
+          if (val <= 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Number must be greater than 0.",
+            });
+          }
+          if (val > 2147483647) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Number must be less than or equal to 2147483647.",
+            });
+          }
+        }
+      }),
   });
 
-  const schemaStep3 = z.object({
-    zltoReward: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
-      // eslint-disable-next-line
-      return val === null || Number.isNaN(val as any) ? null : val;
-    }),
-    zltoRewardPool: z
-      .union([z.nan(), z.null(), z.number()])
-      .transform((val) => {
-        // eslint-disable-next-line
-        return val === null || Number.isNaN(val as any) ? null : val;
-      }),
-    // yomaReward: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
-    //   // eslint-disable-next-line
-    //   return val === null || Number.isNaN(val as any) ? undefined : val;
-    // }),
-    // yomaRewardPool: z
-    //   .union([z.nan(), z.null(), z.number()])
-    //   .transform((val) => {
-    //     // eslint-disable-next-line
-    //     return val === null || Number.isNaN(val as any) ? undefined : val;
-    //   }),
-    skills: z.array(z.string()).optional(),
-  });
+  const schemaStep3 = z
+    .object({
+      zltoReward: z
+        .union([z.nan(), z.null(), z.number()])
+        .superRefine((val, ctx) => {
+          if (val != null) {
+            if (val <= 0) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Reward amount must be greater than 0.",
+              });
+            }
+            if (val > 2000) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Reward amount must be less than or equal to 2000.",
+              });
+            }
+          }
+        }),
+      zltoRewardPool: z
+        .union([z.nan(), z.null(), z.number()])
+        .superRefine((val, ctx) => {
+          if (val != null) {
+            if (val <= 0) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Reward pool must be greater than 0.",
+              });
+            }
+          }
+        }),
+      //   // eslint-disable-next-line
+      //   return val === null || Number.isNaN(val as any) ? undefined : val;
+      // }),
+      // yomaRewardPool: z
+      //   .union([z.nan(), z.null(), z.number()])
+      //   .transform((val) => {
+      //     // eslint-disable-next-line
+      //     return val === null || Number.isNaN(val as any) ? undefined : val;
+      //   }),
+      skills: z.array(z.string()).optional(),
+    })
+    .superRefine((val, ctx) => {
+      if (val == null) return;
+
+      if (
+        val.zltoRewardPool != null &&
+        val.zltoReward != null &&
+        val.zltoRewardPool < val.zltoReward
+      ) {
+        ctx.addIssue({
+          message:
+            "Reward pool must be greater than or equal to reward amount.",
+          code: z.ZodIssueCode.custom,
+          path: ["zltoRewardPool"],
+          fatal: true,
+        });
+        return z.NEVER;
+      }
+    });
 
   const schemaStep4 = z.object({
-    keywords: z.array(z.string()).min(1, "At least 1 keyword is required."),
+    keywords: z.array(z.string()).min(1, "Keyword is required."),
   });
 
   const schemaStep5 = z
@@ -408,7 +549,7 @@ const OpportunityDetails: NextPageWithLayout<{
       // verificationEnabled option is required
       if (values.verificationEnabled == null) {
         ctx.addIssue({
-          message: "Please select an option.",
+          message: "Verification type is required.",
           code: z.ZodIssueCode.custom,
           path: ["verificationEnabled"],
           fatal: true,
@@ -425,7 +566,7 @@ const OpportunityDetails: NextPageWithLayout<{
         values?.verificationTypes?.length === 0
       ) {
         ctx.addIssue({
-          message: "At least one verification type is required.",
+          message: "Verification proof is required.",
           code: z.ZodIssueCode.custom,
           path: ["verificationTypes"],
           fatal: true,
@@ -436,7 +577,7 @@ const OpportunityDetails: NextPageWithLayout<{
       for (const file of values.verificationTypes) {
         if (file?.type && !file.description) {
           ctx.addIssue({
-            message: "A description for each verification type is required .",
+            message: "A description for each verification proof is required.",
             code: z.ZodIssueCode.custom,
             path: ["verificationTypes"],
           });
@@ -460,7 +601,7 @@ const OpportunityDetails: NextPageWithLayout<{
     .superRefine((values, ctx) => {
       if (values.credentialIssuanceEnabled && !values.ssiSchemaName) {
         ctx.addIssue({
-          message: "Schema name is required.",
+          message: "Schema is required.",
           code: z.ZodIssueCode.custom,
           path: ["ssiSchemaName"],
         });
@@ -468,7 +609,7 @@ const OpportunityDetails: NextPageWithLayout<{
     });
 
   const schemaStep7 = z.object({
-    postAsActive: z.boolean(),
+    postAsActive: z.boolean().optional(),
   });
 
   const {
@@ -477,9 +618,11 @@ const OpportunityDetails: NextPageWithLayout<{
     formState: formStateStep1,
     control: controlStep1,
     reset: resetStep1,
+    trigger: triggerStep1,
   } = useForm({
     resolver: zodResolver(schemaStep1),
     defaultValues: formData,
+    mode: "all",
   });
 
   const {
@@ -489,9 +632,11 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep2,
     getValues: getValuesStep2,
     reset: resetStep2,
+    trigger: triggerStep2,
   } = useForm({
     resolver: zodResolver(schemaStep2),
     defaultValues: formData,
+    mode: "all",
   });
 
   const {
@@ -502,20 +647,23 @@ const OpportunityDetails: NextPageWithLayout<{
     getValues: getValuesStep3,
     setValue: setValueStep3,
     reset: resetStep3,
+    trigger: triggerStep3,
   } = useForm({
     resolver: zodResolver(schemaStep3),
     defaultValues: formData,
+    mode: "all",
   });
 
   const {
     handleSubmit: handleSubmitStep4,
     formState: formStateStep4,
-
     reset: resetStep4,
     control: controlStep4,
+    trigger: triggerStep4,
   } = useForm({
     resolver: zodResolver(schemaStep4),
     defaultValues: formData,
+    mode: "all",
   });
 
   const {
@@ -526,9 +674,11 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep5,
     watch: watchStep5,
     reset: resetStep5,
+    trigger: triggerStep5,
   } = useForm({
     resolver: zodResolver(schemaStep5),
     defaultValues: formData,
+    mode: "all",
   });
   const watchVerificationEnabled = watchStep5("verificationEnabled");
   const watchVerificationMethod = watchStep5("verificationMethod");
@@ -545,9 +695,11 @@ const OpportunityDetails: NextPageWithLayout<{
     control: controlStep6,
     watch: watchStep6,
     reset: resetStep6,
+    trigger: triggerStep6,
   } = useForm({
     resolver: zodResolver(schemaStep6),
     defaultValues: formData,
+    mode: "all",
   });
   const watchCredentialIssuanceEnabled = watchStep6(
     "credentialIssuanceEnabled",
@@ -559,22 +711,12 @@ const OpportunityDetails: NextPageWithLayout<{
     handleSubmit: handleSubmitStep7,
     formState: formStateStep7,
     reset: resetStep7,
+    trigger: triggerStep7,
   } = useForm({
     resolver: zodResolver(schemaStep7),
     defaultValues: formData,
+    mode: "all",
   });
-
-  // scroll to top on step change
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, [step]);
-
-  // on schema select, show the schema attributes
-  const schemaAttributes = useMemo(() => {
-    if (watcSSISchemaName) {
-      return schemas?.find((x) => x.name === watcSSISchemaName)?.entities ?? [];
-    } else return [];
-  }, [schemas, watcSSISchemaName]);
 
   // memo for dirty fields
   // because the "isDirty" property on useForm is not working as expected
@@ -602,49 +744,208 @@ const OpportunityDetails: NextPageWithLayout<{
     () => Object.keys(formStateStep6.dirtyFields).length > 0,
     [formStateStep6],
   );
-  const isDirtyStep7 = useMemo(
-    () => Object.keys(formStateStep7.dirtyFields).length > 0,
-    [formStateStep7],
-  );
+  //#endregion Form
 
-  //* SKILLS
-  // cache skills for name lookups
-  const [cacheSkills, setCacheSkills] = useState<Skill[]>([]);
+  //#region Form Behavior
+  const menuItems = [
+    { step: 1, label: "General", formState: formStateStep1 },
+    { step: 2, label: "Details", formState: formStateStep2 },
+    { step: 3, label: "Rewards", formState: formStateStep3 },
+    { step: 4, label: "Keywords", formState: formStateStep4 },
+    { step: 5, label: "Verification", formState: formStateStep5 },
+    { step: 6, label: "Credential", formState: formStateStep6 },
+    {
+      step: 7,
+      label: "Preview",
+      formState: {
+        isValid:
+          formStateStep1.isValid &&
+          formStateStep2.isValid &&
+          formStateStep3.isValid &&
+          formStateStep4.isValid &&
+          formStateStep5.isValid &&
+          formStateStep6.isValid,
+      },
+    },
+  ];
 
-  // popuplate the cache with the skills from the opportunity
   useEffect(() => {
+    // show the expired modal if the opportunity is expired
+    if ((opportunity?.status as any) == "Expired") {
+      setOppExpiredModalVisible(true);
+    }
+  }, [opportunity?.status, setOppExpiredModalVisible]);
+
+  useEffect(() => {
+    // if verification is disabled, uncheck credential issuance, clear verification method, clear schema, clear participantLimit
+    if (!watchVerificationEnabled) {
+      setFormData((prev) => ({
+        ...prev,
+        credentialIssuanceEnabled: false,
+        verificationMethod: null,
+        ssiSchemaName: null,
+        participantLimit: null,
+      }));
+    }
+  }, [watchVerificationEnabled, setFormData]);
+
+  useEffect(() => {
+    // trigger validation when watchVerificationEnabled & watchVerificationMethod changes (for required field indicators to refresh)
+    triggerStep5();
+  }, [watchVerificationEnabled, watchVerificationMethod, triggerStep5]);
+
+  useEffect(() => {
+    // trigger validation when credential issuance changed (for required field indicators to refresh)
+    triggerStep6();
+  }, [watchCredentialIssuanceEnabled, triggerStep6]);
+
+  useEffect(() => {
+    // scroll to top on step change
+    window.scrollTo(0, 0);
+  }, [step]);
+
+  // on schema select, show the schema attributes
+  const schemaAttributes = useMemo(() => {
+    if (watcSSISchemaName) {
+      return schemas?.find((x) => x.name === watcSSISchemaName)?.entities ?? [];
+    } else return [];
+  }, [schemas, watcSSISchemaName]);
+
+  useEffect(() => {
+    // popuplate the cache with the skills from the opportunity
     if (opportunity?.skills) {
       setCacheSkills((prev) => [...prev, ...(opportunity.skills ?? [])]);
     }
   }, [opportunity?.skills, setCacheSkills]);
 
-  // load data asynchronously for the skills dropdown
-  // debounce is used to prevent the API from being called too frequently
-  const loadSkills = debounce(
-    (inputValue: string, callback: (options: any) => void) => {
-      getSkills({
-        nameContains: (inputValue ?? []).length > 2 ? inputValue : null,
-        pageNumber: 1,
-        pageSize: PAGE_SIZE_MEDIUM,
-      }).then((data) => {
-        const options = data.items.map((item) => ({
-          value: item.id,
-          label: item.name,
-        }));
-        callback(options);
-        // add to cache
-        data.items.forEach((item) => {
-          if (!cacheSkills.some((x) => x.id === item.id)) {
-            setCacheSkills((prev) => [...prev, item]);
-          }
-        });
-      });
-    },
-    1000,
+  // this is used by the preview components
+  const opportunityInfo = useMemo<OpportunityInfo>(
+    () => ({
+      id: opportunityId,
+      title: formData.title,
+      description: formData.description,
+      type:
+        formData.typeId && opportunityTypesData
+          ? opportunityTypesData.find((x) => x.id == formData.typeId)?.name ??
+            ""
+          : "",
+      organizationId: id,
+      organizationName: organisation ? organisation.name : "",
+      organizationLogoURL: organisation ? organisation.logoURL : "",
+      summary: formData.summary,
+      instructions: formData.instructions,
+      url: formData.uRL,
+      zltoReward: formData.zltoReward,
+      zltoRewardCumulative: 0,
+      yomaReward: formData.yomaReward,
+      yomaRewardCumulative: 0,
+      verificationEnabled: formData.verificationEnabled ?? false,
+      verificationMethod: formData.verificationMethod,
+      difficulty:
+        formData.difficultyId && difficultiesData
+          ? difficultiesData.find((x) => x.id == formData.difficultyId)?.name ??
+            ""
+          : "",
+      commitmentInterval:
+        formData.commitmentIntervalId && timeIntervalsData
+          ? timeIntervalsData.find((x) => x.id == formData.commitmentIntervalId)
+              ?.name ?? ""
+          : "",
+      commitmentIntervalCount: formData.commitmentIntervalCount ?? 0,
+      commitmentIntervalDescription: "",
+      participantLimit: formData.participantLimit,
+      participantCountCompleted: 0,
+      participantCountPending: 0,
+      participantCountTotal: 0,
+      participantLimitReached: false,
+      countViewed: 0,
+      countNavigatedExternalLink: 0,
+      statusId: "",
+      status: "Active",
+      keywords: formData.keywords,
+      dateStart: formData.dateStart ?? "",
+      dateEnd: formData.dateEnd ?? "",
+      featured: false,
+      engagementType:
+        formData.engagementTypeId && engagementTypesData
+          ? engagementTypesData.find((x) => x.id == formData.engagementTypeId)
+              ?.name ?? ""
+          : "",
+      published: true,
+      yomaInfoURL: "",
+      categories:
+        formData.categories && categoriesData
+          ? formData.categories?.map(
+              (x) => categoriesData.find((y) => y.id == x)!,
+            )
+          : [],
+      countries:
+        formData.countries && countriesData
+          ? formData.countries?.map(
+              (x) => countriesData.find((y) => y.id == x)!,
+            )
+          : [],
+      languages:
+        formData.languages && languagesData
+          ? formData.languages?.map(
+              (x) => languagesData.find((y) => y.id == x)!,
+            )
+          : [],
+      skills:
+        formData.skills && cacheSkills
+          ? formData.skills
+              .map((x) => cacheSkills.find((y) => y.id === x))
+              .filter((skill): skill is Skill => Boolean(skill))
+          : [],
+      verificationTypes: formData.verificationTypes,
+    }),
+    [
+      formData,
+      organisation,
+      opportunityId,
+      id,
+      opportunityTypesData,
+      difficultiesData,
+      timeIntervalsData,
+      engagementTypesData,
+      categoriesData,
+      countriesData,
+      languagesData,
+      cacheSkills,
+    ],
   );
 
-  //* SAVE CHANGES DIALOG
-  const onClick_Menu = useCallback(
+  const triggerValidation = useCallback(() => {
+    const validate = async () => {
+      await triggerStep1();
+      await triggerStep2();
+      await triggerStep3();
+      await triggerStep4();
+      await triggerStep5();
+      await triggerStep6();
+      await triggerStep7();
+    };
+
+    validate();
+  }, [
+    triggerStep1,
+    triggerStep2,
+    triggerStep3,
+    triggerStep4,
+    triggerStep5,
+    triggerStep6,
+    triggerStep7,
+  ]);
+
+  // validate the forms on initial load
+  // this is needed to show the required field indicators (exclamation icon next to labels) on the first render
+  useEffect(() => {
+    triggerValidation();
+  }, [triggerValidation]);
+  //#endregion Form Behavior
+
+  //#region Event Handlers
+  const onStep = useCallback(
     (nextStep: number) => {
       let isDirtyStep = false;
       if (step === 1 && isDirtyStep1) isDirtyStep = true;
@@ -653,7 +954,6 @@ const OpportunityDetails: NextPageWithLayout<{
       else if (step === 4 && isDirtyStep4) isDirtyStep = true;
       else if (step === 5 && isDirtyStep5) isDirtyStep = true;
       else if (step === 6 && isDirtyStep6) isDirtyStep = true;
-      else if (step === 7 && isDirtyStep7) isDirtyStep = true;
 
       if (isDirtyStep) {
         setLastStepBeforeSaveChangesDialog(nextStep);
@@ -670,7 +970,6 @@ const OpportunityDetails: NextPageWithLayout<{
       isDirtyStep4,
       isDirtyStep5,
       isDirtyStep6,
-      isDirtyStep7,
       step,
       setStep,
       setSaveChangesDialogVisible,
@@ -686,6 +985,7 @@ const OpportunityDetails: NextPageWithLayout<{
     resetStep5(formData);
     resetStep6(formData);
     resetStep7(formData);
+    triggerValidation();
     setSaveChangesDialogVisible(false);
     lastStepBeforeSaveChangesDialog && setStep(lastStepBeforeSaveChangesDialog);
     setLastStepBeforeSaveChangesDialog(null);
@@ -698,6 +998,7 @@ const OpportunityDetails: NextPageWithLayout<{
     resetStep5,
     resetStep6,
     resetStep7,
+    triggerValidation,
     setSaveChangesDialogVisible,
     lastStepBeforeSaveChangesDialog,
     setLastStepBeforeSaveChangesDialog,
@@ -782,11 +1083,28 @@ const OpportunityDetails: NextPageWithLayout<{
         // update api
         if (opportunity) {
           await updateOpportunity(data);
+
+          // 📊 GOOGLE ANALYTICS: track event
+          trackGAEvent(
+            GA_CATEGORY_OPPORTUNITY,
+            GA_ACTION_OPPORTUNITY_UPDATE,
+            `Updated Opportunity: ${data.title}`,
+          );
+
           message = "Opportunity updated";
         } else {
           await createOpportunity(data);
+
+          // 📊 GOOGLE ANALYTICS: track event
+          trackGAEvent(
+            GA_CATEGORY_OPPORTUNITY,
+            GA_ACTION_OPPORTUNITY_CREATE,
+            `Created Opportunity: ${data.title}`,
+          );
+
           message = "Opportunity created";
         }
+
         toast(message, {
           type: "success",
         });
@@ -822,7 +1140,6 @@ const OpportunityDetails: NextPageWithLayout<{
     [setIsLoading, id, opportunityId, opportunity, queryClient, router],
   );
 
-  // form submission handler
   const onSubmitStep = useCallback(
     async (step: number, data: FieldValues) => {
       // set form data
@@ -833,32 +1150,20 @@ const OpportunityDetails: NextPageWithLayout<{
 
       setFormData(model);
 
-      if (opportunityId === "create") {
-        // submit on last page when creating new opportunity
-        if (step === 8) {
-          await onSubmit(model);
-
-          // 📊 GOOGLE ANALYTICS: track event
-          trackGAEvent(
-            GA_CATEGORY_OPPORTUNITY,
-            GA_ACTION_OPPORTUNITY_CREATE,
-            `Created Opportunity: ${model.title}`,
-          );
-        }
-        // move to next step
-        else setStep(step);
-      } else {
-        // submit on each page when updating opportunity
+      if (step === menuItems.length + 1) {
         await onSubmit(model);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY,
-          GA_ACTION_OPPORTUNITY_UPDATE,
-          `Updated Opportunity: ${model.title}`,
-        );
+        // // 📊 GOOGLE ANALYTICS: track event
+        // trackGAEvent(
+        //   GA_CATEGORY_OPPORTUNITY,
+        //   GA_ACTION_OPPORTUNITY_CREATE,
+        //   `Created Opportunity: ${model.title}`,
+        // );
       }
+      // move to next step
+      else setStep(step);
 
+      // forms needs to be reset in order to clear the dirty fields
       resetStep1(model);
       resetStep2(model);
       resetStep3(model);
@@ -867,6 +1172,9 @@ const OpportunityDetails: NextPageWithLayout<{
       resetStep6(model);
       resetStep7(model);
 
+      // trigger validation
+      triggerValidation();
+
       // go to last step before save changes dialog
       if (lastStepBeforeSaveChangesDialog)
         setStep(lastStepBeforeSaveChangesDialog);
@@ -874,7 +1182,7 @@ const OpportunityDetails: NextPageWithLayout<{
       setLastStepBeforeSaveChangesDialog(null);
     },
     [
-      opportunityId,
+      menuItems.length,
       setStep,
       formData,
       setFormData,
@@ -888,14 +1196,9 @@ const OpportunityDetails: NextPageWithLayout<{
       resetStep5,
       resetStep6,
       resetStep7,
+      triggerValidation,
     ],
   );
-
-  useEffect(() => {
-    if ((opportunity?.status as any) == "Expired") {
-      setOppExpiredModalVisible(true);
-    }
-  }, [opportunity?.status, setOppExpiredModalVisible]);
 
   const updateStatus = useCallback(
     async (status: Status) => {
@@ -935,18 +1238,31 @@ const OpportunityDetails: NextPageWithLayout<{
     [opportunityId, queryClient],
   );
 
-  useEffect(() => {
-    // if verification is disabled, uncheck credential issuance, clear verification method, clear schema, clear participantLimit
-    if (!watchVerificationEnabled) {
-      setFormData((prev) => ({
-        ...prev,
-        credentialIssuanceEnabled: false,
-        verificationMethod: null,
-        ssiSchemaName: null,
-        participantLimit: null,
-      }));
-    }
-  }, [watchVerificationEnabled, setFormData]);
+  // load data asynchronously for the skills dropdown
+  // debounce is used to prevent the API from being called too frequently
+  const loadSkills = debounce(
+    (inputValue: string, callback: (options: any) => void) => {
+      getSkills({
+        nameContains: (inputValue ?? []).length > 2 ? inputValue : null,
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MEDIUM,
+      }).then((data) => {
+        const options = data.items.map((item) => ({
+          value: item.id,
+          label: item.name,
+        }));
+        callback(options);
+        // add to cache
+        data.items.forEach((item) => {
+          if (!cacheSkills.some((x) => x.id === item.id)) {
+            setCacheSkills((prev) => [...prev, item]);
+          }
+        });
+      });
+    },
+    1000,
+  );
+  //#endregion Event Handlers
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -959,6 +1275,9 @@ const OpportunityDetails: NextPageWithLayout<{
       {isLoading && <Loading />}
 
       <PageBackground />
+
+      {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
+      <div ref={htmlRef} />
 
       {/* OPPORTUNITY EXPIRED MODAL */}
       <ReactModal
@@ -1133,6 +1452,7 @@ const OpportunityDetails: NextPageWithLayout<{
           )}
         </div>
 
+        {/* HEADING */}
         {opportunityId == "create" ? (
           <h3 className="mb-6 mt-2 font-bold text-white">New opportunity</h3>
         ) : (
@@ -1161,187 +1481,46 @@ const OpportunityDetails: NextPageWithLayout<{
           </div>
         )}
 
+        {/* MAIN CONTENT */}
         <div className="flex flex-col gap-4 md:flex-row">
-          {/* LEFT VERTICAL MENU */}
-          <ul className="menu hidden h-max flex-none gap-3 rounded-lg bg-white p-4 font-semibold shadow-custom md:flex md:justify-center">
-            <li onClick={() => onClick_Menu(1)}>
-              <a
-                className={`${
-                  step === 1
-                    ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray-light text-gray-dark hover:bg-gray"
-                } py-3`}
-              >
-                <span
-                  className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    formStateStep1.isValid ? "bg-green" : "bg-gray-dark"
-                  }`}
-                >
-                  1
-                </span>
-                Opportunity information
-              </a>
-            </li>
-            <li onClick={() => onClick_Menu(2)}>
-              <a
-                className={`${
-                  step === 2
-                    ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray-light text-gray-dark hover:bg-gray"
-                } py-3`}
-              >
-                <span
-                  className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    formStateStep2.isValid ? "bg-green" : "bg-gray-dark"
-                  }`}
-                >
-                  2
-                </span>
-                Opportunity details
-              </a>
-            </li>
-            <li onClick={() => onClick_Menu(3)}>
-              <a
-                className={`${
-                  step === 3
-                    ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray-light text-gray-dark hover:bg-gray"
-                } py-3`}
-              >
-                <span
-                  className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    formStateStep3.isValid ? "bg-green" : "bg-gray-dark"
-                  }`}
-                >
-                  3
-                </span>
-                Rewards
-              </a>
-            </li>
-            <li onClick={() => onClick_Menu(4)}>
-              <a
-                className={`${
-                  step === 4
-                    ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray-light text-gray-dark hover:bg-gray"
-                } py-3`}
-              >
-                <span
-                  className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    formStateStep4.isValid ? "bg-green" : "bg-gray-dark"
-                  }`}
-                >
-                  4
-                </span>
-                Keywords
-              </a>
-            </li>
-            <li onClick={() => onClick_Menu(5)}>
-              <a
-                className={`${
-                  step === 5
-                    ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray-light text-gray-dark hover:bg-gray"
-                } py-3`}
-              >
-                <span
-                  className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    formStateStep5.isValid ? "bg-green" : "bg-gray-dark"
-                  }`}
-                >
-                  5
-                </span>
-                Verification type
-              </a>
-            </li>
-            <li onClick={() => onClick_Menu(6)}>
-              <a
-                className={`${
-                  step === 6
-                    ? "bg-green-light text-green hover:bg-green-light"
-                    : "bg-gray-light text-gray-dark hover:bg-gray"
-                } py-3`}
-              >
-                <span
-                  className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    formStateStep6.isValid ? "bg-green" : "bg-gray-dark"
-                  }`}
-                >
-                  6
-                </span>
-                Credential
-              </a>
-            </li>
-            {/* only show preview when creating new opportunity */}
-            {opportunityId === "create" && (
-              <li onClick={() => onClick_Menu(7)}>
+          {/* MD: LEFT VERTICAL MENU */}
+          <ul className="menu hidden h-max w-64 flex-none gap-3 rounded-lg bg-white p-4 font-semibold shadow-custom md:flex md:justify-center">
+            {menuItems.map((item) => (
+              <li key={item.step} onClick={() => onStep(item.step)}>
                 <a
                   className={`${
-                    step === 7
+                    item.step === step
                       ? "bg-green-light text-green hover:bg-green-light"
                       : "bg-gray-light text-gray-dark hover:bg-gray"
                   } py-3`}
                 >
-                  <span
-                    className={`mr-2 rounded-full bg-gray-dark px-1.5 py-0.5 text-xs font-medium text-white ${
-                      formStateStep1.isValid &&
-                      formStateStep2.isValid &&
-                      formStateStep3.isValid &&
-                      formStateStep4.isValid &&
-                      formStateStep5.isValid &&
-                      formStateStep6.isValid &&
-                      formStateStep7.isValid
-                        ? "bg-green"
-                        : "bg-gray-dark"
-                    }`}
-                  >
-                    7
-                  </span>
-                  Preview opportunity
+                  {item.formState.isValid ? (
+                    <IoIosCheckmarkCircle className="h-6 w-6 text-green" />
+                  ) : (
+                    <IoMdAlert className="h-6 w-6 text-yellow" />
+                  )}
+                  {item.label}
                 </a>
               </li>
-            )}
+            ))}
           </ul>
 
-          {/* DROPDOWN MENU */}
+          {/* XS: DROPDOWN MENU */}
           <select
             className="select select-md focus:border-none focus:outline-none md:hidden"
             onChange={(e) => {
-              switch (e.target.value) {
-                case "Opportunity information":
-                  onClick_Menu(1);
-                  break;
-                case "Opportunity details":
-                  onClick_Menu(2);
-                  break;
-                case "Rewards":
-                  onClick_Menu(3);
-                  break;
-                case "Keywords":
-                  onClick_Menu(4);
-                  break;
-                case "Verification type":
-                  onClick_Menu(5);
-                  break;
-                case "Credential":
-                  onClick_Menu(6);
-                  break;
-                case "Preview opportunity":
-                  onClick_Menu(7);
-                  break;
-                default:
-                  onClick_Menu(1);
-                  break;
+              const selectedLabel = e.target.value;
+              const selectedItem = menuItems.find(
+                (item) => item.label === selectedLabel,
+              );
+              if (selectedItem) {
+                onStep(selectedItem.step);
               }
             }}
           >
-            <option>Opportunity information</option>
-            <option>Opportunity details</option>
-            <option>Rewards</option>
-            <option>Keywords</option>
-            <option>Verification type</option>
-            <option>Credential</option>
-            <option>Preview opportunity</option>
+            {menuItems.map((item) => (
+              <option key={item.step}>{item.label}</option>
+            ))}
           </select>
 
           {/* FORMS */}
@@ -1349,14 +1528,12 @@ const OpportunityDetails: NextPageWithLayout<{
             <div className="flex w-full flex-col px-2 py-4 md:p-8">
               {step === 1 && (
                 <>
-                  <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold tracking-wider">
-                      Opportunity information
-                    </h5>
-                    <p className="my-2 text-sm">
-                      Information about the opportunity that young people can
-                      explore
+                  <div className="mb-4 flex flex-col gap-2">
+                    <h5 className="font-bold tracking-wider">General</h5>
+                    <p className="-mt-2 text-sm">
+                      Information about the opportunity that people can explore.
                     </p>
+                    {!formStateStep1.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
@@ -1366,89 +1543,103 @@ const OpportunityDetails: NextPageWithLayout<{
                       onSubmitStep(2, data),
                     )} // eslint-disable-line @typescript-eslint/no-misused-promises
                   >
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Opportunity title
-                        </span>
-                      </label>
+                    <FormField
+                      label="Title"
+                      subLabel="A short title of the opportunity (max 150 characters). This will be displayed on the search results and opportunity page."
+                      showWarningIcon={!!formStateStep1.errors.title?.message}
+                      showError={
+                        !!formStateStep1.touchedFields.title ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.title?.message}
+                    >
                       <input
                         type="text"
                         className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                        placeholder="Opportunity Title"
+                        placeholder="Enter title..."
+                        maxLength={150}
                         {...registerStep1("title")}
-                        contentEditable
                       />
-                      {formStateStep1.errors.title && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.title.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                    </FormField>
 
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Opportunity type
-                        </span>
-                      </label>
+                    <FormField
+                      label="Type"
+                      subLabel="What type of opportunity is this?"
+                      showWarningIcon={!!formStateStep1.errors.typeId?.message}
+                      showError={
+                        !!formStateStep1.touchedFields.typeId ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.typeId?.message}
+                    >
                       <Controller
                         control={controlStep1}
                         name="typeId"
-                        render={({ field: { onChange, value } }) => (
+                        render={({ field: { onChange, value, onBlur } }) => (
                           <Select
                             instanceId="typeId"
                             classNames={{
-                              control: () => "input !border-gray",
+                              control: () => "input pr-0 pl-2 !border-gray",
                             }}
-                            options={opportunityTypes}
+                            options={opportunityTypesOptions}
+                            onBlur={onBlur} // mark the field as touched
                             onChange={(val) => onChange(val?.value)}
-                            value={opportunityTypes?.find(
+                            value={opportunityTypesOptions?.find(
                               (c) => c.value === value,
                             )}
+                            // fix menu z-index issue
+                            menuPortalTarget={htmlRef.current}
                             styles={{
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
                               placeholder: (base) => ({
                                 ...base,
                                 color: "#A3A6AF",
                               }),
                             }}
                             inputId="input_typeid" // e2e
+                            placeholder="Select type..."
                           />
                         )}
                       />
+                    </FormField>
 
-                      {formStateStep1.errors.typeId && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.typeId.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Engagement type
-                        </span>
-                      </label>
+                    <FormField
+                      label="Engagement"
+                      subLabel="How will a person engage with this opportunity?"
+                      showWarningIcon={
+                        !!formStateStep1.errors.engagementTypeId?.message
+                      }
+                      showError={
+                        !!formStateStep1.touchedFields.engagementTypeId ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.engagementTypeId?.message}
+                    >
                       <Controller
                         control={controlStep1}
                         name="engagementTypeId"
-                        render={({ field: { onChange, value } }) => (
+                        render={({ field: { onChange, value, onBlur } }) => (
                           <Select
                             instanceId="engagementTypeId"
                             classNames={{
-                              control: () => "input !border-gray",
+                              control: () => "input !border-gray pr-0 pl-2",
                             }}
-                            options={engagementTypes}
+                            options={engagementTypesOptions}
+                            onBlur={onBlur} // mark the field as touched
                             onChange={(val) => onChange(val ? val.value : null)}
-                            value={engagementTypes?.find(
+                            value={engagementTypesOptions?.find(
                               (c) => c.value === value,
                             )}
+                            // fix menu z-index issue
+                            menuPortalTarget={htmlRef.current}
                             styles={{
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
                               placeholder: (base) => ({
                                 ...base,
                                 color: "#A3A6AF",
@@ -1456,123 +1647,140 @@ const OpportunityDetails: NextPageWithLayout<{
                             }}
                             isClearable={true}
                             inputId="input_engagementTypeId" // e2e
+                            placeholder="Select engagement..."
                           />
                         )}
                       />
+                    </FormField>
 
-                      {formStateStep1.errors.engagementTypeId && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.engagementTypeId.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Under which categories does your opportunity belong
-                        </span>
-                      </label>
+                    <FormField
+                      label="Categories"
+                      subLabel="Under which categories does your opportunity belong?"
+                      showWarningIcon={
+                        !!formStateStep1.errors.categories?.message
+                      }
+                      showError={
+                        !!formStateStep1.touchedFields.categories ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.categories?.message}
+                    >
                       <Controller
                         control={controlStep1}
                         name="categories"
-                        render={({ field: { onChange, value } }) => (
+                        render={({ field: { onChange, value, onBlur } }) => (
                           <Select
                             instanceId="categories"
                             classNames={{
-                              control: () => "input !border-gray py-1 h-fit",
+                              control: () =>
+                                "input !border-gray pr-0 pl-2 py-1 h-fit",
                             }}
                             isMulti={true}
-                            options={categories}
+                            options={categoriesOptions}
+                            onBlur={onBlur} // mark the field as touched
                             onChange={(val) =>
                               onChange(val?.map((c) => c.value ?? ""))
                             }
-                            value={categories?.filter(
+                            value={categoriesOptions?.filter(
                               (c) => value?.includes(c.value),
                             )}
+                            // fix menu z-index issue
+                            menuPortalTarget={htmlRef.current}
                             styles={{
+                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                               placeholder: (base) => ({
                                 ...base,
                                 color: "#A3A6AF",
                               }),
                             }}
                             inputId="input_categories" // e2e
+                            placeholder="Select categories..."
                           />
                         )}
                       />
+                    </FormField>
 
-                      {formStateStep1.errors.categories && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.categories.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Opportunity link
-                        </span>
-                      </label>
-
+                    <FormField
+                      label="Link"
+                      subLabel="Add a link to a website. This can be opened from the 'Go to opportunity' button on the opportunity page."
+                      showWarningIcon={!!formStateStep1.errors.uRL?.message}
+                      showError={
+                        !!formStateStep1.touchedFields.uRL ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.uRL?.message}
+                    >
                       <input
                         type="text"
                         className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                        placeholder="Opportunity Link"
+                        placeholder="Enter link..."
+                        maxLength={2048}
                         {...registerStep1("uRL")}
-                        contentEditable
                       />
-                      {formStateStep1.errors.uRL && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.uRL.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                    </FormField>
 
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-bold">
-                          Description
-                        </span>
-                      </label>
+                    <FormField
+                      label="Summary"
+                      subLabel="A short summary of the opportunity (max 150 characters). This will be displayed on the search results."
+                      showWarningIcon={!!formStateStep1.errors.summary?.message}
+                      showError={
+                        !!formStateStep1.touchedFields.summary ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.summary?.message}
+                    >
                       <textarea
-                        className="input textarea textarea-bordered h-32 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
-                        // placeholder="Description"
-                        {...registerStep1("description")}
+                        className="input textarea textarea-bordered h-16 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
+                        placeholder="Enter summary..."
+                        maxLength={150}
+                        {...registerStep1("summary")}
                       />
-                      {formStateStep1.errors.description && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.description.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                    </FormField>
+
+                    <FormField
+                      label="Description"
+                      subLabel="A detailed description of the opportunity. This will be displayed on the opportunity page."
+                      showWarningIcon={
+                        !!formStateStep1.errors.description?.message
+                      }
+                      showError={
+                        !!formStateStep1.touchedFields.description ||
+                        formStateStep1.isSubmitted
+                      }
+                      error={formStateStep1.errors.description?.message}
+                    >
+                      <Controller
+                        control={controlStep1}
+                        name="description"
+                        render={({ field: { onChange, value, onBlur } }) => (
+                          <Editor
+                            value={value}
+                            readonly={false}
+                            onBlur={onBlur} // mark the field as touched
+                            onChange={onChange}
+                            placeholder="Enter description..."
+                          />
+                        )}
+                      />
+                    </FormField>
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
-                      {opportunityId === "create" && (
-                        <Link
-                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          href={getSafeUrl(
-                            returnUrl?.toString(),
-                            `/organisations/${id}/opportunities`,
-                          )}
-                        >
-                          Cancel
-                        </Link>
-                      )}
+                    <div className="flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
+                      <Link
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        href={getSafeUrl(
+                          returnUrl?.toString(),
+                          `/organisations/${id}/opportunities`,
+                        )}
+                      >
+                        Cancel
+                      </Link>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
-                        {opportunityId === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
@@ -1580,13 +1788,12 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               {step === 2 && (
                 <>
-                  <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold tracking-wider">
-                      Opportunity detail
-                    </h5>
-                    <p className="my-2 text-sm">
-                      Detailed particulars about the opportunity
+                  <div className="mb-4 flex flex-col gap-2">
+                    <h5 className="font-bold tracking-wider">Details</h5>
+                    <p className="-mt-2 text-sm">
+                      Detailed particulars about the opportunity.
                     </p>
+                    {!formStateStep2.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
@@ -1596,323 +1803,345 @@ const OpportunityDetails: NextPageWithLayout<{
                       onSubmitStep(3, data),
                     )}
                   >
-                    <div className="form-control">
-                      <label className="label font-bold">
-                        <span className="label-text">Opportunity language</span>
-                      </label>
+                    <FormField
+                      label="Languages"
+                      subLabel="The languages in which the opportunity is available. This is used for searchability and will be displayed on the opportunity page."
+                      showWarningIcon={
+                        !!formStateStep2.errors.languages?.message
+                      }
+                      showError={
+                        !!formStateStep2.touchedFields.languages ||
+                        formStateStep2.isSubmitted
+                      }
+                      error={formStateStep2.errors.languages?.message}
+                    >
                       <Controller
                         control={controlStep2}
                         name="languages"
-                        render={({ field: { onChange, value } }) => (
+                        render={({ field: { onChange, value, onBlur } }) => (
                           <Select
                             instanceId="languages"
                             classNames={{
-                              control: () => "input !border-gray h-fit py-1",
+                              control: () =>
+                                "input !border-gray pr-0 pl-2 h-fit py-1",
                             }}
                             isMulti={true}
-                            options={languages}
+                            options={languagesOptions}
+                            onBlur={onBlur} // mark the field as touched
                             onChange={(val) =>
                               onChange(val.map((c) => c.value))
                             }
-                            value={languages?.filter(
+                            value={languagesOptions?.filter(
                               (c) => value?.includes(c.value),
                             )}
+                            // fix menu z-index issue
+                            menuPortalTarget={htmlRef.current}
                             styles={{
+                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                               placeholder: (base) => ({
                                 ...base,
                                 color: "#A3A6AF",
                               }),
                             }}
                             inputId="input_languages" // e2e
+                            placeholder="Select languages..."
                           />
                         )}
                       />
+                    </FormField>
 
-                      {formStateStep2.errors.languages && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.languages.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label font-bold">
-                        <span className="label-text">
-                          Country or region of opportunity
-                        </span>
-                      </label>
+                    <FormField
+                      label="Location"
+                      subLabel="The countries or regions where the opportunity is available. This is used for searchability and will be displayed on the opportunity page."
+                      showWarningIcon={
+                        !!formStateStep2.errors.countries?.message
+                      }
+                      showError={
+                        !!formStateStep2.touchedFields.countries ||
+                        formStateStep2.isSubmitted
+                      }
+                      error={formStateStep2.errors.countries?.message}
+                    >
                       <Controller
                         control={controlStep2}
                         name="countries"
-                        render={({ field: { onChange, value } }) => (
+                        render={({ field: { onChange, value, onBlur } }) => (
                           <Select
                             instanceId="countries"
                             classNames={{
-                              control: () => "input !border-gray h-fit py-1",
+                              control: () =>
+                                "input !border-gray pr-0 pl-2 h-fit py-1",
                             }}
                             isMulti={true}
-                            options={countries}
+                            options={countriesOptions}
+                            onBlur={onBlur} // mark the field as touched
                             onChange={(val) =>
                               onChange(val.map((c) => c.value))
                             }
-                            value={countries?.filter(
+                            value={countriesOptions?.filter(
                               (c) => value?.includes(c.value),
                             )}
+                            // fix menu z-index issue
+                            menuPortalTarget={htmlRef.current}
                             styles={{
+                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                               placeholder: (base) => ({
                                 ...base,
                                 color: "#A3A6AF",
                               }),
                             }}
                             inputId="input_countries" // e2e
+                            placeholder="Select countries..."
                           />
                         )}
                       />
+                    </FormField>
 
-                      {formStateStep2.errors.countries && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.countries.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label font-bold">
-                        <span className="label-text">
-                          Opportunity difficulty level
-                        </span>
-                      </label>
+                    <FormField
+                      label="Difficulty"
+                      subLabel="The difficulty level of the opportunity. This will be displayed on the opportunity page."
+                      showWarningIcon={
+                        !!formStateStep2.errors.difficultyId?.message
+                      }
+                      showError={
+                        !!formStateStep2.touchedFields.difficultyId ||
+                        formStateStep2.isSubmitted
+                      }
+                      error={formStateStep2.errors.difficultyId?.message}
+                    >
                       <Controller
                         control={controlStep2}
                         name="difficultyId"
-                        render={({ field: { onChange, value } }) => (
+                        render={({ field: { onChange, value, onBlur } }) => (
                           <Select
                             instanceId="difficultyId"
                             classNames={{
-                              control: () => "input !border-gray",
+                              control: () => "input !border-gray pr-0 pl-2",
                             }}
                             isMulti={false}
-                            options={difficulties}
+                            options={difficultiesOptions}
+                            onBlur={onBlur} // mark the field as touched
                             onChange={(val) => onChange(val?.value)}
-                            value={difficulties?.find((c) => c.value === value)}
+                            value={difficultiesOptions?.find(
+                              (c) => c.value === value,
+                            )}
+                            // fix menu z-index issue
+                            menuPortalTarget={htmlRef.current}
                             styles={{
+                              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                               placeholder: (base) => ({
                                 ...base,
                                 color: "#A3A6AF",
                               }),
                             }}
                             inputId="input_difficultyId" // e2e
+                            placeholder="Select difficulty..."
                           />
                         )}
                       />
+                    </FormField>
 
-                      {formStateStep2.errors.difficultyId && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.difficultyId.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                    <FormField
+                      label="Effort"
+                      subLabel="The effort required to complete the opportunity. This will be displayed on the opportunity page."
+                      showWarningIcon={
+                        !!formStateStep2.errors.commitmentIntervalCount
+                          ?.message ||
+                        !!formStateStep2.errors.commitmentIntervalId?.message
+                      }
+                    >
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          showError={
+                            !!formStateStep2.touchedFields
+                              .commitmentIntervalCount ||
+                            formStateStep2.isSubmitted
+                          }
+                          error={
+                            formStateStep2.errors.commitmentIntervalCount
+                              ?.message
+                          }
+                        >
+                          <input
+                            type="number"
+                            className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                            placeholder="Enter number..."
+                            {...registerStep2("commitmentIntervalCount", {
+                              valueAsNumber: true,
+                            })}
+                          />
+                        </FormField>
 
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="form-control">
-                        <label className="label font-bold">
-                          <span className="label-text">Number of</span>
-                        </label>
-                        <input
-                          type="number"
-                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                          placeholder="Enter number"
-                          {...registerStep2("commitmentIntervalCount", {
-                            valueAsNumber: true,
-                          })}
-                        />
-                        {formStateStep2.errors.commitmentIntervalCount && (
-                          <label className="label -mb-5">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep2.errors.commitmentIntervalCount.message}`}
-                            </span>
-                          </label>
+                        <FormField
+                          showError={
+                            !!formStateStep2.touchedFields
+                              .commitmentIntervalId ||
+                            formStateStep2.isSubmitted
+                          }
+                          error={
+                            formStateStep2.errors.commitmentIntervalId?.message
+                          }
+                        >
+                          <Controller
+                            control={controlStep2}
+                            name="commitmentIntervalId"
+                            render={({
+                              field: { onChange, value, onBlur },
+                            }) => (
+                              <Select
+                                instanceId="commitmentIntervalId"
+                                classNames={{
+                                  control: () => "input !border-gray pr-0 pl-2",
+                                }}
+                                options={timeIntervalsOptions}
+                                onBlur={onBlur} // mark the field as touched
+                                onChange={(val) => onChange(val?.value)}
+                                value={timeIntervalsOptions?.find(
+                                  (c) => c.value === value,
+                                )}
+                                styles={{
+                                  placeholder: (base) => ({
+                                    ...base,
+                                    color: "#A3A6AF",
+                                  }),
+                                }}
+                                inputId="input_commitmentIntervalId" // e2e
+                                placeholder="Select time frame..."
+                              />
+                            )}
+                          />
+                        </FormField>
+                      </div>
+                    </FormField>
+
+                    <FormField
+                      label="Availability"
+                      subLabel="When this opportunity will be available for completion. The end date is optional."
+                      showWarningIcon={
+                        !!formStateStep2.errors.dateStart?.message ||
+                        !!formStateStep2.errors.dateEnd?.message
+                      }
+                    >
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          showError={
+                            !!formStateStep2.touchedFields.dateStart ||
+                            formStateStep2.isSubmitted
+                          }
+                          error={formStateStep2.errors.dateStart?.message}
+                        >
+                          <Controller
+                            control={controlStep2}
+                            name="dateStart"
+                            render={({
+                              field: { onChange, onBlur, value },
+                            }) => (
+                              <DatePicker
+                                className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                                wrapperClassName="w-full"
+                                onBlur={onBlur} // mark the field as touched
+                                onChange={(date) => onChange(date)}
+                                selected={value ? new Date(value) : null}
+                                placeholderText="Select start date..."
+                                id="input_dateStart" // e2e
+                              />
+                            )}
+                          />
+                        </FormField>
+
+                        <FormField
+                          showError={
+                            !!formStateStep2.touchedFields.dateEnd ||
+                            formStateStep2.isSubmitted
+                          }
+                          error={formStateStep2.errors.dateEnd?.message}
+                        >
+                          <Controller
+                            control={controlStep2}
+                            name="dateEnd"
+                            render={({
+                              field: { onChange, onBlur, value },
+                            }) => (
+                              <DatePicker
+                                className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                                wrapperClassName="w-full"
+                                onBlur={onBlur} // mark the field as touched
+                                onChange={(date) => onChange(date)}
+                                selected={value ? new Date(value) : null}
+                                placeholderText="Select end date..."
+                                id="input_dateEnd" // e2e
+                              />
+                            )}
+                          />
+                        </FormField>
+                      </div>
+                    </FormField>
+
+                    <FormField
+                      label="Participant limit"
+                      subLabel="The number of participants that can complete this opportunity."
+                      showWarningIcon={
+                        !!formStateStep2.errors.participantLimit?.message
+                      }
+                      showError={
+                        !!formStateStep2.touchedFields.participantLimit ||
+                        formStateStep2.isSubmitted
+                      }
+                      error={formStateStep2.errors.participantLimit?.message}
+                    >
+                      <Controller
+                        control={controlStep2}
+                        name="participantLimit"
+                        render={({ field: { onBlur } }) => (
+                          <input
+                            type="number"
+                            className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none md:w-1/2"
+                            placeholder="Enter number..."
+                            {...registerStep2("participantLimit", {
+                              valueAsNumber: true,
+                            })}
+                            onBlur={(e) => {
+                              onBlur(); // mark the field as touched
+
+                              // default pool to limit & reward
+                              const participantLimit = parseInt(e.target.value);
+                              //const yomaReward = getValuesStep3("yomaReward");
+                              const zltoReward = getValuesStep3("zltoReward");
+
+                              if (participantLimit !== null) {
+                                if (
+                                  zltoReward !== null &&
+                                  zltoReward !== undefined &&
+                                  !isNaN(zltoReward)
+                                )
+                                  setValueStep3(
+                                    "zltoRewardPool",
+                                    participantLimit * zltoReward,
+                                  );
+                              }
+                            }}
+                          />
                         )}
-                      </div>
-
-                      <div className="form-control">
-                        <label className="label font-bold">
-                          <span className="label-text">Select time frame</span>
-                        </label>
-                        <Controller
-                          control={controlStep2}
-                          name="commitmentIntervalId"
-                          render={({ field: { onChange, value } }) => (
-                            <Select
-                              instanceId="commitmentIntervalId"
-                              classNames={{
-                                control: () => "input !border-gray",
-                              }}
-                              options={timeIntervals}
-                              onChange={(val) => onChange(val?.value)}
-                              value={timeIntervals?.find(
-                                (c) => c.value === value,
-                              )}
-                              styles={{
-                                placeholder: (base) => ({
-                                  ...base,
-                                  color: "#A3A6AF",
-                                }),
-                              }}
-                              inputId="input_commitmentIntervalId" // e2e
-                            />
-                          )}
-                        />
-
-                        {formStateStep2.errors.commitmentIntervalId && (
-                          <label className="label -mb-5">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep2.errors.commitmentIntervalId.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div className="form-control">
-                        <label className="label font-bold">
-                          <span className="label-text">
-                            Opportunity start date
-                          </span>
-                        </label>
-                        <Controller
-                          control={controlStep2}
-                          name="dateStart"
-                          render={({ field: { onChange, value } }) => (
-                            <DatePicker
-                              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
-                              onChange={(date) => onChange(date)}
-                              selected={value ? new Date(value) : null}
-                              placeholderText="Start Date"
-                              id="input_dateStart" // e2e
-                            />
-                          )}
-                        />
-                        {formStateStep2.errors.dateStart && (
-                          <label className="label -mb-5">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep2.errors.dateStart.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </div>
-
-                      <div className="form-control">
-                        <label className="label font-bold">
-                          <span className="label-text">
-                            Opportunity end date
-                          </span>
-                        </label>
-
-                        <Controller
-                          control={controlStep2}
-                          name="dateEnd"
-                          render={({ field: { onChange, value } }) => (
-                            <DatePicker
-                              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
-                              onChange={(date) => onChange(date)}
-                              selected={value ? new Date(value) : null}
-                              placeholderText="Select End Date"
-                              id="input_dateEnd" // e2e
-                            />
-                          )}
-                        />
-
-                        {formStateStep2.errors.dateEnd && (
-                          <label className="label -mb-5">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep2.errors.dateEnd.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="form-control">
-                      <label className="label font-bold">
-                        <span className="label-text">
-                          Opportunity participant limit
-                        </span>
-                      </label>
-
-                      <div className="gap-2">
-                        <input
-                          type="number"
-                          className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
-                          placeholder="Count of participants"
-                          {...registerStep2("participantLimit", {
-                            valueAsNumber: true,
-                          })}
-                          onBlur={(e) => {
-                            // default pool to limit & reward
-                            const participantLimit = parseInt(e.target.value);
-                            // NB: yoma rewards has been disabled temporarily
-                            //const yomaReward = getValuesStep3("yomaReward");
-                            const zltoReward = getValuesStep3("zltoReward");
-
-                            if (participantLimit !== null) {
-                              // if (
-                              //   yomaReward !== null &&
-                              //   yomaReward !== undefined &&
-                              //   !isNaN(yomaReward)
-                              // )
-                              //   setValueStep3(
-                              //     "yomaRewardPool",
-                              //     participantLimit * yomaReward,
-                              //   );
-
-                              if (
-                                zltoReward !== null &&
-                                zltoReward !== undefined &&
-                                !isNaN(zltoReward)
-                              )
-                                setValueStep3(
-                                  "zltoRewardPool",
-                                  participantLimit * zltoReward,
-                                );
-                            }
-                          }}
-                        />
-                      </div>
-                      {formStateStep2.errors.participantLimit && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.participantLimit.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                      />
+                    </FormField>
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-2 md:justify-end md:gap-4">
-                      {opportunityId === "create" && (
-                        <button
-                          type="button"
-                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          onClick={() => {
-                            onClick_Menu(1);
-                          }}
-                        >
-                          Back
-                        </button>
-                      )}
+                    <div className="flex items-center justify-center gap-2 md:justify-end md:gap-4">
+                      <button
+                        type="button"
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        onClick={() => {
+                          onStep(1);
+                        }}
+                      >
+                        Back
+                      </button>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
-                        {opportunityId === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
@@ -1920,12 +2149,13 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               {step === 3 && (
                 <>
-                  <div className="mb-4 flex flex-col">
+                  <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Rewards</h5>
-                    <p className="my-2 text-sm">
-                      Choose the reward that young participants will earn after
-                      successfully completing the opportunity
+                    <p className="-mt-2 text-sm">
+                      Choose the reward that participants will earn after
+                      successfully completing the opportunity.
                     </p>
+                    {!formStateStep3.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
@@ -1935,198 +2165,123 @@ const OpportunityDetails: NextPageWithLayout<{
                       onSubmitStep(4, data),
                     )}
                   >
-                    {/* NB: yoma rewards has been disabled temporarily */}
-                    {/* <div className="grid grid-cols-2 gap-2">
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">Yoma Reward</span>
-                        </label>
-                        <input
-                          type="number"
-                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                          placeholder="Enter reward amount"
-                          {...registerStep3("yomaReward", {
-                            valueAsNumber: true,
-                          })}
-                          onBlur={(e) => {
-                            // default pool to limit & reward
-                            const participantLimit =
-                              getValuesStep2("participantLimit");
-                            const yomaReward = parseInt(e.target.value);
+                    <FormField
+                      label="ZLTO Reward"
+                      subLabel="Amount rewarded for completing the opportunity. Setting a pool will limit the rewards; once depleted, no ZLTO is awarded. If a participant limit is set, then the pool will default to the limit * reward. This can be changed."
+                      showWarningIcon={
+                        !!formStateStep3.errors.zltoReward?.message ||
+                        !!formStateStep3.errors.participantLimit?.message
+                      }
+                    >
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <FormField
+                          showError={
+                            !!formStateStep3.touchedFields.zltoReward ||
+                            formStateStep3.isSubmitted
+                          }
+                          error={formStateStep3.errors.zltoReward?.message}
+                        >
+                          <Controller
+                            control={controlStep3}
+                            name="zltoReward"
+                            render={({ field: { onBlur } }) => (
+                              <input
+                                type="number"
+                                className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                                placeholder="Enter reward amount..."
+                                {...registerStep3("zltoReward", {
+                                  valueAsNumber: true,
+                                })}
+                                onBlur={(e) => {
+                                  onBlur(); // mark the field as touched
 
-                            if (
-                              participantLimit !== null &&
-                              !isNaN(yomaReward)
-                            ) {
-                              setValueStep3(
-                                "yomaRewardPool",
-                                participantLimit * yomaReward,
-                              );
-                            }
-                          }}
-                        />
-                        {formStateStep3.errors.yomaReward && (
-                          <label className="label">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep3.errors.yomaReward.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </div>
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text">Yoma Reward Pool</span>{" "}
-                          <span className="font-gray-light label-text text-xs">
-                            (default limit * reward)
-                          </span>
-                        </label>
-                        <input
-                          type="number"
-                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                          placeholder="Enter reward pool amount"
-                          {...registerStep3("yomaRewardPool", {
-                            valueAsNumber: true,
-                          })}
-                          onBlur={(e) => {
-                            // default pool to limit & reward (when clearing the pool value)
-                            const participantLimit =
-                              getValuesStep2("participantLimit");
-                            const yomaReward = getValuesStep3("yomaReward");
-                            const yomaRewardPool = parseInt(e.target.value);
+                                  // default pool to limit & reward
+                                  const participantLimit =
+                                    getValuesStep2("participantLimit");
+                                  const zltoReward = parseInt(e.target.value);
 
-                            if (participantLimit !== null) {
-                              if (
-                                yomaReward !== null &&
-                                yomaReward !== undefined &&
-                                !isNaN(yomaReward) &&
-                                (yomaRewardPool === null ||
-                                  yomaRewardPool === undefined ||
-                                  isNaN(yomaRewardPool))
-                              ) {
-                                setValueStep3(
-                                  "yomaRewardPool",
-                                  participantLimit * yomaReward,
-                                );
-                              }
-                            }
-                          }}
-                        />
-                        {formStateStep3.errors.yomaRewardPool && (
-                          <label className="label">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep3.errors.yomaRewardPool.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </div>
-                    </div> */}
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text font-bold">
-                            ZLTO Reward
-                          </span>
-                        </label>
-                        <input
-                          type="number"
-                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                          placeholder="Enter reward amount"
-                          {...registerStep3("zltoReward", {
-                            valueAsNumber: true,
-                          })}
-                          onBlur={(e) => {
-                            // default pool to limit & reward
-                            const participantLimit =
-                              getValuesStep2("participantLimit");
-                            const zltoReward = parseInt(e.target.value);
+                                  if (
+                                    participantLimit !== null &&
+                                    !isNaN(zltoReward)
+                                  ) {
+                                    setValueStep3(
+                                      "zltoRewardPool",
+                                      participantLimit * zltoReward,
+                                    );
+                                  }
+                                }}
+                              />
+                            )}
+                          />
+                        </FormField>
 
-                            if (
-                              participantLimit !== null &&
-                              !isNaN(zltoReward)
-                            ) {
-                              setValueStep3(
-                                "zltoRewardPool",
-                                participantLimit * zltoReward,
-                              );
-                            }
-                          }}
-                        />
-                        {formStateStep3.errors.zltoReward && (
-                          <label className="label -mb-5">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep3.errors.zltoReward.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </div>
-                      <div className="form-control">
-                        <label className="label">
-                          <span className="label-text flex items-center font-bold">
-                            ZLTO Reward Pool
-                            <span
-                              className="tooltip tooltip-secondary mx-2"
-                              data-tip="A ZLTO pool is a ZLTO limit you put on your opportunity.
-                          If you set a pool, when it's finished, individuals completing will not receive any ZLTO."
-                            >
-                              <IoIosInformationCircleOutline className="h-5 w-5 text-gray-dark" />
-                            </span>
-                          </span>
-                          <span className="font-gray-light label-text text-xs">
-                            (default limit * reward)
-                          </span>
-                        </label>
-                        <input
-                          type="number"
-                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                          placeholder="Enter reward pool amount"
-                          {...registerStep3("zltoRewardPool", {
-                            valueAsNumber: true,
-                          })}
-                          onBlur={(e) => {
-                            // default pool to limit & reward (when clearing the pool value)
-                            const participantLimit =
-                              getValuesStep2("participantLimit");
-                            const zltoReward = getValuesStep3("zltoReward");
-                            const zltoRewardPool = parseInt(e.target.value);
+                        <FormField
+                          showError={
+                            !!formStateStep3.touchedFields.zltoRewardPool ||
+                            formStateStep3.isSubmitted
+                          }
+                          error={formStateStep3.errors.zltoRewardPool?.message}
+                        >
+                          <Controller
+                            control={controlStep3}
+                            name="zltoRewardPool"
+                            render={({ field: { onBlur } }) => (
+                              <input
+                                type="number"
+                                className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                                placeholder="Enter pool amount..."
+                                {...registerStep3("zltoRewardPool", {
+                                  valueAsNumber: true,
+                                })}
+                                onBlur={(e) => {
+                                  onBlur(); // mark the field as touched
 
-                            if (participantLimit !== null) {
-                              if (
-                                zltoReward !== null &&
-                                zltoReward !== undefined &&
-                                !isNaN(zltoReward) &&
-                                (zltoRewardPool === null ||
-                                  zltoRewardPool === undefined ||
-                                  isNaN(zltoRewardPool))
-                              ) {
-                                setValueStep3(
-                                  "zltoRewardPool",
-                                  participantLimit * zltoReward,
-                                );
-                              }
-                            }
-                          }}
-                        />
-                        {formStateStep3.errors.zltoRewardPool && (
-                          <label className="label -mb-5">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep3.errors.zltoRewardPool.message}`}
-                            </span>
-                          </label>
-                        )}
+                                  // default pool to limit & reward (when clearing the pool value)
+                                  const participantLimit =
+                                    getValuesStep2("participantLimit");
+                                  const zltoReward =
+                                    getValuesStep3("zltoReward");
+                                  const zltoRewardPool = parseInt(
+                                    e.target.value,
+                                  );
+
+                                  if (participantLimit !== null) {
+                                    if (
+                                      zltoReward !== null &&
+                                      zltoReward !== undefined &&
+                                      !isNaN(zltoReward) &&
+                                      (zltoRewardPool === null ||
+                                        zltoRewardPool === undefined ||
+                                        isNaN(zltoRewardPool))
+                                    ) {
+                                      setValueStep3(
+                                        "zltoRewardPool",
+                                        participantLimit * zltoReward,
+                                      );
+                                    }
+                                  }
+                                }}
+                              />
+                            )}
+                          />
+                        </FormField>
                       </div>
-                    </div>
-                    <h6 className="font-bold">Skills</h6>
-                    <div className="form-control">
-                      <label className="label font-bold">
-                        <span className="label-text">
-                          Which skills will the Youth be awarded with upon
-                          completion?
-                        </span>
-                      </label>
+                    </FormField>
+
+                    <FormField
+                      label="Skills"
+                      subLabel="Which skills will the Youth be awarded with upon completion? This will be displayed on the opportunity page."
+                      showWarningIcon={!!formStateStep3.errors.skills?.message}
+                      showError={
+                        !!formStateStep3.touchedFields.skills ||
+                        formStateStep3.isSubmitted
+                      }
+                      error={formStateStep3.errors.skills?.message}
+                    >
                       <Controller
                         control={controlStep3}
                         name="skills"
-                        render={({ field: { onChange, value } }) => (
+                        render={({ field: { onChange, value, onBlur } }) => (
                           <>
                             <Async
                               instanceId="skills"
@@ -2138,6 +2293,7 @@ const OpportunityDetails: NextPageWithLayout<{
                               defaultOptions={true} // calls loadSkills for initial results when clicking on the dropdown
                               cacheOptions
                               loadOptions={loadSkills}
+                              onBlur={onBlur} // mark the field as touched
                               onChange={(val) => {
                                 // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                                 onChange(val.map((c: any) => c.value));
@@ -2148,39 +2304,39 @@ const OpportunityDetails: NextPageWithLayout<{
                                 label: cacheSkills.find((c) => c.id === x)
                                   ?.name,
                               }))}
-                              placeholder="Skill"
+                              placeholder="Select skills..."
                               inputId="input_skills" // e2e
+                              // fix menu z-index issue
+                              menuPortalTarget={htmlRef.current}
+                              styles={{
+                                menuPortal: (base) => ({
+                                  ...base,
+                                  zIndex: 9999,
+                                }),
+                              }}
                             />
                           </>
                         )}
                       />
-                      {formStateStep3.errors.skills && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep3.errors.skills.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                    </FormField>
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
-                      {opportunityId === "create" && (
-                        <button
-                          type="button"
-                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          onClick={() => {
-                            onClick_Menu(2);
-                          }}
-                        >
-                          Back
-                        </button>
-                      )}
+                    <div className="flex items-center justify-center gap-4 md:justify-end">
+                      <button
+                        type="button"
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        onClick={() => {
+                          onStep(2);
+                        }}
+                      >
+                        Back
+                      </button>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
-                        {opportunityId === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
@@ -2188,12 +2344,13 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               {step === 4 && (
                 <>
-                  <div className="mb-4 flex flex-col">
+                  <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Keywords</h5>
-                    <p className="my-2 text-sm">
+                    <p className="-mt-2 text-sm">
                       Boost your chances of being found in searches by adding
-                      keywords to your opportunity
+                      keywords to your opportunity.
                     </p>
+                    {!formStateStep4.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
@@ -2203,22 +2360,31 @@ const OpportunityDetails: NextPageWithLayout<{
                       onSubmitStep(5, data),
                     )}
                   >
-                    <div className="form-control">
-                      <label className="label font-bold">
-                        <span className="label-text">Opportunity keywords</span>
-                      </label>
+                    <FormField
+                      label="Keywords"
+                      showWarningIcon={
+                        !!formStateStep4.errors.keywords?.message
+                      }
+                      showError={
+                        !!formStateStep4.touchedFields.keywords ||
+                        formStateStep4.isSubmitted
+                      }
+                      error={formStateStep4.errors.keywords?.message}
+                    >
                       <Controller
                         control={controlStep4}
                         name="keywords"
-                        render={({ field: { onChange, value } }) => (
+                        render={({ field: { onChange, value, onBlur } }) => (
                           <>
                             {/* eslint-disable */}
                             <CreatableSelect
                               instanceId="keywords"
                               classNames={{
-                                control: () => "input !border-gray h-fit py-1",
+                                control: () =>
+                                  "input !border-gray pr-0 pl-2 h-fit py-1",
                               }}
                               isMulti={true}
+                              onBlur={onBlur} // mark the field as touched
                               onChange={(val) =>
                                 onChange(val.map((c) => c.value))
                               }
@@ -2226,45 +2392,44 @@ const OpportunityDetails: NextPageWithLayout<{
                                 value: c,
                                 label: c,
                               }))}
+                              // fix menu z-index issue
+                              menuPortalTarget={htmlRef.current}
                               styles={{
+                                menuPortal: (base) => ({
+                                  ...base,
+                                  zIndex: 9999,
+                                }),
                                 placeholder: (base) => ({
                                   ...base,
                                   color: "#A3A6AF",
                                 }),
                               }}
                               inputId="input_keywords" // e2e
+                              placeholder="Enter keywords..."
                             />
                             {/* eslint-enable  */}
                           </>
                         )}
                       />
-                      {formStateStep4.errors.keywords && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep4.errors.keywords.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                    </FormField>
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
-                      {opportunityId === "create" && (
-                        <button
-                          type="button"
-                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          onClick={() => {
-                            onClick_Menu(3);
-                          }}
-                        >
-                          Back
-                        </button>
-                      )}
+                    <div className="flex items-center justify-center gap-4 md:justify-end">
+                      <button
+                        type="button"
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        onClick={() => {
+                          onStep(3);
+                        }}
+                      >
+                        Back
+                      </button>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
-                        {opportunityId === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
@@ -2272,11 +2437,12 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               {step === 5 && (
                 <>
-                  <div className="mb-4 flex flex-col">
+                  <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Verification</h5>
-                    <p className="my-2 text-sm">
-                      How can young participants confirm their involvement?
+                    <p className="-mt-2 text-sm">
+                      How can participants confirm their involvement?
                     </p>
+                    {!formStateStep5.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
@@ -2286,52 +2452,33 @@ const OpportunityDetails: NextPageWithLayout<{
                       onSubmitStep(6, data),
                     )}
                   >
-                    <div className="form-control">
+                    <FormField
+                      label="Verification type"
+                      subLabel="What type of verification is required for participants to complete the opportunity?"
+                      showWarningIcon={
+                        !!formStateStep5.errors.verificationEnabled?.message
+                      }
+                      showError={
+                        !!formStateStep5.touchedFields.verificationEnabled ||
+                        formStateStep5.isSubmitted
+                      }
+                      error={formStateStep5.errors.verificationEnabled?.message}
+                    >
                       <Controller
                         control={controlStep5}
                         name="verificationEnabled"
                         render={({ field: { onChange, value } }) => (
                           <>
-                            {/* AUTOMATIC */}
-                            {/* NB: automatic verification has been disabled temporarily */}
-                            {/* <label
-                              htmlFor="verificationEnabledAutomatic"
-                              className="label cursor-pointer justify-normal"
-                            >
-                              <input
-                                type="radio"
-                                className="radio-primary radio"
-                                id="verificationEnabledAutomatic"
-                                onChange={() => {
-                                  setValueStep5("verificationEnabled", true);
-                                  setValueStep5(
-                                    "verificationMethod",
-                                    VerificationMethod.Automatic,
-                                  );
-
-                                  onChange(true);
-                                }}
-                                checked={
+                            {/* MANUAL */}
+                            <FormRadio
+                              id="verificationEnabledManual"
+                              label="Youth should upload proof of completion"
+                              inputProps={{
+                                checked:
                                   value === true &&
                                   getValuesStep5("verificationMethod") ===
-                                    VerificationMethod.Automatic
-                                }
-                              />
-                              <span className="label-text ml-4">
-                                Youth verification happens automatically
-                              </span>
-                            </label> */}
-
-                            {/* MANUAL */}
-                            <label
-                              htmlFor="verificationEnabledManual"
-                              className="label cursor-pointer justify-normal"
-                            >
-                              <input
-                                type="radio"
-                                className="radio-primary radio"
-                                id="verificationEnabledManual"
-                                onChange={() => {
+                                    VerificationMethod.Manual,
+                                onChange: () => {
                                   setValueStep5("verificationEnabled", true);
                                   setValueStep5(
                                     "verificationMethod",
@@ -2339,106 +2486,70 @@ const OpportunityDetails: NextPageWithLayout<{
                                   );
 
                                   onChange(true);
-                                }}
-                                checked={
-                                  value === true &&
-                                  getValuesStep5("verificationMethod") ===
-                                    VerificationMethod.Manual
-                                }
-                              />
-                              <span className="label-text ml-4">
-                                Youth should upload proof of completion
-                              </span>
-                            </label>
+                                },
+                              }}
+                            />
 
                             {/* NOT REQUIRED */}
-                            <label
-                              htmlFor="verificationEnabledNo"
-                              className="label cursor-pointer justify-normal"
-                            >
-                              <input
-                                type="radio"
-                                className="radio-primary radio"
-                                id="verificationEnabledNo"
-                                onChange={() => {
+                            <FormRadio
+                              id="verificationEnabledNo"
+                              label="No verification is required"
+                              inputProps={{
+                                checked: value === false,
+                                onChange: () => {
                                   setValueStep5("verificationEnabled", false);
                                   onChange(false);
-                                }}
-                                checked={value === false}
-                              />
-                              <span className="label-text ml-4">
-                                No verification is required
-                              </span>
-                            </label>
+                                },
+                              }}
+                            />
                           </>
                         )}
                       />
-                      {formStateStep5.errors.verificationEnabled && (
-                        <label className="label -mb-5 font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep5.errors.verificationEnabled.message}`}
-                          </span>
-                        </label>
-                      )}
-                      {formStateStep5.errors.verificationMethod && (
-                        <label className="label -mb-5 font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep5.errors.verificationMethod.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                    </FormField>
 
                     {watchVerificationEnabled &&
                       watchVerificationMethod === VerificationMethod.Manual && (
-                        <div className="form-control">
-                          <label className="label font-bold">
-                            <span className="label-text">
-                              Select the types of proof that participants need
-                              to upload as part of completing the opportuntity.
-                            </span>
-                          </label>
-
+                        <FormField
+                          label="Verification proof"
+                          subLabel="Select the types of proof that participants need to upload as part of completing the opportuntity."
+                          showWarningIcon={
+                            !!formStateStep5.errors.verificationTypes?.message
+                          }
+                          showError={
+                            !!formStateStep5.touchedFields.verificationTypes ||
+                            formStateStep5.isSubmitted
+                          }
+                          error={
+                            formStateStep5.errors.verificationTypes?.message
+                          }
+                        >
                           <div className="flex flex-col gap-1">
-                            {verificationTypes?.map((item) => (
+                            {verificationTypesOptions?.map((item) => (
                               <div
                                 className="flex flex-col"
                                 key={`verificationTypes_${item.id}`}
                               >
-                                {/* verification type: checkbox label */}
-                                <label
-                                  htmlFor={`chk_verificationType_${item.displayName}`}
-                                  className="label w-full cursor-pointer justify-normal"
-                                >
-                                  <input
-                                    type="checkbox"
-                                    value={item.type}
-                                    // on change, add or remove the item from the verificationTypes array
-                                    onChange={(e) => {
+                                <FormCheckbox
+                                  id={`chk_verificationType_${item.displayName}`}
+                                  label={item.displayName}
+                                  inputProps={{
+                                    value: item.type,
+                                    checked: watchVerificationTypes?.some(
+                                      (x) => x.type === item.type,
+                                    ),
+                                    onChange: (e) => {
                                       if (e.target.checked) append(item);
                                       else {
                                         const index =
                                           watchVerificationTypes?.findIndex(
-                                            (x: OpportunityVerificationType) =>
-                                              x.type === item.type,
+                                            (x) => x.type === item.type,
                                           );
                                         remove(index);
                                       }
-                                    }}
-                                    id={`chk_verificationType_${item.displayName}`} // e2e
-                                    className="checkbox-primary checkbox"
-                                    disabled={!watchVerificationEnabled}
-                                    checked={
-                                      watchVerificationTypes?.find(
-                                        (x: OpportunityVerificationType) =>
-                                          x?.type === item.type,
-                                      ) !== undefined
-                                    }
-                                  />
-                                  <span className="label-text ml-4">
-                                    {item.displayName}
-                                  </span>
-                                </label>
+                                    },
+                                    disabled: !watchVerificationEnabled,
+                                  }}
+                                />
 
                                 {/* verification type: description input */}
                                 {watchVerificationTypes?.find(
@@ -2446,6 +2557,93 @@ const OpportunityDetails: NextPageWithLayout<{
                                     x.type === item.type,
                                 ) && (
                                   <>
+                                    {/* file types and file size message */}
+                                    {item.displayName === "File Upload" && (
+                                      <FormMessage
+                                        messageType={FormMessageType.Warning}
+                                        className="my-2"
+                                      >
+                                        Kindly note that candidates are required
+                                        to upload a file (max{" "}
+                                        {MAX_FILE_SIZE_LABEL}) in one of the
+                                        following formats:
+                                        <div className="my-1" />
+                                        {ACCEPTED_DOC_TYPES_LABEL.map(
+                                          (item, index) => (
+                                            <span
+                                              key={`verification_file_upload_doc_file_type_${index}`}
+                                              className="mr-2 font-bold"
+                                            >
+                                              {item}
+                                            </span>
+                                          ),
+                                        )}
+                                        {ACCEPTED_IMAGE_TYPES_LABEL.map(
+                                          (item, index) => (
+                                            <span
+                                              key={`verification_file_upload_image_file_type_${index}`}
+                                              className="mr-2 font-bold"
+                                            >
+                                              {item}
+                                            </span>
+                                          ),
+                                        )}
+                                      </FormMessage>
+                                    )}
+                                    {item.displayName === "Location" && (
+                                      <FormMessage
+                                        messageType={FormMessageType.Warning}
+                                        className="my-2"
+                                      >
+                                        Kindly note that candidates are required
+                                        to choose their location from a map.
+                                      </FormMessage>
+                                    )}
+                                    {item.displayName === "Picture" && (
+                                      <FormMessage
+                                        messageType={FormMessageType.Warning}
+                                        className="my-2"
+                                      >
+                                        Kindly note that candidates are required
+                                        to upload a file (max{" "}
+                                        {MAX_FILE_SIZE_LABEL}) in one of the
+                                        following formats:
+                                        <div className="my-1" />
+                                        {ACCEPTED_IMAGE_TYPES_LABEL.map(
+                                          (item, index) => (
+                                            <span
+                                              key={`verificationtype_picture_image_file_type_${index}`}
+                                              className="mr-2 font-bold"
+                                            >
+                                              {item}
+                                            </span>
+                                          ),
+                                        )}
+                                      </FormMessage>
+                                    )}
+                                    {item.displayName === "Voice Note" && (
+                                      <FormMessage
+                                        messageType={FormMessageType.Warning}
+                                        className="my-2"
+                                      >
+                                        Kindly note that candidates are required
+                                        to upload a file (max{" "}
+                                        {MAX_FILE_SIZE_LABEL}) in one of the
+                                        following formats:
+                                        <div className="my-1" />
+                                        {ACCEPTED_AUDIO_TYPES_LABEL.map(
+                                          (item, index) => (
+                                            <span
+                                              key={`verificationtype_voicenote_audio_file_type_${index}`}
+                                              className="mr-2 font-bold"
+                                            >
+                                              {item}
+                                            </span>
+                                          ),
+                                        )}
+                                      </FormMessage>
+                                    )}
+
                                     <div className="form-control w-full">
                                       <label className="label">
                                         <span className="label-text">
@@ -2484,127 +2682,31 @@ const OpportunityDetails: NextPageWithLayout<{
                                         id={`input_verificationType_${item.displayName}`} // e2e
                                       />
                                     </div>
-
-                                    {/* file types and file size message */}
-                                    {item.displayName === "File Upload" && (
-                                      <div className="my-2 flex flex-row items-center gap-2 rounded-lg bg-green p-2 px-4 text-sm text-white">
-                                        <IoMdWarning className="mr-2 hidden h-6 w-6 md:inline-block" />
-                                        <p>
-                                          Kindly note that candidates are
-                                          required to upload a file (max{" "}
-                                          {MAX_FILE_SIZE_LABEL}) in one of the
-                                          following formats:
-                                          <div className="my-1" />
-                                          {ACCEPTED_DOC_TYPES_LABEL.map(
-                                            (item, index) => (
-                                              <span
-                                                key={`verification_file_upload_doc_file_type_${index}`}
-                                                className="mr-2 font-bold"
-                                              >
-                                                {item}
-                                              </span>
-                                            ),
-                                          )}
-                                          {ACCEPTED_IMAGE_TYPES_LABEL.map(
-                                            (item, index) => (
-                                              <span
-                                                key={`verification_file_upload_image_file_type_${index}`}
-                                                className="mr-2 font-bold"
-                                              >
-                                                {item}
-                                              </span>
-                                            ),
-                                          )}
-                                        </p>
-                                      </div>
-                                    )}
-                                    {item.displayName === "Location" && (
-                                      <div className="my-2 flex flex-row items-center gap-2 rounded-lg bg-green p-2 px-4 text-sm text-white">
-                                        <IoMdWarning className="mr-2 hidden h-6 w-6 md:inline-block" />
-                                        <p>
-                                          Kindly note that candidates are
-                                          required to choose their location from
-                                          a map.
-                                        </p>
-                                      </div>
-                                    )}
-                                    {item.displayName === "Picture" && (
-                                      <div className="my-2 flex flex-row items-center gap-2 rounded-lg bg-green p-2 px-4 text-sm text-white">
-                                        <IoMdWarning className="mr-2 hidden h-6 w-6 md:inline-block" />
-                                        <p>
-                                          Kindly note that candidates are
-                                          required to upload a file (max{" "}
-                                          {MAX_FILE_SIZE_LABEL}) in one of the
-                                          following formats:
-                                          <div className="my-1" />
-                                          {ACCEPTED_IMAGE_TYPES_LABEL.map(
-                                            (item, index) => (
-                                              <span
-                                                key={`verificationtype_picture_image_file_type_${index}`}
-                                                className="mr-2 font-bold"
-                                              >
-                                                {item}
-                                              </span>
-                                            ),
-                                          )}
-                                        </p>
-                                      </div>
-                                    )}
-                                    {item.displayName === "Voice Note" && (
-                                      <div className="my-2 flex flex-row items-center gap-2 rounded-lg bg-green p-2 px-4 text-sm text-white">
-                                        <IoMdWarning className="mr-2 hidden h-6 w-6 md:inline-block" />
-                                        <p>
-                                          Kindly note that candidates are
-                                          required to upload a file (max{" "}
-                                          {MAX_FILE_SIZE_LABEL}) in one of the
-                                          following formats:
-                                          <div className="my-1" />
-                                          {ACCEPTED_AUDIO_TYPES_LABEL.map(
-                                            (item, index) => (
-                                              <span
-                                                key={`verificationtype_voicenote_audio_file_type_${index}`}
-                                                className="mr-2 font-bold"
-                                              >
-                                                {item}
-                                              </span>
-                                            ),
-                                          )}
-                                        </p>
-                                      </div>
-                                    )}
                                   </>
                                 )}
                               </div>
                             ))}
                           </div>
-                          {formStateStep5.errors.verificationTypes && (
-                            <label className="label -mb-5 font-bold">
-                              <span className="label-text-alt italic text-red-500">
-                                {`${formStateStep5.errors.verificationTypes.message}`}
-                              </span>
-                            </label>
-                          )}
-                        </div>
+                        </FormField>
                       )}
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
-                      {opportunityId === "create" && (
-                        <button
-                          type="button"
-                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          onClick={() => {
-                            onClick_Menu(4);
-                          }}
-                        >
-                          Back
-                        </button>
-                      )}
+                    <div className="flex items-center justify-center gap-4 md:justify-end">
+                      <button
+                        type="button"
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        onClick={() => {
+                          onStep(4);
+                        }}
+                      >
+                        Back
+                      </button>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
-                        {opportunityId === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
@@ -2612,12 +2714,13 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               {step === 6 && (
                 <>
-                  <div className="mb-4 flex flex-col">
+                  <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Credential</h5>
-                    <p className="my-2 text-sm">
-                      Information about the credential that Youth will receive
-                      upon completion of this opportunity
+                    <p className="-mt-2 text-sm">
+                      Information about the credential that participants will
+                      receive upon completion of this opportunity.
                     </p>
+                    {!formStateStep6.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
@@ -2628,29 +2731,42 @@ const OpportunityDetails: NextPageWithLayout<{
                     )}
                   >
                     <div className="form-control">
-                      {/* checkbox label */}
-                      <label
-                        htmlFor="credentialIssuanceEnabled"
-                        className="label w-full cursor-pointer justify-normal"
-                      >
-                        <input
-                          {...registerStep6(`credentialIssuanceEnabled`)}
-                          type="checkbox"
-                          id="credentialIssuanceEnabled"
-                          className="checkbox-primary checkbox"
-                          disabled={watchVerificationEnabled !== true}
-                        />
-                        <span className="label-text ml-4">
-                          I want to issue a credential upon completion
-                        </span>
-                      </label>
+                      {watchVerificationEnabled === true && (
+                        <FormField
+                          label="Issuance"
+                          subLabel="Should a credential be issued upon completion of the opportunity?"
+                          showWarningIcon={
+                            !!formStateStep6.errors.credentialIssuanceEnabled
+                              ?.message
+                          }
+                          showError={
+                            !!formStateStep6.touchedFields
+                              .credentialIssuanceEnabled ||
+                            formStateStep6.isSubmitted
+                          }
+                          error={
+                            formStateStep6.errors.credentialIssuanceEnabled
+                              ?.message
+                          }
+                        >
+                          <FormCheckbox
+                            id="credentialIssuanceEnabled"
+                            label="I want to issue a credential upon completion"
+                            inputProps={{
+                              ...registerStep6(`credentialIssuanceEnabled`),
+                              disabled: !watchVerificationEnabled,
+                            }}
+                          />
+                        </FormField>
+                      )}
 
                       {watchVerificationEnabled !== true && (
-                        <div className="text-sm text-warning">
-                          Credential issuance is only available if Verification
-                          is supported (previous step).
-                        </div>
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          Credential issuance is only available if verification
+                          is supported (see previous step).
+                        </FormMessage>
                       )}
+
                       {formStateStep6.errors.credentialIssuanceEnabled && (
                         <label className="label -mb-5 font-bold">
                           <span className="label-text-alt italic text-red-500">
@@ -2662,22 +2778,32 @@ const OpportunityDetails: NextPageWithLayout<{
 
                     {watchCredentialIssuanceEnabled && (
                       <>
-                        <div className="form-control">
-                          <label className="label">
-                            <span className="label-text">Select schema</span>
-                          </label>
-
+                        <FormField
+                          label="Schema"
+                          subLabel="What information will be used to issue the credential?"
+                          showWarningIcon={
+                            !!formStateStep6.errors.ssiSchemaName?.message
+                          }
+                          showError={
+                            !!formStateStep6.touchedFields.ssiSchemaName ||
+                            formStateStep6.isSubmitted
+                          }
+                          error={formStateStep6.errors.ssiSchemaName?.message}
+                        >
                           <Controller
                             control={controlStep6}
                             name="ssiSchemaName"
-                            render={({ field: { onChange, value } }) => (
+                            render={({
+                              field: { onChange, value, onBlur },
+                            }) => (
                               <Select
                                 instanceId="ssiSchemaName"
                                 classNames={{
                                   control: () =>
-                                    "input !border-gray h-fit py-1",
+                                    "input !border-gray pr-0 pl-2 h-fit py-1",
                                 }}
                                 options={schemasOptions}
+                                onBlur={onBlur} // mark the field as touched
                                 onChange={(val) => onChange(val?.value)}
                                 value={schemasOptions?.find(
                                   (c) => c.value === value,
@@ -2689,17 +2815,11 @@ const OpportunityDetails: NextPageWithLayout<{
                                   }),
                                 }}
                                 inputId="input_ssiSchemaName" // e2e
+                                placeholder="Select schema..."
                               />
                             )}
                           />
-                          {formStateStep6.errors.ssiSchemaName && (
-                            <label className="label -mb-5">
-                              <span className="label-text-alt italic text-red-500">
-                                {`${formStateStep6.errors.ssiSchemaName.message}`}
-                              </span>
-                            </label>
-                          )}
-                        </div>
+                        </FormField>
 
                         {/* SCHEMA ATTRIBUTES */}
                         {watcSSISchemaName && (
@@ -2736,536 +2856,162 @@ const OpportunityDetails: NextPageWithLayout<{
                     )}
 
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
-                      {opportunityId === "create" && (
-                        <button
-                          type="button"
-                          className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
-                          onClick={() => {
-                            onClick_Menu(5);
-                          }}
-                        >
-                          Back
-                        </button>
-                      )}
+                    <div className="flex items-center justify-center gap-4 md:justify-end">
+                      <button
+                        type="button"
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        onClick={() => {
+                          onStep(5);
+                        }}
+                      >
+                        Back
+                      </button>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
                       >
-                        {opportunityId === "create" ? "Next" : "Submit"}
+                        Next
                       </button>
                     </div>
                   </form>
                 </>
               )}
-
-              {/* only show preview when creating new opportunity */}
-              {step === 7 && opportunityId === "create" && (
+              {step === 7 && (
                 <>
-                  <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold">Opportunity preview</h5>
-                    <p className="my-2 text-sm">
-                      Detailed particulars about the opportunity
+                  <div className="mb-4 flex flex-col gap-2">
+                    <h5 className="font-bold tracking-wider">Preview</h5>
+                    <p className="-mt-2 text-sm">
+                      Preview your opportunity before submitting.
                     </p>
                   </div>
 
+                  {!(
+                    formStateStep1.isValid &&
+                    formStateStep2.isValid &&
+                    formStateStep3.isValid &&
+                    formStateStep4.isValid &&
+                    formStateStep5.isValid &&
+                    formStateStep6.isValid
+                  ) && (
+                    <FormMessage messageType={FormMessageType.Warning}>
+                      Please complete the previous steps to preview and submit
+                      the opportunity.
+                    </FormMessage>
+                  )}
+
+                  {/* PREVIEWS */}
+                  {formStateStep1.isValid &&
+                    formStateStep2.isValid &&
+                    formStateStep3.isValid &&
+                    formStateStep4.isValid &&
+                    formStateStep5.isValid &&
+                    formStateStep6.isValid && (
+                      <div className="flex flex-col gap-4">
+                        {/* CARD PREVIEW */}
+                        <div className="flex flex-col gap-2">
+                          <h6 className="text-sm font-bold">Search Results</h6>
+
+                          <FormMessage messageType={FormMessageType.Info}>
+                            This is how your opportunity will appear in search
+                            results.
+                          </FormMessage>
+
+                          <div className="mt-4 flex justify-center">
+                            <OpportunityPublicSmallComponent
+                              key={`opportunity_card_preview`}
+                              preview={true}
+                              data={opportunityInfo}
+                            />
+                          </div>
+                        </div>
+
+                        {/* DETAILS PREVIEW */}
+                        <div className="flex flex-col gap-2">
+                          <h6 className="text-sm font-bold">
+                            Opportunity Page
+                          </h6>
+
+                          <FormMessage messageType={FormMessageType.Info}>
+                            This is how your opportunity will appear on the
+                            opportunity page when navigating from the search
+                            results.
+                          </FormMessage>
+
+                          <div className="mt-4 flex justify-center">
+                            <OpportunityPublicDetails
+                              opportunityInfo={opportunityInfo}
+                              user={null}
+                              error={error}
+                              preview={true}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                   <form
                     ref={formRef7}
-                    className="flex flex-col gap-4"
+                    className="mt-4 flex flex-col gap-4"
                     onSubmit={handleSubmitStep7((data) =>
                       onSubmitStep(8, data),
                     )}
                   >
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">
-                          Opportunity title
-                        </span>
-                      </label>
-                      <label className="label label-text pt-0 text-sm">
-                        {formData.title}
-                      </label>
-                      {formStateStep1.errors.title && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.title.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">
-                          Opportunity description
-                        </span>
-                      </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        {formData.description}
-                      </label>
-                      {formStateStep1.errors.description && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.description.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">
-                          Opportunity type
-                        </span>
-                      </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        {
-                          opportunityTypes?.find(
-                            (x) => x.value == formData.typeId,
-                          )?.label
-                        }
-                      </label>
-                      {formStateStep1.errors.typeId && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.typeId.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">
-                          Engagement type
-                        </span>
-                      </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        {
-                          engagementTypes?.find(
-                            (x) => x.value == formData.engagementTypeId,
-                          )?.label
-                        }
-                      </label>
-                      {formStateStep1.errors.engagementTypeId && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.engagementTypeId.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">
-                          Opportunity keywords
-                        </span>
-                      </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        {formData.keywords?.join(", ")}
-                      </label>
-                      {formStateStep1.errors.keywords && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.keywords.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">
-                          Opportunity link
-                        </span>
-                      </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        <Link
-                          className="link link-primary"
-                          href={formData.uRL ?? "#"}
-                          target="new"
+                    {/* POST AS ACTIVE */}
+                    <FormField
+                      label="Visibility"
+                      subLabel="Make this opportunity active to be visible to the public. Inactive opportunities are only visible to you and your team members."
+                      showWarningIcon={
+                        !!formStateStep7.errors.postAsActive?.message
+                      }
+                      showError={
+                        !!formStateStep7.touchedFields.postAsActive ||
+                        formStateStep7.isSubmitted
+                      }
+                      error={formStateStep7.errors.postAsActive?.message}
+                    >
+                      <FormCheckbox
+                        id="postAsActive"
+                        label="Make this opportunity active"
+                        inputProps={{ ...registerStep7(`postAsActive`) }}
+                      />
+
+                      {/* <label
+                          htmlFor="postAsActive"
+                          className="label w-full cursor-pointer justify-normal"
                         >
-                          {formData.uRL}
-                        </Link>
-                      </label>
-                      {formStateStep1.errors.uRL && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.uRL.message}`}
+                          <input
+                            {...registerStep7(`postAsActive`)}
+                            type="checkbox"
+                            id="postAsActive"
+                            className="checkbox-primary checkbox"
+                          />
+                          <span className="label-text ml-4">
+                            Make this opportunity active
                           </span>
-                        </label>
-                      )}
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">
-                          Opportunity difficulty
-                        </span>
-                      </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        {
-                          difficulties?.find(
-                            (x) => x.value == formData.difficultyId,
-                          )?.label
-                        }
-                      </label>
-                      {formStateStep2.errors.difficultyId && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.difficultyId.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">
-                          Opportunity languages
-                        </span>
-                      </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        {formData.languages
-                          ?.map(
-                            (x) => languages?.find((y) => y.value == x)?.label,
-                          )
-                          .join(", ")}
-                      </label>
-                      {formStateStep2.errors.languages && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.languages.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
-                        <h5 className="font-bold">Opportunity countries</h5>
-                      </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        {formData.countries
-                          ?.map(
-                            (x) => countries?.find((y) => y.value == x)?.label,
-                          )
-                          .join(", ")}
-                      </label>
-                      {formStateStep2.errors.countries && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.countries.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="form-control">
-                        <label className="label">
-                          <h5 className="font-bold">Opportunity duration</h5>
-                        </label>
-                        <label className="label label-text pt-0 text-sm ">
-                          {formData.commitmentIntervalCount}{" "}
-                          {
-                            timeIntervals?.find(
-                              (x) => x.value == formData.commitmentIntervalId,
-                            )?.label
-                          }
-                        </label>
-                        {formStateStep2.errors.commitmentIntervalCount && (
-                          <label className="label -mb-5">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep2.errors.commitmentIntervalCount.message}`}
-                            </span>
-                          </label>
-                        )}
-                        {formStateStep2.errors.commitmentIntervalId && (
-                          <label className="label -mb-5">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep2.errors.commitmentIntervalId.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </div>
+                        </label> */}
 
-                      <div className="flex flex-row gap-4">
-                        <div className="form-control flex flex-row">
-                          <label className="label">
-                            <span className="label-text font-semibold">
-                              Start date&#58;
-                            </span>
-                          </label>
-                          <label className="label label-text text-sm">
-                            <Moment format={DATE_FORMAT_HUMAN}>
-                              {formData.dateStart!}
-                            </Moment>
-                          </label>
-                          {formStateStep2.errors.dateStart && (
-                            <label className="label -mb-5">
-                              <span className="label-text-alt italic text-red-500">
-                                {`${formStateStep2.errors.dateStart.message}`}
-                              </span>
-                            </label>
-                          )}
-                        </div>
-                        <div className="form-control flex flex-row">
-                          <label className="label">
-                            <span className="label-text font-semibold">
-                              End date&#58;
-                            </span>
-                          </label>
-                          <label className="label label-text text-sm">
-                            <Moment format={DATE_FORMAT_HUMAN}>
-                              {formData.dateEnd!}
-                            </Moment>
-                          </label>
-                          {formStateStep2.errors.dateEnd && (
-                            <label className="label -mb-5">
-                              <span className="label-text-alt italic text-red-500">
-                                {`${formStateStep2.errors.dateEnd.message}`}
-                              </span>
-                            </label>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    {/* NB: yoma rewards has been disabled temporarily */}
-                    {/* <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">
-                          Yoma Reward
-                        </span>
-                      </label>
-                      <label className="label label-text text-sm pt-0 ">
-                        {formData.yomaReward}
-                      </label>
-                      {formStateStep2.errors.yomaReward && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.yomaReward.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                      {/* {!!formStateStep7.errors.postAsActive?.message &&
+                          (!!formStateStep7.touchedFields.postAsActive ||
+                            formStateStep7.isSubmitted) && (
+                            <FormError
+                              label={formStateStep7.errors.postAsActive.message}
+                            />
+                          )} */}
+                    </FormField>
 
-                    <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">
-                          Yoma Reward Pool
-                        </span>
-                      </label>
-                      <label className="label label-text text-sm pt-0 ">
-                        {formData.yomaRewardPool}
-                      </label>
-                      {formStateStep2.errors.yomaRewardPool && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.yomaRewardPool.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div> */}
-                    <div className="form-control">
-                      <label className="label">
-                        <h5 className="font-bold">Participants</h5>
-                      </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        {formData.participantLimit}
-                      </label>
-                      {formStateStep2.errors.participantLimit && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep2.errors.participantLimit.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    <div>
-                      <h5 className="font-bold">Rewards</h5>
-                      <div className="flex flex-row gap-4">
-                        <div className="form-control flex flex-row">
-                          <label className="label">
-                            <span className="label-text font-semibold">
-                              Zlto Reward&#58;
-                            </span>
-                          </label>
-                          <label className="label label-text text-sm ">
-                            {formData.zltoReward}
-                          </label>
-                          {formStateStep2.errors.zltoReward && (
-                            <label className="label -mb-5">
-                              <span className="label-text-alt italic text-red-500">
-                                {`${formStateStep2.errors.zltoReward.message}`}
-                              </span>
-                            </label>
-                          )}
-                        </div>
-                        <div className="form-control flex flex-row">
-                          <label className="label">
-                            <span className="label-text font-semibold">
-                              Zlto Reward Pool&#58;
-                            </span>
-                          </label>
-                          <label className="label label-text text-sm ">
-                            {formData.zltoRewardPool}
-                          </label>
-                          {formStateStep2.errors.zltoRewardPool && (
-                            <label className="label -mb-5">
-                              <span className="label-text-alt italic text-red-500">
-                                {`${formStateStep2.errors.zltoRewardPool.message}`}
-                              </span>
-                            </label>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="form-control">
-                      <label className="label">
-                        <h5 className="font-bold">Verification</h5>
-                      </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        {formData.verificationEnabled
-                          ? "Youth should upload proof of completion"
-                          : "No verification is required"}
-                      </label>
-                      {formStateStep3.errors.verificationEnabled && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep3.errors.verificationEnabled.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-                    {formData.verificationEnabled && (
-                      <div className="form-control">
-                        <label className="label">
-                          <h5 className="font-bold">Verification Types</h5>
-                        </label>
-
-                        <table className="table w-full">
-                          <thead>
-                            <tr className="border-gray text-gray-dark">
-                              <th>Type</th>
-                              <th>Description</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {formData.verificationTypes?.map((x) => (
-                              <tr
-                                className="border-gray text-gray-dark"
-                                key={`preview_verificationTypes_${x.type}`}
-                              >
-                                <td> {x.type}</td>
-                                <td>{x.description}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-
-                        {formStateStep3.errors.verificationTypes && (
-                          <label className="label -mb-5">
-                            <span className="label-text-alt italic text-red-500">
-                              {`${formStateStep3.errors.verificationTypes.message}`}
-                            </span>
-                          </label>
-                        )}
-                      </div>
-                    )}
-                    <div className="form-control">
-                      <label className="label">
-                        <h5 className="font-bold">Credential</h5>
-                      </label>
-                      <label className="label label-text pt-0 text-sm ">
-                        {formData.credentialIssuanceEnabled
-                          ? "I want to issue a credential upon completion"
-                          : "No credential is required"}
-                      </label>
-                      {formStateStep6.errors.credentialIssuanceEnabled && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep6.errors.credentialIssuanceEnabled.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
-
-                    {/* SCHEMA */}
-                    {formData.credentialIssuanceEnabled && (
-                      <>
-                        <div className="form-control">
-                          <label className="label">
-                            <h5 className="font-bold">Schema</h5>
-                          </label>
-                          <label className="label label-text pt-0 text-sm ">
-                            {formData.ssiSchemaName}
-                          </label>
-                          {formStateStep6.errors.ssiSchemaName && (
-                            <label className="label -mb-5">
-                              <span className="label-text-alt italic text-red-500">
-                                {`${formStateStep6.errors.ssiSchemaName.message}`}
-                              </span>
-                            </label>
-                          )}
-                        </div>
-                        {/* SCHEMA ATTRIBUTES */}
-                        <div className="flex flex-col gap-2">
-                          <table className="table w-full">
-                            <thead>
-                              <tr className="border-gray text-gray-dark">
-                                <th>Datasource</th>
-                                <th>Attribute</th>
-                              </tr>
-                            </thead>
-                            <tbody>
-                              {schemaAttributes?.map(
-                                (attribute) =>
-                                  attribute.properties?.map(
-                                    (property, index) => (
-                                      <tr
-                                        key={`schemaAttributesPreview_${attribute.id}_${index}_${property.id}`}
-                                        className="border-gray text-gray-dark"
-                                      >
-                                        <td>{attribute?.name}</td>
-                                        <td>{property.nameDisplay}</td>
-                                      </tr>
-                                    ),
-                                  ),
-                              )}
-                            </tbody>
-                          </table>
-                        </div>
-                      </>
-                    )}
-                    <div className="form-control">
-                      {/* checkbox label */}
-                      <label
-                        htmlFor="postAsActive"
-                        className="label w-full cursor-pointer justify-normal"
-                      >
-                        <input
-                          {...registerStep7(`postAsActive`)}
-                          type="checkbox"
-                          id="postAsActive"
-                          className="checkbox-primary checkbox"
-                        />
-                        <span className="label-text ml-4">
-                          Make this opportunity active
-                        </span>
-                      </label>
-
-                      {formStateStep7.errors.postAsActive && (
-                        <label className="label -mb-5 font-bold">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep7.errors.postAsActive.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
                     {/* BUTTONS */}
-                    <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
+                    <div className="flex items-center justify-center gap-4 md:justify-end">
                       <button
                         type="button"
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
-                          onClick_Menu(6);
+                          onStep(6);
                         }}
                       >
                         Back
                       </button>
+
                       <button
                         type="submit"
                         className="btn btn-success flex-grow disabled:bg-gray-light md:w-1/3 md:flex-grow-0"
@@ -3276,12 +3022,11 @@ const OpportunityDetails: NextPageWithLayout<{
                             formStateStep3.isValid &&
                             formStateStep4.isValid &&
                             formStateStep5.isValid &&
-                            formStateStep6.isValid &&
-                            formStateStep7.isValid
+                            formStateStep6.isValid
                           )
                         }
                       >
-                        Publish opportunity
+                        Submit
                       </button>
                     </div>
                   </form>
@@ -3295,14 +3040,14 @@ const OpportunityDetails: NextPageWithLayout<{
   );
 };
 
-OpportunityDetails.getLayout = function getLayout(page: ReactElement) {
+OpportunityAdminDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-OpportunityDetails.theme = function getTheme(page: ReactElement) {
+OpportunityAdminDetails.theme = function getTheme(page: ReactElement) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };
 
-export default OpportunityDetails;
+export default OpportunityAdminDetails;
