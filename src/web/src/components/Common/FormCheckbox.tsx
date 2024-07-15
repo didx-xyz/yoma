@@ -6,11 +6,11 @@ const FormCheckbox: React.FC<{
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }> = ({ id, label, inputProps }) => {
   return (
-    <label htmlFor={id} className="label w-full cursor-pointer justify-normal">
+    <label htmlFor={id} className="label cursor-pointer justify-normal">
       <input
         type="checkbox"
         id={id}
-        className="checkbox-primary checkbox"
+        className="checkbox-primary checkbox disabled:border-gray"
         {...inputProps}
       />
       <span className="label-text ml-4">{label}</span>
