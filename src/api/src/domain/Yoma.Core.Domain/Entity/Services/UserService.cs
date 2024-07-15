@@ -163,6 +163,11 @@ namespace Yoma.Core.Domain.Entity.Services
       return SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), user.SettingsRaw);
     }
 
+    public SettingsInfo GetSettingsInfo(string? settingsRaw)
+    {
+      return SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), settingsRaw);
+    } 
+
     public List<User> Contains(string value, bool includeComputed)
     {
       if (string.IsNullOrWhiteSpace(value))

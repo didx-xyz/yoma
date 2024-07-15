@@ -11,6 +11,8 @@ namespace Yoma.Core.Domain.EmailProvider.Services
     #region Class Variables
     private readonly ILogger<EmailPreferenceFilterService> _logger;
     private readonly IUserService _userService;
+
+    private const string SettingsKey_Email_Prefix = "Email";
     #endregion
 
     #region Constructor
@@ -26,7 +28,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
     {
       if (recipients == null || recipients.Count == 0) return recipients;
 
-      var settingKey = $"Email_{type}";
+      var settingKey = $"{SettingsKey_Email_Prefix}_{type}";
       var result = new List<EmailRecipient>();
 
       foreach (var recipient in recipients)

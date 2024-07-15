@@ -37,6 +37,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         UserPhotoId = entity.User.PhotoId,
         UserPhotoStorageType = entity.User.Photo == null ? null : Enum.Parse<StorageType>(entity.User.Photo.StorageType, true),
         UserPhotoKey = entity.User.Photo == null ? null : entity.User.Photo.Key,
+        UserSettings = entity.User.Settings,
         OpportunityId = entity.OpportunityId,
         OpportunityTitle = entity.Opportunity.Title,
         OpportunityDescription = entity.Opportunity.Description,
