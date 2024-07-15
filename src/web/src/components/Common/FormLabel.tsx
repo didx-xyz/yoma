@@ -1,5 +1,6 @@
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import { IoMdAlert } from "react-icons/io";
+import FormTooltip from "./FormTooltip";
 
 const FormLabel: React.FC<{
   label: string;
@@ -13,18 +14,15 @@ const FormLabel: React.FC<{
         {label}
 
         {tooltip && (
-          <span className="tooltip tooltip-secondary" data-tip={tooltip}>
+          <FormTooltip label={tooltip}>
             <IoIosInformationCircleOutline className="h-5 w-5 text-green" />
-          </span>
+          </FormTooltip>
         )}
 
         {showWarningIcon && (
-          <span
-            className="tooltip tooltip-secondary"
-            data-tip="This field is required."
-          >
+          <FormTooltip label="This field is required.">
             <IoMdAlert className="mr-2x h-5 w-5 text-yellow" />
-          </span>
+          </FormTooltip>
         )}
       </span>
       <span className="text-xs">{subLabel}</span>

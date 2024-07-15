@@ -100,7 +100,7 @@ export interface OrganizationInfo {
   id: string;
   name: string;
   tagline: string | null;
-  status: OrganizationStatus | string; //NB
+  status: OrganizationStatus | string; //NB: string
   logoURL: string | null;
 }
 
@@ -120,4 +120,33 @@ export enum OrganizationDocumentType {
 export enum OrganizationProviderType {
   Education,
   Marketplace,
+}
+
+export interface Settings {
+  groups: SettingGroup[];
+}
+
+export interface SettingGroup {
+  group: string;
+  items: SettingItem[] | null;
+  groups: SettingGroup[] | null;
+}
+
+export interface SettingItem {
+  key: string;
+  title: string;
+  description: string;
+  type: SettingType | string; //NB: string
+  enabled: boolean;
+  value: any;
+}
+
+export interface UserRequestSettings {
+  settings: Record<string, any>;
+}
+
+export enum SettingType {
+  Boolean,
+  Number,
+  String,
 }

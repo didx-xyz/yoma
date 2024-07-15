@@ -73,6 +73,14 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         selected: router.asPath.startsWith("/yoid/settings"),
         iconImage: iconCog,
       },
+      {
+        title: "App Settings",
+        description: "My app data",
+        url: "/yoid/appSettings",
+        badgeCount: null,
+        selected: router.asPath.startsWith("/yoid/appSettings"),
+        iconImage: iconCog,
+      },
       // {
       //   title: "Open Digital CV",
       //   description: "My opportunities submitted for verification",
