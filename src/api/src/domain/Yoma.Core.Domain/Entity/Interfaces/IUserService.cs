@@ -19,6 +19,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     SettingsInfo GetSettingsInfoById(Guid id);
 
+    SettingsInfo GetSettingsInfo(string? settingsRaw);
+
     List<User> Contains(string value, bool includeComputed);
 
     UserSearchResults Search(UserSearchFilter filter);

@@ -35,6 +35,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public string? UserPhotoURL { get; set; }
 
+    [JsonIgnore]
+    public string? UserSettings { get; set; }
+
     public Guid OpportunityId { get; set; }
 
     public string OpportunityTitle { get; set; }

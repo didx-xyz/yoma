@@ -18,6 +18,7 @@ using Yoma.Core.Domain.EmailProvider;
 using Yoma.Core.Domain.EmailProvider.Interfaces;
 using Yoma.Core.Domain.EmailProvider.Models;
 using Yoma.Core.Domain.Entity;
+using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
@@ -64,6 +65,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IExecutionStrategyService _executionStrategyService;
 
     private const int List_Aggregated_Opportunity_By_Limit = 100;
+    private const string SettingsKey_ShareEmailWithPartners = "Share_Email_With_Partners";
+    private const string PlaceholderValue_HiddenEmail = "hidden";
     #endregion
 
     #region Constructor
@@ -407,6 +410,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       var result = Search(filter, ensureOrganizationAuthorization);
+
+      foreach (var item in result.Items)
+      {
+        if (SettingsHelper.GetValue<bool>(_userService.GetSettingsInfo(item.UserSettings), SettingsKey_ShareEmailWithPartners) == true) continue;
+        item.UserEmail = PlaceholderValue_HiddenEmail;
+      }
 
       var config = new CsvConfiguration(System.Globalization.CultureInfo.CurrentCulture);
 
