@@ -1,7 +1,14 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  dehydrate,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import type { AxiosError } from "axios";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { useCallback, useState, type ReactElement } from "react";
+import { toast } from "react-toastify";
 import type {
   SettingGroup,
   SettingItem,
@@ -13,16 +20,19 @@ import FormCheckbox from "~/components/Common/FormCheckbox";
 import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
+import FormTooltip from "~/components/Common/FormTooltip";
 import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  GA_ACTION_APP_SETTING_UPDATE,
+  GA_CATEGORY_USER,
+} from "~/lib/constants";
+import { trackGAEvent } from "~/lib/google-analytics";
 import { config } from "~/lib/react-query-config";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
-import { toast } from "react-toastify";
-import type { AxiosError } from "axios";
-import FormTooltip from "~/components/Common/FormTooltip";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -54,6 +64,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const AppSettings: NextPageWithLayout<{
   error?: string;
 }> = ({ error }) => {
+  const queryClient = useQueryClient();
   const { data: dataSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ["userProfileAppSettings"],
     queryFn: async () => await getSettings(),
@@ -224,6 +235,16 @@ const AppSettings: NextPageWithLayout<{
         // call api
         await updateSettings(userRequestSettings);
 
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_USER,
+          GA_ACTION_APP_SETTING_UPDATE,
+          JSON.stringify(userRequestSettings),
+        );
+
+        // invalidate query
+        queryClient.invalidateQueries({ queryKey: ["userProfileAppSettings"] });
+
         toast.success("Settings updated");
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
@@ -235,7 +256,7 @@ const AppSettings: NextPageWithLayout<{
 
       setIsLoading(false);
     },
-    [dataSettings, settings, setIsLoading],
+    [dataSettings, settings, queryClient, setIsLoading],
   );
 
   if (error) return <Unauthorized />;
@@ -247,13 +268,13 @@ const AppSettings: NextPageWithLayout<{
         <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
           {(isLoading || isLoadingSettings) && <Loading />}
 
-          {!isLoading && !isLoadingSettings && !settings && (
+          {!isLoadingSettings && !settings && (
             <FormMessage messageType={FormMessageType.Warning}>
               No settings available
             </FormMessage>
           )}
 
-          {!isLoading && !isLoadingSettings && settings && (
+          {!isLoadingSettings && settings && (
             <form onSubmit={handleSubmit}>
               {/* GROUPS */}
               {settings.groups.map((group) => renderGroup(group, 0))}
