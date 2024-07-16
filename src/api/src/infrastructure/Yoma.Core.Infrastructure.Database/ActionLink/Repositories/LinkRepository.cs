@@ -34,6 +34,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         DateEnd = entity.DateEnd,
         DistributionList = entity.DistributionList,
         LockToDistributionList = entity.LockToDistributionList,
+        CommentApproval = entity.CommentApproval,
         DateCreated = entity.DateCreated,
         CreatedByUserId = entity.CreatedByUserId,
         DateModified = entity.DateModified,
@@ -62,6 +63,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         DateEnd = item.DateEnd,
         DistributionList = item.DistributionList,
         LockToDistributionList = item.LockToDistributionList,
+        CommentApproval = item.CommentApproval,
         DateCreated = item.DateCreated,
         CreatedByUserId = item.CreatedByUserId,
         DateModified = item.DateModified,
@@ -97,6 +99,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
            DateEnd = item.DateEnd,
            DistributionList = item.DistributionList,
            LockToDistributionList = item.LockToDistributionList,
+           CommentApproval = item.CommentApproval,
            DateCreated = DateTimeOffset.UtcNow,
            CreatedByUserId = item.CreatedByUserId,
            DateModified = DateTimeOffset.UtcNow,
@@ -126,6 +129,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 
       entity.UsagesTotal = item.UsagesTotal;
       entity.StatusId = item.StatusId;
+      entity.CommentApproval = item.CommentApproval;
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;
 
@@ -150,6 +154,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 
         entity.UsagesTotal = item.UsagesTotal;
         entity.StatusId = item.StatusId;
+        entity.CommentApproval = item.CommentApproval;
         entity.DateModified = item.DateModified;
         entity.ModifiedByUserId = item.ModifiedByUserId;
       }

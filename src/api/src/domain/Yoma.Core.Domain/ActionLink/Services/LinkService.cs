@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Transactions;
 using Yoma.Core.Domain.ActionLink.Extensions;
 using Yoma.Core.Domain.ActionLink.Interfaces;
@@ -49,9 +50,13 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly LinkRequestCreateValidatorShare _linkRequestCreateValidatorShare;
     private readonly LinkRequestCreateValidatorVerify _linkRequestCreateValidatorVerify;
     private readonly LinkSearchFilterValidator _linkSearchFilterValidator;
+    private readonly LinkRequestUpdateStatusValidator _linkRequestUpdateStatusValidator;
 
+    //a link can only be made active ONCE as it might have a distribution list that gets notified upon approval / activation; thus an active link can not be deactivated 
     private static readonly LinkStatus[] Statuses_Activatable = [LinkStatus.Inactive];
-    private static readonly LinkStatus[] Statuses_DeActivatable = [LinkStatus.Active];
+    private static readonly LinkStatus[] Statuses_Declinable = [LinkStatus.Inactive];
+    private static readonly LinkStatus[] Statuses_DeActivatable = [LinkStatus.Declined]; //send for re-approval
+    private static readonly LinkStatus[] Statuses_CanDelete = [LinkStatus.Active, LinkStatus.Inactive, LinkStatus.Declined];
     #endregion
 
     #region Constructor
@@ -70,7 +75,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
       IEmailURLFactory emailURLFactory,
       LinkRequestCreateValidatorShare linkRequestCreateValidatorShare,
       LinkRequestCreateValidatorVerify linkRequestCreateValidatorVerify,
-      LinkSearchFilterValidator linkSearchFilterValidator)
+      LinkSearchFilterValidator linkSearchFilterValidator,
+      LinkRequestUpdateStatusValidator linkRequestUpdateStatusValidator)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -88,6 +94,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       _linkRequestCreateValidatorShare = linkRequestCreateValidatorShare;
       _linkRequestCreateValidatorVerify = linkRequestCreateValidatorVerify;
       _linkSearchFilterValidator = linkSearchFilterValidator;
+      _linkRequestUpdateStatusValidator = linkRequestUpdateStatusValidator;
     }
     #endregion
 
@@ -184,7 +191,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       await _linkRequestCreateValidatorShare.ValidateAndThrowAsync(request);
 
-      var item = LinkFromRequest(request, ensureOrganizationAuthorization);
+      var item = LinkFromRequest(request, LinkStatus.Active, ensureOrganizationAuthorization);
 
       switch (request.EntityType)
       {
@@ -239,13 +246,12 @@ namespace Yoma.Core.Domain.ActionLink.Services
       if (!request.UsagesLimit.HasValue && !request.DateEnd.HasValue)
         throw new ValidationException($"Either a usage limit or an end date is required");
 
-      var item = LinkFromRequest(request, ensureOrganizationAuthorization);
+      var item = LinkFromRequest(request, LinkStatus.Inactive, ensureOrganizationAuthorization);
       item.UsagesLimit = request.UsagesLimit;
       item.DateEnd = request.DateEnd.HasValue ? request.DateEnd.Value.ToEndOfDay() : null;
       item.DistributionList = request.DistributionList == null ? null : JsonConvert.SerializeObject(request.DistributionList);
       item.LockToDistributionList = request.LockToDistributionList;
 
-      EmailActionLinkVerify? emailData = null;
       switch (request.EntityType)
       {
         case LinkEntityType.Opportunity:
@@ -268,46 +274,10 @@ namespace Yoma.Core.Domain.ActionLink.Services
             throw new ValidationException($"Link with name '{item.Name}' already exists for the opportunity");
 
           item = await GenerateShortLinkAndCreate(request, item);
-
-          if (request.DistributionList == null) break;
-
-          emailData = new EmailActionLinkVerify
-          {
-            EntityTypeDesc = $"{request.EntityType.ToString().ToLower()}(ies)",
-            YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(EmailType.ActionLink_Verify_Created),
-            Items =
-            [
-              new EmailActionLinkVerifyItem
-              {
-                Title = opportunity.Title,
-                DateStart = opportunity.DateStart,
-                DateEnd = opportunity.DateEnd,
-                URL = item.ShortURL,
-                ZltoReward = opportunity.ZltoReward,
-                YomaReward = opportunity.YomaReward
-              }
-            ]
-          };
-
           break;
 
         default:
           throw new InvalidOperationException($"Invalid / unsupported entity type of '{request.EntityType}'");
-      }
-
-      if (request.DistributionList == null) return item.ToLinkInfo(request.IncludeQRCode);
-
-      try
-      {
-        if (emailData == null) throw new InvalidOperationException("Email data not initialized");
-
-        var recipients = request.DistributionList.Select(o => new EmailRecipient { Email = o }).ToList();
-        await _emailProviderClient.Send(EmailType.ActionLink_Verify_Created, recipients, emailData);
-        _logger.LogInformation("Successfully send '{emailType}' email", EmailType.ActionLink_Verify_Created);
-      }
-      catch (Exception ex)
-      {
-        _logger.LogError(ex, "Failed to send '{emailType}' email", EmailType.ActionLink_Verify_Created);
       }
 
       return item.ToLinkInfo(request.IncludeQRCode);
@@ -320,20 +290,25 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return await LogUsage(link);
     }
 
-    public async Task<LinkInfo> UpdateStatus(Guid id, LinkStatus status, bool ensureOrganizationAuthorization)
+    public async Task<LinkInfo> UpdateStatus(Guid id, LinkRequestUpdateStatus request, bool ensureOrganizationAuthorization)
     {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      await _linkRequestUpdateStatusValidator.ValidateAndThrowAsync(request);
+
       var link = GetById(id);
       EnsureOrganizationAuthorization(link);
 
       var action = Enum.Parse<LinkAction>(link.Action);
 
+      var sendEmailActionLinkVerifyCreated = false;
       switch (action)
       {
         case LinkAction.Share:
           throw new ValidationException($"Link with action '{link.Action}' status can not be changed and remains active indefinitely");
 
         case LinkAction.Verify:
-          switch (status)
+          switch (request.Status)
           {
             case LinkStatus.Active:
               if (link.Status == LinkStatus.Active) return link.ToLinkInfo(false);
@@ -341,12 +316,18 @@ namespace Yoma.Core.Domain.ActionLink.Services
               if (!Statuses_Activatable.Contains(link.Status))
                 throw new ValidationException($"Link can not be activated (current status '{link.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
 
+              if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
+
               //ensure not expired but not yet flagged by background service
               if (link.DateEnd.HasValue && link.DateEnd.Value <= DateTimeOffset.UtcNow)
                 throw new ValidationException($"Link cannot be activated because its end date ('{link.DateEnd:yyyy-MM-dd}') is in the past");
 
-              link.StatusId = _linkStatusService.GetByName(LinkStatus.Active.ToString()).Id;
-              link.Status = LinkStatus.Active;
+              link.CommentApproval = request.Comment;
+
+              sendEmailActionLinkVerifyCreated = true;
+
+              //TODO: Email ActionLink_Approval_Approved
+
               break;
 
             case LinkStatus.Inactive:
@@ -355,12 +336,34 @@ namespace Yoma.Core.Domain.ActionLink.Services
               if (!Statuses_DeActivatable.Contains(link.Status))
                 throw new ValidationException($"Link can not be deactivated (current status '{link.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
 
-              link.StatusId = _linkStatusService.GetByName(LinkStatus.Inactive.ToString()).Id;
-              link.Status = LinkStatus.Inactive;
+              if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
+
+              //TODO: Email ActionLink_Approval_Requested
               break;
 
+            case LinkStatus.Declined:
+              if (link.Status == LinkStatus.Declined) return link.ToLinkInfo(false);
+
+              if (!Statuses_Declinable.Contains(link.Status))
+                throw new ValidationException($"Link can not be deactivated (current status '{link.Status}'). Required state '{string.Join(" / ", Statuses_Declinable)}'");
+
+              if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
+
+              link.CommentApproval = request.Comment;
+
+              //TODO: Email ActionLink_Approval_Declined
+              break;
+
+            case LinkStatus.Deleted:
+              if (link.Status == LinkStatus.Deleted) return link.ToLinkInfo(false);
+
+              if (!Statuses_CanDelete.Contains(link.Status))
+                throw new ValidationException($"Link can not be deactivated (current status '{link.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
+              break;
+
+
             default:
-              throw new InvalidOperationException($"Invalid / unsupported status of '{status}'");
+              throw new InvalidOperationException($"Invalid / unsupported status of '{request.Status}'");
           }
           break;
 
@@ -368,7 +371,13 @@ namespace Yoma.Core.Domain.ActionLink.Services
           throw new InvalidOperationException($"Invalid / unsupported action of '{action}'");
       }
 
+      link.StatusId = _linkStatusService.GetByName(request.Status.ToString()).Id;
+      link.Status = request.Status;
+
       link = await _linkRepository.Update(link);
+
+      if (sendEmailActionLinkVerifyCreated) await SendEmail_ActionLinkVerifyCreated(link, ensureOrganizationAuthorization);
+
       return link.ToLinkInfo(false);
     }
     #endregion
@@ -443,7 +452,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return opportunity;
     }
 
-    private Link LinkFromRequest(LinkRequestCreateBase request, bool ensureOrganizationAuthorization)
+    private Link LinkFromRequest(LinkRequestCreateBase request, LinkStatus status, bool ensureOrganizationAuthorization)
     {
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -453,8 +462,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
         Description = request.Description,
         EntityType = request.EntityType.ToString(),
         Action = request.Action.ToString(),
-        Status = LinkStatus.Active,
-        StatusId = _linkStatusService.GetByName(LinkStatus.Active.ToString()).Id,
+        StatusId = _linkStatusService.GetByName(status.ToString()).Id,
+        Status = status,
         CreatedByUserId = user.Id,
         ModifiedByUserId = user.Id,
       };
@@ -548,6 +557,58 @@ namespace Yoma.Core.Domain.ActionLink.Services
       });
 
       return link.ToLinkInfo(false);
+    }
+
+    private async Task SendEmail_ActionLinkVerifyCreated(Link link, bool ensureOrganizationAuthorization)
+    {
+      var distributionList = link.DistributionList == null ? null : JsonConvert.DeserializeObject<List<string>>(link.DistributionList);
+      if (distributionList == null) return;
+
+      var entityType = Enum.Parse<LinkEntityType>(link.EntityType);
+
+      EmailActionLinkVerify? emailData = null;
+      switch (entityType)
+      {
+        case LinkEntityType.Opportunity:
+          if (!link.OpportunityId.HasValue || string.IsNullOrEmpty(link.OpportunityTitle))
+            throw new InvalidOperationException("Opportunity details expected");
+
+          var opportunity = _opportunityService.GetById(link.OpportunityId.Value, false, true, ensureOrganizationAuthorization);
+
+          emailData = new EmailActionLinkVerify
+          {
+            EntityTypeDesc = $"{entityType.ToString().ToLower()}(ies)",
+            YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(EmailType.ActionLink_Verify_Created),
+            Items =
+            [
+              new EmailActionLinkVerifyItem
+              {
+                Title = opportunity.Title,
+                DateStart = opportunity.DateStart,
+                DateEnd = opportunity.DateEnd,
+                URL = link.ShortURL,
+                ZltoReward = opportunity.ZltoReward,
+                YomaReward = opportunity.YomaReward
+               }
+            ]
+          };
+
+          try
+          {
+            var recipients = distributionList.Select(o => new EmailRecipient { Email = o }).ToList();
+            await _emailProviderClient.Send(EmailType.ActionLink_Verify_Created, recipients, emailData);
+            _logger.LogInformation("Successfully send '{emailType}' email", EmailType.ActionLink_Verify_Created);
+          }
+          catch (Exception ex)
+          {
+            _logger.LogError(ex, "Failed to send '{emailType}' email", EmailType.ActionLink_Verify_Created);
+          }
+
+          break;
+
+        default:
+          throw new InvalidOperationException($"Invalid / unsupported entity type of '{entityType}'");
+      }
     }
     #endregion
   }

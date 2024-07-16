@@ -27,6 +27,7 @@ namespace Yoma.Core.Domain.ActionLink.Extensions
         UsagesAvailable = value.UsagesLimit.HasValue ? value.UsagesLimit - (value.UsagesTotal ?? 0) : null,
         DistributionList = value.DistributionList == null ? null : JsonConvert.DeserializeObject<List<string>>(value.DistributionList),
         LockToDistributionList = value.LockToDistributionList,
+        CommentApproval = value.CommentApproval,
         DateEnd = value.DateEnd,
         DateCreated = value.DateCreated,
         DateModified = value.DateModified

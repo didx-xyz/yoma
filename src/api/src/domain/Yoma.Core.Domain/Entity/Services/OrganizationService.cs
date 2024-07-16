@@ -10,6 +10,7 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.EmailProvider;
 using Yoma.Core.Domain.EmailProvider.Interfaces;
 using Yoma.Core.Domain.EmailProvider.Models;
 using Yoma.Core.Domain.Entity.Extensions;
@@ -52,9 +53,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
     private static readonly OrganizationStatus[] Statuses_Updatable = [OrganizationStatus.Active, OrganizationStatus.Inactive, OrganizationStatus.Declined];
     private static readonly OrganizationStatus[] Statuses_Activatable = [OrganizationStatus.Inactive];
-    private static readonly OrganizationStatus[] Statuses_CanDelete = [OrganizationStatus.Active, OrganizationStatus.Inactive, OrganizationStatus.Declined];
     private static readonly OrganizationStatus[] Statuses_DeActivatable = [OrganizationStatus.Active, OrganizationStatus.Declined];
     private static readonly OrganizationStatus[] Statuses_Declinable = [OrganizationStatus.Inactive];
+    private static readonly OrganizationStatus[] Statuses_CanDelete = [OrganizationStatus.Active, OrganizationStatus.Inactive, OrganizationStatus.Declined];
     #endregion
 
     #region Constructor
@@ -519,6 +520,7 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
+        EmailType? emailType = null;
         switch (request.Status)
         {
           case OrganizationStatus.Active:
@@ -533,8 +535,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             await _ssiTenantService.ScheduleCreation(EntityType.Organization, result.Id);
 
-            await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Approved);
-
+            emailType = EmailType.Organization_Approval_Approved;
             break;
 
           case OrganizationStatus.Inactive:
@@ -545,7 +546,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
-            await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Requested);
+            emailType = EmailType.Organization_Approval_Requested;
             break;
 
           case OrganizationStatus.Declined:
@@ -558,8 +559,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             result.CommentApproval = request.Comment;
 
-            await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Declined);
-
+            emailType = EmailType.Organization_Approval_Declined;
             break;
 
           case OrganizationStatus.Deleted:
@@ -582,6 +582,8 @@ namespace Yoma.Core.Domain.Entity.Services
         result = await _organizationRepository.Update(result);
 
         scope.Complete();
+
+        if (emailType.HasValue) await SendEmail(result, emailType.Value);
       });
 
       return result;
