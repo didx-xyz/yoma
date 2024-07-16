@@ -251,7 +251,7 @@ const AppSettings: NextPageWithLayout<{
 
       setIsLoading(false);
     },
-    [dataSettings, settings, setIsLoading],
+    [dataSettings, settings, queryClient, setIsLoading],
   );
 
   if (error) return <Unauthorized />;
