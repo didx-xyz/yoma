@@ -54,6 +54,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const AppSettings: NextPageWithLayout<{
   error?: string;
 }> = ({ error }) => {
+  const queryClient = new QueryClient(config);
   const { data: dataSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ["userProfileAppSettings"],
     queryFn: async () => await getSettings(),
@@ -223,6 +224,9 @@ const AppSettings: NextPageWithLayout<{
       try {
         // call api
         await updateSettings(userRequestSettings);
+
+        // invalidate query
+        queryClient.invalidateQueries({ queryKey: ["userProfileAppSettings"] });
 
         toast.success("Settings updated");
       } catch (error) {
