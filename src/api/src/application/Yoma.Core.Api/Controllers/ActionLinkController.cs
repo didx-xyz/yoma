@@ -95,16 +95,16 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Update link status (Active / Inactive)",
-      Description = "Activate an inactive link, provided the end date has not been reached or deactivate an active link")]
-    [HttpPatch("{linkId}/status/{status}")]
+    [SwaggerOperation(Summary = "Update link status",
+      Description = "An Admin have the power to activate, deactivate, decline or delete a link, whilst an Organization Admin can only delete. With a decline, an approval comment is required")]
+    [HttpPatch("{linkId}/status")]
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> UpdateStatus([FromRoute] Guid linkId, [FromRoute] LinkStatus status)
+    public async Task<IActionResult> UpdateStatus([FromRoute] Guid linkId, [FromBody] LinkRequestUpdateStatus request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
 
-      var result = await _linkService.UpdateStatus(linkId, status, true);
+      var result = await _linkService.UpdateStatus(linkId, request, true);
       _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
 
       return StatusCode((int)HttpStatusCode.OK, result);

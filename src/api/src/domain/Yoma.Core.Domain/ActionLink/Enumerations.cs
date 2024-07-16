@@ -14,8 +14,10 @@ namespace Yoma.Core.Domain.ActionLink
   public enum LinkStatus
   {
     Active,
-    Inactive,
+    Inactive, //flagged as declined if inactive for x days
     Expired,
-    LimitReached
+    LimitReached,
+    Declined, //flagged as deleted if declined for x days
+    Deleted
   }
 }
