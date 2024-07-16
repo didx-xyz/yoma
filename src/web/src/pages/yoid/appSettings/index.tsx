@@ -1,7 +1,14 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  dehydrate,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import type { AxiosError } from "axios";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { useCallback, useState, type ReactElement } from "react";
+import { toast } from "react-toastify";
 import type {
   SettingGroup,
   SettingItem,
@@ -13,21 +20,19 @@ import FormCheckbox from "~/components/Common/FormCheckbox";
 import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
+import FormTooltip from "~/components/Common/FormTooltip";
 import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { config } from "~/lib/react-query-config";
-import type { NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
-import { toast } from "react-toastify";
-import type { AxiosError } from "axios";
-import FormTooltip from "~/components/Common/FormTooltip";
-import { trackGAEvent } from "~/lib/google-analytics";
 import {
   GA_ACTION_APP_SETTING_UPDATE,
   GA_CATEGORY_USER,
 } from "~/lib/constants";
+import { trackGAEvent } from "~/lib/google-analytics";
+import { config } from "~/lib/react-query-config";
+import type { NextPageWithLayout } from "~/pages/_app";
+import { authOptions } from "~/server/auth";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -59,7 +64,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const AppSettings: NextPageWithLayout<{
   error?: string;
 }> = ({ error }) => {
-  const queryClient = new QueryClient(config);
+  const queryClient = useQueryClient();
   const { data: dataSettings, isLoading: isLoadingSettings } = useQuery({
     queryKey: ["userProfileAppSettings"],
     queryFn: async () => await getSettings(),
