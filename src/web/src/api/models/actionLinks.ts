@@ -70,3 +70,8 @@ export interface LinkSearchResult {
   totalCount: number | null;
   items: LinkInfo[];
 }
+
+export interface LinkRequestUpdateStatus {
+  status: LinkStatus;
+  comment: string | null;
+}
