@@ -97,6 +97,7 @@ export const GA_ACTION_USER_LOGIN_BEFORE = "User Logging In";
 export const GA_ACTION_USER_LOGIN_AFTER = "User Logged In";
 export const GA_ACTION_USER_LOGOUT = "User Logged Out";
 export const GA_ACTION_USER_PROFILE_UPDATE = "User Updated Profile";
+export const GA_ACTION_APP_SETTING_UPDATE = "User Updated App Settings";
 
 export const GA_ACTION_OPPORTUNITY_LINK_CREATE = "Created Opportunity Link";
 export const GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS =
