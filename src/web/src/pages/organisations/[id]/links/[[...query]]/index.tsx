@@ -4,69 +4,68 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import axios, { type AxiosError } from "axios";
+import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import { useRouter } from "next/router";
-import { useCallback, useState, type ReactElement } from "react";
-import MainLayout from "~/components/Layout/Main";
-import { authOptions } from "~/server/auth";
-import { type NextPageWithLayout } from "~/pages/_app";
-import { type ParsedUrlQuery } from "querystring";
+import Image from "next/image";
 import Link from "next/link";
-import { PageBackground } from "~/components/PageBackground";
+import { useRouter } from "next/router";
+import { type ParsedUrlQuery } from "querystring";
+import { useCallback, useState, type ReactElement } from "react";
 import {
   IoIosAdd,
-  IoMdPerson,
   IoIosLink,
-  IoMdClose,
   IoIosSettings,
-  IoMdWarning,
   IoMdCalendar,
+  IoMdClose,
   IoMdLock,
+  IoMdPerson,
+  IoMdWarning,
 } from "react-icons/io";
+import { IoQrCode, IoShareSocialOutline } from "react-icons/io5";
+import ReactModal from "react-modal";
+import Moment from "react-moment";
+import { toast } from "react-toastify";
+import {
+  LinkAction,
+  LinkEntityType,
+  LinkStatus,
+  type LinkInfo,
+  type LinkSearchFilter,
+  type LinkSearchResult,
+} from "~/api/models/actionLinks";
+import {
+  createLinkSharing,
+  searchLinks,
+  updateLinkStatus,
+} from "~/api/services/actionLinks";
+import MainLayout from "~/components/Layout/Main";
+import { LinkSearchFilters } from "~/components/Links/LinkSearchFilter";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { PageBackground } from "~/components/PageBackground";
+import { PaginationButtons } from "~/components/PaginationButtons";
+import { ApiErrors } from "~/components/Status/ApiErrors";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
+import { Loading } from "~/components/Status/Loading";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
   GA_CATEGORY_OPPORTUNITY_LINK,
   PAGE_SIZE,
 } from "~/lib/constants";
-import { PaginationButtons } from "~/components/PaginationButtons";
-import { Unauthorized } from "~/components/Status/Unauthorized";
+import { trackGAEvent } from "~/lib/google-analytics";
 import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
-import { useAtomValue } from "jotai";
-import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import axios, { type AxiosError } from "axios";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import {
-  createLinkSharing,
-  searchLinks,
-  updateLinkStatus,
-} from "~/api/services/actionLinks";
-import Image from "next/image";
-import {
-  LinkAction,
-  LinkEntityType,
-  type LinkInfo,
-  type LinkSearchFilter,
-  type LinkSearchResult,
-  LinkStatus,
-} from "~/api/models/actionLinks";
-import Moment from "react-moment";
-import { toast } from "react-toastify";
-import { IoQrCode, IoShareSocialOutline } from "react-icons/io5";
-import ReactModal from "react-modal";
-import { LinkSearchFilters } from "~/components/Links/LinkSearchFilter";
-import { FaClock } from "react-icons/fa";
-import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import { trackGAEvent } from "~/lib/google-analytics";
-import { ApiErrors } from "~/components/Status/ApiErrors";
-import { Loading } from "~/components/Status/Loading";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { type NextPageWithLayout } from "~/pages/_app";
+import { authOptions } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -272,7 +271,14 @@ const Links: NextPageWithLayout<{
         action: action?.toString() ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
-        statuses: statuses ? statuses.toString().split("|") : null,
+        statuses: statuses
+          ? statuses.toString().split("|")
+          : [
+              LinkStatus.Active,
+              LinkStatus.Inactive,
+              LinkStatus.Expired,
+              LinkStatus.LimitReached,
+            ],
       }),
     enabled: !error,
   });
@@ -286,7 +292,12 @@ const Links: NextPageWithLayout<{
         action: action?.toString() ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
-        statuses: null,
+        statuses: [
+          LinkStatus.Active,
+          LinkStatus.Inactive,
+          LinkStatus.Expired,
+          LinkStatus.LimitReached,
+        ],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -506,6 +517,11 @@ const Links: NextPageWithLayout<{
                   Are you sure you want to <i>inactivate</i> this link?
                 </>
               )}
+              {status === LinkStatus.Deleted && (
+                <>
+                  Are you sure you want to <i>delete</i> this link?
+                </>
+              )}
             </p>
           </div>
         </div>,
@@ -516,7 +532,10 @@ const Links: NextPageWithLayout<{
 
       try {
         // call api
-        await updateLinkStatus(item.id, status);
+        await updateLinkStatus(item.id, {
+          status: status,
+          comment: null,
+        });
 
         // 📊 GOOGLE ANALYTICS: track event
         trackGAEvent(
@@ -644,8 +663,8 @@ const Links: NextPageWithLayout<{
                 role="tablist"
               >
                 <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
-                  <ul className="overflow-x-hiddem -mb-px flex w-full justify-center gap-0 md:justify-start">
-                    <li className="w-1/5 md:w-20">
+                  <ul className="-mb-px flex w-full justify-center gap-0 overflow-x-scroll md:justify-start">
+                    <li className="whitespace-nowrap px-4">
                       <Link
                         href={`/organisations/${id}/links`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -663,7 +682,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="whitespace-nowrap px-4">
                       <Link
                         href={`/organisations/${id}/links?statuses=active`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -681,7 +700,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="whitespace-nowrap px-4">
                       <Link
                         href={`/organisations/${id}/links?statuses=inactive`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -699,7 +718,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="whitespace-nowrap px-4">
                       <Link
                         href={`/organisations/${id}/links?statuses=expired`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -717,7 +736,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-24">
+                    <li className="whitespace-nowrap px-4">
                       <Link
                         href={`/organisations/${id}/links?statuses=limitReached`}
                         className={`inline-block w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -897,41 +916,25 @@ const Links: NextPageWithLayout<{
                           <IoQrCode className="h-4 w-4" />
                         </button>
 
-                        {(item.status == "Active" ||
-                          item.status == "Inactive") && (
+                        {(item?.status?.toString() == "Inactive" ||
+                          item?.status?.toString() == "Active" ||
+                          item?.status?.toString() == "Declined") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
                             <button className="badge bg-green-light text-green">
                               <IoIosSettings className="h-4 w-4" />
                             </button>
 
                             <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
-                              {item?.status == "Active" && (
-                                <li>
-                                  <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                                    onClick={() =>
-                                      updateStatus(item, LinkStatus.Inactive)
-                                    }
-                                  >
-                                    <FaClock className="mr-2 h-3 w-3" />
-                                    Make Inactive
-                                  </button>
-                                </li>
-                              )}
-
-                              {item?.status == "Inactive" && (
-                                <li>
-                                  <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                                    onClick={() =>
-                                      updateStatus(item, LinkStatus.Active)
-                                    }
-                                  >
-                                    <FaClock className="mr-2 h-3 w-3" />
-                                    Make Active
-                                  </button>
-                                </li>
-                              )}
+                              <li>
+                                <button
+                                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                  onClick={() =>
+                                    updateStatus(item, LinkStatus.Deleted)
+                                  }
+                                >
+                                  Delete
+                                </button>
+                              </li>
                             </ul>
                           </div>
                         )}
@@ -1074,41 +1077,25 @@ const Links: NextPageWithLayout<{
 
                       {/* ACTIONS */}
                       <td className="border-b-2 border-gray-light">
-                        {(item.status == "Active" ||
-                          item.status == "Inactive") && (
+                        {(item?.status?.toString() == "Inactive" ||
+                          item?.status?.toString() == "Active" ||
+                          item?.status?.toString() == "Declined") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
                             <button className="badge bg-green-light text-green">
                               <IoIosSettings className="h-4 w-4" />
                             </button>
 
                             <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
-                              {item?.status == "Active" && (
-                                <li>
-                                  <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                                    onClick={() =>
-                                      updateStatus(item, LinkStatus.Inactive)
-                                    }
-                                  >
-                                    <FaClock className="mr-2 h-3 w-3" />
-                                    Make Inactive
-                                  </button>
-                                </li>
-                              )}
-
-                              {item?.status == "Inactive" && (
-                                <li>
-                                  <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                                    onClick={() =>
-                                      updateStatus(item, LinkStatus.Active)
-                                    }
-                                  >
-                                    <FaClock className="mr-2 h-3 w-3" />
-                                    Make Active
-                                  </button>
-                                </li>
-                              )}
+                              <li>
+                                <button
+                                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                  onClick={() =>
+                                    updateStatus(item, LinkStatus.Deleted)
+                                  }
+                                >
+                                  Delete
+                                </button>
+                              </li>
                             </ul>
                           </div>
                         )}

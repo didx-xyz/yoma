@@ -1,31 +1,42 @@
-import {
-  QueryClient,
-  dehydrate,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import { type GetServerSidePropsContext } from "next";
-import { getServerSession } from "next-auth";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Head from "next/head";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
-import MainLayout from "~/components/Layout/Main";
-import { authOptions } from "~/server/auth";
-import { type NextPageWithLayout } from "~/pages/_app";
-import { type ParsedUrlQuery } from "querystring";
-import Link from "next/link";
-import { PageBackground } from "~/components/PageBackground";
 import {
-  IoIosAdd,
-  IoMdPerson,
   IoIosLink,
-  IoMdClose,
   IoIosSettings,
-  IoMdWarning,
   IoMdCalendar,
+  IoMdClose,
   IoMdLock,
+  IoMdPerson,
 } from "react-icons/io";
+import { IoQrCode, IoShareSocialOutline } from "react-icons/io5";
+import ReactModal from "react-modal";
+import Moment from "react-moment";
+import { toast } from "react-toastify";
+import {
+  LinkAction,
+  LinkEntityType,
+  LinkStatus,
+  type LinkInfo,
+  type LinkSearchFilter,
+  type LinkSearchResult,
+} from "~/api/models/actionLinks";
+import {
+  createLinkSharing,
+  searchLinks,
+  updateLinkStatus,
+} from "~/api/services/actionLinks";
+import MainLayout from "~/components/Layout/Main";
+import { LinkSearchFilters } from "~/components/Links/LinkSearchFilter";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { PageBackground } from "~/components/PageBackground";
+import { PaginationButtons } from "~/components/PaginationButtons";
+import { ApiErrors } from "~/components/Status/ApiErrors";
+import { Loading } from "~/components/Status/Loading";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
@@ -33,204 +44,9 @@ import {
   PAGE_SIZE,
   THEME_BLUE,
 } from "~/lib/constants";
-import { PaginationButtons } from "~/components/PaginationButtons";
-import { Unauthorized } from "~/components/Status/Unauthorized";
-import { config } from "~/lib/react-query-config";
-import { currentOrganisationInactiveAtom } from "~/lib/store";
-import { useAtomValue } from "jotai";
-import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
-import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import axios, { type AxiosError } from "axios";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import {
-  createLinkSharing,
-  searchLinks,
-  updateLinkStatus,
-} from "~/api/services/actionLinks";
-import Image from "next/image";
-import {
-  LinkAction,
-  LinkEntityType,
-  type LinkInfo,
-  type LinkSearchFilter,
-  type LinkSearchResult,
-  LinkStatus,
-} from "~/api/models/actionLinks";
-import Moment from "react-moment";
-import { toast } from "react-toastify";
-import { IoQrCode, IoShareSocialOutline } from "react-icons/io5";
-import ReactModal from "react-modal";
-import { LinkSearchFilters } from "~/components/Links/LinkSearchFilter";
-import { FaClock } from "react-icons/fa";
-import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import { trackGAEvent } from "~/lib/google-analytics";
-import { ApiErrors } from "~/components/Status/ApiErrors";
-import { Loading } from "~/components/Status/Loading";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-
-interface IParams extends ParsedUrlQuery {
-  id: string;
-  type?: string;
-  action?: string;
-  status?: string;
-  entities?: string;
-  page?: string;
-}
-
-// ⚠️ SSR
-// export async function getServerSideProps(context: GetServerSidePropsContext) {
-//   //const { id } = context.params as IParams;
-//   const { type, action, statuses, entities, page, returnUrl } = context.query;
-//   const session = await getServerSession(context.req, context.res, authOptions);
-//   const queryClient = new QueryClient(config);
-//   let errorCode = null;
-
-//   // 👇 ensure authenticated
-//   if (!session) {
-//     return {
-//       props: {
-//         error: 401,
-//       },
-//     };
-//   }
-
-//   // 👇 set theme based on role
-//   //const theme = getThemeFromRole(session, id);
-
-//   try {
-//     // NB: disabled as we getting 502 bad gateway error on stage
-//     // 👇 prefetch queries on server
-//     // const data = await searchLinks(
-//     //   {
-//     //     pageNumber: page ? parseInt(page.toString()) : 1,
-//     //     pageSize: PAGE_SIZE,
-//     //     entityType: type?.toString() ?? LinkEntityType.Opportunity,
-//     //     action: action?.toString() ?? LinkAction.Verify,
-//     //     entities: entities ? entities.toString().split("|") : null,
-//     //     organizations: [id],
-//     //     statuses: statuses ? statuses.toString().split("|") : null,
-//     //   },
-//     //   context,
-//     // );
-//     // await queryClient.prefetchQuery({
-//     //   queryKey: [
-//     //     "Links",
-//     //     id,
-//     //     `${type?.toString()}_${action?.toString()}_${statuses?.toString()}_${entities?.toString()}_${page?.toString()}`,
-//     //   ],
-//     //   queryFn: () => data,
-//     // });
-//     // // get the totalCount for each status from the searchLinks function
-//     // await Promise.all([
-//     //   queryClient.prefetchQuery({
-//     //     queryKey: ["Links_TotalCount", id, null],
-//     //     queryFn: () =>
-//     //       searchLinks(
-//     //         {
-//     //           pageNumber: 1,
-//     //           pageSize: 1,
-//     //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
-//     //           action: action?.toString() ?? LinkAction.Verify,
-//     //           entities: null,
-//     //           organizations: [id],
-//     //           statuses: null,
-//     //         },
-//     //         context,
-//     //       ).then((data) => data.totalCount ?? 0),
-//     //   }),
-//     //   queryClient.prefetchQuery({
-//     //     queryKey: ["Links_TotalCount", id, LinkStatus.Active],
-//     //     queryFn: () =>
-//     //       searchLinks(
-//     //         {
-//     //           pageNumber: 1,
-//     //           pageSize: 1,
-//     //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
-//     //           action: action?.toString() ?? LinkAction.Verify,
-//     //           entities: null,
-//     //           organizations: [id],
-//     //           statuses: [LinkStatus.Active],
-//     //         },
-//     //         context,
-//     //       ).then((data) => data.totalCount ?? 0),
-//     //   }),
-//     //   queryClient.prefetchQuery({
-//     //     queryKey: ["Links_TotalCount", id, LinkStatus.Inactive],
-//     //     queryFn: () =>
-//     //       searchLinks(
-//     //         {
-//     //           pageNumber: 1,
-//     //           pageSize: 1,
-//     //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
-//     //           action: action?.toString() ?? LinkAction.Verify,
-//     //           entities: null,
-//     //           organizations: [id],
-//     //           statuses: [LinkStatus.Inactive],
-//     //         },
-//     //         context,
-//     //       ).then((data) => data.totalCount ?? 0),
-//     //   }),
-//     //   queryClient.prefetchQuery({
-//     //     queryKey: ["Links_TotalCount", id, LinkStatus.Expired],
-//     //     queryFn: () =>
-//     //       searchLinks(
-//     //         {
-//     //           pageNumber: 1,
-//     //           pageSize: 1,
-//     //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
-//     //           action: action?.toString() ?? LinkAction.Verify,
-//     //           entities: null,
-//     //           organizations: [id],
-//     //           statuses: [LinkStatus.Expired],
-//     //         },
-//     //         context,
-//     //       ).then((data) => data.totalCount ?? 0),
-//     //   }),
-//     //   queryClient.prefetchQuery({
-//     //     queryKey: ["Links_TotalCount", id, LinkStatus.LimitReached],
-//     //     queryFn: () =>
-//     //       searchLinks(
-//     //         {
-//     //           pageNumber: 1,
-//     //           pageSize: 1,
-//     //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
-//     //           action: action?.toString() ?? LinkAction.Verify,
-//     //           entities: null,
-//     //           organizations: [id],
-//     //           statuses: [LinkStatus.LimitReached],
-//     //         },
-//     //         context,
-//     //       ).then((data) => data.totalCount ?? 0),
-//     //   }),
-//     // ]);
-//   } catch (error) {
-//     console.error(error);
-//     if (axios.isAxiosError(error) && error.response?.status) {
-//       if (error.response.status === 404) {
-//         return {
-//           notFound: true,
-//           //props: { theme: theme },
-//         };
-//       } else errorCode = error.response.status;
-//     } else errorCode = 500;
-//   }
-
-//   return {
-//     props: {
-//       dehydratedState: dehydrate(queryClient),
-//       //: id,
-//       type: type ?? null,
-//       action: action ?? null,
-//       statuses: statuses ?? null,
-//       entities: entities ?? null,
-//       page: page ?? null,
-//       //theme: theme,
-//       error: errorCode,
-//       returnUrl: returnUrl ?? null,
-//     },
-//   };
-// }
+import { getSafeUrl } from "~/lib/utils";
+import { type NextPageWithLayout } from "~/pages/_app";
 
 const Links: NextPageWithLayout<{
   id: string;
@@ -251,7 +67,6 @@ const Links: NextPageWithLayout<{
   const [qrCodeImageData, setQRCodeImageData] = useState<
     string | null | undefined
   >(null);
-  const modalContext = useConfirmationModalContext();
   const [isLoading, setIsLoading] = useState(false);
   const [modalActionVisible, setModalActionVisisible] = useState(false);
   const [verifyComments, setVerifyComments] = useState("");
@@ -266,7 +81,6 @@ const Links: NextPageWithLayout<{
     queryKey: [
       "Admin",
       "Links",
-      //id,
       `${type?.toString()}_${action?.toString()}_${statuses?.toString()}_${entities?.toString()}_${page?.toString()}`,
     ],
     queryFn: () =>
@@ -276,8 +90,16 @@ const Links: NextPageWithLayout<{
         entityType: type?.toString() ?? LinkEntityType.Opportunity,
         action: action?.toString() ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
-        organizations: null, //[id],
-        statuses: statuses ? statuses.toString().split("|") : null,
+        organizations: null,
+        statuses: statuses
+          ? statuses.toString().split("|")
+          : [
+              LinkStatus.Active,
+              LinkStatus.Inactive,
+              LinkStatus.Declined,
+              LinkStatus.Expired,
+              LinkStatus.LimitReached,
+            ],
       }),
     enabled: !error,
   });
@@ -290,8 +112,14 @@ const Links: NextPageWithLayout<{
         entityType: type?.toString() ?? LinkEntityType.Opportunity,
         action: action?.toString() ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
-        organizations: null, //[id],
-        statuses: null,
+        organizations: null,
+        statuses: [
+          LinkStatus.Active,
+          LinkStatus.Inactive,
+          LinkStatus.Declined,
+          LinkStatus.Expired,
+          LinkStatus.LimitReached,
+        ],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -304,7 +132,7 @@ const Links: NextPageWithLayout<{
         entityType: type?.toString() ?? LinkEntityType.Opportunity,
         action: action?.toString() ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
-        organizations: null, //[id],
+        organizations: null,
         statuses: [LinkStatus.Active],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
@@ -318,8 +146,22 @@ const Links: NextPageWithLayout<{
         entityType: type?.toString() ?? LinkEntityType.Opportunity,
         action: action?.toString() ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
-        organizations: null, //[id],
+        organizations: null,
         statuses: [LinkStatus.Inactive],
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountDeclined } = useQuery<number>({
+    queryKey: ["Admin", "Links", "TotalCount", LinkStatus.Declined],
+    queryFn: () =>
+      searchLinks({
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: PAGE_SIZE,
+        entityType: type?.toString() ?? LinkEntityType.Opportunity,
+        action: action?.toString() ?? LinkAction.Verify,
+        entities: entities ? entities.toString().split("|") : null,
+        organizations: null,
+        statuses: [LinkStatus.Declined],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -332,7 +174,7 @@ const Links: NextPageWithLayout<{
         entityType: type?.toString() ?? LinkEntityType.Opportunity,
         action: action?.toString() ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
-        organizations: null, //[id],
+        organizations: null,
         statuses: [LinkStatus.Expired],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
@@ -346,7 +188,7 @@ const Links: NextPageWithLayout<{
         entityType: type?.toString() ?? LinkEntityType.Opportunity,
         action: action?.toString() ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
-        organizations: null, //[id],
+        organizations: null,
         statuses: [LinkStatus.LimitReached],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
@@ -360,7 +202,7 @@ const Links: NextPageWithLayout<{
     action: action?.toString() ?? LinkAction.Verify,
     entities: entities ? entities.toString().split("|") : null,
     statuses: statuses ? statuses.toString().split("|") : null,
-    organizations: null, //[id],
+    organizations: null,
   });
 
   // 🎈 FUNCTIONS
@@ -407,7 +249,7 @@ const Links: NextPageWithLayout<{
       if (url != router.asPath)
         void router.push(url, undefined, { scroll: false });
     },
-    [/*id,*/ router, getSearchFilterAsQueryString],
+    [router, getSearchFilterAsQueryString],
   );
 
   // filter popup handlers
@@ -462,68 +304,43 @@ const Links: NextPageWithLayout<{
     [queryClient],
   );
 
-  // const renderAddLinkButton = useCallback(() => {
-  //   if (currentOrganisationInactive) {
-  //     return (
-  //       <span className="bg-theme flex w-56 cursor-not-allowed flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-75">
-  //         Add link (disabled)
-  //       </span>
-  //     );
-  //   }
-
-  //   return (
-  //     <Link
-  //       href={`/admin/links/create${`?returnUrl=${encodeURIComponent(
-  //         getSafeUrl(returnUrl?.toString(), router.asPath),
-  //       )}`}`}
-  //       className="bg-theme btn btn-circle btn-secondary btn-sm h-fit w-fit whitespace-nowrap !border-none p-1 text-xs text-white shadow-custom brightness-105 md:p-2 md:px-4"
-  //       id="btnCreateLink"
-  //     >
-  //       <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />
-  //       <span className="hidden md:inline">Add link</span>
-  //     </Link>
-  //   );
-  // }, [currentOrganisationInactive, id, returnUrl, router]);
-
   const onOpenCommentsDialog = useCallback(
-    async (item: LinkInfo, status: LinkStatus) => {
+    (item: LinkInfo, status: LinkStatus) => {
       setLinkStatus(status);
       setSelectedRow(item);
       setModalActionVisisible(true);
     },
-    [setIsLoading, setSelectedRow, setModalActionVisisible],
+    [setLinkStatus, setSelectedRow, setModalActionVisisible],
   );
 
   const onCloseCommentsDialog = useCallback(() => {
     setVerifyComments("");
     setLinkStatus(null);
+    setSelectedRow(null);
     setModalActionVisisible(false);
-  }, [setVerifyComments, setLinkStatus, setModalActionVisisible]);
+  }, [
+    setVerifyComments,
+    setLinkStatus,
+    setSelectedRow,
+    setModalActionVisisible,
+  ]);
 
   const onPerformLinkStatusChange = useCallback(async () => {
-    //const model: MyOpportunityRequestVerifyFinalizeBatch = {
-    //   status: approved
-    //     ? VerificationStatus.Completed
-    //     : VerificationStatus.Rejected,
-    //   comment: verifyComments,
-    //   items:
-    //     tempSelectedRows?.map((item) => ({
-    //       opportunityId: item.opportunityId,
-    //       userId: item.userId,
-    //     })) ?? [],
-    // };
-
+    if (!selectedRow || linkStatus == null) return;
     setIsLoading(true);
 
     try {
       // call api
-      await updateLinkStatus(item.id, status);
+      await updateLinkStatus(selectedRow.id, {
+        status: linkStatus,
+        comment: verifyComments,
+      });
 
       // 📊 GOOGLE ANALYTICS: track event
       trackGAEvent(
         GA_CATEGORY_OPPORTUNITY_LINK,
         GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
-        `Status Changed to ${status} for Opportunity Link ID: ${item.id}`,
+        `Status Changed to ${linkStatus} for Opportunity Link ID: ${selectedRow.id}`,
       );
 
       // invalidate cache
@@ -547,19 +364,15 @@ const Links: NextPageWithLayout<{
       return;
     }
 
-    // close and open results
     setIsLoading(false);
-    onCloseVerificationModal();
-    setModalVerificationResultVisible(true);
+    onCloseCommentsDialog();
   }, [
-    id,
     queryClient,
     verifyComments,
-    tempSelectedRows,
+    selectedRow,
+    linkStatus,
     setIsLoading,
-    onCloseVerificationModal,
-    setModalVerificationResultVisible,
-    setVerificationResponse,
+    onCloseCommentsDialog,
   ]);
 
   // if (error) {
@@ -588,10 +401,13 @@ const Links: NextPageWithLayout<{
       >
         <div className="flex h-full flex-col space-y-2">
           <div className="flex flex-row items-center bg-white px-4 pt-2">
-            <h4 className="flex-grow pl-2 font-semibold">
-              {/* {tempSelectedRows?.length} Participant
-              {(selectedRows?.length ?? 0) > 1 ? "s" : ""} */}
-            </h4>
+            <div className="flex w-64 flex-grow flex-col pl-2">
+              <div className="truncate text-sm font-semibold">
+                {selectedRow?.name}
+              </div>
+              <div className="truncate text-xs">{selectedRow?.description}</div>
+            </div>
+
             <button
               type="button"
               className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
@@ -601,25 +417,17 @@ const Links: NextPageWithLayout<{
             </button>
           </div>
 
-          <div className="flex flex-grow flex-col overflow-x-hidden overflow-y-scroll bg-gray">
-            {/* <div className="flex flex-grow flex-col gap-4 bg-gray-light p-6 pt-8">
-              {tempSelectedRows?.map((row) => (
-                <OpportunityCompletionRead data={row} key={row?.id} />
-              ))}
-            </div> */}
-
-            <div className="flex flex-col gap-4 bg-gray-light px-6 pb-10">
-              <div className="form-control rounded-lg bg-white px-4 py-2">
-                <label className="label">
-                  <span className="font-semibold text-gray-dark">
-                    Enter comments below:
-                  </span>
-                </label>
-                <textarea
-                  className="input input-bordered my-2 h-[100px] border-gray-light p-2"
-                  onChange={(e) => setVerifyComments(e.target.value)}
-                />
-              </div>
+          <div className="flex flex-grow flex-col gap-4 bg-gray-light px-6 pb-10">
+            <div className="form-control mt-8 rounded-lg bg-white px-4 py-2">
+              <label className="label">
+                <span className="font-semibold text-gray-dark">
+                  Enter comments below:
+                </span>
+              </label>
+              <textarea
+                className="input input-bordered my-2 h-[100px] border-gray-light p-2"
+                onChange={(e) => setVerifyComments(e.target.value)}
+              />
             </div>
           </div>
 
@@ -637,16 +445,16 @@ const Links: NextPageWithLayout<{
             <div className="flex gap-4">
               {linkStatus == LinkStatus.Active && (
                 <button
-                  className="btn btn-sm flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
-                  onClick={() => onLinkStatus(LinkStatus.Active)}
+                  className="btn btn-sm flex-nowrap border-green bg-white py-5 text-green hover:bg-green hover:text-white"
+                  onClick={onPerformLinkStatusChange}
                 >
-                  Activate
+                  Approve
                 </button>
               )}
               {linkStatus == LinkStatus.Declined && (
                 <button
                   className="btn btn-sm flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
-                  onClick={() => onLinkStatus(LinkStatus.Active)}
+                  onClick={onPerformLinkStatusChange}
                 >
                   Decline
                 </button>
@@ -654,7 +462,7 @@ const Links: NextPageWithLayout<{
               {linkStatus == LinkStatus.Inactive && (
                 <button
                   className="btn btn-sm flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
-                  onClick={() => onLinkStatus(LinkStatus.Active)}
+                  onClick={onPerformLinkStatusChange}
                 >
                   Inactivate
                 </button>
@@ -662,7 +470,7 @@ const Links: NextPageWithLayout<{
               {linkStatus == LinkStatus.Deleted && (
                 <button
                   className="btn btn-sm flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
-                  onClick={() => onLinkStatus(LinkStatus.Deleted)}
+                  onClick={onPerformLinkStatusChange}
                 >
                   Delete
                 </button>
@@ -673,7 +481,7 @@ const Links: NextPageWithLayout<{
       </ReactModal>
 
       {/* QR CODE DIALOG */}
-      {/* <ReactModal
+      <ReactModal
         isOpen={showQRCode}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
@@ -685,12 +493,12 @@ const Links: NextPageWithLayout<{
         overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
-           HEADER WITH CLOSE BUTTON
-          <div className="flex flex-row bg-green p-4 shadow-lg">
+          {/* HEADER WITH CLOSE BUTTON */}
+          <div className="bg-theme flex flex-row p-4 shadow-lg">
             <h1 className="flex-grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+              className="bg-theme btn rounded-full border-0 p-3 text-white brightness-75"
               onClick={() => {
                 setShowQRCode(false);
                 setQRCodeImageData(null);
@@ -699,14 +507,13 @@ const Links: NextPageWithLayout<{
               <IoMdClose className="h-6 w-6"></IoMdClose>
             </button>
           </div>
-
-          {/* MAIN CONTENT
+          {/* MAIN CONTENT */}
           <div className="flex flex-col items-center justify-center gap-4 p-8">
             <div className="-mt-16 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
               <IoShareSocialOutline className="h-7 w-7" />
             </div>
 
-            {/* QR CODE
+            {/* QR CODE */}
             {showQRCode && qrCodeImageData && (
               <>
                 <h5>Scan the QR Code with your device&apos;s camera</h5>
@@ -732,7 +539,7 @@ const Links: NextPageWithLayout<{
             </button>
           </div>
         </div>
-      </ReactModal> */}
+      </ReactModal>
 
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
@@ -749,8 +556,8 @@ const Links: NextPageWithLayout<{
                 role="tablist"
               >
                 <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
-                  <ul className="overflow-x-hiddem -mb-px flex w-full justify-center gap-0 md:justify-start">
-                    <li className="w-1/5 md:w-20">
+                  <ul className="-mb-px flex w-full justify-center gap-0 overflow-x-scroll md:justify-start">
+                    <li className="whitespace-nowrap px-4">
                       <Link
                         href={`/admin/links`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -768,7 +575,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="whitespace-nowrap px-4">
                       <Link
                         href={`/admin/links?statuses=active`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -786,7 +593,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="whitespace-nowrap px-4">
                       <Link
                         href={`/admin/links?statuses=inactive`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -804,7 +611,25 @@ const Links: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-20">
+                    <li className="whitespace-nowrap px-4">
+                      <Link
+                        href={`/admin/links?statuses=declined`}
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                          statuses === "declined"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Declined
+                        {(totalCountDeclined ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                            {totalCountDeclined}
+                          </div>
+                        )}
+                      </Link>
+                    </li>
+                    <li className="whitespace-nowrap px-4">
                       <Link
                         href={`/admin/links?statuses=expired`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -822,7 +647,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
-                    <li className="w-1/5 md:w-24">
+                    <li className="whitespace-nowrap px-4">
                       <Link
                         href={`/admin/links?statuses=limitReached`}
                         className={`inline-block w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -854,38 +679,18 @@ const Links: NextPageWithLayout<{
               searchFilter={searchFilter}
               onSubmit={(e) => onSubmitFilter(e)}
             />
-
-            {/* {renderAddLinkButton()} */}
           </div>
         </div>
 
         <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
           {/* NO ROWS */}
           {links && links.items?.length === 0 && (
-            <>
-              {/* ALL TAB */}
-              {!statuses && (
-                <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
-                  <NoRowsMessage
-                    title={"Welcome to Links!"}
-                    description={
-                      "Create a link to auto-verify participants for your opportunities!<br>When the link is clicked, Youth will enter Yoma to claim their opportunity.<br/>The link needs limits on usage and an expiry date.<br/>Create a QR code from your link, and let youth scan to complete."
-                    }
-                  />
-                  {/* {renderAddLinkButton()} */}
-                </div>
-              )}
-
-              {/* OTHER TABS */}
-              {statuses && (
-                <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
-                  <NoRowsMessage
-                    title={"No links found"}
-                    description={"Please try refining your search query."}
-                  />
-                </div>
-              )}
-            </>
+            <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+              <NoRowsMessage
+                title={"No links found"}
+                description={"Please try refining your search query."}
+              />
+            </div>
           )}
 
           {/* GRID */}
@@ -980,6 +785,16 @@ const Links: NextPageWithLayout<{
                           <span className="badge bg-green-light text-red-400">
                             Limit Reached
                           </span>
+                        )}{" "}
+                        {item.status == "Declined" && (
+                          <span className="badge bg-green-light text-red-400">
+                            Declined
+                          </span>
+                        )}
+                        {item.status == "Deleted" && (
+                          <span className="badge bg-green-light text-red-400">
+                            Deleted
+                          </span>
                         )}
                       </div>
 
@@ -1002,8 +817,9 @@ const Links: NextPageWithLayout<{
                           <IoQrCode className="h-4 w-4" />
                         </button>
 
-                        {(item.status == "Active" ||
-                          item.status == "Inactive") && (
+                        {(item?.status?.toString() == "Inactive" ||
+                          item?.status?.toString() == "Active" ||
+                          item?.status?.toString() == "Declined") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
                             <button className="badge bg-green-light text-green">
                               <IoIosSettings className="h-4 w-4" />
@@ -1021,8 +837,7 @@ const Links: NextPageWithLayout<{
                                       )
                                     }
                                   >
-                                    <FaClock className="mr-2 h-3 w-3" />
-                                    Make Active
+                                    Approve
                                   </button>
                                 </li>
                               )}
@@ -1038,32 +853,30 @@ const Links: NextPageWithLayout<{
                                       )
                                     }
                                   >
-                                    <FaClock className="mr-2 h-3 w-3" />
                                     Decline
                                   </button>
                                 </li>
                               )}
 
-                              {item?.status == "Active" ||
+                              {(item?.status == "Active" ||
                                 item?.status == "Inactive" ||
-                                (item?.status == "Declined" && (
-                                  <li>
-                                    <button
-                                      className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                                      onClick={() =>
-                                        onOpenCommentsDialog(
-                                          item,
-                                          LinkStatus.Deleted,
-                                        )
-                                      }
-                                    >
-                                      <FaClock className="mr-2 h-3 w-3" />
-                                      Delete
-                                    </button>
-                                  </li>
-                                ))}
+                                item?.status == "Declined") && (
+                                <li>
+                                  <button
+                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    onClick={() =>
+                                      onOpenCommentsDialog(
+                                        item,
+                                        LinkStatus.Deleted,
+                                      )
+                                    }
+                                  >
+                                    Delete
+                                  </button>
+                                </li>
+                              )}
 
-                              {item?.status == "Declined" && (
+                              {item?.status?.toString() === "Declined" && (
                                 <li>
                                   <button
                                     className="flex flex-row items-center text-gray-dark hover:brightness-50"
@@ -1074,8 +887,7 @@ const Links: NextPageWithLayout<{
                                       )
                                     }
                                   >
-                                    <FaClock className="mr-2 h-3 w-3" />
-                                    Make Inactive
+                                    Make Inactive (send for reapproval)
                                   </button>
                                 </li>
                               )}
@@ -1111,15 +923,15 @@ const Links: NextPageWithLayout<{
                   {links.items.map((item) => (
                     <tr key={`grid_md_${item.id}`} className="">
                       <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4">
-                        <Link
+                        {/* <Link
                           href={`/admin/opportunities/${
                             item.entityId
                           }/info${`?returnUrl=${encodeURIComponent(
                             getSafeUrl(returnUrl?.toString(), router.asPath),
                           )}`}`}
-                        >
-                          {item.entityTitle}
-                        </Link>
+                        > */}
+                        {item.entityTitle}
+                        {/* </Link> */}
                       </td>
 
                       <td className="max-w-[100px] truncate border-b-2 border-gray-light !py-4">
@@ -1193,6 +1005,16 @@ const Links: NextPageWithLayout<{
                             Limit Reached
                           </span>
                         )}
+                        {item.status == "Declined" && (
+                          <span className="badge bg-green-light text-red-400">
+                            Declined
+                          </span>
+                        )}
+                        {item.status == "Deleted" && (
+                          <span className="badge bg-green-light text-red-400">
+                            Deleted
+                          </span>
+                        )}
                       </td>
 
                       {/* LINK */}
@@ -1221,31 +1043,15 @@ const Links: NextPageWithLayout<{
 
                       {/* ACTIONS */}
                       <td className="border-b-2 border-gray-light">
-                        {(item.status == "Active" ||
-                          item.status == "Inactive") && (
+                        {(item?.status?.toString() == "Inactive" ||
+                          item?.status?.toString() == "Active" ||
+                          item?.status?.toString() == "Declined") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
                             <button className="badge bg-green-light text-green">
                               <IoIosSettings className="h-4 w-4" />
                             </button>
 
                             <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
-                              {item?.status == "Active" && (
-                                <li>
-                                  <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Inactive,
-                                      )
-                                    }
-                                  >
-                                    <FaClock className="mr-2 h-3 w-3" />
-                                    Make Inactive
-                                  </button>
-                                </li>
-                              )}
-
                               {item?.status == "Inactive" && (
                                 <li>
                                   <button
@@ -1257,8 +1063,57 @@ const Links: NextPageWithLayout<{
                                       )
                                     }
                                   >
-                                    <FaClock className="mr-2 h-3 w-3" />
-                                    Make Active
+                                    Approve
+                                  </button>
+                                </li>
+                              )}
+
+                              {item?.status == "Inactive" && (
+                                <li>
+                                  <button
+                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    onClick={() =>
+                                      onOpenCommentsDialog(
+                                        item,
+                                        LinkStatus.Declined,
+                                      )
+                                    }
+                                  >
+                                    Decline
+                                  </button>
+                                </li>
+                              )}
+
+                              {(item?.status == "Active" ||
+                                item?.status == "Inactive" ||
+                                item?.status == "Declined") && (
+                                <li>
+                                  <button
+                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    onClick={() =>
+                                      onOpenCommentsDialog(
+                                        item,
+                                        LinkStatus.Deleted,
+                                      )
+                                    }
+                                  >
+                                    Delete
+                                  </button>
+                                </li>
+                              )}
+
+                              {item?.status?.toString() === "Declined" && (
+                                <li>
+                                  <button
+                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    onClick={() =>
+                                      onOpenCommentsDialog(
+                                        item,
+                                        LinkStatus.Inactive,
+                                      )
+                                    }
+                                  >
+                                    Make Inactive (send for reapproval)
                                   </button>
                                 </li>
                               )}

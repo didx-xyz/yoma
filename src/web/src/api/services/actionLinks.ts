@@ -5,9 +5,9 @@ import type {
   LinkInfo,
   LinkRequestCreateShare,
   LinkRequestCreateVerify,
+  LinkRequestUpdateStatus,
   LinkSearchFilter,
   LinkSearchResult,
-  LinkStatus,
 } from "../models/actionLinks";
 
 export const createLinkSharing = async (
@@ -60,12 +60,13 @@ export const searchLinks = async (
 
 export const updateLinkStatus = async (
   linkId: string,
-  status: LinkStatus,
+  request: LinkRequestUpdateStatus,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<LinkInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.patch<LinkInfo>(
-    `/actionLink/${linkId}/status/${status}`,
+    `/actionLink/${linkId}/status`,
+    request,
   );
   return data;
 };
