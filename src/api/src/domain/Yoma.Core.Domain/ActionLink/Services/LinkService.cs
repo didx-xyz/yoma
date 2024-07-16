@@ -589,7 +589,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
                 URL = link.ShortURL,
                 ZltoReward = opportunity.ZltoReward,
                 YomaReward = opportunity.YomaReward
-               }
+              }
             ]
           };
 
