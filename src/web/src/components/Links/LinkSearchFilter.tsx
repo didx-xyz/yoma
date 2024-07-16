@@ -47,7 +47,7 @@ const ValueContainer = ({
 };
 
 export const LinkSearchFilters: React.FC<{
-  organisationId: string;
+  organisationId: string | null;
   searchFilter: LinkSearchFilter | null;
   onSubmit?: (fieldValues: LinkSearchFilter) => void;
 }> = ({ organisationId, searchFilter, onSubmit }) => {
@@ -106,19 +106,19 @@ export const LinkSearchFilters: React.FC<{
   );
 
   // the AsyncSelect component requires the defaultOptions to be set in the state
-  const [defaultOpportunityOptions, setdefaultOpportunityOptions] =
+  const [defaultOpportunityOptions, setDefaultOpportunityOptions] =
     useState<any>([]);
 
   useEffect(() => {
     if (searchFilter?.entities) {
-      setdefaultOpportunityOptions(
+      setDefaultOpportunityOptions(
         searchFilter?.entities?.map((c: any) => ({
           value: c,
           label: c,
         })),
       );
     }
-  }, [setdefaultOpportunityOptions, searchFilter?.entities]);
+  }, [setDefaultOpportunityOptions, searchFilter?.entities]);
 
   return (
     <div className="flex flex-grow flex-col">
