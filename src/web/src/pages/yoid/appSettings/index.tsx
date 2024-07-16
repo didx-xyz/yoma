@@ -23,6 +23,11 @@ import { authOptions } from "~/server/auth";
 import { toast } from "react-toastify";
 import type { AxiosError } from "axios";
 import FormTooltip from "~/components/Common/FormTooltip";
+import { trackGAEvent } from "~/lib/google-analytics";
+import {
+  GA_ACTION_APP_SETTING_UPDATE,
+  GA_CATEGORY_USER,
+} from "~/lib/constants";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -225,6 +230,13 @@ const AppSettings: NextPageWithLayout<{
         // call api
         await updateSettings(userRequestSettings);
 
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_USER,
+          GA_ACTION_APP_SETTING_UPDATE,
+          JSON.stringify(userRequestSettings),
+        );
+
         // invalidate query
         queryClient.invalidateQueries({ queryKey: ["userProfileAppSettings"] });
 
@@ -251,13 +263,13 @@ const AppSettings: NextPageWithLayout<{
         <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
           {(isLoading || isLoadingSettings) && <Loading />}
 
-          {!isLoading && !isLoadingSettings && !settings && (
+          {!isLoadingSettings && !settings && (
             <FormMessage messageType={FormMessageType.Warning}>
               No settings available
             </FormMessage>
           )}
 
-          {!isLoading && !isLoadingSettings && settings && (
+          {!isLoadingSettings && settings && (
             <form onSubmit={handleSubmit}>
               {/* GROUPS */}
               {settings.groups.map((group) => renderGroup(group, 0))}
