@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { captureException } from "@sentry/nextjs";
 import {
   QueryClient,
   dehydrate,
@@ -190,6 +191,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
           icon: false,
         });
 
+        captureException(error);
         setIsLoading(false);
 
         return;
