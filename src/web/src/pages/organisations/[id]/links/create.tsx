@@ -1,73 +1,71 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { captureException } from "@sentry/nextjs";
 import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
-import { type AxiosError } from "axios";
+import axios, { type AxiosError } from "axios";
+import moment from "moment";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import iconBell from "public/images/icon-bell.webp";
 import { type ParsedUrlQuery } from "querystring";
 import {
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactElement,
-  useEffect,
-  useRef,
 } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { Controller, useForm, type FieldValues } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
+import type { FieldValues } from "react-hook-form/dist/types";
+import { IoMdArrowRoundBack, IoMdClose, IoMdWarning } from "react-icons/io";
+import ReactModal from "react-modal";
+import Moment from "react-moment";
 import Select from "react-select";
+import Async from "react-select/async";
+import CreatableSelect from "react-select/creatable";
 import { toast } from "react-toastify";
 import z from "zod";
+import type { LinkRequestCreateVerify } from "~/api/models/actionLinks";
 import type { SelectOption } from "~/api/models/lookups";
-import {
-  searchCriteriaOpportunities,
-  getOpportunityInfoByIdAdminOrgAdminOrUser,
-} from "~/api/services/opportunities";
-import MainLayout from "~/components/Layout/Main";
-import { ApiErrors } from "~/components/Status/ApiErrors";
-import { Loading } from "~/components/Status/Loading";
-import { authOptions, type User } from "~/server/auth";
-import { PageBackground } from "~/components/PageBackground";
-import Link from "next/link";
-import { IoMdArrowRoundBack, IoMdWarning } from "react-icons/io";
-import CreatableSelect from "react-select/creatable";
-import type { NextPageWithLayout } from "~/pages/_app";
-import {
-  DATE_FORMAT_HUMAN,
-  DATE_FORMAT_SYSTEM,
-  PAGE_SIZE_MEDIUM,
-  GA_ACTION_OPPORTUNITY_LINK_CREATE,
-  GA_CATEGORY_OPPORTUNITY_LINK,
-  MAX_INT32,
-  DELIMETER_PASTE_MULTI,
-} from "~/lib/constants";
-import { Unauthorized } from "~/components/Status/Unauthorized";
-import { config } from "~/lib/react-query-config";
-import { trackGAEvent } from "~/lib/google-analytics";
-import Moment from "react-moment";
-import moment from "moment";
-import { getThemeFromRole, debounce, getSafeUrl } from "~/lib/utils";
-import Async from "react-select/async";
-import { useRouter } from "next/router";
-import ReactModal from "react-modal";
-import Image from "next/image";
-import iconBell from "public/images/icon-bell.webp";
-import { IoMdClose } from "react-icons/io";
 import {
   VerificationMethod,
   type OpportunityInfo,
   type OpportunitySearchResultsInfo,
 } from "~/api/models/opportunity";
-import axios from "axios";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import { validateEmail } from "~/lib/validate";
-import type { LinkRequestCreateVerify } from "~/api/models/actionLinks";
 import { createLinkInstantVerify } from "~/api/services/actionLinks";
+import {
+  getOpportunityInfoByIdAdminOrgAdminOrUser,
+  searchCriteriaOpportunities,
+} from "~/api/services/opportunities";
+import MainLayout from "~/components/Layout/Main";
 import SocialPreview from "~/components/Opportunity/SocialPreview";
+import { PageBackground } from "~/components/PageBackground";
+import { ApiErrors } from "~/components/Status/ApiErrors";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Loading } from "~/components/Status/Loading";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import {
+  DATE_FORMAT_HUMAN,
+  DATE_FORMAT_SYSTEM,
+  DELIMETER_PASTE_MULTI,
+  GA_ACTION_OPPORTUNITY_LINK_CREATE,
+  GA_CATEGORY_OPPORTUNITY_LINK,
+  MAX_INT32,
+  PAGE_SIZE_MEDIUM,
+} from "~/lib/constants";
+import { trackGAEvent } from "~/lib/google-analytics";
+import { config } from "~/lib/react-query-config";
+import { debounce, getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import { validateEmail } from "~/lib/validate";
+import type { NextPageWithLayout } from "~/pages/_app";
+import { authOptions, type User } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -448,7 +446,6 @@ const LinkDetails: NextPageWithLayout<{
           icon: false,
         });
 
-        captureException(error);
         setIsLoading(false);
 
         return;
