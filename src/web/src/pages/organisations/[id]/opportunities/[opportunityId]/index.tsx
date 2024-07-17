@@ -77,6 +77,7 @@ import { getOrganisationById } from "~/api/services/organisations";
 import { AvatarImage } from "~/components/AvatarImage";
 import FormCheckbox from "~/components/Common/FormCheckbox";
 import FormField from "~/components/Common/FormField";
+import FormInput from "~/components/Common/FormInput";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormRadio from "~/components/Common/FormRadio";
 import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
@@ -1553,12 +1554,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       }
                       error={formStateStep1.errors.title?.message}
                     >
-                      <input
-                        type="text"
-                        className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                        placeholder="Enter title..."
-                        maxLength={150}
-                        {...registerStep1("title")}
+                      <FormInput
+                        inputProps={{
+                          type: "text",
+                          placeholder: "Enter title...",
+                          maxLength: 150,
+                          ...registerStep1("title"),
+                        }}
                       />
                     </FormField>
 

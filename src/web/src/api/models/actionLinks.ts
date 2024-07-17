@@ -54,6 +54,8 @@ export enum LinkStatus {
   Inactive,
   Expired,
   LimitReached,
+  Declined,
+  Deleted,
 }
 
 export interface LinkSearchFilter extends PaginationFilter {
@@ -67,4 +69,9 @@ export interface LinkSearchFilter extends PaginationFilter {
 export interface LinkSearchResult {
   totalCount: number | null;
   items: LinkInfo[];
+}
+
+export interface LinkRequestUpdateStatus {
+  status: LinkStatus;
+  comment: string | null;
 }
