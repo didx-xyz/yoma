@@ -5,7 +5,6 @@ using Yoma.Core.Domain.ActionLink.Interfaces;
 using System.Net;
 using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core;
-using Yoma.Core.Domain.ActionLink;
 
 namespace Yoma.Core.Api.Controllers
 {
@@ -59,7 +58,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(CreateLinkInstantVerify));
 
-      var result = await _linkService.CreateVerify(request, false, true);
+      var result = await _linkService.CreateVerify(request, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(CreateLinkInstantVerify));
 

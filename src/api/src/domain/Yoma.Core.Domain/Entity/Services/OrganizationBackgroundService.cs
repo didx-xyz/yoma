@@ -149,9 +149,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
             if (executeUntil <= DateTimeOffset.UtcNow) break;
           }
-        }
 
-        _logger.LogInformation("Processed organization declination");
+          _logger.LogInformation("Processed organization declination");
+        }
       }
       catch (DistributedLockTimeoutException ex)
       {

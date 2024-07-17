@@ -19,6 +19,33 @@ namespace Yoma.Core.Domain.EmailProvider.Services
     #endregion
 
     #region Public Members
+    public string ActionLinkVerifyApprovalItemUrl(EmailType emailType, Guid? organizationId)
+    {
+      if (organizationId == Guid.Empty)
+        throw new ArgumentNullException(nameof(organizationId));
+
+      var result = _appSettings.AppBaseURL;
+      switch (emailType)
+      {
+        case EmailType.ActionLink_Verify_Approval_Requested:
+          result = result.AppendPathSegment("admin").AppendPathSegment("links").ToString();
+          break;
+
+        case EmailType.ActionLink_Verify_Approval_Approved:
+        case EmailType.ActionLink_Verify_Approval_Declined:
+          if (!organizationId.HasValue)
+            throw new InvalidOperationException("Organization id expected");
+
+          result = result.AppendPathSegment("organisations").AppendPathSegment(organizationId).AppendPathSegment("links").ToString();
+          break;
+
+        default:
+          throw new ArgumentOutOfRangeException(nameof(emailType), $"Type of '{emailType}' not supported");
+      }
+
+      return result;
+    }
+
     public string OrganizationApprovalItemURL(EmailType emailType, Guid organizationId)
     {
       if (organizationId == Guid.Empty)
@@ -72,7 +99,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
           break;
 
         case EmailType.Opportunity_Verification_Completed:
-        case EmailType.ActionLink_Verify_Created:
+        case EmailType.ActionLink_Verify_Distribution:
           result = result.AppendPathSegment("completed").ToString();
           break;
 
