@@ -1,10 +1,12 @@
 # Ignore everything
-**
+
+\*\*
 
 # Except the following:
+
 !public/
-public/*.js
-public/*.map
+public/_.js
+public/_.map
 
 !src/
 !.env.example
@@ -14,9 +16,6 @@ public/*.map
 !package.json
 !postcss.config.cjs
 !prettier.config.cjs
-!sentry.client.config.ts
-!sentry.edge.config.ts
-!sentry.server.config.ts
 !tailwind.config.ts
 !tsconfig.json
 !yarn.lock
