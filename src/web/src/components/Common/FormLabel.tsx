@@ -1,6 +1,7 @@
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import { IoMdAlert } from "react-icons/io";
 import FormTooltip from "./FormTooltip";
+import { Fragment } from "react";
 
 const FormLabel: React.FC<{
   label: string;
@@ -25,7 +26,17 @@ const FormLabel: React.FC<{
           </FormTooltip>
         )}
       </span>
-      <span className="text-xs">{subLabel}</span>
+
+      {subLabel && (
+        <span className="text-xs">
+          {subLabel.split("\\n").map((line, index, array) => (
+            <Fragment key={index}>
+              {line}
+              {index < array.length - 1 && <br />}
+            </Fragment>
+          ))}
+        </span>
+      )}
     </label>
   );
 };
