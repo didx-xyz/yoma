@@ -338,7 +338,7 @@ namespace Yoma.Core.Domain.Entity.Services
         throw;
       }
 
-      await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Requested);
+      await SendEmail(result, EmailType.Organization_Approval_Requested);
 
       return result;
     }
@@ -501,7 +501,7 @@ namespace Yoma.Core.Domain.Entity.Services
       }
 
       if (statusCurrent != OrganizationStatus.Inactive && result.Status == OrganizationStatus.Inactive)
-        await SendEmail(result, EmailProvider.EmailType.Organization_Approval_Requested);
+        await SendEmail(result, EmailType.Organization_Approval_Requested);
 
       return result;
     }
@@ -1045,7 +1045,7 @@ namespace Yoma.Core.Domain.Entity.Services
           organization = await _organizationRepository.Update(organization);
 
           if (action == OrganizationReapprovalAction.ReapprovalWithEmail)
-            await SendEmail(organization, EmailProvider.EmailType.Organization_Approval_Requested);
+            await SendEmail(organization, EmailType.Organization_Approval_Requested);
 
           break;
 
@@ -1178,7 +1178,7 @@ namespace Yoma.Core.Domain.Entity.Services
         throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
     }
 
-    private async Task SendEmail(Organization organization, EmailProvider.EmailType type)
+    private async Task SendEmail(Organization organization, EmailType type)
     {
       try
       {
@@ -1187,7 +1187,7 @@ namespace Yoma.Core.Domain.Entity.Services
         var dataOrg = new EmailOrganizationApprovalItem { Name = organization.Name };
         switch (type)
         {
-          case EmailProvider.EmailType.Organization_Approval_Requested:
+          case EmailType.Organization_Approval_Requested:
             //send email to super administrators
             var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
             recipients = superAdmins?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.ToDisplayName() }).ToList();
@@ -1196,8 +1196,8 @@ namespace Yoma.Core.Domain.Entity.Services
             dataOrg.URL = _emailURLFactory.OrganizationApprovalItemURL(type, organization.Id);
             break;
 
-          case EmailProvider.EmailType.Organization_Approval_Approved:
-          case EmailProvider.EmailType.Organization_Approval_Declined:
+          case EmailType.Organization_Approval_Approved:
+          case EmailType.Organization_Approval_Declined:
             //send email to organization administrators
             recipients = organization.Administrators?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList();
 

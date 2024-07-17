@@ -2,6 +2,7 @@ using FluentValidation;
 using Hangfire;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.ActionLink.Interfaces.Lookups;
 using Yoma.Core.Domain.ActionLink.Services;
@@ -193,40 +194,44 @@ namespace Yoma.Core.Domain
 
       //opportunity
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration ({Status.Active} that has ended)",
-          s => s.ProcessExpiration(), options.OpportunityExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        s => s.ProcessExpiration(), options.OpportunityExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration Notifications ({Status.Active} ending within {options.OpportunityExpirationNotificationIntervalInDays} days)",
-          s => s.ProcessExpirationNotifications(), options.OpportunityExpirationNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        s => s.ProcessExpirationNotifications(), options.OpportunityExpirationNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Deletion ({Status.Inactive} or {Status.Expired} for more than {options.OpportunityDeletionIntervalInDays} days)",
-          s => s.ProcessDeletion(), options.OpportunityDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        s => s.ProcessDeletion(), options.OpportunityDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //TODO: ISharingBackgroundService.ProcessSharing
 
       //my opportunity
       RecurringJob.AddOrUpdate<IMyOpportunityBackgroundService>($"'My' Opportunity Verification Rejection ({VerificationStatus.Pending} for more than {options.MyOpportunityRejectionIntervalInDays} days)",
-         s => s.ProcessVerificationRejection(), options.MyOpportunityRejectionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        s => s.ProcessVerificationRejection(), options.MyOpportunityRejectionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //organization
       RecurringJob.AddOrUpdate<IOrganizationBackgroundService>($"Organization Declination ({OrganizationStatus.Inactive} for more than {options.OrganizationDeclinationIntervalInDays} days)",
-         s => s.ProcessDeclination(), options.OrganizationDeclinationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        s => s.ProcessDeclination(), options.OrganizationDeclinationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<IOrganizationBackgroundService>($"Organization Deletion ({OrganizationStatus.Declined} for more than {options.OrganizationDeletionIntervalInDays} days)",
-         s => s.ProcessDeletion(), options.OrganizationDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        s => s.ProcessDeletion(), options.OrganizationDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //reward
       RecurringJob.AddOrUpdate<IRewardBackgrounService>($"Rewards Wallet Creation",
-         s => s.ProcessWalletCreation(), options.RewardWalletCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        s => s.ProcessWalletCreation(), options.RewardWalletCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<IRewardBackgrounService>($"Rewards Transaction Processing (awarding rewards)",
         s => s.ProcessRewardTransactions(), options.RewardTransactionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //ssi
       BackgroundJob.Enqueue<ISSIBackgroundService>(s => s.SeedSchemas()); //execute on startup; seed default schemas
       RecurringJob.AddOrUpdate<ISSIBackgroundService>($"SSI Tenant Creation",
-         s => s.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        s => s.ProcessTenantCreation(), options.SSITenantCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<ISSIBackgroundService>($"SSI Credential Issuance",
-         s => s.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        s => s.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //action link
-      RecurringJob.AddOrUpdate<ILinkServiceBackgroundService>($"Action Link Expiration ({Status.Active} that has ended)",
-          s => s.ProcessExpiration(), options.ActionLinkExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+      RecurringJob.AddOrUpdate<ILinkServiceBackgroundService>($"Action Link Expiration ({LinkStatus.Active} that has ended)",
+        s => s.ProcessExpiration(), options.ActionLinkExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+      RecurringJob.AddOrUpdate<ILinkServiceBackgroundService>($"Action Link Declination ({LinkStatus.Inactive} for more than {options.ActionLinkDeclinationScheduleIntervalInDays} days)",
+        s => s.ProcessDeclination(), options.ActionLinkDeclinationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+      RecurringJob.AddOrUpdate<ILinkServiceBackgroundService>($"Action Link Deletion ({LinkStatus.Declined} for more than {options.ActionLinkDeletionScheduleIntervalInDays} days)",
+        s => s.ProcessDeletion(), options.ActionLinkDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //seeding of test data
       if (!appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(environment)) return;

@@ -46,7 +46,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     {
       const string lockIdentifier = "partner_sharing_process";
       var dateTimeNow = DateTimeOffset.UtcNow;
-      var executeUntil = dateTimeNow.AddHours(2); //TODO: ScheduleJobOptions
+      var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.PartnerSharingScheduleMaxIntervalInHours); 
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
@@ -67,7 +67,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
           var itemIdsToSkip = new List<Guid>();
           while (executeUntil > DateTimeOffset.UtcNow)
           {
-            var items = _sharingService.ListPendingSchedule(1000, itemIdsToSkip); //TODO: ScheduleJobOptions
+            var items = _sharingService.ListPendingSchedule(_scheduleJobOptions.PartnerSharingScheduleBatchSize, itemIdsToSkip);
             if (items.Count == 0) break;
 
             foreach (var item in items)

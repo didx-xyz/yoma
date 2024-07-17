@@ -12,6 +12,9 @@ namespace Yoma.Core.Domain.EmailProvider
     Opportunity_Posted_Admin, //sent to admin
     Opportunity_Verification_Pending, //sent to youth
     Opportunity_Verification_Pending_Admin, //sent to organization admin
-    ActionLink_Verify_Created //sent to mailing / distribution list
+    ActionLink_Verify_Distribution, //sent to mailing / distribution list
+    ActionLink_Verify_Approval_Requested, //sent to admin
+    ActionLink_Verify_Approval_Approved, //sent to organization admin
+    ActionLink_Verify_Approval_Declined //sent to organization admin
   }
 }
