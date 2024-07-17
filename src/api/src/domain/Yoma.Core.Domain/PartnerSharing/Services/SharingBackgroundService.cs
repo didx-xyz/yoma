@@ -46,7 +46,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     {
       const string lockIdentifier = "partner_sharing_process";
       var dateTimeNow = DateTimeOffset.UtcNow;
-      var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.PartnerSharingScheduleMaxIntervalInHours); 
+      var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.PartnerSharingScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
 
       if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))

@@ -356,14 +356,14 @@ namespace Yoma.Core.Domain.ActionLink.Services
                     Items =
                     [
                       new EmailActionLinkVerifyItem
-                        {
-                          Title = opportunity.Title,
-                          DateStart = opportunity.DateStart,
-                          DateEnd = opportunity.DateEnd,
-                          URL = link.ShortURL,
-                          ZltoReward = opportunity.ZltoReward,
-                          YomaReward = opportunity.YomaReward
-                         }
+                      {
+                        Title = opportunity.Title,
+                        DateStart = opportunity.DateStart,
+                        DateEnd = opportunity.DateEnd,
+                        URL = link.ShortURL,
+                        ZltoReward = opportunity.ZltoReward,
+                        YomaReward = opportunity.YomaReward
+                      }
                     ]
                   };
 
