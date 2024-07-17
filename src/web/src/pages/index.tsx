@@ -24,6 +24,7 @@ import iconGreenCheck from "public/images/home/icon-check.png";
 import iconBlueUpload from "public/images/home/icon-upload.png";
 import iconOrangeZlto from "public/images/home/icon-zlto.png";
 import iconSap from "public/images/home/logo-sap.png";
+import iconIxo from "public/images/home/logo-ixo.png";
 import iconAccenture from "public/images/home/logo-accenture.png";
 import iconUmuzi from "public/images/home/logo-umuzi.png";
 import iconFoundationBotnar from "public/images/home/logo-foundation-botnar.png";
@@ -632,6 +633,13 @@ const Home: NextPageWithLayout = () => {
               <Image
                 src={iconSap}
                 alt="SAP"
+                width={68}
+                height={35}
+                style={{ width: 68, height: 35 }}
+              />
+              <Image
+                src={iconIxo}
+                alt="IXO"
                 width={68}
                 height={35}
                 style={{ width: 68, height: 35 }}
