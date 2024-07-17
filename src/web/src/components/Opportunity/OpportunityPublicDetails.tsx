@@ -795,7 +795,7 @@ const OpportunityPublicDetails: React.FC<{
                     {opportunityInfo.categories?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                        className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                       >
                         {item.name}
                       </div>
@@ -821,7 +821,7 @@ const OpportunityPublicDetails: React.FC<{
                     {opportunityInfo.languages?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                        className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                       >
                         {item.name}
                       </div>
@@ -866,7 +866,7 @@ const OpportunityPublicDetails: React.FC<{
                     {opportunityInfo.countries?.map((country) => (
                       <div
                         key={country.id}
-                        className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                        className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                       >
                         {country.name}
                       </div>
