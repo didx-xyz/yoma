@@ -1,4 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { captureException } from "@sentry/nextjs";
 import {
   QueryClient,
   dehydrate,
@@ -24,8 +25,12 @@ import {
 } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { Controller, useFieldArray, useForm } from "react-hook-form";
-import type { FieldValues } from "react-hook-form/dist/types";
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  type FieldValues,
+} from "react-hook-form";
 import {
   IoIosCheckmarkCircle,
   IoMdAlert,
@@ -1122,6 +1127,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           icon: false,
         });
 
+        captureException(error);
         setIsLoading(false);
 
         return;

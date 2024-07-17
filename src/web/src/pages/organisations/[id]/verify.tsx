@@ -1,3 +1,4 @@
+import { captureException } from "@sentry/nextjs";
 import {
   QueryClient,
   dehydrate,
@@ -178,6 +179,7 @@ const OrganisationDetails: NextPageWithLayout<{
         icon: false,
       });
 
+      captureException(error);
       setIsLoading(false);
 
       return;

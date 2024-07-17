@@ -16,6 +16,7 @@
     "@hookform/resolvers": "^3.3.2",
     "@mdxeditor/editor": "^3.8.0",
     "@react-google-maps/api": "^2.19.2",
+    "@sentry/nextjs": "^7.82.0",
     "@t3-oss/env-nextjs": "^0.7.1",
     "@tanstack/react-query": "^5.8.7",
     "@types/file-saver": "^2.0.7",
@@ -82,8 +83,5 @@
   },
   "ct3aMetadata": {
     "initVersion": "7.16.0"
-  },
-  "engines": {
-    "node": ">=20.0.0"
   }
 }

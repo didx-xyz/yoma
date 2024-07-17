@@ -1,27 +1,22 @@
+import { captureException } from "@sentry/nextjs";
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
-import axios from "axios";
-import { useAtomValue, useSetAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
-import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useState, type ReactElement } from "react";
-import type { FieldValues } from "react-hook-form/dist/types";
-import { IoIosWarning, IoMdArrowRoundBack } from "react-icons/io";
+import { type FieldValues } from "react-hook-form";
 import { toast } from "react-toastify";
 import {
   type Organization,
   type OrganizationRequestBase,
 } from "~/api/models/organisation";
-import { getCountries } from "~/api/services/lookups";
 import {
   getOrganisationById,
   getOrganisationProviderTypes,
   patchOrganisation,
 } from "~/api/services/organisations";
-import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { OrgAdminsEdit } from "~/components/Organisation/Upsert/OrgAdminsEdit";
@@ -29,26 +24,32 @@ import { OrgInfoEdit } from "~/components/Organisation/Upsert/OrgInfoEdit";
 import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { PageBackground } from "~/components/PageBackground";
 import { ApiErrors } from "~/components/Status/ApiErrors";
-import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { Unauthorized } from "~/components/Status/Unauthorized";
-import {
-  GA_ACTION_ORGANISATION_UPATE,
-  GA_CATEGORY_ORGANISATION,
-  ROLE_ADMIN,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
-import { config } from "~/lib/react-query-config";
+import { type NextPageWithLayout } from "~/pages/_app";
+import { type User, authOptions } from "~/server/auth";
+import { useAtomValue, useSetAtom } from "jotai";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
   currentOrganisationInactiveAtom,
   userProfileAtom,
 } from "~/lib/store";
+import { getUserProfile } from "~/api/services/user";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  GA_ACTION_ORGANISATION_UPATE,
+  GA_CATEGORY_ORGANISATION,
+  ROLE_ADMIN,
+} from "~/lib/constants";
+import { config } from "~/lib/react-query-config";
+import { getCountries } from "~/api/services/lookups";
+import { IoIosWarning, IoMdArrowRoundBack } from "react-icons/io";
+import { trackGAEvent } from "~/lib/google-analytics";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions, type User } from "~/server/auth";
+import axios from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { useRouter } from "next/router";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -219,6 +220,7 @@ const OrganisationUpdate: NextPageWithLayout<{
           icon: false,
         });
 
+        captureException(error);
         setIsLoading(false);
 
         return;
