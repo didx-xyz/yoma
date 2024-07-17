@@ -1741,7 +1741,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                     <FormField
                       label="Description"
-                      subLabel="A detailed description of the opportunity. This will be displayed on the opportunity page."
+                      subLabel="A detailed description of the opportunity. This will be displayed on the opportunity page.\nInsert a space (' ') between lines to create separation."
                       showWarningIcon={
                         !!formStateStep1.errors.description?.message
                       }
