@@ -1,5 +1,5 @@
 ##### DEPENDENCIES
-FROM node:18-alpine AS deps
+FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
@@ -14,7 +14,7 @@ RUN \
  fi
 
 ##### BUILDER
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
@@ -44,7 +44,7 @@ RUN chmod -R a-w /app/.next/standalone
 RUN chmod -R a-w /app/.next/static
 
 ##### RUNNER
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV production
