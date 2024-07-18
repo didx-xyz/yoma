@@ -751,24 +751,24 @@ const Links: NextPageWithLayout<{
                     key={`grid_xs_${item.id}`}
                     className="rounded-lg bg-white p-4 shadow-custom"
                   >
-                    {item.entityType == "Opportunity" && (
-                      <Link
-                        href={`/organisations/${item.entityOrganizationId}/opportunities/${
-                          item.entityId
-                        }/info${`?returnUrl=${encodeURIComponent(
-                          getSafeUrl(returnUrl, router.asPath),
-                        )}`}`}
-                        className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark"
-                      >
-                        {item.entityTitle}
-                      </Link>
-                    )}
-                    {item.entityType != "Opportunity" && (
-                      <>{item.entityTitle}</>
-                    )}
-
                     <div className="mb-2 flex flex-col">
-                      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark">
+                      {item.entityType == "Opportunity" && (
+                        <Link
+                          href={`/organisations/${item.entityOrganizationId}/opportunities/${
+                            item.entityId
+                          }/info${`?returnUrl=${encodeURIComponent(
+                            getSafeUrl(returnUrl, router.asPath),
+                          )}`}`}
+                          className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark underline"
+                        >
+                          {item.entityTitle}
+                        </Link>
+                      )}
+                      {item.entityType != "Opportunity" && (
+                        <>{item.entityTitle}</>
+                      )}
+
+                      <span className="mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark">
                         {item.name}
                       </span>
 
@@ -922,18 +922,19 @@ const Links: NextPageWithLayout<{
                   {links.items.map((item) => (
                     <tr key={`grid_md_${item.id}`} className="">
                       <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4">
-                        {item.entityType == "Opportunity" && (
-                          <Link
-                            href={`/organisations/${item.entityOrganizationId}/opportunities/${
-                              item.entityId
-                            }/info${`?returnUrl=${encodeURIComponent(
-                              getSafeUrl(returnUrl, router.asPath),
-                            )}`}`}
-                            className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark"
-                          >
-                            {item.entityTitle}
-                          </Link>
-                        )}
+                        {item.entityType == "Opportunity" &&
+                          item.entityOrganizationId && (
+                            <Link
+                              href={`/organisations/${item.entityOrganizationId}/opportunities/${
+                                item.entityId
+                              }/info${`?returnUrl=${encodeURIComponent(
+                                getSafeUrl(returnUrl, router.asPath),
+                              )}`}`}
+                              className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap text-sm text-gray-dark underline"
+                            >
+                              {item.entityTitle}
+                            </Link>
+                          )}
                         {item.entityType != "Opportunity" && (
                           <>{item.entityTitle}</>
                         )}

@@ -28,6 +28,7 @@ export interface LinkInfo {
   entityId: string;
   entityTitle: string;
   entityOrganizationId: string | null;
+  entityOrganizationName: string | null;
   uRL: string;
   shortURL: string;
   qrCodeBase64: string | null; // NB: casing not the same as api
