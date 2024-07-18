@@ -42,6 +42,7 @@ namespace Yoma.Core.Domain.ActionLink.Extensions
           result.EntityId = value.OpportunityId.Value;
           result.EntityTitle = value.OpportunityTitle;
           result.EntityOrganizationId = value.OpportunityOrganizationId;
+          result.EntityOrganizationName = value.OpportunityOrganizationName;  
           break;
 
         default:

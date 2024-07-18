@@ -22,8 +22,9 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public string? OpportunityTitle { get; set; }
 
-    [JsonIgnore]
     public Guid? OpportunityOrganizationId { get; set; }
+
+    public string? OpportunityOrganizationName { get; set; }
 
     public string URL { get; set; }
 

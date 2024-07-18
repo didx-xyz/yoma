@@ -27,6 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         OpportunityId = entity.OpportunityId,
         OpportunityTitle = entity.Opportunity == null ? null : entity.Opportunity.Title,
         OpportunityOrganizationId = entity.Opportunity == null ? null : entity.Opportunity.OrganizationId,
+        OpportunityOrganizationName = entity.Opportunity == null ? null : entity.Opportunity.Organization.Name,
         URL = entity.URL,
         ShortURL = entity.ShortURL,
         UsagesLimit = entity.UsagesLimit,
