@@ -1,10 +1,5 @@
-import {
-  QueryClient,
-  dehydrate,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import axios, { type AxiosError } from "axios";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { type AxiosError } from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -61,7 +56,6 @@ import {
   PAGE_SIZE,
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
-import { config } from "~/lib/react-query-config";
 import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -81,7 +75,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const { type, action, statuses, entities, page, returnUrl } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
-  const queryClient = new QueryClient(config);
   let errorCode = null;
 
   // 👇 ensure authenticated
@@ -96,127 +89,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   // 👇 set theme based on role
   const theme = getThemeFromRole(session, id);
 
-  try {
-    // NB: disabled as we getting 502 bad gateway error on stage
-    // 👇 prefetch queries on server
-    // const data = await searchLinks(
-    //   {
-    //     pageNumber: page ? parseInt(page.toString()) : 1,
-    //     pageSize: PAGE_SIZE,
-    //     entityType: type?.toString() ?? LinkEntityType.Opportunity,
-    //     action: action?.toString() ?? LinkAction.Verify,
-    //     entities: entities ? entities.toString().split("|") : null,
-    //     organizations: [id],
-    //     statuses: statuses ? statuses.toString().split("|") : null,
-    //   },
-    //   context,
-    // );
-    // await queryClient.prefetchQuery({
-    //   queryKey: [
-    //     "Links",
-    //     id,
-    //     `${type?.toString()}_${action?.toString()}_${statuses?.toString()}_${entities?.toString()}_${page?.toString()}`,
-    //   ],
-    //   queryFn: () => data,
-    // });
-    // // get the totalCount for each status from the searchLinks function
-    // await Promise.all([
-    //   queryClient.prefetchQuery({
-    //     queryKey: ["Links_TotalCount", id, null],
-    //     queryFn: () =>
-    //       searchLinks(
-    //         {
-    //           pageNumber: 1,
-    //           pageSize: 1,
-    //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
-    //           action: action?.toString() ?? LinkAction.Verify,
-    //           entities: null,
-    //           organizations: [id],
-    //           statuses: null,
-    //         },
-    //         context,
-    //       ).then((data) => data.totalCount ?? 0),
-    //   }),
-    //   queryClient.prefetchQuery({
-    //     queryKey: ["Links_TotalCount", id, LinkStatus.Active],
-    //     queryFn: () =>
-    //       searchLinks(
-    //         {
-    //           pageNumber: 1,
-    //           pageSize: 1,
-    //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
-    //           action: action?.toString() ?? LinkAction.Verify,
-    //           entities: null,
-    //           organizations: [id],
-    //           statuses: [LinkStatus.Active],
-    //         },
-    //         context,
-    //       ).then((data) => data.totalCount ?? 0),
-    //   }),
-    //   queryClient.prefetchQuery({
-    //     queryKey: ["Links_TotalCount", id, LinkStatus.Inactive],
-    //     queryFn: () =>
-    //       searchLinks(
-    //         {
-    //           pageNumber: 1,
-    //           pageSize: 1,
-    //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
-    //           action: action?.toString() ?? LinkAction.Verify,
-    //           entities: null,
-    //           organizations: [id],
-    //           statuses: [LinkStatus.Inactive],
-    //         },
-    //         context,
-    //       ).then((data) => data.totalCount ?? 0),
-    //   }),
-    //   queryClient.prefetchQuery({
-    //     queryKey: ["Links_TotalCount", id, LinkStatus.Expired],
-    //     queryFn: () =>
-    //       searchLinks(
-    //         {
-    //           pageNumber: 1,
-    //           pageSize: 1,
-    //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
-    //           action: action?.toString() ?? LinkAction.Verify,
-    //           entities: null,
-    //           organizations: [id],
-    //           statuses: [LinkStatus.Expired],
-    //         },
-    //         context,
-    //       ).then((data) => data.totalCount ?? 0),
-    //   }),
-    //   queryClient.prefetchQuery({
-    //     queryKey: ["Links_TotalCount", id, LinkStatus.LimitReached],
-    //     queryFn: () =>
-    //       searchLinks(
-    //         {
-    //           pageNumber: 1,
-    //           pageSize: 1,
-    //           entityType: type?.toString() ?? LinkEntityType.Opportunity,
-    //           action: action?.toString() ?? LinkAction.Verify,
-    //           entities: null,
-    //           organizations: [id],
-    //           statuses: [LinkStatus.LimitReached],
-    //         },
-    //         context,
-    //       ).then((data) => data.totalCount ?? 0),
-    //   }),
-    // ]);
-  } catch (error) {
-    console.error(error);
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404) {
-        return {
-          notFound: true,
-          props: { theme: theme },
-        };
-      } else errorCode = error.response.status;
-    } else errorCode = 500;
-  }
-
   return {
     props: {
-      dehydratedState: dehydrate(queryClient),
       id: id,
       type: type ?? null,
       action: action ?? null,
@@ -261,24 +135,17 @@ const Links: NextPageWithLayout<{
     queryKey: [
       "Links",
       id,
-      `${type?.toString()}_${action?.toString()}_${statuses?.toString()}_${entities?.toString()}_${page?.toString()}`,
+      `${type}_${action}_${statuses}_${entities}_${page}`,
     ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
-        statuses: statuses
-          ? statuses.toString().split("|")
-          : [
-              LinkStatus.Active,
-              LinkStatus.Inactive,
-              LinkStatus.Expired,
-              LinkStatus.LimitReached,
-            ],
+        statuses: statuses ? statuses.toString().split("|") : null,
       }),
     enabled: !error,
   });
@@ -288,16 +155,11 @@ const Links: NextPageWithLayout<{
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
-        statuses: [
-          LinkStatus.Active,
-          LinkStatus.Inactive,
-          LinkStatus.Expired,
-          LinkStatus.LimitReached,
-        ],
+        statuses: null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -307,8 +169,8 @@ const Links: NextPageWithLayout<{
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.Active],
@@ -321,11 +183,25 @@ const Links: NextPageWithLayout<{
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.Inactive],
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountDeclined } = useQuery<number>({
+    queryKey: ["Links_TotalCount", id, LinkStatus.Declined],
+    queryFn: () =>
+      searchLinks({
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: PAGE_SIZE,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
+        entities: entities ? entities.toString().split("|") : null,
+        organizations: [id],
+        statuses: [LinkStatus.Declined],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -335,8 +211,8 @@ const Links: NextPageWithLayout<{
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.Expired],
@@ -349,11 +225,25 @@ const Links: NextPageWithLayout<{
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.LimitReached],
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountDeleted } = useQuery<number>({
+    queryKey: ["Links_TotalCount", id, LinkStatus.Deleted],
+    queryFn: () =>
+      searchLinks({
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: PAGE_SIZE,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
+        entities: entities ? entities.toString().split("|") : null,
+        organizations: [id],
+        statuses: [LinkStatus.Deleted],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -480,7 +370,7 @@ const Links: NextPageWithLayout<{
     return (
       <Link
         href={`/organisations/${id}/links/create${`?returnUrl=${encodeURIComponent(
-          getSafeUrl(returnUrl?.toString(), router.asPath),
+          getSafeUrl(returnUrl, router.asPath),
         )}`}`}
         className="bg-theme btn btn-circle btn-secondary btn-sm h-fit w-fit whitespace-nowrap !border-none p-1 text-xs text-white shadow-custom brightness-105 md:p-2 md:px-4"
         id="btnCreateLink"
@@ -720,6 +610,24 @@ const Links: NextPageWithLayout<{
                     </li>
                     <li className="whitespace-nowrap px-4">
                       <Link
+                        href={`/organisations/${id}/links?statuses=declined`}
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                          statuses === "declined"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Declined
+                        {(totalCountDeclined ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                            {totalCountDeclined}
+                          </div>
+                        )}
+                      </Link>
+                    </li>
+                    <li className="whitespace-nowrap px-4">
+                      <Link
                         href={`/organisations/${id}/links?statuses=expired`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           statuses === "expired"
@@ -750,6 +658,24 @@ const Links: NextPageWithLayout<{
                         {(totalCountLimitReached ?? 0) > 0 && (
                           <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
                             {totalCountLimitReached}
+                          </div>
+                        )}
+                      </Link>
+                    </li>
+                    <li className="whitespace-nowrap px-4">
+                      <Link
+                        href={`/organisations/${id}/links?statuses=deleted`}
+                        className={`inline-block w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                          statuses === "deleted"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Deleted
+                        {(totalCountDeleted ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                            {totalCountDeleted}
                           </div>
                         )}
                       </Link>
@@ -816,7 +742,7 @@ const Links: NextPageWithLayout<{
                       href={`/organisations/${id}/opportunities/${
                         item.entityId
                       }/info${`?returnUrl=${encodeURIComponent(
-                        getSafeUrl(returnUrl?.toString(), router.asPath),
+                        getSafeUrl(returnUrl, router.asPath),
                       )}`}`}
                       className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark"
                     >
@@ -894,6 +820,16 @@ const Links: NextPageWithLayout<{
                           <span className="badge bg-green-light text-red-400">
                             Limit Reached
                           </span>
+                        )}{" "}
+                        {item.status == "Declined" && (
+                          <span className="badge bg-green-light text-red-400">
+                            Declined
+                          </span>
+                        )}
+                        {item.status == "Deleted" && (
+                          <span className="badge bg-green-light text-red-400">
+                            Deleted
+                          </span>
                         )}
                       </div>
 
@@ -916,9 +852,9 @@ const Links: NextPageWithLayout<{
                           <IoQrCode className="h-4 w-4" />
                         </button>
 
-                        {(item?.status?.toString() == "Inactive" ||
-                          item?.status?.toString() == "Active" ||
-                          item?.status?.toString() == "Declined") && (
+                        {(item?.status == "Inactive" ||
+                          item?.status == "Active" ||
+                          item?.status == "Declined") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
                             <button className="badge bg-green-light text-green">
                               <IoIosSettings className="h-4 w-4" />
@@ -971,7 +907,7 @@ const Links: NextPageWithLayout<{
                           href={`/organisations/${id}/opportunities/${
                             item.entityId
                           }/info${`?returnUrl=${encodeURIComponent(
-                            getSafeUrl(returnUrl?.toString(), router.asPath),
+                            getSafeUrl(returnUrl, router.asPath),
                           )}`}`}
                         >
                           {item.entityTitle}
@@ -1049,6 +985,16 @@ const Links: NextPageWithLayout<{
                             Limit Reached
                           </span>
                         )}
+                        {item.status == "Declined" && (
+                          <span className="badge bg-green-light text-red-400">
+                            Declined
+                          </span>
+                        )}
+                        {item.status == "Deleted" && (
+                          <span className="badge bg-green-light text-red-400">
+                            Deleted
+                          </span>
+                        )}
                       </td>
 
                       {/* LINK */}
@@ -1077,9 +1023,9 @@ const Links: NextPageWithLayout<{
 
                       {/* ACTIONS */}
                       <td className="border-b-2 border-gray-light">
-                        {(item?.status?.toString() == "Inactive" ||
-                          item?.status?.toString() == "Active" ||
-                          item?.status?.toString() == "Declined") && (
+                        {(item?.status == "Inactive" ||
+                          item?.status == "Active" ||
+                          item?.status == "Declined") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
                             <button className="badge bg-green-light text-green">
                               <IoIosSettings className="h-4 w-4" />

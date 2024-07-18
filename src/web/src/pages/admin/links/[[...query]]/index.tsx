@@ -1,4 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { GetServerSidePropsContext } from "next";
+import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -35,7 +37,10 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { ApiErrors } from "~/components/Status/ApiErrors";
+import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   DATE_FORMAT_HUMAN,
@@ -47,21 +52,46 @@ import {
 import { trackGAEvent } from "~/lib/google-analytics";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
+import { authOptions } from "~/server/auth";
+
+// ⚠️ SSR
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  const { type, action, statuses, entities, page, returnUrl } = context.query;
+  const session = await getServerSession(context.req, context.res, authOptions);
+  let errorCode = null;
+
+  // 👇 ensure authenticated
+  if (!session) {
+    return {
+      props: {
+        error: 401,
+      },
+    };
+  }
+
+  return {
+    props: {
+      type: type ?? null,
+      action: action ?? null,
+      statuses: statuses ?? null,
+      entities: entities ?? null,
+      page: page ?? null,
+      error: errorCode,
+      returnUrl: returnUrl ?? null,
+    },
+  };
+}
 
 const Links: NextPageWithLayout<{
-  id: string;
   type?: string;
   action?: string;
   statuses?: string;
   entities?: string;
   page?: string;
-  theme: string;
   error?: number;
   returnUrl?: string;
-}> = () => {
+}> = ({ type, action, statuses, entities, page, error, returnUrl }) => {
   const router = useRouter();
-  const { type, action, statuses, entities, page, error, returnUrl } =
-    router.query;
   const queryClient = useQueryClient();
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeImageData, setQRCodeImageData] = useState<
@@ -81,25 +111,17 @@ const Links: NextPageWithLayout<{
     queryKey: [
       "Admin",
       "Links",
-      `${type?.toString()}_${action?.toString()}_${statuses?.toString()}_${entities?.toString()}_${page?.toString()}`,
+      `${type}_${action}_${statuses}_${entities}_${page}`,
     ],
     queryFn: () =>
       searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageNumber: page ? parseInt(page) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
+        entities: entities ? entities.split("|") : null,
         organizations: null,
-        statuses: statuses
-          ? statuses.toString().split("|")
-          : [
-              LinkStatus.Active,
-              LinkStatus.Inactive,
-              LinkStatus.Declined,
-              LinkStatus.Expired,
-              LinkStatus.LimitReached,
-            ],
+        statuses: statuses ? statuses.split("|") : null,
       }),
     enabled: !error,
   });
@@ -107,19 +129,13 @@ const Links: NextPageWithLayout<{
     queryKey: ["Admin", "Links", "TotalCount", null],
     queryFn: () =>
       searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageNumber: page ? parseInt(page) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
+        entities: entities ? entities.split("|") : null,
         organizations: null,
-        statuses: [
-          LinkStatus.Active,
-          LinkStatus.Inactive,
-          LinkStatus.Declined,
-          LinkStatus.Expired,
-          LinkStatus.LimitReached,
-        ],
+        statuses: null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -127,11 +143,11 @@ const Links: NextPageWithLayout<{
     queryKey: ["Admin", "Links", "TotalCount", LinkStatus.Active],
     queryFn: () =>
       searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageNumber: page ? parseInt(page) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
+        entities: entities ? entities.split("|") : null,
         organizations: null,
         statuses: [LinkStatus.Active],
       }).then((data) => data.totalCount ?? 0),
@@ -141,11 +157,11 @@ const Links: NextPageWithLayout<{
     queryKey: ["Admin", "Links", "TotalCount", LinkStatus.Inactive],
     queryFn: () =>
       searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageNumber: page ? parseInt(page) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
+        entities: entities ? entities.split("|") : null,
         organizations: null,
         statuses: [LinkStatus.Inactive],
       }).then((data) => data.totalCount ?? 0),
@@ -155,11 +171,11 @@ const Links: NextPageWithLayout<{
     queryKey: ["Admin", "Links", "TotalCount", LinkStatus.Declined],
     queryFn: () =>
       searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageNumber: page ? parseInt(page) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
+        entities: entities ? entities.split("|") : null,
         organizations: null,
         statuses: [LinkStatus.Declined],
       }).then((data) => data.totalCount ?? 0),
@@ -169,11 +185,11 @@ const Links: NextPageWithLayout<{
     queryKey: ["Admin", "Links", "TotalCount", LinkStatus.Expired],
     queryFn: () =>
       searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageNumber: page ? parseInt(page) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
+        entities: entities ? entities.split("|") : null,
         organizations: null,
         statuses: [LinkStatus.Expired],
       }).then((data) => data.totalCount ?? 0),
@@ -183,25 +199,39 @@ const Links: NextPageWithLayout<{
     queryKey: ["Admin", "Links", "TotalCount", LinkStatus.LimitReached],
     queryFn: () =>
       searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageNumber: page ? parseInt(page) : 1,
         pageSize: PAGE_SIZE,
-        entityType: type?.toString() ?? LinkEntityType.Opportunity,
-        action: action?.toString() ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
+        entities: entities ? entities.split("|") : null,
         organizations: null,
         statuses: [LinkStatus.LimitReached],
+      }).then((data) => data.totalCount ?? 0),
+    enabled: !error,
+  });
+  const { data: totalCountDeleted } = useQuery<number>({
+    queryKey: ["Admin", "Links", "TotalCount", LinkStatus.Deleted],
+    queryFn: () =>
+      searchLinks({
+        pageNumber: page ? parseInt(page) : 1,
+        pageSize: PAGE_SIZE,
+        entityType: type ?? LinkEntityType.Opportunity,
+        action: action ?? LinkAction.Verify,
+        entities: entities ? entities.split("|") : null,
+        organizations: null,
+        statuses: [LinkStatus.Deleted],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
 
   // search filter state
   const [searchFilter] = useState<LinkSearchFilter>({
-    pageNumber: page ? parseInt(page.toString()) : 1,
+    pageNumber: page ? parseInt(page) : 1,
     pageSize: PAGE_SIZE,
-    entityType: type?.toString() ?? LinkEntityType.Opportunity,
-    action: action?.toString() ?? LinkAction.Verify,
-    entities: entities ? entities.toString().split("|") : null,
-    statuses: statuses ? statuses.toString().split("|") : null,
+    entityType: type ?? LinkEntityType.Opportunity,
+    action: action ?? LinkAction.Verify,
+    entities: entities ? entities.split("|") : null,
+    statuses: statuses ? statuses.split("|") : null,
     organizations: null,
   });
 
@@ -243,8 +273,7 @@ const Links: NextPageWithLayout<{
     (filter: LinkSearchFilter) => {
       let url = `/admin/links`;
       const params = getSearchFilterAsQueryString(filter);
-      if (params != null && params.size > 0)
-        url = `${url}?${params.toString()}`;
+      if (params != null && params.size > 0) url = `${url}?${params}`;
 
       if (url != router.asPath)
         void router.push(url, undefined, { scroll: false });
@@ -375,11 +404,11 @@ const Links: NextPageWithLayout<{
     onCloseCommentsDialog,
   ]);
 
-  // if (error) {
-  //   if (error === 401) return <Unauthenticated />;
-  //   else if (error === 403) return <Unauthorized />;
-  //   else return <InternalServerError />;
-  // }
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>
@@ -665,6 +694,24 @@ const Links: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
+                    <li className="whitespace-nowrap px-4">
+                      <Link
+                        href={`/admin/links?statuses=deleted`}
+                        className={`inline-block w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                          statuses === "deleted"
+                            ? "active border-orange"
+                            : "border-transparent hover:border-gray hover:text-gray"
+                        }`}
+                        role="tab"
+                      >
+                        Deleted
+                        {(totalCountDeleted ?? 0) > 0 && (
+                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                            {totalCountDeleted}
+                          </div>
+                        )}
+                      </Link>
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -707,7 +754,7 @@ const Links: NextPageWithLayout<{
                       href={`/admin/opportunities/${
                         item.entityId
                       }/info${`?returnUrl=${encodeURIComponent(
-                        getSafeUrl(returnUrl?.toString(), router.asPath),
+                        getSafeUrl(returnUrl, router.asPath),
                       )}`}`}
                       className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark"
                     >
@@ -817,9 +864,9 @@ const Links: NextPageWithLayout<{
                           <IoQrCode className="h-4 w-4" />
                         </button>
 
-                        {(item?.status?.toString() == "Inactive" ||
-                          item?.status?.toString() == "Active" ||
-                          item?.status?.toString() == "Declined") && (
+                        {(item?.status == "Inactive" ||
+                          item?.status == "Active" ||
+                          item?.status == "Declined") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
                             <button className="badge bg-green-light text-green">
                               <IoIosSettings className="h-4 w-4" />
@@ -876,7 +923,7 @@ const Links: NextPageWithLayout<{
                                 </li>
                               )}
 
-                              {item?.status?.toString() === "Declined" && (
+                              {item?.status === "Declined" && (
                                 <li>
                                   <button
                                     className="flex flex-row items-center text-gray-dark hover:brightness-50"
@@ -927,7 +974,7 @@ const Links: NextPageWithLayout<{
                           href={`/admin/opportunities/${
                             item.entityId
                           }/info${`?returnUrl=${encodeURIComponent(
-                            getSafeUrl(returnUrl?.toString(), router.asPath),
+                            getSafeUrl(returnUrl?, router.asPath),
                           )}`}`}
                         > */}
                         {item.entityTitle}
@@ -1043,9 +1090,9 @@ const Links: NextPageWithLayout<{
 
                       {/* ACTIONS */}
                       <td className="border-b-2 border-gray-light">
-                        {(item?.status?.toString() == "Inactive" ||
-                          item?.status?.toString() == "Active" ||
-                          item?.status?.toString() == "Declined") && (
+                        {(item?.status == "Inactive" ||
+                          item?.status == "Active" ||
+                          item?.status == "Declined") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
                             <button className="badge bg-green-light text-green">
                               <IoIosSettings className="h-4 w-4" />
@@ -1102,7 +1149,7 @@ const Links: NextPageWithLayout<{
                                 </li>
                               )}
 
-                              {item?.status?.toString() === "Declined" && (
+                              {item?.status === "Declined" && (
                                 <li>
                                   <button
                                     className="flex flex-row items-center text-gray-dark hover:brightness-50"
@@ -1131,7 +1178,7 @@ const Links: NextPageWithLayout<{
           {/* PAGINATION */}
           <div className="mt-2 grid place-items-center justify-center">
             <PaginationButtons
-              currentPage={page ? parseInt(page.toString()) : 1}
+              currentPage={page ? parseInt(page) : 1}
               totalItems={links?.totalCount ?? 0}
               pageSize={PAGE_SIZE}
               onClick={handlePagerChange}
