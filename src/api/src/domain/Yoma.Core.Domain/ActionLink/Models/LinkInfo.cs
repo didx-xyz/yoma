@@ -20,6 +20,10 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public string EntityTitle { get; set; }
 
+    public Guid? EntityOrganizationId { get; set; }
+
+    public string? EntityOrganizationName { get; set; }
+
     public string URL { get; set; }
 
     public string ShortURL { get; set; }
@@ -37,6 +41,8 @@ namespace Yoma.Core.Domain.ActionLink.Models
     public List<string>? DistributionList { get; set; }
 
     public bool? LockToDistributionList { get; set; }
+
+    public string? CommentApproval { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
 

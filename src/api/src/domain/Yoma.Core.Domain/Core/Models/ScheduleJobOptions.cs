@@ -74,6 +74,24 @@ namespace Yoma.Core.Domain.Core.Models
 
     public string ActionLinkExpirationSchedule { get; set; }
 
-    public int ActionLinkExpirationBatchSize { get; set; }
+    public int ActionLinkExpirationScheduleBatchSize { get; set; }
+
+    public string ActionLinkDeletionSchedule { get; set; }
+
+    public int ActionLinkDeletionScheduleBatchSize { get; set; }
+
+    public int ActionLinkDeletionScheduleIntervalInDays { get; set; }
+
+    public string ActionLinkDeclinationSchedule { get; set; }
+
+    public int ActionLinkDeclinationScheduleBatchSize { get; set; }
+
+    public int ActionLinkDeclinationScheduleIntervalInDays { get; set; }
+
+    public string PartnerSharingSchedule { get; set; }
+
+    public int PartnerSharingScheduleBatchSize { get; set; }
+
+    public int PartnerSharingScheduleMaxIntervalInHours { get; set; }
   }
 }

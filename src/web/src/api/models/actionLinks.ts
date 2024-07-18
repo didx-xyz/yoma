@@ -21,12 +21,14 @@ export interface LinkInfo {
   id: string;
   name: string;
   description: string | null;
-  entityType: LinkEntityType;
+  entityType: LinkEntityType | string; //NB: string is not in the original model
   action: LinkAction;
   statusId: string;
   status: LinkStatus | string; //NB: string is not in the original model
   entityId: string;
   entityTitle: string;
+  entityOrganizationId: string | null;
+  entityOrganizationName: string | null;
   uRL: string;
   shortURL: string;
   qrCodeBase64: string | null; // NB: casing not the same as api
@@ -54,6 +56,8 @@ export enum LinkStatus {
   Inactive,
   Expired,
   LimitReached,
+  Declined,
+  Deleted,
 }
 
 export interface LinkSearchFilter extends PaginationFilter {
@@ -67,4 +71,9 @@ export interface LinkSearchFilter extends PaginationFilter {
 export interface LinkSearchResult {
   totalCount: number | null;
   items: LinkInfo[];
+}
+
+export interface LinkRequestUpdateStatus {
+  status: LinkStatus;
+  comment: string | null;
 }

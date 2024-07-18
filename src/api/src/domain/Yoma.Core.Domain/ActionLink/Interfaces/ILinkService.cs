@@ -12,10 +12,10 @@ namespace Yoma.Core.Domain.ActionLink.Interfaces
 
     Task<LinkInfo> GetOrCreateShare(LinkRequestCreateShare request, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization);
 
-    Task<LinkInfo> CreateVerify(LinkRequestCreateVerify request, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization);
+    Task<LinkInfo> CreateVerify(LinkRequestCreateVerify request, bool ensureOrganizationAuthorization);
 
     Task<LinkInfo> LogUsage(Guid id);
 
-    Task<LinkInfo> UpdateStatus(Guid id, LinkStatus status, bool ensureOrganizationAuthorization);
+    Task<LinkInfo> UpdateStatus(Guid id, LinkRequestUpdateStatus request, bool ensureOrganizationAuthorization);
   }
 }

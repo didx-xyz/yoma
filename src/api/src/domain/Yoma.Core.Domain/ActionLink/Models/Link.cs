@@ -22,8 +22,9 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public string? OpportunityTitle { get; set; }
 
-    [JsonIgnore]
     public Guid? OpportunityOrganizationId { get; set; }
+
+    public string? OpportunityOrganizationName { get; set; }
 
     public string URL { get; set; }
 
@@ -38,6 +39,8 @@ namespace Yoma.Core.Domain.ActionLink.Models
     public string? DistributionList { get; set; }
 
     public bool? LockToDistributionList { get; set; }
+
+    public string? CommentApproval { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
 
