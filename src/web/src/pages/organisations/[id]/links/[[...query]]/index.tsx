@@ -753,7 +753,9 @@ const Links: NextPageWithLayout<{
                     <div className="mb-2 flex flex-col">
                       {item.entityType == "Opportunity" && (
                         <Link
-                          href={`/organisations/${item.entityOrganizationId}/opportunities/${
+                          href={`/organisations/${
+                            item.entityOrganizationId
+                          }/opportunities/${
                             item.entityId
                           }/info${`?returnUrl=${encodeURIComponent(
                             getSafeUrl(returnUrl, router.asPath),
@@ -924,7 +926,9 @@ const Links: NextPageWithLayout<{
                         {item.entityType == "Opportunity" &&
                           item.entityOrganizationId && (
                             <Link
-                              href={`/organisations/${item.entityOrganizationId}/opportunities/${
+                              href={`/organisations/${
+                                item.entityOrganizationId
+                              }/opportunities/${
                                 item.entityId
                               }/info${`?returnUrl=${encodeURIComponent(
                                 getSafeUrl(returnUrl, router.asPath),
