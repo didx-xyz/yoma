@@ -32,7 +32,10 @@ import {
   updateLinkStatus,
 } from "~/api/services/actionLinks";
 import MainLayout from "~/components/Layout/Main";
-import { LinkSearchFilters } from "~/components/Links/LinkSearchFilter";
+import {
+  LinkFilterOptions,
+  LinkSearchFilters,
+} from "~/components/Links/LinkSearchFilter";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -56,7 +59,8 @@ import { authOptions } from "~/server/auth";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { type, action, statuses, entities, page, returnUrl } = context.query;
+  const { type, action, statuses, organizations, entities, page, returnUrl } =
+    context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
   let errorCode = null;
 
@@ -74,6 +78,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       type: type ?? null,
       action: action ?? null,
       statuses: statuses ?? null,
+      organizations: organizations ?? null,
       entities: entities ?? null,
       page: page ?? null,
       error: errorCode,
@@ -86,11 +91,21 @@ const Links: NextPageWithLayout<{
   type?: string;
   action?: string;
   statuses?: string;
+  organizations?: string;
   entities?: string;
   page?: string;
   error?: number;
   returnUrl?: string;
-}> = ({ type, action, statuses, entities, page, error, returnUrl }) => {
+}> = ({
+  type,
+  action,
+  statuses,
+  organizations,
+  entities,
+  page,
+  error,
+  returnUrl,
+}) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [showQRCode, setShowQRCode] = useState(false);
@@ -111,7 +126,7 @@ const Links: NextPageWithLayout<{
     queryKey: [
       "Admin",
       "Links",
-      `${type}_${action}_${statuses}_${entities}_${page}`,
+      `${type}_${action}_${statuses}_${organizations}_${entities}_${page}`,
     ],
     queryFn: () =>
       searchLinks({
@@ -119,8 +134,8 @@ const Links: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         entityType: type ?? LinkEntityType.Opportunity,
         action: action ?? LinkAction.Verify,
+        organizations: organizations ? organizations.split("|") : null,
         entities: entities ? entities.split("|") : null,
-        organizations: null,
         statuses: statuses ? statuses.split("|") : null,
       }),
     enabled: !error,
@@ -230,9 +245,9 @@ const Links: NextPageWithLayout<{
     pageSize: PAGE_SIZE,
     entityType: type ?? LinkEntityType.Opportunity,
     action: action ?? LinkAction.Verify,
+    organizations: organizations ? organizations.split("|") : null,
     entities: entities ? entities.split("|") : null,
     statuses: statuses ? statuses.split("|") : null,
-    organizations: null,
   });
 
   // 🎈 FUNCTIONS
@@ -242,6 +257,12 @@ const Links: NextPageWithLayout<{
 
       // construct querystring parameters from filter
       const params = new URLSearchParams();
+
+      if (
+        searchFilter?.organizations?.length !== undefined &&
+        searchFilter.organizations.length > 0
+      )
+        params.append("organizations", searchFilter.organizations.join("|"));
 
       if (
         searchFilter?.entities?.length !== undefined &&
@@ -722,8 +743,11 @@ const Links: NextPageWithLayout<{
           <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
             {/* LINKS FILTER */}
             <LinkSearchFilters
-              organisationId={null}
               searchFilter={searchFilter}
+              filterOptions={[
+                LinkFilterOptions.ORGANIZATIONS,
+                LinkFilterOptions.ENTITIES,
+              ]}
               onSubmit={(e) => onSubmitFilter(e)}
             />
           </div>

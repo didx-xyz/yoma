@@ -8,7 +8,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import { useCallback, useState, type ReactElement } from "react";
+import { useCallback, useMemo, useState, type ReactElement } from "react";
 import {
   IoIosAdd,
   IoIosLink,
@@ -37,7 +37,10 @@ import {
   updateLinkStatus,
 } from "~/api/services/actionLinks";
 import MainLayout from "~/components/Layout/Main";
-import { LinkSearchFilters } from "~/components/Links/LinkSearchFilter";
+import {
+  LinkFilterOptions,
+  LinkSearchFilters,
+} from "~/components/Links/LinkSearchFilter";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -461,6 +464,16 @@ const Links: NextPageWithLayout<{
     [id, queryClient, modalContext, setIsLoading],
   );
 
+  // memo for isSearchPerformed based on filter parameters
+  const isSearchPerformed = useMemo<boolean>(() => {
+    return (
+      type != undefined ||
+      action != undefined ||
+      statuses != undefined ||
+      entities != undefined
+    );
+  }, [type, action, statuses, entities]);
+
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -690,8 +703,8 @@ const Links: NextPageWithLayout<{
           <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
             {/* LINKS FILTER */}
             <LinkSearchFilters
-              organisationId={id}
               searchFilter={searchFilter}
+              filterOptions={[LinkFilterOptions.ENTITIES]}
               onSubmit={(e) => onSubmitFilter(e)}
             />
 
@@ -704,7 +717,7 @@ const Links: NextPageWithLayout<{
           {links && links.items?.length === 0 && (
             <>
               {/* ALL TAB */}
-              {!statuses && (
+              {!isSearchPerformed && (
                 <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
                   <NoRowsMessage
                     title={"Welcome to Links!"}
@@ -717,7 +730,7 @@ const Links: NextPageWithLayout<{
               )}
 
               {/* OTHER TABS */}
-              {statuses && (
+              {isSearchPerformed && (
                 <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
                   <NoRowsMessage
                     title={"No links found"}
