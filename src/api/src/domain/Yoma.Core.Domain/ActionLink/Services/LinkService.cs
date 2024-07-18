@@ -289,6 +289,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
           throw new InvalidOperationException($"Invalid / unsupported entity type of '{request.EntityType}'");
       }
 
+      await SendEmail(item, EmailType.ActionLink_Verify_Approval_Requested);
+
       return item.ToLinkInfo(request.IncludeQRCode);
     }
 
@@ -652,7 +654,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
                   throw new InvalidOperationException("Opportunity organization details expected");
 
                 //send email to organization administrators
-                var organization = _organizationService.GetById(link.OpportunityOrganizationId.Value, false, false, false);
+                var organization = _organizationService.GetById(link.OpportunityOrganizationId.Value, true, false, false);
 
                 recipients = organization.Administrators?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList();
 

@@ -183,7 +183,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
                       throw new InvalidOperationException("Opportunity organization details expected");
 
                     //send email to organization administrators
-                    var organization = _organizationService.GetById(item.OpportunityOrganizationId.Value, false, false, false);
+                    var organization = _organizationService.GetById(item.OpportunityOrganizationId.Value, true, false, false);
 
                     recipients = organization.Administrators?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList();
 
