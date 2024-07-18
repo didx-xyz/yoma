@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { GetServerSidePropsContext } from "next";
+import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Image from "next/image";
@@ -62,7 +62,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { type, action, statuses, organizations, entities, page, returnUrl } =
     context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
-  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
@@ -81,7 +80,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       organizations: organizations ?? null,
       entities: entities ?? null,
       page: page ?? null,
-      error: errorCode,
+      error: null,
       returnUrl: returnUrl ?? null,
     },
   };

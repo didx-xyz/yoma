@@ -827,8 +827,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       description: formData.description,
       type:
         formData.typeId && opportunityTypesData
-          ? opportunityTypesData.find((x) => x.id == formData.typeId)?.name ??
-            ""
+          ? (opportunityTypesData.find((x) => x.id == formData.typeId)?.name ??
+            "")
           : "",
       organizationId: id,
       organizationName: organisation ? organisation.name : "",
@@ -844,13 +844,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       verificationMethod: formData.verificationMethod,
       difficulty:
         formData.difficultyId && difficultiesData
-          ? difficultiesData.find((x) => x.id == formData.difficultyId)?.name ??
-            ""
+          ? (difficultiesData.find((x) => x.id == formData.difficultyId)
+              ?.name ?? "")
           : "",
       commitmentInterval:
         formData.commitmentIntervalId && timeIntervalsData
-          ? timeIntervalsData.find((x) => x.id == formData.commitmentIntervalId)
-              ?.name ?? ""
+          ? (timeIntervalsData.find(
+              (x) => x.id == formData.commitmentIntervalId,
+            )?.name ?? "")
           : "",
       commitmentIntervalCount: formData.commitmentIntervalCount ?? 0,
       commitmentIntervalDescription: "",
@@ -869,8 +870,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       featured: false,
       engagementType:
         formData.engagementTypeId && engagementTypesData
-          ? engagementTypesData.find((x) => x.id == formData.engagementTypeId)
-              ?.name ?? ""
+          ? (engagementTypesData.find((x) => x.id == formData.engagementTypeId)
+              ?.name ?? "")
           : "",
       published: true,
       yomaInfoURL: "",
@@ -1683,8 +1684,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             onChange={(val) =>
                               onChange(val?.map((c) => c.value ?? ""))
                             }
-                            value={categoriesOptions?.filter(
-                              (c) => value?.includes(c.value),
+                            value={categoriesOptions?.filter((c) =>
+                              value?.includes(c.value),
                             )}
                             // fix menu z-index issue
                             menuPortalTarget={htmlRef.current}
@@ -1833,8 +1834,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             onChange={(val) =>
                               onChange(val.map((c) => c.value))
                             }
-                            value={languagesOptions?.filter(
-                              (c) => value?.includes(c.value),
+                            value={languagesOptions?.filter((c) =>
+                              value?.includes(c.value),
                             )}
                             // fix menu z-index issue
                             menuPortalTarget={htmlRef.current}
@@ -1880,8 +1881,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             onChange={(val) =>
                               onChange(val.map((c) => c.value))
                             }
-                            value={countriesOptions?.filter(
-                              (c) => value?.includes(c.value),
+                            value={countriesOptions?.filter((c) =>
+                              value?.includes(c.value),
                             )}
                             // fix menu z-index issue
                             menuPortalTarget={htmlRef.current}
@@ -2835,19 +2836,18 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {schemaAttributes?.map(
-                                    (attribute) =>
-                                      attribute.properties?.map(
-                                        (property, index) => (
-                                          <tr
-                                            key={`schemaAttributes_${attribute.id}_${index}_${property.id}`}
-                                            className="border-gray text-gray-dark"
-                                          >
-                                            <td>{attribute?.name}</td>
-                                            <td>{property.nameDisplay}</td>
-                                          </tr>
-                                        ),
+                                  {schemaAttributes?.map((attribute) =>
+                                    attribute.properties?.map(
+                                      (property, index) => (
+                                        <tr
+                                          key={`schemaAttributes_${attribute.id}_${index}_${property.id}`}
+                                          className="border-gray text-gray-dark"
+                                        >
+                                          <td>{attribute?.name}</td>
+                                          <td>{property.nameDisplay}</td>
+                                        </tr>
                                       ),
+                                    ),
                                   )}
                                 </tbody>
                               </table>

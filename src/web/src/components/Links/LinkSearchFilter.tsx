@@ -133,10 +133,7 @@ export const LinkSearchFilters: React.FC<{
     (inputValue: string, callback: (options: any) => void) => {
       searchCriteriaOpportunities({
         opportunities: [],
-        organization:
-          searchFilter?.organizations && searchFilter.organizations[0]
-            ? searchFilter.organizations[0]
-            : null,
+        organization: searchFilter?.organizations?.[0] ?? null,
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
         published: null,
         verificationMethod: null,

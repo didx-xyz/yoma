@@ -78,7 +78,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
   const { type, action, statuses, entities, page, returnUrl } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
-  let errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
@@ -101,7 +100,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       entities: entities ?? null,
       page: page ?? null,
       theme: theme,
-      error: errorCode,
+      error: null,
       returnUrl: returnUrl ?? null,
     },
   };
