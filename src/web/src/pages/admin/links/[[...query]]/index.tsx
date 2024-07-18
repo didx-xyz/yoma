@@ -777,7 +777,9 @@ const Links: NextPageWithLayout<{
                       {item.entityOrganizationId &&
                         item.entityOrganizationName && (
                           <Link
-                            href={`/organisations/${item.entityOrganizationId}${`?returnUrl=${encodeURIComponent(
+                            href={`/organisations/${
+                              item.entityOrganizationId
+                            }${`?returnUrl=${encodeURIComponent(
                               getSafeUrl(returnUrl, router.asPath),
                             )}`}`}
                             className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-bold text-gray-dark underline"
@@ -789,7 +791,9 @@ const Links: NextPageWithLayout<{
                       {item.entityType == "Opportunity" &&
                         item.entityOrganizationId && (
                           <Link
-                            href={`/organisations/${item.entityOrganizationId}/opportunities/${
+                            href={`/organisations/${
+                              item.entityOrganizationId
+                            }/opportunities/${
                               item.entityId
                             }/info${`?returnUrl=${encodeURIComponent(
                               getSafeUrl(returnUrl, router.asPath),
@@ -1018,7 +1022,9 @@ const Links: NextPageWithLayout<{
                         {item.entityOrganizationId &&
                           item.entityOrganizationName && (
                             <Link
-                              href={`/organisations/${item.entityOrganizationId}${`?returnUrl=${encodeURIComponent(
+                              href={`/organisations/${
+                                item.entityOrganizationId
+                              }${`?returnUrl=${encodeURIComponent(
                                 getSafeUrl(returnUrl, router.asPath),
                               )}`}`}
                               className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap text-sm text-gray-dark underline"
@@ -1031,7 +1037,9 @@ const Links: NextPageWithLayout<{
                         {item.entityType == "Opportunity" &&
                           item.entityOrganizationId && (
                             <Link
-                              href={`/organisations/${item.entityOrganizationId}/opportunities/${
+                              href={`/organisations/${
+                                item.entityOrganizationId
+                              }/opportunities/${
                                 item.entityId
                               }/info${`?returnUrl=${encodeURIComponent(
                                 getSafeUrl(returnUrl, router.asPath),

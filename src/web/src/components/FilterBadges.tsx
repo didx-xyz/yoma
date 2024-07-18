@@ -69,7 +69,7 @@ const FilterBadges: React.FC<{
                   </span>
                 );
               })
-            ) : (resolveValue(key, value as string) ?? (value as string)) ? (
+            ) : resolveValue(key, value as string) ?? (value as string) ? (
               <span className="badge h-6 max-w-[200px] rounded-md border-none bg-green-light p-2 text-green">
                 <p className="truncate text-center text-xs font-semibold">
                   {resolveValue(key, value as string) ?? (value as string)}
