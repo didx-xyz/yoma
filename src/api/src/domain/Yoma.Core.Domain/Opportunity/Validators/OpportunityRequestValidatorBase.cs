@@ -49,11 +49,11 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       _opportunityVerificationTypeService = opportunityVerificationTypeService;
       _ssiSchemaService = ssiSchemaService;
 
-      RuleFor(x => x.Title).NotEmpty().Length(1, 255).WithMessage("'{PropertyName}' is required and must be between 1 and 255 characters long.");
+      RuleFor(x => x.Title).NotEmpty().Length(1, 150).WithMessage("'{PropertyName}' is required and must be between 1 and 150 characters long.");
       RuleFor(x => x.Description).NotEmpty();
       RuleFor(x => x.TypeId).NotEmpty().Must(TypeExists).WithMessage($"Specified type is invalid / does not exist.");
       RuleFor(x => x.OrganizationId).NotEmpty().Must(OrganizationUpdatable).WithMessage($"Specified organization has been declined / deleted or does not exist.");
-      RuleFor(x => x.Summary).Length(1, 500).When(x => !string.IsNullOrEmpty(x.Summary)).WithMessage("'{PropertyName}' must be between 1 and 500 characters.");
+      RuleFor(x => x.Summary).NotEmpty().Length(1, 150).WithMessage("'{PropertyName}' must be between 1 and 150 characters.");
       //instructions (varchar(max); auto trimmed
       RuleFor(x => x.URL).Length(1, 2048).Must(ValidURL).When(x => !string.IsNullOrEmpty(x.URL)).WithMessage("'{PropertyName}' must be between 1 and 2048 characters long and be a valid URL if specified.");
       RuleFor(x => x.ZltoReward)
@@ -106,7 +106,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .Must(SSISchemaExistsAndOfTypeOpportunity)
           .When(x => !string.IsNullOrEmpty(x.SSISchemaName))
           .WithMessage("SSI schema does not exist.");
-      RuleFor(x => x.EngagementTypeId).Must(EngagementTypeExists).WithMessage($"Specified education is invalid / does not exist.");
+      RuleFor(x => x.EngagementTypeId).Must(EngagementTypeExists).WithMessage($"Specified engagement type is invalid / does not exist.");
       RuleFor(x => x.Categories).Must(categories => categories != null && categories.Count != 0 && categories.All(id => id != Guid.Empty && CategoryExists(id)))
         .WithMessage("Categories are required and must exist.");
       RuleFor(x => x.Countries).Must(countries => countries != null && countries.Count != 0 && countries.All(id => id != Guid.Empty && CountryExists(id)))

@@ -21,21 +21,21 @@ namespace Yoma.Core.Domain.Entity.Validators
       _countryService = countryService;
       _organizationProviderTypeService = organizationProviderTypeService;
 
-      RuleFor(x => x.Name).NotEmpty().Length(1, 80);
+      RuleFor(x => x.Name).NotEmpty().Length(1, 80).WithMessage("'{PropertyName}' is required and must be between 1 and 80 characters long.");
       RuleFor(x => x.WebsiteURL).Length(1, 2048).Must(ValidURL).WithMessage("'{PropertyName}' is invalid.");
-      RuleFor(x => x.PrimaryContactName).Length(1, 255).When(x => !string.IsNullOrEmpty(x.PrimaryContactName));
-      RuleFor(x => x.PrimaryContactEmail).Length(1, 320).EmailAddress().When(x => !string.IsNullOrEmpty(x.PrimaryContactEmail));
-      RuleFor(x => x.PrimaryContactPhone).Length(1, 50).Matches(RegExValidators.PhoneNumber()).WithMessage("'{PropertyName}' is invalid.").When(x => !string.IsNullOrEmpty(x.PrimaryContactPhone));
-      RuleFor(x => x.VATIN).Length(1, 255).When(x => !string.IsNullOrEmpty(x.VATIN));
-      RuleFor(x => x.TaxNumber).Length(1, 255).When(x => !string.IsNullOrEmpty(x.TaxNumber));
-      RuleFor(x => x.RegistrationNumber).Length(1, 255).When(x => !string.IsNullOrEmpty(x.RegistrationNumber));
-      RuleFor(x => x.City).Length(1, 50).When(x => !string.IsNullOrEmpty(x.City));
-      RuleFor(x => x.CountryId).Must(CountryExists).WithMessage($"Specified country is invalid / does not exist.");
-      RuleFor(x => x.StreetAddress).Length(1, 500).When(x => !string.IsNullOrEmpty(x.StreetAddress));
-      RuleFor(x => x.Province).Length(1, 255).When(x => !string.IsNullOrEmpty(x.Province));
-      RuleFor(x => x.PostalCode).Length(1, 10).When(x => !string.IsNullOrEmpty(x.PostalCode));
-      RuleFor(x => x.Tagline).Length(1, 160).When(x => !string.IsNullOrEmpty(x.Tagline));
-      RuleFor(x => x.Biography).Length(1, 480).When(x => !string.IsNullOrEmpty(x.Biography));
+      RuleFor(x => x.PrimaryContactName).Length(1, 255).When(x => !string.IsNullOrEmpty(x.PrimaryContactName)).WithMessage("'{PropertyName}' must be between 1 and 255 characters.");
+      RuleFor(x => x.PrimaryContactEmail).Length(1, 320).EmailAddress().When(x => !string.IsNullOrEmpty(x.PrimaryContactEmail)).WithMessage("'{PropertyName}' is invalid.");
+      RuleFor(x => x.PrimaryContactPhone).Length(1, 50).Matches(RegExValidators.PhoneNumber()).When(x => !string.IsNullOrEmpty(x.PrimaryContactPhone)).WithMessage("'{PropertyName}' is invalid.");
+      RuleFor(x => x.VATIN).Length(1, 255).When(x => !string.IsNullOrEmpty(x.VATIN)).WithMessage("'{PropertyName}' must be between 1 and 255 characters.");
+      RuleFor(x => x.TaxNumber).Length(1, 255).When(x => !string.IsNullOrEmpty(x.TaxNumber)).WithMessage("'{PropertyName}' must be between 1 and 255 characters.");
+      RuleFor(x => x.RegistrationNumber).Length(1, 255).When(x => !string.IsNullOrEmpty(x.RegistrationNumber)).WithMessage("'{PropertyName}' must be between 1 and 255 characters.");
+      RuleFor(x => x.City).NotEmpty().Length(1, 50).WithMessage("'{PropertyName}' is required and must be between 1 and 50 characters long.");
+      RuleFor(x => x.CountryId).NotEmpty().WithMessage("Country is required.").Must(CountryExists).WithMessage($"Specified country is invalid / does not exist.");
+      RuleFor(x => x.StreetAddress).NotEmpty().Length(1, 500).WithMessage("'{PropertyName}' is required and must be between 1 and 500 characters long.");
+      RuleFor(x => x.Province).NotEmpty().Length(1, 255).WithMessage("'{PropertyName}' is required and must be between 1 and 255 characters long.");
+      RuleFor(x => x.PostalCode).NotEmpty().Length(1, 10).WithMessage("'{PropertyName}' is required and must be between 1 and 10 characters long.");
+      RuleFor(x => x.Tagline).Length(1, 160).When(x => !string.IsNullOrEmpty(x.Tagline)).WithMessage("'{PropertyName}' must be between 1 and 160 characters.");
+      RuleFor(x => x.Biography).Length(1, 480).When(x => !string.IsNullOrEmpty(x.Biography)).WithMessage("'{PropertyName}' must be between 1 and 480 characters.");
       RuleFor(x => x.Logo).Must(file => file == null || file.Length > 0).WithMessage("Logo is optional, but if specified, can not be empty.");
       RuleFor(x => x.ProviderTypes).Must(providerTypes => providerTypes != null && providerTypes.Count != 0 && providerTypes.All(id => id != Guid.Empty && ProviderTypeExists(id)))
           .WithMessage("Provider types are required and must exist.");
