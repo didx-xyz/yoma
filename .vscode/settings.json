@@ -1,7 +1,8 @@
 {
+  "editor.formatOnSave": true,
+  "files.eol": "\n",
   "files.insertFinalNewline": true,
   "files.trimFinalNewlines": true,
-  "files.eol": "\n",
   "files.trimTrailingWhitespace": true,
   "sonarlint.connectedMode.project": {
     "connectionId": "didx-xyz",
