@@ -640,9 +640,9 @@ const Home: NextPageWithLayout = () => {
               <Image
                 src={iconIxo}
                 alt="IXO"
-                width={68}
-                height={35}
-                style={{ width: 68, height: 35 }}
+                width={70}
+                height={70}
+                style={{ width: 70, height: 70 }}
               />
             </div>
 
