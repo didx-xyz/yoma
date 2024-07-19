@@ -94,21 +94,21 @@ BEGIN
             'My Province',
             '12345-1234',
             (
-                SELECT STRING_AGG(Word, ' ')
+                SELECT LEFT(STRING_AGG(Word, ' '), 160)
                 FROM (
                     SELECT word
                     FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
                     ORDER BY RANDOM()
-                    LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
+                    LIMIT 3 + FLOOR(RANDOM() * 7)
                 ) AS RandomTaglineWords
             ),
             (
-                SELECT STRING_AGG(Word, ' ')
+                SELECT LEFT(STRING_AGG(Word, ' '), 480)
                 FROM (
                     SELECT word
                     FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
                     ORDER BY RANDOM()
-                    LIMIT ABS(FLOOR(RANDOM() * 101) + 100)
+                    LIMIT 10 + FLOOR(RANDOM() * 21)
                 ) AS RandomBiographyWords
             ),
             (SELECT "Id" FROM "Entity"."OrganizationStatus" WHERE "Name" = 'Active'),
