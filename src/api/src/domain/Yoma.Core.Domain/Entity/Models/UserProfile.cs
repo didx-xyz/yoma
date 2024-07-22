@@ -36,8 +36,6 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public SettingsInfo? Settings { get; set; }
 
-    public List<UserSkillInfo>? Skills { get; set; }
-
     public List<OrganizationInfo> AdminsOf { get; set; }
 
     public UserProfileZlto Zlto { get; set; }

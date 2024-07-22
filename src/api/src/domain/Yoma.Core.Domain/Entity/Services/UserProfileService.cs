@@ -72,6 +72,13 @@ namespace Yoma.Core.Domain.Entity.Services
       return ToProfile(user).Result;
     }
 
+    public List<UserSkillInfo>? GetSkills()
+    {
+      var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
+      var user = _userService.GetByEmail(username, true, true);
+      return user.Skills;
+    }
+
     public Settings GetSettings()
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);

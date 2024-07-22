@@ -82,6 +82,21 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Get the user's skills, if any (Authenticated User)")]
+    [HttpGet("skills")]
+    [ProducesResponseType(typeof(List<UserSkillInfo>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public IActionResult GetSkills()
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetSkills));
+
+      var result = _userProfileService.GetSkills();
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetSkills));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Get the user's settings (Authenticated User)")]
     [HttpGet("settings")]
     [ProducesResponseType(typeof(Settings), (int)HttpStatusCode.OK)]
