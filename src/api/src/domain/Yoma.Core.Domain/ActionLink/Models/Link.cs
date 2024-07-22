@@ -1,5 +1,3 @@
-using Newtonsoft.Json;
-
 namespace Yoma.Core.Domain.ActionLink.Models
 {
   public class Link

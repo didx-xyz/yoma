@@ -256,6 +256,54 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return Search(filterInternal, false);
     }
 
+    public MyOpportunitySearchResultsSummary Search(MyOpportunitySearchFilterSummary filter)
+    {
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+
+      //filter validated by SearchAdmin
+
+      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      var filterInternal = new MyOpportunitySearchFilterAdmin
+      {
+        UserId = user.Id,
+        Action = filter.Action,
+        VerificationStatuses = filter.VerificationStatuses,
+        TimeIntervalSummaryQuery = true
+      };
+
+      var resultsInternal = Search(filterInternal, false);
+
+      var myOpportunitiesWeekly = resultsInternal.Items
+          .Select(o => new
+          {
+            Date = (o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Completed && o.DateCompleted.HasValue)
+                          ? o.DateCompleted.Value
+                          : o.DateModified
+          })
+          .GroupBy(x => x.Date.AddDays(-(int)x.Date.DayOfWeek).AddDays(7).Date)
+          .Select(group => new
+          {
+            WeekEnding = group.Key,
+            Count = group.Count()
+          })
+          .OrderBy(result => result.WeekEnding)
+          .ToList();
+
+      var myOpportunitiesData = new List<TimeValueEntry>();
+      myOpportunitiesWeekly.ForEach(o => { myOpportunitiesData.Add(new TimeValueEntry(o.WeekEnding, o.Count)); });
+
+      return new MyOpportunitySearchResultsSummary
+      {
+        MyOpportunities = new TimeIntervalSummary
+        {
+          Legend = ["'My' Opportunities"],
+          Data = myOpportunitiesData,
+          Count = [resultsInternal.TotalCount ?? resultsInternal.Items.Count]
+        }
+      };
+    }
+
     public MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
@@ -381,9 +429,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         return result;
       }
 
-      orderInstructions.Add(new() { OrderBy = o => o.Id, SortOrder = FilterSortOrder.Ascending }); //ensure deterministic sorting / consistent pagination results 
-
-      query = query.ApplyFiltersAndOrdering(orderInstructions);
+      if (!filter.TimeIntervalSummaryQuery)
+      {
+        orderInstructions.Add(new() { OrderBy = o => o.Id, SortOrder = FilterSortOrder.Ascending }); //ensure deterministic sorting / consistent pagination results 
+        query = query.ApplyFiltersAndOrdering(orderInstructions);
+      }
 
       //pagination
       if (filter.PaginationEnabled)
@@ -393,13 +443,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
 
       var items = query.ToList();
-      items.ForEach(o =>
+
+      if (!filter.TimeIntervalSummaryQuery)
       {
-        o.UserPhotoURL = GetBlobObjectURL(o.UserPhotoStorageType, o.UserPhotoKey);
-        o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
-        o.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
-      });
+        items.ForEach(o =>
+        {
+          o.UserPhotoURL = GetBlobObjectURL(o.UserPhotoStorageType, o.UserPhotoKey);
+          o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
+          o.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
+        });
+      }
       result.Items = items.Select(o => o.ToInfo()).ToList();
+      if (filter.TimeIntervalSummaryQuery) return result;
 
       result.Items.ForEach(o => SetEngagementCounts(o));
       return result;
