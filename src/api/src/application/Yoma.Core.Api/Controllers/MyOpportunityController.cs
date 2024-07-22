@@ -156,6 +156,21 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter and return time-based summary (Authenticated User)")]
+    [HttpPost("search/summary")]
+    [ProducesResponseType(typeof(MyOpportunitySearchResultsSummary), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public IActionResult Search([FromBody] MyOpportunitySearchFilterSummary filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(Search));
+
+      var result = _myOpportunityService.Search(filter);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(Search));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Track viewing of an opportunity (Authenticated User)")]
     [HttpPut("action/{opportunityId}/view")]
     [ProducesResponseType((int)HttpStatusCode.OK)]

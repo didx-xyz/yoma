@@ -13,6 +13,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     [JsonIgnore]
     internal bool TotalCountOnly { get; set; }
 
+    [JsonIgnore]
+    internal bool TimeIntervalSummaryQuery { get; set; } = false;
+
     /// <summary>
     /// Flag indicating whether to include only published records (relating to active opportunities, 
     /// irrespective of their start status, that relate to active organizations) for non-verification actions 

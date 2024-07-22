@@ -12,6 +12,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter);
 
+    MyOpportunitySearchResultsSummary Search(MyOpportunitySearchFilterSummary filter);
+
     MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
     (string fileName, byte[] bytes) SearchAndExportToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);

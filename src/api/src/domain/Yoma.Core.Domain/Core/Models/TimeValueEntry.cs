@@ -1,4 +1,4 @@
-namespace Yoma.Core.Domain.Analytics.Models
+namespace Yoma.Core.Domain.Core.Models
 {
   public class TimeValueEntry
   {
