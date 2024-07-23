@@ -140,3 +140,22 @@ export const debounce = function (
     debounceTimer = setTimeout(() => func.apply(this, args), delay);
   };
 };
+
+export const getTimeOfDayAndEmoji = (): [string, string] => {
+  const hour = new Date().getHours();
+  let timeOfDay: string;
+  let timeOfDayEmoji: string;
+
+  if (hour < 12) {
+    timeOfDay = "morning";
+    timeOfDayEmoji = "☀️";
+  } else if (hour < 18) {
+    timeOfDay = "afternoon";
+    timeOfDayEmoji = "☀️";
+  } else {
+    timeOfDay = "evening";
+    timeOfDayEmoji = "🌙";
+  }
+
+  return [timeOfDay, timeOfDayEmoji];
+};

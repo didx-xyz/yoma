@@ -18,7 +18,7 @@ import type { TabItem } from "~/api/models/common";
 import Head from "next/head";
 import { AvatarImage } from "../AvatarImage";
 import { IoIosInformationCircleOutline } from "react-icons/io";
-import { ZltoModal } from "../Modals/ZltoModal";
+import { ZltoModal } from "../YoID/ZltoModal";
 import stamps from "public/images/stamps.svg";
 
 export type TabProps = ({
