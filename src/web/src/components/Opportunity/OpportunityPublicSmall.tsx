@@ -29,10 +29,10 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
         <div className="flex flex-row">
           <div className="flex flex-row">
             <div className="flex w-3/5 flex-grow flex-col">
-              <h1 className="h-[32px] max-w-[180px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark md:max-w-[200px]">
+              <h1 className="h-[32px] max-w-[180px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark md:max-w-[160px] xl:max-w-[200px]">
                 {data.organizationName}
               </h1>
-              <h2 className="mt-1 line-clamp-2 h-[45px] max-w-[180px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight md:max-w-[210px]">
+              <h2 className="mt-1 line-clamp-2 h-[45px] max-w-[180px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight md:mt-4 md:max-w-[210px] xl:mt-1">
                 {data.title}
               </h2>
             </div>
@@ -45,7 +45,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
             </div>
           </div>
         </div>
-        <div className="mb-auto flex max-w-[280px] flex-row">
+        <div className="mb-auto mt-0 flex max-w-[280px] flex-row md:mt-2 xl:mt-0">
           <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-ellipsis text-sm font-light">
             {data.summary ?? data.description}
           </p>
@@ -168,13 +168,13 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   };
 
   return preview ? (
-    <div className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl md:w-[19.2rem]">
+    <div className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl md:w-[15rem] xl:w-[19.2rem]">
       {renderContent()}
     </div>
   ) : (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-sm md:w-[19.2rem]"
+      className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-sm md:w-[15rem] xl:w-[19.2rem]"
     >
       {renderContent()}
     </Link>
