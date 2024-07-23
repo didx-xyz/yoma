@@ -55,7 +55,6 @@ export interface UserProfile {
   dateLastLogin: string | null;
   yoIDOnboarded: boolean | null;
   dateYoIDOnboarded: string | null;
-  skills: UserSkillInfo[] | null;
   adminsOf: OrganizationInfo[];
   zlto: UserProfileZlto;
   opportunityCountSaved: number;

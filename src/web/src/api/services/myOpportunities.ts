@@ -8,7 +8,9 @@ import type {
   MyOpportunitySearchCriteriaOpportunity,
   MyOpportunitySearchFilter,
   MyOpportunitySearchFilterAdmin,
+  MyOpportunitySearchFilterSummary,
   MyOpportunitySearchResults,
+  MyOpportunitySearchResultsSummary,
   VerificationStatus,
 } from "../models/myOpportunity";
 import { objectToFormData } from "~/lib/utils";
@@ -17,6 +19,10 @@ import type {
   GetStaticPropsContext,
 } from "next/types";
 import ApiServer from "~/lib/axiosServer";
+import {
+  TimeValueEntry,
+  TimeIntervalSummary,
+} from "../models/organizationDashboard";
 
 export const saveMyOpportunity = async (
   opportunityId: string,
@@ -94,6 +100,40 @@ export const searchMyOpportunitiesAdmin = async (
     filter,
   );
   return data;
+};
+
+export const searchMyOpportunitiesSummary = async (
+  filter: MyOpportunitySearchFilterSummary,
+  context?: GetServerSidePropsContext,
+): Promise<MyOpportunitySearchResultsSummary> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.post<MyOpportunitySearchResultsSummary>(
+    `/myopportunity/search/summary`,
+    filter,
+  );
+
+  // //TODO: mock data:
+  const mockTimeValueEntries: TimeValueEntry[] = [
+    { date: "2023-04-01", values: [10, 20, 30, 4] },
+    { date: "2023-04-02", values: [65, 25, 35, 13] },
+    { date: "2023-04-03", values: [29, 130, 140, 12] }, // Using Date object for variety
+    { date: "2023-04-04", values: [25, 35, 45, 0] },
+    { date: "2023-04-05", values: [130, 240, 250, 3] },
+    { date: "2023-04-06", values: [35, 145, 55, 1] }, // Adding more dates with values
+  ];
+
+  const mockTimeIntervalSummary: TimeIntervalSummary = {
+    legend: ["Completed", "Pending", "Rejected", "Saved"],
+    data: mockTimeValueEntries,
+    count: [3, 3, 3], // Assuming each date has the same number of entries for simplicity
+  };
+
+  const data2: MyOpportunitySearchResultsSummary = {
+    myOpportunities: mockTimeIntervalSummary,
+  };
+
+  return data2;
 };
 
 export const performActionVerifyBulk = async (

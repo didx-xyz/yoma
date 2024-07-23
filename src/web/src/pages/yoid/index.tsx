@@ -1,99 +1,32 @@
-import {
-  QueryClient,
-  dehydrate,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
-import axios from "axios";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtom } from "jotai";
-import moment from "moment";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/router";
-import iconBookmark from "public/images/icon-completions-green.svg";
-import iconSkills from "public/images/icon-skills-green.svg";
-import iconZlto from "public/images/icon-zlto-green.svg";
 import { type ParsedUrlQuery } from "querystring";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ReactElement,
-} from "react";
+import { useState, type ReactElement } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import {
-  IoIosArrowBack,
-  IoIosArrowForward,
-  IoIosInformationCircleOutline,
-  IoMdPerson,
-} from "react-icons/io";
-import type { Country } from "~/api/models/lookups";
+import { IoIosInformationCircleOutline } from "react-icons/io";
+import { SSIWalletSearchResults } from "~/api/models/credential";
 import { Action, VerificationStatus } from "~/api/models/myOpportunity";
-import type {
-  OpportunityCategory,
-  OpportunitySearchResultsInfo,
-} from "~/api/models/opportunity";
-import type { Organization } from "~/api/models/organisation";
-import type {
-  OrganizationSearchFilterOpportunity,
-  OrganizationSearchFilterYouth,
-  OrganizationSearchResultsOpportunity,
-  OrganizationSearchResultsSummary,
-  OrganizationSearchResultsYouth,
-  OrganizationSearchSso,
-} from "~/api/models/organizationDashboard";
-import { UserProfile, UserSkillInfo } from "~/api/models/user";
-import { searchMyOpportunities } from "~/api/services/myOpportunities";
-import {
-  getCategoriesAdmin,
-  searchCriteriaOpportunities,
-} from "~/api/services/opportunities";
-import { getOrganisationById } from "~/api/services/organisations";
-import {
-  getCountries,
-  searchOrganizationEngagement,
-  searchOrganizationOpportunities,
-  searchOrganizationSso,
-  searchOrganizationYouth,
-} from "~/api/services/organizationDashboard";
-import { AvatarImage } from "~/components/AvatarImage";
-import FormTooltip from "~/components/Common/FormTooltip";
+import { searchCredentials } from "~/api/services/credentials";
+import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
+import { getUserSkills } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
-import NoRowsMessage from "~/components/NoRowsMessage";
-import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
-import DashboardCarousel from "~/components/Organisation/Dashboard/DashboardCarousel";
-import { EngagementRowFilter } from "~/components/Organisation/Dashboard/EngagementRowFilter";
-import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
-import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
-import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
-import { SkillsChart } from "~/components/Organisation/Dashboard/SkillsChart";
-import { SsoChart } from "~/components/Organisation/Dashboard/SsoChart";
-import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
 import { PageBackground } from "~/components/PageBackground";
-import { PaginationButtons } from "~/components/PaginationButtons";
 import { InternalServerError } from "~/components/Status/InternalServerError";
-import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
-import { Loading } from "~/components/Status/Loading";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { HeaderWithLink } from "~/components/YoID/HeaderWithLink";
+import { LineChart } from "~/components/YoID/LineChart";
+import { PassportCard } from "~/components/YoID/PassportCard";
+import { SkillsCard } from "~/components/YoID/SkillsCard";
 import { WalletCard } from "~/components/YoID/WalletCard";
 import { ZltoModal } from "~/components/YoID/ZltoModal";
-import {
-  CHART_COLORS,
-  DATETIME_FORMAT_HUMAN,
-  PAGE_SIZE,
-  PAGE_SIZE_MINIMUM,
-  ROLE_ADMIN,
-} from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
 import { userProfileAtom } from "~/lib/store";
-import { getThemeFromRole, getTimeOfDayAndEmoji } from "~/lib/utils";
+import { getTimeOfDayAndEmoji } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -739,18 +672,68 @@ const YoIDDashboard: NextPageWithLayout<{
   // );
 
   const {
-    data: dataMyOpportunities,
-    error: dataMyOpportunitiesError,
-    isLoading: dataMyOpportunitiesIsLoading,
+    data: dataUserSkills,
+    error: dataUserSkillsError,
+    isLoading: dataUserSkillsIsLoading,
   } = useQuery({
-    queryKey: ["MyOpportunities_Completed"],
+    queryKey: ["User", "Skills"],
+    queryFn: () => getUserSkills(),
+    enabled: !error,
+  });
+
+  const {
+    data: dataMyOpportunitiesSummary,
+    error: dataMyOpportunitiesSummaryError,
+    isLoading: dataMyOpportunitiesSummaryIsLoading,
+  } = useQuery({
+    queryKey: ["MyOpportunities", "Summary", "All"],
     queryFn: () =>
-      searchMyOpportunities({
+      searchMyOpportunitiesSummary({
         action: Action.Verification,
-        verificationStatuses: [VerificationStatus.Completed],
-        pageNumber: null, // pageNumber,
-        pageSize: PAGE_SIZE,
+        verificationStatuses: [
+          VerificationStatus.Completed,
+          VerificationStatus.Rejected,
+          VerificationStatus.Pending,
+        ],
       }),
+    enabled: !error,
+  });
+
+  const {
+    data: dataCredentials,
+    error: dataCredentialsError,
+    isLoading: dataCredentialsIsLoading,
+  } = useQuery<{ schemaType: string; totalCount: number | null }[]>({
+    queryKey: ["Credentials", "TotalCounts"],
+    queryFn: (): Promise<{ schemaType: string; totalCount: number | null }[]> =>
+      Promise.all([
+        searchCredentials({
+          pageNumber: null,
+          pageSize: null,
+          schemaType: "Opportunity",
+        }),
+        searchCredentials({
+          pageNumber: null,
+          pageSize: null,
+          schemaType: "YoID",
+        }),
+      ])
+        .then(([opportunityResult, yoidResult]) => {
+          const combinedResults = [
+            {
+              schemaType: "Opportunity",
+              totalCount: opportunityResult.totalCount,
+            },
+            { schemaType: "YoID", totalCount: yoidResult.totalCount },
+          ];
+
+          return combinedResults;
+        })
+        .catch((error) => {
+          console.error("Error fetching data:", error);
+          // Depending on your error handling strategy, you might want to throw an error or return a default value
+          throw error; // or return [];
+        }),
     enabled: !error,
   });
 
@@ -823,54 +806,63 @@ const YoIDDashboard: NextPageWithLayout<{
           {/* DASHBOARD */}
           <div
             //className="grid-col-1 md:grid-col-3 mt-4 grid gap-4"
-            className="mt-5 flex flex-col gap-4 md:flex-row"
+            className="mt-8 flex flex-wrap justify-center gap-4 lg:justify-normal"
           >
             {/* WALLET */}
-            <div className="flex flex-col gap-2">
+            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
               <HeaderWithLink title="Wallet 💸" url="/yoid/credentials" />
-              <WalletCard />
+              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+                {userProfile ? (
+                  <WalletCard userProfile={userProfile} />
+                ) : (
+                  <LoadingSkeleton />
+                )}
+              </div>
             </div>
 
             {/* SKILLS */}
-            <div className="flex flex-col gap-2">
+            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
               <HeaderWithLink title="Skills ⚡" url="/yoid/credentials" />
-              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow md:w-[333px]">
-                <div className="my-2 flex flex-wrap gap-1 overflow-y-auto">
-                  {userProfile?.skills?.map((skill) => (
-                    <div
-                      key={skill.id}
-                      className="badge bg-green px-2 py-1 text-white"
-                    >
-                      {skill.infoURL && (
-                        <Link href={skill.infoURL}>{skill.name}</Link>
-                      )}
-                      {!skill.infoURL && <div>{skill.name}</div>}
-                    </div>
-                  ))}
+              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+                <div className="flex flex-wrap gap-1 overflow-y-auto">
+                  {dataUserSkills ? (
+                    <SkillsCard data={dataUserSkills} />
+                  ) : (
+                    <LoadingSkeleton />
+                  )}
                 </div>
               </div>
             </div>
 
             {/* OPPORTUNITIES */}
-            <div className="flex flex-col gap-2">
+            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
               <HeaderWithLink
                 title="Opportunities 🏆"
                 url="/yoid/opportunities"
               />
-              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow md:w-[333px]">
-                <div className="my-2 flex flex-wrap gap-1"></div>
+              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+                {dataMyOpportunitiesSummary?.myOpportunities && userProfile ? (
+                  <LineChart
+                    data={dataMyOpportunitiesSummary.myOpportunities}
+                    userProfile={userProfile}
+                  />
+                ) : (
+                  <LoadingSkeleton />
+                )}
               </div>
             </div>
 
-            {/* DEMOGRAPHICS */}
-            {/* <div className="flex w-full flex-col gap-2">
-              {/* <div className="mb-2 text-xl font-semibold">Demographics</div>
-
-              <div className="flex w-full flex-col gap-4 md:flex-row">
-                {/* WALLET
-                <WalletCard />
+            {/* PASSPORT */}
+            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
+              <HeaderWithLink title="Passport 🌐" url="/yoid/credentials" />
+              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+                {dataCredentials ? (
+                  <PassportCard data={dataCredentials} />
+                ) : (
+                  <LoadingSkeleton />
+                )}
               </div>
-            </div>*/}
+            </div>
           </div>
         </div>
       </div>
