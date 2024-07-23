@@ -65,7 +65,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IExecutionStrategyService _executionStrategyService;
 
     private const int List_Aggregated_Opportunity_By_Limit = 100;
-    private const string SettingsKey_ShareEmailWithPartners = "Share_Email_With_Partners";
     private const string PlaceholderValue_HiddenEmail = "hidden";
     #endregion
 
@@ -468,7 +467,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       foreach (var item in result.Items)
       {
-        if (SettingsHelper.GetValue<bool>(_userService.GetSettingsInfo(item.UserSettings), SettingsKey_ShareEmailWithPartners) == true) continue;
+        if (SettingsHelper.GetValue<bool>(_userService.GetSettingsInfo(item.UserSettings), Setting.User_Share_Email_With_Partners.ToString()) == true) continue;
         item.UserEmail = PlaceholderValue_HiddenEmail;
       }
 

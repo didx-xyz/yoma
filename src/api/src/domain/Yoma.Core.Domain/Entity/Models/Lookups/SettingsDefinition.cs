@@ -25,5 +25,7 @@ namespace Yoma.Core.Domain.Entity.Models.Lookups
     public SettingType Type { get; set; }
 
     public bool Enabled { get; set; }
+
+    public bool Visible { get; set; }
   }
 }
