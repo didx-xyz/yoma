@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Interfaces
@@ -12,7 +13,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter);
 
-    MyOpportunitySearchResultsSummary Search(MyOpportunitySearchFilterSummary filter);
+    TimeIntervalSummary GetSummary();
 
     MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
