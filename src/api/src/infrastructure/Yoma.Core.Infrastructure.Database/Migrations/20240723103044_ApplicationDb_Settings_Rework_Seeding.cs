@@ -21,7 +21,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           { "FE13ECF7-0136-4F5A-9BFD-85BCD31868EF", "User", "User_PopUp_LeavingYoma", "Hide 'leaving Yoma' pop up", "A user has opted to hide the pop up when leaving the Yoma app ", "Display", null, 2, $"[\"{Constants.Role_User}\"]", "false", "Boolean", true, false },
 
           // Notifications: General
-          { "8DFEA39C-FE35-4974-95DE-C3E6E8B5C72B", "User", "User_Email_Opportunity_Posted", "New opportunities", "Get notified about new opportunities", "Notifications", "General", 3, $"[\"{Constants.Role_User}\"]", "false", "Boolean", true , true},
+          { "8DFEA39C-FE35-4974-95DE-C3E6E8B5C72B", "User", "User_Email_Opportunity_Published", "New opportunities", "Get notified about new opportunities", "Notifications", "General", 3, $"[\"{Constants.Role_User}\"]", "false", "Boolean", true , true},
           { "DA42922D-89CE-4C7C-9CB7-59843FABC087", "User", "User_Email_Opportunity_Completion", "Verification status", "Get notified when the status of your verifications change", "Notifications", "General", 4, $"[\"{Constants.Role_User}\"]", "true", "Boolean", false , false},
           { "E6FBD123-5820-4DB1-8C37-8A90B2A3E86F", "User", "User_MailingList_Subscribe", "Mailing list", "Subscribe to our mailing list", "Notifications", "General", 5, $"[\"{Constants.Role_User}\"]", "true", "Boolean", true , true},
 

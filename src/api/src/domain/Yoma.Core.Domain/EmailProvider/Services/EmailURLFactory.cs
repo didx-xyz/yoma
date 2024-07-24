@@ -147,7 +147,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
       };
     }
 
-    public string OpportunityPostedItemURL(EmailType emailType, Guid opportunityId, Guid organizationId)
+    public string OpportunityAnnouncedItemURL(EmailType emailType, Guid opportunityId, Guid organizationId)
     {
       if (opportunityId == Guid.Empty)
         throw new ArgumentNullException(nameof(opportunityId));
@@ -157,6 +157,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
 
       return emailType switch
       {
+        EmailType.Opportunity_Published => _appSettings.AppBaseURL.AppendPathSegment("opportunities").AppendPathSegment(opportunityId).ToString(),
         EmailType.Opportunity_Posted_Admin => _appSettings.AppBaseURL.AppendPathSegment("organisations").AppendPathSegment(organizationId)
                                         .AppendPathSegment("opportunities").AppendPathSegment(opportunityId).AppendPathSegment("info")
                                         .SetQueryParam("returnUrl", "/admin/opportunities").ToString(),

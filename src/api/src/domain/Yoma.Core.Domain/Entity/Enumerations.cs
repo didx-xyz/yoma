@@ -42,7 +42,7 @@ namespace Yoma.Core.Domain.Entity
 
   public enum Setting
   {
-    User_Email_Opportunity_Posted,
+    User_Email_Opportunity_Published,
     User_Email_Opportunity_Completion,
     Organization_Admin_Email_Opportunity_Expiration,
     Organization_Admin_Email_Organization_Approval,

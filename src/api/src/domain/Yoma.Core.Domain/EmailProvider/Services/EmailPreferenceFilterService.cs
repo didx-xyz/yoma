@@ -33,7 +33,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
       {
         // user
         EmailType.Opportunity_Verification_Rejected or EmailType.Opportunity_Verification_Completed or EmailType.Opportunity_Verification_Pending => Setting.User_Email_Opportunity_Completion,
-        EmailType.Opportunity_Posted => Setting.User_Email_Opportunity_Posted,
+        EmailType.Opportunity_Published => Setting.User_Email_Opportunity_Published,
         // organization admin
         EmailType.Organization_Approval_Approved or EmailType.Organization_Approval_Declined => Setting.Organization_Admin_Email_Organization_Approval,
         EmailType.Opportunity_Expiration_Expired or EmailType.Opportunity_Expiration_WithinNextDays => Setting.Organization_Admin_Email_Opportunity_Expiration,
@@ -54,9 +54,8 @@ namespace Yoma.Core.Domain.EmailProvider.Services
           var settingsInfo = _userService.GetSettingsInfoByEmail(recipient.Email);
           var settingValue = SettingsHelper.GetValue<bool>(settingsInfo, setting.ToString());
 
-          if (settingValue == false) continue;
-
-          result.Add(recipient);
+          if (settingValue == true)
+            result.Add(recipient);
         }
         catch (Exception ex)
         {
