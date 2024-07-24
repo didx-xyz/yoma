@@ -228,6 +228,20 @@ namespace Yoma.Core.Domain.SSI.Services
           ? throw new ArgumentException($"Schema full name of '{schemaFullName}' is invalid. Specified type '{nameParts.First()}' does not exist", nameof(schemaFullName))
           : ((SSISchemaType schemaType, string displayName))(schemaType, nameParts.Last());
     }
+
+    public (SSISchemaType schemaType, string displayName) SchemaIdValidateAndGetParts(string schemaId)
+    {
+      if (string.IsNullOrWhiteSpace(schemaId))
+        throw new ArgumentNullException(nameof(schemaId));
+      schemaId = schemaId.Trim();
+
+      var parts = schemaId.Split(':');
+      if (parts.Length != 4)
+        throw new ArgumentException($"Schema ID '{schemaId}' is invalid. Expecting [identifier]:[version]:[type|name]:[version]", nameof(schemaId));
+
+      return SchemaFullNameValidateAndGetParts(parts[2]);
+    }
+
     #endregion
 
     #region Private Members

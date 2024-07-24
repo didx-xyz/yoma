@@ -15,6 +15,8 @@ using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Reward.Interfaces;
+using Yoma.Core.Domain.SSI.Interfaces;
+using Yoma.Core.Domain.SSI.Models;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -30,6 +32,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IOrganizationService _organizationService;
     private readonly IMyOpportunityService _myOpportunityService;
     private readonly IWalletService _rewardWalletService;
+    private readonly ISSIWalletService _sSIWalletService;
     private readonly UserProfileRequestValidator _userProfileRequestValidator;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
@@ -45,6 +48,7 @@ namespace Yoma.Core.Domain.Entity.Services
         IOrganizationService organizationService,
         IMyOpportunityService myOpportunityService,
         IWalletService rewardWalletService,
+        ISSIWalletService sSIWalletService,
         UserProfileRequestValidator userProfileRequestValidator,
         IRepositoryValueContainsWithNavigation<User> userRepository,
         IExecutionStrategyService executionStrategyService)
@@ -58,6 +62,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _organizationService = organizationService;
       _myOpportunityService = myOpportunityService;
       _rewardWalletService = rewardWalletService;
+      _sSIWalletService = sSIWalletService;
       _userProfileRequestValidator = userProfileRequestValidator;
       _userRepository = userRepository;
       _executionStrategyService = executionStrategyService;
@@ -205,6 +210,14 @@ namespace Yoma.Core.Domain.Entity.Services
 
       filter.VerificationStatuses = [VerificationStatus.Rejected];
       result.OpportunityCountRejected = _myOpportunityService.Search(filter).TotalCount ?? default;
+
+      var filterSSI = new SSIWalletFilter { TotalCountOnly = true };
+      result.CredentialCounts = [];
+      foreach (var schemaType in Enum.GetValues<SchemaType>())
+      {
+        filterSSI.SchemaType = schemaType;
+        result.CredentialCounts.Add(schemaType, (await _sSIWalletService.SearchUserCredentials(filterSSI)).TotalCount ?? default);
+      }
 
       return result;
     }
