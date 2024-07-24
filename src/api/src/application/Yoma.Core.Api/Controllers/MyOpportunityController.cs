@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
@@ -156,17 +157,17 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter and return time-based summary (Authenticated User)")]
-    [HttpPost("search/summary")]
-    [ProducesResponseType(typeof(MyOpportunitySearchResultsSummary), (int)HttpStatusCode.OK)]
+    [SwaggerOperation(Summary = "Return a time-based summary of 'my' opportunities (Authenticated User)")]
+    [HttpGet("summary")]
+    [ProducesResponseType(typeof(TimeIntervalSummary), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public IActionResult Search([FromBody] MyOpportunitySearchFilterSummary filter)
+    public IActionResult GetSummary()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(Search));
+      _logger.LogInformation("Handling request {requestName}", nameof(GetSummary));
 
-      var result = _myOpportunityService.Search(filter);
+      var result = _myOpportunityService.GetSummary();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(Search));
+      _logger.LogInformation("Request {requestName} handled", nameof(GetSummary));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

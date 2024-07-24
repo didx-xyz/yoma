@@ -12,7 +12,7 @@ namespace Yoma.Core.Domain.EmailProvider.Interfaces
 
     string OpportunityExpirationItemURL(EmailType emailType, Guid opportunityId, Guid organizationId);
 
-    string OpportunityPostedItemURL(EmailType emailType, Guid opportunityId, Guid organizationId);
+    string OpportunityAnnouncedItemURL(EmailType emailType, Guid opportunityId, Guid organizationId);
 
     string ActionLinkVerifyApprovalItemUrl(EmailType emailType, Guid? organizationId);
   }

@@ -28,6 +28,8 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public bool Enabled { get; set; }
 
+    public bool Visible { get; set; }
+
     public object Value { get; set; }
 
     [JsonIgnore]

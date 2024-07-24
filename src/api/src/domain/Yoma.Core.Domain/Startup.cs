@@ -193,6 +193,8 @@ namespace Yoma.Core.Domain
       RecurringJob.AddOrUpdate<ISkillService>("Skill Reference Seeding", s => s.SeedSkills(false), options.SeedSkillsSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //opportunity
+      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Published Notifications ({Status.Active} and started in the last {options.OpportunityPublishedNotificationIntervalInDays} days)",
+        s => s.ProcessPublishedNotifications(), options.OpportunityPublishedNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration ({Status.Active} that has ended)",
         s => s.ProcessExpiration(), options.OpportunityExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration Notifications ({Status.Active} ending within {options.OpportunityExpirationNotificationIntervalInDays} days)",

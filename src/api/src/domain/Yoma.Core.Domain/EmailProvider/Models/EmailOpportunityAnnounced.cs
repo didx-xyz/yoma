@@ -2,13 +2,13 @@ using Newtonsoft.Json;
 
 namespace Yoma.Core.Domain.EmailProvider.Models
 {
-  public class EmailOpportunityPosted : EmailBase
+  public class EmailOpportunityAnnounced : EmailBase
   {
     [JsonProperty("opportunities")]
-    public List<EmailOpportunityPostedItem> Opportunities { get; set; }
+    public List<EmailOpportunityAnnouncedItem> Opportunities { get; set; }
   }
 
-  public class EmailOpportunityPostedItem
+  public class EmailOpportunityAnnouncedItem
   {
     [JsonProperty("title")]
     public string Title { get; set; }

@@ -15,6 +15,7 @@ namespace Yoma.Core.Domain.EmailProvider
     ActionLink_Verify_Distribution, //sent to mailing / distribution list
     ActionLink_Verify_Approval_Requested, //sent to admin
     ActionLink_Verify_Approval_Approved, //sent to organization admin
-    ActionLink_Verify_Approval_Declined //sent to organization admin
+    ActionLink_Verify_Approval_Declined, //sent to organization admin
+    Opportunity_Published //sent to youth
   }
 }

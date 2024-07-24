@@ -93,5 +93,9 @@ namespace Yoma.Core.Domain.Core.Models
     public int PartnerSharingScheduleBatchSize { get; set; }
 
     public int PartnerSharingScheduleMaxIntervalInHours { get; set; }
+
+    public string OpportunityPublishedNotificationSchedule { get; set; }
+
+    public int OpportunityPublishedNotificationIntervalInDays { get; set; }
   }
 }

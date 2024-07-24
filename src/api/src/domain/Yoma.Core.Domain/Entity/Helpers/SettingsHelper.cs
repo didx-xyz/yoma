@@ -38,6 +38,7 @@ namespace Yoma.Core.Domain.Entity.Helpers
           Type = definition.Type,
           Value = value,
           Enabled = definition.Enabled,
+          Visible = definition.Visible,
           Roles = definition.Roles
         };
       }

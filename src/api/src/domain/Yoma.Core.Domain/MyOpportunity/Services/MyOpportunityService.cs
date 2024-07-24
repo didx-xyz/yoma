@@ -65,7 +65,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IExecutionStrategyService _executionStrategyService;
 
     private const int List_Aggregated_Opportunity_By_Limit = 100;
-    private const string SettingsKey_ShareEmailWithPartners = "Share_Email_With_Partners";
     private const string PlaceholderValue_HiddenEmail = "hidden";
     #endregion
 
@@ -256,52 +255,60 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return Search(filterInternal, false);
     }
 
-    public MyOpportunitySearchResultsSummary Search(MyOpportunitySearchFilterSummary filter)
+    public TimeIntervalSummary GetSummary()
     {
-      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
-
-      //filter validated by SearchAdmin
-
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var filterInternal = new MyOpportunitySearchFilterAdmin
       {
         UserId = user.Id,
-        Action = filter.Action,
-        VerificationStatuses = filter.VerificationStatuses,
+        Action = Action.Verification,
+        VerificationStatuses = [VerificationStatus.Pending, VerificationStatus.Completed, VerificationStatus.Rejected],
         TimeIntervalSummaryQuery = true
       };
 
-      var resultsInternal = Search(filterInternal, false);
+      var searchResultVerification = Search(filterInternal, false);
 
-      var myOpportunitiesWeekly = resultsInternal.Items
-          .Select(o => new
-          {
-            Date = (o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Completed && o.DateCompleted.HasValue)
-                          ? o.DateCompleted.Value
-                          : o.DateModified
-          })
-          .GroupBy(x => x.Date.AddDays(-(int)x.Date.DayOfWeek).AddDays(7).Date)
-          .Select(group => new
-          {
-            WeekEnding = group.Key,
-            Count = group.Count()
-          })
-          .OrderBy(result => result.WeekEnding)
-          .ToList();
+      var itemsCompleted = SummaryGroupByWeekItems(searchResultVerification.Items.Where(o => o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Completed).ToList());
+      var resultsCompleted = new List<TimeValueEntry>();
+      itemsCompleted.ForEach(o => { resultsCompleted.Add(new TimeValueEntry(o.WeekEnding, o.Count, default(int), default(int), default(int))); });
 
-      var myOpportunitiesData = new List<TimeValueEntry>();
-      myOpportunitiesWeekly.ForEach(o => { myOpportunitiesData.Add(new TimeValueEntry(o.WeekEnding, o.Count)); });
+      var itemsPending = SummaryGroupByWeekItems(searchResultVerification.Items.Where(o => o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Pending).ToList());
+      var resultsPending = new List<TimeValueEntry>();
+      itemsPending.ForEach(o => { resultsPending.Add(new TimeValueEntry(o.WeekEnding, default(int), o.Count, default(int), default(int))); });
 
-      return new MyOpportunitySearchResultsSummary
+      var itemsRejected = SummaryGroupByWeekItems(searchResultVerification.Items.Where(o => o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Rejected).ToList());
+      var resultsRejected = new List<TimeValueEntry>();
+      itemsRejected.ForEach(o => { resultsRejected.Add(new TimeValueEntry(o.WeekEnding, default(int), default(int), o.Count, default(int))); });
+
+      filterInternal.Action = Action.Saved;
+      filterInternal.VerificationStatuses = null;
+      var searchResultSaved = Search(filterInternal, false);
+
+      var itemSaved = SummaryGroupByWeekItems(searchResultSaved.Items);
+      var resultsSaved = new List<TimeValueEntry>();
+      itemSaved.ForEach(o => { resultsSaved.Add(new TimeValueEntry(o.WeekEnding, default(int), default(int), default(int), o.Count)); });
+
+      var resultsCombined = resultsCompleted.Concat(resultsPending).Concat(resultsRejected).Concat(resultsSaved)
+        .GroupBy(e => e.Date)
+        .Select(g => new TimeValueEntry(
+            g.Key,
+            g.Sum(e => Convert.ToInt32(e.Values[0])), //completed
+            g.Sum(e => Convert.ToInt32(e.Values[1])), //pending
+            g.Sum(e => Convert.ToInt32(e.Values[2])), //rejected
+            g.Sum(e => Convert.ToInt32(e.Values[3]))  //saved
+        ))
+        .OrderBy(e => e.Date)
+        .ToList();
+
+      var result = new TimeIntervalSummary
       {
-        MyOpportunities = new TimeIntervalSummary
-        {
-          Legend = ["'My' Opportunities"],
-          Data = myOpportunitiesData,
-          Count = [resultsInternal.TotalCount ?? resultsInternal.Items.Count]
-        }
+        Legend = ["Completed", "Pending", "Rejected", "Saved"],
+        Data = resultsCombined,
+        Count = [itemsCompleted.Sum(o => o.Count), itemsPending.Sum(o => o.Count), itemsRejected.Sum(o => o.Count), itemSaved.Sum(o => o.Count)]
       };
+
+      return result;
     }
 
     public MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
@@ -468,7 +475,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       foreach (var item in result.Items)
       {
-        if (SettingsHelper.GetValue<bool>(_userService.GetSettingsInfo(item.UserSettings), SettingsKey_ShareEmailWithPartners) == true) continue;
+        if (SettingsHelper.GetValue<bool>(_userService.GetSettingsInfo(item.UserSettings), Setting.User_Share_Email_With_Partners.ToString()) == true) continue;
         item.UserEmail = PlaceholderValue_HiddenEmail;
       }
 
@@ -838,6 +845,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #endregion
 
     #region Private Members
+    private static List<(DateTime WeekEnding, int Count)> SummaryGroupByWeekItems(List<MyOpportunityInfo> items)
+    {
+      var results = items
+        .Select(o => new
+        {
+          Date = (o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Completed && o.DateCompleted.HasValue)
+                          ? o.DateCompleted.Value
+                          : o.DateModified
+        })
+        .GroupBy(x => x.Date.AddDays(-(int)x.Date.DayOfWeek).AddDays(7).Date)
+        .Select(group => (WeekEnding: group.Key, Count: group.Count()))
+        .OrderBy(result => result.WeekEnding)
+        .ToList();
+
+      return results;
+    }
+
     //supported statuses: Rejected or Completed
     private async Task FinalizeVerificationManual(User user, Opportunity.Models.Opportunity opportunity, VerificationStatus status, bool instantVerification, string? comment)
     {

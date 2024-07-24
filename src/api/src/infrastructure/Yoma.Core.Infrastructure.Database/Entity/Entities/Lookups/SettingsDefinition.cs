@@ -49,5 +49,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups
 
     [Required]
     public bool Enabled { get; set; }
+
+    [Required]
+    public bool Visible { get; set; }
   }
 }

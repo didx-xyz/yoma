@@ -1049,6 +1049,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       result.SetPublished();
 
+      //sent when activated irrespective of organization status (sent to admin)
       if (result.Status == Status.Active) await SendEmail(result, EmailType.Opportunity_Posted_Admin);
 
       return result;
@@ -1309,6 +1310,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       result = await _opportunityRepository.Update(result);
 
+      result.SetPublished();
+
+      //sent when activated irrespective of organization status (sent to admin)
       if (status == Status.Active) await SendEmail(result, EmailType.Opportunity_Posted_Admin);
 
       return result;
@@ -1557,14 +1561,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
         recipients = _emailPreferenceFilterService.FilterRecipients(type, recipients);
         if (recipients == null || recipients.Count == 0) return;
 
-        var data = new EmailOpportunityPosted
+        var data = new EmailOpportunityAnnounced
         {
           Opportunities = [new()
           {
             Title = opportunity.Title,
             DateStart = opportunity.DateStart,
             DateEnd = opportunity.DateEnd,
-            URL = _emailURLFactory.OpportunityPostedItemURL(type, opportunity.Id, opportunity.OrganizationId),
+            URL = _emailURLFactory.OpportunityAnnouncedItemURL(type, opportunity.Id, opportunity.OrganizationId),
             ZltoReward = opportunity.ZltoReward,
             YomaReward = opportunity.YomaReward
           }]

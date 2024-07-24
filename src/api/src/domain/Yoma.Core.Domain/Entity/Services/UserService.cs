@@ -197,6 +197,11 @@ namespace Yoma.Core.Domain.Entity.Services
       //only includes users which email has been confirmed (implies linked to identity provider)
       query = query.Where(o => o.EmailConfirmed);
 
+      //yoIDOnboarded
+      if (filter.YoIDOnboarded == true)
+        query = query.Where(o => o.YoIDOnboarded == true);
+
+      //valueContains
       if (!string.IsNullOrEmpty(filter.ValueContains))
         query = _userRepository.Contains(query, filter.ValueContains);
 
