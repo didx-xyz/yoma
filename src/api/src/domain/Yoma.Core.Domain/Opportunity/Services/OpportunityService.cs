@@ -1303,7 +1303,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       var statusId = _opportunityStatusService.GetByName(status.ToString()).Id;
-      
+
       result.StatusId = statusId;
       result.Status = status;
       result.ModifiedByUserId = user.Id;
@@ -1314,7 +1314,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       //sent when activated irrespective of organization status (sent to admin)
       if (status == Status.Active) await SendEmail(result, EmailType.Opportunity_Posted_Admin);
-      
+
       return result;
     }
 
