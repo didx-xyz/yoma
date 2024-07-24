@@ -1,11 +1,9 @@
+import { useAtomValue } from "jotai";
 import { useEffect, useMemo, useState } from "react";
 import Chart, { type GoogleChartWrapper } from "react-google-charts";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
-import Image from "next/image";
 import { UserProfile } from "~/api/models/user";
-import { colors } from "react-select/dist/declarations/src/theme";
 import { screenWidthAtom } from "~/lib/store";
-import { useAtomValue } from "jotai";
 
 export const LineChart: React.FC<{
   data: TimeIntervalSummary;
@@ -54,31 +52,35 @@ export const LineChart: React.FC<{
   };
 
   const Legend = () => (
-    <div className="flex flex-grow flex-col justify-center gap-2 text-xs">
-      <div className="flex flex-row flex-nowrap gap-2">
-        <span className="flex flex-grow items-center whitespace-nowrap">
+    <div className="flex flex-grow flex-row justify-between gap-4 text-xs md:justify-normal">
+      <div className="flex flex-col flex-nowrap gap-2 md:flex-row">
+        <span className="flex flex-grow items-center truncate whitespace-nowrap">
           ✅ Completed
         </span>
         <span className="badge badge-xs bg-gray">
           {userProfile?.opportunityCountCompleted}
         </span>
       </div>
-      <div className="flex flex-row gap-2">
-        <span className="flex flex-grow items-center">
+      <div className="flex flex-col gap-2 md:flex-row">
+        <span className="flex flex-grow items-center truncate whitespace-nowrap">
           ⌛<span className="ml-2">Pending</span>
         </span>
         <span className="badge badge-xs bg-gray">
           {userProfile?.opportunityCountPending}
         </span>
       </div>
-      <div className="flex flex-row gap-2">
-        <span className="flex flex-grow items-center">😞 Rejected</span>
+      <div className="flex flex-col gap-2 md:flex-row">
+        <span className="flex flex-grow items-center truncate whitespace-nowrap">
+          😞 Rejected
+        </span>
         <span className="badge badge-xs bg-gray">
           {userProfile?.opportunityCountRejected}
         </span>
       </div>
-      <div className="flex flex-row gap-2">
-        <span className="flex flex-grow items-center">💗 Saved</span>
+      <div className="flex flex-col gap-2 md:flex-row">
+        <span className="flex flex-grow items-center truncate whitespace-nowrap">
+          💗 Saved
+        </span>
         <span className="badge badge-xs bg-gray">
           {userProfile?.opportunityCountSaved}
         </span>
@@ -150,7 +152,9 @@ export const LineChart: React.FC<{
   }, [screenWidth]);
 
   return (
-    <div className="flex h-full flex-row gap-4">
+    <div className="flex h-full flex-col">
+      <Legend />
+
       {showLabels ? (
         <Chart
           key={key}
@@ -181,8 +185,8 @@ export const LineChart: React.FC<{
                 color: "transparent",
               },
               textPosition: showLabels ? "out" : "none",
-              //format: "MMM dd",
-              //showTextEvery: 2,
+              format: "MMM dd",
+              showTextEvery: 2,
               textStyle: {
                 fontSize: 10,
               },
@@ -198,9 +202,9 @@ export const LineChart: React.FC<{
             height: "100%" as any,
             chartArea: {
               left: 0,
-              top: 0,
+              top: -10,
               width: "100%",
-              height: "100%",
+              height: "85%",
             },
           }}
           chartEvents={[
@@ -215,8 +219,6 @@ export const LineChart: React.FC<{
           Not enough data to display
         </div>
       )}
-
-      <Legend />
     </div>
   );
 };

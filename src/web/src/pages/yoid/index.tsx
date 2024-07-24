@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
@@ -18,6 +18,7 @@ import { PageBackground } from "~/components/PageBackground";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { CVCard } from "~/components/YoID/CVCard";
 import { HeaderWithLink } from "~/components/YoID/HeaderWithLink";
 import { LineChart } from "~/components/YoID/LineChart";
 import { PassportCard } from "~/components/YoID/PassportCard";
@@ -121,23 +122,17 @@ const YoIDDashboard: NextPageWithLayout<{
           pageSize: null,
           schemaType: "YoID",
         }),
-      ])
-        .then(([opportunityResult, yoidResult]) => {
-          const combinedResults = [
-            {
-              schemaType: "Opportunity",
-              totalCount: opportunityResult.totalCount,
-            },
-            { schemaType: "YoI1D", totalCount: yoidResult.totalCount },
-          ];
+      ]).then(([opportunityResult, yoidResult]) => {
+        const combinedResults = [
+          {
+            schemaType: "Opportunity",
+            totalCount: opportunityResult.totalCount,
+          },
+          { schemaType: "YoID", totalCount: yoidResult.totalCount },
+        ];
 
-          return combinedResults;
-        })
-        .catch((error) => {
-          console.error("Error fetching data:", error);
-          // Depending on your error handling strategy, you might want to throw an error or return a default value
-          throw error; // or return [];
-        }),
+        return combinedResults;
+      }),
     enabled: !error,
   });
 
@@ -160,7 +155,7 @@ const YoIDDashboard: NextPageWithLayout<{
         onClose={() => setZltoModalVisible(false)}
       />
 
-      <div className="container z-10 mt-[6rem] max-w-7xl overflow-hidden px-4 py-1 md:py-4">
+      <div className="container z-10 mt-[6rem] max-w-7xl overflow-hidden px-4 py-4">
         <div className="flex flex-col gap-4">
           {/* HEADER */}
           <div className="flex flex-col gap-2">
@@ -200,35 +195,9 @@ const YoIDDashboard: NextPageWithLayout<{
           </div>
 
           {/* DASHBOARD */}
-          <div className="mt-8 flex flex-wrap justify-center gap-4 lg:justify-normal">
-            {/* WALLET */}
-            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-              <HeaderWithLink title="Wallet 💸" url="/yoid/credentials" />
-              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-                <Suspense isReady={!!userProfile} isLoading={false}>
-                  <WalletCard userProfile={userProfile!} />
-                </Suspense>
-              </div>
-            </div>
-
-            {/* SKILLS */}
-            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-              <HeaderWithLink title="Skills ⚡" url="/yoid/credentials" />
-              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-                <div className="flex flex-wrap gap-1 overflow-y-auto">
-                  <Suspense
-                    isReady={!!dataUserSkills}
-                    isLoading={dataUserSkillsIsLoading}
-                    error={dataUserSkillsError}
-                  >
-                    <SkillsCard data={dataUserSkills!} />
-                  </Suspense>
-                </div>
-              </div>
-            </div>
-
+          <div className="mt-6 flex flex-wrap justify-center gap-4 lg:justify-normal">
             {/* OPPORTUNITIES */}
-            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
+            <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
               <HeaderWithLink
                 title="Opportunities 🏆"
                 url="/yoid/opportunities"
@@ -250,6 +219,16 @@ const YoIDDashboard: NextPageWithLayout<{
               </div>
             </div>
 
+            {/* WALLET */}
+            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
+              <HeaderWithLink title="Wallet 💸" url="/yoid/credentials" />
+              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+                <Suspense isReady={!!userProfile}>
+                  <WalletCard userProfile={userProfile!} />
+                </Suspense>
+              </div>
+            </div>
+
             {/* PASSPORT */}
             <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
               <HeaderWithLink title="Passport 🌐" url="/yoid/credentials" />
@@ -263,6 +242,28 @@ const YoIDDashboard: NextPageWithLayout<{
                 </Suspense>
               </div>
             </div>
+
+            {/* SKILLS */}
+            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
+              <HeaderWithLink title="Skills ⚡" url="/yoid/credentials" />
+              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+                <div className="flex flex-wrap gap-1 overflow-y-auto">
+                  <Suspense
+                    isReady={!!dataUserSkills}
+                    isLoading={dataUserSkillsIsLoading}
+                    error={dataUserSkillsError}
+                  >
+                    <SkillsCard data={dataUserSkills!} />
+                  </Suspense>
+                </div>
+              </div>
+            </div>
+
+            {/* CV */}
+            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
+              <HeaderWithLink title="CV 🏦" />
+              <CVCard />
+            </div>
           </div>
         </div>
       </div>
@@ -273,11 +274,5 @@ const YoIDDashboard: NextPageWithLayout<{
 YoIDDashboard.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
-
-// 👇 return theme from component properties. this is set server-side (getServerSideProps)
-// YoIDDashboard.theme = function getTheme(page: ReactElement) {
-//   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
-//   return page.props.theme;
-// };
 
 export default YoIDDashboard;
