@@ -1,5 +1,6 @@
 using Flurl;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.EmailProvider.Interfaces;
 
@@ -23,12 +24,14 @@ namespace Yoma.Core.Domain.EmailProvider.Services
     {
       if (organizationId == Guid.Empty)
         throw new ArgumentNullException(nameof(organizationId));
-
+      
       var result = _appSettings.AppBaseURL;
+      LinkStatus? status = null;
       switch (emailType)
       {
         case EmailType.ActionLink_Verify_Approval_Requested:
           result = result.AppendPathSegment("admin").AppendPathSegment("links").ToString();
+          status = LinkStatus.Inactive;
           break;
 
         case EmailType.ActionLink_Verify_Approval_Approved:
@@ -37,12 +40,15 @@ namespace Yoma.Core.Domain.EmailProvider.Services
             throw new InvalidOperationException("Organization id expected");
 
           result = result.AppendPathSegment("organisations").AppendPathSegment(organizationId).AppendPathSegment("links").ToString();
+
+          status = emailType == EmailType.ActionLink_Verify_Approval_Approved ? LinkStatus.Active : LinkStatus.Declined;  
           break;
 
         default:
           throw new ArgumentOutOfRangeException(nameof(emailType), $"Type of '{emailType}' not supported");
       }
 
+      result = result.AppendQueryParam($"statuses={status.Value.ToString().ToLower()}").ToString();
       return result;
     }
 
