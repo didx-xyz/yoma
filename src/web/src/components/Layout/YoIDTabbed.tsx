@@ -124,7 +124,11 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
           onClose={() => setZltoModalVisible(false)}
         />
 
-        <div className="container relative z-10 mt-24 py-4">
+        <div
+          className="relativex container z-10 mt-24 py-4"
+          //className="container z-10 mt-14 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4"
+          //className="relativex z-10 flex flex-col"
+        >
           {/* USER CARD */}
           <div className="flex items-center justify-center">
             <Image
@@ -272,7 +276,9 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
             </div>
 
             {/* MAIN CONTENT */}
-            <div className="flex flex-grow flex-col">
+            <div
+            //className="flex flex-grow flex-col"
+            >
               {/* DROPDOWN NAVIGATION: SMALL DISPLAY */}
               <div className="visible flex w-full items-center justify-center px-4 pb-4 md:hidden">
                 <select

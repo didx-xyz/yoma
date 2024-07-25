@@ -8,7 +8,6 @@ import { type ParsedUrlQuery } from "querystring";
 import { useState, type ReactElement } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { IoIosInformationCircleOutline } from "react-icons/io";
-import { Action, VerificationStatus } from "~/api/models/myOpportunity";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
 import { getUserSkills } from "~/api/services/user";
@@ -69,9 +68,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 // YoID dashboard page
 const YoIDDashboard: NextPageWithLayout<{
-  error?: number;
   user?: any;
-}> = ({ error, user }) => {
+  error?: number;
+}> = ({ user, error }) => {
   const [zltoModalVisible, setZltoModalVisible] = useState(false);
   const [timeOfDay, timeOfDayEmoji] = getTimeOfDayAndEmoji();
   const [userProfile] = useAtom(userProfileAtom);
