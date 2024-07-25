@@ -91,16 +91,8 @@ const YoIDDashboard: NextPageWithLayout<{
     error: dataMyOpportunitiesSummaryError,
     isLoading: dataMyOpportunitiesSummaryIsLoading,
   } = useQuery({
-    queryKey: ["MyOpportunities", "Summary", "All"],
-    queryFn: () =>
-      searchMyOpportunitiesSummary({
-        action: Action.Verification,
-        verificationStatuses: [
-          VerificationStatus.Completed,
-          VerificationStatus.Rejected,
-          VerificationStatus.Pending,
-        ],
-      }),
+    queryKey: ["MyOpportunities", "Summary"],
+    queryFn: () => searchMyOpportunitiesSummary(),
     enabled: !error,
   });
 
@@ -204,17 +196,11 @@ const YoIDDashboard: NextPageWithLayout<{
               />
               <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                 <Suspense
-                  isReady={
-                    !!dataMyOpportunitiesSummary?.myOpportunities &&
-                    !!userProfile
-                  }
+                  isReady={!!dataMyOpportunitiesSummary}
                   isLoading={dataMyOpportunitiesSummaryIsLoading}
                   error={dataMyOpportunitiesSummaryError}
                 >
-                  <LineChart
-                    data={dataMyOpportunitiesSummary?.myOpportunities!}
-                    userProfile={userProfile!}
-                  />
+                  <LineChart data={dataMyOpportunitiesSummary!} />
                 </Suspense>
               </div>
             </div>
@@ -223,7 +209,7 @@ const YoIDDashboard: NextPageWithLayout<{
             <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
               <HeaderWithLink title="Wallet 💸" url="/yoid/credentials" />
               <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-                <Suspense isReady={!!userProfile}>
+                <Suspense isReady={!!userProfile} isLoading={!userProfile}>
                   <WalletCard userProfile={userProfile!} />
                 </Suspense>
               </div>

@@ -67,7 +67,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const MyOpportunitiesSubmitted: NextPageWithLayout<{
+const MyOpportunitiesPending: NextPageWithLayout<{
   query?: string;
   pageNumber: number;
   error: string;
@@ -94,7 +94,7 @@ const MyOpportunitiesSubmitted: NextPageWithLayout<{
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/yoid/opportunities/submitted`,
+        pathname: `/yoid/opportunities/pending`,
         query: { ...(query && { query }), ...(value && { page: value }) },
       });
     },
@@ -121,9 +121,9 @@ const MyOpportunitiesSubmitted: NextPageWithLayout<{
       {dataMyOpportunities && dataMyOpportunities.totalCount === 0 && (
         <div className="flex justify-center rounded-lg bg-white text-center md:p-8">
           <NoRowsMessage
-            title={"You haven't submitted any opportunities yet."}
+            title={"You haven't pending any opportunities yet."}
             description={
-              "Once you've successfully submitted an opportunity, it will be displayed here for your reference. Start exploring the available opportunities now!"
+              "Once you've successfully pending an opportunity, it will be displayed here for your reference. Start exploring the available opportunities now!"
             }
           />
         </div>
@@ -168,8 +168,8 @@ const MyOpportunitiesSubmitted: NextPageWithLayout<{
   );
 };
 
-MyOpportunitiesSubmitted.getLayout = function getLayout(page: ReactElement) {
+MyOpportunitiesPending.getLayout = function getLayout(page: ReactElement) {
   return <YoIDTabbedOpportunities>{page}</YoIDTabbedOpportunities>;
 };
 
-export default MyOpportunitiesSubmitted;
+export default MyOpportunitiesPending;

@@ -67,7 +67,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const MyOpportunitiesDeclined: NextPageWithLayout<{
+const MyOpportunitiesRejected: NextPageWithLayout<{
   query?: string;
   pageNumber: number;
   error: string;
@@ -94,7 +94,7 @@ const MyOpportunitiesDeclined: NextPageWithLayout<{
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/yoid/opportunities/declined`,
+        pathname: `/yoid/opportunities/rejected`,
         query: { ...(query && { query }), ...(value && { page: value }) },
       });
     },
@@ -119,8 +119,8 @@ const MyOpportunitiesDeclined: NextPageWithLayout<{
       {dataMyOpportunities && dataMyOpportunities.totalCount === 0 && (
         <div className="flex justify-center rounded-lg bg-white text-center md:p-8">
           <NoRowsMessage
-            title={"No declined opportunites found"}
-            description={"Declined opportunities will be displayed here."}
+            title={"No rejected opportunites found"}
+            description={"Rejected opportunities will be displayed here."}
           />
         </div>
       )}
@@ -165,8 +165,8 @@ const MyOpportunitiesDeclined: NextPageWithLayout<{
   );
 };
 
-MyOpportunitiesDeclined.getLayout = function getLayout(page: ReactElement) {
+MyOpportunitiesRejected.getLayout = function getLayout(page: ReactElement) {
   return <YoIDTabbedOpportunities>{page}</YoIDTabbedOpportunities>;
 };
 
-export default MyOpportunitiesDeclined;
+export default MyOpportunitiesRejected;

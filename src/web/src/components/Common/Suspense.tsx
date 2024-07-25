@@ -1,10 +1,9 @@
 import { ApiErrors } from "../Status/ApiErrors";
 import { LoadingSkeleton } from "../Status/LoadingSkeleton";
-import FormMessage, { FormMessageType } from "./FormMessage";
 
 type SuspenseProps = {
   isReady: boolean;
-  isLoading?: boolean;
+  isLoading: boolean;
   error?: any;
   children: React.ReactNode;
 };
@@ -19,11 +18,11 @@ const Suspense: React.FC<SuspenseProps> = ({
     return <LoadingSkeleton />;
   }
 
-  if (!isLoading && !isReady && error) {
+  if (!isReady && error) {
     return <ApiErrors error={error} />;
   }
 
-  if (!isLoading && !error && isReady) {
+  if (!error && isReady) {
     return children;
   }
 

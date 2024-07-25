@@ -138,12 +138,3 @@ export interface MyOpportunitySearchCriteriaOpportunity {
   id: string;
   title: string;
 }
-
-export interface MyOpportunitySearchFilterSummary {
-  action: Action;
-  verificationStatuses: VerificationStatus[] | null;
-}
-
-export interface MyOpportunitySearchResultsSummary {
-  myOpportunities: TimeIntervalSummary | null;
-}

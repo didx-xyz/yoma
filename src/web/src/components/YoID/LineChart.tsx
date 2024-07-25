@@ -1,14 +1,15 @@
 import { useAtomValue } from "jotai";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import Chart, { type GoogleChartWrapper } from "react-google-charts";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
-import { UserProfile } from "~/api/models/user";
 import { screenWidthAtom } from "~/lib/store";
 
 export const LineChart: React.FC<{
   data: TimeIntervalSummary;
-  userProfile: UserProfile;
-}> = ({ data, userProfile }) => {
+}> = ({ data }) => {
+  const colors = ["#387F6A", "#4CADE9", "#FE4D57", "#F9AB3E"]; // green, blue, pink, orange
+
   const [selectedLegendIndex, setSelectedLegendIndex] = useState<number | null>(
     null,
   );
@@ -51,97 +52,74 @@ export const LineChart: React.FC<{
     }
   };
 
-  const Legend = () => (
-    <div className="flex flex-grow flex-row justify-between gap-4 text-xs md:justify-normal">
-      <div className="flex flex-col flex-nowrap gap-2 md:flex-row">
-        <span className="flex flex-grow items-center truncate whitespace-nowrap">
-          ✅ Completed
-        </span>
-        <span className="badge badge-xs bg-gray">
-          {userProfile?.opportunityCountCompleted}
-        </span>
-      </div>
-      <div className="flex flex-col gap-2 md:flex-row">
-        <span className="flex flex-grow items-center truncate whitespace-nowrap">
-          ⌛<span className="ml-2">Pending</span>
-        </span>
-        <span className="badge badge-xs bg-gray">
-          {userProfile?.opportunityCountPending}
-        </span>
-      </div>
-      <div className="flex flex-col gap-2 md:flex-row">
-        <span className="flex flex-grow items-center truncate whitespace-nowrap">
-          😞 Rejected
-        </span>
-        <span className="badge badge-xs bg-gray">
-          {userProfile?.opportunityCountRejected}
-        </span>
-      </div>
-      <div className="flex flex-col gap-2 md:flex-row">
-        <span className="flex flex-grow items-center truncate whitespace-nowrap">
-          💗 Saved
-        </span>
-        <span className="badge badge-xs bg-gray">
-          {userProfile?.opportunityCountSaved}
-        </span>
-      </div>
-    </div>
-  );
   // const Legend = () => (
-  //   <div className="ml-0 flex flex-row gap-2 md:ml-3">
-  //     <div className="ml-4 mt-2 flex flex-col gap-1">
-  //       <div className="flex flex-row items-center gap-2">
-  //         <span className="hidden rounded-lg bg-green-light p-1 min-[400px]:inline">
-  //           <Image
-  //             className="h-3 w-3 md:h-5 md:w-5"
-  //             src="/images/icon-skills-green.svg"
-  //             alt="Icon"
-  //             height={20}
-  //             width={20}
-  //           />
-  //         </span>
-  //         <span className="text-xs font-semibold md:text-sm">
-  //           Opportunities
-  //         </span>
-  //       </div>
-  //       <div className="w-fit border-b-2 border-green text-sm font-semibold md:text-3xl">
-  //         {opportunityCount?.toLocaleString()}
-  //       </div>
+  //   <div className="flex flex-grow flex-row justify-between gap-4 text-xs md:justify-normal">
+  //     <div className="flex flex-col flex-nowrap gap-2 md:flex-row">
+  //       <span className="flex flex-grow items-center truncate whitespace-nowrap">
+  //         ✅ Completed
+  //       </span>
+  //       <span className="badge badge-xs bg-gray">
+  //         {userProfile?.opportunityCountCompleted}
+  //       </span>
   //     </div>
-  //     {data?.legend.map((name, index) => (
-  //       <div
-  //         key={index}
-  //         className={`ml-0 mt-2 flex flex-col gap-1 md:ml-4 ${
-  //           selectedLegendIndex === index ? "selected" : ""
-  //         }`}
-  //       >
-  //         <div className="flex flex-row items-center gap-2">
-  //           <span
-  //             className={`hidden rounded-lg bg-green-light p-1 min-[400px]:inline`}
-  //           >
-  //             <Image
-  //               className={`h-3 w-3 md:h-5 md:w-5`}
-  //               src={`/images/icon-${name.toLowerCase()}-green.svg`}
-  //               alt="Icon"
-  //               height={20}
-  //               width={20}
-  //             />
-  //           </span>
-  //           <span className="text-xs font-semibold md:text-sm">{name}</span>
-  //         </div>
-  //         {data.count[index] != null && (
-  //           <div
-  //             className={`w-fit border-b-2 border-green text-sm font-semibold md:text-3xl ${
-  //               name === "Viewed" ? "border-dashed" : ""
-  //             }`}
-  //           >
-  //             {data.count[index]?.toLocaleString()}
-  //           </div>
-  //         )}
-  //       </div>
-  //     ))}
+  //     <div className="flex flex-col gap-2 md:flex-row">
+  //       <span className="flex flex-grow items-center truncate whitespace-nowrap">
+  //         ⌛<span className="ml-2">Pending</span>
+  //       </span>
+  //       <span className="badge badge-xs bg-gray">
+  //         {userProfile?.opportunityCountPending}
+  //       </span>
+  //     </div>
+  //     <div className="flex flex-col gap-2 md:flex-row">
+  //       <span className="flex flex-grow items-center truncate whitespace-nowrap">
+  //         😞 Rejected
+  //       </span>
+  //       <span className="badge badge-xs bg-gray">
+  //         {userProfile?.opportunityCountRejected}
+  //       </span>
+  //     </div>
+  //     <div className="flex flex-col gap-2 md:flex-row">
+  //       <span className="flex flex-grow items-center truncate whitespace-nowrap">
+  //         💗 Saved
+  //       </span>
+  //       <span className="badge badge-xs bg-gray">
+  //         {userProfile?.opportunityCountSaved}
+  //       </span>
+  //     </div>
   //   </div>
   // );
+  const Legend = () => (
+    <div className="flex flex-grow flex-row justify-between text-xs md:justify-normal md:gap-4">
+      {data?.legend.map((name, index) => (
+        <Link
+          key={index}
+          className={`cursor-pointerx flex flex-row flex-nowrap gap-2 border-b-2 px-2 pb-1  ${
+            selectedLegendIndex === index ? "font-bold" : ""
+          }`}
+          style={{ borderColor: colors[index] }}
+          href={`/yoid/opportunities/${name.toLowerCase()}`}
+        >
+          <div className="flex flex-grow items-center gap-2 whitespace-nowrap">
+            <span className="">
+              {name == "Completed"
+                ? "✅"
+                : name == "Pending"
+                  ? "⌛"
+                  : name == "Rejected"
+                    ? "😞"
+                    : name == "Saved"
+                      ? "💗"
+                      : "❔"}
+            </span>
+            <span className="hidden sm:flex">{name}</span>
+          </div>
+          <div className="badge badge-xs bg-gray text-black">
+            {data.count[index]?.toLocaleString()}
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
 
   // chart responsiveness
   // changing the key forces a redraw of the chart when the screen width changes
@@ -174,7 +152,7 @@ export const LineChart: React.FC<{
             legend: "none",
             lineWidth: 1,
             areaOpacity: 0.1,
-            colors: ["#387F6A", "#0000FF", "#FF0000", "#FFA500"], // green, blue, red, orange
+            colors: colors,
             curveType: "function",
             title: "",
             pointSize: 0,
@@ -215,7 +193,7 @@ export const LineChart: React.FC<{
           ]}
         />
       ) : (
-        <div className="h-full rounded-lg bg-gray-light p-12 text-center text-sm">
+        <div className="mt-2 h-full rounded-lg bg-gray-light p-12 text-center text-sm">
           Not enough data to display
         </div>
       )}
