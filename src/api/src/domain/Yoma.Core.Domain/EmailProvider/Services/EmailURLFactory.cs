@@ -24,7 +24,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
     {
       if (organizationId == Guid.Empty)
         throw new ArgumentNullException(nameof(organizationId));
-      
+
       var result = _appSettings.AppBaseURL;
       LinkStatus? status = null;
       switch (emailType)
@@ -41,7 +41,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
 
           result = result.AppendPathSegment("organisations").AppendPathSegment(organizationId).AppendPathSegment("links").ToString();
 
-          status = emailType == EmailType.ActionLink_Verify_Approval_Approved ? LinkStatus.Active : LinkStatus.Declined;  
+          status = emailType == EmailType.ActionLink_Verify_Approval_Approved ? LinkStatus.Active : LinkStatus.Declined;
           break;
 
         default:
