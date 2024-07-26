@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using System.IO.Compression;
 
 namespace Yoma.Core.Domain.Core.Helpers
 {
@@ -21,6 +22,32 @@ namespace Yoma.Core.Domain.Core.Helpers
       };
 
       return result;
+    }
+
+    public static IFormFile Zip(List<IFormFile> files, string fileName)
+    {
+      if (files == null || files.Count == 0)
+        ArgumentNullException.ThrowIfNull(files, nameof(files));
+
+      ArgumentException.ThrowIfNullOrWhiteSpace(fileName, nameof(fileName));  
+      fileName = fileName.Trim();
+
+      if (!Path.GetExtension(fileName).Equals(".zip", StringComparison.CurrentCultureIgnoreCase))
+        throw new ArgumentException("File name must end with '.zip' extension.", nameof(fileName));
+
+      using var memoryStream = new MemoryStream();
+      using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+      {
+        foreach (var file in files)
+        {
+          var entry = archive.CreateEntry(file.FileName, CompressionLevel.Fastest);
+          using var entryStream = entry.Open();
+          using var fileStream = file.OpenReadStream();
+          fileStream.CopyTo(entryStream);
+        }
+      }
+
+      return FromByteArray(fileName, "application/zip", memoryStream.ToArray());
     }
   }
 }

@@ -244,7 +244,6 @@ namespace Yoma.Core.Domain
       //organization
       BackgroundJob.Schedule<IOrganizationBackgroundService>(s => s.SeedLogoAndDocuments(), TimeSpan.FromMinutes(appSettings.TestDataSeedingDelayInMinutes + 1));
 
-
       //my opportunity verifications
       BackgroundJob.Schedule<IMyOpportunityBackgroundService>(s => s.SeedPendingVerifications(), TimeSpan.FromMinutes(appSettings.TestDataSeedingDelayInMinutes + 2));
     }
