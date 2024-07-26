@@ -217,9 +217,58 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return results;
     }
 
+    public async Task<IFormFile> DownloadVerificationFiles(Guid opportunityId, List<VerificationType>? verificationTypes)
+    {
+      var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
+
+      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+
+      var myOpportunity = _myOpportunityRepository.Query(true).SingleOrDefault(
+        o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
+        ?? throw new EntityNotFoundException($"Verification not actioned for opportunity with id '{opportunityId}'");
+
+      if (myOpportunity.Verifications == null || myOpportunity.Verifications.Count == 0)
+        throw new EntityNotFoundException($"Verification of opportunity with id '{opportunityId}' has no downloadable files");
+
+      verificationTypes ??= [VerificationType.FileUpload, VerificationType.Picture, VerificationType.VoiceNote];
+
+      if (verificationTypes.Contains(VerificationType.Location))
+        throw new ValidationException($"Verification type '{VerificationType.Location}' is not supported / downloadable");
+
+      var files = new List<IFormFile>();
+
+      foreach (var item in myOpportunity.Verifications)
+      {
+        switch (item.VerificationType)
+        {
+          case VerificationType.FileUpload:
+          case VerificationType.Picture:
+          case VerificationType.VoiceNote:
+            if (!verificationTypes.Contains(item.VerificationType)) continue;
+
+            if (!item.FileId.HasValue)
+              throw new InvalidOperationException("File id expected");
+
+            files.Add(await _blobService.Download(item.FileId.Value));
+            break;
+
+          case VerificationType.Location:
+            continue;
+
+          default:
+            throw new InvalidOperationException($"Unknown / unsupported '{nameof(VerificationType)}' of '{item.VerificationType}'");
+        }
+      }
+
+      if (files.Count == 1) return files.First();
+
+      return FileHelper.Zip(files, $"Files.zip");
+    }
+
     public MyOpportunityResponseVerify GetVerificationStatus(Guid opportunityId)
     {
-      var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
+      var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 

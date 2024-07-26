@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
+using Yoma.Core.Domain.Opportunity;
 
 namespace Yoma.Core.Api.Controllers
 {
@@ -128,10 +130,10 @@ namespace Yoma.Core.Api.Controllers
 
     #region Authenticated User Based Actions
     [SwaggerOperation(Summary = "Get 'my' opportunity verification status for the specified opportunity (Authenticated User)")]
-    [HttpPost("action/verify/status")]
+    [HttpGet("action/{opportunityId}/verify/status")]
     [ProducesResponseType(typeof(MyOpportunityResponseVerify), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public IActionResult GetVerificationStatus([FromQuery] Guid opportunityId)
+    public IActionResult GetVerificationStatus([FromRoute] Guid opportunityId)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(GetVerificationStatus));
 
@@ -140,6 +142,21 @@ namespace Yoma.Core.Api.Controllers
       _logger.LogInformation("Request {requestName} handled", nameof(GetVerificationStatus));
 
       return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Download the uploaded 'my' opportunity verification files for specified opportunity (Authenticated User)")]
+    [HttpGet("action/{opportunityId}/verify/files")]
+    [ProducesResponseType(typeof(FileStreamResult), (int)HttpStatusCode.OK)]
+    [Produces("application/octet-stream")] //various file types
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public async Task<IActionResult> DownloadVerificationFiles([FromRoute] Guid opportunityId, [FromQuery] List<VerificationType>? verificationTypes)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(DownloadVerificationFiles));
+
+      var file = await _myOpportunityService.DownloadVerificationFiles(opportunityId, verificationTypes);
+      _logger.LogInformation("Request {requestName} handled", nameof(DownloadVerificationFiles));
+
+      return File(file.ToBinary(), file.ContentType, file.Name);
     }
 
     [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter (Authenticated User)")]

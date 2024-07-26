@@ -246,8 +246,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           var request = new MyOpportunityRequestVerify
           {
-            DateStart = item.DateStart.HasValue ? item.DateStart.Value.AddHours(1) : null,
-            DateEnd = item.DateEnd.HasValue ? item.DateEnd.Value.AddHours(-1) : null
+            DateStart = item.DateStart,
+            DateEnd = item.DateStart
           };
 
           foreach (var verificationType in opportunity.VerificationTypes)

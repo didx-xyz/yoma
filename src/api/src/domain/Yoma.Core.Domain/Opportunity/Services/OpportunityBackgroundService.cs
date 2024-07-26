@@ -15,7 +15,6 @@ using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
-using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
