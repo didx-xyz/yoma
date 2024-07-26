@@ -147,6 +147,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Download the uploaded 'my' opportunity verification files for specified opportunity (Authenticated User)")]
     [HttpGet("action/{opportunityId}/verify/files")]
     [ProducesResponseType(typeof(FileStreamResult), (int)HttpStatusCode.OK)]
+    [Produces("application/octet-stream")] //various file types
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<IActionResult> DownloadVerificationFiles([FromRoute] Guid opportunityId, [FromQuery] List<VerificationType>? verificationTypes)
     {
