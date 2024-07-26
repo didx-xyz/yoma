@@ -29,7 +29,7 @@ namespace Yoma.Core.Domain.Core.Helpers
       if (files == null || files.Count == 0)
         ArgumentNullException.ThrowIfNull(files, nameof(files));
 
-      ArgumentException.ThrowIfNullOrWhiteSpace(fileName, nameof(fileName));  
+      ArgumentException.ThrowIfNullOrWhiteSpace(fileName, nameof(fileName));
       fileName = fileName.Trim();
 
       if (!Path.GetExtension(fileName).Equals(".zip", StringComparison.CurrentCultureIgnoreCase))
