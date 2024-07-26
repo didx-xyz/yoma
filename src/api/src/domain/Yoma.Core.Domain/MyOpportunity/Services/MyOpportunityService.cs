@@ -231,10 +231,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (myOpportunity.Verifications == null || myOpportunity.Verifications.Count == 0)
         throw new EntityNotFoundException($"Verification of opportunity with id '{opportunityId}' has no downloadable files");
 
-      verificationTypes ??= [VerificationType.FileUpload, VerificationType.Picture, VerificationType.VoiceNote];
+      verificationTypes ??= myOpportunity.Verifications.Select(o => o.VerificationType).Distinct().ToList();
 
       if (verificationTypes.Contains(VerificationType.Location))
         throw new ValidationException($"Verification type '{VerificationType.Location}' is not supported / downloadable");
+
+      var notFound = verificationTypes.Except(myOpportunity.Verifications.Select(o => o.VerificationType).Distinct()).ToList();
+      if (notFound.Count > 0)
+        throw new EntityNotFoundException($"Requested verification type(s) '{string.Join(", ", notFound)}' not found for opportunity with id '{opportunityId}'");
 
       var files = new List<IFormFile>();
 
