@@ -4,7 +4,6 @@ import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
-import { type ParsedUrlQuery } from "querystring";
 import { useState, type ReactElement } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { IoIosInformationCircleOutline } from "react-icons/io";
@@ -40,14 +39,10 @@ export interface OrganizationSearchFilterSummaryViewModel {
   countries: string[] | null;
 }
 
-interface IParams extends ParsedUrlQuery {
-  id: string;
-}
-
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
-  let errorCode = null;
+  const errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {

@@ -2,7 +2,7 @@ import Image from "next/image";
 import iconZltoColor from "public/images/icon-zlto-rounded-color.webp";
 import { useEffect, useState } from "react";
 import { IoIosInformationCircleOutline } from "react-icons/io";
-import { UserProfile } from "~/api/models/user";
+import type { UserProfile } from "~/api/models/user";
 import { ZltoModal } from "./ZltoModal";
 
 export const WalletCard: React.FC<{

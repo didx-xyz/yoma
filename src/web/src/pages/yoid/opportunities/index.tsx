@@ -2,34 +2,30 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import { type ParsedUrlQuery } from "querystring";
 import { useCallback, type ReactElement } from "react";
 import {
   Action,
-  MyOpportunitySearchFilter,
-  MyOpportunitySearchResults,
   VerificationStatus,
+  type MyOpportunitySearchFilter,
+  type MyOpportunitySearchResults,
 } from "~/api/models/myOpportunity";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import Breadcrumb from "~/components/Breadcrumb";
 import Suspense from "~/components/Common/Suspense";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
-import OpportunitiesCarousel from "~/components/MyOpportunity/OpportunitiesCarousel";
+import OpportunitiesCarousel, {
+  DisplayType,
+} from "~/components/MyOpportunity/OpportunitiesCarousel";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { PAGE_SIZE_MINIMUM } from "~/lib/constants";
-import { NextPageWithLayout } from "~/pages/_app";
+import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
-
-interface IParams extends ParsedUrlQuery {
-  query?: string;
-  page?: string;
-}
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
-  let errorCode = null;
+  const errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
@@ -42,16 +38,14 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   return {
     props: {
-      user: session?.user ?? null,
       error: errorCode,
     },
   };
 }
 
 const MyOpportunitiesOverview: NextPageWithLayout<{
-  user?: any;
   error?: number;
-}> = ({ user, error }) => {
+}> = ({ error }) => {
   const queryClient = useQueryClient();
 
   const {
@@ -248,6 +242,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
       <Head>
         <title>Yoma | 🏆 Opportunities</title>
       </Head>
+
       <div className="flex w-full flex-col gap-4">
         <h5 className="font-bold tracking-wider text-black">
           <Breadcrumb
@@ -275,6 +270,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
               data={completedData!}
               loadData={completedLoadData}
               viewAllUrl="/yoid/opportunities/completed"
+              displayType={DisplayType.Completed}
             />
           </Suspense>
 
@@ -291,6 +287,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
               data={pendingData!}
               loadData={pendingLoadData}
               viewAllUrl="/yoid/opportunities/pending"
+              displayType={DisplayType.Pending}
             />
           </Suspense>
 
@@ -307,6 +304,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
               data={rejectedData!}
               loadData={rejectedLoadData}
               viewAllUrl="/yoid/opportunities/rejected"
+              displayType={DisplayType.Rejected}
             />
           </Suspense>
 
@@ -323,6 +321,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
               data={savedData!}
               loadData={savedLoadData}
               viewAllUrl="/yoid/opportunities/saved"
+              displayType={DisplayType.Saved}
             />
           </Suspense>
         </div>

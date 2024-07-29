@@ -1,12 +1,12 @@
 import { ApiErrors } from "../Status/ApiErrors";
 import { LoadingSkeleton } from "../Status/LoadingSkeleton";
 
-type SuspenseProps = {
+interface SuspenseProps {
   isReady: boolean;
   isLoading: boolean;
   error?: any;
   children: React.ReactNode;
-};
+}
 
 const Suspense: React.FC<SuspenseProps> = ({
   isReady,

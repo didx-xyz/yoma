@@ -17,10 +17,7 @@ import type {
   GetStaticPropsContext,
 } from "next/types";
 import ApiServer from "~/lib/axiosServer";
-import {
-  TimeValueEntry,
-  TimeIntervalSummary,
-} from "../models/organizationDashboard";
+import type { TimeIntervalSummary } from "../models/organizationDashboard";
 
 export const saveMyOpportunity = async (
   opportunityId: string,
@@ -108,26 +105,26 @@ export const searchMyOpportunitiesSummary = async (
   const { data } = await instance.get<TimeIntervalSummary>(
     `/myopportunity/summary`,
   );
-  //console.warn(data);
-  //return data;
 
-  // //TODO: mock data:
-  const mockTimeValueEntries: TimeValueEntry[] = [
-    { date: "2023-04-01", values: [10, 20, 30, 4] },
-    { date: "2023-04-02", values: [65, 25, 35, 13] },
-    { date: "2023-04-03", values: [29, 130, 140, 12] },
-    { date: "2023-04-04", values: [25, 35, 45, 0] },
-    { date: "2023-04-05", values: [130, 240, 250, 3] },
-    { date: "2023-04-06", values: [35, 145, 55, 1] },
-  ];
+  return data;
 
-  const mockTimeIntervalSummary: TimeIntervalSummary = {
-    legend: ["Completed", "Pending", "Rejected", "Saved"],
-    data: mockTimeValueEntries,
-    count: [3, 3, 3, 40],
-  };
+  //   //TODO: mock data:
+  // const mockTimeValueEntries: TimeValueEntry[] = [
+  //   { date: "2023-04-01", values: [10, 20, 30, 4] },
+  //   { date: "2023-04-02", values: [65, 25, 35, 13] },
+  //   { date: "2023-04-03", values: [29, 130, 140, 12] },
+  //   { date: "2023-04-04", values: [25, 35, 45, 0] },
+  //   { date: "2023-04-05", values: [130, 240, 250, 3] },
+  //   { date: "2023-04-06", values: [35, 145, 55, 1] },
+  // ];
 
-  return mockTimeIntervalSummary;
+  // const mockTimeIntervalSummary: TimeIntervalSummary = {
+  //   legend: ["Completed", "Pending", "Rejected", "Saved"],
+  //   data: mockTimeValueEntries,
+  //   count: [3, 3, 3, 40],
+  // };
+
+  // return mockTimeIntervalSummary;
 };
 
 export const performActionVerifyBulk = async (

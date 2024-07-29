@@ -13,7 +13,7 @@ import {
   Slider,
   type OnSlideProps,
 } from "react-scroll-snap-anime-slider";
-import { MyOpportunitySearchResults } from "~/api/models/myOpportunity";
+import type { MyOpportunitySearchResults } from "~/api/models/myOpportunity";
 import {
   LG_BREAKPOINT,
   MD_BREAKPOINT,
@@ -26,6 +26,13 @@ import { SelectedSnapDisplay } from "../Carousel/SelectedSnapDisplay";
 import { LoadingSkeleton } from "../Status/LoadingSkeleton";
 import { OpportunityCard } from "./OpportunityCard";
 
+export enum DisplayType {
+  Completed = "Completed",
+  Pending = "Pending",
+  Rejected = "Rejected",
+  Saved = "Saved",
+}
+
 const OpportunitiesCarousel: React.FC<{
   [id: string]: any;
   title?: string;
@@ -33,16 +40,17 @@ const OpportunitiesCarousel: React.FC<{
   viewAllUrl?: string;
   loadData: (startRow: number) => Promise<MyOpportunitySearchResults>;
   data: MyOpportunitySearchResults;
-}> = ({ id, title, description, viewAllUrl, loadData, data }) => {
+  displayType: DisplayType;
+}> = ({ id, title, description, viewAllUrl, loadData, data, displayType }) => {
   const [slides, setSlides] = useState(data.items);
   const screenWidth = useAtomValue(screenWidthAtom);
   const [visibleSlides, setVisibleSlides] = useState(1);
   const [currentSlide, setCurrentSlide] = useState(0);
   const totalSlides = useMemo(() => slides.length, [slides]);
   const totalAll = data.totalCount ?? 0;
-  const lastSlideRef = useRef(-1);
-  const [hasMoreToLoad, setHasMoreToLoad] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
+  const lastSlideRef = useRef(-1);
+  const hasMoreToLoadRef = useRef(true);
 
   // Determine the number of visible slides based on screen width
   useEffect(() => {
@@ -65,18 +73,18 @@ const OpportunitiesCarousel: React.FC<{
 
       const shouldLoadMoreSlides =
         props.currentSlide + 1 + visibleSlides > totalSlides &&
-        hasMoreToLoad &&
+        hasMoreToLoadRef.current &&
         !loadingMore;
       if (shouldLoadMoreSlides) {
         setLoadingMore(true);
         loadData(totalSlides + 1).then((data) => {
-          if (data.items.length === 0) setHasMoreToLoad(false);
+          if (data.items.length === 0) hasMoreToLoadRef.current = false;
           setSlides((prevSlides) => [...prevSlides, ...data.items]);
           setLoadingMore(false);
         });
       }
     },
-    [visibleSlides, totalSlides, loadData, loadingMore, hasMoreToLoad],
+    [visibleSlides, totalSlides, loadData, loadingMore],
   );
 
   // Calculate the selected snap
@@ -90,8 +98,8 @@ const OpportunitiesCarousel: React.FC<{
   const nextDisabled = useMemo(() => {
     // Check if the current set of visible slides includes the last slide
     const isLastSlideVisible = selectedSnap >= totalAll - 1;
-    return isLastSlideVisible;
-  }, [selectedSnap, totalAll]);
+    return isLastSlideVisible || loadingMore;
+  }, [selectedSnap, totalAll, loadingMore]);
 
   // Render navigation buttons
   const renderButtons = useCallback(
@@ -156,7 +164,7 @@ const OpportunitiesCarousel: React.FC<{
             <OpportunityCard
               key={`${id}_${item.id}_component`}
               data={item}
-              displayDate={item.dateModified}
+              displayType={displayType}
             />
           </Slide>
         ))}
@@ -172,7 +180,7 @@ const OpportunitiesCarousel: React.FC<{
           ))}
       </Slider>
 
-      {screenWidth < 768 && (
+      {screenWidth < SM_BREAKPOINT && (
         <div className="my-2 mt-2 flex w-full place-content-start md:mb-10 md:mt-1">
           <div className="mx-auto flex w-full justify-center gap-4 md:mx-0 md:mr-auto md:justify-start md:gap-6">
             <SelectedSnapDisplay

@@ -5,7 +5,6 @@ import type {
   PaginationFilter,
 } from "./common";
 import type { VerificationType } from "./opportunity";
-import type { TimeIntervalSummary } from "./organizationDashboard";
 
 export interface MyOpportunityRequestVerify {
   certificate: FormFile | null;

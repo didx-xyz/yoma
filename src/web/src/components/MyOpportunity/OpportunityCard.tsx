@@ -1,17 +1,18 @@
 import Link from "next/link";
 import Moment from "react-moment";
-import { MyOpportunityInfo } from "~/api/models/myOpportunity";
+import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { AvatarImage } from "../AvatarImage";
 import { useRouter } from "next/router";
+import { DisplayType } from "./OpportunitiesCarousel";
 
 interface InputProps {
   data: MyOpportunityInfo;
-  displayDate: string;
+  displayType: DisplayType;
   [key: string]: any;
 }
 
-const OpportunityCard: React.FC<InputProps> = ({ data, displayDate }) => {
+const OpportunityCard: React.FC<InputProps> = ({ data, displayType }) => {
   const router = useRouter();
   const { pathname } = router;
 
@@ -66,18 +67,19 @@ const OpportunityCard: React.FC<InputProps> = ({ data, displayDate }) => {
         )}
 
         {/* DATE */}
-        {displayDate && (
-          <div className="flex flex-row">
-            <h4 className="line-clamp-4 text-sm font-thin">
-              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                {displayDate}
-              </Moment>
-            </h4>
-          </div>
-        )}
+        <div className="flex flex-row">
+          <h4 className="line-clamp-4 text-sm font-thin">
+            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+              {displayType == DisplayType.Completed ||
+              displayType == DisplayType.Pending
+                ? data.dateCompleted?.toString()
+                : data.dateModified?.toString()}
+            </Moment>
+          </h4>
+        </div>
 
         {/* COMMENT */}
-        {data.commentVerification && (
+        {displayType == DisplayType.Rejected && data.commentVerification && (
           <div className="flex flex-row flex-wrap gap-1">
             <h4 className="line-clamp-4 text-sm font-bold">Comment: </h4>
             <h4 className="line-clamp-4 text-sm font-thin">

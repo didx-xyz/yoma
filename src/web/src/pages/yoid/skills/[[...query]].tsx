@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { type ReactElement } from "react";
@@ -8,10 +8,7 @@ import { type ParsedUrlQuery } from "querystring";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
-import { userProfileAtom } from "~/lib/store";
-import { useAtomValue } from "jotai";
 import Link from "next/link";
-import { config } from "~/lib/react-query-config";
 import { AvatarImage } from "~/components/AvatarImage";
 import { getUserSkills } from "~/api/services/user";
 import Suspense from "~/components/Common/Suspense";

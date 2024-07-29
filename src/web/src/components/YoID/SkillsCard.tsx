@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { UserSkillInfo } from "~/api/models/user";
+import type { UserSkillInfo } from "~/api/models/user";
 
 export const SkillsCard: React.FC<{ data: UserSkillInfo[] }> = ({ data }) => {
   return (
