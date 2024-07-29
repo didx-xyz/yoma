@@ -19,6 +19,12 @@ import { NavigationButtons } from "../Carousel/NavigationButtons";
 import { SelectedSnapDisplay } from "../Carousel/SelectedSnapDisplay";
 import { LoadingSkeleton } from "../Status/LoadingSkeleton";
 import { OpportunityCard } from "./OpportunityCard";
+import {
+  XS_BREAKPOINT,
+  SM_BREAKPOINT,
+  MD_BREAKPOINT,
+  LG_BREAKPOINT,
+} from "~/lib/constants";
 
 const OpportunitiesCarousel: React.FC<{
   [id: string]: any;
@@ -36,15 +42,15 @@ const OpportunitiesCarousel: React.FC<{
   const totalAll = data.totalCount ?? 0;
   const lastSlideRef = useRef(-1);
   const hasMoreToLoadRef = useRef(true);
-  const loadingMoreRef = useRef(false);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   // Determine the number of visible slides based on screen width
   useEffect(() => {
     const calculateVisibleSlides = () => {
-      if (screenWidth < 600) return 1; // xs: Mobile
-      if (screenWidth >= 600 && screenWidth < 768) return 1; // sm: Small devices
-      if (screenWidth >= 768 && screenWidth < 1024) return 2; // md: Medium devices
-      if (screenWidth >= 1024 && screenWidth < 1280) return 3; // lg: Large devices
+      if (screenWidth < XS_BREAKPOINT) return 1; // xs: Mobile
+      if (screenWidth >= XS_BREAKPOINT && screenWidth < SM_BREAKPOINT) return 1; // sm: Small devices
+      if (screenWidth >= SM_BREAKPOINT && screenWidth < MD_BREAKPOINT) return 2; // md: Medium devices
+      if (screenWidth >= MD_BREAKPOINT && screenWidth < LG_BREAKPOINT) return 3; // lg: Large devices
       return 4; // xl: Extra large devices
     };
     setVisibleSlides(calculateVisibleSlides());
@@ -60,17 +66,17 @@ const OpportunitiesCarousel: React.FC<{
       const shouldLoadMoreSlides =
         props.currentSlide + 1 + visibleSlides > totalSlides &&
         hasMoreToLoadRef.current &&
-        !loadingMoreRef.current;
+        !loadingMore;
       if (shouldLoadMoreSlides) {
-        loadingMoreRef.current = true;
+        setLoadingMore(true);
         loadData(totalSlides + 1).then((data) => {
           if (data.items.length === 0) hasMoreToLoadRef.current = false;
           setSlides((prevSlides) => [...prevSlides, ...data.items]);
-          loadingMoreRef.current = false;
+          setLoadingMore(false);
         });
       }
     },
-    [visibleSlides, totalSlides, loadData],
+    [visibleSlides, totalSlides, loadData, loadingMore],
   );
 
   // Calculate the selected snap
@@ -155,8 +161,7 @@ const OpportunitiesCarousel: React.FC<{
           </Slide>
         ))}
 
-        {!nextDisabled &&
-          hasMoreToLoadRef.current &&
+        {loadingMore &&
           [...Array(visibleSlides)].map((_, index) => (
             <Slide
               key={`${id}-loading-skeleton-${index}`}
