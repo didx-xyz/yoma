@@ -20,14 +20,15 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import Moment from "react-moment";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
 import ReactModal from "react-modal";
-import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
 import { toast } from "react-toastify";
 import { config } from "~/lib/react-query-config";
 import { AvatarImage } from "~/components/AvatarImage";
-import { Loading } from "~/components/Status/Loading";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import Suspense from "~/components/Common/Suspense";
+import Breadcrumb from "~/components/Breadcrumb";
+import Head from "next/head";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -58,9 +59,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     queryFn: () =>
       searchCredentials(
         {
-          //TODO: PAGING NOT SUPPORTED BY API (ARIES CLOUD)
-          pageNumber: null, //page ? parseInt(page.toString()) : 1,
-          pageSize: null, //PAGE_SIZE,
+          pageNumber: page ? parseInt(page.toString()) : 1,
+          pageSize: PAGE_SIZE,
           schemaType: null, //schemaType?.toString() ?? null,
         },
         context,
@@ -99,9 +99,8 @@ const MyCredentials: NextPageWithLayout<{
     queryKey: [`Credentials_${query?.toString()}_${page?.toString()}`],
     queryFn: () =>
       searchCredentials({
-        //TODO: PAGING NOT SUPPORTED BY API (ARIES CLOUD)
-        pageNumber: null, //page ? parseInt(page.toString()) : 1,
-        pageSize: null, //PAGE_SIZE,
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: PAGE_SIZE,
         schemaType: null, //schemaType?.toString() ?? null,
       }),
     enabled: !error,
@@ -112,7 +111,7 @@ const MyCredentials: NextPageWithLayout<{
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/yoid/credentials`,
+        pathname: `/yoid/passport`,
         query: { query: query, page: value },
       });
     },
@@ -138,6 +137,10 @@ const MyCredentials: NextPageWithLayout<{
 
   return (
     <>
+      <Head>
+        <title>Yoma | 🌐 Passport</title>
+      </Head>
+
       {/* CREDENTIAL DIALOG */}
       <ReactModal
         isOpen={credentialDialogVisible}
@@ -260,85 +263,93 @@ const MyCredentials: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      <div className="mb-8 mt-2 flex w-full flex-col gap-4 px-4">
-        <h5 className="font-bold tracking-wider">My Passport</h5>
-        {/* ERRROR */}
-        {dataError && <ApiErrors error={dataError} />}
-        {/* LOADING */}
-        {dataIsLoading && <Loading />}
+      <div className="w-full">
+        <h5 className="mb-4 font-bold tracking-wider text-black">
+          <Breadcrumb
+            items={[
+              { title: "💳 Yo-ID", url: "/yoid" },
+              {
+                title: "🌐 Passport",
+                selected: true,
+              },
+            ]}
+          />
+        </h5>
 
-        {/* NO ROWS */}
-        {/* TODO:data.totalCount not populated by API */}
-        {/* {data && (data.totalCount === null || data.totalCount === 0) && ( */}
-        {data && data.items.length === 0 && (
-          <div className="flex justify-center rounded-lg bg-white p-8 text-center">
-            <NoRowsMessage
-              title={"No credentials found"}
-              description={
-                "Credentials that you receive by completing opportunities will be displayed here. Please be aware credentials will take 24 hours to reflect."
-              }
-            />
-          </div>
-        )}
-
-        {data && data.items?.length > 0 && (
-          <div className="flex flex-col items-center gap-4">
-            {/* GRID */}
-            {data && data.items?.length > 0 && (
-              <div className="grid grid-cols-1 gap-4 md:mr-auto md:grid-cols-2 xl:grid-cols-3">
-                {data.items.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex h-[180px] cursor-pointer flex-col rounded-lg bg-white p-4 shadow-custom"
-                    onClick={() => handleOnClickCredential(item)}
-                  >
-                    <div className="flex h-full flex-row">
-                      <div className="flex flex-grow flex-row items-start justify-start">
-                        <div className="flex flex-col items-start justify-start gap-1">
-                          <p className="line-clamp-2 max-h-[35px] max-w-[210px] overflow-hidden text-ellipsis pr-2 text-xs font-medium text-gray-dark">
-                            {item.issuer}
-                          </p>
-                          <p className="line-clamp-3 max-h-[80px] max-w-[210px] overflow-hidden text-ellipsis pr-2 text-sm font-bold">
-                            {item.title}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-row items-start">
-                        <AvatarImage
-                          icon={item.issuerLogoURL}
-                          alt={`${item.issuer} Logo`}
-                          size={50}
-                        />
-                      </div>
-                    </div>
-                    <div className="flex flex-row items-center justify-center">
-                      <div className="flex flex-grow text-xs tracking-widest text-gray-dark">
-                        <Moment format={DATETIME_FORMAT_SYSTEM} utc={true}>
-                          {item.dateIssued!}
-                        </Moment>
-                      </div>
-                      <div className="badge bg-green-light text-green">
-                        <IoMdCheckmark className="mr-1 h-4 w-4" />
-                        Verified
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-
-            <div className="mt-2 grid place-items-center justify-center">
-              {/* PAGINATION BUTTONS */}
-              <PaginationButtons
-                currentPage={page ? parseInt(page) : 1}
-                totalItems={data?.totalCount ?? 0}
-                pageSize={PAGE_SIZE}
-                onClick={handlePagerChange}
-                showPages={false}
+        <Suspense isReady={!!data} isLoading={dataIsLoading} error={dataError}>
+          {/* NO ROWS */}
+          {/* TODO:data.totalCount not populated by API */}
+          {/* {data && (data.totalCount === null || data.totalCount === 0) && ( */}
+          {data && data.items.length === 0 && (
+            <div className="flex justify-center rounded-lg bg-white p-8 text-center">
+              <NoRowsMessage
+                title={"No credentials found"}
+                description={
+                  "Credentials that you receive by completing opportunities will be displayed here. Please be aware credentials will take 24 hours to reflect."
+                }
               />
             </div>
-          </div>
-        )}
+          )}
+
+          {data && data.items?.length > 0 && (
+            <div className="flex flex-col items-center gap-4">
+              {/* GRID */}
+              {data && data.items?.length > 0 && (
+                <div className="grid grid-cols-1 gap-4 md:mr-auto md:grid-cols-2 xl:grid-cols-3">
+                  {data.items.map((item, index) => (
+                    <div
+                      key={index}
+                      className="flex h-[180px] cursor-pointer flex-col rounded-lg bg-white p-4 shadow-custom"
+                      onClick={() => handleOnClickCredential(item)}
+                    >
+                      <div className="flex h-full flex-row">
+                        <div className="flex flex-grow flex-row items-start justify-start">
+                          <div className="flex flex-col items-start justify-start gap-1">
+                            <p className="line-clamp-2 max-h-[35px] max-w-[210px] overflow-hidden text-ellipsis pr-2 text-xs font-medium text-gray-dark">
+                              {item.issuer}
+                            </p>
+                            <p className="line-clamp-3 max-h-[80px] max-w-[210px] overflow-hidden text-ellipsis pr-2 text-sm font-bold">
+                              {item.title}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex flex-row items-start">
+                          <AvatarImage
+                            icon={item.issuerLogoURL}
+                            alt={`${item.issuer} Logo`}
+                            size={50}
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-row items-center justify-center">
+                        <div className="flex flex-grow text-xs tracking-widest text-gray-dark">
+                          <Moment format={DATETIME_FORMAT_SYSTEM} utc={true}>
+                            {item.dateIssued!}
+                          </Moment>
+                        </div>
+                        <div className="badge bg-green-light text-green">
+                          <IoMdCheckmark className="mr-1 h-4 w-4" />
+                          Verified
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mt-2 grid place-items-center justify-center">
+                {/* PAGINATION BUTTONS */}
+                <PaginationButtons
+                  currentPage={page ? parseInt(page) : 1}
+                  totalItems={data?.totalCount ?? 0}
+                  pageSize={PAGE_SIZE}
+                  onClick={handlePagerChange}
+                  showPages={false}
+                />
+              </div>
+            </div>
+          )}
+        </Suspense>
       </div>
     </>
   );

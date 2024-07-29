@@ -79,7 +79,7 @@ import {
   ROLE_ADMIN,
 } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
-import { getThemeFromRole } from "~/lib/utils";
+import { getThemeFromRole, getTimeOfDayAndEmoji } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -678,24 +678,6 @@ const OrganisationDashboard: NextPageWithLayout<{
     },
     [id, router, getSearchFilterAsQueryString],
   );
-  const getTimeOfDayAndEmoji = (): [string, string] => {
-    const hour = new Date().getHours();
-    let timeOfDay: string;
-    let timeOfDayEmoji: string;
-
-    if (hour < 12) {
-      timeOfDay = "morning";
-      timeOfDayEmoji = "☀️";
-    } else if (hour < 18) {
-      timeOfDay = "afternoon";
-      timeOfDayEmoji = "☀️";
-    } else {
-      timeOfDay = "evening";
-      timeOfDayEmoji = "🌙";
-    }
-
-    return [timeOfDay, timeOfDayEmoji];
-  };
 
   // 🔔 EVENTS
   const onSubmitFilter = useCallback(

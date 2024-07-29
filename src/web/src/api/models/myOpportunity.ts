@@ -33,7 +33,7 @@ export interface MyOpportunitySearchFilter
 
 export interface MyOpportunitySearchFilterBase extends PaginationFilter {
   action: Action;
-  verificationStatuses: VerificationStatus[] | null | string[]; //NB
+  verificationStatuses: VerificationStatus[] | null | string[]; //NB: string
 }
 
 export interface MyOpportunitySearchFilterAdmin
@@ -72,14 +72,14 @@ export interface MyOpportunityInfo {
   actionId: string;
   action: Action;
   verificationStatusId: string | null;
-  verificationStatus: VerificationStatus | null | string; //NB
+  verificationStatus: VerificationStatus | null | string; //NB: string
   commentVerification: string | null;
   dateStart: string | null;
   dateEnd: string | null;
   dateCompleted: string | null;
-  dateModified: string | null;
   zltoReward: number | null;
   yomaReward: number | null;
+  dateModified: string;
   verifications: MyOpportunityInfoVerification[] | null;
   skills: Skill[] | null;
 }

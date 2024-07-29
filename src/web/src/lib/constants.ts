@@ -130,3 +130,8 @@ export const SLOW_NETWORK_MESSAGE_TIMEOUT = 10000; // 10 seconds
 export const SLOW_NETWORK_ABORT_TIMEOUT = 45000; // 45 seconds
 
 export const DELIMETER_PASTE_MULTI = /\s|\||,|;/;
+
+export const XS_BREAKPOINT = 600;
+export const SM_BREAKPOINT = 768;
+export const MD_BREAKPOINT = 1024;
+export const LG_BREAKPOINT = 1280;

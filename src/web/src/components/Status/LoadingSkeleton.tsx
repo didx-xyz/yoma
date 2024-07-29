@@ -5,7 +5,7 @@ interface LoadingSkeletonProps {
 }
 
 export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
-  className = "w-64",
+  className = "w-full h-full",
 }) => {
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
