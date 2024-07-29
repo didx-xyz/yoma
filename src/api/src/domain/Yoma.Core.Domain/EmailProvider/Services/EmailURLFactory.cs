@@ -101,7 +101,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
       switch (emailType)
       {
         case EmailType.Opportunity_Verification_Rejected:
-          result = result.AppendPathSegment("declined").ToString();
+          result = result.AppendPathSegment("rejected").ToString();
           break;
 
         case EmailType.Opportunity_Verification_Completed:
@@ -110,7 +110,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
           break;
 
         case EmailType.Opportunity_Verification_Pending:
-          result = result.AppendPathSegment("submitted").ToString();
+          result = result.AppendPathSegment("pending").ToString();
           break;
 
         case EmailType.Opportunity_Verification_Pending_Admin:
