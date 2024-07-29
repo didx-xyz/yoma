@@ -1,4 +1,4 @@
-import { QueryClient, dehydrate } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { type ReactElement } from "react";
@@ -8,11 +8,12 @@ import { type ParsedUrlQuery } from "querystring";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
-import { userProfileAtom } from "~/lib/store";
-import { useAtomValue } from "jotai";
 import Link from "next/link";
-import { config } from "~/lib/react-query-config";
 import { AvatarImage } from "~/components/AvatarImage";
+import { getUserSkills } from "~/api/services/user";
+import Suspense from "~/components/Common/Suspense";
+import Breadcrumb from "~/components/Breadcrumb";
+import Head from "next/head";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -31,13 +32,11 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const queryClient = new QueryClient(config);
   const { id } = context.params as IParams;
   const { query, page } = context.query;
 
   return {
     props: {
-      dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       id: id ?? null,
       query: query ?? null,
@@ -52,36 +51,62 @@ const MyCredentials: NextPageWithLayout<{
   page?: string;
   error: string;
 }> = ({ error }) => {
-  const userProfile = useAtomValue(userProfileAtom);
+  const {
+    data: dataUserSkills,
+    error: dataUserSkillsError,
+    isLoading: dataUserSkillsIsLoading,
+  } = useQuery({
+    queryKey: ["User", "Skills"],
+    queryFn: () => getUserSkills(),
+    enabled: !error,
+  });
 
   if (error) return <Unauthorized />;
 
   return (
     <>
-      <div className="mb-8 mt-2 flex w-full flex-col gap-4">
-        {/* NO ROWS */}
-        {(userProfile?.skills === null ||
-          userProfile?.skills === undefined ||
-          userProfile?.skills.length === 0) && (
-          <div className="flex justify-center rounded-lg bg-white p-8 text-center">
-            <NoRowsMessage
-              title={"No completed skills found"}
-              description={
-                "Skills that you receive by completing opportunities will be diplayed here."
-              }
-            />
-          </div>
-        )}
+      <Head>
+        <title>Yoma | ⚡ Skills</title>
+      </Head>
 
-        {userProfile?.skills !== null &&
-          userProfile?.skills !== undefined &&
-          userProfile?.skills.length > 0 && (
-            <div className="flex flex-col gap-4 px-4 md:px-0">
-              <h5 className="font-bold tracking-wider">My Skills</h5>
+      <div className="w-full">
+        <h5 className="mb-4 font-bold tracking-wider text-black">
+          <Breadcrumb
+            items={[
+              { title: "💳 Yo-ID", url: "/yoid" },
+              {
+                title: "⚡ Skills",
+                selected: true,
+              },
+            ]}
+          />
+        </h5>
 
-              {/* GRID */}
+        <Suspense
+          isReady={!!dataUserSkills}
+          isLoading={dataUserSkillsIsLoading}
+          error={dataUserSkillsError}
+        >
+          {/* NO ROWS */}
+          {(dataUserSkills === null ||
+            dataUserSkills === undefined ||
+            dataUserSkills.length === 0) && (
+            <div className="flex justify-center rounded-lg bg-white p-8 text-center">
+              <NoRowsMessage
+                title={"No completed skills found"}
+                description={
+                  "Skills that you receive by completing opportunities will be diplayed here."
+                }
+              />
+            </div>
+          )}
+
+          {/* GRID */}
+          {dataUserSkills !== null &&
+            dataUserSkills !== undefined &&
+            dataUserSkills.length > 0 && (
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {userProfile?.skills.map((item, index) => (
+                {dataUserSkills.map((item, index) => (
                   <Link
                     key={`${item.id}_${index}`}
                     href={item?.infoURL ? (item?.infoURL as any) : "#noaction"}
@@ -123,8 +148,8 @@ const MyCredentials: NextPageWithLayout<{
                   </Link>
                 ))}
               </div>
-            </div>
-          )}
+            )}
+        </Suspense>
       </div>
     </>
   );

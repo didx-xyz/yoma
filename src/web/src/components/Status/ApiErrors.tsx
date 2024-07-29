@@ -43,7 +43,7 @@ export const ApiErrors: Props = ({ error }) => {
               return (
                 <>
                   <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                    <IoMdFlame className="mr-2 h-10 w-10 text-xl text-red-400" />{" "}
+                    <IoMdFlame className="mr-2 h-10 w-10 text-xl text-red-400" />
                     Access Denied
                   </div>
                   <p className="text-sm">
@@ -57,7 +57,7 @@ export const ApiErrors: Props = ({ error }) => {
                 return (
                   <>
                     <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                      <IoMdFlame className="mr-2 h-10 w-10 text-xl text-red-400" />{" "}
+                      <IoMdFlame className="mr-2 h-10 w-10 text-xl text-red-400" />
                       Error
                     </div>
                     <p className="text-sm">
@@ -79,12 +79,12 @@ export const ApiErrors: Props = ({ error }) => {
                 return (
                   <>
                     <div className="mb-4 flex flex-row items-center text-sm font-bold">
-                      <IoMdFlame className="mr-2 h-10 w-10 text-xl text-red-400" />{" "}
+                      <IoMdFlame className="mr-2 h-10 w-10 text-xl text-red-400" />
                       The following errors occurred:
                     </div>
                     <ul className="list-disc">
                       {customErrors?.map((error) => (
-                        <li key={error.message} className="text-sm">
+                        <li key={error.message} className="truncate text-sm">
                           {error.message}
                         </li>
                       ))}

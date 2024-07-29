@@ -18,6 +18,7 @@ import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListI
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { config } from "~/lib/react-query-config";
+import Head from "next/head";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -104,68 +105,72 @@ const MyOpportunitiesSaved: NextPageWithLayout<{
   if (error) return <Unauthorized />;
 
   return (
-    <div className="flex flex-col gap-4">
-      <h6 className="font-bold tracking-wider">
-        Saved opportunities <span className="text-red-600">❤</span>
-      </h6>
+    <>
+      <Head>
+        <title>Yoma | 💗 Saved Opportunities</title>
+      </Head>
 
-      {/* ERRROR */}
-      {dataMyOpportunitiesError && (
-        <ApiErrors error={dataMyOpportunitiesError} />
-      )}
+      <div className="flex flex-col gap-4">
+        {/* ERRROR */}
+        {dataMyOpportunitiesError && (
+          <ApiErrors error={dataMyOpportunitiesError} />
+        )}
 
-      {/* LOADING */}
-      {dataMyOpportunitiesIsLoading && <LoadingSkeleton />}
+        {/* LOADING */}
+        {dataMyOpportunitiesIsLoading && <LoadingSkeleton />}
 
-      {/* NO ROWS */}
-      {dataMyOpportunities && dataMyOpportunities.totalCount === 0 && (
-        <div className="flex justify-center rounded-lg bg-white text-center md:p-8">
-          <NoRowsMessage
-            title={"You don't have any saved opportunities."}
-            description={
-              "Opportunities you have saved will be listed here for easy access and reference. To save an opportunity, simply click the 'Save' button when viewing the opportunity details. This way, you can quickly find and return to the opportunities that interest you most."
-            }
-          />
-        </div>
-      )}
-
-      {dataMyOpportunities && dataMyOpportunities.items?.length > 0 && (
-        <div className="flex flex-col gap-4">
-          {/* PAGINATION INFO */}
-          <PaginationInfoComponent
-            currentPage={pageNumber}
-            itemCount={
-              dataMyOpportunities?.items ? dataMyOpportunities.items.length : 0
-            }
-            totalItems={dataMyOpportunities?.totalCount ?? 0}
-            pageSize={PAGE_SIZE}
-            query={null}
-          />
-
-          {/* GRID */}
-          <div className="flex flex-col gap-4">
-            {dataMyOpportunities.items.map((item, index) => (
-              <OpportunityListItem
-                key={index}
-                data={item}
-                displayDate={item.dateModified ?? ""}
-              />
-            ))}
-          </div>
-
-          {/* PAGINATION BUTTONS */}
-          <div className="mt-2 grid place-items-center justify-center">
-            <PaginationButtons
-              currentPage={pageNumber}
-              totalItems={dataMyOpportunities?.totalCount ?? 0}
-              pageSize={PAGE_SIZE}
-              onClick={handlePagerChange}
-              showPages={false}
+        {/* NO ROWS */}
+        {dataMyOpportunities && dataMyOpportunities.totalCount === 0 && (
+          <div className="flex justify-center rounded-lg bg-white text-center md:p-8">
+            <NoRowsMessage
+              title={"You don't have any saved opportunities."}
+              description={
+                "Opportunities you have saved will be listed here for easy access and reference. To save an opportunity, simply click the 'Save' button when viewing the opportunity details. This way, you can quickly find and return to the opportunities that interest you most."
+              }
             />
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {dataMyOpportunities && dataMyOpportunities.items?.length > 0 && (
+          <div className="flex flex-col gap-4">
+            {/* PAGINATION INFO */}
+            <PaginationInfoComponent
+              currentPage={pageNumber}
+              itemCount={
+                dataMyOpportunities?.items
+                  ? dataMyOpportunities.items.length
+                  : 0
+              }
+              totalItems={dataMyOpportunities?.totalCount ?? 0}
+              pageSize={PAGE_SIZE}
+              query={null}
+            />
+
+            {/* GRID */}
+            <div className="flex flex-col gap-4">
+              {dataMyOpportunities.items.map((item, index) => (
+                <OpportunityListItem
+                  key={index}
+                  data={item}
+                  displayDate={item.dateModified ?? ""}
+                />
+              ))}
+            </div>
+
+            {/* PAGINATION BUTTONS */}
+            <div className="mt-2 grid place-items-center justify-center">
+              <PaginationButtons
+                currentPage={pageNumber}
+                totalItems={dataMyOpportunities?.totalCount ?? 0}
+                pageSize={PAGE_SIZE}
+                onClick={handlePagerChange}
+                showPages={false}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 

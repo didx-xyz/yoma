@@ -10,13 +10,13 @@ interface InputProps {
 
 const Breadcrumb: React.FC<InputProps> = ({ items }) => {
   return (
-    <div className="breadcrumbs text-sm text-gray-dark">
+    <div className="breadcrumbs">
       <ul>
         {items.map((item, index) => (
           <li key={index}>
             {item.url ? (
               <Link
-                className="max-w-[200px] overflow-hidden text-ellipsis font-bold hover:text-gray"
+                className="max-w-[200px] overflow-hidden text-ellipsis font-bold hover:text-gray-dark"
                 href={item.url}
               >
                 {item.iconImage && (

@@ -18,6 +18,7 @@ import { OpportunityListItem } from "~/components/MyOpportunity/OpportunityListI
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { config } from "~/lib/react-query-config";
+import Head from "next/head";
 
 interface IParams extends ParsedUrlQuery {
   query?: string;
@@ -67,7 +68,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const MyOpportunitiesDeclined: NextPageWithLayout<{
+const MyOpportunitiesRejected: NextPageWithLayout<{
   query?: string;
   pageNumber: number;
   error: string;
@@ -94,7 +95,7 @@ const MyOpportunitiesDeclined: NextPageWithLayout<{
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/yoid/opportunities/declined`,
+        pathname: `/yoid/opportunities/rejected`,
         query: { ...(query && { query }), ...(value && { page: value }) },
       });
     },
@@ -104,69 +105,75 @@ const MyOpportunitiesDeclined: NextPageWithLayout<{
   if (error) return <Unauthorized />;
 
   return (
-    <div className="flex flex-col gap-4">
-      <h6 className="font-bold tracking-wider">Rejected opportunities 👎</h6>
+    <>
+      <Head>
+        <title>Yoma | ❌ Rejected Opportunities</title>
+      </Head>
 
-      {/* ERRROR */}
-      {dataMyOpportunitiesError && (
-        <ApiErrors error={dataMyOpportunitiesError} />
-      )}
+      <div className="flex flex-col gap-4">
+        {/* ERRROR */}
+        {dataMyOpportunitiesError && (
+          <ApiErrors error={dataMyOpportunitiesError} />
+        )}
 
-      {/* LOADING */}
-      {dataMyOpportunitiesIsLoading && <LoadingSkeleton />}
+        {/* LOADING */}
+        {dataMyOpportunitiesIsLoading && <LoadingSkeleton />}
 
-      {/* NO ROWS */}
-      {dataMyOpportunities && dataMyOpportunities.totalCount === 0 && (
-        <div className="flex justify-center rounded-lg bg-white text-center md:p-8">
-          <NoRowsMessage
-            title={"No declined opportunites found"}
-            description={"Declined opportunities will be displayed here."}
-          />
-        </div>
-      )}
-
-      {dataMyOpportunities && dataMyOpportunities.items?.length > 0 && (
-        <div className="flex flex-col gap-4">
-          {/* PAGINATION INFO */}
-          <PaginationInfoComponent
-            currentPage={pageNumber}
-            itemCount={
-              dataMyOpportunities?.items ? dataMyOpportunities.items.length : 0
-            }
-            totalItems={dataMyOpportunities?.totalCount ?? 0}
-            pageSize={PAGE_SIZE}
-            query={null}
-          />
-
-          {/* GRID */}
-          <div className="flex flex-col gap-4">
-            {dataMyOpportunities.items.map((item, index) => (
-              <OpportunityListItem
-                key={index}
-                data={item}
-                displayDate={item.dateModified ?? ""}
-              />
-            ))}
-          </div>
-
-          {/* PAGINATION BUTTONS */}
-          <div className="mt-2 grid place-items-center justify-center">
-            <PaginationButtons
-              currentPage={pageNumber}
-              totalItems={dataMyOpportunities?.totalCount ?? 0}
-              pageSize={PAGE_SIZE}
-              onClick={handlePagerChange}
-              showPages={false}
+        {/* NO ROWS */}
+        {dataMyOpportunities && dataMyOpportunities.totalCount === 0 && (
+          <div className="flex justify-center rounded-lg bg-white text-center md:p-8">
+            <NoRowsMessage
+              title={"No rejected opportunites found"}
+              description={"Rejected opportunities will be displayed here."}
             />
           </div>
-        </div>
-      )}
-    </div>
+        )}
+
+        {dataMyOpportunities && dataMyOpportunities.items?.length > 0 && (
+          <div className="flex flex-col gap-4">
+            {/* PAGINATION INFO */}
+            <PaginationInfoComponent
+              currentPage={pageNumber}
+              itemCount={
+                dataMyOpportunities?.items
+                  ? dataMyOpportunities.items.length
+                  : 0
+              }
+              totalItems={dataMyOpportunities?.totalCount ?? 0}
+              pageSize={PAGE_SIZE}
+              query={null}
+            />
+
+            {/* GRID */}
+            <div className="flex flex-col gap-4">
+              {dataMyOpportunities.items.map((item, index) => (
+                <OpportunityListItem
+                  key={index}
+                  data={item}
+                  displayDate={item.dateModified ?? ""}
+                />
+              ))}
+            </div>
+
+            {/* PAGINATION BUTTONS */}
+            <div className="mt-2 grid place-items-center justify-center">
+              <PaginationButtons
+                currentPage={pageNumber}
+                totalItems={dataMyOpportunities?.totalCount ?? 0}
+                pageSize={PAGE_SIZE}
+                onClick={handlePagerChange}
+                showPages={false}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
-MyOpportunitiesDeclined.getLayout = function getLayout(page: ReactElement) {
+MyOpportunitiesRejected.getLayout = function getLayout(page: ReactElement) {
   return <YoIDTabbedOpportunities>{page}</YoIDTabbedOpportunities>;
 };
 
-export default MyOpportunitiesDeclined;
+export default MyOpportunitiesRejected;

@@ -9,7 +9,7 @@ import { toBase64, shimmer } from "~/lib/image";
 import Head from "next/head";
 import iconZltoWhite from "public/images/icon-zlto-white.svg";
 import iconZltoCircle from "public/images/icon-zlto-rounded.webp";
-import { ZltoModal } from "../Modals/ZltoModal";
+import { ZltoModal } from "../YoID/ZltoModal";
 import { SignInButton } from "../SignInButton";
 
 export type TabProps = ({

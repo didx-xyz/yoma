@@ -56,7 +56,7 @@ export interface SSISchema {
 }
 
 export interface SSIWalletFilter extends PaginationFilter {
-  schemaType: SchemaType | null;
+  schemaType: SchemaType | null | string; //NB: string
 }
 
 export interface SSIWalletSearchResults {
@@ -69,8 +69,8 @@ export interface SSICredential extends SSICredentialBase {}
 
 export interface SSICredentialBase {
   id: string;
-  artifactType: ArtifactType | string; //NB
-  schemaType: SchemaType | string; //NB
+  artifactType: ArtifactType | string; //NB: string
+  schemaType: SchemaType | string; //NB: string
   issuer: string;
   issuerLogoURL: string;
   title: string;
