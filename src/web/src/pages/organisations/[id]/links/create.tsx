@@ -384,13 +384,16 @@ const LinkDetails: NextPageWithLayout<{
         >
           <div className="flex flex-row items-center gap-2">
             <IoMdWarning className="h-6 w-6 text-warning" />
-            <p className="text-lg">Confirm</p>
+            <p className="text-lg">Submit</p>
           </div>
 
           <div>
-            <p className="text-sm leading-6">
-              Are you sure you want to <i>create</i> this link? These details
-              cannot be changed afterwards.
+            <p className="text-xs leading-6 md:text-sm">
+              Are you sure you want to submit your link for approval?
+              <br />
+              An administrator must approve this link before it becomes active.
+              <br />
+              Please note that these details cannot be changed later.
             </p>
           </div>
         </div>,
