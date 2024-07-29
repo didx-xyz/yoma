@@ -64,8 +64,8 @@ export const getVerificationStatus = async (
   context?: GetServerSidePropsContext,
 ): Promise<MyOpportunityResponseVerify> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.post<MyOpportunityResponseVerify>(
-    `/myopportunity/action/verify/status?opportunityId=${opportunityId}`,
+  const { data } = await instance.get<MyOpportunityResponseVerify>(
+    `/myopportunity/action/${opportunityId}/verify/status`,
   );
 
   return data;
