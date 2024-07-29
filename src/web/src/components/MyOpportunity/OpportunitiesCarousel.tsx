@@ -14,17 +14,17 @@ import {
   type OnSlideProps,
 } from "react-scroll-snap-anime-slider";
 import { MyOpportunitySearchResults } from "~/api/models/myOpportunity";
+import {
+  LG_BREAKPOINT,
+  MD_BREAKPOINT,
+  SM_BREAKPOINT,
+  XS_BREAKPOINT,
+} from "~/lib/constants";
 import { screenWidthAtom } from "~/lib/store";
 import { NavigationButtons } from "../Carousel/NavigationButtons";
 import { SelectedSnapDisplay } from "../Carousel/SelectedSnapDisplay";
 import { LoadingSkeleton } from "../Status/LoadingSkeleton";
 import { OpportunityCard } from "./OpportunityCard";
-import {
-  XS_BREAKPOINT,
-  SM_BREAKPOINT,
-  MD_BREAKPOINT,
-  LG_BREAKPOINT,
-} from "~/lib/constants";
 
 const OpportunitiesCarousel: React.FC<{
   [id: string]: any;
@@ -41,7 +41,7 @@ const OpportunitiesCarousel: React.FC<{
   const totalSlides = useMemo(() => slides.length, [slides]);
   const totalAll = data.totalCount ?? 0;
   const lastSlideRef = useRef(-1);
-  const hasMoreToLoadRef = useRef(true);
+  const [hasMoreToLoad, setHasMoreToLoad] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
   // Determine the number of visible slides based on screen width
@@ -65,18 +65,18 @@ const OpportunitiesCarousel: React.FC<{
 
       const shouldLoadMoreSlides =
         props.currentSlide + 1 + visibleSlides > totalSlides &&
-        hasMoreToLoadRef.current &&
+        hasMoreToLoad &&
         !loadingMore;
       if (shouldLoadMoreSlides) {
         setLoadingMore(true);
         loadData(totalSlides + 1).then((data) => {
-          if (data.items.length === 0) hasMoreToLoadRef.current = false;
+          if (data.items.length === 0) setHasMoreToLoad(false);
           setSlides((prevSlides) => [...prevSlides, ...data.items]);
           setLoadingMore(false);
         });
       }
     },
-    [visibleSlides, totalSlides, loadData, loadingMore],
+    [visibleSlides, totalSlides, loadData, loadingMore, hasMoreToLoad],
   );
 
   // Calculate the selected snap
@@ -90,8 +90,8 @@ const OpportunitiesCarousel: React.FC<{
   const nextDisabled = useMemo(() => {
     // Check if the current set of visible slides includes the last slide
     const isLastSlideVisible = selectedSnap >= totalAll - 1;
-    return isLastSlideVisible || !hasMoreToLoadRef.current; // Disable if the last slide is visible or no more items to load
-  }, [selectedSnap, totalAll, hasMoreToLoadRef.current]);
+    return isLastSlideVisible;
+  }, [selectedSnap, totalAll]);
 
   // Render navigation buttons
   const renderButtons = useCallback(
