@@ -32,14 +32,6 @@ const navBarLinksUser: TabItem[] = [
     selected: false,
     iconImage: null,
   },
-  // {
-  //   title: "Jobs",
-  //   description: "Jobs",
-  //   url: "/jobs",
-  //   badgeCount: null,
-  //   selected: false,
-  //   iconImage: null,
-  // },
   {
     title: "Marketplace",
     description: "Marketplace",
@@ -59,14 +51,6 @@ const navBarLinksAdmin: TabItem[] = [
     selected: false,
     iconImage: null,
   },
-  // {
-  //   title: "Overview",
-  //   description: "Overview",
-  //   url: "/admin",
-  //   badgeCount: null,
-  //   selected: false,
-  //   iconImage: null,
-  // },
   {
     title: "Organisations",
     description: "Organisations",
@@ -201,7 +185,7 @@ export const Navbar: React.FC = () => {
               <div className="flex flex-col">
                 {currentNavbarLinks.map((link, index) => (
                   <Link
-                    href={link.url}
+                    href={link.url!}
                     key={index}
                     className="px-7 py-3 text-white hover:brightness-50"
                     onClick={() => setMenuVisible(false)}
@@ -219,7 +203,7 @@ export const Navbar: React.FC = () => {
             {currentNavbarLinks.map((link, index) => (
               <li key={index} tabIndex={index}>
                 <Link
-                  href={link.url}
+                  href={link.url!}
                   tabIndex={index}
                   className="text-white hover:brightness-50"
                   id={`lnkNavbarMenu_${link.title}`}
