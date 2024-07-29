@@ -162,7 +162,7 @@ keycloak:
     - --http-port=8080
     - --hostname-strict=false
     - --spi-events-listener-jboss-logging-success-level=info # log login/out events
-    - --spi-events-listener-jboss-logging-error-level=error  # log login/out events
+    - --spi-events-listener-jboss-logging-error-level=error # log login/out events
 
   serviceAccount:
     create: true
@@ -173,13 +173,13 @@ keycloak:
   rbac:
     create: true
     rules:
-     - apiGroups:
-         - ""
-       resources:
-         - pods
-       verbs:
-         - get
-         - list
+      - apiGroups:
+          - ""
+        resources:
+          - pods
+        verbs:
+          - get
+          - list
 
   podSecurityContext:
     runAsUser: 1000
@@ -219,17 +219,10 @@ keycloak:
         - |-
           cd /themes
           wget -qO - \
-            --header="Authorization: token ${GITHUB_PAT}" \
             --header="Accept:application/vnd.github.v3.raw" \
             https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.themes.ref }} | tar xz
           cp -R ./didx-xyz-yoma-*/src/keycloak/themes/yoma /themes
           rm -rf ./didx-xyz-yoma-*
-      env:
-        - name: GITHUB_PAT
-          valueFrom:
-            secretKeyRef:
-              name: {{ include "keycloak.fullname" . }}-github-pat
-              key: github-pat
       volumeMounts:
         - name: themes
           mountPath: /themes
@@ -323,12 +316,12 @@ keycloak:
   statefulsetLabels:
     # tags.datadoghq.com/env: <env>
     tags.datadoghq.com/service: keycloak
-    tags.datadoghq.com/version: '{{ default .Chart.AppVersion .Values.image.tag }}'
+    tags.datadoghq.com/version: "{{ default .Chart.AppVersion .Values.image.tag }}"
   statefulsetAnnotations: {}
   podLabels:
     # tags.datadoghq.com/env: <env>
     tags.datadoghq.com/service: keycloak
-    tags.datadoghq.com/version: '{{ default .Chart.AppVersion .Values.image.tag }}'
+    tags.datadoghq.com/version: "{{ default .Chart.AppVersion .Values.image.tag }}"
     admission.datadoghq.com/enabled: "false" # disabled by default (for now)
   podAnnotations:
     # gcr.io/datadoghq/dd-lib-java-init
@@ -360,7 +353,8 @@ keycloak:
     maxUnavailable: 1
     # minAvailable: 1
 
-  database: {}
+  database:
+    {}
     # existingSecret: keycloak-db
     # existingSecretKey: password
     # vendor: postgres
