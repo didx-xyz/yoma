@@ -7,7 +7,6 @@ import Image from "next/image";
 import { userProfileAtom } from "~/lib/store";
 import { useAtom } from "jotai";
 import { IoMdArrowForward } from "react-icons/io";
-import { toBase64, shimmer } from "~/lib/image";
 import iconZlto from "public/images/icon-zlto-rounded.webp";
 import iconZltoColor from "public/images/icon-zlto-rounded-color.webp";
 import iconCheckmark from "public/images/icon-checkmark.png";
@@ -33,24 +32,27 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
   const [tabItems, setTabItems] = useState<TabItem[]>([]);
   const [zltoModalVisible, setZltoModalVisible] = useState(false);
 
-  // 🔔 dropdown navigation change event
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    router.push(e.target.value);
-  };
-
   // set the tab items based on the current route
   useEffect(() => {
     setTabItems([
       {
-        title: "Opportunities",
-        description: "Completed, pending & saved",
-        url: "/yoid/opportunities/completed",
+        title: "💳 Yo-ID",
+        description: "Overview of your Yo-ID",
+        url: "/yoid",
+        badgeCount: null,
+        selected: router.asPath == "/yoid",
+        iconImage: iconCheckmark,
+      },
+      {
+        title: "🏆 Opportunities",
+        description: "Completed, pending, rejected & saved opportunities",
+        url: "/yoid/opportunities",
         badgeCount: null,
         selected: router.asPath.startsWith("/yoid/opportunities"),
         iconImage: iconCheckmark,
       },
       {
-        title: "My Skills",
+        title: "⚡ Skills",
         description: "Skills gained through opportunities",
         url: "/yoid/skills",
         badgeCount: null,
@@ -58,37 +60,29 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         iconImage: iconTools,
       },
       {
-        title: "Passport",
-        description: "Digital credentials",
-        url: "/yoid/credentials",
+        title: "🌐 Passport",
+        description: "My digital credentials",
+        url: "/yoid/passport",
         badgeCount: null,
-        selected: router.asPath.startsWith("/yoid/credentials"),
+        selected: router.asPath.startsWith("/yoid/passport"),
         iconImage: iconCredential,
       },
       {
-        title: "User Settings",
+        title: "👤 Profile",
         description: "My personal data",
+        url: "/yoid/profile",
+        badgeCount: null,
+        selected: router.asPath.startsWith("/yoid/profile"),
+        iconImage: iconCog,
+      },
+      {
+        title: "⚙ Settings",
+        description: "My settings & app data",
         url: "/yoid/settings",
         badgeCount: null,
         selected: router.asPath.startsWith("/yoid/settings"),
         iconImage: iconCog,
       },
-      {
-        title: "App Settings",
-        description: "My app data",
-        url: "/yoid/appSettings",
-        badgeCount: null,
-        selected: router.asPath.startsWith("/yoid/appSettings"),
-        iconImage: iconCog,
-      },
-      // {
-      //   title: "Open Digital CV",
-      //   description: "My opportunities submitted for verification",
-      //   url: "/yoid/cv",
-      //   badgeCount: null,
-      //   selected: router.asPath.startsWith("/yoid/cv"),
-      //   iconImage: iconShare,
-      // },
     ]);
   }, [router.asPath, setTabItems]);
 
@@ -114,21 +108,17 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
     <MainLayout>
       <>
         <Head>
-          <title>Yoma | YoID</title>
+          <title>Yoma | Yo-ID</title>
         </Head>
 
-        <PageBackground className="h-[23rem]" />
+        <PageBackground className="h-[28rem] md:h-[24rem]" />
 
         <ZltoModal
           isOpen={zltoModalVisible}
           onClose={() => setZltoModalVisible(false)}
         />
 
-        <div
-          className="relativex container z-10 mt-24 py-4"
-          //className="container z-10 mt-14 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4"
-          //className="relativex z-10 flex flex-col"
-        >
+        <div className="container z-10 mt-24 py-4">
           {/* USER CARD */}
           <div className="flex items-center justify-center">
             <Image
@@ -227,80 +217,27 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
             </div>
           </div>
 
-          <div className="mt-[5rem] flex flex-col gap-5 md:flex-row">
-            {/* TABBED NAVIGATION: MEDIUM DISPLAY */}
-            <div className="hidden md:block">
-              <ul className="menu w-64 gap-2 rounded-lg bg-gray-light">
-                {/* TABS */}
-                {tabItems.map((tabItem, index) => (
-                  <li key={`MenuNavigation_${index}`}>
-                    <Link
-                      href={tabItem.url}
-                      key={index}
-                      className={`hover:bg-gray ${
-                        tabItem.selected ? "bg-gray" : "bg-gray-light"
-                      }`}
-                    >
-                      <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full shadow">
-                        <Image
-                          src={tabItem.iconImage}
-                          alt={`${tabItem.title} icon`}
-                          width={20}
-                          height={20}
-                          sizes="(max-width: 20px) 30vw, 50vw"
-                          priority={true}
-                          placeholder="blur"
-                          blurDataURL={`data:image/svg+xml;base64,${toBase64(
-                            shimmer(20, 20),
-                          )}`}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                            maxWidth: "20px",
-                            maxHeight: "20px",
-                          }}
-                        />
-                      </div>
-                      <div className="flex flex-col">
-                        <div className="text-sm font-bold uppercase tracking-widest">
-                          {tabItem.title}
-                        </div>
-                        <div className="text-xs text-gray-dark">
-                          {tabItem.description}
-                        </div>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          {/* NAVIGATION BUTTONS */}
+          <div className="mt-6 flex flex-row flex-wrap items-center justify-center gap-2">
+            {tabItems.map((tab) => (
+              <Link
+                key={tab.title}
+                href={tab.url!}
+                rel="noopener noreferrer"
+                className={`btn btn-sm tooltip tooltip-secondary flex items-center border-gray text-xs text-gray hover:border-gray-dark ${
+                  tab.selected ? "btn-secondary border-0 hover:text-white" : ""
+                }`}
+                data-tip={tab.description}
+              >
+                {tab.title}
+              </Link>
+            ))}
+          </div>
 
-            {/* MAIN CONTENT */}
-            <div
-            //className="flex flex-grow flex-col"
-            >
-              {/* DROPDOWN NAVIGATION: SMALL DISPLAY */}
-              <div className="visible flex w-full items-center justify-center px-4 pb-4 md:hidden">
-                <select
-                  className="select w-full"
-                  onChange={handleChange}
-                  value={router.asPath}
-                  title="Select a page"
-                >
-                  {tabItems.map((tabItem, index) => (
-                    <option
-                      value={tabItem.url}
-                      key={`DropdownNavigation_${index}`}
-                    >
-                      {tabItem.title}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* CHILDREN */}
-              <div className="flex items-center justify-center">{children}</div>
-            </div>
+          {/* MAIN CONTENT */}
+          <div className="mx-4 mt-[2rem] flex flex-grow flex-col items-center justify-center md:mx-0">
+            {/* CHILDREN */}
+            {children}
           </div>
         </div>
       </>

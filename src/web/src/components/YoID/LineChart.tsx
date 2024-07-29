@@ -104,9 +104,9 @@ export const LineChart: React.FC<{
               {name == "Completed"
                 ? "✅"
                 : name == "Pending"
-                  ? "⌛"
+                  ? "🕒"
                   : name == "Rejected"
-                    ? "😞"
+                    ? "❌"
                     : name == "Saved"
                       ? "💗"
                       : "❔"}

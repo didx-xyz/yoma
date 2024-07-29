@@ -18,7 +18,7 @@ const OpportunityCard: React.FC<InputProps> = ({ data, displayDate }) => {
   return (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-sm md:w-[19.2rem]"
+      className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-lg md:w-[19.2rem]"
     >
       <div className="mb-2 flex flex-row gap-2">
         <AvatarImage
@@ -27,7 +27,7 @@ const OpportunityCard: React.FC<InputProps> = ({ data, displayDate }) => {
           size={60}
         />
 
-        <div className="flex flex-col justify-center gap-1 overflow-ellipsis ">
+        <div className="overflow-ellipsisx  flex flex-col justify-center gap-1   ">
           <h1 className="line-clamp-1 text-xs font-medium text-gray-dark">
             {data.organizationName}
           </h1>

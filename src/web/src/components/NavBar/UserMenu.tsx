@@ -3,7 +3,6 @@ import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import {
-  // IoMdAdd,
   IoMdPower,
   IoMdSearch,
   IoMdSettings,
@@ -176,7 +175,7 @@ export const UserMenu: React.FC = () => {
           {/* USER (YOID) */}
           <li className="z-30 w-full rounded-t-lg bg-white py-2 shadow-custom">
             <Link
-              href="/yoid/opportunities/completed"
+              href="/yoid"
               className="!rounded-t-lg rounded-b-none text-gray-dark"
               onClick={() => setUserMenuVisible(false)}
             >

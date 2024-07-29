@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import Head from "next/head";
 import { type ParsedUrlQuery } from "querystring";
 import { useCallback, type ReactElement } from "react";
 import {
@@ -10,6 +11,7 @@ import {
   VerificationStatus,
 } from "~/api/models/myOpportunity";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
+import Breadcrumb from "~/components/Breadcrumb";
 import Suspense from "~/components/Common/Suspense";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
 import OpportunitiesCarousel from "~/components/MyOpportunity/OpportunitiesCarousel";
@@ -53,15 +55,63 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
   const queryClient = useQueryClient();
 
   const {
-    data: dataMyOpportunitiesCompleted,
-    error: dataMyOpportunitiesCompletedError,
-    isLoading: dataMyOpportunitiesCompletedIsLoading,
+    data: completedData,
+    error: completedError,
+    isLoading: completedIsLoading,
   } = useQuery({
-    queryKey: ["MyOpportunities", "Completed"],
+    queryKey: ["MyOpportunities", "Completed", 1],
     queryFn: () =>
       searchMyOpportunities({
         action: Action.Verification,
         verificationStatuses: [VerificationStatus.Completed],
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MINIMUM,
+      }),
+    enabled: !error,
+  });
+
+  const {
+    data: pendingData,
+    error: pendingError,
+    isLoading: pendingIsLoading,
+  } = useQuery({
+    queryKey: ["MyOpportunities", "Pending", 1],
+    queryFn: () =>
+      searchMyOpportunities({
+        action: Action.Verification,
+        verificationStatuses: [VerificationStatus.Pending],
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MINIMUM,
+      }),
+    enabled: !error,
+  });
+
+  const {
+    data: rejectedData,
+    error: rejectedError,
+    isLoading: rejectedIsLoading,
+  } = useQuery({
+    queryKey: ["MyOpportunities", "Rejected", 1],
+    queryFn: () =>
+      searchMyOpportunities({
+        action: Action.Verification,
+        verificationStatuses: [VerificationStatus.Rejected],
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MINIMUM,
+      }),
+    enabled: !error,
+  });
+
+  const {
+    data: savedData,
+    error: savedError,
+    isLoading: savedIsLoading,
+  } = useQuery({
+    queryKey: ["MyOpportunities", "Saved", 1],
+    queryFn: () =>
+      searchMyOpportunities({
+        action: Action.Saved,
+        verificationStatuses: null,
         pageNumber: 1,
         pageSize: PAGE_SIZE_MINIMUM,
       }),
@@ -90,9 +140,9 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
     [queryClient],
   );
 
-  const loadDataCompleted = useCallback(
+  const completedLoadData = useCallback(
     async (startRow: number) => {
-      if (startRow > (dataMyOpportunitiesCompleted?.totalCount ?? 0)) {
+      if (startRow > (completedData?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
@@ -101,14 +151,89 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
 
       const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
 
-      return fetchDataAndUpdateCache(["trending", pageNumber.toString()], {
-        action: Action.Verification,
-        verificationStatuses: [VerificationStatus.Completed],
-        pageNumber: pageNumber,
-        pageSize: PAGE_SIZE_MINIMUM,
-      });
+      return fetchDataAndUpdateCache(
+        ["MyOpportunities", "Completed", pageNumber.toString()],
+        {
+          action: Action.Verification,
+          verificationStatuses: [VerificationStatus.Completed],
+          pageNumber: pageNumber,
+          pageSize: PAGE_SIZE_MINIMUM,
+        },
+      );
     },
-    [dataMyOpportunitiesCompleted, fetchDataAndUpdateCache],
+    [completedData, fetchDataAndUpdateCache],
+  );
+
+  const pendingLoadData = useCallback(
+    async (startRow: number) => {
+      if (startRow > (pendingData?.totalCount ?? 0)) {
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(
+        ["MyOpportunities", "Pending", pageNumber.toString()],
+        {
+          action: Action.Verification,
+          verificationStatuses: [VerificationStatus.Pending],
+          pageNumber: pageNumber,
+          pageSize: PAGE_SIZE_MINIMUM,
+        },
+      );
+    },
+    [pendingData, fetchDataAndUpdateCache],
+  );
+
+  const rejectedLoadData = useCallback(
+    async (startRow: number) => {
+      if (startRow > (rejectedData?.totalCount ?? 0)) {
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(
+        ["MyOpportunities", "Rejected", pageNumber.toString()],
+        {
+          action: Action.Verification,
+          verificationStatuses: [VerificationStatus.Rejected],
+          pageNumber: pageNumber,
+          pageSize: PAGE_SIZE_MINIMUM,
+        },
+      );
+    },
+    [rejectedData, fetchDataAndUpdateCache],
+  );
+
+  const savedLoadData = useCallback(
+    async (startRow: number) => {
+      if (startRow > (savedData?.totalCount ?? 0)) {
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(
+        ["MyOpportunities", "Saved", pageNumber.toString()],
+        {
+          action: Action.Saved,
+          verificationStatuses: null,
+          pageNumber: pageNumber,
+          pageSize: PAGE_SIZE_MINIMUM,
+        },
+      );
+    },
+    [savedData, fetchDataAndUpdateCache],
   );
   //#endregion carousels
 
@@ -119,28 +244,90 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
   }
 
   return (
-    <div
-      className="overflow-hiddenx w-full"
-      //className="flex flex-col gap-4 overflow-hidden"
-      //className="mt-14x px-2x py-1x md:mt-20x md:py-4x containerx md:max-w-6xlx w-fullx z-10 overflow-hidden"
-    >
-      {/* <h6 className="font-bold tracking-wider">Completed opportunities 👍</h6> */}
+    <>
+      <Head>
+        <title>Yoma | 🏆 Opportunities</title>
+      </Head>
+      <div className="flex w-full flex-col gap-4">
+        <h5 className="font-bold tracking-wider text-black">
+          <Breadcrumb
+            items={[
+              { title: "💳 Yo-ID", url: "/yoid" },
+              {
+                title: "🏆 Opportunities",
+                selected: true,
+              },
+            ]}
+          />
+        </h5>
 
-      <Suspense
-        isReady={!!dataMyOpportunitiesCompleted}
-        isLoading={dataMyOpportunitiesCompletedIsLoading}
-        error={dataMyOpportunitiesCompletedError}
-      >
-        <OpportunitiesCarousel
-          id={`myopportunities_completed`}
-          title="Completed ✅"
-          description="Opportunities that you have completed"
-          data={dataMyOpportunitiesCompleted!}
-          loadData={loadDataCompleted}
-          viewAllUrl="/yoid/opportunities/completed"
-        />
-      </Suspense>
-    </div>
+        <div className="flex flex-col gap-4 rounded-lg bg-white p-4">
+          {/* COMPLETED */}
+          <Suspense
+            isReady={!!completedData}
+            isLoading={completedIsLoading}
+            error={completedError}
+          >
+            <OpportunitiesCarousel
+              id={`myopportunities_completed`}
+              title="✅ Completed"
+              description="Opportunities that you have completed"
+              data={completedData!}
+              loadData={completedLoadData}
+              viewAllUrl="/yoid/opportunities/completed"
+            />
+          </Suspense>
+
+          {/* PENDING */}
+          <Suspense
+            isReady={!!pendingData}
+            isLoading={pendingIsLoading}
+            error={pendingError}
+          >
+            <OpportunitiesCarousel
+              id={`myopportunities_pending`}
+              title="🕒 Pending"
+              description="Opportunities that are pending verification"
+              data={pendingData!}
+              loadData={pendingLoadData}
+              viewAllUrl="/yoid/opportunities/pending"
+            />
+          </Suspense>
+
+          {/* REJECTED */}
+          <Suspense
+            isReady={!!rejectedData}
+            isLoading={rejectedIsLoading}
+            error={rejectedError}
+          >
+            <OpportunitiesCarousel
+              id={`myopportunities_rejected`}
+              title="❌ Rejected"
+              description="Opportunities that have been rejected"
+              data={rejectedData!}
+              loadData={rejectedLoadData}
+              viewAllUrl="/yoid/opportunities/rejected"
+            />
+          </Suspense>
+
+          {/* SAVED */}
+          <Suspense
+            isReady={!!savedData}
+            isLoading={savedIsLoading}
+            error={savedError}
+          >
+            <OpportunitiesCarousel
+              id={`myopportunities_saved`}
+              title="💗 Saved"
+              description="Opportunities that you have saved"
+              data={savedData!}
+              loadData={savedLoadData}
+              viewAllUrl="/yoid/opportunities/saved"
+            />
+          </Suspense>
+        </div>
+      </div>
+    </>
   );
 };
 

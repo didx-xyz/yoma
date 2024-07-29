@@ -136,7 +136,7 @@ const YoIDDashboard: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | YoID</title>
+        <title>Yoma | 💳 Yo-ID</title>
       </Head>
 
       <PageBackground className="h-[15rem] md:h-[16rem]" />
@@ -172,15 +172,15 @@ const YoIDDashboard: NextPageWithLayout<{
             <div className="mt-4 flex flex-row gap-2">
               <Link
                 className="md:btn-mdx btn btn-secondary btn-sm w-1/2 md:max-w-[200px]"
-                href="/yoid/settings"
+                href="/yoid/profile"
               >
-                Edit Profile
+                👤 Edit Profile
               </Link>
               <Link
                 className="md:btn-mdx btn btn-secondary btn-sm w-1/2 md:max-w-[200px]"
-                href="/yoid/appSettings"
+                href="/yoid/settings"
               >
-                Settings
+                ⚙ Settings
               </Link>
             </div>
           </div>
@@ -190,7 +190,7 @@ const YoIDDashboard: NextPageWithLayout<{
             {/* OPPORTUNITIES */}
             <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
               <HeaderWithLink
-                title="Opportunities 🏆"
+                title="🏆 Opportunities"
                 url="/yoid/opportunities"
               />
               <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
@@ -206,7 +206,7 @@ const YoIDDashboard: NextPageWithLayout<{
 
             {/* WALLET */}
             <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-              <HeaderWithLink title="Wallet 💸" url="/yoid/credentials" />
+              <HeaderWithLink title="💸 Wallet" />
               <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                 <Suspense isReady={!!userProfile} isLoading={!userProfile}>
                   <WalletCard userProfile={userProfile!} />
@@ -216,7 +216,7 @@ const YoIDDashboard: NextPageWithLayout<{
 
             {/* PASSPORT */}
             <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-              <HeaderWithLink title="Passport 🌐" url="/yoid/credentials" />
+              <HeaderWithLink title="🌐 Passport" url="/yoid/passport" />
               <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                 <Suspense
                   isReady={!!dataCredentials}
@@ -230,7 +230,7 @@ const YoIDDashboard: NextPageWithLayout<{
 
             {/* SKILLS */}
             <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-              <HeaderWithLink title="Skills ⚡" url="/yoid/credentials" />
+              <HeaderWithLink title="⚡ Skills" url="/yoid/skills" />
               <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                 <div className="flex flex-wrap gap-1 overflow-y-auto">
                   <Suspense
@@ -246,7 +246,7 @@ const YoIDDashboard: NextPageWithLayout<{
 
             {/* CV */}
             <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-              <HeaderWithLink title="CV 🏦" />
+              <HeaderWithLink title="🏦 CV" />
               <CVCard />
             </div>
           </div>
