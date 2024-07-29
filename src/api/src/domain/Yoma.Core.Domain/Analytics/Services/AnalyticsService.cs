@@ -262,7 +262,9 @@ namespace Yoma.Core.Domain.Analytics.Services
               g.Sum(e => Convert.ToInt32(e.Values[1])), //navigatedExternalLink
               g.Sum(e => Convert.ToInt32(e.Values[2]))  //completed
           ))
-          .OrderBy(e => e.Date)
+          .OrderByDescending(e => e.Date)
+          .Take(Constants.TimeIntervalSummary_Data_MaxNoOfPoints)
+          .Reverse()
           .ToList();
 
       //results
@@ -342,7 +344,9 @@ namespace Yoma.Core.Domain.Analytics.Services
             WeekEnding = group.Key,
             Count = group.Select(x => x.SkillId).Distinct().Count()
           })
-          .OrderBy(result => result.WeekEnding)
+          .OrderByDescending(result => result.WeekEnding)
+          .Take(Constants.TimeIntervalSummary_Data_MaxNoOfPoints)
+          .Reverse()
           .ToList();
 
       var resultsSkills = new List<TimeValueEntry>();
@@ -575,7 +579,9 @@ namespace Yoma.Core.Domain.Analytics.Services
           WeekEnding = group.Key,
           Count = group.Select(x => x.UserId).Distinct().Count()
         })
-        .OrderBy(result => result.WeekEnding)
+        .OrderByDescending(result => result.WeekEnding)
+        .Take(Constants.TimeIntervalSummary_Data_MaxNoOfPoints)
+        .Reverse()
         .ToList();
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
 
