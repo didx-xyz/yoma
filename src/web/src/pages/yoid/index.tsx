@@ -23,6 +23,7 @@ import { PassportCard } from "~/components/YoID/PassportCard";
 import { SkillsCard } from "~/components/YoID/SkillsCard";
 import { WalletCard } from "~/components/YoID/WalletCard";
 import { ZltoModal } from "~/components/YoID/ZltoModal";
+import { MAXINT32 } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
 import { getTimeOfDayAndEmoji } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
@@ -99,13 +100,13 @@ const YoIDDashboard: NextPageWithLayout<{
     queryFn: (): Promise<{ schemaType: string; totalCount: number | null }[]> =>
       Promise.all([
         searchCredentials({
-          pageNumber: null,
-          pageSize: null,
+          pageNumber: MAXINT32,
+          pageSize: 1,
           schemaType: "Opportunity",
         }),
         searchCredentials({
-          pageNumber: null,
-          pageSize: null,
+          pageNumber: MAXINT32,
+          pageSize: 1,
           schemaType: "YoID",
         }),
       ]).then(([opportunityResult, yoidResult]) => {

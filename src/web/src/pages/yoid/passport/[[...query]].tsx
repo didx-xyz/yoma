@@ -59,9 +59,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     queryFn: () =>
       searchCredentials(
         {
-          //TODO: PAGING NOT SUPPORTED BY API (ARIES CLOUD)
-          pageNumber: null, //page ? parseInt(page.toString()) : 1,
-          pageSize: null, //PAGE_SIZE,
+          pageNumber: page ? parseInt(page.toString()) : 1,
+          pageSize: PAGE_SIZE,
           schemaType: null, //schemaType?.toString() ?? null,
         },
         context,
@@ -100,9 +99,8 @@ const MyCredentials: NextPageWithLayout<{
     queryKey: [`Credentials_${query?.toString()}_${page?.toString()}`],
     queryFn: () =>
       searchCredentials({
-        //TODO: PAGING NOT SUPPORTED BY API (ARIES CLOUD)
-        pageNumber: null, //page ? parseInt(page.toString()) : 1,
-        pageSize: null, //PAGE_SIZE,
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: PAGE_SIZE,
         schemaType: null, //schemaType?.toString() ?? null,
       }),
     enabled: !error,
