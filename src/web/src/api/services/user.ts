@@ -1,5 +1,6 @@
 import ApiClient from "~/lib/axiosClient";
 import type {
+  SettingItem,
   Settings,
   UserProfile,
   UserRequestProfile,
@@ -68,7 +69,7 @@ export const getSettings = async (
   //   value: 42,
   // };
 
-  // MOCK DATA with string and number items
+  // // MOCK DATA with string and number items
   // if (data && data.groups.length > 0) {
   //   if (!data.groups[0].items) {
   //     data.groups[0].items = [];

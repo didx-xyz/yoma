@@ -2529,7 +2529,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             formStateStep5.errors.verificationTypes?.message
                           }
                         >
-                          <div className="flex flex-col gap-1">
+                          <div className="flex flex-col gap-2">
                             {verificationTypesOptions?.map((item) => (
                               <div
                                 className="flex flex-col"

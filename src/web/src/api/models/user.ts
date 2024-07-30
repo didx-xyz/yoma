@@ -137,6 +137,7 @@ export interface SettingItem {
   description: string;
   type: SettingType | string; //NB: string
   enabled: boolean;
+  visible: boolean;
   value: any;
 }
 
