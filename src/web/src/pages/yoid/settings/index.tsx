@@ -271,7 +271,6 @@ const AppSettings: NextPageWithLayout<{
 
       try {
         // call api
-        //if (Object.keys(userRequestSettings.settings).length > 0) {
         await updateSettings(userRequestSettings);
 
         // 📊 GOOGLE ANALYTICS: track event
@@ -285,7 +284,6 @@ const AppSettings: NextPageWithLayout<{
         queryClient.invalidateQueries({
           queryKey: ["userProfileAppSettings"],
         });
-        //}
 
         toast.success("Settings updated");
       } catch (error) {

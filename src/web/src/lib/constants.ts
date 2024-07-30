@@ -137,3 +137,4 @@ export const MD_BREAKPOINT = 1024;
 export const LG_BREAKPOINT = 1280;
 
 export const SETTING_USER_SETTINGS_CONFIGURED = "User_Settings_Configured";
+export const SETTING_USER_POPUP_LEAVINGYOMA = "User_PopUp_LeavingYoma";

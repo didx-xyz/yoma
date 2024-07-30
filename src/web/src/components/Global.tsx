@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { IoMdFingerPrint } from "react-icons/io";
 import ReactModal from "react-modal";
 import { toast } from "react-toastify";
-import { UserProfile } from "~/api/models/user";
+import type { UserProfile } from "~/api/models/user";
 import { getOrganisationById } from "~/api/services/organisations";
 import { getUserProfile, patchYoIDOnboarding } from "~/api/services/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
@@ -76,36 +76,6 @@ export const Global: React.FC = () => {
   );
 
   //#region Functions
-  const isUserProfileCompleted = (userProfile: UserProfile) => {
-    if (!userProfile) return null;
-
-    const {
-      firstName,
-      surname,
-      displayName,
-      //phoneNumber, ignore phone number for now
-      countryId,
-      educationId,
-      genderId,
-      dateOfBirth,
-    } = userProfile;
-
-    if (
-      !firstName ||
-      !surname ||
-      !displayName ||
-      //!phoneNumber || ignore phone number for now
-      !countryId ||
-      !educationId ||
-      !genderId ||
-      !dateOfBirth
-    ) {
-      return false;
-    }
-
-    return true;
-  };
-
   const performSignIn = useCallback(async () => {
     setIsButtonLoading(true);
 
@@ -125,6 +95,36 @@ export const Global: React.FC = () => {
 
   const postLoginChecks = useCallback(
     (userProfile: UserProfile) => {
+      const isUserProfileCompleted = (userProfile: UserProfile) => {
+        if (!userProfile) return null;
+
+        const {
+          firstName,
+          surname,
+          displayName,
+          //phoneNumber, ignore phone number for now
+          countryId,
+          educationId,
+          genderId,
+          dateOfBirth,
+        } = userProfile;
+
+        if (
+          !firstName ||
+          !surname ||
+          !displayName ||
+          //!phoneNumber || ignore phone number for now
+          !countryId ||
+          !educationId ||
+          !genderId ||
+          !dateOfBirth
+        ) {
+          return false;
+        }
+
+        return true;
+      };
+
       if (!userProfile) return;
 
       if (!userProfile.yoIDOnboarded) {
@@ -142,18 +142,15 @@ export const Global: React.FC = () => {
         toast.warn(
           "Your application settings have not be configured. Please click here to configure them now.",
           {
-            onClick: async () => await router.push("/yoid/settings"),
+            onClick: () => {
+              router.push("/yoid/settings").then(() => null);
+            },
             autoClose: false,
             closeOnClick: true,
           },
         );
     },
-    [
-      router,
-      isUserProfileCompleted,
-      setOnboardingDialogVisible,
-      setUpdateProfileDialogVisible,
-    ],
+    [router, setOnboardingDialogVisible, setUpdateProfileDialogVisible],
   );
   //#endregion Functions
 
