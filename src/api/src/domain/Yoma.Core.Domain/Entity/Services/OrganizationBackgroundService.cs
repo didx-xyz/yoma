@@ -1,5 +1,6 @@
 using Hangfire;
 using Hangfire.Storage;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Reflection;
@@ -8,9 +9,11 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.EmailProvider.Interfaces;
 using Yoma.Core.Domain.EmailProvider.Models;
+using Yoma.Core.Domain.Entity.Events;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.Opportunity.Events;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -30,6 +33,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
     private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IMediator _mediator;
     private static readonly OrganizationStatus[] Statuses_Declination = [OrganizationStatus.Inactive];
     private static readonly OrganizationStatus[] Statuses_Deletion = [OrganizationStatus.Declined];
     #endregion
@@ -47,7 +51,8 @@ namespace Yoma.Core.Domain.Entity.Services
         IEmailPreferenceFilterService emailPreferenceFilterService,
         IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
         IRepository<OrganizationDocument> organizationDocumentRepository,
-        IDistributedLockService distributedLockService)
+        IDistributedLockService distributedLockService,
+        IMediator mediator)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -62,6 +67,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _organizationRepository = organizationRepository;
       _organizationDocumentRepository = organizationDocumentRepository;
       _distributedLockService = distributedLockService;
+      _mediator = mediator;
     }
     #endregion
 
@@ -109,6 +115,9 @@ namespace Yoma.Core.Domain.Entity.Services
             }
 
             items = await _organizationRepository.Update(items);
+
+            foreach (var item in items)
+              await _mediator.Publish(new OrganizationStatusChangedEvent(item));
 
             var groupedOrganizations = items
                 .SelectMany(org => org.Administrators ?? Enumerable.Empty<UserInfo>(), (org, admin) => new { Administrator = admin, Organization = org })
@@ -209,6 +218,9 @@ namespace Yoma.Core.Domain.Entity.Services
             }
 
             await _organizationRepository.Update(items);
+
+            foreach (var item in items)
+              await _mediator.Publish(new OrganizationStatusChangedEvent(item));
 
             if (executeUntil <= DateTimeOffset.UtcNow) break;
           }

@@ -22,7 +22,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     private readonly IExecutionStrategyService _executionStrategyService;
 
     public static readonly Status[] Statuses_Opportunity_Creatable = [Status.Active, Status.Inactive];
-    public static readonly Status[] Statuses_Opportunity_Updatable = [Status.Active, Status.Inactive];
+    public static readonly Status[] Statuses_Opportunity_Updatable = [Status.Active, Status.Inactive, Status.Expired]; //Expired: updated with end date in the past
     public static readonly Status[] Statuses_Opportunity_CanDelete = [Status.Active, Status.Inactive, Status.Expired];
     #endregion
 
@@ -259,7 +259,8 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
         });
       }
 
-      await _processingLogRepository.Create(items);
+      if (items.Count != 0)
+        await _processingLogRepository.Create(items);
     }
     #endregion
   }

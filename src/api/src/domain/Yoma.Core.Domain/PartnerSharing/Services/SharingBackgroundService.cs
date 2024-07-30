@@ -91,7 +91,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                       case ProcessingAction.Create:
                         //scheduled for execution upon explicit opportunity creation (see ISharingServiceEventListener)
                         //organization must be active in order to create an opportunity
-                        //trigger points (TODO: MediatR):
+                        //trigger points:
                         // - IOpportunityService.Create (explicit)
 
                         //scheduling failsafe
@@ -106,11 +106,14 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                           throw new ArgumentNullException(nameof(item), "External id required");
 
                         //scheduled for execution upon opportunity update and explicit and implicit activation or deactivation (see ISharingServiceEventListener)
-                        //trigger points (TODO: MediatR):
-                        // - IOpportunityService.Update (explicit)
-                        // - IOpportunityService.UpdateStatus (explicit)
+                        //trigger points:
+                        // - IOpportunityService: (explicit)
+                        //    Update | AllocateRewards | UpdateFeatured | UpdateStatus | AssignCategories | RemoveCategories | AssignCountries | RemoveCountries
+                        //    AssignLanguages | RemoveLanguages | AssignSkills | RemoveSkills | AssignVerificationTypes | RemoveVerificationTypes
+                        // - IOpportunityBackgroundService.ProcessExpiration (explicit)
                         // - IOrganizationService.UpdateStatus (implicit)
-                        // - IOrganizationService.SendForReapproval (implicit)
+                        // - IOrganizationService.SendForReapproval (implicit) [TODO]
+                        // - IOrganizationBackgroundService.ProcessDeclination (implicit)
 
                         //implicit alignment for sharing processing
                         //if organization is activated, opportunity is activated provided current status of active 
@@ -131,9 +134,9 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
 
                         //scheduled for execution upon explicit and implicit opportunity deletion (see ISharingServiceEventListener)
                         //once an opportunity or organization are deleted, it cannot be reinstated
-                        //trigger points (TODO: MediatR):
+                        //trigger points:
                         // - IOpportunityService.UpdateStatus (explicit)
-                        // - IOpportunityService.ProcessDeletion (explicit)
+                        // - IOpportunityBackgroundService.ProcessDeletion (explicit)
                         // - IOrganizationService.UpdateStatus (implicit)
                         // - IOrganizationBackgroundService.ProcessDeletion (implicit)
 

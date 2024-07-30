@@ -65,4 +65,11 @@ namespace Yoma.Core.Domain.Core
     [Description("Prefer not to say")]
     PreferNotToSay
   }
+
+  public enum EventType
+  {
+    Create,
+    Update,
+    Delete
+  }
 }

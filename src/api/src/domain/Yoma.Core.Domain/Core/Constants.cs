@@ -1,5 +1,3 @@
-using Yoma.Core.Domain.Core.Models;
-
 namespace Yoma.Core.Domain.Core
 {
   public static class Constants
