@@ -1741,7 +1741,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                     <FormField
                       label="Description"
-                      subLabel="A detailed description of the opportunity. This will be displayed on the opportunity page.\nInsert a space (' ') between lines to create separation."
+                      subLabel="A detailed description of the opportunity. This will be displayed on the opportunity page."
                       showWarningIcon={
                         !!formStateStep1.errors.description?.message
                       }
@@ -1751,6 +1751,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       }
                       error={formStateStep1.errors.description?.message}
                     >
+                      <FormMessage messageType={FormMessageType.Info}>
+                        Ensure to add a space (&apos; &apos;) on your empty
+                        lines if you want to add a line break.
+                      </FormMessage>
                       <Controller
                         control={controlStep1}
                         name="description"
