@@ -1,14 +1,13 @@
+import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
+import ApiServer from "~/lib/axiosServer";
 import type {
-  SettingItem,
   Settings,
   UserProfile,
   UserRequestProfile,
   UserRequestSettings,
   UserSkillInfo,
 } from "../models/user";
-import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
-import ApiServer from "~/lib/axiosServer";
 
 export const patchUser = async (
   model: UserRequestProfile,
@@ -22,6 +21,7 @@ export const getUserProfile = async (
 ): Promise<UserProfile> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<UserProfile>(`/user`);
+
   return data;
 };
 

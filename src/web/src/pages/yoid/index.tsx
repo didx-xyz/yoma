@@ -1,4 +1,3 @@
-import { settings } from ".eslintrc.cjs";
 import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import type { GetServerSidePropsContext } from "next";

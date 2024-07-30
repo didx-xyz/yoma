@@ -18,22 +18,19 @@ import type {
 } from "~/api/models/user";
 import { getSettings, updateSettings } from "~/api/services/user";
 import Breadcrumb from "~/components/Breadcrumb";
-import FormCheckbox from "~/components/Common/FormCheckbox";
 import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
 import FormLabel from "~/components/Common/FormLabel";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
-import FormRadio from "~/components/Common/FormRadio";
 import FormToggle from "~/components/Common/FormToggle";
-import FormTooltip from "~/components/Common/FormTooltip";
 import Suspense from "~/components/Common/Suspense";
 import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
 import { ApiErrors } from "~/components/Status/ApiErrors";
-import { Loading } from "~/components/Status/Loading";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   GA_ACTION_APP_SETTING_UPDATE,
   GA_CATEGORY_USER,
+  SETTING_USER_SETTINGS_CONFIGURED,
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { config } from "~/lib/react-query-config";
@@ -268,23 +265,27 @@ const AppSettings: NextPageWithLayout<{
         settings!,
       );
 
+      // ensure that the USER_SETTINGS_CONFIGURED is always set
+      // this prevents the "please update your settings" popup from showing again (Global.tsx)
+      userRequestSettings.settings[SETTING_USER_SETTINGS_CONFIGURED] = true;
+
       try {
         // call api
-        if (Object.keys(userRequestSettings.settings).length > 0) {
-          await updateSettings(userRequestSettings);
+        //if (Object.keys(userRequestSettings.settings).length > 0) {
+        await updateSettings(userRequestSettings);
 
-          // 📊 GOOGLE ANALYTICS: track event
-          trackGAEvent(
-            GA_CATEGORY_USER,
-            GA_ACTION_APP_SETTING_UPDATE,
-            JSON.stringify(userRequestSettings),
-          );
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_USER,
+          GA_ACTION_APP_SETTING_UPDATE,
+          JSON.stringify(userRequestSettings),
+        );
 
-          // invalidate query
-          queryClient.invalidateQueries({
-            queryKey: ["userProfileAppSettings"],
-          });
-        }
+        // invalidate query
+        queryClient.invalidateQueries({
+          queryKey: ["userProfileAppSettings"],
+        });
+        //}
 
         toast.success("Settings updated");
       } catch (error) {

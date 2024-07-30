@@ -61,6 +61,7 @@ export interface UserProfile {
   opportunityCountPending: number;
   opportunityCountCompleted: number;
   opportunityCountRejected: number;
+  settings?: SettingsInfo;
 }
 
 export interface UserProfileZlto {
@@ -69,6 +70,16 @@ export interface UserProfileZlto {
   pending: number;
   total: number;
   zltoOffline: boolean | null;
+}
+
+export interface SettingsInfo {
+  items: SettingsInfoItem[];
+}
+
+export interface SettingsInfoItem {
+  key: string;
+  type: SettingType;
+  value: any;
 }
 
 export enum WalletCreationStatus {

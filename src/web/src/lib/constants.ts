@@ -135,3 +135,5 @@ export const XS_BREAKPOINT = 600;
 export const SM_BREAKPOINT = 768;
 export const MD_BREAKPOINT = 1024;
 export const LG_BREAKPOINT = 1280;
+
+export const SETTING_USER_SETTINGS_CONFIGURED = "User_Settings_Configured";
