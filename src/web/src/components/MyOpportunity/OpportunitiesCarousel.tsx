@@ -31,6 +31,7 @@ export enum DisplayType {
   Pending = "Pending",
   Rejected = "Rejected",
   Saved = "Saved",
+  Viewed = "Viewed",
 }
 
 const OpportunitiesCarousel: React.FC<{
