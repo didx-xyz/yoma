@@ -1,9 +1,20 @@
 import { useAtomValue, useSetAtom } from "jotai";
 import { signIn, useSession } from "next-auth/react";
+import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { parseCookies } from "nookies";
+import iconBell from "public/images/icon-bell.webp";
+import stamps from "public/images/stamps.svg";
+import YoIDCard from "public/images/YoID-modal-card.webp";
+import { useCallback, useEffect, useState } from "react";
+import { IoMdFingerPrint } from "react-icons/io";
+import ReactModal from "react-modal";
+import { toast } from "react-toastify";
+import type { UserProfile } from "~/api/models/user";
 import { getOrganisationById } from "~/api/services/organisations";
 import { getUserProfile, patchYoIDOnboarding } from "~/api/services/user";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   COOKIE_KEYCLOAK_SESSION,
   GA_ACTION_USER_LOGIN_BEFORE,
@@ -11,7 +22,9 @@ import {
   GA_CATEGORY_USER,
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
+  SETTING_USER_SETTINGS_CONFIGURED,
 } from "~/lib/constants";
+import { trackGAEvent } from "~/lib/google-analytics";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
@@ -21,23 +34,12 @@ import {
   screenWidthAtom,
   userProfileAtom,
 } from "~/lib/store";
-import ReactModal from "react-modal";
-import { IoMdFingerPrint } from "react-icons/io";
-import iconBell from "public/images/icon-bell.webp";
-import YoIDCard from "public/images/YoID-modal-card.webp";
-import Image from "next/image";
-import { toast } from "react-toastify";
-import { ApiErrors } from "./Status/ApiErrors";
-import { trackGAEvent } from "~/lib/google-analytics";
 import { fetchClientEnv } from "~/lib/utils";
-import Link from "next/link";
-import stamps from "public/images/stamps.svg";
+import { ApiErrors } from "./Status/ApiErrors";
 import {
   UserProfileFilterOptions,
   UserProfileForm,
 } from "./User/UserProfileForm";
-import { parseCookies } from "nookies";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 // * GLOBAL APP CONCERNS
 // * needs to be done here as jotai atoms are not available in _app.tsx
@@ -73,54 +75,8 @@ export const Global: React.FC = () => {
     loginDialogVisible || onboardingDialogVisible || updateProfileDialogVisible,
   );
 
-  // SESSION
-  useEffect(() => {
-    if (session?.error) {
-      // show dialog to login again
-      if (session?.error === "RefreshAccessTokenError") {
-        setLoginMessage("Your session has expired. Please sign in again.");
-        setLoginDialogVisible(true);
-      } else {
-        setLoginMessage("There was an error signing in. Please sign in again.");
-        setLoginDialogVisible(true);
-      }
-
-      console.error("session error: ", session?.error);
-    }
-  }, [session?.error, setLoginDialogVisible, setLoginMessage]);
-
-  // memo to check if user profile is completed i.e any form field is empty
-  const isUserProfileCompleted = useMemo(() => {
-    if (!userProfile) return null;
-
-    const {
-      firstName,
-      surname,
-      displayName,
-      //phoneNumber, ignore phone number for now
-      countryId,
-      educationId,
-      genderId,
-      dateOfBirth,
-    } = userProfile;
-
-    if (
-      !firstName ||
-      !surname ||
-      !displayName ||
-      //!phoneNumber || ignore phone number for now
-      !countryId ||
-      !educationId ||
-      !genderId ||
-      !dateOfBirth
-    ) {
-      return false;
-    }
-
-    return true;
-  }, [userProfile]);
-
-  const onSignIn = useCallback(async () => {
+  //#region Functions
+  const performSignIn = useCallback(async () => {
     setIsButtonLoading(true);
 
     // 📊 GOOGLE ANALYTICS: track event
@@ -137,11 +93,72 @@ export const Global: React.FC = () => {
     );
   }, [setIsButtonLoading]);
 
-  // 🔔 USER PROFILE
+  const postLoginChecks = useCallback(
+    (userProfile: UserProfile) => {
+      const isUserProfileCompleted = (userProfile: UserProfile) => {
+        if (!userProfile) return null;
+
+        const {
+          firstName,
+          surname,
+          displayName,
+          //phoneNumber, ignore phone number for now
+          countryId,
+          educationId,
+          genderId,
+          dateOfBirth,
+        } = userProfile;
+
+        if (
+          !firstName ||
+          !surname ||
+          !displayName ||
+          //!phoneNumber || ignore phone number for now
+          !countryId ||
+          !educationId ||
+          !genderId ||
+          !dateOfBirth
+        ) {
+          return false;
+        }
+
+        return true;
+      };
+
+      if (!userProfile) return;
+
+      if (!userProfile.yoIDOnboarded) {
+        // show onboarding dialog if not onboarded
+        setOnboardingDialogVisible(true);
+      } else if (!isUserProfileCompleted(userProfile)) {
+        // show update profile dialog if profile completed
+        setUpdateProfileDialogVisible(true);
+      } else if (
+        !userProfile?.settings?.items.find(
+          (x) => x.key === SETTING_USER_SETTINGS_CONFIGURED,
+        )?.value
+      )
+        // show toast if settings not configured
+        toast.warn(
+          "Your application settings have not be configured. Please click here to configure them now.",
+          {
+            onClick: () => {
+              router.push("/yoid/settings").then(() => null);
+            },
+            autoClose: false,
+            closeOnClick: true,
+          },
+        );
+    },
+    [router, setOnboardingDialogVisible, setUpdateProfileDialogVisible],
+  );
+  //#endregion Functions
+
+  //#region Event Handlers
+  // 🔔 POST SIGN-IN
+  // get user profile after sign in & perform post login checks
   useEffect(() => {
-    //TODO: disabled for now. need to fix issue with GA login event beging tracked twice
-    // skip if not logged in or userProfile atom already set (atomWithStorage)
-    //if (!session || userProfile) return;
+    // TODO: disabled for now. need to fix issue with GA login event beging tracked twice
     if (sessionStatus === "loading") return;
 
     // check error
@@ -168,13 +185,7 @@ export const Global: React.FC = () => {
           //   "User logged in",
           // );
 
-          // show onboarding dialog if not onboarded
-          if (!res.yoIDOnboarded) {
-            setOnboardingDialogVisible(true);
-          } else if (isUserProfileCompleted === false) {
-            // show dialog to update profile
-            setUpdateProfileDialogVisible(true);
-          }
+          postLoginChecks(res);
         })
         .catch((e) => {
           if (e.response?.status === 401) {
@@ -194,7 +205,7 @@ export const Global: React.FC = () => {
       const existingSessionCookieValue = cookies[COOKIE_KEYCLOAK_SESSION];
 
       if (existingSessionCookieValue) {
-        onSignIn();
+        performSignIn();
       }
     }
   }, [
@@ -202,10 +213,8 @@ export const Global: React.FC = () => {
     sessionStatus,
     userProfile,
     setUserProfile,
-    setOnboardingDialogVisible,
-    setUpdateProfileDialogVisible,
-    isUserProfileCompleted,
-    onSignIn,
+    postLoginChecks,
+    performSignIn,
   ]);
 
   // 🔔 VIEWPORT DETECTION
@@ -222,6 +231,8 @@ export const Global: React.FC = () => {
   }, [setScreenWidthAtom]);
 
   // 🔔 ROUTE CHANGE HANDLER
+  // set the active navigation role view atom based on the route
+  // this is used to determine which navigation items & profile image to show (for organisation admin pages)
   useEffect(() => {
     if (!session) {
       setActiveNavigationRoleViewAtom(RoleView.User);
@@ -287,6 +298,23 @@ export const Global: React.FC = () => {
     currentOrganisationIdValue,
   ]);
 
+  // 🔔 CHECK SESSION
+  // show login dialog if session error
+  useEffect(() => {
+    if (session?.error) {
+      // show dialog to login again
+      if (session?.error === "RefreshAccessTokenError") {
+        setLoginMessage("Your session has expired. Please sign in again.");
+        setLoginDialogVisible(true);
+      } else {
+        setLoginMessage("There was an error signing in. Please sign in again.");
+        setLoginDialogVisible(true);
+      }
+
+      console.error("session error: ", session?.error);
+    }
+  }, [session?.error, setLoginDialogVisible, setLoginMessage]);
+
   // 🔔 CLICK HANDLER: ONBOARDING DIALOG CONFIRMATION
   const onClickYoIDOnboardingConfirm = useCallback(async () => {
     try {
@@ -300,24 +328,21 @@ export const Global: React.FC = () => {
       trackGAEvent(
         GA_CATEGORY_USER,
         GA_ACTION_USER_YOIDONBOARDINGCONFIRMED,
-        `User confirmed YoID onboarding message at ${new Date().toISOString()}`,
+        `User confirmed Yo-ID onboarding message at ${new Date().toISOString()}`,
       );
 
       // update ATOM
       setUserProfile(userProfile);
 
-      //toast
-      toast.success("YoID activated successfully", { autoClose: 5000 });
+      // toast
+      toast.success("Yo-ID activated successfully", { autoClose: 5000 });
 
       // hide popup
       setOnboardingDialogVisible(false);
       setIsYoIDOnboardingLoading(false);
 
-      // check if profile completed, if not show update profile dialog
-      if (isUserProfileCompleted === false) {
-        // show dialog to update profile
-        setUpdateProfileDialogVisible(true);
-      }
+      // perform post login checks
+      postLoginChecks(userProfile);
     } catch (error) {
       console.error(error);
       setIsYoIDOnboardingLoading(false);
@@ -327,7 +352,8 @@ export const Global: React.FC = () => {
         icon: false,
       });
     }
-  }, [setUserProfile, setOnboardingDialogVisible, isUserProfileCompleted]);
+  }, [setUserProfile, setOnboardingDialogVisible, postLoginChecks]);
+  //#endregion Event Handlers
 
   return (
     <>
@@ -359,7 +385,7 @@ export const Global: React.FC = () => {
             <div className="z-30 -mb-6 -mr-4 -mt-24 flex items-center justify-center">
               <Image
                 src={YoIDCard}
-                alt="YoID Card"
+                alt="Yo-ID Card"
                 width={300}
                 height={300}
                 sizes="100vw"
@@ -375,14 +401,14 @@ export const Global: React.FC = () => {
               </h4>
             </div>
             <p className="text-gray-dark">
-              Introducing YoID, your Learning Identity Passport. Log in easily
+              Introducing Yo-ID, your Learning Identity Passport. Log in easily
               across all Yoma Partners while we keep your info safe and secure.
             </p>
             <p className="text-gray-dark">
               Please note to use your passport, and receive credentials, you
-              will need to activate your YoID.{" "}
+              will need to activate your Yo-ID.{" "}
               <br className="hidden md:inline" /> Your passport will be
-              populated with your YoID and previously completed opportunities
+              populated with your Yo-ID and previously completed opportunities
               within 24 hours.
             </p>
             <div className="mt-4 flex flex-grow flex-col items-center gap-6">
@@ -395,7 +421,7 @@ export const Global: React.FC = () => {
                 {isYoIDOnboardingLoading && isYoIDOnboardingLoading ? (
                   <span className="loading loading-spinner">loading</span>
                 ) : (
-                  <span>Activate your YoID</span>
+                  <span>Activate your Yo-ID</span>
                 )}
               </button>
               <Link
@@ -442,7 +468,7 @@ export const Global: React.FC = () => {
               <button
                 type="button"
                 className="bg-theme btn rounded-full normal-case text-white hover:brightness-95 md:w-[150px]"
-                onClick={onSignIn}
+                onClick={performSignIn}
               >
                 {isButtonLoading && (
                   <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
@@ -450,7 +476,7 @@ export const Global: React.FC = () => {
                 {!isButtonLoading && (
                   <IoMdFingerPrint className="h-5 w-5 text-white" />
                 )}
-                <p className="text-white">Login</p>
+                <p className="text-white">Sign In</p>
               </button>
             </div>
           </div>
@@ -488,7 +514,7 @@ export const Global: React.FC = () => {
                 PROFILE UPDATE
               </h5>
               <h4 className="text-2xl font-semibold tracking-wide">
-                Update your YoID
+                Update your Yo-ID
               </h4>
             </div>
 
@@ -500,8 +526,12 @@ export const Global: React.FC = () => {
             <div className="max-w-[300px] md:max-w-md">
               <UserProfileForm
                 userProfile={userProfile}
-                onSubmit={() => {
+                onSubmit={(updatedUserProfile) => {
+                  // hide popup
                   setUpdateProfileDialogVisible(false);
+
+                  // perform login checks (again)
+                  postLoginChecks(updatedUserProfile);
                 }}
                 filterOptions={[
                   UserProfileFilterOptions.FIRSTNAME,

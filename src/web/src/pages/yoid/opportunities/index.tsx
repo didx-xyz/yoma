@@ -258,11 +258,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
 
         <div className="flex flex-col gap-4 rounded-lg bg-white p-4">
           {/* COMPLETED */}
-          <Suspense
-            isReady={!!completedData}
-            isLoading={completedIsLoading}
-            error={completedError}
-          >
+          <Suspense isLoading={completedIsLoading} error={completedError}>
             <OpportunitiesCarousel
               id={`myopportunities_completed`}
               title="✅ Completed"
@@ -275,11 +271,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
           </Suspense>
 
           {/* PENDING */}
-          <Suspense
-            isReady={!!pendingData}
-            isLoading={pendingIsLoading}
-            error={pendingError}
-          >
+          <Suspense isLoading={pendingIsLoading} error={pendingError}>
             <OpportunitiesCarousel
               id={`myopportunities_pending`}
               title="🕒 Pending"
@@ -292,11 +284,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
           </Suspense>
 
           {/* REJECTED */}
-          <Suspense
-            isReady={!!rejectedData}
-            isLoading={rejectedIsLoading}
-            error={rejectedError}
-          >
+          <Suspense isLoading={rejectedIsLoading} error={rejectedError}>
             <OpportunitiesCarousel
               id={`myopportunities_rejected`}
               title="❌ Rejected"
@@ -309,11 +297,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
           </Suspense>
 
           {/* SAVED */}
-          <Suspense
-            isReady={!!savedData}
-            isLoading={savedIsLoading}
-            error={savedError}
-          >
+          <Suspense isLoading={savedIsLoading} error={savedError}>
             <OpportunitiesCarousel
               id={`myopportunities_saved`}
               title="💗 Saved"

@@ -76,7 +76,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
         iconImage: iconCog,
       },
       {
-        title: "⚙ Settings",
+        title: "🔧 Settings",
         description: "My settings & app data",
         url: "/yoid/settings",
         badgeCount: null,

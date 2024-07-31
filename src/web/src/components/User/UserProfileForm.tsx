@@ -41,7 +41,7 @@ export enum UserProfileFilterOptions {
 
 export const UserProfileForm: React.FC<{
   userProfile: UserProfile | null | undefined;
-  onSubmit?: (fieldValues: FieldValues) => void;
+  onSubmit?: (userProfile: UserProfile) => void;
   onCancel?: () => void;
   cancelButtonText?: string;
   submitButtonText?: string;
@@ -202,7 +202,7 @@ export const UserProfileForm: React.FC<{
           toastId: "patchUserProfile",
         });
 
-        if (onSubmit) onSubmit(data);
+        if (onSubmit) onSubmit(userProfile);
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",

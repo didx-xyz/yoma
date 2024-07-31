@@ -10,6 +10,7 @@ import { IoIosInformationCircleOutline } from "react-icons/io";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
 import { getUserSkills } from "~/api/services/user";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
@@ -72,9 +73,9 @@ const YoIDDashboard: NextPageWithLayout<{
   const [userProfile] = useAtom(userProfileAtom);
 
   const {
-    data: dataUserSkills,
-    error: dataUserSkillsError,
-    isLoading: dataUserSkillsIsLoading,
+    data: skills,
+    error: skillsError,
+    isLoading: skillsIsLoading,
   } = useQuery({
     queryKey: ["User", "Skills"],
     queryFn: () => getUserSkills(),
@@ -82,9 +83,9 @@ const YoIDDashboard: NextPageWithLayout<{
   });
 
   const {
-    data: dataMyOpportunitiesSummary,
-    error: dataMyOpportunitiesSummaryError,
-    isLoading: dataMyOpportunitiesSummaryIsLoading,
+    data: myOpportunitiesSummary,
+    error: myOpportunitiesSummaryError,
+    isLoading: myOpportunitiesSummaryIsLoading,
   } = useQuery({
     queryKey: ["MyOpportunities", "Summary"],
     queryFn: () => searchMyOpportunitiesSummary(),
@@ -92,9 +93,9 @@ const YoIDDashboard: NextPageWithLayout<{
   });
 
   const {
-    data: dataCredentials,
-    error: dataCredentialsError,
-    isLoading: dataCredentialsIsLoading,
+    data: credentials,
+    error: credentialsError,
+    isLoading: credentialsIsLoading,
   } = useQuery<{ schemaType: string; totalCount: number | null }[]>({
     queryKey: ["Credentials", "TotalCounts"],
     queryFn: (): Promise<{ schemaType: string; totalCount: number | null }[]> =>
@@ -176,7 +177,7 @@ const YoIDDashboard: NextPageWithLayout<{
                 className="md:btn-mdx btn btn-secondary btn-sm w-1/2 md:max-w-[200px]"
                 href="/yoid/settings"
               >
-                ⚙ Settings
+                🔧 Settings
               </Link>
             </div>
           </div>
@@ -191,11 +192,10 @@ const YoIDDashboard: NextPageWithLayout<{
               />
               <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                 <Suspense
-                  isReady={!!dataMyOpportunitiesSummary}
-                  isLoading={dataMyOpportunitiesSummaryIsLoading}
-                  error={dataMyOpportunitiesSummaryError}
+                  isLoading={myOpportunitiesSummaryIsLoading}
+                  error={myOpportunitiesSummaryError}
                 >
-                  <LineChart data={dataMyOpportunitiesSummary!} />
+                  <LineChart data={myOpportunitiesSummary!} />
                 </Suspense>
               </div>
             </div>
@@ -204,7 +204,7 @@ const YoIDDashboard: NextPageWithLayout<{
             <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
               <HeaderWithLink title="💸 Wallet" />
               <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-                <Suspense isReady={!!userProfile} isLoading={!userProfile}>
+                <Suspense isLoading={!userProfile}>
                   <WalletCard userProfile={userProfile!} />
                 </Suspense>
               </div>
@@ -215,11 +215,16 @@ const YoIDDashboard: NextPageWithLayout<{
               <HeaderWithLink title="🌐 Passport" url="/yoid/passport" />
               <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                 <Suspense
-                  isReady={!!dataCredentials}
-                  isLoading={dataCredentialsIsLoading}
-                  error={dataCredentialsError}
+                  isLoading={credentialsIsLoading}
+                  error={credentialsError}
                 >
-                  <PassportCard data={dataCredentials!} />
+                  {!credentials?.length && (
+                    <FormMessage messageType={FormMessageType.Warning}>
+                      No data available
+                    </FormMessage>
+                  )}
+
+                  {!!credentials?.length && <PassportCard data={credentials} />}
                 </Suspense>
               </div>
             </div>
@@ -229,12 +234,14 @@ const YoIDDashboard: NextPageWithLayout<{
               <HeaderWithLink title="⚡ Skills" url="/yoid/skills" />
               <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                 <div className="flex flex-wrap gap-1 overflow-y-auto">
-                  <Suspense
-                    isReady={!!dataUserSkills}
-                    isLoading={dataUserSkillsIsLoading}
-                    error={dataUserSkillsError}
-                  >
-                    <SkillsCard data={dataUserSkills!} />
+                  <Suspense isLoading={skillsIsLoading} error={skillsError}>
+                    {!skills?.length && (
+                      <FormMessage messageType={FormMessageType.Warning}>
+                        No data available
+                      </FormMessage>
+                    )}
+
+                    {!!skills?.length && <SkillsCard data={skills} />}
                   </Suspense>
                 </div>
               </div>
