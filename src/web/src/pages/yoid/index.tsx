@@ -171,32 +171,50 @@ const YoIDDashboard: NextPageWithLayout<{
                 className="btn btn-secondary btn-sm w-1/2 md:max-w-[200px]"
                 href="/yoid/profile"
               >
-                👤 Edit Profile
+                👤 <span className="ml-1">Edit Profile</span>
               </Link>
               <Link
                 className="btn btn-secondary btn-sm w-1/2 md:max-w-[200px]"
                 href="/yoid/settings"
               >
-                🔧 Settings
+                🔧 <span className="ml-1">Settings</span>
               </Link>
             </div>
           </div>
 
           {/* DASHBOARD */}
-          <div className="mt-6 flex flex-wrap justify-center gap-4 lg:justify-normal">
+          <div className="mt-6 flex flex-wrap justify-center gap-4 xl:justify-normal">
             {/* OPPORTUNITIES */}
             <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
               <HeaderWithLink
                 title="🏆 Opportunities"
                 url="/yoid/opportunities"
               />
-              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+              <div className="flex h-[300px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                 <Suspense
                   isLoading={myOpportunitiesSummaryIsLoading}
                   error={myOpportunitiesSummaryError}
                 >
                   <LineChart data={myOpportunitiesSummary!} />
                 </Suspense>
+              </div>
+            </div>
+
+            {/* SKILLS */}
+            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
+              <HeaderWithLink title="⚡ Skills" url="/yoid/skills" />
+              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow xl:h-[300px]">
+                <div className="flex flex-wrap gap-1 overflow-y-auto">
+                  <Suspense isLoading={skillsIsLoading} error={skillsError}>
+                    {!skills?.length && (
+                      <FormMessage messageType={FormMessageType.Warning}>
+                        No data available
+                      </FormMessage>
+                    )}
+
+                    {!!skills?.length && <SkillsCard data={skills} />}
+                  </Suspense>
+                </div>
               </div>
             </div>
 
@@ -229,28 +247,12 @@ const YoIDDashboard: NextPageWithLayout<{
               </div>
             </div>
 
-            {/* SKILLS */}
-            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-              <HeaderWithLink title="⚡ Skills" url="/yoid/skills" />
-              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-                <div className="flex flex-wrap gap-1 overflow-y-auto">
-                  <Suspense isLoading={skillsIsLoading} error={skillsError}>
-                    {!skills?.length && (
-                      <FormMessage messageType={FormMessageType.Warning}>
-                        No data available
-                      </FormMessage>
-                    )}
-
-                    {!!skills?.length && <SkillsCard data={skills} />}
-                  </Suspense>
-                </div>
-              </div>
-            </div>
-
             {/* CV */}
             <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
               <HeaderWithLink title="🏦 CV" />
-              <CVCard />
+              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+                <CVCard />
+              </div>
             </div>
           </div>
         </div>
