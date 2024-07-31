@@ -7,12 +7,16 @@ export const SearchInputLarge: React.FC<{
   onSearch?: (query: string) => void;
   openFilter?: (filterFullWindowVisible: boolean) => void;
   maxWidth?: number;
+  inputClassName?: string;
+  buttonClassName?: string;
 }> = ({
   defaultValue,
   placeholder,
   onSearch,
   openFilter,
   maxWidth = 0, // The default maxWidth is set to 0, which means it will be auto
+  inputClassName,
+  buttonClassName,
 }) => {
   const [searchInputValue, setSearchInputValue] = useState(defaultValue);
 
@@ -36,11 +40,11 @@ export const SearchInputLarge: React.FC<{
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full flex-grow">
-      <div className="join my-4 w-full overflow-hidden rounded-3xl lg:my-0">
+      <div className="join w-full overflow-hidden rounded-3xl lg:my-0">
         {openFilter && (
           <button
             type="button"
-            className="bg-theme btn join-item inline-flex items-center justify-center rounded-l-full border-none p-3 text-white brightness-[1.12] hover:brightness-95"
+            className={`${buttonClassName} bg-theme btn join-item inline-flex items-center justify-center rounded-l-full border-none p-3 text-white brightness-[1.12] hover:brightness-95`}
             onClick={() => openFilter(true)}
           >
             <IoMdOptions className="h-5 w-5" />
@@ -49,7 +53,7 @@ export const SearchInputLarge: React.FC<{
         <input
           type="search"
           placeholder={placeholder ?? "Search..."}
-          className={`bg-theme input-md w-full rounded-bl-3xl rounded-tl-3xl text-sm text-white placeholder-white brightness-90 focus:outline-none md:!pl-8 lg:w-full ${
+          className={`${inputClassName} bg-theme input-md w-full rounded-bl-3xl rounded-tl-3xl text-sm text-white placeholder-white brightness-90 focus:outline-none md:!pl-8 lg:w-full ${
             openFilter
               ? "rounded-bl-none rounded-tl-none"
               : "rounded-bl-3xl rounded-tl-3xl"
@@ -62,7 +66,7 @@ export const SearchInputLarge: React.FC<{
           maxLength={50}
         />
         <button
-          className="bg-theme btn btn-primary join-item inline-flex items-center justify-center rounded-r-full border-none p-3 text-white brightness-[1.12] hover:brightness-95 disabled:brightness-75"
+          className={`${buttonClassName} bg-theme btn btn-primary join-item inline-flex items-center justify-center rounded-r-full border-none p-3 text-white brightness-[1.12] hover:brightness-95 disabled:brightness-75`}
           type="submit"
           disabled={
             !!searchInputValue &&

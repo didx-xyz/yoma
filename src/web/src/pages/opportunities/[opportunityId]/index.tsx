@@ -41,7 +41,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     let dataVerificationStatus: MyOpportunityResponseVerify | null = null;
 
     if (session) {
-      // authenticated user (user may be an admin, orgDamin or the user has completed the opportunitiy)
+      // authenticated user (user may be an admin, orgDamin or the user has completed the opportunity)
       dataOpportunityInfo = await getOpportunityInfoByIdAdminOrgAdminOrUser(
         opportunityId,
         context,

@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
+import Link from "next/link";
 import { useCallback, type ReactElement } from "react";
 import {
   Action,
@@ -11,6 +12,7 @@ import {
 } from "~/api/models/myOpportunity";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import Breadcrumb from "~/components/Breadcrumb";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
 import OpportunitiesCarousel, {
@@ -255,6 +257,17 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
             ]}
           />
         </h5>
+
+        <FormMessage messageType={FormMessageType.Info}>
+          Just completed an opportunity? Click
+          <Link
+            className="mx-1 font-bold text-green hover:underline"
+            href="/yoid/opportunities/add"
+          >
+            here
+          </Link>
+          to add it.
+        </FormMessage>
 
         <div className="flex flex-col gap-4 rounded-lg bg-white p-4">
           {/* COMPLETED */}
