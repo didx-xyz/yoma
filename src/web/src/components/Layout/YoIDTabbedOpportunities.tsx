@@ -61,7 +61,7 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
     <YoIDTabbedLayout>
       <div className="flex w-full flex-col gap-4">
         {/* BREADCRUMB */}
-        <h5 className="font-bold tracking-wider text-black">
+        <div className="text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
@@ -81,7 +81,7 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
                 : []),
             ]}
           />
-        </h5>
+        </div>
 
         {/* NAVIGATION BUTTONS */}
         <div className="-mt-2 flex flex-row flex-wrap items-center justify-start gap-2">
@@ -90,12 +90,11 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
               key={tab.title}
               href={tab.url!}
               rel="noopener noreferrer"
-              className={`btn btn-sm tooltip tooltip-secondary flex items-center border-gray text-xs text-gray-dark hover:border-gray-dark ${
+              className={`btn btn-sm flex items-center border-gray text-xs text-gray-dark hover:border-gray-dark ${
                 tab.selected
                   ? "btn-secondary border-0 !text-gray hover:text-white"
                   : ""
               }`}
-              data-tip={tab.description}
             >
               {tab.title}
             </Link>

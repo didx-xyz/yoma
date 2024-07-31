@@ -308,7 +308,7 @@ const AppSettings: NextPageWithLayout<{
       </Head>
 
       <div className="w-full max-w-2xl">
-        <h5 className="mb-4 font-bold tracking-wider text-black">
+        <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
@@ -318,7 +318,7 @@ const AppSettings: NextPageWithLayout<{
               },
             ]}
           />
-        </h5>
+        </div>
 
         <div className="flex w-full flex-col items-center">
           <Suspense isLoading={settingsIsLoading} error={settingsError}>

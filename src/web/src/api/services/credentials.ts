@@ -83,7 +83,7 @@ export const searchCredentials = async (
 ): Promise<SSIWalletSearchResults> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
-  // // if environment is Local, return hardcoded data
+  // if environment is Local, return hardcoded data
   // if (process.env.NEXT_PUBLIC_ENVIRONMENT === "local") {
   //   return {
   //     totalCount: 10,

@@ -52,9 +52,9 @@ const MyCredentials: NextPageWithLayout<{
   error: string;
 }> = ({ error }) => {
   const {
-    data: dataUserSkills,
-    error: dataUserSkillsError,
-    isLoading: dataUserSkillsIsLoading,
+    data: data,
+    error: dataError,
+    isLoading: dataIsLoading,
   } = useQuery({
     queryKey: ["User", "Skills"],
     queryFn: () => getUserSkills(),
@@ -70,7 +70,7 @@ const MyCredentials: NextPageWithLayout<{
       </Head>
 
       <div className="w-full">
-        <h5 className="mb-4 font-bold tracking-wider text-black">
+        <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
@@ -80,16 +80,11 @@ const MyCredentials: NextPageWithLayout<{
               },
             ]}
           />
-        </h5>
+        </div>
 
-        <Suspense
-          isLoading={dataUserSkillsIsLoading}
-          error={dataUserSkillsError}
-        >
+        <Suspense isLoading={dataIsLoading} error={dataError}>
           {/* NO ROWS */}
-          {(dataUserSkills === null ||
-            dataUserSkills === undefined ||
-            dataUserSkills.length === 0) && (
+          {!data?.length && (
             <div className="flex justify-center rounded-lg bg-white p-8 text-center">
               <NoRowsMessage
                 title={"No completed skills found"}
@@ -101,53 +96,51 @@ const MyCredentials: NextPageWithLayout<{
           )}
 
           {/* GRID */}
-          {dataUserSkills !== null &&
-            dataUserSkills !== undefined &&
-            dataUserSkills.length > 0 && (
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {dataUserSkills.map((item, index) => (
-                  <Link
-                    key={`${item.id}_${index}`}
-                    href={item?.infoURL ? (item?.infoURL as any) : "#noaction"}
-                    className="flex h-[150px] flex-col rounded-lg bg-white p-4 shadow-custom"
-                    aria-disabled={item?.infoURL ? false : true}
-                  >
-                    <div className="flex h-full flex-col gap-2">
-                      <div className="flex flex-grow flex-row items-start justify-start">
-                        <div className="flex flex-col items-start justify-start gap-2">
-                          <p className="line-clamp-2 max-h-[45px] overflow-hidden text-ellipsis text-base font-semibold text-black">
-                            {item.name}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-row text-xs text-gray-dark">
-                        Skill issued by {item.organizations.length} partner
-                        {item.organizations.length > 1 ? "s" : ""}
-                      </div>
-
-                      <div className="flex flex-row items-start overflow-hidden">
-                        {item.organizations.map((org, index) => (
-                          <div
-                            className="-mr-4 flex w-fit items-center justify-center overflow-visible rounded-full bg-white"
-                            style={{
-                              zIndex: item.organizations.length - index,
-                            }}
-                            key={`${item.id}_${index}`}
-                          >
-                            <AvatarImage
-                              icon={org.logoURL ?? null}
-                              alt={`${org.name} Logo`}
-                              size={40}
-                            />
-                          </div>
-                        ))}
+          {!!data?.length && (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {data.map((item, index) => (
+                <Link
+                  key={`${item.id}_${index}`}
+                  href={item?.infoURL ? (item?.infoURL as any) : "#noaction"}
+                  className="flex h-[150px] flex-col rounded-lg bg-white p-4 shadow-custom"
+                  aria-disabled={item?.infoURL ? false : true}
+                >
+                  <div className="flex h-full flex-col gap-2">
+                    <div className="flex flex-grow flex-row items-start justify-start">
+                      <div className="flex flex-col items-start justify-start gap-2">
+                        <p className="line-clamp-2 max-h-[45px] overflow-hidden text-ellipsis text-base font-semibold text-black">
+                          {item.name}
+                        </p>
                       </div>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            )}
+
+                    <div className="flex flex-row text-xs text-gray-dark">
+                      Skill issued by {item.organizations.length} partner
+                      {item.organizations.length > 1 ? "s" : ""}
+                    </div>
+
+                    <div className="flex flex-row items-start overflow-hidden">
+                      {item.organizations.map((org, index) => (
+                        <div
+                          className="-mr-4 flex w-fit items-center justify-center overflow-visible rounded-full bg-white"
+                          style={{
+                            zIndex: item.organizations.length - index,
+                          }}
+                          key={`${item.id}_${index}`}
+                        >
+                          <AvatarImage
+                            icon={org.logoURL ?? null}
+                            alt={`${org.name} Logo`}
+                            size={40}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
         </Suspense>
       </div>
     </>

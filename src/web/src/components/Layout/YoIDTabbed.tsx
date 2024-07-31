@@ -110,10 +110,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
           <title>Yoma | Yo-ID</title>
         </Head>
 
-        <PageBackground
-          className="h-[28rem] md:h-[24rem]"
-          includeStamps={true}
-        />
+        <PageBackground className="h-[16rem]" includeStamps={true} />
 
         <ZltoModal
           isOpen={zltoModalVisible}
@@ -122,7 +119,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
 
         <div className="container z-10 mt-24 py-4">
           {/* USER CARD */}
-          <div className="flex items-center justify-center">
+          {/* <div className="flex items-center justify-center">
             <div className="group relative mx-4 flex h-[220px] w-full flex-col items-center justify-center rounded-lg bg-orange shadow-lg before:absolute before:left-0 before:top-0 before:-z-10 before:h-[220px] before:w-full before:rotate-[3deg] before:rounded-lg before:bg-orange before:brightness-75 before:transition-transform before:duration-300 before:ease-linear before:content-[''] md:mx-0 md:h-[200px] md:w-[410px] md:before:h-[200px] md:before:w-[410px] md:hover:before:rotate-0">
               <div className="grid w-full grid-cols-3 gap-4 p-2 md:grid-cols-4 md:p-6">
                 <div className="col-span-1 mx-auto my-auto scale-95 md:scale-100">
@@ -147,7 +144,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                       Welcome, {userProfile?.firstName}
                     </h5>
 
-                    {/* ZLTO Balances */}
+                    * ZLTO Balances
                     <div className="mt-2 flex flex-col gap-2 text-white">
                       <div className="flex flex-col gap-1 border-y-2 border-dotted border-[#FFD69C] py-px md:py-2">
                         <div className="flex flex-row items-center">
@@ -208,19 +205,18 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                 </div>
               </div>
             </div>
-          </div>
+          </div> */}
 
           {/* NAVIGATION BUTTONS */}
-          <div className="mt-6 flex flex-row flex-wrap items-center justify-center gap-2">
+          <div className="mt-3 flex h-[80px] flex-row flex-wrap items-center justify-center gap-2">
             {tabItems.map((tab) => (
               <Link
                 key={tab.title}
                 href={tab.url!}
                 rel="noopener noreferrer"
-                className={`btn btn-sm tooltip tooltip-secondary flex items-center border-gray text-xs text-gray hover:border-gray-dark ${
+                className={`btn btn-sm flex items-center border-gray text-xs text-gray hover:border-gray-dark ${
                   tab.selected ? "btn-secondary border-0 hover:text-white" : ""
                 }`}
-                data-tip={tab.description}
               >
                 {tab.title}
               </Link>
@@ -228,7 +224,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
           </div>
 
           {/* MAIN CONTENT */}
-          <div className="mx-4 mt-[2rem] flex flex-grow flex-col items-center justify-center md:mx-0">
+          <div className="mx-4 mt-[4rem] flex flex-grow flex-col items-center justify-center md:mx-0">
             {/* CHILDREN */}
             {children}
           </div>

@@ -246,7 +246,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
       </Head>
 
       <div className="flex w-full flex-col gap-4">
-        <h5 className="font-bold tracking-wider text-black">
+        <div className="text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
@@ -256,7 +256,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
               },
             ]}
           />
-        </h5>
+        </div>
 
         <FormMessage messageType={FormMessageType.Info}>
           Just completed an opportunity? Click
