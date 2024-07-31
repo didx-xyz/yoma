@@ -5,7 +5,6 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Models;
-using Yoma.Core.Domain.SSI.Models;
 
 namespace Yoma.Core.Domain.Reward.Services
 {
@@ -149,7 +148,8 @@ namespace Yoma.Core.Domain.Reward.Services
           //retry attempts specified and exceeded
           if (_appSettings.RewardMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.RewardMaximumRetryAttempts) break;
 
-          item.StatusId = _rewardTransactionStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
+          item.StatusId = _rewardTransactionStatusService.GetByName(RewardTransactionStatus.Pending.ToString()).Id;
+          item.Status = RewardTransactionStatus.Pending;
           break;
 
         default:

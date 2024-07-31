@@ -991,7 +991,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OrganizationId = request.OrganizationId,
         OrganizationName = organization.Name,
         OrganizationLogoId = organization.LogoId,
+        OrganizationLogoStorageType = organization.LogoStorageType,
+        OrganizationLogoKey = organization.LogoKey,
         OrganizationLogoURL = organization.LogoURL,
+        OrganizationStatusId = organization.StatusId,
+        OrganizationStatus = organization.Status,
         Summary = request.Summary,
         Instructions = request.Instructions,
         URL = request.URL,
@@ -1096,8 +1100,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //by default, status remains unchanged, except for immediate expiration based on DateEnd (status updated via UpdateStatus)
       if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
       {
-        result.Status = Status.Expired;
         result.StatusId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+        result.Status = Status.Expired;
       }
 
       result.Title = request.Title.NormalizeTrim();

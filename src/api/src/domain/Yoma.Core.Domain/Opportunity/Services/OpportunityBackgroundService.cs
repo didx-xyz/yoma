@@ -157,6 +157,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             foreach (var item in items)
             {
               item.StatusId = statusExpiredId;
+              item.Status = Status.Expired;
               item.ModifiedByUserId = user.Id;
               _logger.LogInformation("Opportunity with id '{id}' flagged for expiration", item.Id);
             }
@@ -274,6 +275,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
               foreach (var item in items)
               {
                 item.StatusId = statusDeletedId;
+                item.Status = Status.Deleted;
                 item.ModifiedByUserId = user.Id;
                 _logger.LogInformation("Opportunity with id '{id}' flagged for deletion", item.Id);
               }
@@ -281,7 +283,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
               await _opportunityRepository.Update(items);
 
               foreach (var item in items)
-                await _mediator.Publish(new OpportunityEvent(Core.EventType.Update, item));
+                await _mediator.Publish(new OpportunityEvent(Core.EventType.Delete, item));
 
               if (executeUntil <= DateTimeOffset.UtcNow) break;
             }

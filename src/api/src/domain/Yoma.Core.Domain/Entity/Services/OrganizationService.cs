@@ -1087,8 +1087,8 @@ namespace Yoma.Core.Domain.Entity.Services
           if (organization.Status == OrganizationStatus.Inactive) return organization;
 
           organization.CommentApproval = commentApproval;
-          organization.Status = OrganizationStatus.Inactive;
           organization.StatusId = _organizationStatusService.GetByName(OrganizationStatus.Inactive.ToString()).Id;
+          organization.Status = OrganizationStatus.Inactive;
           organization = await _organizationRepository.Update(organization);
 
           if (action == OrganizationReapprovalAction.ReapprovalWithEmail)

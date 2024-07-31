@@ -6,7 +6,6 @@ using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.PartnerSharing.Interfaces;
 using Yoma.Core.Domain.PartnerSharing.Interfaces.Lookups;
 using Yoma.Core.Domain.PartnerSharing.Models;
-using Yoma.Core.Domain.SSI.Models;
 
 namespace Yoma.Core.Domain.PartnerSharing.Services
 {
@@ -21,9 +20,9 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
 
     private readonly IExecutionStrategyService _executionStrategyService;
 
-    public static readonly Status[] Statuses_Opportunity_Creatable = [Status.Active, Status.Inactive];
-    public static readonly Status[] Statuses_Opportunity_Updatable = [Status.Active, Status.Inactive, Status.Expired]; //Expired: updated with end date in the past
-    public static readonly Status[] Statuses_Opportunity_CanDelete = [Status.Active, Status.Inactive, Status.Expired];
+    public static readonly Status[] Statuses_Opportunity_Creatable = [Status.Active]; //only active opportunities scheduled for creation
+    public static readonly Status[] Statuses_Opportunity_Updatable = [Status.Active, Status.Inactive, Status.Expired]; //expired: might be updated with end date in the past
+    public static readonly Status[] Statuses_Opportunity_CanDelete = [Status.Active, Status.Inactive, Status.Expired, Status.Deleted]; //active, inactive and expired: implicit deletion due to organization deletion
     #endregion
 
     #region Constructor
@@ -87,7 +86,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     /// Once an entity, such as an opportunity, is deleted, it cannot be reinstated. If scheduled for deletion an error will be thrown (logical invocation error).
     /// Error status requires manual intervention and the entity will eventually be consistent with the latest scheduled action
     /// </summary>
-    public async Task ScheduleUpdate(EntityType entityType, Guid entityId)
+    public async Task ScheduleUpdate(EntityType entityType, Guid entityId, bool canCreate)
     {
       var actionSchedule = ProcessingAction.Update;
       var existingItem = GetByEntity(entityType, entityId);
@@ -110,7 +109,14 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
         }
       }
       else
+      {
+        if (!canCreate)
+        {
+          _logger.LogInformation("Scheduling of partner sharing create skipped: Entity type '{entityType}' and entity id '{entityId}' not creatable (active)", entityType, entityId);
+          return;
+        }
         actionSchedule = ProcessingAction.Create;
+      }
 
       await Schedule(actionSchedule, entityType, entityId, existingItem?.EntityExternalId);
       _logger.LogInformation("Scheduling of partner sharing update initiated: Entity type '{entityType}' and entity id '{entityId}'", entityType, entityId);
@@ -137,12 +143,14 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
           case ProcessingAction.Create:
             if (existingItem.Status == ProcessingStatus.Processed) break;
             existingItem.StatusId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
+            existingItem.Status = ProcessingStatus.Aborted;
             await _processingLogRepository.Update(existingItem);
             return;
 
           case ProcessingAction.Update:
             if (existingItem.Status == ProcessingStatus.Processed) break;
             existingItem.StatusId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
+            existingItem.Status = ProcessingStatus.Aborted;
             await _processingLogRepository.Update(existingItem);
             break;
 
@@ -209,7 +217,8 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
           //retry attempts specified and exceeded
           if (_appSettings.SSIMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.SSIMaximumRetryAttempts) break;
 
-          item.StatusId = _processingStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
+          item.StatusId = _processingStatusService.GetByName(ProcessingStatus.Pending.ToString()).Id;
+          item.Status = ProcessingStatus.Pending;
           break;
 
         default:

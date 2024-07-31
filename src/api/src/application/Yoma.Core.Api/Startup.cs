@@ -29,7 +29,6 @@ using Yoma.Core.Infrastructure.SendGrid;
 using Yoma.Core.Infrastructure.Zlto;
 using Yoma.Core.Infrastructure.SAYouth;
 using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
-using Yoma.Core.Infrastructure.SAYouth.Client;
 using Yoma.Core.Domain.PartnerSharing;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Mime;
@@ -132,7 +131,7 @@ namespace Yoma.Core.Api
       {
         var factories = new Dictionary<Partner, ISharingProviderClientFactory>
             {
-                { Partner.SAYouth, sp.GetRequiredService<SAYouthClientFactory>() }
+                { Partner.SAYouth, sp.GetRequiredService<ISharingProviderClientFactory>() }
             };
         return factories;
       });

@@ -114,6 +114,7 @@ namespace Yoma.Core.Domain.SSI.Services
           if (_appSettings.SSIMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.SSIMaximumRetryAttempts) break;
 
           item.StatusId = _ssiCredentialIssuanceStatusService.GetByName(CredentialIssuanceStatus.Pending.ToString()).Id;
+          item.Status = CredentialIssuanceStatus.Pending;
           break;
 
         default:

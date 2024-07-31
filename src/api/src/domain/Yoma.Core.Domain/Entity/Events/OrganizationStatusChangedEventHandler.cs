@@ -51,6 +51,7 @@ namespace Yoma.Core.Domain.Entity.Events
               filter.Statuses = [Status.Active];
 
               result = _opportunityService.Search(filter, false);
+              if (result.Items.Count == 0) return;
 
               foreach (var item in result.Items)
                 await _mediator.Publish(new OpportunityEvent(EventType.Update, item), cancellationToken);
@@ -62,6 +63,7 @@ namespace Yoma.Core.Domain.Entity.Events
               filter.Statuses = [Status.Active, Status.Inactive, Status.Expired];
 
               result = _opportunityService.Search(filter, false);
+              if (result.Items.Count == 0) return;
 
               foreach (var item in result.Items)
                 await _mediator.Publish(new OpportunityEvent(EventType.Delete, item), cancellationToken);
@@ -69,14 +71,15 @@ namespace Yoma.Core.Domain.Entity.Events
               break;
 
             case OrganizationStatus.Declined:
-              break; // no action
+              return;
 
             default:
               throw new InvalidOperationException($"Organization status '{notification.Organization.Status}' is not supported");
           }
+
           filter.PageNumber++;
         }
-        while (result != null && result.Items.Count != 0);
+        while (result.Items.Count != 0);
       }
       catch (Exception ex)
       {
