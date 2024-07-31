@@ -1,12 +1,15 @@
 import Image from "next/image";
+import stamps from "public/images/stamps.svg";
 
 export const PageBackground: React.FC<{
   className?: string;
-}> = ({ className = "h-80" }) => {
+  includeStamps?: boolean;
+}> = ({ className = "h-80", includeStamps }) => {
   return (
     <div
       className={`bg-theme absolute left-0 top-0 z-0 flex w-full items-center justify-center ${className}`}
     >
+      {/* WORLD MAP */}
       <Image
         src={"/images/world-map.webp"}
         alt="world-map"
@@ -14,6 +17,19 @@ export const PageBackground: React.FC<{
         height={720}
         className="fixed h-[20rem] object-scale-down opacity-10 md:mt-20"
       />
+
+      {/* STAMPS */}
+      {includeStamps && (
+        <Image
+          src={stamps}
+          alt="Stamps"
+          height={400}
+          width={700}
+          sizes="100vw"
+          priority={true}
+          className="absolute top-20 opacity-25 brightness-200 grayscale"
+        />
+      )}
     </div>
   );
 };

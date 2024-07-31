@@ -136,7 +136,7 @@ const YoIDDashboard: NextPageWithLayout<{
         <title>Yoma | 💳 Yo-ID</title>
       </Head>
 
-      <PageBackground className="h-[15rem] md:h-[16rem]" />
+      <PageBackground className="h-[15rem] md:h-[16rem]" includeStamps={true} />
 
       <ZltoModal
         isOpen={zltoModalVisible}
@@ -144,7 +144,7 @@ const YoIDDashboard: NextPageWithLayout<{
       />
 
       <div className="container z-10 mt-[6rem] max-w-7xl overflow-hidden px-4 py-4">
-        <div className="flex flex-col gap-4">
+        <div className="z-1 flex flex-col gap-4">
           {/* HEADER */}
           <div className="flex flex-col gap-2">
             {/* WELCOME MSG */}
@@ -168,13 +168,13 @@ const YoIDDashboard: NextPageWithLayout<{
             {/* BUTTONS */}
             <div className="mt-4 flex flex-row gap-2">
               <Link
-                className="md:btn-mdx btn btn-secondary btn-sm w-1/2 md:max-w-[200px]"
+                className="btn btn-secondary btn-sm w-1/2 md:max-w-[200px]"
                 href="/yoid/profile"
               >
                 👤 Edit Profile
               </Link>
               <Link
-                className="md:btn-mdx btn btn-secondary btn-sm w-1/2 md:max-w-[200px]"
+                className="btn btn-secondary btn-sm w-1/2 md:max-w-[200px]"
                 href="/yoid/settings"
               >
                 🔧 Settings
