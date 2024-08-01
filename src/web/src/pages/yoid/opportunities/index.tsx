@@ -14,7 +14,7 @@ import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import Breadcrumb from "~/components/Breadcrumb";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
-import YoIDTabbed from "~/components/Layout/YoIDTabbed";
+import YoIDLayout from "~/components/Layout/YoID";
 import OpportunitiesCarousel, {
   DisplayType,
 } from "~/components/MyOpportunity/OpportunitiesCarousel";
@@ -246,7 +246,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
       </Head>
 
       <div className="flex w-full flex-col gap-4">
-        <h5 className="font-bold tracking-wider text-black">
+        <div className="text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
@@ -256,9 +256,12 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
               },
             ]}
           />
-        </h5>
+        </div>
 
-        <FormMessage messageType={FormMessageType.Info}>
+        <FormMessage
+          messageType={FormMessageType.Info}
+          classNameLabel="!text-xs md:!text-sm"
+        >
           Just completed an opportunity? Click
           <Link
             className="mx-1 font-bold text-green hover:underline"
@@ -269,13 +272,15 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
           to add it.
         </FormMessage>
 
-        <div className="flex flex-col gap-4 rounded-lg bg-white p-4">
+        <div className="flex flex-col gap-8 py-4">
           {/* COMPLETED */}
           <Suspense isLoading={completedIsLoading} error={completedError}>
             <OpportunitiesCarousel
               id={`myopportunities_completed`}
               title="✅ Completed"
-              description="Opportunities that you have completed"
+              description="Opportunities that you have completed."
+              noRowsTitle="You haven't completed any opportunities yet."
+              noRowsDescription="Once you complete an opportunity, it will be proudly displayed here. Start your journey now and showcase your achievements by completing opportunities!"
               data={completedData!}
               loadData={completedLoadData}
               viewAllUrl="/yoid/opportunities/completed"
@@ -288,7 +293,9 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
             <OpportunitiesCarousel
               id={`myopportunities_pending`}
               title="🕒 Pending"
-              description="Opportunities that are pending verification"
+              description="Opportunities that are pending verification."
+              noRowsTitle="You don't have any pending opportunities."
+              noRowsDescription="Once you've completed an opportunity, it will undergo verification and will be displayed here for your reference."
               data={pendingData!}
               loadData={pendingLoadData}
               viewAllUrl="/yoid/opportunities/pending"
@@ -301,7 +308,9 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
             <OpportunitiesCarousel
               id={`myopportunities_rejected`}
               title="❌ Rejected"
-              description="Opportunities that have been rejected"
+              description="Opportunities that have been rejected."
+              noRowsTitle="No rejected opportunites found."
+              noRowsDescription="Any opportunities that have been rejected will be listed here for your reference."
               data={rejectedData!}
               loadData={rejectedLoadData}
               viewAllUrl="/yoid/opportunities/rejected"
@@ -314,7 +323,9 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
             <OpportunitiesCarousel
               id={`myopportunities_saved`}
               title="💗 Saved"
-              description="Opportunities that you have saved"
+              description="Opportunities that you have saved."
+              noRowsTitle="You don't have any saved opportunities."
+              noRowsDescription="Opportunities you have saved will be listed here for easy access and reference. To save an opportunity, simply click the 'Save' button when viewing the opportunity details. This way, you can quickly find and return to the opportunities that interest you most."
               data={savedData!}
               loadData={savedLoadData}
               viewAllUrl="/yoid/opportunities/saved"
@@ -328,7 +339,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
 };
 
 MyOpportunitiesOverview.getLayout = function getLayout(page: ReactElement) {
-  return <YoIDTabbed>{page}</YoIDTabbed>;
+  return <YoIDLayout>{page}</YoIDLayout>;
 };
 
 export default MyOpportunitiesOverview;

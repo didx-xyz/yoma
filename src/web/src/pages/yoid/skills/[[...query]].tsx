@@ -4,21 +4,17 @@ import { getServerSession } from "next-auth";
 import { type ReactElement } from "react";
 import { type User, authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
-import { type ParsedUrlQuery } from "querystring";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import YoIDTabbed from "~/components/Layout/YoIDTabbed";
+import YoID from "~/components/Layout/YoID";
 import Link from "next/link";
 import { AvatarImage } from "~/components/AvatarImage";
 import { getUserSkills } from "~/api/services/user";
 import Suspense from "~/components/Common/Suspense";
 import Breadcrumb from "~/components/Breadcrumb";
 import Head from "next/head";
-
-interface IParams extends ParsedUrlQuery {
-  query?: string;
-  page?: string;
-}
+import { PaginationInfoComponent } from "~/components/PaginationInfo";
+import { PAGE_SIZE } from "~/lib/constants";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -32,29 +28,27 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
-  const { id } = context.params as IParams;
   const { query, page } = context.query;
 
   return {
     props: {
       user: session?.user ?? null,
-      id: id ?? null,
       query: query ?? null,
       page: page ?? "1",
     },
   };
 }
 
-const MyCredentials: NextPageWithLayout<{
+const MySkills: NextPageWithLayout<{
   user: User;
   query?: string;
   page?: string;
   error: string;
 }> = ({ error }) => {
   const {
-    data: dataUserSkills,
-    error: dataUserSkillsError,
-    isLoading: dataUserSkillsIsLoading,
+    data: data,
+    error: dataError,
+    isLoading: dataIsLoading,
   } = useQuery({
     queryKey: ["User", "Skills"],
     queryFn: () => getUserSkills(),
@@ -70,7 +64,7 @@ const MyCredentials: NextPageWithLayout<{
       </Head>
 
       <div className="w-full">
-        <h5 className="mb-4 font-bold tracking-wider text-black">
+        <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
@@ -80,16 +74,11 @@ const MyCredentials: NextPageWithLayout<{
               },
             ]}
           />
-        </h5>
+        </div>
 
-        <Suspense
-          isLoading={dataUserSkillsIsLoading}
-          error={dataUserSkillsError}
-        >
+        <Suspense isLoading={dataIsLoading} error={dataError}>
           {/* NO ROWS */}
-          {(dataUserSkills === null ||
-            dataUserSkills === undefined ||
-            dataUserSkills.length === 0) && (
+          {!data?.length && (
             <div className="flex justify-center rounded-lg bg-white p-8 text-center">
               <NoRowsMessage
                 title={"No completed skills found"}
@@ -101,11 +90,20 @@ const MyCredentials: NextPageWithLayout<{
           )}
 
           {/* GRID */}
-          {dataUserSkills !== null &&
-            dataUserSkills !== undefined &&
-            dataUserSkills.length > 0 && (
+          {!!data?.length && (
+            <div className="flex flex-col gap-4">
+              {/* PAGINATION INFO */}
+              <PaginationInfoComponent
+                currentPage={1}
+                itemCount={data?.length ?? 0}
+                totalItems={data?.length ?? 0}
+                pageSize={PAGE_SIZE}
+                query={null}
+              />
+
+              {/* GRID */}
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-                {dataUserSkills.map((item, index) => (
+                {data.map((item, index) => (
                   <Link
                     key={`${item.id}_${index}`}
                     href={item?.infoURL ? (item?.infoURL as any) : "#noaction"}
@@ -147,15 +145,16 @@ const MyCredentials: NextPageWithLayout<{
                   </Link>
                 ))}
               </div>
-            )}
+            </div>
+          )}
         </Suspense>
       </div>
     </>
   );
 };
 
-MyCredentials.getLayout = function getLayout(page: ReactElement) {
-  return <YoIDTabbed>{page}</YoIDTabbed>;
+MySkills.getLayout = function getLayout(page: ReactElement) {
+  return <YoID>{page}</YoID>;
 };
 
-export default MyCredentials;
+export default MySkills;

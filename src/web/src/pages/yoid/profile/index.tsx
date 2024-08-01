@@ -11,7 +11,7 @@ import { getUserProfile } from "~/api/services/user";
 import { authOptions } from "~/server/auth";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import type { NextPageWithLayout } from "~/pages/_app";
-import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
+import YoIDLayout from "~/components/Layout/YoID";
 import { config } from "~/lib/react-query-config";
 import {
   UserProfileFilterOptions,
@@ -63,7 +63,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const Settings: NextPageWithLayout<{
+const MyProfile: NextPageWithLayout<{
   error?: string;
 }> = ({ error }) => {
   const { data: userProfile, isLoading } = useQuery({
@@ -84,8 +84,8 @@ const Settings: NextPageWithLayout<{
         <title>Yoma | 👤 Profile</title>
       </Head>
 
-      <div className="w-full max-w-2xl">
-        <h5 className="mb-4 font-bold tracking-wider text-black">
+      <div className="max-w-2xl">
+        <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
@@ -95,7 +95,7 @@ const Settings: NextPageWithLayout<{
               },
             ]}
           />
-        </h5>
+        </div>
 
         <div className="flex flex-col items-center">
           <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
@@ -127,8 +127,8 @@ const Settings: NextPageWithLayout<{
   );
 };
 
-Settings.getLayout = function getLayout(page: ReactElement) {
-  return <YoIDTabbedLayout>{page}</YoIDTabbedLayout>;
+MyProfile.getLayout = function getLayout(page: ReactElement) {
+  return <YoIDLayout>{page}</YoIDLayout>;
 };
 
-export default Settings;
+export default MyProfile;

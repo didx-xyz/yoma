@@ -108,7 +108,7 @@ export const searchMyOpportunitiesSummary = async (
 
   return data;
 
-  //   //TODO: mock data:
+  // //TODO: mock data:
   // const mockTimeValueEntries: TimeValueEntry[] = [
   //   { date: "2023-04-01", values: [10, 20, 30, 4] },
   //   { date: "2023-04-02", values: [65, 25, 35, 13] },

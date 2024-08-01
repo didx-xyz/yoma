@@ -16,12 +16,14 @@ export enum FormMessageType {
 interface MessageProps {
   messageType: FormMessageType;
   className?: string;
+  classNameLabel?: string;
   children: React.ReactNode;
 }
 
 const FormMessage: React.FC<MessageProps> = ({
   messageType,
   className,
+  classNameLabel,
   children,
 }) => {
   const iconColorClass = {
@@ -50,7 +52,7 @@ const FormMessage: React.FC<MessageProps> = ({
       className={`flex w-full flex-row items-center rounded-lg border-[1px] p-2 ${borderColorClass} ${className}`}
     >
       <Icon className={`mr-2 h-6 w-6 ${iconColorClass}`} />
-      <span className="text-xs">{children}</span>
+      <span className={`text-xs ${classNameLabel}`}>{children}</span>
     </div>
   );
 };
