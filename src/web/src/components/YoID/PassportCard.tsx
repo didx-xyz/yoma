@@ -6,9 +6,13 @@ export const PassportCard: React.FC<{
 }> = ({ data }) => {
   return (
     <div className="flex flex-grow flex-col justify-center">
-      <Image src={stamps} alt="Stamps" className="absolute" />
+      <Image src={stamps} alt="Stamps" className="absolute opacity-50" />
+      <div className="text-sm text-gray-dark">
+        Your digital passport contains the credentials you receive from
+        completing opportunities.
+      </div>
       <div className="flex flex-grow items-center justify-end">
-        <div className="flex flex-col gap-1 text-xs">
+        <div className="flex flex-col gap-1 text-sm">
           {data?.map((item) => (
             <div
               key={item.schemaType}

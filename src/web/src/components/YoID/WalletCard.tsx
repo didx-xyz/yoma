@@ -34,17 +34,25 @@ export const WalletCard: React.FC<{
         onClose={() => setZltoModalVisible(false)}
       />
 
-      <div className="flex flex-col gap-2 text-black">
-        <div className="flex items-center gap-2 text-sm">
-          ZLTO
+      <div className="flex h-full flex-col gap-2 text-black">
+        <div className="h-full content-center justify-center gap-2 text-sm text-gray-dark">
+          <span>
+            <span className="font-semibold italic">ZLTO</span> - Your digital
+            wallet for managing rewards and transactions.
+          </span>
+
           {/* TOOLTIP */}
-          <button type="button" onClick={() => setZltoModalVisible(true)}>
-            <IoIosInformationCircleOutline className="h-5 w-5" />
+          <button
+            type="button"
+            onClick={() => setZltoModalVisible(true)}
+            className="ml-2 inline-block align-middle"
+          >
+            <IoIosInformationCircleOutline className="h-5 w-5 text-green" />
           </button>
         </div>
         <div className="flex flex-col gap-1 border-y-2 border-dotted border-[#FFD69C] py-2">
           <div className="flex flex-row items-center">
-            <p className="w-28 text-xs tracking-widest">Available:</p>
+            <p className="w-28 text-sm">Available:</p>
 
             <div className="flex items-center text-xs font-semibold text-black">
               <Image
@@ -58,7 +66,7 @@ export const WalletCard: React.FC<{
             </div>
           </div>
           <div className="flex flex-row items-center">
-            <p className="w-28 text-xs tracking-widest">Processing:</p>
+            <p className="w-28 text-sm">Processing:</p>
 
             <div className="flex items-center text-xs font-semibold text-black">
               <Image
@@ -73,7 +81,7 @@ export const WalletCard: React.FC<{
           </div>
         </div>
         <div className="relative flex flex-row items-center">
-          <p className="w-28 text-xs tracking-widest">Total:</p>
+          <p className="w-28 text-sm font-bold">Total:</p>
           <div className="badge -ml-2 !rounded-full bg-white px-2 py-2 text-xs !font-semibold text-black">
             <Image
               src={iconZltoColor}

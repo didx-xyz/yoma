@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Chart, { type GoogleChartWrapper } from "react-google-charts";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
 import { screenWidthAtom } from "~/lib/store";
+import NoRowsMessage from "../NoRowsMessage";
 
 export const LineChart: React.FC<{
   data: TimeIntervalSummary;
@@ -53,7 +54,7 @@ export const LineChart: React.FC<{
   };
 
   const Legend = () => (
-    <div className="mb-2 flex flex-grow flex-row justify-between text-xs md:justify-normal md:gap-4">
+    <div className="mb-2 flex flex-grow flex-row justify-between text-xs md:justify-normal md:gap-4 md:text-sm">
       {data?.legend.map((name, index) => (
         <Link
           key={index}
@@ -158,7 +159,13 @@ export const LineChart: React.FC<{
         />
       ) : (
         <div className="flex h-full items-center justify-center rounded-lg bg-gray-light text-sm">
-          Not enough data to display
+          {/* Not enough data to display */}
+          <NoRowsMessage
+            title={"Not enough data to display"}
+            description={
+              "This chart will display your activities as you engage more with the system by completing opportunities etc."
+            }
+          />
         </div>
       )}
     </div>
