@@ -11,17 +11,20 @@ const NoRowsMessage: React.FC<{
         {icon}
       </div>
 
-      <div className="my-2 font-semibold text-black">
-        {title ?? "No rows found"}
+      <div className="max-w-sm">
+        <div className="my-2 font-semibold text-black">
+          {title ?? "No rows found"}
+        </div>
+
+        <div
+          className="text-sm text-gray-dark"
+          dangerouslySetInnerHTML={{
+            __html:
+              description ??
+              "There are no rows to display at the moment. Please check back later.",
+          }}
+        ></div>
       </div>
-      <div
-        className="text-sm text-gray-dark"
-        dangerouslySetInnerHTML={{
-          __html:
-            description ??
-            "There are no rows to display at the moment. Please check back later.",
-        }}
-      ></div>
     </div>
   );
 };
