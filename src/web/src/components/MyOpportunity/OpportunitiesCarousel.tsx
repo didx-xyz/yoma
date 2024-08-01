@@ -23,10 +23,9 @@ import {
 import { screenWidthAtom } from "~/lib/store";
 import { NavigationButtons } from "../Carousel/NavigationButtons";
 import { SelectedSnapDisplay } from "../Carousel/SelectedSnapDisplay";
+import NoRowsMessage from "../NoRowsMessage";
 import { LoadingSkeleton } from "../Status/LoadingSkeleton";
 import { OpportunityCard } from "./OpportunityCard";
-import NoRowsMessage from "../NoRowsMessage";
-import FormMessage, { FormMessageType } from "../Common/FormMessage";
 
 export enum DisplayType {
   Completed = "Completed",
@@ -40,6 +39,7 @@ const OpportunitiesCarousel: React.FC<{
   [id: string]: any;
   title?: string;
   description?: string;
+  noRowsTitle?: string;
   noRowsDescription?: string;
   viewAllUrl?: string;
   loadData: (startRow: number) => Promise<MyOpportunitySearchResults>;
@@ -49,6 +49,7 @@ const OpportunitiesCarousel: React.FC<{
   id,
   title,
   description,
+  noRowsTitle,
   noRowsDescription,
   viewAllUrl,
   loadData,
@@ -139,13 +140,23 @@ const OpportunitiesCarousel: React.FC<{
     >
       <div className="mb-4 flex flex-col gap-6">
         <div className="flex flex-row">
-          <div className="flex flex-grow flex-col">
+          <div className="flex flex-grow flex-col gap-2">
             <div className="truncate text-sm font-semibold text-black md:text-base">
               {title}
             </div>
-            <div className="text-xs text-gray-dark md:text-sm">
-              {!!slides?.length ? <>{description}</> : <>{noRowsDescription}</>}
-            </div>
+            {!!slides?.length && (
+              <div className="text-xs text-gray-dark md:text-sm">
+                {description}
+              </div>
+            )}
+            {!slides?.length && (
+              <div className="mt-1">
+                <NoRowsMessage
+                  title={noRowsTitle}
+                  description={noRowsDescription}
+                />
+              </div>
+            )}
           </div>
 
           {!!slides?.length && (

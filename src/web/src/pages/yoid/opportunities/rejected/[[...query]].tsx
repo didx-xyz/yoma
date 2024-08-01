@@ -114,7 +114,7 @@ const MyOpportunitiesRejected: NextPageWithLayout<{
         {!data?.items?.length && (
           <div className="flex justify-center rounded-lg bg-white p-8 text-center">
             <NoRowsMessage
-              title={"No rejected opportunites found"}
+              title={"No rejected opportunites found."}
               description={
                 "Any opportunities that have been rejected will be listed here for your reference."
               }

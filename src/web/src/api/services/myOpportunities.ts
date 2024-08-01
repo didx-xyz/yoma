@@ -17,10 +17,7 @@ import type {
   GetStaticPropsContext,
 } from "next/types";
 import ApiServer from "~/lib/axiosServer";
-import type {
-  TimeIntervalSummary,
-  TimeValueEntry,
-} from "../models/organizationDashboard";
+import type { TimeIntervalSummary } from "../models/organizationDashboard";
 
 export const saveMyOpportunity = async (
   opportunityId: string,

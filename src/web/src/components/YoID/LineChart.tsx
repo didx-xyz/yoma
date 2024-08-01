@@ -158,10 +158,9 @@ export const LineChart: React.FC<{
           ]}
         />
       ) : (
-        <div className="flex h-full items-center justify-center rounded-lg bg-gray-light text-sm">
-          {/* Not enough data to display */}
+        <div className="flex h-full items-center justify-center rounded-lg bg-gray-light">
           <NoRowsMessage
-            title={"Not enough data to display"}
+            title={"Not enough data to display."}
             description={
               "This chart will display your activities as you engage more with the system by completing opportunities etc."
             }

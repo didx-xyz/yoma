@@ -5,14 +5,14 @@ export const PassportCard: React.FC<{
   data: { schemaType: string; totalCount: number | null }[];
 }> = ({ data }) => {
   return (
-    <div className="flex flex-grow flex-col justify-center">
+    <div className="flex flex-grow flex-col justify-center text-xs md:text-sm">
       <Image src={stamps} alt="Stamps" className="absolute opacity-50" />
-      <div className="text-sm text-gray-dark">
+      <div className="text-gray-dark">
         Your digital passport contains the credentials you receive from
         completing opportunities.
       </div>
       <div className="flex flex-grow items-center justify-end">
-        <div className="flex flex-col gap-1 text-sm">
+        <div className="flex flex-col gap-1">
           {data?.map((item) => (
             <div
               key={item.schemaType}

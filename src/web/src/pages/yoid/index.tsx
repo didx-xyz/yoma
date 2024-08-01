@@ -51,7 +51,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   return {
     props: {
-      user: session?.user ?? null,
       error: errorCode,
     },
   };
@@ -59,9 +58,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 // YoID dashboard page
 const YoIDDashboard: NextPageWithLayout<{
-  user?: any;
   error?: number;
-}> = ({ user, error }) => {
+}> = ({ error }) => {
   const [zltoModalVisible, setZltoModalVisible] = useState(false);
   const [userProfile] = useAtom(userProfileAtom);
 
@@ -153,7 +151,7 @@ const YoIDDashboard: NextPageWithLayout<{
               <Suspense isLoading={skillsIsLoading} error={skillsError}>
                 {!skills?.length && (
                   <NoRowsMessage
-                    title={"No skills"}
+                    title={"No skills."}
                     description={
                       "Skills that you receive by completing opportunities will be diplayed here."
                     }
@@ -184,7 +182,7 @@ const YoIDDashboard: NextPageWithLayout<{
               {!credentials?.length && (
                 <NoRowsMessage
                   icon="💳"
-                  title={"No credentials"}
+                  title={"No credentials."}
                   description={
                     "Complete opportunities to receive your credentials."
                   }
@@ -202,9 +200,9 @@ const YoIDDashboard: NextPageWithLayout<{
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
             <NoRowsMessage
               icon="🚧"
-              title={"Coming soon"}
+              title={"Coming soon..."}
               description={
-                "Watch this space! Exciting updates are on the way id"
+                "Watch this space! Exciting updates are on the way ;)"
               }
             />
           </div>

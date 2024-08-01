@@ -1,35 +1,34 @@
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import Head from "next/head";
 import router from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
-import { authOptions } from "~/server/auth";
-import { type NextPageWithLayout } from "../../_app";
-import { DATETIME_FORMAT_SYSTEM, PAGE_SIZE } from "~/lib/constants";
-import {
-  getCredentialById,
-  searchCredentials,
-} from "~/api/services/credentials";
-import { type ParsedUrlQuery } from "querystring";
+import { IoMdCheckmark, IoMdClose } from "react-icons/io";
+import ReactModal from "react-modal";
+import Moment from "react-moment";
+import { toast } from "react-toastify";
 import type {
   SSICredentialInfo,
   SSIWalletSearchResults,
 } from "~/api/models/credential";
+import {
+  getCredentialById,
+  searchCredentials,
+} from "~/api/services/credentials";
+import { AvatarImage } from "~/components/AvatarImage";
+import Breadcrumb from "~/components/Breadcrumb";
+import Suspense from "~/components/Common/Suspense";
+import YoID from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
-import Moment from "react-moment";
-import { IoMdCheckmark, IoMdClose } from "react-icons/io";
-import ReactModal from "react-modal";
-import { Unauthorized } from "~/components/Status/Unauthorized";
-import YoID from "~/components/Layout/YoID";
-import { toast } from "react-toastify";
-import { config } from "~/lib/react-query-config";
-import { AvatarImage } from "~/components/AvatarImage";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import Suspense from "~/components/Common/Suspense";
-import Breadcrumb from "~/components/Breadcrumb";
-import Head from "next/head";
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { DATETIME_FORMAT_SYSTEM, PAGE_SIZE } from "~/lib/constants";
+import { config } from "~/lib/react-query-config";
+import { authOptions } from "~/server/auth";
+import { type NextPageWithLayout } from "../../_app";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);

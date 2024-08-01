@@ -114,7 +114,7 @@ const MyOpportunitiesPending: NextPageWithLayout<{
         {!data?.items?.length && (
           <div className="flex justify-center rounded-lg bg-white p-8 text-center">
             <NoRowsMessage
-              title={"You don't have any pending opportunities yet."}
+              title={"You don't have any pending opportunities."}
               description={
                 "Once you've completed an opportunity, it will undergo verification and will be displayed here for your reference."
               }

@@ -14,7 +14,7 @@ import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import Breadcrumb from "~/components/Breadcrumb";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
-import YoID from "~/components/Layout/YoID";
+import YoIDLayout from "~/components/Layout/YoID";
 import OpportunitiesCarousel, {
   DisplayType,
 } from "~/components/MyOpportunity/OpportunitiesCarousel";
@@ -279,7 +279,8 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
               id={`myopportunities_completed`}
               title="✅ Completed"
               description="Opportunities that you have completed."
-              noRowsDescription="You haven't completed any opportunities yet. Once you complete an opportunity, it will be proudly displayed here. Start your journey now and showcase your achievements by completing opportunities!"
+              noRowsTitle="You haven't completed any opportunities yet."
+              noRowsDescription="Once you complete an opportunity, it will be proudly displayed here. Start your journey now and showcase your achievements by completing opportunities!"
               data={completedData!}
               loadData={completedLoadData}
               viewAllUrl="/yoid/opportunities/completed"
@@ -293,7 +294,8 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
               id={`myopportunities_pending`}
               title="🕒 Pending"
               description="Opportunities that are pending verification."
-              noRowsDescription="You don't have any pending opportunities yet. Once you've completed an opportunity, it will undergo verification and will be displayed here for your reference."
+              noRowsTitle="You don't have any pending opportunities."
+              noRowsDescription="Once you've completed an opportunity, it will undergo verification and will be displayed here for your reference."
               data={pendingData!}
               loadData={pendingLoadData}
               viewAllUrl="/yoid/opportunities/pending"
@@ -307,7 +309,8 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
               id={`myopportunities_rejected`}
               title="❌ Rejected"
               description="Opportunities that have been rejected."
-              noRowsDescription="No rejected opportunites found. Any opportunities that have been rejected will be listed here for your reference."
+              noRowsTitle="No rejected opportunites found."
+              noRowsDescription="Any opportunities that have been rejected will be listed here for your reference."
               data={rejectedData!}
               loadData={rejectedLoadData}
               viewAllUrl="/yoid/opportunities/rejected"
@@ -321,7 +324,8 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
               id={`myopportunities_saved`}
               title="💗 Saved"
               description="Opportunities that you have saved."
-              noRowsDescription="You don't have any saved opportunities. Opportunities you have saved will be listed here for easy access and reference. To save an opportunity, simply click the 'Save' button when viewing the opportunity details. This way, you can quickly find and return to the opportunities that interest you most."
+              noRowsTitle="You don't have any saved opportunities."
+              noRowsDescription="Opportunities you have saved will be listed here for easy access and reference. To save an opportunity, simply click the 'Save' button when viewing the opportunity details. This way, you can quickly find and return to the opportunities that interest you most."
               data={savedData!}
               loadData={savedLoadData}
               viewAllUrl="/yoid/opportunities/saved"
@@ -335,7 +339,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
 };
 
 MyOpportunitiesOverview.getLayout = function getLayout(page: ReactElement) {
-  return <YoID>{page}</YoID>;
+  return <YoIDLayout>{page}</YoIDLayout>;
 };
 
 export default MyOpportunitiesOverview;
