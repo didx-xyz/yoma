@@ -276,7 +276,7 @@ const MyCredentials: NextPageWithLayout<{
           />
         </h5>
 
-        <Suspense isReady={!!data} isLoading={dataIsLoading} error={dataError}>
+        <Suspense isLoading={dataIsLoading} error={dataError}>
           {/* NO ROWS */}
           {/* TODO:data.totalCount not populated by API */}
           {/* {data && (data.totalCount === null || data.totalCount === 0) && ( */}

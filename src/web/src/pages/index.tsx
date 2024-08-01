@@ -89,7 +89,7 @@ const Home: NextPageWithLayout = () => {
               the loop with what&apos;s happening in the working world.
             </p>
             <div className="mb-4 md:my-4">
-              <div className="flex w-full flex-row justify-start">
+              <div className="my-4 flex w-full flex-row justify-start">
                 <SearchInputLarge
                   onSearch={onSearchInputSubmit}
                   placeholder="Explore..."

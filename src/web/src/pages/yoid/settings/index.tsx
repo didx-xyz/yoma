@@ -18,18 +18,19 @@ import type {
 } from "~/api/models/user";
 import { getSettings, updateSettings } from "~/api/services/user";
 import Breadcrumb from "~/components/Breadcrumb";
-import FormCheckbox from "~/components/Common/FormCheckbox";
 import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
+import FormLabel from "~/components/Common/FormLabel";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
-import FormTooltip from "~/components/Common/FormTooltip";
+import FormToggle from "~/components/Common/FormToggle";
+import Suspense from "~/components/Common/Suspense";
 import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
 import { ApiErrors } from "~/components/Status/ApiErrors";
-import { Loading } from "~/components/Status/Loading";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   GA_ACTION_APP_SETTING_UPDATE,
   GA_CATEGORY_USER,
+  SETTING_USER_SETTINGS_CONFIGURED,
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { config } from "~/lib/react-query-config";
@@ -67,12 +68,16 @@ const AppSettings: NextPageWithLayout<{
   error?: string;
 }> = ({ error }) => {
   const queryClient = useQueryClient();
-  const { data: dataSettings, isLoading: isLoadingSettings } = useQuery({
+  const {
+    data: settingsData,
+    isLoading: settingsIsLoading,
+    error: settingsError,
+  } = useQuery({
     queryKey: ["userProfileAppSettings"],
     queryFn: async () => await getSettings(),
     enabled: !error,
   });
-  const [settings, setSettings] = useState(dataSettings);
+  const [settings, setSettings] = useState(settingsData);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleInputChange = (depth: number, itemKey: string, newValue: any) => {
@@ -113,63 +118,90 @@ const AppSettings: NextPageWithLayout<{
     setSettings(newSettings);
   };
 
-  const renderGroup = (group: SettingGroup, depth: number): JSX.Element => (
-    <div className="mb-2 flex flex-col gap-2" key={`${group.group}_${depth}`}>
-      <div
-        className="font-bold"
-        style={{ fontSize: `${1.2 - depth * 0.3}rem` }}
-      >
-        {group.group}
-      </div>
+  const renderGroup = (
+    group: SettingGroup,
+    depth: number,
+  ): JSX.Element | null => {
+    const visibleItems = group.items?.filter((item) => item.visible) || [];
 
-      {group.items?.map((item: SettingItem) => (
-        <div key={`${group.group}_${depth}_${item.key}`}>
-          {item.type == "Boolean" && (
-            <div className="flex flex-row items-center gap-2">
-              <FormCheckbox
-                id={item.key}
-                label={item.title}
-                inputProps={{
-                  checked: item.value,
-                  onChange: (e) =>
-                    handleInputChange(depth, item.key, e.target.checked),
-                  disabled: !item.enabled,
-                }}
-              />
-              <FormTooltip label={item.description} />
-            </div>
-          )}
-          {item.type == "Number" && (
-            <FormField label={item.title} tooltip={item.description}>
-              <FormInput
-                inputProps={{
-                  type: "number",
-                  value: item.value,
-                  onChange: (e) =>
-                    handleInputChange(depth, item.key, e.target.value),
-                  disabled: !item.enabled,
-                }}
-              />
-            </FormField>
-          )}
-          {item.type == "String" && (
-            <FormField label={item.title} tooltip={item.description}>
-              <FormInput
-                inputProps={{
-                  type: "text",
-                  value: item.value,
-                  onChange: (e) =>
-                    handleInputChange(depth, item.key, e.target.value),
-                  disabled: !item.enabled,
-                }}
-              />
-            </FormField>
-          )}
-        </div>
-      ))}
-      {group.groups?.map((subGroup) => renderGroup(subGroup, depth + 1))}
-    </div>
-  );
+    return (
+      <div
+        className="flex flex-col gap-2"
+        key={`${group.group}_${depth}`}
+        style={{
+          marginBottom:
+            !!visibleItems?.length || !!group.groups?.length ? "16px" : "0px",
+        }}
+      >
+        {(!!visibleItems?.length || !!group.groups?.length) && (
+          <div
+            className="font-bold"
+            style={{ fontSize: `${1 - depth * 0.2}rem` }}
+          >
+            {group.group}
+          </div>
+        )}
+
+        {!!visibleItems?.length && (
+          <div className="flex flex-col gap-4 rounded-lg bg-white p-4">
+            {visibleItems?.map((item: SettingItem) => (
+              <div key={`${group.group}_${depth}_${item.key}`}>
+                {item.type == "Boolean" && (
+                  <div className="flex flex-row items-center gap-2">
+                    <div className="w-full">
+                      <FormLabel
+                        label={item.title}
+                        subLabel={item.description}
+                        showWarningIcon={false}
+                      />
+                    </div>
+                    <FormToggle
+                      id={item.key}
+                      label=""
+                      inputProps={{
+                        checked: item.value,
+                        onChange: (e) =>
+                          handleInputChange(depth, item.key, e.target.checked),
+                        disabled: !item.enabled,
+                      }}
+                    />
+                  </div>
+                )}
+                {item.type == "Number" && (
+                  <FormField label={item.title} subLabel={item.description}>
+                    <FormInput
+                      inputProps={{
+                        type: "number",
+                        value: item.value,
+                        onChange: (e) =>
+                          handleInputChange(depth, item.key, e.target.value),
+                        disabled: !item.enabled,
+                      }}
+                    />
+                  </FormField>
+                )}
+                {item.type == "String" && (
+                  <FormField label={item.title} subLabel={item.description}>
+                    <FormInput
+                      inputProps={{
+                        type: "text",
+                        value: item.value,
+                        onChange: (e) =>
+                          handleInputChange(depth, item.key, e.target.value),
+                        disabled: !item.enabled,
+                      }}
+                    />
+                  </FormField>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {group.groups?.map((subGroup) => renderGroup(subGroup, depth + 1))}
+      </div>
+    );
+  };
 
   const handleSubmit = useCallback(
     async (e: any) => {
@@ -229,9 +261,13 @@ const AppSettings: NextPageWithLayout<{
 
       // format settings into UserRequestSettings and send to server
       const userRequestSettings = convertSettingsToUserRequestSettings(
-        dataSettings!,
+        settingsData!,
         settings!,
       );
+
+      // ensure that the USER_SETTINGS_CONFIGURED is always set
+      // this prevents the "please update your settings" popup from showing again (Global.tsx)
+      userRequestSettings.settings[SETTING_USER_SETTINGS_CONFIGURED] = true;
 
       try {
         // call api
@@ -245,7 +281,9 @@ const AppSettings: NextPageWithLayout<{
         );
 
         // invalidate query
-        queryClient.invalidateQueries({ queryKey: ["userProfileAppSettings"] });
+        queryClient.invalidateQueries({
+          queryKey: ["userProfileAppSettings"],
+        });
 
         toast.success("Settings updated");
       } catch (error) {
@@ -258,7 +296,7 @@ const AppSettings: NextPageWithLayout<{
 
       setIsLoading(false);
     },
-    [dataSettings, settings, queryClient, setIsLoading],
+    [settingsData, settings, queryClient, setIsLoading],
   );
 
   if (error) return <Unauthorized />;
@@ -266,7 +304,7 @@ const AppSettings: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | ⚙ Settings</title>
+        <title>Yoma | 🔧 Settings</title>
       </Head>
 
       <div className="w-full max-w-2xl">
@@ -275,24 +313,22 @@ const AppSettings: NextPageWithLayout<{
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
               {
-                title: "⚙ Settings",
+                title: "🔧 Settings",
                 selected: true,
               },
             ]}
           />
         </h5>
 
-        <div className="flex flex-col items-center">
-          <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
-            {(isLoading || isLoadingSettings) && <Loading />}
-
-            {!isLoadingSettings && !settings && (
+        <div className="flex w-full flex-col items-center">
+          <Suspense isLoading={settingsIsLoading} error={settingsError}>
+            {!settings && (
               <FormMessage messageType={FormMessageType.Warning}>
                 No settings available
               </FormMessage>
             )}
 
-            {!isLoadingSettings && settings && (
+            {settings && (
               <form onSubmit={handleSubmit}>
                 {/* GROUPS */}
                 {settings.groups.map((group) => renderGroup(group, 0))}
@@ -302,13 +338,14 @@ const AppSettings: NextPageWithLayout<{
                   <button
                     type="submit"
                     className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                    disabled={isLoading}
                   >
                     Submit
                   </button>
                 </div>
               </form>
             )}
-          </div>
+          </Suspense>
         </div>
       </div>
     </>

@@ -11,7 +11,7 @@ const FormLabel: React.FC<{
 }> = ({ label, subLabel, tooltip, showWarningIcon }) => {
   return (
     <label className="flex flex-col justify-start gap-0">
-      <span className="flex flex-row items-center gap-2 text-sm font-bold">
+      <span className="flex flex-row items-center gap-2 text-sm font-semibold">
         {label}
 
         {tooltip && (
@@ -28,7 +28,7 @@ const FormLabel: React.FC<{
       </span>
 
       {subLabel && (
-        <span className="text-xs">
+        <span className="text-xs text-gray-dark">
           {subLabel.split("\\n").map((line, index, array) => (
             <Fragment key={index}>
               {line}

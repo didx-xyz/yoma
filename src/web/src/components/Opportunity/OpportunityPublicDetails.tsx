@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
+import { useAtomValue, useSetAtom } from "jotai";
 import Image from "next/image";
 import iconBell from "public/images/icon-bell.webp";
 import iconClock from "public/images/icon-clock.svg";
@@ -23,6 +24,7 @@ import Moment from "react-moment";
 import { toast } from "react-toastify";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
 import { type OpportunityInfo } from "~/api/models/opportunity";
+import { SettingType } from "~/api/models/user";
 import {
   getVerificationStatus,
   isOpportunitySaved,
@@ -31,6 +33,7 @@ import {
   removeMySavedOpportunity,
   saveMyOpportunity,
 } from "~/api/services/myOpportunities";
+import { updateSettings } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
 import Badges from "~/components/Opportunity/Badges";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
@@ -47,9 +50,12 @@ import {
   GA_ACTION_OPPORTUNITY_COMPLETED,
   GA_ACTION_OPPORTUNITY_FOLLOWEXTERNAL,
   GA_CATEGORY_OPPORTUNITY,
+  SETTING_USER_POPUP_LEAVINGYOMA,
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { userProfileAtom } from "~/lib/store";
 import { type User } from "~/server/auth";
+import FormCheckbox from "../Common/FormCheckbox";
 import { Editor } from "../RichText/Editor";
 
 // this component is used by the public opportunity page,
@@ -77,6 +83,8 @@ const OpportunityPublicDetails: React.FC<{
   const [shareOpportunityDialogVisible, setShareOpportunityDialogVisible] =
     useState(false);
   const [isOppSaved, setIsOppSaved] = useState(false);
+  const userProfile = useAtomValue(userProfileAtom);
+  const setUserProfile = useSetAtom(userProfileAtom);
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(
@@ -152,7 +160,7 @@ const OpportunityPublicDetails: React.FC<{
     }
   }, [opportunityInfo.id, user, isOppSaved]);
 
-  const onGoToOpportunity = useCallback(async () => {
+  const onProceedToOpportunity = useCallback(async () => {
     if (!opportunityInfo.url) return;
 
     window.open(opportunityInfo.url, "_blank");
@@ -169,6 +177,15 @@ const OpportunityPublicDetails: React.FC<{
       opportunityInfo.url,
     );
   }, [opportunityInfo.id, opportunityInfo.url, user]);
+
+  const onGoToOpportunity = useCallback(async () => {
+    const settingDontShowAgain = userProfile?.settings?.items.find(
+      (x) => x.key === SETTING_USER_POPUP_LEAVINGYOMA,
+    )?.value;
+
+    if (settingDontShowAgain) await onProceedToOpportunity();
+    else setGotoOpportunityDialogVisible(true);
+  }, [userProfile, onProceedToOpportunity]);
 
   const onOpportunityCompleted = useCallback(async () => {
     setCompleteOpportunityDialogVisible(false);
@@ -204,6 +221,37 @@ const OpportunityPublicDetails: React.FC<{
   const onShareOpportunity = useCallback(() => {
     setShareOpportunityDialogVisible(true);
   }, [setShareOpportunityDialogVisible]);
+
+  const onUpdateLeavingYomaSetting = useCallback(
+    async (value: boolean) => {
+      await updateSettings({
+        settings: {
+          [SETTING_USER_POPUP_LEAVINGYOMA]: value,
+        },
+      });
+
+      // update this setting in the userprofile atom
+      if (userProfile?.settings) {
+        const setting = userProfile.settings.items.find(
+          (x) => x.key === SETTING_USER_POPUP_LEAVINGYOMA,
+        );
+
+        if (setting) {
+          setting.value = value;
+        } else {
+          userProfile.settings.items.push({
+            key: SETTING_USER_POPUP_LEAVINGYOMA,
+            type: SettingType.Boolean,
+            value: value,
+          });
+        }
+
+        // update atom
+        setUserProfile(userProfile);
+      }
+    },
+    [userProfile, setUserProfile],
+  );
   //#endregion Event Handlers
 
   if (error) {
@@ -281,7 +329,7 @@ const OpportunityPublicDetails: React.FC<{
             portalClassName={"fixed z-40"}
             overlayClassName="fixed inset-0 bg-overlay"
           >
-            <div className="flex h-full flex-col gap-2 overflow-y-auto pb-10">
+            <div className="pb-10x flex h-full flex-col gap-2 overflow-y-auto">
               <div className="flex flex-row bg-green p-4 shadow-lg">
                 <h1 className="flex-grow"></h1>
                 <button
@@ -295,7 +343,7 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
-                <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                <div className="-mt-12 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg md:-mt-8">
                   <Image
                     src={iconBell}
                     alt="Icon Bell"
@@ -318,7 +366,21 @@ const OpportunityPublicDetails: React.FC<{
                   your data private.
                 </div>
 
-                <div className="mt-4 flex w-full flex-grow flex-col justify-center gap-4 md:flex-row">
+                <div className="italic text-gray-dark">
+                  <FormCheckbox
+                    id="dontShowAgain"
+                    label="Do not show this message again"
+                    inputProps={{
+                      onChange: (e) => {
+                        onUpdateLeavingYomaSetting(e.target.checked).then(
+                          () => null,
+                        );
+                      },
+                    }}
+                  />
+                </div>
+
+                <div className="mt-2 flex w-full flex-grow flex-col justify-center gap-4 md:flex-row">
                   <button
                     type="button"
                     className={
@@ -340,7 +402,7 @@ const OpportunityPublicDetails: React.FC<{
                   <button
                     type="button"
                     className="btn btn-primary normal-case text-white md:w-[250px]"
-                    onClick={onGoToOpportunity}
+                    onClick={onProceedToOpportunity}
                     disabled={!opportunityInfo.url}
                   >
                     <Image
@@ -580,8 +642,8 @@ const OpportunityPublicDetails: React.FC<{
                       opportunityInfo.status !== "Expired" && (
                         <button
                           type="button"
-                          className="disabledxx:border-white disabledxx:text-gray-dark btn btn-sm h-10 w-full rounded-full bg-green normal-case text-white hover:bg-green-dark disabled:border-0 disabled:bg-green disabled:text-white md:w-[250px]"
-                          onClick={() => setGotoOpportunityDialogVisible(true)}
+                          className="btn btn-sm h-10 w-full rounded-full bg-green normal-case text-white hover:bg-green-dark disabled:border-0 disabled:bg-green disabled:text-white md:w-[250px]"
+                          onClick={onGoToOpportunity}
                           disabled={preview}
                         >
                           <Image

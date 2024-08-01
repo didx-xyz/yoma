@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
+import Link from "next/link";
 import { useCallback, type ReactElement } from "react";
 import {
   Action,
@@ -11,6 +12,7 @@ import {
 } from "~/api/models/myOpportunity";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import Breadcrumb from "~/components/Breadcrumb";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
 import YoIDTabbed from "~/components/Layout/YoIDTabbed";
 import OpportunitiesCarousel, {
@@ -256,13 +258,20 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
           />
         </h5>
 
+        <FormMessage messageType={FormMessageType.Info}>
+          Just completed an opportunity? Click
+          <Link
+            className="mx-1 font-bold text-green hover:underline"
+            href="/yoid/opportunities/add"
+          >
+            here
+          </Link>
+          to add it.
+        </FormMessage>
+
         <div className="flex flex-col gap-4 rounded-lg bg-white p-4">
           {/* COMPLETED */}
-          <Suspense
-            isReady={!!completedData}
-            isLoading={completedIsLoading}
-            error={completedError}
-          >
+          <Suspense isLoading={completedIsLoading} error={completedError}>
             <OpportunitiesCarousel
               id={`myopportunities_completed`}
               title="✅ Completed"
@@ -275,11 +284,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
           </Suspense>
 
           {/* PENDING */}
-          <Suspense
-            isReady={!!pendingData}
-            isLoading={pendingIsLoading}
-            error={pendingError}
-          >
+          <Suspense isLoading={pendingIsLoading} error={pendingError}>
             <OpportunitiesCarousel
               id={`myopportunities_pending`}
               title="🕒 Pending"
@@ -292,11 +297,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
           </Suspense>
 
           {/* REJECTED */}
-          <Suspense
-            isReady={!!rejectedData}
-            isLoading={rejectedIsLoading}
-            error={rejectedError}
-          >
+          <Suspense isLoading={rejectedIsLoading} error={rejectedError}>
             <OpportunitiesCarousel
               id={`myopportunities_rejected`}
               title="❌ Rejected"
@@ -309,11 +310,7 @@ const MyOpportunitiesOverview: NextPageWithLayout<{
           </Suspense>
 
           {/* SAVED */}
-          <Suspense
-            isReady={!!savedData}
-            isLoading={savedIsLoading}
-            error={savedError}
-          >
+          <Suspense isLoading={savedIsLoading} error={savedError}>
             <OpportunitiesCarousel
               id={`myopportunities_saved`}
               title="💗 Saved"

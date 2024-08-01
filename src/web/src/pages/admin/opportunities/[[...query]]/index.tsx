@@ -606,7 +606,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             Opportunities
           </h2>
 
-          <div className="flex h-fit justify-center gap-2 md:justify-end">
+          <div className="my-4 flex h-fit justify-center gap-2 md:justify-end">
             <SearchInputLarge
               openFilter={setFilterFullWindowVisible}
               maxWidth={400}
