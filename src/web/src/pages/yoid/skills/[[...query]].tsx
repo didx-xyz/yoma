@@ -83,7 +83,6 @@ const MyCredentials: NextPageWithLayout<{
         </h5>
 
         <Suspense
-          isReady={!!dataUserSkills}
           isLoading={dataUserSkillsIsLoading}
           error={dataUserSkillsError}
         >

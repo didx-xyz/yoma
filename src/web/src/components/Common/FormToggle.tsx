@@ -1,19 +1,16 @@
 import React from "react";
 
-const FormRadio: React.FC<{
+const FormToggle: React.FC<{
   id: string;
   label: string;
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>;
 }> = ({ id, label, inputProps }) => {
   return (
-    <label
-      htmlFor={id}
-      className="label w-full cursor-pointer justify-normal p-0"
-    >
+    <label htmlFor={id} className="label cursor-pointer justify-normal p-0">
       <input
-        type="radio"
+        type="checkbox"
         id={id}
-        className="radio-primary radio"
+        className="toggle toggle-secondary text-red-400 disabled:border-gray"
         {...inputProps}
       />
       <span className="label-text ml-4">{label}</span>
@@ -21,4 +18,4 @@ const FormRadio: React.FC<{
   );
 };
 
-export default FormRadio;
+export default FormToggle;

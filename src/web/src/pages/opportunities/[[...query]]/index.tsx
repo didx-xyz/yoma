@@ -1140,7 +1140,7 @@ const Opportunities: NextPageWithLayout<{
             finish at your convenience.
           </h6>
           <div className="w-full px-2 md:w-[600px] md:items-center md:justify-center">
-            <div className="flex flex-row items-center justify-center gap-2 md:mt-4">
+            <div className="my-4 flex flex-row items-center justify-center gap-2 md:mt-4">
               <SearchInputLarge
                 onSearch={onSearchInputSubmit}
                 placeholder="Search..."
