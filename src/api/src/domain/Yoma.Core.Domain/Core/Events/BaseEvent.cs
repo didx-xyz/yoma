@@ -10,7 +10,7 @@ namespace Yoma.Core.Domain.Core.Events
     {
       EventType = eventType;
       Entity = entity;
-    } 
+    }
     #endregion
 
     #region Public Members
