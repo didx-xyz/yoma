@@ -151,7 +151,7 @@ const MyOpportunitiesAdd: NextPageWithLayout<{
       </Head>
 
       <div className="flex w-full flex-col gap-4">
-        <h5 className="font-bold tracking-wider text-black">
+        <h5 className="text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
@@ -188,7 +188,6 @@ const MyOpportunitiesAdd: NextPageWithLayout<{
               description="Opportunities that you have viewed recently."
               data={viewedData!}
               loadData={viewedLoadData}
-              //viewAllUrl="/yoid/opportunities/completed"
               displayType={DisplayType.Viewed}
             />
           </Suspense>

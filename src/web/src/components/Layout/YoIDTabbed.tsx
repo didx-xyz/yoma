@@ -18,6 +18,7 @@ import Head from "next/head";
 import { AvatarImage } from "../AvatarImage";
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import { ZltoModal } from "../YoID/ZltoModal";
+import { getTimeOfDayAndEmoji } from "~/lib/utils";
 
 export type TabProps = ({
   children,
@@ -30,6 +31,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
   const [userProfile] = useAtom(userProfileAtom);
   const [tabItems, setTabItems] = useState<TabItem[]>([]);
   const [zltoModalVisible, setZltoModalVisible] = useState(false);
+  const [timeOfDay, timeOfDayEmoji] = getTimeOfDayAndEmoji();
 
   // set the tab items based on the current route
   useEffect(() => {
@@ -117,7 +119,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
           onClose={() => setZltoModalVisible(false)}
         />
 
-        <div className="container z-10 mt-24 py-4">
+        <div className="container z-10 mt-20 p-4 md:mt-24">
           {/* USER CARD */}
           {/* <div className="flex items-center justify-center">
             <div className="group relative mx-4 flex h-[220px] w-full flex-col items-center justify-center rounded-lg bg-orange shadow-lg before:absolute before:left-0 before:top-0 before:-z-10 before:h-[220px] before:w-full before:rotate-[3deg] before:rounded-lg before:bg-orange before:brightness-75 before:transition-transform before:duration-300 before:ease-linear before:content-[''] md:mx-0 md:h-[200px] md:w-[410px] md:before:h-[200px] md:before:w-[410px] md:hover:before:rotate-0">
@@ -208,7 +210,7 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
           </div> */}
 
           {/* NAVIGATION BUTTONS */}
-          <div className="mt-3 flex h-[80px] flex-row flex-wrap items-center justify-center gap-2">
+          {/* <div className="mt-3 flex h-[80px] flex-row flex-wrap items-center justify-center gap-2">
             {tabItems.map((tab) => (
               <Link
                 key={tab.title}
@@ -221,10 +223,57 @@ const YoIDTabbedLayout: TabProps = ({ children }) => {
                 {tab.title}
               </Link>
             ))}
+          </div> */}
+
+          {/* HEADER */}
+          <div className="flex flex-row gap-4">
+            <div className="hidden sm:flex sm:scale-75 md:scale-90">
+              <AvatarImage
+                icon={userProfile?.photoURL ?? null}
+                alt="User Logo"
+                size={85}
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              {/* WELCOME MSG */}
+              <div className="max-w-[290px] truncate text-lg font-semibold text-white md:text-2xl">
+                Good {timeOfDay} {userProfile?.firstName}! {timeOfDayEmoji}
+              </div>
+
+              <div className="flex flex-row items-center gap-2 text-white">
+                {/* DESCRIPTION */}
+                <span className="truncate text-sm md:text-base">
+                  Welcome to your Yo-ID
+                </span>
+
+                {/* TOOLTIP */}
+                <button type="button" onClick={() => setZltoModalVisible(true)}>
+                  <IoIosInformationCircleOutline className="h-6 w-6" />
+                </button>
+              </div>
+
+              {/* NAVIGATION */}
+              <div className="flex h-[70px] flex-row flex-wrap gap-2">
+                {tabItems.map((tab) => (
+                  <Link
+                    key={tab.title}
+                    href={tab.url!}
+                    rel="noopener noreferrer"
+                    className={`btn btn-xs flex items-center border-gray text-xs text-gray lg:btn-sm hover:border-gray-dark ${
+                      tab.selected
+                        ? "btn-secondary border-0 hover:text-white"
+                        : ""
+                    }`}
+                  >
+                    {tab.title}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* MAIN CONTENT */}
-          <div className="mx-4 mt-[4rem] flex flex-grow flex-col items-center justify-center md:mx-0">
+          <div className="mt-[2rem] flex flex-grow flex-col items-center justify-center md:mx-0 md:mt-[1rem]">
             {/* CHILDREN */}
             {children}
           </div>

@@ -307,7 +307,7 @@ const AppSettings: NextPageWithLayout<{
         <title>Yoma | 🔧 Settings</title>
       </Head>
 
-      <div className="w-full max-w-2xl">
+      <div className="max-w-2xl">
         <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
