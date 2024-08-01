@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactElement } from "react";
 import type { TabItem } from "~/api/models/common";
 import { userProfileAtom } from "~/lib/store";
 import Breadcrumb from "../Breadcrumb";
-import YoIDTabbedLayout from "./YoIDTabbed";
+import YoIDLayout from "./YoID";
 
 export type TabProps = ({
   children,
@@ -13,7 +13,7 @@ export type TabProps = ({
   children: ReactElement;
 }) => ReactElement;
 
-const YoIDTabbedOpportunities: TabProps = ({ children }) => {
+const YoIDOpportunities: TabProps = ({ children }) => {
   const router = useRouter();
   const [userProfile] = useAtom(userProfileAtom);
   const [tabItems, setTabItems] = useState<TabItem[]>([]);
@@ -58,7 +58,7 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
   }, [router.asPath, setTabItems, setSelectedTab, userProfile]);
 
   return (
-    <YoIDTabbedLayout>
+    <YoIDLayout>
       <div className="flex w-full flex-col gap-4">
         {/* BREADCRUMB */}
         <div className="text-xs font-bold tracking-wider text-black md:text-base">
@@ -101,14 +101,11 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
           ))}
         </div>
 
-        {/* MAIN CONTENT */}
-        <div className="flex-grow rounded-lg bg-white p-4">
-          {/* CHILDREN */}
-          {children}
-        </div>
+        {/* CHILDREN */}
+        {children}
       </div>
-    </YoIDTabbedLayout>
+    </YoIDLayout>
   );
 };
 
-export default YoIDTabbedOpportunities;
+export default YoIDOpportunities;

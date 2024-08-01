@@ -7,13 +7,12 @@ import "react-datepicker/dist/react-datepicker.css";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
 import { getUserSkills } from "~/api/services/user";
-import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
-import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
+import YoIDLayout from "~/components/Layout/YoID";
+import NoRowsMessage from "~/components/NoRowsMessage";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { CVCard } from "~/components/YoID/CVCard";
 import { HeaderWithLink } from "~/components/YoID/HeaderWithLink";
 import { LineChart } from "~/components/YoID/LineChart";
 import { PassportCard } from "~/components/YoID/PassportCard";
@@ -22,7 +21,6 @@ import { WalletCard } from "~/components/YoID/WalletCard";
 import { ZltoModal } from "~/components/YoID/ZltoModal";
 import { MAXINT32 } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
-import { getTimeOfDayAndEmoji } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -133,7 +131,7 @@ const YoIDDashboard: NextPageWithLayout<{
       />
 
       {/* DASHBOARD */}
-      <div className="flex flex-wrap justify-center gap-4">
+      <div className="mt-2 flex flex-wrap justify-center gap-4">
         {/* OPPORTUNITIES */}
         <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
           <HeaderWithLink title="🏆 Opportunities" url="/yoid/opportunities" />
@@ -151,12 +149,15 @@ const YoIDDashboard: NextPageWithLayout<{
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
           <HeaderWithLink title="⚡ Skills" url="/yoid/skills" />
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow xl:h-[300px]">
-            <div className="flex flex-wrap gap-1 overflow-y-auto">
+            <div className="flex flex-grow flex-wrap gap-1 overflow-y-auto">
               <Suspense isLoading={skillsIsLoading} error={skillsError}>
                 {!skills?.length && (
-                  <FormMessage messageType={FormMessageType.Warning}>
-                    No data available
-                  </FormMessage>
+                  <NoRowsMessage
+                    title={"No skills"}
+                    description={
+                      "Skills that you receive by completing opportunities will be diplayed here."
+                    }
+                  />
                 )}
 
                 {!!skills?.length && <SkillsCard data={skills} />}
@@ -181,9 +182,13 @@ const YoIDDashboard: NextPageWithLayout<{
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
             <Suspense isLoading={credentialsIsLoading} error={credentialsError}>
               {!credentials?.length && (
-                <FormMessage messageType={FormMessageType.Warning}>
-                  No data available
-                </FormMessage>
+                <NoRowsMessage
+                  icon="💳"
+                  title={"No credentials"}
+                  description={
+                    "Complete opportunities to receive your credentials."
+                  }
+                />
               )}
 
               {!!credentials?.length && <PassportCard data={credentials} />}
@@ -195,7 +200,13 @@ const YoIDDashboard: NextPageWithLayout<{
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
           <HeaderWithLink title="🏦 CV" />
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-            <CVCard />
+            <NoRowsMessage
+              icon="🚧"
+              title={"Coming soon"}
+              description={
+                "Watch this space! Exciting updates are on the way id"
+              }
+            />
           </div>
         </div>
       </div>
@@ -204,7 +215,7 @@ const YoIDDashboard: NextPageWithLayout<{
 };
 
 YoIDDashboard.getLayout = function getLayout(page: ReactElement) {
-  return <YoIDTabbedLayout>{page}</YoIDTabbedLayout>;
+  return <YoIDLayout>{page}</YoIDLayout>;
 };
 
 export default YoIDDashboard;

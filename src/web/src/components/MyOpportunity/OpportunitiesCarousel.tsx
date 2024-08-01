@@ -25,6 +25,8 @@ import { NavigationButtons } from "../Carousel/NavigationButtons";
 import { SelectedSnapDisplay } from "../Carousel/SelectedSnapDisplay";
 import { LoadingSkeleton } from "../Status/LoadingSkeleton";
 import { OpportunityCard } from "./OpportunityCard";
+import NoRowsMessage from "../NoRowsMessage";
+import FormMessage, { FormMessageType } from "../Common/FormMessage";
 
 export enum DisplayType {
   Completed = "Completed",
@@ -38,11 +40,21 @@ const OpportunitiesCarousel: React.FC<{
   [id: string]: any;
   title?: string;
   description?: string;
+  noRowsDescription?: string;
   viewAllUrl?: string;
   loadData: (startRow: number) => Promise<MyOpportunitySearchResults>;
   data: MyOpportunitySearchResults;
   displayType: DisplayType;
-}> = ({ id, title, description, viewAllUrl, loadData, data, displayType }) => {
+}> = ({
+  id,
+  title,
+  description,
+  noRowsDescription,
+  viewAllUrl,
+  loadData,
+  data,
+  displayType,
+}) => {
   const [slides, setSlides] = useState(data.items);
   const screenWidth = useAtomValue(screenWidthAtom);
   const [visibleSlides, setVisibleSlides] = useState(1);
@@ -122,66 +134,74 @@ const OpportunitiesCarousel: React.FC<{
       currentSlide={currentSlide}
       step={visibleSlides}
       className="container" //NB: width needs to be restricted for carousel to render correctly
+      slideMargin="4px"
+      trayPadding="32px"
     >
-      <div className="flex flex-col gap-6">
+      <div className="mb-4 flex flex-col gap-6">
         <div className="flex flex-row">
           <div className="flex flex-grow flex-col">
-            <div className="overflow-hidden text-ellipsis whitespace-nowrap font-semibold text-black">
+            <div className="truncate text-sm font-semibold text-black md:text-base">
               {title}
             </div>
-            <div className="text-sm text-gray-dark">{description}</div>
-          </div>
-
-          <div className="flex items-end gap-4">
-            <div className="flex items-center">
-              <div className="hidden w-full gap-4 md:flex">
-                <SelectedSnapDisplay
-                  selectedSnap={selectedSnap}
-                  snapCount={totalAll}
-                />
-                {renderButtons()}
-              </div>
+            <div className="text-xs text-gray-dark md:text-sm">
+              {!!slides?.length ? <>{description}</> : <>{noRowsDescription}</>}
             </div>
-
-            {viewAllUrl && (
-              <Link
-                href={viewAllUrl}
-                className="flex w-14 select-none whitespace-nowrap border-b-2 border-transparent text-center text-sm tracking-wide text-gray-dark duration-300 md:mb-[3.5px] xl:hover:border-purple xl:hover:text-purple"
-              >
-                View All
-              </Link>
-            )}
           </div>
+
+          {!!slides?.length && (
+            <div className="flex items-end gap-4">
+              <div className="flex items-center">
+                <div className="hidden w-full gap-4 md:flex">
+                  <SelectedSnapDisplay
+                    selectedSnap={selectedSnap}
+                    snapCount={totalAll}
+                  />
+                  {renderButtons()}
+                </div>
+              </div>
+
+              {viewAllUrl && (
+                <Link
+                  href={viewAllUrl}
+                  className="flex w-14 select-none whitespace-nowrap border-b-2 border-transparent text-center text-xs tracking-wide text-gray-dark duration-300 md:mb-[3.5px] md:text-sm xl:hover:border-purple xl:hover:text-purple"
+                >
+                  View All
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       </div>
 
-      <Slider>
-        {slides.map((item, index) => (
-          <Slide
-            key={`${id}-slide-${index}`}
-            className="my-4 flex justify-center"
-            id={`${id}_${item.id}`}
-          >
-            <OpportunityCard
-              key={`${id}_${item.id}_component`}
-              data={item}
-              displayType={displayType}
-            />
-          </Slide>
-        ))}
-
-        {loadingMore &&
-          [...Array(visibleSlides)].map((_, index) => (
+      {!!slides?.length && (
+        <Slider>
+          {slides.map((item, index) => (
             <Slide
-              key={`${id}-loading-skeleton-${index}`}
-              className="flex items-center justify-center"
+              key={`${id}-slide-${index}`}
+              className="mb-2 flex justify-center"
+              id={`${id}_${item.id}`}
             >
-              <LoadingSkeleton />
+              <OpportunityCard
+                key={`${id}_${item.id}_component`}
+                data={item}
+                displayType={displayType}
+              />
             </Slide>
           ))}
-      </Slider>
 
-      {screenWidth < SM_BREAKPOINT && (
+          {loadingMore &&
+            [...Array(visibleSlides)].map((_, index) => (
+              <Slide
+                key={`${id}-loading-skeleton-${index}`}
+                className="flex items-center justify-center"
+              >
+                <LoadingSkeleton />
+              </Slide>
+            ))}
+        </Slider>
+      )}
+
+      {!!slides?.length && screenWidth < SM_BREAKPOINT && (
         <div className="my-2 mt-2 flex w-full place-content-start md:mb-10 md:mt-1">
           <div className="mx-auto flex w-full justify-center gap-4 md:mx-0 md:mr-auto md:justify-start md:gap-6">
             <SelectedSnapDisplay

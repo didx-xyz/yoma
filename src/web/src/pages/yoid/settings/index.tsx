@@ -24,7 +24,7 @@ import FormLabel from "~/components/Common/FormLabel";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormToggle from "~/components/Common/FormToggle";
 import Suspense from "~/components/Common/Suspense";
-import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
+import YoIDLayout from "~/components/Layout/YoID";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
@@ -64,7 +64,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const AppSettings: NextPageWithLayout<{
+const MySettings: NextPageWithLayout<{
   error?: string;
 }> = ({ error }) => {
   const queryClient = useQueryClient();
@@ -352,8 +352,8 @@ const AppSettings: NextPageWithLayout<{
   );
 };
 
-AppSettings.getLayout = function getLayout(page: ReactElement) {
-  return <YoIDTabbedLayout>{page}</YoIDTabbedLayout>;
+MySettings.getLayout = function getLayout(page: ReactElement) {
+  return <YoIDLayout>{page}</YoIDLayout>;
 };
 
-export default AppSettings;
+export default MySettings;

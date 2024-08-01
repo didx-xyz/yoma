@@ -1,31 +1,27 @@
 import React from "react";
-import iconImage from "public/images/icon-rocket.webp";
-import { RoundedImage } from "./RoundedImage";
 
 const NoRowsMessage: React.FC<{
+  icon?: string | null;
   title?: string | null;
   description?: string | null;
-}> = ({ title, description }) => {
+}> = ({ icon = "🚀", title, description }) => {
   return (
-    <div className="flex h-full w-full flex-col items-center justify-center rounded-lg bg-white p-8 md:p-24">
-      <RoundedImage
-        icon={iconImage}
-        alt="Icon Rocket"
-        imageWidth={28}
-        imageHeight={28}
-      />
+    <div className="flex h-full w-full flex-col items-center justify-center rounded-xl bg-white p-4 text-center">
+      <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-white shadow-lg">
+        {icon}
+      </div>
 
-      <h2 className="text-gray-900 mb-2 mt-4 text-center text-lg font-medium">
+      <div className="my-2 font-semibold text-black">
         {title ?? "No rows found"}
-      </h2>
-      <p
-        className="text-gray-500 text-center"
+      </div>
+      <div
+        className="text-sm text-gray-dark"
         dangerouslySetInnerHTML={{
           __html:
             description ??
             "There are no rows to display at the moment. Please check back later.",
         }}
-      ></p>
+      ></div>
     </div>
   );
 };

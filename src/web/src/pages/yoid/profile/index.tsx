@@ -11,7 +11,7 @@ import { getUserProfile } from "~/api/services/user";
 import { authOptions } from "~/server/auth";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import type { NextPageWithLayout } from "~/pages/_app";
-import YoIDTabbedLayout from "~/components/Layout/YoIDTabbed";
+import YoIDLayout from "~/components/Layout/YoID";
 import { config } from "~/lib/react-query-config";
 import {
   UserProfileFilterOptions,
@@ -63,7 +63,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-const Settings: NextPageWithLayout<{
+const MyProfile: NextPageWithLayout<{
   error?: string;
 }> = ({ error }) => {
   const { data: userProfile, isLoading } = useQuery({
@@ -127,8 +127,8 @@ const Settings: NextPageWithLayout<{
   );
 };
 
-Settings.getLayout = function getLayout(page: ReactElement) {
-  return <YoIDTabbedLayout>{page}</YoIDTabbedLayout>;
+MyProfile.getLayout = function getLayout(page: ReactElement) {
+  return <YoIDLayout>{page}</YoIDLayout>;
 };
 
-export default Settings;
+export default MyProfile;
