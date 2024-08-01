@@ -12,8 +12,6 @@ namespace Yoma.Core.Domain.EmailProvider.Services
     #region Class Variables
     private readonly ILogger<EmailPreferenceFilterService> _logger;
     private readonly IUserService _userService;
-
-    private const string SettingsKey_Email_Prefix = "Email";
     #endregion
 
     #region Constructor

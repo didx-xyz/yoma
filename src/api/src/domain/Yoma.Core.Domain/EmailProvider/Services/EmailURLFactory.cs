@@ -26,7 +26,7 @@ namespace Yoma.Core.Domain.EmailProvider.Services
         throw new ArgumentNullException(nameof(organizationId));
 
       var result = _appSettings.AppBaseURL;
-      LinkStatus? status = null;
+      LinkStatus? status;
       switch (emailType)
       {
         case EmailType.ActionLink_Verify_Approval_Requested:

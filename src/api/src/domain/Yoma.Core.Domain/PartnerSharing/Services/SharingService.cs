@@ -18,8 +18,6 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     private readonly IProcessingStatusService _processingStatusService;
     private readonly IRepositoryBatched<ProcessingLog> _processingLogRepository;
 
-    private readonly IExecutionStrategyService _executionStrategyService;
-
     public static readonly Status[] Statuses_Opportunity_Creatable = [Status.Active]; //only active opportunities scheduled for creation
     public static readonly Status[] Statuses_Opportunity_Updatable = [Status.Active, Status.Inactive, Status.Expired]; //expired: might be updated with end date in the past
     public static readonly Status[] Statuses_Opportunity_CanDelete = [Status.Active, Status.Inactive, Status.Expired, Status.Deleted]; //active, inactive and expired: implicit deletion due to organization deletion
@@ -30,15 +28,13 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
        IOptions<AppSettings> appSettings,
        IPartnerService partnerService,
        IProcessingStatusService processingStatusService,
-       IRepositoryBatched<ProcessingLog> processingLogRepository,
-       IExecutionStrategyService executionStrategyService)
+       IRepositoryBatched<ProcessingLog> processingLogRepository)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
       _partnerService = partnerService;
       _processingStatusService = processingStatusService;
       _processingLogRepository = processingLogRepository;
-      _executionStrategyService = executionStrategyService;
     }
     #endregion
 
