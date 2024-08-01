@@ -7,7 +7,7 @@ const NoRowsMessage: React.FC<{
 }> = ({ icon = "🚀", title, description }) => {
   return (
     <div className="flex h-full w-full flex-col items-center justify-center rounded-xl bg-white p-4 text-center">
-      <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-white shadow-lg">
+      <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-white p-4 shadow-lg">
         {icon}
       </div>
 

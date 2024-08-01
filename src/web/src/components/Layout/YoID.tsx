@@ -222,7 +222,7 @@ const YoIDLayout: TabProps = ({ children }) => {
           </div> */}
 
           {/* HEADER */}
-          <div className="flex flex-row gap-4">
+          <div className="flex flex-row justify-center gap-4">
             <div className="hidden sm:flex sm:scale-75 md:scale-90">
               <AvatarImage
                 icon={userProfile?.photoURL ?? null}
@@ -230,9 +230,9 @@ const YoIDLayout: TabProps = ({ children }) => {
                 size={85}
               />
             </div>
-            <div className="flex w-full flex-col gap-2">
+            <div className="w-fullx flex flex-col gap-2 lg:w-auto">
               {/* WELCOME MSG */}
-              <div className="-mb-2 truncate text-lg font-semibold text-white md:text-2xl">
+              <div className="-mb-2 max-w-lg truncate text-lg font-semibold text-white md:text-2xl">
                 {timeOfDayEmoji} Good {timeOfDay} {userProfile?.firstName}!
               </div>
 

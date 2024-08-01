@@ -1,6 +1,4 @@
 import Head from "next/head";
-import iconImage from "public/images/icon-rocket.webp";
-import { RoundedImage } from "../RoundedImage";
 
 export const UnderConstruction = () => (
   <>
@@ -10,12 +8,9 @@ export const UnderConstruction = () => (
 
     <div className="container flex flex-col items-center justify-center gap-12 px-4 py-16">
       <div className="flex w-full max-w-md flex-col place-items-center justify-center rounded-xl bg-white p-4 md:p-16">
-        <RoundedImage
-          icon={iconImage}
-          alt="Icon Rocket"
-          imageWidth={28}
-          imageHeight={28}
-        />
+        <div className="flex h-[48px] w-[48px] items-center justify-center rounded-full bg-white p-4 shadow-lg">
+          🚀
+        </div>
 
         <h2 className="text-gray-900 my-2 text-lg font-medium">
           Under development
