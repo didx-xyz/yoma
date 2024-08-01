@@ -1,4 +1,5 @@
 using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -21,6 +22,7 @@ using Yoma.Core.Domain.IdentityProvider.Helpers;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Helpers;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Opportunity.Events;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -59,6 +61,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
     private readonly OpportunitySearchFilterValidator _opportunitySearchFilterValidator;
     private readonly OpportunitySearchFilterCriteriaValidator _opportunitySearchFilterCriteriaValidator;
+
+    private readonly IMediator _mediator;
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
@@ -103,6 +107,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
         OpportunitySearchFilterCriteriaValidator opportunitySearchFilterCriteriaValidator,
+        IMediator mediator,
         IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
         IRepository<OpportunityCountry> opportunityCountryRepository,
@@ -138,6 +143,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
       _opportunitySearchFilterValidator = opportunitySearchFilterValidator;
       _opportunitySearchFilterCriteriaValidator = opportunitySearchFilterCriteriaValidator;
+
+      _mediator = mediator;
 
       _opportunityRepository = opportunityRepository;
       _opportunityCategoryRepository = opportunityCategoryRepository;
@@ -984,7 +991,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OrganizationId = request.OrganizationId,
         OrganizationName = organization.Name,
         OrganizationLogoId = organization.LogoId,
+        OrganizationLogoStorageType = organization.LogoStorageType,
+        OrganizationLogoKey = organization.LogoKey,
         OrganizationLogoURL = organization.LogoURL,
+        OrganizationStatusId = organization.StatusId,
+        OrganizationStatus = organization.Status,
         Summary = request.Summary,
         Instructions = request.Instructions,
         URL = request.URL,
@@ -1052,6 +1063,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //sent when activated irrespective of organization status (sent to admin)
       if (result.Status == Status.Active) await SendEmail(result, EmailType.Opportunity_Posted_Admin);
 
+      await _mediator.Publish(new OpportunityEvent(EventType.Create, result));
+
       return result;
     }
 
@@ -1087,8 +1100,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //by default, status remains unchanged, except for immediate expiration based on DateEnd (status updated via UpdateStatus)
       if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
       {
-        result.Status = Status.Expired;
         result.StatusId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+        result.Status = Status.Expired;
       }
 
       result.Title = request.Title.NormalizeTrim();
@@ -1161,6 +1174,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         scope.Complete();
       });
       result.SetPublished();
+
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
 
       return result;
     }
@@ -1246,6 +1261,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //modifiedBy preserved
       await _opportunityRepository.Update(opportunity);
 
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, opportunity));
+
       return result;
     }
 
@@ -1263,6 +1280,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       result = await _opportunityRepository.Update(result);
 
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
+
       return result;
     }
 
@@ -1272,6 +1291,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
+      EventType? eventType = null;
       switch (status)
       {
         case Status.Active:
@@ -1283,12 +1303,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
           if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
             throw new ValidationException($"The {nameof(Models.Opportunity)} '{result.Title}' cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation.");
 
+          eventType = EventType.Update;
           break;
 
         case Status.Inactive:
           if (result.Status == Status.Inactive) return result;
           if (!Statuses_DeActivatable.Contains(result.Status))
             throw new ValidationException($"{nameof(Models.Opportunity)} can not be deactivated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
+
+          eventType = EventType.Update;
           break;
 
         case Status.Deleted:
@@ -1296,6 +1319,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           if (!Statuses_CanDelete.Contains(result.Status))
             throw new ValidationException($"{nameof(Models.Opportunity)} can not be deleted (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
 
+          eventType = EventType.Delete;
           break;
 
         default:
@@ -1314,6 +1338,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       //sent when activated irrespective of organization status (sent to admin)
       if (status == Status.Active) await SendEmail(result, EmailType.Opportunity_Posted_Admin);
+
+      await _mediator.Publish(new OpportunityEvent(eventType.Value, result));
 
       return result;
     }
@@ -1334,6 +1360,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result = await _opportunityRepository.Update(result);
         scope.Complete();
       });
+
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
 
       return result;
     }
@@ -1358,6 +1386,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         scope.Complete();
       });
 
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
+
       return result;
     }
 
@@ -1378,6 +1408,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         scope.Complete();
       });
 
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
+
       return result;
     }
 
@@ -1391,6 +1423,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       AssertUpdatable(result);
 
       result = await RemoveCountries(result, countryIds);
+
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
 
       return result;
     }
@@ -1411,6 +1445,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result = await _opportunityRepository.Update(result);
         scope.Complete();
       });
+
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
 
       return result;
     }
@@ -1435,6 +1471,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         scope.Complete();
       });
 
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
+
       return result;
     }
 
@@ -1457,6 +1495,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result = await _opportunityRepository.Update(result);
         scope.Complete();
       });
+
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
 
       return result;
     }
@@ -1481,6 +1521,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         scope.Complete();
       });
 
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
+
       return result;
     }
 
@@ -1503,6 +1545,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result = await _opportunityRepository.Update(result);
         scope.Complete();
       });
+
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
 
       return result;
     }
@@ -1529,6 +1573,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result = await _opportunityRepository.Update(result);
         scope.Complete();
       });
+
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
 
       return result;
     }

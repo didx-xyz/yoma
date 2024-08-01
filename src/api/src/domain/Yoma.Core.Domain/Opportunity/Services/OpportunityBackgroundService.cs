@@ -1,5 +1,6 @@
 using Hangfire;
 using Hangfire.Storage;
+using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Extensions;
@@ -13,6 +14,7 @@ using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.Opportunity.Events;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 
@@ -32,6 +34,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
     private readonly IDistributedLockService _distributedLockService;
+    private readonly IMediator _mediator;
     private static readonly Status[] Statuses_Expirable = [Status.Active];
     private static readonly Status[] Statuses_Deletion = [Status.Inactive, Status.Expired];
     #endregion
@@ -47,7 +50,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IEmailURLFactory emailURLFactory,
         IEmailPreferenceFilterService emailPreferenceFilterService,
         IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
-        IDistributedLockService distributedLockService)
+        IDistributedLockService distributedLockService,
+        IMediator mediator)
     {
       _logger = logger;
       _scheduleJobOptions = scheduleJobOptions.Value;
@@ -60,6 +64,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _emailPreferenceFilterService = emailPreferenceFilterService;
       _opportunityRepository = opportunityRepository;
       _distributedLockService = distributedLockService;
+      _mediator = mediator;
     }
     #endregion
 
@@ -152,6 +157,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             foreach (var item in items)
             {
               item.StatusId = statusExpiredId;
+              item.Status = Status.Expired;
               item.ModifiedByUserId = user.Id;
               _logger.LogInformation("Opportunity with id '{id}' flagged for expiration", item.Id);
             }
@@ -159,6 +165,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
             items = await _opportunityRepository.Update(items);
 
             await SendEmailExpiration(items, EmailType.Opportunity_Expiration_Expired);
+
+            foreach (var item in items)
+              await _mediator.Publish(new OpportunityEvent(Core.EventType.Update, item));
 
             if (executeUntil <= DateTimeOffset.UtcNow) break;
           }
@@ -266,11 +275,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
               foreach (var item in items)
               {
                 item.StatusId = statusDeletedId;
+                item.Status = Status.Deleted;
                 item.ModifiedByUserId = user.Id;
                 _logger.LogInformation("Opportunity with id '{id}' flagged for deletion", item.Id);
               }
 
               await _opportunityRepository.Update(items);
+
+              foreach (var item in items)
+                await _mediator.Publish(new OpportunityEvent(Core.EventType.Delete, item));
 
               if (executeUntil <= DateTimeOffset.UtcNow) break;
             }

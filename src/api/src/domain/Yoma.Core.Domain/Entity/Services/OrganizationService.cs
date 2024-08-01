@@ -1,4 +1,5 @@
 using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -13,6 +14,7 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.EmailProvider;
 using Yoma.Core.Domain.EmailProvider.Interfaces;
 using Yoma.Core.Domain.EmailProvider.Models;
+using Yoma.Core.Domain.Entity.Events;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
@@ -45,6 +47,9 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
     private readonly OrganizationSearchFilterValidator _organizationSearchFilterValidator;
     private readonly OrganizationRequestUpdateStatusValidator _organizationRequestUpdateStatusValidator;
+
+    private readonly IMediator _mediator;
+
     private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
     private readonly IRepository<OrganizationUser> _organizationUserRepository;
     private readonly IRepository<Models.OrganizationProviderType> _organizationProviderTypeRepository;
@@ -75,6 +80,7 @@ namespace Yoma.Core.Domain.Entity.Services
         OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
         OrganizationSearchFilterValidator organizationSearchFilterValidator,
         OrganizationRequestUpdateStatusValidator organizationRequestUpdateStatusValidator,
+        IMediator mediator,
         IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
         IRepository<OrganizationUser> organizationUserRepository,
         IRepository<Models.OrganizationProviderType> organizationProviderTypeRepository,
@@ -97,6 +103,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _organizationUpdateRequestValidator = organizationUpdateRequestValidator;
       _organizationSearchFilterValidator = organizationSearchFilterValidator;
       _organizationRequestUpdateStatusValidator = organizationRequestUpdateStatusValidator;
+      _mediator = mediator;
       _organizationRepository = organizationRepository;
       _organizationUserRepository = organizationUserRepository;
       _organizationProviderTypeRepository = organizationProviderTypeRepository;
@@ -503,6 +510,9 @@ namespace Yoma.Core.Domain.Entity.Services
       if (statusCurrent != OrganizationStatus.Inactive && result.Status == OrganizationStatus.Inactive)
         await SendEmail(result, EmailType.Organization_Approval_Requested);
 
+      if (statusCurrent != result.Status)
+        await _mediator.Publish(new OrganizationStatusChangedEvent(result));
+
       return result;
     }
 
@@ -516,11 +526,11 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
+      EmailType? emailType = null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-        EmailType? emailType = null;
         switch (request.Status)
         {
           case OrganizationStatus.Active:
@@ -582,9 +592,11 @@ namespace Yoma.Core.Domain.Entity.Services
         result = await _organizationRepository.Update(result);
 
         scope.Complete();
-
-        if (emailType.HasValue) await SendEmail(result, emailType.Value);
       });
+
+      if (emailType.HasValue) await SendEmail(result, emailType.Value);
+
+      await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
       return result;
     }
@@ -605,6 +617,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
+      var statusCurrent = result.Status;
+
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
@@ -613,6 +627,9 @@ namespace Yoma.Core.Domain.Entity.Services
         result = await _organizationRepository.Update(result);
         scope.Complete();
       });
+
+      if (statusCurrent != result.Status)
+        await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
       return result;
     }
@@ -631,6 +648,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
+      var statusCurrent = result.Status;
+
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
@@ -639,6 +658,9 @@ namespace Yoma.Core.Domain.Entity.Services
         result = await _organizationRepository.Update(result);
         scope.Complete();
       });
+
+      if (statusCurrent != result.Status)
+        await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
       return result;
     }
@@ -650,6 +672,8 @@ namespace Yoma.Core.Domain.Entity.Services
       ValidateUpdatable(result);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+
+      var statusCurrent = result.Status;
 
       (Organization? Organization, BlobObject? ItemAdded) resultLogo = (null, null);
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
@@ -664,6 +688,9 @@ namespace Yoma.Core.Domain.Entity.Services
       if (resultLogo.Organization == null)
         throw new InvalidOperationException("Organization expected");
 
+      if (statusCurrent != result.Status)
+        await _mediator.Publish(new OrganizationStatusChangedEvent(result));
+
       return resultLogo.Organization;
     }
 
@@ -674,6 +701,8 @@ namespace Yoma.Core.Domain.Entity.Services
       ValidateUpdatable(result);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+
+      var statusCurrent = result.Status;
 
       (Organization? Organization, List<BlobObject>? ItemsAdded) resultDocuments = (null, null);
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
@@ -687,6 +716,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (resultDocuments.Organization == null)
         throw new InvalidOperationException("Organization expected");
+
+      if (statusCurrent != result.Status)
+        await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
       return resultDocuments.Organization;
     }
@@ -710,6 +742,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
+      var statusCurrent = result.Status;
+
       (Organization? Organization, List<OrganizationDocument>? ItemsDeleted) resultDelete = (null, null);
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -723,6 +757,9 @@ namespace Yoma.Core.Domain.Entity.Services
       if (resultDelete.Organization == null)
         throw new InvalidOperationException("Organization expected");
 
+      if (statusCurrent != result.Status)
+        await _mediator.Publish(new OrganizationStatusChangedEvent(result));
+
       return resultDelete.Organization;
     }
 
@@ -734,6 +771,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
+      var statusCurrent = result.Status;
+
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
@@ -742,6 +781,9 @@ namespace Yoma.Core.Domain.Entity.Services
         result = await _organizationRepository.Update(result);
         scope.Complete();
       });
+
+      if (statusCurrent != result.Status)
+        await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
       return result;
     }
@@ -757,6 +799,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
+      var statusCurrent = result.Status;
+
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
@@ -765,6 +809,9 @@ namespace Yoma.Core.Domain.Entity.Services
         result = await _organizationRepository.Update(result);
         scope.Complete();
       });
+
+      if (statusCurrent != result.Status)
+        await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
       return result;
     }
@@ -857,7 +904,7 @@ namespace Yoma.Core.Domain.Entity.Services
         if (updated)
         {
           var commentApproval = $"Assigned roles '{typesAssignedNames}'";
-          await SendForReapproval(organization, reapprovalAction, null, commentApproval);
+          organization = await SendForReapproval(organization, reapprovalAction, null, commentApproval);
         }
 
         scope.Complete();
@@ -1040,8 +1087,8 @@ namespace Yoma.Core.Domain.Entity.Services
           if (organization.Status == OrganizationStatus.Inactive) return organization;
 
           organization.CommentApproval = commentApproval;
-          organization.Status = OrganizationStatus.Inactive;
           organization.StatusId = _organizationStatusService.GetByName(OrganizationStatus.Inactive.ToString()).Id;
+          organization.Status = OrganizationStatus.Inactive;
           organization = await _organizationRepository.Update(organization);
 
           if (action == OrganizationReapprovalAction.ReapprovalWithEmail)

@@ -97,6 +97,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
             foreach (var item in items)
             {
               item.StatusId = statusExpiredId;
+              item.Status = LinkStatus.Expired;
               item.ModifiedByUserId = user.Id;
               _logger.LogInformation("Action link with id '{id}' flagged for expiration", item.Id);
             }
@@ -161,6 +162,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
             {
               item.CommentApproval = $"Auto-Declined due to being {string.Join("/", Statuses_Declination).ToLower()} for more than {_scheduleJobOptions.ActionLinkDeclinationScheduleIntervalInDays} days";
               item.StatusId = statusDeclinedId;
+              item.Status = LinkStatus.Declined;
               item.ModifiedByUserId = user.Id;
               _logger.LogInformation("Verify link with id '{id}' flagged for declination", item.Id);
             }
@@ -271,6 +273,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
             foreach (var item in items)
             {
               item.StatusId = statusDeletedId;
+              item.Status = LinkStatus.Deleted;
               item.ModifiedByUserId = user.Id;
               _logger.LogInformation("Action link with id '{id}' flagged for deletion", item.Id);
             }

@@ -30,19 +30,19 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     #endregion
 
     #region Public Members
-    public Task<string> CreateOpportunity(Opportunity opportunity)
+    public async Task<string> CreateOpportunity(Opportunity opportunity)
     {
-      throw new NotImplementedException();
+      return await Task.FromResult(Guid.NewGuid().ToString()); //TODO: Implement
     }
 
-    public Task UpdateOpportunity(string externalId, Opportunity opportunity)
+    public async Task UpdateOpportunity(string externalId, Opportunity opportunity)
     {
-      throw new NotImplementedException();
+      await Task.CompletedTask; //TODO: Implement
     }
 
-    public Task DeleteOpportunity(string externalId)
+    public async Task DeleteOpportunity(string externalId)
     {
-      throw new NotImplementedException();
+      await Task.CompletedTask; //TODO: Implement
     }
     #endregion
   }

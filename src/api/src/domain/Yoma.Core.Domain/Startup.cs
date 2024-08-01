@@ -2,6 +2,7 @@ using FluentValidation;
 using Hangfire;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using System.Reflection;
 using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.ActionLink.Interfaces.Lookups;
@@ -59,6 +60,9 @@ namespace Yoma.Core.Domain
     {
       //register all validators in Yoma.Core.Domain assembly
       services.AddValidatorsFromAssemblyContaining<UserService>();
+
+      // add MediatR and register all handlers in the assembly
+      services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
       #region ActionLink
       #region Lookups
@@ -202,7 +206,9 @@ namespace Yoma.Core.Domain
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Deletion ({Status.Inactive} or {Status.Expired} for more than {options.OpportunityDeletionIntervalInDays} days)",
         s => s.ProcessDeletion(), options.OpportunityDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
-      //TODO: ISharingBackgroundService.ProcessSharing
+      //partner sharing
+      RecurringJob.AddOrUpdate<ISharingBackgroundService>($"Partner Sharing Synchronization",
+        s => s.ProcessSharing(), options.PartnerSharingSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //my opportunity
       RecurringJob.AddOrUpdate<IMyOpportunityBackgroundService>($"'My' Opportunity Verification Rejection ({VerificationStatus.Pending} for more than {options.MyOpportunityRejectionIntervalInDays} days)",

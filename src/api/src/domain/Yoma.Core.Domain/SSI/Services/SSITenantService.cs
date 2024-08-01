@@ -151,6 +151,7 @@ namespace Yoma.Core.Domain.SSI.Services
           if (_appSettings.SSIMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.SSIMaximumRetryAttempts) break;
 
           item.StatusId = _ssiTenantCreationStatusService.GetByName(TenantCreationStatus.Pending.ToString()).Id;
+          item.Status = TenantCreationStatus.Pending;
           break;
 
         default:

@@ -7,6 +7,7 @@ using Microsoft.Extensions.Options;
 using Hangfire;
 using Hangfire.Storage;
 using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
+using Yoma.Core.Domain.Opportunity;
 
 namespace Yoma.Core.Domain.PartnerSharing.Services
 {
@@ -83,15 +84,18 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                 switch (entityType)
                 {
                   case EntityType.Opportunity:
-                    var opportunity = _opportunityService.GetById(item.Id, true, true, false);
+                    if (!item.OpportunityId.HasValue)
+                      throw new InvalidOperationException($"Entity type '{entityType}': Opportunity id is null");
+
+                    var opportunity = _opportunityService.GetById(item.OpportunityId.Value, true, true, false);
                     var action = Enum.Parse<ProcessingAction>(item.Action, true);
 
                     switch (action)
                     {
                       case ProcessingAction.Create:
-                        //scheduled for execution upon explicit opportunity creation (see ISharingServiceEventListener)
+                        //scheduled for execution upon explicit opportunity creation (active only)
                         //organization must be active in order to create an opportunity
-                        //trigger points (TODO: MediatR):
+                        //trigger points:
                         // - IOpportunityService.Create (explicit)
 
                         //scheduling failsafe
@@ -105,18 +109,21 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                         if (string.IsNullOrEmpty(item.EntityExternalId))
                           throw new ArgumentNullException(nameof(item), "External id required");
 
-                        //scheduled for execution upon opportunity update and explicit and implicit activation or deactivation (see ISharingServiceEventListener)
-                        //trigger points (TODO: MediatR):
-                        // - IOpportunityService.Update (explicit)
-                        // - IOpportunityService.UpdateStatus (explicit)
+                        //scheduled for execution upon opportunity update and explicit and implicit activation or deactivation
+                        //trigger points:
+                        // - IOpportunityService: (explicit)
+                        //    Update | AllocateRewards | UpdateFeatured | UpdateStatus | AssignCategories | RemoveCategories | AssignCountries | RemoveCountries
+                        //    AssignLanguages | RemoveLanguages | AssignSkills | RemoveSkills | AssignVerificationTypes | RemoveVerificationTypes
+                        // - IOpportunityBackgroundService.ProcessExpiration (explicit)
                         // - IOrganizationService.UpdateStatus (implicit)
-                        // - IOrganizationService.SendForReapproval (implicit)
+                        // - IOrganizationService.SendForReapproval (implicit) [TODO]
+                        // - IOrganizationBackgroundService.ProcessDeclination (implicit)
 
                         //implicit alignment for sharing processing
                         //if organization is activated, opportunity is activated provided current status of active 
                         //if organization is inactivated, opportunity is inactivated provided active
-                        if (opportunity.OrganizationStatus == Entity.OrganizationStatus.Inactive && opportunity.Status == Opportunity.Status.Active)
-                          opportunity.Status = Opportunity.Status.Inactive;
+                        if (opportunity.OrganizationStatus == Entity.OrganizationStatus.Inactive && opportunity.Status == Status.Active)
+                          opportunity.Status = Status.Inactive;
 
                         //scheduling failsafe post implicit adjustment
                         if (!SharingService.Statuses_Opportunity_Updatable.Contains(opportunity.Status))
@@ -129,17 +136,33 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                         if (string.IsNullOrEmpty(item.EntityExternalId))
                           throw new ArgumentNullException(nameof(item), "External id required");
 
-                        //scheduled for execution upon explicit and implicit opportunity deletion (see ISharingServiceEventListener)
+                        //scheduled for execution upon explicit and implicit opportunity deletion
                         //once an opportunity or organization are deleted, it cannot be reinstated
-                        //trigger points (TODO: MediatR):
+                        //trigger points:
                         // - IOpportunityService.UpdateStatus (explicit)
-                        // - IOpportunityService.ProcessDeletion (explicit)
+                        // - IOpportunityBackgroundService.ProcessDeletion (explicit)
                         // - IOrganizationService.UpdateStatus (implicit)
                         // - IOrganizationBackgroundService.ProcessDeletion (implicit)
 
                         //scheduling failsafe
                         if (!SharingService.Statuses_Opportunity_CanDelete.Contains(opportunity.Status))
                           throw new InvalidOperationException($"Action '{action}': Opportunity status of '{string.Join(',', SharingService.Statuses_Opportunity_CanDelete)}' expected. Current status '{opportunity.Status}'");
+
+                        switch (opportunity.Status)
+                        {
+                          case Status.Active:
+                          case Status.Inactive:
+                          case Status.Expired:
+                            if (opportunity.OrganizationStatus != Entity.OrganizationStatus.Deleted)
+                              throw new InvalidOperationException($"Processing action {action}: Opportunity with status {opportunity.Status} must be associated with a deleted organization");
+                            break;
+
+                          case Status.Deleted:
+                            break;
+
+                          default:
+                            throw new InvalidOperationException($"Opportunity status of '{opportunity.Status}' not supported");
+                        }
 
                         await sharingProviderClient.DeleteOpportunity(item.EntityExternalId);
                         break;

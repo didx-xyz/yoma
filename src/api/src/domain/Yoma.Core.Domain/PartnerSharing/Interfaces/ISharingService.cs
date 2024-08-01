@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Interfaces
   {
     Task ScheduleCreate(EntityType entityType, Guid entityId);
 
-    Task ScheduleUpdate(EntityType entityType, Guid entityId);
+    Task ScheduleUpdate(EntityType entityType, Guid entityId, bool canCreate);
 
     Task ScheduleDelete(EntityType entityType, Guid entityId);
 

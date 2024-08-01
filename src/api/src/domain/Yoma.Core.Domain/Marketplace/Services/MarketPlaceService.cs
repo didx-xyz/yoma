@@ -198,8 +198,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
         result.TransactionId = await _marketplaceProviderClient.ItemReserve(walletId, user.Email, storeItem.Id);
         reserved = true;
 
-        result.Status = TransactionStatus.Reserved;
         result.StatusId = _transactionStatusService.GetByName(TransactionStatus.Reserved.ToString()).Id;
+        result.Status = TransactionStatus.Reserved;
         result = await _transactionLogRepository.Create(result);
 
         return result;
@@ -224,8 +224,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
         {
           using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-          transaction.Status = TransactionStatus.Sold;
           transaction.StatusId = _transactionStatusService.GetByName(TransactionStatus.Sold.ToString()).Id;
+          transaction.Status = TransactionStatus.Sold;
           transaction = await _transactionLogRepository.Create(transaction);
 
           await _marketplaceProviderClient.ItemSold(walletId, user.Email, transaction.ItemId, transaction.TransactionId);
@@ -255,8 +255,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
         {
           using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-          transaction.Status = TransactionStatus.Released;
           transaction.StatusId = _transactionStatusService.GetByName(TransactionStatus.Released.ToString()).Id;
+          transaction.Status = TransactionStatus.Released;
           await _transactionLogRepository.Create(transaction);
 
           await _marketplaceProviderClient.ItemReserveReset(transaction.ItemId, transaction.TransactionId);
