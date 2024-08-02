@@ -366,39 +366,44 @@ const OpportunityPublicDetails: React.FC<{
                   your data private.
                 </div>
 
-                <div className="italic text-gray-dark">
-                  <FormCheckbox
-                    id="dontShowAgain"
-                    label="Do not show this message again"
-                    inputProps={{
-                      onChange: (e) => {
-                        onUpdateLeavingYomaSetting(e.target.checked).then(
-                          () => null,
-                        );
-                      },
-                    }}
-                  />
-                </div>
+                {user && (
+                  <div className="italic text-gray-dark">
+                    <FormCheckbox
+                      id="dontShowAgain"
+                      label="Do not show this message again"
+                      inputProps={{
+                        onChange: (e) => {
+                          onUpdateLeavingYomaSetting(e.target.checked).then(
+                            () => null,
+                          );
+                        },
+                      }}
+                    />
+                  </div>
+                )}
 
                 <div className="mt-2 flex w-full flex-grow flex-col justify-center gap-4 md:flex-row">
-                  <button
-                    type="button"
-                    className={
-                      "btn btn-outline rounded-full border-purple bg-white normal-case text-purple hover:text-purple md:w-[250px]" +
-                      `${
-                        isOppSaved
-                          ? " border-none bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow"
-                          : ""
-                      }`
-                    }
-                    onClick={onUpdateSavedOpportunity}
-                  >
-                    <IoMdBookmark style={{ width: "20px", height: "20px" }} />
+                  {user && (
+                    <button
+                      type="button"
+                      className={
+                        "btn btn-outline rounded-full border-purple bg-white normal-case text-purple hover:text-purple md:w-[250px]" +
+                        `${
+                          isOppSaved
+                            ? " border-none bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow"
+                            : ""
+                        }`
+                      }
+                      onClick={onUpdateSavedOpportunity}
+                    >
+                      <IoMdBookmark style={{ width: "20px", height: "20px" }} />
 
-                    <span className="ml-1">
-                      {isOppSaved ? "Opportunty saved" : "Save opportunity"}
-                    </span>
-                  </button>
+                      <span className="ml-1">
+                        {isOppSaved ? "Opportunty saved" : "Save opportunity"}
+                      </span>
+                    </button>
+                  )}
+
                   <button
                     type="button"
                     className="btn btn-primary normal-case text-white md:w-[250px]"
