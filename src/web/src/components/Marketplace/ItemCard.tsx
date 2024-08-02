@@ -100,7 +100,7 @@ const ItemCardComponent: React.FC<InputProps> = ({
                   style={{ width: "16px", height: "16px" }}
                 />
                 <span className="ml-1 text-xs">{amount}</span>
-              </div>{" "}
+              </div>
             </div>
           )}
           <div className="badge h-6 whitespace-nowrap rounded-md bg-gray text-gray-dark">

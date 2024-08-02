@@ -603,7 +603,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
             <div className="flex flex-col items-center justify-center gap-4 px-8">
               {currentItem?.imageURL && (
-                <div className="border-green-darkx flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg">
                   <AvatarImage
                     icon={currentItem.imageURL}
                     alt={`Product Image`}
@@ -613,8 +613,12 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               )}
 
               <div className="flex w-full flex-col gap-4 rounded-lg border-2 border-dotted border-gray p-4 text-center">
-                <div>{currentItem.description}</div>
-                <div>{currentItem.summary}</div>
+                <p
+                  dangerouslySetInnerHTML={{ __html: currentItem.description }}
+                ></p>
+                <p
+                  dangerouslySetInnerHTML={{ __html: currentItem.summary }}
+                ></p>
               </div>
 
               <div className="p-4 text-center">
