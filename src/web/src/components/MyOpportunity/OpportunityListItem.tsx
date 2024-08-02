@@ -1,4 +1,7 @@
-import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
+import type {
+  MyOpportunityInfo,
+  MyOpportunityInfoVerification,
+} from "~/api/models/myOpportunity";
 import Moment from "react-moment";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { AvatarImage } from "../AvatarImage";
@@ -8,10 +11,61 @@ import Link from "next/link";
 const OpportunityListItem: React.FC<{
   data: MyOpportunityInfo;
   displayDate: string;
+  allowDownload?: boolean;
   [key: string]: any;
-}> = ({ data, displayDate }) => {
+}> = ({ data, displayDate, allowDownload }) => {
   const router = useRouter();
   const { pathname } = router;
+
+  const downloadFile = async (item: MyOpportunityInfoVerification) => {
+    try {
+      const response = await fetch(item.fileURL!);
+      if (!response.ok) throw new Error("Network response was not ok");
+
+      const blob = await response.blob();
+      const objectURL = URL.createObjectURL(blob);
+
+      // Extract file extension from the URL
+      const fileExtension = item.fileURL!.split(".").pop() || "";
+
+      // Format the completed date
+      const completedDate = new Date(data.dateCompleted!)
+        .toISOString()
+        .split("T")[0]; // YYYY-MM-DD format
+
+      // Construct the file name
+      const fileName = `${completedDate}_${item.verificationType}.${fileExtension}`;
+
+      const link = document.createElement("a");
+      link.href = objectURL;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      URL.revokeObjectURL(objectURL);
+    } catch (error) {
+      console.error("There was a problem with the fetch operation:", error);
+    }
+  };
+
+  const downloadFiles = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+
+    const downloadPromises = (data?.verifications || []).map((verification) => {
+      if (verification.fileURL) {
+        return downloadFile(verification);
+      }
+      return Promise.resolve();
+    });
+
+    try {
+      await Promise.all(downloadPromises);
+      console.log("All files downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading files:", error);
+    }
+  };
 
   return (
     <Link
@@ -62,7 +116,6 @@ const OpportunityListItem: React.FC<{
             </div>
           </>
         )}
-
         {/* DATE */}
         {displayDate && (
           <div className="flex flex-row">
@@ -70,6 +123,19 @@ const OpportunityListItem: React.FC<{
               <Moment format={DATE_FORMAT_HUMAN} utc={true}>
                 {displayDate}
               </Moment>
+            </h4>
+          </div>
+        )}
+        {/* DOWNLOAD LINK */}
+        {allowDownload && !!data?.verifications?.length && (
+          <div className="flex flex-row">
+            <h4 className="line-clamp-4 text-sm font-thin">
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={downloadFiles}
+              >
+                Download your completion files
+              </button>
             </h4>
           </div>
         )}
