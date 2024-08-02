@@ -141,6 +141,7 @@ const MyOpportunitiesCompleted: NextPageWithLayout<{
                   key={index}
                   data={item}
                   displayDate={item.dateCompleted ?? ""}
+                  allowDownload={true}
                 />
               ))}
             </div>
