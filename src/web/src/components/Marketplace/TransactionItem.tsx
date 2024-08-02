@@ -20,9 +20,6 @@ const TransactionItemComponent: React.FC<{
       <div className="flex flex-row">
         <div className="flex flex-row">
           <div className="flex w-3/5 flex-grow flex-col">
-            {/* <h1 className="h-[32px] max-w-[200px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark">
-              {data.category}
-            </h1> */}
             <h2 className="line-clamp-3 h-[70px] max-w-[210px] overflow-hidden text-ellipsis text-start text-[18px] font-semibold leading-tight">
               {data.name}
             </h2>
@@ -33,9 +30,10 @@ const TransactionItemComponent: React.FC<{
         </div>
       </div>
       <div className="flex max-w-[280px] flex-grow flex-row">
-        <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-start text-sm font-light">
-          {data.instructions}
-        </p>
+        <p
+          className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-start text-sm font-light"
+          dangerouslySetInnerHTML={{ __html: data.instructions }}
+        ></p>
       </div>
 
       {/* DATES */}
