@@ -14,6 +14,9 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly AppSettings _appSettings;
     private readonly SAYouthOptions _options;
+
+    private const string Header_Api_Version = "X-API-VERSION";
+    private const string Header_Authorization = "X-API-KEY";
     #endregion
 
     #region Constructor
@@ -43,6 +46,17 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     public async Task DeleteOpportunity(string externalId)
     {
       await Task.CompletedTask; //TODO: Implement
+    }
+    #endregion
+
+    #region Private Members
+    private Dictionary<string, string> GetAuthHeaders()
+    {
+      return new Dictionary<string, string>
+      {
+        { Header_Api_Version, _options.ApiVersion },
+        { Header_Authorization, _options.ApiKey  }
+      };
     }
     #endregion
   }
