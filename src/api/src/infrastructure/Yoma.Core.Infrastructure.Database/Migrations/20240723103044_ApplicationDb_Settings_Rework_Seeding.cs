@@ -27,7 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
           // Notifications: Organisations
           { "710F5D22-0F2A-4DA3-8777-D9DF50E6B93A", "User", "Organization_Admin_Email_Opportunity_Expiration", "Opportunity expiring", "Get notified about opportunities that are expiring", "Notifications", "Organisation", 6, $"[\"{Constants.Role_OrganizationAdmin}\"]", "false", "Boolean", true , true},
-          { "0ABF9E3E-FAD0-478C-AF92-43ACD2D1E1B1", "User", "Organization_Admin_Email_Organization_Approval", "Organisation status", "Get notified when the organisation status changes", "Notifications", "Organisation", 7, $"[\"{Constants.Role_OrganizationAdmin}\"]", "false", "Boolean", false, false },
+          { "0ABF9E3E-FAD0-478C-AF92-43ACD2D1E1B1", "User", "Organization_Admin_Email_Organization_Approval", "Organisation status", "Get notified when the organisation status changes", "Notifications", "Organisation", 7, $"[\"{Constants.Role_OrganizationAdmin}\"]", "true", "Boolean", false, false },
           { "AD2A2B6E-5E0A-420B-965B-EE3D35B4D43D", "User", "Organization_Admin_Email_Opportunity_Completion", "Verification requests", "Get notified when there are new verification requests", "Notifications", "Organisation", 8, $"[\"{Constants.Role_OrganizationAdmin}\"]", "false", "Boolean", true, true },
           { "A2F95E7A-D2C4-4ACE-9D34-044966FD34F4", "User", "Organization_Admin_Email_ActionLink_Verify_Approval", "Magic links", "Get notified when a magic link's status is updated", "Notifications", "Organisation", 9, $"[\"{Constants.Role_OrganizationAdmin}\"]", "false", "Boolean", true , true},
   
