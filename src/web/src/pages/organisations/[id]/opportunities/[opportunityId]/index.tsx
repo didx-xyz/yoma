@@ -534,16 +534,19 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       verificationEnabled: z.union([z.boolean(), z.null()]),
       verificationMethod: z.union([z.number(), z.null()]).optional(),
       verificationTypes: z
-        .array(
-          z.object({
-            type: z.any(),
-            description: z
-              .string({
-                required_error: "Description is required",
-              })
-              .optional(),
-          }),
-        )
+        .union([
+          z.array(
+            z.object({
+              type: z.any(),
+              description: z
+                .string({
+                  required_error: "Description is required",
+                })
+                .optional(),
+            }),
+          ),
+          z.null(),
+        ])
         .optional(),
     })
     .superRefine((values, ctx) => {
@@ -2512,7 +2515,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         )}
                       />
                     </FormField>
-
                     {watchVerificationEnabled &&
                       watchVerificationMethod === VerificationMethod.Manual && (
                         <FormField
