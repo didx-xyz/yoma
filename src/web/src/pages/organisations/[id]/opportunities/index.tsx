@@ -343,7 +343,7 @@ const Opportunities: NextPageWithLayout<{
   const onSearch = useCallback(
     (query: string) => {
       searchFilter.pageNumber = 1;
-      searchFilter.valueContains = query.length > 3 ? query : null;
+      searchFilter.valueContains = query.length > 2 ? query : null;
       redirectWithSearchFilterParams(searchFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],
