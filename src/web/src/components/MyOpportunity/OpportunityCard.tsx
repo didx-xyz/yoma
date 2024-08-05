@@ -19,7 +19,7 @@ const OpportunityCard: React.FC<InputProps> = ({ data, displayType }) => {
   return (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-lg md:w-[19.2rem]"
+      className="relative flex h-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-md md:w-[19.2rem]"
     >
       <div className="mb-2 flex flex-row gap-2">
         <AvatarImage
@@ -28,18 +28,18 @@ const OpportunityCard: React.FC<InputProps> = ({ data, displayType }) => {
           size={60}
         />
 
-        <div className="overflow-ellipsisx  flex flex-col justify-center gap-1   ">
+        <div className="truncatex flex flex-col justify-center gap-1">
           <h1 className="line-clamp-1 text-xs font-medium text-gray-dark">
             {data.organizationName}
           </h1>
-          <h2 className="line-clamp-2 text-[18px] font-semibold leading-tight md:line-clamp-1">
+          <h2 className="line-clamp-2 text-sm font-semibold leading-tight md:line-clamp-1">
             {data.opportunityTitle}
           </h2>
         </div>
       </div>
 
       <div className="flex h-full max-h-[60px] flex-row">
-        <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-sm font-light">
+        <p className="line-clamp-4 text-xs font-light text-gray-dark">
           {data.opportunityDescription}
         </p>
       </div>
@@ -68,7 +68,7 @@ const OpportunityCard: React.FC<InputProps> = ({ data, displayType }) => {
 
         {/* DATE */}
         <div className="flex flex-row">
-          <h4 className="line-clamp-4 text-sm font-thin">
+          <h4 className="line-clamp-4 text-sm font-medium">
             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
               {displayType == DisplayType.Completed ||
               displayType == DisplayType.Pending
@@ -81,8 +81,8 @@ const OpportunityCard: React.FC<InputProps> = ({ data, displayType }) => {
         {/* COMMENT */}
         {displayType == DisplayType.Rejected && data.commentVerification && (
           <div className="flex flex-row flex-wrap gap-1">
-            <h4 className="line-clamp-4 text-sm font-bold">Comment: </h4>
-            <h4 className="line-clamp-4 text-sm font-thin">
+            <h4 className="line-clamp-4 text-xs font-bold">Comment: </h4>
+            <h4 className="line-clamp-4 text-xs font-thin">
               {data.commentVerification}
             </h4>
           </div>

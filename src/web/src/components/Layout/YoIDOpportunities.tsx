@@ -5,7 +5,7 @@ import { useEffect, useState, type ReactElement } from "react";
 import type { TabItem } from "~/api/models/common";
 import { userProfileAtom } from "~/lib/store";
 import Breadcrumb from "../Breadcrumb";
-import YoIDTabbedLayout from "./YoIDTabbed";
+import YoIDLayout from "./YoID";
 
 export type TabProps = ({
   children,
@@ -13,7 +13,7 @@ export type TabProps = ({
   children: ReactElement;
 }) => ReactElement;
 
-const YoIDTabbedOpportunities: TabProps = ({ children }) => {
+const YoIDOpportunities: TabProps = ({ children }) => {
   const router = useRouter();
   const [userProfile] = useAtom(userProfileAtom);
   const [tabItems, setTabItems] = useState<TabItem[]>([]);
@@ -58,10 +58,10 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
   }, [router.asPath, setTabItems, setSelectedTab, userProfile]);
 
   return (
-    <YoIDTabbedLayout>
+    <YoIDLayout>
       <div className="flex w-full flex-col gap-4">
         {/* BREADCRUMB */}
-        <h5 className="font-bold tracking-wider text-black">
+        <div className="text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
@@ -81,7 +81,7 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
                 : []),
             ]}
           />
-        </h5>
+        </div>
 
         {/* NAVIGATION BUTTONS */}
         <div className="-mt-2 flex flex-row flex-wrap items-center justify-start gap-2">
@@ -90,26 +90,22 @@ const YoIDTabbedOpportunities: TabProps = ({ children }) => {
               key={tab.title}
               href={tab.url!}
               rel="noopener noreferrer"
-              className={`btn btn-sm tooltip tooltip-secondary flex items-center border-gray text-xs text-gray-dark hover:border-gray-dark ${
+              className={`btn btn-sm flex items-center border-gray text-xs text-gray-dark hover:border-gray-dark ${
                 tab.selected
                   ? "btn-secondary border-0 !text-gray hover:text-white"
                   : ""
               }`}
-              data-tip={tab.description}
             >
               {tab.title}
             </Link>
           ))}
         </div>
 
-        {/* MAIN CONTENT */}
-        <div className="flex-grow rounded-lg bg-white p-4">
-          {/* CHILDREN */}
-          {children}
-        </div>
+        {/* CHILDREN */}
+        {children}
       </div>
-    </YoIDTabbedLayout>
+    </YoIDLayout>
   );
 };
 
-export default YoIDTabbedOpportunities;
+export default YoIDOpportunities;

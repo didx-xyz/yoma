@@ -2,22 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import { useAtom } from "jotai";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import Head from "next/head";
-import Link from "next/link";
 import { useState, type ReactElement } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import { IoIosInformationCircleOutline } from "react-icons/io";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
 import { getUserSkills } from "~/api/services/user";
-import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
-import MainLayout from "~/components/Layout/Main";
-import { PageBackground } from "~/components/PageBackground";
+import YoIDLayout from "~/components/Layout/YoID";
+import NoRowsMessage from "~/components/NoRowsMessage";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { CVCard } from "~/components/YoID/CVCard";
 import { HeaderWithLink } from "~/components/YoID/HeaderWithLink";
 import { LineChart } from "~/components/YoID/LineChart";
 import { PassportCard } from "~/components/YoID/PassportCard";
@@ -26,7 +21,6 @@ import { WalletCard } from "~/components/YoID/WalletCard";
 import { ZltoModal } from "~/components/YoID/ZltoModal";
 import { MAXINT32 } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
-import { getTimeOfDayAndEmoji } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -57,7 +51,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   return {
     props: {
-      user: session?.user ?? null,
       error: errorCode,
     },
   };
@@ -65,11 +58,9 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 // YoID dashboard page
 const YoIDDashboard: NextPageWithLayout<{
-  user?: any;
   error?: number;
-}> = ({ user, error }) => {
+}> = ({ error }) => {
   const [zltoModalVisible, setZltoModalVisible] = useState(false);
-  const [timeOfDay, timeOfDayEmoji] = getTimeOfDayAndEmoji();
   const [userProfile] = useAtom(userProfileAtom);
 
   const {
@@ -132,126 +123,88 @@ const YoIDDashboard: NextPageWithLayout<{
 
   return (
     <>
-      <Head>
-        <title>Yoma | 💳 Yo-ID</title>
-      </Head>
-
-      <PageBackground className="h-[15rem] md:h-[16rem]" />
-
       <ZltoModal
         isOpen={zltoModalVisible}
         onClose={() => setZltoModalVisible(false)}
       />
 
-      <div className="container z-10 mt-[6rem] max-w-7xl overflow-hidden px-4 py-4">
-        <div className="flex flex-col gap-4">
-          {/* HEADER */}
-          <div className="flex flex-col gap-2">
-            {/* WELCOME MSG */}
-            <div className="truncate text-xl font-semibold text-white md:text-2xl">
-              <span>
-                {timeOfDayEmoji} Good {timeOfDay}&nbsp;
-                <span>{user?.name}!</span>
-              </span>
-            </div>
+      {/* DASHBOARD */}
+      <div className="mt-2 flex flex-wrap justify-center gap-4">
+        {/* OPPORTUNITIES */}
+        <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
+          <HeaderWithLink title="🏆 Opportunities" url="/yoid/opportunities" />
+          <div className="flex h-[300px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+            <Suspense
+              isLoading={myOpportunitiesSummaryIsLoading}
+              error={myOpportunitiesSummaryError}
+            >
+              <LineChart data={myOpportunitiesSummary!} />
+            </Suspense>
+          </div>
+        </div>
 
-            <div className="flex flex-row items-center gap-2 text-white">
-              {/* DESCRIPTION */}
-              <span className="truncate">Welcome to your Yo-ID</span>
+        {/* SKILLS */}
+        <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
+          <HeaderWithLink title="⚡ Skills" url="/yoid/skills" />
+          <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow xl:h-[300px]">
+            <div className="flex flex-grow flex-wrap gap-1 overflow-y-auto">
+              <Suspense isLoading={skillsIsLoading} error={skillsError}>
+                {!skills?.length && (
+                  <NoRowsMessage
+                    title={"No skills."}
+                    description={
+                      "Skills that you receive by completing opportunities will be diplayed here."
+                    }
+                  />
+                )}
 
-              {/* TOOLTIP */}
-              <button type="button" onClick={() => setZltoModalVisible(true)}>
-                <IoIosInformationCircleOutline className="h-6 w-6" />
-              </button>
-            </div>
-
-            {/* BUTTONS */}
-            <div className="mt-4 flex flex-row gap-2">
-              <Link
-                className="md:btn-mdx btn btn-secondary btn-sm w-1/2 md:max-w-[200px]"
-                href="/yoid/profile"
-              >
-                👤 Edit Profile
-              </Link>
-              <Link
-                className="md:btn-mdx btn btn-secondary btn-sm w-1/2 md:max-w-[200px]"
-                href="/yoid/settings"
-              >
-                🔧 Settings
-              </Link>
+                {!!skills?.length && <SkillsCard data={skills} />}
+              </Suspense>
             </div>
           </div>
+        </div>
 
-          {/* DASHBOARD */}
-          <div className="mt-6 flex flex-wrap justify-center gap-4 lg:justify-normal">
-            {/* OPPORTUNITIES */}
-            <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
-              <HeaderWithLink
-                title="🏆 Opportunities"
-                url="/yoid/opportunities"
-              />
-              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-                <Suspense
-                  isLoading={myOpportunitiesSummaryIsLoading}
-                  error={myOpportunitiesSummaryError}
-                >
-                  <LineChart data={myOpportunitiesSummary!} />
-                </Suspense>
-              </div>
-            </div>
+        {/* WALLET */}
+        <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
+          <HeaderWithLink title="💸 Wallet" />
+          <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+            <Suspense isLoading={!userProfile}>
+              <WalletCard userProfile={userProfile!} />
+            </Suspense>
+          </div>
+        </div>
 
-            {/* WALLET */}
-            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-              <HeaderWithLink title="💸 Wallet" />
-              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-                <Suspense isLoading={!userProfile}>
-                  <WalletCard userProfile={userProfile!} />
-                </Suspense>
-              </div>
-            </div>
+        {/* PASSPORT */}
+        <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
+          <HeaderWithLink title="🌐 Passport" url="/yoid/passport" />
+          <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+            <Suspense isLoading={credentialsIsLoading} error={credentialsError}>
+              {!credentials?.length && (
+                <NoRowsMessage
+                  icon="💳"
+                  title={"No credentials."}
+                  description={
+                    "Complete opportunities to receive your credentials."
+                  }
+                />
+              )}
 
-            {/* PASSPORT */}
-            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-              <HeaderWithLink title="🌐 Passport" url="/yoid/passport" />
-              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-                <Suspense
-                  isLoading={credentialsIsLoading}
-                  error={credentialsError}
-                >
-                  {!credentials?.length && (
-                    <FormMessage messageType={FormMessageType.Warning}>
-                      No data available
-                    </FormMessage>
-                  )}
+              {!!credentials?.length && <PassportCard data={credentials} />}
+            </Suspense>
+          </div>
+        </div>
 
-                  {!!credentials?.length && <PassportCard data={credentials} />}
-                </Suspense>
-              </div>
-            </div>
-
-            {/* SKILLS */}
-            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-              <HeaderWithLink title="⚡ Skills" url="/yoid/skills" />
-              <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-                <div className="flex flex-wrap gap-1 overflow-y-auto">
-                  <Suspense isLoading={skillsIsLoading} error={skillsError}>
-                    {!skills?.length && (
-                      <FormMessage messageType={FormMessageType.Warning}>
-                        No data available
-                      </FormMessage>
-                    )}
-
-                    {!!skills?.length && <SkillsCard data={skills} />}
-                  </Suspense>
-                </div>
-              </div>
-            </div>
-
-            {/* CV */}
-            <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-              <HeaderWithLink title="🏦 CV" />
-              <CVCard />
-            </div>
+        {/* CV */}
+        <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
+          <HeaderWithLink title="🏦 CV" />
+          <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+            <NoRowsMessage
+              icon="🚧"
+              title={"Coming soon..."}
+              description={
+                "Watch this space! Exciting updates are on the way ;)"
+              }
+            />
           </div>
         </div>
       </div>
@@ -260,7 +213,7 @@ const YoIDDashboard: NextPageWithLayout<{
 };
 
 YoIDDashboard.getLayout = function getLayout(page: ReactElement) {
-  return <MainLayout>{page}</MainLayout>;
+  return <YoIDLayout>{page}</YoIDLayout>;
 };
 
 export default YoIDDashboard;

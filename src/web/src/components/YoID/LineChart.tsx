@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import Chart, { type GoogleChartWrapper } from "react-google-charts";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
 import { screenWidthAtom } from "~/lib/store";
+import NoRowsMessage from "../NoRowsMessage";
 
 export const LineChart: React.FC<{
   data: TimeIntervalSummary;
@@ -52,48 +53,12 @@ export const LineChart: React.FC<{
     }
   };
 
-  // const Legend = () => (
-  //   <div className="flex flex-grow flex-row justify-between gap-4 text-xs md:justify-normal">
-  //     <div className="flex flex-col flex-nowrap gap-2 md:flex-row">
-  //       <span className="flex flex-grow items-center truncate whitespace-nowrap">
-  //         ✅ Completed
-  //       </span>
-  //       <span className="badge badge-xs bg-gray">
-  //         {userProfile?.opportunityCountCompleted}
-  //       </span>
-  //     </div>
-  //     <div className="flex flex-col gap-2 md:flex-row">
-  //       <span className="flex flex-grow items-center truncate whitespace-nowrap">
-  //         ⌛<span className="ml-2">Pending</span>
-  //       </span>
-  //       <span className="badge badge-xs bg-gray">
-  //         {userProfile?.opportunityCountPending}
-  //       </span>
-  //     </div>
-  //     <div className="flex flex-col gap-2 md:flex-row">
-  //       <span className="flex flex-grow items-center truncate whitespace-nowrap">
-  //         😞 Rejected
-  //       </span>
-  //       <span className="badge badge-xs bg-gray">
-  //         {userProfile?.opportunityCountRejected}
-  //       </span>
-  //     </div>
-  //     <div className="flex flex-col gap-2 md:flex-row">
-  //       <span className="flex flex-grow items-center truncate whitespace-nowrap">
-  //         💗 Saved
-  //       </span>
-  //       <span className="badge badge-xs bg-gray">
-  //         {userProfile?.opportunityCountSaved}
-  //       </span>
-  //     </div>
-  //   </div>
-  // );
   const Legend = () => (
-    <div className="flex flex-grow flex-row justify-between text-xs md:justify-normal md:gap-4">
+    <div className="mb-2 flex flex-grow flex-row justify-between text-xs md:justify-normal md:gap-4 md:text-sm">
       {data?.legend.map((name, index) => (
         <Link
           key={index}
-          className={`cursor-pointerx flex flex-row flex-nowrap gap-2 border-b-2 px-2 pb-1  ${
+          className={`flex flex-row flex-nowrap gap-2 border-b-2 px-2 pb-1  ${
             selectedLegendIndex === index ? "font-bold" : ""
           }`}
           style={{ borderColor: colors[index] }}
@@ -180,9 +145,9 @@ export const LineChart: React.FC<{
             height: "100%" as any,
             chartArea: {
               left: 0,
-              top: -10,
+              top: 5,
               width: "100%",
-              height: "85%",
+              height: "90%",
             },
           }}
           chartEvents={[
@@ -193,8 +158,13 @@ export const LineChart: React.FC<{
           ]}
         />
       ) : (
-        <div className="mt-2 h-full rounded-lg bg-gray-light p-12 text-center text-sm">
-          Not enough data to display
+        <div className="flex h-full items-center justify-center rounded-lg bg-gray-light">
+          <NoRowsMessage
+            title={"Not enough data to display."}
+            description={
+              "This chart will display your activities as you engage more with the system by completing opportunities etc."
+            }
+          />
         </div>
       )}
     </div>

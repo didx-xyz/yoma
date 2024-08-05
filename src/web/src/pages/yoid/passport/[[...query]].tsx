@@ -1,39 +1,34 @@
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import Head from "next/head";
 import router from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
-import { authOptions } from "~/server/auth";
-import { type NextPageWithLayout } from "../../_app";
-import { DATETIME_FORMAT_SYSTEM, PAGE_SIZE } from "~/lib/constants";
-import {
-  getCredentialById,
-  searchCredentials,
-} from "~/api/services/credentials";
-import { type ParsedUrlQuery } from "querystring";
+import { IoMdCheckmark, IoMdClose } from "react-icons/io";
+import ReactModal from "react-modal";
+import Moment from "react-moment";
+import { toast } from "react-toastify";
 import type {
   SSICredentialInfo,
   SSIWalletSearchResults,
 } from "~/api/models/credential";
+import {
+  getCredentialById,
+  searchCredentials,
+} from "~/api/services/credentials";
+import { AvatarImage } from "~/components/AvatarImage";
+import Breadcrumb from "~/components/Breadcrumb";
+import Suspense from "~/components/Common/Suspense";
+import YoID from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
-import Moment from "react-moment";
-import { IoMdCheckmark, IoMdClose } from "react-icons/io";
-import ReactModal from "react-modal";
+import { PaginationInfoComponent } from "~/components/PaginationInfo";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import YoIDTabbed from "~/components/Layout/YoIDTabbed";
-import { toast } from "react-toastify";
-import { config } from "~/lib/react-query-config";
-import { AvatarImage } from "~/components/AvatarImage";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import Suspense from "~/components/Common/Suspense";
-import Breadcrumb from "~/components/Breadcrumb";
-import Head from "next/head";
-
-interface IParams extends ParsedUrlQuery {
-  query?: string;
-  page?: string;
-}
+import { DATETIME_FORMAT_SYSTEM, PAGE_SIZE } from "~/lib/constants";
+import { config } from "~/lib/react-query-config";
+import { authOptions } from "~/server/auth";
+import { type NextPageWithLayout } from "../../_app";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -48,20 +43,18 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   const queryClient = new QueryClient(config);
-  const { id } = context.params as IParams;
-  const { query, schemaType, page } = context.query;
+  const { page } = context.query;
+  const pageNumber = page ? parseInt(page.toString()) : 1;
 
   // 👇 prefetch queries on server
   await queryClient.prefetchQuery({
-    queryKey: [
-      `Credentials_${id}_${query?.toString()}_${schemaType}_${page?.toString()}`,
-    ],
+    queryKey: [`Credentials_${pageNumber}`],
     queryFn: () =>
       searchCredentials(
         {
-          pageNumber: page ? parseInt(page.toString()) : 1,
+          pageNumber: pageNumber,
           pageSize: PAGE_SIZE,
-          schemaType: null, //schemaType?.toString() ?? null,
+          schemaType: null,
         },
         context,
       ),
@@ -71,18 +64,15 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
-      id: id ?? null,
-      query: query ?? null,
-      page: page ?? "1",
+      pageNumber: pageNumber,
     },
   };
 }
 
-const MyCredentials: NextPageWithLayout<{
-  query?: string;
-  page?: string;
+const MyPassport: NextPageWithLayout<{
+  pageNumber: number;
   error: string;
-}> = ({ query, page, error }) => {
+}> = ({ pageNumber, error }) => {
   const [credentialDialogVisible, setCredentialDialogVisible] = useState(false);
   const [activeCredential, setActiveCredential] =
     useState<SSICredentialInfo | null>(null);
@@ -96,27 +86,24 @@ const MyCredentials: NextPageWithLayout<{
     error: dataError,
     isLoading: dataIsLoading,
   } = useQuery<SSIWalletSearchResults>({
-    queryKey: [`Credentials_${query?.toString()}_${page?.toString()}`],
+    queryKey: [`Credentials_${pageNumber}`],
     queryFn: () =>
       searchCredentials({
-        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageNumber: pageNumber,
         pageSize: PAGE_SIZE,
-        schemaType: null, //schemaType?.toString() ?? null,
+        schemaType: null,
       }),
     enabled: !error,
   });
 
   // 🔔 pager change event
-  const handlePagerChange = useCallback(
-    (value: number) => {
-      // redirect
-      void router.push({
-        pathname: `/yoid/passport`,
-        query: { query: query, page: value },
-      });
-    },
-    [query],
-  );
+  const handlePagerChange = useCallback((value: number) => {
+    // redirect
+    void router.push({
+      pathname: `/yoid/passport`,
+      query: { ...(value && { page: value }) },
+    });
+  }, []);
 
   const handleOnClickCredential = useCallback(
     (item: SSICredentialInfo) => {
@@ -264,7 +251,7 @@ const MyCredentials: NextPageWithLayout<{
       </ReactModal>
 
       <div className="w-full">
-        <h5 className="mb-4 font-bold tracking-wider text-black">
+        <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
@@ -274,13 +261,11 @@ const MyCredentials: NextPageWithLayout<{
               },
             ]}
           />
-        </h5>
+        </div>
 
         <Suspense isLoading={dataIsLoading} error={dataError}>
           {/* NO ROWS */}
-          {/* TODO:data.totalCount not populated by API */}
-          {/* {data && (data.totalCount === null || data.totalCount === 0) && ( */}
-          {data && data.items.length === 0 && (
+          {!data?.items?.length && (
             <div className="flex justify-center rounded-lg bg-white p-8 text-center">
               <NoRowsMessage
                 title={"No credentials found"}
@@ -291,56 +276,64 @@ const MyCredentials: NextPageWithLayout<{
             </div>
           )}
 
-          {data && data.items?.length > 0 && (
-            <div className="flex flex-col items-center gap-4">
+          {/* GRID */}
+          {!!data?.items?.length && (
+            <div className="flex flex-col gap-4">
+              {/* PAGINATION INFO */}
+              <PaginationInfoComponent
+                currentPage={pageNumber}
+                itemCount={data?.items ? data.items.length : 0}
+                totalItems={data?.totalCount ?? 0}
+                pageSize={PAGE_SIZE}
+                query={null}
+              />
+
               {/* GRID */}
-              {data && data.items?.length > 0 && (
-                <div className="grid grid-cols-1 gap-4 md:mr-auto md:grid-cols-2 xl:grid-cols-3">
-                  {data.items.map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex h-[180px] cursor-pointer flex-col rounded-lg bg-white p-4 shadow-custom"
-                      onClick={() => handleOnClickCredential(item)}
-                    >
-                      <div className="flex h-full flex-row">
-                        <div className="flex flex-grow flex-row items-start justify-start">
-                          <div className="flex flex-col items-start justify-start gap-1">
-                            <p className="line-clamp-2 max-h-[35px] max-w-[210px] overflow-hidden text-ellipsis pr-2 text-xs font-medium text-gray-dark">
-                              {item.issuer}
-                            </p>
-                            <p className="line-clamp-3 max-h-[80px] max-w-[210px] overflow-hidden text-ellipsis pr-2 text-sm font-bold">
-                              {item.title}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex flex-row items-start">
-                          <AvatarImage
-                            icon={item.issuerLogoURL}
-                            alt={`${item.issuer} Logo`}
-                            size={50}
-                          />
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {data.items.map((item, index) => (
+                  <div
+                    key={index}
+                    className="flex h-[180px] cursor-pointer flex-col rounded-lg bg-white p-4 shadow-custom"
+                    onClick={() => handleOnClickCredential(item)}
+                  >
+                    <div className="flex h-full flex-row">
+                      <div className="flex flex-grow flex-row items-start justify-start">
+                        <div className="flex flex-col items-start justify-start gap-1">
+                          <p className="line-clamp-2 max-h-[35px] max-w-[210px] overflow-hidden text-ellipsis pr-2 text-xs font-medium text-gray-dark">
+                            {item.issuer}
+                          </p>
+                          <p className="line-clamp-3 max-h-[80px] max-w-[210px] overflow-hidden text-ellipsis pr-2 text-sm font-bold">
+                            {item.title}
+                          </p>
                         </div>
                       </div>
-                      <div className="flex flex-row items-center justify-center">
-                        <div className="flex flex-grow text-xs tracking-widest text-gray-dark">
-                          <Moment format={DATETIME_FORMAT_SYSTEM} utc={true}>
-                            {item.dateIssued!}
-                          </Moment>
-                        </div>
-                        <div className="badge bg-green-light text-green">
-                          <IoMdCheckmark className="mr-1 h-4 w-4" />
-                          Verified
-                        </div>
+                      <div className="flex flex-row items-start">
+                        <AvatarImage
+                          icon={item.issuerLogoURL}
+                          alt={`${item.issuer} Logo`}
+                          size={50}
+                        />
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="flex flex-row items-center justify-center">
+                      <div className="flex flex-grow text-xs tracking-widest text-gray-dark">
+                        <Moment format={DATETIME_FORMAT_SYSTEM} utc={true}>
+                          {item.dateIssued!}
+                        </Moment>
+                      </div>
+                      <div className="badge bg-green-light text-green">
+                        <IoMdCheckmark className="mr-1 h-4 w-4" />
+                        Verified
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
 
+              {/* PAGINATION BUTTONS */}
               <div className="mt-2 grid place-items-center justify-center">
-                {/* PAGINATION BUTTONS */}
                 <PaginationButtons
-                  currentPage={page ? parseInt(page) : 1}
+                  currentPage={pageNumber}
                   totalItems={data?.totalCount ?? 0}
                   pageSize={PAGE_SIZE}
                   onClick={handlePagerChange}
@@ -355,8 +348,8 @@ const MyCredentials: NextPageWithLayout<{
   );
 };
 
-MyCredentials.getLayout = function getLayout(page: ReactElement) {
-  return <YoIDTabbed>{page}</YoIDTabbed>;
+MyPassport.getLayout = function getLayout(page: ReactElement) {
+  return <YoID>{page}</YoID>;
 };
 
-export default MyCredentials;
+export default MyPassport;

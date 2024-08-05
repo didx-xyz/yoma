@@ -227,9 +227,12 @@ const MarketplaceTransactions: NextPageWithLayout<{
                   <div className="w-full text-xs text-gray-dark">
                     Instructions
                   </div>
-                  <div className="text-sm font-semibold">
-                    {currentItem.instructions}
-                  </div>
+                  <div
+                    className="text-sm font-semibold"
+                    dangerouslySetInnerHTML={{
+                      __html: currentItem.instructions,
+                    }}
+                  ></div>
                 </div>
               </div>
 

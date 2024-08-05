@@ -13,7 +13,7 @@ import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import Breadcrumb from "~/components/Breadcrumb";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
-import YoIDTabbed from "~/components/Layout/YoIDTabbed";
+import YoIDLayout from "~/components/Layout/YoID";
 import OpportunitiesCarousel, {
   DisplayType,
 } from "~/components/MyOpportunity/OpportunitiesCarousel";
@@ -151,7 +151,7 @@ const MyOpportunitiesAdd: NextPageWithLayout<{
       </Head>
 
       <div className="flex w-full flex-col gap-4">
-        <h5 className="font-bold tracking-wider text-black">
+        <h5 className="text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
               { title: "💳 Yo-ID", url: "/yoid" },
@@ -168,7 +168,7 @@ const MyOpportunitiesAdd: NextPageWithLayout<{
         </h5>
 
         <div className="flex w-full flex-col gap-2 rounded-lg bg-white p-4">
-          <p className="text-sm">
+          <p className="text-xs md:text-sm">
             🔎 Find an opportunity, and add it to your Yo-ID.
           </p>
           <SearchInputLarge
@@ -179,22 +179,25 @@ const MyOpportunitiesAdd: NextPageWithLayout<{
           />
         </div>
 
-        <div className="flex flex-col gap-4 rounded-lg bg-white p-4">
+        <div className="p-4x flex flex-col gap-4">
           {/* VIEWED */}
           <Suspense isLoading={viewedIsLoading} error={viewedError}>
             <OpportunitiesCarousel
               id={`myopportunities_viewed`}
               title="👀 Recently viewed"
               description="Opportunities that you have viewed recently."
+              noRowsDescription="You haven't viewed any opportunities yet."
               data={viewedData!}
               loadData={viewedLoadData}
-              //viewAllUrl="/yoid/opportunities/completed"
               displayType={DisplayType.Viewed}
             />
           </Suspense>
         </div>
 
-        <FormMessage messageType={FormMessageType.Info}>
+        <FormMessage
+          messageType={FormMessageType.Info}
+          classNameLabel="!text-xs md:!text-sm"
+        >
           Note: If the opportunity requires verification, you will need to
           submit your proof and wait for approval before it&apos;s added.
         </FormMessage>
@@ -204,7 +207,7 @@ const MyOpportunitiesAdd: NextPageWithLayout<{
 };
 
 MyOpportunitiesAdd.getLayout = function getLayout(page: ReactElement) {
-  return <YoIDTabbed>{page}</YoIDTabbed>;
+  return <YoIDLayout>{page}</YoIDLayout>;
 };
 
 export default MyOpportunitiesAdd;
