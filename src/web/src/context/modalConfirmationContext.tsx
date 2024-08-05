@@ -105,16 +105,16 @@ const ConfirmationModalContextProvider: React.FC<
           isOpen={show}
           shouldCloseOnOverlayClick={true}
           onRequestClose={onHide}
-          className="fixed inset-0 z-50 m-auto h-[180px] w-full rounded-lg bg-white p-4 font-openSans outline-2 duration-100 animate-in zoom-in md:w-[380px]"
+          className="f-full fixed inset-0 z-50 m-auto min-h-[180px] w-full rounded-lg bg-white p-4 font-openSans outline-2 duration-100 animate-in zoom-in md:h-fit md:w-[380px]"
           portalClassName={"fixed z-40"}
           overlayClassName="fixed inset-0 bg-overlay"
         >
-          <div className="flex h-full flex-col space-y-2">
+          <div className="flex flex-col space-y-2">
             {/* TITLE */}
             {content.title && <p className="text-lg">{content.title}</p>}
 
             {/* MESSAGE BODY */}
-            {content.message}
+            <div className="text-center md:text-start">{content.message}</div>
 
             {/* BUTTONS */}
             <div className="mt-10 flex h-full flex-row place-items-center justify-center space-x-2">

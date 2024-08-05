@@ -717,7 +717,7 @@ const Links: NextPageWithLayout<{
             <>
               {/* ALL TAB */}
               {!isSearchPerformed && (
-                <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+                <div className="flex flex-col items-center">
                   <NoRowsMessage
                     title={"Welcome to Links!"}
                     description={
@@ -730,7 +730,7 @@ const Links: NextPageWithLayout<{
 
               {/* OTHER TABS */}
               {isSearchPerformed && (
-                <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+                <div className="flex flex-col items-center">
                   <NoRowsMessage
                     title={"No links found"}
                     description={"Please try refining your search query."}
