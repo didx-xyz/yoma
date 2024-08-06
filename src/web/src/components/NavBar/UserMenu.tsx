@@ -58,6 +58,8 @@ export const UserMenu: React.FC = () => {
   }, [setUserProfile]);
 
   const renderOrganisationMenuItem = (organisation: OrganizationInfo) => {
+    if (organisation.status == "Deleted") return null;
+
     return (
       <li
         key={`userMenu_orgs_${organisation.id}`}
