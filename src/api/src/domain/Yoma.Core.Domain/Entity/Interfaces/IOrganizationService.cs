@@ -13,7 +13,11 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Organization? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed);
 
-    List<Organization> Contains(string value, bool includeComputed);
+    Settings GetSettingsById(Guid id, bool ensureOrganizationAuthorization);
+
+    SettingsInfo GetSettingsInfoById(Guid id, bool ensureOrganizationAuthorization);
+
+    List<Organization> Contains(string value, bool includeChildItems, bool includeComputed);
 
     OrganizationSearchResults Search(OrganizationSearchFilter filter, bool ensureOrganizationAuthorization);
 
@@ -22,6 +26,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
     Task<Organization> Update(OrganizationRequestUpdate request, bool ensureOrganizationAuthorization);
 
     Task<Organization> UpdateStatus(Guid id, OrganizationRequestUpdateStatus request, bool ensureOrganizationAuthorization);
+
+    Task<Organization> UpdateSettings(Guid id, SettingsRequest request, bool ensureOrganizationAuthorization);
 
     Task<Organization> AssignProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization);
 

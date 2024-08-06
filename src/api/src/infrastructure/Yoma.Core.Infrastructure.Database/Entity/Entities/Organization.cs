@@ -83,6 +83,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Column(TypeName = "varchar(255)")]
     public string? SSOClientIdInbound { get; set; }
 
+    [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
+    public string? Settings { get; set; }
+
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 

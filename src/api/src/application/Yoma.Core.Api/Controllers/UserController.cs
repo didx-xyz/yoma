@@ -147,7 +147,7 @@ namespace Yoma.Core.Api.Controllers
     [HttpPatch("settings")]
     [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public async Task<IActionResult> UpdateSettings([FromBody] UserRequestSettings request)
+    public async Task<IActionResult> UpdateSettings([FromBody] SettingsRequest request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateSettings));
 

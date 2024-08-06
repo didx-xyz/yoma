@@ -90,6 +90,21 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Get the organization's settings by id")]
+    [HttpGet("{id}/settings")]
+    [ProducesResponseType(typeof(Settings), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult GetSettingsById([FromRoute] Guid id)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetSettingsById));
+
+      var result = _organizationService.GetSettingsById(id, true);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetSettingsById));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Search for organizations based on the supplied filter")]
     [HttpPost("search")]
     [ProducesResponseType(typeof(OrganizationSearchResults), (int)HttpStatusCode.OK)]
@@ -132,6 +147,21 @@ namespace Yoma.Core.Api.Controllers
       var result = await _organizationService.UpdateStatus(id, request, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Update the organization's settings (Authenticated User)")]
+    [HttpPatch("{id}/settings")]
+    [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public async Task<IActionResult> UpdateSettings([FromRoute] Guid id, [FromBody] SettingsRequest request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UpdateSettings));
+
+      var result = await _organizationService.UpdateSettings(id, request, true);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UpdateSettings));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

@@ -97,7 +97,7 @@ namespace Yoma.Core.Domain.Entity.Services
       return await ToProfile(user);
     }
 
-    public async Task<UserProfile> UpdateSettings(UserRequestSettings settings)
+    public async Task<UserProfile> UpdateSettings(SettingsRequest settings)
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
       var user = await _userService.UpdateSettings(username, HttpContextAccessorHelper.GetRoles(_httpContextAccessor), settings);

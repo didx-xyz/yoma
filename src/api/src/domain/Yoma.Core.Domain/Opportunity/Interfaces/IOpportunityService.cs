@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems, bool includeComputed);
 
-    List<Models.Opportunity> Contains(string value, bool includeComputed);
+    List<Models.Opportunity> Contains(string value, bool includeChildItems, bool includeComputed);
 
     OpportunitySearchResultsCriteria SearchCriteriaOpportunities(OpportunitySearchFilterCriteria filter, bool ensureOrganizationAuthorization);
 

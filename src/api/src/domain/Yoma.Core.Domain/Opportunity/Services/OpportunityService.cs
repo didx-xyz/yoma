@@ -208,13 +208,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public List<Models.Opportunity> Contains(string value, bool includeComputed)
+    public List<Models.Opportunity> Contains(string value, bool includeChildItems, bool includeComputed)
     {
       if (string.IsNullOrWhiteSpace(value))
         throw new ArgumentNullException(nameof(value));
       value = value.Trim();
 
-      var results = _opportunityRepository.Contains(_opportunityRepository.Query(), value).ToList();
+      var results = _opportunityRepository.Contains(_opportunityRepository.Query(includeChildItems), value).ToList();
 
       if (includeComputed)
         results.ForEach(o =>
@@ -897,7 +897,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         var predicate = PredicateBuilder.False<Models.Opportunity>();
 
         //organizations
-        var matchedOrganizationIds = _organizationService.Contains(filter.ValueContains, false).Select(o => o.Id).Distinct().ToList();
+        var matchedOrganizationIds = _organizationService.Contains(filter.ValueContains, false, false).Select(o => o.Id).Distinct().ToList();
         predicate = predicate.Or(o => matchedOrganizationIds.Contains(o.OrganizationId));
 
         //types
