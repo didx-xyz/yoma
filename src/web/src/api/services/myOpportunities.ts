@@ -1,5 +1,5 @@
 import ApiClient from "~/lib/axiosClient";
-import type { Opportunity } from "../models/opportunity";
+import type { Opportunity, VerificationType } from "../models/opportunity";
 import type {
   MyOpportunityRequestVerify,
   MyOpportunityRequestVerifyFinalizeBatch,
@@ -228,4 +228,30 @@ export const performActionNavigateExternalLink = async (
   await instance.put(
     `/myopportunity/action/${opportunityId}/navigateExternalLink`,
   );
+};
+
+export const downloadVerificationFiles = async (
+  opportunityId: string,
+
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<File> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get(
+    `/myopportunity/action/${opportunityId}/verify/files`,
+    {
+      responseType: "blob", // set responseType to 'blob' or 'arraybuffer'
+    },
+  );
+
+  // create the file name
+  const fileName = `${opportunityId}.zip`;
+
+  // create a new Blob object using the data
+  const blob = new Blob([data], { type: "application/zip" });
+
+  // create a new File object from the Blob
+  const file = new File([blob], fileName);
+
+  return file;
 };
