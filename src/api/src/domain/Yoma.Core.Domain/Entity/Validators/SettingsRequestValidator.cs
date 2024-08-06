@@ -3,10 +3,10 @@ using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Domain.Entity.Validators
 {
-  public class UserRequestSettingsValidator : AbstractValidator<UserRequestSettings>
+  public class SettingsRequestValidator : AbstractValidator<SettingsRequest>
   {
     #region Constructor
-    public UserRequestSettingsValidator()
+    public SettingsRequestValidator()
     {
       RuleFor(x => x.Settings)
          .NotNull().WithMessage("One or more settings required")

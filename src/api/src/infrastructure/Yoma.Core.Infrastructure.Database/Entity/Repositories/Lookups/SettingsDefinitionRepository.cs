@@ -28,7 +28,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories.Lookups
         Group = entity.Group,
         SubGroup = entity.SubGroup,
         Order = entity.Order,
-        Roles = JsonConvert.DeserializeObject<List<string>>(entity.Roles) ?? new List<string>(),
+        Roles = JsonConvert.DeserializeObject<List<string>>(entity.Roles),
         DefaultValue = entity.DefaultValue,
         Type = Enum.Parse<SettingType>(entity.Type, true),
         Enabled = entity.Enabled,

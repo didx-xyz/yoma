@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.Entity.Models.Lookups
 
     public short Order { get; set; }
 
-    public List<string> Roles { get; set; }
+    public List<string>? Roles { get; set; }
 
     public string DefaultValue { get; set; }
 

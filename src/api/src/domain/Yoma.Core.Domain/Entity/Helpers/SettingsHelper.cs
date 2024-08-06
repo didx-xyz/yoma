@@ -149,6 +149,7 @@ namespace Yoma.Core.Domain.Entity.Helpers
           throw new ValidationException($"Setting '{setting.Key}' has an invalid value. Value of type '{definition.Type}' expected");
 
         if (roles == null) continue;
+        if (definition.Roles == null || definition.Roles.Count == 0) continue;
         if (!definition.Roles.Intersect(roles).Any())
           throw new ValidationException($"Setting '{setting.Key}' is not supported based on the current user roles");
 
@@ -173,14 +174,14 @@ namespace Yoma.Core.Domain.Entity.Helpers
               {
                 Group = group.Group,
                 Items = group.Items?
-                      .Where(item => item.Roles.Intersect(roles).Any())
+                      .Where(item => item.Roles == null || item.Roles.Count == 0 || item.Roles.Intersect(roles).Any())
                       .ToList(),
                 Groups = group.Groups?
                       .Select(subgroup => new SettingGroup
                       {
                         Group = subgroup.Group,
                         Items = subgroup.Items?
-                              .Where(item => item.Roles.Intersect(roles).Any())
+                              .Where(item => item.Roles == null || item.Roles.Count == 0 || item.Roles.Intersect(roles).Any())
                               .ToList(),
                         Groups = null
                       })
@@ -202,7 +203,7 @@ namespace Yoma.Core.Domain.Entity.Helpers
       return new SettingsInfo
       {
         Items = settingsInfo.Items
-              .Where(item => item.Roles.Intersect(roles).Any())
+              .Where(item => item.Roles == null || item.Roles.Intersect(roles).Any())
               .ToList()
       };
     }
