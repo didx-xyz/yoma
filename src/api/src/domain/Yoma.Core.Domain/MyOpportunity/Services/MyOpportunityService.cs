@@ -66,6 +66,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     private const int List_Aggregated_Opportunity_By_Limit = 100;
     private const string PlaceholderValue_HiddenEmail = "hidden";
+
+    private static readonly VerificationType[] VerificationTypes_Downloadable = [VerificationType.FileUpload, VerificationType.Picture, VerificationType.VoiceNote];
     #endregion
 
     #region Constructor
@@ -219,6 +221,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public async Task<IFormFile> DownloadVerificationFiles(Guid opportunityId, List<VerificationType>? verificationTypes)
     {
+
       var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
@@ -231,12 +234,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (myOpportunity.Verifications == null || myOpportunity.Verifications.Count == 0)
         throw new EntityNotFoundException($"Verification of opportunity with id '{opportunityId}' has no downloadable files");
 
-      verificationTypes ??= myOpportunity.Verifications.Select(o => o.VerificationType).Distinct().ToList();
+      var verificationTypesConfiguredAndDownloadable = myOpportunity.Verifications.Select(o => o.VerificationType).Where(o => VerificationTypes_Downloadable.Contains(o)).Distinct().ToList();
 
-      if (verificationTypes.Contains(VerificationType.Location))
-        throw new ValidationException($"Verification type '{VerificationType.Location}' is not supported / downloadable");
+      if (verificationTypes == null || verificationTypes.Count == 0)
+        verificationTypes = verificationTypesConfiguredAndDownloadable;
 
-      var notFound = verificationTypes.Except(myOpportunity.Verifications.Select(o => o.VerificationType).Distinct()).ToList();
+      var nonDownloadable = verificationTypes.Except(VerificationTypes_Downloadable).ToList();
+      if (nonDownloadable.Count > 0)
+        throw new ValidationException($"Verification type(s) '{string.Join(", ", nonDownloadable)}' is not supported / downloadable");
+
+      var notFound = verificationTypes.Except(verificationTypesConfiguredAndDownloadable).ToList();
       if (notFound.Count > 0)
         throw new EntityNotFoundException($"Requested verification type(s) '{string.Join(", ", notFound)}' not found for opportunity with id '{opportunityId}'");
 
