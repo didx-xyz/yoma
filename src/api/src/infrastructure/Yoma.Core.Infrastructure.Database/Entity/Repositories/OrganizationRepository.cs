@@ -53,6 +53,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         LogoKey = entity.Logo == null ? null : entity.Logo.Key,
         SSOClientIdOutbound = entity.SSOClientIdOutbound,
         SSOClientIdInbound = entity.SSOClientIdInbound,
+        SettingsRaw = entity.Settings,
         DateCreated = entity.DateCreated,
         CreatedByUserId = entity.CreatedByUserId,
         DateModified = entity.DateModified,
@@ -128,6 +129,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         LogoId = item.LogoId,
         SSOClientIdOutbound = item.SSOClientIdOutbound,
         SSOClientIdInbound = item.SSOClientIdInbound,
+        Settings = item.SettingsRaw,
         DateCreated = item.DateCreated,
         CreatedByUserId = item.CreatedByUserId,
         DateModified = item.DateModified,
@@ -172,6 +174,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
            LogoId = item.LogoId,
            SSOClientIdOutbound = item.SSOClientIdOutbound,
            SSOClientIdInbound = item.SSOClientIdInbound,
+           Settings = item.SettingsRaw,
            DateCreated = DateTimeOffset.UtcNow,
            CreatedByUserId = item.CreatedByUserId,
            DateModified = DateTimeOffset.UtcNow,
@@ -221,6 +224,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       entity.LogoId = item.LogoId;
       entity.SSOClientIdOutbound = item.SSOClientIdOutbound;
       entity.SSOClientIdInbound = item.SSOClientIdInbound;
+      entity.Settings = item.SettingsRaw;
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;
 
@@ -265,6 +269,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         entity.LogoId = item.LogoId;
         entity.SSOClientIdOutbound = item.SSOClientIdOutbound;
         entity.SSOClientIdInbound = item.SSOClientIdInbound;
+        entity.Settings = item.SettingsRaw;
         entity.DateModified = item.DateModified;
         entity.ModifiedByUserId = item.ModifiedByUserId;
       }

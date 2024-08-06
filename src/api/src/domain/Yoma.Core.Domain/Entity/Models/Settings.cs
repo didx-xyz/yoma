@@ -33,6 +33,6 @@ namespace Yoma.Core.Domain.Entity.Models
     public object Value { get; set; }
 
     [JsonIgnore]
-    public List<string> Roles { get; set; }
+    public List<string>? Roles { get; set; }
   }
 }

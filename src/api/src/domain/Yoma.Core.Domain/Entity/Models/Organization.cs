@@ -69,6 +69,11 @@ namespace Yoma.Core.Domain.Entity.Models
     /// </summary>
     public string? SSOClientIdInbound { get; set; }
 
+    [JsonIgnore]
+    public string? SettingsRaw { get; set; }
+
+    public SettingsInfo? Settings { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
 
     public Guid CreatedByUserId { get; set; }

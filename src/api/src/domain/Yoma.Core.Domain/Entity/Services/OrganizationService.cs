@@ -3,6 +3,7 @@ using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
@@ -16,6 +17,7 @@ using Yoma.Core.Domain.EmailProvider.Interfaces;
 using Yoma.Core.Domain.EmailProvider.Models;
 using Yoma.Core.Domain.Entity.Events;
 using Yoma.Core.Domain.Entity.Extensions;
+using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
@@ -43,10 +45,12 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IEmailURLFactory _emailURLFactory;
     private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
     private readonly IEmailProviderClient _emailProviderClient;
+    private readonly ISettingsDefinitionService _settingsDefinitionService;
     private readonly OrganizationRequestValidatorCreate _organizationCreateRequestValidator;
     private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
     private readonly OrganizationSearchFilterValidator _organizationSearchFilterValidator;
     private readonly OrganizationRequestUpdateStatusValidator _organizationRequestUpdateStatusValidator;
+    private readonly SettingsRequestValidator _settingsRequestValidator;
 
     private readonly IMediator _mediator;
 
@@ -76,10 +80,12 @@ namespace Yoma.Core.Domain.Entity.Services
         IEmailURLFactory emailURLFactory,
         IEmailPreferenceFilterService emailPreferenceFilterService,
         IEmailProviderClientFactory emailProviderClientFactory,
+        ISettingsDefinitionService settingsDefinitionService,
         OrganizationRequestValidatorCreate organizationCreateRequestValidator,
         OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
         OrganizationSearchFilterValidator organizationSearchFilterValidator,
         OrganizationRequestUpdateStatusValidator organizationRequestUpdateStatusValidator,
+        SettingsRequestValidator settingsRequestValidator,
         IMediator mediator,
         IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
         IRepository<OrganizationUser> organizationUserRepository,
@@ -99,10 +105,12 @@ namespace Yoma.Core.Domain.Entity.Services
       _emailURLFactory = emailURLFactory;
       _emailPreferenceFilterService = emailPreferenceFilterService;
       _emailProviderClient = emailProviderClientFactory.CreateClient();
+      _settingsDefinitionService = settingsDefinitionService;
       _organizationCreateRequestValidator = organizationCreateRequestValidator;
       _organizationUpdateRequestValidator = organizationUpdateRequestValidator;
       _organizationSearchFilterValidator = organizationSearchFilterValidator;
       _organizationRequestUpdateStatusValidator = organizationRequestUpdateStatusValidator;
+      _settingsRequestValidator = settingsRequestValidator;
       _mediator = mediator;
       _organizationRepository = organizationRepository;
       _organizationUserRepository = organizationUserRepository;
@@ -146,6 +154,7 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         result.LogoURL = GetBlobObjectURL(result.LogoStorageType, result.LogoKey);
         result.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileStorageType, o.FileKey));
+        result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), result.SettingsRaw);
       }
 
       return result;
@@ -165,20 +174,37 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         result.LogoURL = GetBlobObjectURL(result.LogoStorageType, result.LogoKey);
         result.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileStorageType, o.FileKey));
+        result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), result.SettingsRaw);
       }
 
       return result;
     }
 
-    public List<Organization> Contains(string value, bool includeComputed)
+    public Settings GetSettingsById(Guid id, bool ensureOrganizationAuthorization)
+    {
+      var organization = GetById(id, false, false, ensureOrganizationAuthorization);
+      return SettingsHelper.Parse(_settingsDefinitionService.ListByEntityType(EntityType.Organization), organization.SettingsRaw);
+    }
+
+    public SettingsInfo GetSettingsInfoById(Guid id, bool ensureOrganizationAuthorization)
+    {
+      var organization = GetById(id, false, false, ensureOrganizationAuthorization);
+      return SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), organization.SettingsRaw);
+    }
+
+    public List<Organization> Contains(string value, bool includeChildItems, bool includeComputed)
     {
       ArgumentException.ThrowIfNullOrWhiteSpace(value, nameof(value));
       value = value.Trim();
 
-      var results = _organizationRepository.Contains(_organizationRepository.Query(), value).ToList();
+      var results = _organizationRepository.Contains(_organizationRepository.Query(includeChildItems), value).ToList();
 
       if (includeComputed)
+      {
         results.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey));
+        results.ForEach(o => o.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileStorageType, o.FileKey)));
+        results.ForEach(o => o.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), o.SettingsRaw));
+      }
 
       return results;
     }
@@ -277,7 +303,8 @@ namespace Yoma.Core.Domain.Entity.Services
         CreatedByUserId = user.Id,
         ModifiedByUserId = user.Id,
         SSOClientIdOutbound = request.SSOClientIdOutbound,
-        SSOClientIdInbound = request.SSOClientIdInbound
+        SSOClientIdInbound = request.SSOClientIdInbound,
+        Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), (string?)null)
       };
 
       var blobObjects = new List<BlobObject>();
@@ -598,6 +625,32 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
+      return result;
+    }
+
+    public async Task<Organization> UpdateSettings(Guid id, SettingsRequest request, bool ensureOrganizationAuthorization)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      await _settingsRequestValidator.ValidateAndThrowAsync(request);
+
+      var result = GetById(id, false, false, ensureOrganizationAuthorization);
+
+      var definitions = _settingsDefinitionService.ListByEntityType(EntityType.Organization);
+
+      var currentSettings = SettingsHelper.ToDictionary(result.SettingsRaw);
+
+      SettingsHelper.Validate(definitions, null, request.Settings, currentSettings);
+
+      var settings = request.Settings;
+      if (currentSettings != null)
+        settings = settings.Concat(currentSettings.Where(kv => !settings.ContainsKey(kv.Key)))
+          .ToDictionary(kv => kv.Key, kv => kv.Value);
+
+      result.SettingsRaw = JsonConvert.SerializeObject(settings);
+      result = await _organizationRepository.Update(result);
+
+      result.Settings = SettingsHelper.ParseInfo(definitions, settings);
       return result;
     }
 

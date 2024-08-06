@@ -21,7 +21,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     SettingsInfo GetSettingsInfo(string? settingsRaw);
 
-    List<User> Contains(string value, bool includeComputed);
+    List<User> Contains(string value, bool includeChildItems, bool includeComputed);
 
     UserSearchResults Search(UserSearchFilter filter);
 
@@ -29,7 +29,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<User> UpsertPhoto(string? email, IFormFile? file);
 
-    Task<User> UpdateSettings(string? email, List<string> roles, UserRequestSettings request);
+    Task<User> UpdateSettings(string? email, List<string> roles, SettingsRequest request);
 
     Task AssignSkills(User user, Opportunity.Models.Opportunity opportunity);
 

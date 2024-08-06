@@ -14,6 +14,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           columns: ["Id", "EntityType", "Key", "Title", "Description", "Group", "SubGroup", "Order", "Roles", "DefaultValue", "Type", "Enabled"],
           values: new object?[,]
           {
+            // User
             // Email Preferences
             // Completions (Youth)
             { "3B6F3E2E-4A6D-4329-999B-61C9F86A3820", "User", "Email_Opportunity_Completion_Pending", "Opportunity completion pending", "Email sent when successfully applied for opportunity verification.", "Email Preferences", "Completions (Youth)", 1, $"[\"{Constants.Role_User}\"]", "true", "Boolean", false },

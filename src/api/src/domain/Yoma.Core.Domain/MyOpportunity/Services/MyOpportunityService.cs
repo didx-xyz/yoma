@@ -419,10 +419,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         var predicate = PredicateBuilder.False<Models.MyOpportunity>();
 
-        var matchedOpportunityIds = _opportunityService.Contains(filter.ValueContains, false).Select(o => o.Id).ToList();
+        var matchedOpportunityIds = _opportunityService.Contains(filter.ValueContains, false, false).Select(o => o.Id).ToList();
         predicate = predicate.Or(o => matchedOpportunityIds.Contains(o.OpportunityId));
 
-        var matchedUserIds = _userService.Contains(filter.ValueContains, false).Select(o => o.Id).ToList();
+        var matchedUserIds = _userService.Contains(filter.ValueContains, false, false).Select(o => o.Id).ToList();
         predicate = predicate.Or(o => matchedUserIds.Contains(o.UserId));
 
         query = query.Where(predicate);

@@ -51,6 +51,8 @@ namespace Yoma.Core.Domain.Entity
     Admin_Email_Opportunity_Posted,
     Admin_Email_Organization_Approval,
     Admin_Email_ActionLink_Verify_Approval,
-    User_Share_Email_With_Partners
+    User_Share_Email_With_Partners,
+    Organization_Share_Address_Details_With_Partners,
+    Organization_Share_Contact_Info_With_Partners
   }
 }

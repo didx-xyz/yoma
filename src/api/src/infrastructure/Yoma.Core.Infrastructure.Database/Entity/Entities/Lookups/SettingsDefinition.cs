@@ -35,7 +35,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups
     [Required]
     public short Order { get; set; }
 
-    [Required]
+    [Required] //nullable column results in an EF error: 22P02 invalid input syntax for type json
     [Column(TypeName = "jsonb")]
     public string Roles { get; set; }
 

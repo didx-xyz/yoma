@@ -16,6 +16,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         columns: ["Id", "EntityType", "Key", "Title", "Description", "Group", "SubGroup", "Order", "Roles", "DefaultValue", "Type", "Enabled", "Visible"],
         values: new object?[,]
         {
+          // User
           // Display
           { "3B6F3E2E-4A6D-4329-999B-61C9F86A3820", "User", "User_Settings_Configured", "Configured settings", "A user has configured their settings", "Display", null, 1, $"[\"{Constants.Role_User}\"]", "false", "Boolean", true, false },
           { "FE13ECF7-0136-4F5A-9BFD-85BCD31868EF", "User", "User_PopUp_LeavingYoma", "Hide 'leaving Yoma' pop up", "A user has opted to hide the pop up when leaving the Yoma app ", "Display", null, 2, $"[\"{Constants.Role_User}\"]", "false", "Boolean", true, false },

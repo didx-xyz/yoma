@@ -35,7 +35,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly ISettingsDefinitionService _settingsDefinitionService;
     private readonly UserRequestValidator _userRequestValidator;
     private readonly UserSearchFilterValidator _userSearchFilterValidator;
-    private readonly UserRequestSettingsValidator _userRequestSettingsValidator;
+    private readonly SettingsRequestValidator _settingsRequestValidator;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
     private readonly IRepository<UserSkill> _userSkillRepository;
     private readonly IRepository<UserSkillOrganization> _userSkillOrganizationRepository;
@@ -56,7 +56,7 @@ namespace Yoma.Core.Domain.Entity.Services
         ISettingsDefinitionService settingsDefinitionService,
         UserRequestValidator userValidator,
         UserSearchFilterValidator userSearchFilterValidator,
-        UserRequestSettingsValidator userRequestSettingsValidator,
+        SettingsRequestValidator settingsRequestValidator,
         IRepositoryValueContainsWithNavigation<User> userRepository,
         IRepository<UserSkill> userSkillRepository,
         IRepository<UserSkillOrganization> userSkillOrganizationRepository,
@@ -74,7 +74,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _settingsDefinitionService = settingsDefinitionService;
       _userRequestValidator = userValidator;
       _userSearchFilterValidator = userSearchFilterValidator;
-      _userRequestSettingsValidator = userRequestSettingsValidator;
+      _settingsRequestValidator = settingsRequestValidator;
       _userRepository = userRepository;
       _userSkillRepository = userSkillRepository;
       _userSkillOrganizationRepository = userSkillOrganizationRepository;
@@ -168,13 +168,13 @@ namespace Yoma.Core.Domain.Entity.Services
       return SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), settingsRaw);
     }
 
-    public List<User> Contains(string value, bool includeComputed)
+    public List<User> Contains(string value, bool includeChildItems, bool includeComputed)
     {
       if (string.IsNullOrWhiteSpace(value))
         throw new ArgumentNullException(nameof(value));
       value = value.Trim();
 
-      var results = _userRepository.Contains(_userRepository.Query(), value).ToList();
+      var results = _userRepository.Contains(_userRepository.Query(includeChildItems), value).ToList();
 
       if (includeComputed)
       {
@@ -248,6 +248,7 @@ namespace Yoma.Core.Domain.Entity.Services
         result.EducationId = request.EducationId;
         result.GenderId = request.GenderId;
         result.DateOfBirth = request.DateOfBirth.RemoveTime();
+        result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), (string?) null);
       }
 
       result.EmailConfirmed = request.EmailConfirmed;
@@ -299,11 +300,11 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public async Task<User> UpdateSettings(string? email, List<string>? roles, UserRequestSettings request)
+    public async Task<User> UpdateSettings(string? email, List<string>? roles, SettingsRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      await _userRequestSettingsValidator.ValidateAndThrowAsync(request);
+      await _settingsRequestValidator.ValidateAndThrowAsync(request);
 
       var result = GetByEmail(email, false, false);
 

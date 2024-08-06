@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Entity.Models
 {
-  public class UserRequestSettings
+  public class SettingsRequest
   {
     public Dictionary<string, object> Settings { get; set; }
   }

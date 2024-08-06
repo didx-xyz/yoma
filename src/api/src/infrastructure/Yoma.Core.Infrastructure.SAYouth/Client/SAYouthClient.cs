@@ -33,6 +33,22 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     #endregion
 
     #region Public Members
+
+    //learning_opportunity_holder >> Org Name
+    //learning_opportunity_sponsoring_partner >> Yoma (Youth Agency Marketplace)
+    //learning_opportunity_title >> Opp Title
+    //learning_opportunity_description >> Opp Description
+    //learning_opportunity_has_certification >> Opp VerificationEnabled
+    //learning_opportunity_certification_description >> Opp Summary
+    //learning_opportunity_certification_type >> NonAccreditedCertification
+    //learning_opportunity_close_date >> If no end date don't post
+    //learning_opportunity_duration >> If duration exceeds 24 months post null
+    //learning_opportunity_requirements >> Hardcoded text (awaiting Sam)
+    //learning_opportunity_face_to_face >> Online (No) / Offline (Yes), if null Online
+    //learning_opportunity_address >> Org address
+    //learning_address_contact >> Org contact else ? (awaiting Sam)
+    //learning_opportunity_url >> Yoma URL
+
     public async Task<string> CreateOpportunity(Opportunity opportunity)
     {
       //var request = new OpportunitySkillingUpsertRequest
