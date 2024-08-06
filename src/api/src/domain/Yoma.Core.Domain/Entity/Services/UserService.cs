@@ -248,7 +248,7 @@ namespace Yoma.Core.Domain.Entity.Services
         result.EducationId = request.EducationId;
         result.GenderId = request.GenderId;
         result.DateOfBirth = request.DateOfBirth.RemoveTime();
-        result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), (string?) null);
+        result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), (string?)null);
       }
 
       result.EmailConfirmed = request.EmailConfirmed;
