@@ -132,7 +132,10 @@ const YoIDDashboard: NextPageWithLayout<{
       <div className="mt-2 flex flex-wrap justify-center gap-4">
         {/* OPPORTUNITIES */}
         <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
-          <HeaderWithLink title="🏆 Opportunities" url="/yoid/opportunities" />
+          <HeaderWithLink
+            title="🏆 Opportunities"
+            url="/yoid/opportunities/completed"
+          />
           <div className="flex h-[300px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
             <Suspense
               isLoading={myOpportunitiesSummaryIsLoading}

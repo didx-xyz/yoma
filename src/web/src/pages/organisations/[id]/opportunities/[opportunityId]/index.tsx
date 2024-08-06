@@ -534,16 +534,19 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       verificationEnabled: z.union([z.boolean(), z.null()]),
       verificationMethod: z.union([z.number(), z.null()]).optional(),
       verificationTypes: z
-        .array(
-          z.object({
-            type: z.any(),
-            description: z
-              .string({
-                required_error: "Description is required",
-              })
-              .optional(),
-          }),
-        )
+        .union([
+          z.array(
+            z.object({
+              type: z.any(),
+              description: z
+                .string({
+                  required_error: "Description is required",
+                })
+                .optional(),
+            }),
+          ),
+          z.null(),
+        ])
         .optional(),
     })
     .superRefine((values, ctx) => {
@@ -2028,58 +2031,66 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         !!formStateStep2.errors.dateEnd?.message
                       }
                     >
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <FormField
-                          showError={
-                            !!formStateStep2.touchedFields.dateStart ||
-                            formStateStep2.isSubmitted
-                          }
-                          error={formStateStep2.errors.dateStart?.message}
-                        >
-                          <Controller
-                            control={controlStep2}
-                            name="dateStart"
-                            render={({
-                              field: { onChange, onBlur, value },
-                            }) => (
-                              <DatePicker
-                                className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
-                                wrapperClassName="w-full"
-                                onBlur={onBlur} // mark the field as touched
-                                onChange={(date) => onChange(date)}
-                                selected={value ? new Date(value) : null}
-                                placeholderText="Select start date..."
-                                id="input_dateStart" // e2e
-                              />
-                            )}
-                          />
-                        </FormField>
+                      <div className="flex flex-col gap-2">
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          Heads up! If there is not an end date set, this
+                          opportunity cannot be posted to SAYouth, we therefore
+                          recommend adding one.
+                        </FormMessage>
 
-                        <FormField
-                          showError={
-                            !!formStateStep2.touchedFields.dateEnd ||
-                            formStateStep2.isSubmitted
-                          }
-                          error={formStateStep2.errors.dateEnd?.message}
-                        >
-                          <Controller
-                            control={controlStep2}
-                            name="dateEnd"
-                            render={({
-                              field: { onChange, onBlur, value },
-                            }) => (
-                              <DatePicker
-                                className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
-                                wrapperClassName="w-full"
-                                onBlur={onBlur} // mark the field as touched
-                                onChange={(date) => onChange(date)}
-                                selected={value ? new Date(value) : null}
-                                placeholderText="Select end date..."
-                                id="input_dateEnd" // e2e
-                              />
-                            )}
-                          />
-                        </FormField>
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FormField
+                            showError={
+                              !!formStateStep2.touchedFields.dateStart ||
+                              formStateStep2.isSubmitted
+                            }
+                            error={formStateStep2.errors.dateStart?.message}
+                          >
+                            <Controller
+                              control={controlStep2}
+                              name="dateStart"
+                              render={({
+                                field: { onChange, onBlur, value },
+                              }) => (
+                                <DatePicker
+                                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                                  wrapperClassName="w-full"
+                                  onBlur={onBlur} // mark the field as touched
+                                  onChange={(date) => onChange(date)}
+                                  selected={value ? new Date(value) : null}
+                                  placeholderText="Select start date..."
+                                  id="input_dateStart" // e2e
+                                />
+                              )}
+                            />
+                          </FormField>
+
+                          <FormField
+                            showError={
+                              !!formStateStep2.touchedFields.dateEnd ||
+                              formStateStep2.isSubmitted
+                            }
+                            error={formStateStep2.errors.dateEnd?.message}
+                          >
+                            <Controller
+                              control={controlStep2}
+                              name="dateEnd"
+                              render={({
+                                field: { onChange, onBlur, value },
+                              }) => (
+                                <DatePicker
+                                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                                  wrapperClassName="w-full"
+                                  onBlur={onBlur} // mark the field as touched
+                                  onChange={(date) => onChange(date)}
+                                  selected={value ? new Date(value) : null}
+                                  placeholderText="Select end date..."
+                                  id="input_dateEnd" // e2e
+                                />
+                              )}
+                            />
+                          </FormField>
+                        </div>
                       </div>
                     </FormField>
 
@@ -2512,7 +2523,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         )}
                       />
                     </FormField>
-
                     {watchVerificationEnabled &&
                       watchVerificationMethod === VerificationMethod.Manual && (
                         <FormField

@@ -157,7 +157,7 @@ const MyOpportunitiesAdd: NextPageWithLayout<{
               { title: "💳 Yo-ID", url: "/yoid" },
               {
                 title: "🏆 Opportunities",
-                url: "/yoid/opportunities",
+                url: "/yoid/opportunities/completed",
               },
               {
                 title: "➕ Add",
