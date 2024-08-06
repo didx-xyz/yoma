@@ -129,44 +129,7 @@ const YoIDDashboard: NextPageWithLayout<{
       />
 
       {/* DASHBOARD */}
-      <div className="mt-2 flex flex-wrap justify-center gap-4">
-        {/* OPPORTUNITIES */}
-        <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
-          <HeaderWithLink
-            title="🏆 Opportunities"
-            url="/yoid/opportunities/completed"
-          />
-          <div className="flex h-[300px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-            <Suspense
-              isLoading={myOpportunitiesSummaryIsLoading}
-              error={myOpportunitiesSummaryError}
-            >
-              <LineChart data={myOpportunitiesSummary!} />
-            </Suspense>
-          </div>
-        </div>
-
-        {/* SKILLS */}
-        <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-          <HeaderWithLink title="⚡ Skills" url="/yoid/skills" />
-          <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow xl:h-[300px]">
-            <div className="flex flex-grow flex-wrap gap-1 overflow-y-auto">
-              <Suspense isLoading={skillsIsLoading} error={skillsError}>
-                {!skills?.length && (
-                  <NoRowsMessage
-                    title={"No skills."}
-                    description={
-                      "Skills that you receive by completing opportunities will be diplayed here."
-                    }
-                  />
-                )}
-
-                {!!skills?.length && <SkillsCard data={skills} />}
-              </Suspense>
-            </div>
-          </div>
-        </div>
-
+      <div className="mt-2 flex flex-wrap items-center justify-center gap-4">
         {/* WALLET */}
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
           <HeaderWithLink title="💸 Wallet" />
@@ -197,10 +160,30 @@ const YoIDDashboard: NextPageWithLayout<{
           </div>
         </div>
 
+        {/* SKILLS */}
+        <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
+          <HeaderWithLink title="⚡ Skills" url="/yoid/skills" />
+          <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+            <div className="flex flex-wrap gap-1 overflow-y-auto">
+              <Suspense isLoading={skillsIsLoading} error={skillsError}>
+                {!skills?.length && (
+                  <NoRowsMessage
+                    title={"No skills."}
+                    description={
+                      "Skills that you receive by completing opportunities will be diplayed here."
+                    }
+                  />
+                )}
+                {!!skills?.length && <SkillsCard data={skills} />}
+              </Suspense>
+            </div>
+          </div>
+        </div>
+
         {/* CV */}
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
           <HeaderWithLink title="🏦 CV" />
-          <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+          <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow xl:h-[300px]">
             <NoRowsMessage
               icon="🚧"
               title={"Coming soon..."}
@@ -208,6 +191,22 @@ const YoIDDashboard: NextPageWithLayout<{
                 "Watch this space! Exciting updates are on the way ;)"
               }
             />
+          </div>
+        </div>
+
+        {/* OPPORTUNITIES */}
+        <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
+          <HeaderWithLink
+            title="🏆 Opportunities"
+            url="/yoid/opportunities/completed"
+          />
+          <div className="flex h-[300px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+            <Suspense
+              isLoading={myOpportunitiesSummaryIsLoading}
+              error={myOpportunitiesSummaryError}
+            >
+              <LineChart data={myOpportunitiesSummary!} />
+            </Suspense>
           </div>
         </div>
       </div>

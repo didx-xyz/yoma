@@ -33,12 +33,20 @@ const YoIDLayout: TabProps = ({ children }) => {
   useEffect(() => {
     setTabItems([
       {
-        title: "💳 Yo-ID",
+        title: "💳 Overview",
         description: "Overview of your Yo-ID",
         url: "/yoid",
         badgeCount: null,
         selected: router.asPath == "/yoid",
         iconImage: iconCheckmark,
+      },
+      {
+        title: "🌐 Passport",
+        description: "My digital credentials",
+        url: "/yoid/passport",
+        badgeCount: null,
+        selected: router.asPath.startsWith("/yoid/passport"),
+        iconImage: iconCredential,
       },
       {
         title: "🏆 Opportunities",
@@ -55,14 +63,6 @@ const YoIDLayout: TabProps = ({ children }) => {
         badgeCount: null,
         selected: router.asPath.startsWith("/yoid/skills"),
         iconImage: iconTools,
-      },
-      {
-        title: "🌐 Passport",
-        description: "My digital credentials",
-        url: "/yoid/passport",
-        badgeCount: null,
-        selected: router.asPath.startsWith("/yoid/passport"),
-        iconImage: iconCredential,
       },
       {
         title: "👤 Profile",
