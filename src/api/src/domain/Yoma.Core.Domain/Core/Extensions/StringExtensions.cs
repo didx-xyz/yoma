@@ -132,6 +132,18 @@ namespace Yoma.Core.Domain.Core.Extensions
       var result = NonAplhaNumberic().Replace(asciiOnly, string.Empty);
       return result.Trim(); // remove leading and trailing spaces
     }
+
+    public static string TrimToLength(this string input, int length)
+    {
+      ArgumentNullException.ThrowIfNull(input, nameof(input));
+
+      input = input.NormalizeTrim();
+
+      if (length < 10)
+        throw new ArgumentOutOfRangeException(nameof(length), "Must be at least 10 characters.");
+
+      return input.Length <= length ? input : input[..length];
+    }
     #endregion
 
     #region Private Members

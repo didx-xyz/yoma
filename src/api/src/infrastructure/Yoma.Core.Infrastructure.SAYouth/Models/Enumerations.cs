@@ -17,4 +17,10 @@ namespace Yoma.Core.Infrastructure.SAYouth.Models
     EighteenMonths,
     TwentyFourMonths
   }
+
+  public enum CertificateType
+  {
+    AccreditedCertification,
+    NonAccreditedCertification
+  }
 }

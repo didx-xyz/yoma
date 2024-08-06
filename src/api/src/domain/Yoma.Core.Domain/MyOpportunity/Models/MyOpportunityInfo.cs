@@ -44,6 +44,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public string OpportunityDescription { get; set; }
 
     [Ignore]
+    public string? OpportunitySummary { get; set; }
+
+    [Ignore]
     public string OpportunityType { get; set; }
 
     [Ignore]

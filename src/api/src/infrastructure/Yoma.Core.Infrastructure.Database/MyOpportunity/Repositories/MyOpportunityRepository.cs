@@ -41,6 +41,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         OpportunityId = entity.OpportunityId,
         OpportunityTitle = entity.Opportunity.Title,
         OpportunityDescription = entity.Opportunity.Description,
+        OpportunitySummary = entity.Opportunity.Summary,
         OpportunityType = entity.Opportunity.Type.Name,
         OpportunityCommitmentIntervalDescription = $"{entity.Opportunity.CommitmentIntervalCount} {entity.Opportunity.CommitmentInterval.Name}{(entity.Opportunity.CommitmentIntervalCount > 1 ? "s" : string.Empty)}",
         OpportunityParticipantCountTotal = entity.Opportunity.ParticipantCount ?? default,

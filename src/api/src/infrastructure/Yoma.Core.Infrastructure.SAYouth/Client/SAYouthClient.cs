@@ -35,6 +35,19 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     #region Public Members
     public async Task<string> CreateOpportunity(Opportunity opportunity)
     {
+      //var request = new OpportunitySkillingUpsertRequest
+      //{
+      //  Holder = opportunity.OrganizationName.RemoveSpecialCharacters().TrimToLength(200),
+      //  SponsoringPartner = null,
+      //  Title = opportunity.Title.RemoveSpecialCharacters().TrimToLength(200),
+      //  Description = opportunity.Description,
+      //  HasCertification = opportunity.VerificationEnabled ? YesNoOption.Yes : YesNoOption.No,
+      //  CertificationType = CertificateType.AccreditedCertification.ToString(),
+      //  CertificationDescription = opportunity.Description,
+      //  CloseDate = opportunity.DateEnd,
+      //  Duration = opportunity.ToDuration()
+      //};
+
       return await Task.FromResult(Guid.NewGuid().ToString()); //TODO: Implement
     }
 
