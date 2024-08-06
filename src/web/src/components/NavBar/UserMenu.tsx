@@ -7,6 +7,7 @@ import {
   IoMdSearch,
   IoMdSettings,
   IoIosCheckmarkCircle,
+  IoMdConstruct,
 } from "react-icons/io";
 import ReactModal from "react-modal";
 import { type OrganizationInfo } from "~/api/models/user";
@@ -199,6 +200,23 @@ export const UserMenu: React.FC = () => {
             </Link>
           </li>
 
+          {/* USER (SETTINGS) */}
+          <div className="z-20 w-full bg-white-shade">
+            <li className="w-full bg-white-shade py-2">
+              <Link
+                href="/yoid/settings"
+                className="!rounded-t-lg rounded-b-none text-gray-dark"
+                onClick={() => setUserMenuVisible(false)}
+              >
+                <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
+                  <IoMdSettings className="h-6 w-6 text-gray-dark" />
+                </div>
+                Settings
+              </Link>
+            </li>{" "}
+            <div className="divider m-0 mx-4 !bg-gray" />
+          </div>
+
           {/* ORGANISATIONS */}
           {(userProfile?.adminsOf?.length ?? 0) > 0 && (
             <>
@@ -241,6 +259,8 @@ export const UserMenu: React.FC = () => {
               </li> */}
             </>
           )}
+
+          {/* ADMIN */}
           {(activeRoleView == RoleView.Admin || isAdmin) && (
             <div className="z-20 w-full bg-white-shade">
               <li className="w-full bg-white-shade py-2">
@@ -251,7 +271,7 @@ export const UserMenu: React.FC = () => {
                   id={`userMenu_admin`}
                 >
                   <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
-                    <IoMdSettings className="h-6 w-6 text-gray-dark" />
+                    <IoMdConstruct className="h-6 w-6 text-gray-dark" />
                   </div>
                   Admin
                 </Link>
@@ -259,6 +279,8 @@ export const UserMenu: React.FC = () => {
               <div className="divider m-0 mx-4 !bg-gray" />
             </div>
           )}
+
+          {/* SIGN OUT */}
           <div className="z-20 w-full !rounded-b-lg !bg-white-shade">
             <li className="w-full rounded-b-lg bg-white-shade py-2">
               <button
