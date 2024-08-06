@@ -6,6 +6,7 @@ import type { TabItem } from "~/api/models/common";
 import { userProfileAtom } from "~/lib/store";
 import Breadcrumb from "../Breadcrumb";
 import YoIDLayout from "./YoID";
+import FormMessage, { FormMessageType } from "../Common/FormMessage";
 
 export type TabProps = ({
   children,
@@ -67,7 +68,7 @@ const YoIDOpportunities: TabProps = ({ children }) => {
               { title: "💳 Yo-ID", url: "/yoid" },
               {
                 title: "🏆 Opportunities",
-                url: "/yoid/opportunities",
+                url: "/yoid/opportunities/completed",
                 selected: false,
               },
 
@@ -100,6 +101,20 @@ const YoIDOpportunities: TabProps = ({ children }) => {
             </Link>
           ))}
         </div>
+
+        <FormMessage
+          messageType={FormMessageType.Info}
+          classNameLabel="!text-xs md:!text-sm"
+        >
+          Just completed an opportunity? Click
+          <Link
+            className="mx-1 font-bold text-green hover:underline"
+            href="/yoid/opportunities/add"
+          >
+            here
+          </Link>
+          to add it.
+        </FormMessage>
 
         {/* CHILDREN */}
         {children}

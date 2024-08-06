@@ -380,21 +380,19 @@ const LinkDetails: NextPageWithLayout<{
         "",
         <div
           key="confirm-dialog-content"
-          className="text-gray-500 flex h-full flex-col space-y-2"
+          className="flex h-full flex-col space-y-2"
         >
           <div className="flex flex-row items-center gap-2">
             <IoMdWarning className="h-6 w-6 text-warning" />
             <p className="text-lg">Submit</p>
           </div>
 
-          <div>
-            <p className="text-xs leading-6 md:text-sm">
-              Are you sure you want to submit your link for approval?
-              <br />
-              An administrator must approve this link before it becomes active.
-              <br />
-              Please note that these details cannot be changed later.
-            </p>
+          <div className="text-xs leading-6 text-gray-dark md:text-sm">
+            Are you sure you want to submit your link for approval?
+            <br />
+            An administrator must approve this link before it becomes active.
+            <br />
+            Please note that these details cannot be changed later.
           </div>
         </div>,
       );
