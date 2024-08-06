@@ -164,7 +164,7 @@ const YoIDDashboard: NextPageWithLayout<{
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
           <HeaderWithLink title="⚡ Skills" url="/yoid/skills" />
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-            <div className="flex flex-grow flex-wrap gap-1 overflow-y-auto">
+            <div className="flex flex-wrap gap-1 overflow-y-auto">
               <Suspense isLoading={skillsIsLoading} error={skillsError}>
                 {!skills?.length && (
                   <NoRowsMessage
