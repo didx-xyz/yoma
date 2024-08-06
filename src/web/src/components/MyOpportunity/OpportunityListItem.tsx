@@ -11,7 +11,6 @@ import Link from "next/link";
 const OpportunityListItem: React.FC<{
   data: MyOpportunityInfo;
   displayDate: string;
-  allowDownload?: boolean;
   [key: string]: any;
 }> = ({ data, displayDate, allowDownload }) => {
   const router = useRouter();
@@ -29,12 +28,12 @@ const OpportunityListItem: React.FC<{
       const fileExtension = item.fileURL!.split(".").pop() || "";
 
       // Format the completed date
-      const completedDate = new Date(data.dateCompleted!)
-        .toISOString()
-        .split("T")[0]; // YYYY-MM-DD format
+      // const completedDate = new Date(data.dateModified!)
+      //   .toISOString()
+      //   .split("T")[0]; // YYYY-MM-DD format
 
       // Construct the file name
-      const fileName = `${completedDate}_${item.verificationType}.${fileExtension}`;
+      const fileName = `${item.verificationType}.${fileExtension}`;
 
       const link = document.createElement("a");
       link.href = objectURL;
@@ -126,8 +125,9 @@ const OpportunityListItem: React.FC<{
             </h4>
           </div>
         )}
+
         {/* DOWNLOAD LINK */}
-        {allowDownload && !!data?.verifications?.length && (
+        {!!data?.verifications?.filter((x) => x.fileURL).length && (
           <div className="flex flex-row">
             <h4 className="line-clamp-4 text-sm font-thin">
               <button
