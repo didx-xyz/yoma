@@ -47,7 +47,7 @@ const OpportunityListItem: React.FC<{
 
       <div className="flex h-full max-h-[60px] flex-row">
         <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-sm font-light">
-          {data.opportunityDescription}
+          {data.opportunitySummary}
         </p>
       </div>
 

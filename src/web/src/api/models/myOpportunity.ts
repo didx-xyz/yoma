@@ -61,6 +61,7 @@ export interface MyOpportunityInfo {
   opportunityId: string;
   opportunityTitle: string;
   opportunityDescription: string;
+  opportunitySummary: string | null;
   opportunityType: string;
   opportunityCommitmentIntervalDescription: string;
   opportunityParticipantCountTotal: number;

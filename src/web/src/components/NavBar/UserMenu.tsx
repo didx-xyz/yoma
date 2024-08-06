@@ -213,7 +213,7 @@ export const UserMenu: React.FC = () => {
                 </div>
                 Settings
               </Link>
-            </li>{" "}
+            </li>
             <div className="divider m-0 mx-4 !bg-gray" />
           </div>
 
