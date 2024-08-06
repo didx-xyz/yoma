@@ -1,5 +1,5 @@
 import ApiClient from "~/lib/axiosClient";
-import type { Opportunity, VerificationType } from "../models/opportunity";
+import type { Opportunity } from "../models/opportunity";
 import type {
   MyOpportunityRequestVerify,
   MyOpportunityRequestVerifyFinalizeBatch,

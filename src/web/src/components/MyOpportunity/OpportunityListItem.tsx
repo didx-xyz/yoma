@@ -11,7 +11,7 @@ const OpportunityListItem: React.FC<{
   data: MyOpportunityInfo;
   displayDate: string;
   [key: string]: any;
-}> = ({ data, displayDate, allowDownload }) => {
+}> = ({ data, displayDate }) => {
   const router = useRouter();
   const { pathname } = router;
 
