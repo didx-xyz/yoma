@@ -40,7 +40,7 @@ const OpportunityCard: React.FC<InputProps> = ({ data, displayType }) => {
 
       <div className="flex h-full max-h-[60px] flex-row">
         <p className="line-clamp-4 text-xs font-light text-gray-dark">
-          {data.opportunityDescription}
+          {data.opportunitySummary}
         </p>
       </div>
 
