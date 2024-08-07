@@ -245,10 +245,6 @@ export const downloadVerificationFiles = async (
       },
     );
 
-    // Log headers to debug
-    debugger;
-    console.log("Response Headers:", response.headers);
-
     // get file name from result
     const contentDisposition = response.headers["content-disposition"];
     if (!contentDisposition) {
@@ -260,7 +256,17 @@ export const downloadVerificationFiles = async (
       throw new Error("Content-Type header is missing");
     }
 
-    const fileName = contentDisposition.split("filename=")[1].replace(/"/g, "");
+    // Define a regular expression to match both filename and filename* parameters
+    const filenameRegex = /filename\*?=(?:UTF-8''|")?([^;\n]*)/i;
+
+    // Execute the regular expression on the contentDisposition string
+    const matches = filenameRegex.exec(contentDisposition);
+
+    // Extract the filename from the matches
+    const fileName =
+      matches && matches[1]
+        ? decodeURIComponent(matches[1].replace(/"/g, ""))
+        : "";
 
     // create a new Blob object using the data
     const blob = new Blob([response.data], { type: contentType });

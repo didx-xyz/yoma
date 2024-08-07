@@ -49,6 +49,7 @@ import type { SelectOption, Skill } from "~/api/models/lookups";
 import {
   Status,
   VerificationMethod,
+  VerificationType,
   type Opportunity,
   type OpportunityInfo,
   type OpportunityRequestBase,
@@ -592,7 +593,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       // remove non-selected verification types
       values.verificationTypes =
         values.verificationTypes?.filter(
-          (x) => x.type != null && x.type != undefined && x.type != false,
+          (x: any) => x.type != null && x.type != undefined && x.type != false,
         ) ?? [];
       return values;
     });
