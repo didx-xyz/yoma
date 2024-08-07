@@ -263,10 +263,7 @@ export const downloadVerificationFiles = async (
     const matches = filenameRegex.exec(contentDisposition);
 
     // Extract the filename from the matches
-    const fileName =
-      matches && matches[1]
-        ? decodeURIComponent(matches[1].replace(/"/g, ""))
-        : "";
+    const fileName = decodeURIComponent(matches?.[1]?.replace(/"/g, "") || "");
 
     // create a new Blob object using the data
     const blob = new Blob([response.data], { type: contentType });
