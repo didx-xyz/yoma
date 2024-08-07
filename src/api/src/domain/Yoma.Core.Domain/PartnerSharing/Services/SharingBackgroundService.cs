@@ -145,7 +145,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                         if (!SharingService.Statuses_Opportunity_Updatable.Contains(opportunity.Status))
                           throw new InvalidOperationException($"Action '{action}': Opportunity status of '{string.Join(',', SharingService.Statuses_Opportunity_Updatable)}' expected. Current status '{opportunity.Status}'");
 
-                        request.ExternalId = item.EntityExternalId; 
+                        request.ExternalId = item.EntityExternalId;
                         await sharingProviderClient.UpdateOpportunity(request);
                         break;
 
