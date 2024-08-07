@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Helpers;
@@ -13,6 +14,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
   public class PartnerService : IPartnerService
   {
     #region Class Variables
+    private readonly ILogger<PartnerService> _logger;
     private readonly AppSettings _appSettings;
     private readonly IMemoryCache _memoryCache;
     private readonly IOpportunityService _opportunityService;
@@ -20,11 +22,13 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
     #endregion
 
     #region Constructor
-    public PartnerService(IOptions<AppSettings> appSettings,
-        IMemoryCache memoryCache,
-        IOpportunityService opportunityService,
-        IRepository<Models.Lookups.Partner> partnerRepository)
+    public PartnerService(ILogger<PartnerService> logger,
+      IOptions<AppSettings> appSettings,
+      IMemoryCache memoryCache,
+      IOpportunityService opportunityService,
+      IRepository<Models.Lookups.Partner> partnerRepository)
     {
+      _logger = logger;
       _appSettings = appSettings.Value;
       _memoryCache = memoryCache;
       _opportunityService = opportunityService;
@@ -96,9 +100,20 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
             switch (partner)
             {
               case Partner.SAYouth:
-                //only include learning opportunities
+                //only include opportunities with an end date and of type learning
                 var opportunity = _opportunityService.GetById(entityId, false, false, false);
-                if (opportunity.Type != Opportunity.Type.Learning.ToString()) break;
+
+                if (!opportunity.DateEnd.HasValue)
+                {
+                  _logger.LogInformation("Partner sharing filtering: Entity {entityType} with id {entityId} for partner {partner} does not have an end date and will be skipped", EntityType.Opportunity, entityId, partner);
+                  break;
+                }
+
+                if (opportunity.Type != Opportunity.Type.Learning.ToString())
+                {
+                  _logger.LogInformation("Partner sharing filtering: Entity {EntityType} with id {EntityId} for partner {Partner} is not a learning type and will be skipped", EntityType.Opportunity, entityId, partner);
+                  break;
+                }
                 results.Add(item);
                 break;
 
