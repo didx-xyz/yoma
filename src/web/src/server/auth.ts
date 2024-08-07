@@ -257,7 +257,7 @@ async function refreshAccessToken(token: any) {
     const { realm_access } = decode(refreshedTokens.access_token); // eslint-disable-line
 
     // get user profile from yoma-api
-    const userProfile = await getYomaUserProfile(refreshedTokens.access_token!);
+    const userProfile = await getYomaUserProfile(refreshedTokens.access_token);
 
     /* eslint-disable */
     return {
