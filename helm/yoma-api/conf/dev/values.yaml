@@ -11,6 +11,7 @@ ingress:
     enabled: true
     annotations:
       nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Content-Disposition"
       nginx.ingress.kubernetes.io/cors-allow-origin: "https://dev.yoma.world"
     rules:
       - host: v3api.dev.yoma.world
@@ -19,6 +20,7 @@ ingress:
     className: nginx-external
     annotations:
       nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/cors-allow-headers: "DNT,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Range,Authorization,Content-Disposition"
       nginx.ingress.kubernetes.io/cors-allow-origin: "https://dev.yoma.world"
       nginx.ingress.kubernetes.io/server-snippet: |
         location /hangfire {
