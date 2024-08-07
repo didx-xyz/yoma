@@ -232,26 +232,48 @@ export const performActionNavigateExternalLink = async (
 
 export const downloadVerificationFiles = async (
   opportunityId: string,
-
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<File> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
-  const { data } = await instance.get(
-    `/myopportunity/action/${opportunityId}/verify/files`,
-    {
-      responseType: "blob", // set responseType to 'blob' or 'arraybuffer'
-    },
-  );
+  try {
+    const response = await instance.get(
+      `/myopportunity/action/${opportunityId}/verify/files`,
+      {
+        responseType: "blob", // set responseType to 'blob' or 'arraybuffer',
+        withCredentials: true,
+      },
+    );
 
-  // create the file name
-  const fileName = `${opportunityId}.zip`;
+    // get file name from result
+    const contentDisposition = response.headers["content-disposition"];
+    if (!contentDisposition) {
+      throw new Error("Content-Disposition header is missing");
+    }
 
-  // create a new Blob object using the data
-  const blob = new Blob([data], { type: "application/zip" });
+    const contentType = response.headers["content-type"];
+    if (!contentType) {
+      throw new Error("Content-Type header is missing");
+    }
 
-  // create a new File object from the Blob
-  const file = new File([blob], fileName);
+    // Define a regular expression to match both filename and filename* parameters
+    const filenameRegex = /filename\*?=(?:UTF-8''|")?([^;\n]*)/i;
 
-  return file;
+    // Execute the regular expression on the contentDisposition string
+    const matches = filenameRegex.exec(contentDisposition);
+
+    // Extract the filename from the matches
+    const fileName = decodeURIComponent(matches?.[1]?.replace(/"/g, "") || "");
+
+    // create a new Blob object using the data
+    const blob = new Blob([response.data], { type: contentType });
+
+    // create a new File object from the Blob
+    const file = new File([blob], fileName);
+
+    return file;
+  } catch (error) {
+    console.error("Error downloading verification files:", error);
+    throw error;
+  }
 };
