@@ -49,7 +49,7 @@ namespace Yoma.Core.Api
     private const string ConnectionStrings_RedisConnection = "RedisConnection";
     private const string Swagger_JsonUrl = $"/swagger/{Constants.Api_Version}/swagger.json";
 
-    private static readonly string[] ExposedHeaders = [ "Content-Disposition" ];
+    private static readonly string[] ExposedHeaders = ["Content-Disposition"];
     #endregion
 
     #region Constructors
