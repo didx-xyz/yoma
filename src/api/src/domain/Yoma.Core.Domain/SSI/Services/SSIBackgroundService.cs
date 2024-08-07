@@ -285,11 +285,11 @@ namespace Yoma.Core.Domain.SSI.Services
                       throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'User id is null");
                     user = _userService.GetById(item.UserId.Value, true, true);
 
-                    var organization = _organizationService.GetByNameOrNull(_appSettings.SSIIssuerNameYomaOrganization, true, true);
+                    var organization = _organizationService.GetByNameOrNull(_appSettings.YomaOrganizationName, true, true);
                     if (organization == null)
                     {
                       _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with id '{id}' " +
-                          "was skipped as the '{orgName}' organization could not be found", item.SchemaType, item.Id, _appSettings.SSIIssuerNameYomaOrganization);
+                          "was skipped as the '{orgName}' organization could not be found", item.SchemaType, item.Id, _appSettings.YomaOrganizationName);
                       itemIdsToSkip.Add(item.Id);
                       continue;
                     }

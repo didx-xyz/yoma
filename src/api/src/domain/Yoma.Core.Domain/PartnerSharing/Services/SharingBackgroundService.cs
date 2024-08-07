@@ -8,6 +8,10 @@ using Hangfire;
 using Hangfire.Storage;
 using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
 using Yoma.Core.Domain.Opportunity;
+using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Entity.Helpers;
+using Yoma.Core.Domain.Entity;
+using Yoma.Core.Domain.PartnerSharing.Models;
 
 namespace Yoma.Core.Domain.PartnerSharing.Services
 {
@@ -19,6 +23,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly ISharingService _sharingService;
     private readonly IOpportunityService _opportunityService;
+    private readonly IOrganizationService _organizationService;
     private readonly ISharingProviderClientFactoryPartner _sharingProviderClientFactoryPartner;
     private readonly IDistributedLockService _distributedLockService;
     #endregion
@@ -29,6 +34,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
         IOptions<ScheduleJobOptions> scheduleJobOptions,
         ISharingService sharingService,
         IOpportunityService opportunityService,
+        IOrganizationService organizationService,
         ISharingProviderClientFactoryPartner sharingProviderClientFactoryPartner,
         IDistributedLockService distributedLockService)
     {
@@ -37,6 +43,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
       _scheduleJobOptions = scheduleJobOptions.Value;
       _sharingService = sharingService;
       _opportunityService = opportunityService;
+      _organizationService = organizationService;
       _sharingProviderClientFactoryPartner = sharingProviderClientFactoryPartner;
       _distributedLockService = distributedLockService;
     }
@@ -88,6 +95,15 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                       throw new InvalidOperationException($"Entity type '{entityType}': Opportunity id is null");
 
                     var opportunity = _opportunityService.GetById(item.OpportunityId.Value, true, true, false);
+                    var organizationSettings = _organizationService.GetSettingsInfoById(opportunity.OrganizationId, false);
+
+                    var request = new OpportunityRequestUpsert
+                    {
+                      Opportunity = opportunity,
+                      ShareContactInfo = SettingsHelper.GetValue<bool>(organizationSettings, Setting.Organization_Share_Contact_Info_With_Partners.ToString()) == true,
+                      ShareAddressDetails = SettingsHelper.GetValue<bool>(organizationSettings, Setting.Organization_Share_Address_Details_With_Partners.ToString()) == true,
+                    };
+
                     var action = Enum.Parse<ProcessingAction>(item.Action, true);
 
                     switch (action)
@@ -102,7 +118,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                         if (!SharingService.Statuses_Opportunity_Creatable.Contains(opportunity.Status))
                           throw new InvalidOperationException($"Action '{action}': Opportunity status of '{string.Join(',', SharingService.Statuses_Opportunity_Creatable)}' expected. Current status '{opportunity.Status}'");
 
-                        item.EntityExternalId = await sharingProviderClient.CreateOpportunity(opportunity);
+                        item.EntityExternalId = await sharingProviderClient.CreateOpportunity(request);
                         break;
 
                       case ProcessingAction.Update:
@@ -122,14 +138,15 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                         //implicit alignment for sharing processing
                         //if organization is activated, opportunity is activated provided current status of active 
                         //if organization is inactivated, opportunity is inactivated provided active
-                        if (opportunity.OrganizationStatus == Entity.OrganizationStatus.Inactive && opportunity.Status == Status.Active)
+                        if (opportunity.OrganizationStatus == OrganizationStatus.Inactive && opportunity.Status == Status.Active)
                           opportunity.Status = Status.Inactive;
 
                         //scheduling failsafe post implicit adjustment
                         if (!SharingService.Statuses_Opportunity_Updatable.Contains(opportunity.Status))
                           throw new InvalidOperationException($"Action '{action}': Opportunity status of '{string.Join(',', SharingService.Statuses_Opportunity_Updatable)}' expected. Current status '{opportunity.Status}'");
 
-                        await sharingProviderClient.UpdateOpportunity(item.EntityExternalId, opportunity);
+                        request.ExternalId = item.EntityExternalId; 
+                        await sharingProviderClient.UpdateOpportunity(request);
                         break;
 
                       case ProcessingAction.Delete:
@@ -153,7 +170,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                           case Status.Active:
                           case Status.Inactive:
                           case Status.Expired:
-                            if (opportunity.OrganizationStatus != Entity.OrganizationStatus.Deleted)
+                            if (opportunity.OrganizationStatus != OrganizationStatus.Deleted)
                               throw new InvalidOperationException($"Processing action {action}: Opportunity with status {opportunity.Status} must be associated with a deleted organization");
                             break;
 

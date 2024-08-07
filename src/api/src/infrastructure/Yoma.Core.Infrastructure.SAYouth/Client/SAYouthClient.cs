@@ -1,8 +1,8 @@
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
+using Yoma.Core.Domain.PartnerSharing.Models;
 using Yoma.Core.Infrastructure.SAYouth.Models;
 
 namespace Yoma.Core.Infrastructure.SAYouth.Client
@@ -49,7 +49,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     //learning_address_contact >> Org contact else ? (awaiting Sam)
     //learning_opportunity_url >> Yoma URL
 
-    public async Task<string> CreateOpportunity(Opportunity opportunity)
+    public async Task<string> CreateOpportunity(OpportunityRequestUpsert request)
     {
       //var request = new OpportunitySkillingUpsertRequest
       //{
@@ -67,7 +67,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       return await Task.FromResult(Guid.NewGuid().ToString()); //TODO: Implement
     }
 
-    public async Task UpdateOpportunity(string externalId, Opportunity opportunity)
+    public async Task UpdateOpportunity(OpportunityRequestUpsert request)
     {
       await Task.CompletedTask; //TODO: Implement
     }

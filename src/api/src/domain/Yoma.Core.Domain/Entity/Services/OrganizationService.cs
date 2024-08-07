@@ -387,7 +387,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var result = GetById(request.Id, true, true, ensureOrganizationAuthorization);
 
-      if (string.Equals(result.Name, _appSettings.SSIIssuerNameYomaOrganization, StringComparison.InvariantCultureIgnoreCase)
+      if (string.Equals(result.Name, _appSettings.YomaOrganizationName, StringComparison.InvariantCultureIgnoreCase)
           && !string.Equals(result.Name, request.Name))
         throw new ValidationException($"{nameof(Organization)} '{result.Name}' is a system organization and its name cannot be changed");
 

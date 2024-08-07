@@ -1,10 +1,12 @@
+using Yoma.Core.Domain.PartnerSharing.Models;
+
 namespace Yoma.Core.Domain.PartnerSharing.Interfaces.Provider
 {
   public interface ISharingProviderClient
   {
-    Task<string> CreateOpportunity(Opportunity.Models.Opportunity opportunity);
+    Task<string> CreateOpportunity(OpportunityRequestUpsert request);
 
-    Task UpdateOpportunity(string externalId, Opportunity.Models.Opportunity opportunity);
+    Task UpdateOpportunity(OpportunityRequestUpsert request);
 
     Task DeleteOpportunity(string externalId);
   }
