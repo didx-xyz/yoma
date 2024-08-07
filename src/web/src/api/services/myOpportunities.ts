@@ -244,11 +244,14 @@ export const downloadVerificationFiles = async (
     },
   );
 
-  // create the file name
-  const fileName = `${opportunityId}.zip`;
+  debugger;
+  // get file name from result
+  const contentDisposition = data.headers["content-disposition"];
+  const contentType = data.headers["content-type"];
+  const fileName = contentDisposition.split("filename=")[1].replace(/"/g, "");
 
   // create a new Blob object using the data
-  const blob = new Blob([data], { type: "application/zip" });
+  const blob = new Blob([data], { type: contentType });
 
   // create a new File object from the Blob
   const file = new File([blob], fileName);
