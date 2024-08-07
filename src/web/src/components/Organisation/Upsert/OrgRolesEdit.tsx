@@ -103,10 +103,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
         (x) => x.name == "Education",
       );
 
-      if (
-        values.providerTypes?.findIndex((x: string) => x == educationPT?.id) >
-        -1
-      ) {
+      if (values?.providerTypes?.find((x: string) => x == educationPT?.id)) {
         const docCount = getActualDocumentCount(
           values.educationProviderDocumentsExisting,
           values.educationProviderDocumentsDelete,
@@ -126,10 +123,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
         (x) => x.name == "Marketplace",
       );
 
-      if (
-        values.providerTypes?.findIndex((x: string) => x == marketplacePT?.id) >
-        -1
-      ) {
+      if (values?.providerTypes?.find((x: string) => x == marketplacePT?.id)) {
         const docCount = getActualDocumentCount(
           values.businessDocumentsExisting,
           values.businessDocumentsDelete,

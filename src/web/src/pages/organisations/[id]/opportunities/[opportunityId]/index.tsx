@@ -592,7 +592,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       // remove non-selected verification types
       values.verificationTypes =
         values.verificationTypes?.filter(
-          (x) => x.type != null && x.type != undefined && x.type != false,
+          (x: any) => x.type != null && x.type != undefined && x.type != false,
         ) ?? [];
       return values;
     });
