@@ -49,7 +49,6 @@ import type { SelectOption, Skill } from "~/api/models/lookups";
 import {
   Status,
   VerificationMethod,
-  VerificationType,
   type Opportunity,
   type OpportunityInfo,
   type OpportunityRequestBase,
