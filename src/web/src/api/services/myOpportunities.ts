@@ -232,29 +232,45 @@ export const performActionNavigateExternalLink = async (
 
 export const downloadVerificationFiles = async (
   opportunityId: string,
-
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<File> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
-  const { data } = await instance.get(
-    `/myopportunity/action/${opportunityId}/verify/files`,
-    {
-      responseType: "blob", // set responseType to 'blob' or 'arraybuffer'
-    },
-  );
+  try {
+    const response = await instance.get(
+      `/myopportunity/action/${opportunityId}/verify/files`,
+      {
+        responseType: "blob", // set responseType to 'blob' or 'arraybuffer',
+        withCredentials: true,
+      },
+    );
 
-  debugger;
-  // get file name from result
-  const contentDisposition = data.headers["content-disposition"];
-  const contentType = data.headers["content-type"];
-  const fileName = contentDisposition.split("filename=")[1].replace(/"/g, "");
+    // Log headers to debug
+    debugger;
+    console.log("Response Headers:", response.headers);
 
-  // create a new Blob object using the data
-  const blob = new Blob([data], { type: contentType });
+    // get file name from result
+    const contentDisposition = response.headers["content-disposition"];
+    if (!contentDisposition) {
+      throw new Error("Content-Disposition header is missing");
+    }
 
-  // create a new File object from the Blob
-  const file = new File([blob], fileName);
+    const contentType = response.headers["content-type"];
+    if (!contentType) {
+      throw new Error("Content-Type header is missing");
+    }
 
-  return file;
+    const fileName = contentDisposition.split("filename=")[1].replace(/"/g, "");
+
+    // create a new Blob object using the data
+    const blob = new Blob([response.data], { type: contentType });
+
+    // create a new File object from the Blob
+    const file = new File([blob], fileName);
+
+    return file;
+  } catch (error) {
+    console.error("Error downloading verification files:", error);
+    throw error;
+  }
 };
