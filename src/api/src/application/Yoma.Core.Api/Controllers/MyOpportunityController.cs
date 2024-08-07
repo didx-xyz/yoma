@@ -156,7 +156,7 @@ namespace Yoma.Core.Api.Controllers
       var file = await _myOpportunityService.DownloadVerificationFiles(opportunityId, verificationTypes);
       _logger.LogInformation("Request {requestName} handled", nameof(DownloadVerificationFiles));
 
-      return File(file.ToBinary(), file.ContentType, file.Name);
+      return File(file.ToBinary(), file.ContentType, file.FileName);
     }
 
     [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter (Authenticated User)")]
