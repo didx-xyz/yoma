@@ -48,6 +48,8 @@ namespace Yoma.Core.Api
     private const string OAuth_Scope_Separator = " ";
     private const string ConnectionStrings_RedisConnection = "RedisConnection";
     private const string Swagger_JsonUrl = $"/swagger/{Constants.Api_Version}/swagger.json";
+
+    private static readonly string[] ExposedHeaders = [ "Content-Disposition" ];
     #endregion
 
     #region Constructors
@@ -251,7 +253,8 @@ namespace Yoma.Core.Api
                               .WithOrigins(values)
                               .AllowAnyHeader()
                               .AllowCredentials()
-                              .AllowAnyMethod();
+                              .AllowAnyMethod()
+                              .WithExposedHeaders(ExposedHeaders);
                         });
       });
     }
