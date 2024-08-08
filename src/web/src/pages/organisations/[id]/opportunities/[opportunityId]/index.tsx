@@ -455,12 +455,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             */
             if (val == null) return;
 
-            if (typeof val === "string") {
-              val = new Date(val);
-            }
-
             // Normalize the date to midnight
-            val = normalizeDate(val);
+            val = normalizeDate(new Date(val));
 
             if (opportunityId !== "create") {
               // update
