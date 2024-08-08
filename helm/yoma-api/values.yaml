@@ -29,11 +29,11 @@ podAnnotations:
   admission.datadoghq.com/dotnet-lib.version: v2.49.0
 deploymentLabels:
   tags.datadoghq.com/service: yoma-api
-  tags.datadoghq.com/version: '{{ .Values.image.tag | default .Chart.AppVersion }}'
+  tags.datadoghq.com/version: "{{ .Values.image.tag | default .Chart.AppVersion }}"
 podLabels:
   admission.datadoghq.com/enabled: "false" # disabled by default (for now)
   tags.datadoghq.com/service: yoma-api
-  tags.datadoghq.com/version: '{{ .Values.image.tag | default .Chart.AppVersion }}'
+  tags.datadoghq.com/version: "{{ .Values.image.tag | default .Chart.AppVersion }}"
 
 env:
   DD_RUNTIME_METRICS_ENABLED: true
@@ -44,10 +44,12 @@ env:
   DD_PROFILING_HEAP_ENABLED: true
   DD_PROFILING_ALLOCATION_ENABLED: true
 
-podSecurityContext: {}
+podSecurityContext:
+  {}
   # fsGroup: 2000
 
-securityContext: {}
+securityContext:
+  {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -75,14 +77,30 @@ ingress:
   internal:
     enabled: false
     className: nginx-internal
-    annotations: {}
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
+      nginx.ingress.kubernetes.io/proxy-buffering: "on"
+      nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
+    rules:
+      - host: example.com
+        paths:
+          - path: /
+            port: 8000
+  external:
+    enabled: false
+    className: nginx-external
+    annotations:
+      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
+      nginx.ingress.kubernetes.io/proxy-buffering: "on"
+      nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
     rules:
       - host: example.com
         paths:
           - path: /
             port: 8000
 
-resources: {}
+resources:
+  {}
   # We usually recommend not to specify default resources and to leave this as a conscious
   # choice for the user. This also increases chances charts run on environments with little
   # resources, such as Minikube. If you do want to specify resources, uncomment the following
@@ -120,14 +138,14 @@ affinity:
           labelSelector:
             matchLabels:
               app.kubernetes.io/name: '{{ include "yoma-api.name" . }}'
-              app.kubernetes.io/instance: '{{ .Release.Name }}'
+              app.kubernetes.io/instance: "{{ .Release.Name }}"
           topologyKey: kubernetes.io/hostname
       - weight: 100
         podAffinityTerm:
           labelSelector:
             matchLabels:
               app.kubernetes.io/name: '{{ include "yoma-api.name" . }}'
-              app.kubernetes.io/instance: '{{ .Release.Name }}'
+              app.kubernetes.io/instance: "{{ .Release.Name }}"
           topologyKey: kubernetes.io/zone
 
 volumeMounts: {}

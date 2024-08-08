@@ -12,6 +12,8 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public string? DisplayName { get; set; }
 
+    public Guid? CountryId { get; set; }
+
     public override bool Equals(object? obj)
     {
       if (obj == null || obj is not UserInfo) return false;

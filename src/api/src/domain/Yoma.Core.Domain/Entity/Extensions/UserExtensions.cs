@@ -52,7 +52,8 @@ namespace Yoma.Core.Domain.Entity.Extensions
         Email = value.Email,
         FirstName = value.FirstName,
         Surname = value.Surname,
-        DisplayName = value.DisplayName
+        DisplayName = value.DisplayName,
+        CountryId = value.CountryId
       };
     }
 
