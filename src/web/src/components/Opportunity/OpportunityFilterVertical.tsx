@@ -541,14 +541,6 @@ export const OpportunityFilterVertical: React.FC<{
 
         {/* BUTTONS */}
         <div className="mx-4 my-8 flex flex-col items-center justify-center gap-6 md:flex-row">
-          {onSubmit && (
-            <button
-              type="submit"
-              className="btn btn-primary w-full flex-grow rounded-full md:w-40"
-            >
-              {submitButtonText}
-            </button>
-          )}
           {onClear && (
             <button
               type="button"
@@ -556,6 +548,14 @@ export const OpportunityFilterVertical: React.FC<{
               onClick={onClear}
             >
               {clearButtonText}
+            </button>
+          )}
+          {onSubmit && (
+            <button
+              type="submit"
+              className="btn btn-primary w-full flex-grow rounded-full md:w-40"
+            >
+              {submitButtonText}
             </button>
           )}
         </div>

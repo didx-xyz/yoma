@@ -1,12 +1,8 @@
 import React from "react";
 
-interface LoadingSkeletonProps {
+export const LoadingSkeleton: React.FC<{
   className?: string;
-}
-
-export const LoadingSkeleton: React.FC<LoadingSkeletonProps> = ({
-  className = "w-full h-full",
-}) => {
+}> = ({ className = "w-full h-full" }) => {
   return (
     <div className={`flex flex-col gap-4 ${className}`}>
       <div className="flex items-center gap-4">
