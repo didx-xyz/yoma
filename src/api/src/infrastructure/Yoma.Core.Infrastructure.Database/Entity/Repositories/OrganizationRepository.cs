@@ -81,7 +81,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 FirstName = o.User.FirstName,
                 Surname = o.User.Surname,
                 DisplayName = o.User.DisplayName,
-                CountryId = o.User.CountryId  
+                CountryId = o.User.CountryId
               }).OrderBy(o => o.DisplayName).ToList() : null
 
       }).AsSplitQuery();
