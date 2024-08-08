@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 interface InputProps {
   [key: string]: any;
@@ -17,6 +17,8 @@ export const PaginationButtons: React.FC<InputProps> = ({
   showInfo,
   onClick,
 }) => {
+  const [inputValue, setInputValue] = useState(currentPage);
+
   // 🧮 calculated fields
   const totalPages = useMemo(() => {
     const totalItemCount = totalItems ?? 0;
@@ -37,38 +39,51 @@ export const PaginationButtons: React.FC<InputProps> = ({
     return result;
   }, [totalPages]);
 
-  const handlePagerChange = (
-    event: React.ChangeEvent<unknown>,
-    value: number,
-  ) => {
-    onClick(value);
-  };
+  const handlePagerChange = useCallback(
+    (value: number) => {
+      onClick(value);
+    },
+    [onClick],
+  );
+
+  const handleInputChange = useCallback(
+    (
+      event:
+        | React.ChangeEvent<HTMLInputElement>
+        | React.KeyboardEvent<HTMLInputElement>,
+    ) => {
+      const value = parseInt((event.target as HTMLInputElement).value, 10);
+      setInputValue(value);
+
+      if (
+        event.type === "blur" ||
+        (event.type === "keydown" &&
+          (event as React.KeyboardEvent).key === "Enter")
+      ) {
+        if (!isNaN(value) && value >= 1 && value <= totalPages) {
+          handlePagerChange(value);
+        } else {
+          setInputValue(currentPage);
+        }
+      }
+    },
+    [totalPages, currentPage, handlePagerChange],
+  );
 
   return (
     <>
       {totalPages > 1 && (
         <div className="mb-4 flex w-full items-center justify-center gap-2">
           {/* PREVIOUS BUTTON */}
-          {!(currentPage > 1 && totalPages >= currentPage) && (
-            <button
-              key={`PaginationItem_Prev`}
-              type="button"
-              className="btn btn-square btn-primary btn-sm !rounded-md border-0 bg-white text-black hover:bg-gray"
-              disabled
-            >
-              «
-            </button>
-          )}
-          {currentPage > 1 && totalPages >= currentPage && (
-            <button
-              key={`PaginationItem_Prev`}
-              type="button"
-              className="btn btn-square btn-primary btn-sm !rounded-md border-0 bg-white text-black hover:bg-gray"
-              onClick={(e) => handlePagerChange(e, currentPage - 1)}
-            >
-              «
-            </button>
-          )}
+          <button
+            key={`PaginationItem_Prev`}
+            type="button"
+            className="btn btn-square btn-sm !rounded-md border-0 bg-gray text-black hover:bg-gray disabled:invisible"
+            disabled={!(currentPage > 1 && totalPages >= currentPage)}
+            onClick={() => handlePagerChange(currentPage - 1)}
+          >
+            «
+          </button>
 
           {/* PAGER BUTTONS */}
           {showPages &&
@@ -78,7 +93,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
                   {pageNumber === currentPage && (
                     <button
                       type="button"
-                      className="btn btn-square btn-primary btn-sm !rounded-md border-0 bg-white text-black hover:bg-gray disabled:bg-gray-light"
+                      className="btn btn-square btn-primary btn-sm cursor-default !rounded-md border-0 bg-white text-black hover:bg-gray disabled:bg-gray-light"
                       disabled
                     >
                       {pageNumber}
@@ -89,7 +104,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
                     <button
                       type="button"
                       className="btn btn-square btn-primary btn-sm cursor-pointer !rounded-md border-0 bg-white text-black hover:bg-gray"
-                      onClick={(e) => handlePagerChange(e, pageNumber)}
+                      onClick={() => handlePagerChange(pageNumber)}
                     >
                       {pageNumber}
                     </button>
@@ -100,32 +115,33 @@ export const PaginationButtons: React.FC<InputProps> = ({
 
           {/* INFO */}
           {showInfo && (
-            <div className="text-sm font-bold">
-              {currentPage} of {totalPages}
+            <div className="flex flex-row items-center gap-2 text-xs">
+              <span>Page</span>
+              <input
+                type="number"
+                className="input input-bordered input-sm rounded-md border-gray font-bold focus:border-gray focus:outline-none"
+                value={inputValue}
+                onChange={handleInputChange}
+                onBlur={handleInputChange}
+                onKeyDown={handleInputChange}
+                min={1}
+                max={totalPages}
+              />
+              <span>of</span>
+              <span className="font-bold">{totalPages}</span>
             </div>
           )}
 
           {/* NEXT BUTTON */}
-          {totalPages <= currentPage && (
-            <button
-              key={`PaginationItem_Next`}
-              type="button"
-              className="btn btn-square btn-primary btn-sm !rounded-md border-0 bg-white text-black hover:bg-gray disabled:bg-gray-light"
-              disabled
-            >
-              »
-            </button>
-          )}
-          {totalPages > currentPage && (
-            <button
-              key={`PaginationItem_Next`}
-              type="button"
-              className="btn btn-square btn-primary btn-sm cursor-pointer !rounded-md border-0 bg-white text-black hover:bg-gray"
-              onClick={(e) => handlePagerChange(e, currentPage + 1)}
-            >
-              »
-            </button>
-          )}
+          <button
+            key={`PaginationItem_Next`}
+            type="button"
+            className="btn btn-square btn-sm !rounded-md border-0 bg-gray text-black hover:bg-gray disabled:invisible"
+            disabled={totalPages <= currentPage}
+            onClick={() => handlePagerChange(currentPage + 1)}
+          >
+            »
+          </button>
         </div>
       )}
     </>
