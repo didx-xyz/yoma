@@ -7,12 +7,17 @@ import {
   type OnSlideProps,
   Slide,
   Slider,
-  SliderBarDotGroup,
-  renderDotsDynamicPill,
 } from "react-scroll-snap-anime-slider";
 import type { OpportunityCategory } from "~/api/models/opportunity";
 import { screenWidthAtom } from "~/lib/store";
 import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
+import {
+  XS2_BREAKPOINT,
+  XS_BREAKPOINT,
+  SM_BREAKPOINT,
+  MD_BREAKPOINT,
+  LG_BREAKPOINT,
+} from "~/lib/constants";
 
 const OpportunityCategoriesHorizontalFilter: React.FC<{
   lookups_categories: OpportunityCategory[];
@@ -26,19 +31,19 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
   const [totalSlides] = useState(lookups_categories?.length ?? 0);
 
   useEffect(() => {
-    if (screenWidth < 480) {
+    if (screenWidth < XS2_BREAKPOINT) {
       // Very small screens
       setVisibleSlides(2);
-    } else if (screenWidth >= 480 && screenWidth < 600) {
+    } else if (screenWidth >= XS2_BREAKPOINT && screenWidth < XS_BREAKPOINT) {
       // Mobile
       setVisibleSlides(3);
-    } else if (screenWidth >= 600 && screenWidth < 768) {
+    } else if (screenWidth >= XS_BREAKPOINT && screenWidth < SM_BREAKPOINT) {
       // Between mobile and tablet
       setVisibleSlides(4);
-    } else if (screenWidth >= 768 && screenWidth < 1024) {
+    } else if (screenWidth >= SM_BREAKPOINT && screenWidth < MD_BREAKPOINT) {
       // Tablet
       setVisibleSlides(5);
-    } else if (screenWidth >= 1024 && screenWidth < 1440) {
+    } else if (screenWidth >= MD_BREAKPOINT && screenWidth < LG_BREAKPOINT) {
       // Small desktop
       setVisibleSlides(6);
     } else {
@@ -70,7 +75,7 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
       visibleSlides={visibleSlides}
       onSlide={onSlide}
       currentSlide={currentSlide}
-      freeScroll={true}
+      className="relative"
     >
       {isLoading ? (
         <div className="flex h-[135px] items-center justify-center">
@@ -103,8 +108,9 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
           })}
         </Slider>
       )}
-      <div className="flex items-center justify-center">
-        <ButtonBack className="group btn btn-circle btn-sm h-10 w-10 transform-gpu cursor-pointer border-none bg-transparent text-black shadow-none md:-mr-3 md:h-8 md:w-8">
+      {/* NB: the pointer-events-none & pointer-events-auto classes are needed to ensure that both the buttons and the carousel items are clickable */}
+      <div className="pointer-events-none absolute -inset-x-1 inset-y-0 flex items-center justify-between">
+        <ButtonBack className="group btn btn-circle btn-sm pointer-events-auto h-8 w-8 transform-gpu cursor-pointer border-[1.5px] border-purple bg-white text-black transition-all duration-500 ease-bounce hover:border-purple hover:bg-white disabled:invisible md:h-8 md:w-8 xl:hover:scale-110 xl:hover:bg-purple">
           <svg
             className="mr-[2px] h-[45%] w-[45%] transform text-purple group-disabled:text-gray"
             viewBox="0 0 532 532"
@@ -118,18 +124,9 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
           </svg>
         </ButtonBack>
 
-        <SliderBarDotGroup
-          id="categories-carousel-slider-dot-group"
-          aria-label="slider bar"
-          dotGroupProps={{
-            id: "categories-carousel-slider-bar-dot-group",
-          }}
-          renderDots={renderDotsDynamicPill}
-        />
-
-        <ButtonNext className="group btn btn-circle btn-sm h-10 w-10 transform-gpu cursor-pointer border-none bg-transparent text-black shadow-none md:-ml-3 md:h-8 md:w-8">
+        <ButtonNext className="group btn btn-circle btn-sm pointer-events-auto h-8 w-8 transform-gpu cursor-pointer border-[1.5px] border-purple bg-white text-black transition-all duration-500 ease-bounce hover:border-purple hover:bg-white disabled:invisible md:h-8 md:w-8 xl:hover:scale-110 xl:hover:bg-purple">
           <svg
-            className="ml-[2px] h-[45%] w-[45%] transform text-purple group-disabled:text-gray"
+            className="ml-[2px] h-[45%] w-[45%] transform text-purple transition-all duration-500 ease-bounce group-disabled:text-gray xl:group-hover:scale-110 xl:group-hover:text-white"
             viewBox="0 0 532 532"
           >
             <path
