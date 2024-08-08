@@ -23,9 +23,9 @@ namespace Yoma.Core.Domain.Entity.Validators
 
       RuleFor(x => x.Name).NotEmpty().Length(1, 80).WithMessage("'{PropertyName}' is required and must be between 1 and 80 characters long.");
       RuleFor(x => x.WebsiteURL).Length(1, 2048).Must(ValidURL).WithMessage("'{PropertyName}' is invalid.");
-      RuleFor(x => x.PrimaryContactName).Length(1, 255).When(x => !string.IsNullOrEmpty(x.PrimaryContactName)).WithMessage("'{PropertyName}' must be between 1 and 255 characters.");
-      RuleFor(x => x.PrimaryContactEmail).Length(1, 320).EmailAddress().When(x => !string.IsNullOrEmpty(x.PrimaryContactEmail)).WithMessage("'{PropertyName}' is invalid.");
-      RuleFor(x => x.PrimaryContactPhone).Length(1, 50).Matches(RegExValidators.PhoneNumber()).When(x => !string.IsNullOrEmpty(x.PrimaryContactPhone)).WithMessage("'{PropertyName}' is invalid.");
+      RuleFor(x => x.PrimaryContactName).NotEmpty().Length(1, 255).WithMessage("'{PropertyName}' is required must be between 1 and 255 characters.");
+      RuleFor(x => x.PrimaryContactEmail).NotEmpty().Length(1, 320).EmailAddress().WithMessage("'{PropertyName}' is required and must be a valid email address.");
+      RuleFor(x => x.PrimaryContactPhone).NotEmpty().Length(1, 50).Matches(RegExValidators.PhoneNumber()).WithMessage("'{PropertyName}' is required and must be a valid phone number.");
       RuleFor(x => x.VATIN).Length(1, 255).When(x => !string.IsNullOrEmpty(x.VATIN)).WithMessage("'{PropertyName}' must be between 1 and 255 characters.");
       RuleFor(x => x.TaxNumber).Length(1, 255).When(x => !string.IsNullOrEmpty(x.TaxNumber)).WithMessage("'{PropertyName}' must be between 1 and 255 characters.");
       RuleFor(x => x.RegistrationNumber).Length(1, 255).When(x => !string.IsNullOrEmpty(x.RegistrationNumber)).WithMessage("'{PropertyName}' must be between 1 and 255 characters.");
