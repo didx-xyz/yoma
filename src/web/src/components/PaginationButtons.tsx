@@ -39,9 +39,12 @@ export const PaginationButtons: React.FC<InputProps> = ({
     return result;
   }, [totalPages]);
 
-  const handlePagerChange = useCallback((value: number) => {
-    onClick(value);
-  }, []);
+  const handlePagerChange = useCallback(
+    (value: number) => {
+      onClick(value);
+    },
+    [onClick],
+  );
 
   const handleInputChange = useCallback(
     (
@@ -77,7 +80,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
             type="button"
             className="btn btn-square btn-sm !rounded-md border-0 bg-gray text-black hover:bg-gray disabled:invisible"
             disabled={!(currentPage > 1 && totalPages >= currentPage)}
-            onClick={(e) => handlePagerChange(currentPage - 1)}
+            onClick={() => handlePagerChange(currentPage - 1)}
           >
             «
           </button>
@@ -101,7 +104,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
                     <button
                       type="button"
                       className="btn btn-square btn-primary btn-sm cursor-pointer !rounded-md border-0 bg-white text-black hover:bg-gray"
-                      onClick={(e) => handlePagerChange(pageNumber)}
+                      onClick={() => handlePagerChange(pageNumber)}
                     >
                       {pageNumber}
                     </button>
@@ -135,7 +138,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
             type="button"
             className="btn btn-square btn-sm !rounded-md border-0 bg-gray text-black hover:bg-gray disabled:invisible"
             disabled={totalPages <= currentPage}
-            onClick={(e) => handlePagerChange(currentPage + 1)}
+            onClick={() => handlePagerChange(currentPage + 1)}
           >
             »
           </button>
