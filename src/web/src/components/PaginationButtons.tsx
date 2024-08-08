@@ -67,7 +67,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
         }
       }
     },
-    [totalPages, handlePagerChange],
+    [totalPages, currentPage, handlePagerChange],
   );
 
   return (
