@@ -39,12 +39,9 @@ export const PaginationButtons: React.FC<InputProps> = ({
     return result;
   }, [totalPages]);
 
-  const handlePagerChange = (
-    event: React.ChangeEvent<unknown>,
-    value: number,
-  ) => {
+  const handlePagerChange = useCallback((value: number) => {
     onClick(value);
-  };
+  }, []);
 
   const handleInputChange = useCallback(
     (
@@ -61,7 +58,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
           (event as React.KeyboardEvent).key === "Enter")
       ) {
         if (!isNaN(value) && value >= 1 && value <= totalPages) {
-          handlePagerChange(event, value);
+          handlePagerChange(value);
         } else {
           setInputValue(currentPage);
         }
@@ -80,7 +77,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
             type="button"
             className="btn btn-square btn-sm !rounded-md border-0 bg-gray text-black hover:bg-gray disabled:invisible"
             disabled={!(currentPage > 1 && totalPages >= currentPage)}
-            onClick={(e) => handlePagerChange(e, currentPage - 1)}
+            onClick={(e) => handlePagerChange(currentPage - 1)}
           >
             «
           </button>
@@ -104,7 +101,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
                     <button
                       type="button"
                       className="btn btn-square btn-primary btn-sm cursor-pointer !rounded-md border-0 bg-white text-black hover:bg-gray"
-                      onClick={(e) => handlePagerChange(e, pageNumber)}
+                      onClick={(e) => handlePagerChange(pageNumber)}
                     >
                       {pageNumber}
                     </button>
@@ -138,7 +135,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
             type="button"
             className="btn btn-square btn-sm !rounded-md border-0 bg-gray text-black hover:bg-gray disabled:invisible"
             disabled={totalPages <= currentPage}
-            onClick={(e) => handlePagerChange(e, currentPage + 1)}
+            onClick={(e) => handlePagerChange(currentPage + 1)}
           >
             »
           </button>
