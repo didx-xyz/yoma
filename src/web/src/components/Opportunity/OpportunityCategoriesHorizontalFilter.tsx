@@ -1,26 +1,24 @@
 import { useAtomValue } from "jotai";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  Carousel,
   ButtonBack,
   ButtonNext,
+  Carousel,
   type OnSlideProps,
   Slide,
   Slider,
 } from "react-scroll-snap-anime-slider";
 import type { OpportunityCategory } from "~/api/models/opportunity";
-import { screenWidthAtom } from "~/lib/store";
-import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
 import {
+  LG_BREAKPOINT,
+  MD_BREAKPOINT,
+  SM_BREAKPOINT,
   XS2_BREAKPOINT,
   XS_BREAKPOINT,
-  SM_BREAKPOINT,
-  MD_BREAKPOINT,
-  LG_BREAKPOINT,
 } from "~/lib/constants";
-import { LoadingSkeleton } from "../Status/LoadingSkeleton";
-import { Loading } from "../Status/Loading";
+import { screenWidthAtom } from "~/lib/store";
 import { LoadingInline } from "../Status/LoadingInline";
+import { OpportunityCategoryHorizontalCard } from "./OpportunityCategoryHorizontalCard";
 
 const OpportunityCategoriesHorizontalFilter: React.FC<{
   lookups_categories: OpportunityCategory[];
