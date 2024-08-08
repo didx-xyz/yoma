@@ -963,6 +963,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (ensureOrganizationAuthorization)
         _organizationService.IsAdmin(request.OrganizationId, true);
 
+      if (request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
+        throw new ValidationException("The start date cannot be in the past, it can be today or later");
+
       var existingByTitle = GetByTitleOrNull(request.Title, false, false);
       if (existingByTitle != null)
         throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
@@ -971,7 +974,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
       {
         if (request.PostAsActive)
-          throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' has already ended and can not be posted as active");
+          throw new ValidationException($"{nameof(Models.Opportunity)} has already ended and can not be posted as active");
         status = Status.Expired;
       }
 
@@ -1085,6 +1088,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var result = GetById(request.Id, true, true, false);
 
       AssertUpdatable(result);
+
+      if (!result.DateStart.Equals(request.DateStart) && request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
+        throw new ValidationException("The start date cannot be in the past. The start date has been updated and must be today or later");
 
       var existingByTitle = GetByTitleOrNull(request.Title, false, false);
       if (existingByTitle != null && result.Id != existingByTitle.Id)
