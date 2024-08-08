@@ -440,7 +440,43 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       .union([z.null(), z.string(), z.date()])
       .refine((val) => val !== null, {
         message: "Start date is required.",
-      }),
+      })
+      .refine(
+        (val) => {
+          /*
+          Create: Can not be in the past
+          Update: Can not be in the past provided the start date has changed
+          */
+          if (typeof val === "string") {
+            val = new Date(val);
+          }
+
+          // Normalize the date to midnight
+          const normalizeDate = (date: Date) => {
+            const normalized = new Date(date);
+            normalized.setHours(0, 0, 0, 0);
+            return normalized;
+          };
+
+          val = normalizeDate(val);
+
+          if (opportunityId !== "create") {
+            // update
+            const originalDateStart = opportunity?.dateStart;
+            if (originalDateStart) {
+              const originalDate = normalizeDate(new Date(originalDateStart));
+              if (originalDate.getTime() === val.getTime()) {
+                return true; // No change in start date
+              }
+            }
+          }
+
+          return val instanceof Date && val >= normalizeDate(new Date());
+        },
+        {
+          message: "Start date cannot be in the past.",
+        },
+      ),
     dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
     participantLimit: z
       .union([z.nan(), z.null(), z.number()])
