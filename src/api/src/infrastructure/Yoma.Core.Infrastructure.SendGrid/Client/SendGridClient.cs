@@ -42,7 +42,13 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
 
     #region Public Members
     public async Task Send<T>(EmailType type, List<EmailRecipient> recipients, T data)
-        where T : EmailBase
+      where T : EmailBase
+    {
+      await Send(type, [(recipients, data)]);
+    }
+
+    public async Task Send<T>(EmailType type, List<(List<EmailRecipient> Recipients, T Data)> recipientDataGroups)
+      where T : EmailBase
     {
       if (!_appSettings.SendGridEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
@@ -50,22 +56,31 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
         return;
       }
 
-      if (recipients == null || recipients.Count == 0)
-        throw new ArgumentNullException(nameof(recipients));
-
-      ArgumentNullException.ThrowIfNull(data, nameof(data));
+      if (recipientDataGroups == null || recipientDataGroups.Count == 0)
+        throw new ArgumentNullException(nameof(recipientDataGroups));
 
       if (!_options.Templates.ContainsKey(type.ToString()))
         throw new ArgumentException($"Email template id for type '{type}' not configured", nameof(type));
 
-      //ensure environment suffix
-      data.SubjectSuffix = _environmentProvider.Environment == Domain.Core.Environment.Production ? string.Empty : $" ({_environmentProvider.Environment.ToDescription()})";
+      foreach (var (recipients, data) in recipientDataGroups)
+      {
+        if (recipients == null || recipients.Count == 0)
+          throw new ArgumentNullException(nameof(recipientDataGroups), "Contains null or empty recipient list");
+
+        if (data == null)
+          throw new ArgumentNullException(nameof(recipientDataGroups), "Contains null data");
+
+        //ensure environment suffix
+        data.SubjectSuffix = _environmentProvider.Environment == Domain.Core.Environment.Production
+            ? string.Empty
+            : $" ({_environmentProvider.Environment.ToDescription()})";
+      }
 
       var msg = new SendGridMessage
       {
         TemplateId = _options.Templates[type.ToString()],
         From = new EmailAddress(_options.From.Email, _options.From.Name),
-        Personalizations = ProcessRecipients(recipients, data)
+        Personalizations = ProcessRecipients(recipientDataGroups)
       };
 
       if (_options.ReplyTo != null) msg.ReplyTo = new EmailAddress(_options.ReplyTo.Email, _options.ReplyTo.Name);
@@ -82,24 +97,26 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
     #endregion
 
     #region Private Members
-    private static List<Personalization> ProcessRecipients<T>(List<EmailRecipient> recipients, T data)
-        where T : EmailBase
+    private static List<Personalization> ProcessRecipients<T>(List<(List<EmailRecipient> recipients, T data)> recipientDataGroups)
+    where T : EmailBase
     {
       var result = new List<Personalization>();
 
-      foreach (var recipient in recipients)
+      foreach (var (recipients, data) in recipientDataGroups)
       {
-        var dataCopy = ObjectHelper.DeepCopy(data);
-        dataCopy.RecipientDisplayName = string.IsNullOrEmpty(recipient.DisplayName) ? recipient.Email : recipient.DisplayName;
-
-        var item = new Personalization
+        foreach (var recipient in recipients)
         {
-          Tos = [],
-          TemplateData = dataCopy
-        };
+          var dataCopy = ObjectHelper.DeepCopy(data);
+          dataCopy.RecipientDisplayName = string.IsNullOrEmpty(recipient.DisplayName) ? recipient.Email : recipient.DisplayName;
 
-        item.Tos.Add(new EmailAddress(recipient.Email, recipient.DisplayName));
-        result.Add(item);
+          var item = new Personalization
+          {
+            Tos = [new EmailAddress(recipient.Email, recipient.DisplayName)],
+            TemplateData = dataCopy
+          };
+
+          result.Add(item);
+        }
       }
 
       return result;

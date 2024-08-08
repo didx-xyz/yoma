@@ -10,6 +10,9 @@ namespace Yoma.Core.Domain.EmailProvider.Models
 
   public class EmailOpportunityAnnouncedItem
   {
+    [JsonIgnore]
+    public Guid Id { get; set; }
+
     [JsonProperty("title")]
     public string Title { get; set; }
 
