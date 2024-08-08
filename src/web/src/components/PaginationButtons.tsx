@@ -1,4 +1,6 @@
-import { useMemo } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { debounce } from "~/lib/utils";
+import FormInput from "./Common/FormInput";
 
 interface InputProps {
   [key: string]: any;
@@ -17,6 +19,8 @@ export const PaginationButtons: React.FC<InputProps> = ({
   showInfo,
   onClick,
 }) => {
+  const [inputValue, setInputValue] = useState(currentPage);
+
   // 🧮 calculated fields
   const totalPages = useMemo(() => {
     const totalItemCount = totalItems ?? 0;
@@ -43,6 +47,30 @@ export const PaginationButtons: React.FC<InputProps> = ({
   ) => {
     onClick(value);
   };
+
+  const handleInputChange = useCallback(
+    (
+      event:
+        | React.ChangeEvent<HTMLInputElement>
+        | React.KeyboardEvent<HTMLInputElement>,
+    ) => {
+      const value = parseInt((event.target as HTMLInputElement).value, 10);
+      setInputValue(value);
+
+      if (
+        event.type === "blur" ||
+        (event.type === "keydown" &&
+          (event as React.KeyboardEvent).key === "Enter")
+      ) {
+        if (!isNaN(value) && value >= 1 && value <= totalPages) {
+          handlePagerChange(event, value);
+        } else {
+          setInputValue(currentPage);
+        }
+      }
+    },
+    [totalPages, handlePagerChange],
+  );
 
   return (
     <>
@@ -101,7 +129,17 @@ export const PaginationButtons: React.FC<InputProps> = ({
           {/* INFO */}
           {showInfo && (
             <div className="text-sm font-bold">
-              {currentPage} of {totalPages}
+              <input
+                type="number"
+                className="input input-bordered input-sm rounded-md border-gray focus:border-gray focus:outline-none"
+                value={inputValue}
+                onChange={handleInputChange}
+                onBlur={handleInputChange}
+                onKeyDown={handleInputChange}
+                min={1}
+                max={totalPages}
+              />{" "}
+              of {totalPages}
             </div>
           )}
 
