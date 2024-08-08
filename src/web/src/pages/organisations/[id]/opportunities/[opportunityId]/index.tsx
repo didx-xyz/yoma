@@ -453,6 +453,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               Create: Can not be in the past
               Update: Can not be in the past provided the start date has changed
             */
+            if (val == null) return;
+
             if (typeof val === "string") {
               val = new Date(val);
             }
@@ -500,7 +502,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     })
     .superRefine((val, ctx) => {
       if (val == null) return;
-      // debugger;
       // ensure dateEnd is not before dateStart
       if (val.dateEnd && val.dateStart) {
         if (
