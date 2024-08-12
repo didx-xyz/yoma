@@ -44,6 +44,15 @@ export default {
       transitionTimingFunction: {
         bounce: "cubic-bezier(0.175, 1.485, 0.320, 1.275)",
       },
+      keyframes: {
+        wiggle: {
+          "0%, 50%, 100%": { transform: "rotate(-3deg)" },
+          "25%, 75%": { transform: "rotate(3deg)" },
+        },
+      },
+      animation: {
+        wiggle: "wiggle 2s ease-in-out",
+      },
     },
   },
   darkMode: "class",
