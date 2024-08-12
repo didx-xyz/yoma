@@ -30,6 +30,35 @@ export async function fetchClientEnv() {
 }
 
 /* eslint-disable */
+function appendToFormData(formData: FormData, key: string, value: any) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      const arrayKey = `${key}[${index}]`;
+      appendToFormData(formData, arrayKey, item);
+    });
+  } else if (value instanceof File) {
+    console.log(`Appending file: ${value.name}`);
+    logFileProperties(value);
+    formData.append(key, value);
+  } else if (typeof value === "object" && value !== null) {
+    for (const subProperty in value) {
+      if (value.hasOwnProperty(subProperty)) {
+        const nestedKey = `${key}[${subProperty}]`;
+        appendToFormData(formData, nestedKey, value[subProperty]);
+      }
+    }
+  } else {
+    formData.append(key, value);
+  }
+}
+function logFileProperties(file: File) {
+  console.log(`  Name: ${file.name}`);
+  console.log(`  Size: ${file.size} bytes`);
+  console.log(`  Type: ${file.type}`);
+  console.log(
+    `  Last Modified: ${new Date(file.lastModified).toLocaleString()}`,
+  );
+}
 export function objectToFormData(
   obj: any,
   form?: FormData,
@@ -38,33 +67,25 @@ export function objectToFormData(
   const formData = form || new FormData();
 
   for (const property in obj) {
-    if (!obj.hasOwnProperty(property) || (!obj[property] && obj[property] != 0))
+    if (
+      !obj.hasOwnProperty(property) ||
+      (!obj[property] && obj[property] !== 0)
+    ) {
       continue;
+    }
 
     const formKey = namespace ? `${namespace}[${property}]` : property;
+    appendToFormData(formData, formKey, obj[property]);
+  }
 
-    if (Array.isArray(obj[property])) {
-      obj[property].forEach((item: any, index: number) => {
-        if (typeof item === "object" && item !== null) {
-          objectToFormData(item, formData, `${formKey}[${index}]`);
-        } else {
-          formData.append(`${formKey}[${index}]`, item);
-        }
-      });
-    } else if (
-      typeof obj[property] === "object" &&
-      obj[property] !== null &&
-      !(obj[property] instanceof Date) &&
-      !(obj[property] instanceof File)
-    ) {
-      objectToFormData(obj[property], formData, formKey);
-    } else {
-      formData.append(formKey, obj[property]);
-    }
+  // log each entry in form data
+  for (const entry of formData.entries()) {
+    console.log(entry);
   }
 
   return formData;
 }
+
 /* eslint-enable */
 
 // formats a date in the local timezone as string

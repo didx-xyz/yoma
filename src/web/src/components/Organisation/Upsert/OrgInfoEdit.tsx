@@ -300,7 +300,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
             {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
 
             {/* UPLOAD IMAGE */}
-            <div className="x-50 container mx-auto">
+            <div className="container mx-auto">
               <AvatarUpload
                 onRemoveImageExisting={() => {
                   setValue("logoExisting", null);

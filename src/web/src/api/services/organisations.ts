@@ -10,6 +10,7 @@ import type {
   OrganizationSearchResults,
   UserInfo,
 } from "../models/organisation";
+import { objectToFormData } from "~/lib/utils";
 
 export const getOrganisationProviderTypes = async (
   context?: GetServerSidePropsContext,
@@ -25,37 +26,10 @@ export const getOrganisationProviderTypes = async (
 export const postOrganisation = async (
   model: OrganizationRequestBase,
 ): Promise<Organization> => {
-  // convert model to form data
-  /* eslint-disable */
-  const formData = new FormData();
-  for (const property in model) {
-    let propVal = (model as any)[property];
+  // send logo as single file (not array)
+  model.logo = !!model?.logo?.length ? (model as any).logo[0] : null;
 
-    if (property === "logo") {
-      // send as first item in array
-      formData.append(property, propVal ? propVal[0] : null);
-    } else if (
-      property === "providerTypes" ||
-      property === "adminEmails" ||
-      property === "registrationDocuments" ||
-      property === "educationProviderDocuments" ||
-      property === "businessDocuments" ||
-      property === "registrationDocumentsDelete" ||
-      property === "educationProviderDocumentsDelete" ||
-      property === "businessDocumentsDelete"
-    ) {
-      // send as multiple items in form data
-      for (const file of propVal) {
-        formData.append(property, file);
-      }
-    } else formData.append(property, propVal);
-  }
-  /* eslint-enable */
-
-  // log each entry in form data
-  for (const entry of formData.entries()) {
-    console.log(entry);
-  }
+  const formData = objectToFormData(model);
 
   const { data } = await (
     await ApiClient
@@ -68,32 +42,7 @@ export const postOrganisation = async (
 export const patchOrganisation = async (
   model: OrganizationRequestBase,
 ): Promise<Organization> => {
-  // convert model to form data
-  /* eslint-disable */
-  const formData = new FormData();
-  for (const property in model) {
-    let propVal = (model as any)[property];
-
-    if (property === "logo") {
-      // send as first item in array
-      formData.append(property, propVal ? propVal[0] : null);
-    } else if (
-      property === "providerTypes" ||
-      property === "adminEmails" ||
-      property === "registrationDocuments" ||
-      property === "educationProviderDocuments" ||
-      property === "businessDocuments" ||
-      property === "registrationDocumentsDelete" ||
-      property === "educationProviderDocumentsDelete" ||
-      property === "businessDocumentsDelete"
-    ) {
-      // send as multiple items in form data
-      for (const file of propVal) {
-        formData.append(property, file);
-      }
-    } else formData.append(property, propVal);
-  }
-  /* eslint-enable */
+  const formData = objectToFormData(model);
 
   const { data } = await (
     await ApiClient
