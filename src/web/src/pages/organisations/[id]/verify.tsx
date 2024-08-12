@@ -291,7 +291,7 @@ const OrganisationDetails: NextPageWithLayout<{
         onRequestClose={() => {
           setModalVerifySingleVisible(false);
         }}
-        className={`text-gray-700 fixed inset-0 m-auto h-[230px] w-[380px] rounded-lg bg-white p-4 font-openSans duration-100 animate-in fade-in zoom-in`}
+        className={`text-gray-700 fixed inset-0 m-auto h-[230px] w-[380px] rounded-lg bg-white p-4 font-nunito duration-100 animate-in fade-in zoom-in`}
         overlayClassName="fixed inset-0 bg-black modal-overlay"
         portalClassName={"fixed z-20"}
       >

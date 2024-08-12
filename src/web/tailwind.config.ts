@@ -35,7 +35,8 @@ export default {
         overlay: "rgba(0, 0, 0, 0.5)",
       },
       fontFamily: {
-        openSans: ["var(--font-open-sans)"],
+        // openSans: ["var(--font-open-sans)"],
+        nunito: ["var(--font-nunito)"],
       },
       boxShadow: {
         custom:
