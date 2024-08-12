@@ -33,7 +33,6 @@ namespace Yoma.Core.Domain.SSI.Services
     }
     #endregion
 
-
     #region Public Members
     public string GetTenantId(EntityType entityType, Guid entityId)
     {
