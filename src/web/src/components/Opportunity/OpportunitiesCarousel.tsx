@@ -109,7 +109,6 @@ const OpportunitiesCarousel: React.FC<{
       onSlide={onSlide}
       currentSlide={currentSlide}
       step={visibleSlides}
-      freeScroll={true}
     >
       <div className="mb-12 md:mb-20">
         <div className="mb-2 flex flex-col gap-6">

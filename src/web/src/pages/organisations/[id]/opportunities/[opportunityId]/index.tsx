@@ -106,7 +106,12 @@ import {
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { config } from "~/lib/react-query-config";
-import { debounce, getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import {
+  debounce,
+  getSafeUrl,
+  getThemeFromRole,
+  normalizeDate,
+} from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
 
@@ -416,52 +421,98 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       ),
   });
 
-  const schemaStep2 = z.object({
-    difficultyId: z.string().min(1, "Difficulty is required."),
-    languages: z
-      .array(z.string(), { required_error: "Language is required" })
-      .min(1, "Language is required."),
-    countries: z
-      .array(z.string(), { required_error: "Country is required" })
-      .min(1, "Country is required."),
-    commitmentIntervalCount: z
-      .union([z.nan(), z.null(), z.number()])
-      .refine((val) => val != null && !isNaN(val), {
-        message: "Number is required.",
-      })
-      .refine((val) => val != null && val > 0, {
-        message: "Number must be greater than 0.",
-      })
-      .refine((val) => val != null && val <= 32767, {
-        message: "Number must be less than or equal to 32767.",
-      }),
-    commitmentIntervalId: z.string().min(1, "Time frame is required."),
-    dateStart: z
-      .union([z.null(), z.string(), z.date()])
-      .refine((val) => val !== null, {
-        message: "Start date is required.",
-      }),
-    dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
-    participantLimit: z
-      .union([z.nan(), z.null(), z.number()])
-      .optional()
-      .superRefine((val, ctx) => {
-        if (val != null) {
-          if (val <= 0) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Number must be greater than 0.",
-            });
+  const schemaStep2 = z
+    .object({
+      difficultyId: z.string().min(1, "Difficulty is required."),
+      languages: z
+        .array(z.string(), { required_error: "Language is required" })
+        .min(1, "Language is required."),
+      countries: z
+        .array(z.string(), { required_error: "Country is required" })
+        .min(1, "Country is required."),
+      commitmentIntervalCount: z
+        .union([z.nan(), z.null(), z.number()])
+        .refine((val) => val != null && !isNaN(val), {
+          message: "Number is required.",
+        })
+        .refine((val) => val != null && val > 0, {
+          message: "Number must be greater than 0.",
+        })
+        .refine((val) => val != null && val <= 32767, {
+          message: "Number must be less than or equal to 32767.",
+        }),
+      commitmentIntervalId: z.string().min(1, "Time frame is required."),
+      dateStart: z
+        .union([z.null(), z.string(), z.date()])
+        .refine((val) => val !== null, {
+          message: "Start date is required.",
+        })
+        .refine(
+          (val) => {
+            /*
+              Create: Can not be in the past
+              Update: Can not be in the past provided the start date has changed
+            */
+            if (val == null) return;
+
+            // Normalize the date to midnight
+            val = normalizeDate(new Date(val));
+
+            if (opportunityId !== "create") {
+              // update
+              const originalDateStart = opportunity?.dateStart;
+              if (originalDateStart) {
+                const originalDate = normalizeDate(new Date(originalDateStart));
+                if (originalDate.getTime() === val.getTime()) {
+                  return true; // No change in start date
+                }
+              }
+            }
+
+            return val instanceof Date && val >= normalizeDate(new Date());
+          },
+          {
+            message: "Start date cannot be in the past.",
+          },
+        ),
+      dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
+      participantLimit: z
+        .union([z.nan(), z.null(), z.number()])
+        .optional()
+        .superRefine((val, ctx) => {
+          if (val != null) {
+            if (val <= 0) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Number must be greater than 0.",
+              });
+            }
+            if (val > 2147483647) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Number must be less than or equal to 2147483647.",
+              });
+            }
           }
-          if (val > 2147483647) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              message: "Number must be less than or equal to 2147483647.",
-            });
-          }
+        }),
+    })
+    .superRefine((val, ctx) => {
+      if (val == null) return;
+      // ensure dateEnd is not before dateStart
+      if (val.dateEnd && val.dateStart) {
+        if (
+          normalizeDate(new Date(val.dateEnd)) <
+          normalizeDate(new Date(val.dateStart))
+        ) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "End date must be after start date.",
+            path: ["dateEnd"],
+            fatal: true,
+          });
         }
-      }),
-  });
+      }
+    });
 
   const schemaStep3 = z
     .object({

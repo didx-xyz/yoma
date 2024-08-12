@@ -24,6 +24,8 @@ ingress:
       nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Disposition,Content-Length"
       nginx.ingress.kubernetes.io/cors-allow-origin: "https://stage.yoma.world,https://yoma-six.vercel.app"
       nginx.ingress.kubernetes.io/server-snippet: |
+        large_client_header_buffers 8 128k;
+
         location /hangfire {
           deny all;
         }

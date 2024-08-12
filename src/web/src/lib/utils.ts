@@ -103,6 +103,12 @@ export function toUTCDateTime(date: Date | null) {
   ).toISOString();
 }
 
+export function normalizeDate(date: Date) {
+  const normalized = new Date(date);
+  normalized.setHours(0, 0, 0, 0);
+  return normalized;
+}
+
 /**
  * This function checks if the provided URL is a relative URL (i.e., it starts with a '/').
  * If the URL is relative, it returns the URL as is. If not, it returns a default URL.
