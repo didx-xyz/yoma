@@ -10,10 +10,13 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public string? WebsiteURL { get; set; }
 
+    [Required]
     public string? PrimaryContactName { get; set; }
 
+    [Required]
     public string? PrimaryContactEmail { get; set; }
 
+    [Required]
     public string? PrimaryContactPhone { get; set; }
 
     public string? VATIN { get; set; }
@@ -22,14 +25,19 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public string? RegistrationNumber { get; set; }
 
+    [Required]
     public string? City { get; set; }
 
+    [Required]
     public Guid? CountryId { get; set; }
 
+    [Required]
     public string? StreetAddress { get; set; }
 
+    [Required]
     public string? Province { get; set; }
 
+    [Required]
     public string? PostalCode { get; set; }
 
     public string? Tagline { get; set; }
