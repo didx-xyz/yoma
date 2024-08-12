@@ -891,6 +891,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (filter.Featured == true)
         query = query.Where(o => o.Featured == true);
 
+      //shareWithPartners
+      if (filter.ShareWithPartners == true)
+        query = query.Where(o => o.ShareWithPartners == true);
+
       //valueContains (includes organizations, types, categories, opportunities and skills)
       if (!string.IsNullOrEmpty(filter.ValueContains))
       {
@@ -1024,6 +1028,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         SSISchemaName = request.SSISchemaName,
         EngagementTypeId = request.EngagementTypeId,
         EngagementType = request.EngagementTypeId.HasValue ? _engagementTypeService.GetById(request.EngagementTypeId.Value).Name : null,
+        ShareWithPartners = request.ShareWithPartners.HasValue ? request.ShareWithPartners : null,
         StatusId = _opportunityStatusService.GetByName(status.ToString()).Id,
         Status = status,
         CreatedByUserId = user.Id,
@@ -1142,6 +1147,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.SSISchemaName = request.SSISchemaName;
       result.EngagementTypeId = request.EngagementTypeId;
       result.EngagementType = request.EngagementTypeId.HasValue ? _engagementTypeService.GetById(request.EngagementTypeId.Value).Name : null;
+      result.ShareWithPartners = request.ShareWithPartners.HasValue ? request.ShareWithPartners : result.ShareWithPartners;
       result.ModifiedByUserId = user.Id;
 
       if (result.DateEnd.HasValue)

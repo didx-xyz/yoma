@@ -97,24 +97,30 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
         switch (entityType)
         {
           case EntityType.Opportunity:
+            var opportunity = _opportunityService.GetById(entityId, false, false, false);
+
+            if (opportunity.ShareWithPartners != true)
+            {
+              _logger.LogInformation("Partner sharing filtering: Entity {entityType} with id {entityId} not flagged for sharing and will be skipped", EntityType.Opportunity, entityId);
+              continue;
+            }
+
             switch (partner)
             {
               case Partner.SAYouth:
                 //only include opportunities with an end date and of type learning
-                var opportunity = _opportunityService.GetById(entityId, false, false, false);
-
                 if (!opportunity.DateEnd.HasValue)
                 {
                   _logger.LogInformation("Partner sharing filtering: Entity {entityType} with id {entityId} for partner {partner} does not have an end date and will be skipped", EntityType.Opportunity, entityId, partner);
-                  break;
+                  continue;
                 }
 
                 if (opportunity.Type != Opportunity.Type.Learning.ToString())
                 {
                   _logger.LogInformation("Partner sharing filtering: Entity {EntityType} with id {EntityId} for partner {Partner} is not a learning type and will be skipped", EntityType.Opportunity, entityId, partner);
-                  break;
+                  continue;
                 }
-                results.Add(item);
+
                 break;
 
               default:
@@ -125,6 +131,8 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
           default:
             throw new InvalidOperationException($"Entity type of '{entityType}' not supported");
         }
+
+        results.Add(item);
       }
 
       return results;

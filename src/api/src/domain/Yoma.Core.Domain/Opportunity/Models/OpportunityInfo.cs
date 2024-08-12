@@ -115,6 +115,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [BooleanFalseValues("No")]
     [BooleanTrueValues("Yes")]
+    public bool ShareWithPartners { get; set; }
+
+    [BooleanFalseValues("No")]
+    [BooleanTrueValues("Yes")]
     public bool Published { get; set; }
 
     [Ignore]
