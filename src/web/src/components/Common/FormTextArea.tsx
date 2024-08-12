@@ -5,15 +5,15 @@ interface CustomInputHTMLAttributes<T> extends React.InputHTMLAttributes<T> {
   [key: `data-${string}`]: string | undefined;
 }
 
-const FormInput: React.FC<{
-  inputProps?: CustomInputHTMLAttributes<HTMLInputElement>;
+const FormTextArea: React.FC<{
+  inputProps?: CustomInputHTMLAttributes<HTMLTextAreaElement>;
 }> = ({ inputProps }) => {
   return (
-    <input
-      className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+    <textarea
+      className="input textarea textarea-bordered h-16 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
       {...inputProps}
     />
   );
 };
 
-export default FormInput;
+export default FormTextArea;

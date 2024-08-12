@@ -52,6 +52,11 @@ export const postOrganisation = async (
   }
   /* eslint-enable */
 
+  // log each entry in form data
+  for (const entry of formData.entries()) {
+    console.log(entry);
+  }
+
   const { data } = await (
     await ApiClient
   ).post<Organization>("/organization", formData, {

@@ -10,6 +10,11 @@ import { REGEX_URL_VALIDATION } from "~/lib/constants";
 import { useQuery } from "@tanstack/react-query";
 import { getCountries } from "~/api/services/lookups";
 import AvatarUpload from "./AvatarUpload";
+import FormField from "~/components/Common/FormField";
+import FormInput from "~/components/Common/FormInput";
+import FormTextArea from "~/components/Common/FormTextArea";
+import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 
 export interface InputProps {
   formData: OrganizationRequestBase | null;
@@ -42,11 +47,23 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         .string()
         .min(1, "Organisation name is required.")
         .max(80, "Maximum of 80 characters allowed."),
-      streetAddress: zod.string().min(1, "Street address is required."),
-      province: zod.string().min(1, "Province is required."),
-      city: zod.string().min(1, "City is required."),
+      streetAddress: zod
+        .string()
+        .min(1, "Street address is required.")
+        .max(500, "Maximum of 500 characters allowed."),
+      province: zod
+        .string()
+        .min(1, "Province is required.")
+        .max(255, "Maximum of 255 characters allowed."),
+      city: zod
+        .string()
+        .min(1, "City is required.")
+        .max(50, "Maximum of 50 characters allowed."),
       countryId: zod.string().min(1, "Country is required."),
-      postalCode: zod.string().min(1, "Postal code is required."),
+      postalCode: zod
+        .string()
+        .min(1, "Postal code is required.")
+        .max(10, "Maximum of 10 characters allowed."),
       websiteURL: zod
         .string()
         .regex(
@@ -66,6 +83,19 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         .max(480, "Maximum of 480 characters allowed.")
         .nullish()
         .optional(),
+      primaryContactName: zod
+        .string()
+        .min(1, "Primary contact name is required.")
+        .max(255, "Maximum of 255 characters allowed."),
+      primaryContactEmail: zod
+        .string()
+        .min(1, "Email is required.")
+        .max(320, "Maximum of 320 characters allowed.")
+        .email("Invalid email address."),
+      primaryContactPhone: zod
+        .string()
+        .min(1, "Primary contact phone is required.")
+        .max(50, "Maximum of 50 characters allowed."),
     })
     .superRefine((values, ctx) => {
       let logoCount = 0;
@@ -95,7 +125,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { register, handleSubmit, formState, setValue, reset } = form;
+  const { register, handleSubmit, formState, setValue, reset, trigger } = form;
 
   // set default values
   useEffect(() => {
@@ -106,6 +136,10 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         ...formData,
         logoExisting: organisation?.logoURL,
       });
+
+      // validate the forms on initial load
+      // this is needed to show the required field indicators (exclamation icon next to labels) on the first render
+      trigger();
     }, 100);
   }, [reset, formData, organisation?.logoURL]);
 
@@ -118,246 +152,293 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
   );
 
   return (
-    <form
-      onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
-      className="flex flex-col gap-4"
-    >
-      <div className="form-control">
-        <label className="label font-bold">
-          <span className="label-text">Organisation name</span>
-        </label>
-        <input
-          type="text"
-          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-          placeholder="Your organisation name"
-          {...register("name")}
-          data-autocomplete="organization"
-        />
-        {formState.errors.name && (
-          <label className="label font-bold">
-            <span className="label-text-alt italic text-red-500">
-              {`${formState.errors.name.message}`}
-            </span>
-          </label>
-        )}
-      </div>
+    <div className="flex flex-col gap-4">
+      {!formState.isValid && <FormRequiredFieldMessage />}
 
-      <div className="form-control">
-        <label className="label font-bold">
-          <span className="label-text">Physical address</span>
-        </label>
-        <textarea
-          className="textarea textarea-bordered rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
-          placeholder="Your organisation's physical address"
-          {...register("streetAddress")}
-          data-autocomplete="street-address"
-        />
-        {formState.errors.streetAddress && (
-          <label className="label font-bold">
-            <span className="label-text-alt italic text-red-500">
-              {`${formState.errors.streetAddress.message}`}
-            </span>
-          </label>
-        )}
-      </div>
-
-      <div className="form-control">
-        <label className="label font-bold">
-          <span className="label-text">Province</span>
-        </label>
-        <input
-          type="text"
-          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-          placeholder="Your organisation's province/state"
-          {...register("province")}
-          data-autocomplete="address-level1"
-        />
-        {formState.errors.province && (
-          <label className="label font-bold">
-            <span className="label-text-alt italic text-red-500">
-              {`${formState.errors.province.message}`}
-            </span>
-          </label>
-        )}
-      </div>
-
-      <div className="form-control">
-        <label className="label font-bold">
-          <span className="label-text">City</span>
-        </label>
-        <input
-          type="text"
-          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-          placeholder="Your organisation's city/town"
-          {...register("city")}
-          data-autocomplete="address-level2"
-        />
-        {formState.errors.city && (
-          <label className="label font-bold">
-            <span className="label-text-alt italic text-red-500">
-              {`${formState.errors.city.message}`}
-            </span>
-          </label>
-        )}
-      </div>
-
-      <div className="form-control">
-        <label className="label font-bold">
-          <span className="label-text">Country</span>
-        </label>
-        <select
-          className="select select-bordered border-gray focus:border-gray focus:outline-none"
-          {...register("countryId")}
-          style={{ fontSize: "1rem" }}
+      <form
+        onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
+        className="flex flex-col gap-4"
+      >
+        <FormField
+          label="Organisation name"
+          showWarningIcon={!!formState.errors.name?.message}
+          showError={!!formState.touchedFields.name || formState.isSubmitted}
+          error={formState.errors.name?.message?.toString()}
         >
-          <option value="">Please select</option>
-          {countries?.map((country) => (
-            <option key={country.id} value={country.id}>
-              {country.name}
-            </option>
-          ))}
-        </select>
-        {formState.errors.countryId && (
-          <label className="label font-bold">
-            <span className="label-text-alt italic text-red-500">
-              {`${formState.errors.countryId.message}`}
-            </span>
-          </label>
-        )}
-      </div>
+          <FormInput
+            inputProps={{
+              type: "text",
+              placeholder: "Your organisation name",
+              maxLength: 80,
+              "data-autocomplete": "organization",
+              ...register("name"),
+            }}
+          />
+        </FormField>
 
-      <div className="form-control">
-        <label className="label font-bold">
-          <span className="label-text">Postal code</span>
-        </label>
-        <input
-          type="text"
-          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-          placeholder="Your organisation's postal code/zip"
-          {...register("postalCode")}
-          data-autocomplete="postal-code"
-        />
-        {formState.errors.postalCode && (
-          <label className="label font-bold">
-            <span className="label-text-alt italic text-red-500">
-              {`${formState.errors.postalCode.message}`}
-            </span>
-          </label>
-        )}
-      </div>
+        <FormField
+          label="Physical address"
+          showWarningIcon={!!formState.errors.streetAddress?.message}
+          showError={
+            !!formState.touchedFields.streetAddress || formState.isSubmitted
+          }
+          error={formState.errors.streetAddress?.message?.toString()}
+        >
+          <FormTextArea
+            inputProps={{
+              placeholder: "Your organisation's physical address",
+              maxLength: 500,
+              "data-autocomplete": "street-address",
+              ...register("streetAddress"),
+            }}
+          />
+        </FormField>
 
-      <div className="form-control">
-        <label className="label font-bold">
-          <span className="label-text">Organisation website URL</span>
-        </label>
-        <input
-          type="text"
-          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-          placeholder="www.website.com"
-          {...register("websiteURL")}
-          data-autocomplete="url"
-        />
-        {formState.errors.websiteURL && (
-          <label className="label font-bold">
-            <span className="label-text-alt italic text-red-500">
-              {`${formState.errors.websiteURL.message}`}
-            </span>
-          </label>
-        )}
-      </div>
+        <FormField
+          label="Province"
+          showWarningIcon={!!formState.errors.province?.message}
+          showError={
+            !!formState.touchedFields.province || formState.isSubmitted
+          }
+          error={formState.errors.province?.message?.toString()}
+        >
+          <FormInput
+            inputProps={{
+              type: "text",
+              placeholder: "Your organisation's province/state",
+              maxLength: 255,
+              "data-autocomplete": "address-level1",
+              ...register("province"),
+            }}
+          />
+        </FormField>
 
-      <div className="form-control">
-        <label className="label font-bold">
-          <span className="label-text">Logo</span>
-        </label>
+        <FormField
+          label="City"
+          showWarningIcon={!!formState.errors.city?.message}
+          showError={!!formState.touchedFields.city || formState.isSubmitted}
+          error={formState.errors.city?.message?.toString()}
+        >
+          <FormInput
+            inputProps={{
+              type: "text",
+              placeholder: "Your organisation's city/town",
+              maxLength: 50,
+              "data-autocomplete": "address-level2",
+              ...register("city"),
+            }}
+          />
+        </FormField>
 
-        <div className="flex items-center justify-center pb-4">
-          {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
+        <FormField
+          label="Country"
+          showWarningIcon={!!formState.errors.countryId?.message}
+          showError={
+            !!formState.touchedFields.countryId || formState.isSubmitted
+          }
+          error={formState.errors.countryId?.message?.toString()}
+        >
+          <select
+            className="select select-bordered border-gray focus:border-gray focus:outline-none"
+            {...register("countryId")}
+            style={{ fontSize: "1rem" }}
+          >
+            <option value="">Please select</option>
+            {countries?.map((country) => (
+              <option key={country.id} value={country.id}>
+                {country.name}
+              </option>
+            ))}
+          </select>
+        </FormField>
 
-          {/* UPLOAD IMAGE */}
-          <div className="container mx-auto">
-            <AvatarUpload
-              onRemoveImageExisting={() => {
-                setValue("logoExisting", null);
-                setLogoFiles(false);
-                setValue("logo", null);
-              }}
-              onUploadComplete={(files) => {
-                setLogoFiles(true);
-                setValue("logoExisting", null);
-                setValue("logo", files && files.length > 0 ? [files[0]] : []);
-              }}
-              existingImage={logoExisting ?? ""}
-              showExisting={!logoFiles && logoExisting ? true : false}
-            />
-            {formState.errors.logo && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.logo.message}`}
-                </span>
-              </label>
-            )}
+        <FormField
+          label="Postal code"
+          showWarningIcon={!!formState.errors.postalCode?.message}
+          showError={
+            !!formState.touchedFields.postalCode || formState.isSubmitted
+          }
+          error={formState.errors.postalCode?.message?.toString()}
+        >
+          <FormInput
+            inputProps={{
+              type: "text",
+              placeholder: "Your organisation's postal code/zip",
+              maxLength: 10,
+              "data-autocomplete": "postal-code",
+              ...register("postalCode"),
+            }}
+          />
+        </FormField>
+
+        <FormField
+          label="Organisation website URL"
+          showWarningIcon={!!formState.errors.websiteURL?.message}
+          showError={
+            !!formState.touchedFields.websiteURL || formState.isSubmitted
+          }
+          error={formState.errors.websiteURL?.message?.toString()}
+        >
+          <FormInput
+            inputProps={{
+              type: "text",
+              placeholder: "www.website.com",
+              maxLength: 2048,
+              "data-autocomplete": "url",
+              ...register("websiteURL"),
+            }}
+          />
+        </FormField>
+
+        <FormField
+          label="Logo"
+          showWarningIcon={!!formState.errors.logo?.message}
+          showError={!!formState.touchedFields.logo || formState.isSubmitted}
+          error={formState.errors.logo?.message?.toString()}
+        >
+          <div className="flex items-center justify-center pb-4">
+            {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
+
+            {/* UPLOAD IMAGE */}
+            <div className="x-50 container mx-auto">
+              <AvatarUpload
+                onRemoveImageExisting={() => {
+                  setValue("logoExisting", null);
+                  setLogoFiles(false);
+                  setValue("logo", null);
+                  trigger("logo");
+                }}
+                onUploadComplete={(files) => {
+                  setLogoFiles(true);
+                  setValue("logoExisting", null);
+                  setValue("logo", files && files.length > 0 ? [files[0]] : []);
+                  trigger("logo");
+                }}
+                existingImage={logoExisting ?? ""}
+                showExisting={!logoFiles && logoExisting ? true : false}
+              />
+            </div>
           </div>
+        </FormField>
+
+        <FormField
+          label="Organisation tagline"
+          showWarningIcon={!!formState.errors.tagline?.message}
+          showError={!!formState.touchedFields.tagline || formState.isSubmitted}
+          error={formState.errors.tagline?.message?.toString()}
+        >
+          <FormInput
+            inputProps={{
+              type: "text",
+              placeholder: "Your organisation tagline",
+              maxLength: 160,
+              ...register("tagline"),
+            }}
+          />
+        </FormField>
+
+        <FormField
+          label="Organisation biography"
+          showWarningIcon={!!formState.errors.biography?.message}
+          showError={
+            !!formState.touchedFields.biography || formState.isSubmitted
+          }
+          error={formState.errors.biography?.message?.toString()}
+        >
+          <FormTextArea
+            inputProps={{
+              placeholder: "Your organisation biography",
+              maxLength: 480,
+              ...register("biography"),
+            }}
+          />
+        </FormField>
+
+        <div className="-mb-2 font-semibold">Primary Contact Details</div>
+
+        <FormMessage messageType={FormMessageType.Info}>
+          These details will be shared to partners and Youth to enhance
+          discovery and contractibility if settings are enabled.
+        </FormMessage>
+
+        <FormField
+          label="Primary Contact Name"
+          showWarningIcon={!!formState.errors.primaryContactName?.message}
+          showError={
+            !!formState.touchedFields.primaryContactName ||
+            formState.isSubmitted
+          }
+          error={formState.errors.primaryContactName?.message?.toString()}
+        >
+          <FormInput
+            inputProps={{
+              type: "text",
+              placeholder: "Your organisation's primary contact name",
+              maxLength: 255,
+              ...register("primaryContactName"),
+            }}
+          />
+        </FormField>
+
+        <FormField
+          label="Primary Contact Email"
+          showWarningIcon={!!formState.errors.primaryContactEmail?.message}
+          showError={
+            !!formState.touchedFields.primaryContactEmail ||
+            formState.isSubmitted
+          }
+          error={formState.errors.primaryContactEmail?.message?.toString()}
+        >
+          <FormInput
+            inputProps={{
+              type: "email",
+              placeholder: "Your organisation's primary contact email",
+              maxLength: 320,
+              ...register("primaryContactEmail"),
+            }}
+          />
+        </FormField>
+
+        <FormField
+          label="Primary Contact Phone"
+          showWarningIcon={!!formState.errors.primaryContactPhone?.message}
+          showError={
+            !!formState.touchedFields.primaryContactPhone ||
+            formState.isSubmitted
+          }
+          error={formState.errors.primaryContactPhone?.message?.toString()}
+        >
+          <FormInput
+            inputProps={{
+              type: "phone",
+              placeholder: "Your organisation's primary contact phone",
+              maxLength: 50,
+              ...register("primaryContactPhone"),
+            }}
+          />
+        </FormField>
+
+        {/* BUTTONS */}
+        <div className="mt-4 flex flex-row items-center justify-end gap-4">
+          {onCancel && (
+            <button
+              type="button"
+              className="btn btn-warning w-1/2 flex-shrink normal-case md:btn-wide"
+              onClick={onCancel}
+            >
+              {cancelButtonText}
+            </button>
+          )}
+          {onSubmit && (
+            <button
+              type="submit"
+              className="btn btn-success w-1/2 flex-shrink normal-case md:btn-wide"
+            >
+              {submitButtonText}
+            </button>
+          )}
         </div>
-      </div>
-
-      <div className="form-control">
-        <label className="label font-bold">
-          <span className="label-text">Organisation tagline</span>
-        </label>
-        <input
-          type="text"
-          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-          placeholder="Your organisation tagline"
-          {...register("tagline")}
-        />
-        {formState.errors.tagline && (
-          <label className="label font-bold">
-            <span className="label-text-alt italic text-red-500">
-              {`${formState.errors.tagline.message}`}
-            </span>
-          </label>
-        )}
-      </div>
-
-      <div className="form-control">
-        <label className="label font-bold">
-          <span className="label-text">Organisation biography</span>
-        </label>
-        <textarea
-          className="textarea textarea-bordered rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
-          placeholder="Your organisation biography"
-          {...register("biography")}
-        />
-        {formState.errors.biography && (
-          <label className="label font-bold">
-            <span className="label-text-alt italic text-red-500">
-              {`${formState.errors.biography.message}`}
-            </span>
-          </label>
-        )}
-      </div>
-
-      {/* BUTTONS */}
-      <div className="mt-4 flex flex-row items-center justify-end gap-4">
-        {onCancel && (
-          <button
-            type="button"
-            className="btn btn-warning w-1/2 flex-shrink normal-case md:btn-wide"
-            onClick={onCancel}
-          >
-            {cancelButtonText}
-          </button>
-        )}
-        {onSubmit && (
-          <button
-            type="submit"
-            className="btn btn-success w-1/2 flex-shrink normal-case md:btn-wide"
-          >
-            {submitButtonText}
-          </button>
-        )}
-      </div>
-    </form>
+      </form>
+    </div>
   );
 };
