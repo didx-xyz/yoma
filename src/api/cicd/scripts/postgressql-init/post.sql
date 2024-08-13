@@ -66,7 +66,7 @@ BEGIN
                 SELECT word
                 FROM regexp_split_to_table(V_Words, ',') AS RandomWords(word)
                 ORDER BY RANDOM()
-                LIMIT 2 + FLOOR(RANDOM() * 4)  -- Generates a number between 2 and 5
+                LIMIT 2 + FLOOR(RANDOM() * 3)  -- Generates a number between 2 and 4
             ) AS RandomNameWords
         ) || ' ' || CAST(ABS(FLOOR(RANDOM() * 2147483647)) AS VARCHAR(10));
 
