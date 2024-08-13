@@ -196,10 +196,11 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Update the organization's logo")]
+    [SwaggerOperation(Summary = "Update the organization's logo",
+      Description = $"An admin or organization admin can add or update the organization's logo. A user can only add a logo if they are the original creator of the organization and the organization is currently inactive")]
     [HttpPatch("{id}/logo")]
     [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    [Authorize(Roles = $"{Constants.Role_User}, {Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> UpdateLogo([FromRoute] Guid id, [Required] IFormFile file)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateLogo));

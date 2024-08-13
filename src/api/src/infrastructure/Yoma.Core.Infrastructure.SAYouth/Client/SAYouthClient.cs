@@ -33,38 +33,23 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     #endregion
 
     #region Public Members
-
-    //learning_opportunity_holder >> Org Name
-    //learning_opportunity_sponsoring_partner >> Yoma (Youth Agency Marketplace)
-    //learning_opportunity_title >> Opp Title
-    //learning_opportunity_description >> Opp Description
-    //learning_opportunity_has_certification >> Opp VerificationEnabled
-    //learning_opportunity_certification_description >> Opp Summary
-    //learning_opportunity_certification_type >> NonAccreditedCertification
-    //learning_opportunity_close_date >> If no end date don't post
-    //learning_opportunity_duration >> If duration exceeds 24 months post null
-    //learning_opportunity_requirements >> Hardcoded text (awaiting Sam)
-    //learning_opportunity_face_to_face >> Online (No) / Offline (Yes), if null Online
-    //learning_opportunity_address >> Org address
-    //learning_address_contact >> Org contact else ? (awaiting Sam)
-    //learning_opportunity_url >> Yoma URL
-
     public async Task<string> CreateOpportunity(OpportunityRequestUpsert request)
     {
-      //var request = new OpportunitySkillingUpsertRequest
-      //{
-      //  Holder = opportunity.OrganizationName.RemoveSpecialCharacters().TrimToLength(200),
-      //  SponsoringPartner = null,
-      //  Title = opportunity.Title.RemoveSpecialCharacters().TrimToLength(200),
-      //  Description = opportunity.Description,
-      //  HasCertification = opportunity.VerificationEnabled ? YesNoOption.Yes : YesNoOption.No,
-      //  CertificationType = CertificateType.AccreditedCertification.ToString(),
-      //  CertificationDescription = opportunity.Description,
-      //  CloseDate = opportunity.DateEnd,
-      //  Duration = opportunity.ToDuration()
-      //};
+      return Guid.NewGuid().ToString(); //TODO: Implement 
 
-      return await Task.FromResult(Guid.NewGuid().ToString()); //TODO: Implement
+      //var requestUpsert = ToRequestUpsert(request);
+
+      //var response = await _options.BaseUrl
+      //  .AppendPathSegment("/Opportunity/Skilling")
+      //  .WithAuthHeaders(GetAuthHeaders())
+      //  .PostJsonAsync(requestUpsert)
+      //  .EnsureSuccessStatusCodeAsync()
+      //  .ReceiveJson<OpportunityUpsertResponse>();
+
+      //if (response.Details == null)
+      //  throw new InvalidOperationException("Opportunity creation failed");
+
+      //return response.Details.OpportunityId.ToString();
     }
 
     public async Task UpdateOpportunity(OpportunityRequestUpsert request)
@@ -87,6 +72,56 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
         { Header_Authorization, _options.ApiKey  }
       };
     }
+
+    //private OpportunitySkillingUpsertRequest ToRequestUpsert(OpportunityRequestUpsert request)
+    //{
+    //  ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+    //  if (request.Opportunity == null)
+    //    throw new ArgumentNullException(nameof(request), "Opportunity is required");
+
+    //  if (request.OrganizationYoma == null)
+    //    throw new ArgumentNullException(nameof(request), "OrganizationYoma is required");
+
+    //  var result = new OpportunitySkillingUpsertRequest
+    //  {
+    //    Holder = request.Opportunity.OrganizationName.RemoveSpecialCharacters().TrimToLength(200),
+    //    SponsoringPartner = request.OrganizationYoma.Name.RemoveSpecialCharacters().TrimToLength(200),
+    //    Title = request.Opportunity.Title.RemoveSpecialCharacters().TrimToLength(200),
+    //    Description = request.Opportunity.Description,
+    //    HasCertification = request.Opportunity.VerificationEnabled ? YesNoOption.Yes : YesNoOption.No,
+    //    CertificationType = CertificateType.AccreditedCertification.ToString(),
+    //    CertificationDescription = request.Opportunity.Summary,
+    //    CloseDate = request.Opportunity.DateEnd,
+    //    Duration = request.Opportunity.ToDuration(),
+    //    Requirements = "Instructions can be found in the description",
+    //    //FaceToFace = request.Opportunity.EngagementType ? YesNoOption.No : YesNoOption.Yes,
+    //    Url = request.Opportunity.YomaInfoURL(_appSettings.AppBaseURL)
+    //  };
+
+    //  if (result.FaceToFace == YesNoOption.Yes)
+    //  {
+    //    result.Address = new Address
+    //    {
+    //      AddressName = request.OrganizationYoma.Name.RemoveSpecialCharacters().TrimToLength(100),
+    //      AddressLine1 = request.OrganizationYoma.StreetAddress,
+    //      SuburbName = "n/a",
+    //      CityName = request.OrganizationYoma.City,
+    //      PostalCode = request.OrganizationYoma.PostalCode,
+    //      Province = request.OrganizationYoma.Province,
+    //    };
+
+    //    result.Contact = new Contact
+    //    {
+    //      FirstName = request.OrganizationYoma.PrimaryContactName,
+    //      Surname = request.OrganizationYoma.PrimaryContactName,
+    //      EmailAddress = request.OrganizationYoma.PrimaryContactEmail,
+    //      PhoneNumber = request.OrganizationYoma.PrimaryContactPhone
+    //    };
+    //  }
+
+    //  return result;
+    //}
     #endregion
   }
 }

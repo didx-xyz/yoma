@@ -1,3 +1,5 @@
+using Yoma.Core.Domain.Entity.Models;
+
 namespace Yoma.Core.Domain.PartnerSharing.Models
 {
   public class OpportunityRequestUpsert
@@ -5,6 +7,8 @@ namespace Yoma.Core.Domain.PartnerSharing.Models
     public string? ExternalId { get; set; }
 
     public Opportunity.Models.Opportunity Opportunity { get; set; }
+
+    public Organization OrganizationYoma { get; set; }
 
     public bool ShareContactInfo { get; set; }
 
