@@ -63,6 +63,13 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
         return;
       }
 
+      var organizationYoma = _organizationService.GetByNameOrNull(_appSettings.YomaOrganizationName, true, true);
+      if (organizationYoma == null)
+      {
+        _logger.LogInformation("{Process} will be aborted/skipped as the '{orgName}' organization could not be found", nameof(ProcessSharing), _appSettings.YomaOrganizationName);
+        return;
+      }
+
       try
       {
         using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
@@ -100,6 +107,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                     var request = new OpportunityRequestUpsert
                     {
                       Opportunity = opportunity,
+                      OrganizationYoma = organizationYoma,
                       ShareContactInfo = SettingsHelper.GetValue<bool>(organizationSettings, Setting.Organization_Share_Contact_Info_With_Partners.ToString()) == true,
                       ShareAddressDetails = SettingsHelper.GetValue<bool>(organizationSettings, Setting.Organization_Share_Address_Details_With_Partners.ToString()) == true,
                     };
