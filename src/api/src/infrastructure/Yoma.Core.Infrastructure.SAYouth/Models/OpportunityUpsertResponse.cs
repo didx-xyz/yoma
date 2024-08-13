@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 
 namespace Yoma.Core.Infrastructure.SAYouth.Models
 {
-  internal class OpportunityResponse
+  public class OpportunityUpsertResponse
   {
     [JsonProperty("success")]
     public bool Success { get; set; }

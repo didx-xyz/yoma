@@ -726,11 +726,21 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public async Task<Organization> UpdateLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization)
     {
+      //determine if the current user context is a user role only. If no user context (system process), IsUserRoleOnly returns false.
+      var userRoleOnly = HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor);
+
+      // if ensureOrganizationAuthorization is true, skip authorization if the user is in a user-only role.
+      if (ensureOrganizationAuthorization) ensureOrganizationAuthorization = !userRoleOnly;
+
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
       ValidateUpdatable(result);
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+
+      // only allow a user to add a logo if: they are in a user-only role, the organization has no logo, they are the original creator, and the organization is inactive.
+      if (userRoleOnly && (result.LogoId.HasValue || user.Id != result.CreatedByUserId || result.Status != OrganizationStatus.Inactive))
+        throw new SecurityException("Unauthorized");
 
       var statusCurrent = result.Status;
 
