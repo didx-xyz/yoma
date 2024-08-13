@@ -207,7 +207,7 @@ const OrganisationUpdate: NextPageWithLayout<{
         }
 
         // update query cache (get existing logo url)
-        queryClient.setQueryData(["organisation", id], updatedModel);
+        queryClient.invalidateQueries({ queryKey: ["organisation", id] });
 
         // clear uploaded logo from cache
         setOrganizationRequestBase((prev) => ({
