@@ -131,7 +131,7 @@ const YoIDDashboard: NextPageWithLayout<{
       />
 
       {/* DASHBOARD */}
-      <div className="mt-2 flex h-fit w-full flex-wrap items-center justify-center gap-4 lg:max-w-7xl">
+      <div className="mt-2 flex h-full w-full flex-wrap items-center justify-center gap-4 lg:max-w-7xl">
         {/* WALLET */}
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
           <HeaderWithLink title="💸 Wallet" />
