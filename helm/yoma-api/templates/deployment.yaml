@@ -64,12 +64,33 @@ spec:
             httpGet:
               path: /api/v3/health/live
               port: {{ .Values.service.portName | default "http"  }}
+            initialDelaySeconds: {{ default 0 .Values.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ default 10 .Values.livenessProbe.periodSeconds }}
+            failureThreshold: {{ default 3 .Values.livenessProbe.failureThreshold }}
+            successThreshold: {{ default 1 .Values.livenessProbe.successThreshold }}
+            timeoutSeconds: {{ default 1 .Values.livenessProbe.timeoutSeconds }}
           {{- end }}
           {{- if .Values.readinessProbe.enabled }}
           readinessProbe:
             httpGet:
               path: /api/v3/health/ready
               port: {{ .Values.service.portName | default "http"  }}
+            initialDelaySeconds: {{ default 0 .Values.readinessProbe.initialDelaySeconds }}
+            periodSeconds: {{ default 10 .Values.readinessProbe.periodSeconds }}
+            failureThreshold: {{ default 3 .Values.readinessProbe.failureThreshold }}
+            successThreshold: {{ default 1 .Values.readinessProbe.successThreshold }}
+            timeoutSeconds: {{ default 1 .Values.readinessProbe.timeoutSeconds }}
+          {{- end }}
+          {{- if .Values.startupProbe.enabled }}
+          startupProbe:
+            httpGet:
+              path: /api/v3/health/live
+              port: {{ .Values.service.portName | default "http"  }}
+            initialDelaySeconds: {{ default 0 .Values.startupProbe.initialDelaySeconds }}
+            periodSeconds: {{ default 10 .Values.startupProbe.periodSeconds }}
+            failureThreshold: {{ default 3 .Values.startupProbe.failureThreshold }}
+            successThreshold: {{ default 1 .Values.startupProbe.successThreshold }}
+            timeoutSeconds: {{ default 1 .Values.startupProbe.timeoutSeconds }}
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
