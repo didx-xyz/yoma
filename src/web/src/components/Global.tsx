@@ -143,7 +143,7 @@ export const Global: React.FC = () => {
           "Your application settings have not be configured. Please click here to configure them now.",
           {
             onClick: () => {
-              router.push("/yoid/settings").then(() => null);
+              router.push("/user/settings").then(() => null);
             },
             autoClose: false,
             closeOnClick: true,

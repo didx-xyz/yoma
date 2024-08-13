@@ -1,5 +1,7 @@
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import Head from "next/head";
 import router from "next/router";
 import { type ReactElement } from "react";
 import {
@@ -8,19 +10,17 @@ import {
   getGenders,
 } from "~/api/services/lookups";
 import { getUserProfile } from "~/api/services/user";
-import { authOptions } from "~/server/auth";
+import MainLayout from "~/components/Layout/Main";
+import { PageBackground } from "~/components/PageBackground";
+import { Loading } from "~/components/Status/Loading";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import type { NextPageWithLayout } from "~/pages/_app";
-import YoIDLayout from "~/components/Layout/YoID";
-import { config } from "~/lib/react-query-config";
 import {
   UserProfileFilterOptions,
   UserProfileForm,
 } from "~/components/User/UserProfileForm";
-import type { GetServerSidePropsContext } from "next";
-import { Loading } from "~/components/Status/Loading";
-import Breadcrumb from "~/components/Breadcrumb";
-import Head from "next/head";
+import { config } from "~/lib/react-query-config";
+import type { NextPageWithLayout } from "~/pages/_app";
+import { authOptions } from "~/server/auth";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -81,46 +81,38 @@ const MyProfile: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | 👤 Profile</title>
+        <title>Yoma | 🕶️ Profile</title>
       </Head>
 
-      <div className="max-w-2xl">
-        <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
-          <Breadcrumb
-            items={[
-              { title: "💳 Yo-ID", url: "/yoid" },
-              {
-                title: "👤 Profile",
-                selected: true,
-              },
-            ]}
-          />
+      <PageBackground className="h-[16rem]" />
+
+      <div className="overflow-x-hiddenx z-10 mt-20 w-full max-w-2xl p-4 md:mt-24">
+        <div className="mb-4 text-xs font-bold tracking-wider text-white md:text-base">
+          🕶️ Profile
         </div>
 
-        <div className="flex flex-col items-center">
-          <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
-            {isLoading && <Loading />}
+        <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
+          {isLoading && <Loading />}
 
-            {!isLoading && (
-              <UserProfileForm
-                userProfile={userProfile}
-                onCancel={handleCancel}
-                filterOptions={[
-                  UserProfileFilterOptions.EMAIL,
-                  UserProfileFilterOptions.FIRSTNAME,
-                  UserProfileFilterOptions.SURNAME,
-                  UserProfileFilterOptions.DISPLAYNAME,
-                  UserProfileFilterOptions.PHONENUMBER,
-                  UserProfileFilterOptions.COUNTRY,
-                  UserProfileFilterOptions.EDUCATION,
-                  UserProfileFilterOptions.GENDER,
-                  UserProfileFilterOptions.DATEOFBIRTH,
-                  UserProfileFilterOptions.RESETPASSWORD,
-                  UserProfileFilterOptions.LOGO,
-                ]}
-              />
-            )}
-          </div>
+          {!isLoading && (
+            <UserProfileForm
+              userProfile={userProfile}
+              onCancel={handleCancel}
+              filterOptions={[
+                UserProfileFilterOptions.EMAIL,
+                UserProfileFilterOptions.FIRSTNAME,
+                UserProfileFilterOptions.SURNAME,
+                UserProfileFilterOptions.DISPLAYNAME,
+                UserProfileFilterOptions.PHONENUMBER,
+                UserProfileFilterOptions.COUNTRY,
+                UserProfileFilterOptions.EDUCATION,
+                UserProfileFilterOptions.GENDER,
+                UserProfileFilterOptions.DATEOFBIRTH,
+                UserProfileFilterOptions.RESETPASSWORD,
+                UserProfileFilterOptions.LOGO,
+              ]}
+            />
+          )}
         </div>
       </div>
     </>
@@ -128,7 +120,7 @@ const MyProfile: NextPageWithLayout<{
 };
 
 MyProfile.getLayout = function getLayout(page: ReactElement) {
-  return <YoIDLayout>{page}</YoIDLayout>;
+  return <MainLayout>{page}</MainLayout>;
 };
 
 export default MyProfile;

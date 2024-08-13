@@ -172,7 +172,7 @@ export const UserMenu: React.FC = () => {
           {/* USER (YOID) */}
           <li className="z-30 w-full rounded-t-lg bg-white py-2 shadow-custom">
             <Link
-              href="/yoid/profile"
+              href="/user/profile"
               className="!rounded-t-lg rounded-b-none text-gray-dark"
               onClick={() => setUserMenuVisible(false)}
             >
@@ -206,7 +206,7 @@ export const UserMenu: React.FC = () => {
                 onClick={() => setUserMenuVisible(false)}
               >
                 <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
-                  🪪
+                  💳
                 </div>
                 <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
                   Yo-ID
@@ -223,7 +223,7 @@ export const UserMenu: React.FC = () => {
           <div className="z-20 w-full bg-white-shade">
             <li className="w-full bg-white-shade py-2">
               <Link
-                href="/yoid/profile"
+                href="/user/profile"
                 className="!rounded-t-lg rounded-b-none text-gray-dark"
                 onClick={() => setUserMenuVisible(false)}
               >
@@ -245,7 +245,7 @@ export const UserMenu: React.FC = () => {
           <div className="z-20 w-full bg-white-shade">
             <li className="w-full bg-white-shade py-2">
               <Link
-                href="/yoid/settings"
+                href="/user/settings"
                 className="!rounded-t-lg rounded-b-none text-gray-dark"
                 onClick={() => setUserMenuVisible(false)}
               >
