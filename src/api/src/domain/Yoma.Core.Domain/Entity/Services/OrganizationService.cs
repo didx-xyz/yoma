@@ -571,7 +571,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
-            if (result.LogoId == null)
+            if (!result.LogoId.HasValue)
               throw new ValidationException("A logo is required to activate the organization. Please add a logo before proceeding");
 
             result.CommentApproval = request.Comment;
