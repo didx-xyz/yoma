@@ -927,12 +927,21 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      OrganizationUser? orgUser = null;
       var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
-      if (!isAdmin) orgUser = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.UserId == user.Id);
 
-      if (!isAdmin && orgUser == null && throwUnauthorized)
-        throw new SecurityException("Unauthorized");
+      if (!isAdmin)
+      {
+        var isOrgAdmin = HttpContextAccessorHelper.IsOrganizationAdminRole(_httpContextAccessor);
+
+        var orgUser = _organizationUserRepository.Query().SingleOrDefault(o => o.OrganizationId == organization.Id && o.UserId == user.Id);
+
+        if (!isOrgAdmin || orgUser == null)
+        {
+          if (throwUnauthorized) throw new SecurityException("Unauthorized");
+          return false;
+        }
+      }
+
       return true;
     }
 
