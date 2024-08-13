@@ -131,7 +131,7 @@ const YoIDDashboard: NextPageWithLayout<{
       />
 
       {/* DASHBOARD */}
-      <div className="mt-2 flex w-full flex-wrap items-center justify-center gap-4 lg:max-w-7xl h-fit">
+      <div className="mt-2 flex h-fit w-full flex-wrap items-center justify-center gap-4 lg:max-w-7xl">
         {/* WALLET */}
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
           <HeaderWithLink title="💸 Wallet" />
@@ -197,7 +197,7 @@ const YoIDDashboard: NextPageWithLayout<{
         </div>
 
         {/* OPPORTUNITIES */}
-        <div className="relative flex w-full h-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
+        <div className="relative flex h-full w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
           <HeaderWithLink
             title="🏆 Opportunities"
             url="/yoid/opportunities/completed"
