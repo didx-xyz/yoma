@@ -244,7 +244,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       // this is needed to show the required field indicators (exclamation icon next to labels) on the first render
       trigger();
     }, 100);
-  }, [reset, formData, organisation]);
+  }, [reset, formData, organisation, trigger]);
 
   // form submission handler
   const onSubmitHandler = useCallback(
@@ -260,7 +260,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       let arr1 = getValues("registrationDocumentsExisting");
       if (!arr1) arr1 = [];
       arr1 = arr1.filter((x: OrganizationDocument) => x.fileId != doc.fileId);
-      setValue("registrationDocumentExisting", arr1);
+      setValue("registrationDocumentsExisting", arr1);
 
       // add to deleted array
       let arr2 = getValues("registrationDocumentsDelete");

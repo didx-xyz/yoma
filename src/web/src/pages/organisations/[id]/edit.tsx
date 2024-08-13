@@ -1,5 +1,10 @@
 import { captureException } from "@sentry/nextjs";
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  dehydrate,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -16,6 +21,7 @@ import {
   getOrganisationById,
   getOrganisationProviderTypes,
   patchOrganisation,
+  updateOrganisationLogo,
 } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
@@ -50,6 +56,8 @@ import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { useRouter } from "next/router";
+import { OrganizationRequestViewModel } from "~/models/organisation";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -123,6 +131,7 @@ const OrganisationUpdate: NextPageWithLayout<{
   theme: string;
   error?: number;
 }> = ({ id, user, error }) => {
+  const queryClient = useQueryClient();
   const router = useRouter();
   const { returnUrl } = router.query;
   const [isLoading, setIsLoading] = useState(false);
@@ -145,7 +154,7 @@ const OrganisationUpdate: NextPageWithLayout<{
   });
 
   const [OrganizationRequestBase, setOrganizationRequestBase] =
-    useState<OrganizationRequestBase>({
+    useState<OrganizationRequestViewModel>({
       id: organisation?.id ?? "",
       name: organisation?.name ?? "",
       websiteURL: organisation?.websiteURL ?? "",
@@ -179,7 +188,7 @@ const OrganisationUpdate: NextPageWithLayout<{
     });
 
   const onSubmit = useCallback(
-    async (model: OrganizationRequestBase) => {
+    async (model: OrganizationRequestViewModel) => {
       setIsLoading(true);
 
       try {
@@ -187,10 +196,26 @@ const OrganisationUpdate: NextPageWithLayout<{
         toast.dismiss();
 
         // update api
-        const updatedOrg = await patchOrganisation(model);
+        const logo = model.logo;
+        model.logo = null;
+        const updatedModel = await patchOrganisation(model);
+
+        // uplodad logo
+        if (logo) {
+          await updateOrganisationLogo(updatedModel.id, logo);
+        }
+
+        // update query cache (get existing logo url)
+        queryClient.setQueryData(["organisation", id], updatedModel);
+
+        // clear uploaded logo from cache
+        setOrganizationRequestBase((prev) => ({
+          ...prev,
+          logo: null,
+        }));
 
         // update org status (limited functionality badge)
-        setCurrentOrganisationInactiveAtom(updatedOrg.status !== "Active");
+        setCurrentOrganisationInactiveAtom(updatedModel.status !== "Active");
 
         // refresh user profile for updated organisation to reflect on user menu
         if (isUserAdminOfCurrentOrg) {
@@ -398,13 +423,15 @@ const OrganisationUpdate: NextPageWithLayout<{
                   </h5>
                 </div>
 
-                <p className="my-2 flex flex-row items-center gap-4 rounded-lg bg-green px-4 py-2 text-sm text-white">
-                  <IoIosWarning className="inline-block h-6 w-6" />
+                <FormMessage
+                  messageType={FormMessageType.Warning}
+                  className="mb-4"
+                >
                   Kindly note that expanding the roles your organization plays
                   in Yoma will necessitate re-verification of your organization.
                   <br /> During this process, functionalities such as creating
                   opportunities may be limited.
-                </p>
+                </FormMessage>
 
                 <OrgRolesEdit
                   formData={OrganizationRequestBase}

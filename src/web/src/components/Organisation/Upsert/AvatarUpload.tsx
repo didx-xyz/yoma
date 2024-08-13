@@ -186,7 +186,6 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
       {showExisting ? (
         <div className="mt-4 flex w-full justify-center rounded-lg bg-white py-8">
-          {" "}
           <AvatarImage icon={existingImage} alt="Existing Avatar" size={150} />
         </div>
       ) : (

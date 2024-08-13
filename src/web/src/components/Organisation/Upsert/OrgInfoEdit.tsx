@@ -15,9 +15,10 @@ import FormInput from "~/components/Common/FormInput";
 import FormTextArea from "~/components/Common/FormTextArea";
 import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
+import { OrganizationRequestViewModel } from "~/models/organisation";
 
 export interface InputProps {
-  formData: OrganizationRequestBase | null;
+  formData: OrganizationRequestViewModel | null;
   organisation?: Organization | null;
   onSubmit?: (fieldValues: FieldValues) => void;
   onCancel?: () => void;
@@ -33,8 +34,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
   cancelButtonText = "Cancel",
   submitButtonText = "Submit",
 }) => {
-  const [logoExisting] = useState(organisation?.logoURL);
-  const [logoFiles, setLogoFiles] = useState(false);
+  //const [logoFiles, setLogoFiles] = useState(false);
 
   const { data: countries } = useQuery({
     queryKey: ["countries"],
@@ -100,8 +100,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
     .superRefine((values, ctx) => {
       let logoCount = 0;
       if (values.logoExisting) logoCount++;
-      if (values.logo && values.logo.length > 0)
-        logoCount = logoCount + values.logo.length;
+      if (values.logo) logoCount++;
 
       // logo is required
       if (logoCount < 1) {
@@ -125,7 +124,15 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { register, handleSubmit, formState, setValue, reset, trigger } = form;
+  const {
+    register,
+    handleSubmit,
+    formState,
+    setValue,
+    getValues,
+    reset,
+    trigger,
+  } = form;
 
   // set default values
   useEffect(() => {
@@ -304,18 +311,18 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
               <AvatarUpload
                 onRemoveImageExisting={() => {
                   setValue("logoExisting", null);
-                  setLogoFiles(false);
                   setValue("logo", null);
                   trigger("logo");
                 }}
                 onUploadComplete={(files) => {
-                  setLogoFiles(true);
                   setValue("logoExisting", null);
-                  setValue("logo", files && files.length > 0 ? [files[0]] : []);
+                  setValue("logo", files && files.length > 0 ? files[0] : null);
                   trigger("logo");
                 }}
-                existingImage={logoExisting ?? ""}
-                showExisting={!logoFiles && logoExisting ? true : false}
+                existingImage={getValues("logoExisting") ?? ""}
+                showExisting={
+                  !getValues("logo") && getValues("logoExisting") ? true : false
+                }
               />
             </div>
           </div>

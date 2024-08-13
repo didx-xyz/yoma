@@ -26,15 +26,15 @@ export const getOrganisationProviderTypes = async (
 export const postOrganisation = async (
   model: OrganizationRequestBase,
 ): Promise<Organization> => {
-  // send logo as single file (not array)
-  model.logo = !!model?.logo?.length ? (model as any).logo[0] : null;
-
-  const formData = objectToFormData(model);
+  const formData = objectToFormData(model, undefined, undefined, false);
 
   const { data } = await (
     await ApiClient
   ).post<Organization>("/organization", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "multipart/form-data",
+    },
   });
   return data;
 };
@@ -42,13 +42,30 @@ export const postOrganisation = async (
 export const patchOrganisation = async (
   model: OrganizationRequestBase,
 ): Promise<Organization> => {
-  const formData = objectToFormData(model);
+  const formData = objectToFormData(model, undefined, undefined, false);
 
   const { data } = await (
     await ApiClient
-  ).patch<Organization>("/organization", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+  ).patch<Organization>("/organization", formData);
+  return data;
+};
+
+export const updateOrganisationLogo = async (
+  id: string,
+  file: any,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+) => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const { data } = await instance.patch(`/organization/${id}/logo`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
+
   return data;
 };
 

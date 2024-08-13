@@ -11,6 +11,7 @@ import { type OrganizationRequestBase } from "~/api/models/organisation";
 import {
   getOrganisationProviderTypes,
   postOrganisation,
+  updateOrganisationLogo,
 } from "~/api/services/organisations";
 import { getUserProfile } from "~/api/services/user";
 import MainLayout from "~/components/Layout/Main";
@@ -37,6 +38,7 @@ import { config } from "~/lib/react-query-config";
 import { getCountries } from "~/api/services/lookups";
 import { useSession } from "next-auth/react";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { OrganizationRequestViewModel } from "~/models/organisation";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -98,7 +100,7 @@ const OrganisationCreate: NextPageWithLayout<{
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
 
   const [OrganizationRequestBase, setOrganizationRequestBase] =
-    useState<OrganizationRequestBase>({
+    useState<OrganizationRequestViewModel>({
       id: "",
       name: "",
       websiteURL: "",
@@ -130,7 +132,7 @@ const OrganisationCreate: NextPageWithLayout<{
     });
 
   const onSubmit = useCallback(
-    async (model: OrganizationRequestBase) => {
+    async (model: OrganizationRequestViewModel) => {
       setIsLoading(true);
 
       try {
@@ -138,7 +140,13 @@ const OrganisationCreate: NextPageWithLayout<{
         toast.dismiss();
 
         // update api
-        await postOrganisation(model);
+        const logo = model.logo;
+        model.logo = null;
+        const updatedModel = await postOrganisation(model);
+
+        // uplodad logo
+        await updateOrganisationLogo(updatedModel.id, logo);
+
         console.log("Organisation registered");
 
         setIsLoading(false);

@@ -30,39 +30,36 @@ export async function fetchClientEnv() {
 }
 
 /* eslint-disable */
-function appendToFormData(formData: FormData, key: string, value: any) {
+function appendToFormData(
+  formData: FormData,
+  key: string,
+  value: any,
+  useIndexer: boolean,
+) {
   if (Array.isArray(value)) {
     value.forEach((item, index) => {
-      const arrayKey = `${key}[${index}]`;
-      appendToFormData(formData, arrayKey, item);
+      const arrayKey = useIndexer ? `${key}[${index}]` : key;
+      appendToFormData(formData, arrayKey, item, useIndexer);
     });
   } else if (value instanceof File) {
-    console.log(`Appending file: ${value.name}`);
-    logFileProperties(value);
-    formData.append(key, value);
+    formData.append(key, value, value.name);
   } else if (typeof value === "object" && value !== null) {
     for (const subProperty in value) {
       if (value.hasOwnProperty(subProperty)) {
         const nestedKey = `${key}[${subProperty}]`;
-        appendToFormData(formData, nestedKey, value[subProperty]);
+        appendToFormData(formData, nestedKey, value[subProperty], useIndexer);
       }
     }
   } else {
     formData.append(key, value);
   }
 }
-function logFileProperties(file: File) {
-  console.log(`  Name: ${file.name}`);
-  console.log(`  Size: ${file.size} bytes`);
-  console.log(`  Type: ${file.type}`);
-  console.log(
-    `  Last Modified: ${new Date(file.lastModified).toLocaleString()}`,
-  );
-}
+
 export function objectToFormData(
   obj: any,
   form?: FormData,
   namespace?: string,
+  useIndexer: boolean = true,
 ): FormData {
   const formData = form || new FormData();
 
@@ -75,17 +72,11 @@ export function objectToFormData(
     }
 
     const formKey = namespace ? `${namespace}[${property}]` : property;
-    appendToFormData(formData, formKey, obj[property]);
-  }
-
-  // log each entry in form data
-  for (const entry of formData.entries()) {
-    console.log(entry);
+    appendToFormData(formData, formKey, obj[property], useIndexer);
   }
 
   return formData;
 }
-
 /* eslint-enable */
 
 // formats a date in the local timezone as string
