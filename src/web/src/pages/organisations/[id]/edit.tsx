@@ -1,55 +1,64 @@
 import { captureException } from "@sentry/nextjs";
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  dehydrate,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
+import axios from "axios";
+import { useAtomValue, useSetAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useState, type ReactElement } from "react";
 import { type FieldValues } from "react-hook-form";
+import { IoMdArrowRoundBack } from "react-icons/io";
 import { toast } from "react-toastify";
 import {
   type Organization,
   type OrganizationRequestBase,
 } from "~/api/models/organisation";
+import { getCountries } from "~/api/services/lookups";
 import {
   getOrganisationById,
   getOrganisationProviderTypes,
   patchOrganisation,
+  updateOrganisationLogo,
 } from "~/api/services/organisations";
+import { getUserProfile } from "~/api/services/user";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { OrgAdminsEdit } from "~/components/Organisation/Upsert/OrgAdminsEdit";
+import { OrgContactEdit } from "~/components/Organisation/Upsert/OrgContactEdit";
 import { OrgInfoEdit } from "~/components/Organisation/Upsert/OrgInfoEdit";
 import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { PageBackground } from "~/components/PageBackground";
 import { ApiErrors } from "~/components/Status/ApiErrors";
+import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
-import { type NextPageWithLayout } from "~/pages/_app";
-import { type User, authOptions } from "~/server/auth";
-import { useAtomValue, useSetAtom } from "jotai";
-import {
-  RoleView,
-  activeNavigationRoleViewAtom,
-  currentOrganisationInactiveAtom,
-  userProfileAtom,
-} from "~/lib/store";
-import { getUserProfile } from "~/api/services/user";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   GA_ACTION_ORGANISATION_UPATE,
   GA_CATEGORY_ORGANISATION,
   ROLE_ADMIN,
 } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
-import { getCountries } from "~/api/services/lookups";
-import { IoIosWarning, IoMdArrowRoundBack } from "react-icons/io";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { config } from "~/lib/react-query-config";
+import {
+  RoleView,
+  activeNavigationRoleViewAtom,
+  currentOrganisationInactiveAtom,
+  userProfileAtom,
+} from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import axios from "axios";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { useRouter } from "next/router";
+import type { OrganizationRequestViewModel } from "~/models/organisation";
+import { type NextPageWithLayout } from "~/pages/_app";
+import { authOptions, type User } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -123,6 +132,7 @@ const OrganisationUpdate: NextPageWithLayout<{
   theme: string;
   error?: number;
 }> = ({ id, user, error }) => {
+  const queryClient = useQueryClient();
   const router = useRouter();
   const { returnUrl } = router.query;
   const [isLoading, setIsLoading] = useState(false);
@@ -145,7 +155,7 @@ const OrganisationUpdate: NextPageWithLayout<{
   });
 
   const [OrganizationRequestBase, setOrganizationRequestBase] =
-    useState<OrganizationRequestBase>({
+    useState<OrganizationRequestViewModel>({
       id: organisation?.id ?? "",
       name: organisation?.name ?? "",
       websiteURL: organisation?.websiteURL ?? "",
@@ -179,7 +189,7 @@ const OrganisationUpdate: NextPageWithLayout<{
     });
 
   const onSubmit = useCallback(
-    async (model: OrganizationRequestBase) => {
+    async (model: OrganizationRequestViewModel) => {
       setIsLoading(true);
 
       try {
@@ -187,10 +197,26 @@ const OrganisationUpdate: NextPageWithLayout<{
         toast.dismiss();
 
         // update api
-        const updatedOrg = await patchOrganisation(model);
+        const logo = model.logo;
+        model.logo = null;
+        const updatedModel = await patchOrganisation(model);
+
+        // uplodad logo
+        if (logo) {
+          await updateOrganisationLogo(updatedModel.id, logo);
+        }
+
+        // update query cache (get existing logo url)
+        queryClient.invalidateQueries({ queryKey: ["organisation", id] });
+
+        // clear uploaded logo from cache
+        setOrganizationRequestBase((prev) => ({
+          ...prev,
+          logo: null,
+        }));
 
         // update org status (limited functionality badge)
-        setCurrentOrganisationInactiveAtom(updatedOrg.status !== "Active");
+        setCurrentOrganisationInactiveAtom(updatedModel.status !== "Active");
 
         // refresh user profile for updated organisation to reflect on user menu
         if (isUserAdminOfCurrentOrg) {
@@ -227,6 +253,8 @@ const OrganisationUpdate: NextPageWithLayout<{
       }
     },
     [
+      id,
+      queryClient,
       setIsLoading,
       setUserProfile,
       isUserAdminOfCurrentOrg,
@@ -317,7 +345,7 @@ const OrganisationUpdate: NextPageWithLayout<{
                 <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
                   1
                 </span>
-                Organisation details
+                Details
               </a>
             </li>
             <li
@@ -331,7 +359,7 @@ const OrganisationUpdate: NextPageWithLayout<{
                 <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
                   2
                 </span>
-                Organisation roles
+                Contact
               </a>
             </li>
             <li
@@ -341,11 +369,25 @@ const OrganisationUpdate: NextPageWithLayout<{
                   : "bg-gray-light text-gray-dark"
               }`}
             >
-              <a onClick={() => setStep(3)} id="lnkOrganisationAdmins">
+              <a onClick={() => setStep(3)} id="lnkOrganisationRoles">
                 <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
                   3
                 </span>
-                Organisation admins
+                Roles
+              </a>
+            </li>
+            <li
+              className={`w-full rounded-lg p-1 ${
+                step === 4
+                  ? "bg-green-light font-bold text-green"
+                  : "bg-gray-light text-gray-dark"
+              }`}
+            >
+              <a onClick={() => setStep(4)} id="lnkOrganisationAdmins">
+                <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
+                  4
+                </span>
+                Admins
               </a>
             </li>
           </ul>
@@ -355,14 +397,17 @@ const OrganisationUpdate: NextPageWithLayout<{
             className="select select-md focus:border-none focus:outline-none md:hidden"
             onChange={(e) => {
               switch (e.target.value) {
-                case "Organisation detail":
+                case "Detail":
                   setStep(1);
                   break;
-                case "Organisation roles":
+                case "Contact":
                   setStep(2);
                   break;
-                case "Organisation admins":
+                case "Roles":
                   setStep(3);
+                  break;
+                case "Admins":
+                  setStep(4);
                   break;
                 default:
                   setStep(1);
@@ -370,9 +415,10 @@ const OrganisationUpdate: NextPageWithLayout<{
               }
             }}
           >
-            <option>Organisation details</option>
-            <option>Organisation roles</option>
-            <option>Organisation admins</option>
+            <option>Details</option>
+            <option>Contact</option>
+            <option>Roles</option>
+            <option>Admins</option>
           </select>
 
           <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
@@ -383,6 +429,7 @@ const OrganisationUpdate: NextPageWithLayout<{
                     Organisation details
                   </h5>
                 </div>
+
                 <OrgInfoEdit
                   formData={OrganizationRequestBase}
                   organisation={organisation}
@@ -394,19 +441,19 @@ const OrganisationUpdate: NextPageWithLayout<{
               <>
                 <div className="flex flex-col text-left">
                   <h5 className="mb-6 font-bold tracking-wider">
-                    Organisation roles
+                    Contact details
                   </h5>
                 </div>
 
-                <p className="my-2 flex flex-row items-center gap-4 rounded-lg bg-green px-4 py-2 text-sm text-white">
-                  <IoIosWarning className="inline-block h-6 w-6" />
-                  Kindly note that expanding the roles your organization plays
-                  in Yoma will necessitate re-verification of your organization.
-                  <br /> During this process, functionalities such as creating
-                  opportunities may be limited.
-                </p>
+                <FormMessage
+                  messageType={FormMessageType.Info}
+                  className="mb-4"
+                >
+                  These details will be shared to partners and Youth to enhance
+                  discovery and contractibility if settings are enabled.
+                </FormMessage>
 
-                <OrgRolesEdit
+                <OrgContactEdit
                   formData={OrganizationRequestBase}
                   organisation={organisation}
                   onSubmit={(data) => onSubmitStep(3, data)}
@@ -417,13 +464,38 @@ const OrganisationUpdate: NextPageWithLayout<{
               <>
                 <div className="flex flex-col text-left">
                   <h5 className="mb-6 font-bold tracking-wider">
+                    Organisation roles
+                  </h5>
+                </div>
+
+                <FormMessage
+                  messageType={FormMessageType.Warning}
+                  className="mb-4"
+                >
+                  Kindly note that expanding the roles your organization plays
+                  in Yoma will necessitate re-verification of your organization.
+                  <br /> During this process, functionalities such as creating
+                  opportunities may be limited.
+                </FormMessage>
+
+                <OrgRolesEdit
+                  formData={OrganizationRequestBase}
+                  organisation={organisation}
+                  onSubmit={(data) => onSubmitStep(4, data)}
+                />
+              </>
+            )}
+            {step == 4 && (
+              <>
+                <div className="flex flex-col text-left">
+                  <h5 className="mb-6 font-bold tracking-wider">
                     Organisation admins
                   </h5>
                 </div>
 
                 <OrgAdminsEdit
                   organisation={OrganizationRequestBase}
-                  onSubmit={(data) => onSubmitStep(4, data)}
+                  onSubmit={(data) => onSubmitStep(5, data)}
                   isAdmin={isAdmin}
                 />
               </>

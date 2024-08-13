@@ -1,42 +1,46 @@
 import { captureException } from "@sentry/nextjs";
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
+import { useSetAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import { useCallback, useState, type ReactElement, useEffect } from "react";
+import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { type FieldValues } from "react-hook-form";
 import { toast } from "react-toastify";
 import { type OrganizationRequestBase } from "~/api/models/organisation";
+import { getCountries } from "~/api/services/lookups";
 import {
   getOrganisationProviderTypes,
   postOrganisation,
+  updateOrganisationLogo,
 } from "~/api/services/organisations";
 import { getUserProfile } from "~/api/services/user";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import MainLayout from "~/components/Layout/Main";
 import { OrgAdminsEdit } from "~/components/Organisation/Upsert/OrgAdminsEdit";
+import { OrgContactEdit } from "~/components/Organisation/Upsert/OrgContactEdit";
 import { OrgInfoEdit } from "~/components/Organisation/Upsert/OrgInfoEdit";
 import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
-import { userProfileAtom } from "~/lib/store";
-import { type NextPageWithLayout } from "~/pages/_app";
-import { authOptions } from "~/server/auth";
-import { useSetAtom } from "jotai";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import {
+  GA_ACTION_ORGANISATION_REGISTER,
+  GA_CATEGORY_ORGANISATION,
   ROLE_ADMIN,
-  THEME_BLUE,
   ROLE_ORG_ADMIN,
+  THEME_BLUE,
   THEME_GREEN,
   THEME_PURPLE,
-  GA_CATEGORY_ORGANISATION,
-  GA_ACTION_ORGANISATION_REGISTER,
 } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
-import { getCountries } from "~/api/services/lookups";
-import { useSession } from "next-auth/react";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { config } from "~/lib/react-query-config";
+import { userProfileAtom } from "~/lib/store";
+import type { OrganizationRequestViewModel } from "~/models/organisation";
+import { type NextPageWithLayout } from "~/pages/_app";
+import { authOptions } from "~/server/auth";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -98,7 +102,7 @@ const OrganisationCreate: NextPageWithLayout<{
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
 
   const [OrganizationRequestBase, setOrganizationRequestBase] =
-    useState<OrganizationRequestBase>({
+    useState<OrganizationRequestViewModel>({
       id: "",
       name: "",
       websiteURL: "",
@@ -130,7 +134,7 @@ const OrganisationCreate: NextPageWithLayout<{
     });
 
   const onSubmit = useCallback(
-    async (model: OrganizationRequestBase) => {
+    async (model: OrganizationRequestViewModel) => {
       setIsLoading(true);
 
       try {
@@ -138,7 +142,13 @@ const OrganisationCreate: NextPageWithLayout<{
         toast.dismiss();
 
         // update api
-        await postOrganisation(model);
+        const logo = model.logo;
+        model.logo = null;
+        const updatedModel = await postOrganisation(model);
+
+        // uplodad logo
+        await updateOrganisationLogo(updatedModel.id, logo);
+
         console.log("Organisation registered");
 
         setIsLoading(false);
@@ -185,7 +195,7 @@ const OrganisationCreate: NextPageWithLayout<{
 
       setOrganizationRequestBase(model);
 
-      if (step < 4)
+      if (step < 5)
         // next step
         setStep(step);
       else {
@@ -228,6 +238,7 @@ const OrganisationCreate: NextPageWithLayout<{
                 <li className="step step-success"></li>
                 <li className="step before:!bg-gray after:!bg-gray"></li>
                 <li className="step before:!bg-gray after:!bg-gray"></li>
+                <li className="step before:!bg-gray after:!bg-gray"></li>
               </ul>
               <div className="my-4 flex flex-col text-center">
                 <h2 className="font-semibold tracking-wide">
@@ -254,17 +265,21 @@ const OrganisationCreate: NextPageWithLayout<{
                 <li className="step step-success"></li>
                 <li className="step step-success"></li>
                 <li className="step before:!bg-gray after:!bg-gray"></li>
+                <li className="step before:!bg-gray after:!bg-gray"></li>
               </ul>
               <div className="my-4 flex flex-col text-center">
-                <h2 className="font-semibold tracking-wide">
-                  Organisation roles
-                </h2>
+                <h2 className="font-semibold tracking-wide">Contact details</h2>
                 <p className="my-2 text-gray-dark">
-                  Organisation role information
+                  Organisation contact information
                 </p>
               </div>
 
-              <OrgRolesEdit
+              <FormMessage messageType={FormMessageType.Info} className="mb-4">
+                These details will be shared to partners and Youth to enhance
+                discovery and contractibility if settings are enabled.
+              </FormMessage>
+
+              <OrgContactEdit
                 formData={OrganizationRequestBase}
                 onCancel={() => {
                   setStep(1);
@@ -278,7 +293,37 @@ const OrganisationCreate: NextPageWithLayout<{
 
           {step == 3 && (
             <>
+              <ul className="steps steps-horizontal mx-auto w-72">
+                <li className="step step-success"></li>
+                <li className="step step-success"></li>
+                <li className="step step-success"></li>
+                <li className="step before:!bg-gray after:!bg-gray"></li>
+              </ul>
+              <div className="my-4 flex flex-col text-center">
+                <h2 className="font-semibold tracking-wide">
+                  Organisation roles
+                </h2>
+                <p className="my-2 text-gray-dark">
+                  Organisation role information
+                </p>
+              </div>
+
+              <OrgRolesEdit
+                formData={OrganizationRequestBase}
+                onCancel={() => {
+                  setStep(2);
+                }}
+                onSubmit={(data) => onSubmitStep(4, data)}
+                cancelButtonText="Back"
+                submitButtonText="Next"
+              />
+            </>
+          )}
+
+          {step == 4 && (
+            <>
               <ul className="steps steps-horizontal mx-auto w-full md:w-96">
+                <li className="step step-success"></li>
                 <li className="step step-success"></li>
                 <li className="step step-success"></li>
                 <li className="step step-success"></li>
@@ -294,8 +339,8 @@ const OrganisationCreate: NextPageWithLayout<{
 
               <OrgAdminsEdit
                 organisation={OrganizationRequestBase}
-                onCancel={(data) => onSubmitStep(2, data)}
-                onSubmit={(data) => onSubmitStep(4, data)}
+                onCancel={(data) => onSubmitStep(3, data)}
+                onSubmit={(data) => onSubmitStep(5, data)}
                 cancelButtonText="Back"
                 submitButtonText="Submit for approval"
                 isAdmin={isAdmin}
