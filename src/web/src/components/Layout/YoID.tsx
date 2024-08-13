@@ -3,7 +3,6 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import iconCheckmark from "public/images/icon-checkmark.png";
-import iconCog from "public/images/icon-cog.webp";
 import iconCredential from "public/images/icon-credential.png";
 import iconTools from "public/images/icon-tools.png";
 import { useEffect, useState, type ReactElement } from "react";
@@ -63,14 +62,6 @@ const YoIDLayout: TabProps = ({ children }) => {
         badgeCount: null,
         selected: router.asPath.startsWith("/yoid/skills"),
         iconImage: iconTools,
-      },
-      {
-        title: "👤 Profile",
-        description: "My personal data",
-        url: "/yoid/profile",
-        badgeCount: null,
-        selected: router.asPath.startsWith("/yoid/profile"),
-        iconImage: iconCog,
       },
     ]);
   }, [router.asPath, setTabItems]);
