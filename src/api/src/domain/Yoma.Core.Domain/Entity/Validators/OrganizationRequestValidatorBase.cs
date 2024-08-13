@@ -36,21 +36,27 @@ namespace Yoma.Core.Domain.Entity.Validators
       RuleFor(x => x.PostalCode).NotEmpty().Length(1, 10).WithMessage("'{PropertyName}' is required and must be between 1 and 10 characters long.");
       RuleFor(x => x.Tagline).Length(1, 160).When(x => !string.IsNullOrEmpty(x.Tagline)).WithMessage("'{PropertyName}' must be between 1 and 160 characters.");
       RuleFor(x => x.Biography).Length(1, 480).When(x => !string.IsNullOrEmpty(x.Biography)).WithMessage("'{PropertyName}' must be between 1 and 480 characters.");
+
       RuleFor(x => x.Logo).Must(file => file == null || file.Length > 0).WithMessage("Logo is optional, but if specified, can not be empty.");
+
       RuleFor(x => x.ProviderTypes).Must(providerTypes => providerTypes != null && providerTypes.Count != 0 && providerTypes.All(id => id != Guid.Empty && ProviderTypeExists(id)))
           .WithMessage("Provider types are required and must exist.");
+
       RuleFor(x => x.RegistrationDocuments)
-          .ForEach(doc => doc.Must(file => file != null && file.Length > 0)
-          .WithMessage("Registration documents are optional, but if specified, can not be empty."))
+          .ForEach(docs => docs.Must(doc => doc != null && doc.Length > 0)
+          .WithMessage("Registration documents are optional, but if specified, cannot be empty."))
           .When(x => x.RegistrationDocuments != null && x.RegistrationDocuments.Count != 0);
+
       RuleFor(x => x.EducationProviderDocuments)
-          .Must(docs => docs != null && docs.All(file => file != null && file.Length > 0))
-          .WithMessage("Education provider documents are optional, but if specified, can not be empty.")
-          .When(x => x.EducationProviderDocuments != null && x.EducationProviderDocuments.Count != 0);
+        .ForEach(docs => docs.Must(doc => doc != null && doc.Length > 0)
+        .WithMessage("Education provider documents are optional, but if specified, cannot be empty."))
+        .When(x => x.EducationProviderDocuments != null && x.EducationProviderDocuments.Count > 0);
+
       RuleFor(x => x.BusinessDocuments)
-         .Must(docs => docs != null && docs.All(file => file != null && file.Length > 0))
-         .WithMessage("Business documents are optional, but if specified, can not be empty.")
-         .When(x => x.BusinessDocuments != null && x.BusinessDocuments.Count != 0);
+        .ForEach(docs => docs.Must(doc => doc != null && doc.Length > 0)
+        .WithMessage("Business documents are optional, but if specified, cannot be empty."))
+        .When(x => x.BusinessDocuments != null && x.BusinessDocuments.Count > 0);
+
       RuleFor(x => x.AdminEmails).Must(emails => emails != null && emails.Count != 0).When(x => !x.AddCurrentUserAsAdmin)
           .WithMessage("Additional administrative emails are required provided not adding the current user as an admin.");
       RuleFor(x => x.AdminEmails).Must(emails => emails != null && emails.All(email => !string.IsNullOrWhiteSpace(email) && new EmailAddressAttribute().IsValid(email)))

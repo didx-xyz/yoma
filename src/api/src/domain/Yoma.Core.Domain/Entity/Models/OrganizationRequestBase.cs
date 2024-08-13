@@ -49,7 +49,7 @@ namespace Yoma.Core.Domain.Entity.Models
     [Required]
     public List<Guid> ProviderTypes { get; set; }
 
-    public List<IFormFile>? RegistrationDocuments { get; set; }
+    public List<IFormFile>? RegistrationDocuments { get; set; } 
 
     public List<IFormFile>? EducationProviderDocuments { get; set; }
 

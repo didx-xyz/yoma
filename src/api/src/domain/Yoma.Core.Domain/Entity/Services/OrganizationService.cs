@@ -321,9 +321,12 @@ namespace Yoma.Core.Domain.Entity.Services
           result = await AssignProviderTypes(result, request.ProviderTypes, OrganizationReapprovalAction.None);
 
           //insert logo
-          var resultLogo = await UpdateLogo(result, request.Logo, OrganizationReapprovalAction.None);
-          result = resultLogo.Organization;
-          blobObjects.Add(resultLogo.ItemAdded);
+          if (request.Logo != null)
+          {
+            var resultLogo = await UpdateLogo(result, request.Logo, OrganizationReapprovalAction.None);
+            result = resultLogo.Organization;
+            blobObjects.Add(resultLogo.ItemAdded);
+          }
 
           //assign admins
           var admins = request.AdminEmails ??= [];

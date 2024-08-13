@@ -10,8 +10,7 @@ namespace Yoma.Core.Domain.Entity.Validators
     #region Constructor
     public OrganizationRequestValidatorCreate(ICountryService countryService, IOrganizationProviderTypeService organizationProviderTypeService) : base(countryService, organizationProviderTypeService)
     {
-      RuleFor(x => x.Logo).NotNull().WithMessage("Logo is required.");
-      RuleFor(x => x.RegistrationDocuments).NotEmpty().WithMessage("Registration documents are required.");
+      RuleFor(x => x.RegistrationDocuments).NotEmpty().WithMessage("Registration documents are required."); //see base validator; if specified, not null or empty
     }
     #endregion
   }
