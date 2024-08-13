@@ -38,7 +38,7 @@ export const PassportCard: React.FC<{
                   )}
               </span>
               <span className="badge badge-xs ml-4 min-w-[40px] bg-gray px-2">
-                {item.totalCount ?? "?"}
+                {item.totalCount ?? "0"}
               </span>
             </div>
           ))}

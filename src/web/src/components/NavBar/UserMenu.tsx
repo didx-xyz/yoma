@@ -206,7 +206,7 @@ export const UserMenu: React.FC = () => {
                 onClick={() => setUserMenuVisible(false)}
               >
                 <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
-                  🪪
+                  💳
                 </div>
                 <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
                   Yo-ID
