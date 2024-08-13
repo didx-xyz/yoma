@@ -25,19 +25,21 @@ serviceAccount:
 
 podAnnotations:
   # gcr.io/datadoghq/dd-lib-js-init
-  admission.datadoghq.com/js-lib.version: v5.10.0
+  admission.datadoghq.com/js-lib.version: v5.19.0
 deploymentLabels:
   tags.datadoghq.com/service: yoma-web
-  tags.datadoghq.com/version: '{{ .Values.image.tag | default .Chart.AppVersion }}'
+  tags.datadoghq.com/version: "{{ .Values.image.tag | default .Chart.AppVersion }}"
 podLabels:
   admission.datadoghq.com/enabled: "false" # disabled by default (for now)
   tags.datadoghq.com/service: yoma-web
-  tags.datadoghq.com/version: '{{ .Values.image.tag | default .Chart.AppVersion }}'
+  tags.datadoghq.com/version: "{{ .Values.image.tag | default .Chart.AppVersion }}"
 
-podSecurityContext: {}
+podSecurityContext:
+  {}
   # fsGroup: 2000
 
-securityContext: {}
+securityContext:
+  {}
   # capabilities:
   #   drop:
   #   - ALL
@@ -110,14 +112,14 @@ affinity:
           labelSelector:
             matchLabels:
               app.kubernetes.io/name: '{{ include "yoma-web.name" . }}'
-              app.kubernetes.io/instance: '{{ .Release.Name }}'
+              app.kubernetes.io/instance: "{{ .Release.Name }}"
           topologyKey: kubernetes.io/hostname
       - weight: 100
         podAffinityTerm:
           labelSelector:
             matchLabels:
               app.kubernetes.io/name: '{{ include "yoma-web.name" . }}'
-              app.kubernetes.io/instance: '{{ .Release.Name }}'
+              app.kubernetes.io/instance: "{{ .Release.Name }}"
           topologyKey: kubernetes.io/zone
 
 env:
