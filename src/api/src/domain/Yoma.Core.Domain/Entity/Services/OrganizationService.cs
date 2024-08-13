@@ -321,9 +321,12 @@ namespace Yoma.Core.Domain.Entity.Services
           result = await AssignProviderTypes(result, request.ProviderTypes, OrganizationReapprovalAction.None);
 
           //insert logo
-          var resultLogo = await UpdateLogo(result, request.Logo, OrganizationReapprovalAction.None);
-          result = resultLogo.Organization;
-          blobObjects.Add(resultLogo.ItemAdded);
+          if (request.Logo != null)
+          {
+            var resultLogo = await UpdateLogo(result, request.Logo, OrganizationReapprovalAction.None);
+            result = resultLogo.Organization;
+            blobObjects.Add(resultLogo.ItemAdded);
+          }
 
           //assign admins
           var admins = request.AdminEmails ??= [];
@@ -567,6 +570,9 @@ namespace Yoma.Core.Domain.Entity.Services
               throw new ValidationException($"{nameof(Organization)} can not be activated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
 
             if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
+
+            if (!result.LogoId.HasValue)
+              throw new ValidationException("A logo is required to activate the organization. Please add a logo before proceeding");
 
             result.CommentApproval = request.Comment;
 
