@@ -35,7 +35,8 @@ export default {
         overlay: "rgba(0, 0, 0, 0.5)",
       },
       fontFamily: {
-        openSans: ["var(--font-open-sans)"],
+        // openSans: ["var(--font-open-sans)"],
+        nunito: ["var(--font-nunito)"],
       },
       boxShadow: {
         custom:
@@ -43,6 +44,15 @@ export default {
       },
       transitionTimingFunction: {
         bounce: "cubic-bezier(0.175, 1.485, 0.320, 1.275)",
+      },
+      keyframes: {
+        wiggle: {
+          "0%, 50%, 100%": { transform: "rotate(-3deg)" },
+          "25%, 75%": { transform: "rotate(3deg)" },
+        },
+      },
+      animation: {
+        wiggle: "wiggle 2s ease-in-out",
       },
     },
   },

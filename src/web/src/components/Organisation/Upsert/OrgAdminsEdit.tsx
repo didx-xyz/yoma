@@ -30,8 +30,6 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
       ssoClientIdInbound: zod.string().optional(),
       ssoClientIdOutbound: zod.string().optional(),
     })
-    .nonstrict()
-
     .superRefine((values, ctx) => {
       // adminEmails is required if addCurrentUserAsAdmin is false
       if (

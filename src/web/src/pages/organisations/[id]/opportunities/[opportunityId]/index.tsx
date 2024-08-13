@@ -1785,6 +1785,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       }
                       error={formStateStep1.errors.summary?.message}
                     >
+                      {/* TODO: replace with FormTextArea component */}
                       <textarea
                         className="input textarea textarea-bordered h-16 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
                         placeholder="Enter summary..."

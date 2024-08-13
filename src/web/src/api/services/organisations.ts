@@ -10,6 +10,7 @@ import type {
   OrganizationSearchResults,
   UserInfo,
 } from "../models/organisation";
+import { objectToFormData } from "~/lib/utils";
 
 export const getOrganisationProviderTypes = async (
   context?: GetServerSidePropsContext,
@@ -25,37 +26,15 @@ export const getOrganisationProviderTypes = async (
 export const postOrganisation = async (
   model: OrganizationRequestBase,
 ): Promise<Organization> => {
-  // convert model to form data
-  /* eslint-disable */
-  const formData = new FormData();
-  for (const property in model) {
-    let propVal = (model as any)[property];
-
-    if (property === "logo") {
-      // send as first item in array
-      formData.append(property, propVal ? propVal[0] : null);
-    } else if (
-      property === "providerTypes" ||
-      property === "adminEmails" ||
-      property === "registrationDocuments" ||
-      property === "educationProviderDocuments" ||
-      property === "businessDocuments" ||
-      property === "registrationDocumentsDelete" ||
-      property === "educationProviderDocumentsDelete" ||
-      property === "businessDocumentsDelete"
-    ) {
-      // send as multiple items in form data
-      for (const file of propVal) {
-        formData.append(property, file);
-      }
-    } else formData.append(property, propVal);
-  }
-  /* eslint-enable */
+  const formData = objectToFormData(model, undefined, undefined, false);
 
   const { data } = await (
     await ApiClient
   ).post<Organization>("/organization", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "multipart/form-data",
+    },
   });
   return data;
 };
@@ -63,38 +42,30 @@ export const postOrganisation = async (
 export const patchOrganisation = async (
   model: OrganizationRequestBase,
 ): Promise<Organization> => {
-  // convert model to form data
-  /* eslint-disable */
-  const formData = new FormData();
-  for (const property in model) {
-    let propVal = (model as any)[property];
-
-    if (property === "logo") {
-      // send as first item in array
-      formData.append(property, propVal ? propVal[0] : null);
-    } else if (
-      property === "providerTypes" ||
-      property === "adminEmails" ||
-      property === "registrationDocuments" ||
-      property === "educationProviderDocuments" ||
-      property === "businessDocuments" ||
-      property === "registrationDocumentsDelete" ||
-      property === "educationProviderDocumentsDelete" ||
-      property === "businessDocumentsDelete"
-    ) {
-      // send as multiple items in form data
-      for (const file of propVal) {
-        formData.append(property, file);
-      }
-    } else formData.append(property, propVal);
-  }
-  /* eslint-enable */
+  const formData = objectToFormData(model, undefined, undefined, false);
 
   const { data } = await (
     await ApiClient
-  ).patch<Organization>("/organization", formData, {
-    headers: { "Content-Type": "multipart/form-data" },
+  ).patch<Organization>("/organization", formData);
+  return data;
+};
+
+export const updateOrganisationLogo = async (
+  id: string,
+  file: any,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+) => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const { data } = await instance.patch(`/organization/${id}/logo`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
   });
+
   return data;
 };
 

@@ -2,13 +2,7 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
-import {
-  IoMdPower,
-  IoMdSearch,
-  IoMdSettings,
-  IoIosCheckmarkCircle,
-  IoMdConstruct,
-} from "react-icons/io";
+import { IoMdSettings, IoIosCheckmarkCircle } from "react-icons/io";
 import ReactModal from "react-modal";
 import { type OrganizationInfo } from "~/api/models/user";
 import {
@@ -170,7 +164,7 @@ export const UserMenu: React.FC = () => {
         onRequestClose={() => {
           setUserMenuVisible(false);
         }}
-        className={`fixed left-0 right-0 top-16 -mt-1 flex-grow rounded-lg bg-white shadow-lg animate-in fade-in md:left-auto md:right-2 md:top-[60px] md:-mt-0 md:w-96`}
+        className={`fixed left-0 right-0 top-16 -mt-1 flex-grow rounded-lg bg-white shadow animate-in fade-in md:left-auto md:right-2 md:top-[60px] md:-mt-0 md:w-96`}
         portalClassName={"fixed z-50"}
         overlayClassName="fixed inset-0"
       >
@@ -178,7 +172,7 @@ export const UserMenu: React.FC = () => {
           {/* USER (YOID) */}
           <li className="z-30 w-full rounded-t-lg bg-white py-2 shadow-custom">
             <Link
-              href="/yoid"
+              href="/yoid/profile"
               className="!rounded-t-lg rounded-b-none text-gray-dark"
               onClick={() => setUserMenuVisible(false)}
             >
@@ -192,7 +186,9 @@ export const UserMenu: React.FC = () => {
 
               <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
                 {session?.user?.name ?? "Settings"}
-                <div className="text-xs text-gray-dark">View profile</div>
+                {userProfile?.emailConfirmed && userProfile?.yoIDOnboarded && (
+                  <div className="text-xs text-gray-dark">Verified</div>
+                )}
               </div>
               {userProfile?.emailConfirmed && userProfile?.yoIDOnboarded && (
                 <span>
@@ -201,6 +197,49 @@ export const UserMenu: React.FC = () => {
               )}
             </Link>
           </li>
+          {/* YOID */}
+          <div className="z-20 w-full bg-white-shade">
+            <li className="w-full bg-white-shade py-2">
+              <Link
+                href="/yoid"
+                className="!rounded-t-lg rounded-b-none text-gray-dark"
+                onClick={() => setUserMenuVisible(false)}
+              >
+                <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
+                  🪪
+                </div>
+                <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
+                  Yo-ID
+                  <div className="text-xs text-gray-dark">
+                    Opportunities, skills and ZLTO wallet.
+                  </div>
+                </div>
+              </Link>
+            </li>
+            <div className="divider m-0 mx-4 !bg-gray" />
+          </div>
+
+          {/* PROFILE */}
+          <div className="z-20 w-full bg-white-shade">
+            <li className="w-full bg-white-shade py-2">
+              <Link
+                href="/yoid/profile"
+                className="!rounded-t-lg rounded-b-none text-gray-dark"
+                onClick={() => setUserMenuVisible(false)}
+              >
+                <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
+                  🕶️
+                </div>
+                <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
+                  Profile
+                  <div className="text-xs text-gray-dark">
+                    Personal info, picture and password.
+                  </div>
+                </div>
+              </Link>
+            </li>
+            <div className="divider m-0 mx-4 !bg-gray" />
+          </div>
 
           {/* USER (SETTINGS) */}
           <div className="z-20 w-full bg-white-shade">
@@ -210,10 +249,15 @@ export const UserMenu: React.FC = () => {
                 className="!rounded-t-lg rounded-b-none text-gray-dark"
                 onClick={() => setUserMenuVisible(false)}
               >
-                <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
-                  <IoMdSettings className="h-6 w-6 text-gray-dark" />
+                <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
+                  ⚙️
                 </div>
-                Settings
+                <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
+                  Settings
+                  <div className="text-xs text-gray-dark">
+                    Notification and privacy settings.
+                  </div>
+                </div>
               </Link>
             </li>
             <div className="divider m-0 mx-4 !bg-gray" />
@@ -221,31 +265,28 @@ export const UserMenu: React.FC = () => {
 
           {/* ORGANISATIONS */}
           {(userProfile?.adminsOf?.length ?? 0) > 0 && (
-            <>
+            <span className="w-full bg-white-shade">
               <div
                 className="max-h-[200px] w-full overflow-x-hidden overflow-y-scroll bg-white-shade p-0"
                 id="organisations"
               >
+                <li className="w-full rounded-none bg-white-shade py-2">
+                  <Link
+                    href="/organisations"
+                    className="hover:white w-full rounded-none bg-white-shade"
+                    onClick={() => setUserMenuVisible(false)}
+                  >
+                    <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
+                      🔎
+                    </div>
+                    View all organisations
+                  </Link>
+                </li>
                 {userProfile?.adminsOf?.map((organisation) =>
                   renderOrganisationMenuItem(organisation),
                 )}
               </div>
-
-              <li className="w-full rounded-none bg-white-shade py-2 shadow-[0_-2px_15px_-3px_rgba(0,0,0,0.07),0_-10px_20px_-2px_rgba(0,0,0,0.04)]">
-                <Link
-                  href="/organisations"
-                  className="hover:white w-full rounded-none bg-white-shade text-gray-dark"
-                  onClick={() => setUserMenuVisible(false)}
-                >
-                  <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
-                    <IoMdSearch className="h-6 w-6 text-gray-dark" />
-                  </div>
-                  View all organisations
-                </Link>
-              </li>
-              <div className="z-20 w-full bg-white-shade">
-                <div className="divider m-0 mx-4 !bg-gray" />
-              </div>
+              <div className="divider m-0 mx-4 !bg-gray" />
 
               {/* <li>
                 <Link
@@ -259,7 +300,7 @@ export const UserMenu: React.FC = () => {
                   Create new organisation
                 </Link>
               </li> */}
-            </>
+            </span>
           )}
 
           {/* ADMIN */}
@@ -272,10 +313,15 @@ export const UserMenu: React.FC = () => {
                   onClick={() => setUserMenuVisible(false)}
                   id={`userMenu_admin`}
                 >
-                  <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
-                    <IoMdConstruct className="h-6 w-6 text-gray-dark" />
+                  <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg shadow">
+                    🛠️
                   </div>
-                  Admin
+                  <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
+                    Admin
+                    <div className="text-xs text-gray-dark">
+                      Manage organisations.
+                    </div>
+                  </div>
                 </Link>
               </li>
               <div className="divider m-0 mx-4 !bg-gray" />
@@ -285,12 +331,10 @@ export const UserMenu: React.FC = () => {
           {/* SIGN OUT */}
           <div className="z-20 w-full !rounded-b-lg !bg-white-shade">
             <li className="w-full rounded-b-lg bg-white-shade py-2">
-              <button
-                className="text-left text-gray-dark"
-                onClick={handleLogout}
-              >
-                <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white shadow">
-                  <IoMdPower className="h-6 w-6 text-gray-dark" />
+              <button className="text-left" onClick={handleLogout}>
+                <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
+                  {/* ↩️ */}
+                  ✌️
                 </div>
                 Sign out
               </button>

@@ -18,6 +18,8 @@ import {
 } from "~/lib/constants";
 import { Document } from "./Document";
 import { FileUploader } from "./FileUpload";
+import FormField from "~/components/Common/FormField";
+import FormCheckbox from "~/components/Common/FormCheckbox";
 
 export interface InputProps {
   formData: OrganizationRequestBase | null;
@@ -209,8 +211,15 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { register, handleSubmit, formState, setValue, getValues, reset } =
-    form;
+  const {
+    register,
+    handleSubmit,
+    formState,
+    setValue,
+    getValues,
+    reset,
+    trigger,
+  } = form;
   const watchVerificationTypes = form.watch("providerTypes");
 
   // set default values
@@ -230,8 +239,12 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
           (x) => x.type == "Business",
         ),
       });
+
+      // validate the forms on initial load
+      // this is needed to show the required field indicators (exclamation icon next to labels) on the first render
+      trigger();
     }, 100);
-  }, [reset, formData, organisation]);
+  }, [reset, formData, organisation, trigger]);
 
   // form submission handler
   const onSubmitHandler = useCallback(
@@ -247,7 +260,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       let arr1 = getValues("registrationDocumentsExisting");
       if (!arr1) arr1 = [];
       arr1 = arr1.filter((x: OrganizationDocument) => x.fileId != doc.fileId);
-      setValue("registrationDocumentExisting", arr1);
+      setValue("registrationDocumentsExisting", arr1);
 
       // add to deleted array
       let arr2 = getValues("registrationDocumentsDelete");
@@ -294,82 +307,70 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     <>
       <form
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
-        className="flex flex-col gap-2"
+        className="flex flex-col gap-4"
       >
-        <div className="form-control">
-          <label className="label font-bold">
-            <span className="label-text">
-              What role will your organisation play within Yoma?
-            </span>
-          </label>
+        <FormField
+          label="What role will your organisation play within Yoma?"
+          showWarningIcon={!!formState.errors.providerTypes?.message}
+          showError={
+            !!formState.touchedFields.providerTypes || formState.isSubmitted
+          }
+          error={formState.errors.providerTypes?.message?.toString()}
+        >
           {organisationProviderTypes?.map((item) => (
-            <label
-              htmlFor={item.id}
-              className="label cursor-pointer justify-normal"
+            <FormCheckbox
+              id={item.id}
               key={item.id}
-            >
-              <input
-                {...register("providerTypes")}
-                type="checkbox"
-                value={item.id}
-                id={item.id}
-                className="checkbox-secondary checkbox"
-              />
-              <span className="label-text ml-4">{item.name}</span>
-            </label>
+              inputProps={{
+                value: item.id,
+                ...register("providerTypes"),
+              }}
+              label={item.name}
+            />
           ))}
-
-          {formState.errors.providerTypes && (
-            <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
-                {`${formState.errors.providerTypes.message}`}
-              </span>
-            </label>
-          )}
-        </div>
+        </FormField>
 
         {/* REGISTRATION DOCUMENTS */}
-        <div className="form-control">
-          <label className="label font-bold">
-            <span className="label-text">Registration documents</span>
-          </label>
+        <FormField
+          label="Registration documents"
+          showWarningIcon={!!formState.errors.registrationDocuments?.message}
+          showError={
+            !!formState.touchedFields.registrationDocuments ||
+            formState.isSubmitted
+          }
+          error={formState.errors.registrationDocuments?.message?.toString()}
+        >
+          <>
+            {/* show existing documents */}
+            <div className="flex flex-col gap-2">
+              {organisation?.documents
+                ?.filter((x) => x.type == "Registration")
+                .map((item) => (
+                  <Document
+                    key={item.fileId}
+                    doc={item}
+                    onRemove={onRemoveRegistrationDocument}
+                  />
+                ))}
 
-          {/* show existing documents */}
-          <div className="flex flex-col gap-2">
-            {organisation?.documents
-              ?.filter((x) => x.type == "Registration")
-              .map((item) => (
-                <Document
-                  key={item.fileId}
-                  doc={item}
-                  onRemove={onRemoveRegistrationDocument}
-                />
-              ))}
-
-            {/* upload documents */}
-            <FileUploader
-              name="registration"
-              files={registrationDocuments}
-              allowMultiple={true}
-              fileTypes={ACCEPTED_DOC_TYPES}
-              onUploadComplete={(files) => {
-                setRegistrationDocuments(files);
-                setValue(
-                  "registrationDocuments",
-                  files && files.length > 0 ? files.map((x) => x.file) : [],
-                );
-              }}
-            />
-          </div>
-
-          {formState.errors.registrationDocuments && (
-            <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
-                {`${formState.errors.registrationDocuments.message}`}
-              </span>
-            </label>
-          )}
-        </div>
+              {/* upload documents */}
+              <FileUploader
+                name="registration"
+                files={registrationDocuments}
+                allowMultiple={true}
+                fileTypes={ACCEPTED_DOC_TYPES}
+                onUploadComplete={(files) => {
+                  setRegistrationDocuments(files);
+                  setValue(
+                    "registrationDocuments",
+                    files && files.length > 0 ? files.map((x) => x.file) : [],
+                  );
+                  trigger("registrationDocuments");
+                }}
+              />
+            </div>
+          </>
+        </FormField>
 
         {watchVerificationTypes && (
           <>
@@ -377,13 +378,17 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
             {watchVerificationTypes.includes(
               organisationProviderTypes?.find((x) => x.name == "Education")?.id,
             ) && (
-              <div className="form-control">
-                <label className="label font-bold">
-                  <span className="label-text">
-                    Education provider documents
-                  </span>
-                </label>
-
+              <FormField
+                label="Education documents"
+                showWarningIcon={
+                  !!formState.errors.educationProviderDocuments?.message
+                }
+                showError={
+                  !!formState.touchedFields.educationProviderDocuments ||
+                  formState.isSubmitted
+                }
+                error={formState.errors.educationProviderDocuments?.message?.toString()}
+              >
                 <div className="flex flex-col gap-2">
                   {/* show existing documents */}
                   {organisation?.documents
@@ -410,18 +415,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
                           ? files.map((x) => x.file)
                           : [],
                       );
+                      trigger("educationProviderDocuments");
                     }}
                   />
                 </div>
-
-                {formState.errors.educationProviderDocuments && (
-                  <label className="label font-bold">
-                    <span className="label-text-alt italic text-red-500">
-                      {`${formState.errors.educationProviderDocuments.message}`}
-                    </span>
-                  </label>
-                )}
-              </div>
+              </FormField>
             )}
 
             {/* VAT AND BUSINESS DOCUMENTS */}
@@ -429,11 +427,15 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
               organisationProviderTypes?.find((x) => x.name == "Marketplace")
                 ?.id,
             ) && (
-              <div className="form-control">
-                <label className="label font-bold">
-                  <span className="label-text">VAT and business document</span>
-                </label>
-
+              <FormField
+                label="VAT and business document"
+                showWarningIcon={!!formState.errors.businessDocuments?.message}
+                showError={
+                  !!formState.touchedFields.businessDocuments ||
+                  formState.isSubmitted
+                }
+                error={formState.errors.businessDocuments?.message?.toString()}
+              >
                 <div className="flex flex-col gap-2">
                   {/* show existing documents */}
                   {organisation?.documents
@@ -460,18 +462,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
                           ? files.map((x) => x.file)
                           : [],
                       );
+                      trigger("businessDocuments");
                     }}
                   />
                 </div>
-
-                {formState.errors.businessDocuments && (
-                  <label className="label font-bold">
-                    <span className="label-text-alt italic text-red-500">
-                      {`${formState.errors.businessDocuments.message}`}
-                    </span>
-                  </label>
-                )}
-              </div>
+              </FormField>
             )}
           </>
         )}
