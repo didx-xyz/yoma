@@ -60,7 +60,7 @@ const YoIDOpportunities: TabProps = ({ children }) => {
 
   return (
     <YoIDLayout>
-      <div className="flex w-full flex-col gap-4">
+      <div className="flex w-full flex-col gap-4 lg:max-w-7xl">
         {/* BREADCRUMB */}
         <div className="text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb

@@ -13,8 +13,8 @@ import { userProfileAtom } from "~/lib/store";
 import { getTimeOfDayAndEmoji } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
 import { PageBackground } from "../PageBackground";
-import { ZltoModal } from "../YoID/ZltoModal";
 import MainLayout from "./Main";
+import { YoIdModal } from "../YoID/YoIdModal";
 
 export type TabProps = ({
   children,
@@ -26,7 +26,7 @@ const YoIDLayout: TabProps = ({ children }) => {
   const router = useRouter();
   const [userProfile] = useAtom(userProfileAtom);
   const [tabItems, setTabItems] = useState<TabItem[]>([]);
-  const [zltoModalVisible, setZltoModalVisible] = useState(false);
+  const [yoIdModalVisible, setYoIdModalVisible] = useState(false);
   const [timeOfDay, timeOfDayEmoji] = getTimeOfDayAndEmoji();
 
   // set the tab items based on the current route
@@ -84,9 +84,9 @@ const YoIDLayout: TabProps = ({ children }) => {
 
         <PageBackground className="h-[16rem]" includeStamps={true} />
 
-        <ZltoModal
-          isOpen={zltoModalVisible}
-          onClose={() => setZltoModalVisible(false)}
+        <YoIdModal
+          isOpen={yoIdModalVisible}
+          onClose={() => setYoIdModalVisible(false)}
         />
 
         <div className="container z-10 mt-20 p-4 md:mt-24">
@@ -102,7 +102,7 @@ const YoIDLayout: TabProps = ({ children }) => {
             <div className="w-fullx flex flex-col gap-2 lg:w-auto">
               {/* WELCOME MSG */}
               <div className="-mb-2 max-w-xs truncate text-lg font-semibold text-white md:max-w-xl md:text-2xl">
-                {timeOfDayEmoji} Good {timeOfDay} {userProfile?.firstName}!
+                {timeOfDayEmoji} Good {timeOfDay} {userProfile?.firstName}! 👋
               </div>
 
               <div className="flex flex-row items-center gap-2 text-white">
@@ -112,7 +112,7 @@ const YoIDLayout: TabProps = ({ children }) => {
                 </span>
 
                 {/* TOOLTIP */}
-                <button type="button" onClick={() => setZltoModalVisible(true)}>
+                <button type="button" onClick={() => setYoIdModalVisible(true)}>
                   <IoIosInformationCircleOutline className="h-6 w-6" />
                 </button>
               </div>
@@ -124,10 +124,8 @@ const YoIDLayout: TabProps = ({ children }) => {
                     key={tab.title}
                     href={tab.url!}
                     rel="noopener noreferrer"
-                    className={`btn btn-xs flex items-center border-gray text-xs text-gray lg:btn-sm hover:border-gray-dark ${
-                      tab.selected
-                        ? "btn-secondary border-0 hover:text-white"
-                        : ""
+                    className={`btn btn-xs flex h-8 items-center border-orange bg-orange text-xs tracking-wide text-white lg:btn-sm hover:border-orange hover:bg-purple hover:text-white ${
+                      tab.selected ? "border-orange bg-purple text-white" : ""
                     }`}
                   >
                     {tab.title}

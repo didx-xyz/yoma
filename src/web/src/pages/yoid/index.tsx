@@ -15,6 +15,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { HeaderWithLink } from "~/components/YoID/HeaderWithLink";
 import { LineChart } from "~/components/YoID/LineChart";
+import { OpportunitiesSummary } from "~/components/YoID/OpportunitiesSummary";
 import { PassportCard } from "~/components/YoID/PassportCard";
 import { SkillsCard } from "~/components/YoID/SkillsCard";
 import { WalletCard } from "~/components/YoID/WalletCard";
@@ -62,6 +63,7 @@ const YoIDDashboard: NextPageWithLayout<{
 }> = ({ error }) => {
   const [zltoModalVisible, setZltoModalVisible] = useState(false);
   const [userProfile] = useAtom(userProfileAtom);
+  const [graphView, setGraphView] = useState(false);
 
   const {
     data: skills,
@@ -129,7 +131,7 @@ const YoIDDashboard: NextPageWithLayout<{
       />
 
       {/* DASHBOARD */}
-      <div className="mt-2 flex flex-wrap items-center justify-center gap-4">
+      <div className="mt-2 flex w-full flex-wrap items-center justify-center gap-4 lg:max-w-7xl">
         {/* WALLET */}
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
           <HeaderWithLink title="💸 Wallet" />
@@ -195,17 +197,31 @@ const YoIDDashboard: NextPageWithLayout<{
         </div>
 
         {/* OPPORTUNITIES */}
-        <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
+        <div className="relative flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
           <HeaderWithLink
             title="🏆 Opportunities"
             url="/yoid/opportunities/completed"
           />
-          <div className="flex h-[300px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+          <button
+            onClick={() => setGraphView(!graphView)}
+            className="absolute left-[7.5rem] flex lg:left-[9rem]"
+          >
+            {graphView ? "📋" : "📈"}&nbsp;
+            <span className="my-auto text-xs text-gray-dark underline">
+              {graphView ? "View Summary" : "View Graph"}
+            </span>
+          </button>
+
+          <div className="flex h-fit w-full flex-col items-center gap-4 rounded-lg bg-white p-4 shadow md:h-[300px]">
             <Suspense
               isLoading={myOpportunitiesSummaryIsLoading}
               error={myOpportunitiesSummaryError}
             >
-              <LineChart data={myOpportunitiesSummary!} />
+              {graphView ? (
+                <LineChart data={myOpportunitiesSummary!} />
+              ) : (
+                <OpportunitiesSummary data={myOpportunitiesSummary} />
+              )}
             </Suspense>
           </div>
         </div>

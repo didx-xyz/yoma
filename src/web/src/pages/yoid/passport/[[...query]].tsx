@@ -250,7 +250,7 @@ const MyPassport: NextPageWithLayout<{
         </div>
       </ReactModal>
 
-      <div className="w-full">
+      <div className="w-full lg:max-w-7xl">
         <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[

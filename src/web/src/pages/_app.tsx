@@ -9,7 +9,7 @@ import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import type { AppProps } from "next/app";
-import { Open_Sans } from "next/font/google";
+import { Nunito } from "next/font/google";
 import { useRouter } from "next/router";
 import type { ReactElement, ReactNode } from "react";
 import { useState } from "react";
@@ -31,9 +31,15 @@ import "nprogress/nprogress.css";
 
 // configure font for tailwindcss
 // see https://nextjs.org/docs/pages/building-your-application/optimizing/fonts
-const openSans = Open_Sans({
+// const openSans = Open_Sans({
+//   subsets: ["latin"],
+//   variable: "--font-open-sans",
+// });
+
+const nunito = Nunito({
   subsets: ["latin"],
-  variable: "--font-open-sans",
+  variable: "--font-nunito",
+  display: "swap",
 });
 
 // Make sure to bind modal to your appElement (https://reactcommunity.org/react-modal/accessibility/)
@@ -94,7 +100,7 @@ const MyApp = ({
             <HydrationBoundary state={pageProps.dehydratedState}>
               <div
                 id="mainContent"
-                className={`${openSans.variable} font-openSans`}
+                className={`${nunito.variable} font-nunito`}
               >
                 <ConfirmationModalContextProvider>
                   <Global />
