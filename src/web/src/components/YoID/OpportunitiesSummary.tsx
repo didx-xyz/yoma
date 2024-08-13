@@ -15,14 +15,14 @@ export const OpportunitiesSummary: React.FC<{
   const pendingPercentage = calculatePercentage(pending);
   const rejectedPercentage = calculatePercentage(rejected);
   return (
-    <div className="rouned-lg flex flex-col col-span-2 h-full w-full items-center justify-center gap-4 bg-white p-4 text-white md:flex-row">
+    <div className="rouned-lg col-span-2 flex h-full w-full flex-col items-center justify-center gap-4 bg-white p-4 text-white md:flex-row">
       <span className="flex gap-4">
         <Link
           href="yoid/opportunities/completed"
           style={{
             background: `conic-gradient(from 180deg, #F9AB3E ${completedPercentage}%, #387F6A 0)`,
           }}
-          className="h-[6rem] w-[6rem] flex flex-col items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center shadow-custom md:h-40 md:w-40 md:p-3"
+          className="flex h-[6rem] w-[6rem] flex-col items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center shadow-custom md:h-40 md:w-40 md:p-3"
         >
           <div className="flex h-full w-full flex-col items-center justify-center rounded-full border-2 border-dotted border-orange bg-green">
             <div className="text-md font-semibold md:text-3xl">
@@ -36,7 +36,7 @@ export const OpportunitiesSummary: React.FC<{
           style={{
             background: `conic-gradient(from 180deg, #F9AB3E ${pendingPercentage}%, #387F6A 0)`,
           }}
-          className="h-[6rem] w-[6rem] md:w-40 flex flex-col  items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center shadow-custom md:h-40 md:p-3"
+          className="flex h-[6rem] w-[6rem] flex-col items-center  justify-center rounded-full border-2 border-orange bg-green p-2 text-center shadow-custom md:h-40 md:w-40 md:p-3"
         >
           <div className="flex h-full w-full flex-col items-center justify-center rounded-full border-2 border-dotted border-orange bg-green">
             <div className="text-md font-semibold md:text-3xl">
@@ -52,7 +52,7 @@ export const OpportunitiesSummary: React.FC<{
           style={{
             background: `conic-gradient(from 180deg, #F9AB3E ${rejectedPercentage}%, #387F6A 0)`,
           }}
-          className="h-[6rem] w-[6rem] md:w-40 flex flex-col  items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center shadow-custom md:h-40 md:p-3"
+          className="flex h-[6rem] w-[6rem] flex-col items-center  justify-center rounded-full border-2 border-orange bg-green p-2 text-center shadow-custom md:h-40 md:w-40 md:p-3"
         >
           <div className="flex h-full w-full flex-col items-center justify-center rounded-full border-2 border-dotted border-orange bg-green">
             <div className="text-md font-semibold md:text-3xl">
@@ -63,7 +63,7 @@ export const OpportunitiesSummary: React.FC<{
         </Link>
         <Link
           href="yoid/opportunities/saved"
-          className="h-[6rem] w-[6rem] md:w-40 flex flex-col  items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center shadow-custom  md:h-40 md:p-3"
+          className="flex h-[6rem] w-[6rem] flex-col items-center  justify-center rounded-full border-2 border-orange bg-green p-2 text-center shadow-custom md:h-40  md:w-40 md:p-3"
         >
           <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-green">
             <div className="text-md font-semibold md:text-3xl">💖 {saved}</div>
