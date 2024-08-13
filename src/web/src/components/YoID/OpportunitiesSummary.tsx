@@ -21,13 +21,13 @@ export const OpportunitiesSummary: React.FC<{
         style={{
           background: `conic-gradient(from 180deg, #F9AB3E ${completedPercentage}%, #387F6A 0)`,
         }}
-        className="flex aspect-square h-32 flex-col  items-center justify-center rounded-full border-2 border-orange bg-green p-3 text-center shadow-custom md:h-40"
+        className="h-26 flex aspect-square flex-col  items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center shadow-custom md:h-40 md:p-3"
       >
         <div className="flex aspect-square h-full w-full flex-col items-center justify-center rounded-full border-2 border-dotted border-orange bg-green">
-          <div className="text-2xl font-semibold md:text-3xl">
+          <div className="text-md font-semibold md:text-3xl">
             ✅ {data?.count[0]}
           </div>
-          <span className="text-sm ">Completed</span>
+          <span className="text-xs md:text-sm ">Completed</span>
         </div>
       </Link>
       <Link
@@ -35,13 +35,13 @@ export const OpportunitiesSummary: React.FC<{
         style={{
           background: `conic-gradient(from 180deg, #F9AB3E ${pendingPercentage}%, #387F6A 0)`,
         }}
-        className="flex aspect-square h-32 flex-col  items-center justify-center rounded-full border-2 border-orange bg-green p-3 text-center shadow-custom md:h-40"
+        className="h-26 flex aspect-square flex-col  items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center shadow-custom md:h-40 md:p-3"
       >
         <div className="flex aspect-square h-full w-full flex-col items-center justify-center rounded-full border-2 border-dotted border-orange bg-green">
-          <div className="text-2xl font-semibold md:text-3xl">
+          <div className="text-md font-semibold md:text-3xl">
             🕑 {data?.count[1]}
           </div>
-          <span className="text-sm ">Pending</span>
+          <span className="text-xs md:text-sm ">Pending</span>
         </div>
       </Link>
       <Link
@@ -49,22 +49,22 @@ export const OpportunitiesSummary: React.FC<{
         style={{
           background: `conic-gradient(from 180deg, #F9AB3E ${rejectedPercentage}%, #387F6A 0)`,
         }}
-        className="flex aspect-square h-32 flex-col  items-center justify-center rounded-full border-2 border-orange bg-green p-3 text-center shadow-custom md:h-40"
+        className="h-26 flex aspect-square flex-col  items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center shadow-custom md:h-40 md:p-3"
       >
         <div className="flex aspect-square h-full w-full flex-col items-center justify-center rounded-full border-2 border-dotted border-orange bg-green">
-          <div className="text-2xl font-semibold md:text-3xl">
+          <div className="text-md font-semibold md:text-3xl">
             ❌ {data?.count[2]}
           </div>
-          <span className="text-sm ">Rejected</span>
+          <span className="text-xs md:text-sm ">Rejected</span>
         </div>
       </Link>
       <Link
         href="yoid/opportunities/saved"
-        className="flex aspect-square h-32 flex-col  items-center justify-center rounded-full border-2 border-orange bg-green p-3 text-center  shadow-custom md:h-40"
+        className="h-26 flex aspect-square flex-col  items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center shadow-custom  md:h-40 md:p-3"
       >
         <div className="flex aspect-square h-full w-full flex-col items-center justify-center rounded-full bg-green">
-          <div className="text-2xl font-semibold md:text-3xl">💖 {saved}</div>
-          <span className="text-sm ">Saved</span>
+          <div className="text-md font-semibold md:text-3xl">💖 {saved}</div>
+          <span className="text-xs md:text-sm ">Saved</span>
         </div>
       </Link>
     </div>
