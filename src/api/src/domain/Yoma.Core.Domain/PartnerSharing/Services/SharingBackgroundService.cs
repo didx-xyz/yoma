@@ -103,7 +103,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
 
                     var opportunity = _opportunityService.GetById(item.OpportunityId.Value, true, true, false);
                     var organization = _organizationService.GetById(opportunity.OrganizationId, false, true, false);
-                 
+
                     var request = new OpportunityRequestUpsert
                     {
                       Opportunity = opportunity,
