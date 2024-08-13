@@ -1,21 +1,15 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect } from "react";
 import { type FieldValues, useForm } from "react-hook-form";
 import zod from "zod";
-import type {
-  Organization,
-  OrganizationRequestBase,
-} from "~/api/models/organisation";
-import { REGEX_URL_VALIDATION } from "~/lib/constants";
-import { useQuery } from "@tanstack/react-query";
+import type { Organization } from "~/api/models/organisation";
 import { getCountries } from "~/api/services/lookups";
-import AvatarUpload from "./AvatarUpload";
 import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
-import FormTextArea from "~/components/Common/FormTextArea";
 import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
-import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
-import { OrganizationRequestViewModel } from "~/models/organisation";
+import FormTextArea from "~/components/Common/FormTextArea";
+import type { OrganizationRequestViewModel } from "~/models/organisation";
 
 export interface InputProps {
   formData: OrganizationRequestViewModel | null;
@@ -92,7 +86,7 @@ export const OrgContactEdit: React.FC<InputProps> = ({
       // this is needed to show the required field indicators (exclamation icon next to labels) on the first render
       trigger();
     }, 100);
-  }, [reset, formData, organisation?.logoURL]);
+  }, [reset, formData, organisation?.logoURL, trigger]);
 
   // form submission handler
   const onSubmitHandler = useCallback(

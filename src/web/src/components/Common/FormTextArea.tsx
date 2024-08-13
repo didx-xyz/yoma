@@ -1,9 +1,15 @@
 import React from "react";
 
 // extend the type to include an index signature for data-* attributes
-interface CustomInputHTMLAttributes<T> extends React.InputHTMLAttributes<T> {
-  [key: `data-${string}`]: string | undefined;
-}
+type DataAttributes = Record<`data-${string}`, string | undefined>;
+
+interface CustomInputHTMLAttributes<T>
+  extends React.TextareaHTMLAttributes<T>,
+    DataAttributes {}
+
+interface CustomInputHTMLAttributes<T>
+  extends React.TextareaHTMLAttributes<T>,
+    DataAttributes {}
 
 const FormTextArea: React.FC<{
   inputProps?: CustomInputHTMLAttributes<HTMLTextAreaElement>;

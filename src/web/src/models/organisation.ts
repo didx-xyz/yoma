@@ -1,4 +1,4 @@
-import { FormFile } from "~/api/models/common";
+import type { FormFile } from "~/api/models/common";
 
 export interface OrganizationRequestViewModel {
   id: string;
