@@ -35,7 +35,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     #region Public Members
     public async Task<string> CreateOpportunity(OpportunityRequestUpsert request)
     {
-      return Guid.NewGuid().ToString(); //TODO: Implement 
+      return await Task.FromResult(Guid.NewGuid().ToString()); //TODO: Implement
 
       //var requestUpsert = ToRequestUpsert(request);
 
@@ -79,6 +79,9 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
 
     //  if (request.Opportunity == null)
     //    throw new ArgumentNullException(nameof(request), "Opportunity is required");
+
+    //  if (request.Organization == null)
+    //    throw new ArgumentNullException(nameof(request), "Organization is required");
 
     //  if (request.OrganizationYoma == null)
     //    throw new ArgumentNullException(nameof(request), "OrganizationYoma is required");

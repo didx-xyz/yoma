@@ -39,6 +39,14 @@ namespace Yoma.Core.Domain.Core.Helpers
       return claimsPrincipal.IsInRole(Constants.Role_Admin);
     }
 
+    public static bool IsOrganizationAdminRole(IHttpContextAccessor? httpContextAccessor)
+    {
+      var claimsPrincipal = httpContextAccessor?.HttpContext?.User;
+      if (claimsPrincipal == null) return false;
+
+      return claimsPrincipal.IsInRole(Constants.Role_OrganizationAdmin);
+    }
+
     public static bool IsUserRoleOnly(IHttpContextAccessor? httpContextAccessor)
     {
       var claimsPrincipal = httpContextAccessor?.HttpContext?.User;

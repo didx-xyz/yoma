@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.PartnerSharing.Models
 
     public Opportunity.Models.Opportunity Opportunity { get; set; }
 
+    public Organization Organization { get; set; }
+
     public Organization OrganizationYoma { get; set; }
 
     public bool ShareContactInfo { get; set; }

@@ -102,14 +102,15 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                       throw new InvalidOperationException($"Entity type '{entityType}': Opportunity id is null");
 
                     var opportunity = _opportunityService.GetById(item.OpportunityId.Value, true, true, false);
-                    var organizationSettings = _organizationService.GetSettingsInfoById(opportunity.OrganizationId, false);
-
+                    var organization = _organizationService.GetById(opportunity.OrganizationId, false, true, false);
+                 
                     var request = new OpportunityRequestUpsert
                     {
                       Opportunity = opportunity,
+                      Organization = organization,
                       OrganizationYoma = organizationYoma,
-                      ShareContactInfo = SettingsHelper.GetValue<bool>(organizationSettings, Setting.Organization_Share_Contact_Info_With_Partners.ToString()) == true,
-                      ShareAddressDetails = SettingsHelper.GetValue<bool>(organizationSettings, Setting.Organization_Share_Address_Details_With_Partners.ToString()) == true,
+                      ShareContactInfo = SettingsHelper.GetValue<bool>(organization.Settings, Setting.Organization_Share_Contact_Info_With_Partners.ToString()) == true,
+                      ShareAddressDetails = SettingsHelper.GetValue<bool>(organization.Settings, Setting.Organization_Share_Address_Details_With_Partners.ToString()) == true,
                     };
 
                     var action = Enum.Parse<ProcessingAction>(item.Action, true);
