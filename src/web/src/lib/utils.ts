@@ -30,37 +30,49 @@ export async function fetchClientEnv() {
 }
 
 /* eslint-disable */
+function appendToFormData(
+  formData: FormData,
+  key: string,
+  value: any,
+  useIndexer: boolean,
+) {
+  if (Array.isArray(value)) {
+    value.forEach((item, index) => {
+      const arrayKey = useIndexer ? `${key}[${index}]` : key;
+      appendToFormData(formData, arrayKey, item, useIndexer);
+    });
+  } else if (value instanceof File) {
+    formData.append(key, value, value.name);
+  } else if (typeof value === "object" && value !== null) {
+    for (const subProperty in value) {
+      if (value.hasOwnProperty(subProperty)) {
+        const nestedKey = `${key}[${subProperty}]`;
+        appendToFormData(formData, nestedKey, value[subProperty], useIndexer);
+      }
+    }
+  } else {
+    formData.append(key, value);
+  }
+}
+
 export function objectToFormData(
   obj: any,
   form?: FormData,
   namespace?: string,
+  useIndexer: boolean = true,
 ): FormData {
   const formData = form || new FormData();
 
   for (const property in obj) {
-    if (!obj.hasOwnProperty(property) || (!obj[property] && obj[property] != 0))
+    if (
+      !obj.hasOwnProperty(property) ||
+      (!obj[property] && obj[property] !== 0)
+    ) {
       continue;
+    }
 
     const formKey = namespace ? `${namespace}[${property}]` : property;
-
-    if (Array.isArray(obj[property])) {
-      obj[property].forEach((item: any, index: number) => {
-        if (typeof item === "object" && item !== null) {
-          objectToFormData(item, formData, `${formKey}[${index}]`);
-        } else {
-          formData.append(`${formKey}[${index}]`, item);
-        }
-      });
-    } else if (
-      typeof obj[property] === "object" &&
-      obj[property] !== null &&
-      !(obj[property] instanceof Date) &&
-      !(obj[property] instanceof File)
-    ) {
-      objectToFormData(obj[property], formData, formKey);
-    } else {
-      formData.append(formKey, obj[property]);
-    }
+    appendToFormData(formData, formKey, obj[property], useIndexer);
   }
 
   return formData;

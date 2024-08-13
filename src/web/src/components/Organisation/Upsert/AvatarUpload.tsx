@@ -186,14 +186,13 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
       {showExisting ? (
         <div className="mt-4 flex w-full justify-center rounded-lg bg-white py-8">
-          {" "}
           <AvatarImage icon={existingImage} alt="Existing Avatar" size={150} />
         </div>
       ) : (
         <div className="mt-4 flex w-full justify-center rounded-lg bg-white py-8">
           <div className="indicator">
             <button
-              className="filepond--file-action-button filepond--action-remove-item indicator-item z-10 !cursor-pointer rounded-full bg-gray-light hover:bg-error"
+              className="filepond--file-action-button filepond--action-remove-item indicator-item !z-10 !cursor-pointer rounded-full bg-gray-light hover:bg-error"
               type="button"
               data-align="left"
               onClick={clearFile}
