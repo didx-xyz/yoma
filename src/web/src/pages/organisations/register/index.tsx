@@ -39,6 +39,8 @@ import { getCountries } from "~/api/services/lookups";
 import { useSession } from "next-auth/react";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { OrganizationRequestViewModel } from "~/models/organisation";
+import { OrgContactEdit } from "~/components/Organisation/Upsert/OrgContactEdit";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -193,7 +195,7 @@ const OrganisationCreate: NextPageWithLayout<{
 
       setOrganizationRequestBase(model);
 
-      if (step < 4)
+      if (step < 5)
         // next step
         setStep(step);
       else {
@@ -236,6 +238,7 @@ const OrganisationCreate: NextPageWithLayout<{
                 <li className="step step-success"></li>
                 <li className="step before:!bg-gray after:!bg-gray"></li>
                 <li className="step before:!bg-gray after:!bg-gray"></li>
+                <li className="step before:!bg-gray after:!bg-gray"></li>
               </ul>
               <div className="my-4 flex flex-col text-center">
                 <h2 className="font-semibold tracking-wide">
@@ -262,17 +265,21 @@ const OrganisationCreate: NextPageWithLayout<{
                 <li className="step step-success"></li>
                 <li className="step step-success"></li>
                 <li className="step before:!bg-gray after:!bg-gray"></li>
+                <li className="step before:!bg-gray after:!bg-gray"></li>
               </ul>
               <div className="my-4 flex flex-col text-center">
-                <h2 className="font-semibold tracking-wide">
-                  Organisation roles
-                </h2>
+                <h2 className="font-semibold tracking-wide">Contact details</h2>
                 <p className="my-2 text-gray-dark">
-                  Organisation role information
+                  Organisation contact information
                 </p>
               </div>
 
-              <OrgRolesEdit
+              <FormMessage messageType={FormMessageType.Info} className="mb-4">
+                These details will be shared to partners and Youth to enhance
+                discovery and contractibility if settings are enabled.
+              </FormMessage>
+
+              <OrgContactEdit
                 formData={OrganizationRequestBase}
                 onCancel={() => {
                   setStep(1);
@@ -286,7 +293,37 @@ const OrganisationCreate: NextPageWithLayout<{
 
           {step == 3 && (
             <>
+              <ul className="steps steps-horizontal mx-auto w-72">
+                <li className="step step-success"></li>
+                <li className="step step-success"></li>
+                <li className="step step-success"></li>
+                <li className="step before:!bg-gray after:!bg-gray"></li>
+              </ul>
+              <div className="my-4 flex flex-col text-center">
+                <h2 className="font-semibold tracking-wide">
+                  Organisation roles
+                </h2>
+                <p className="my-2 text-gray-dark">
+                  Organisation role information
+                </p>
+              </div>
+
+              <OrgRolesEdit
+                formData={OrganizationRequestBase}
+                onCancel={() => {
+                  setStep(2);
+                }}
+                onSubmit={(data) => onSubmitStep(4, data)}
+                cancelButtonText="Back"
+                submitButtonText="Next"
+              />
+            </>
+          )}
+
+          {step == 4 && (
+            <>
               <ul className="steps steps-horizontal mx-auto w-full md:w-96">
+                <li className="step step-success"></li>
                 <li className="step step-success"></li>
                 <li className="step step-success"></li>
                 <li className="step step-success"></li>
@@ -302,8 +339,8 @@ const OrganisationCreate: NextPageWithLayout<{
 
               <OrgAdminsEdit
                 organisation={OrganizationRequestBase}
-                onCancel={(data) => onSubmitStep(2, data)}
-                onSubmit={(data) => onSubmitStep(4, data)}
+                onCancel={(data) => onSubmitStep(3, data)}
+                onSubmit={(data) => onSubmitStep(5, data)}
                 cancelButtonText="Back"
                 submitButtonText="Submit for approval"
                 isAdmin={isAdmin}

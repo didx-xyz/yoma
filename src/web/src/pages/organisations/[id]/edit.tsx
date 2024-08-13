@@ -58,6 +58,7 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { useRouter } from "next/router";
 import { OrganizationRequestViewModel } from "~/models/organisation";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
+import { OrgContactEdit } from "~/components/Organisation/Upsert/OrgContactEdit";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -342,7 +343,7 @@ const OrganisationUpdate: NextPageWithLayout<{
                 <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
                   1
                 </span>
-                Organisation details
+                Details
               </a>
             </li>
             <li
@@ -356,7 +357,7 @@ const OrganisationUpdate: NextPageWithLayout<{
                 <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
                   2
                 </span>
-                Organisation roles
+                Contact
               </a>
             </li>
             <li
@@ -366,11 +367,25 @@ const OrganisationUpdate: NextPageWithLayout<{
                   : "bg-gray-light text-gray-dark"
               }`}
             >
-              <a onClick={() => setStep(3)} id="lnkOrganisationAdmins">
+              <a onClick={() => setStep(3)} id="lnkOrganisationRoles">
                 <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
                   3
                 </span>
-                Organisation admins
+                Roles
+              </a>
+            </li>
+            <li
+              className={`w-full rounded-lg p-1 ${
+                step === 4
+                  ? "bg-green-light font-bold text-green"
+                  : "bg-gray-light text-gray-dark"
+              }`}
+            >
+              <a onClick={() => setStep(4)} id="lnkOrganisationAdmins">
+                <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
+                  4
+                </span>
+                Admins
               </a>
             </li>
           </ul>
@@ -380,14 +395,17 @@ const OrganisationUpdate: NextPageWithLayout<{
             className="select select-md focus:border-none focus:outline-none md:hidden"
             onChange={(e) => {
               switch (e.target.value) {
-                case "Organisation detail":
+                case "Detail":
                   setStep(1);
                   break;
-                case "Organisation roles":
+                case "Contact":
                   setStep(2);
                   break;
-                case "Organisation admins":
+                case "Roles":
                   setStep(3);
+                  break;
+                case "Admins":
+                  setStep(4);
                   break;
                 default:
                   setStep(1);
@@ -395,9 +413,10 @@ const OrganisationUpdate: NextPageWithLayout<{
               }
             }}
           >
-            <option>Organisation details</option>
-            <option>Organisation roles</option>
-            <option>Organisation admins</option>
+            <option>Details</option>
+            <option>Contact</option>
+            <option>Roles</option>
+            <option>Admins</option>
           </select>
 
           <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
@@ -408,6 +427,7 @@ const OrganisationUpdate: NextPageWithLayout<{
                     Organisation details
                   </h5>
                 </div>
+
                 <OrgInfoEdit
                   formData={OrganizationRequestBase}
                   organisation={organisation}
@@ -416,6 +436,29 @@ const OrganisationUpdate: NextPageWithLayout<{
               </>
             )}
             {step == 2 && (
+              <>
+                <div className="flex flex-col text-left">
+                  <h5 className="mb-6 font-bold tracking-wider">
+                    Contact details
+                  </h5>
+                </div>
+
+                <FormMessage
+                  messageType={FormMessageType.Info}
+                  className="mb-4"
+                >
+                  These details will be shared to partners and Youth to enhance
+                  discovery and contractibility if settings are enabled.
+                </FormMessage>
+
+                <OrgContactEdit
+                  formData={OrganizationRequestBase}
+                  organisation={organisation}
+                  onSubmit={(data) => onSubmitStep(3, data)}
+                />
+              </>
+            )}
+            {step == 3 && (
               <>
                 <div className="flex flex-col text-left">
                   <h5 className="mb-6 font-bold tracking-wider">
@@ -436,11 +479,11 @@ const OrganisationUpdate: NextPageWithLayout<{
                 <OrgRolesEdit
                   formData={OrganizationRequestBase}
                   organisation={organisation}
-                  onSubmit={(data) => onSubmitStep(3, data)}
+                  onSubmit={(data) => onSubmitStep(4, data)}
                 />
               </>
             )}
-            {step == 3 && (
+            {step == 4 && (
               <>
                 <div className="flex flex-col text-left">
                   <h5 className="mb-6 font-bold tracking-wider">
@@ -450,7 +493,7 @@ const OrganisationUpdate: NextPageWithLayout<{
 
                 <OrgAdminsEdit
                   organisation={OrganizationRequestBase}
-                  onSubmit={(data) => onSubmitStep(4, data)}
+                  onSubmit={(data) => onSubmitStep(5, data)}
                   isAdmin={isAdmin}
                 />
               </>
