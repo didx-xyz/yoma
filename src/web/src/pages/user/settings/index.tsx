@@ -8,6 +8,7 @@ import type { AxiosError } from "axios";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
+import router from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { toast } from "react-toastify";
 import type {
@@ -17,14 +18,14 @@ import type {
   UserRequestSettings,
 } from "~/api/models/user";
 import { getSettings, updateSettings } from "~/api/services/user";
-import Breadcrumb from "~/components/Breadcrumb";
 import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
 import FormLabel from "~/components/Common/FormLabel";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormToggle from "~/components/Common/FormToggle";
 import Suspense from "~/components/Common/Suspense";
-import YoIDLayout from "~/components/Layout/YoID";
+import MainLayout from "~/components/Layout/Main";
+import { PageBackground } from "~/components/PageBackground";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
@@ -143,7 +144,7 @@ const MySettings: NextPageWithLayout<{
         )}
 
         {!!visibleItems?.length && (
-          <div className="flex flex-col gap-4 rounded-lg bg-white p-4">
+          <div className="flex flex-col gap-4 rounded-lg bg-gray-light p-4">
             {visibleItems?.map((item: SettingItem) => (
               <div key={`${group.group}_${depth}_${item.key}`}>
                 {item.type == "Boolean" && (
@@ -299,28 +300,26 @@ const MySettings: NextPageWithLayout<{
     [settingsData, settings, queryClient, setIsLoading],
   );
 
+  const handleCancel = () => {
+    router.back();
+  };
+
   if (error) return <Unauthorized />;
 
   return (
     <>
       <Head>
-        <title>Yoma | 🔧 Settings</title>
+        <title>Yoma | ⚙️ Settings</title>
       </Head>
 
-      <div className="max-w-2xl">
-        <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
-          <Breadcrumb
-            items={[
-              { title: "💳 Yo-ID", url: "/yoid" },
-              {
-                title: "🔧 Settings",
-                selected: true,
-              },
-            ]}
-          />
+      <PageBackground className="h-[16rem]" />
+
+      <div className="z-10 mt-20 w-full max-w-2xl p-4 md:mt-24">
+        <div className="mb-4 text-xs font-bold tracking-wider text-white md:text-base">
+          ⚙️ Settings
         </div>
 
-        <div className="flex w-full flex-col items-center">
+        <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
           <Suspense isLoading={settingsIsLoading} error={settingsError}>
             {!settings && (
               <FormMessage messageType={FormMessageType.Warning}>
@@ -334,10 +333,27 @@ const MySettings: NextPageWithLayout<{
                 {settings.groups.map((group) => renderGroup(group, 0))}
 
                 {/* BUTTONS */}
-                <div className="flex items-center justify-center gap-4 md:justify-end">
+                {/* <div className="flex items-center justify-center gap-4 md:justify-end">
                   <button
                     type="submit"
                     className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                    disabled={isLoading}
+                  >
+                    Submit
+                  </button>
+                </div> */}
+                <div className="mt-8 flex flex-row items-center justify-center gap-4">
+                  <button
+                    type="button"
+                    className="btn btn-warning w-1/2 flex-shrink normal-case md:btn-wide"
+                    onClick={handleCancel}
+                  >
+                    Cancel
+                  </button>
+
+                  <button
+                    type="submit"
+                    className="btn btn-success w-1/2 flex-shrink normal-case md:btn-wide"
                     disabled={isLoading}
                   >
                     Submit
@@ -353,7 +369,7 @@ const MySettings: NextPageWithLayout<{
 };
 
 MySettings.getLayout = function getLayout(page: ReactElement) {
-  return <YoIDLayout>{page}</YoIDLayout>;
+  return <MainLayout>{page}</MainLayout>;
 };
 
 export default MySettings;

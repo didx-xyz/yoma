@@ -93,7 +93,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
-        <div className="flex flex-col gap-2">
+        <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex flex-row items-center p-4 shadow-lg">
             <h3 className="flex-grow text-white">Edit</h3>
             <button
@@ -158,7 +158,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
       {/* IMAGE UPLOAD */}
 
-      <div className="flex w-full">
+      <div className="flex w-full overflow-x-hidden">
         <input
           name="logo"
           type="file"
