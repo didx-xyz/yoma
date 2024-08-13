@@ -18,7 +18,7 @@ const OpportunityCard: React.FC<InputProps> = ({ data, displayType }) => {
 
   return (
     <Link
-      href={`/opportunities/${data.id}`}
+      href={`/opportunities/${data.opportunityId}`}
       className="relative flex h-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-md md:w-[19.2rem]"
     >
       <div className="mb-2 flex flex-row gap-2">
