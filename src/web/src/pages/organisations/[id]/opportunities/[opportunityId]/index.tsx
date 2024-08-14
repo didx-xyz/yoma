@@ -392,8 +392,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     ssiSchemaName: opportunity?.ssiSchemaName ?? null,
     engagementTypeId: opportunity?.engagementTypeId ?? null,
     organizationId: id,
-    postAsActive: opportunity?.published ?? false,
     instructions: opportunity?.instructions ?? "",
+    postAsActive: opportunity?.published ?? false,
+    shareWithPartners: opportunity?.shareWithPartners ?? false,
   });
 
   const schemaStep1 = z.object({
@@ -665,6 +666,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
   const schemaStep7 = z.object({
     postAsActive: z.boolean().optional(),
+    shareWithPartners: z.boolean().optional(),
   });
 
   const {
@@ -3043,29 +3045,26 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         label="Make this opportunity active"
                         inputProps={{ ...registerStep7(`postAsActive`) }}
                       />
+                    </FormField>
 
-                      {/* <label
-                          htmlFor="postAsActive"
-                          className="label w-full cursor-pointer justify-normal"
-                        >
-                          <input
-                            {...registerStep7(`postAsActive`)}
-                            type="checkbox"
-                            id="postAsActive"
-                            className="checkbox-primary checkbox"
-                          />
-                          <span className="label-text ml-4">
-                            Make this opportunity active
-                          </span>
-                        </label> */}
-
-                      {/* {!!formStateStep7.errors.postAsActive?.message &&
-                          (!!formStateStep7.touchedFields.postAsActive ||
-                            formStateStep7.isSubmitted) && (
-                            <FormError
-                              label={formStateStep7.errors.postAsActive.message}
-                            />
-                          )} */}
+                    {/* SHARE WITH PARTNERS */}
+                    <FormField
+                      label="Share With Partners"
+                      subLabel="Enabling this allows for the posting of this opportunity to partner platforms. This increases discoverability and reach of your opportunity."
+                      showWarningIcon={
+                        !!formStateStep7.errors.shareWithPartners?.message
+                      }
+                      showError={
+                        !!formStateStep7.touchedFields.shareWithPartners ||
+                        formStateStep7.isSubmitted
+                      }
+                      error={formStateStep7.errors.shareWithPartners?.message}
+                    >
+                      <FormCheckbox
+                        id="shareWithPartners"
+                        label="Share with partners"
+                        inputProps={{ ...registerStep7(`shareWithPartners`) }}
+                      />
                     </FormField>
 
                     {/* BUTTONS */}
