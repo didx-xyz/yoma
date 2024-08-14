@@ -57,6 +57,7 @@ export interface Opportunity {
   featured: boolean | null;
   engagementTypeId: string | null;
   engagementType: string | null;
+  shareWithPartners: boolean | null;
   dateCreated: string;
   createdByUserId: string;
   dateModified: string;
@@ -237,6 +238,7 @@ export interface OpportunityRequestBase {
   skills: string[];
   verificationTypes: OpportunityVerificationType[] | null;
   postAsActive: boolean;
+  shareWithPartners: boolean;
 }
 
 export interface OpportunityRequestVerificationType {

@@ -118,7 +118,9 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
 
   return (
     <div className="flex flex-col gap-4">
-      {!formState.isValid && <FormRequiredFieldMessage />}
+      {formState.defaultValues && !formState.isValid && (
+        <FormRequiredFieldMessage />
+      )}
 
       <form
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
