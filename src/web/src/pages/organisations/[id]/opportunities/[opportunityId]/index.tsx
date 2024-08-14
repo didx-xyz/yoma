@@ -687,6 +687,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     handleSubmit: handleSubmitStep2,
     formState: formStateStep2,
     control: controlStep2,
+    watch: watchStep2,
     getValues: getValuesStep2,
     reset: resetStep2,
     trigger: triggerStep2,
@@ -695,6 +696,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     defaultValues: formData,
     mode: "all",
   });
+  const watchDateEnd = watchStep2("dateEnd");
 
   const {
     register: registerStep3,
@@ -1135,6 +1137,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         // if credential issuance is disabled, clear schema
         if (!data.credentialIssuanceEnabled) {
           data.ssiSchemaName = null;
+        }
+
+        // if no end date, clear shareWithPartners flag
+        if (!data.dateEnd) {
+          data.shareWithPartners = false;
         }
 
         // update api
@@ -3060,11 +3067,20 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       }
                       error={formStateStep7.errors.shareWithPartners?.message}
                     >
-                      <FormCheckbox
-                        id="shareWithPartners"
-                        label="Share with partners"
-                        inputProps={{ ...registerStep7(`shareWithPartners`) }}
-                      />
+                      {watchDateEnd && (
+                        <FormCheckbox
+                          id="shareWithPartners"
+                          label="Share with partners"
+                          inputProps={{
+                            ...registerStep7(`shareWithPartners`),
+                          }}
+                        />
+                      )}
+                      {!watchDateEnd && (
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          This option is only available if an end date is set.
+                        </FormMessage>
+                      )}
                     </FormField>
 
                     {/* BUTTONS */}
