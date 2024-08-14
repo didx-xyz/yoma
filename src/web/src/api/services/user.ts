@@ -1,11 +1,10 @@
 import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
+import { Settings, SettingsRequest } from "../models/common";
 import type {
-  Settings,
   UserProfile,
   UserRequestProfile,
-  UserRequestSettings,
   UserSkillInfo,
 } from "../models/user";
 
@@ -81,7 +80,7 @@ export const getSettings = async (
 };
 
 export const updateSettings = async (
-  model: UserRequestSettings,
+  model: SettingsRequest,
   context?: GetServerSidePropsContext,
 ): Promise<UserProfile> => {
   const instance = context ? ApiServer(context) : await ApiClient;

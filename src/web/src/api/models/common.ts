@@ -36,3 +36,33 @@ export interface TabItem {
   iconImage?: any;
   iconElement?: React.ReactElement;
 }
+
+export interface Settings {
+  groups: SettingGroup[];
+}
+
+export interface SettingGroup {
+  group: string;
+  items: SettingItem[] | null;
+  groups: SettingGroup[] | null;
+}
+
+export interface SettingItem {
+  key: string;
+  title: string;
+  description: string;
+  type: SettingType | string; //NB: string
+  enabled: boolean;
+  visible: boolean;
+  value: any;
+}
+
+export enum SettingType {
+  Boolean,
+  Number,
+  String,
+}
+
+export interface SettingsRequest {
+  settings: Record<string, any>;
+}

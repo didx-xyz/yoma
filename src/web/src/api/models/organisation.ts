@@ -17,7 +17,7 @@ export interface OrganizationRequestBase {
   postalCode: string | null;
   tagline: string | null;
   biography: string | null;
-  //logo: FormFile | null;
+  //logo: FormFile | null; // NB: optional due to FormData upload issue
   providerTypes: string[];
   registrationDocuments: FormFile[] | null;
   educationProviderDocuments: FormFile[] | null;

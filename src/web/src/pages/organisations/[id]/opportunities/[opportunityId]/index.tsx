@@ -1554,7 +1554,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                 <a
                   className={`${
                     item.step === step
-                      ? "bg-green-light text-green hover:bg-green-light"
+                      ? "bg-green-light font-bold text-green hover:bg-green-light"
                       : "bg-gray-light text-gray-dark hover:bg-gray"
                   } py-3`}
                 >

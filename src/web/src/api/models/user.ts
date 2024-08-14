@@ -1,3 +1,5 @@
+import type { SettingType } from "./common";
+
 export interface User {
   id: string | null;
   email: string;
@@ -130,34 +132,4 @@ export enum OrganizationDocumentType {
 export enum OrganizationProviderType {
   Education,
   Marketplace,
-}
-
-export interface Settings {
-  groups: SettingGroup[];
-}
-
-export interface SettingGroup {
-  group: string;
-  items: SettingItem[] | null;
-  groups: SettingGroup[] | null;
-}
-
-export interface SettingItem {
-  key: string;
-  title: string;
-  description: string;
-  type: SettingType | string; //NB: string
-  enabled: boolean;
-  visible: boolean;
-  value: any;
-}
-
-export interface UserRequestSettings {
-  settings: Record<string, any>;
-}
-
-export enum SettingType {
-  Boolean,
-  Number,
-  String,
 }

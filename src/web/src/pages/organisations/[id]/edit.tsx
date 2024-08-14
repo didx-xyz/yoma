@@ -13,7 +13,7 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import { useCallback, useState, type ReactElement } from "react";
+import { useCallback, useMemo, useState, type ReactElement } from "react";
 import { type FieldValues } from "react-hook-form";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { toast } from "react-toastify";
@@ -36,6 +36,7 @@ import { OrgAdminsEdit } from "~/components/Organisation/Upsert/OrgAdminsEdit";
 import { OrgContactEdit } from "~/components/Organisation/Upsert/OrgContactEdit";
 import { OrgInfoEdit } from "~/components/Organisation/Upsert/OrgInfoEdit";
 import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
+import { OrgSettingsEdit } from "~/components/Organisation/Upsert/OrgSettingsEdit";
 import { PageBackground } from "~/components/PageBackground";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -188,6 +189,21 @@ const OrganisationUpdate: NextPageWithLayout<{
       ssoClientIdOutbound: organisation?.ssoClientIdOutbound ?? "",
     });
 
+  const menuItems = useMemo(
+    () => [
+      { step: 1, label: "Details", id: "lnkOrganisationDetails" },
+      { step: 2, label: "Contact", id: "lnkOrganisationContact" },
+      { step: 3, label: "Roles", id: "lnkOrganisationRoles" },
+      { step: 4, label: "Admins", id: "lnkOrganisationAdmins" },
+      ...((isAdmin || isUserAdminOfCurrentOrg) &&
+      organisation?.status === "Active"
+        ? [{ step: 5, label: "Settings", id: "lnkOrganisationSettings" }]
+        : []),
+    ],
+    [organisation],
+  );
+
+  //#region Event Handlers
   const onSubmit = useCallback(
     async (model: OrganizationRequestViewModel) => {
       setIsLoading(true);
@@ -262,7 +278,6 @@ const OrganisationUpdate: NextPageWithLayout<{
     ],
   );
 
-  // form submission handler
   const onSubmitStep = useCallback(
     async (step: number, data: FieldValues) => {
       // set form data
@@ -278,6 +293,7 @@ const OrganisationUpdate: NextPageWithLayout<{
     },
     [OrganizationRequestBase, onSubmit],
   );
+  //#endregion Event Handlers
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -326,99 +342,47 @@ const OrganisationUpdate: NextPageWithLayout<{
             </div>
           </div>
         )}
-
         {/* LOGO/TITLE */}
         <LogoTitle logoUrl={organisation?.logoURL} title={organisation?.name} />
-
         {/* CONTENT */}
         <div className="flex flex-col justify-center gap-4 md:flex-row">
           {/* MENU */}
           <ul className="menu-horizontal hidden h-max w-full items-center justify-center gap-4 rounded-lg bg-white p-4 font-semibold shadow-custom md:menu md:menu-vertical md:max-w-[265px]">
-            <li
-              className={`w-full rounded-lg p-1 ${
-                step === 1
-                  ? "bg-green-light font-bold text-green"
-                  : "bg-gray-light text-gray-dark"
-              }`}
-            >
-              <a onClick={() => setStep(1)} id="lnkOrganisationDetails">
-                <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
-                  1
-                </span>
-                Details
-              </a>
-            </li>
-            <li
-              className={`w-full rounded-lg p-1 ${
-                step === 2
-                  ? "bg-green-light font-bold text-green"
-                  : "bg-gray-light text-gray-dark"
-              }`}
-            >
-              <a onClick={() => setStep(2)} id="lnkOrganisationRoles">
-                <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
-                  2
-                </span>
-                Contact
-              </a>
-            </li>
-            <li
-              className={`w-full rounded-lg p-1 ${
-                step === 3
-                  ? "bg-green-light font-bold text-green"
-                  : "bg-gray-light text-gray-dark"
-              }`}
-            >
-              <a onClick={() => setStep(3)} id="lnkOrganisationRoles">
-                <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
-                  3
-                </span>
-                Roles
-              </a>
-            </li>
-            <li
-              className={`w-full rounded-lg p-1 ${
-                step === 4
-                  ? "bg-green-light font-bold text-green"
-                  : "bg-gray-light text-gray-dark"
-              }`}
-            >
-              <a onClick={() => setStep(4)} id="lnkOrganisationAdmins">
-                <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
-                  4
-                </span>
-                Admins
-              </a>
-            </li>
+            {menuItems.map((item) => (
+              <li
+                key={item.step}
+                className={`w-full rounded-lg p-1 ${
+                  step === item.step
+                    ? "bg-green-light font-bold text-green hover:bg-green-light"
+                    : "bg-gray-light text-gray-dark hover:bg-gray"
+                }`}
+              >
+                <a onClick={() => setStep(item.step)} id={item.id}>
+                  <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
+                    {item.step}
+                  </span>
+                  {item.label}
+                </a>
+              </li>
+            ))}
           </ul>
 
           {/* DROPDOWN MENU */}
           <select
             className="select select-md focus:border-none focus:outline-none md:hidden"
             onChange={(e) => {
-              switch (e.target.value) {
-                case "Detail":
-                  setStep(1);
-                  break;
-                case "Contact":
-                  setStep(2);
-                  break;
-                case "Roles":
-                  setStep(3);
-                  break;
-                case "Admins":
-                  setStep(4);
-                  break;
-                default:
-                  setStep(1);
-                  break;
-              }
+              const selectedItem = menuItems.find(
+                (item) => item.label === e.target.value,
+              );
+              setStep(selectedItem ? selectedItem.step : 1);
             }}
+            value={
+              menuItems.find((item) => item.step === step)?.label || "Details"
+            }
           >
-            <option>Details</option>
-            <option>Contact</option>
-            <option>Roles</option>
-            <option>Admins</option>
+            {menuItems.map((item) => (
+              <option key={item.step}>{item.label}</option>
+            ))}
           </select>
 
           <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
@@ -498,6 +462,17 @@ const OrganisationUpdate: NextPageWithLayout<{
                   onSubmit={(data) => onSubmitStep(5, data)}
                   isAdmin={isAdmin}
                 />
+              </>
+            )}
+            {step == 5 && (
+              <>
+                <div className="flex flex-col text-left">
+                  <h5 className="mb-6 font-bold tracking-wider">
+                    Organisation settings
+                  </h5>
+                </div>
+
+                <OrgSettingsEdit organisation={organisation!} />
               </>
             )}
           </div>
