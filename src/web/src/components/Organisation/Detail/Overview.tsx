@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { IoMdImage } from "react-icons/io";
 import { type Organization } from "~/api/models/organisation";
@@ -67,15 +68,13 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
 
             {/* EXISTING IMAGE */}
             {organisation?.logoURL && (
-              <>
-                <img
-                  className="rounded-lg"
-                  alt="company logo"
-                  width={150}
-                  height={1500}
-                  src={organisation.logoURL}
-                />
-              </>
+              <Image
+                className="rounded-lg"
+                alt="Company logo"
+                width={150}
+                height={150}
+                src={organisation.logoURL}
+              />
             )}
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { SettingsRequest } from "~/api/models/common";
+import type { SettingsRequest } from "~/api/models/common";
 import type { Organization } from "~/api/models/organisation";
 import {
   getOrganisationSettingsById,
@@ -49,7 +49,7 @@ export const OrgSettingsEdit: React.FC<InputProps> = ({ organisation }) => {
         queryKey: ["organisation", "settings", organisation.id],
       });
     },
-    [queryClient],
+    [queryClient, organisation.id],
   );
 
   return (

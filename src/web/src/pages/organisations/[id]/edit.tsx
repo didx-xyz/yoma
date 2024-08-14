@@ -200,7 +200,7 @@ const OrganisationUpdate: NextPageWithLayout<{
         ? [{ step: 5, label: "Settings", id: "lnkOrganisationSettings" }]
         : []),
     ],
-    [organisation],
+    [isAdmin, isUserAdminOfCurrentOrg, organisation],
   );
 
   //#region Event Handlers

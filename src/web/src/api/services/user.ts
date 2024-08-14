@@ -1,7 +1,7 @@
 import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
-import { Settings, SettingsRequest } from "../models/common";
+import type { Settings, SettingsRequest } from "../models/common";
 import type {
   UserProfile,
   UserRequestProfile,

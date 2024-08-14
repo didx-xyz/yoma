@@ -99,7 +99,7 @@ const OrganisationOverview: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma Admin | {organisation?.name}</title>
+        <title>{`Yoma Admin | ${organisation?.name || ""}`}</title>
       </Head>
 
       <PageBackground />
@@ -121,9 +121,6 @@ const OrganisationOverview: NextPageWithLayout<{
 
         {/* LOGO/TITLE */}
         <LogoTitle logoUrl={organisation?.logoURL} title={organisation?.name} />
-
-        {/* TABS */}
-        {/* <OrganisationTabLayout /> */}
 
         {/* CONTENT */}
         <div className="flex flex-col items-center">

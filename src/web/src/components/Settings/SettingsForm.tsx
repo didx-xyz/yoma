@@ -1,7 +1,7 @@
-import { AxiosError } from "axios";
+import type { AxiosError } from "axios";
 import React, { useCallback, useState } from "react";
 import { toast } from "react-toastify";
-import {
+import type {
   SettingGroup,
   SettingItem,
   Settings,
@@ -16,7 +16,7 @@ import { ApiErrors } from "../Status/ApiErrors";
 
 interface SettingsFormProps {
   data: Settings | undefined;
-  onSubmit: (data: SettingsRequest) => void;
+  onSubmit: (data: SettingsRequest) => Promise<void>;
   onCancel?: () => void;
 }
 
@@ -123,7 +123,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
 
       try {
         // call supplied handler
-        onSubmit(settingsRequest);
+        await onSubmit(settingsRequest);
 
         toast.success("Settings updated");
       } catch (error) {
@@ -136,7 +136,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
 
       setIsLoading(false);
     },
-    [data, settings, setIsLoading],
+    [data, settings, setIsLoading, onSubmit],
   );
 
   const renderGroup = (

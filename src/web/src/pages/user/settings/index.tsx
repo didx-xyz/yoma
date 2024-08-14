@@ -9,7 +9,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import router from "next/router";
 import { useCallback, type ReactElement } from "react";
-import { SettingsRequest } from "~/api/models/common";
+import type { SettingsRequest } from "~/api/models/common";
 import { getSettings, updateSettings } from "~/api/services/user";
 import Suspense from "~/components/Common/Suspense";
 import MainLayout from "~/components/Layout/Main";
