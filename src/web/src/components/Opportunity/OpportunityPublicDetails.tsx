@@ -22,9 +22,9 @@ import {
 import ReactModal from "react-modal";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
+import { SettingType } from "~/api/models/common";
 import type { MyOpportunityResponseVerify } from "~/api/models/myOpportunity";
 import { type OpportunityInfo } from "~/api/models/opportunity";
-import { SettingType } from "~/api/models/user";
 import {
   getVerificationStatus,
   isOpportunitySaved,
