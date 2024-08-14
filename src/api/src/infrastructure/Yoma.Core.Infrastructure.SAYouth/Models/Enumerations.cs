@@ -23,4 +23,10 @@ namespace Yoma.Core.Infrastructure.SAYouth.Models
     AccreditedCertification,
     NonAccreditedCertification
   }
+
+  public enum StatusAction
+  {
+    Pause,
+    Resume
+  }
 }

@@ -14,18 +14,15 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     {
       ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
 
-      if (!Enum.TryParse<TimeInterval>(opportunity.CommitmentInterval, true, out var interval))
-        throw new ArgumentOutOfRangeException(nameof(opportunity), $"{nameof(opportunity.CommitmentInterval)} of '{opportunity.CommitmentInterval}' is not supported");
-
       var hours = 0;
-      hours = interval switch
+      hours = opportunity.CommitmentInterval switch
       {
-        TimeInterval.Minute => (int)Math.Ceiling(opportunity.CommitmentIntervalCount / 60m),
-        TimeInterval.Hour => opportunity.CommitmentIntervalCount,
-        TimeInterval.Day => opportunity.CommitmentIntervalCount * 24,
-        TimeInterval.Week => opportunity.CommitmentIntervalCount * 24 * 7,
-        TimeInterval.Month => opportunity.CommitmentIntervalCount * 24 * 30,
-        _ => throw new InvalidOperationException($"{nameof(TimeInterval)} of '{interval}' not supported"),
+        TimeIntervalOption.Minute => (int)Math.Ceiling(opportunity.CommitmentIntervalCount / 60m),
+        TimeIntervalOption.Hour => opportunity.CommitmentIntervalCount,
+        TimeIntervalOption.Day => opportunity.CommitmentIntervalCount * 24,
+        TimeIntervalOption.Week => opportunity.CommitmentIntervalCount * 24 * 7,
+        TimeIntervalOption.Month => opportunity.CommitmentIntervalCount * 24 * 30,
+        _ => throw new InvalidOperationException($"{nameof(TimeIntervalOption)} of '{opportunity.CommitmentInterval}' not supported"),
       };
 
       return hours;
@@ -35,18 +32,15 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     {
       ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
 
-      if (!Enum.TryParse<TimeInterval>(opportunity.CommitmentInterval, true, out var interval))
-        throw new ArgumentOutOfRangeException(nameof(opportunity), $"{nameof(opportunity.CommitmentInterval)} of '{opportunity.CommitmentInterval}' is not supported");
-
       var days = 0;
-      days = interval switch
+      days = opportunity.CommitmentInterval switch
       {
-        TimeInterval.Minute => (int)Math.Ceiling(opportunity.CommitmentIntervalCount / (60m * 24)),
-        TimeInterval.Hour => (int)Math.Ceiling((double)opportunity.CommitmentIntervalCount / 24),
-        TimeInterval.Day => opportunity.CommitmentIntervalCount,
-        TimeInterval.Week => opportunity.CommitmentIntervalCount * 7,
-        TimeInterval.Month => opportunity.CommitmentIntervalCount * 30,
-        _ => throw new InvalidOperationException($"{nameof(TimeInterval)} of '{interval}' not supported"),
+        TimeIntervalOption.Minute => (int)Math.Ceiling(opportunity.CommitmentIntervalCount / (60m * 24)),
+        TimeIntervalOption.Hour => (int)Math.Ceiling((double)opportunity.CommitmentIntervalCount / 24),
+        TimeIntervalOption.Day => opportunity.CommitmentIntervalCount,
+        TimeIntervalOption.Week => opportunity.CommitmentIntervalCount * 7,
+        TimeIntervalOption.Month => opportunity.CommitmentIntervalCount * 30,
+        _ => throw new InvalidOperationException($"{nameof(TimeIntervalOption)} of '{opportunity.CommitmentInterval}' not supported"),
       };
 
       return days;

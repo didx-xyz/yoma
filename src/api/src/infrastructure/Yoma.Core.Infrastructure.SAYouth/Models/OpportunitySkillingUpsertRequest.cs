@@ -29,7 +29,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Models
 
     [JsonProperty("learning_opportunity_close_date")]
     [JsonConverter(typeof(IsoDateTimeConverter), "yyyy-MM-dd")]
-    public DateTimeOffset CloseDate { get; set; }
+    public DateTimeOffset? CloseDate { get; set; }
 
     [JsonProperty("learning_opportunity_duration")]
     [JsonConverter(typeof(StringEnumConverter))]

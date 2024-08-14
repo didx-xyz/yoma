@@ -110,7 +110,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                       Organization = organization,
                       OrganizationYoma = organizationYoma,
                       ShareContactInfo = SettingsHelper.GetValue<bool>(organization.Settings, Setting.Organization_Share_Contact_Info_With_Partners.ToString()) == true,
-                      ShareAddressDetails = SettingsHelper.GetValue<bool>(organization.Settings, Setting.Organization_Share_Address_Details_With_Partners.ToString()) == true,
+                      ShareAddressInfo = SettingsHelper.GetValue<bool>(organization.Settings, Setting.Organization_Share_Address_Details_With_Partners.ToString()) == true,
                     };
 
                     var action = Enum.Parse<ProcessingAction>(item.Action, true);
