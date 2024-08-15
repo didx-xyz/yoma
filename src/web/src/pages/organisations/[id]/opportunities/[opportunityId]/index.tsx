@@ -2094,9 +2094,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     >
                       <div className="flex flex-col gap-2">
                         <FormMessage messageType={FormMessageType.Warning}>
-                          Heads up! If there is not an end date set, this
-                          opportunity cannot be posted to SAYouth, we therefore
-                          recommend adding one.
+                          Heads up! An end date is required to share this
+                          opportunity with partners. We recommend setting an end
+                          date.
                         </FormMessage>
 
                         <div className="grid gap-4 md:grid-cols-2">
@@ -3068,17 +3068,25 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       error={formStateStep7.errors.shareWithPartners?.message}
                     >
                       {watchDateEnd && (
-                        <FormCheckbox
-                          id="shareWithPartners"
-                          label="Share with partners"
-                          inputProps={{
-                            ...registerStep7(`shareWithPartners`),
-                          }}
-                        />
+                        <>
+                          <FormCheckbox
+                            id="shareWithPartners"
+                            label="Share with partners"
+                            inputProps={{
+                              ...registerStep7(`shareWithPartners`),
+                            }}
+                          />
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            Once enabled, sharing with partners cannot be
+                            disabled. The end date cannot be removed and the
+                            type cannot be changed once set.
+                          </FormMessage>
+                        </>
                       )}
                       {!watchDateEnd && (
                         <FormMessage messageType={FormMessageType.Warning}>
-                          This option is only available if an end date is set.
+                          An end date is required to share this opportunity with
+                          partners.
                         </FormMessage>
                       )}
                     </FormField>
