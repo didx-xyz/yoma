@@ -22,6 +22,7 @@ import {
   COUNTRY_WW,
   GA_ACTION_MARKETPLACE_ITEM_BUY,
   GA_CATEGORY_OPPORTUNITY,
+  MAX_INT32,
   PAGE_SIZE_MINIMUM,
   THEME_BLUE,
 } from "~/lib/constants";
@@ -98,8 +99,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
     for (const store of stores.items) {
       const items = await searchStoreItemCategories(
         {
-          pageNumber: 1,
-          pageSize: PAGE_SIZE_MINIMUM,
+          pageNumber: null,
+          pageSize: null,
           storeId: store.id?.toString() ?? "",
         },
         context,
@@ -140,8 +141,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
       for (const store of stores.items) {
         const items = await searchStoreItemCategories(
           {
-            pageNumber: 1,
-            pageSize: PAGE_SIZE_MINIMUM,
+            pageNumber: null,
+            pageSize: null,
             storeId: store.id?.toString() ?? "",
           },
           context,
