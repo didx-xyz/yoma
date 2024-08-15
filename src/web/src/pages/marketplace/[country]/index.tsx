@@ -98,8 +98,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
     for (const store of stores.items) {
       const items = await searchStoreItemCategories(
         {
-          pageNumber: 1,
-          pageSize: PAGE_SIZE_MINIMUM,
+          pageNumber: null,
+          pageSize: null,
           storeId: store.id?.toString() ?? "",
         },
         context,
@@ -140,8 +140,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
       for (const store of stores.items) {
         const items = await searchStoreItemCategories(
           {
-            pageNumber: 1,
-            pageSize: PAGE_SIZE_MINIMUM,
+            pageNumber: null,
+            pageSize: null,
             storeId: store.id?.toString() ?? "",
           },
           context,
