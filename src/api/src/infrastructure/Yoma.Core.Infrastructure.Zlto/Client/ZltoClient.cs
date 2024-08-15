@@ -26,6 +26,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     private const string Header_Authorization = "Authorization";
     private const string Header_Authorization_Value_Prefix = "Bearer";
     private const string Image_Default_Empty_Value = "default";
+
+    private static readonly HttpStatusCode[] StatusCode_WalletNotFound = [HttpStatusCode.NotFound, HttpStatusCode.Conflict];
     #endregion
 
     #region Constructor
@@ -486,7 +488,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       }
       catch (HttpClientException ex)
       {
-        if (ex.StatusCode != HttpStatusCode.NotFound) throw;
+        if (!StatusCode_WalletNotFound.Contains(ex.StatusCode)) throw;
       }
 
       return null;
