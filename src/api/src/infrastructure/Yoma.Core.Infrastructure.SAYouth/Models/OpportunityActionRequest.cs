@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Yoma.Core.Domain.Core.Converters;
 
 namespace Yoma.Core.Infrastructure.SAYouth.Models
 {
@@ -12,7 +13,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Models
     public string? Reason { get; set; }
 
     [JsonProperty("closing_date")]
-    [JsonConverter(typeof(IsoDateTimeConverter), "yyyy-MM-dd")]
+    [JsonConverter(typeof(IsoDateFormatConverter), "yyyy-MM-dd")]
     public DateTimeOffset? ClosingDate { get; set; }
   }
 }

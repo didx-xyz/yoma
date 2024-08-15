@@ -93,6 +93,10 @@ namespace Yoma.Core.Domain.Core.Models
 
     public Environment ShortLinkProviderAsSourceEnabledEnvironmentsAsEnum => ParseEnvironmentInput(ShortLinkProviderAsSourceEnabledEnvironments);
 
+    public string PartnerSharingEnabledEnvironments { get; set; }
+
+    public Environment PartnerSharingEnabledEnvironmentsAsEnum => ParseEnvironmentInput(PartnerSharingEnabledEnvironments);
+
     public AppSettingsDatabaseRetryPolicy DatabaseRetryPolicy { get; set; }
 
     public bool? RedisSSLCertificateValidationBypass { get; set; }

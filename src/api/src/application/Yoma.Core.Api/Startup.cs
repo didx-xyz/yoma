@@ -83,6 +83,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_IdentityProvider(_configuration);
       services.ConfigureServices_EmailProvider(_configuration);
       services.ConfigureServices_RewardProvider(_configuration);
+      services.ConfigureServices_SharingProvider(_configuration);
       #endregion Configuration
 
       #region System

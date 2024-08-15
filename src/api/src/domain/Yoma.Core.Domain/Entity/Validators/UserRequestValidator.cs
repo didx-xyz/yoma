@@ -15,7 +15,6 @@ namespace Yoma.Core.Domain.Entity.Validators
     {
       RuleFor(x => x.Id).NotEmpty().When(x => x.Id.HasValue);
       RuleFor(x => x.DateLastLogin).Must(NotInFuture).WithMessage("'{PropertyName}' is in the future.");
-      //TODO: ExternalId
     }
     #endregion
 

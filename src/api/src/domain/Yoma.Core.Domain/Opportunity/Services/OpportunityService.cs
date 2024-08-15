@@ -28,6 +28,7 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Validators;
+using Yoma.Core.Domain.PartnerSharing.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
@@ -56,6 +57,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly IIdentityProviderClient _identityProviderClient;
+    private readonly ISharingInfoService _sharingInfoService;
 
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
@@ -103,6 +105,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IEmailPreferenceFilterService emailPreferenceFilterService,
         IEmailProviderClientFactory emailProviderClientFactory,
         IIdentityProviderClientFactory identityProviderClientFactory,
+        ISharingInfoService sharingInfoService,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
@@ -138,6 +141,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _emailPreferenceFilterService = emailPreferenceFilterService;
       _emailProviderClient = emailProviderClientFactory.CreateClient();
       _identityProviderClient = identityProviderClientFactory.CreateClient();
+      _sharingInfoService = sharingInfoService;
 
       _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate;
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
@@ -1157,6 +1161,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
+        await AssertUpdatableShared(request, result); //check will abort sharing if possible and needs to be rolled back if the update failes
+
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
         result = await _opportunityRepository.Update(result);
 
@@ -1594,6 +1600,29 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       if (!Statuses_Updatable.Contains(opportunity.Status))
         throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+    }
+
+    private async Task AssertUpdatableShared(OpportunityRequestUpdate request, Models.Opportunity opportunity)
+    {
+      var reasons = new List<string>();
+
+      if (opportunity.ShareWithPartners == true && request.ShareWithPartners != true)
+        reasons.Add("Option to share with partners cannot be disabled after it has been enabled");
+
+      if (opportunity.DateEnd.HasValue && !request.DateEnd.HasValue)
+        reasons.Add("End date cannot be removed once it has been set");
+
+      if (opportunity.TypeId != request.TypeId)
+        reasons.Add("Type cannot be changed");
+
+      if (reasons.Count == 0) return;
+
+      var shared = await _sharingInfoService.IsShared(PartnerSharing.EntityType.Opportunity, opportunity.Id, true);
+      if (!shared) return;
+
+      var reasonText = string.Join("; ", reasons);
+
+      throw new ValidationException($"The {nameof(Models.Opportunity)} has already been shared and cannot be updated for the following reasons: {reasonText}");
     }
 
     private async Task SendEmail(Models.Opportunity opportunity, EmailType type)

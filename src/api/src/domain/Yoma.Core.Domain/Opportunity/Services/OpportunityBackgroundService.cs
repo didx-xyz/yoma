@@ -315,7 +315,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private async Task SendEmailPublished(List<Models.Opportunity> items, DateTimeOffset executeUntil)
     {
       var emailType = EmailType.Opportunity_Published;
-      var countryWorldWideId = _countryService.GetByCodeAplha2(Domain.Core.Country.Worldwide.ToDescription()).Id;
+      var countryWorldWideId = _countryService.GetByCodeAplha2(Core.Country.Worldwide.ToDescription()).Id;
 
       try
       {

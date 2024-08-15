@@ -44,7 +44,12 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     #region Public Members
     public async Task<string> CreateOpportunity(OpportunityRequestUpsert request)
     {
-      //return await Task.FromResult(Guid.NewGuid().ToString());
+      if (!_appSettings.PartnerSharingEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      {
+        var mockId = $"MOCK_{Guid.NewGuid():N}";
+        _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(CreateOpportunity), _environmentProvider.Environment);
+        return mockId;
+      }
 
       var requestUpsert = ToRequestUpsert(request);
 
@@ -62,8 +67,11 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
 
     public async Task UpdateOpportunity(OpportunityRequestUpsert request)
     {
-      //await Task.CompletedTask;
-      //return;
+      if (!_appSettings.PartnerSharingEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      {
+        _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(UpdateOpportunity), _environmentProvider.Environment);
+        return;
+      }
 
       if (!int.TryParse(request.ExternalId, out var externalIdParsed))
         throw new InvalidOperationException($"Invalid external id '{request.ExternalId}'. Integer expected");
@@ -72,26 +80,27 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
 
       var response = await _options.BaseUrl
         .AppendPathSegment("Opportunity/Skilling")
+        .SetQueryParam("opportunityId", externalIdParsed)  
         .WithAuthHeaders(GetAuthHeaders())
         .PutJsonAsync(requestUpsert)
         .EnsureSuccessStatusCodeAsync()
         .ReceiveJson<OpportunityUpsertResponse>();
 
       var requestAction = new OpportunityActionRequest { OpportunityId = externalIdParsed };
-      Models.StatusAction? action = null;  
+      StatusAction? action = null;
 
       switch (request.Opportunity.Status)
       {
         case Domain.Opportunity.Status.Active:
           // ensure not paused
-          action = Models.StatusAction.Resume;
+          action = StatusAction.Resume;
           requestAction.ClosingDate = request.Opportunity.DateEnd;
           requestAction.Reason = "Opportunity updated and activated by Yoma";
           break;
 
         case Domain.Opportunity.Status.Inactive:
           // ensure paused
-          action = Models.StatusAction.Pause;
+          action = StatusAction.Pause;
           requestAction.Reason = "Opportunity updated and inactivated by Yoma";
           break;
 
@@ -108,7 +117,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       //TODO: handle error response when already action?
       await _options.BaseUrl
             .AppendPathSegment("Opportunity")
-            .AppendPathSegment(action.ToString()) 
+            .AppendPathSegment(action.ToString())
             .WithAuthHeaders(GetAuthHeaders())
             .PutJsonAsync(requestAction)
             .EnsureSuccessStatusCodeAsync();
@@ -116,8 +125,11 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
 
     public async Task DeleteOpportunity(string externalId)
     {
-      //await Task.CompletedTask;
-      //return;
+      if (!_appSettings.PartnerSharingEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      {
+        _logger.LogInformation("Partner sharing '{action}' skipped for environment '{environment}' and assuming success", nameof(DeleteOpportunity), _environmentProvider.Environment);
+        return;
+      }
 
       if (!int.TryParse(externalId, out var externalIdParsed))
         throw new InvalidOperationException($"Invalid external id '{externalId}'. Integer expected");
@@ -182,7 +194,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       return requestCreate;
     }
 
-    private OpportunitySkillingUpsertRequest ToRequestUpsertAddressInfo(OpportunityRequestUpsert request, OpportunitySkillingUpsertRequest requestUpsert)
+    private static OpportunitySkillingUpsertRequest ToRequestUpsertAddressInfo(OpportunityRequestUpsert request, OpportunitySkillingUpsertRequest requestUpsert)
     {
       if (requestUpsert.FaceToFace == YesNoOption.No) return requestUpsert;
 
@@ -209,7 +221,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       return requestUpsert;
     }
 
-    private OpportunitySkillingUpsertRequest ToRequestUpsertContactInfo(OpportunityRequestUpsert request, OpportunitySkillingUpsertRequest requestUpsert)
+    private static OpportunitySkillingUpsertRequest ToRequestUpsertContactInfo(OpportunityRequestUpsert request, OpportunitySkillingUpsertRequest requestUpsert)
     {
       if (requestUpsert.FaceToFace == YesNoOption.No) return requestUpsert;
 

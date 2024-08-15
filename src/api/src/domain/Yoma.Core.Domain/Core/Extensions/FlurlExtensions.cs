@@ -55,6 +55,9 @@ namespace Yoma.Core.Domain.Core.Extensions
 
         resp = ex.Call.Response;
         var errorMessage = await resp.ResponseMessage.Content.ReadAsStringAsync();
+        if (string.IsNullOrEmpty(errorMessage)) errorMessage = resp.ResponseMessage.ReasonPhrase;
+        if (string.IsNullOrEmpty(errorMessage))
+          errorMessage = $"Response is empty / null: {ex.Message}";
 
         throw new HttpClientException((HttpStatusCode)resp.StatusCode, errorMessage);
       }
