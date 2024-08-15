@@ -6,9 +6,10 @@ import { GA_ACTION_USER_LOGIN_BEFORE, GA_CATEGORY_USER } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { currentLanguageAtom } from "~/lib/store";
 import { fetchClientEnv } from "~/lib/utils";
+import { LoadingInline } from "./Status/LoadingInline";
 
 export const SignInButton: React.FC<{ className?: string }> = ({
-  className = "btn gap-2 border-0 border-none bg-transparent px-2 disabled:brightness-50",
+  className = "btn shadow-lg gap-2 border-0 border-none px-2 disabled:!cursor-wait disabled:animate-pulse bg-theme brightness-110 hover:brightness-95 hover:animate-pulsex transition disabled:brightness-95 animate-in animate-out",
 }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const currentLanguage = useAtomValue(currentLanguageAtom);
@@ -24,13 +25,16 @@ export const SignInButton: React.FC<{ className?: string }> = ({
     );
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    signIn(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
-        "") as string,
-      undefined,
-      { ui_locales: currentLanguage }, // pass the current language to the keycloak provider
-    );
+    // signIn(
+    //   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+    //   ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
+    //     "") as string,
+    //   undefined,
+    //   { ui_locales: currentLanguage }, // pass the current language to the keycloak provider
+    // );
+    setTimeout(() => {
+      setIsButtonLoading(false);
+    }, 5000);
   }, [currentLanguage]);
 
   return (
@@ -42,7 +46,11 @@ export const SignInButton: React.FC<{ className?: string }> = ({
       id="btnSignIn"
     >
       {isButtonLoading && (
-        <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
+        // <span className="loading loading-spinner loading-md mr-2 !text-white"></span>
+        <LoadingInline
+          classNameSpinner="border-white h-6 w-6"
+          classNameLabel="hidden"
+        />
       )}
       {!isButtonLoading && <IoMdFingerPrint className="h-6 w-6 text-white" />}
       <p className="uppercase text-white">Sign In</p>

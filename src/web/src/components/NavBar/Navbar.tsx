@@ -221,14 +221,19 @@ export const Navbar: React.FC = () => {
           {/* TOP MENU (DESKTOP) */}
           <ul className="absolute left-0 right-0 top-5 mx-auto hidden w-fit items-center justify-center gap-12 md:flex">
             {currentNavbarLinks.map((link, index) => (
-              <li key={index} tabIndex={index}>
+              <li
+                key={index}
+                tabIndex={index}
+                className="hover:repeat-infinitez hover:animate-pulse"
+              >
                 <Link
                   href={link.url!}
                   tabIndex={index}
-                  className="text-white hover:brightness-50"
+                  className="group text-white transition duration-300"
                   id={`lnkNavbarMenu_${link.title}`}
                 >
                   {link.title}
+                  <span className="block h-0.5 max-w-0 bg-gray-light transition-all duration-500 group-hover:max-w-full"></span>
                 </Link>
               </li>
             ))}
