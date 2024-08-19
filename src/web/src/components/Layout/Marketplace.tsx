@@ -44,7 +44,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
     <MainLayout>
       <>
         <Head>
-          <title>Yoma | Marketplace</title>
+          <title>Yoma | 🛒 Marketplace</title>
         </Head>
 
         <PageBackground />
@@ -196,7 +196,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                 </button>
 
                 <Link
-                  href="/marketplace/transactions"
+                  href="/yoid/wallet"
                   className="btn rounded-full border-2 border-blue-dark brightness-110"
                 >
                   My vouchers
