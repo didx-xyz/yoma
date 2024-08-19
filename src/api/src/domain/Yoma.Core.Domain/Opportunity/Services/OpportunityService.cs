@@ -1161,7 +1161,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        await AssertUpdatableShared(request, result); //check will abort sharing if possible and needs to be rolled back if the update failes
+        await AssertUpdatablePartnerSharing(request, result); //check will abort sharing if possible and needs to be rolled back if the update fails
 
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
         result = await _opportunityRepository.Update(result);
@@ -1602,7 +1602,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
     }
 
-    private async Task AssertUpdatableShared(OpportunityRequestUpdate request, Models.Opportunity opportunity)
+    private async Task AssertUpdatablePartnerSharing(OpportunityRequestUpdate request, Models.Opportunity opportunity)
     {
       var reasons = new List<string>();
 

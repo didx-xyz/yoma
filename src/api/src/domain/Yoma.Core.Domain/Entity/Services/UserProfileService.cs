@@ -32,7 +32,6 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IOrganizationService _organizationService;
     private readonly IMyOpportunityService _myOpportunityService;
     private readonly IWalletService _rewardWalletService;
-    private readonly ISSIWalletService _sSIWalletService;
     private readonly UserProfileRequestValidator _userProfileRequestValidator;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
@@ -48,7 +47,6 @@ namespace Yoma.Core.Domain.Entity.Services
         IOrganizationService organizationService,
         IMyOpportunityService myOpportunityService,
         IWalletService rewardWalletService,
-        ISSIWalletService sSIWalletService,
         UserProfileRequestValidator userProfileRequestValidator,
         IRepositoryValueContainsWithNavigation<User> userRepository,
         IExecutionStrategyService executionStrategyService)
@@ -62,7 +60,6 @@ namespace Yoma.Core.Domain.Entity.Services
       _organizationService = organizationService;
       _myOpportunityService = myOpportunityService;
       _rewardWalletService = rewardWalletService;
-      _sSIWalletService = sSIWalletService;
       _userProfileRequestValidator = userProfileRequestValidator;
       _userRepository = userRepository;
       _executionStrategyService = executionStrategyService;

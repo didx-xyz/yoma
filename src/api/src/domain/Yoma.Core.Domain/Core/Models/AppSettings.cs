@@ -95,13 +95,13 @@ namespace Yoma.Core.Domain.Core.Models
 
     public string PartnerSharingEnabledEnvironments { get; set; }
 
+    public Environment PartnerSharingEnabledEnvironmentsAsEnum => ParseEnvironmentInput(PartnerSharingEnabledEnvironments);
+
     /// <summary>
     /// -1: Represents infinite retries. Never transitions to an error state.
     /// 0: Represents no retries. Immediately transitions to an error state.
     /// >0: Represents the maximum number of retries. Transitions to an error state when retries exceed the specified value.
     public int PartnerSharingMaximumRetryAttempts { get; set; }
-
-    public Environment PartnerSharingEnabledEnvironmentsAsEnum => ParseEnvironmentInput(PartnerSharingEnabledEnvironments);
 
     /// <summary>
     /// Determines the expiration behavior for item reservations
