@@ -179,7 +179,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
         Title = request.Opportunity.Title.RemoveSpecialCharacters().TrimToLength(200),
         Description = request.Opportunity.Description,
         HasCertification = request.Opportunity.VerificationEnabled ? YesNoOption.Yes : YesNoOption.No,
-        CertificationType = CertificateType.AccreditedCertification.ToString(),
+        CertificationType = request.Opportunity.VerificationEnabled ? CertificateType.AccreditedCertification.ToString() : null,
         CertificationDescription = request.Opportunity.Summary,
         CloseDate = request.Opportunity.DateEnd,
         Duration = request.Opportunity.ToDuration(),
