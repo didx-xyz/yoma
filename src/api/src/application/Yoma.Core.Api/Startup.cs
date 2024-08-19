@@ -303,7 +303,7 @@ namespace Yoma.Core.Api
 
       services.AddHangfireServer(options =>
       {
-        options.ServerTimeout = TimeSpan.FromHours(3); // ensure the job remains visible for up to 3 hours; MaxIntervalInHours set to 2 hours or less for all jobs
+        options.ServerTimeout = TimeSpan.FromHours(3); // ensures that jobs can run for up to 3 hours without being marked as timed out; MaxIntervalInHours set to 2 hours or less for all jobs
       });
     }
 
