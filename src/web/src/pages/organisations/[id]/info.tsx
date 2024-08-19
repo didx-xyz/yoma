@@ -99,7 +99,7 @@ const OrganisationOverview: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma Admin | {organisation?.name}</title>
+        <title>{`Yoma Admin | ${organisation?.name || ""}`}</title>
       </Head>
 
       <PageBackground />
@@ -122,9 +122,6 @@ const OrganisationOverview: NextPageWithLayout<{
         {/* LOGO/TITLE */}
         <LogoTitle logoUrl={organisation?.logoURL} title={organisation?.name} />
 
-        {/* TABS */}
-        {/* <OrganisationTabLayout /> */}
-
         {/* CONTENT */}
         <div className="flex flex-col items-center">
           <div className="flex w-full flex-col gap-2 rounded-lg bg-white p-4 shadow-lg lg:w-[600px]">
@@ -133,19 +130,21 @@ const OrganisationOverview: NextPageWithLayout<{
         </div>
 
         {/* BUTTONS */}
-        <div className="my-4 flex items-center justify-center gap-2">
-          <Link
-            href={`/organisations/${id}/edit${
-              returnUrl
-                ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
-                : ``
-            }`}
-            type="button"
-            className="bg-theme btn btn-wide text-white"
-          >
-            Edit Details
-          </Link>
-        </div>
+        {organisation?.status !== "Deleted" && (
+          <div className="my-4 flex items-center justify-center gap-2">
+            <Link
+              href={`/organisations/${id}/edit${
+                returnUrl
+                  ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
+                  : ``
+              }`}
+              type="button"
+              className="bg-theme btn btn-wide text-white"
+            >
+              Edit Details
+            </Link>
+          </div>
+        )}
       </div>
     </>
   );

@@ -392,8 +392,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     ssiSchemaName: opportunity?.ssiSchemaName ?? null,
     engagementTypeId: opportunity?.engagementTypeId ?? null,
     organizationId: id,
-    postAsActive: opportunity?.published ?? false,
     instructions: opportunity?.instructions ?? "",
+    postAsActive: opportunity?.published ?? false,
+    shareWithPartners: opportunity?.shareWithPartners ?? false,
   });
 
   const schemaStep1 = z.object({
@@ -665,6 +666,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
   const schemaStep7 = z.object({
     postAsActive: z.boolean().optional(),
+    shareWithPartners: z.boolean().optional(),
   });
 
   const {
@@ -685,6 +687,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     handleSubmit: handleSubmitStep2,
     formState: formStateStep2,
     control: controlStep2,
+    watch: watchStep2,
     getValues: getValuesStep2,
     reset: resetStep2,
     trigger: triggerStep2,
@@ -693,6 +696,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     defaultValues: formData,
     mode: "all",
   });
+  const watchDateEnd = watchStep2("dateEnd");
 
   const {
     register: registerStep3,
@@ -1135,6 +1139,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           data.ssiSchemaName = null;
         }
 
+        // if no end date, clear shareWithPartners flag
+        if (!data.dateEnd) {
+          data.shareWithPartners = false;
+        }
+
         // update api
         if (opportunity) {
           await updateOpportunity(data);
@@ -1545,7 +1554,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                 <a
                   className={`${
                     item.step === step
-                      ? "bg-green-light text-green hover:bg-green-light"
+                      ? "bg-green-light font-bold text-green hover:bg-green-light"
                       : "bg-gray-light text-gray-dark hover:bg-gray"
                   } py-3`}
                 >
@@ -2085,9 +2094,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     >
                       <div className="flex flex-col gap-2">
                         <FormMessage messageType={FormMessageType.Warning}>
-                          Heads up! If there is not an end date set, this
-                          opportunity cannot be posted to SAYouth, we therefore
-                          recommend adding one.
+                          Heads up! An end date is required to share this
+                          opportunity with partners. We recommend setting an end
+                          date.
                         </FormMessage>
 
                         <div className="grid gap-4 md:grid-cols-2">
@@ -3043,29 +3052,43 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         label="Make this opportunity active"
                         inputProps={{ ...registerStep7(`postAsActive`) }}
                       />
+                    </FormField>
 
-                      {/* <label
-                          htmlFor="postAsActive"
-                          className="label w-full cursor-pointer justify-normal"
-                        >
-                          <input
-                            {...registerStep7(`postAsActive`)}
-                            type="checkbox"
-                            id="postAsActive"
-                            className="checkbox-primary checkbox"
+                    {/* SHARE WITH PARTNERS */}
+                    <FormField
+                      label="Share With Partners"
+                      subLabel="Enabling this allows for the posting of this opportunity to partner platforms. This increases discoverability and reach of your opportunity."
+                      showWarningIcon={
+                        !!formStateStep7.errors.shareWithPartners?.message
+                      }
+                      showError={
+                        !!formStateStep7.touchedFields.shareWithPartners ||
+                        formStateStep7.isSubmitted
+                      }
+                      error={formStateStep7.errors.shareWithPartners?.message}
+                    >
+                      {watchDateEnd && (
+                        <>
+                          <FormCheckbox
+                            id="shareWithPartners"
+                            label="Share with partners"
+                            inputProps={{
+                              ...registerStep7(`shareWithPartners`),
+                            }}
                           />
-                          <span className="label-text ml-4">
-                            Make this opportunity active
-                          </span>
-                        </label> */}
-
-                      {/* {!!formStateStep7.errors.postAsActive?.message &&
-                          (!!formStateStep7.touchedFields.postAsActive ||
-                            formStateStep7.isSubmitted) && (
-                            <FormError
-                              label={formStateStep7.errors.postAsActive.message}
-                            />
-                          )} */}
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            Once enabled, sharing with partners cannot be
+                            disabled. The end date cannot be removed and the
+                            type cannot be changed once set.
+                          </FormMessage>
+                        </>
+                      )}
+                      {!watchDateEnd && (
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          An end date is required to share this opportunity with
+                          partners.
+                        </FormMessage>
+                      )}
                     </FormField>
 
                     {/* BUTTONS */}

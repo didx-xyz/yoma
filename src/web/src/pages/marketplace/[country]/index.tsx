@@ -98,8 +98,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
     for (const store of stores.items) {
       const items = await searchStoreItemCategories(
         {
-          pageNumber: 1,
-          pageSize: PAGE_SIZE_MINIMUM,
+          pageNumber: null,
+          pageSize: null,
           storeId: store.id?.toString() ?? "",
         },
         context,
@@ -140,8 +140,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
       for (const store of stores.items) {
         const items = await searchStoreItemCategories(
           {
-            pageNumber: 1,
-            pageSize: PAGE_SIZE_MINIMUM,
+            pageNumber: null,
+            pageSize: null,
             storeId: store.id?.toString() ?? "",
           },
           context,
@@ -712,7 +712,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
           <Select
             instanceId={"country"}
             classNames={{
-              control: () => "input input-xs w-[200px] !z-50",
+              control: () => "input input-xs w-[200px]",
             }}
             options={countryOptions}
             onChange={(val) => onFilterCountry(val?.value ?? "")}
@@ -722,7 +722,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             placeholder="Country"
             // fix menu z-index issue
             menuPortalTarget={myRef.current}
-            styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
+            styles={{
+              menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+              menu: (base) => ({ ...base, zIndex: 9999 }),
+            }}
           />
         </div>
 

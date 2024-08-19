@@ -49,7 +49,5 @@ namespace Yoma.Core.Domain.Entity.Models
     public int OpportunityCountCompleted { get; set; }
 
     public int OpportunityCountRejected { get; set; }
-
-    public Dictionary<SchemaType, int> CredentialCounts { get; set; }
   }
 }

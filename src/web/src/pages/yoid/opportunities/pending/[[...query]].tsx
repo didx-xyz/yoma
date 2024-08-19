@@ -153,6 +153,7 @@ const MyOpportunitiesPending: NextPageWithLayout<{
                 pageSize={PAGE_SIZE}
                 onClick={handlePagerChange}
                 showPages={false}
+                showInfo={true}
               />
             </div>
           </div>
