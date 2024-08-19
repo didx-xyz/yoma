@@ -9,7 +9,7 @@ export const Feedback: React.FC = () => {
   return (
     <button
       aria-label="Feedback"
-      className="fixed right-0 top-1/2 z-50 -mr-12 hidden -translate-y-1/2 -rotate-90 transform !rounded-none !rounded-t-md bg-green px-8 py-2 pb-4 text-sm text-white hover:bg-purple md:block"
+      className="fixed right-0 top-1/2 z-10 -mr-12 hidden -translate-y-1/2 -rotate-90 transform !rounded-none !rounded-t-md bg-green px-8 py-2 pb-4 text-sm text-white hover:bg-purple md:block"
       onClick={handleClick}
     >
       Feedback
