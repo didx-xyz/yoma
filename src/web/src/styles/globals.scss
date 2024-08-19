@@ -118,6 +118,10 @@ body {
   }
 }
 
+#beacon-container .BeaconFabButtonFrame {
+  z-index: 30 !important;
+}
+
 // NProgress
 #nprogress .bar {
   height: 5.5px !important;
