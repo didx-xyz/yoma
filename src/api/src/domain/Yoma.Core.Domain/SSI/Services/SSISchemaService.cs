@@ -102,7 +102,6 @@ namespace Yoma.Core.Domain.SSI.Services
       // No matches found for schema attributes that match entities
       if (matchedEntitiesGrouped == null || matchedEntitiesGrouped.Count == 0) return results;
 
-      //TODO: Remove; skip schemas not created via Yoma
       schemas = schemas.Where(o => o.Name.Split(SchemaName_TypeDelimiter).Length == 2).ToList();
 
       results = schemas.Where(o => matchedEntitiesGrouped.ContainsKey(o.Id)).Select(o =>

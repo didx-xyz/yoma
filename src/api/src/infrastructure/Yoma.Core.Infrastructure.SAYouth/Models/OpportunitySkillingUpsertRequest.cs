@@ -1,5 +1,6 @@
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Yoma.Core.Domain.Core.Converters;
 
 namespace Yoma.Core.Infrastructure.SAYouth.Models
 {
@@ -28,8 +29,8 @@ namespace Yoma.Core.Infrastructure.SAYouth.Models
     public string? CertificationDescription { get; set; }
 
     [JsonProperty("learning_opportunity_close_date")]
-    [JsonConverter(typeof(IsoDateTimeConverter), "yyyy-MM-dd")]
-    public DateTimeOffset CloseDate { get; set; }
+    [JsonConverter(typeof(IsoDateFormatConverter), "yyyy-MM-dd")]
+    public DateTimeOffset? CloseDate { get; set; }
 
     [JsonProperty("learning_opportunity_duration")]
     [JsonConverter(typeof(StringEnumConverter))]

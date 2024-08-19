@@ -53,7 +53,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string Difficulty { get; set; }
 
     [Ignore]
-    public string CommitmentInterval { get; set; }
+    public Core.TimeIntervalOption CommitmentInterval { get; set; }
 
     [Ignore]
     public short CommitmentIntervalCount { get; set; }
@@ -111,7 +111,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public bool Featured { get; set; }
 
     [Name("Engagement Type")]
-    public string? EngagementType { get; set; }
+    public Core.EngagementTypeOption? EngagementType { get; set; }
 
     [BooleanFalseValues("No")]
     [BooleanTrueValues("Yes")]

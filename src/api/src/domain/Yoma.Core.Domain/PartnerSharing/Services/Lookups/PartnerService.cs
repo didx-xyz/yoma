@@ -99,6 +99,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
           case EntityType.Opportunity:
             var opportunity = _opportunityService.GetById(entityId, false, false, false);
 
+            //once shared, flag can not be disabled
             if (opportunity.ShareWithPartners != true)
             {
               _logger.LogInformation("Partner sharing filtering: Entity {entityType} with id {entityId} not flagged for sharing and will be skipped", EntityType.Opportunity, entityId);
@@ -109,12 +110,14 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
             {
               case Partner.SAYouth:
                 //only include opportunities with an end date and of type learning
+                //once shared, end date can be changed but not removed
                 if (!opportunity.DateEnd.HasValue)
                 {
                   _logger.LogInformation("Partner sharing filtering: Entity {entityType} with id {entityId} for partner {partner} does not have an end date and will be skipped", EntityType.Opportunity, entityId, partner);
                   continue;
                 }
 
+                //once shared, the type can not be changed
                 if (opportunity.Type != Opportunity.Type.Learning.ToString())
                 {
                   _logger.LogInformation("Partner sharing filtering: Entity {EntityType} with id {EntityId} for partner {Partner} is not a learning type and will be skipped", EntityType.Opportunity, entityId, partner);

@@ -45,7 +45,7 @@ namespace Yoma.Core.Domain.Core
     Point
   }
 
-  public enum TimeInterval
+  public enum TimeIntervalOption
   {
     Minute,
     Hour,
@@ -71,5 +71,12 @@ namespace Yoma.Core.Domain.Core
     Create,
     Update,
     Delete
+  }
+
+  public enum EngagementTypeOption
+  {
+    Online,
+    Offline,
+    Hybrid
   }
 }

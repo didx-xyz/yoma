@@ -149,8 +149,10 @@ namespace Yoma.Core.Domain
       services.AddScoped<IProcessingStatusService, ProcessingStatusService>();
       #endregion Lookups
 
-      services.AddScoped<ISharingService, SharingService>();
+      services.AddScoped<IProcessingLogHelperService, ProcessingLogHelperService>();
       services.AddScoped<ISharingBackgroundService, SharingBackgroundService>();
+      services.AddScoped<ISharingInfoService, SharingInfoService>();
+      services.AddScoped<ISharingService, SharingService>();
       #endregion PartnerSharing
 
       #region Reward

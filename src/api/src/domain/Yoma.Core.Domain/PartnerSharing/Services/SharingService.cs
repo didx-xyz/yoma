@@ -16,6 +16,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     private readonly AppSettings _appSettings;
     private readonly IPartnerService _partnerService;
     private readonly IProcessingStatusService _processingStatusService;
+    private readonly IProcessingLogHelperService _processingLogHelperService;
     private readonly IRepositoryBatched<ProcessingLog> _processingLogRepository;
 
     public static readonly Status[] Statuses_Opportunity_Creatable = [Status.Active]; //only active opportunities scheduled for creation
@@ -28,12 +29,14 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
        IOptions<AppSettings> appSettings,
        IPartnerService partnerService,
        IProcessingStatusService processingStatusService,
+       IProcessingLogHelperService processingLogHelperService,
        IRepositoryBatched<ProcessingLog> processingLogRepository)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
       _partnerService = partnerService;
       _processingStatusService = processingStatusService;
+      _processingLogHelperService = processingLogHelperService;
       _processingLogRepository = processingLogRepository;
     }
     #endregion
@@ -41,14 +44,14 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     #region Public Members
     /// <summary>
     /// Schedules the creation of a partner sharing entity.
-    /// An entity can only be scheduled for creation once; if it is already scheduled (any status), it will be skipped (independency).
+    /// An entity can only be scheduled for creation once; if it is already scheduled (any status), it will be skipped (idempotent).
     /// If scheduled for update or delete an error will be thrown (logical invocation error).
     /// Once an entity, such as an opportunity, is deleted, it cannot be reinstated.
     /// Error status requires manual intervention and the entity will eventually be consistent with the latest scheduled action.
     /// </summary>
     public async Task ScheduleCreate(EntityType entityType, Guid entityId)
     {
-      var existingItem = GetByEntity(entityType, entityId);
+      var existingItem = _processingLogHelperService.GetByEntity(entityType, entityId);
       if (existingItem != null)
       {
         var action = Enum.Parse<ProcessingAction>(existingItem.Action, true);
@@ -75,7 +78,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
 
     /// <summary>
     /// Schedules an update for a partner sharing entity.
-    /// An entity can only be scheduled for update if it has been created and processed, and is not already scheduled for update (status pending or error) (independency).
+    /// An entity can only be scheduled for update if it has been created and processed, and is not already scheduled for update (status pending or error) (idempotent).
     /// If the entity does not exist, it will be scheduled for creation else an update.
     /// If a creation if pending, the entity will eventually be created with the latest info, thus no update needed.
     /// If an update is pending, the entity will eventually be updated with the latest info, thus another update not needed.
@@ -85,7 +88,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     public async Task ScheduleUpdate(EntityType entityType, Guid entityId, bool canCreate)
     {
       var actionSchedule = ProcessingAction.Update;
-      var existingItem = GetByEntity(entityType, entityId);
+      var existingItem = _processingLogHelperService.GetByEntity(entityType, entityId);
       if (existingItem != null)
       {
         var action = Enum.Parse<ProcessingAction>(existingItem.Action, true);
@@ -123,13 +126,13 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     /// An entity can only be scheduled for deletion if it has been created.
     /// If scheduled for creation and not processed, it will be aborted and no further action will be taken.
     /// If scheduled for update and not processed, it will be aborted and then scheduled for deletion.
-    /// If already scheduled for deletion, it will be skipped (independency).
+    /// If already scheduled for deletion, it will be skipped (idempotent).
     /// If the entity does not exist, it will be skipped.
     /// Once an entity, such as an opportunity, is deleted, it cannot be reinstated.
     /// </summary>
     public async Task ScheduleDelete(EntityType entityType, Guid entityId)
     {
-      var existingItem = GetByEntity(entityType, entityId);
+      var existingItem = _processingLogHelperService.GetByEntity(entityType, entityId);
       if (existingItem != null)
       {
         var action = Enum.Parse<ProcessingAction>(existingItem.Action, true);
@@ -210,8 +213,9 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
           item.ErrorReason = item.ErrorReason?.Trim();
           item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; //1st attempt not counted as a retry
 
-          //retry attempts specified and exceeded
-          if (_appSettings.SSIMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.SSIMaximumRetryAttempts) break;
+          //retry attempts specified and exceeded (-1: infinite retries)
+          if (_appSettings.PartnerSharingMaximumRetryAttempts == 0 || //no retries
+            (_appSettings.PartnerSharingMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.PartnerSharingMaximumRetryAttempts)) break;
 
           item.StatusId = _processingStatusService.GetByName(ProcessingStatus.Pending.ToString()).Id;
           item.Status = ProcessingStatus.Pending;
@@ -226,24 +230,8 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     #endregion
 
     #region Private Members
-    private ProcessingLog? GetByEntity(EntityType entityType, Guid entityId)
-    {
-      var statusAbortedId = _processingStatusService.GetByName(ProcessingStatus.Aborted.ToString()).Id;
-      var query = _processingLogRepository.Query().Where(o => o.EntityType == entityType.ToString() && o.StatusId != statusAbortedId); //ignore status aborted; historical; no effect on scheduling logic
-
-      query = entityType switch
-      {
-        EntityType.Opportunity => query.Where(o => o.OpportunityId == entityId),
-        _ => throw new InvalidOperationException($"Entity type of '{entityType}' not supported"),
-      };
-
-      query = query.OrderByDescending(o => o.DateModified);
-      return query.FirstOrDefault();
-    }
-
     private async Task Schedule(ProcessingAction action, EntityType entityType, Guid entityId, string? entityExternalId)
     {
-
       var items = new List<ProcessingLog>();
       var partners = _partnerService.ListForScheduling(action, entityType, entityId);
 

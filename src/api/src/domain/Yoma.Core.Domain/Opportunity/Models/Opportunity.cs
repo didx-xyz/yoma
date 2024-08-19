@@ -66,7 +66,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public Guid CommitmentIntervalId { get; set; }
 
-    public string CommitmentInterval { get; set; }
+    public Core.TimeIntervalOption CommitmentInterval { get; set; }
 
     public short CommitmentIntervalCount { get; set; }
 
@@ -99,7 +99,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public Guid? EngagementTypeId { get; set; }
 
-    public string? EngagementType { get; set; }
+    public Core.EngagementTypeOption? EngagementType { get; set; }
 
     public bool? ShareWithPartners { get; set; }
 

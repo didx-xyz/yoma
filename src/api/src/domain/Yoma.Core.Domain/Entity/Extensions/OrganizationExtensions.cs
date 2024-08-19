@@ -1,4 +1,3 @@
-using System.Runtime.CompilerServices;
 using Yoma.Core.Domain.Entity.Models;
 
 namespace Yoma.Core.Domain.Entity.Extensions

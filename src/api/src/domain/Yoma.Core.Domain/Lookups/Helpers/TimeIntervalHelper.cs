@@ -12,17 +12,17 @@ namespace Yoma.Core.Domain.Lookups.Helpers
       if (count <= 0)
         throw new ArgumentOutOfRangeException(nameof(count), "Count must be greater than 0");
 
-      if (!Enum.TryParse<TimeInterval>(intervalName, true, out var interval))
+      if (!Enum.TryParse<TimeIntervalOption>(intervalName, true, out var interval))
         throw new ArgumentOutOfRangeException(nameof(intervalName), $"'{intervalName}' is not supported");
 
       var minutes = interval switch
       {
-        TimeInterval.Minute => count,
-        TimeInterval.Hour => (long)count * 60,
-        TimeInterval.Day => (long)count * 60 * 24,
-        TimeInterval.Week => (long)count * 60 * 24 * 7,
-        TimeInterval.Month => (long)count * 60 * 24 * 30,
-        _ => throw new InvalidOperationException($"{nameof(TimeInterval)} of '{interval}' not supported"),
+        TimeIntervalOption.Minute => count,
+        TimeIntervalOption.Hour => (long)count * 60,
+        TimeIntervalOption.Day => (long)count * 60 * 24,
+        TimeIntervalOption.Week => (long)count * 60 * 24 * 7,
+        TimeIntervalOption.Month => (long)count * 60 * 24 * 30,
+        _ => throw new InvalidOperationException($"{nameof(TimeIntervalOption)} of '{interval}' not supported"),
       };
 
       return minutes;
@@ -30,16 +30,16 @@ namespace Yoma.Core.Domain.Lookups.Helpers
 
     public static int GetOrder(string intervalAsString)
     {
-      if (Enum.TryParse<TimeInterval>(intervalAsString, out var interval))
+      if (Enum.TryParse<TimeIntervalOption>(intervalAsString, out var interval))
       {
         return interval switch
         {
-          TimeInterval.Minute => 1,
-          TimeInterval.Hour => 2,
-          TimeInterval.Day => 3,
-          TimeInterval.Week => 4,
-          TimeInterval.Month => 5,
-          _ => throw new InvalidOperationException($"{nameof(TimeInterval)} of '{interval}' not supported"),
+          TimeIntervalOption.Minute => 1,
+          TimeIntervalOption.Hour => 2,
+          TimeIntervalOption.Day => 3,
+          TimeIntervalOption.Week => 4,
+          TimeIntervalOption.Month => 5,
+          _ => throw new InvalidOperationException($"{nameof(TimeIntervalOption)} of '{interval}' not supported"),
         };
       }
       throw new InvalidOperationException($"Invalid TimeInterval name '{intervalAsString}'");

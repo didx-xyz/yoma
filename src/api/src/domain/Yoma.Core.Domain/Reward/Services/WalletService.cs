@@ -221,7 +221,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
           item.WalletId = wallet.Id;
           item.Balance = wallet.Balance; //track initial balance upon creation, if any
-          item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id; //TODO: Distinguish between existing and newly created wallet
+          item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id;
           item.Status = WalletCreationStatus.Created;
         }
         catch (Exception)
@@ -280,8 +280,9 @@ namespace Yoma.Core.Domain.Reward.Services
           item.ErrorReason = item.ErrorReason?.Trim();
           item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; //1st attempt not counted as a retry
 
-          //retry attempts specified and exceeded
-          if (_appSettings.RewardMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.RewardMaximumRetryAttempts) break;
+          //retry attempts specified and exceeded (-1: infinite retries)
+          if (_appSettings.RewardMaximumRetryAttempts == 0 ||
+            _appSettings.RewardMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.RewardMaximumRetryAttempts) break;
 
           item.StatusId = _walletCreationStatusService.GetByName(WalletCreationStatus.Pending.ToString()).Id;
           item.Status = WalletCreationStatus.Pending;

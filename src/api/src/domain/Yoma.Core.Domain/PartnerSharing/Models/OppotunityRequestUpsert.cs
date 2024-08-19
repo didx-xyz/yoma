@@ -14,6 +14,6 @@ namespace Yoma.Core.Domain.PartnerSharing.Models
 
     public bool ShareContactInfo { get; set; }
 
-    public bool ShareAddressDetails { get; set; }
+    public bool ShareAddressInfo { get; set; }
   }
 }

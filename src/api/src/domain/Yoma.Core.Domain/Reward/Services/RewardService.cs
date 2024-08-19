@@ -145,8 +145,9 @@ namespace Yoma.Core.Domain.Reward.Services
           item.ErrorReason = item.ErrorReason?.Trim();
           item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; //1st attempt not counted as a retry
 
-          //retry attempts specified and exceeded
-          if (_appSettings.RewardMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.RewardMaximumRetryAttempts) break;
+          //retry attempts specified and exceeded (-1: infinite retries)
+          if (_appSettings.RewardMaximumRetryAttempts == 0 ||
+            _appSettings.RewardMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.RewardMaximumRetryAttempts) break;
 
           item.StatusId = _rewardTransactionStatusService.GetByName(RewardTransactionStatus.Pending.ToString()).Id;
           item.Status = RewardTransactionStatus.Pending;

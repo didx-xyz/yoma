@@ -28,6 +28,7 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Validators;
+using Yoma.Core.Domain.PartnerSharing.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
@@ -56,6 +57,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
     private readonly IEmailProviderClient _emailProviderClient;
     private readonly IIdentityProviderClient _identityProviderClient;
+    private readonly ISharingInfoService _sharingInfoService;
 
     private readonly OpportunityRequestValidatorCreate _opportunityRequestValidatorCreate;
     private readonly OpportunityRequestValidatorUpdate _opportunityRequestValidatorUpdate;
@@ -103,6 +105,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IEmailPreferenceFilterService emailPreferenceFilterService,
         IEmailProviderClientFactory emailProviderClientFactory,
         IIdentityProviderClientFactory identityProviderClientFactory,
+        ISharingInfoService sharingInfoService,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
         OpportunityRequestValidatorUpdate opportunityRequestValidatorUpdate,
         OpportunitySearchFilterValidator opportunitySearchFilterValidator,
@@ -138,6 +141,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _emailPreferenceFilterService = emailPreferenceFilterService;
       _emailProviderClient = emailProviderClientFactory.CreateClient();
       _identityProviderClient = identityProviderClientFactory.CreateClient();
+      _sharingInfoService = sharingInfoService;
 
       _opportunityRequestValidatorCreate = opportunityRequestValidatorCreate;
       _opportunityRequestValidatorUpdate = opportunityRequestValidatorUpdate;
@@ -622,21 +626,18 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var results = queryResults
         .Select(item =>
         {
-          if (!Enum.TryParse<TimeInterval>(item.Interval, true, out var interval))
-            throw new InvalidOperationException($"{nameof(item.Interval)} of '{item.Interval}' is not supported");
-
           return new OpportunitySearchCriteriaCommitmentIntervalOption
           {
             Id = $"{item.Count}|{item.Id}",
             Name = $"{item.Count} {item.Interval}{(item.Count > 1 ? "s" : string.Empty)}",
-            Order = interval switch
+            Order = item.Interval switch
             {
-              TimeInterval.Minute => 1,
-              TimeInterval.Hour => 2,
-              TimeInterval.Day => 3,
-              TimeInterval.Week => 4,
-              TimeInterval.Month => 5,
-              _ => throw new InvalidOperationException($"{nameof(TimeInterval)} of '{interval}' not supported"),
+              TimeIntervalOption.Minute => 1,
+              TimeIntervalOption.Hour => 2,
+              TimeIntervalOption.Day => 3,
+              TimeIntervalOption.Week => 4,
+              TimeIntervalOption.Month => 5,
+              _ => throw new InvalidOperationException($"{nameof(TimeIntervalOption)} of '{item.Interval}' not supported"),
             },
             Count = item.Count
           };
@@ -846,11 +847,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
           var filterIntervalName = _timeIntervalService.GetById(filter.CommitmentInterval.Interval.Id).Name;
           var filterCountInMinutes = TimeIntervalHelper.ConvertToMinutes(filterIntervalName, filter.CommitmentInterval.Interval.Count);
 
-          var minuteIntervalId = _timeIntervalService.GetByName(TimeInterval.Minute.ToString()).Id;
-          var hourIntervalId = _timeIntervalService.GetByName(TimeInterval.Hour.ToString()).Id;
-          var dayIntervalId = _timeIntervalService.GetByName(TimeInterval.Day.ToString()).Id;
-          var weekIntervalId = _timeIntervalService.GetByName(TimeInterval.Week.ToString()).Id;
-          var monthIntervalId = _timeIntervalService.GetByName(TimeInterval.Month.ToString()).Id;
+          var minuteIntervalId = _timeIntervalService.GetByName(TimeIntervalOption.Minute.ToString()).Id;
+          var hourIntervalId = _timeIntervalService.GetByName(TimeIntervalOption.Hour.ToString()).Id;
+          var dayIntervalId = _timeIntervalService.GetByName(TimeIntervalOption.Day.ToString()).Id;
+          var weekIntervalId = _timeIntervalService.GetByName(TimeIntervalOption.Week.ToString()).Id;
+          var monthIntervalId = _timeIntervalService.GetByName(TimeIntervalOption.Month.ToString()).Id;
 
           query = query.Where(o =>
               (o.CommitmentIntervalId == minuteIntervalId && o.CommitmentIntervalCount <= filterCountInMinutes) ||
@@ -1016,7 +1017,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         DifficultyId = request.DifficultyId,
         Difficulty = _opportunityDifficultyService.GetById(request.DifficultyId).Name,
         CommitmentIntervalId = request.CommitmentIntervalId,
-        CommitmentInterval = _timeIntervalService.GetById(request.CommitmentIntervalId).Name,
+        CommitmentInterval = Enum.Parse<TimeIntervalOption>(_timeIntervalService.GetById(request.CommitmentIntervalId).Name, true),
         CommitmentIntervalCount = request.CommitmentIntervalCount,
         CommitmentIntervalDescription = $"{request.CommitmentIntervalCount} {_timeIntervalService.GetById(request.CommitmentIntervalId).Name}{(request.CommitmentIntervalCount > 1 ? "s" : string.Empty)}",
         ParticipantLimit = request.ParticipantLimit,
@@ -1027,7 +1028,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         CredentialIssuanceEnabled = request.CredentialIssuanceEnabled,
         SSISchemaName = request.SSISchemaName,
         EngagementTypeId = request.EngagementTypeId,
-        EngagementType = request.EngagementTypeId.HasValue ? _engagementTypeService.GetById(request.EngagementTypeId.Value).Name : null,
+        EngagementType = request.EngagementTypeId.HasValue ? Enum.Parse<EngagementTypeOption>(_engagementTypeService.GetById(request.EngagementTypeId.Value).Name, true) : null,
         ShareWithPartners = request.ShareWithPartners.HasValue ? request.ShareWithPartners : null,
         StatusId = _opportunityStatusService.GetByName(status.ToString()).Id,
         Status = status,
@@ -1135,7 +1136,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.DifficultyId = request.DifficultyId;
       result.Difficulty = _opportunityDifficultyService.GetById(request.DifficultyId).Name;
       result.CommitmentIntervalId = request.CommitmentIntervalId;
-      result.CommitmentInterval = _timeIntervalService.GetById(request.CommitmentIntervalId).Name;
+      result.CommitmentInterval = Enum.Parse<TimeIntervalOption>(_timeIntervalService.GetById(request.CommitmentIntervalId).Name, true);
       result.CommitmentIntervalCount = request.CommitmentIntervalCount;
       result.CommitmentIntervalDescription = $"{request.CommitmentIntervalCount} {_timeIntervalService.GetById(request.CommitmentIntervalId).Name}{(request.CommitmentIntervalCount > 1 ? "s" : string.Empty)}";
       result.ParticipantLimit = request.ParticipantLimit;
@@ -1146,7 +1147,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.CredentialIssuanceEnabled = request.CredentialIssuanceEnabled;
       result.SSISchemaName = request.SSISchemaName;
       result.EngagementTypeId = request.EngagementTypeId;
-      result.EngagementType = request.EngagementTypeId.HasValue ? _engagementTypeService.GetById(request.EngagementTypeId.Value).Name : null;
+      result.EngagementType = request.EngagementTypeId.HasValue ? Enum.Parse<EngagementTypeOption>(_engagementTypeService.GetById(request.EngagementTypeId.Value).Name, true) : null;
       result.ShareWithPartners = request.ShareWithPartners.HasValue ? request.ShareWithPartners : result.ShareWithPartners;
       result.ModifiedByUserId = user.Id;
 
@@ -1160,6 +1161,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
+        await AssertUpdatablePartnerSharing(request, result); //check will abort sharing if possible and needs to be rolled back if the update fails
+
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
         result = await _opportunityRepository.Update(result);
 
@@ -1597,6 +1600,29 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       if (!Statuses_Updatable.Contains(opportunity.Status))
         throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+    }
+
+    private async Task AssertUpdatablePartnerSharing(OpportunityRequestUpdate request, Models.Opportunity opportunity)
+    {
+      var reasons = new List<string>();
+
+      if (opportunity.ShareWithPartners == true && request.ShareWithPartners != true)
+        reasons.Add("Option to share with partners cannot be disabled after it has been enabled");
+
+      if (opportunity.DateEnd.HasValue && !request.DateEnd.HasValue)
+        reasons.Add("End date cannot be removed once it has been set");
+
+      if (opportunity.TypeId != request.TypeId)
+        reasons.Add("Type cannot be changed");
+
+      if (reasons.Count == 0) return;
+
+      var shared = await _sharingInfoService.IsShared(PartnerSharing.EntityType.Opportunity, opportunity.Id, true);
+      if (!shared) return;
+
+      var reasonText = string.Join("; ", reasons);
+
+      throw new ValidationException($"The {nameof(Models.Opportunity)} has already been shared and cannot be updated for the following reasons: {reasonText}");
     }
 
     private async Task SendEmail(Models.Opportunity opportunity, EmailType type)

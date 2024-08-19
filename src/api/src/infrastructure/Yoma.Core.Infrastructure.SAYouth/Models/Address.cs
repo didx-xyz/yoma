@@ -8,18 +8,18 @@ namespace Yoma.Core.Infrastructure.SAYouth.Models
     public string AddressName { get; set; }
 
     [JsonProperty("address_line_1")]
-    public string AddressLine1 { get; set; }
+    public string? AddressLine1 { get; set; }
 
     [JsonProperty("suburb_name")]
     public string SuburbName { get; set; }
 
     [JsonProperty("city_name")]
-    public string CityName { get; set; }
+    public string? CityName { get; set; }
 
     [JsonProperty("postal_code")]
-    public string PostalCode { get; set; }
+    public string? PostalCode { get; set; }
 
     [JsonProperty("province")]
-    public string Province { get; set; }
+    public string? Province { get; set; }
   }
 }

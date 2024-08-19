@@ -8,17 +8,17 @@ namespace Yoma.Core.Infrastructure.SAYouth.Extensions
   {
     public static Duration? ToDuration(this Opportunity opportunity)
     {
-      int totalHours = opportunity.TimeIntervalToHours();
+      int totalDays = opportunity.TimeIntervalToDays();
 
-      return totalHours switch
+      return totalDays switch
       {
-        <= 168 => Duration.OneWeek, // 1 week = 168 hours
-        <= 720 => Duration.OneMonth, // 1 month = 720 hours (assuming 30 days)
-        <= 2160 => Duration.ThreeMonths, // 3 months = 2160 hours
-        <= 4320 => Duration.ThreeToSixMonths, // 6 months = 4320 hours
-        <= 8760 => Duration.SixToTwelveMonths, // 12 months = 8760 hours
-        <= 13140 => Duration.EighteenMonths, // 18 months = 13140 hours
-        <= 17520 => Duration.TwentyFourMonths, // 24 months = 17520 hours
+        <= 7 => Duration.OneWeek, // 1 week = 7 days
+        <= 30 => Duration.OneMonth, // 1 month = 30 days
+        <= 90 => Duration.ThreeMonths, // 3 months = 90 days
+        <= 180 => Duration.ThreeToSixMonths, // 6 months = 180 days
+        <= 365 => Duration.SixToTwelveMonths, // 12 months = 365 days
+        <= 547 => Duration.EighteenMonths, // 18 months = 547 days
+        <= 730 => Duration.TwentyFourMonths, // 24 months = 730 days
         _ => null
       };
     }

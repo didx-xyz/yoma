@@ -83,6 +83,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_IdentityProvider(_configuration);
       services.ConfigureServices_EmailProvider(_configuration);
       services.ConfigureServices_RewardProvider(_configuration);
+      services.ConfigureServices_SharingProvider(_configuration);
       #endregion Configuration
 
       #region System
@@ -300,7 +301,10 @@ namespace Yoma.Core.Api
              }, new PostgreSqlStorageOptions { SchemaName = "HangFire" });
       });
 
-      services.AddHangfireServer();
+      services.AddHangfireServer(options =>
+      {
+        options.ServerTimeout = TimeSpan.FromHours(3); // ensures that jobs can run for up to 3 hours without being marked as timed out; MaxIntervalInHours set to 2 hours or less for all jobs
+      });
     }
 
     public void ConfigureRedis(IServiceCollection services, IConfiguration configuration)

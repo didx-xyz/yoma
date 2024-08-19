@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity;
@@ -54,7 +55,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         DifficultyId = entity.DifficultyId,
         Difficulty = entity.Difficulty.Name,
         CommitmentIntervalId = entity.CommitmentIntervalId,
-        CommitmentInterval = entity.CommitmentInterval.Name,
+        CommitmentInterval = Enum.Parse<TimeIntervalOption>(entity.CommitmentInterval.Name, true),
         CommitmentIntervalCount = entity.CommitmentIntervalCount,
         CommitmentIntervalDescription = $"{entity.CommitmentIntervalCount} {entity.CommitmentInterval.Name}{(entity.CommitmentIntervalCount > 1 ? "s" : string.Empty)}",
         ParticipantLimit = entity.ParticipantLimit,
@@ -69,7 +70,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         SSISchemaName = entity.SSISchemaName,
         Featured = entity.Featured,
         EngagementTypeId = entity.EngagementTypeId,
-        EngagementType = entity.EngagementType == null ? null : entity.EngagementType.Name,
+        EngagementType = entity.EngagementType == null ? null : Enum.Parse<EngagementTypeOption>(entity.EngagementType.Name, true),
         ShareWithPartners = entity.ShareWithPartners,
         DateCreated = entity.DateCreated,
         CreatedByUserId = entity.CreatedByUserId,
