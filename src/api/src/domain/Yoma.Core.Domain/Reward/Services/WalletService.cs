@@ -221,7 +221,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
           item.WalletId = wallet.Id;
           item.Balance = wallet.Balance; //track initial balance upon creation, if any
-          item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id; 
+          item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id;
           item.Status = WalletCreationStatus.Created;
         }
         catch (Exception)

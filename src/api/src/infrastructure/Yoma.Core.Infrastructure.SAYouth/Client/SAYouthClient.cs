@@ -80,7 +80,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
 
       var response = await _options.BaseUrl
         .AppendPathSegment("Opportunity/Skilling")
-        .SetQueryParam("opportunityId", externalIdParsed)  
+        .SetQueryParam("opportunityId", externalIdParsed)
         .WithAuthHeaders(GetAuthHeaders())
         .PutJsonAsync(requestUpsert)
         .EnsureSuccessStatusCodeAsync()

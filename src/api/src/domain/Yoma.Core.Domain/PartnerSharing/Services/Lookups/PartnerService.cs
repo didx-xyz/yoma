@@ -100,7 +100,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
             var opportunity = _opportunityService.GetById(entityId, false, false, false);
 
             //once shared, flag can not be disabled
-            if (opportunity.ShareWithPartners != true) 
+            if (opportunity.ShareWithPartners != true)
             {
               _logger.LogInformation("Partner sharing filtering: Entity {entityType} with id {entityId} not flagged for sharing and will be skipped", EntityType.Opportunity, entityId);
               continue;
