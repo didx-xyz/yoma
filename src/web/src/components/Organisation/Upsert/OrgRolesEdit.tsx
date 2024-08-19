@@ -20,6 +20,7 @@ import { Document } from "./Document";
 import { FileUploader } from "./FileUpload";
 import FormField from "~/components/Common/FormField";
 import FormCheckbox from "~/components/Common/FormCheckbox";
+import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
 
 export interface InputProps {
   formData: OrganizationRequestBase | null;
@@ -267,8 +268,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       if (!arr2) arr2 = [];
       arr2.push(doc.fileId);
       setValue("registrationDocumentsDelete", arr2);
+
+      // mark as touched
+      trigger("registrationDocuments");
     },
-    [setValue, getValues],
+    [setValue, getValues, trigger],
   );
   const onRemoveEducationProviderDocument = useCallback(
     (doc: OrganizationDocument) => {
@@ -283,8 +287,11 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       if (!arr2) arr2 = [];
       arr2.push(doc.fileId);
       setValue("educationProviderDocumentsDelete", arr2);
+
+      // mark as touched
+      trigger("educationProviderDocuments");
     },
-    [setValue, getValues],
+    [setValue, getValues, trigger],
   );
   const onRemoveBusinessDocument = useCallback(
     (doc: OrganizationDocument) => {
@@ -299,12 +306,19 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       if (!arr2) arr2 = [];
       arr2.push(doc.fileId);
       setValue("businessDocumentsDelete", arr2);
+
+      // mark as touched
+      trigger("businessDocuments");
     },
-    [setValue, getValues],
+    [setValue, getValues, trigger],
   );
 
   return (
-    <>
+    <div className="flex flex-col gap-4">
+      {formState.defaultValues && !formState.isValid && (
+        <FormRequiredFieldMessage />
+      )}
+
       <form
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
         className="flex flex-col gap-4"
@@ -492,7 +506,6 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
           )}
         </div>
       </form>
-    </>
+    </div>
   );
 };
-/* eslint-enable */

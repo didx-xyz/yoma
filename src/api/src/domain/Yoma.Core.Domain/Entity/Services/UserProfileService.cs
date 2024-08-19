@@ -211,14 +211,6 @@ namespace Yoma.Core.Domain.Entity.Services
       filter.VerificationStatuses = [VerificationStatus.Rejected];
       result.OpportunityCountRejected = _myOpportunityService.Search(filter).TotalCount ?? default;
 
-      var filterSSI = new SSIWalletFilter { TotalCountOnly = true };
-      result.CredentialCounts = [];
-      foreach (var schemaType in Enum.GetValues<SchemaType>())
-      {
-        filterSSI.SchemaType = schemaType;
-        result.CredentialCounts.Add(schemaType, (await _sSIWalletService.SearchUserCredentials(filterSSI)).TotalCount ?? default);
-      }
-
       return result;
     }
     #endregion

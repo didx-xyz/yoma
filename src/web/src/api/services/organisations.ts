@@ -11,6 +11,7 @@ import type {
   UserInfo,
 } from "../models/organisation";
 import { objectToFormData } from "~/lib/utils";
+import type { Settings, SettingsRequest } from "../models/common";
 
 export const getOrganisationProviderTypes = async (
   context?: GetServerSidePropsContext,
@@ -107,4 +108,22 @@ export const patchOrganisationStatus = async (
   await (
     await ApiClient
   ).patch<Organization>(`/organization/${id}/status`, model);
+};
+
+export const getOrganisationSettingsById = async (
+  id: string,
+  context?: GetServerSidePropsContext,
+): Promise<Settings> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<Settings>(`/organization/${id}/settings`);
+  return data;
+};
+
+export const updateOrganisationSettings = async (
+  id: string,
+  model: SettingsRequest,
+) => {
+  await (
+    await ApiClient
+  ).patch<Organization>(`/organization/${id}/settings`, model);
 };
