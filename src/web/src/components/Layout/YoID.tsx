@@ -40,6 +40,14 @@ const YoIDLayout: TabProps = ({ children }) => {
         iconImage: iconCheckmark,
       },
       {
+        title: "💸 Wallet",
+        description: "My digital wallet",
+        url: "/yoid/wallet",
+        badgeCount: null,
+        selected: router.asPath.startsWith("/yoid/wallet"),
+        iconImage: iconCredential,
+      },
+      {
         title: "🌐 Passport",
         description: "My digital credentials",
         url: "/yoid/passport",
@@ -52,7 +60,7 @@ const YoIDLayout: TabProps = ({ children }) => {
         description: "Completed, pending, rejected & saved opportunities",
         url: "/yoid/opportunities/completed",
         badgeCount: null,
-        selected: router.asPath.startsWith("/yoid/opportunities/completed"),
+        selected: router.asPath.startsWith("/yoid/opportunities"),
         iconImage: iconCheckmark,
       },
       {

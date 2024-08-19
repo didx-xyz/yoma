@@ -14,7 +14,7 @@ const TransactionItemComponent: React.FC<{
   return (
     <button
       key={key}
-      className="relative flex aspect-square h-64 w-[300px] flex-col gap-1 rounded-lg bg-white p-5 shadow-sm"
+      className="relative flex aspect-square h-64 w-full flex-col gap-1 rounded-lg bg-white p-5 shadow-sm sm:max-w-[300px]"
       onClick={onClick}
     >
       <div className="flex flex-row">

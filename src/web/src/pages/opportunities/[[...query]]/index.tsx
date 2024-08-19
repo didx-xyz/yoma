@@ -1087,7 +1087,7 @@ const Opportunities: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Opportunities</title>
+        <title>Yoma | 🏆 Opportunities</title>
       </Head>
 
       <PageBackground className="h-[350px]" />

@@ -1,21 +1,21 @@
 import {
-  type GetStaticPropsContext,
   type GetServerSidePropsContext,
+  type GetStaticPropsContext,
 } from "next";
 import ApiClient from "~/lib/axiosClient";
 import ApiServer from "~/lib/axiosServer";
+import type { Country } from "../models/lookups";
 import type {
   StoreCategory,
-  StoreSearchFilter,
-  StoreSearchResults,
   StoreItemCategorySearchFilter,
   StoreItemCategorySearchResults,
   StoreItemSearchFilter,
   StoreItemSearchResults,
+  StoreSearchFilter,
+  StoreSearchResults,
   WalletVoucherSearchFilter,
   WalletVoucherSearchResults,
 } from "../models/marketplace";
-import type { Country } from "../models/lookups";
 
 export const listSearchCriteriaCountries = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
@@ -38,7 +38,6 @@ export const listStoreCategories = async (
   return data;
 };
 
-//NB: paging doesn't work (zlto issue)
 export const searchStores = async (
   filter: StoreSearchFilter,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
@@ -62,25 +61,6 @@ export const searchStoreItemCategories = async (
     filter,
   );
   return data;
-
-  // TODO: hardcoded data based on the filter.pageNumber
-  // const { pageNumber } = filter;
-  // const items = Array.from({ length: 4 }, (_, index) => {
-  //   return {
-  //     id: `id-${pageNumber}-${index}`,
-  //     name: `Item ${pageNumber}-${index}`,
-  //     description: `Description ${pageNumber}-${index}`,
-  //     amount: 100,
-  //     count: 100,
-  //     imageURL:
-  //       "https://s3-eu-west-1.amazonaws.com/media.zlto.cloud/store/store_front/50a0338879e04c619ade3d989b727e9f_sfd/Electricity.png",
-  //     storeId: filter.storeId,
-  //     summary: `summary ${pageNumber}-${index}`,
-  //   };
-  // });
-  // return {
-  //   items: items,
-  // };
 };
 
 export const searchStoreItems = async (
