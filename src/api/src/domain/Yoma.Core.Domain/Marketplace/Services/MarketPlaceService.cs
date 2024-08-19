@@ -1,10 +1,12 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Transactions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -22,6 +24,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
   {
     #region Class Variables
     private readonly ILogger<MarketplaceService> _logger;
+    private readonly AppSettings _appSettings;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ICountryService _countryService;
     private readonly IUserService _userService;
@@ -38,6 +41,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     #region Constructors
     public MarketplaceService(ILogger<MarketplaceService> logger,
+        IOptions<AppSettings> appSettings,
         IHttpContextAccessor httpContextAccessor,
         ICountryService countryService,
         IUserService userService,
@@ -51,6 +55,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
         IExecutionStrategyService executionStrategyService)
     {
       _logger = logger;
+      _appSettings = appSettings.Value;
       _httpContextAccessor = httpContextAccessor;
       _countryService = countryService;
       _userService = userService;
@@ -172,9 +177,30 @@ namespace Yoma.Core.Domain.Marketplace.Services
         .Where(o => o.UserId == user.Id && o.ItemCategoryId == itemCategoryId)
         .OrderByDescending(o => o.DateModified).FirstOrDefault();
 
-      //existing reservation re-used if available; assume remains effective and not expired by ZLTO
-      var transaction = transactionExisting != null && transactionExisting.Status == TransactionStatus.Reserved
-        ? transactionExisting : await BuyItemTransactionReserve(user, walletBalance.WalletId, itemCategoryId, storeItem);
+      // check if an existing reservation can be re-used
+      TransactionLog? transaction = null;
+      if (transactionExisting != null && transactionExisting.Status == TransactionStatus.Reserved)
+      {
+        //check if reservation expired (-1: never expires | 0: expires immediately | >0: expires in x hours)
+        if (_appSettings.MarketplaceItemReservationExpirationInHours >= 0 && transactionExisting.DateModified.AddHours(_appSettings.MarketplaceItemReservationExpirationInHours) <= DateTimeOffset.UtcNow)
+        {
+          //expired; mark as released and create a new reservation
+          transactionExisting.StatusId = _transactionStatusService.GetByName(TransactionStatus.Released.ToString()).Id;
+          transactionExisting.Status = TransactionStatus.Released;
+          await _transactionLogRepository.Create(transactionExisting);
+
+          //create a new reservation
+          transaction = await BuyItemTransactionReserve(user, walletBalance.WalletId, itemCategoryId, storeItem);
+        }
+        else
+          //not expired; re-use existing reservation
+          transaction = transactionExisting;
+      }
+      else
+      {
+        //no existing reservation; create a new one
+        transaction = await BuyItemTransactionReserve(user, walletBalance.WalletId, itemCategoryId, storeItem);
+      }
 
       await BuyItemTransactionSold(transaction, user, walletBalance.WalletId);
     }
@@ -213,7 +239,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
     }
 
     /// <summary>
-    /// Mark item as sold and log trasnaction; with failure attempt to reset / release reservation provided not sold
+    /// Mark item as sold and log transaction; with failure attempt to reset / release reservation provided not sold
     /// </summary>
     private async Task BuyItemTransactionSold(TransactionLog transaction, User user, string walletId)
     {

@@ -213,8 +213,9 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
           item.ErrorReason = item.ErrorReason?.Trim();
           item.RetryCount = (byte?)(item.RetryCount + 1) ?? 0; //1st attempt not counted as a retry
 
-          //retry attempts specified and exceeded
-          if (_appSettings.SSIMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.SSIMaximumRetryAttempts) break;
+          //retry attempts specified and exceeded (-1: infinite retries)
+          if (_appSettings.PartnerSharingMaximumRetryAttempts == 0 || //no retries
+            (_appSettings.PartnerSharingMaximumRetryAttempts > 0 && item.RetryCount > _appSettings.PartnerSharingMaximumRetryAttempts)) break;
 
           item.StatusId = _processingStatusService.GetByName(ProcessingStatus.Pending.ToString()).Id;
           item.Status = ProcessingStatus.Pending;
