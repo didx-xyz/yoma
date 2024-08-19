@@ -301,7 +301,10 @@ namespace Yoma.Core.Api
              }, new PostgreSqlStorageOptions { SchemaName = "HangFire" });
       });
 
-      services.AddHangfireServer();
+      services.AddHangfireServer(options =>
+      {
+        options.ServerTimeout = TimeSpan.FromHours(3); // ensure the job remains visible for up to 3 hours; MaxIntervalInHours set to 2 hours or less for all jobs
+      });
     }
 
     public void ConfigureRedis(IServiceCollection services, IConfiguration configuration)
