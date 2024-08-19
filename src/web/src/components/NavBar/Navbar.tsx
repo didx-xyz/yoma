@@ -1,19 +1,19 @@
+import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { IoMdMenu } from "react-icons/io";
-import ReactModal from "react-modal";
-import { LogoImage } from "./LogoImage";
-import { UserMenu } from "./UserMenu";
-import { useAtomValue } from "jotai";
+import type { TabItem } from "~/api/models/common";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
 } from "~/lib/store";
-import type { TabItem } from "~/api/models/common";
-import { LanguageSwitcher } from "./LanguageSwitcher";
 import { SignInButton } from "../SignInButton";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { LogoImage } from "./LogoImage";
+import { UserMenu } from "./UserMenu";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 const navBarLinksUser: TabItem[] = [
   {
@@ -94,10 +94,14 @@ const navBarLinksAdmin: TabItem[] = [
 ];
 
 export const Navbar: React.FC = () => {
-  const [menuVisible, setMenuVisible] = useState(false);
+  const [isDrawerOpen, setDrawerOpen] = useState(false);
+  const toggle = () => setDrawerOpen(!isDrawerOpen);
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
   const { data: session } = useSession();
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  useDisableBodyScroll(isDrawerOpen);
 
   const currentNavbarLinks = useMemo<TabItem[]>(() => {
     if (activeRoleView == RoleView.Admin) {
@@ -162,43 +166,59 @@ export const Navbar: React.FC = () => {
     <div className="fixed left-0 right-0 top-0 z-40">
       <div className={`bg-theme navbar z-40`}>
         <div className="flex w-full justify-between md:flex md:justify-between md:px-4">
-          <div className="flex justify-start">
-            <button
-              type="button"
-              aria-label="Navigation Menu"
-              className="ml-1 text-white  lg:hidden"
-              onClick={() => setMenuVisible(!menuVisible)}
-              id="btnNavbarMenu"
-            >
-              <IoMdMenu className="h-8 w-8" />
-            </button>
-            <ReactModal
-              isOpen={menuVisible}
-              shouldCloseOnOverlayClick={true}
-              onRequestClose={() => {
-                setMenuVisible(false);
-              }}
-              className="bg-theme fixed left-0 right-0 top-16 flex-grow items-center animate-in fade-in"
-              portalClassName={"fixed z-50"}
-              overlayClassName="fixed inset-0"
-            >
-              <div className="flex flex-col">
-                {currentNavbarLinks.map((link, index) => (
-                  <Link
-                    href={link.url!}
-                    key={index}
-                    className="px-7 py-3 text-white hover:brightness-50"
-                    onClick={() => setMenuVisible(false)}
-                    id={`lnkNavbarMenuModal_${link.title}`}
-                  >
-                    {link.title}
-                  </Link>
-                ))}
+          <div className="flex items-center justify-start">
+            {/* SIDE MENU (MOBILE) */}
+            <div className="drawer lg:hidden">
+              <input
+                id="nav-drawer"
+                type="checkbox"
+                className="drawer-toggle"
+                checked={isDrawerOpen}
+                onChange={toggle}
+              />
+              <div className="drawer-content">
+                <label
+                  htmlFor="nav-drawer"
+                  className="btn-primaryx drawer-buttonx btnx text-white hover:cursor-pointer"
+                >
+                  {/* BUTTON */}
+                  <IoMdMenu className="h-8 w-8" />
+                </label>
               </div>
-            </ReactModal>
+              <div className="drawer-side">
+                <label
+                  htmlFor="nav-drawer"
+                  aria-label="close sidebar"
+                  className="drawer-overlay"
+                ></label>
+                <div className="h-screen w-80 overflow-y-auto rounded-lg bg-white">
+                  <ul className="menu p-0">
+                    {currentNavbarLinks.map((link, index) => (
+                      <>
+                        <li>
+                          <Link
+                            href={link.url!}
+                            key={index}
+                            className="text-whitex px-7 py-3 hover:brightness-50"
+                            onClick={() => setDrawerOpen(false)}
+                            id={`lnkNavbarMenuModal_${link.title}`}
+                          >
+                            {link.title}
+                          </Link>
+                        </li>
+                        <div className="divider m-0 mx-4 !bg-gray" />
+                      </>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
+
+            {/* LOGO */}
             <LogoImage />
           </div>
 
+          {/* TOP MENU (DESKTOP) */}
           <ul className="absolute left-0 right-0 top-5 mx-auto hidden w-fit items-center justify-center gap-12 md:flex">
             {currentNavbarLinks.map((link, index) => (
               <li key={index} tabIndex={index}>

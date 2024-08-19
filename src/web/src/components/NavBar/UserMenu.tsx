@@ -3,7 +3,6 @@ import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { IoMdSettings, IoIosCheckmarkCircle } from "react-icons/io";
-import ReactModal from "react-modal";
 import { type OrganizationInfo } from "~/api/models/user";
 import {
   COOKIE_KEYCLOAK_SESSION,
@@ -23,7 +22,8 @@ import { destroyCookie } from "nookies";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 export const UserMenu: React.FC = () => {
-  const [userMenuVisible, setUserMenuVisible] = useState(false);
+  const [isDrawerOpen, setDrawerOpen] = useState(false);
+  const toggle = () => setDrawerOpen(!isDrawerOpen);
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
@@ -31,14 +31,11 @@ export const UserMenu: React.FC = () => {
   const { data: session } = useSession();
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
 
-  const [isDrawerOpen, setDrawerOpen] = useState(false);
-  const toggle = () => setDrawerOpen(!isDrawerOpen);
-
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(isDrawerOpen);
 
   const handleLogout = useCallback(() => {
-    setUserMenuVisible(false);
+    setDrawerOpen(false);
 
     // update atom
     setUserProfile(null);
@@ -75,7 +72,7 @@ export const UserMenu: React.FC = () => {
               : `/organisations/${organisation.id}/edit`
           }
           className="w-full text-gray-dark hover:brightness-95"
-          onClick={() => setUserMenuVisible(false)}
+          onClick={() => setDrawerOpen(false)}
           id={`userMenu_orgs_${organisation.name}`} // e2e
         >
           <AvatarImage
@@ -117,7 +114,7 @@ export const UserMenu: React.FC = () => {
             key={organisation.id}
             href={`/organisations/${organisation.id}/edit`}
             className="rounded-full bg-white p-1 text-gray-dark shadow duration-300 hover:bg-gray-dark hover:text-gray-light"
-            onClick={() => setUserMenuVisible(false)}
+            onClick={() => setDrawerOpen(false)}
           >
             <IoMdSettings className="h-4 w-4" />
           </Link>
@@ -127,225 +124,213 @@ export const UserMenu: React.FC = () => {
   };
 
   return (
-    <>
-      {/* USER ICON BUTTON */}
-      <button
-        type="button"
-        aria-label="User Menu"
-        className="text-center text-white"
-        onClick={() => setUserMenuVisible(!userMenuVisible)}
-        id="btnUserMenu"
-      ></button>
+    <div className="drawer drawer-end">
+      <input
+        id="userMenu-drawer"
+        type="checkbox"
+        className="drawer-toggle"
+        checked={isDrawerOpen}
+        onChange={toggle}
+      ></input>
+      <div className="drawer-content flex flex-col">
+        <label htmlFor="userMenu-drawer" className="hover:cursor-pointer">
+          {/* BUTTON */}
+          {/* USER/ADMIN, SHOW USER IMAGE */}
+          {(activeRoleView == RoleView.User ||
+            activeRoleView == RoleView.Admin) && (
+            <>
+              <div className="rounded-full hover:outline hover:outline-2 hover:outline-white">
+                <AvatarImage
+                  icon={userProfile?.photoURL ?? null}
+                  alt="User Logo"
+                  size={44}
+                />
+              </div>
+            </>
+          )}
 
-      <div className="drawer drawer-end">
-        <input
-          id="userMenu-drawer"
-          type="checkbox"
-          className="drawer-toggle"
-          checked={isDrawerOpen}
-          onChange={toggle}
-        ></input>
-        <div className="drawer-content flex flex-col">
-          <label htmlFor="userMenu-drawer">
-            {/* BUTTON */}
-            {/* USER/ADMIN, SHOW USER IMAGE */}
-            {(activeRoleView == RoleView.User ||
-              activeRoleView == RoleView.Admin) && (
-              <>
-                <div className="rounded-full hover:outline hover:outline-2 hover:outline-white">
+          {/* ORG ADMIN, SHOW COMPANY LOGO */}
+          {activeRoleView == RoleView.OrgAdmin && (
+            <>
+              <div className="rounded-full hover:outline hover:outline-2 hover:outline-white">
+                <AvatarImage
+                  icon={currentOrganisationLogo ?? null}
+                  alt="Org Logo"
+                  size={44}
+                />
+              </div>
+            </>
+          )}
+        </label>
+      </div>
+      <div className="drawer-side">
+        <label htmlFor="userMenu-drawer" className="drawer-overlay"></label>
+
+        {/* MENU ITEMS */}
+        <div className="h-screen w-80 overflow-y-auto rounded-lg bg-white">
+          <ul className="menu p-0">
+            {/* USER (YOID) */}
+            <li className="w-full bg-white py-2 shadow-custom">
+              <Link
+                href="/user/profile"
+                className="text-gray-dark"
+                onClick={() => setDrawerOpen(false)}
+              >
+                <div className="relative mr-2 h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow">
                   <AvatarImage
-                    icon={userProfile?.photoURL ?? null}
-                    alt="User Logo"
+                    icon={userProfile?.photoURL}
+                    alt="User logo"
                     size={44}
                   />
                 </div>
-              </>
-            )}
 
-            {/* ORG ADMIN, SHOW COMPANY LOGO */}
-            {activeRoleView == RoleView.OrgAdmin && (
-              <>
-                <div className="rounded-full hover:outline hover:outline-2 hover:outline-white">
-                  <AvatarImage
-                    icon={currentOrganisationLogo ?? null}
-                    alt="Org Logo"
-                    size={44}
-                  />
+                <div className="flex h-10 flex-col items-start gap-1 truncate text-black">
+                  {session?.user?.name ?? "Settings"}
+                  {userProfile?.emailConfirmed &&
+                    userProfile?.yoIDOnboarded && (
+                      <div className="text-xs text-gray-dark">Verified</div>
+                    )}
                 </div>
-              </>
-            )}
-          </label>
-        </div>
-        <div className="drawer-side">
-          <label htmlFor="userMenu-drawer" className="drawer-overlay"></label>
+                {userProfile?.emailConfirmed && userProfile?.yoIDOnboarded && (
+                  <span>
+                    <IoIosCheckmarkCircle className="h-6 w-6 text-success" />
+                  </span>
+                )}
+              </Link>
+            </li>
 
-          {/* MENU ITEMS */}
-          <div className="h-screen w-80 overflow-y-auto rounded-lg bg-white">
-            <ul className="menu menu-horizontal p-0">
-              {/* USER (YOID) */}
-              <li className="w-full bg-white py-2 shadow-custom">
+            {/* YOID */}
+            <div className="w-full bg-white-shade">
+              <li className="w-full bg-white-shade py-2">
+                <Link
+                  href="/yoid"
+                  className="text-gray-dark"
+                  onClick={() => setDrawerOpen(false)}
+                >
+                  <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
+                    💳
+                  </div>
+                  <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
+                    Yo-ID
+                    <div className="text-xs text-gray-dark">
+                      Opportunities, skills and ZLTO wallet.
+                    </div>
+                  </div>
+                </Link>
+              </li>
+              <div className="divider m-0 mx-4 !bg-gray" />
+            </div>
+
+            {/* PROFILE */}
+            <div className="w-full bg-white-shade">
+              <li className="w-full bg-white-shade py-2">
                 <Link
                   href="/user/profile"
                   className="text-gray-dark"
-                  onClick={() => setUserMenuVisible(false)}
+                  onClick={() => setDrawerOpen(false)}
                 >
-                  <div className="relative mr-2 h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow">
-                    <AvatarImage
-                      icon={userProfile?.photoURL}
-                      alt="User logo"
-                      size={44}
-                    />
+                  <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
+                    🕶️
                   </div>
-
-                  <div className="flex h-10 flex-col items-start gap-1 truncate text-black">
-                    {session?.user?.name ?? "Settings"}
-                    {userProfile?.emailConfirmed &&
-                      userProfile?.yoIDOnboarded && (
-                        <div className="text-xs text-gray-dark">Verified</div>
-                      )}
+                  <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
+                    Profile
+                    <div className="text-xs text-gray-dark">
+                      Personal info, picture and password.
+                    </div>
                   </div>
-                  {userProfile?.emailConfirmed &&
-                    userProfile?.yoIDOnboarded && (
-                      <span>
-                        <IoIosCheckmarkCircle className="h-6 w-6 text-success" />
-                      </span>
-                    )}
                 </Link>
               </li>
+              <div className="divider m-0 mx-4 !bg-gray" />
+            </div>
 
-              {/* YOID */}
-              <div className="w-full bg-white-shade">
-                <li className="w-full bg-white-shade py-2">
-                  <Link
-                    href="/yoid"
-                    className="text-gray-dark"
-                    onClick={() => setUserMenuVisible(false)}
-                  >
-                    <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
-                      💳
-                    </div>
-                    <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
-                      Yo-ID
-                      <div className="text-xs text-gray-dark">
-                        Opportunities, skills and ZLTO wallet.
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-                <div className="divider m-0 mx-4 !bg-gray" />
-              </div>
-
-              {/* PROFILE */}
-              <div className="w-full bg-white-shade">
-                <li className="w-full bg-white-shade py-2">
-                  <Link
-                    href="/user/profile"
-                    className="text-gray-dark"
-                    onClick={() => setUserMenuVisible(false)}
-                  >
-                    <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
-                      🕶️
-                    </div>
-                    <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
-                      Profile
-                      <div className="text-xs text-gray-dark">
-                        Personal info, picture and password.
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-                <div className="divider m-0 mx-4 !bg-gray" />
-              </div>
-
-              {/* USER (SETTINGS) */}
-              <div className="w-full bg-white-shade">
-                <li className="w-full bg-white-shade py-2">
-                  <Link
-                    href="/user/settings"
-                    className="text-gray-dark"
-                    onClick={() => setUserMenuVisible(false)}
-                  >
-                    <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
-                      ⚙️
-                    </div>
-                    <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
-                      Settings
-                      <div className="text-xs text-gray-dark">
-                        Notification and privacy settings.
-                      </div>
-                    </div>
-                  </Link>
-                </li>
-                <div className="divider m-0 mx-4 !bg-gray" />
-              </div>
-
-              {/* ORGANISATIONS */}
-              {(userProfile?.adminsOf?.length ?? 0) > 0 && (
-                <span className="w-full bg-white-shade">
-                  <div
-                    className="max-h-[200px] w-full overflow-x-hidden overflow-y-scroll bg-white-shade p-0"
-                    id="organisations"
-                  >
-                    <li className="w-full bg-white-shade pt-2">
-                      <Link
-                        href="/organisations"
-                        className="hover:white w-full bg-white-shade"
-                        onClick={() => setUserMenuVisible(false)}
-                      >
-                        <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
-                          🔎
-                        </div>
-                        View all organisations
-                      </Link>
-                    </li>
-                    {userProfile?.adminsOf?.map((organisation) =>
-                      renderOrganisationMenuItem(organisation),
-                    )}
+            {/* USER (SETTINGS) */}
+            <div className="w-full bg-white-shade">
+              <li className="w-full bg-white-shade py-2">
+                <Link
+                  href="/user/settings"
+                  className="text-gray-dark"
+                  onClick={() => setDrawerOpen(false)}
+                >
+                  <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
+                    ⚙️
                   </div>
-                  <div className="divider m-0 mx-4 !bg-gray" />
-                </span>
-              )}
+                  <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
+                    Settings
+                    <div className="text-xs text-gray-dark">
+                      Notification and privacy settings.
+                    </div>
+                  </div>
+                </Link>
+              </li>
+              <div className="divider m-0 mx-4 !bg-gray" />
+            </div>
 
-              {/* ADMIN */}
-              {(activeRoleView == RoleView.Admin || isAdmin) && (
-                <div className="w-full bg-white-shade">
-                  <li className="w-full bg-white-shade py-2">
+            {/* ORGANISATIONS */}
+            {(userProfile?.adminsOf?.length ?? 0) > 0 && (
+              <span className="w-full bg-white-shade">
+                <div
+                  className="max-h-[200px] w-full overflow-x-hidden overflow-y-scroll bg-white-shade p-0"
+                  id="organisations"
+                >
+                  <li className="w-full bg-white-shade pt-2">
                     <Link
                       href="/organisations"
-                      className="bg-white-shade text-gray-dark"
-                      onClick={() => setUserMenuVisible(false)}
-                      id={`userMenu_admin`}
+                      className="hover:white w-full bg-white-shade"
+                      onClick={() => setDrawerOpen(false)}
                     >
-                      <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg shadow">
-                        🛠️
+                      <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
+                        🔎
                       </div>
-                      <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
-                        Admin
-                        <div className="text-xs text-gray-dark">
-                          Manage organisations.
-                        </div>
-                      </div>
+                      View all organisations
                     </Link>
                   </li>
-                  <div className="divider m-0 mx-4 !bg-gray" />
+                  {userProfile?.adminsOf?.map((organisation) =>
+                    renderOrganisationMenuItem(organisation),
+                  )}
                 </div>
-              )}
+                <div className="divider m-0 mx-4 !bg-gray" />
+              </span>
+            )}
 
-              {/* SIGN OUT */}
-              <div className="w-full !bg-white-shade">
+            {/* ADMIN */}
+            {(activeRoleView == RoleView.Admin || isAdmin) && (
+              <div className="w-full bg-white-shade">
                 <li className="w-full bg-white-shade py-2">
-                  <button className="text-left" onClick={handleLogout}>
-                    <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
-                      ✌️
+                  <Link
+                    href="/organisations"
+                    className="bg-white-shade text-gray-dark"
+                    onClick={() => setDrawerOpen(false)}
+                    id={`userMenu_admin`}
+                  >
+                    <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-lg shadow">
+                      🛠️
                     </div>
-                    Sign out
-                  </button>
+                    <div className="flex h-10 flex-col items-start gap-1 overflow-hidden text-ellipsis text-black">
+                      Admin
+                      <div className="text-xs text-gray-dark">
+                        Manage organisations.
+                      </div>
+                    </div>
+                  </Link>
                 </li>
+                <div className="divider m-0 mx-4 !bg-gray" />
               </div>
-            </ul>
-          </div>
+            )}
+
+            {/* SIGN OUT */}
+            <div className="w-full !bg-white-shade">
+              <li className="w-full bg-white-shade py-2">
+                <button className="text-left" onClick={handleLogout}>
+                  <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
+                    ✌️
+                  </div>
+                  Sign out
+                </button>
+              </li>
+            </div>
+          </ul>
         </div>
       </div>
-    </>
+    </div>
   );
 };
