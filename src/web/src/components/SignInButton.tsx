@@ -25,16 +25,16 @@ export const SignInButton: React.FC<{ className?: string }> = ({
     );
 
     // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    // signIn(
-    //   // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-    //   ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
-    //     "") as string,
-    //   undefined,
-    //   { ui_locales: currentLanguage }, // pass the current language to the keycloak provider
-    // );
-    setTimeout(() => {
-      setIsButtonLoading(false);
-    }, 5000);
+    signIn(
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
+      ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
+        "") as string,
+      undefined,
+      { ui_locales: currentLanguage }, // pass the current language to the keycloak provider
+    );
+    // setTimeout(() => {
+    //   setIsButtonLoading(false);
+    // }, 5000);
   }, [currentLanguage]);
 
   return (

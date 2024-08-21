@@ -61,7 +61,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/organisations",
     badgeCount: null,
     selected: false,
-    iconImage: "🏢",
+    iconImage: "🏦",
   },
   {
     title: "Opportunities",
@@ -197,7 +197,8 @@ export const Navbar: React.FC = () => {
                 ></label>
                 <div className="h-screen w-80 overflow-y-auto rounded-lg bg-white p-4">
                   <div className="flex h-full flex-col gap-2">
-                    <div className="mb-4x flex grow-0 flex-row items-center justify-center">
+                    {/* HEADER */}
+                    <div className="flex grow-0 flex-row items-center justify-center">
                       <div className="grow">
                         {/* LOGO */}
                         <Image
@@ -217,21 +218,21 @@ export const Navbar: React.FC = () => {
                         <IoMdClose className="h-5 w-5" />
                       </label>
                     </div>
+
+                    {/* MENU */}
                     <ul className="menu grow p-0">
                       {currentNavbarLinks.map((link, index) => (
-                        <>
-                          <li className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light">
-                            <Link
-                              href={link.url!}
-                              key={index}
-                              onClick={() => setDrawerOpen(false)}
-                              id={`lnkNavbarMenuModal_${link.title}`}
-                            >
-                              <span className="mr-1">{link.iconImage}</span>
-                              <span>{link.title}</span>
-                            </Link>
-                          </li>
-                        </>
+                        <li className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light">
+                          <Link
+                            href={link.url!}
+                            key={index}
+                            onClick={() => setDrawerOpen(false)}
+                            id={`lnkNavbarMenuModal_${link.title}`}
+                          >
+                            <span className="mr-1">{link.iconImage}</span>
+                            <span>{link.title}</span>
+                          </Link>
+                        </li>
                       ))}
                     </ul>
 
