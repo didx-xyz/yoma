@@ -30,7 +30,11 @@ declare global {
   }
 }
 
-const LanguageSwitcher = () => {
+const LanguageSwitcher: React.FC<{
+  className?: string;
+  classNameIcon?: string;
+  classNameSelect?: string;
+}> = ({ className, classNameIcon, classNameSelect }) => {
   const [currentLanguage, setCurrentLanguage] = useState<string>();
   const [languageConfig, setLanguageConfig] = useState<any>();
 
@@ -100,12 +104,15 @@ const LanguageSwitcher = () => {
 
   return (
     <>
-      <div className="notranslate -mr-4 flex flex-row text-center">
-        <IoMdGlobe className="h-6 w-6 text-white" />
+      <div
+        className={`notranslate flex flex-row gap-2 rounded-md px-1 py-3 ${className}`}
+      >
+        <IoMdGlobe className={`h-6 w-6 ${classNameIcon}`} />
         <select
           value={currentLanguage}
           onChange={(e) => switchLanguage(e.target.value)}
-          className="mobile-select mr-4 cursor-pointer bg-transparent pl-1 text-white hover:underline focus:outline-none md:mr-8"
+          className={`cursor-pointer bg-transparent font-semibold focus:outline-none ${classNameSelect}`}
+          title="Select Language"
         >
           {languageConfig.languages.map((ld: LanguageDescriptor) => (
             <option
@@ -120,7 +127,7 @@ const LanguageSwitcher = () => {
       </div>
 
       <style jsx>{`
-        @media (max-width: 767px) {
+        @media (max-width: 768px) {
           .mobile-select {
             appearance: none;
             -webkit-appearance: none;

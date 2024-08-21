@@ -6,9 +6,10 @@ import { GA_ACTION_USER_LOGIN_BEFORE, GA_CATEGORY_USER } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { currentLanguageAtom } from "~/lib/store";
 import { fetchClientEnv } from "~/lib/utils";
+import { LoadingInline } from "./Status/LoadingInline";
 
 export const SignInButton: React.FC<{ className?: string }> = ({
-  className = "btn gap-2 border-0 border-none bg-transparent px-2 disabled:brightness-50",
+  className = "",
 }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const currentLanguage = useAtomValue(currentLanguageAtom);
@@ -42,7 +43,10 @@ export const SignInButton: React.FC<{ className?: string }> = ({
       id="btnSignIn"
     >
       {isButtonLoading && (
-        <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
+        <LoadingInline
+          classNameSpinner="border-white h-6 w-6"
+          classNameLabel="hidden"
+        />
       )}
       {!isButtonLoading && <IoMdFingerPrint className="h-6 w-6 text-white" />}
       <p className="uppercase text-white">Sign In</p>

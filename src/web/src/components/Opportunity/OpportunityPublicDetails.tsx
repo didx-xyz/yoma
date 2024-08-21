@@ -312,7 +312,7 @@ const OpportunityPublicDetails: React.FC<{
                     <IoMdClose className="h-5 w-5 text-purple" /> Cancel
                   </button>
 
-                  <SignInButton className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light disabled:border-0 disabled:bg-purple-light md:w-[150px]" />
+                  <SignInButton className="btn gap-2 border-0 border-none bg-purple px-4 shadow-lg transition animate-in animate-out hover:bg-purple-light hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:bg-purple-light md:w-[150px]" />
                 </div>
               </div>
             </div>

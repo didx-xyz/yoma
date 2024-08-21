@@ -118,6 +118,7 @@ body {
   }
 }
 
+// prevent the feedback button from covering the user menu drawer (right)
 #beacon-container .BeaconFabButtonFrame {
   z-index: 30 !important;
 }

@@ -333,7 +333,7 @@ const OrganisationCreate: NextPageWithLayout<{
                   Organisation Admins
                 </h2>
                 <p className="my-2 text-gray-dark">
-                  Who can login and manage the organisation?
+                  Who can sign-in and manage the organisation?
                 </p>
               </div>
 

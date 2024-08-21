@@ -860,22 +860,21 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                       ))}
                     </tbody>
                   </table>
+
+                  {/* PAGINATION */}
+                  <div className="mt-4 grid place-items-center justify-center">
+                    <PaginationButtons
+                      currentPage={page ? parseInt(page.toString()) : 1}
+                      totalItems={searchResults.totalCount as number}
+                      pageSize={PAGE_SIZE}
+                      showPages={false}
+                      showInfo={true}
+                      onClick={handlePagerChange}
+                    />
+                  </div>
                 </div>
               )}
             </div>
-            {/* PAGINATION */}
-            {searchResults && (searchResults.totalCount as number) > 0 && (
-              <div className="mt-4 grid place-items-center justify-center">
-                <PaginationButtons
-                  currentPage={page ? parseInt(page.toString()) : 1}
-                  totalItems={searchResults.totalCount as number}
-                  pageSize={PAGE_SIZE}
-                  showPages={false}
-                  showInfo={true}
-                  onClick={handlePagerChange}
-                />
-              </div>
-            )}
           </div>
         )}
       </div>
