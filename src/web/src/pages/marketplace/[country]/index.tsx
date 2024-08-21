@@ -51,6 +51,7 @@ import StoreItemsCarousel from "~/components/Marketplace/StoreItemsCarousel";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { Loading } from "~/components/Status/Loading";
 import Link from "next/link";
+import { SignInButton } from "~/components/SignInButton";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
@@ -469,7 +470,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               />
             </div>
 
-            <h5>Please login to continue</h5>
+            <h5>Please sign-in to continue</h5>
 
             <div className="mt-4 flex flex-grow gap-4">
               <button
@@ -480,19 +481,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                 Cancel
               </button>
 
-              <button
-                type="button"
-                className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[150px]"
-                onClick={onLogin}
-              >
-                {isButtonLoading && (
-                  <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
-                )}
-                {!isButtonLoading && (
-                  <IoMdFingerPrint className="h-5 w-5 text-white" />
-                )}
-                <p className="text-white">Login</p>
-              </button>
+              <SignInButton className="btn gap-2 border-0 border-none bg-purple px-4 shadow-lg transition animate-in animate-out hover:bg-purple-light hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:bg-purple-light md:w-[150px]" />
             </div>
           </div>
         </div>

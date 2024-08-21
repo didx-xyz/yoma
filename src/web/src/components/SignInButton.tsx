@@ -9,7 +9,7 @@ import { fetchClientEnv } from "~/lib/utils";
 import { LoadingInline } from "./Status/LoadingInline";
 
 export const SignInButton: React.FC<{ className?: string }> = ({
-  className = "btn shadow-lg gap-2 border-0 border-none px-2 disabled:!cursor-wait disabled:animate-pulse bg-theme brightness-110 hover:brightness-95 hover:animate-pulsex transition disabled:brightness-95 animate-in animate-out",
+  className = "", // "btn shadow-lg gap-2 border-0 border-none px-4 disabled:!cursor-wait disabled:animate-pulse bg-theme hover:brightness-95 hover:animate-pulsex transition disabled:brightness-95 animate-in animate-out",
 }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const currentLanguage = useAtomValue(currentLanguageAtom);
@@ -46,7 +46,6 @@ export const SignInButton: React.FC<{ className?: string }> = ({
       id="btnSignIn"
     >
       {isButtonLoading && (
-        // <span className="loading loading-spinner loading-md mr-2 !text-white"></span>
         <LoadingInline
           classNameSpinner="border-white h-6 w-6"
           classNameLabel="hidden"

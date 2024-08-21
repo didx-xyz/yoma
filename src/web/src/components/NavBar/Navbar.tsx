@@ -1,9 +1,13 @@
 import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import Link from "next/link";
+import logoPicDark from "public/images/logo-dark.webp";
+import logoPicLight from "public/images/logo-light.webp";
 import { useMemo, useState } from "react";
-import { IoMdMenu } from "react-icons/io";
+import { IoMdClose, IoMdMenu } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
@@ -11,9 +15,9 @@ import {
 } from "~/lib/store";
 import { SignInButton } from "../SignInButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
-import { LogoImage } from "./LogoImage";
 import { UserMenu } from "./UserMenu";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { Footer } from "../Footer/Footer";
+import { SignOutButton } from "../SignOutButton";
 
 const navBarLinksUser: TabItem[] = [
   {
@@ -22,7 +26,7 @@ const navBarLinksUser: TabItem[] = [
     url: "/",
     badgeCount: null,
     selected: false,
-    iconImage: null,
+    iconImage: "🏠",
   },
   {
     title: "Opportunities",
@@ -30,7 +34,7 @@ const navBarLinksUser: TabItem[] = [
     url: "/opportunities",
     badgeCount: null,
     selected: false,
-    iconImage: null,
+    iconImage: "🏆",
   },
   {
     title: "Marketplace",
@@ -38,7 +42,7 @@ const navBarLinksUser: TabItem[] = [
     url: "/marketplace",
     badgeCount: null,
     selected: false,
-    iconImage: null,
+    iconImage: "🛒",
   },
 ];
 
@@ -49,7 +53,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: `/`,
     badgeCount: null,
     selected: false,
-    iconImage: null,
+    iconImage: "🏠",
   },
   {
     title: "Organisations",
@@ -57,7 +61,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/organisations",
     badgeCount: null,
     selected: false,
-    iconImage: null,
+    iconImage: "🏢",
   },
   {
     title: "Opportunities",
@@ -65,7 +69,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/opportunities",
     badgeCount: null,
     selected: false,
-    iconImage: null,
+    iconImage: "🏆",
   },
   {
     title: "Links",
@@ -73,7 +77,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/admin/links",
     badgeCount: null,
     selected: false,
-    iconImage: null,
+    iconImage: "🔗",
   },
   // {
   //   title: "Schemas",
@@ -114,7 +118,7 @@ export const Navbar: React.FC = () => {
           url: `/`,
           badgeCount: null,
           selected: false,
-          iconImage: null,
+          iconImage: "🏠",
         },
         {
           title: "Overview",
@@ -122,7 +126,7 @@ export const Navbar: React.FC = () => {
           url: `/organisations/${currentOrganisationId}`,
           badgeCount: null,
           selected: false,
-          iconImage: null,
+          iconImage: "📊",
         },
         {
           title: "Opportunities",
@@ -130,7 +134,7 @@ export const Navbar: React.FC = () => {
           url: `/organisations/${currentOrganisationId}/opportunities`,
           badgeCount: null,
           selected: false,
-          iconImage: null,
+          iconImage: "🏆",
         },
         {
           title: "Verifications",
@@ -138,7 +142,7 @@ export const Navbar: React.FC = () => {
           url: `/organisations/${currentOrganisationId}/verifications?verificationStatus=Pending`,
           badgeCount: null,
           selected: false,
-          iconImage: null,
+          iconImage: "✅",
         },
         {
           title: "Links",
@@ -146,7 +150,7 @@ export const Navbar: React.FC = () => {
           url: `/organisations/${currentOrganisationId}/links`,
           badgeCount: null,
           selected: false,
-          iconImage: null,
+          iconImage: "🔗",
         },
         {
           title: "Settings",
@@ -154,7 +158,7 @@ export const Navbar: React.FC = () => {
           url: `/organisations/${currentOrganisationId}/edit`,
           badgeCount: null,
           selected: false,
-          iconImage: null,
+          iconImage: "⚙️",
         },
       ];
     } else {
@@ -165,10 +169,10 @@ export const Navbar: React.FC = () => {
   return (
     <div className="fixed left-0 right-0 top-0 z-40">
       <div className={`bg-theme navbar z-40`}>
-        <div className="flex w-full justify-between md:flex md:justify-between md:px-4">
+        <div className="flex w-full justify-between md:flex md:justify-between">
           <div className="flex items-center justify-start">
             {/* SIDE MENU (MOBILE) */}
-            <div className="drawer lg:hidden">
+            <div className="drawer w-auto lg:hidden">
               <input
                 id="nav-drawer"
                 type="checkbox"
@@ -179,7 +183,7 @@ export const Navbar: React.FC = () => {
               <div className="drawer-content">
                 <label
                   htmlFor="nav-drawer"
-                  className="btn-primaryx drawer-buttonx btnx text-white hover:cursor-pointer"
+                  className="bg-theme btn !rounded-md border-none px-1 text-white shadow-none transition animate-in animate-out hover:brightness-95 md:px-3"
                 >
                   {/* BUTTON */}
                   <IoMdMenu className="h-8 w-8" />
@@ -191,57 +195,116 @@ export const Navbar: React.FC = () => {
                   aria-label="close sidebar"
                   className="drawer-overlay"
                 ></label>
-                <div className="h-screen w-80 overflow-y-auto rounded-lg bg-white">
-                  <ul className="menu p-0">
-                    {currentNavbarLinks.map((link, index) => (
-                      <>
-                        <li>
-                          <Link
-                            href={link.url!}
-                            key={index}
-                            className="text-whitex px-7 py-3 hover:brightness-50"
-                            onClick={() => setDrawerOpen(false)}
-                            id={`lnkNavbarMenuModal_${link.title}`}
-                          >
-                            {link.title}
-                          </Link>
-                        </li>
-                        <div className="divider m-0 mx-4 !bg-gray" />
-                      </>
-                    ))}
-                  </ul>
+                <div className="h-screen w-80 overflow-y-auto rounded-lg bg-white p-4">
+                  <div className="flex h-full flex-col gap-2">
+                    <div className="mb-4x flex grow-0 flex-row items-center justify-center">
+                      <div className="grow">
+                        {/* LOGO */}
+                        <Image
+                          src={logoPicDark}
+                          alt="Logo"
+                          priority={false}
+                          width={85}
+                          height={41}
+                        />
+                      </div>
+                      {/* CLOSE BUTTON */}
+                      <label
+                        htmlFor="nav-drawer"
+                        className="drawer-close btn btn-sm !rounded-md border-none text-gray-dark shadow-md hover:bg-gray"
+                        aria-label="close sidebar"
+                      >
+                        <IoMdClose className="h-5 w-5" />
+                      </label>
+                    </div>
+                    <ul className="menu grow p-0">
+                      {currentNavbarLinks.map((link, index) => (
+                        <>
+                          <li className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light">
+                            <Link
+                              href={link.url!}
+                              key={index}
+                              onClick={() => setDrawerOpen(false)}
+                              id={`lnkNavbarMenuModal_${link.title}`}
+                            >
+                              <span className="mr-1">{link.iconImage}</span>
+                              <span>{link.title}</span>
+                            </Link>
+                          </li>
+                        </>
+                      ))}
+                    </ul>
+
+                    <LanguageSwitcher
+                      className="ml-1x bg-transparent !py-1 px-3 hover:bg-gray-light"
+                      classNameIcon="text-gray-dark ml-1 !h-5 !w-5"
+                      classNameSelect="text-gray-dark text-sm"
+                    />
+
+                    {!session && (
+                      <SignInButton className="bg-theme btn btn-sm gap-2 border-0 border-none px-4 shadow-lg transition animate-in animate-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95" />
+                    )}
+
+                    {session && (
+                      <SignOutButton className="bg-theme btn btn-sm gap-2 border-0 border-none px-4 shadow-lg transition animate-in animate-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95" />
+                    )}
+
+                    <div className="divider my-2 grow-0 !bg-gray" />
+
+                    {/* FOOTER */}
+                    <div className="grow-0">
+                      <Footer />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* LOGO */}
-            <LogoImage />
+            <Link
+              href="/"
+              className="bg-theme btn gap-2 !rounded-md border-none px-2 text-white shadow-none transition animate-in animate-out hover:brightness-95 md:px-2"
+            >
+              <Image
+                src={logoPicLight}
+                alt="Logo"
+                priority={true}
+                width={85}
+                height={41}
+              />
+            </Link>
           </div>
 
           {/* TOP MENU (DESKTOP) */}
-          <ul className="absolute left-0 right-0 top-5 mx-auto hidden w-fit items-center justify-center gap-12 md:flex">
+          <ul className="overflow-x-clipx  gap-6x content-betweenx mx-auto hidden w-fit items-center justify-center lg:flex">
             {currentNavbarLinks.map((link, index) => (
               <li
                 key={index}
                 tabIndex={index}
-                className="hover:repeat-infinitez hover:animate-pulse"
+                className="bg-theme group btn !rounded-md border-none p-2 px-4 text-base text-white shadow-none transition duration-300 hover:brightness-95"
               >
                 <Link
                   href={link.url!}
                   tabIndex={index}
-                  className="group text-white transition duration-300"
                   id={`lnkNavbarMenu_${link.title}`}
                 >
-                  {link.title}
+                  <span className="mr-2">{link.iconImage}</span>
+                  <span>{link.title}</span>
                   <span className="block h-0.5 max-w-0 bg-gray-light transition-all duration-500 group-hover:max-w-full"></span>
                 </Link>
               </li>
             ))}
           </ul>
-          <div className="flex items-center justify-end">
-            <LanguageSwitcher />
+          <div className="flex items-center justify-end gap-2 md:gap-4">
+            <LanguageSwitcher
+              className="bg-theme hover:brightness-95 md:px-3"
+              classNameIcon="text-white"
+              classNameSelect="text-white mobile-select"
+            />
 
-            {!session && <SignInButton></SignInButton>}
+            {!session && (
+              <SignInButton className="bg-theme btn gap-2 border-0 border-none px-4 shadow-lg transition animate-in animate-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95" />
+            )}
             {session && <UserMenu />}
           </div>
         </div>
