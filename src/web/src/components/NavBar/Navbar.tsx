@@ -170,8 +170,9 @@ export const Navbar: React.FC = () => {
     <div className="fixed left-0 right-0 top-0 z-40">
       <div className={`bg-theme navbar z-40`}>
         <div className="flex w-full justify-between md:flex md:justify-between">
+          {/* LEFT MENU */}
           <div className="flex items-center justify-start">
-            {/* SIDE MENU (MOBILE) */}
+            {/* LEFT DRAWER (MOBILE) */}
             <div className="drawer w-auto lg:hidden">
               <input
                 id="nav-drawer"
@@ -183,7 +184,7 @@ export const Navbar: React.FC = () => {
               <div className="drawer-content">
                 <label
                   htmlFor="nav-drawer"
-                  className="bg-theme btn !rounded-md border-none px-1 text-white shadow-none transition animate-in animate-out hover:brightness-95 md:px-3"
+                  className="bg-theme btn !rounded-md border-none px-1 text-white shadow-none duration-0 hover:brightness-95 md:px-3"
                 >
                   {/* BUTTON */}
                   <IoMdMenu className="h-8 w-8" />
@@ -195,7 +196,7 @@ export const Navbar: React.FC = () => {
                   aria-label="close sidebar"
                   className="drawer-overlay"
                 ></label>
-                <div className="h-screen w-80 overflow-y-auto rounded-lg bg-white p-4">
+                <div className="h-screen max-w-[20rem] overflow-y-auto rounded-lg bg-white p-4">
                   <div className="flex h-full flex-col gap-2">
                     {/* HEADER */}
                     <div className="flex grow-0 flex-row items-center justify-center">
@@ -219,26 +220,34 @@ export const Navbar: React.FC = () => {
                       </label>
                     </div>
 
+                    <div className="divider my-2 grow-0 !bg-gray" />
+
                     {/* MENU */}
                     <ul className="menu grow p-0">
                       {currentNavbarLinks.map((link, index) => (
-                        <li className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light">
+                        <li
+                          key={`lnkNavbarMenuModal_${index}`}
+                          className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
+                        >
                           <Link
                             href={link.url!}
-                            key={index}
                             onClick={() => setDrawerOpen(false)}
                             id={`lnkNavbarMenuModal_${link.title}`}
                           >
-                            <span className="mr-1">{link.iconImage}</span>
+                            <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                              {link.iconImage}
+                            </span>
                             <span>{link.title}</span>
                           </Link>
                         </li>
                       ))}
                     </ul>
 
+                    <div className="divider my-2 grow-0 !bg-gray" />
+
                     <LanguageSwitcher
-                      className="ml-1x bg-transparent !py-1 px-3 hover:bg-gray-light"
-                      classNameIcon="text-gray-dark ml-1 !h-5 !w-5"
+                      className="ml-1 bg-transparent !py-1 px-3 hover:bg-gray-light"
+                      classNameIcon="text-gray-dark ml-1x !h-5 !w-5"
                       classNameSelect="text-gray-dark text-sm"
                     />
 
@@ -264,7 +273,7 @@ export const Navbar: React.FC = () => {
             {/* LOGO */}
             <Link
               href="/"
-              className="bg-theme btn gap-2 !rounded-md border-none px-2 text-white shadow-none transition animate-in animate-out hover:brightness-95 md:px-2"
+              className="bg-theme btn gap-2 !rounded-md border-none px-2 text-white shadow-none duration-0 animate-in animate-out hover:brightness-95 md:px-2"
             >
               <Image
                 src={logoPicLight}
@@ -276,13 +285,13 @@ export const Navbar: React.FC = () => {
             </Link>
           </div>
 
-          {/* TOP MENU (DESKTOP) */}
-          <ul className="overflow-x-clipx  gap-6x content-betweenx mx-auto hidden w-fit items-center justify-center lg:flex">
+          {/* CENTER MENU (DESKTOP) */}
+          <ul className="mx-auto hidden w-fit items-center justify-center lg:flex">
             {currentNavbarLinks.map((link, index) => (
               <li
                 key={index}
                 tabIndex={index}
-                className="bg-theme group btn !rounded-md border-none p-2 px-4 text-base text-white shadow-none transition duration-300 hover:brightness-95"
+                className="bg-theme group btn !rounded-md border-none p-2 px-4 text-base text-white shadow-none duration-0 hover:brightness-95"
               >
                 <Link
                   href={link.url!}
@@ -296,6 +305,8 @@ export const Navbar: React.FC = () => {
               </li>
             ))}
           </ul>
+
+          {/* RIGHT MENU */}
           <div className="flex items-center justify-end gap-2 md:gap-4">
             <LanguageSwitcher
               className="bg-theme hover:brightness-95 md:px-3"

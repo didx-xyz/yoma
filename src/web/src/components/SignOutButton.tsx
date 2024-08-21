@@ -54,7 +54,7 @@ export const SignOutButton: React.FC<{ className?: string }> = ({
         />
       )}
       {!isButtonLoading && <IoMdLogOut className="h-6 w-6 text-white" />}
-      <p className="uppercasex text-white">Sign Out</p>
+      <p className="text-white">Sign Out</p>
     </button>
   );
 };

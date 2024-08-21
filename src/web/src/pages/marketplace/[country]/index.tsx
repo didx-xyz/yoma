@@ -1,15 +1,20 @@
-import type { GetStaticPaths, GetStaticProps } from "next";
 import { useQueryClient } from "@tanstack/react-query";
-import React, { useCallback, type ReactElement, useState, useRef } from "react";
-import { type NextPageWithLayout } from "~/pages/_app";
-import NoRowsMessage from "~/components/NoRowsMessage";
-import {
-  listStoreCategories,
-  listSearchCriteriaCountries,
-  searchStoreItemCategories,
-  searchStores,
-  buyItem,
-} from "~/api/services/marketplace";
+import { useAtomValue, useSetAtom } from "jotai";
+import type { GetStaticPaths, GetStaticProps } from "next";
+import { useSession } from "next-auth/react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { env } from "process";
+import iconBell from "public/images/icon-bell.webp";
+import type { ParsedUrlQuery } from "querystring";
+import React, { useCallback, useRef, useState, type ReactElement } from "react";
+import { IoMdClose, IoMdWarning } from "react-icons/io";
+import ReactModal from "react-modal";
+import Select from "react-select";
+import { useConfirmationModalContext } from "src/context/modalConfirmationContext";
+import type { ErrorResponseItem } from "~/api/models/common";
+import type { Country } from "~/api/models/lookups";
 import type {
   Store,
   StoreCategory,
@@ -17,7 +22,25 @@ import type {
   StoreItemCategorySearchFilter,
   StoreItemCategorySearchResults,
 } from "~/api/models/marketplace";
+import {
+  buyItem,
+  listSearchCriteriaCountries,
+  listStoreCategories,
+  searchStoreItemCategories,
+  searchStores,
+} from "~/api/services/marketplace";
+import { getUserProfile } from "~/api/services/user";
+import { AvatarImage } from "~/components/AvatarImage";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
+import StoreItemsCarousel from "~/components/Marketplace/StoreItemsCarousel";
+import NoRowsMessage from "~/components/NoRowsMessage";
+import { SignInButton } from "~/components/SignInButton";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Loading } from "~/components/Status/Loading";
+import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   COUNTRY_WW,
   GA_ACTION_MARKETPLACE_ITEM_BUY,
@@ -25,33 +48,9 @@ import {
   PAGE_SIZE_MINIMUM,
   THEME_BLUE,
 } from "~/lib/constants";
-import type { Country } from "~/api/models/lookups";
-import Select from "react-select";
-import { useRouter } from "next/router";
-import type { ParsedUrlQuery } from "querystring";
-import { AvatarImage } from "~/components/AvatarImage";
-import { IoMdClose, IoMdFingerPrint, IoMdWarning } from "react-icons/io";
-import ReactModal from "react-modal";
-import { useAtomValue, useSetAtom } from "jotai";
-import { signIn, useSession } from "next-auth/react";
-import type { ErrorResponseItem } from "~/api/models/common";
-import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
-import iconBell from "public/images/icon-bell.webp";
-import Image from "next/image";
-import { getUserProfile } from "~/api/services/user";
 import { trackGAEvent } from "~/lib/google-analytics";
-import { fetchClientEnv } from "~/lib/utils";
-import { useConfirmationModalContext } from "src/context/modalConfirmationContext";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { Unauthorized } from "~/components/Status/Unauthorized";
-import { env } from "process";
-import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
-import StoreItemsCarousel from "~/components/Marketplace/StoreItemsCarousel";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import { Loading } from "~/components/Status/Loading";
-import Link from "next/link";
-import { SignInButton } from "~/components/SignInButton";
+import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
+import { type NextPageWithLayout } from "~/pages/_app";
 
 interface IParams extends ParsedUrlQuery {
   country: string;
@@ -293,17 +292,6 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     },
     [fetchDataAndUpdateCache],
   );
-
-  const [isButtonLoading, setIsButtonLoading] = useState(false);
-  const onLogin = useCallback(async () => {
-    setIsButtonLoading(true);
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    signIn(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
-        "") as string,
-    );
-  }, [setIsButtonLoading]);
 
   const onBuyClick = useCallback(
     async (item: StoreItemCategory) => {

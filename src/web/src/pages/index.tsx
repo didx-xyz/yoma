@@ -291,14 +291,14 @@ const Home: NextPageWithLayout = () => {
               {/* RIGHT: HEADERS AND TEXT */}
               <div className="z-10 mt-4 flex flex-col gap-2 px-4 text-white md:max-w-lg lg:-ml-8 lg:mt-[7.5rem] lg:w-[648px] lg:px-0">
                 <h6 className="text-xs font-bold uppercase tracking-wider">
-                  Your YoID
+                  Your Yo-ID
                 </h6>
                 <h1 className="text-3xl font-semibold tracking-wide">
                   All connected with one secure profile
                 </h1>
                 <p>
-                  YoID is your learning identity passport powered by Yoma, you
-                  can simply login with YoID, and use one profile between all
+                  Yo-ID is your learning identity passport powered by Yoma, you
+                  can simply login with Yo-ID, and use one profile between all
                   apps.
                 </p>
               </div>

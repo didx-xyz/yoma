@@ -9,7 +9,7 @@ import { fetchClientEnv } from "~/lib/utils";
 import { LoadingInline } from "./Status/LoadingInline";
 
 export const SignInButton: React.FC<{ className?: string }> = ({
-  className = "", // "btn shadow-lg gap-2 border-0 border-none px-4 disabled:!cursor-wait disabled:animate-pulse bg-theme hover:brightness-95 hover:animate-pulsex transition disabled:brightness-95 animate-in animate-out",
+  className = "",
 }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const currentLanguage = useAtomValue(currentLanguageAtom);
@@ -32,9 +32,6 @@ export const SignInButton: React.FC<{ className?: string }> = ({
       undefined,
       { ui_locales: currentLanguage }, // pass the current language to the keycloak provider
     );
-    // setTimeout(() => {
-    //   setIsButtonLoading(false);
-    // }, 5000);
   }, [currentLanguage]);
 
   return (

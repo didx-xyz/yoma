@@ -1,16 +1,11 @@
-import { useAtomValue, useSetAtom } from "jotai";
-import { signOut, useSession } from "next-auth/react";
+import { useAtomValue } from "jotai";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { useCallback, useState } from "react";
-import { IoMdSettings, IoIosCheckmarkCircle } from "react-icons/io";
+import { useState } from "react";
+import { IoIosCheckmarkCircle, IoMdSettings } from "react-icons/io";
 import { type OrganizationInfo } from "~/api/models/user";
-import {
-  COOKIE_KEYCLOAK_SESSION,
-  GA_ACTION_USER_LOGOUT,
-  GA_CATEGORY_USER,
-  ROLE_ADMIN,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { ROLE_ADMIN } from "~/lib/constants";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
@@ -18,15 +13,12 @@ import {
   userProfileAtom,
 } from "~/lib/store";
 import { AvatarImage } from "../AvatarImage";
-import { destroyCookie } from "nookies";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { SignOutButton } from "../SignOutButton";
 
 export const UserMenu: React.FC = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const toggle = () => setDrawerOpen(!isDrawerOpen);
   const userProfile = useAtomValue(userProfileAtom);
-  const setUserProfile = useSetAtom(userProfileAtom);
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationLogo = useAtomValue(currentOrganisationLogoAtom);
   const { data: session } = useSession();
@@ -35,32 +27,11 @@ export const UserMenu: React.FC = () => {
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(isDrawerOpen);
 
-  const handleLogout = useCallback(() => {
-    setDrawerOpen(false);
-
-    // update atom
-    setUserProfile(null);
-
-    // 📊 GOOGLE ANALYTICS: track event
-    trackGAEvent(GA_CATEGORY_USER, GA_ACTION_USER_LOGOUT, "User logged out");
-
-    // signout from keycloak
-    signOut({
-      callbackUrl: `${window.location.origin}/`,
-    }).then(() => {
-      // delete the KEYCLOAK_SESSION cookie (prevents signing in again after signout)
-      destroyCookie(null, COOKIE_KEYCLOAK_SESSION, {
-        path: "/",
-        maxAge: 0, // expire the cookie immediately
-      });
-    }); // eslint-disable-line @typescript-eslint/no-floating-promises
-  }, [setUserProfile]);
-
   const renderOrganisationMenuItem = (organisation: OrganizationInfo) => {
     if (organisation.status == "Deleted") return null;
 
     return (
-      <div className="flex flex-row items-center bg-white-shade px-4 py-2">
+      <div className="flex flex-row items-center bg-white-shade px-4 py-2 hover:bg-gray">
         {/* ORGANISATION LINK */}
         <Link
           key={`userMenu_orgs_${organisation.id}`}
@@ -80,7 +51,7 @@ export const UserMenu: React.FC = () => {
           />
 
           <div className="ml-2 flex flex-col">
-            <div className="w-[200px] truncate text-sm text-black">
+            <div className="w-[190px] truncate text-sm text-black">
               {organisation.name}
             </div>
             <div className="flex flex-row items-center">
@@ -122,14 +93,14 @@ export const UserMenu: React.FC = () => {
   };
 
   return (
-    <div className="drawer drawer-end">
+    <div className="drawer-end">
       <input
         id="userMenu-drawer"
         type="checkbox"
         className="drawer-toggle"
         checked={isDrawerOpen}
         onChange={toggle}
-      ></input>
+      />
       <div className="drawer-content flex flex-col">
         <label htmlFor="userMenu-drawer" className="hover:cursor-pointer">
           {/* BUTTON */}
@@ -165,12 +136,12 @@ export const UserMenu: React.FC = () => {
         <label htmlFor="userMenu-drawer" className="drawer-overlay"></label>
 
         {/* MENU ITEMS */}
-        <div className="h-screen w-80 overflow-y-auto rounded-lg bg-white">
+        <div className="h-screen max-w-[20rem] overflow-y-auto rounded-lg bg-white">
           <div className="flex h-full flex-col">
             {/* USER (YOID) */}
             <Link
               href="/user/profile"
-              className="flex flex-row items-center bg-white px-4 py-2 text-gray-dark shadow-custom"
+              className="flex flex-row items-center bg-white px-4 py-2 text-gray-dark shadow-custom hover:bg-gray"
               onClick={() => setDrawerOpen(false)}
             >
               <div className="relative mr-2 h-11 w-11 cursor-pointer overflow-hidden rounded-full shadow">
@@ -201,7 +172,7 @@ export const UserMenu: React.FC = () => {
             {/* YOID */}
             <Link
               href="/yoid"
-              className="flex flex-row items-center bg-white-shade px-4 py-2 text-gray-dark"
+              className="flex flex-row items-center bg-white-shade px-4 py-2 text-gray-dark hover:bg-gray"
               onClick={() => setDrawerOpen(false)}
             >
               <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
@@ -220,7 +191,7 @@ export const UserMenu: React.FC = () => {
             {/* PROFILE */}
             <Link
               href="/user/profile"
-              className="flex flex-row items-center bg-white-shade px-4 py-2 text-gray-dark"
+              className="flex flex-row items-center bg-white-shade px-4 py-2 text-gray-dark hover:bg-gray"
               onClick={() => setDrawerOpen(false)}
             >
               <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
@@ -239,7 +210,7 @@ export const UserMenu: React.FC = () => {
             {/* USER (SETTINGS) */}
             <Link
               href="/user/settings"
-              className="flex flex-row items-center bg-white-shade px-4 py-2 text-gray-dark"
+              className="flex flex-row items-center bg-white-shade px-4 py-2 text-gray-dark hover:bg-gray"
               onClick={() => setDrawerOpen(false)}
             >
               <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
@@ -260,7 +231,7 @@ export const UserMenu: React.FC = () => {
               <>
                 <Link
                   href="/organisations"
-                  className="flex flex-row items-center bg-white-shade px-4 py-2 text-gray-dark"
+                  className="flex flex-row items-center bg-white-shade px-4 py-2 text-gray-dark hover:bg-gray"
                   onClick={() => setDrawerOpen(false)}
                   id={`userMenu_admin`}
                 >
@@ -280,15 +251,15 @@ export const UserMenu: React.FC = () => {
             )}
 
             {/* ORGANISATIONS */}
-            <div
-              className="min-w-[200px] grow overflow-y-scroll bg-white-shade"
-              id="organisations"
-            >
-              {(userProfile?.adminsOf?.length ?? 0) > 0 && (
-                <>
+            {(userProfile?.adminsOf?.length ?? 0) > 0 && (
+              <>
+                <div
+                  className="h-full min-h-[60px] overflow-y-auto bg-white-shade"
+                  id="organisations"
+                >
                   <Link
                     href="/organisations"
-                    className="flex flex-row items-center bg-white-shade px-4 py-2"
+                    className="flex flex-row items-center bg-white-shade px-4 py-2 hover:bg-gray"
                     onClick={() => setDrawerOpen(false)}
                   >
                     <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
@@ -305,45 +276,13 @@ export const UserMenu: React.FC = () => {
                   {userProfile?.adminsOf?.map((organisation) =>
                     renderOrganisationMenuItem(organisation),
                   )}
-
-                  {/* <div className="divider m-0 !bg-gray" /> */}
-                </>
-
-                // <div className="grow items-center flex-wrap overflow-y-scroll bg-red-500 p-4">
-                //   1111111111111111 11111111111111111 11111111111111111
-                //   11111111111111111 111111111111111111 1111111111111111111
-                //   111111111111111111 111111111111111111 1111111111111111111
-                //   1111111111111111 11111111111111111 11111111111111111
-                //   11111111111111111 111111111111111111 1111111111111111111
-                //   111111111111111111 111111111111111111 1111111111111111111
-                //   1111111111111111 11111111111111111 11111111111111111
-                //   11111111111111111 111111111111111111 1111111111111111111
-                //   111111111111111111 111111111111111111 1111111111111111111
-                //   1111111111111111 11111111111111111 11111111111111111
-                //   11111111111111111 111111111111111111 1111111111111111111
-                //   111111111111111111 111111111111111111 1111111111111111111
-                //   1111111111111111 11111111111111111 11111111111111111
-                //   11111111111111111 111111111111111111 1111111111111111111
-                //   111111111111111111 111111111111111111 1111111111111111111
-                // </div>
-              )}
-            </div>
-
-            {(userProfile?.adminsOf?.length ?? 0) > 0 && (
-              <div className="divider m-0 !bg-gray" />
+                </div>
+                <div className="divider m-0 !bg-gray" />
+              </>
             )}
 
             {/* SIGN OUT */}
-            {/* <button
-              className="flex flex-row items-center px-4 py-2 text-left"
-              onClick={handleLogout}
-            >
-              <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
-                ✌️
-              </div>
-              Sign out
-            </button> */}
-            <div className="flex flex-row items-center px-4 py-2">
+            <div className="flex flex-row items-center bg-white-shade px-4 py-2">
               <SignOutButton className="bg-theme btn btn-sm grow gap-2 border-0 border-none px-4 shadow-lg transition animate-in animate-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95" />
             </div>
           </div>

@@ -1079,20 +1079,20 @@ const Links: NextPageWithLayout<{
                   ))}
                 </tbody>
               </table>
+
+              {/* PAGINATION */}
+              <div className="mt-2 grid place-items-center justify-center">
+                <PaginationButtons
+                  currentPage={page ? parseInt(page) : 1}
+                  totalItems={links?.totalCount ?? 0}
+                  pageSize={PAGE_SIZE}
+                  onClick={handlePagerChange}
+                  showPages={false}
+                  showInfo={true}
+                />
+              </div>
             </div>
           )}
-
-          {/* PAGINATION */}
-          <div className="mt-2 grid place-items-center justify-center">
-            <PaginationButtons
-              currentPage={page ? parseInt(page) : 1}
-              totalItems={links?.totalCount ?? 0}
-              pageSize={PAGE_SIZE}
-              onClick={handlePagerChange}
-              showPages={false}
-              showInfo={true}
-            />
-          </div>
         </div>
       </div>
     </>
