@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.Exceptions;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.PartnerSharing.Interfaces.Lookups;
 

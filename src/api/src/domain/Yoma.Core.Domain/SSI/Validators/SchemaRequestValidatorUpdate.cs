@@ -1,5 +1,5 @@
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
-using Yoma.Core.Domain.SSI.Models.Lookups;
+using Yoma.Core.Domain.SSI.Models;
 
 namespace Yoma.Core.Domain.SSI.Validators
 {

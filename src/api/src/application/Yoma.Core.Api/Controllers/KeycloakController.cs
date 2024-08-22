@@ -5,10 +5,10 @@ using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
-using Yoma.Core.Domain.Keycloak.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Infrastructure.Keycloak;
+using Yoma.Core.Infrastructure.Keycloak.Models;
 
 namespace Yoma.Core.Api.Controllers
 {

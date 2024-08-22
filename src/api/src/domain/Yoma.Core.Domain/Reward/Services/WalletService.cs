@@ -8,14 +8,13 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
-using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Interfaces.Provider;
 using Yoma.Core.Domain.Reward.Models;
 using Yoma.Core.Domain.Reward.Models.Provider;
 using Yoma.Core.Domain.Reward.Validators;
-using Yoma.Core.Domain.SSI.Models;
+using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Services;
 
 namespace Yoma.Core.Domain.Reward.Services

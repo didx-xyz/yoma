@@ -1,6 +1,6 @@
 using Yoma.Core.Domain.IdentityProvider.Models;
 
-namespace Yoma.Core.Domain.IdentityProvider.Helpers
+namespace Yoma.Core.Domain.IdentityProvider.Extensions
 {
   public static class UserExtensions
   {

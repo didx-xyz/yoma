@@ -1,6 +1,6 @@
 using FluentValidation;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
-using Yoma.Core.Domain.SSI.Models.Lookups;
+using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Services;
 
 namespace Yoma.Core.Domain.SSI.Validators

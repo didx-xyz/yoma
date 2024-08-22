@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Domain.Core.Interfaces;
-using Yoma.Core.Domain.SSI.Models;
+using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;

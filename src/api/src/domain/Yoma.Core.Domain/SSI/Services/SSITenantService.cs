@@ -4,7 +4,6 @@ using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity;
-using Yoma.Core.Domain.Exceptions;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Models;

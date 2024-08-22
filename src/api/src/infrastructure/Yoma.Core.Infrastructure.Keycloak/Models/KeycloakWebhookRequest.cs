@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace Yoma.Core.Domain.Keycloak.Models
+namespace Yoma.Core.Infrastructure.Keycloak.Models
 {
   public class KeycloakWebhookRequest
   {

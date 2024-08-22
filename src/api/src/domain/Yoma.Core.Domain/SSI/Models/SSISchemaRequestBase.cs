@@ -1,4 +1,4 @@
-namespace Yoma.Core.Domain.SSI.Models.Lookups
+namespace Yoma.Core.Domain.SSI.Models
 {
   public abstract class SSISchemaRequestBase
   {

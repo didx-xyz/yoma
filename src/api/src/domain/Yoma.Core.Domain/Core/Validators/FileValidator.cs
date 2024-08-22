@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
-using Yoma.Core.Domain.Exceptions;
 
 namespace Yoma.Core.Domain.Core.Validators
 {

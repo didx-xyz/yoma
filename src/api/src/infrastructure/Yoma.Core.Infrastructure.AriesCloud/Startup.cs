@@ -1,3 +1,5 @@
+using Aries.CloudAPI.DotnetSDK.AspCore.Configuration;
+using Aries.CloudAPI.DotnetSDK.AspCore.Configuration.DependencyInjection;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
@@ -40,7 +42,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud
                           maxRetryDelay: TimeSpan.FromSeconds(appSettings.DatabaseRetryPolicy.MaxRetryDelayInSeconds),
                           errorCodesToAdd: null);
               })
-              .ConfigureWarnings(w => w.Ignore(RelationalEventId.MultipleCollectionIncludeWarning)); //didable warning related to not using AsSplitQuery() as per MS SQL implementation
+              .ConfigureWarnings(w => w.Ignore(RelationalEventId.MultipleCollectionIncludeWarning)); //disable warning related to not using AsSplitQuery() as per MS SQL implementation
                                                                                                      //.UseLazyLoadingProxies(): without arguments is used to enable lazy loading. Simply not calling UseLazyLoadingProxies() ensure lazy loading is not enabled
       }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
@@ -50,7 +52,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud
       services.AddScoped<IRepository<Connection>, ConnectionRepository>();
 
       //sdk
-      services.AddAriesCloudAPI();
+      services.AddAriesCloudAPI(configuration);
       services.AddScoped<ISSIProviderClientFactory, AriesCloudClientFactory>();
 
       //service

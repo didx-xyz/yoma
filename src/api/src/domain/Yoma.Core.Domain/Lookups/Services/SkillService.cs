@@ -128,7 +128,7 @@ namespace Yoma.Core.Domain.Lookups.Services
           {
             if (onStartupInitialSeeding && _skillRepository.Query().Any())
             {
-              _logger.LogInformation("Seeding of skills (On Startup) skipped as intially seeded has already been executed");
+              _logger.LogInformation("Seeding of skills (On Startup) skipped as initially seeded has already been executed");
               return;
             }
 

@@ -1,4 +1,3 @@
-using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Services;
 
 namespace Yoma.Core.Domain.SSI.Helpers

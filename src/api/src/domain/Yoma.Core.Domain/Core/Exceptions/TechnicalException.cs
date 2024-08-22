@@ -1,4 +1,4 @@
-namespace Yoma.Core.Domain.Exceptions
+namespace Yoma.Core.Domain.Core.Exceptions
 {
   public class TechnicalException : Exception
   {

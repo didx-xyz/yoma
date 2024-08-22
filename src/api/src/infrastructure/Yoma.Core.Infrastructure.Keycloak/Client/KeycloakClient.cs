@@ -11,7 +11,7 @@ using System.Net.Http.Headers;
 using System.Text;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
-using Yoma.Core.Domain.Exceptions;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.IdentityProvider.Models;
 using Yoma.Core.Infrastructure.Keycloak.Extensions;
