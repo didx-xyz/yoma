@@ -1,4 +1,4 @@
-namespace Yoma.Core.Domain.SSI.Models
+namespace Yoma.Core.Domain.SSI
 {
   public enum ArtifactType
   {

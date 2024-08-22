@@ -1,9 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
-using Yoma.Core.Infrastructure.Database.Context;
 
-namespace Wadappt.Portal.Infrastructure.Database.Context
+namespace Yoma.Core.Infrastructure.Database.Context
 {
   public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext>
   {

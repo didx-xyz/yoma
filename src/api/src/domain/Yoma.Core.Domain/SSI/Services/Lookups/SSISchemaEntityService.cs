@@ -3,9 +3,8 @@ using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.Exceptions;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
-using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 
 namespace Yoma.Core.Domain.SSI.Services.Lookups

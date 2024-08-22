@@ -1,5 +1,6 @@
 using System.Data;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
@@ -19,7 +20,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories
       {
         Id = entity.Id,
         SchemaTypeId = entity.SchemaTypeId,
-        SchemaType = Enum.Parse<Domain.SSI.Models.SchemaType>(entity.SchemaType.Name, true),
+        SchemaType = Enum.Parse<Domain.SSI.SchemaType>(entity.SchemaType.Name, true),
         ArtifactType = Enum.Parse<ArtifactType>(entity.ArtifactType, true),
         SchemaName = entity.SchemaName,
         SchemaVersion = entity.SchemaVersion,

@@ -2,7 +2,6 @@ using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.Exceptions;
 
 namespace Yoma.Core.Api.Middleware
 {

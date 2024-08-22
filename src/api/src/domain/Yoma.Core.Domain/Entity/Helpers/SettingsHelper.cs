@@ -63,7 +63,25 @@ namespace Yoma.Core.Domain.Entity.Helpers
                         })
                         .OrderBy(subGroup => subGroup.Items != null && subGroup.Items.Count != 0 ? subGroup.Items.Min(i => definitions.First(d => d.Key == i.Key).Order) : int.MaxValue)]
           })
-          .OrderBy(g => g.Items != null && g.Items.Count != 0 ? g.Items.Min(i => definitions.First(d => d.Key == i.Key).Order) : g.Groups != null && g.Groups.Count != 0 ? g.Groups.Min(subGroup => subGroup.Items != null && subGroup.Items.Count != 0 ? subGroup.Items.Min(i => definitions.First(d => d.Key == i.Key).Order) : int.MaxValue) : int.MaxValue)
+          .OrderBy(g =>
+          {
+            if (g.Items != null && g.Items.Count > 0)
+            {
+              return OrderByGetMinOrder(g.Items, definitions);
+            }
+            else if (g.Groups != null && g.Groups.Count > 0)
+            {
+              return g.Groups.Min(subGroup =>
+              {
+                if (subGroup.Items != null && subGroup.Items.Count > 0)
+                {
+                  return OrderByGetMinOrder(subGroup.Items, definitions);
+                }
+                return int.MaxValue;
+              });
+            }
+            return int.MaxValue;
+          })
           .ToList();
 
       foreach (var group in groupedSettings)
@@ -273,6 +291,11 @@ namespace Yoma.Core.Domain.Entity.Helpers
     #endregion
 
     #region Private Members
+    private static int OrderByGetMinOrder(IEnumerable<SettingItem> items, IEnumerable<SettingsDefinition> definitions)
+    {
+      return items.Min(i => definitions.First(d => d.Key == i.Key).Order);
+    }
+
     private static object ParseValue(SettingType type, string value)
     {
       return type switch

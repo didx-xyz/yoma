@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using System.Security.Claims;
-using Yoma.Core.Domain.Exceptions;
+using Yoma.Core.Domain.Core.Exceptions;
 
 namespace Yoma.Core.Domain.Core.Helpers
 {

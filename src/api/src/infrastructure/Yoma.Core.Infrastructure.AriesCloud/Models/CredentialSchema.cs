@@ -1,4 +1,4 @@
-using Yoma.Core.Domain.SSI.Models;
+using Yoma.Core.Domain.SSI;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Models
 {

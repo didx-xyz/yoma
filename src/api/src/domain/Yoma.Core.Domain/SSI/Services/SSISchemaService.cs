@@ -1,5 +1,5 @@
 using FluentValidation;
-using Yoma.Core.Domain.Exceptions;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;

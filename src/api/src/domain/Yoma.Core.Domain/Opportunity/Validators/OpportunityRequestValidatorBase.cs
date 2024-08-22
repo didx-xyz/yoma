@@ -3,6 +3,7 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Services;
+using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Validators
@@ -202,7 +203,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       if (string.IsNullOrEmpty(name)) return false;
       var result = _ssiSchemaService.GetByFullNameOrNull(name).Result;
 
-      return result != null && result.Type == SSI.Models.SchemaType.Opportunity;
+      return result != null && result.Type == SchemaType.Opportunity;
     }
 
     private bool EngagementTypeExists(Guid? id)
