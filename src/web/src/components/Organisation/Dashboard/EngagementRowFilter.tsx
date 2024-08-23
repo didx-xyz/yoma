@@ -90,61 +90,59 @@ export const EngagementRowFilter: React.FC<{
         onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
         className="flex flex-col gap-2"
       >
-        <div className="flex w-full flex-col items-center justify-center gap-2 md:justify-start lg:flex-row">
-          <div className="flex w-full flex-grow flex-col flex-wrap items-center gap-2 md:w-fit lg:flex-row">
-            <div className="mr-4 flex text-sm font-bold text-gray-dark">
-              Filter by:
-            </div>
-
-            {/* COUNTRIES */}
-            {lookups_countries && (
-              <span className="w-full md:w-72">
-                <Controller
-                  name="countries"
-                  control={form.control}
-                  defaultValue={searchFilter?.countries}
-                  render={({ field: { onChange, value } }) => (
-                    <Select
-                      instanceId="countries"
-                      classNames={{
-                        control: () =>
-                          "input input-xs h-fit !border-none w-full md:w-72",
-                      }}
-                      isMulti={true}
-                      options={lookups_countries.map((c) => ({
-                        value: c.name,
-                        label: c.name,
-                      }))}
-                      // fix menu z-index issue
-                      menuPortalTarget={htmlRef}
-                      styles={{
-                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                      }}
-                      onChange={(val) => {
-                        onChange(val.map((c) => c.value));
-                        void handleSubmit(onSubmitHandler)();
-                      }}
-                      value={lookups_countries
-                        .filter((c) => value?.includes(c.name))
-                        .map((c) => ({ value: c.name, label: c.name }))}
-                      placeholder="Country"
-                      components={{
-                        ValueContainer,
-                      }}
-                    />
-                  )}
-                />
-
-                {formState.errors.countries && (
-                  <label className="label font-bold">
-                    <span className="label-text-alt italic text-red-500">
-                      {`${formState.errors.countries.message}`}
-                    </span>
-                  </label>
-                )}
-              </span>
-            )}
+        <div className="flex flex-row items-center gap-2">
+          <div className="whitespace-nowrap text-sm font-bold text-gray-dark">
+            Filter by:
           </div>
+
+          {/* COUNTRIES */}
+          {lookups_countries && (
+            <span className="w-full sm:w-72">
+              <Controller
+                name="countries"
+                control={form.control}
+                defaultValue={searchFilter?.countries}
+                render={({ field: { onChange, value } }) => (
+                  <Select
+                    instanceId="countries"
+                    classNames={{
+                      control: () =>
+                        "input input-xs h-fit !border-none w-full md:w-72",
+                    }}
+                    isMulti={true}
+                    options={lookups_countries.map((c) => ({
+                      value: c.name,
+                      label: c.name,
+                    }))}
+                    // fix menu z-index issue
+                    menuPortalTarget={htmlRef}
+                    styles={{
+                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    }}
+                    onChange={(val) => {
+                      onChange(val.map((c) => c.value));
+                      void handleSubmit(onSubmitHandler)();
+                    }}
+                    value={lookups_countries
+                      .filter((c) => value?.includes(c.name))
+                      .map((c) => ({ value: c.name, label: c.name }))}
+                    placeholder="Country"
+                    components={{
+                      ValueContainer,
+                    }}
+                  />
+                )}
+              />
+
+              {formState.errors.countries && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {`${formState.errors.countries.message}`}
+                  </span>
+                </label>
+              )}
+            </span>
+          )}
         </div>
       </form>
 

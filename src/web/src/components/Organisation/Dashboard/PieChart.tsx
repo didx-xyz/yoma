@@ -9,7 +9,7 @@ export const PieChart: React.FC<{
   data: GoogleChartData;
   colors?: string[];
   className?: string;
-}> = ({ id, title, subTitle, data, colors, className = "" }) => {
+}> = ({ id, title, subTitle, data, colors, className }) => {
   return (
     <div
       key={id}
@@ -18,7 +18,6 @@ export const PieChart: React.FC<{
       <div className="flex flex-row items-center gap-2 tracking-wide">
         <div className="text-sm font-semibold">{title}</div>
       </div>
-
       <div className="flex flex-col">
         <div className="flex-grow text-3xl font-semibold">{subTitle}</div>
       </div>
@@ -28,7 +27,7 @@ export const PieChart: React.FC<{
           height={100}
           chartType="PieChart"
           loader={
-            <div className="flex w-full items-center justify-center">
+            <div className="flex h-full w-full items-center justify-center">
               <span className="loading loading-spinner loading-lg text-green"></span>
             </div>
           }
