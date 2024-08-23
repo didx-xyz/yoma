@@ -13,7 +13,7 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { HeaderWithLink } from "~/components/YoID/HeaderWithLink";
+import { Header } from "~/components/Common/Header";
 import { LineChart } from "~/components/YoID/LineChart";
 import { OpportunitiesSummary } from "~/components/YoID/OpportunitiesSummary";
 import { PassportCard } from "~/components/YoID/PassportCard";
@@ -134,7 +134,7 @@ const YoIDDashboard: NextPageWithLayout<{
       <div className="mt-2 flex h-full w-full flex-wrap items-center justify-center gap-4 lg:max-w-7xl">
         {/* WALLET */}
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-          <HeaderWithLink title="💸 Wallet" url="/yoid/wallet" />
+          <Header title="💸 Wallet" url="/yoid/wallet" />
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
             <Suspense isLoading={!userProfile}>
               <WalletCard userProfile={userProfile!} />
@@ -144,7 +144,7 @@ const YoIDDashboard: NextPageWithLayout<{
 
         {/* PASSPORT */}
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-          <HeaderWithLink title="🌐 Passport" url="/yoid/passport" />
+          <Header title="🌐 Passport" url="/yoid/passport" />
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
             <Suspense isLoading={credentialsIsLoading} error={credentialsError}>
               {!credentials?.length && (
@@ -164,7 +164,7 @@ const YoIDDashboard: NextPageWithLayout<{
 
         {/* SKILLS */}
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-          <HeaderWithLink title="⚡ Skills" url="/yoid/skills" />
+          <Header title="⚡ Skills" url="/yoid/skills" />
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
             <div className="flex flex-wrap gap-1 overflow-y-auto">
               <Suspense isLoading={skillsIsLoading} error={skillsError}>
@@ -184,7 +184,7 @@ const YoIDDashboard: NextPageWithLayout<{
 
         {/* CV */}
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-          <HeaderWithLink title="🏦 CV" />
+          <Header title="🏦 CV" />
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow xl:h-[300px]">
             <NoRowsMessage
               icon="🚧"
@@ -198,7 +198,7 @@ const YoIDDashboard: NextPageWithLayout<{
 
         {/* OPPORTUNITIES */}
         <div className="relative flex h-full w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
-          <HeaderWithLink
+          <Header
             title="🏆 Opportunities"
             url="/yoid/opportunities/completed"
           />

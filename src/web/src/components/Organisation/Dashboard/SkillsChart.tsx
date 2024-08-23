@@ -1,12 +1,10 @@
+import { useAtomValue } from "jotai";
+import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import Chart from "react-google-charts";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
 import { CHART_COLORS } from "~/lib/constants";
-import Image from "next/image";
-import { useAtomValue } from "jotai";
 import { screenWidthAtom } from "~/lib/store";
-import { bool } from "sharp";
-import NoRowsMessage from "~/components/NoRowsMessage";
 
 export const SkillsChart: React.FC<{
   data: TimeIntervalSummary | undefined;

@@ -15,7 +15,7 @@ export const SignInButton: React.FC<{ className?: string }> = ({
     setIsButtonLoading(true);
 
     // sign in with keycloak
-    handleUserSignIn(currentLanguage);
+    await handleUserSignIn(currentLanguage);
   }, [currentLanguage]);
 
   return (

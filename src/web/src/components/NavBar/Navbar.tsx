@@ -251,9 +251,9 @@ export const Navbar: React.FC = () => {
                       classNameSelect="text-gray-dark text-sm"
                     />
 
-                    {!session && <SignInButton />}
+                    {!session && <SignInButton className="!btn-sm" />}
 
-                    {session && <SignOutButton />}
+                    {session && <SignOutButton className="!btn-sm" />}
 
                     <div className="divider my-2 grow-0 !bg-gray" />
 

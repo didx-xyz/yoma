@@ -68,12 +68,10 @@ import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
-import { Loading } from "~/components/Status/Loading";
 import { LoadingInline } from "~/components/Status/LoadingInline";
-import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { HeaderWithLink } from "~/components/YoID/HeaderWithLink";
+import { Header } from "~/components/Common/Header";
 import {
   CHART_COLORS,
   DATETIME_FORMAT_HUMAN,
@@ -757,11 +755,6 @@ const OrganisationDashboard: NextPageWithLayout<{
 
       <PageBackground className="h-[450px] lg:h-[320px]" />
 
-      {/* {(isLoadingEngagement ||
-        isLoadingSelectedOpportunities ||
-        isLoadingCompletedYouth ||
-        isLoadingSSO) && <Loading />} */}
-
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
@@ -837,6 +830,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             error={
               engagementError ||
               categoriesError ||
+              countriesError ||
               engagementError ||
               completedOpportunitiesError ||
               selectedOpportunitiesError ||
@@ -848,7 +842,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               <div className="flex flex-col gap-4">
                 {/* ENGAGEMENT */}
                 <div className="flex flex-col gap-2">
-                  <HeaderWithLink title="🤝 Engagement" />
+                  <Header title="🤝 Engagement" />
 
                   {/* FILTERS */}
                   <EngagementRowFilter
@@ -935,7 +929,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 <div className="flex flex-col gap-4 md:flex-row">
                   {/* COUNTRIES */}
                   <div className="flex grow flex-col gap-1">
-                    <HeaderWithLink title="🌐 Countries" />
+                    <Header title="🌐 Countries" />
 
                     <div className="h-full rounded-lg bg-white p-4 shadow">
                       {engagementData?.demographics?.countries?.items && (
@@ -955,7 +949,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     <div className="flex flex-col gap-4 md:flex-row">
                       {/* REWARDS */}
                       <div className="flex flex-col gap-1">
-                        <HeaderWithLink title="💸 Rewards" />
+                        <Header title="💸 Rewards" />
 
                         <div className="h-[176px] rounded-lg bg-white p-4 shadow md:w-[275px]">
                           <div className="flex flex-row items-center gap-3">
@@ -994,7 +988,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                       {/* SKILLS */}
                       <div className="flex flex-col gap-1">
-                        <HeaderWithLink title="⚡ Skills" />
+                        <Header title="⚡ Skills" />
 
                         <div className="h-[176px] rounded-lg bg-white shadow md:w-[275px]">
                           <SkillsChart data={engagementData?.skills?.items} />
@@ -1046,7 +1040,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {/* DEMOGRAPHICS */}
                 <div className="flex w-full flex-col gap-1">
-                  <HeaderWithLink title="📊 Demographics" />
+                  <Header title="📊 Demographics" />
 
                   <div className="flex w-full flex-col gap-4 md:flex-row">
                     {/* EDUCATION */}
@@ -1096,7 +1090,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
               {/* COMPLETED YOUTH */}
               <div className="flex flex-col gap-1">
-                <HeaderWithLink title="✅ Completed by Youth" />
+                <Header title="✅ Completed by Youth" />
 
                 {/* COMPLETED YOUTH */}
                 <div className="rounded-lg bg-transparent p-0 shadow-none md:bg-white md:p-4 md:shadow">
@@ -1206,7 +1200,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
               {/* SELECTED OPPORTUNITIES */}
               <div className="flex flex-col">
-                <HeaderWithLink title="🏆 Selected Opportunities" />
+                <Header title="🏆 Selected Opportunities" />
 
                 {/* NB: DECPRECATED */}
                 <div className="mb-4 hidden flex-col gap-4 md:flex-row">
@@ -1378,7 +1372,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               {/* SSO */}
               {isAdmin && (
                 <div className="my-8 flex flex-col gap-4">
-                  <HeaderWithLink title="🔑 Single Sign-On" />
+                  <Header title="🔑 Single Sign-On" />
 
                   <div className="grid grid-rows-2 gap-4 md:grid-cols-2">
                     <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">

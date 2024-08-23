@@ -1,25 +1,19 @@
-import { useSetAtom } from "jotai";
 import React, { useCallback, useState } from "react";
 import { IoMdLogOut } from "react-icons/io";
 import { handleUserSignOut } from "~/lib/authUtils";
-import { userProfileAtom } from "~/lib/store";
 import { LoadingInline } from "./Status/LoadingInline";
 
 export const SignOutButton: React.FC<{ className?: string }> = ({
   className,
 }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
-  const setUserProfile = useSetAtom(userProfileAtom);
 
   const handleLogout = useCallback(() => {
     setIsButtonLoading(true);
 
-    // update atom
-    setUserProfile(null);
-
     // signout from keycloak
     handleUserSignOut();
-  }, [setIsButtonLoading, setUserProfile]);
+  }, [setIsButtonLoading]);
 
   return (
     <button

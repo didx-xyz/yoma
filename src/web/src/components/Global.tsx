@@ -1,5 +1,5 @@
 import { useAtomValue, useSetAtom } from "jotai";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -8,16 +8,15 @@ import iconBell from "public/images/icon-bell.webp";
 import stamps from "public/images/stamps.svg";
 import YoIDCard from "public/images/YoID-modal-card.webp";
 import { useCallback, useEffect, useState } from "react";
-import { IoMdFingerPrint } from "react-icons/io";
 import ReactModal from "react-modal";
 import { toast } from "react-toastify";
 import type { UserProfile } from "~/api/models/user";
 import { getOrganisationById } from "~/api/services/organisations";
 import { getUserProfile, patchYoIDOnboarding } from "~/api/services/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { handleUserSignIn } from "~/lib/authUtils";
 import {
   COOKIE_KEYCLOAK_SESSION,
-  GA_ACTION_USER_LOGIN_BEFORE,
   GA_ACTION_USER_YOIDONBOARDINGCONFIRMED,
   GA_CATEGORY_USER,
   ROLE_ADMIN,
@@ -35,14 +34,12 @@ import {
   screenWidthAtom,
   userProfileAtom,
 } from "~/lib/store";
-import { fetchClientEnv } from "~/lib/utils";
+import { SignInButton } from "./SignInButton";
 import { ApiErrors } from "./Status/ApiErrors";
 import {
   UserProfileFilterOptions,
   UserProfileForm,
 } from "./User/UserProfileForm";
-import { SignInButton } from "./SignInButton";
-import { handleUserSignIn } from "~/lib/authUtils";
 
 // * GLOBAL APP CONCERNS
 // * needs to be done here as jotai atoms are not available in _app.tsx

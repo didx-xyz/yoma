@@ -21,7 +21,7 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { HeaderWithLink } from "~/components/YoID/HeaderWithLink";
+import { Header } from "~/components/Common/Header";
 import { WalletCard } from "~/components/YoID/WalletCard";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { PAGE_SIZE } from "~/lib/constants";
@@ -246,7 +246,7 @@ const MyWallet: NextPageWithLayout<{
 
         <div className="flex flex-col gap-8">
           <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
-            <HeaderWithLink title="💸 My Wallet" />
+            <Header title="💸 My Wallet" />
             <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
               <Suspense isLoading={!userProfile}>
                 <WalletCard userProfile={userProfile!} />
@@ -255,7 +255,7 @@ const MyWallet: NextPageWithLayout<{
           </div>
 
           <div className="flex w-full flex-col gap-2">
-            <HeaderWithLink title="🛒 My Products" />
+            <Header title="🛒 My Products" />
 
             <Suspense isLoading={dataIsLoading} error={dataError}>
               {/* NO ROWS */}
