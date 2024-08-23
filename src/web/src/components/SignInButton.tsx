@@ -1,15 +1,12 @@
 import { useAtomValue } from "jotai";
-import { signIn } from "next-auth/react";
 import React, { useCallback, useState } from "react";
 import { IoMdFingerPrint } from "react-icons/io";
-import { GA_ACTION_USER_LOGIN_BEFORE, GA_CATEGORY_USER } from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { handleUserSignIn } from "~/lib/authUtils";
 import { currentLanguageAtom } from "~/lib/store";
-import { fetchClientEnv } from "~/lib/utils";
 import { LoadingInline } from "./Status/LoadingInline";
 
 export const SignInButton: React.FC<{ className?: string }> = ({
-  className = "",
+  className,
 }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const currentLanguage = useAtomValue(currentLanguageAtom);
@@ -17,27 +14,14 @@ export const SignInButton: React.FC<{ className?: string }> = ({
   const handleLogin = useCallback(async () => {
     setIsButtonLoading(true);
 
-    // 📊 GOOGLE ANALYTICS: track event
-    trackGAEvent(
-      GA_CATEGORY_USER,
-      GA_ACTION_USER_LOGIN_BEFORE,
-      "User Logging In. Redirected to External Authentication Provider",
-    );
-
-    // eslint-disable-next-line @typescript-eslint/no-floating-promises
-    signIn(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
-        "") as string,
-      undefined,
-      { ui_locales: currentLanguage }, // pass the current language to the keycloak provider
-    );
+    // sign in with keycloak
+    handleUserSignIn(currentLanguage);
   }, [currentLanguage]);
 
   return (
     <button
       type="button"
-      className={className}
+      className={`bg-theme btn gap-2 border-0 border-none px-4 shadow-lg transition animate-in animate-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95 ${className}`}
       onClick={handleLogin}
       disabled={isButtonLoading}
       id="btnSignIn"

@@ -71,6 +71,7 @@ import { Loading } from "~/components/Status/Loading";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { HeaderWithLink } from "~/components/YoID/HeaderWithLink";
 import {
   CHART_COLORS,
   DATETIME_FORMAT_HUMAN,
@@ -744,7 +745,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      <div className="container z-10 mt-[6rem] max-w-7xl overflow-hidden px-4 py-1 md:py-4">
+      <div className="container z-10 mt-[6rem] max-w-7xl overflow-hidden p-4">
         <div className="flex flex-col gap-4">
           {/* HEADER */}
           <div className="flex flex-col gap-2">
@@ -798,7 +799,9 @@ const OrganisationDashboard: NextPageWithLayout<{
             <div className="mt-4 flex flex-col gap-4">
               {/* ENGAGEMENT */}
               <div className="flex flex-col gap-2">
-                <div className="text-3xl font-semibold">Engagement</div>
+                <div className="text-lg font-semibold md:text-xl">
+                  Engagement
+                </div>
 
                 {/* FILTERS */}
                 <div className="">
@@ -888,13 +891,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                 </div>
               </div>
 
-              <div className="flex flex-col">
-                <div className="flex gap-4">
-                  <div className="text-xl font-semibold">Countries</div>
-                </div>
-                <div className="flex flex-col gap-4 md:flex-row">
-                  <div className="flex w-full flex-col justify-center overflow-hidden rounded-lg bg-white shadow">
-                    {/* COUNTRIES - WORLD MAP */}
+              <div className="flex flex-col gap-4 md:flex-row">
+                {/* COUNTRIES */}
+                <div className="flex grow flex-col gap-1">
+                  <HeaderWithLink title="🌐 Countries" />
+
+                  <div className="h-full rounded-lg bg-white p-4 shadow">
                     {dataEngagement?.demographics?.countries?.items && (
                       <WorldMapChart
                         data={[
@@ -907,14 +909,14 @@ const OrganisationDashboard: NextPageWithLayout<{
                       />
                     )}
                   </div>
+                </div>
+                <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-4 md:flex-row">
+                    {/* REWARDS */}
+                    <div className="flex flex-col gap-1">
+                      <HeaderWithLink title="💸 Rewards" />
 
-                  <div className="flex flex-col gap-4">
-                    <div className="mt-0 text-xl font-semibold md:-mt-[2.75rem]">
-                      Rewards
-                    </div>
-                    <div className="flex flex-col gap-4 md:flex-row">
-                      {/* ZLTO AMOUNT AWARDED */}
-                      <div className="h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow md:w-[275px]">
+                      <div className="h-[176px] rounded-lg bg-white p-4 shadow md:w-[275px]">
                         <div className="flex flex-row items-center gap-3">
                           <div className="rounded-lg bg-green-light p-1">
                             <Image
@@ -947,64 +949,63 @@ const OrganisationDashboard: NextPageWithLayout<{
                           </div>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="flex flex-col md:-mt-[2.75rem]">
-                        <span className="mb-4 text-xl font-semibold">
-                          Skills
-                        </span>
+                    {/* SKILLS */}
+                    <div className="flex flex-col gap-1">
+                      <HeaderWithLink title="⚡ Skills" />
 
-                        {/* TOTAL UNIQUE SKILLS */}
+                      <div className="h-[176px] rounded-lg bg-white shadow md:w-[275px]">
                         <SkillsChart data={dataEngagement?.skills?.items} />
                       </div>
                     </div>
-                    {/* MOST COMPLETED SKILLS */}
-                    {dataEngagement?.skills?.topCompleted && (
-                      <>
-                        <div className="flex h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow md:w-[565px]">
-                          <div className="flex flex-row items-center gap-3">
-                            <div className="rounded-lg bg-green-light p-1">
-                              <Image
-                                src={iconSkills}
-                                alt="Icon Skills"
-                                width={20}
-                                height={20}
-                                sizes="100vw"
-                                priority={true}
-                                style={{ width: "20px", height: "20px" }}
-                              />
-                            </div>
-                            <div className="text-sm font-semibold">
-                              {dataEngagement?.skills.topCompleted.legend}
-                            </div>
-                          </div>
-                          <div className="mt-4 flex flex-grow flex-wrap gap-1 overflow-y-auto overflow-x-hidden md:h-[100px]">
-                            {dataEngagement?.skills.topCompleted.topCompleted.map(
-                              (x) => (
-                                <div
-                                  key={x.id}
-                                  className=" md:truncate-none flex h-9 w-max items-center text-ellipsis rounded border-[1px] border-green bg-white px-2 text-xs text-gray-dark md:w-fit md:max-w-none"
-                                >
-                                  {x.name}
-                                </div>
-                              ),
-                            )}
-                          </div>
-                          {dataEngagement?.skills?.topCompleted.topCompleted
-                            .length === 0 && (
-                            <div className="mb-8 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-10 text-center text-xs">
-                              Not enough data to display
-                            </div>
-                          )}
-                        </div>
-                      </>
-                    )}
                   </div>
+
+                  {/* MOST COMPLETED SKILLS */}
+                  {dataEngagement?.skills?.topCompleted && (
+                    <div className="flex h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow md:w-[565px]">
+                      <div className="flex flex-row items-center gap-3">
+                        <div className="rounded-lg bg-green-light p-1">
+                          <Image
+                            src={iconSkills}
+                            alt="Icon Skills"
+                            width={20}
+                            height={20}
+                            sizes="100vw"
+                            priority={true}
+                            style={{ width: "20px", height: "20px" }}
+                          />
+                        </div>
+                        <div className="text-sm font-semibold">
+                          {dataEngagement?.skills.topCompleted.legend}
+                        </div>
+                      </div>
+                      <div className="mt-4 flex flex-grow flex-wrap gap-1 overflow-y-auto overflow-x-hidden md:h-[100px]">
+                        {dataEngagement?.skills.topCompleted.topCompleted.map(
+                          (x) => (
+                            <div
+                              key={x.id}
+                              className=" md:truncate-none flex h-9 w-max items-center text-ellipsis rounded border-[1px] border-green bg-white px-2 text-xs text-gray-dark md:w-fit md:max-w-none"
+                            >
+                              {x.name}
+                            </div>
+                          ),
+                        )}
+                      </div>
+                      {dataEngagement?.skills?.topCompleted.topCompleted
+                        .length === 0 && (
+                        <div className="mb-8 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-10 text-center text-xs">
+                          Not enough data to display
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* DEMOGRAPHICS */}
-              <div className="flex w-full flex-col gap-2">
-                <div className="mb-2 text-xl font-semibold">Demographics</div>
+              <div className="flex w-full flex-col gap-1">
+                <HeaderWithLink title="📊 Demographics" />
 
                 <div className="flex w-full flex-col gap-4 md:flex-row">
                   {/* EDUCATION */}
@@ -1061,15 +1062,14 @@ const OrganisationDashboard: NextPageWithLayout<{
           )}
 
           {/* COMPLETED YOUTH */}
-          <div className="flex flex-col">
-            <div className="text-xl font-semibold">Completed by Youth</div>
+          <div className="flex flex-col gap-1">
+            <HeaderWithLink title="🏆 Completed by Youth" />
 
             {isLoadingCompletedYouth && <LoadingSkeleton />}
 
             {/* COMPLETED YOUTH */}
             {!isLoadingCompletedYouth && (
               <div id="results">
-                <div className="mb-6 flex flex-row items-center justify-end"></div>
                 <div className="rounded-lg bg-transparent p-0 shadow-none md:bg-white md:p-4 md:shadow">
                   {/* NO ROWS */}
                   {(!dataCompletedYouth ||
@@ -1087,7 +1087,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   {/* RESULTS */}
                   {dataCompletedYouth &&
                     dataCompletedYouth.items?.length > 0 && (
-                      <div>
+                      <>
                         {/* DESKTOP */}
                         <div className="hidden overflow-x-auto md:block">
                           <table className="table">
@@ -1138,6 +1138,22 @@ const OrganisationDashboard: NextPageWithLayout<{
                               ))}
                             </tbody>
                           </table>
+
+                          {/* PAGINATION */}
+                          <div className="mt-2">
+                            <PaginationButtons
+                              currentPage={
+                                pageCompletedYouth
+                                  ? parseInt(pageCompletedYouth.toString())
+                                  : 1
+                              }
+                              totalItems={dataCompletedYouth.totalCount}
+                              pageSize={PAGE_SIZE}
+                              showPages={false}
+                              showInfo={true}
+                              onClick={handlePagerChangeCompletedYouth}
+                            />
+                          </div>
                         </div>
 
                         {/* MOBILE */}
@@ -1149,26 +1165,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                             loadData={loadData_Youth}
                           />
                         </div>
-                      </div>
+                      </>
                     )}
-
-                  {/* PAGINATION */}
-                  {dataCompletedYouth && dataCompletedYouth.totalCount > 0 && (
-                    <div className="mt-2 grid place-items-center justify-center">
-                      <PaginationButtons
-                        currentPage={
-                          pageCompletedYouth
-                            ? parseInt(pageCompletedYouth.toString())
-                            : 1
-                        }
-                        totalItems={dataCompletedYouth.totalCount}
-                        pageSize={PAGE_SIZE}
-                        showPages={false}
-                        showInfo={true}
-                        onClick={handlePagerChangeCompletedYouth}
-                      />
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -1180,17 +1178,15 @@ const OrganisationDashboard: NextPageWithLayout<{
           {/* SELECTED OPPORTUNITIES */}
           {dataSelectedOpportunities &&
           dataSelectedOpportunities?.items.length > 0 ? (
-            <div className="mt-4 flex flex-col">
+            <div className="mt-4x flex flex-col">
               <div>
-                <div className="mb-1 text-3xl font-semibold">Opportunities</div>
-                {/* <div>
-                  Opportunities performance (sort by views, completions,
-                  conversion ratio)
-                </div> */}
+                <div className="mb-4 text-lg font-semibold md:text-xl">
+                  Opportunities
+                </div>
 
-                <div className="mb-4 flex hidden flex-col gap-4 md:flex-row">
+                <div className="mb-4 hidden flex-col gap-4 md:flex-row">
                   {/* UNPUBLISHED */}
-                  <div className="mt-4 flex h-32 w-full flex-col gap-2 rounded-lg bg-white p-4 shadow md:w-72">
+                  <div className="mt-4x flex h-32 w-full flex-col gap-2 rounded-lg bg-white p-4 shadow md:w-72">
                     <div className="flex h-min items-center gap-2">
                       <div className="items-center rounded-lg bg-green-light p-1">
                         <Image
@@ -1213,7 +1209,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   </div>
 
                   {/* EXPIRED */}
-                  <div className="mt-4 flex h-32 w-full flex-col gap-2 rounded-lg bg-white p-4 shadow md:w-72">
+                  <div className="mt-4x flex h-32 w-full flex-col gap-2 rounded-lg bg-white p-4 shadow md:w-72">
                     <div className="flex h-min items-center gap-2">
                       <div className="items-center rounded-lg bg-green-light p-1">
                         <Image
@@ -1236,16 +1232,15 @@ const OrganisationDashboard: NextPageWithLayout<{
                   </div>
                 </div>
               </div>
-              <div className="mt-2 text-xl font-semibold">
-                Selected Opportunities
-              </div>
+
+              <HeaderWithLink title="🏆 Selected Opportunities" />
 
               {isLoadingSelectedOpportunities && <LoadingSkeleton />}
 
               {/* SELECTED OPPORTUNITIES */}
               {!isLoadingSelectedOpportunities && (
                 <div id="results">
-                  <div className="mb-6 flex flex-row items-center justify-end"></div>
+                  {/* <div className="mb-6 flex flex-row items-center justify-end"></div> */}
                   <div className="rounded-lg bg-transparent p-0 shadow-none md:bg-white md:p-4 md:shadow">
                     {/* NO ROWS */}
                     {(!dataSelectedOpportunities ||
@@ -1329,6 +1324,26 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 )}
                               </tbody>
                             </table>
+
+                            {/* PAGINATION */}
+                            <div className="mt-2">
+                              <PaginationButtons
+                                currentPage={
+                                  pageSelectedOpportunities
+                                    ? parseInt(
+                                        pageSelectedOpportunities.toString(),
+                                      )
+                                    : 1
+                                }
+                                totalItems={
+                                  dataSelectedOpportunities.totalCount
+                                }
+                                pageSize={PAGE_SIZE}
+                                showPages={false}
+                                showInfo={true}
+                                onClick={handlePagerChangeSelectedOpportunities}
+                              />
+                            </div>
                           </div>
 
                           {/* MOBILE */}
@@ -1342,25 +1357,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                               }
                             />
                           </div>
-                        </div>
-                      )}
-
-                    {/* PAGINATION */}
-                    {dataSelectedOpportunities &&
-                      dataSelectedOpportunities.totalCount > 0 && (
-                        <div className="mt-2 hidden place-items-center justify-center md:grid">
-                          <PaginationButtons
-                            currentPage={
-                              pageSelectedOpportunities
-                                ? parseInt(pageSelectedOpportunities.toString())
-                                : 1
-                            }
-                            totalItems={dataSelectedOpportunities.totalCount}
-                            pageSize={PAGE_SIZE}
-                            showPages={false}
-                            showInfo={true}
-                            onClick={handlePagerChangeSelectedOpportunities}
-                          />
                         </div>
                       )}
                   </div>
@@ -1384,7 +1380,8 @@ const OrganisationDashboard: NextPageWithLayout<{
           {/* SSO */}
           {isAdmin && (
             <div className="my-8 flex flex-col gap-4">
-              <div className="text-2xl font-semibold">Single Sign On</div>
+              <HeaderWithLink title="🔑 Single Sign On" />
+
               {isLoadingSSO && <LoadingSkeleton />}
               {dataSSO && (
                 <div className="grid grid-rows-2 gap-4 md:grid-cols-2">

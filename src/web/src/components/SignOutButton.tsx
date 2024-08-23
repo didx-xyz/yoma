@@ -1,19 +1,12 @@
 import { useSetAtom } from "jotai";
-import { signOut } from "next-auth/react";
-import { destroyCookie } from "nookies";
 import React, { useCallback, useState } from "react";
 import { IoMdLogOut } from "react-icons/io";
-import {
-  COOKIE_KEYCLOAK_SESSION,
-  GA_ACTION_USER_LOGOUT,
-  GA_CATEGORY_USER,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { handleUserSignOut } from "~/lib/authUtils";
 import { userProfileAtom } from "~/lib/store";
 import { LoadingInline } from "./Status/LoadingInline";
 
 export const SignOutButton: React.FC<{ className?: string }> = ({
-  className = "",
+  className,
 }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const setUserProfile = useSetAtom(userProfileAtom);
@@ -24,25 +17,14 @@ export const SignOutButton: React.FC<{ className?: string }> = ({
     // update atom
     setUserProfile(null);
 
-    // 📊 GOOGLE ANALYTICS: track event
-    trackGAEvent(GA_CATEGORY_USER, GA_ACTION_USER_LOGOUT, "User logged out");
-
     // signout from keycloak
-    signOut({
-      callbackUrl: `${window.location.origin}/`,
-    }).then(() => {
-      // delete the KEYCLOAK_SESSION cookie (prevents signing in again after signout)
-      destroyCookie(null, COOKIE_KEYCLOAK_SESSION, {
-        path: "/",
-        maxAge: 0, // expire the cookie immediately
-      });
-    }); // eslint-disable-line @typescript-eslint/no-floating-promises
+    handleUserSignOut();
   }, [setIsButtonLoading, setUserProfile]);
 
   return (
     <button
       type="button"
-      className={className}
+      className={`bg-theme btn btn-sm gap-2 border-0 border-none px-4 shadow-lg transition animate-in animate-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95 ${className}`}
       onClick={handleLogout}
       disabled={isButtonLoading}
       id="btnSignOut"

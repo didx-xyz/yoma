@@ -1,8 +1,12 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Chart from "react-google-charts";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
 import { CHART_COLORS } from "~/lib/constants";
 import Image from "next/image";
+import { useAtomValue } from "jotai";
+import { screenWidthAtom } from "~/lib/store";
+import { bool } from "sharp";
+import NoRowsMessage from "~/components/NoRowsMessage";
 
 export const SkillsChart: React.FC<{
   data: TimeIntervalSummary | undefined;
@@ -35,9 +39,9 @@ export const SkillsChart: React.FC<{
 
   const Legend = () => {
     return (
-      <div className="flex flex-row gap-2">
+      <div className="flex flex-row gap-2 p-4">
         {data?.legend.map((name, index) => (
-          <div key={index} className="ml-4 mt-4 flex flex-col gap-4">
+          <div key={index} className="flex flex-col gap-4">
             <div className="flex flex-row items-center gap-3">
               <span className="rounded-lg bg-green-light p-1">
                 <Image
@@ -60,12 +64,22 @@ export const SkillsChart: React.FC<{
     );
   };
 
+  // chart responsiveness
+  // changing the key forces a redraw of the chart when the screen width changes
+  const [key, setkey] = useState("");
+  const screenWidth = useAtomValue(screenWidthAtom);
+  useEffect(() => {
+    setkey(`org-skills-chart-${screenWidth}`);
+  }, [screenWidth]);
+
   return (
-    <div className="h-44 w-full overflow-hidden rounded-lg bg-white shadow md:w-[275px]">
+    <div className="h-44x  ">
       <Legend />
-      <div className="flex w-full justify-center pt-2">
+
+      <div className="-mx-4x flexx h-fullx w-fullx justify-centerx">
         {showChart ? (
           <Chart
+            key={key}
             chartType="AreaChart"
             loader={
               <div className="flex w-full items-center justify-center">
@@ -86,13 +100,17 @@ export const SkillsChart: React.FC<{
               curveType: "function",
               pointSize: 0,
               pointShape: "circle",
-              enableInteractivity: false,
+              enableInteractivity: true,
               hAxis: {
                 gridlines: {
                   color: "transparent",
                 },
-                textPosition: "none",
-                baselineColor: "transparent",
+                textPosition: "out",
+                format: "MMM dd",
+                showTextEvery: 2,
+                textStyle: {
+                  fontSize: 10,
+                },
               },
               vAxis: {
                 gridlines: {
@@ -101,17 +119,20 @@ export const SkillsChart: React.FC<{
                 textPosition: "none",
                 baselineColor: "transparent",
               },
+              width: "100%" as any,
+              height: "58px" as any,
               chartArea: {
                 left: 0,
                 top: 0,
                 right: 0,
-                width: "94%",
-                height: "38%",
+                bottom: 0,
+                width: "100%",
+                height: "100%",
               },
             }}
           />
         ) : (
-          <div className="mx-4 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
+          <div className="mx-4 flex flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
             Not enough data to display
           </div>
         )}

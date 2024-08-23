@@ -1,4 +1,7 @@
+import { useAtomValue } from "jotai";
+import { useState, useEffect } from "react";
 import { Chart } from "react-google-charts";
+import { screenWidthAtom } from "~/lib/store";
 
 type GoogleChartData = (string | number)[][];
 
@@ -13,20 +16,27 @@ export const WorldMapChart: React.FC<{ data: GoogleChartData }> = ({
     legend: "none",
   };
 
+  // chart responsiveness
+  // changing the key forces a redraw of the chart when the screen width changes
+  const [key, setkey] = useState("");
+  const screenWidth = useAtomValue(screenWidthAtom);
+  useEffect(() => {
+    setkey(`org-countries-chart-${screenWidth}`);
+  }, [screenWidth]);
+
   return (
-    <div className="m-2 mr-6 flex h-fit flex-col items-center justify-center md:h-[22rem]">
-      <Chart
-        chartType="GeoChart"
-        width="100%"
-        height="100%"
-        data={data}
-        options={options}
-        loader={
-          <div className="flex w-full items-center justify-center">
-            <span className="loading loading-spinner loading-lg text-green"></span>
-          </div>
-        }
-      />
-    </div>
+    <Chart
+      key={key}
+      chartType="GeoChart"
+      width="100%"
+      height="100%"
+      data={data}
+      options={options}
+      loader={
+        <div className="flex w-full items-center justify-center">
+          <span className="loading loading-spinner loading-lg text-green"></span>
+        </div>
+      }
+    />
   );
 };
