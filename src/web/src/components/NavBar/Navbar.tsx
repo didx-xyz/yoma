@@ -61,7 +61,7 @@ const navBarLinksAdmin: TabItem[] = [
     url: "/organisations",
     badgeCount: null,
     selected: false,
-    iconImage: "🏦",
+    iconImage: "🏢",
   },
   {
     title: "Opportunities",
@@ -251,13 +251,9 @@ export const Navbar: React.FC = () => {
                       classNameSelect="text-gray-dark text-sm"
                     />
 
-                    {!session && (
-                      <SignInButton className="bg-theme btn btn-sm gap-2 border-0 border-none px-4 shadow-lg transition animate-in animate-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95" />
-                    )}
+                    {!session && <SignInButton className="!btn-sm" />}
 
-                    {session && (
-                      <SignOutButton className="bg-theme btn btn-sm gap-2 border-0 border-none px-4 shadow-lg transition animate-in animate-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95" />
-                    )}
+                    {session && <SignOutButton className="!btn-sm" />}
 
                     <div className="divider my-2 grow-0 !bg-gray" />
 
@@ -314,9 +310,7 @@ export const Navbar: React.FC = () => {
               classNameSelect="text-white mobile-select"
             />
 
-            {!session && (
-              <SignInButton className="bg-theme btn gap-2 border-0 border-none px-4 shadow-lg transition animate-in animate-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95" />
-            )}
+            {!session && <SignInButton />}
             {session && <UserMenu />}
           </div>
         </div>

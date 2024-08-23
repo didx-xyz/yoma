@@ -6,10 +6,10 @@ interface InputProps {
   url?: string | null;
 }
 
-export const HeaderWithLink: React.FC<InputProps> = ({ title, url }) => {
+export const Header: React.FC<InputProps> = ({ title, url }) => {
   return (
     <div className="flex h-[24px] flex-row items-center gap-2">
-      <span className="w-full truncate text-xs font-bold tracking-wider text-black md:text-sm">
+      <span className="w-full truncate text-sm font-semibold tracking-wider text-black md:text-base">
         {title}
       </span>
 

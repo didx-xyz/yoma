@@ -1,5 +1,5 @@
 import { useAtomValue, useSetAtom } from "jotai";
-import { signIn, useSession } from "next-auth/react";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
@@ -8,16 +8,15 @@ import iconBell from "public/images/icon-bell.webp";
 import stamps from "public/images/stamps.svg";
 import YoIDCard from "public/images/YoID-modal-card.webp";
 import { useCallback, useEffect, useState } from "react";
-import { IoMdFingerPrint } from "react-icons/io";
 import ReactModal from "react-modal";
 import { toast } from "react-toastify";
 import type { UserProfile } from "~/api/models/user";
 import { getOrganisationById } from "~/api/services/organisations";
 import { getUserProfile, patchYoIDOnboarding } from "~/api/services/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { handleUserSignIn } from "~/lib/authUtils";
 import {
   COOKIE_KEYCLOAK_SESSION,
-  GA_ACTION_USER_LOGIN_BEFORE,
   GA_ACTION_USER_YOIDONBOARDINGCONFIRMED,
   GA_CATEGORY_USER,
   ROLE_ADMIN,
@@ -28,13 +27,14 @@ import { trackGAEvent } from "~/lib/google-analytics";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
+  currentLanguageAtom,
   currentOrganisationIdAtom,
   currentOrganisationInactiveAtom,
   currentOrganisationLogoAtom,
   screenWidthAtom,
   userProfileAtom,
 } from "~/lib/store";
-import { fetchClientEnv } from "~/lib/utils";
+import { SignInButton } from "./SignInButton";
 import { ApiErrors } from "./Status/ApiErrors";
 import {
   UserProfileFilterOptions,
@@ -66,9 +66,9 @@ export const Global: React.FC = () => {
   const [updateProfileDialogVisible, setUpdateProfileDialogVisible] =
     useState(false);
 
-  const [isButtonLoading, setIsButtonLoading] = useState(false);
   const [isYoIDOnboardingLoading, setIsYoIDOnboardingLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
+  const currentLanguage = useAtomValue(currentLanguageAtom);
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(
@@ -76,23 +76,6 @@ export const Global: React.FC = () => {
   );
 
   //#region Functions
-  const performSignIn = useCallback(async () => {
-    setIsButtonLoading(true);
-
-    // 📊 GOOGLE ANALYTICS: track event
-    trackGAEvent(
-      GA_CATEGORY_USER,
-      GA_ACTION_USER_LOGIN_BEFORE,
-      "User Logging In. Redirected to External Authentication Provider",
-    );
-
-    signIn(
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
-      ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
-        "") as string,
-    );
-  }, [setIsButtonLoading]);
-
   const postLoginChecks = useCallback(
     (userProfile: UserProfile) => {
       const isUserProfileCompleted = (userProfile: UserProfile) => {
@@ -205,16 +188,17 @@ export const Global: React.FC = () => {
       const existingSessionCookieValue = cookies[COOKIE_KEYCLOAK_SESSION];
 
       if (existingSessionCookieValue) {
-        performSignIn();
+        // sign in with keycloak
+        handleUserSignIn(currentLanguage);
       }
     }
   }, [
     session,
     sessionStatus,
     userProfile,
+    currentLanguage,
     setUserProfile,
     postLoginChecks,
-    performSignIn,
   ]);
 
   // 🔔 VIEWPORT DETECTION
@@ -465,19 +449,7 @@ export const Global: React.FC = () => {
             <h5>{loginMessage}</h5>
 
             <div className="mt-8 flex flex-grow gap-4">
-              <button
-                type="button"
-                className="bg-theme btn rounded-full normal-case text-white hover:brightness-95 md:w-[150px]"
-                onClick={performSignIn}
-              >
-                {isButtonLoading && (
-                  <span className="loading loading-spinner loading-md mr-2 text-warning"></span>
-                )}
-                {!isButtonLoading && (
-                  <IoMdFingerPrint className="h-5 w-5 text-white" />
-                )}
-                <p className="text-white">Sign In</p>
-              </button>
+              <SignInButton />
             </div>
           </div>
         </div>
