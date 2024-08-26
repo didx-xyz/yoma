@@ -136,7 +136,7 @@ export const UserMenu: React.FC = () => {
         <label htmlFor="userMenu-drawer" className="drawer-overlay"></label>
 
         {/* MENU ITEMS */}
-        <div className="h-screen max-w-[20rem] overflow-y-auto rounded-lg bg-white">
+        <div className="h-screen max-w-[20rem] overflow-y-auto rounded-bl-lg rounded-br-none rounded-tl-lg rounded-tr-none bg-white">
           <div className="flex h-full flex-col">
             {/* USER (YOID) */}
             <Link

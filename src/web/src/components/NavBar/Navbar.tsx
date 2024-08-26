@@ -196,7 +196,7 @@ export const Navbar: React.FC = () => {
                   aria-label="close sidebar"
                   className="drawer-overlay"
                 ></label>
-                <div className="h-screen max-w-[20rem] overflow-y-auto rounded-lg bg-white p-4">
+                <div className="h-screen max-w-[20rem] overflow-y-auto rounded-bl-none rounded-br-lg rounded-tl-none rounded-tr-lg bg-white p-4">
                   <div className="flex h-full flex-col gap-2">
                     {/* HEADER */}
                     <div className="flex grow-0 flex-row items-center justify-center">
