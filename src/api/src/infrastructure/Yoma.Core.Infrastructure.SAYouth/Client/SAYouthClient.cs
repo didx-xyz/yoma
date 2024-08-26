@@ -2,6 +2,7 @@ using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -114,13 +115,21 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
 
       if (action == null) return;
 
-      //TODO: handle error response when already action?
-      await _options.BaseUrl
+      try
+      {
+        await _options.BaseUrl
             .AppendPathSegment("Opportunity")
             .AppendPathSegment(action.ToString())
             .WithAuthHeaders(GetAuthHeaders())
             .PutJsonAsync(requestAction)
             .EnsureSuccessStatusCodeAsync();
+      }
+      catch (HttpClientException ex)
+      {
+        // if we receive a 400 status code, it's likely that the opportunity is already in the desired state (paused or resumed).
+        // we assume that the action was already applied and do not need to re-throw the exception.
+        if (ex.StatusCode != System.Net.HttpStatusCode.BadRequest) throw;
+      }
     }
 
     public async Task DeleteOpportunity(string externalId)
@@ -141,10 +150,10 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       };
 
       await _options.BaseUrl
-        .AppendPathSegment("Opportunity/Delete")
-        .WithAuthHeaders(GetAuthHeaders())
-        .SendJsonAsync(HttpMethod.Delete, request)
-        .EnsureSuccessStatusCodeAsync();
+      .AppendPathSegment("Opportunity/Delete")
+      .WithAuthHeaders(GetAuthHeaders())
+      .SendJsonAsync(HttpMethod.Delete, request)
+      .EnsureSuccessStatusCodeAsync();
     }
     #endregion
 
