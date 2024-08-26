@@ -40,7 +40,7 @@ export const UserMenu: React.FC = () => {
               ? `/organisations/${organisation.id}`
               : `/organisations/${organisation.id}/edit`
           }
-          className="flex grow flex-row text-gray-dark  hover:brightness-95"
+          className="flex grow flex-row text-gray-dark hover:brightness-95"
           onClick={() => setDrawerOpen(false)}
           id={`userMenu_orgs_${organisation.name}`} // e2e
         >
@@ -263,7 +263,7 @@ export const UserMenu: React.FC = () => {
                     onClick={() => setDrawerOpen(false)}
                   >
                     <div className="mr-2 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow">
-                      🏦
+                      🏢
                     </div>
                     <div className="flex flex-col">
                       <div className="text-sm text-black">Organisations</div>
@@ -283,7 +283,7 @@ export const UserMenu: React.FC = () => {
 
             {/* SIGN OUT */}
             <div className="flex flex-row items-center bg-white-shade px-4 py-2">
-              <SignOutButton className="bg-theme btn btn-sm grow gap-2 border-0 border-none px-4 shadow-lg transition animate-in animate-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95" />
+              <SignOutButton className="grow" />
             </div>
           </div>
         </div>

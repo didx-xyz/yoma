@@ -5,11 +5,17 @@ interface SuspenseProps {
   isLoading: boolean;
   error?: any;
   children: React.ReactNode;
+  loader?: React.ReactNode;
 }
 
-const Suspense: React.FC<SuspenseProps> = ({ isLoading, error, children }) => {
+const Suspense: React.FC<SuspenseProps> = ({
+  isLoading,
+  error,
+  children,
+  loader = <LoadingSkeleton />,
+}) => {
   if (isLoading) {
-    return <LoadingSkeleton />;
+    return loader;
   }
 
   if (error) {

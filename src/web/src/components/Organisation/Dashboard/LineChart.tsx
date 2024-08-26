@@ -1,7 +1,10 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Chart, { type GoogleChartWrapper } from "react-google-charts";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
 import Image from "next/image";
+import { useAtomValue } from "jotai";
+import { screenWidthAtom } from "~/lib/store";
+import NoRowsMessage from "~/components/NoRowsMessage";
 
 export const LineChart: React.FC<{
   data: TimeIntervalSummary | undefined;
@@ -48,6 +51,14 @@ export const LineChart: React.FC<{
       setSelectedLegendIndex(null);
     }
   };
+
+  // chart responsiveness
+  // changing the key forces a redraw of the chart when the screen width changes
+  const [key, setkey] = useState("");
+  const screenWidth = useAtomValue(screenWidthAtom);
+  useEffect(() => {
+    setkey(`org-engagement-chart-${screenWidth}`);
+  }, [screenWidth]);
 
   const Legend = () => (
     <div className="ml-0 flex flex-row gap-2 md:ml-3">
@@ -111,6 +122,7 @@ export const LineChart: React.FC<{
       {showLabels ? (
         <div className="ml-4 mt-2 flex h-full w-[94%] flex-col items-stretch justify-center pb-4 md:ml-6 md:w-full md:pb-0">
           <Chart
+            key={key}
             chartType="AreaChart"
             loader={
               <div className="mt-20 flex w-full items-center justify-center">
@@ -171,8 +183,13 @@ export const LineChart: React.FC<{
           />
         </div>
       ) : (
-        <div className="m-6 flex flex-grow flex-col items-center justify-center rounded-lg bg-gray-light p-12 text-center">
-          Not enough data to display
+        <div className="flex h-full items-center justify-center rounded-lg bg-gray-light">
+          <NoRowsMessage
+            title={"Not enough data to display."}
+            description={
+              "This chart will display data as more activity is recorded on the system."
+            }
+          />
         </div>
       )}
     </div>
