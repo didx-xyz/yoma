@@ -251,12 +251,12 @@ export const UserMenu: React.FC = () => {
             )}
 
             {/* ORGANISATIONS */}
-            {(userProfile?.adminsOf?.length ?? 0) > 0 && (
-              <>
-                <div
-                  className="h-full min-h-[60px] overflow-y-auto bg-white-shade"
-                  id="organisations"
-                >
+            <div
+              className="h-full min-h-[60px] overflow-y-auto bg-white-shade"
+              id="organisations"
+            >
+              {(userProfile?.adminsOf?.length ?? 0) > 0 && (
+                <>
                   <Link
                     href="/organisations"
                     className="flex flex-row items-center bg-white-shade px-4 py-2 hover:bg-gray"
@@ -276,10 +276,10 @@ export const UserMenu: React.FC = () => {
                   {userProfile?.adminsOf?.map((organisation) =>
                     renderOrganisationMenuItem(organisation),
                   )}
-                </div>
-                <div className="divider m-0 !bg-gray" />
-              </>
-            )}
+                  <div className="divider m-0 !bg-gray" />
+                </>
+              )}
+            </div>
 
             {/* SIGN OUT */}
             <div className="flex flex-row items-center bg-white-shade px-4 py-2">
