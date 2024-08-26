@@ -159,18 +159,16 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
           filterOptions?.includes(
             OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
           )) && (
-          <div className="mt-10 hidden flex-col items-center justify-center gap-2 pb-8 md:flex">
-            <div className="flex justify-center gap-2">
-              {/* CATEGORIES */}
-              {filterOptions?.includes(OpportunityFilterOptions.CATEGORIES) && (
-                <OpportunityCategoriesHorizontalFilter
-                  lookups_categories={lookups_categories}
-                  selected_categories={searchFilter?.categories}
-                  onClick={onClickCategoryFilter}
-                />
-              )}
-            </div>
-          </div>
+          <>
+            {/* CATEGORIES */}
+            {filterOptions?.includes(OpportunityFilterOptions.CATEGORIES) && (
+              <OpportunityCategoriesHorizontalFilter
+                lookups_categories={lookups_categories}
+                selected_categories={searchFilter?.categories}
+                onClick={onClickCategoryFilter}
+              />
+            )}
+          </>
         )}
 
       {filterOptions?.some(

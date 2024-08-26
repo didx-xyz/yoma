@@ -599,8 +599,8 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      {/* TITLE & SEARCH INPUT */}
-      <div className="container z-10 mt-16 max-w-7xl px-2 py-8">
+      <div className="container z-10 mt-14 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
+        {/* TITLE & SEARCH INPUT */}
         <div className="flex flex-col gap-2 py-4 sm:flex-row">
           <h2 className="mb-4 flex flex-grow items-center font-semibold text-white">
             Opportunities
@@ -617,43 +617,42 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         </div>
 
         {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
-        <div className="mb-4 mt-10 hidden md:flex">
-          {lookups_categories &&
-            lookups_countries &&
-            lookups_languages &&
-            lookups_organisations && (
-              <OpportunityAdminFilterHorizontal
-                htmlRef={myRef.current!}
-                searchFilter={searchFilter}
-                lookups_categories={lookups_categories}
-                lookups_countries={lookups_countries}
-                lookups_languages={lookups_languages}
-                lookups_types={lookups_types}
-                lookups_organisations={lookups_organisations}
-                lookups_publishedStates={lookups_publishedStates}
-                lookups_statuses={lookups_statuses}
-                clearButtonText="Clear"
-                onClear={onClearFilter}
-                onSubmit={onSubmitFilter}
-                onOpenFilterFullWindow={() => {
-                  setFilterFullWindowVisible(!filterFullWindowVisible);
-                }}
-                filterOptions={[
-                  OpportunityFilterOptions.CATEGORIES,
-                  OpportunityFilterOptions.TYPES,
-                  OpportunityFilterOptions.COUNTRIES,
-                  OpportunityFilterOptions.LANGUAGES,
-                  OpportunityFilterOptions.ORGANIZATIONS,
-                  OpportunityFilterOptions.DATE_START,
-                  OpportunityFilterOptions.DATE_END,
-                  OpportunityFilterOptions.STATUSES,
-                  OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
-                ]}
-                totalCount={searchResults?.totalCount ?? 0}
-                exportToCsv={setExportDialogOpen}
-              />
-            )}
-        </div>
+
+        {lookups_categories &&
+          lookups_countries &&
+          lookups_languages &&
+          lookups_organisations && (
+            <OpportunityAdminFilterHorizontal
+              htmlRef={myRef.current!}
+              searchFilter={searchFilter}
+              lookups_categories={lookups_categories}
+              lookups_countries={lookups_countries}
+              lookups_languages={lookups_languages}
+              lookups_types={lookups_types}
+              lookups_organisations={lookups_organisations}
+              lookups_publishedStates={lookups_publishedStates}
+              lookups_statuses={lookups_statuses}
+              clearButtonText="Clear"
+              onClear={onClearFilter}
+              onSubmit={onSubmitFilter}
+              onOpenFilterFullWindow={() => {
+                setFilterFullWindowVisible(!filterFullWindowVisible);
+              }}
+              filterOptions={[
+                OpportunityFilterOptions.CATEGORIES,
+                OpportunityFilterOptions.TYPES,
+                OpportunityFilterOptions.COUNTRIES,
+                OpportunityFilterOptions.LANGUAGES,
+                OpportunityFilterOptions.ORGANIZATIONS,
+                OpportunityFilterOptions.DATE_START,
+                OpportunityFilterOptions.DATE_END,
+                OpportunityFilterOptions.STATUSES,
+                OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
+              ]}
+              totalCount={searchResults?.totalCount ?? 0}
+              exportToCsv={setExportDialogOpen}
+            />
+          )}
 
         {/* SEARCH RESULTS */}
         {!isLoading && (
