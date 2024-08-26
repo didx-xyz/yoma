@@ -24,7 +24,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
 
       if (string.IsNullOrEmpty(value.PrimaryContactName)) return false;
       if (string.IsNullOrEmpty(value.PrimaryContactEmail)) return false;
-      if (string.IsNullOrEmpty(value.PrimaryContactPhone)) return false;
+      // omit phone numbers due to the complexity of global formatting and align Yoma's allowed formatting with SA Youth
 
       return true;
     }

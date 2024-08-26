@@ -223,8 +223,8 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
         AddressLine1 = organization.StreetAddress,
         SuburbName = "n/a",
         CityName = organization.City,
-        PostalCode = organization.PostalCode,
-        Province = organization.Province,
+        PostalCode = organization.PostalCode?.RemoveSpecialCharacters().RemoveWhiteSpaces().TrimToLength(4),
+        Province = organization.Province?.TrimToLength(50),
       };
 
       return requestUpsert;
@@ -246,10 +246,10 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       //nullable fields matched on SA Youth's request even though not nullable; rely on their error handling
       requestUpsert.Contact = new Contact
       {
-        FirstName = organization.PrimaryContactName,
-        Surname = organization.PrimaryContactName,
+        FirstName = organization.PrimaryContactName?.RemoveSpecialCharacters().TrimToLength(50),
+        Surname = organization.PrimaryContactName?.RemoveSpecialCharacters().TrimToLength(50),
         EmailAddress = organization.PrimaryContactEmail,
-        PhoneNumber = organization.PrimaryContactPhone
+        PhoneNumber = null // omit phone numbers due to the complexity of global formatting and align Yoma's allowed formatting with SA Youth
       };
 
       return requestUpsert;
