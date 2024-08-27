@@ -3,8 +3,7 @@ apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ include "yoma-api.fullname" . }}-sqlserver-init
-  labels:
-    {{- include "yoma-api.labels" . | nindent 4 }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" .Values.commonLabels "context" $ ) | nindent 4 }}
   annotations:
     # This is what defines this resource as a hook. Without this line, the
     # job is considered part of the release.
@@ -15,8 +14,8 @@ spec:
   template:
     metadata:
       name: {{ include "yoma-api.fullname" . }}
-      labels:
-        {{- include "yoma-api.labels" . | nindent 4 }}
+      {{- $podLabels := include "common.tplvalues.merge" ( dict "values" ( list .Values.podLabels .Values.commonLabels ) "context" . ) }}
+      labels: {{- include "common.labels.standard" ( dict "customLabels" $podLabels "context" $ ) | nindent 8 }}
     spec:
       restartPolicy: Never
       {{- if .Values.postInstallHook.initContainers }}

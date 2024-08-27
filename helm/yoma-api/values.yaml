@@ -26,7 +26,7 @@ serviceAccount:
 podAnnotations:
   ad.datadoghq.com/yoma-api.logs: '[{ "service" : "yoma-api", "source" : "csharp"}]'
   # gcr.io/datadoghq/dd-lib-dotnet-init
-  admission.datadoghq.com/dotnet-lib.version: v2.56.0
+  admission.datadoghq.com/dotnet-lib.version: v2.57.0
 deploymentLabels:
   tags.datadoghq.com/service: yoma-api
   tags.datadoghq.com/version: "{{ .Values.image.tag | default .Chart.AppVersion }}"
@@ -34,6 +34,7 @@ podLabels:
   admission.datadoghq.com/enabled: "false" # disabled by default (for now)
   tags.datadoghq.com/service: yoma-api
   tags.datadoghq.com/version: "{{ .Values.image.tag | default .Chart.AppVersion }}"
+commonLabels: {}
 
 env:
   DD_RUNTIME_METRICS_ENABLED: true
@@ -120,35 +121,31 @@ autoscaling:
   maxReplicas: 100
   targetCPUUtilizationPercentage: 80
   # targetMemoryUtilizationPercentage: 80
+  behavior:
+    # https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/#default-behavior
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 15
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 15
 
 nodeSelector: {}
 tolerations: []
-affinity:
-  nodeAffinity:
-    preferredDuringSchedulingIgnoredDuringExecution:
-      - weight: 100
-        preference:
-          matchExpressions:
-            - key: node.kubernetes.io/lifecycle
-              operator: In
-              values:
-                - spot
-  podAntiAffinity:
-    preferredDuringSchedulingIgnoredDuringExecution:
-      - weight: 100
-        podAffinityTerm:
-          labelSelector:
-            matchLabels:
-              app.kubernetes.io/name: '{{ include "yoma-api.name" . }}'
-              app.kubernetes.io/instance: "{{ .Release.Name }}"
-          topologyKey: kubernetes.io/hostname
-      - weight: 100
-        podAffinityTerm:
-          labelSelector:
-            matchLabels:
-              app.kubernetes.io/name: '{{ include "yoma-api.name" . }}'
-              app.kubernetes.io/instance: "{{ .Release.Name }}"
-          topologyKey: kubernetes.io/zone
+affinity: {}
+podAffinityPreset: ""
+podAntiAffinityPreset: soft
+nodeAffinityPreset:
+  type: soft
+  key: node.kubernetes.io/lifecycle
+  values:
+    - spot
 
 volumeMounts: {}
 volumes: {}
