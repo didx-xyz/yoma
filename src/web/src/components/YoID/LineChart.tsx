@@ -8,7 +8,8 @@ import NoRowsMessage from "../NoRowsMessage";
 
 export const LineChart: React.FC<{
   data: TimeIntervalSummary;
-}> = ({ data }) => {
+  forceSmall?: boolean;
+}> = ({ data, forceSmall }) => {
   const colors = ["#387F6A", "#4CADE9", "#FE4D57", "#F9AB3E"]; // green, blue, pink, orange
 
   const [selectedLegendIndex, setSelectedLegendIndex] = useState<number | null>(
@@ -54,7 +55,11 @@ export const LineChart: React.FC<{
   };
 
   const Legend = () => (
-    <div className="mb-2 flex flex-grow flex-row justify-between text-xs md:justify-normal md:gap-4 md:text-sm">
+    <div
+      className={`mb-2 flex flex-grow flex-row justify-between ${
+        forceSmall ? "text-xs" : "text-xs md:justify-normal md:gap-4 md:text-sm"
+      }`}
+    >
       {data?.legend.map((name, index) => (
         <Link
           key={index}
@@ -76,7 +81,9 @@ export const LineChart: React.FC<{
                       ? "💗"
                       : "❔"}
             </span>
-            <span className="hidden sm:flex">{name}</span>
+            <span className={`${forceSmall ? "hidden" : "hidden sm:flex"}`}>
+              {name}
+            </span>
           </div>
           <div className="badge badge-xs bg-gray text-black">
             {data.count[index]?.toLocaleString()}

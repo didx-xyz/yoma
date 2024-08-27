@@ -212,7 +212,7 @@ const YoIDDashboard: NextPageWithLayout<{
             </span>
           </button>
 
-          <div className="flex h-full w-full flex-col items-center gap-4 rounded-lg bg-white p-4 shadow md:h-[300px]">
+          <div className="flex h-full w-full flex-col items-center justify-center gap-4 rounded-lg bg-white p-4 shadow md:h-[300px]">
             <Suspense
               isLoading={myOpportunitiesSummaryIsLoading}
               error={myOpportunitiesSummaryError}
@@ -220,7 +220,10 @@ const YoIDDashboard: NextPageWithLayout<{
               {graphView ? (
                 <LineChart data={myOpportunitiesSummary!} />
               ) : (
-                <OpportunitiesSummary data={myOpportunitiesSummary} />
+                <OpportunitiesSummary
+                  data={myOpportunitiesSummary}
+                  showSaved={true}
+                />
               )}
             </Suspense>
           </div>

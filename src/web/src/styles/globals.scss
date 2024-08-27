@@ -52,12 +52,6 @@ body {
   --primary: theme("colors.gray-light");
   --secondary: theme("colors.gray-dark");
 }
-/* Firefox */
-//NB: this class forces the scrollbars to always be visible on the carousels 🤷‍♂️
-// * {
-//   scrollbar-width: thin;
-//   scrollbar-color: var(--secondary) var(--primary);
-// }
 
 /* Chrome, Edge, and Safari */
 *::-webkit-scrollbar {
@@ -67,7 +61,7 @@ body {
 *::-webkit-scrollbar-track {
   background: var(--primary);
   border-radius: 5px;
-  background-color: var(--secondary) var(--primary); //
+  background-color: var(--secondary) var(--primary);
 }
 
 *::-webkit-scrollbar-thumb {
@@ -78,7 +72,7 @@ body {
 
 // STYLE OVERRIDES PER THEME (PURPLE/GREEN/BLUE)
 :root .bg-theme {
-  @apply bg-purple; // default
+  @apply bg-purple;
 }
 
 [data-theme="purple"] .bg-theme {
