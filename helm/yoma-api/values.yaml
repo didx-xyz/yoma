@@ -179,16 +179,46 @@ postInstallHook:
         - name: init
           mountPath: /init
 
-readinessProbe:
-  enabled: true
 livenessProbe:
   enabled: true
+  # failureThreshold: 3
+  httpGet:
+    path: /api/v3/health/live
+    port: http
+  # initialDelaySeconds: 0
+  # periodSeconds: 10
+  # successThreshold: 1
+  # timeoutSeconds: 1
+readinessProbe:
+  enabled: true
+  # failureThreshold: 3
+  httpGet:
+    path: /api/v3/health/ready
+    port: http
+  # initialDelaySeconds: 0
+  # periodSeconds: 10
+  # successThreshold: 1
+  # timeoutSeconds: 1
 startupProbe:
   enabled: true
-  periodSeconds: 10
   failureThreshold: 30
+  httpGet:
+    path: /api/v3/health/live
+    port: http
+  # initialDelaySeconds: 0
+  periodSeconds: 10
   successThreshold: 1
   timeoutSeconds: 3
+
+lifecycleHooks:
+  preStop:
+    exec:
+      command:
+        - /bin/sh
+        - -c
+        - sleep 5
+    # sleep:
+    #   seconds: 5
 
 podDisruptionBudget:
   enabled: false

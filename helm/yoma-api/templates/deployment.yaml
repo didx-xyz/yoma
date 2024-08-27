@@ -42,6 +42,9 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          {{- if .Values.lifecycleHooks }}
+          lifecycle: {{- include "common.tplvalues.render" (dict "value" .Values.lifecycleHooks "context" $) | nindent 12 }}
+          {{- end }}
           {{- if .Values.command }}
           command:
             {{- toYaml .Values.command | nindent 12 }}
@@ -59,38 +62,17 @@ spec:
               containerPort: {{ $v.port }}
               protocol: TCP
           {{- end }}
-          {{- if .Values.livenessProbe.enabled }}
+          {{- if .Values.livenessProbe.enabled}}
           livenessProbe:
-            httpGet:
-              path: /api/v3/health/live
-              port: {{ .Values.service.portName | default "http"  }}
-            initialDelaySeconds: {{ default 0 .Values.livenessProbe.initialDelaySeconds }}
-            periodSeconds: {{ default 10 .Values.livenessProbe.periodSeconds }}
-            failureThreshold: {{ default 3 .Values.livenessProbe.failureThreshold }}
-            successThreshold: {{ default 1 .Values.livenessProbe.successThreshold }}
-            timeoutSeconds: {{ default 1 .Values.livenessProbe.timeoutSeconds }}
+            {{- tpl (toYaml (omit .Values.livenessProbe "enabled")) . | nindent 12 }}
           {{- end }}
-          {{- if .Values.readinessProbe.enabled }}
+          {{- if .Values.readinessProbe.enabled}}
           readinessProbe:
-            httpGet:
-              path: /api/v3/health/ready
-              port: {{ .Values.service.portName | default "http"  }}
-            initialDelaySeconds: {{ default 0 .Values.readinessProbe.initialDelaySeconds }}
-            periodSeconds: {{ default 10 .Values.readinessProbe.periodSeconds }}
-            failureThreshold: {{ default 3 .Values.readinessProbe.failureThreshold }}
-            successThreshold: {{ default 1 .Values.readinessProbe.successThreshold }}
-            timeoutSeconds: {{ default 1 .Values.readinessProbe.timeoutSeconds }}
+            {{- tpl (toYaml (omit .Values.readinessProbe "enabled")) . | nindent 12 }}
           {{- end }}
-          {{- if .Values.startupProbe.enabled }}
+          {{- if .Values.startupProbe.enabled}}
           startupProbe:
-            httpGet:
-              path: /api/v3/health/live
-              port: {{ .Values.service.portName | default "http"  }}
-            initialDelaySeconds: {{ default 0 .Values.startupProbe.initialDelaySeconds }}
-            periodSeconds: {{ default 10 .Values.startupProbe.periodSeconds }}
-            failureThreshold: {{ default 3 .Values.startupProbe.failureThreshold }}
-            successThreshold: {{ default 1 .Values.startupProbe.successThreshold }}
-            timeoutSeconds: {{ default 1 .Values.startupProbe.timeoutSeconds }}
+            {{- tpl (toYaml (omit .Values.startupProbe "enabled")) . | nindent 12 }}
           {{- end }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
