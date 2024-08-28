@@ -153,6 +153,9 @@ services:
       CLIENT_YOMA_WEB_SECRET: superSecretYomaWebClientSecret
       CLIENT_ATINGI_SECRET: superSecretAtingiClientSecret
       CLIENT_GOODWALL_SECRET: superSecretAtingiClientSecret
+      CLIENT_YOUTHHUB_SECRET: superSecretYouthHubClientSecret
+      CLIENT_YOUTHHUB_URL: ""
+      CLIENT_YOUTHHUB_URL_REDIRECT: ""
       SA_YOMA_API_PASSWORD: &KCAdminPassword superSecretYomaApiServiceAccountPassword
       SMTP_PASSWORD: superSecretSmtpPassword
     volumes:
