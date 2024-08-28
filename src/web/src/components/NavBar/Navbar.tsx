@@ -5,19 +5,23 @@ import Link from "next/link";
 import logoPicDark from "public/images/logo-dark.webp";
 import logoPicLight from "public/images/logo-light.webp";
 import { useMemo, useState } from "react";
-import { IoMdClose, IoMdMenu } from "react-icons/io";
+import { IoMdClose, IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
   currentOrganisationIdAtom,
+  userProfileAtom,
 } from "~/lib/store";
 import { SignInButton } from "../SignInButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
 import { Footer } from "../Footer/Footer";
 import { SignOutButton } from "../SignOutButton";
+import type { OrganizationInfo } from "~/api/models/user";
+import { AvatarImage } from "../AvatarImage";
+import { ROLE_ADMIN } from "~/lib/constants";
 
 const navBarLinksUser: TabItem[] = [
   {
@@ -103,6 +107,8 @@ export const Navbar: React.FC = () => {
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
   const { data: session } = useSession();
+  const userProfile = useAtomValue(userProfileAtom);
+  const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(isDrawerOpen);
@@ -166,14 +172,83 @@ export const Navbar: React.FC = () => {
     }
   }, [activeRoleView, currentOrganisationId]);
 
+  const renderOrganisationMenuItem = (organisation: OrganizationInfo) => {
+    if (organisation.status == "Deleted") return null;
+
+    return (
+      <li
+        key={`userMenu_orgs_${organisation.id}`}
+        className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
+      >
+        <Link
+          href={
+            organisation.status == "Active"
+              ? `/organisations/${organisation.id}`
+              : `/organisations/${organisation.id}/edit`
+          }
+          onClick={() => setDrawerOpen(false)}
+          id={`userMenu_orgs_${organisation.name}`} // e2e
+        >
+          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+            <AvatarImage
+              icon={organisation?.logoURL ?? null}
+              alt={`${organisation.name} logo`}
+              size={20}
+            />
+          </span>
+          <div className="flex flex-row items-center gap-2">
+            <div className="w-[170px] truncate text-sm">
+              {organisation.name}
+            </div>
+            <div className="flex flex-row items-center">
+              {organisation.status == "Active" && (
+                <>
+                  <span
+                    className="tooltip tooltip-left tooltip-secondary mr-2 h-2 w-2 rounded-full bg-success"
+                    data-tip="Active"
+                  ></span>
+                </>
+              )}
+              {organisation.status == "Inactive" && (
+                <span
+                  className="tooltip tooltip-left tooltip-secondary mr-2 h-2 w-2 rounded-full bg-warning"
+                  data-tip="Pending"
+                ></span>
+              )}
+              {organisation.status == "Declined" && (
+                <span
+                  className="tooltip tooltip-left tooltip-secondary mr-2 h-2 w-2 rounded-full bg-error"
+                  data-tip="Declined"
+                ></span>
+              )}
+            </div>
+
+            {/* SETTING BUTTON */}
+            <div className="pl-2x flex items-center">
+              <Link
+                key={organisation.id}
+                href={`/organisations/${organisation.id}/edit`}
+                className="tooltip tooltip-left tooltip-secondary rounded-full bg-white p-1 text-gray-dark shadow duration-300 hover:bg-gray-dark hover:text-gray-light"
+                onClick={() => setDrawerOpen(false)}
+                data-tip="Settings"
+              >
+                <IoMdSettings className="h-4 w-4" />
+              </Link>
+            </div>
+          </div>
+        </Link>
+      </li>
+    );
+  };
+
   return (
     <div className="fixed left-0 right-0 top-0 z-40">
       <div className={`bg-theme navbar z-40`}>
         <div className="flex w-full justify-between md:flex md:justify-between">
           {/* LEFT MENU */}
           <div className="flex items-center justify-start">
-            {/* LEFT DRAWER (MOBILE) */}
-            <div className="drawer w-auto lg:hidden">
+            {/* LEFT DRAWER */}
+            <div className="drawer w-auto">
               <input
                 id="nav-drawer"
                 type="checkbox"
@@ -251,6 +326,66 @@ export const Navbar: React.FC = () => {
                       classNameSelect="text-gray-dark text-sm"
                     />
 
+                    <div className="divider my-2 grow-0 !bg-gray" />
+
+                    {/* ORGANISATIONS */}
+                    {(userProfile?.adminsOf?.length ?? 0) > 0 && (
+                      <>
+                        <div
+                          className="bg-white-shadex h-full max-h-[120px] overflow-x-hidden overflow-y-scroll"
+                          id="organisations"
+                        >
+                          <ul className="menu grow p-0">
+                            {userProfile?.adminsOf?.map((organisation) =>
+                              renderOrganisationMenuItem(organisation),
+                            )}
+
+                            <li
+                              key="userMenu_orgs_all"
+                              className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
+                            >
+                              <Link
+                                href="/organisations"
+                                onClick={() => setDrawerOpen(false)}
+                                id="userMenu_orgs_all"
+                              >
+                                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                                  🏢
+                                </span>
+                                <span>All Organisations</span>
+                              </Link>
+                            </li>
+                          </ul>
+                        </div>
+                        <div className="divider my-2 grow-0 !bg-gray" />
+                      </>
+                    )}
+
+                    {/* ADMIN */}
+                    {(activeRoleView == RoleView.Admin || isAdmin) && (
+                      <>
+                        <ul className="menu grow p-0">
+                          <li
+                            key="userMenu_admin"
+                            className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
+                          >
+                            <Link
+                              href="/organisations"
+                              onClick={() => setDrawerOpen(false)}
+                              id="userMenu_admin"
+                            >
+                              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                                🛠️
+                              </span>
+                              <span>Administration</span>
+                            </Link>
+                          </li>
+                        </ul>
+
+                        <div className="divider my-2 grow-0 !bg-gray" />
+                      </>
+                    )}
+
                     {!session && <SignInButton className="!btn-sm" />}
 
                     {session && <SignOutButton className="!btn-sm" />}
@@ -282,7 +417,7 @@ export const Navbar: React.FC = () => {
           </div>
 
           {/* CENTER MENU (DESKTOP) */}
-          <ul className="mx-auto hidden w-fit items-center justify-center lg:flex">
+          {/* <ul className="mx-auto hidden w-fit items-center justify-center lg:flex">
             {currentNavbarLinks.map((link, index) => (
               <li
                 key={index}
@@ -300,7 +435,7 @@ export const Navbar: React.FC = () => {
                 </Link>
               </li>
             ))}
-          </ul>
+          </ul> */}
 
           {/* RIGHT MENU */}
           <div className="flex items-center justify-end gap-2 md:gap-4">

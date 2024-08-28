@@ -4,12 +4,19 @@ import { MdKeyboardArrowRight } from "react-icons/md";
 interface InputProps {
   title: string;
   url?: string | null;
+  className?: string;
 }
 
-export const Header: React.FC<InputProps> = ({ title, url }) => {
+export const Header: React.FC<InputProps> = ({
+  title,
+  url,
+  className = "text-sm md:text-base font-semibold text-black",
+}) => {
   return (
-    <div className="flex h-[24px] flex-row items-center gap-2">
-      <span className="w-full truncate text-sm font-semibold tracking-wider text-black md:text-base">
+    <div className="flex h-[24px] w-full flex-row items-center gap-2">
+      <span
+        className={`w-full truncate tracking-wider text-black ${className}`}
+      >
         {title}
       </span>
 
