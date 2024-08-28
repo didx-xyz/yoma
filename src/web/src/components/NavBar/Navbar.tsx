@@ -19,7 +19,7 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
 import { Footer } from "../Footer/Footer";
 import { SignOutButton } from "../SignOutButton";
-import { OrganizationInfo } from "~/api/models/user";
+import type { OrganizationInfo } from "~/api/models/user";
 import { AvatarImage } from "../AvatarImage";
 import { ROLE_ADMIN } from "~/lib/constants";
 

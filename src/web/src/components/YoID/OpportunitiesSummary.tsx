@@ -1,12 +1,13 @@
 import Link from "next/link";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
-type MenuItem = {
+
+interface MenuItem {
   href: string;
   background: string;
   count: number;
   label: string;
   emoji: string;
-};
+}
 
 export const OpportunitiesSummary: React.FC<{
   data: TimeIntervalSummary | undefined;
@@ -58,7 +59,7 @@ export const OpportunitiesSummary: React.FC<{
   }
 
   return (
-    <div className="ridxxx w-fullxx grid-cols-1xx md:grid-cols-3xx h-fullxxx flex flex-row gap-3">
+    <div className="flex flex-row gap-3">
       {menuItems.map((item, index) => (
         <Link
           key={index}
@@ -67,10 +68,7 @@ export const OpportunitiesSummary: React.FC<{
           className="flex aspect-square w-[30%] min-w-[80px] flex-col items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center text-white shadow-custom"
         >
           <div className="flex h-full w-full flex-col items-center justify-center rounded-full border-2 border-dotted border-orange bg-green">
-            <div
-              className="whitespace-nowrap text-sm font-semibold"
-              // style={{ fontSize: "0.85rem" }}
-            >
+            <div className="whitespace-nowrap text-sm font-semibold">
               {item.emoji} {item.count}
             </div>
             <span className="text-sx -mt-3x" style={{ fontSize: "0.65rem" }}>

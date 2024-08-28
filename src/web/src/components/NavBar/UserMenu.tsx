@@ -1,9 +1,13 @@
+import { useQuery } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useState } from "react";
 import { IoIosCheckmarkCircle, IoMdSettings } from "react-icons/io";
 import { type OrganizationInfo } from "~/api/models/user";
+import { searchCredentials } from "~/api/services/credentials";
+import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
+import { getUserSkills } from "~/api/services/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { MAXINT32, ROLE_ADMIN } from "~/lib/constants";
 import {
@@ -13,21 +17,14 @@ import {
   userProfileAtom,
 } from "~/lib/store";
 import { AvatarImage } from "../AvatarImage";
-import { SignOutButton } from "../SignOutButton";
-import YoIDDashboard from "~/pages/yoid";
-import credentials from "next-auth/providers/credentials";
 import { Header } from "../Common/Header";
+import Suspense from "../Common/Suspense";
 import NoRowsMessage from "../NoRowsMessage";
 import { LineChart } from "../YoID/LineChart";
 import { OpportunitiesSummary } from "../YoID/OpportunitiesSummary";
 import { PassportCard } from "../YoID/PassportCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
-import Suspense from "../Common/Suspense";
-import { useQuery } from "@tanstack/react-query";
-import { searchCredentials } from "~/api/services/credentials";
-import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
-import { getUserSkills } from "~/api/services/user";
 
 export const UserMenu: React.FC = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
