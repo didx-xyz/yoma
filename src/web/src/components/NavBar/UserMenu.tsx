@@ -33,7 +33,6 @@ export const UserMenu: React.FC = () => {
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationLogo = useAtomValue(currentOrganisationLogoAtom);
   const { data: session } = useSession();
-  const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(isDrawerOpen);
@@ -92,71 +91,6 @@ export const UserMenu: React.FC = () => {
     enabled: isDrawerOpen,
   });
   //#endregion
-
-  const renderOrganisationMenuItem = (organisation: OrganizationInfo) => {
-    if (organisation.status == "Deleted") return null;
-
-    return (
-      <div className="flex flex-row items-center bg-white-shade px-4 py-2 hover:bg-gray">
-        {/* ORGANISATION LINK */}
-        <Link
-          key={`userMenu_orgs_${organisation.id}`}
-          href={
-            organisation.status == "Active"
-              ? `/organisations/${organisation.id}`
-              : `/organisations/${organisation.id}/edit`
-          }
-          className="flex grow flex-row text-gray-dark hover:brightness-95"
-          onClick={() => setDrawerOpen(false)}
-          id={`userMenu_orgs_${organisation.name}`} // e2e
-        >
-          <AvatarImage
-            icon={organisation?.logoURL ?? null}
-            alt={`${organisation.name} logo`}
-            size={44}
-          />
-
-          <div className="ml-2 flex flex-col">
-            <div className="w-[190px] truncate text-sm text-black">
-              {organisation.name}
-            </div>
-            <div className="flex flex-row items-center">
-              {organisation.status == "Active" && (
-                <>
-                  <span className="mr-2 h-2 w-2 rounded-full bg-success"></span>
-                  <div className="text-xs">{organisation.status}</div>
-                </>
-              )}
-              {organisation.status == "Inactive" && (
-                <>
-                  <span className="mr-2 h-2 w-2 rounded-full bg-warning"></span>
-                  <div className="text-xs">Pending</div>
-                </>
-              )}
-              {organisation.status == "Declined" && (
-                <>
-                  <span className="mr-2 h-2 w-2 rounded-full bg-error"></span>
-                  <div className="text-xs">{organisation.status}</div>
-                </>
-              )}
-            </div>
-          </div>
-        </Link>
-
-        {/* SETTING BUTTON */}
-        <div className="flex items-center pl-2">
-          <Link
-            key={organisation.id}
-            href={`/organisations/${organisation.id}/edit`}
-            className="rounded-full bg-white p-1 text-gray-dark shadow duration-300 hover:bg-gray-dark hover:text-gray-light"
-            onClick={() => setDrawerOpen(false)}
-          >
-            <IoMdSettings className="h-4 w-4" />
-          </Link>
-        </div>
-      </div>
-    );
-  };
 
   return (
     <div className="drawer-end">
