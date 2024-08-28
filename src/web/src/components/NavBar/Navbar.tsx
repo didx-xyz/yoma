@@ -247,8 +247,8 @@ export const Navbar: React.FC = () => {
         <div className="flex w-full justify-between md:flex md:justify-between">
           {/* LEFT MENU */}
           <div className="flex items-center justify-start">
-            {/* LEFT DRAWER (MOBILE) */}
-            <div className="drawer w-auto lg:hidden">
+            {/* LEFT DRAWER */}
+            <div className="drawer w-auto">
               <input
                 id="nav-drawer"
                 type="checkbox"
