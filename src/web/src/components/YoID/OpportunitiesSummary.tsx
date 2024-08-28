@@ -12,7 +12,8 @@ interface MenuItem {
 export const OpportunitiesSummary: React.FC<{
   data: TimeIntervalSummary | undefined;
   showSaved?: boolean;
-}> = ({ data, showSaved }) => {
+  onClick?: () => void;
+}> = ({ data, showSaved, onClick }) => {
   const [completed = 0, pending = 0, rejected = 0, saved = 0] =
     data?.count || [];
 
@@ -66,6 +67,7 @@ export const OpportunitiesSummary: React.FC<{
           href={item.href}
           style={{ background: item.background }}
           className="flex aspect-square w-[30%] min-w-[80px] flex-col items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center text-white shadow-custom"
+          onClick={onClick}
         >
           <div className="flex h-full w-full flex-col items-center justify-center rounded-full border-2 border-dotted border-orange bg-green">
             <div className="whitespace-nowrap text-sm font-semibold">

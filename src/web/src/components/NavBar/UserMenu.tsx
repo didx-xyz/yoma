@@ -160,6 +160,7 @@ export const UserMenu: React.FC = () => {
                 <Link
                   href="/user/profile"
                   className="btn btn-warning btn-sm w-1/2 !rounded-md normal-case"
+                  onClick={() => setDrawerOpen(false)}
                 >
                   Profile
                 </Link>
@@ -167,6 +168,7 @@ export const UserMenu: React.FC = () => {
                 <Link
                   href="/user/settings"
                   className="btn btn-warning btn-sm w-1/2 !rounded-md normal-case"
+                  onClick={() => setDrawerOpen(false)}
                 >
                   Settings
                 </Link>
@@ -186,6 +188,7 @@ export const UserMenu: React.FC = () => {
                   title="💸 Wallet"
                   url="/yoid/wallet"
                   className="text-xs text-black md:text-sm"
+                  onClick={() => setDrawerOpen(false)}
                 />
                 <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                   <Suspense isLoading={!userProfile}>
@@ -200,6 +203,7 @@ export const UserMenu: React.FC = () => {
                   title="🏆 Opportunities"
                   url="/yoid/opportunities/completed"
                   className="text-xs text-black md:text-sm"
+                  onClick={() => setDrawerOpen(false)}
                 />
                 <button
                   onClick={() => setGraphView(!graphView)}
@@ -224,7 +228,10 @@ export const UserMenu: React.FC = () => {
                         />
                       </div>
                     ) : (
-                      <OpportunitiesSummary data={myOpportunitiesSummary} />
+                      <OpportunitiesSummary
+                        data={myOpportunitiesSummary}
+                        onClick={() => setDrawerOpen(false)}
+                      />
                     )}
                   </Suspense>
                 </div>
@@ -236,6 +243,7 @@ export const UserMenu: React.FC = () => {
                   title="🌐 Passport"
                   url="/yoid/passport"
                   className="text-xs text-black md:text-sm"
+                  onClick={() => setDrawerOpen(false)}
                 />
                 <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                   <Suspense
@@ -265,6 +273,7 @@ export const UserMenu: React.FC = () => {
                   title="⚡ Skills"
                   url="/yoid/skills"
                   className="text-xs text-black md:text-sm"
+                  onClick={() => setDrawerOpen(false)}
                 />
                 <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                   <div className="flex flex-wrap gap-1 overflow-y-auto">
