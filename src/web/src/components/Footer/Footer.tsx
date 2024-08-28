@@ -1,11 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import logoPicDark from "public/images/logo-dark.webp";
+import { SocialMediaLinks } from "./SocialMediaLinks";
 
-export const Footer: React.FC = () => {
+export const Footer: React.FC<{ showSocialMediaLinks?: boolean }> = ({
+  showSocialMediaLinks,
+}) => {
   return (
     <footer className="flex w-full items-center p-2 px-4">
-      <div className="flex-grow">
+      <div className="flex flex-grow flex-row gap-4">
         {/* LINKS */}
         <div className="w-fullx flex flex-col gap-1 text-xs">
           <div className="flex flex-wrap gap-1">
@@ -24,6 +27,8 @@ export const Footer: React.FC = () => {
             </Link>
           </div>
         </div>
+
+        {showSocialMediaLinks && <SocialMediaLinks />}
       </div>
       <div className="flex-none">
         {/* LOGO */}

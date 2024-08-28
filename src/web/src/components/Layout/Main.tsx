@@ -25,7 +25,7 @@ const MainLayout: LayoutProps = ({ children }) => {
         <Feedback />
         {children}
       </main>
-      <Footer />
+      <Footer showSocialMediaLinks={true}/>
     </>
   );
 };

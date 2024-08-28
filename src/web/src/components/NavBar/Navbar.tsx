@@ -5,7 +5,14 @@ import Link from "next/link";
 import logoPicDark from "public/images/logo-dark.webp";
 import logoPicLight from "public/images/logo-light.webp";
 import { useMemo, useState } from "react";
-import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import {
+  FaArrowLeft,
+  FaArrowRight,
+  FaInstagram,
+  FaLinkedin,
+  FaLinkedinIn,
+  FaYoutube,
+} from "react-icons/fa";
 import { IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import type { OrganizationInfo } from "~/api/models/user";
@@ -23,6 +30,7 @@ import { SignInButton } from "../SignInButton";
 import { SignOutButton } from "../SignOutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
+import { SocialMediaLinks } from "../Footer/SocialMediaLinks";
 
 const navBarLinksUser: TabItem[] = [
   {
@@ -368,10 +376,6 @@ export const Navbar: React.FC<{
                           id="organisations"
                         >
                           <ul className="menu grow p-0">
-                            {userProfile?.adminsOf?.map((organisation) =>
-                              renderOrganisationMenuItem(organisation),
-                            )}
-
                             <li
                               key="userMenu_orgs_all"
                               className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
@@ -384,9 +388,13 @@ export const Navbar: React.FC<{
                                 <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
                                   🏢
                                 </span>
-                                <span>All Organisations</span>
+                                <span>My organisations</span>
                               </Link>
                             </li>
+
+                            {userProfile?.adminsOf?.map((organisation) =>
+                              renderOrganisationMenuItem(organisation),
+                            )}
                           </ul>
                         </div>
                         <div className="divider my-2 grow-0 !bg-gray" />
@@ -422,6 +430,8 @@ export const Navbar: React.FC<{
                     {session && <SignOutButton className="!btn-sm" />}
 
                     <div className="divider my-2 grow-0 !bg-gray" />
+
+                    <SocialMediaLinks />
 
                     <div className="grow-0">
                       <Footer />
