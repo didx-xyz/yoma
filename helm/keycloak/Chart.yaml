@@ -2,12 +2,12 @@ apiVersion: v2
 name: keycloak
 description: A Wrapper Helm chart for Keycloakx in Kubernetes
 type: application
-version: 0.3.2
+version: 0.3.3
 appVersion: 22.0.1
 
 dependencies:
   - name: common
-    version: 2.13.3
+    version: 2.x.x
     repository: oci://registry-1.docker.io/bitnamicharts
 
   # https://github.com/codecentric/helm-charts/tree/master/charts/keycloakx

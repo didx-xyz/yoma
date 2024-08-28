@@ -14,8 +14,7 @@ metadata:
   {{- with .namespace }}
   namespace: {{ tpl . $ }}
   {{- end }}
-  labels:
-    {{- include "yoma-api.labels" $ | nindent 4 }}
+  labels: {{- include "common.labels.standard" ( dict "customLabels" $.Values.commonLabels "context" $ ) | nindent 4 }}
     {{- with .labels }}
     {{- toYaml . | nindent 4 }}
     {{- end }}
