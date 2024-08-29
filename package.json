@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "postinstall": "husky install",
-    "test:cypress": "cypress open"
+    "test:cypress": "cypress open",
+    "prepare": "husky"
   },
   "devDependencies": {
     "@types/cypress": "^1.1.3",
