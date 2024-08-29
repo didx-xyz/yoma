@@ -1,46 +1,47 @@
-import { type ReactElement, useCallback } from "react";
-import "react-datepicker/dist/react-datepicker.css";
-import MainLayout from "~/components/Layout/Main";
-import type { NextPageWithLayout } from "./_app";
-import Link from "next/link";
-import { PageBackground } from "~/components/PageBackground";
-import { RoundedImage } from "~/components/RoundedImage";
-import { THEME_ORANGE } from "~/lib/constants";
 import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
 import imageWoman from "public/images/home/bg-woman.webp";
 import imageCardID from "public/images/home/card-id.png";
-import imageLogoGoodwall from "public/images/home/logo-goodwall.png";
-import imageLogoAppStore from "public/images/home/logo-app-store.png";
-import imageLogoPlayStore from "public/images/home/logo-play-store.png";
-import imageLogoYoma from "public/images/logo-dark.webp";
-import imageLogoWhatsapp from "public/images/home/logo-whatsapp.png";
-import imageLogoAtingi from "public/images/home/logo-atingi.png";
-import imageLogoUCT from "public/images/home/logo-uct.png";
-import imageLogoCartedo from "public/images/home/logo-cartedo.png";
-import iconImpact from "public/images/home/icon-impact.png";
-import imageThrive from "public/images/home/image-thrive.png";
-import imageLogoZltoBig from "public/images/home/logo-zlto.png";
 import iconGreenCheck from "public/images/home/icon-check.png";
-import iconBlueUpload from "public/images/home/icon-upload.png";
-import iconOrangeZlto from "public/images/home/icon-zlto.png";
-import iconSap from "public/images/home/logo-sap.png";
-import iconIxo from "public/images/home/logo-ixo.png";
-import iconAccenture from "public/images/home/logo-accenture.png";
-import iconUmuzi from "public/images/home/logo-umuzi.png";
-import iconFoundationBotnar from "public/images/home/logo-foundation-botnar.png";
-import iconRlabs from "public/images/home/logo-rlabs.webp";
-import iconGiz from "public/images/home/logo-giz.png";
-import iconUnlimitedGeneration from "public/images/home/logo-generation-unlimited.png";
-import iconDidx from "public/images/home/logo-didx.png";
+import iconImpact from "public/images/home/icon-impact.png";
 import imageMtn from "public/images/home/icon-mtn.png";
+import iconBlueUpload from "public/images/home/icon-upload.png";
 import imageVodacom from "public/images/home/icon-vodacom.png";
+import iconOrangeZlto from "public/images/home/icon-zlto.png";
+import imageThrive from "public/images/home/image-thrive.png";
+import iconAccenture from "public/images/home/logo-accenture.png";
+import imageLogoAppStore from "public/images/home/logo-app-store.png";
+import imageLogoAtingi from "public/images/home/logo-atingi.png";
+import imageLogoCartedo from "public/images/home/logo-cartedo.png";
+import iconDidx from "public/images/home/logo-didx.png";
+import iconFoundationBotnar from "public/images/home/logo-foundation-botnar.png";
+import iconUnlimitedGeneration from "public/images/home/logo-generation-unlimited.png";
+import iconGiz from "public/images/home/logo-giz.png";
+import imageLogoGoodwall from "public/images/home/logo-goodwall.png";
+import iconIxo from "public/images/home/logo-ixo.png";
+import imageLogoPlayStore from "public/images/home/logo-play-store.png";
+import iconRlabs from "public/images/home/logo-rlabs.webp";
+import iconSap from "public/images/home/logo-sap.png";
+import imageLogoUCT from "public/images/home/logo-uct.png";
+import iconUmuzi from "public/images/home/logo-umuzi.png";
 import iconUnicef from "public/images/home/logo-unicef.png";
-import OpportunityCard from "~/components/Home/OpportunityCard";
+import imageLogoWhatsapp from "public/images/home/logo-whatsapp.png";
+import imageLogoZltoBig from "public/images/home/logo-zlto.png";
+import imageLogoYoma from "public/images/logo-dark.webp";
+import stamp1 from "public/images/stamp-1.png";
+import stamp2 from "public/images/stamp-2.png";
+import { type ReactElement, useCallback } from "react";
+import "react-datepicker/dist/react-datepicker.css";
 import { IoMdCheckmark } from "react-icons/io";
-import { SearchInputLarge } from "~/components/SearchInputLarge";
-import { useRouter } from "next/router";
-import stamps from "public/images/stamps.svg";
 import MarketplaceCard from "~/components/Home/MarketplaceCard";
+import OpportunityCard from "~/components/Home/OpportunityCard";
+import MainLayout from "~/components/Layout/Main";
+import { PageBackground } from "~/components/PageBackground";
+import { RoundedImage } from "~/components/RoundedImage";
+import { SearchInputLarge } from "~/components/SearchInputLarge";
+import { THEME_ORANGE } from "~/lib/constants";
+import type { NextPageWithLayout } from "./_app";
 
 const Home: NextPageWithLayout = () => {
   const router = useRouter();
@@ -264,13 +265,22 @@ const Home: NextPageWithLayout = () => {
               {/* LEFT: ID CARD  */}
               <div className="-my-6 mt-0 flex w-[448px] scale-75 flex-col items-center md:-my-0 md:-mt-14 md:scale-100 md:items-start lg:-ml-[45px]">
                 <Image
-                  src={stamps}
-                  alt="Stamps"
-                  height={400}
-                  width={700}
+                  src={stamp1}
+                  alt="Stamp1"
+                  height={179}
+                  width={135}
                   sizes="100vw"
                   priority={true}
-                  className="absolute z-0 rotate-[-6deg] opacity-100 md:top-32"
+                  className="user-select-none pointer-events-none absolute z-0 rotate-[-6deg] grayscale md:top-32"
+                />
+                <Image
+                  src={stamp2}
+                  alt="Stamp2"
+                  height={184}
+                  width={161}
+                  sizes="100vw"
+                  priority={true}
+                  className="user-select-none pointer-events-none absolute -bottom-5 right-0 z-0 rotate-12 mix-blend-plus-lighter"
                 />
                 <Image
                   src={imageCardID}

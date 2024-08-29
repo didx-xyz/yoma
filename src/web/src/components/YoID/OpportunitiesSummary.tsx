@@ -12,7 +12,8 @@ interface MenuItem {
 export const OpportunitiesSummary: React.FC<{
   data: TimeIntervalSummary | undefined;
   showSaved?: boolean;
-}> = ({ data, showSaved }) => {
+  onClick?: () => void;
+}> = ({ data, showSaved, onClick }) => {
   const [completed = 0, pending = 0, rejected = 0, saved = 0] =
     data?.count || [];
 
@@ -26,21 +27,21 @@ export const OpportunitiesSummary: React.FC<{
 
   const menuItems: MenuItem[] = [
     {
-      href: "yoid/opportunities/completed",
+      href: "/yoid/opportunities/completed",
       background: `conic-gradient(from 180deg, #F9AB3E ${completedPercentage}%, #387F6A 0)`,
       count: data?.count[0] || 0,
       label: "Completed",
       emoji: "✅",
     },
     {
-      href: "yoid/opportunities/pending",
+      href: "/yoid/opportunities/pending",
       background: `conic-gradient(from 180deg, #F9AB3E ${pendingPercentage}%, #387F6A 0)`,
       count: data?.count[1] || 0,
       label: "Pending",
       emoji: "🕑",
     },
     {
-      href: "yoid/opportunities/rejected",
+      href: "/yoid/opportunities/rejected",
       background: `conic-gradient(from 180deg, #F9AB3E ${rejectedPercentage}%, #387F6A 0)`,
       count: data?.count[2] || 0,
       label: "Rejected",
@@ -50,7 +51,7 @@ export const OpportunitiesSummary: React.FC<{
 
   if (showSaved) {
     menuItems.push({
-      href: "yoid/opportunities/saved",
+      href: "/yoid/opportunities/saved",
       background: "",
       count: saved,
       label: "Saved",
@@ -66,6 +67,7 @@ export const OpportunitiesSummary: React.FC<{
           href={item.href}
           style={{ background: item.background }}
           className="flex aspect-square w-[30%] min-w-[80px] flex-col items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center text-white shadow-custom"
+          onClick={onClick}
         >
           <div className="flex h-full w-full flex-col items-center justify-center rounded-full border-2 border-dotted border-orange bg-green">
             <div className="whitespace-nowrap text-sm font-semibold">

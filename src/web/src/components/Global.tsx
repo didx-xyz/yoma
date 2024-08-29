@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
 import iconBell from "public/images/icon-bell.webp";
-import stamps from "public/images/stamps.svg";
+import stamp1 from "public/images/stamp-1.png";
+import stamp2 from "public/images/stamp-2.png";
 import YoIDCard from "public/images/YoID-modal-card.webp";
 import { useCallback, useEffect, useState } from "react";
 import ReactModal from "react-modal";
@@ -356,13 +357,22 @@ export const Global: React.FC = () => {
           <div className="relative flex h-32 flex-row bg-green p-4">
             <h1 className="flex-grow"></h1>
             <Image
-              src={stamps}
-              alt="Stamps"
-              height={300}
-              width={400}
+              src={stamp1}
+              alt="Stamp1"
+              height={179}
+              width={135}
               sizes="100vw"
               priority={true}
-              className="absolute -bottom-5 z-0 -rotate-3 opacity-70 mix-blend-plus-lighter md:left-[10%]"
+              className="absolute left-[10%] z-0 -rotate-3 opacity-70 mix-blend-plus-lighter"
+            />
+            <Image
+              src={stamp2}
+              alt="Stamp2"
+              height={184}
+              width={161}
+              sizes="100vw"
+              priority={true}
+              className="absolute right-0 z-0 rotate-12 opacity-70 mix-blend-plus-lighter"
             />
           </div>
           <div className="flex flex-col items-center justify-center gap-8 px-6 pb-8 text-center md:px-12">

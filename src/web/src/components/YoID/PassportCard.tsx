@@ -1,12 +1,12 @@
-import stamps from "public/images/stamps-vertical.svg";
 import Image from "next/image";
+import stamp1 from "public/images/stamp-1.png";
 
 export const PassportCard: React.FC<{
   data: { schemaType: string; totalCount: number | null }[];
 }> = ({ data }) => {
   return (
     <div className="flex flex-grow flex-col justify-center text-xs md:text-sm">
-      <Image src={stamps} alt="Stamps" className="absolute opacity-50" />
+      <Image src={stamp1} alt="Stamps" className="absolute opacity-50" />
       <div className="text-gray-dark">
         Your digital passport contains the credentials you receive from
         completing opportunities.
