@@ -131,7 +131,7 @@ namespace Yoma.Core.Api.Controllers
     #region Authenticated User Based Actions
     [SwaggerOperation(Summary = "Get 'my' opportunity verification status for the specified opportunity (Authenticated User)")]
     [HttpGet("action/{opportunityId}/verify/status")]
-    [ProducesResponseType(typeof(MyOpportunityResponseVerify), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(MyOpportunityResponseVerifyStatus), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public IActionResult GetVerificationStatus([FromRoute] Guid opportunityId)
     {

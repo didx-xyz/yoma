@@ -15,8 +15,6 @@ using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Reward.Interfaces;
-using Yoma.Core.Domain.SSI.Interfaces;
-using Yoma.Core.Domain.SSI.Models;
 
 namespace Yoma.Core.Domain.Entity.Services
 {

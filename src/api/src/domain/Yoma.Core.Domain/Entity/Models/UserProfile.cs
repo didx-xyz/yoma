@@ -1,5 +1,3 @@
-using Yoma.Core.Domain.SSI.Models;
-
 namespace Yoma.Core.Domain.Entity.Models
 {
   public class UserProfile

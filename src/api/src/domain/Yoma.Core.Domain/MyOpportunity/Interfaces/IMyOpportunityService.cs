@@ -9,7 +9,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
   {
     Models.MyOpportunity GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization);
 
-    MyOpportunityResponseVerify GetVerificationStatus(Guid opportunityId);
+    MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId);
+
+    MyOpportunityResponseVerifyCompletedExternal GetVerificationCompletedExternal(Guid opportunityId);
 
     Task<IFormFile> DownloadVerificationFiles(Guid opportunityId, List<VerificationType>? verificationTypes);
 
