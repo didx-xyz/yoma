@@ -91,12 +91,6 @@ const MyApp = ({
       ? getTheme(component)
       : THEME_PURPLE;
 
-  // pinned state for sidebar
-  const [isPinned, setPinned] = useState(false);
-
-  const handlePinToggle = (isPinned: boolean) => {
-    setPinned(isPinned);
-  };
   return (
     <Provider>
       <SessionProvider session={pageProps.session}>
@@ -106,13 +100,11 @@ const MyApp = ({
             <HydrationBoundary state={pageProps.dehydratedState}>
               <div
                 id="mainContent"
-                className={`${nunito.variable} font-nunito ${
-                  isPinned ? "ml-[20rem]" : ""
-                }`}
+                className={`${nunito.variable} font-nunito`}
               >
                 <ConfirmationModalContextProvider>
                   <Global />
-                  <Navbar isPinned={isPinned} togglePin={handlePinToggle} />
+                  <Navbar />
                   {getLayout(component)}
                   <ToastContainer
                     containerId="toastContainer"

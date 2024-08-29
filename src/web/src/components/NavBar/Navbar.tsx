@@ -6,7 +6,7 @@ import logoPicDark from "public/images/logo-dark.webp";
 import logoPicLight from "public/images/logo-light.webp";
 import { useMemo, useState } from "react";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
-import { IoMdMenu, IoMdSettings } from "react-icons/io";
+import { IoMdClose, IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import type { OrganizationInfo } from "~/api/models/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
@@ -103,10 +103,7 @@ const navBarLinksAdmin: TabItem[] = [
   // },
 ];
 
-export const Navbar: React.FC<{
-  isPinned: boolean;
-  togglePin: (isPinned: boolean) => void;
-}> = ({ isPinned, togglePin }) => {
+export const Navbar: React.FC = () => {
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
   const { data: session } = useSession();
@@ -114,24 +111,13 @@ export const Navbar: React.FC<{
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
 
   const [isDrawerOpen, setDrawerOpen] = useState(false);
-  const [pinned, setPinned] = useState(isPinned);
 
   const onToggle = () => {
-    if (isDrawerOpen) {
-      setPinned(false);
-      togglePin && togglePin(false);
-    }
     setDrawerOpen(!isDrawerOpen);
   };
 
-  const onTogglePin = () => {
-    setPinned(!pinned);
-    if (isDrawerOpen) setDrawerOpen(false);
-    togglePin && togglePin(!pinned);
-  };
-
   // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(isDrawerOpen && !pinned);
+  useDisableBodyScroll(isDrawerOpen);
 
   const currentNavbarLinks = useMemo<TabItem[]>(() => {
     if (activeRoleView == RoleView.Admin) {
@@ -273,7 +259,7 @@ export const Navbar: React.FC<{
                 id="nav-drawer"
                 type="checkbox"
                 className="drawer-toggle"
-                checked={isDrawerOpen || isPinned}
+                checked={isDrawerOpen}
                 onChange={onToggle}
               />
               <div className="drawer-content">
@@ -284,50 +270,34 @@ export const Navbar: React.FC<{
                   <IoMdMenu className="h-8 w-8" />
                 </label>
               </div>
-              {/* when pinned, need to have the width restrictred to allow the content to be clickable */}
-              <div className={`drawer-side ${pinned ? "max-w-[20rem]" : ""}`}>
+              <div className="drawer-side">
                 {/* overlay */}
-                {isDrawerOpen && !isPinned && (
+                {isDrawerOpen && (
                   <label
                     htmlFor="nav-drawer"
                     aria-label="close sidebar"
                     className="drawer-overlay"
                   ></label>
                 )}
-                <div
-                  className={`min-h-screen max-w-[20rem] overflow-y-auto rounded-bl-none rounded-tl-none bg-white p-4 ${
-                    pinned ? "" : "rounded-br-lg rounded-tr-lg"
-                  }`}
-                >
+                <div className="min-h-screen max-w-[20rem] overflow-y-auto rounded-bl-none rounded-br-lg rounded-tl-none rounded-tr-lg bg-white p-4">
                   <div className="flex h-full flex-col gap-2">
                     <div className="flex grow-0 flex-row items-center justify-center">
                       <div className="grow">
                         <Image
                           src={logoPicDark}
                           alt="Logo"
-                          //priority={false}
                           width={85}
                           height={41}
                         />
                       </div>
                       {/* close button removed */}
-                      {/* <label
+                      <label
                         htmlFor="nav-drawer"
                         className="drawer-close btn btn-sm !rounded-md border-none text-gray-dark shadow-md hover:bg-gray"
                         aria-label="close sidebar"
                       >
                         <IoMdClose className="h-5 w-5" />
-                      </label> */}
-
-                      {/* pin toggle button */}
-                      <button
-                        onClick={onTogglePin}
-                        className="btn btn-sm hidden !rounded-full border-none text-gray-dark shadow-none hover:bg-gray md:block"
-                        aria-label="pin sidebar"
-                      >
-                        {isPinned && <FaArrowLeft className="h-4 w-4" />}
-                        {!isPinned && <FaArrowRight className="h-4 w-4" />}
-                      </button>
+                      </label>
                     </div>
 
                     <div className="divider my-2 grow-0 !bg-gray" />
