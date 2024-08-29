@@ -1,5 +1,6 @@
 using CsvHelper.Configuration;
 using FluentValidation;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -276,7 +277,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return FileHelper.Zip(files, $"Files.zip");
     }
 
-    public MyOpportunityResponseVerify GetVerificationStatus(Guid opportunityId)
+    public MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId)
     {
       var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
 
@@ -284,12 +285,40 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
-      if (myOpportunity == null) return new MyOpportunityResponseVerify { Status = VerificationStatus.None };
+      if (myOpportunity == null) return new MyOpportunityResponseVerifyStatus { Status = VerificationStatus.None };
 
       if (!myOpportunity.VerificationStatus.HasValue)
         throw new InvalidOperationException($"Verification status expected for 'my' opportunity with id '{myOpportunity.Id}'");
 
-      return new MyOpportunityResponseVerify { Status = myOpportunity.VerificationStatus.Value, Comment = myOpportunity.CommentVerification };
+      return new MyOpportunityResponseVerifyStatus { Status = myOpportunity.VerificationStatus.Value, Comment = myOpportunity.CommentVerification };
+    }
+
+    public MyOpportunityResponseVerifyCompletedExternal GetVerificationCompletedExternal(Guid opportunityId)
+    {
+      var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
+
+      if (opportunity.ShareWithPartners != true)
+        throw new EntityNotFoundException($"Opportunity with id '{opportunityId}' is not shared with partners");
+
+      var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
+      var verificationStatusCompleted = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Completed.ToString()).Id;
+
+      var completions = _myOpportunityRepository.Query(false).Where(
+        o => o.ActionId == actionVerificationId
+        && o.VerificationStatusId == verificationStatusCompleted
+        && o.OpportunityId == opportunity.Id).ToList();
+
+      var users = completions.Where(completion =>
+         SettingsHelper.GetValue<bool>(
+             _userService.GetSettingsInfo(completion.UserSettings),
+             Setting.User_Share_Email_With_Partners.ToString()) == true
+         ).Select(completion => new MyOpportunityResponseVerifyStatusExternalUser
+         {
+           Email = completion.UserEmail,
+           DateCompleted = completion.DateCompleted
+         }).ToList();
+
+      return new MyOpportunityResponseVerifyCompletedExternal { Users = users.Count != 0 ? users : null };
     }
 
     public MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter)

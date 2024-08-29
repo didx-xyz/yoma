@@ -51,6 +51,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         OpportunityDateEnd = entity.Opportunity.DateEnd,
         OpportunityCredentialIssuanceEnabled = entity.Opportunity.CredentialIssuanceEnabled,
         OpportunitySSISchemaName = entity.Opportunity.SSISchemaName,
+        OpporunityShareWithPartners = entity.Opportunity.ShareWithPartners,
         OrganizationId = entity.Opportunity.OrganizationId,
         OrganizationName = entity.Opportunity.Organization.Name,
         OrganizationLogoId = entity.Opportunity.Organization.LogoId,

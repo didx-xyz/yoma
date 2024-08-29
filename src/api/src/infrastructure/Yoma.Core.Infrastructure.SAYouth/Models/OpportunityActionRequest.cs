@@ -1,5 +1,4 @@
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
 using Yoma.Core.Domain.Core.Converters;
 
 namespace Yoma.Core.Infrastructure.SAYouth.Models

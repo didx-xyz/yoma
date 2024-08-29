@@ -66,6 +66,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public string? OpportunitySSISchemaName { get; set; }
 
+    public bool? OpporunityShareWithPartners { get; set; }
+
     public Guid OrganizationId { get; set; }
 
     public string OrganizationName { get; set; }

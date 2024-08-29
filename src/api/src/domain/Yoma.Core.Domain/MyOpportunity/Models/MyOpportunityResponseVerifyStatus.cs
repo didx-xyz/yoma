@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.MyOpportunity.Models
 {
-  public class MyOpportunityResponseVerify
+  public class MyOpportunityResponseVerifyStatus
   {
     public VerificationStatus Status { get; set; }
 
