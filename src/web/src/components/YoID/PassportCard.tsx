@@ -1,6 +1,5 @@
-import stamp1 from "public/images/stamp-1.png";
-import stamp2 from "public/images/stamp-2.png";
 import Image from "next/image";
+import stamp1 from "public/images/stamp-1.png";
 
 export const PassportCard: React.FC<{
   data: { schemaType: string; totalCount: number | null }[];

@@ -271,7 +271,6 @@ export const Navbar: React.FC = () => {
                 </label>
               </div>
               <div className="drawer-side">
-                {/* overlay */}
                 {isDrawerOpen && (
                   <label
                     htmlFor="nav-drawer"
@@ -290,7 +289,6 @@ export const Navbar: React.FC = () => {
                           height={41}
                         />
                       </div>
-                      {/* close button removed */}
                       <label
                         htmlFor="nav-drawer"
                         className="drawer-close btn btn-sm !rounded-md border-none text-gray-dark shadow-md hover:bg-gray"
