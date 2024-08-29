@@ -5,7 +5,6 @@ import Link from "next/link";
 import logoPicDark from "public/images/logo-dark.webp";
 import logoPicLight from "public/images/logo-light.webp";
 import { useMemo, useState } from "react";
-import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { IoMdClose, IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import type { OrganizationInfo } from "~/api/models/user";

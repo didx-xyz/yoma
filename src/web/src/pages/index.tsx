@@ -271,7 +271,7 @@ const Home: NextPageWithLayout = () => {
                   width={135}
                   sizes="100vw"
                   priority={true}
-                  className="opacity-100xx absolute z-0 rotate-[-6deg] grayscale md:top-32"
+                  className="user-select-none pointer-events-none absolute z-0 rotate-[-6deg] grayscale md:top-32"
                 />
                 <Image
                   src={stamp2}
@@ -280,7 +280,7 @@ const Home: NextPageWithLayout = () => {
                   width={161}
                   sizes="100vw"
                   priority={true}
-                  className="right-2x opacity-70x user-select-none pointer-events-none absolute -bottom-5 right-0 z-0 rotate-12 mix-blend-plus-lighter grayscale"
+                  className="user-select-none pointer-events-none absolute -bottom-5 right-0 z-0 rotate-12 mix-blend-plus-lighter"
                 />
                 <Image
                   src={imageCardID}
@@ -290,7 +290,11 @@ const Home: NextPageWithLayout = () => {
                   sizes="100vw"
                   priority={true}
                   quality={100}
-                  className="user-select-none pointer-events-none"
+                  style={{
+                    width: "420px",
+                    height: "250px",
+                    zIndex: 1,
+                  }}
                 />
               </div>
 
