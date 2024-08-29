@@ -71,70 +71,68 @@ export const SkillsChart: React.FC<{
   }, [screenWidth]);
 
   return (
-    <div className="h-44x  ">
+    <>
       <Legend />
 
-      <div className="-mx-4x flexx h-fullx w-fullx justify-centerx">
-        {showChart ? (
-          <Chart
-            key={key}
-            chartType="AreaChart"
-            loader={
-              <div className="flex w-full items-center justify-center">
-                <span className="loading loading-spinner loading-lg text-green"></span>
-              </div>
-            }
-            data={localData}
-            options={{
-              legend: "none",
-              animation: {
-                duration: 300,
-                easing: "linear",
-                startup: true,
+      {showChart ? (
+        <Chart
+          key={key}
+          chartType="AreaChart"
+          loader={
+            <div className="flex w-full items-center justify-center">
+              <span className="loading loading-spinner loading-lg text-green"></span>
+            </div>
+          }
+          data={localData}
+          options={{
+            legend: "none",
+            animation: {
+              duration: 300,
+              easing: "linear",
+              startup: true,
+            },
+            lineWidth: 1,
+            areaOpacity: 0.1,
+            colors: CHART_COLORS,
+            curveType: "function",
+            pointSize: 0,
+            pointShape: "circle",
+            enableInteractivity: true,
+            hAxis: {
+              gridlines: {
+                color: "transparent",
               },
-              lineWidth: 1,
-              areaOpacity: 0.1,
-              colors: CHART_COLORS,
-              curveType: "function",
-              pointSize: 0,
-              pointShape: "circle",
-              enableInteractivity: true,
-              hAxis: {
-                gridlines: {
-                  color: "transparent",
-                },
-                textPosition: "out",
-                format: "MMM dd",
-                showTextEvery: 2,
-                textStyle: {
-                  fontSize: 10,
-                },
+              textPosition: "out",
+              format: "MMM dd",
+              showTextEvery: 2,
+              textStyle: {
+                fontSize: 10,
               },
-              vAxis: {
-                gridlines: {
-                  color: "transparent",
-                },
-                textPosition: "none",
-                baselineColor: "transparent",
+            },
+            vAxis: {
+              gridlines: {
+                color: "transparent",
               },
-              width: "100%" as any,
-              height: "58px" as any,
-              chartArea: {
-                left: 0,
-                top: 0,
-                right: 0,
-                bottom: 0,
-                width: "100%",
-                height: "100%",
-              },
-            }}
-          />
-        ) : (
-          <div className="mx-4 flex flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
-            Not enough data to display
-          </div>
-        )}
-      </div>
-    </div>
+              textPosition: "none",
+              baselineColor: "transparent",
+            },
+            width: "100%" as any,
+            height: "58px" as any,
+            chartArea: {
+              left: 0,
+              top: 0,
+              right: 0,
+              bottom: 0,
+              width: "100%",
+              height: "100%",
+            },
+          }}
+        />
+      ) : (
+        <div className="mx-4 flex flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
+          Not enough data to display
+        </div>
+      )}
+    </>
   );
 };

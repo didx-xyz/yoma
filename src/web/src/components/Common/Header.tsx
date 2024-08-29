@@ -25,7 +25,7 @@ export const Header: React.FC<InputProps> = ({
       {url && (
         <Link
           href={url}
-          className="my-auto items-end whitespace-nowrap text-sm text-gray-dark"
+          className="flex items-center whitespace-nowrap text-sm text-gray-dark"
           onClick={onClick}
         >
           <MdKeyboardArrowRight className="mr-2 h-6 w-6"></MdKeyboardArrowRight>

@@ -5,14 +5,7 @@ import Link from "next/link";
 import logoPicDark from "public/images/logo-dark.webp";
 import logoPicLight from "public/images/logo-light.webp";
 import { useMemo, useState } from "react";
-import {
-  FaArrowLeft,
-  FaArrowRight,
-  FaInstagram,
-  FaLinkedin,
-  FaLinkedinIn,
-  FaYoutube,
-} from "react-icons/fa";
+import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import type { OrganizationInfo } from "~/api/models/user";
@@ -26,11 +19,11 @@ import {
 } from "~/lib/store";
 import { AvatarImage } from "../AvatarImage";
 import { Footer } from "../Footer/Footer";
+import { SocialMediaLinks } from "../Footer/SocialMediaLinks";
 import { SignInButton } from "../SignInButton";
 import { SignOutButton } from "../SignOutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
-import { SocialMediaLinks } from "../Footer/SocialMediaLinks";
 
 const navBarLinksUser: TabItem[] = [
   {
@@ -312,7 +305,7 @@ export const Navbar: React.FC<{
                         <Image
                           src={logoPicDark}
                           alt="Logo"
-                          priority={false}
+                          //priority={false}
                           width={85}
                           height={41}
                         />
@@ -449,7 +442,7 @@ export const Navbar: React.FC<{
               <Image
                 src={logoPicLight}
                 alt="Logo"
-                priority={true}
+                //priority={true}
                 width={85}
                 height={41}
               />

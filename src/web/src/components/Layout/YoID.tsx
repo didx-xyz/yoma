@@ -98,7 +98,7 @@ const YoIDLayout: TabProps = ({ children }) => {
                 size={85}
               />
             </div>
-            <div className="w-fullx flex flex-col gap-2 lg:w-auto">
+            <div className="flex flex-col gap-2 lg:w-auto">
               {/* WELCOME MSG */}
               <div className="-mb-2 max-w-xs truncate text-lg font-semibold text-white md:max-w-xl md:text-2xl">
                 {timeOfDayEmoji} Good {timeOfDay} {userProfile?.firstName}! 👋
