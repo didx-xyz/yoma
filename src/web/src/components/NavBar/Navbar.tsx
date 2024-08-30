@@ -110,9 +110,23 @@ export const Navbar: React.FC = () => {
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
 
   const [isDrawerOpen, setDrawerOpen] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
+  // open/close drawer
   const onToggle = () => {
     setDrawerOpen(!isDrawerOpen);
+  };
+
+  // hover menu
+  const handleMouseEnter = () => {
+    setIsHovered(true);
+    setDrawerOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    if (!isDrawerOpen) {
+      setIsHovered(false);
+    }
   };
 
   // 👇 prevent scrolling on the page when the dialogs are open
@@ -250,10 +264,19 @@ export const Navbar: React.FC = () => {
     <div className="fixed left-0 right-0 top-0 z-40">
       <div className={`bg-theme navbar z-40`}>
         <div className="flex w-full justify-between md:flex md:justify-between">
+          {/* hover menu */}
+          <div
+            className="top-1/5 z-10x absolute left-0 h-[100vh] w-[2px] bg-transparent"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          ></div>
+
           {/* LEFT MENU */}
           <div className="flex items-center justify-start">
             {/* LEFT DRAWER */}
-            <div className="drawer w-auto">
+            <div
+              className={`drawer ${isHovered || isDrawerOpen ? "open" : ""}`}
+            >
               <input
                 id="nav-drawer"
                 type="checkbox"
