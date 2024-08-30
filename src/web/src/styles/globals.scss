@@ -169,6 +169,11 @@ body {
   background: theme("colors.purple") !important;
 }
 
+// prevent dragging of elements on ios
+.no-drag {
+  -webkit-user-drag: none;
+}
+
 /* MDXEditor overrides */
 .mdxeditor-popup-container {
   z-index: 2000 !important;

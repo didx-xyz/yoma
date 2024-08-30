@@ -278,7 +278,7 @@ export const Navbar: React.FC = () => {
                   ></label>
                 )}
                 <div className="min-h-screen max-w-[20rem] overflow-y-auto rounded-bl-none rounded-br-lg rounded-tl-none rounded-tr-lg bg-white p-4">
-                  <div className="flex h-full flex-col gap-2">
+                  <div className="no-drag flex h-full flex-col gap-2">
                     <div className="flex grow-0 flex-row items-center justify-center">
                       <div className="grow">
                         <Image
