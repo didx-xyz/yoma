@@ -157,7 +157,7 @@ export const UserMenu: React.FC = () => {
           <label htmlFor="userMenu-drawer" className="drawer-overlay"></label>
           {/* MENU ITEMS */}
           <div className="h-screen max-w-[20rem] overflow-y-auto rounded-bl-lg rounded-br-none rounded-tl-lg rounded-tr-none bg-[#FFF5E7]">
-            <div className="mb-12 flex h-full flex-col gap-2 p-4">
+            <div className="no-drag flex h-full flex-col gap-2 p-4">
               {/* USER (YOID) */}
               <div className="flex h-full flex-col items-center gap-1 p-2 text-gray-dark">
                 {/* BACKGROUND IMAGES */}
