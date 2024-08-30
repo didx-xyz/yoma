@@ -266,7 +266,7 @@ export const Navbar: React.FC = () => {
         <div className="flex w-full justify-between md:flex md:justify-between">
           {/* hover menu */}
           <div
-            className="top-1/5 z-10x absolute left-0 h-[100vh] w-[2px] bg-transparent"
+            className="z-10x absolute left-0 top-1/5 h-[100vh] w-[2px] bg-transparent"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           ></div>
