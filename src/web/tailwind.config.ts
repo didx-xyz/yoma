@@ -37,6 +37,21 @@ export default {
       fontFamily: {
         nunito: ["var(--font-nunito)"],
       },
+      fontSize: {
+        xs: ["0.775rem", { lineHeight: "1rem" }], // Default: 0.75rem
+        sm: ["0.9rem", { lineHeight: "1.25rem" }], // Default: 0.875rem
+        base: ["1.1rem", { lineHeight: "1.5rem" }], // Default: 1rem
+        lg: ["1.25rem", { lineHeight: "1.75rem" }], // Default: 1.125rem
+        xl: ["1.5rem", { lineHeight: "1.75rem" }], // Default: 1.25rem
+        "2xl": ["1.875rem", { lineHeight: "2rem" }], // Default: 1.5rem
+        "3xl": ["2.25rem", { lineHeight: "2.5rem" }], // Default: 1.875rem
+        "4xl": ["2.625rem", { lineHeight: "2.75rem" }], // Default: 2.25rem
+        "5xl": ["3.25rem", { lineHeight: "1" }], // Default: 3rem
+        "6xl": ["4.25rem", { lineHeight: "1" }], // Default: 3.75rem
+        "7xl": ["5.25rem", { lineHeight: "1" }], // Default: 4.5rem
+        "8xl": ["6.25rem", { lineHeight: "1" }], // Default: 6rem
+        "9xl": ["7.25rem", { lineHeight: "1" }], // Default: 8rem
+      },
       boxShadow: {
         custom:
           "0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)",
