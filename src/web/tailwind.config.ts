@@ -35,7 +35,6 @@ export default {
         overlay: "rgba(0, 0, 0, 0.5)",
       },
       fontFamily: {
-        // openSans: ["var(--font-open-sans)"],
         nunito: ["var(--font-nunito)"],
       },
       boxShadow: {
@@ -53,6 +52,9 @@ export default {
       },
       animation: {
         wiggle: "wiggle 2s ease-in-out",
+      },
+      inset: {
+        "1/5": "20%", // Custom class for top: 20%
       },
     },
   },
