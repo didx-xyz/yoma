@@ -343,7 +343,6 @@ const OrganisationCreate: NextPageWithLayout<{
                 onSubmit={(data) => onSubmitStep(5, data)}
                 cancelButtonText="Back"
                 submitButtonText="Submit for approval"
-                isAdmin={isAdmin}
               />
             </>
           )}
