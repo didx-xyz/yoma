@@ -313,7 +313,7 @@ export const Navbar: React.FC = () => {
                       </div>
                       <label
                         htmlFor="nav-drawer"
-                        className="drawer-close btn btn-sm !rounded-md border-none text-gray-dark shadow-md hover:bg-gray"
+                        className="drawer-close btn btn-sm !rounded-full border-none text-gray-dark shadow-md hover:bg-gray"
                         aria-label="close sidebar"
                       >
                         <IoMdClose className="h-5 w-5" />

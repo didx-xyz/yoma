@@ -179,7 +179,7 @@ export const UserMenu: React.FC = () => {
                   width={161}
                   sizes="100vw"
                   priority={true}
-                  className="user-select-none pointer-events-none absolute left-32 top-56 z-0 -rotate-6 opacity-50"
+                  className="user-select-none pointer-events-none absolute left-32 top-56 -z-10 -rotate-6 opacity-50"
                 />
                 {/* STAMP 1 */}
                 <Image
@@ -189,7 +189,7 @@ export const UserMenu: React.FC = () => {
                   width={135}
                   sizes="100vw"
                   priority={true}
-                  className="user-select-none pointer-events-none absolute inset-x-2 left-32 top-[500px] z-0 -rotate-3 opacity-50"
+                  className="user-select-none pointer-events-none absolute inset-x-2 left-32 top-[500px] -z-10 -rotate-3 opacity-50"
                 />
 
                 <div className="relative z-10 mr-2 mt-6 overflow-hidden rounded-full shadow">
@@ -212,7 +212,7 @@ export const UserMenu: React.FC = () => {
                 {/* CLOSE BUTTON */}
                 <label
                   htmlFor="userMenu-drawer"
-                  className="drawer-close btn btn-sm absolute right-2 top-2 !rounded-md border-none text-black shadow-none hover:bg-orange"
+                  className="drawer-close btn btn-sm absolute right-2 top-2 !rounded-full border-none text-black shadow-none hover:bg-orange"
                   aria-label="close sidebar"
                 >
                   <IoMdClose className="h-5 w-5" />
@@ -242,7 +242,9 @@ export const UserMenu: React.FC = () => {
 
               {/* YoID Dashboard components */}
               <div className="flex flex-row gap-2">
-                <span className="tracking-wider text-black">My Yo-ID</span>
+                <span className="font-bold tracking-wider text-black">
+                  My Yo-ID
+                </span>
                 {/* TOOLTIP */}
                 <button type="button" onClick={() => setYoIdModalVisible(true)}>
                   <IoIosInformationCircleOutline className="h-5 w-5" />
@@ -254,7 +256,7 @@ export const UserMenu: React.FC = () => {
                   <Header
                     title="💸 Wallet"
                     url="/yoid/wallet"
-                    className="text-xs text-black md:text-sm"
+                    className="text-xs font-bold text-black md:text-sm"
                     onClick={() => setDrawerOpen(false)}
                   />
                   <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
@@ -269,7 +271,7 @@ export const UserMenu: React.FC = () => {
                   <Header
                     title="🏆 Opportunities"
                     url="/yoid/opportunities/completed"
-                    className="text-xs text-black md:text-sm"
+                    className="text-xs font-bold text-black md:text-sm"
                     onClick={() => setDrawerOpen(false)}
                   />
                   <button
@@ -309,7 +311,7 @@ export const UserMenu: React.FC = () => {
                   <Header
                     title="⚡ Skills"
                     url="/yoid/skills"
-                    className="text-xs text-black md:text-sm"
+                    className="text-xs font-bold text-black md:text-sm"
                     onClick={() => setDrawerOpen(false)}
                   />
                   <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
@@ -336,7 +338,7 @@ export const UserMenu: React.FC = () => {
                       onClick={toggleCollapsePassport}
                       className="flex h-[24px] w-full flex-row items-center gap-2 text-xs text-gray-dark md:text-sm"
                     >
-                      <span className="w-full truncate text-start text-xs tracking-wider text-black  md:text-sm">
+                      <span className="w-full truncate text-start text-xs font-bold tracking-wider  text-black md:text-sm">
                         🌐 Passport
                       </span>
 
