@@ -12,7 +12,7 @@ export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size }) => {
   const sizePixels: string = size + "px";
   return (
     <div
-      className={`flex aspect-square flex-shrink-0 overflow-hidden rounded-full bg-transparent shadow-custom `}
+      className={`flex aspect-square flex-shrink-0 overflow-hidden rounded-full bg-white bg-opacity-20 shadow-custom `}
       style={{
         width: sizePixels,
         height: sizePixels,
