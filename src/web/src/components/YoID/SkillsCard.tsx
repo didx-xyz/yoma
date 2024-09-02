@@ -1,7 +1,21 @@
 import Link from "next/link";
 import type { UserSkillInfo } from "~/api/models/user";
+import NoRowsMessage from "../NoRowsMessage";
 
 export const SkillsCard: React.FC<{ data: UserSkillInfo[] }> = ({ data }) => {
+  if (!data?.length) {
+    return (
+      <NoRowsMessage
+        title={""}
+        description={
+          "All your skills from completed opportunities will automatically appear here."
+        }
+        icon={"⚡"}
+        classNameIcon={"h-[60px] w-[60px]"}
+      />
+    );
+  }
+
   return (
     <>
       {data?.map((item) => (

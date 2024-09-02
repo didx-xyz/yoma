@@ -3,6 +3,7 @@ import iconZltoColor from "public/images/icon-zlto-rounded-color.webp";
 import { useEffect, useState } from "react";
 import { IoIosInformationCircleOutline } from "react-icons/io";
 import type { UserProfile } from "~/api/models/user";
+import NoRowsMessage from "../NoRowsMessage";
 import { ZltoModal } from "./ZltoModal";
 
 export const WalletCard: React.FC<{
@@ -27,6 +28,19 @@ export const WalletCard: React.FC<{
     }
   }, [userProfile]);
 
+  if (!total) {
+    return (
+      <NoRowsMessage
+        title={""}
+        description={
+          "You will receive ZLTO for completing opportunities, which can be spent on the marketplace."
+        }
+        icon={<Image src={iconZltoColor} alt="ZLTO" width={48} height={48} />}
+        classNameIcon={"h-[60px] w-[60px]"}
+      />
+    );
+  }
+
   return (
     <>
       <ZltoModal
@@ -36,7 +50,7 @@ export const WalletCard: React.FC<{
 
       <div className="flex h-full flex-col gap-2 text-xs text-black md:text-sm">
         <div className="h-full content-center justify-center gap-2 text-gray-dark">
-          <span>
+          <span className="text-xs">
             <span className="font-semibold italic">ZLTO</span> - Your digital
             wallet for managing rewards and transactions.
           </span>

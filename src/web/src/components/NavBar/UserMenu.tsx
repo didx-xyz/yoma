@@ -3,13 +3,17 @@ import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import stamp1 from "public/images/stamp-1.png";
+import stamp2 from "public/images/stamp-2.png";
 import worldMap from "public/images/world-map.png";
 import { useState } from "react";
+import { FaArrowRight } from "react-icons/fa";
 import {
   IoIosCheckmarkCircle,
   IoIosInformationCircleOutline,
   IoMdClose,
 } from "react-icons/io";
+import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
 import { getUserSkills } from "~/api/services/user";
@@ -24,16 +28,11 @@ import {
 import { AvatarImage } from "../AvatarImage";
 import { Header } from "../Common/Header";
 import Suspense from "../Common/Suspense";
-import NoRowsMessage from "../NoRowsMessage";
 import { LineChart } from "../YoID/LineChart";
 import { OpportunitiesSummary } from "../YoID/OpportunitiesSummary";
 import { PassportCard } from "../YoID/PassportCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
-import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
-import { FaArrowRight } from "react-icons/fa";
-import stamp1 from "public/images/stamp-1.png";
-import stamp2 from "public/images/stamp-2.png";
 import { YoIdModal } from "../YoID/YoIdModal";
 
 export const UserMenu: React.FC = () => {
@@ -317,15 +316,7 @@ export const UserMenu: React.FC = () => {
                   <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                     <div className="flex flex-wrap gap-1 overflow-y-auto">
                       <Suspense isLoading={skillsIsLoading} error={skillsError}>
-                        {!skills?.length && (
-                          <NoRowsMessage
-                            title={"No skills."}
-                            description={
-                              "Skills that you receive by completing opportunities will be diplayed here."
-                            }
-                          />
-                        )}
-                        {!!skills?.length && <SkillsCard data={skills} />}
+                        <SkillsCard data={skills!} />
                       </Suspense>
                     </div>
                   </div>
@@ -356,19 +347,7 @@ export const UserMenu: React.FC = () => {
                         isLoading={credentialsIsLoading}
                         error={credentialsError}
                       >
-                        {!credentials?.length && (
-                          <NoRowsMessage
-                            icon="💳"
-                            title={"No credentials."}
-                            description={
-                              "Complete opportunities to receive your credentials."
-                            }
-                          />
-                        )}
-
-                        {!!credentials?.length && (
-                          <PassportCard data={credentials} />
-                        )}
+                        <PassportCard data={credentials!} />
                       </Suspense>
                     </div>
                   )}
