@@ -69,7 +69,7 @@ export const OpportunitiesSummary: React.FC<{
           className="flex aspect-square w-[30%] min-w-[80px] flex-col items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center text-white shadow-custom"
           onClick={onClick}
         >
-          <div className="flex h-full w-full flex-col items-center justify-center rounded-full border-2 border-dotted border-orange bg-green">
+          <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-green">
             <div className="whitespace-nowrap text-sm font-semibold">
               {item.emoji} {item.count}
             </div>

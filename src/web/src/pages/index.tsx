@@ -90,7 +90,7 @@ const Home: NextPageWithLayout = () => {
               the loop with what&apos;s happening in the working world.
             </p>
             <div className="mb-4 md:my-4">
-              <div className="my-4 flex w-full flex-row justify-start">
+              <div className="my-2 flex w-full flex-row justify-start md:my-4">
                 <HomeSearchInputLarge
                   onSearch={onSearchInputSubmit}
                   maxWidth={0}
