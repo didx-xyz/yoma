@@ -37,6 +37,7 @@ import { OrgContactEdit } from "~/components/Organisation/Upsert/OrgContactEdit"
 import { OrgInfoEdit } from "~/components/Organisation/Upsert/OrgInfoEdit";
 import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { OrgSettingsEdit } from "~/components/Organisation/Upsert/OrgSettingsEdit";
+import { OrgSSOEdit } from "~/components/Organisation/Upsert/OrgSSOEdit";
 import { PageBackground } from "~/components/PageBackground";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -147,6 +148,7 @@ const OrganisationUpdate: NextPageWithLayout<{
   const isAdmin = user?.roles?.includes(ROLE_ADMIN);
   const isUserAdminOfCurrentOrg =
     userProfile?.adminsOf?.find((x) => x.id == id) != null;
+  const [activeTab, setActiveTab] = useState("orgSettings");
 
   // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
@@ -280,6 +282,22 @@ const OrganisationUpdate: NextPageWithLayout<{
 
   const onSubmitStep = useCallback(
     async (step: number, data: FieldValues) => {
+      // set form data
+      const model = {
+        ...OrganizationRequestBase,
+        ...(data as OrganizationRequestBase),
+      };
+
+      setOrganizationRequestBase(model);
+
+      await onSubmit(model);
+      return;
+    },
+    [OrganizationRequestBase, onSubmit],
+  );
+
+  const onSubmitSSO = useCallback(
+    async (data: FieldValues) => {
       // set form data
       const model = {
         ...OrganizationRequestBase,
@@ -466,13 +484,61 @@ const OrganisationUpdate: NextPageWithLayout<{
             )}
             {step == 5 && (
               <>
-                <div className="flex flex-col text-left">
-                  <h5 className="mb-6 font-bold tracking-wider">
-                    Organisation settings
-                  </h5>
-                </div>
+                {isAdmin && (
+                  <div>
+                    <div role="tablist" className="tabs tabs-bordered">
+                      <a
+                        role="tab"
+                        className={`tab-lg tab ${
+                          activeTab === "orgSettings"
+                            ? "tab-active bg-white text-black"
+                            : "text-gray"
+                        }`}
+                        onClick={() => setActiveTab("orgSettings")}
+                      >
+                        <div className="font-bold tracking-wider">Settings</div>
+                      </a>
+                      <a
+                        role="tab"
+                        className={`tab-lg tab ${
+                          activeTab === "ssoSettings"
+                            ? "tab-active bg-white text-black"
+                            : "text-gray"
+                        }`}
+                        onClick={() => setActiveTab("ssoSettings")}
+                      >
+                        <div className="font-bold tracking-wider">SSO</div>
+                      </a>
+                    </div>
 
-                <OrgSettingsEdit organisation={organisation!} />
+                    <div className="mt-4">
+                      {activeTab === "orgSettings" && (
+                        <div>
+                          <OrgSettingsEdit organisation={organisation!} />
+                        </div>
+                      )}
+                      {activeTab === "ssoSettings" && (
+                        <div>
+                          <OrgSSOEdit
+                            organisation={OrganizationRequestBase!}
+                            onSubmit={onSubmitSSO}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {!isAdmin && (
+                  <>
+                    <div className="flex flex-col text-left">
+                      <h5 className="mb-6 font-bold tracking-wider">
+                        Organisation settings
+                      </h5>
+                    </div>
+                    <OrgSettingsEdit organisation={organisation!} />
+                  </>
+                )}
               </>
             )}
           </div>
