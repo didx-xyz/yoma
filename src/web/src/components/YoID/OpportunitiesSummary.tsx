@@ -66,7 +66,7 @@ export const OpportunitiesSummary: React.FC<{
   if (allCountsZero) {
     return (
       <NoRowsMessage
-          title={""}
+        title={""}
         description={
           "You are able to complete opportunities, and get them verified. You can find your opportunities here."
         }
