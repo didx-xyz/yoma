@@ -27,7 +27,10 @@ export const PassportCard: React.FC<{
   return (
     <div className="flex flex-grow flex-col justify-center text-xs md:text-sm">
       <Image src={stamp1} alt="Stamps" className="absolute opacity-50" />
-
+      <div className="text-gray-dark">
+        Your digital passport contains the credentials you receive from
+        completing opportunities.
+      </div>
       <div className="flex flex-grow items-center justify-end">
         <div className="flex flex-col gap-1">
           {data?.map((item) => (
