@@ -431,8 +431,8 @@ const OrganisationUpdate: NextPageWithLayout<{
                   messageType={FormMessageType.Info}
                   className="mb-4"
                 >
-                  These details will be shared to partners and Youth to enhance
-                  discovery and contractibility if settings are enabled.
+                  If enabled in Settings, these details will be shared with
+                  trusted partners when sharing your opportunities.
                 </FormMessage>
 
                 <OrgContactEdit
