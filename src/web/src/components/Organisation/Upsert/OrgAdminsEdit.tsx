@@ -12,7 +12,6 @@ export interface InputProps {
   onCancel?: (fieldValues: FieldValues) => void;
   cancelButtonText?: string;
   submitButtonText?: string;
-  isAdmin?: boolean;
 }
 
 export const OrgAdminsEdit: React.FC<InputProps> = ({
@@ -21,7 +20,6 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
   onCancel,
   cancelButtonText = "Cancel",
   submitButtonText = "Submit",
-  isAdmin = false,
 }) => {
   const schema = zod
     .object({

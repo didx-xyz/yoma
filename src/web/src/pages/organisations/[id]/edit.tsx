@@ -478,7 +478,6 @@ const OrganisationUpdate: NextPageWithLayout<{
                 <OrgAdminsEdit
                   organisation={OrganizationRequestBase}
                   onSubmit={(data) => onSubmitStep(5, data)}
-                  isAdmin={isAdmin}
                 />
               </>
             )}
@@ -520,7 +519,7 @@ const OrganisationUpdate: NextPageWithLayout<{
                       {activeTab === "ssoSettings" && (
                         <div>
                           <OrgSSOEdit
-                            organisation={OrganizationRequestBase!}
+                            organisation={OrganizationRequestBase}
                             onSubmit={onSubmitSSO}
                           />
                         </div>
