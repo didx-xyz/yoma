@@ -39,7 +39,7 @@ import OpportunityCard from "~/components/Home/OpportunityCard";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import { RoundedImage } from "~/components/RoundedImage";
-import { SearchInputLarge } from "~/components/SearchInputLarge";
+import { HomeSearchInputLarge } from "~/components/Home/HomeSearchInputLarge";
 import { THEME_ORANGE } from "~/lib/constants";
 import type { NextPageWithLayout } from "./_app";
 
@@ -78,22 +78,21 @@ const Home: NextPageWithLayout = () => {
         <div className="grid grid-cols-1 gap-6 md:max-w-5xl lg:grid-cols-2">
           {/* LEFT: HEADERS AND TEXT */}
           <div className="flex flex-col gap-2 overflow-hidden pt-8 text-white md:py-8">
-            <h6 className="text-xs uppercase tracking-widest">
+            <h6 className="text-sm uppercase tracking-widest">
               Welcome to Yoma
             </h6>
             <h1 className="text-3xl font-bold tracking-wide">
               A world of opportunities
             </h1>
-            <p className="text-sm font-thin">
+            <p className="text-sm">
               Yoma is your friendly platform of trusted partners, bringing you
               the freshest opportunities to keep your skills sharp and stay in
               the loop with what&apos;s happening in the working world.
             </p>
             <div className="mb-4 md:my-4">
-              <div className="my-4 flex w-full flex-row justify-start">
-                <SearchInputLarge
+              <div className="my-2 flex w-full flex-row justify-start md:my-4">
+                <HomeSearchInputLarge
                   onSearch={onSearchInputSubmit}
-                  placeholder="Explore..."
                   maxWidth={0}
                 />
               </div>
