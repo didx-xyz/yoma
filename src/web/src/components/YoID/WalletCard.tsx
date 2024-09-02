@@ -28,7 +28,7 @@ export const WalletCard: React.FC<{
     }
   }, [userProfile]);
 
-  if (!total) {
+  if (total === "0") {
     return (
       <NoRowsMessage
         title={""}
