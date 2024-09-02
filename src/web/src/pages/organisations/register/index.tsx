@@ -99,7 +99,6 @@ const OrganisationCreate: NextPageWithLayout<{
   const [step, setStep] = useState(1);
   const setUserProfile = useSetAtom(userProfileAtom);
   const { data: session, update } = useSession();
-  const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
 
   const [OrganizationRequestBase, setOrganizationRequestBase] =
     useState<OrganizationRequestViewModel>({

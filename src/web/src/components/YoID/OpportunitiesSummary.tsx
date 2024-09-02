@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
+import NoRowsMessage from "../NoRowsMessage";
 
 interface MenuItem {
   href: string;
@@ -57,6 +58,22 @@ export const OpportunitiesSummary: React.FC<{
       label: "Saved",
       emoji: "💖",
     });
+  }
+
+  // Check if all counts are 0
+  const allCountsZero = menuItems.every((item) => item.count === 0);
+
+  if (allCountsZero) {
+    return (
+      <NoRowsMessage
+        title={""}
+        description={
+          "You are able to complete opportunities, and get them verified. You can find your opportunities here."
+        }
+        icon={`🏆`}
+        classNameIcon={"h-[60px] w-[60px]"}
+      />
+    );
   }
 
   return (
