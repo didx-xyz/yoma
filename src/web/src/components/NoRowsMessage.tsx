@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 
 const NoRowsMessage: React.FC<{
   icon?: string | ReactNode | null;

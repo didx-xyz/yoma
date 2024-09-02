@@ -50,9 +50,9 @@ export const WalletCard: React.FC<{
 
       <div className="flex h-full flex-col gap-2 text-xs text-black md:text-sm">
         <div className="h-full content-center justify-center gap-2 text-gray-dark">
-          <span>
-            <span className="text-xs font-semibold italic">ZLTO</span> - Your
-            digital wallet for managing rewards and transactions.
+          <span className="text-xs">
+            <span className="font-semibold italic">ZLTO</span> - Your digital
+            wallet for managing rewards and transactions.
           </span>
 
           {/* TOOLTIP */}
