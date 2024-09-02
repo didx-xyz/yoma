@@ -39,7 +39,7 @@ export const PageBackground: React.FC<{
             width={161}
             sizes="100vw"
             priority={true}
-            className="opacity-70x absolute -top-6 right-0 z-0 rotate-12 mix-blend-plus-lighter"
+            className="opacity-70x absolute -top-6 right-0 z-0 mix-blend-plus-lighter"
           />
         </div>
       )}
