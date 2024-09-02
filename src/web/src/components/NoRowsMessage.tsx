@@ -1,7 +1,7 @@
-import React from "react";
+import React, { ReactNode } from "react";
 
 const NoRowsMessage: React.FC<{
-  icon?: any | null;
+  icon?: string | ReactNode | null;
   title?: string | null;
   description?: string | null;
   className?: string | null;
