@@ -29,4 +29,6 @@ export interface OrganizationRequestViewModel {
   businessDocumentsDelete: string[] | null;
   ssoClientIdInbound: string | null;
   ssoClientIdOutbound: string | null;
+  zltoRewardPool: number | null;
+  yomaRewardPool: number | null;
 }

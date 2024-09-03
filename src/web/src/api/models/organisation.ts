@@ -67,6 +67,8 @@ export interface Organization {
   administrators: UserInfo[] | null;
   ssoClientIdInbound: string | null;
   ssoClientIdOutbound: string | null;
+  zltoRewardPool: number | null;
+  yomaRewardPool: number | null;
 }
 
 export interface UserInfo {

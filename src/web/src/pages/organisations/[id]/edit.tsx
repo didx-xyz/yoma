@@ -35,6 +35,7 @@ import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { OrgAdminsEdit } from "~/components/Organisation/Upsert/OrgAdminsEdit";
 import { OrgContactEdit } from "~/components/Organisation/Upsert/OrgContactEdit";
 import { OrgInfoEdit } from "~/components/Organisation/Upsert/OrgInfoEdit";
+import { OrgRewardsEdit } from "~/components/Organisation/Upsert/OrgRewardsEdit";
 import { OrgRolesEdit } from "~/components/Organisation/Upsert/OrgRolesEdit";
 import { OrgSettingsEdit } from "~/components/Organisation/Upsert/OrgSettingsEdit";
 import { OrgSSOEdit } from "~/components/Organisation/Upsert/OrgSSOEdit";
@@ -189,21 +190,40 @@ const OrganisationUpdate: NextPageWithLayout<{
       businessDocumentsDelete: [],
       ssoClientIdInbound: organisation?.ssoClientIdInbound ?? "",
       ssoClientIdOutbound: organisation?.ssoClientIdOutbound ?? "",
+      zltoRewardPool: organisation?.zltoRewardPool ?? 0,
+      yomaRewardPool: organisation?.yomaRewardPool ?? 0,
     });
 
-  const menuItems = useMemo(
-    () => [
+  const menuItems = useMemo(() => {
+    const items = [
       { step: 1, label: "Details", id: "lnkOrganisationDetails" },
       { step: 2, label: "Contact", id: "lnkOrganisationContact" },
       { step: 3, label: "Roles", id: "lnkOrganisationRoles" },
       { step: 4, label: "Admins", id: "lnkOrganisationAdmins" },
-      ...((isAdmin || isUserAdminOfCurrentOrg) &&
+    ];
+
+    if (isAdmin) {
+      items.push({
+        step: items.length + 1,
+        label: "Reward",
+        id: "lnkOrganisationReward",
+      });
+    }
+
+    if (
+      (isAdmin || isUserAdminOfCurrentOrg) &&
       organisation?.status === "Active"
-        ? [{ step: 5, label: "Settings", id: "lnkOrganisationSettings" }]
-        : []),
-    ],
-    [isAdmin, isUserAdminOfCurrentOrg, organisation],
-  );
+    ) {
+      items.push({
+        step: items.length + 1,
+        label: "Settings",
+        id: "lnkOrganisationSettings",
+      });
+    }
+
+    return items;
+  }, [isAdmin, isUserAdminOfCurrentOrg, organisation]);
+  const currentStep = menuItems.find((item) => item.step === step);
 
   //#region Event Handlers
   const onSubmit = useCallback(
@@ -384,7 +404,6 @@ const OrganisationUpdate: NextPageWithLayout<{
               </li>
             ))}
           </ul>
-
           {/* DROPDOWN MENU */}
           <select
             className="select select-md focus:border-none focus:outline-none md:hidden"
@@ -404,14 +423,13 @@ const OrganisationUpdate: NextPageWithLayout<{
           </select>
 
           <div className="flex w-full flex-col rounded-lg bg-white p-4 md:p-8">
-            {step == 1 && (
+            {currentStep?.id === "lnkOrganisationDetails" && (
               <>
                 <div className="flex flex-col text-left">
                   <h5 className="mb-6 font-bold tracking-wider">
                     Organisation details
                   </h5>
                 </div>
-
                 <OrgInfoEdit
                   formData={OrganizationRequestBase}
                   organisation={organisation}
@@ -419,14 +437,13 @@ const OrganisationUpdate: NextPageWithLayout<{
                 />
               </>
             )}
-            {step == 2 && (
+            {currentStep?.id === "lnkOrganisationContact" && (
               <>
                 <div className="flex flex-col text-left">
                   <h5 className="mb-6 font-bold tracking-wider">
                     Contact details
                   </h5>
                 </div>
-
                 <FormMessage
                   messageType={FormMessageType.Info}
                   className="mb-4"
@@ -434,7 +451,6 @@ const OrganisationUpdate: NextPageWithLayout<{
                   If enabled in Settings, these details will be shared with
                   trusted partners when sharing your opportunities.
                 </FormMessage>
-
                 <OrgContactEdit
                   formData={OrganizationRequestBase}
                   organisation={organisation}
@@ -442,14 +458,13 @@ const OrganisationUpdate: NextPageWithLayout<{
                 />
               </>
             )}
-            {step == 3 && (
+            {currentStep?.id === "lnkOrganisationRoles" && (
               <>
                 <div className="flex flex-col text-left">
                   <h5 className="mb-6 font-bold tracking-wider">
                     Organisation roles
                   </h5>
                 </div>
-
                 <FormMessage
                   messageType={FormMessageType.Warning}
                   className="mb-4"
@@ -459,7 +474,6 @@ const OrganisationUpdate: NextPageWithLayout<{
                   <br /> During this process, functionalities such as creating
                   opportunities may be limited.
                 </FormMessage>
-
                 <OrgRolesEdit
                   formData={OrganizationRequestBase}
                   organisation={organisation}
@@ -467,23 +481,22 @@ const OrganisationUpdate: NextPageWithLayout<{
                 />
               </>
             )}
-            {step == 4 && (
+            {currentStep?.id === "lnkOrganisationAdmins" && (
               <>
                 <div className="flex flex-col text-left">
                   <h5 className="mb-6 font-bold tracking-wider">
                     Organisation admins
                   </h5>
                 </div>
-
                 <OrgAdminsEdit
                   organisation={OrganizationRequestBase}
                   onSubmit={(data) => onSubmitStep(5, data)}
                 />
               </>
             )}
-            {step == 5 && (
+            {currentStep?.id === "lnkOrganisationSettings" && (
               <>
-                {isAdmin && (
+                {isAdmin ? (
                   <div>
                     <div role="tablist" className="tabs tabs-bordered">
                       <a
@@ -509,26 +522,19 @@ const OrganisationUpdate: NextPageWithLayout<{
                         <div className="font-bold tracking-wider">SSO</div>
                       </a>
                     </div>
-
                     <div className="mt-4">
                       {activeTab === "orgSettings" && (
-                        <div>
-                          <OrgSettingsEdit organisation={organisation!} />
-                        </div>
+                        <OrgSettingsEdit organisation={organisation!} />
                       )}
                       {activeTab === "ssoSettings" && (
-                        <div>
-                          <OrgSSOEdit
-                            organisation={OrganizationRequestBase}
-                            onSubmit={onSubmitSSO}
-                          />
-                        </div>
+                        <OrgSSOEdit
+                          organisation={OrganizationRequestBase}
+                          onSubmit={onSubmitSSO}
+                        />
                       )}
                     </div>
                   </div>
-                )}
-
-                {!isAdmin && (
+                ) : (
                   <>
                     <div className="flex flex-col text-left">
                       <h5 className="mb-6 font-bold tracking-wider">
@@ -538,6 +544,35 @@ const OrganisationUpdate: NextPageWithLayout<{
                     <OrgSettingsEdit organisation={organisation!} />
                   </>
                 )}
+              </>
+            )}
+            {currentStep?.id === "lnkOrganisationReward" && (
+              <>
+                <div className="flex flex-col text-left">
+                  <h5 className="mb-6 font-bold tracking-wider">Reward pool</h5>
+                </div>
+                <FormMessage
+                  messageType={FormMessageType.Info}
+                  className="mb-4"
+                >
+                  <strong>Opportunity-Level Pool:</strong> Each opportunity has
+                  its own ZLTO pool. Once depleted, no more ZLTO can be awarded
+                  for that opportunity.
+                </FormMessage>
+                <FormMessage
+                  messageType={FormMessageType.Info}
+                  className="mb-4"
+                >
+                  <strong>Organization-Level Pool:</strong> This new pool covers
+                  all opportunities within an organization. If depleted, no ZLTO
+                  can be awarded for any opportunity under that organization,
+                  even if individual opportunity pools still have ZLTO
+                  remaining.
+                </FormMessage>
+                <OrgRewardsEdit
+                  organisation={OrganizationRequestBase}
+                  onSubmit={(data) => onSubmitStep(7, data)}
+                />
               </>
             )}
           </div>
