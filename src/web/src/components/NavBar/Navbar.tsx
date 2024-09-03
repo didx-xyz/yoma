@@ -207,6 +207,7 @@ export const Navbar: React.FC = () => {
           }
           onClick={() => setDrawerOpen(false)}
           id={`userMenu_orgs_${organisation.name}`} // e2e
+          className="w-full"
         >
           <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
             <AvatarImage
@@ -332,6 +333,7 @@ export const Navbar: React.FC = () => {
                             href={link.url!}
                             onClick={() => setDrawerOpen(false)}
                             id={`lnkNavbarMenuModal_${link.title}`}
+                            className="w-full"
                           >
                             <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
                               {link.iconImage}
