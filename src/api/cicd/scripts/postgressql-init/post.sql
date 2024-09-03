@@ -616,4 +616,29 @@ SET
 FROM AggregatedData A
 WHERE O."Id" = A."OpportunityId";
 
--- Organization: Running totals updated as part of migration
+-- Organization: Update Running Totals
+WITH rewardsums AS (
+    SELECT
+        O."OrganizationId" AS "OrganizationId",
+        CASE
+            WHEN COUNT(O."ZltoRewardCumulative") = 0 THEN NULL
+            ELSE SUM(O."ZltoRewardCumulative")
+        END AS "ZltoRewardCumulative",
+        CASE
+            WHEN COUNT(O."YomaRewardCumulative") = 0 THEN NULL
+            ELSE SUM(O."YomaRewardCumulative")
+        END AS "YomaRewardCumulative"
+    FROM
+        "Opportunity"."Opportunity" O
+    GROUP BY
+        O."OrganizationId"
+)
+UPDATE
+    "Entity"."Organization" org
+SET
+    "ZltoRewardCumulative" = rewardsums."ZltoRewardCumulative",
+    "YomaRewardCumulative" = rewardsums."YomaRewardCumulative"
+FROM
+    rewardsums
+WHERE
+    org."Id" = rewardsums."OrganizationId";
