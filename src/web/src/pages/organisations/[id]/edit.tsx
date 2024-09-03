@@ -567,7 +567,7 @@ const OrganisationUpdate: NextPageWithLayout<{
                     <div className="w-full">
                       <FormField
                         label="Zlto Reward Cumulative"
-                        tooltip="What has been awarded"
+                        tooltip="Represents the total amount of rewards that have already been distributed or allocated to participants. It is a running total that accumulates as rewards are awarded."
                       >
                         <label className="label-text">
                           {organisation?.zltoRewardCumulative ?? "N/A"}
@@ -577,7 +577,7 @@ const OrganisationUpdate: NextPageWithLayout<{
                     <div className="w-full">
                       <FormField
                         label="Zlto Reward Balance"
-                        tooltip="What can still be awarded"
+                        tooltip="Represents the remaining amount of rewards available to be distributed. It is calculated as the difference between the Pool and Cumulative values. If no pool is defined, the balance will be null."
                       >
                         <label className="label-text">
                           {organisation?.zltoRewardBalance ?? "N/A"}

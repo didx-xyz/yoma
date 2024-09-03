@@ -63,6 +63,7 @@ export const OrgRewardsEdit: React.FC<InputProps> = ({
           !!formState.touchedFields.zltoRewardPool || formState.isSubmitted
         }
         error={formState.errors.zltoRewardPool?.message?.toString()}
+        tooltip="Represents the total amount of rewards that an organization or opportunity has allocated to be distributed. It is the maximum amount that can be awarded as rewards to participants"
       >
         <FormInput
           inputProps={{
