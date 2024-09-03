@@ -1,6 +1,5 @@
 using CsvHelper.Configuration;
 using FluentValidation;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -993,7 +992,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             EnsureNoEarlierPendingVerificationsForOtherStudents(user, opportunity, item, instantVerification);
 
             //with instant-verifications ensureOrganizationAuthorization not checked as finalized immediately by the user (youth)
-            var result = await _opportunityService.AllocateRewards(opportunity.Id, user.Id, !instantVerification);
+            var result = await _opportunityService.AllocateRewards(opportunity.Id, !instantVerification);
             item.ZltoReward = result.ZltoReward;
             item.YomaReward = result.YomaReward;
             item.DateCompleted = DateTimeOffset.UtcNow;
@@ -1010,7 +1009,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (result.ZltoReward.HasValue && result.ZltoReward.Value > default(decimal))
               await _rewardService.ScheduleRewardTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, result.ZltoReward.Value);
 
+            if (result.ZltoRewardReduced == true) item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "ZLTO partially awarded due to insufficient reward pool");
             if (result.ZltoRewardPoolDepleted == true) item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "ZLTO not awarded as reward pool has been depleted");
+            if (result.YomaRewardReduced == true) item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "Yoma partially awarded due to insufficient reward pool");
             if (result.YomaRewardPoolDepleted == true) item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "Yoma not awarded as reward pool has been depleted");
 
             emailType = EmailType.Opportunity_Verification_Completed;

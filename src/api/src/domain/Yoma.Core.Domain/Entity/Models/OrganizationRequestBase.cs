@@ -69,5 +69,9 @@ namespace Yoma.Core.Domain.Entity.Models
     /// Inbound SSO Client ID used for configuring SSO, allowing logins on Yoma's site using third-party credentials
     /// </summary>
     public string? SSOClientIdInbound { get; set; }
+
+    public decimal? ZltoRewardPool { get; set; }
+
+    public decimal? YomaRewardPool { get; set; }
   }
 }

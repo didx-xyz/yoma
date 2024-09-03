@@ -615,3 +615,5 @@ SET
     "YomaRewardCumulative" = A."YomaRewardTotal"
 FROM AggregatedData A
 WHERE O."Id" = A."OpportunityId";
+
+-- Organization: Running totals updated as part of migration

@@ -86,6 +86,18 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
     public string? Settings { get; set; }
 
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal? ZltoRewardPool { get; set; }
+
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal? ZltoRewardCumulative { get; set; }
+
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal? YomaRewardPool { get; set; }
+
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal? YomaRewardCumulative { get; set; }
+
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 

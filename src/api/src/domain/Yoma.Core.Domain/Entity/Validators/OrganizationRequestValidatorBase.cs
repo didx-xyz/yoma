@@ -62,6 +62,14 @@ namespace Yoma.Core.Domain.Entity.Validators
       RuleFor(x => x.AdminEmails).Must(emails => emails != null && emails.All(email => !string.IsNullOrWhiteSpace(email) && new EmailAddressAttribute().IsValid(email)))
           .WithMessage("Additional administrative emails contain invalid addresses.")
           .When(x => x.AdminEmails != null && x.AdminEmails.Count != 0);
+
+      RuleFor(x => x.ZltoRewardPool)
+          .GreaterThan(0).When(x => x.ZltoRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.")
+          .Must(zltoRewardPool => zltoRewardPool % 1 == 0).When(x => x.ZltoRewardPool.HasValue)
+              .WithMessage("'{PropertyName}' does not support decimal points.");
+
+      RuleFor(x => x.YomaRewardPool)
+          .GreaterThan(0).When(x => x.YomaRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
     }
     #endregion
 
