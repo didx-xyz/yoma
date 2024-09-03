@@ -627,7 +627,9 @@ WITH rewardsums AS (
         CASE
             WHEN COUNT(O."YomaRewardCumulative") = 0 THEN NULL
             ELSE SUM(O."YomaRewardCumulative")
-        END AS "YomaRewardCumulative"
+        END AS "YomaRewardCumulative",
+        SUM(O."ZltoRewardPool") AS "TotalZltoRewardPool",
+        SUM(O."YomaRewardPool") AS "TotalYomaRewardPool"
     FROM
         "Opportunity"."Opportunity" O
     GROUP BY
@@ -637,7 +639,9 @@ UPDATE
     "Entity"."Organization" org
 SET
     "ZltoRewardCumulative" = rewardsums."ZltoRewardCumulative",
-    "YomaRewardCumulative" = rewardsums."YomaRewardCumulative"
+    "YomaRewardCumulative" = rewardsums."YomaRewardCumulative",
+    "ZltoRewardPool" = rewardsums."TotalZltoRewardPool",
+    "YomaRewardPool" = rewardsums."TotalYomaRewardPool"
 FROM
     rewardsums
 WHERE
