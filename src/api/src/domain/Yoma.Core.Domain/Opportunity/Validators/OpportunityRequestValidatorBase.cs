@@ -78,7 +78,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .GreaterThan(0).When(x => x.YomaRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.")
           .Must((model, yomaRewardPool) => !model.YomaRewardPool.HasValue || (model.YomaReward.HasValue && yomaRewardPool >= model.YomaReward))
               .WithMessage("'{PropertyName}' must be greater than or equal to YomaReward.");
-          
+
       RuleFor(x => x.VerificationMethod)
           .NotNull()
           .When(x => x.VerificationEnabled)
