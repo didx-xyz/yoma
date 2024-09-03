@@ -1102,6 +1102,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         _organizationService.IsAdmin(request.OrganizationId, true);
 
       var result = GetById(request.Id, true, true, false);
+      var resultCurrent = ObjectHelper.DeepCopy(result);
 
       AssertUpdatable(result);
 
@@ -1179,7 +1180,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        await AssertUpdatablePartnerSharing(request, result); //check will abort sharing if possible and needs to be rolled back if the update fails
+        await AssertUpdatablePartnerSharing(request, resultCurrent); //check will abort sharing if possible and needs to be rolled back if the update fails
 
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
         result = await _opportunityRepository.Update(result);
@@ -1640,22 +1641,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
         throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
     }
 
-    private async Task AssertUpdatablePartnerSharing(OpportunityRequestUpdate request, Models.Opportunity opportunity)
+    private async Task AssertUpdatablePartnerSharing(OpportunityRequestUpdate request, Models.Opportunity opportunityCurrent)
     {
       var reasons = new List<string>();
 
-      if (opportunity.ShareWithPartners == true && request.ShareWithPartners != true)
+      if (opportunityCurrent.ShareWithPartners == true && request.ShareWithPartners != true)
         reasons.Add("Option to share with partners cannot be disabled after it has been enabled");
 
-      if (opportunity.DateEnd.HasValue && !request.DateEnd.HasValue)
+      if (opportunityCurrent.DateEnd.HasValue && !request.DateEnd.HasValue)
         reasons.Add("End date cannot be removed once it has been set");
 
-      if (opportunity.TypeId != request.TypeId)
+      if (opportunityCurrent.TypeId != request.TypeId)
         reasons.Add("Type cannot be changed");
 
       if (reasons.Count == 0) return;
 
-      var shared = await _sharingInfoService.IsShared(PartnerSharing.EntityType.Opportunity, opportunity.Id, true);
+      var shared = await _sharingInfoService.IsShared(PartnerSharing.EntityType.Opportunity, opportunityCurrent.Id, true);
       if (!shared) return;
 
       var reasonText = string.Join("; ", reasons);
