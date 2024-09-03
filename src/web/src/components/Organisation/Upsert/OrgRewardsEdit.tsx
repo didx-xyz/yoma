@@ -22,8 +22,8 @@ export const OrgRewardsEdit: React.FC<InputProps> = ({
   submitButtonText = "Submit",
 }) => {
   const schema = zod.object({
-    zltoRewardPool: zod.string().optional(),
-    yomaRewardPool: zod.string().optional(),
+    zltoRewardPool: zod.string().nullable().optional(),
+    yomaRewardPool: zod.string().nullable().optional(),
   });
 
   const form = useForm({

@@ -29,6 +29,7 @@ import {
   updateOrganisationLogo,
 } from "~/api/services/organisations";
 import { getUserProfile } from "~/api/services/user";
+import FormField from "~/components/Common/FormField";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import MainLayout from "~/components/Layout/Main";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
@@ -190,8 +191,8 @@ const OrganisationUpdate: NextPageWithLayout<{
       businessDocumentsDelete: [],
       ssoClientIdInbound: organisation?.ssoClientIdInbound ?? "",
       ssoClientIdOutbound: organisation?.ssoClientIdOutbound ?? "",
-      zltoRewardPool: organisation?.zltoRewardPool ?? 0,
-      yomaRewardPool: organisation?.yomaRewardPool ?? 0,
+      zltoRewardPool: organisation?.zltoRewardPool ?? null,
+      yomaRewardPool: organisation?.yomaRewardPool ?? null,
     });
 
   const menuItems = useMemo(() => {
@@ -551,28 +552,45 @@ const OrganisationUpdate: NextPageWithLayout<{
                 <div className="flex flex-col text-left">
                   <h5 className="mb-6 font-bold tracking-wider">Reward pool</h5>
                 </div>
-                <FormMessage
-                  messageType={FormMessageType.Info}
-                  className="mb-4"
-                >
-                  <strong>Opportunity-Level Pool:</strong> Each opportunity has
-                  its own ZLTO pool. Once depleted, no more ZLTO can be awarded
-                  for that opportunity.
-                </FormMessage>
-                <FormMessage
-                  messageType={FormMessageType.Info}
-                  className="mb-4"
-                >
-                  <strong>Organization-Level Pool:</strong> This new pool covers
-                  all opportunities within an organization. If depleted, no ZLTO
-                  can be awarded for any opportunity under that organization,
-                  even if individual opportunity pools still have ZLTO
-                  remaining.
-                </FormMessage>
-                <OrgRewardsEdit
-                  organisation={OrganizationRequestBase}
-                  onSubmit={(data) => onSubmitStep(7, data)}
-                />
+
+                <div className="flex flex-col gap-4">
+                  <FormMessage messageType={FormMessageType.Info}>
+                    <strong>Organization-Level Pool:</strong> This new pool
+                    covers all opportunities within an organization. If
+                    depleted, no ZLTO can be awarded for any opportunity under
+                    that organization, even if individual opportunity pools
+                    still have ZLTO remaining.
+                  </FormMessage>
+
+                  {/* show the zltoRewardCumulative & zltoRewardBalance */}
+                  <div className="flex flex-row gap-4">
+                    <div className="w-full">
+                      <FormField
+                        label="Zlto Reward Cumulative"
+                        tooltip="What has been awarded"
+                      >
+                        <label className="label-text">
+                          {organisation?.zltoRewardCumulative ?? "N/A"}
+                        </label>
+                      </FormField>
+                    </div>
+                    <div className="w-full">
+                      <FormField
+                        label="Zlto Reward Balance"
+                        tooltip="What can still be awarded"
+                      >
+                        <label className="label-text">
+                          {organisation?.zltoRewardBalance ?? "N/A"}
+                        </label>
+                      </FormField>
+                    </div>
+                  </div>
+
+                  <OrgRewardsEdit
+                    organisation={OrganizationRequestBase}
+                    onSubmit={(data) => onSubmitStep(7, data)}
+                  />
+                </div>
               </>
             )}
           </div>

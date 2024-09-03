@@ -1,4 +1,5 @@
 import type { FormFile, PaginationFilter } from "./common";
+import { SettingsInfo } from "./user";
 
 export interface OrganizationRequestBase {
   id: string;
@@ -39,6 +40,7 @@ export interface OrganizationProviderType {
 export interface Organization {
   id: string;
   name: string;
+  nameHashValue: string;
   websiteURL: string | null;
   primaryContactName: string | null;
   primaryContactEmail: string | null;
@@ -55,21 +57,62 @@ export interface Organization {
   tagline: string | null;
   biography: string | null;
   statusId: string;
-  status: OrganizationStatus | string; //NB
+  status: OrganizationStatus | string; //NB;
   commentApproval: string | null;
   dateStatusModified: string | null;
   logoId: string | null;
   logoURL: string | null;
+  ssoClientIdOutbound: string | null;
+  ssoClientIdInbound: string | null;
+  settings: SettingsInfo | null;
+  zltoRewardPool: number | null;
+  zltoRewardCumulative: number | null;
+  zltoRewardBalance: number | null;
+  yomaRewardPool: number | null;
+  yomaRewardCumulative: number | null;
+  yomaRewardBalance: number | null;
   dateCreated: string;
+  createdByUserId: string;
   dateModified: string;
+  modifiedByUserId: string;
   documents: OrganizationDocument[] | null;
   providerTypes: OrganizationProviderType[] | null;
   administrators: UserInfo[] | null;
-  ssoClientIdInbound: string | null;
-  ssoClientIdOutbound: string | null;
-  zltoRewardPool: number | null;
-  yomaRewardPool: number | null;
 }
+// export interface Organization {
+//   id: string;
+//   name: string;
+//   websiteURL: string | null;
+//   primaryContactName: string | null;
+//   primaryContactEmail: string | null;
+//   primaryContactPhone: string | null;
+//   vATIN: string | null;
+//   taxNumber: string | null;
+//   registrationNumber: string | null;
+//   city: string | null;
+//   countryId: string | null;
+//   country: string | null;
+//   streetAddress: string | null;
+//   province: string | null;
+//   postalCode: string | null;
+//   tagline: string | null;
+//   biography: string | null;
+//   statusId: string;
+//   status: OrganizationStatus | string; //NB
+//   commentApproval: string | null;
+//   dateStatusModified: string | null;
+//   logoId: string | null;
+//   logoURL: string | null;
+//   dateCreated: string;
+//   dateModified: string;
+//   documents: OrganizationDocument[] | null;
+//   providerTypes: OrganizationProviderType[] | null;
+//   administrators: UserInfo[] | null;
+//   ssoClientIdInbound: string | null;
+//   ssoClientIdOutbound: string | null;
+//   zltoRewardPool: number | null;
+//   yomaRewardPool: number | null;
+// }
 
 export interface UserInfo {
   id: string;

@@ -33,6 +33,7 @@ export interface Opportunity {
   url: string | null;
   zltoReward: number | null;
   zltoRewardPool: number | null;
+  zltoRewardBalance: number | null;
   zltoRewardCumulative: number | null;
   yomaReward: number | null;
   yomaRewardPool: number | null;
