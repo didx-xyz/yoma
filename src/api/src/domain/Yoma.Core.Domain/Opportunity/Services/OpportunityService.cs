@@ -1615,7 +1615,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (!reward.HasValue) return (reward, rewardReduced, rewardPoolDepleted);
 
       // process reward if the current level has a pool and the higher level has not been depleted
-      if (rewardPool.HasValue && rewardPoolDepleted != true) // executes when isRewardPoolDepleted is null or false, thus not true
+      if (rewardPool.HasValue && rewardPoolDepleted != true) // executes when rewardPoolDepleted is null or false, preserving higher-level depletion if already marked as true
       {
         // calculate the remainder of rewardPool - rewardCumulative, treating null as 0
         var remainder = rewardPool.Value - (rewardCumulative ?? default);
@@ -1627,8 +1627,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         // set flag indicating if the pool has been depleted
         rewardPoolDepleted = remainder <= default(decimal);
 
-        // check if the reward was reduced, and preserve the incoming flag if it was already set
-        if (reward < rewardOriginal) rewardReduced = true;
+        // set flag indicating if the reward was reduced; only set if null or false, preserving the higher-level reduction if already marked as true
+        if (rewardReduced != true) rewardReduced = reward < rewardOriginal;
 
         if (rewardReduced == true && rewardPoolDepleted == true)
           throw new InvalidOperationException("Logical error: Reward pool depleted and reward reduced");
