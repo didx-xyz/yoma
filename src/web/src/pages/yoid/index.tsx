@@ -147,17 +147,7 @@ const YoIDDashboard: NextPageWithLayout<{
           <Header title="🌐 Passport" url="/yoid/passport" />
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
             <Suspense isLoading={credentialsIsLoading} error={credentialsError}>
-              {!credentials?.length && (
-                <NoRowsMessage
-                  icon="💳"
-                  title={"No credentials."}
-                  description={
-                    "Complete opportunities to receive your credentials."
-                  }
-                />
-              )}
-
-              {!!credentials?.length && <PassportCard data={credentials} />}
+              <PassportCard data={credentials!} />
             </Suspense>
           </div>
         </div>
@@ -168,15 +158,7 @@ const YoIDDashboard: NextPageWithLayout<{
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
             <div className="flex flex-wrap gap-1 overflow-y-auto">
               <Suspense isLoading={skillsIsLoading} error={skillsError}>
-                {!skills?.length && (
-                  <NoRowsMessage
-                    title={"No skills."}
-                    description={
-                      "Skills that you receive by completing opportunities will be diplayed here."
-                    }
-                  />
-                )}
-                {!!skills?.length && <SkillsCard data={skills} />}
+                <SkillsCard data={skills!} />
               </Suspense>
             </div>
           </div>

@@ -2093,11 +2093,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       }
                     >
                       <div className="flex flex-col gap-2">
-                        <FormMessage messageType={FormMessageType.Warning}>
-                          Heads up! An end date is required to share this
-                          opportunity with partners. We recommend setting an end
-                          date.
-                        </FormMessage>
+                        {!watchDateEnd && (
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            Heads up! An end date is required to share this
+                            opportunity with partners. We recommend setting an
+                            end date.
+                          </FormMessage>
+                        )}
 
                         <div className="grid gap-4 md:grid-cols-2">
                           <FormField
