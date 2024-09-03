@@ -1,5 +1,5 @@
 import type { FormFile, PaginationFilter } from "./common";
-import { SettingsInfo } from "./user";
+import type { SettingsInfo } from "./user";
 
 export interface OrganizationRequestBase {
   id: string;
@@ -79,40 +79,6 @@ export interface Organization {
   providerTypes: OrganizationProviderType[] | null;
   administrators: UserInfo[] | null;
 }
-// export interface Organization {
-//   id: string;
-//   name: string;
-//   websiteURL: string | null;
-//   primaryContactName: string | null;
-//   primaryContactEmail: string | null;
-//   primaryContactPhone: string | null;
-//   vATIN: string | null;
-//   taxNumber: string | null;
-//   registrationNumber: string | null;
-//   city: string | null;
-//   countryId: string | null;
-//   country: string | null;
-//   streetAddress: string | null;
-//   province: string | null;
-//   postalCode: string | null;
-//   tagline: string | null;
-//   biography: string | null;
-//   statusId: string;
-//   status: OrganizationStatus | string; //NB
-//   commentApproval: string | null;
-//   dateStatusModified: string | null;
-//   logoId: string | null;
-//   logoURL: string | null;
-//   dateCreated: string;
-//   dateModified: string;
-//   documents: OrganizationDocument[] | null;
-//   providerTypes: OrganizationProviderType[] | null;
-//   administrators: UserInfo[] | null;
-//   ssoClientIdInbound: string | null;
-//   ssoClientIdOutbound: string | null;
-//   zltoRewardPool: number | null;
-//   yomaRewardPool: number | null;
-// }
 
 export interface UserInfo {
   id: string;

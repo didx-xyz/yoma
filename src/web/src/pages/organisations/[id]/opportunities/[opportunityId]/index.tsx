@@ -2384,30 +2384,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       </FormMessage>
                     )}
 
-                    {/* show the zltoRewardCumulative & zltoRewardBalance */}
-                    <div className="flex flex-row gap-4">
-                      <div className="w-full">
-                        <FormField
-                          label="Zlto Reward Cumulative"
-                          tooltip="What has been awarded"
-                        >
-                          <label className="label-text">
-                            {opportunity?.zltoRewardCumulative ?? "N/A"}
-                          </label>
-                        </FormField>
-                      </div>
-                      <div className="w-full">
-                        <FormField
-                          label="Zlto Reward Balance"
-                          tooltip="What can still be awarded"
-                        >
-                          <label className="label-text">
-                            {opportunity?.zltoRewardBalance ?? "N/A"}
-                          </label>
-                        </FormField>
-                      </div>
-                    </div>
-
                     <FormField
                       label="Skills"
                       subLabel="Which skills will the Youth be awarded with upon completion? This will be displayed on the opportunity page."
