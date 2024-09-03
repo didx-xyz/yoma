@@ -3,13 +3,17 @@ import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import stamp1 from "public/images/stamp-1.png";
+import stamp2 from "public/images/stamp-2.png";
 import worldMap from "public/images/world-map.png";
 import { useState } from "react";
+import { FaArrowRight } from "react-icons/fa";
 import {
   IoIosCheckmarkCircle,
   IoIosInformationCircleOutline,
   IoMdClose,
 } from "react-icons/io";
+import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
 import { getUserSkills } from "~/api/services/user";
@@ -24,16 +28,11 @@ import {
 import { AvatarImage } from "../AvatarImage";
 import { Header } from "../Common/Header";
 import Suspense from "../Common/Suspense";
-import NoRowsMessage from "../NoRowsMessage";
 import { LineChart } from "../YoID/LineChart";
 import { OpportunitiesSummary } from "../YoID/OpportunitiesSummary";
 import { PassportCard } from "../YoID/PassportCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
-import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
-import { FaArrowRight } from "react-icons/fa";
-import stamp1 from "public/images/stamp-1.png";
-import stamp2 from "public/images/stamp-2.png";
 import { YoIdModal } from "../YoID/YoIdModal";
 
 export const UserMenu: React.FC = () => {
@@ -179,7 +178,7 @@ export const UserMenu: React.FC = () => {
                   width={161}
                   sizes="100vw"
                   priority={true}
-                  className="user-select-none pointer-events-none absolute left-32 top-56 z-0 -rotate-6 opacity-50"
+                  className="user-select-none pointer-events-none absolute left-32 top-56 -z-10 -rotate-6 opacity-50"
                 />
                 {/* STAMP 1 */}
                 <Image
@@ -189,7 +188,7 @@ export const UserMenu: React.FC = () => {
                   width={135}
                   sizes="100vw"
                   priority={true}
-                  className="user-select-none pointer-events-none absolute inset-x-2 left-32 top-[500px] z-0 -rotate-3 opacity-50"
+                  className="user-select-none pointer-events-none absolute inset-x-2 left-32 top-[500px] -z-10 -rotate-3 opacity-50"
                 />
 
                 <div className="relative z-10 mr-2 mt-6 overflow-hidden rounded-full shadow">
@@ -212,7 +211,7 @@ export const UserMenu: React.FC = () => {
                 {/* CLOSE BUTTON */}
                 <label
                   htmlFor="userMenu-drawer"
-                  className="drawer-close btn btn-sm absolute right-2 top-2 !rounded-md border-none text-black shadow-none hover:bg-orange"
+                  className="drawer-close btn btn-sm absolute right-2 top-2 !rounded-full border-none text-black shadow-none hover:bg-orange"
                   aria-label="close sidebar"
                 >
                   <IoMdClose className="h-5 w-5" />
@@ -242,7 +241,9 @@ export const UserMenu: React.FC = () => {
 
               {/* YoID Dashboard components */}
               <div className="flex flex-row gap-2">
-                <span className="tracking-wider text-black">My Yo-ID</span>
+                <span className="font-bold tracking-wider text-black">
+                  My Yo-ID
+                </span>
                 {/* TOOLTIP */}
                 <button type="button" onClick={() => setYoIdModalVisible(true)}>
                   <IoIosInformationCircleOutline className="h-5 w-5" />
@@ -254,7 +255,7 @@ export const UserMenu: React.FC = () => {
                   <Header
                     title="💸 Wallet"
                     url="/yoid/wallet"
-                    className="text-xs text-black md:text-sm"
+                    className="text-xs font-bold text-black md:text-sm"
                     onClick={() => setDrawerOpen(false)}
                   />
                   <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
@@ -269,7 +270,7 @@ export const UserMenu: React.FC = () => {
                   <Header
                     title="🏆 Opportunities"
                     url="/yoid/opportunities/completed"
-                    className="text-xs text-black md:text-sm"
+                    className="text-xs font-bold text-black md:text-sm"
                     onClick={() => setDrawerOpen(false)}
                   />
                   <button
@@ -309,21 +310,13 @@ export const UserMenu: React.FC = () => {
                   <Header
                     title="⚡ Skills"
                     url="/yoid/skills"
-                    className="text-xs text-black md:text-sm"
+                    className="text-xs font-bold text-black md:text-sm"
                     onClick={() => setDrawerOpen(false)}
                   />
                   <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                     <div className="flex flex-wrap gap-1 overflow-y-auto">
                       <Suspense isLoading={skillsIsLoading} error={skillsError}>
-                        {!skills?.length && (
-                          <NoRowsMessage
-                            title={"No skills."}
-                            description={
-                              "Skills that you receive by completing opportunities will be diplayed here."
-                            }
-                          />
-                        )}
-                        {!!skills?.length && <SkillsCard data={skills} />}
+                        <SkillsCard data={skills!} />
                       </Suspense>
                     </div>
                   </div>
@@ -336,7 +329,7 @@ export const UserMenu: React.FC = () => {
                       onClick={toggleCollapsePassport}
                       className="flex h-[24px] w-full flex-row items-center gap-2 text-xs text-gray-dark md:text-sm"
                     >
-                      <span className="w-full truncate text-start text-xs tracking-wider text-black  md:text-sm">
+                      <span className="w-full truncate text-start text-xs font-bold tracking-wider  text-black md:text-sm">
                         🌐 Passport
                       </span>
 
@@ -354,19 +347,7 @@ export const UserMenu: React.FC = () => {
                         isLoading={credentialsIsLoading}
                         error={credentialsError}
                       >
-                        {!credentials?.length && (
-                          <NoRowsMessage
-                            icon="💳"
-                            title={"No credentials."}
-                            description={
-                              "Complete opportunities to receive your credentials."
-                            }
-                          />
-                        )}
-
-                        {!!credentials?.length && (
-                          <PassportCard data={credentials} />
-                        )}
+                        <PassportCard data={credentials!} />
                       </Suspense>
                     </div>
                   )}

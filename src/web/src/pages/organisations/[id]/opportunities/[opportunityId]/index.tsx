@@ -2093,11 +2093,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       }
                     >
                       <div className="flex flex-col gap-2">
-                        <FormMessage messageType={FormMessageType.Warning}>
-                          Heads up! An end date is required to share this
-                          opportunity with partners. We recommend setting an end
-                          date.
-                        </FormMessage>
+                        {!watchDateEnd && (
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            Heads up! An end date is required to share this
+                            opportunity with partners. We recommend setting an
+                            end date.
+                          </FormMessage>
+                        )}
 
                         <div className="grid gap-4 md:grid-cols-2">
                           <FormField
@@ -2345,6 +2347,42 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         </FormField>
                       </div>
                     </FormField>
+
+                    {organisation?.zltoRewardPool != null && (
+                      <FormMessage messageType={FormMessageType.Warning}>
+                        <strong>Organisation-Level Pool:</strong> The
+                        organization&apos;s reward pool is checked first. If the
+                        pool is depleted, no further rewards are allocated at
+                        the opportunity level. This organisation has a ZLTO pool
+                        of{" "}
+                        <strong>{organisation?.zltoRewardPool ?? "0"}</strong>.
+                        The cumulative ZLTO awarded is{" "}
+                        <strong>
+                          {organisation?.zltoRewardCumulative ?? "0"}
+                        </strong>
+                        . The remaining balance is{" "}
+                        <strong>
+                          {organisation?.zltoRewardBalance ?? "0"}
+                        </strong>
+                        .
+                      </FormMessage>
+                    )}
+
+                    {opportunity?.zltoRewardPool != null && (
+                      <FormMessage messageType={FormMessageType.Info}>
+                        <strong>Opportunity-Level Pool:</strong> This
+                        opportunity has a ZLTO pool of{" "}
+                        <strong>{opportunity?.zltoRewardPool ?? "0"}</strong>.
+                        The cumulative ZLTO awarded is{" "}
+                        <strong>
+                          {opportunity?.zltoRewardCumulative ?? "0"}
+                        </strong>
+                        . The remaining balance is{" "}
+                        <strong>{opportunity?.zltoRewardBalance ?? "0"}</strong>
+                        . Once depleted, no more ZLTO can be awarded for this
+                        opportunity.
+                      </FormMessage>
+                    )}
 
                     <FormField
                       label="Skills"

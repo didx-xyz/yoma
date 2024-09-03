@@ -11,14 +11,12 @@ interface InputProps {
 export const Header: React.FC<InputProps> = ({
   title,
   url,
-  className = "text-sm md:text-base font-semibold text-black",
+  className = "text-sm font-semibold text-black",
   onClick,
 }) => {
   return (
     <div className="flex h-[24px] w-full flex-row items-center gap-2">
-      <span
-        className={`w-full truncate tracking-wider text-black ${className}`}
-      >
+      <span className={`w-full truncate tracking-wider ${className}`}>
         {title}
       </span>
 

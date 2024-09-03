@@ -43,7 +43,6 @@ import OpportunityCategoriesHorizontalFilter from "~/components/Opportunity/Oppo
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
-import { SearchInputLarge } from "~/components/SearchInputLarge";
 import { Loading } from "~/components/Status/Loading";
 import FilterTab from "~/components/Opportunity/FilterTab";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
@@ -57,6 +56,8 @@ import {
 } from "~/lib/constants";
 import { currentLanguageAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
+import AnimatedText from "~/components/Opportunity/AnimatedText";
+import { OppSearchInputLarge } from "~/components/Opportunity/OppSearchInputLarge";
 
 // 👇 SSG
 // This page is statically generated at build time on server-side
@@ -1084,13 +1085,19 @@ const Opportunities: NextPageWithLayout<{
   );
   //#endregion carousels
 
+  const oppTypeDescriptions = [
+    "A learning opportunity is a self-paced online course that you can finish at your convenience.",
+    "Explore events to attend",
+    "Contribute to real-world projects with micro-tasks",
+  ];
+
   return (
     <>
       <Head>
         <title>Yoma | 🏆 Opportunities</title>
       </Head>
 
-      <PageBackground className="h-[350px]" />
+      <PageBackground className="h-[368px] lg:h-[385px]" />
       <FilterTab openFilter={setFilterFullWindowVisible} />
 
       {isSearchPerformed && isLoading && <Loading />}
@@ -1130,18 +1137,16 @@ const Opportunities: NextPageWithLayout<{
       </ReactModal>
 
       <div className="container z-10 mt-14 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
-        <div className="mb-5 flex flex-col items-center justify-center gap-2 pt-6 text-white md:mb-9">
-          <h3 className="w-[300px] flex-grow flex-wrap text-center text-xl font-semibold md:w-full">
+        <div className="mb-3 flex flex-col items-center justify-center gap-2 pt-6 text-white md:mb-9">
+          <h3 className="w-[300px] flex-grow flex-wrap text-center text-xl font-semibold md:w-full md:text-2xl">
             Find <span className="mx-2 text-orange">opportunities</span> to
             <span className="mx-2 text-orange">unlock</span> your future.
           </h3>
-          <h6 className="w-[300px] text-center text-[14px] font-normal text-purple-soft md:w-full">
-            A learning opportunity is a self-paced online course that you can
-            finish at your convenience.
-          </h6>
+          <AnimatedText sentences={oppTypeDescriptions} />
+
           <div className="w-full px-2 md:w-[600px] md:items-center md:justify-center">
-            <div className="my-4 flex flex-row items-center justify-center gap-2 md:mt-4">
-              <SearchInputLarge
+            <div className="mb-8 mt-1 flex flex-row items-center justify-center md:mb-4 md:mt-8">
+              <OppSearchInputLarge
                 onSearch={onSearchInputSubmit}
                 placeholder="Search..."
                 defaultValue={
