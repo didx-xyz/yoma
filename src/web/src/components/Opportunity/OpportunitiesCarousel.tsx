@@ -49,6 +49,9 @@ const OpportunitiesCarousel: React.FC<{
     } else if (screenWidth >= 600 && screenWidth < 1024) {
       // Tablet
       setVisibleSlides(2);
+    } else if (screenWidth >= 1024 && screenWidth < 1440) {
+      // Small desktop
+      setVisibleSlides(3);
     } else {
       // Large desktop
       setVisibleSlides(4);
@@ -109,6 +112,8 @@ const OpportunitiesCarousel: React.FC<{
       onSlide={onSlide}
       currentSlide={currentSlide}
       step={visibleSlides}
+      //slideMargin="4px"
+      // trayPadding="32px"
     >
       <div className="mb-12 md:mb-20">
         <div className="mb-2 flex flex-col gap-6">

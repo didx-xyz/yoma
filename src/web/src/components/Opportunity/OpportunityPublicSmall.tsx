@@ -168,13 +168,13 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   };
 
   return preview ? (
-    <div className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl md:w-[15rem] xl:w-[19.2rem]">
+    <div className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl sm:w-[19.2rem]">
       {renderContent()}
     </div>
   ) : (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-sm md:w-[15rem] xl:w-[19.2rem]"
+      className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-sm sm:w-[19.2rem]"
     >
       {renderContent()}
     </Link>
