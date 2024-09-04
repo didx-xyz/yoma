@@ -1629,9 +1629,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         // set flag indicating if the reward was reduced; only set if null or false, preserving the higher-level reduction if already marked as true
         if (rewardReduced != true) rewardReduced = reward < rewardOriginal;
-
-        if (rewardReduced == true && rewardPoolDepleted == true)
-          throw new InvalidOperationException("Logical error: Reward pool depleted and reward reduced");
       }
 
       return (reward, rewardReduced, rewardPoolDepleted);

@@ -1009,10 +1009,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (result.ZltoReward.HasValue && result.ZltoReward.Value > default(decimal))
               await _rewardService.ScheduleRewardTransaction(user.Id, Reward.RewardTransactionEntityType.MyOpportunity, item.Id, result.ZltoReward.Value);
 
-            if (result.ZltoRewardReduced == true) item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "ZLTO partially awarded due to insufficient reward pool");
-            if (result.ZltoRewardPoolDepleted == true) item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "ZLTO not awarded as reward pool has been depleted");
-            if (result.YomaRewardReduced == true) item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "Yoma partially awarded due to insufficient reward pool");
-            if (result.YomaRewardPoolDepleted == true) item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "Yoma not awarded as reward pool has been depleted");
+            if (result.ZltoRewardPoolDepleted == true)
+              item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "ZLTO not awarded as reward pool has been depleted");
+            else if (result.ZltoRewardReduced == true)
+              item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "ZLTO partially awarded due to insufficient reward pool");
+
+            if (result.YomaRewardPoolDepleted == true)
+              item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "Yoma not awarded as reward pool has been depleted");
+            else if (result.YomaRewardReduced == true)
+              item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "Yoma partially awarded due to insufficient reward pool");
 
             emailType = EmailType.Opportunity_Verification_Completed;
             break;
@@ -1062,7 +1067,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       ArgumentException.ThrowIfNullOrWhiteSpace(info, nameof(info));
 
-      return string.IsNullOrEmpty(currentComment) ? info : $"{currentComment}{System.Environment.NewLine}{info}";
+      return string.IsNullOrEmpty(currentComment) ? info : $"{currentComment}{". "}{info}";
     }
 
     private void SetEngagementCounts(MyOpportunityInfo result)
