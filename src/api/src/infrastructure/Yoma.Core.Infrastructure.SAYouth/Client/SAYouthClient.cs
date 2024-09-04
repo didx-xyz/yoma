@@ -26,7 +26,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     private const string Header_Api_Version = "X-API-VERSION";
     private const string Header_Authorization = "X-API-KEY";
 
-    private static readonly EngagementTypeOption[] EngagementTypes_FaceToFace = [EngagementTypeOption.Online, EngagementTypeOption.Hybrid];
+    private static readonly EngagementTypeOption[] EngagementTypes_FaceToFace = [EngagementTypeOption.Offline];
     #endregion
 
     #region Constructor
@@ -193,7 +193,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
         CloseDate = request.Opportunity.DateEnd,
         Duration = request.Opportunity.ToDuration(),
         Requirements = "Instructions can be found in the description",
-        FaceToFace = request.Opportunity.EngagementType.HasValue ? EngagementTypes_FaceToFace.Contains(request.Opportunity.EngagementType.Value) ? YesNoOption.Yes : YesNoOption.No : YesNoOption.Yes,
+        FaceToFace = request.Opportunity.EngagementType.HasValue ? EngagementTypes_FaceToFace.Contains(request.Opportunity.EngagementType.Value) ? YesNoOption.Yes : YesNoOption.No : YesNoOption.No,
         Url = request.Opportunity.YomaInfoURL(_appSettings.AppBaseURL)
       };
 
