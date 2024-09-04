@@ -26,7 +26,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
     private const string Header_Api_Version = "X-API-VERSION";
     private const string Header_Authorization = "X-API-KEY";
 
-    private static readonly EngagementTypeOption[] EngagementTypes_FaceToFace = [ EngagementTypeOption.Offline ];
+    private static readonly EngagementTypeOption[] EngagementTypes_FaceToFace = [EngagementTypeOption.Offline];
     #endregion
 
     #region Constructor
