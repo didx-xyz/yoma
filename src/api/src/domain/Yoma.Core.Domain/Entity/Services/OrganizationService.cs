@@ -154,6 +154,8 @@ namespace Yoma.Core.Domain.Entity.Services
         result.LogoURL = GetBlobObjectURL(result.LogoStorageType, result.LogoKey);
         result.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileStorageType, o.FileKey));
         result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), result.SettingsRaw);
+        result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
+        result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
       }
 
       return result;
@@ -174,6 +176,8 @@ namespace Yoma.Core.Domain.Entity.Services
         result.LogoURL = GetBlobObjectURL(result.LogoStorageType, result.LogoKey);
         result.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileStorageType, o.FileKey));
         result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), result.SettingsRaw);
+        result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
+        result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
       }
 
       return result;
@@ -200,9 +204,14 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (includeComputed)
       {
-        results.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey));
-        results.ForEach(o => o.Documents?.ForEach(o => o.Url = GetBlobObjectURL(o.FileStorageType, o.FileKey)));
-        results.ForEach(o => o.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), o.SettingsRaw));
+        results.ForEach(o =>
+        {
+          o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey);
+          o.Documents?.ForEach(d => d.Url = GetBlobObjectURL(d.FileStorageType, d.FileKey));
+          o.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), o.SettingsRaw);
+          o.ZltoRewardBalance = o.ZltoRewardPool.HasValue ? o.ZltoRewardPool - (o.ZltoRewardCumulative ?? default) : null;
+          o.YomaRewardBalance = o.YomaRewardPool.HasValue ? o.YomaRewardPool - (o.YomaRewardCumulative ?? default) : null;
+        });
       }
 
       return results;
@@ -277,6 +286,10 @@ namespace Yoma.Core.Domain.Entity.Services
       if (ssoClientSpecified && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
         throw new SecurityException("Unauthorized");
 
+      var rewardPoolsSpecified = request.ZltoRewardPool.HasValue || request.YomaRewardPool.HasValue;
+      if (rewardPoolsSpecified && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+        throw new SecurityException("Unauthorized");
+
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var result = new Organization
@@ -303,7 +316,11 @@ namespace Yoma.Core.Domain.Entity.Services
         ModifiedByUserId = user.Id,
         SSOClientIdOutbound = request.SSOClientIdOutbound,
         SSOClientIdInbound = request.SSOClientIdInbound,
-        Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), (string?)null)
+        Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), (string?)null),
+        ZltoRewardPool = request.ZltoRewardPool,
+        YomaRewardPool = request.YomaRewardPool,
+        ZltoRewardBalance = request.ZltoRewardPool.HasValue ? request.ZltoRewardPool : null,
+        YomaRewardBalance = request.YomaRewardPool.HasValue ? request.YomaRewardPool : null
       };
 
       var blobObjects = new List<BlobObject>();
@@ -410,6 +427,17 @@ namespace Yoma.Core.Domain.Entity.Services
       if (ssoClientUpdated && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
         throw new SecurityException("Unauthorized");
 
+      var rewardPoolsUpdated = request.ZltoRewardPool != result.ZltoRewardPool;
+      if (!rewardPoolsUpdated) rewardPoolsUpdated = request.YomaRewardPool != result.YomaRewardPool;
+      if (rewardPoolsUpdated && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+        throw new SecurityException("Unauthorized");
+
+      if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool < result.ZltoRewardCumulative)
+        throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative:D0}) already allocated to participants");
+
+      if (request.YomaRewardPool.HasValue && result.YomaRewardCumulative.HasValue && request.YomaRewardPool < result.YomaRewardCumulative)
+        throw new ValidationException($"The Yoma reward pool cannot be less than the cumulative Yoma rewards ({result.YomaRewardCumulative:D2}) already allocated to participants");
+
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       result.Name = request.Name.NormalizeTrim();
@@ -430,6 +458,10 @@ namespace Yoma.Core.Domain.Entity.Services
       result.ModifiedByUserId = user.Id;
       result.SSOClientIdOutbound = request.SSOClientIdOutbound;
       result.SSOClientIdInbound = request.SSOClientIdInbound;
+      result.ZltoRewardPool = request.ZltoRewardPool;
+      result.YomaRewardPool = request.YomaRewardPool;
+      result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
+      result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
 
       ValidateUpdatable(result);
 
@@ -882,6 +914,40 @@ namespace Yoma.Core.Domain.Entity.Services
         await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
       return result;
+    }
+
+    public async Task AllocateRewards(Organization organization, decimal? zltoReward, decimal? yomaReward)
+    {
+      ArgumentNullException.ThrowIfNull(organization, nameof(organization));
+
+      if (zltoReward.HasValue && zltoReward.Value < default(decimal))
+        throw new ArgumentOutOfRangeException(nameof(zltoReward), "Zlto reward must be greater than or equal to zero");
+
+      if (yomaReward.HasValue && yomaReward.Value < default(decimal))
+        throw new ArgumentOutOfRangeException(nameof(yomaReward), "Yoma reward must be greater than or equal to zero");
+
+      bool rewardCumulativeUpdated = false;
+      if (zltoReward.HasValue)
+      {
+        organization.ZltoRewardCumulative = (organization.ZltoRewardCumulative ?? default) + zltoReward.Value;
+        rewardCumulativeUpdated = true;
+      }
+
+      if (yomaReward.HasValue)
+      {
+        organization.YomaRewardCumulative = (organization.YomaRewardCumulative ?? default) + yomaReward.Value;
+        rewardCumulativeUpdated = true;
+      }
+
+      if (!rewardCumulativeUpdated) return;
+
+      organization.ZltoRewardBalance = organization.ZltoRewardPool.HasValue ? organization.ZltoRewardPool - (organization.ZltoRewardCumulative ?? default) : null;
+      organization.YomaRewardBalance = organization.YomaRewardPool.HasValue ? organization.YomaRewardPool - (organization.YomaRewardCumulative ?? default) : null;
+
+      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+
+      organization.ModifiedByUserId = user.Id;
+      await _organizationRepository.Update(organization);
     }
 
     public bool IsAdmin(Guid id, bool throwUnauthorized)

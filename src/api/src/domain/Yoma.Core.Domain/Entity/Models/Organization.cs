@@ -74,6 +74,18 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public SettingsInfo? Settings { get; set; }
 
+    public decimal? ZltoRewardPool { get; set; }
+
+    public decimal? ZltoRewardCumulative { get; set; }
+
+    public decimal? ZltoRewardBalance { get; set; }
+
+    public decimal? YomaRewardPool { get; set; }
+
+    public decimal? YomaRewardCumulative { get; set; }
+
+    public decimal? YomaRewardBalance { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
 
     public Guid CreatedByUserId { get; set; }

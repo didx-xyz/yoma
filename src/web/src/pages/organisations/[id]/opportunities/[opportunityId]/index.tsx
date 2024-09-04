@@ -2348,6 +2348,42 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       </div>
                     </FormField>
 
+                    {organisation?.zltoRewardPool != null && (
+                      <FormMessage messageType={FormMessageType.Warning}>
+                        <strong>Organisation-Level Pool:</strong> The
+                        organization&apos;s reward pool is checked first. If the
+                        pool is depleted, no further rewards are allocated at
+                        the opportunity level. This organisation has a ZLTO pool
+                        of{" "}
+                        <strong>{organisation?.zltoRewardPool ?? "0"}</strong>.
+                        The cumulative ZLTO awarded is{" "}
+                        <strong>
+                          {organisation?.zltoRewardCumulative ?? "0"}
+                        </strong>
+                        . The remaining balance is{" "}
+                        <strong>
+                          {organisation?.zltoRewardBalance ?? "0"}
+                        </strong>
+                        .
+                      </FormMessage>
+                    )}
+
+                    {opportunity?.zltoRewardPool != null && (
+                      <FormMessage messageType={FormMessageType.Info}>
+                        <strong>Opportunity-Level Pool:</strong> This
+                        opportunity has a ZLTO pool of{" "}
+                        <strong>{opportunity?.zltoRewardPool ?? "0"}</strong>.
+                        The cumulative ZLTO awarded is{" "}
+                        <strong>
+                          {opportunity?.zltoRewardCumulative ?? "0"}
+                        </strong>
+                        . The remaining balance is{" "}
+                        <strong>{opportunity?.zltoRewardBalance ?? "0"}</strong>
+                        . Once depleted, no more ZLTO can be awarded for this
+                        opportunity.
+                      </FormMessage>
+                    )}
+
                     <FormField
                       label="Skills"
                       subLabel="Which skills will the Youth be awarded with upon completion? This will be displayed on the opportunity page."

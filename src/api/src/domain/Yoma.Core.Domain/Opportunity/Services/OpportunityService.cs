@@ -187,6 +187,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         result.SetPublished();
         result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
+        result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
+        result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
       }
 
       return result;
@@ -207,6 +209,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         result.SetPublished();
         result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
+        result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
+        result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
       }
 
       return result;
@@ -225,6 +229,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           o.SetPublished();
           o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
+          o.ZltoRewardBalance = o.ZltoRewardPool.HasValue ? o.ZltoRewardPool - (o.ZltoRewardCumulative ?? default) : null;
+          o.YomaRewardBalance = o.YomaRewardPool.HasValue ? o.YomaRewardPool - (o.YomaRewardCumulative ?? default) : null;
         });
 
       return results;
@@ -812,7 +818,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (filter.EngagementTypes != null && filter.EngagementTypes.Count != 0)
       {
         filter.EngagementTypes = filter.EngagementTypes.Distinct().ToList();
-        query = query.Where(o => !o.EngagementTypeId.HasValue || filter.EngagementTypes.Contains(o.EngagementTypeId.Value)); ///always included of not explcitly defined
+        query = query.Where(o => !o.EngagementTypeId.HasValue || filter.EngagementTypes.Contains(o.EngagementTypeId.Value)); ///always included of not explicitly defined
       }
 
       //statuses
@@ -949,6 +955,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         o.SetPublished();
         o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
+        o.ZltoRewardBalance = o.ZltoRewardPool.HasValue ? o.ZltoRewardPool - (o.ZltoRewardCumulative ?? default) : null;
+        o.YomaRewardBalance = o.YomaRewardPool.HasValue ? o.YomaRewardPool - (o.YomaRewardCumulative ?? default) : null;
       });
 
       return result;
@@ -1011,6 +1019,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         YomaReward = request.YomaReward,
         ZltoRewardPool = request.ZltoRewardPool,
         YomaRewardPool = request.YomaRewardPool,
+        ZltoRewardBalance = request.ZltoRewardPool.HasValue ? request.ZltoRewardPool : null,
+        YomaRewardBalance = request.YomaRewardPool.HasValue ? request.YomaRewardPool : null,
         VerificationEnabled = request.VerificationEnabled,
         VerificationMethodValue = request.VerificationMethod?.ToString(),
         VerificationMethod = request.VerificationMethod,
@@ -1117,6 +1127,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result.Status = Status.Expired;
       }
 
+      if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool < result.ZltoRewardCumulative)
+        throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative:D0}) already allocated to participants");
+
+      if (request.YomaRewardPool.HasValue && result.YomaRewardCumulative.HasValue && request.YomaRewardPool < result.YomaRewardCumulative)
+        throw new ValidationException($"The Yoma reward pool cannot be less than the cumulative Yoma rewards ({result.YomaRewardCumulative:D2}) already allocated to participants");
+
       result.Title = request.Title.NormalizeTrim();
       result.Description = request.Description;
       result.TypeId = request.TypeId;
@@ -1132,6 +1148,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.YomaReward = request.YomaReward;
       result.ZltoRewardPool = request.ZltoRewardPool;
       result.YomaRewardPool = request.YomaRewardPool;
+      result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
+      result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
       result.VerificationEnabled = request.VerificationEnabled;
       result.VerificationMethod = request.VerificationMethod;
       result.DifficultyId = request.DifficultyId;
@@ -1196,7 +1214,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<OpportunityAllocateRewardResponse> AllocateRewards(Guid id, Guid userId, bool ensureOrganizationAuthorization)
+    public async Task<OpportunityAllocateRewardResponse> AllocateRewards(Guid id, bool ensureOrganizationAuthorization)
     {
       var opportunity = GetById(id, false, true, ensureOrganizationAuthorization);
 
@@ -1226,9 +1244,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (opportunity.ParticipantLimit.HasValue && count > opportunity.ParticipantLimit.Value)
         throw new ValidationException($"The number of participants cannot exceed the limit. The current count is '{opportunity.ParticipantCount ?? 0}', and the limit is '{opportunity.ParticipantLimit.Value}'. Please edit the opportunity to increase or remove the limit, or reject the verification request");
 
-      var user = _userService.GetById(userId, false, false);
-
-      opportunity.ParticipantCount = count;
+      var organization = _organizationService.GetById(opportunity.OrganizationId, false, false, false);
+      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
       var result = new OpportunityAllocateRewardResponse
       {
@@ -1236,46 +1253,43 @@ namespace Yoma.Core.Domain.Opportunity.Services
         YomaReward = opportunity.YomaReward
       };
 
-      if (result.ZltoReward.HasValue)
+      // zlto reward
+      (result.ZltoReward, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted) =
+        ProcessRewardAllocation(result.ZltoReward, organization.ZltoRewardPool, organization.ZltoRewardCumulative, null, null);
+
+      (result.ZltoReward, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted) =
+       ProcessRewardAllocation(result.ZltoReward, opportunity.ZltoRewardPool, opportunity.ZltoRewardCumulative, result.ZltoRewardReduced, result.ZltoRewardPoolDepleted);
+
+      // yoma reward
+      (result.YomaReward, result.YomaRewardReduced, result.YomaRewardPoolDepleted) =
+        ProcessRewardAllocation(result.YomaReward, organization.YomaRewardPool, organization.YomaRewardCumulative, null, null);
+
+      (result.YomaReward, result.YomaRewardReduced, result.YomaRewardPoolDepleted) =
+        ProcessRewardAllocation(result.YomaReward, opportunity.YomaRewardPool, opportunity.YomaRewardCumulative, result.YomaRewardReduced, result.YomaRewardPoolDepleted);
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        if (opportunity.ZltoRewardPool.HasValue)
-        {
-          // calculate the remainder of ZltoRewardPool - ZltoRewardCumulative, treating null as 0
-          var remainder = opportunity.ZltoRewardPool.Value - (opportunity.ZltoRewardCumulative ?? default);
+        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
-          // if remainder >= zltoReward, zltoReward stays the same; otherwise, it becomes the remainder
-          result.ZltoReward = Math.Max(Math.Min(remainder, result.ZltoReward.Value), default);
+        opportunity.ParticipantCount = count;
+        opportunity.ModifiedByUserId = user.Id;
 
-          // set flag indicating if the pool has been depleted
-          result.ZltoRewardPoolDepleted = remainder <= default(decimal);
-        }
+        // update rewardCumulative, treating null as 0 for the addition
+        await _organizationService.AllocateRewards(organization, result.ZltoReward, result.YomaReward);
 
-        // update ZltoRewardCumulative, treating null as 0 for the addition
-        opportunity.ZltoRewardCumulative = (opportunity.ZltoRewardCumulative ?? default) + result.ZltoReward.Value;
-      }
+        if (result.ZltoReward.HasValue)
+          opportunity.ZltoRewardCumulative = (opportunity.ZltoRewardCumulative ?? default) + result.ZltoReward.Value;
 
-      if (result.YomaReward.HasValue)
-      {
-        if (opportunity.YomaRewardPool.HasValue)
-        {
-          // calculate the remainder of YomaRewardPool - YomaRewardCumulative, treating null as 0
-          var remainder = opportunity.YomaRewardPool.Value - (opportunity.YomaRewardCumulative ?? default);
+        if (result.YomaReward.HasValue)
+          opportunity.YomaRewardCumulative = (opportunity.YomaRewardCumulative ?? default) + result.YomaReward.Value;
 
-          // if remainder >= yomaReward, yomaReward stays the same; otherwise, it becomes the remainder
-          result.YomaReward = Math.Max(Math.Min(remainder, result.YomaReward.Value), default);
+        await _opportunityRepository.Update(opportunity);
 
-          // set flag indicating if the pool has been depleted
-          result.YomaRewardPoolDepleted = remainder <= default(decimal);
-        }
+        scope.Complete();
+      });
 
-        // update YomaRewardCumulative, treating null as 0 for the addition
-        opportunity.YomaRewardCumulative = (opportunity.YomaRewardCumulative ?? default) + result.YomaReward.Value;
-      }
-
-      opportunity.ModifiedByUserId = user.Id;
-
-      //modifiedBy preserved
-      await _opportunityRepository.Update(opportunity);
+      opportunity.ZltoRewardBalance = opportunity.ZltoRewardPool.HasValue ? opportunity.ZltoRewardPool - (opportunity.ZltoRewardCumulative ?? default) : null;
+      opportunity.YomaRewardBalance = opportunity.YomaRewardPool.HasValue ? opportunity.YomaRewardPool - (opportunity.YomaRewardCumulative ?? default) : null;
 
       await _mediator.Publish(new OpportunityEvent(EventType.Update, opportunity));
 
@@ -1597,6 +1611,30 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #endregion
 
     #region Private Members
+    private static (decimal? Reward, bool? RewardReduced, bool? RewardPoolDepleted) ProcessRewardAllocation(decimal? reward, decimal? rewardPool, decimal? rewardCumulative, bool? rewardReduced, bool? rewardPoolDepleted)
+    {
+      if (!reward.HasValue) return (reward, rewardReduced, rewardPoolDepleted);
+
+      // process reward if the current level has a pool and the higher level has not been depleted
+      if (rewardPool.HasValue && rewardPoolDepleted != true) // executes when rewardPoolDepleted is null or false, preserving higher-level depletion if already marked as true
+      {
+        // calculate the remainder of rewardPool - rewardCumulative, treating null as 0
+        var remainder = rewardPool.Value - (rewardCumulative ?? default);
+
+        // if remainder >= reward, reward stays the same; otherwise, it becomes the remainder
+        var rewardOriginal = reward;
+        reward = Math.Max(Math.Min(remainder, reward.Value), default);
+
+        // set flag indicating if the pool has been depleted
+        rewardPoolDepleted = remainder <= default(decimal);
+
+        // set flag indicating if the reward was reduced; only set if null or false, preserving the higher-level reduction if already marked as true
+        if (rewardReduced != true) rewardReduced = reward < rewardOriginal;
+      }
+
+      return (reward, rewardReduced, rewardPoolDepleted);
+    }
+
     private static void AssertUpdatable(Models.Opportunity opportunity)
     {
       if (!Statuses_Updatable.Contains(opportunity.Status))

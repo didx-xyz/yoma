@@ -47,11 +47,15 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public decimal? ZltoRewardCumulative { get; set; }
 
+    public decimal? ZltoRewardBalance { get; set; }
+
     public decimal? YomaReward { get; set; }
 
     public decimal? YomaRewardPool { get; set; }
 
     public decimal? YomaRewardCumulative { get; set; }
+
+    public decimal? YomaRewardBalance { get; set; }
 
     public bool VerificationEnabled { get; set; }
 

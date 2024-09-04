@@ -39,6 +39,12 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<Organization> DeleteDocuments(Guid id, OrganizationDocumentType type, List<Guid> documentsIds, bool ensureOrganizationAuthorization);
 
+    Task<Organization> AssignAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization);
+
+    Task<Organization> RemoveAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization);
+
+    Task AllocateRewards(Organization organization, decimal? zltoReward, decimal? yomaReward);
+
     bool IsAdmin(Guid id, bool throwUnauthorized);
 
     bool IsAdminsOf(List<Guid> ids, bool throwUnauthorized);
@@ -46,9 +52,5 @@ namespace Yoma.Core.Domain.Entity.Interfaces
     List<UserInfo> ListAdmins(Guid id, bool includeComputed, bool ensureOrganizationAuthorization);
 
     List<OrganizationInfo> ListAdminsOf(bool includeComputed);
-
-    Task<Organization> AssignAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization);
-
-    Task<Organization> RemoveAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization);
   }
 }

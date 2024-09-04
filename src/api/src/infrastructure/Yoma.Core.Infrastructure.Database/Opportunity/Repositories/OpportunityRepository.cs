@@ -157,8 +157,6 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         YomaReward = item.YomaReward,
         ZltoRewardPool = item.ZltoRewardPool,
         YomaRewardPool = item.YomaRewardPool,
-        ZltoRewardCumulative = item.ZltoRewardCumulative,
-        YomaRewardCumulative = item.YomaRewardCumulative,
         VerificationEnabled = item.VerificationEnabled,
         VerificationMethod = item.VerificationMethod?.ToString(),
         DifficultyId = item.DifficultyId,

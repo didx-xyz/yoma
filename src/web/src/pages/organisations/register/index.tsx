@@ -130,6 +130,8 @@ const OrganisationCreate: NextPageWithLayout<{
       registrationDocumentsDelete: [],
       ssoClientIdInbound: "",
       ssoClientIdOutbound: "",
+      zltoRewardPool: null,
+      yomaRewardPool: null,
     });
 
   const onSubmit = useCallback(
