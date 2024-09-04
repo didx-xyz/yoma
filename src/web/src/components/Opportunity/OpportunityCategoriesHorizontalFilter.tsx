@@ -112,7 +112,7 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
           </Slider>
 
           {/* NB: the pointer-events-none & pointer-events-auto classes are needed to ensure that both the buttons and the carousel items are clickable */}
-          <div className="pointer-events-none absolute -inset-x-1 inset-y-0 -ml-1 mr-[1px] flex items-center justify-between lg:mx-12 ">
+          <div className="pointer-events-none absolute inset-x-0 inset-y-0 left-0 -ml-1 mr-5 flex items-center justify-between">
             <ButtonBack className="group pointer-events-auto -mt-4 h-8 w-8 transform-gpu animate-wiggle cursor-pointer text-4xl transition-all duration-300 ease-bounce active:ml-1 disabled:invisible md:h-8 md:w-8">
               👈
             </ButtonBack>
