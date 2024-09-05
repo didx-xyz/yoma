@@ -456,8 +456,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       if (sseEvent == null)
         throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Credentials}' and desired state '{CredentialExchangeState.OfferReceived}'");
 
-      // request the credential by holder (aries cloud auto completes and store the credential in the holders wallet)
-      var credentialExchange = await clientHolder.RequestCredentialByIdAsync(sseEvent.Payload.Credential_exchange_id);
+      // accept the credential by holder (aries cloud auto completes and store the credential in the holders wallet)
+      var credentialExchange = await clientHolder.AcceptCredentialOfferByIdAsync(sseEvent.Payload.Credential_exchange_id);
 
       await Task.Run(async () =>
       {
