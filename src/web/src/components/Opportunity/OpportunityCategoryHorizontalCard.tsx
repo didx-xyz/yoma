@@ -23,7 +23,7 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
   return (
     <button
       onClick={handleClick}
-      className={`group flex aspect-square flex-col items-center rounded-lg border-gray px-1 py-2 duration-0`}
+      className={`group flex aspect-square select-none flex-col items-center rounded-lg border-gray px-1 py-2 duration-0`}
     >
       <div className="flex flex-col gap-2 md:gap-1">
         <div className="flex items-center justify-center">
