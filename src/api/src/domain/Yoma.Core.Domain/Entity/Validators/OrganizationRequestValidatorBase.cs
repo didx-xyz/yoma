@@ -65,11 +65,12 @@ namespace Yoma.Core.Domain.Entity.Validators
 
       RuleFor(x => x.ZltoRewardPool)
           .GreaterThan(0).When(x => x.ZltoRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.")
-          .Must(zltoRewardPool => zltoRewardPool % 1 == 0).When(x => x.ZltoRewardPool.HasValue)
-              .WithMessage("'{PropertyName}' does not support decimal points.");
+          .LessThanOrEqualTo(10000000M).When(x => x.ZltoRewardPool.HasValue).WithMessage("'{PropertyName}' must not exceed 10 million.")
+          .Must(zltoRewardPool => zltoRewardPool % 1 == 0).When(x => x.ZltoRewardPool.HasValue).WithMessage("'{PropertyName}' does not support decimal points.");
 
       RuleFor(x => x.YomaRewardPool)
-          .GreaterThan(0).When(x => x.YomaRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.");
+          .GreaterThan(0).When(x => x.YomaRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.")
+          .LessThanOrEqualTo(10000000M).When(x => x.YomaRewardPool.HasValue).WithMessage("'{PropertyName}' must not exceed 10 million.");
     }
     #endregion
 

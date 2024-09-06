@@ -432,11 +432,11 @@ namespace Yoma.Core.Domain.Entity.Services
       if (rewardPoolsUpdated && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
         throw new SecurityException("Unauthorized");
 
-      if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool < result.ZltoRewardCumulative)
-        throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative:D0}) already allocated to participants");
+      if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
+        throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative.Value:F0}) already allocated to participants");
 
-      if (request.YomaRewardPool.HasValue && result.YomaRewardCumulative.HasValue && request.YomaRewardPool < result.YomaRewardCumulative)
-        throw new ValidationException($"The Yoma reward pool cannot be less than the cumulative Yoma rewards ({result.YomaRewardCumulative:D2}) already allocated to participants");
+      if (request.YomaRewardPool.HasValue && result.YomaRewardCumulative.HasValue && request.YomaRewardPool.Value < result.YomaRewardCumulative.Value)
+        throw new ValidationException($"The Yoma reward pool cannot be less than the cumulative Yoma rewards ({result.YomaRewardCumulative.Value:F2}) already allocated to participants");
 
       var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
