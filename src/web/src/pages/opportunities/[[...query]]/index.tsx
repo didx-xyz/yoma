@@ -1097,7 +1097,7 @@ const Opportunities: NextPageWithLayout<{
         <title>Yoma | 🏆 Opportunities</title>
       </Head>
 
-      <PageBackground className="h-[290px] lg:h-[385pxxxx]" />
+      <PageBackground className="h-[300px]" />
       <FilterTab openFilter={setFilterFullWindowVisible} />
 
       {isSearchPerformed && isLoading && <Loading />}
@@ -1136,7 +1136,7 @@ const Opportunities: NextPageWithLayout<{
         )}
       </ReactModal>
 
-      <div className="container z-10 mt-14 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
+      <div className="container z-10 mt-16 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
         <div className="mb-3 flex flex-col items-center justify-center gap-2 pt-6 text-white md:mb-9">
           <h3 className="w-[300px] flex-grow flex-wrap text-center text-xl font-semibold md:w-full md:text-2xl">
             Find <span className="mx-2 text-orange">opportunities</span> to

@@ -1,7 +1,5 @@
-import { useAtomValue } from "jotai";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback } from "react";
 import type { OpportunityCategory } from "~/api/models/opportunity";
-import { screenWidthAtom } from "~/lib/store";
 import { AvatarImage } from "../AvatarImage";
 
 interface InputProps {
@@ -21,16 +19,6 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
     if (!onClick) return;
     onClick(data);
   }, [data, onClick]);
-  const screenWidth = useAtomValue(screenWidthAtom);
-  const [iconSize, setIconSize] = useState(31);
-
-  useEffect(() => {
-    if (screenWidth < 1024) {
-      setIconSize(40);
-    } else {
-      setIconSize(31);
-    }
-  }, [screenWidth, setIconSize]);
 
   return (
     <button
@@ -42,7 +30,7 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
           <AvatarImage
             icon={data.imageURL ?? null}
             alt="Organization Logo"
-            size={iconSize}
+            size={31}
           />
         </div>
 
