@@ -137,7 +137,7 @@ const CustomSlider = ({ children }: CustomSliderProps) => {
       )}
       <div
         ref={sliderRef}
-        className={`flex overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap ${styles.noscrollbar}`}
+        className={`flex gap-[2px] overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap ${styles.noscrollbar}`}
         onMouseDown={handleMouseDown}
         onMouseLeave={handleMouseLeave}
         onMouseUp={handleMouseUp}
