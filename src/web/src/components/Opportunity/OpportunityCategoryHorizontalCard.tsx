@@ -1,8 +1,6 @@
-import { useCallback, useState, useEffect } from "react";
+import { useCallback } from "react";
 import type { OpportunityCategory } from "~/api/models/opportunity";
 import { AvatarImage } from "../AvatarImage";
-import { screenWidthAtom } from "~/lib/store";
-import { useAtomValue } from "jotai";
 
 interface InputProps {
   data: OpportunityCategory;
@@ -21,41 +19,37 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
     if (!onClick) return;
     onClick(data);
   }, [data, onClick]);
-  const screenWidth = useAtomValue(screenWidthAtom);
-  const [iconSize, setIconSize] = useState(screenWidth);
-
-  useEffect(() => {
-    if (screenWidth < 1024) {
-      setIconSize(40);
-    } else {
-      setIconSize(31);
-    }
-  }, [screenWidth, setIconSize]);
 
   return (
     <button
       onClick={handleClick}
-      className={`mb-4 flex aspect-square h-[130px] flex-col items-center rounded-lg p-2 shadow-lg md:h-[145px] xl:h-[120px] ${
-        selected ? "bg-gray" : "bg-white"
-      }`}
+      className={`group flex aspect-square select-none flex-col items-center rounded-lg border-gray px-1 py-2 duration-0`}
     >
       <div className="flex flex-col gap-2 md:gap-1">
         <div className="flex items-center justify-center">
           <AvatarImage
             icon={data.imageURL ?? null}
             alt="Organization Logo"
-            size={iconSize}
+            size={31}
           />
         </div>
 
         <div className="flex flex-grow flex-col">
-          <div className="flex flex-grow flex-col gap-1">
-            <h1 className="h-12 overflow-hidden text-ellipsis text-center text-xs font-semibold text-black">
+          <div className="flex flex-grow flex-col">
+            <h1 className="h-8 w-[94px] whitespace-normal text-center text-[11px] font-semibold leading-tight text-black">
               {data.name}
             </h1>
-            <h6 className="text-center text-xs text-gray-dark">
-              {data.count} available
+
+            <h6 className="text-center text-[9px] font-bold leading-tight text-orange">
+              <strong>{data.count}</strong> available
             </h6>
+
+            {/* selected line */}
+            <span
+              className={`mt-1 block h-0.5 max-w-0 bg-green transition-all duration-500 ${
+                selected ? "max-w-full" : "group-hover:max-w-full"
+              }`}
+            ></span>
           </div>
         </div>
       </div>

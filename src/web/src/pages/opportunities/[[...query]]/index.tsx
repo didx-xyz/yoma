@@ -1097,7 +1097,7 @@ const Opportunities: NextPageWithLayout<{
         <title>Yoma | 🏆 Opportunities</title>
       </Head>
 
-      <PageBackground className="h-[368px] lg:h-[385px]" />
+      <PageBackground className="h-[300px]" />
       <FilterTab openFilter={setFilterFullWindowVisible} />
 
       {isSearchPerformed && isLoading && <Loading />}
@@ -1136,7 +1136,7 @@ const Opportunities: NextPageWithLayout<{
         )}
       </ReactModal>
 
-      <div className="container z-10 mt-14 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
+      <div className="container z-10 mt-16 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
         <div className="mb-3 flex flex-col items-center justify-center gap-2 pt-6 text-white md:mb-9">
           <h3 className="w-[300px] flex-grow flex-wrap text-center text-xl font-semibold md:w-full md:text-2xl">
             Find <span className="mx-2 text-orange">opportunities</span> to
@@ -1158,15 +1158,15 @@ const Opportunities: NextPageWithLayout<{
           </div>
         </div>
 
-        {/* FILTER: CATEGORIES */}
-        <OpportunityCategoriesHorizontalFilter
-          lookups_categories={lookups_categories}
-          selected_categories={searchFilter?.categories}
-          onClick={onClickCategoryFilter}
-        />
+        <div className="mb-6 flex flex-col gap-4">
+          {/* FILTER: CATEGORIES */}
+          <OpportunityCategoriesHorizontalFilter
+            lookups_categories={lookups_categories}
+            selected_categories={searchFilter?.categories}
+            onClick={onClickCategoryFilter}
+          />
 
-        {/* FILTER: BADGES */}
-        <div className="mt-4">
+          {/* FILTER: BADGES */}
           <FilterBadges
             searchFilter={searchFilter}
             excludeKeys={["pageNumber", "pageSize"]}
@@ -1191,148 +1191,148 @@ const Opportunities: NextPageWithLayout<{
             }}
             onSubmit={(e) => onSubmitFilter(e)}
           />
-        </div>
 
-        {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
-        {!isSearchPerformed && (
-          <div className="mt-4 gap-6 px-2 pb-4 md:p-0 md:pb-0">
-            {/* FEATURED */}
-            {(opportunities_featured?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel
-                id={`opportunities_featured`}
-                title="Featured 🌟"
-                description="Explore our featured opportunities"
-                data={opportunities_featured}
-                loadData={loadDataFeatured}
-                viewAllUrl="/opportunities?featured=true"
-              />
-            )}
-
-            {/* TRENDING */}
-            {(opportunities_trending?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel
-                id={`opportunities_trending`}
-                title="Trending 🔥"
-                description="The most viewed opportunities"
-                data={opportunities_trending}
-                loadData={loadDataTrending}
-                viewAllUrl="/opportunities?mostViewed=true"
-              />
-            )}
-
-            {/* MOST COMPLETED */}
-            {(opportunities_mostCompleted?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel
-                id={`opportunities_mostCompleted`}
-                title="Most completed 🏆"
-                description="The most completed opportunities"
-                data={opportunities_mostCompleted}
-                loadData={loadDataMostCompleted}
-                viewAllUrl="/opportunities?mostCompleted=true"
-              />
-            )}
-
-            {/* LEARNING COURSES */}
-            {(opportunities_learning?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel
-                id={`opportunities_learning`}
-                title="Learning Courses 📚"
-                description="Discover exciting online courses"
-                data={opportunities_learning}
-                loadData={loadDataLearning}
-                viewAllUrl="/opportunities?types=Learning"
-              />
-            )}
-
-            {/* TASKS */}
-            {(opportunities_tasks?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel
-                id={`opportunities_tasks`}
-                title="Micro-tasks ⚡"
-                description="Contribute to real-world projects"
-                data={opportunities_tasks}
-                loadData={loadDataTasks}
-                viewAllUrl="/opportunities?types=Micro-task"
-              />
-            )}
-
-            {/* EVENTS */}
-            {(opportunities_events?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel
-                id={`opportunities_events`}
-                title="Events 🎉"
-                description="Explore events to attend"
-                data={opportunities_events}
-                loadData={loadDataEvents}
-                viewAllUrl="/opportunities?types=Event"
-              />
-            )}
-
-            {/* OTHER */}
-            {(opportunities_other?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel
-                id={`opportunities_other`}
-                title="Other 💡"
-                description="Explore other opportunities"
-                data={opportunities_other}
-                loadData={loadDataOther}
-                viewAllUrl="/opportunities?types=Other"
-              />
-            )}
-
-            {/* ALL OPPORTUNITIES */}
-            {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
-              <OpportunitiesCarousel
-                id={`opportunities_allOpportunities`}
-                title="All Opportunities 🌍"
-                description="Explore all available opportunities"
-                data={opportunities_allOpportunities}
-                loadData={loadDataOpportunities}
-                viewAllUrl="/opportunities?page=1"
-              />
-            )}
-          </div>
-        )}
-        {/* SEARCH PERFORMED, SHOW RESULTS */}
-        {isSearchPerformed && (
-          <div id="results" className="flex flex-col items-center rounded-lg">
-            <div className="flex w-full flex-col gap-2">
-              {/* NO ROWS */}
-              {!searchResults ||
-                (searchResults.items.length === 0 && (
-                  <NoRowsMessage
-                    title={"No opportunities found"}
-                    description={
-                      "Please try refining your search query or filters above."
-                    }
-                  />
-                ))}
-
-              {/* GRID */}
-              {searchResults && searchResults.items.length > 0 && (
-                <OpportunitiesGrid
-                  id="opportunities_search"
-                  data={searchResults}
-                  loadData={loadDataTrending}
+          {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
+          {!isSearchPerformed && (
+            <div className="mt-4 gap-6 px-2 pb-4 md:p-0 md:pb-0">
+              {/* FEATURED */}
+              {(opportunities_featured?.totalCount ?? 0) > 0 && (
+                <OpportunitiesCarousel
+                  id={`opportunities_featured`}
+                  title="Featured 🌟"
+                  description="Explore our featured opportunities"
+                  data={opportunities_featured}
+                  loadData={loadDataFeatured}
+                  viewAllUrl="/opportunities?featured=true"
                 />
               )}
 
-              {/* PAGINATION */}
-              {searchResults && (searchResults.totalCount as number) > 0 && (
-                <div className="mt-2 grid place-items-center justify-center">
-                  <PaginationButtons
-                    currentPage={page ? parseInt(page.toString()) : 1}
-                    totalItems={searchResults.totalCount as number}
-                    pageSize={PAGE_SIZE}
-                    showPages={false}
-                    showInfo={true}
-                    onClick={handlePagerChange}
-                  />
-                </div>
+              {/* TRENDING */}
+              {(opportunities_trending?.totalCount ?? 0) > 0 && (
+                <OpportunitiesCarousel
+                  id={`opportunities_trending`}
+                  title="Trending 🔥"
+                  description="The most viewed opportunities"
+                  data={opportunities_trending}
+                  loadData={loadDataTrending}
+                  viewAllUrl="/opportunities?mostViewed=true"
+                />
+              )}
+
+              {/* MOST COMPLETED */}
+              {(opportunities_mostCompleted?.totalCount ?? 0) > 0 && (
+                <OpportunitiesCarousel
+                  id={`opportunities_mostCompleted`}
+                  title="Most completed 🏆"
+                  description="The most completed opportunities"
+                  data={opportunities_mostCompleted}
+                  loadData={loadDataMostCompleted}
+                  viewAllUrl="/opportunities?mostCompleted=true"
+                />
+              )}
+
+              {/* LEARNING COURSES */}
+              {(opportunities_learning?.totalCount ?? 0) > 0 && (
+                <OpportunitiesCarousel
+                  id={`opportunities_learning`}
+                  title="Learning Courses 📚"
+                  description="Discover exciting online courses"
+                  data={opportunities_learning}
+                  loadData={loadDataLearning}
+                  viewAllUrl="/opportunities?types=Learning"
+                />
+              )}
+
+              {/* TASKS */}
+              {(opportunities_tasks?.totalCount ?? 0) > 0 && (
+                <OpportunitiesCarousel
+                  id={`opportunities_tasks`}
+                  title="Micro-tasks ⚡"
+                  description="Contribute to real-world projects"
+                  data={opportunities_tasks}
+                  loadData={loadDataTasks}
+                  viewAllUrl="/opportunities?types=Micro-task"
+                />
+              )}
+
+              {/* EVENTS */}
+              {(opportunities_events?.totalCount ?? 0) > 0 && (
+                <OpportunitiesCarousel
+                  id={`opportunities_events`}
+                  title="Events 🎉"
+                  description="Explore events to attend"
+                  data={opportunities_events}
+                  loadData={loadDataEvents}
+                  viewAllUrl="/opportunities?types=Event"
+                />
+              )}
+
+              {/* OTHER */}
+              {(opportunities_other?.totalCount ?? 0) > 0 && (
+                <OpportunitiesCarousel
+                  id={`opportunities_other`}
+                  title="Other 💡"
+                  description="Explore other opportunities"
+                  data={opportunities_other}
+                  loadData={loadDataOther}
+                  viewAllUrl="/opportunities?types=Other"
+                />
+              )}
+
+              {/* ALL OPPORTUNITIES */}
+              {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
+                <OpportunitiesCarousel
+                  id={`opportunities_allOpportunities`}
+                  title="All Opportunities 🌍"
+                  description="Explore all available opportunities"
+                  data={opportunities_allOpportunities}
+                  loadData={loadDataOpportunities}
+                  viewAllUrl="/opportunities?page=1"
+                />
               )}
             </div>
-          </div>
-        )}
+          )}
+          {/* SEARCH PERFORMED, SHOW RESULTS */}
+          {isSearchPerformed && (
+            <div id="results" className="flex flex-col items-center rounded-lg">
+              <div className="flex w-full flex-col gap-2">
+                {/* NO ROWS */}
+                {!searchResults ||
+                  (searchResults.items.length === 0 && (
+                    <NoRowsMessage
+                      title={"No opportunities found"}
+                      description={
+                        "Please try refining your search query or filters above."
+                      }
+                    />
+                  ))}
+
+                {/* GRID */}
+                {searchResults && searchResults.items.length > 0 && (
+                  <OpportunitiesGrid
+                    id="opportunities_search"
+                    data={searchResults}
+                    loadData={loadDataTrending}
+                  />
+                )}
+
+                {/* PAGINATION */}
+                {searchResults && (searchResults.totalCount as number) > 0 && (
+                  <div className="mt-2 grid place-items-center justify-center">
+                    <PaginationButtons
+                      currentPage={page ? parseInt(page.toString()) : 1}
+                      totalItems={searchResults.totalCount as number}
+                      pageSize={PAGE_SIZE}
+                      showPages={false}
+                      showInfo={true}
+                      onClick={handlePagerChange}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </>
   );
