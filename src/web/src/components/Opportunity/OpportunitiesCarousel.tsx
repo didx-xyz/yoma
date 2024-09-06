@@ -119,7 +119,7 @@ const OpportunitiesCarousel: React.FC<{
         <div className="mb-2 flex flex-col gap-6">
           <div className="flex max-w-full flex-row px-0 md:max-w-7xl md:px-2">
             <div className="flex flex-grow flex-col">
-              <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-black md:max-w-[800px]">
+              <div className="overflow-hidden text-ellipsis whitespace-nowrap text-lg font-semibold text-black md:max-w-[800px] md:text-xl">
                 {title}
               </div>
               <div className="text-gray-dark">{description}</div>
