@@ -1097,7 +1097,7 @@ const Opportunities: NextPageWithLayout<{
         <title>Yoma | 🏆 Opportunities</title>
       </Head>
 
-      <PageBackground className="h-[368px] lg:h-[385px]" />
+      <PageBackground className="h-[290px] lg:h-[385pxxxx]" />
       <FilterTab openFilter={setFilterFullWindowVisible} />
 
       {isSearchPerformed && isLoading && <Loading />}
