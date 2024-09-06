@@ -1,18 +1,15 @@
 import React, { useRef, useState, useCallback, useEffect } from "react";
-import { useAtomValue } from "jotai";
-import { screenWidthAtom } from "~/lib/store";
 import { MdKeyboardArrowLeft, MdKeyboardArrowRight } from "react-icons/md";
 import styles from "./CustomSlider.module.css";
 
-interface CustomSliderProps<T> {
+interface CustomSliderProps {
   children: React.ReactNode;
 }
 
-const CustomSlider = <T,>({ children }: CustomSliderProps<T>) => {
+const CustomSlider = ({ children }: CustomSliderProps) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [showPrevButton, setShowPrevButton] = useState(false);
-  const [showNextButton, setShowNextButton] = useState(true);
-  const screenWidth = useAtomValue(screenWidthAtom);
+  const [showNextButton, setShowNextButton] = useState(false);
   let isDown = false;
   let startX: number;
   let scrollLeft: number;
@@ -41,14 +38,14 @@ const CustomSlider = <T,>({ children }: CustomSliderProps<T>) => {
   const handleMouseUp = endDrag;
   const handleMouseMove = (e: React.MouseEvent) => {
     e.preventDefault();
-    moveDrag(e.pageX, 3); // Increased sensitivity
+    moveDrag(e.pageX, 3);
   };
 
   const handleTouchStart = (e: React.TouchEvent) =>
     startDrag(e.touches[0]!.pageX);
   const handleTouchEnd = endDrag;
   const handleTouchMove = (e: React.TouchEvent) =>
-    moveDrag(e.touches[0]!.pageX, 3); // Increased sensitivity
+    moveDrag(e.touches[0]!.pageX, 3);
 
   const onScrollLeft = useCallback(() => {
     if (sliderRef.current) {
@@ -80,40 +77,67 @@ const CustomSlider = <T,>({ children }: CustomSliderProps<T>) => {
   }, []);
 
   useEffect(() => {
-    if (sliderRef.current) {
-      sliderRef.current.addEventListener("scroll", handleScroll);
+    const sliderElement = sliderRef.current;
+
+    if (sliderElement) {
+      sliderElement.addEventListener("scroll", handleScroll);
       handleScroll(); // Initial check
+
       return () => {
-        if (sliderRef.current) {
-          sliderRef.current.removeEventListener("scroll", handleScroll);
-        }
+        sliderElement.removeEventListener("scroll", handleScroll);
       };
     }
   }, [handleScroll]);
 
-  // call handleScroll on resize (atom)
   useEffect(() => {
-    handleScroll();
-  }, [screenWidth]);
+    // use a MutationObserver to detect when the slides are fully loaded.
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.type === "childList") {
+          handleScroll();
+        }
+      });
+    });
+
+    const sliderElement = sliderRef.current;
+
+    if (sliderElement) {
+      observer.observe(sliderElement, { childList: true, subtree: true });
+    }
+
+    const handleResize = () => {
+      handleScroll();
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () => {
+      if (sliderElement) {
+        observer.disconnect();
+      }
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [handleScroll]);
 
   return (
-    <div className="relative flex justify-center">
+    <>
       {showPrevButton && (
         <>
-          <div className="absolute left-0 top-0 z-10 h-full w-12 backdrop-blur-[0.6px]"></div>
-          <div className="absolute left-0 top-0 z-20 flex h-full w-12 items-center justify-center">
+          <div className="absolute left-0 top-0 z-10 h-full w-10 backdrop-blur-[0.6px] md:w-12"></div>
+          <div className="absolute left-0 top-0 z-20 flex h-full w-10 items-center justify-center md:w-12">
             <button
+              type="button"
               onClick={onScrollLeft}
-              className="group btn btn-circle btn-sm h-10 w-10 cursor-pointer border-[1.5px] border-orange bg-orange px-2 text-black hover:border-orange hover:bg-orange hover:brightness-90 disabled:!cursor-not-allowed"
+              className="group btn btn-circle btn-sm h-8 w-8 cursor-pointer border-[1.5px] border-orange bg-orange px-2 text-black hover:border-orange hover:bg-orange hover:brightness-90 disabled:!cursor-not-allowed md:h-10 md:w-10"
             >
-              <MdKeyboardArrowLeft className="text-3xl" />
+              <MdKeyboardArrowLeft className="text-lg md:text-3xl" />
             </button>
           </div>
         </>
       )}
       <div
         ref={sliderRef}
-        className={`flex overflow-x-auto scroll-smooth whitespace-nowrap ${styles.noscrollbar}`}
+        className={`flex overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap ${styles.noscrollbar}`}
         onMouseDown={handleMouseDown}
         onMouseLeave={handleMouseLeave}
         onMouseUp={handleMouseUp}
@@ -126,18 +150,19 @@ const CustomSlider = <T,>({ children }: CustomSliderProps<T>) => {
       </div>
       {showNextButton && (
         <>
-          <div className="absolute right-0 top-0 z-10 h-full w-12 backdrop-blur-[0.6px]"></div>
-          <div className="absolute right-0 top-0 z-20 flex h-full w-12 items-center justify-center">
+          <div className="absolute right-0 top-0 z-10 h-full w-10 backdrop-blur-[0.6px] md:w-12"></div>
+          <div className="absolute right-0 top-0 z-20 flex h-full w-10 items-center justify-center md:w-12">
             <button
+              type="button"
               onClick={onScrollRight}
-              className="group btn btn-circle btn-sm h-10 w-10 cursor-pointer border-[1.5px] border-orange bg-orange px-2 text-black delay-300 hover:border-orange hover:bg-orange hover:brightness-90 disabled:!cursor-not-allowed"
+              className="group btn btn-circle btn-sm h-8 w-8 cursor-pointer border-[1.5px] border-orange bg-orange px-2 text-black delay-300 hover:border-orange hover:bg-orange hover:brightness-90 disabled:!cursor-not-allowed md:h-10 md:w-10"
             >
-              <MdKeyboardArrowRight className="text-3xl" />
+              <MdKeyboardArrowRight className="text-lg md:text-3xl" />
             </button>
           </div>
         </>
       )}
-    </div>
+    </>
   );
 };
 

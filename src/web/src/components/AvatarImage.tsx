@@ -1,6 +1,5 @@
-import React, { useState } from "react";
 import Image from "next/image";
-import { shimmer, toBase64 } from "~/lib/image";
+import React, { useState } from "react";
 import { IoMdPerson } from "react-icons/io";
 
 interface InputProps {
