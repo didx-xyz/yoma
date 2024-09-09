@@ -29,14 +29,14 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
         <div className="flex flex-row">
           <div className="flex flex-row">
             <div className="flex w-3/5 flex-grow flex-col">
-              <div className="max-w-[220px] truncate text-xs font-medium text-gray-dark">
+              <div className="w-full max-w-[340px] truncate text-xs font-medium text-gray-dark md:max-w-[220px]">
                 {data.organizationName}
               </div>
-              <div className="mt-1 line-clamp-2 h-[45px] max-w-[220px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight">
+              <div className="mt-1 line-clamp-2 h-[45px] w-full max-w-[340px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight md:max-w-[220px]">
                 {data.title}
               </div>
             </div>
-            <div className="absolute right-4 top-3">
+            <div className="flex items-center justify-center">
               <AvatarImage
                 icon={data?.organizationLogoURL ?? null}
                 alt="Company Logo"
@@ -45,7 +45,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
             </div>
           </div>
         </div>
-        <div className="mt-0x md:mt-2x xl:mt-0x mb-auto flex max-w-[280pxx] flex-row">
+        <div className="mb-auto flex max-w-[340px] flex-row md:max-w-[280px]">
           <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-ellipsis text-sm font-light">
             {data.summary ?? data.description}
           </p>

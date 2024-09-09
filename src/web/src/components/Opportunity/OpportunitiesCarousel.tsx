@@ -161,6 +161,7 @@ const OpportunitiesCarousel: React.FC<{
           );
         })}
       </Slider>
+
       <div className="my-2 mt-2 flex w-full place-content-start md:mb-10 md:mt-1">
         <div className="mx-auto flex w-full justify-center gap-4 md:mx-0 md:mr-auto md:justify-start md:gap-6">
           {screenWidth < 768 && (
