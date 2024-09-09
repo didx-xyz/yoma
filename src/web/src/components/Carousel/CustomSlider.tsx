@@ -67,11 +67,14 @@ const CustomSlider = ({ children }: CustomSliderProps) => {
   }, []);
 
   const handleScroll = useCallback(() => {
+    const tolerance = 2; // Small tolerance value to handle floating-point precision issues
+
     if (sliderRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
-      setShowPrevButton(scrollLeft > 0);
+      setShowPrevButton(scrollLeft > tolerance);
       setShowNextButton(
-        scrollWidth > clientWidth && scrollLeft < scrollWidth - clientWidth,
+        scrollWidth > clientWidth &&
+          scrollLeft < scrollWidth - clientWidth - tolerance,
       );
     }
   }, []);
