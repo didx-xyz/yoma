@@ -36,11 +36,11 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
 
         <div className="flex flex-grow flex-col">
           <div className="flex flex-grow flex-col">
-            <h1 className="h-8 w-[94px] whitespace-normal text-center text-[11px] font-semibold leading-tight text-black">
+            <h1 className="h-8 w-[94px] whitespace-normal text-center text-[11px] font-semibold leading-tight text-black md:text-[11.3px]">
               {data.name}
             </h1>
 
-            <h6 className="text-center text-[9px] font-bold leading-tight text-orange">
+            <h6 className="text-center text-[9px] font-bold leading-tight text-orange md:text-[10px]">
               <strong>{data.count}</strong> available
             </h6>
 
