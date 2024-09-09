@@ -123,7 +123,7 @@ const CustomSlider = ({ children }: CustomSliderProps) => {
   }, [handleScroll]);
 
   return (
-    <>
+    <div className="overflow-x-hidden">
       {showPrevButton && (
         <>
           <div className="absolute left-0 top-0 z-10 h-full w-10 backdrop-blur-[0.6px] md:w-12"></div>
@@ -165,7 +165,7 @@ const CustomSlider = ({ children }: CustomSliderProps) => {
           </div>
         </>
       )}
-    </>
+    </div>
   );
 };
 
