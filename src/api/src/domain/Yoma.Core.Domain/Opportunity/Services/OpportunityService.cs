@@ -284,7 +284,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         results.TotalCount = query.Count();
         query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
       }
-      results.Items = query.ToList().Select(o => o.ToOpportunitySearchCriteria()).ToList();
+      results.Items = query.ToList().Select(o => o.ToOpportunityItem()).ToList();
 
       return results;
     }

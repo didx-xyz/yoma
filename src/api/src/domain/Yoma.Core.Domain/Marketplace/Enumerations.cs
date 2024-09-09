@@ -6,4 +6,17 @@ namespace Yoma.Core.Domain.Marketplace
     Released,
     Sold
   }
+
+  public enum StoreAccessControlRuleOpportunityCondition
+  {
+    All,
+    Any
+  }
+
+  public enum StoreAccessControlRuleStatus
+  {
+    Active,
+    Inactive,
+    Deleted
+  }
 }

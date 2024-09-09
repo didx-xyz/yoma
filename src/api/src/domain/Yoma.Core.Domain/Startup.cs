@@ -113,9 +113,11 @@ namespace Yoma.Core.Domain
 
       #region Marketplace
       #region Lookups
+      services.AddScoped<IStoreAccessControlRuleStatusService, StoreAccessControlRuleStatusService>();
       services.AddScoped<ITransactionStatusService, TransactionStatusService>();
       #endregion Lookups
 
+      services.AddScoped<IStoreAccessControlRuleService, StoreAccessControlRuleService>();
       services.AddScoped<IMarketplaceService, MarketplaceService>();
       #endregion Marketplace
 

@@ -67,11 +67,11 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       opportunity.Published = opportunity.Status == Status.Active && opportunity.OrganizationStatus == Entity.OrganizationStatus.Active;
     }
 
-    public static OpportunitySearchCriteriaItem ToOpportunitySearchCriteria(this Models.Opportunity value)
+    public static OpportunityItem ToOpportunityItem(this Models.Opportunity value)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
 
-      return new OpportunitySearchCriteriaItem
+      return new OpportunityItem
       {
         Id = value.Id,
         Title = value.Title.RemoveSpecialCharacters()
