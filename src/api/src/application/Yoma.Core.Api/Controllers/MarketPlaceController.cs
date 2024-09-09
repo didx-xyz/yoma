@@ -240,7 +240,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Update the specified store access control rule status (Admin role required)")]
     [HttpPatch("store/rule/{id}/{status}")]
-    [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(StoreAccessControlRuleInfo), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<IActionResult> UpdateStatusStoreAccessControlRule([FromRoute] Guid id, [FromRoute] StoreAccessControlRuleStatus status)
     {

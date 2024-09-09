@@ -17,7 +17,7 @@ namespace Yoma.Core.Domain.Marketplace.Models
 
     public StoreInfo Store { get; set; }
 
-    public List<StoreItemCategoryInfo>? Category { get; set; }
+    public List<StoreItemCategoryInfo>? StoreItemCategories { get; set; }
 
     public int? AgeMin { get; set; }
 
