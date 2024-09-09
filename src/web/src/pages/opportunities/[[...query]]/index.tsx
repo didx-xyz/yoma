@@ -1158,8 +1158,8 @@ const Opportunities: NextPageWithLayout<{
           </div>
         </div>
 
-        <div className="gap-4x mb-6 flex flex-col">
-          <div className="gap-2x flex flex-col">
+        <div className="flex flex-col">
+          <div className="flex flex-col">
             {/* FILTER: CATEGORIES */}
             <OpportunityCategoriesHorizontalFilter
               lookups_categories={lookups_categories}
@@ -1199,7 +1199,7 @@ const Opportunities: NextPageWithLayout<{
 
           {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
           {!isSearchPerformed && (
-            <div className="mt-4x gap-6 px-2 pb-4 md:p-0 md:pb-0">
+            <>
               {/* FEATURED */}
               {(opportunities_featured?.totalCount ?? 0) > 0 && (
                 <OpportunitiesCarousel
@@ -1295,7 +1295,7 @@ const Opportunities: NextPageWithLayout<{
                   viewAllUrl="/opportunities?page=1"
                 />
               )}
-            </div>
+            </>
           )}
           {/* SEARCH PERFORMED, SHOW RESULTS */}
           {isSearchPerformed && (

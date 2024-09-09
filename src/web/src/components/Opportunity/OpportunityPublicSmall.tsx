@@ -29,12 +29,12 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
         <div className="flex flex-row">
           <div className="flex flex-row">
             <div className="flex w-3/5 flex-grow flex-col">
-              <h1 className="h-[32px] max-w-[180px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark md:max-w-[160px] xl:max-w-[200px]">
+              <div className="max-w-[220px] truncate text-xs font-medium text-gray-dark">
                 {data.organizationName}
-              </h1>
-              <h2 className="mt-1 line-clamp-2 h-[45px] max-w-[180px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight md:mt-4 md:max-w-[210px] xl:mt-1">
+              </div>
+              <div className="mt-1 line-clamp-2 h-[45px] max-w-[220px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight">
                 {data.title}
-              </h2>
+              </div>
             </div>
             <div className="absolute right-4 top-3">
               <AvatarImage
@@ -45,7 +45,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
             </div>
           </div>
         </div>
-        <div className="mb-auto mt-0 flex max-w-[280px] flex-row md:mt-2 xl:mt-0">
+        <div className="mt-0x md:mt-2x xl:mt-0x mb-auto flex max-w-[280pxx] flex-row">
           <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-ellipsis text-sm font-light">
             {data.summary ?? data.description}
           </p>
@@ -168,13 +168,13 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   };
 
   return preview ? (
-    <div className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl sm:w-[19.2rem]">
+    <div className="relative flex h-[15.5rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl sm:w-[19.2rem]">
       {renderContent()}
     </div>
   ) : (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex h-[19.2rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-sm sm:w-[19.2rem]"
+      className="relative flex h-[15.5rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-sm sm:w-[19.2rem]"
     >
       {renderContent()}
     </Link>
