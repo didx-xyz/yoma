@@ -24,16 +24,20 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
     public Entity.Entities.Organization Organization { get; set; }
 
     [Required]
+    [ForeignKey("StoreCountryId")]
+    public Guid StoreCountryId { get; set; }
+    public Country StoreCountry { get; set; }
+
+    [Required]
     [Column(TypeName = "varchar(50)")]
     public string StoreId { get; set; }
 
-    [Required] //nullable column results in an EF error: 22P02 invalid input syntax for type json
-    [Column(TypeName = "jsonb")]
-    public string StoreItemCategories { get; set; }
+    [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
+    public string? StoreItemCategories { get; set; }
 
-    public int? AgeMin { get; set; }
+    public int? AgeFrom { get; set; }
 
-    public int? AgeMax { get; set; }
+    public int? AgeTo { get; set; }
 
     [ForeignKey("GenderId")]
     public Guid? GenderId { get; set; }

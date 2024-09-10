@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Marketplace.Models
 
     public Guid OrganizationId { get; set; }
 
-    public string CountryCodeAlpha2 { get; set; }
+    public string StoreCountryCodeAlpha2 { get; set; }
 
     public string StoreId { get; set; }
 
