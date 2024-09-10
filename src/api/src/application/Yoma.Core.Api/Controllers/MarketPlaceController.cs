@@ -20,7 +20,7 @@ namespace Yoma.Core.Api.Controllers
     private readonly ILogger<MarketplaceController> _logger;
     private readonly IMarketplaceService _marketplaceService;
     private readonly IWalletService _rewardWalletService;
-    private readonly IStoreAccessControlRuleService _storeAccessControlRuleService;
+    private readonly IStoreAccessControlRuleInfoService _storeAccessControlRuleInfoService;
     #endregion
 
     #region Constructor
@@ -28,12 +28,12 @@ namespace Yoma.Core.Api.Controllers
       ILogger<MarketplaceController> logger,
       IMarketplaceService marketplaceService,
       IWalletService rewardWalletService,
-      IStoreAccessControlRuleService storeAccessControlRuleService)
+      IStoreAccessControlRuleInfoService storeAccessControlRuleInfoService)
     {
       _logger = logger;
       _marketplaceService = marketplaceService;
       _rewardWalletService = rewardWalletService;
-      _storeAccessControlRuleService = storeAccessControlRuleService;
+      _storeAccessControlRuleInfoService = storeAccessControlRuleInfoService;
     }
     #endregion
 
@@ -156,7 +156,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaOrganizations));
 
-      var result = _storeAccessControlRuleService.ListSearchCriteriaOrganizations();
+      var result = _storeAccessControlRuleInfoService.ListSearchCriteriaOrganizations();
 
       _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaOrganizations));
 
@@ -171,7 +171,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaStores));
 
-      var result = _storeAccessControlRuleService.ListSearchCriteriaStores(organizationId);
+      var result = _storeAccessControlRuleInfoService.ListSearchCriteriaStores(organizationId);
 
       _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaStores));
 
@@ -182,11 +182,11 @@ namespace Yoma.Core.Api.Controllers
     [HttpGet("store/rule/{id}")]
     [ProducesResponseType(typeof(StoreAccessControlRuleInfo), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public IActionResult GetStoreAccessControlRuleById([FromRoute] Guid id)
+    public async Task<IActionResult> GetStoreAccessControlRuleById([FromRoute] Guid id)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(GetStoreAccessControlRuleById));
 
-      var result = _storeAccessControlRuleService.GetById(id);
+      var result = await _storeAccessControlRuleInfoService.GetById(id);
 
       _logger.LogInformation("Request {requestName} handled", nameof(GetStoreAccessControlRuleById));
 
@@ -197,11 +197,11 @@ namespace Yoma.Core.Api.Controllers
     [HttpPost("store/rule/search")]
     [ProducesResponseType(typeof(StoreAccessControlRuleSearchResults), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public IActionResult SearchStoreAccessControlRule([FromBody] StoreAccessControlRuleSearchFilter filter)
+    public async Task<IActionResult> SearchStoreAccessControlRule([FromBody] StoreAccessControlRuleSearchFilter filter)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreAccessControlRule));
 
-      var result = _storeAccessControlRuleService.Search(filter);
+      var result = await _storeAccessControlRuleInfoService.Search(filter);
       _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreAccessControlRule));
 
       return StatusCode((int)HttpStatusCode.OK, result);
@@ -215,7 +215,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(CreateStoreAccessControlRule));
 
-      var result = await _storeAccessControlRuleService.Create(request);
+      var result = await _storeAccessControlRuleInfoService.Create(request);
 
       _logger.LogInformation("Request {requestName} handled", nameof(CreateStoreAccessControlRule));
 
@@ -230,7 +230,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateStoreAccessControlRule));
 
-      var result = await _storeAccessControlRuleService.Update(request);
+      var result = await _storeAccessControlRuleInfoService.Update(request);
 
       _logger.LogInformation("Request {requestName} handled", nameof(UpdateStoreAccessControlRule));
 
@@ -245,7 +245,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatusStoreAccessControlRule));
 
-      var result = await _storeAccessControlRuleService.UpdateStatus(id, status);
+      var result = await _storeAccessControlRuleInfoService.UpdateStatus(id, status);
 
       _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatusStoreAccessControlRule));
 

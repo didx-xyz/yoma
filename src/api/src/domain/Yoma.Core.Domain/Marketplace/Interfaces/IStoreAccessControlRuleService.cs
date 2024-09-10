@@ -1,22 +1,17 @@
-using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Marketplace.Models;
 
 namespace Yoma.Core.Domain.Marketplace.Interfaces
 {
   public interface IStoreAccessControlRuleService
   {
-    StoreAccessControlRuleInfo GetById(Guid id);
+    StoreAccessControlRule GetById(Guid id);
 
-    List<OrganizationInfo> ListSearchCriteriaOrganizations();
+    StoreAccessControlRuleSearchResultsInternal Search(StoreAccessControlRuleSearchFilter filter);
 
-    List<StoreInfo> ListSearchCriteriaStores(Guid? organizationId);
+    Task<StoreAccessControlRule> Create(StoreAccessControlRuleRequestCreate request);
 
-    StoreAccessControlRuleSearchResults Search(StoreAccessControlRuleSearchFilter filter);
+    Task<StoreAccessControlRule> Update(StoreAccessControlRuleRequestUpdate request);
 
-    Task<StoreAccessControlRuleInfo> Create(StoreAccessControlRuleRequestCreate request);
-
-    Task<StoreAccessControlRuleInfo> Update(StoreAccessControlRuleRequestUpdate request);
-
-    Task<StoreAccessControlRuleInfo> UpdateStatus(Guid id, StoreAccessControlRuleStatus status);
+    Task<StoreAccessControlRule> UpdateStatus(Guid id, StoreAccessControlRuleStatus status);
   }
 }

@@ -1,10 +1,8 @@
 using FluentValidation;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
-using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Marketplace.Interfaces;
-using Yoma.Core.Domain.Opportunity.Interfaces;
 
 namespace Yoma.Core.Domain.Marketplace.Validators
 {
@@ -12,31 +10,25 @@ namespace Yoma.Core.Domain.Marketplace.Validators
         where TRequest : Models.StoreAccessControlRuleRequestBase
   {
     #region Class Variables
-    private readonly IOrganizationService _organizationService;
     private readonly ICountryService _countryService;
     private readonly IMarketplaceService _marketplaceService;
     private readonly IGenderService _genderService;
-    private readonly IOpportunityService _opportunityService;
     #endregion
 
     #region Constructor
-    public StoreAccessControlRuleRequestValidatorBase(IOrganizationService organizationService,
-      ICountryService countryService,
+    public StoreAccessControlRuleRequestValidatorBase(ICountryService countryService,
       IMarketplaceService marketplaceService,
-      IGenderService genderService,
-      IOpportunityService opportunityService)
+      IGenderService genderService)
     {
-      _organizationService = organizationService;
       _countryService = countryService;
       _marketplaceService = marketplaceService;
       _genderService = genderService;
-      _opportunityService = opportunityService;
 
       RuleFor(x => x.Name).NotEmpty().Length(1, 255).WithMessage("'{PropertyName}' is required and must be between 1 and 255 characters long.");
 
       RuleFor(x => x.Description).Length(1, 500).When(x => !string.IsNullOrEmpty(x.Description)).WithMessage("'{PropertyName}' must be between 1 and 500 characters.");
 
-      RuleFor(x => x.OrganizationId).NotEmpty().Must(OrganizationExists).WithMessage("The selected organization is invalid.");
+      RuleFor(x => x.OrganizationId).NotEmpty().WithMessage("Organization is required.");
 
       RuleFor(x => x.StoreCountryCodeAlpha2).Must(value => !string.IsNullOrEmpty(value) && CountryExists(value)).WithMessage("{PropertyName} is required and must be a valid country alpha 2 code.");
       RuleFor(x => x.StoreId).NotEmpty().MustAsync((request, storeId, cancellationToken) => StoreExists(request.StoreCountryCodeAlpha2, storeId)).WithMessage("{PropertyName} is required and must exist in the specified country.");
@@ -61,21 +53,14 @@ namespace Yoma.Core.Domain.Marketplace.Validators
       RuleFor(x => x.GenderId).Must(id => !id.HasValue || GenderExistsAndValid(id.Value)).WithMessage($"Selected gender does not exist or is invalid ('{Gender.PreferNotToSay.ToDescription()}' not allowed).");
 
       RuleFor(x => x.Opportunities)
-        .Must((request, opportunities) => opportunities == null || (opportunities.Count > 0 && opportunities.All(id => OpporunityExist(id))))
-        .WithMessage("{PropertyName} must contain at least one item if provided, and all items must exist.");
+        .Must(opportunities => opportunities == null || (opportunities.Count > 0 && opportunities.All(id => id != Guid.Empty)))
+        .WithMessage("{PropertyName} must contain at least one item if provided, and cannot contain empty or invalid values.");
 
       RuleFor(x => x.OpportunityOption).NotNull().When(x => x.Opportunities != null && x.Opportunities.Count > 0).WithMessage("{PropertyName} is required when opportunities are specified.");
     }
     #endregion
 
     #region Private Memebers
-    private bool OrganizationExists(Guid id)
-    {
-      if (id == Guid.Empty) return false;
-      var organization = _organizationService.GetByIdOrNull(id, false, false, false);
-      return organization != null;
-    }
-
     private bool CountryExists(string countryCodeAlpha2)
     {
       if (string.IsNullOrEmpty(countryCodeAlpha2)) return false;
@@ -108,13 +93,6 @@ namespace Yoma.Core.Domain.Marketplace.Validators
       if (item == null) return false;
 
       return !string.Equals(item.Name, Gender.PreferNotToSay.ToDescription(), StringComparison.InvariantCultureIgnoreCase);
-    }
-
-    private bool OpporunityExist(Guid id)
-    {
-      if (id == Guid.Empty) return false;
-      var opportunity = _opportunityService.GetByIdOrNull(id, false, true, false);
-      return opportunity != null;
     }
     #endregion
   }
