@@ -120,13 +120,6 @@ namespace Yoma.Core.Domain.Entity.Services
     #endregion
 
     #region Public Members
-    public bool Updatable(Guid id, bool throwNotFound)
-    {
-      var org = throwNotFound ? GetById(id, false, false, false) : GetByIdOrNull(id, false, false, false);
-      if (org == null) return false;
-      return Statuses_Updatable.Contains(org.Status);
-    }
-
     public Organization GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
     {
       if (id == Guid.Empty)

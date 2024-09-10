@@ -996,7 +996,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
       if (organization.Status != OrganizationStatus.Active)
-        throw new ValidationException($"An opportunity cannot be created as the associated organization '{organization.Name}' is not currently active (pending approval)");
+        throw new ValidationException($"An opportunity cannot be created as the associated organization '{organization.Name}' is not currently active");
 
       var result = new Models.Opportunity
       {
@@ -1118,7 +1118,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
       if (organization.Status != OrganizationStatus.Active)
-        throw new ValidationException($"The opportunity cannot be updated as the associated organization '{organization.Name}' is not currently active (pending approval)");
+        throw new ValidationException($"The opportunity cannot be updated as the associated organization '{organization.Name}' is not currently active");
 
       //by default, status remains unchanged, except for immediate expiration based on DateEnd (status updated via UpdateStatus)
       if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
