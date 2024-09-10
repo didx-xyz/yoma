@@ -14,15 +14,21 @@ namespace Yoma.Core.Domain.Marketplace.Models
 
     public string OrganizationName { get; set; }
 
+    public Guid StoreCountryId { get; set; }
+
+    public string StoreCountryName { get; set; }
+
+    public string StoreCountryCodeAlpha2 { get; set; }
+
     public string StoreId { get; set; }
 
-    public string StoreItemCategoriesRaw { get; set; }
+    public string? StoreItemCategoriesRaw { get; set; }
 
     public List<string>? StoreItemCategories { get; set; }
 
-    public int? AgeMin { get; set; }
+    public int? AgeFrom { get; set; }
 
-    public int? AgeMax { get; set; }
+    public int? AgeTo { get; set; }
 
     public Guid? GenderId { get; set; }
 
