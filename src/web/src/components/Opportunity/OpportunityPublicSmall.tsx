@@ -27,25 +27,23 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
     return (
       <>
         <div className="flex flex-row">
-          <div className="flex flex-row">
-            <div className="flex w-3/5 flex-grow flex-col">
-              <div className="w-full max-w-[340px] truncate text-xs font-medium text-gray-dark md:max-w-[220px]">
-                {data.organizationName}
-              </div>
-              <div className="mt-1 line-clamp-2 h-[45px] w-full max-w-[340px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight md:max-w-[220px]">
-                {data.title}
-              </div>
+          <div className="flex w-full flex-grow flex-col">
+            <div className="w-[220px] truncate text-xs font-medium text-gray-dark">
+              {data.organizationName}
             </div>
-            <div className="flex items-center justify-center">
-              <AvatarImage
-                icon={data?.organizationLogoURL ?? null}
-                alt="Company Logo"
-                size={50}
-              />
+            <div className="mt-1 line-clamp-2 h-[45px] w-[220px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight">
+              {data.title}
             </div>
           </div>
+          <div className="-mt-2 flex items-center justify-center">
+            <AvatarImage
+              icon={data?.organizationLogoURL ?? null}
+              alt="Company Logo"
+              size={50}
+            />
+          </div>
         </div>
-        <div className="mb-auto flex max-w-[340px] flex-row md:max-w-[280px]">
+        <div className="mb-auto flex w-[280px] flex-row">
           <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-ellipsis text-sm font-light">
             {data.summary ?? data.description}
           </p>
@@ -168,13 +166,13 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   };
 
   return preview ? (
-    <div className="relative flex h-[15.5rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl sm:w-[19.2rem]">
+    <div className="relative flex h-[15.5rem] w-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl">
       {renderContent()}
     </div>
   ) : (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex h-[15.5rem] w-[88vw] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-sm sm:w-[19.2rem]"
+      className="relative flex h-[15.5rem] w-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-sm"
     >
       {renderContent()}
     </Link>
