@@ -25,7 +25,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     private readonly ISSISchemaService _ssiSchemaService;
     #endregion
 
-    #region Public Members
+    #region Constructor
     public OpportunityRequestValidatorBase(IOpportunityTypeService opportunityTypeService,
         IOrganizationService organizationService,
         IOpportunityDifficultyService opportunityDifficultyService,
@@ -53,7 +53,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       RuleFor(x => x.Title).NotEmpty().Length(1, 150).WithMessage("'{PropertyName}' is required and must be between 1 and 150 characters long.");
       RuleFor(x => x.Description).NotEmpty();
       RuleFor(x => x.TypeId).NotEmpty().Must(TypeExists).WithMessage($"Specified type is invalid / does not exist.");
-      RuleFor(x => x.OrganizationId).NotEmpty().Must(OrganizationUpdatable).WithMessage($"Specified organization has been declined / deleted or does not exist.");
+      RuleFor(x => x.OrganizationId).NotEmpty().Must(OrganizationActive).WithMessage("The selected organization is either invalid or inactive.");
       RuleFor(x => x.Summary).NotEmpty().Length(1, 150).WithMessage("'{PropertyName}' must be between 1 and 150 characters.");
       //instructions (varchar(max); auto trimmed
       RuleFor(x => x.URL).Length(1, 2048).Must(ValidURL).When(x => !string.IsNullOrEmpty(x.URL)).WithMessage("'{PropertyName}' must be between 1 and 2048 characters long and be a valid URL if specified.");
@@ -157,10 +157,11 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       return _timeIntervalService.GetByIdOrNull(id) != null;
     }
 
-    private bool OrganizationUpdatable(Guid organizationId)
+    private bool OrganizationActive(Guid organizationId)
     {
       if (organizationId == Guid.Empty) return false;
-      return _organizationService.Updatable(organizationId, false);
+      var organization = _organizationService.GetByIdOrNull(organizationId, false, false, false);
+      return organization != null && organization.Status == Entity.OrganizationStatus.Active;
     }
 
     private bool ValidURL(string? url)

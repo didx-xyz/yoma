@@ -6,7 +6,6 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Marketplace;
 using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Models;
-using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.Reward.Models;
 

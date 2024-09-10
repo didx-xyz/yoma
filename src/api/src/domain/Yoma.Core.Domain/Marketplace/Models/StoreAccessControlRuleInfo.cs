@@ -1,4 +1,3 @@
-using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Domain.Marketplace.Models

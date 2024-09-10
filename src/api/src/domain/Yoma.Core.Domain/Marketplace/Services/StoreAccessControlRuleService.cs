@@ -1,4 +1,3 @@
-using System.Net;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Models;
