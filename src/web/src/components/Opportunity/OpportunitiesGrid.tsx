@@ -18,7 +18,7 @@ export const OpportunitiesGrid: React.FC<InputProps> = ({
   return (
     <div key={`OpportunitiesGrid_${id}`}>
       {(data?.items?.length ?? 0) > 0 && (
-        <div className="flex flex-col gap-6">
+        <div className="gap-6x flex flex-col">
           <div className="flex flex-row">
             <div className="flex flex-grow">
               <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-black md:max-w-[800px]">

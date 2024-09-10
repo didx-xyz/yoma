@@ -21,7 +21,9 @@ export const SkillsCard: React.FC<{ data: UserSkillInfo[] }> = ({ data }) => {
       {data?.map((item) => (
         <div key={item.id} className="badge bg-green px-2 py-1 text-white">
           {item.infoURL && <Link href={item.infoURL}>{item.name}</Link>}
-          {!item.infoURL && <div>{item.name}</div>}
+          {!item.infoURL && (
+            <div className="max-w-[200px] truncate">{item.name}</div>
+          )}
         </div>
       ))}
     </>

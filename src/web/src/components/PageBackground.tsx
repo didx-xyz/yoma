@@ -15,9 +15,9 @@ export const PageBackground: React.FC<{
       <Image
         src={worldMap}
         alt="world-map"
-        width={1280}
-        height={720}
-        className="user-select-none pointer-events-none fixed h-[20rem] object-scale-down opacity-10 md:mt-20"
+        width={640}
+        height={360}
+        className="user-select-none pointer-events-none fixed mt-14 h-[14rem] object-scale-down opacity-10"
       />
 
       {/* STAMPS */}

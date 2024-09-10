@@ -67,11 +67,14 @@ const CustomSlider = ({ children }: CustomSliderProps) => {
   }, []);
 
   const handleScroll = useCallback(() => {
+    const tolerance = 2; // Small tolerance value to handle floating-point precision issues
+
     if (sliderRef.current) {
       const { scrollLeft, scrollWidth, clientWidth } = sliderRef.current;
-      setShowPrevButton(scrollLeft > 0);
+      setShowPrevButton(scrollLeft > tolerance);
       setShowNextButton(
-        scrollWidth > clientWidth && scrollLeft < scrollWidth - clientWidth,
+        scrollWidth > clientWidth &&
+          scrollLeft < scrollWidth - clientWidth - tolerance,
       );
     }
   }, []);
@@ -120,7 +123,7 @@ const CustomSlider = ({ children }: CustomSliderProps) => {
   }, [handleScroll]);
 
   return (
-    <>
+    <div className="overflow-x-hidden">
       {showPrevButton && (
         <>
           <div className="absolute left-0 top-0 z-10 h-full w-10 backdrop-blur-[0.6px] md:w-12"></div>
@@ -162,7 +165,7 @@ const CustomSlider = ({ children }: CustomSliderProps) => {
           </div>
         </>
       )}
-    </>
+    </div>
   );
 };
 
