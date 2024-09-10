@@ -81,3 +81,84 @@ export interface WalletVoucherSearchResults {
 }
 
 export interface WalletVoucherSearchFilter extends PaginationFilter {}
+
+// administrative models
+export interface StoreInfo {
+  id: string;
+  name: string;
+  codeAlpha2: string;
+  countryName: string;
+}
+
+export interface StoreAccessControlRuleInfo {
+  id: string;
+  name: string;
+  description: string | null;
+  organizationId: string;
+  organizationName: string;
+  store: StoreInfo;
+  storeItemCategories: StoreItemCategoryInfo[] | null;
+  ageMin: number | null;
+  ageMax: number | null;
+  genderId: string | null;
+  gender: string | null;
+  opportunityOption: StoreAccessControlRuleOpportunityCondition | null | string; //NB: string for API compatibility
+  statusId: string;
+  status: StoreAccessControlRuleStatus | string; //NB: string for API compatibility
+  dateCreated: string;
+  dateModified: string;
+  opportunities: OpportunityItem[] | null;
+}
+
+export interface StoreItemCategoryInfo {
+  id: string;
+  name: string;
+}
+
+export enum StoreAccessControlRuleOpportunityCondition {
+  All,
+  Any,
+}
+
+export enum StoreAccessControlRuleStatus {
+  Active,
+  Inactive,
+  Deleted,
+}
+
+export interface OpportunityItem {
+  id: string;
+  title: string;
+}
+export interface StoreAccessControlRuleSearchFilter extends PaginationFilter {
+  nameContains: string | null;
+  stores: string[] | null;
+  organizations: string[] | null;
+  statuses: StoreAccessControlRuleStatus[] | null | string[]; //NB: string[] for API compatibility
+}
+
+export interface StoreAccessControlRuleSearchResults {
+  totalCount: number | null;
+  items: StoreAccessControlRuleInfo[];
+}
+
+export interface StoreAccessControlRuleRequestBase {
+  name: string;
+  description: string | null;
+  organizationId: string;
+  storeId: string;
+  storeItemCategories: string[] | null;
+  ageMin: number | null;
+  ageMax: number | null;
+  genderId: string | null;
+  opportunities: string[] | null;
+  opportunityOption: StoreAccessControlRuleOpportunityCondition | null;
+}
+
+export interface StoreAccessControlRuleRequestCreate
+  extends StoreAccessControlRuleRequestBase {}
+
+export interface StoreAccessControlRuleRequestUpdate
+  extends StoreAccessControlRuleRequestBase {
+  id: string;
+}

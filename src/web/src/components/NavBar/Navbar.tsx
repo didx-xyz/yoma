@@ -84,6 +84,14 @@ const navBarLinksAdmin: TabItem[] = [
     selected: false,
     iconImage: "🔗",
   },
+  {
+    title: "Stores",
+    description: "Stores",
+    url: "/admin/stores",
+    badgeCount: null,
+    selected: false,
+    iconImage: "🛒",
+  },
   // {
   //   title: "Schemas",
   //   description: "Schemas",
