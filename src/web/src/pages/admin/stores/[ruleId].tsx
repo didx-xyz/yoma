@@ -712,8 +712,9 @@ const StoreRuleDetails: NextPageWithLayout<{
         opportunities: [],
         organization: watchOrganizationId ?? null,
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
-        published: null,
+        published: true,
         verificationMethod: null,
+        verificationEnabled: true,
         pageNumber: 1,
         pageSize: PAGE_SIZE_MEDIUM,
       }).then((data) => {
@@ -1130,6 +1131,8 @@ const StoreRuleDetails: NextPageWithLayout<{
                               setValueStep2("storeId", "");
                               setValueStep2("storeItemCategories", []);
 
+                              // trigger change
+                              tri;
                               onChange(val?.value);
                             }}
                             value={countryOptions?.filter(
@@ -1198,7 +1201,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                                 }),
                               }}
                               menuPortalTarget={htmlRef.current}
-                              inputId="input_store" // e2e
+                              inputId="input_storeId" // e2e
                             />
                           )}
                         />
@@ -1326,6 +1329,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                                     type: "number",
                                     placeholder: "Age from...",
                                     step: 1,
+                                    min: 0,
                                     ...registerStep3("ageFrom", {
                                       valueAsNumber: true,
                                     }),
@@ -1351,6 +1355,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                                     type: "number",
                                     placeholder: "Age to...",
                                     step: 1,
+                                    min: 0,
                                     ...registerStep3("ageTo", {
                                       valueAsNumber: true,
                                     }),
@@ -1406,7 +1411,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                     {/* OPPORTUNITIES */}
                     <FormField
                       label="Opportunities"
-                      subLabel="Select the opportunities that must be completed for the store to be visible. If no opportunity condition is specified, the store or item categories will be visible to all users regardless of completed opportunities."
+                      subLabel="Select the opportunities that must be completed for the store to be visible. The opportunities must match the current organization and country, and they must support verification. If no opportunity condition is specified, the store or item categories will be visible to all users regardless of completed opportunities."
                       showError={
                         !!formStateStep3.touchedFields.opportunities ||
                         formStateStep3.isSubmitted

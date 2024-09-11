@@ -114,6 +114,7 @@ export const OrganisationRowFilter: React.FC<{
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
         published: null,
         verificationMethod: null,
+        verificationEnabled: null,
         pageNumber: 1,
         pageSize: PAGE_SIZE_MEDIUM,
       }).then((data) => {
