@@ -20,6 +20,7 @@ namespace Yoma.Core.Api.Controllers
     private readonly ILogger<MarketplaceController> _logger;
     private readonly IMarketplaceService _marketplaceService;
     private readonly IWalletService _rewardWalletService;
+    private readonly IStoreAccessControlRuleService _storeAccessControlRuleService;
     private readonly IStoreAccessControlRuleInfoService _storeAccessControlRuleInfoService;
     #endregion
 
@@ -28,11 +29,13 @@ namespace Yoma.Core.Api.Controllers
       ILogger<MarketplaceController> logger,
       IMarketplaceService marketplaceService,
       IWalletService rewardWalletService,
+      IStoreAccessControlRuleService storeAccessControlRuleService,
       IStoreAccessControlRuleInfoService storeAccessControlRuleInfoService)
     {
       _logger = logger;
       _marketplaceService = marketplaceService;
       _rewardWalletService = rewardWalletService;
+      _storeAccessControlRuleService = storeAccessControlRuleService;
       _storeAccessControlRuleInfoService = storeAccessControlRuleInfoService;
     }
     #endregion
@@ -156,7 +159,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaOrganizations));
 
-      var result = _storeAccessControlRuleInfoService.ListSearchCriteriaOrganizations();
+      var result = _storeAccessControlRuleService.ListSearchCriteriaOrganizations();
 
       _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaOrganizations));
 
@@ -167,11 +170,11 @@ namespace Yoma.Core.Api.Controllers
     [HttpGet("store/rule/search/filter/stores")]
     [ProducesResponseType(typeof(List<StoreInfo>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public IActionResult ListSearchCriteriaStores([FromQuery] Guid? organizationId)
+    public async Task<IActionResult> ListSearchCriteriaStores([FromQuery] Guid? organizationId)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaStores));
 
-      var result = _storeAccessControlRuleInfoService.ListSearchCriteriaStores(organizationId);
+      var result = await _storeAccessControlRuleInfoService.ListSearchCriteriaStores(organizationId);
 
       _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaStores));
 

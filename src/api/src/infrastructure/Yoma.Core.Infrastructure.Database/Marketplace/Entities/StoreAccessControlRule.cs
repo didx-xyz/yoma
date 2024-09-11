@@ -57,7 +57,6 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
     [Required]
     public DateTimeOffset DateModified { get; set; }
 
-    public ICollection<Opportunity.Entities.Opportunity>? Opportunities { get; set; }
-
+    public ICollection<StoreAccessControlRuleOpportunity>? Opportunities { get; set; }
   }
 }

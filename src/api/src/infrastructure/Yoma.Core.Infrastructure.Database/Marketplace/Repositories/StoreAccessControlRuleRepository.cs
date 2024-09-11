@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Newtonsoft.Json;
+using StackExchange.Redis;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -36,20 +38,22 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
         StoreCountryCodeAlpha2 = entity.StoreCountry.CodeAlpha2,
         StoreId = entity.StoreId,
         StoreItemCategoriesRaw = entity.StoreItemCategories,
+        StoreItemCategories = string.IsNullOrEmpty(entity.StoreItemCategories) ? null : JsonConvert.DeserializeObject<List<string>>(entity.StoreItemCategories),
         AgeFrom = entity.AgeFrom,
         AgeTo = entity.AgeTo,
         GenderId = entity.GenderId,
         Gender = entity.Gender == null ? null : entity.Gender.Name,
         OpportunityOption = string.IsNullOrEmpty(entity.OpportunityOption) ? null : Enum.Parse<StoreAccessControlRuleOpportunityCondition>(entity.OpportunityOption, true),
         StatusId = entity.StatusId,
-        Status = Enum.Parse<StoreAccessControlRuleStatus>(entity.Status.Name, true),  
+        Status = Enum.Parse<StoreAccessControlRuleStatus>(entity.Status.Name, true),
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified,
-        Opportunities = includeChildItems ? entity.Opportunities == null ? null : entity.Opportunities.Select(o => new OpportunityItem
-        {
-          Id = o.Id,
-          Title = o.Title
-        }).OrderBy(o => o.Title).ToList() : null
+        Opportunities = entity.Opportunities == null ? null : includeChildItems ?
+              entity.Opportunities.Select(o => new OpportunityItem
+              {
+                Id = o.OpportunityId,
+                Title = o.Opportunity.Title
+              }).OrderBy(o => o.Title).ToList() : null,
       });
     }
 

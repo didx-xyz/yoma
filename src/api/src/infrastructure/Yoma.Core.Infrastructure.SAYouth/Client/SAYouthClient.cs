@@ -193,7 +193,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
         CloseDate = request.Opportunity.DateEnd,
         Duration = request.Opportunity.ToDuration(),
         Requirements = "Instructions can be found in the description",
-        // ensure 'FaceToFace' is set to 'No' so the YOMA link always shows on SA Youth; resulting in no address info being posted; opportunity will always be listed as 'Online Opportunity'
+        // ensure 'FaceToFace' is set to 'No' so the YOMA link always shows on SA Youth; resulting in no address or contact info being posted; opportunity will always be listed as 'Online Opportunity'
         FaceToFace = YesNoOption.No, //request.Opportunity.EngagementType.HasValue ? EngagementTypes_FaceToFace.Contains(request.Opportunity.EngagementType.Value) ? YesNoOption.Yes : YesNoOption.No : YesNoOption.No,
         Url = request.Opportunity.YomaInfoURL(_appSettings.AppBaseURL)
       };
