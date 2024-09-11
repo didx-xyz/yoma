@@ -73,14 +73,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
     #region Public Members
     public List<Country> ListSearchCriteriaCountries()
     {
-      Country? country = null;
-      if (HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
-      {
-        var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-        country = user.CountryId.HasValue ? _countryService.GetByIdOrNull(user.CountryId.Value) : null;
-      }
-
-      var countryCodesAlpha2Available = _marketplaceProviderClient.ListSupportedCountryCodesAlpha2(country?.CodeAlpha2);
+      var countryCodesAlpha2Available = _marketplaceProviderClient.ListSupportedCountryCodesAlpha2(null);
 
       var results = _countryService.List().Where(o => countryCodesAlpha2Available.Contains(o.CodeAlpha2, StringComparer.InvariantCultureIgnoreCase))
           .OrderBy(o => o.CodeAlpha2 != Core.Country.Worldwide.ToDescription()).ThenBy(o => o.Name).ToList(); //esnure Worldwide appears first
