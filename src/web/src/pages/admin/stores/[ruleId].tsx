@@ -20,7 +20,7 @@ import {
 } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { Controller, useForm, type FieldValues } from "react-hook-form";
+import { Controller, Form, useForm, type FieldValues } from "react-hook-form";
 import Select from "react-select";
 import { toast } from "react-toastify";
 import z from "zod";
@@ -75,6 +75,8 @@ import { createLinkInstantVerify } from "~/api/services/actionLinks";
 import SocialPreview from "~/components/Opportunity/SocialPreview";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import {
+  OpportunityItem,
+  StoreAccessControlRuleInfo,
   StoreAccessControlRuleRequestUpdate,
   StoreInfo,
   StoreItemCategorySearchResults,
@@ -82,6 +84,8 @@ import {
 } from "~/api/models/marketplace";
 import {
   createStoreAccessControlRule,
+  getStoreAccessControlRuleById,
+  listSearchCriteriaCountries,
   listSearchCriteriaOrganizations,
   listSearchCriteriaStores,
   searchStoreItemCategories,
@@ -89,6 +93,10 @@ import {
   updateStoreAccessControlRule,
 } from "~/api/services/marketplace";
 import FormField from "~/components/Common/FormField";
+import FormInput from "~/components/Common/FormInput";
+import { getGenders } from "~/api/services/lookups";
+import AsyncSelect from "react-select/async";
+import FormRadio from "~/components/Common/FormRadio";
 
 interface IParams extends ParsedUrlQuery {
   ruleId: string;
@@ -116,13 +124,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
   try {
     // 👇 prefetch queries on server
-    // if (entityId !== "create") {
-    //   const data = await getOpportunityById(entityId, context);
-    //   await queryClient.prefetchQuery({
-    //     queryKey: ["opportunity", entityId],
-    //     queryFn: () => data,
-    //   });
-    // }
+    if (ruleId !== "create") {
+      const data = await getStoreAccessControlRuleById(ruleId, context);
+      await queryClient.prefetchQuery({
+        queryKey: ["storeAccessControlRule", ruleId],
+        queryFn: () => data,
+      });
+    }
   } catch (error) {
     if (axios.isAxiosError(error) && error.response?.status) {
       if (error.response.status === 404) {
@@ -168,45 +176,91 @@ const StoreRuleDetails: NextPageWithLayout<{
     useState<number | null>(null);
   const modalContext = useConfirmationModalContext();
 
-  const linkEntityTypes: SelectOption[] = [
-    { value: "0", label: "Opportunity" },
+  const opportunityOptions: SelectOption[] = [
+    { value: "0", label: "All" },
+    { value: "1", label: "Any" },
   ];
 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<StoreAccessControlRuleRequestUpdate>(
-    {
-      name: "",
-      description: "",
-      organizationId: "",
-      storeId: "",
-      storeItemCategories: null,
-      ageMin: null,
-      ageMax: null,
-      genderId: null,
-      opportunities: null,
-      opportunityOption: null,
-      id: ruleId ?? null,
-    },
-  );
 
   //#region Queries
 
+  // 👇 use prefetched query from server
+  const { data: storeAccessControlRule } = useQuery<StoreAccessControlRuleInfo>(
+    {
+      queryKey: ["storeAccessControlRule", ruleId],
+      queryFn: () => getStoreAccessControlRuleById(ruleId),
+      enabled: ruleId !== "create" && !error,
+    },
+  );
+
   // Organisations
-  const { data: organisationsData } = useQuery({
+  const { data: dataOrganisations } = useQuery({
     queryKey: ["organisations"],
     queryFn: async () => listSearchCriteriaOrganizations(),
     enabled: !error,
   });
   const organisationOptions = useMemo<SelectOption[]>(
     () =>
-      organisationsData?.map((c) => ({
+      dataOrganisations?.map((c) => ({
         value: c.id,
         label: c.name,
       })) ?? [],
-    [organisationsData],
+    [dataOrganisations],
+  );
+
+  // Countries
+  const { data: dataCountries } = useQuery({
+    queryKey: ["marketplace", "countries"],
+    queryFn: async () => listSearchCriteriaCountries(),
+    enabled: !error,
+  });
+  const countryOptions = useMemo<SelectOption[]>(
+    () =>
+      dataCountries?.map((c) => ({
+        value: c.codeAlpha2,
+        label: c.name,
+      })) ?? [],
+    [dataCountries],
+  );
+
+  // Genders
+  const { data: dataGenders } = useQuery({
+    queryKey: ["genders"],
+    queryFn: async () => getGenders(),
+    enabled: !error,
+  });
+  const genderOptions = useMemo<SelectOption[]>(
+    () =>
+      dataGenders
+        ?.filter((c) => c.name.toLowerCase() !== "prefer not to say")
+        .map((c) => ({
+          value: c.id,
+          label: c.name,
+        })) ?? [],
+    [dataGenders],
   );
   //# endregion
+
+  const [formData, setFormData] = useState<StoreAccessControlRuleRequestUpdate>(
+    {
+      name: storeAccessControlRule?.name ?? "",
+      description: storeAccessControlRule?.description ?? "",
+      organizationId: storeAccessControlRule?.organizationId ?? "",
+      storeId: storeAccessControlRule?.store.id ?? "",
+      storeItemCategories:
+        storeAccessControlRule?.storeItemCategories?.map((x) => x.id) ?? [],
+      ageFrom: storeAccessControlRule?.ageMin ?? null,
+      ageTo: storeAccessControlRule?.ageMax ?? null,
+      genderId: storeAccessControlRule?.genderId ?? null,
+      opportunities:
+        storeAccessControlRule?.opportunities?.map((x) => x.id) ?? [],
+      opportunityOption: storeAccessControlRule?.opportunityOption ?? null,
+      countryCodeAlpha2: "", //storeAccessControlRule?.countryCodeAlpha2 ?? "",
+      id: storeAccessControlRule?.id ?? ruleId ?? null,
+    },
+  );
 
   const schemaStep1 = z.object({
     name: z
@@ -301,11 +355,12 @@ const StoreRuleDetails: NextPageWithLayout<{
   // );
 
   const schemaStep3 = z.object({
-    ageMin: z.number().int().min(0).max(MAX_INT32).optional(),
-    ageMax: z.number().int().min(0).max(MAX_INT32).optional(),
-    genderId: z.string().optional(),
+    ageFrom: z.number().int().min(0).max(MAX_INT32).nullable().optional(),
+    ageTo: z.number().int().min(0).max(MAX_INT32).nullable().optional(),
+    genderId: z.string().nullable().optional(),
     opportunities: z.array(z.string()).optional(),
-    opportunityOption: z.string().optional(),
+    opportunityOption: z.string().nullable().optional(),
+    countryCodeAlpha2: z.string().nullable().optional(),
   });
 
   const schemaStep4 = z.object({});
@@ -339,7 +394,7 @@ const StoreRuleDetails: NextPageWithLayout<{
   const {
     handleSubmit: handleSubmitStep3,
     formState: formStateStep3,
-
+    control: controlStep3,
     reset: resetStep3,
   } = useForm({
     resolver: zodResolver(schemaStep3),
@@ -797,6 +852,66 @@ const StoreRuleDetails: NextPageWithLayout<{
       setDataStoreItemCategories(options);
     });
   }, [watchStoreId, setDataStoreItemCategories]);
+
+  //#region opportunities
+
+  const [cacheOpportunities, setCacheOpportunities] = useState<
+    OpportunityItem[]
+  >([]);
+  useEffect(() => {
+    // popuplate the cache with the opportunities from the model
+    if (storeAccessControlRule?.opportunities) {
+      setCacheOpportunities((prev) => [
+        ...prev,
+        ...(storeAccessControlRule.opportunities ?? []),
+      ]);
+    }
+  }, [storeAccessControlRule?.opportunities, setCacheOpportunities]);
+
+  // load data asynchronously for the opportunities dropdown
+  // debounce is used to prevent the API from being called too frequently
+  const loadOpportunities = useCallback(
+    debounce((inputValue: string, callback: (options: any) => void) => {
+      searchCriteriaOpportunities({
+        opportunities: [],
+        organization: watchOrganizationId ?? null,
+        titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
+        published: null,
+        verificationMethod: null,
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MEDIUM,
+      }).then((data) => {
+        const options = data.items.map((item) => ({
+          value: item.id,
+          label: item.title,
+        }));
+        callback(options);
+        // add to cache
+        data.items.forEach((item) => {
+          if (!cacheOpportunities.some((x) => x.id === item.id)) {
+            setCacheOpportunities((prev) => [...prev, item]);
+          }
+        });
+      });
+    }, 1000),
+    [watchOrganizationId],
+  );
+
+  // the AsyncSelect component requires the defaultOptions to be set in the state
+  // const [defaultOpportunityOptions, setDefaultOpportunityOptions] =
+  //   useState<any>([]);
+
+  // useEffect(() => {
+  //   if (formData?.opportunities) {
+  //     setDefaultOpportunityOptions(
+  //       formData?.opportunities?.map((c: any) => ({
+  //         value: c,
+  //         label: c,
+  //       })),
+  //     );
+  //   }
+  // }, [setDefaultOpportunityOptions, formData?.opportunities]);
+  // #endregion opportunities
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -1293,9 +1408,9 @@ const StoreRuleDetails: NextPageWithLayout<{
               {step === 3 && (
                 <>
                   <div className="mb-4 flex flex-col">
-                    <h5 className="font-bold">Preview</h5>
+                    <h5 className="font-bold">Conditions</h5>
                     <p className="my-2 text-sm">
-                      Review your link before publishing it.
+                      Target audiences with specific conditions.
                     </p>
                   </div>
 
@@ -1306,6 +1421,238 @@ const StoreRuleDetails: NextPageWithLayout<{
                       onSubmitStep(4, data),
                     )}
                   >
+                    {/* AGES */}
+                    <FormField
+                      label="Ages"
+                      subLabel="Select the age range."
+                      showWarningIcon={
+                        !!formStateStep3.errors.ageFrom?.message ||
+                        !!formStateStep3.errors.ageTo?.message
+                      }
+                    >
+                      <div className="flex flex-col gap-2">
+                        <div className="grid gap-4 md:grid-cols-2">
+                          <FormField
+                            showError={
+                              !!formStateStep3.touchedFields.ageFrom ||
+                              formStateStep3.isSubmitted
+                            }
+                            error={formStateStep3.errors.ageFrom?.message}
+                          >
+                            <Controller
+                              control={controlStep3}
+                              name="ageFrom"
+                              render={() => (
+                                <FormInput
+                                  inputProps={{
+                                    type: "number",
+                                    placeholder: "Age from...",
+                                    step: 1,
+                                    ...registerStep2("ageFrom", {
+                                      valueAsNumber: true,
+                                    }),
+                                  }}
+                                />
+                              )}
+                            />
+                          </FormField>
+
+                          <FormField
+                            showError={
+                              !!formStateStep3.touchedFields.ageTo ||
+                              formStateStep3.isSubmitted
+                            }
+                            error={formStateStep3.errors.ageTo?.message}
+                          >
+                            <Controller
+                              control={controlStep3}
+                              name="ageTo"
+                              render={() => (
+                                <FormInput
+                                  inputProps={{
+                                    type: "number",
+                                    placeholder: "Age to...",
+                                    step: 1,
+                                    ...registerStep2("ageTo", {
+                                      valueAsNumber: true,
+                                    }),
+                                  }}
+                                />
+                              )}
+                            />
+                          </FormField>
+                        </div>
+                      </div>
+                    </FormField>
+
+                    {/* GENDER */}
+                    <FormField
+                      label="Gender"
+                      subLabel="Select the gender."
+                      showError={
+                        !!formStateStep3.touchedFields.genderId ||
+                        formStateStep3.isSubmitted
+                      }
+                      error={formStateStep3.errors.genderId?.message}
+                    >
+                      <Controller
+                        control={controlStep3}
+                        name="genderId"
+                        render={({ field: { onChange, value } }) => (
+                          <Select
+                            instanceId="genderId"
+                            classNames={{
+                              control: () => "input !border-gray",
+                            }}
+                            isMulti={false}
+                            options={genderOptions}
+                            onChange={(val) => {
+                              onChange(val?.value);
+                            }}
+                            value={genderOptions?.filter(
+                              (c) => value === c.value,
+                            )}
+                            placeholder="Genders"
+                            styles={{
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#A3A6AF",
+                              }),
+                            }}
+                            inputId="input_genderId" // e2e
+                          />
+                        )}
+                      />
+                    </FormField>
+
+                    {/* OPPORTUNITIES */}
+                    <FormField
+                      label="Opportunities"
+                      subLabel="Select the opportunities."
+                      showError={
+                        !!formStateStep3.touchedFields.opportunities ||
+                        formStateStep3.isSubmitted
+                      }
+                      error={formStateStep3.errors.opportunities?.message}
+                    >
+                      <Controller
+                        control={controlStep3}
+                        name="opportunities"
+                        render={({ field: { onChange, value } }) => (
+                          <Async
+                            instanceId="opportunities"
+                            classNames={{
+                              control: () => "input !border-gray",
+                            }}
+                            isMulti={true}
+                            defaultOptions={true} // calls loadSkills for initial results when clicking on the dropdown
+                            cacheOptions
+                            loadOptions={loadOpportunities}
+                            onChange={(val) => {
+                              onChange(val.map((c) => c.value));
+                            }}
+                            // for each value, look up the value and label from the cache
+                            value={value?.map((x: any) => ({
+                              value: x,
+                              label: cacheOpportunities.find((c) => c.id === x)
+                                ?.title,
+                            }))}
+                            placeholder="Select opportunities..."
+                            inputId="input_opportunities" // e2e
+                            // fix menu z-index issue
+                            // menuPortalTarget={htmlRef.current}
+                            styles={{
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
+                            }}
+                          />
+                        )}
+                      />
+                    </FormField>
+
+                    {/* OPPORTUNITY OPTION (radio button All/Any)  */}
+                    <FormField
+                      label="Opportunity Option"
+                      subLabel="Select the opportunity option."
+                      showError={
+                        !!formStateStep3.touchedFields.opportunityOption ||
+                        formStateStep3.isSubmitted
+                      }
+                      error={formStateStep3.errors.opportunityOption?.message}
+                    >
+                      <Controller
+                        control={controlStep3}
+                        name="opportunityOption"
+                        render={({ field: { onChange, value } }) => (
+                          <Select
+                            instanceId="opportunityOption"
+                            classNames={{
+                              control: () => "input !border-gray",
+                            }}
+                            isMulti={false}
+                            options={opportunityOptions}
+                            onChange={(val) => {
+                              onChange(val?.value);
+                            }}
+                            value={opportunityOptions?.filter(
+                              (c) => value === c.value,
+                            )}
+                            placeholder="Select option..."
+                            styles={{
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#A3A6AF",
+                              }),
+                            }}
+                            inputId="input_opportunityOption" // e2e
+                            isClearable={true}
+                          />
+                        )}
+                      />
+                    </FormField>
+
+                    {/* COUNTRY */}
+                    <FormField
+                      label="Country"
+                      subLabel="Select the country."
+                      showError={
+                        !!formStateStep3.touchedFields.countryCodeAlpha2 ||
+                        formStateStep3.isSubmitted
+                      }
+                      error={formStateStep3.errors.countryCodeAlpha2?.message}
+                    >
+                      <Controller
+                        control={controlStep3}
+                        name="countryCodeAlpha2"
+                        render={({ field: { onChange, value } }) => (
+                          <Select
+                            instanceId="countryCodeAlpha2"
+                            classNames={{
+                              control: () => "input !border-gray",
+                            }}
+                            isMulti={false}
+                            options={countryOptions}
+                            onChange={(val) => {
+                              onChange(val?.value);
+                            }}
+                            value={countryOptions?.filter(
+                              (c) => value === c.value,
+                            )}
+                            placeholder="Country"
+                            styles={{
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#A3A6AF",
+                              }),
+                            }}
+                            inputId="input_countryId" // e2e
+                          />
+                        )}
+                      />
+                    </FormField>
+
                     {/* TYPE */}
                     {/* <div className="form-control">
                       <label className="label">

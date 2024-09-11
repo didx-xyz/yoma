@@ -146,13 +146,14 @@ export interface StoreAccessControlRuleRequestBase {
   name: string;
   description: string | null;
   organizationId: string;
+  countryCodeAlpha2: string;
   storeId: string;
   storeItemCategories: string[] | null;
-  ageMin: number | null;
-  ageMax: number | null;
+  ageFrom: number | null;
+  ageTo: number | null;
   genderId: string | null;
   opportunities: string[] | null;
-  opportunityOption: StoreAccessControlRuleOpportunityCondition | null;
+  opportunityOption: StoreAccessControlRuleOpportunityCondition | null | string; //NB: string for API compatibility
 }
 
 export interface StoreAccessControlRuleRequestCreate
