@@ -22,6 +22,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .WithMessage("If specified, the organization must not be empty and must exist.");
       RuleFor(x => x.TitleContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.TitleContains)).WithMessage("{PropertyName} is optional, but when specified,m must be between 3 and 50 characters");
       RuleFor(x => x.Opportunities).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
+      RuleFor(x => x.Countries).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.VerificationEnabled).NotEqual(false).When(x => x.VerificationMethod != null).WithMessage("VerificationEnabled cannot be false when a VerificationMethod is specified.");
     }
     #endregion
