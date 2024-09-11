@@ -100,6 +100,7 @@ import { getGenders } from "~/api/services/lookups";
 import AsyncSelect from "react-select/async";
 import FormRadio from "~/components/Common/FormRadio";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
+import { getOrganisations } from "~/api/services/organisations";
 
 interface IParams extends ParsedUrlQuery {
   ruleId: string;
@@ -179,10 +180,10 @@ const StoreRuleDetails: NextPageWithLayout<{
     useState<number | null>(null);
   const modalContext = useConfirmationModalContext();
 
-  const opportunityOptions: SelectOption[] = [
-    { value: "0", label: "All" },
-    { value: "1", label: "Any" },
-  ];
+  // const opportunityOptions: SelectOption[] = [
+  //   { value: "0", label: "All" },
+  //   { value: "1", label: "Any" },
+  // ];
 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
@@ -201,12 +202,18 @@ const StoreRuleDetails: NextPageWithLayout<{
   // Organisations
   const { data: dataOrganisations } = useQuery({
     queryKey: ["organisations"],
-    queryFn: async () => listSearchCriteriaOrganizations(),
+    queryFn: async () =>
+      getOrganisations({
+        pageNumber: 1,
+        pageSize: MAX_INT32,
+        statuses: ["Active"],
+        valueContains: "",
+      }),
     enabled: !error,
   });
   const organisationOptions = useMemo<SelectOption[]>(
     () =>
-      dataOrganisations?.map((c) => ({
+      dataOrganisations?.items?.map((c) => ({
         value: c.id,
         label: c.name,
       })) ?? [],
@@ -279,19 +286,45 @@ const StoreRuleDetails: NextPageWithLayout<{
   const schemaStep2 = z.object({
     organizationId: z.string().min(1, "Organization is required."),
     storeId: z.string().min(1, "Store is required."),
-    storeItemCategories: z
-      .array(z.string())
-      .min(1, "At least one item must be selected"),
+    storeItemCategories: z.array(z.string()).optional(),
   });
 
-  const schemaStep3 = z.object({
-    ageFrom: z.number().int().min(0).max(MAX_INT32).nullable().optional(),
-    ageTo: z.number().int().min(0).max(MAX_INT32).nullable().optional(),
-    genderId: z.string().nullable().optional(),
-    opportunities: z.array(z.string()).optional(),
-    opportunityOption: z.string().nullable().optional(),
-    storeCountryCodeAlpha2: z.string().nullable().optional(),
-  });
+  const schemaStep3 = z
+    .object({
+      ageFrom: z.union([z.nan(), z.null(), z.number()]),
+      ageTo: z.union([z.nan(), z.null(), z.number()]),
+      genderId: z.string().nullable().optional(),
+      opportunities: z.array(z.string()).optional(),
+      opportunityOption: z.string().nullable().optional(),
+      storeCountryCodeAlpha2: z.string().nullable().optional(),
+    })
+    .superRefine((data, ctx) => {
+      if (!data.ageFrom && data.ageTo) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Both From and To must be specified together",
+          path: ["ageFrom"],
+          fatal: true,
+        });
+      }
+      if (!data.ageTo && data.ageFrom) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Both From and To must be specified together",
+          path: ["ageTo"],
+          fatal: true,
+        });
+      }
+      if (!!data.opportunities?.length && !data.opportunityOption) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message:
+            "Opportunity option is required when opportunities are specified",
+          path: ["opportunityOption"],
+          fatal: true,
+        });
+      }
+    });
 
   const schemaStep4 = z.object({});
 
@@ -311,6 +344,7 @@ const StoreRuleDetails: NextPageWithLayout<{
     control: controlStep2,
     reset: resetStep2,
     watch: watchStep2,
+    setValue: setValueStep2,
   } = useForm({
     resolver: zodResolver(schemaStep2),
     defaultValues: formData,
@@ -633,18 +667,18 @@ const StoreRuleDetails: NextPageWithLayout<{
 
   //#region opportunities
 
-  const [cacheOpportunities, setCacheOpportunities] = useState<
-    OpportunityItem[]
-  >([]);
+  const [dataOpportunities, setDataOpportunities] = useState<OpportunityItem[]>(
+    [],
+  );
   useEffect(() => {
     // popuplate the cache with the opportunities from the model
     if (storeAccessControlRule?.opportunities) {
-      setCacheOpportunities((prev) => [
+      setDataOpportunities((prev) => [
         ...prev,
         ...(storeAccessControlRule.opportunities ?? []),
       ]);
     }
-  }, [storeAccessControlRule?.opportunities, setCacheOpportunities]);
+  }, [storeAccessControlRule?.opportunities, setDataOpportunities]);
 
   // load data asynchronously for the opportunities dropdown
   // debounce is used to prevent the API from being called too frequently
@@ -666,8 +700,8 @@ const StoreRuleDetails: NextPageWithLayout<{
         callback(options);
         // add to cache
         data.items.forEach((item) => {
-          if (!cacheOpportunities.some((x) => x.id === item.id)) {
-            setCacheOpportunities((prev) => [...prev, item]);
+          if (!dataOpportunities.some((x) => x.id === item.id)) {
+            setDataOpportunities((prev) => [...prev, item]);
           }
         });
       });
@@ -1025,7 +1059,13 @@ const StoreRuleDetails: NextPageWithLayout<{
                               control: () => "input !border-gray",
                             }}
                             options={organisationOptions}
-                            onChange={(val) => onChange(val?.value)}
+                            onChange={(val) => {
+                              // clear store and store item categories
+                              setValueStep2("storeId", "");
+                              setValueStep2("storeItemCategories", []);
+
+                              onChange(val?.value);
+                            }}
                             value={organisationOptions?.find(
                               (c) => c.value === value,
                             )}
@@ -1065,6 +1105,9 @@ const StoreRuleDetails: NextPageWithLayout<{
                               isMulti={false}
                               options={dataStores}
                               onChange={(val) => {
+                                // clear store item categories
+                                setValueStep2("storeItemCategories", []);
+
                                 onChange(val?.value);
                               }}
                               value={dataStores?.find((c) => c.value === value)}
@@ -1171,6 +1214,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                       onSubmitStep(4, data),
                     )}
                   >
+                    {/* formStateStep3: {JSON.stringify(formStateStep3.errors)} */}
                     {/* AGES */}
                     <FormField
                       label="Age range"
@@ -1234,7 +1278,6 @@ const StoreRuleDetails: NextPageWithLayout<{
                         </div>
                       </div>
                     </FormField>
-
                     {/* GENDER */}
                     <FormField
                       label="Gender"
@@ -1274,7 +1317,6 @@ const StoreRuleDetails: NextPageWithLayout<{
                         )}
                       />
                     </FormField>
-
                     {/* OPPORTUNITIES */}
                     <FormField
                       label="Opportunities"
@@ -1305,13 +1347,12 @@ const StoreRuleDetails: NextPageWithLayout<{
                             // for each value, look up the value and label from the cache
                             value={value?.map((x: any) => ({
                               value: x,
-                              label: cacheOpportunities.find((c) => c.id === x)
+                              label: dataOpportunities.find((c) => c.id === x)
                                 ?.title,
                             }))}
                             placeholder="Select opportunities..."
                             inputId="input_opportunities" // e2e
                             // fix menu z-index issue
-                            // menuPortalTarget={htmlRef.current}
                             styles={{
                               menuPortal: (base) => ({
                                 ...base,
@@ -1322,11 +1363,9 @@ const StoreRuleDetails: NextPageWithLayout<{
                         )}
                       />
                     </FormField>
-
                     {/* OPPORTUNITY OPTION */}
                     <FormField
                       label="Opportunity Option"
-                      subLabel="Any: Users who have completed at least one of the selected opportunities will meet this condition. All: Users must have completed all of the selected opportunities to meet this condition."
                       showError={
                         !!formStateStep3.touchedFields.opportunityOption ||
                         formStateStep3.isSubmitted
@@ -1337,29 +1376,24 @@ const StoreRuleDetails: NextPageWithLayout<{
                         control={controlStep3}
                         name="opportunityOption"
                         render={({ field: { onChange, value } }) => (
-                          <Select
-                            instanceId="opportunityOption"
-                            classNames={{
-                              control: () => "input !border-gray",
-                            }}
-                            isMulti={false}
-                            options={opportunityOptions}
-                            onChange={(val) => {
-                              onChange(val?.value);
-                            }}
-                            value={opportunityOptions?.filter(
-                              (c) => value === c.value,
-                            )}
-                            placeholder="Select option..."
-                            styles={{
-                              placeholder: (base) => ({
-                                ...base,
-                                color: "#A3A6AF",
-                              }),
-                            }}
-                            inputId="input_opportunityOption" // e2e
-                            isClearable={true}
-                          />
+                          <>
+                            <FormRadio
+                              id="opportunityOptionAny"
+                              label="Any - Users who have completed at least one of the selected opportunities will meet this condition."
+                              inputProps={{
+                                checked: value === "1",
+                                onChange: () => onChange("1"),
+                              }}
+                            />
+                            <FormRadio
+                              id="opportunityOptionAll"
+                              label="All - Users must have completed all of the selected opportunities to meet this condition."
+                              inputProps={{
+                                checked: value === "0",
+                                onChange: () => onChange("0"),
+                              }}
+                            />
+                          </>
                         )}
                       />
                     </FormField>
@@ -1406,57 +1440,6 @@ const StoreRuleDetails: NextPageWithLayout<{
                       />
                     </FormField>
 
-                    {/* TYPE */}
-                    {/* <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">Type</span>
-                      </label>
-
-                      <label className="label label-text pt-0 text-sm ">
-                        {
-                          linkEntityTypes?.find(
-                            (x) => x.value == formData.entityType,
-                          )?.label
-                        }
-                      </label>
-                      {formStateStep1.errors.entityType && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.entityType.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div> */}
-
-                    {/* LINK PREVIEW */}
-                    {/* <div className="form-control">
-                      <label className="flex flex-col">
-                        <div className="label-text font-semibold">
-                          Social Preview
-                        </div>
-                        <div className="label-text-alt my-2">
-                          This is how your link will look on social media:
-                        </div>
-                      </label>
-                      {formData.entityType == "0" && (
-                        <SocialPreview
-                          name={formData?.name}
-                          description={formData?.description}
-                          logoURL={selectedOpportuntity?.organizationLogoURL}
-                          organizationName={
-                            selectedOpportuntity?.organizationName
-                          }
-                        />
-                      )}
-                      {formStateStep1.errors.entityId && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.entityId.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div> */}
-
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       <button
@@ -1484,7 +1467,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold">Preview</h5>
                     <p className="my-2 text-sm">
-                      Review your link before publishing it.
+                      Review your rule before submitting it.
                     </p>
                   </div>
 
@@ -1495,56 +1478,114 @@ const StoreRuleDetails: NextPageWithLayout<{
                       onSubmitStep(5, data),
                     )}
                   >
-                    {/* TYPE */}
-                    {/* <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">Type</span>
-                      </label>
+                    {/* PREVIEW */}
+                    {formData.name && (
+                      <FormField label="Name" subLabel={formData.name} />
+                    )}
 
-                      <label className="label label-text pt-0 text-sm ">
-                        {
-                          linkEntityTypes?.find(
-                            (x) => x.value == formData.entityType,
-                          )?.label
+                    {formData.description && (
+                      <FormField
+                        label="Description"
+                        subLabel={formData.description!}
+                      />
+                    )}
+
+                    {formData.organizationId && (
+                      <FormField
+                        label="Organisation"
+                        subLabel={
+                          dataOrganisations?.items?.find(
+                            (x) => x.id == formData.organizationId,
+                          )?.name
                         }
-                      </label>
-                      {formStateStep1.errors.entityType && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.entityType.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div> */}
-                    {/* LINK PREVIEW */}
-                    {/* <div className="form-control">
-                      <label className="flex flex-col">
-                        <div className="label-text font-semibold">
-                          Social Preview
-                        </div>
-                        <div className="label-text-alt my-2">
-                          This is how your link will look on social media:
-                        </div>
-                      </label>
-                      {formData.entityType == "0" && (
-                        <SocialPreview
-                          name={formData?.name}
-                          description={formData?.description}
-                          logoURL={selectedOpportuntity?.organizationLogoURL}
-                          organizationName={
-                            selectedOpportuntity?.organizationName
-                          }
-                        />
-                      )}
-                      {formStateStep1.errors.entityId && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.entityId.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div> */}
+                      />
+                    )}
 
+                    {formData.storeId && (
+                      <FormField
+                        label="Store"
+                        subLabel={
+                          dataStores.find((x) => x.value == formData.storeId)
+                            ?.label
+                        }
+                      />
+                    )}
+
+                    {!!formData.storeItemCategories?.length && (
+                      <FormField label="Store Item Categories">
+                        {formData.storeItemCategories?.map((item, index) => {
+                          const category = dataStoreItemCategories.find(
+                            (c) => c.value === item,
+                          );
+                          return (
+                            <span
+                              key={`storeItemCategories_${index}`}
+                              className="text-xs text-gray-dark"
+                            >
+                              {category ? category.label : item}
+                            </span>
+                          );
+                        })}
+                      </FormField>
+                    )}
+
+                    {formData.ageFrom && formData.ageTo && (
+                      <FormField
+                        label="Age range"
+                        subLabel={`${formData.ageFrom} - ${formData.ageTo}`}
+                      />
+                    )}
+
+                    {formData.genderId && (
+                      <FormField
+                        label="Gender"
+                        subLabel={
+                          dataGenders?.find((x) => x.id == formData.genderId)
+                            ?.name
+                        }
+                      />
+                    )}
+
+                    {!!formData.opportunities?.length && (
+                      <>
+                        <FormField label="Opportunities">
+                          {formData.opportunities?.map((item, index) => {
+                            const opportunity = dataOpportunities.find(
+                              (o) => o.id === item,
+                            );
+                            return (
+                              <span
+                                key={`opportunities_${index}`}
+                                className="text-xs text-gray-dark"
+                              >
+                                {opportunity ? opportunity.title : item}
+                              </span>
+                            );
+                          })}
+                        </FormField>
+
+                        <FormField label="Opportunity Option">
+                          {formData.opportunityOption == "0" && (
+                            <span className="text-xs text-gray-dark">All</span>
+                          )}
+                          {formData.opportunityOption == "1" && (
+                            <span className="text-xs text-gray-dark">Any</span>
+                          )}
+                        </FormField>
+                      </>
+                    )}
+
+                    {formData.storeCountryCodeAlpha2 && (
+                      <FormField
+                        label="Country"
+                        subLabel={
+                          dataCountries?.find(
+                            (x) =>
+                              x.codeAlpha2 == formData.storeCountryCodeAlpha2,
+                          )?.name
+                        }
+                      />
+                    )}
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       <button
