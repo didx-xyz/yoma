@@ -43,10 +43,12 @@ import {
   DATE_FORMAT_SYSTEM,
   PAGE_SIZE_MEDIUM,
   GA_ACTION_OPPORTUNITY_LINK_CREATE,
-  GA_CATEGORY_OPPORTUNITY_LINK,
+  GA_CATEGORY_STORE_ACCESS_CONTROL_RULE,
   MAX_INT32,
   DELIMETER_PASTE_MULTI,
   THEME_BLUE,
+  GA_ACTION_STORE_ACCESS_CONTROL_RULE_CREATE,
+  GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
@@ -97,6 +99,7 @@ import FormInput from "~/components/Common/FormInput";
 import { getGenders } from "~/api/services/lookups";
 import AsyncSelect from "react-select/async";
 import FormRadio from "~/components/Common/FormRadio";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 
 interface IParams extends ParsedUrlQuery {
   ruleId: string;
@@ -257,8 +260,8 @@ const StoreRuleDetails: NextPageWithLayout<{
       opportunities:
         storeAccessControlRule?.opportunities?.map((x) => x.id) ?? [],
       opportunityOption: storeAccessControlRule?.opportunityOption ?? null,
-      countryCodeAlpha2: "", //storeAccessControlRule?.countryCodeAlpha2 ?? "",
-      id: storeAccessControlRule?.id ?? ruleId ?? null,
+      storeCountryCodeAlpha2: "", //storeAccessControlRule?.storeCountryCodeAlpha2 ?? "",
+      id: storeAccessControlRule?.id ?? "",
     },
   );
 
@@ -271,8 +274,6 @@ const StoreRuleDetails: NextPageWithLayout<{
       .string()
       .max(500, "Description cannot exceed 500 characters.")
       .optional(),
-    // entityType: z.string().min(1, "Type is required."),
-    // entityId: z.string().min(1, "Entity is required."),
   });
 
   const schemaStep2 = z.object({
@@ -281,78 +282,7 @@ const StoreRuleDetails: NextPageWithLayout<{
     storeItemCategories: z
       .array(z.string())
       .min(1, "At least one item must be selected"),
-
-    // usagesLimit: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
-    //   // eslint-disable-next-line
-    //   return val === null || Number.isNaN(val as any) ? null : val;
-    // }),
-    // dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
-    // lockToDistributionList: z.boolean().optional(),
-    // distributionList: z
-    //   .union([z.array(z.string().email()), z.null()])
-    //   .optional(),
   });
-  // .refine(
-  //   (data) => {
-  //     // if not locked to the distribution list, you must specify either a usage limit or an end date.
-  //     if (
-  //       !data.lockToDistributionList &&
-  //       data.usagesLimit == null &&
-  //       data.dateEnd == null
-  //     ) {
-  //       return false;
-  //     }
-
-  //     return true;
-  //   },
-  //   {
-  //     message:
-  //       "If not limited to the distribution list, you must specify either a usage limit or an expiry date.",
-  //     path: ["lockToDistributionList"],
-  //   },
-  // )
-  // .refine(
-  //   (data) => {
-  //     // if lockToDistributionList is true, then distributionList is required
-  //     return (
-  //       !data.lockToDistributionList ||
-  //       (data.distributionList?.length ?? 0) > 0
-  //     );
-  //   },
-  //   {
-  //     message: "Please enter at least one email address.",
-  //     path: ["distributionList"],
-  //   },
-  // )
-  // .refine(
-  //   (data) => {
-  //     // validate all items are valid email addresses
-  //     return (
-  //       data.distributionList == null ||
-  //       data.distributionList?.every((email) => validateEmail(email))
-  //     );
-  //   },
-  //   {
-  //     message:
-  //       "Please enter valid email addresses e.g. name@domain.com. One or more email address are wrong.",
-  //     path: ["distributionList"],
-  //   },
-  // )
-  // .refine(
-  //   (data) => {
-  //     // if lockToDistributionList is false and dateEnd is not null, then validate that the dateEnd is not in the past.
-  //     if (!data.lockToDistributionList && data.dateEnd !== null) {
-  //       const now = new Date();
-  //       const dateEnd = data.dateEnd ? new Date(data.dateEnd) : undefined;
-  //       return dateEnd ? dateEnd >= now : true;
-  //     }
-  //     return true;
-  //   },
-  //   {
-  //     message: "The expiry date must be in the future.",
-  //     path: ["dateEnd"],
-  //   },
-  // );
 
   const schemaStep3 = z.object({
     ageFrom: z.number().int().min(0).max(MAX_INT32).nullable().optional(),
@@ -360,7 +290,7 @@ const StoreRuleDetails: NextPageWithLayout<{
     genderId: z.string().nullable().optional(),
     opportunities: z.array(z.string()).optional(),
     opportunityOption: z.string().nullable().optional(),
-    countryCodeAlpha2: z.string().nullable().optional(),
+    storeCountryCodeAlpha2: z.string().nullable().optional(),
   });
 
   const schemaStep4 = z.object({});
@@ -369,16 +299,13 @@ const StoreRuleDetails: NextPageWithLayout<{
     register: registerStep1,
     handleSubmit: handleSubmitStep1,
     formState: formStateStep1,
-    control: controlStep1,
     reset: resetStep1,
-    watch: watchStep1,
   } = useForm({
     resolver: zodResolver(schemaStep1),
     defaultValues: formData,
   });
 
   const {
-    register: registerStep2,
     handleSubmit: handleSubmitStep2,
     formState: formStateStep2,
     control: controlStep2,
@@ -392,6 +319,7 @@ const StoreRuleDetails: NextPageWithLayout<{
   const watchStoreId = watchStep2("storeId");
 
   const {
+    register: registerStep3,
     handleSubmit: handleSubmitStep3,
     formState: formStateStep3,
     control: controlStep3,
@@ -404,7 +332,6 @@ const StoreRuleDetails: NextPageWithLayout<{
   const {
     handleSubmit: handleSubmitStep4,
     formState: formStateStep4,
-
     reset: resetStep4,
   } = useForm({
     resolver: zodResolver(schemaStep4),
@@ -528,11 +455,9 @@ const StoreRuleDetails: NextPageWithLayout<{
           </div>
 
           <div className="text-xs leading-6 text-gray-dark md:text-sm">
-            Are you sure you want to submit your link for approval?
+            Are you sure you want to submit your rule?
             <br />
-            An administrator must approve this link before it becomes active.
-            <br />
-            Please note that these details cannot be changed later.
+            These details can be changed later.
           </div>
         </div>,
       );
@@ -606,7 +531,9 @@ const StoreRuleDetails: NextPageWithLayout<{
       setIsLoading(false);
 
       // redirect to list after create
-      //void router.push(`/organisations/${id}/links`);
+      if (ruleId == "create") {
+        void router.push(`/admin/stores`);
+      }
     },
     [setIsLoading, /* id,*/ queryClient, /* router,*/ modalContext],
   );
@@ -623,14 +550,18 @@ const StoreRuleDetails: NextPageWithLayout<{
       setFormData(model);
 
       // submit on last page when creating new opportunity
-      if (step === 4) {
+      if (step === 5) {
         await onSubmit(model);
 
         // 📊 GOOGLE ANALYTICS: track event
         trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY_LINK,
-          GA_ACTION_OPPORTUNITY_LINK_CREATE,
-          `Created Link: ${model.name}`,
+          GA_CATEGORY_STORE_ACCESS_CONTROL_RULE,
+          ruleId == "create"
+            ? GA_ACTION_STORE_ACCESS_CONTROL_RULE_CREATE
+            : GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE,
+          `${
+            ruleId === "create" ? "Created" : "Updated"
+          } Store Access Control Rule: ${model.name}`,
         );
       }
       // move to next step
@@ -663,159 +594,6 @@ const StoreRuleDetails: NextPageWithLayout<{
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(saveChangesDialogVisible);
-
-  //  look up the opportunity when watchEntityId changes (for link preview)
-  // const [selectedOpportuntity, setSelectedOpportuntity] =
-  //   useState<OpportunityInfo | null>(null);
-
-  // useEffect(() => {
-  //   if (!watchEntityId) return;
-
-  //   if (watchEntityType == "0") {
-  //     // get opportunity
-  //     getOpportunityInfoByIdAdminOrgAdminOrUser(watchEntityId).then((res) => {
-  //       // set state
-  //       setSelectedOpportuntity(res);
-  //     });
-  //   }
-  // }, [watchEntityId, watchEntityType, setSelectedOpportuntity]);
-
-  // load data asynchronously for the opportunities dropdown (debounced)
-  // const loadOpportunities = debounce(
-  //   (inputValue: string, callback: (options: any) => void) => {
-  //     if (inputValue.length < 3) inputValue = "";
-
-  //     const cacheKey = [
-  //       "opportunities",
-  //       {
-  //         organization: null, // id,
-  //         titleContains: inputValue,
-  //         published: true,
-  //         verificationMethod: VerificationMethod.Manual,
-  //       },
-  //     ];
-
-  //     // try to get data from cache
-  //     const cachedData =
-  //       queryClient.getQueryData<OpportunitySearchResultsInfo>(cacheKey);
-
-  //     if (cachedData) {
-  //       const options = cachedData.items.map((item) => ({
-  //         value: item.id,
-  //         label: item.title,
-  //       }));
-  //       callback(options);
-  //     } else {
-  //       // if not in cache, fetch data
-  //       searchCriteriaOpportunities({
-  //         opportunities: [],
-  //         organization: null, //id,
-  //         titleContains: inputValue,
-  //         published: true,
-  //         verificationMethod: VerificationMethod.Manual,
-  //         pageNumber: 1,
-  //         pageSize: PAGE_SIZE_MEDIUM,
-  //       }).then((data) => {
-  //         const options = data.items.map((item) => ({
-  //           value: item.id,
-  //           label: item.title,
-  //         }));
-  //         callback(options);
-
-  //         // save data to cache
-  //         queryClient.setQueryData(cacheKey, data);
-  //       });
-  //     }
-  //   },
-  //   1000,
-  // );
-
-  // //  look up the store when watchEntityId changes (for link preview)
-  //   const [selectedStore, setSelectedStore] =
-  //   useState<StoreInfo | null>(null);
-
-  // useEffect(() => {
-  //   if (!watchStoreId )return;
-
-  //   if (watchStoreId == "0") {
-  //     // get store
-  //     getOpportunityInfoByIdAdminOrgAdminOrUser(watchStoreId).then((res) => {
-  //       // set state
-  //       setSelectedStore(res);
-  //     });
-  //   }
-  // }, [watchStoreId,  setSelectedStore]);
-
-  // // load data asynchronously for the stores dropdown (debounced)
-  // const loadStores = useCallback(
-  //   debounce((inputValue: string, callback: (options: any) => void) => {
-  //     if (inputValue.length < 3) inputValue = "";
-
-  //     const cacheKey = ["stores", watchOrganizationId];
-
-  //     // try to get data from cache
-  //     const cachedData = queryClient.getQueryData<StoreInfo[]>(cacheKey);
-
-  //     if (cachedData) {
-  //       const options = cachedData.map((item) => ({
-  //         value: item.id,
-  //         label: item.name,
-  //       }));
-  //       callback(options);
-  //     } else {
-  //       // if not in cache, fetch data
-  //       listSearchCriteriaStores(watchOrganizationId).then((data) => {
-  //         const options = data.map((item) => ({
-  //           value: item.id,
-  //           label: item.name,
-  //         }));
-  //         callback(options);
-
-  //         // save data to cache
-  //         queryClient.setQueryData(cacheKey, data);
-  //       });
-  //     }
-  //   }, 1000),
-  //   [watchOrganizationId, queryClient],
-  // );
-
-  // // load data asynchronously for the store item categories dropdown (debounced)
-  // const loadStoreItemCategories = useCallback(
-  //   debounce((inputValue: string, callback: (options: any) => void) => {
-  //     if (inputValue.length < 3) inputValue = "";
-
-  //     const cacheKey = ["storesItemCategories", watchStoreId];
-
-  //     // try to get data from cache
-  //     const cachedData =
-  //       queryClient.getQueryData<StoreItemCategorySearchResults>(cacheKey);
-
-  //     if (cachedData) {
-  //       const options = cachedData.items.map((item) => ({
-  //         value: item.id,
-  //         label: item.name,
-  //       }));
-  //       callback(options);
-  //     } else {
-  //       // if not in cache, fetch data
-  //       searchStoreItemCategories({
-  //         storeId: watchStoreId,
-  //         pageNumber: 1,
-  //         pageSize: MAX_INT32,
-  //       }).then((data) => {
-  //         const options = data.items.map((item) => ({
-  //           value: item.id,
-  //           label: item.name,
-  //         }));
-  //         callback(options);
-
-  //         // save data to cache
-  //         queryClient.setQueryData(cacheKey, data);
-  //       });
-  //     }
-  //   }, 1000),
-  //   [watchStoreId, queryClient],
-  // );
 
   // load stores (based on watchOrganizationId)
   const [dataStores, setDataStores] = useState<SelectOption[]>([]);
@@ -896,22 +674,6 @@ const StoreRuleDetails: NextPageWithLayout<{
     }, 1000),
     [watchOrganizationId],
   );
-
-  // the AsyncSelect component requires the defaultOptions to be set in the state
-  // const [defaultOpportunityOptions, setDefaultOpportunityOptions] =
-  //   useState<any>([]);
-
-  // useEffect(() => {
-  //   if (formData?.opportunities) {
-  //     setDefaultOpportunityOptions(
-  //       formData?.opportunities?.map((c: any) => ({
-  //         value: c,
-  //         label: c,
-  //       })),
-  //     );
-  //   }
-  // }, [setDefaultOpportunityOptions, formData?.opportunities]);
-  // #endregion opportunities
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -1126,9 +888,22 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold tracking-wider">General</h5>
-                    <p className="my-2 text-sm">
-                      Create a new rule for your store.
-                    </p>
+                    <FormMessage messageType={FormMessageType.Info}>
+                      Store Access Control Rules are a set of conditions
+                      configured by a Yoma administrator to control the
+                      visibility of a ZLTO store and its item categories to
+                      youth users. These rules ensure that the store is
+                      accessible only to users who meet specific criteria, such
+                      as age, gender, and completed opportunities. The rules are
+                      evaluated using AND logic, meaning all specified
+                      conditions must be met for the store or item categories to
+                      be visible to a user. Multiple rules can be created for
+                      the same store or item categories, with OR logic
+                      determining visibility across different rules. This system
+                      allows for precise targeting of store visibility based on
+                      user demographics and achievements, ensuring that the
+                      store is tailored to the intended audience.
+                    </FormMessage>
                   </div>
 
                   <form
@@ -1136,14 +911,13 @@ const StoreRuleDetails: NextPageWithLayout<{
                     className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep1((data) =>
                       onSubmitStep(2, data),
-                    )} // eslint-disable-line @typescript-eslint/no-misused-promises
+                    )}
                   >
                     <div className="form-control">
                       <label className="flex flex-col">
                         <div className="label-text font-bold">Name</div>
                         <div className="label-text-alt my-2">
-                          This name will be visible to you, and in the link
-                          preview.
+                          The name of the rule that will be visible to you.
                         </div>
                       </label>
                       <input
@@ -1166,8 +940,10 @@ const StoreRuleDetails: NextPageWithLayout<{
                       <label className="flex flex-col">
                         <div className="label-text font-bold">Description</div>
                         <div className="label-text-alt my-2">
-                          This description will be visible to you, and in the
-                          link preview.
+                          A brief description of the rule, outlining its purpose
+                          and any specific conditions or criteria it applies to.
+                          This will help you and others understand the rule's
+                          intent and scope.
                         </div>
                       </label>
                       <textarea
@@ -1186,15 +962,15 @@ const StoreRuleDetails: NextPageWithLayout<{
 
                     {/* BUTTONS */}
                     <div className="my-4 flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
-                      {/* <Link
+                      <Link
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         href={getSafeUrl(
                           returnUrl?.toString(),
-                          `/organisations/${id}/links`,
+                          `/admin/stores`,
                         )}
                       >
                         Cancel
-                      </Link> */}
+                      </Link>
 
                       <button
                         type="submit"
@@ -1211,9 +987,14 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold tracking-wider">Store</h5>
-                    <p className="my-2 text-sm">
-                      Select the store you want to create a rule for.
-                    </p>
+                    <FormMessage messageType={FormMessageType.Info}>
+                      You can configure a ZLTO store for youth by having a ZLTO
+                      representative set up the store based on your
+                      specifications. You can select an organization and a
+                      store, with the option to choose specific item categories.
+                      Visibility conditions will apply to either the entire
+                      store or the selected item categories.
+                    </FormMessage>
                   </div>
                   <form
                     ref={formRef2}
@@ -1296,24 +1077,6 @@ const StoreRuleDetails: NextPageWithLayout<{
                               }}
                               inputId="input_store" // e2e
                             />
-                            // <Select
-                            //   instanceId="storeId"
-                            //   classNames={{
-                            //     control: () => "input !border-gray",
-                            //   }}
-                            //   options={organisationOptions}
-                            //   onChange={(val) => onChange(val?.value)}
-                            //   value={organisationOptions?.find(
-                            //     (c) => c.value === value,
-                            //   )}
-                            //   styles={{
-                            //     placeholder: (base) => ({
-                            //       ...base,
-                            //       color: "#A3A6AF",
-                            //     }),
-                            //   }}
-                            //   inputId="input_store" // e2e
-                            // />
                           )}
                         />
                       </FormField>
@@ -1360,24 +1123,6 @@ const StoreRuleDetails: NextPageWithLayout<{
                               }}
                               inputId="input_storeItemCategories" // e2e
                             />
-                            // <Select
-                            //   instanceId="storeItemCategories"
-                            //   classNames={{
-                            //     control: () => "input !border-gray",
-                            //   }}
-                            //   options={organisationOptions}
-                            //   onChange={(val) => onChange(val?.value)}
-                            //   value={organisationOptions?.find(
-                            //     (c) => c.value === value,
-                            //   )}
-                            //   styles={{
-                            //     placeholder: (base) => ({
-                            //       ...base,
-                            //       color: "#A3A6AF",
-                            //     }),
-                            //   }}
-                            //   inputId="input_store" // e2e
-                            // />
                           )}
                         />
                       </FormField>
@@ -1409,9 +1154,14 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold">Conditions</h5>
-                    <p className="my-2 text-sm">
-                      Target audiences with specific conditions.
-                    </p>
+                    <FormMessage messageType={FormMessageType.Info}>
+                      You can create multiple rules for the same store or item
+                      categories, with OR logic determining visibility. This
+                      sequence ensures that the store and its items are tailored
+                      to specific youth demographics, their completed
+                      opportunities, and eligibility criteria, while also
+                      accommodating users with incomplete profile information.
+                    </FormMessage>
                   </div>
 
                   <form
@@ -1423,8 +1173,8 @@ const StoreRuleDetails: NextPageWithLayout<{
                   >
                     {/* AGES */}
                     <FormField
-                      label="Ages"
-                      subLabel="Select the age range."
+                      label="Age range"
+                      subLabel="Stores will not be visible to users without a specified date of birth, regardless of the age condition. If no age restriction is set, the store or item categories will be visible to all ages."
                       showWarningIcon={
                         !!formStateStep3.errors.ageFrom?.message ||
                         !!formStateStep3.errors.ageTo?.message
@@ -1448,7 +1198,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                                     type: "number",
                                     placeholder: "Age from...",
                                     step: 1,
-                                    ...registerStep2("ageFrom", {
+                                    ...registerStep3("ageFrom", {
                                       valueAsNumber: true,
                                     }),
                                   }}
@@ -1473,7 +1223,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                                     type: "number",
                                     placeholder: "Age to...",
                                     step: 1,
-                                    ...registerStep2("ageTo", {
+                                    ...registerStep3("ageTo", {
                                       valueAsNumber: true,
                                     }),
                                   }}
@@ -1488,7 +1238,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                     {/* GENDER */}
                     <FormField
                       label="Gender"
-                      subLabel="Select the gender."
+                      subLabel="Stores will NOT be visible to users with no gender specified or who have selected 'Prefer not to say', irrespective of the gender condition. If no gender condition is specified, the store or item categories will be visible to all genders."
                       showError={
                         !!formStateStep3.touchedFields.genderId ||
                         formStateStep3.isSubmitted
@@ -1528,7 +1278,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                     {/* OPPORTUNITIES */}
                     <FormField
                       label="Opportunities"
-                      subLabel="Select the opportunities."
+                      subLabel="Select the opportunities that must be completed for the store to be visible. If no opportunity condition is specified, the store or item categories will be visible to all users regardless of completed opportunities."
                       showError={
                         !!formStateStep3.touchedFields.opportunities ||
                         formStateStep3.isSubmitted
@@ -1542,7 +1292,8 @@ const StoreRuleDetails: NextPageWithLayout<{
                           <Async
                             instanceId="opportunities"
                             classNames={{
-                              control: () => "input !border-gray",
+                              control: () =>
+                                "input input-xs text-[1rem] h-fit !border-gray",
                             }}
                             isMulti={true}
                             defaultOptions={true} // calls loadSkills for initial results when clicking on the dropdown
@@ -1572,10 +1323,10 @@ const StoreRuleDetails: NextPageWithLayout<{
                       />
                     </FormField>
 
-                    {/* OPPORTUNITY OPTION (radio button All/Any)  */}
+                    {/* OPPORTUNITY OPTION */}
                     <FormField
                       label="Opportunity Option"
-                      subLabel="Select the opportunity option."
+                      subLabel="Any: Users who have completed at least one of the selected opportunities will meet this condition. All: Users must have completed all of the selected opportunities to meet this condition."
                       showError={
                         !!formStateStep3.touchedFields.opportunityOption ||
                         formStateStep3.isSubmitted
@@ -1618,17 +1369,19 @@ const StoreRuleDetails: NextPageWithLayout<{
                       label="Country"
                       subLabel="Select the country."
                       showError={
-                        !!formStateStep3.touchedFields.countryCodeAlpha2 ||
+                        !!formStateStep3.touchedFields.storeCountryCodeAlpha2 ||
                         formStateStep3.isSubmitted
                       }
-                      error={formStateStep3.errors.countryCodeAlpha2?.message}
+                      error={
+                        formStateStep3.errors.storeCountryCodeAlpha2?.message
+                      }
                     >
                       <Controller
                         control={controlStep3}
-                        name="countryCodeAlpha2"
+                        name="storeCountryCodeAlpha2"
                         render={({ field: { onChange, value } }) => (
                           <Select
-                            instanceId="countryCodeAlpha2"
+                            instanceId="storeCountryCodeAlpha2"
                             classNames={{
                               control: () => "input !border-gray",
                             }}
@@ -1763,7 +1516,6 @@ const StoreRuleDetails: NextPageWithLayout<{
                         </label>
                       )}
                     </div> */}
-
                     {/* LINK PREVIEW */}
                     {/* <div className="form-control">
                       <label className="flex flex-col">
@@ -1811,8 +1563,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                           !(
                             formStateStep1.isValid &&
                             formStateStep2.isValid &&
-                            formStateStep3.isValid &&
-                            formStateStep4.isValid
+                            formStateStep3.isValid
                           )
                         }
                       >

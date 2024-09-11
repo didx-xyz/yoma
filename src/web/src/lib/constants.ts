@@ -68,6 +68,8 @@ export const GA_CATEGORY_ORGANISATION = "Organisation";
 export const GA_CATEGORY_OPPORTUNITY = "Opportunity";
 export const GA_CATEGORY_SCHEMA = "Schema";
 export const GA_CATEGORY_OPPORTUNITY_LINK = "Opportunity Link";
+export const GA_CATEGORY_STORE_ACCESS_CONTROL_RULE =
+  "Store Access Control Rule";
 
 export const GA_ACTION_USER_YOIDONBOARDINGCONFIRMED =
   "YoID Onboarding Confirmed";
@@ -102,6 +104,11 @@ export const GA_ACTION_APP_SETTING_UPDATE = "User Updated App Settings";
 export const GA_ACTION_OPPORTUNITY_LINK_CREATE = "Created Opportunity Link";
 export const GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS =
   "Updated Status for Opportunity Link";
+
+export const GA_ACTION_STORE_ACCESS_CONTROL_RULE_CREATE =
+  "Created Store Access Control Rule";
+export const GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE =
+  "Updated Store Access Control Rule";
 
 // colors for green, organge, purple, blue, red, pink, teal, indigo, cyan
 export const CHART_COLORS = [
