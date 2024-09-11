@@ -273,6 +273,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Where(o => o.StatusId == statusActiveId && o.OrganizationStatusId == statusOrganizationActiveId);
       }
 
+      if (filter.VerificationEnabled.HasValue)
+        query = query.Where(o => o.VerificationEnabled == filter.VerificationEnabled.Value);
+
       if (filter.VerificationMethod.HasValue)
         query = query.Where(o => o.VerificationEnabled && o.VerificationMethodValue == filter.VerificationMethod.ToString());
 
@@ -707,7 +710,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           Id = id,
           Name = description
-        }); 
+        });
       }
 
       return results;
