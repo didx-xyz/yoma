@@ -179,6 +179,7 @@ const StoreRuleDetails: NextPageWithLayout<{
   const [lastStepBeforeSaveChangesDialog, setLastStepBeforeSaveChangesDialog] =
     useState<number | null>(null);
   const modalContext = useConfirmationModalContext();
+  const htmlRef = useRef<HTMLDivElement>(null);
 
   // const opportunityOptions: SelectOption[] = [
   //   { value: "0", label: "All" },
@@ -299,22 +300,39 @@ const StoreRuleDetails: NextPageWithLayout<{
       opportunityOption: z.string().nullable().optional(),
     })
     .superRefine((data, ctx) => {
-      if (!data.ageFrom && data.ageTo) {
+      // if (!data.ageFrom && data.ageTo) {
+      //   ctx.addIssue({
+      //     code: z.ZodIssueCode.custom,
+      //     message: "Both From and To must be specified together",
+      //     path: ["ageFrom"],
+      //     fatal: true,
+      //   });
+      // }
+      // if (!data.ageTo && data.ageFrom) {
+      //   ctx.addIssue({
+      //     code: z.ZodIssueCode.custom,
+      //     message: "Both From and To must be specified together",
+      //     path: ["ageTo"],
+      //     fatal: true,
+      //   });
+      // }
+
+      // either ageFrom or ageTo or Gender or Opportunities (length > 0) must be specified
+      if (
+        !data.ageFrom &&
+        !data.ageTo &&
+        !data.genderId &&
+        !data.opportunities?.length
+      ) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message: "Both From and To must be specified together",
-          path: ["ageFrom"],
+          message:
+            "Select at least one of the following: Age, Gender or Opportunities",
           fatal: true,
+          path: ["opportunityOption"],
         });
       }
-      if (!data.ageTo && data.ageFrom) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "Both From and To must be specified together",
-          path: ["ageTo"],
-          fatal: true,
-        });
-      }
+
       if (!!data.opportunities?.length && !data.opportunityOption) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
@@ -810,6 +828,9 @@ const StoreRuleDetails: NextPageWithLayout<{
 
         <h3 className="mb-6 mt-2 font-bold text-white">New rule</h3>
 
+        {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
+        <div ref={htmlRef} />
+
         <div className="flex flex-col gap-4 md:flex-row">
           {/* LEFT VERTICAL MENU */}
           <ul className="menu hidden h-max w-60 flex-none gap-3 rounded-lg bg-white p-4 font-semibold shadow-custom md:flex md:justify-center">
@@ -928,22 +949,12 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold tracking-wider">General</h5>
-                    <FormMessage messageType={FormMessageType.Info}>
-                      Store Access Control Rules are a set of conditions
-                      configured by a Yoma administrator to control the
+                    <p className="my-2 text-sm">
+                      Store Access Control Rules are conditions to control the
                       visibility of a ZLTO store and its item categories to
-                      youth users. These rules ensure that the store is
-                      accessible only to users who meet specific criteria, such
-                      as age, gender, and completed opportunities. The rules are
-                      evaluated using AND logic, meaning all specified
-                      conditions must be met for the store or item categories to
-                      be visible to a user. Multiple rules can be created for
-                      the same store or item categories, with OR logic
-                      determining visibility across different rules. This system
-                      allows for precise targeting of store visibility based on
-                      user demographics and achievements, ensuring that the
-                      store is tailored to the intended audience.
-                    </FormMessage>
+                      users. This system allows precise targeting based on user
+                      demographics and achievements.
+                    </p>
                   </div>
 
                   <form
@@ -1029,14 +1040,14 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold tracking-wider">Store</h5>
-                    <FormMessage messageType={FormMessageType.Info}>
-                      You can configure a ZLTO store for youth by having a ZLTO
+                    <p className="my-2 text-sm">
+                      Configure a ZLTO store for users by having a ZLTO
                       representative set up the store based on your
-                      specifications. You can select an organization and a
+                      specifications. You can select the organization and a
                       store, with the option to choose specific item categories.
                       Visibility conditions will apply to either the entire
                       store or the selected item categories.
-                    </FormMessage>
+                    </p>
                   </div>
                   <form
                     ref={formRef2}
@@ -1068,21 +1079,23 @@ const StoreRuleDetails: NextPageWithLayout<{
                             }}
                             options={organisationOptions}
                             onChange={(val) => {
-                              // clear store and store item categories
-                              setValueStep2("storeId", "");
-                              setValueStep2("storeItemCategories", []);
-
                               onChange(val?.value);
                             }}
                             value={organisationOptions?.find(
                               (c) => c.value === value,
                             )}
                             styles={{
+                              // fix menu z-index issue
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
                               placeholder: (base) => ({
                                 ...base,
                                 color: "#A3A6AF",
                               }),
                             }}
+                            menuPortalTarget={htmlRef.current}
                             inputId="input_organisation" // e2e
                           />
                         )}
@@ -1113,6 +1126,10 @@ const StoreRuleDetails: NextPageWithLayout<{
                             isMulti={false}
                             options={countryOptions}
                             onChange={(val) => {
+                              // clear store and store item categories
+                              setValueStep2("storeId", "");
+                              setValueStep2("storeItemCategories", []);
+
                               onChange(val?.value);
                             }}
                             value={countryOptions?.filter(
@@ -1120,11 +1137,17 @@ const StoreRuleDetails: NextPageWithLayout<{
                             )}
                             placeholder="Country"
                             styles={{
+                              // fix menu z-index issue
+                              menuPortal: (base) => ({
+                                ...base,
+                                zIndex: 9999,
+                              }),
                               placeholder: (base) => ({
                                 ...base,
                                 color: "#A3A6AF",
                               }),
                             }}
+                            menuPortalTarget={htmlRef.current}
                             inputId="input_countryId" // e2e
                           />
                         )}
@@ -1164,11 +1187,17 @@ const StoreRuleDetails: NextPageWithLayout<{
                               value={dataStores?.find((c) => c.value === value)}
                               placeholder="Store"
                               styles={{
+                                // fix menu z-index issue
+                                menuPortal: (base) => ({
+                                  ...base,
+                                  zIndex: 9999,
+                                }),
                                 placeholder: (base) => ({
                                   ...base,
                                   color: "#A3A6AF",
                                 }),
                               }}
+                              menuPortalTarget={htmlRef.current}
                               inputId="input_store" // e2e
                             />
                           )}
@@ -1210,11 +1239,17 @@ const StoreRuleDetails: NextPageWithLayout<{
                               )}
                               placeholder="Store Item Categories"
                               styles={{
+                                // fix menu z-index issue
+                                menuPortal: (base) => ({
+                                  ...base,
+                                  zIndex: 9999,
+                                }),
                                 placeholder: (base) => ({
                                   ...base,
                                   color: "#A3A6AF",
                                 }),
                               }}
+                              menuPortalTarget={htmlRef.current}
                               inputId="input_storeItemCategories" // e2e
                             />
                           )}
@@ -1248,14 +1283,13 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold">Conditions</h5>
-                    <FormMessage messageType={FormMessageType.Info}>
-                      You can create multiple rules for the same store or item
-                      categories, with OR logic determining visibility. This
-                      sequence ensures that the store and its items are tailored
-                      to specific youth demographics, their completed
-                      opportunities, and eligibility criteria, while also
-                      accommodating users with incomplete profile information.
-                    </FormMessage>
+                    <p className="my-2 text-sm">
+                      These rules ensure the store is accessible only to users
+                      who meet criteria like age, gender, and completed
+                      opportunities. All specified conditions must be met for
+                      visibility, and multiple rules can be created with OR
+                      logic determining visibility across different rules.
+                    </p>
                   </div>
 
                   <form
@@ -1387,10 +1421,10 @@ const StoreRuleDetails: NextPageWithLayout<{
                             instanceId="opportunities"
                             classNames={{
                               control: () =>
-                                "input input-xs text-[1rem] h-fit !border-gray",
+                                "input input-sm text-[1rem] h-fit !border-gray",
                             }}
                             isMulti={true}
-                            defaultOptions={true} // calls loadSkills for initial results when clicking on the dropdown
+                            defaultOptions={true} // calls loadOpportunities for initial results when clicking on the dropdown
                             cacheOptions
                             loadOptions={loadOpportunities}
                             onChange={(val) => {
@@ -1404,13 +1438,18 @@ const StoreRuleDetails: NextPageWithLayout<{
                             }))}
                             placeholder="Select opportunities..."
                             inputId="input_opportunities" // e2e
-                            // fix menu z-index issue
                             styles={{
+                              // fix menu z-index issue
                               menuPortal: (base) => ({
                                 ...base,
                                 zIndex: 9999,
                               }),
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#A3A6AF",
+                              }),
                             }}
+                            menuPortalTarget={htmlRef.current}
                           />
                         )}
                       />
@@ -1477,9 +1516,9 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold">Preview</h5>
-                    <p className="my-2 text-sm">
-                      Review your rule before submitting it.
-                    </p>
+                    {/* <p className="my-2 text-sm">
+                      Preview your rule before submitting it.
+                    </p> */}
                   </div>
 
                   <form
@@ -1507,6 +1546,18 @@ const StoreRuleDetails: NextPageWithLayout<{
                         subLabel={
                           dataOrganisations?.items?.find(
                             (x) => x.id == formData.organizationId,
+                          )?.name
+                        }
+                      />
+                    )}
+
+                    {formData.storeCountryCodeAlpha2 && (
+                      <FormField
+                        label="Country"
+                        subLabel={
+                          dataCountries?.find(
+                            (x) =>
+                              x.codeAlpha2 == formData.storeCountryCodeAlpha2,
                           )?.name
                         }
                       />
@@ -1540,10 +1591,18 @@ const StoreRuleDetails: NextPageWithLayout<{
                       </FormField>
                     )}
 
-                    {formData.ageFrom && formData.ageTo && (
+                    {(!!formData.ageFrom || !!formData.ageTo) && (
                       <FormField
                         label="Age range"
-                        subLabel={`${formData.ageFrom} - ${formData.ageTo}`}
+                        subLabel={
+                          formData.ageFrom && formData.ageTo
+                            ? `From ${formData.ageFrom} To ${formData.ageTo}`
+                            : formData.ageFrom
+                              ? `From ${formData.ageFrom}`
+                              : formData.ageTo
+                                ? `To ${formData.ageTo}`
+                                : "No age range specified"
+                        }
                       />
                     )}
 
@@ -1586,17 +1645,6 @@ const StoreRuleDetails: NextPageWithLayout<{
                       </>
                     )}
 
-                    {formData.storeCountryCodeAlpha2 && (
-                      <FormField
-                        label="Country"
-                        subLabel={
-                          dataCountries?.find(
-                            (x) =>
-                              x.codeAlpha2 == formData.storeCountryCodeAlpha2,
-                          )?.name
-                        }
-                      />
-                    )}
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       <button
