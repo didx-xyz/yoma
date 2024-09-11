@@ -1,4 +1,3 @@
-using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Marketplace.Models;
 
 namespace Yoma.Core.Domain.Marketplace.Interfaces
@@ -7,9 +6,7 @@ namespace Yoma.Core.Domain.Marketplace.Interfaces
   {
     Task<StoreAccessControlRuleInfo> GetById(Guid id);
 
-    List<OrganizationInfo> ListSearchCriteriaOrganizations();
-
-    List<StoreInfo> ListSearchCriteriaStores(Guid? organizationId);
+    Task<List<StoreInfo>> ListSearchCriteriaStores(Guid? organizationId);
 
     Task<StoreAccessControlRuleSearchResults> Search(StoreAccessControlRuleSearchFilter filter);
 

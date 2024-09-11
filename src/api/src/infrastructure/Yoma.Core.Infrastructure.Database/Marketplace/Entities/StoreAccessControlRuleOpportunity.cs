@@ -10,12 +10,12 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
   public class StoreAccessControlRuleOpportunity : BaseEntity<Guid>
   {
     [Required]
-    [ForeignKey("OpportunityId")]
+    [ForeignKey("StoreAccessControlRuleId")]
     public Guid StoreAccessControlRuleId { get; set; }
     public StoreAccessControlRule StoreAccessControlRule { get; set; }
 
     [Required]
-    [ForeignKey("CategoryId")]
+    [ForeignKey("OpportunityId")]
     public Guid OpportunityId { get; set; }
     public Opportunity.Entities.Opportunity Opportunity { get; set; }
 

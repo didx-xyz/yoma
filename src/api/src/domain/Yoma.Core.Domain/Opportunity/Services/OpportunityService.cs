@@ -707,7 +707,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           Id = id,
           Name = description
-        });
+        }); 
       }
 
       return results;

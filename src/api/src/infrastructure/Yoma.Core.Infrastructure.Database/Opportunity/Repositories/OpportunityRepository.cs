@@ -81,8 +81,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
               {
                 Id = o.CategoryId,
                 Name = o.Category.Name,
-                ImageURL =
-                  o.Category.ImageURL
+                ImageURL = o.Category.ImageURL
               }).OrderBy(o => o.Name).ToList() : null,
         Countries = includeChildItems ?
               entity.Countries.Select(o => new Domain.Lookups.Models.Country
@@ -98,16 +97,14 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
               {
                 Id = o.LanguageId,
                 Name = o.Language.Name,
-                CodeAlpha2 =
-                  o.Language.CodeAlpha2
+                CodeAlpha2 = o.Language.CodeAlpha2
               }).OrderBy(o => o.Name).ToList() : null,
         Skills = entity.Skills == null ? null : includeChildItems ?
               entity.Skills.Select(o => new Domain.Lookups.Models.Skill
               {
                 Id = o.SkillId,
                 Name = o.Skill.Name,
-                InfoURL =
-                  o.Skill.InfoURL
+                InfoURL = o.Skill.InfoURL
               }).OrderBy(o => o.Name).ToList() : null,
         VerificationTypes = entity.VerificationTypes == null ? null : includeChildItems ?
               entity.VerificationTypes.Select(o => new Domain.Opportunity.Models.Lookups.OpportunityVerificationType
