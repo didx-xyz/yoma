@@ -149,10 +149,10 @@ export const listSearchCriteriaOrganizations = async (
   //TODO: return MOCK data for now
   return [
     {
-      id: "org1",
-      name: "Organization 1",
+      id: "773def1a-e6e6-44b3-9f92-dd97dff86027",
+      name: "Yoma (Youth Agency Marketplace)",
       tagline: "Tagline 1",
-      status: "status1",
+      status: "Active",
       logoURL: "https://via.placeholder.com/150",
     },
   ];

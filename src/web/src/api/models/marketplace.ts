@@ -146,7 +146,7 @@ export interface StoreAccessControlRuleRequestBase {
   name: string;
   description: string | null;
   organizationId: string;
-  countryCodeAlpha2: string;
+  storeCountryCodeAlpha2: string;
   storeId: string;
   storeItemCategories: string[] | null;
   ageFrom: number | null;
