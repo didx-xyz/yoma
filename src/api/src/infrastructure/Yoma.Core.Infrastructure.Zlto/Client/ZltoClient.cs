@@ -187,13 +187,13 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     {
       countryCodeAlpha2 = countryCodeAlpha2?.Trim();
 
-      var results = new List<string>() { Country.Worldwide.ToDescription() };
+      var results = _options.Store.Owners
+           .Where(o => string.IsNullOrEmpty(countryCodeAlpha2) || string.Equals(countryCodeAlpha2, o.CountryCodeAlpha2, StringComparison.InvariantCultureIgnoreCase))
+           .Select(o => o.CountryCodeAlpha2)
+           .ToList();
 
-      var supportedCountryCodesAlpha2 = _options.Store.Owners
-          .Where(o => string.IsNullOrEmpty(countryCodeAlpha2) || string.Equals(countryCodeAlpha2, o.CountryCodeAlpha2, StringComparison.InvariantCultureIgnoreCase))
-          .Select(o => o.CountryCodeAlpha2).ToList();
-
-      results = results.Union(supportedCountryCodesAlpha2).ToList();
+      if (!results.Contains(Country.Worldwide.ToDescription(), StringComparer.InvariantCultureIgnoreCase))
+        throw new InvalidOperationException("Worldwide (WW) country code must be configured");
 
       return results;
     }
@@ -524,6 +524,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
     private static string ResolveCountryCode(string? countryCodeAlpha2)
     {
+      // if the incoming country code is null or empty, default to the Worldwide (WW) country code
       countryCodeAlpha2 = countryCodeAlpha2?.Trim();
       if (string.IsNullOrEmpty(countryCodeAlpha2))
         countryCodeAlpha2 = Country.Worldwide.ToDescription();
@@ -541,10 +542,15 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         throw new ArgumentNullException(nameof(countryCodeAlpha2));
       countryCodeAlpha2 = countryCodeAlpha2.Trim();
 
+      // attempt to find the country owner for the specified country code (countryCodeAlpha2)
+      // if the country is not explicitly configured, default to the owner configured for the Worldwide (WW) store
       var countryOwner = _options.Store.Owners.SingleOrDefault(o => string.Equals(o.CountryCodeAlpha2, countryCodeAlpha2, StringComparison.InvariantCultureIgnoreCase));
-
       var countryOwnerId = countryOwner?.Id ?? _options.Store.Owners
           .Single(o => string.Equals(o.CountryCodeAlpha2, Country.Worldwide.ToDescription(), StringComparison.InvariantCultureIgnoreCase)).Id;
+
+      if (string.IsNullOrWhiteSpace(countryOwnerId))
+        throw new InvalidOperationException($"Failed to resolve the country owner id");
+
       query = query.SetQueryParam("country_owner_id", countryOwnerId);
 
       if (limit.HasValue && limit.Value > default(int))
