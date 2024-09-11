@@ -285,6 +285,7 @@ const StoreRuleDetails: NextPageWithLayout<{
 
   const schemaStep2 = z.object({
     organizationId: z.string().min(1, "Organization is required."),
+    storeCountryCodeAlpha2: z.string().nullable().optional(),
     storeId: z.string().min(1, "Store is required."),
     storeItemCategories: z.array(z.string()).optional(),
   });
@@ -296,7 +297,6 @@ const StoreRuleDetails: NextPageWithLayout<{
       genderId: z.string().nullable().optional(),
       opportunities: z.array(z.string()).optional(),
       opportunityOption: z.string().nullable().optional(),
-      storeCountryCodeAlpha2: z.string().nullable().optional(),
     })
     .superRefine((data, ctx) => {
       if (!data.ageFrom && data.ageTo) {
@@ -350,6 +350,7 @@ const StoreRuleDetails: NextPageWithLayout<{
     defaultValues: formData,
   });
   const watchOrganizationId = watchStep2("organizationId");
+  const watchCountry = watchStep2("storeCountryCodeAlpha2");
   const watchStoreId = watchStep2("storeId");
 
   const {
@@ -632,17 +633,22 @@ const StoreRuleDetails: NextPageWithLayout<{
   // load stores (based on watchOrganizationId)
   const [dataStores, setDataStores] = useState<SelectOption[]>([]);
   useEffect(() => {
-    if (!watchOrganizationId) return;
+    if (!watchCountry) return;
 
     // load stores
-    listSearchCriteriaStores(watchOrganizationId).then((data) => {
-      const options = data.map((store) => ({
+    searchStores({
+      categoryId: null,
+      countryCodeAlpha2: watchCountry,
+      pageNumber: 1,
+      pageSize: MAX_INT32,
+    }).then((data) => {
+      const options = data.items.map((store) => ({
         value: store.id,
         label: store.name,
       }));
       setDataStores(options);
     });
-  }, [watchOrganizationId, setDataStores]);
+  }, [watchCountry, setDataStores]);
 
   // load store item categories (based on watchStoreId)
   const [dataStoreItemCategories, setDataStoreItemCategories] = useState<
@@ -960,6 +966,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                         placeholder="Name"
                         {...registerStep1("name")}
                         contentEditable
+                        maxLength={255}
                       />
                       {formStateStep1.errors.name && (
                         <label className="label -mb-5">
@@ -984,6 +991,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                         className="input textarea textarea-bordered h-32 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
                         placeholder="Description"
                         {...registerStep1("description")}
+                        maxLength={500}
                       />
                       {formStateStep1.errors.description && (
                         <label className="label">
@@ -1080,7 +1088,50 @@ const StoreRuleDetails: NextPageWithLayout<{
                         )}
                       />
                     </FormField>
-                    {watchOrganizationId && (
+
+                    {/* COUNTRY */}
+                    <FormField
+                      label="Country"
+                      subLabel="Select the country."
+                      showError={
+                        !!formStateStep2.touchedFields.storeCountryCodeAlpha2 ||
+                        formStateStep2.isSubmitted
+                      }
+                      error={
+                        formStateStep2.errors.storeCountryCodeAlpha2?.message
+                      }
+                    >
+                      <Controller
+                        control={controlStep2}
+                        name="storeCountryCodeAlpha2"
+                        render={({ field: { onChange, value } }) => (
+                          <Select
+                            instanceId="storeCountryCodeAlpha2"
+                            classNames={{
+                              control: () => "input !border-gray",
+                            }}
+                            isMulti={false}
+                            options={countryOptions}
+                            onChange={(val) => {
+                              onChange(val?.value);
+                            }}
+                            value={countryOptions?.filter(
+                              (c) => value === c.value,
+                            )}
+                            placeholder="Country"
+                            styles={{
+                              placeholder: (base) => ({
+                                ...base,
+                                color: "#A3A6AF",
+                              }),
+                            }}
+                            inputId="input_countryId" // e2e
+                          />
+                        )}
+                      />
+                    </FormField>
+
+                    {watchCountry && (
                       <FormField
                         label="Store"
                         subLabel="Select the store."
@@ -1214,7 +1265,6 @@ const StoreRuleDetails: NextPageWithLayout<{
                       onSubmitStep(4, data),
                     )}
                   >
-                    {/* formStateStep3: {JSON.stringify(formStateStep3.errors)} */}
                     {/* AGES */}
                     <FormField
                       label="Age range"
@@ -1278,6 +1328,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                         </div>
                       </div>
                     </FormField>
+
                     {/* GENDER */}
                     <FormField
                       label="Gender"
@@ -1317,6 +1368,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                         )}
                       />
                     </FormField>
+
                     {/* OPPORTUNITIES */}
                     <FormField
                       label="Opportunities"
@@ -1363,6 +1415,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                         )}
                       />
                     </FormField>
+
                     {/* OPPORTUNITY OPTION */}
                     <FormField
                       label="Opportunity Option"
@@ -1394,48 +1447,6 @@ const StoreRuleDetails: NextPageWithLayout<{
                               }}
                             />
                           </>
-                        )}
-                      />
-                    </FormField>
-
-                    {/* COUNTRY */}
-                    <FormField
-                      label="Country"
-                      subLabel="Select the country."
-                      showError={
-                        !!formStateStep3.touchedFields.storeCountryCodeAlpha2 ||
-                        formStateStep3.isSubmitted
-                      }
-                      error={
-                        formStateStep3.errors.storeCountryCodeAlpha2?.message
-                      }
-                    >
-                      <Controller
-                        control={controlStep3}
-                        name="storeCountryCodeAlpha2"
-                        render={({ field: { onChange, value } }) => (
-                          <Select
-                            instanceId="storeCountryCodeAlpha2"
-                            classNames={{
-                              control: () => "input !border-gray",
-                            }}
-                            isMulti={false}
-                            options={countryOptions}
-                            onChange={(val) => {
-                              onChange(val?.value);
-                            }}
-                            value={countryOptions?.filter(
-                              (c) => value === c.value,
-                            )}
-                            placeholder="Country"
-                            styles={{
-                              placeholder: (base) => ({
-                                ...base,
-                                color: "#A3A6AF",
-                              }),
-                            }}
-                            inputId="input_countryId" // e2e
-                          />
                         )}
                       />
                     </FormField>
