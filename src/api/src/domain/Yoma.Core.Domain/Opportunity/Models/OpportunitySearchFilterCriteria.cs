@@ -12,6 +12,8 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public bool? Published { get; set; }
 
+    public bool? VerificationEnabled { get; set; }
+
     public VerificationMethod? VerificationMethod { get; set; }
   }
 }
