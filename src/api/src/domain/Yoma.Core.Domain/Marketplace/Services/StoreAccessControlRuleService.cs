@@ -10,6 +10,7 @@ using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Interfaces.Lookups;
 using Yoma.Core.Domain.Marketplace.Models;
 using Yoma.Core.Domain.Marketplace.Validators;
+using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 
@@ -31,6 +32,9 @@ namespace Yoma.Core.Domain.Marketplace.Services
     private readonly IExecutionStrategyService _executionStrategyService;
 
     private static readonly StoreAccessControlRuleStatus[] Statuses_Updatable = [StoreAccessControlRuleStatus.Active, StoreAccessControlRuleStatus.Inactive];
+    private static readonly StoreAccessControlRuleStatus[] Statuses_Activatable = [StoreAccessControlRuleStatus.Inactive];
+    private static readonly StoreAccessControlRuleStatus[] Statuses_CanDelete = [StoreAccessControlRuleStatus.Active, StoreAccessControlRuleStatus.Inactive];
+    private static readonly StoreAccessControlRuleStatus[] Statuses_DeActivatable = [StoreAccessControlRuleStatus.Active];
     #endregion
 
     #region Constructor
@@ -319,9 +323,41 @@ namespace Yoma.Core.Domain.Marketplace.Services
       return result;
     }
 
-    public Task<StoreAccessControlRule> UpdateStatus(Guid id, StoreAccessControlRuleStatus status)
+    public async Task<StoreAccessControlRule> UpdateStatus(Guid id, StoreAccessControlRuleStatus status)
     {
-      throw new NotImplementedException();
+      var result = GetById(id, true);
+
+      switch (status)
+      {
+        case StoreAccessControlRuleStatus.Active:
+          if (result.Status == StoreAccessControlRuleStatus.Active) return result;
+          if (!Statuses_Activatable.Contains(result.Status))
+            throw new ValidationException($"{nameof(StoreAccessControlRule)} can not be activated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
+          break;
+
+        case StoreAccessControlRuleStatus.Inactive:
+          if (result.Status == StoreAccessControlRuleStatus.Inactive) return result;
+          if (!Statuses_DeActivatable.Contains(result.Status))
+            throw new ValidationException($"{nameof(StoreAccessControlRule)} can not be deactivated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
+          break;
+
+        case StoreAccessControlRuleStatus.Deleted:
+          if (result.Status == StoreAccessControlRuleStatus.Deleted) return result;
+          if (!Statuses_CanDelete.Contains(result.Status))
+            throw new ValidationException($"{nameof(StoreAccessControlRule)} can not be deleted (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
+        break;
+
+        default:
+          throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status}' not supported");
+      }
+
+      var statusId = _storeAccessControlRuleStatusService.GetByName(status.ToString()).Id;
+      result.StatusId = statusId;
+      result.Status = status;
+
+      result = await _storeAccessControlRuleRepistory.Update(result);
+
+      return result;
     }
     #endregion
 

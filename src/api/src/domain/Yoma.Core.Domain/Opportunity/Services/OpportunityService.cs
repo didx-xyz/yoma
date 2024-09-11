@@ -244,6 +244,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var query = _opportunityRepository.Query();
 
+      //organization
       if (filter.Organization.HasValue)
       {
         if (ensureOrganizationAuthorization)
@@ -257,15 +258,26 @@ namespace Yoma.Core.Domain.Opportunity.Services
           throw new ValidationException($"Organization required for '{Constants.Role_OrganizationAdmin}' role only");
       }
 
+      //titleContains
       if (!string.IsNullOrEmpty(filter.TitleContains))
         query = _opportunityRepository.Contains(query, filter.TitleContains);
 
+      //opporunities
       if (filter.Opportunities != null && filter.Opportunities.Count != 0)
       {
         filter.Opportunities = filter.Opportunities.Distinct().ToList();
         query = query.Where(o => filter.Opportunities.Contains(o.Id));
       }
 
+      //countries
+      if (filter.Countries != null && filter.Countries.Count != 0)
+      {
+        filter.Countries = filter.Countries.Distinct().ToList();
+        query = query.Where(opportunity => _opportunityCountryRepository.Query().Any(
+          opportunityCountry => filter.Countries.Contains(opportunityCountry.CountryId) && opportunityCountry.OpportunityId == opportunity.Id));
+      }
+
+      //published
       if (filter.Published.HasValue)
       {
         var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
@@ -273,9 +285,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Where(o => o.StatusId == statusActiveId && o.OrganizationStatusId == statusOrganizationActiveId);
       }
 
+      //verificationEnabled
       if (filter.VerificationEnabled.HasValue)
         query = query.Where(o => o.VerificationEnabled == filter.VerificationEnabled.Value);
 
+      //verificationMethod
       if (filter.VerificationMethod.HasValue)
         query = query.Where(o => o.VerificationEnabled && o.VerificationMethodValue == filter.VerificationMethod.ToString());
 
