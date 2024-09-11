@@ -117,19 +117,23 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
   );
 
   // the AsyncSelect component requires the defaultOptions to be set in the state
+  // const [defaultOrganisationOptions, setDefaultOrganisationOptions] =
+  //   useState<any>([]);
+
+  // useEffect(() => {
+  //   if (searchFilter?.organizations) {
+  //     setDefaultOrganisationOptions(
+  //       searchFilter?.organizations?.map((c: any) => ({
+  //         value: c,
+  //         label: c,
+  //       })),
+  //     );
+  //   }
+  // }, [setDefaultOrganisationOptions, searchFilter?.organizations]);
+
   const [defaultOrganisationOptions, setDefaultOrganisationOptions] =
     useState<any>([]);
 
-  useEffect(() => {
-    if (searchFilter?.organizations) {
-      setDefaultOrganisationOptions(
-        searchFilter?.organizations?.map((c: any) => ({
-          value: c,
-          label: c,
-        })),
-      );
-    }
-  }, [setDefaultOrganisationOptions, searchFilter?.organizations]);
   //#endregion organisations
 
   //#region stores

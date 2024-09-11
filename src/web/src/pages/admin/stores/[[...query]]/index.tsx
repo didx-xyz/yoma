@@ -204,7 +204,6 @@ const Stores: NextPageWithLayout<{
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
-
   const { data: totalCountDeleted } = useQuery<number>({
     queryKey: [
       "Admin",
@@ -495,7 +494,7 @@ const Stores: NextPageWithLayout<{
         <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
           {/* NO ROWS */}
           {dataRules && dataRules.items?.length === 0 && (
-            <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+            <div className="flex h-fit flex-col items-center rounded-lg bg-white">
               <NoRowsMessage
                 title={"No rules found"}
                 description={"Please try refining your search query."}
