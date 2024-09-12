@@ -109,7 +109,7 @@ const ConfirmationModalContextProvider: React.FC<
           portalClassName={"fixed z-40"}
           overlayClassName="fixed inset-0 bg-overlay"
         >
-          <div className="flex flex-col space-y-2">
+          <div className="flex flex-col">
             {/* TITLE */}
             {content.title && <p className="text-lg">{content.title}</p>}
 
