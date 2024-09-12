@@ -18,6 +18,6 @@ namespace Yoma.Core.Domain.Marketplace.Models
 
     public int Count { get; set; }
 
-    public StoreAccessControlRuleResult? StoreAccessControlRuleResult { get; set; }
+    public StoreAccessControlRuleEvaluationResult? StoreAccessControlRuleResult { get; set; }
   }
 }

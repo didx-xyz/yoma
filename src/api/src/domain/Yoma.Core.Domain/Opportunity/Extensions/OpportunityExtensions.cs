@@ -85,6 +85,13 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       return appBaseURL.AppendPathSegment("opportunities").AppendPathSegment(value.Id).ToString();
     }
 
+    public static string YomaInfoURL(this OpportunityItem value, string appBaseURL)
+    {
+      ArgumentNullException.ThrowIfNull(value, nameof(value));
+
+      return appBaseURL.AppendPathSegment("opportunities").AppendPathSegment(value.Id).ToString();
+    }
+
     public static string YomaInstantVerifyURL(this Models.Opportunity value, string appBaseURL)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));

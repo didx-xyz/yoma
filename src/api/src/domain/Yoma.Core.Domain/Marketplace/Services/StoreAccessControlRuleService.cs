@@ -412,13 +412,13 @@ namespace Yoma.Core.Domain.Marketplace.Services
       }
     }
 
-    public StoreAccessControlRuleResult EvaluateStoreAccessControlRules(StoreItemCategory storeItemCategory, User? user, List<MyOpportunityInfo>? myOpportunitiesCompleted)
+    public StoreAccessControlRuleEvaluationResult EvaluateStoreAccessControlRules(StoreItemCategory storeItemCategory, User? user, List<MyOpportunityInfo>? myOpportunitiesCompleted)
     {
       ArgumentNullException.ThrowIfNull(storeItemCategory, nameof(storeItemCategory));
 
       var rules = RulesActiveCached();
 
-      var result = new StoreAccessControlRuleResult();
+      var result = new StoreAccessControlRuleEvaluationResult();
       var matchingRules = rules.Where(o => o.StoreId == storeItemCategory.StoreId && (o.StoreItemCategories == null || o.StoreItemCategories.Contains(storeItemCategory.Id))).ToList();
 
       //no matching rules, resulting in unlcoked status
@@ -488,38 +488,61 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       // rules are logically OR: if any rule is retained, the store remains locked
       result.Locked = true;
-      result.Reasons = [];
+      result.Rules = [];
+
       foreach (var rule in matchingRules)
       {
-        var reason = string.Empty;
+        var evaluationItem = new StoreAccessControlRuleEvaluationItem { Id = rule.Id, Name = rule.Name, Reasons = [] };
 
         // age condition
         if (rule.AgeFrom.HasValue || rule.AgeTo.HasValue)
         {
+          var ageMessage = string.Empty;
+
           if (rule.AgeFrom.HasValue && rule.AgeTo.HasValue)
-            reason += $"Age must be between {rule.AgeFrom.Value} and {rule.AgeTo.Value}. ";
+            ageMessage = $"Age must be between {rule.AgeFrom.Value} and {rule.AgeTo.Value}.";
           else if (rule.AgeFrom.HasValue)
-            reason += $"Age must be greater than or equal to {rule.AgeFrom.Value}. ";
+            ageMessage = $"Age must be greater than or equal to {rule.AgeFrom.Value}.";
           else if (rule.AgeTo.HasValue)
-            reason += $"Age must be less than or equal to {rule.AgeTo.Value}. ";
+            ageMessage = $"Age must be less than or equal to {rule.AgeTo.Value}.";
+
+          evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
+          {
+            Reason = ageMessage
+          });
         }
 
         // gender condition
         if (rule.GenderId.HasValue)
-          reason += $"{rule.Gender} users only. ";
+        {
+          var genderMessage = $"{rule.Gender} users only.";
+
+          evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
+          {
+            Reason = genderMessage
+          });
+        }
 
         // opportunity condition
         if (rule.Opportunities != null && rule.Opportunities.Count > 0)
         {
-          var opportunityTitles = string.Join(", ", rule.Opportunities.Select(o => o.Title));
           var opportunityMessage = rule.OpportunityOption == StoreAccessControlRuleOpportunityCondition.All
-              ? $"Must complete the following opportunities: {opportunityTitles}. "
-              : $"Must complete at least one of the following opportunities: {opportunityTitles}. ";
-          reason += opportunityMessage;
+            ? "Must complete the following opportunities:" : "Must complete at least one of the following opportunities:";
+
+          var opportunityLinks = rule.Opportunities.Select(o => new StoreAccessControlRuleEvaluationItemReasonLink
+          {
+            Title = o.Title,
+            URL = o.YomaInfoURL(_appSettings.AppBaseURL)
+          }).ToList();
+
+          evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
+          {
+            Reason = opportunityMessage,
+            Links = opportunityLinks
+          });
         }
 
-        reason = reason.Trim();
-        if (!string.IsNullOrEmpty(reason)) result.Reasons.Add($"Restriction: {reason}");
+        result.Rules.Add(evaluationItem);
       }
 
       return result;
