@@ -111,6 +111,7 @@ export const OrganisationRowFilter: React.FC<{
       searchCriteriaOpportunities({
         opportunities: [],
         organization: organisationId,
+        countries: null,
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
         published: null,
         verificationMethod: null,

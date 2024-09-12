@@ -1,18 +1,16 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback, useEffect, useState } from "react";
-import { type FieldValues, Controller, useForm } from "react-hook-form";
-import zod from "zod";
-import type { SelectOption } from "~/api/models/lookups";
+import { useCallback, useEffect } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import { searchCriteriaOpportunities } from "~/api/services/opportunities";
+import { Controller, useForm, type FieldValues } from "react-hook-form";
 import { components, type ValueContainerProps } from "react-select";
 import Async from "react-select/async";
+import zod from "zod";
+import type { SelectOption } from "~/api/models/lookups";
+import type { StoreAccessControlRuleSearchFilter } from "~/api/models/marketplace";
+import { listSearchCriteriaStores } from "~/api/services/marketplace";
+import { getOrganisations } from "~/api/services/organisations";
 import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 import { debounce } from "~/lib/utils";
-import type { LinkSearchFilter } from "~/api/models/actionLinks";
-import { getOrganisations } from "~/api/services/organisations";
-import { StoreAccessControlRuleSearchFilter } from "~/api/models/marketplace";
-import { listSearchCriteriaStores } from "~/api/services/marketplace";
 
 export enum StoreAccessControlRuleSearchFilterOptions {
   ORGANIZATIONS = "organizations",
@@ -61,7 +59,7 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
 }> = ({ searchFilter, filterOptions, onSubmit }) => {
   const schema = zod.object({
     organizations: zod.array(zod.string()).optional().nullable(),
-    entities: zod.array(zod.string()).optional().nullable(),
+    stores: zod.array(zod.string()).optional().nullable(),
   });
 
   const form = useForm({
@@ -95,7 +93,6 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
     [searchFilter, onSubmit],
   );
 
-  //#region organisations
   // load data asynchronously for the organisations dropdown
   // debounce is used to prevent the API from being called too frequently
   const loadOrganisations = debounce(
@@ -116,42 +113,12 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
     1000,
   );
 
-  // the AsyncSelect component requires the defaultOptions to be set in the state
-  // const [defaultOrganisationOptions, setDefaultOrganisationOptions] =
-  //   useState<any>([]);
-
-  // useEffect(() => {
-  //   if (searchFilter?.organizations) {
-  //     setDefaultOrganisationOptions(
-  //       searchFilter?.organizations?.map((c: any) => ({
-  //         value: c,
-  //         label: c,
-  //       })),
-  //     );
-  //   }
-  // }, [setDefaultOrganisationOptions, searchFilter?.organizations]);
-
-  const [defaultOrganisationOptions, setDefaultOrganisationOptions] =
-    useState<any>([]);
-
-  //#endregion organisations
-
-  //#region stores
   // load data asynchronously for the stores dropdown
   // debounce is used to prevent the API from being called too frequently
   const loadStores = debounce(
     (inputValue: string, callback: (options: any) => void) => {
       listSearchCriteriaStores(
-        searchFilter?.organizations?.[0]! ?? null,
-        //{
-        // opportunities: [],
-        // organization: searchFilter?.organizations?.[0] ?? null,
-        // titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
-        // published: null,
-        // verificationMethod: null,
-        //pageNumber: 1,
-        // pageSize: PAGE_SIZE_MEDIUM,
-        //}
+        searchFilter?.organizations?.[0] ?? undefined,
       ).then((data) => {
         const options = data.map((item) => ({
           value: item.id,
@@ -162,22 +129,6 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
     },
     1000,
   );
-
-  // the AsyncSelect component requires the defaultOptions to be set in the state
-  const [defaultOpportunityOptions, setDefaultOpportunityOptions] =
-    useState<any>([]);
-
-  useEffect(() => {
-    if (searchFilter?.stores) {
-      setDefaultOpportunityOptions(
-        searchFilter?.stores?.map((c: any) => ({
-          value: c,
-          label: c,
-        })),
-      );
-    }
-  }, [setDefaultOpportunityOptions, searchFilter?.stores]);
-  //#endregion opportunities
 
   return (
     <div className="flex flex-grow flex-col">
@@ -218,7 +169,12 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
                       );
                       void handleSubmit(onSubmitHandler)();
                     }}
-                    value={defaultOrganisationOptions}
+                    value={
+                      searchFilter?.organizations?.map((c) => ({
+                        value: c,
+                        label: c,
+                      })) ?? []
+                    }
                     placeholder="Organisation"
                     components={{
                       ValueContainer,
@@ -252,7 +208,7 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
                         "input input-xs h-fit !border-none w-full md:w-72",
                     }}
                     isMulti={true}
-                    defaultOptions={true} // calls loadOpportunities for initial results when clicking on the dropdown
+                    defaultOptions={true} // calls loadStores for initial results when clicking on the dropdown
                     cacheOptions
                     loadOptions={loadStores}
                     onChange={(val) => {
@@ -260,7 +216,12 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
                       onChange(val.map((c: any) => c.value));
                       void handleSubmit(onSubmitHandler)();
                     }}
-                    value={defaultOpportunityOptions}
+                    value={
+                      searchFilter?.stores?.map((c) => ({
+                        value: c,
+                        label: c,
+                      })) ?? []
+                    }
                     placeholder="Store"
                     components={{
                       ValueContainer,

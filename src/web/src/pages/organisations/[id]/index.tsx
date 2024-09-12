@@ -148,6 +148,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         {
           opportunities: opportunities.toString().split("|") ?? [],
           organization: id,
+          countries: null,
           titleContains: null,
           published: null,
           verificationMethod: null,

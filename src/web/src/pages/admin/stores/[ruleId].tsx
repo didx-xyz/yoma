@@ -6,101 +6,72 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import { type AxiosError } from "axios";
+import axios, { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import iconBell from "public/images/icon-bell.webp";
 import { type ParsedUrlQuery } from "querystring";
 import {
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactElement,
-  useEffect,
-  useRef,
 } from "react";
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import { Controller, Form, useForm, type FieldValues } from "react-hook-form";
+import { Controller, useForm, type FieldValues } from "react-hook-form";
+import { IoMdArrowRoundBack, IoMdClose, IoMdWarning } from "react-icons/io";
+import ReactModal from "react-modal";
 import Select from "react-select";
+import Async from "react-select/async";
 import { toast } from "react-toastify";
 import z from "zod";
 import type { SelectOption } from "~/api/models/lookups";
-import {
-  searchCriteriaOpportunities,
-  getOpportunityInfoByIdAdminOrgAdminOrUser,
-} from "~/api/services/opportunities";
-import MainLayout from "~/components/Layout/Main";
-import { ApiErrors } from "~/components/Status/ApiErrors";
-import { Loading } from "~/components/Status/Loading";
-import { authOptions, type User } from "~/server/auth";
-import { PageBackground } from "~/components/PageBackground";
-import Link from "next/link";
-import { IoMdArrowRoundBack, IoMdWarning } from "react-icons/io";
-import CreatableSelect from "react-select/creatable";
-import type { NextPageWithLayout } from "~/pages/_app";
-import {
-  DATE_FORMAT_HUMAN,
-  DATE_FORMAT_SYSTEM,
-  PAGE_SIZE_MEDIUM,
-  GA_ACTION_OPPORTUNITY_LINK_CREATE,
-  GA_CATEGORY_STORE_ACCESS_CONTROL_RULE,
-  MAX_INT32,
-  DELIMETER_PASTE_MULTI,
-  THEME_BLUE,
-  GA_ACTION_STORE_ACCESS_CONTROL_RULE_CREATE,
-  GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE,
-} from "~/lib/constants";
-import { Unauthorized } from "~/components/Status/Unauthorized";
-import { config } from "~/lib/react-query-config";
-import { trackGAEvent } from "~/lib/google-analytics";
-import Moment from "react-moment";
-import moment from "moment";
-import { getThemeFromRole, debounce, getSafeUrl } from "~/lib/utils";
-import Async from "react-select/async";
-import { useRouter } from "next/router";
-import ReactModal from "react-modal";
-import Image from "next/image";
-import iconBell from "public/images/icon-bell.webp";
-import { IoMdClose } from "react-icons/io";
-import {
-  VerificationMethod,
-  type OpportunityInfo,
-  type OpportunitySearchResultsInfo,
-} from "~/api/models/opportunity";
-import axios from "axios";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import { validateEmail } from "~/lib/validate";
-import type { LinkRequestCreateVerify } from "~/api/models/actionLinks";
-import { createLinkInstantVerify } from "~/api/services/actionLinks";
-import SocialPreview from "~/components/Opportunity/SocialPreview";
-import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import {
+import type {
   OpportunityItem,
   StoreAccessControlRuleInfo,
   StoreAccessControlRuleRequestUpdate,
-  StoreInfo,
-  StoreItemCategorySearchResults,
-  StoreSearchResults,
 } from "~/api/models/marketplace";
+import { getGenders } from "~/api/services/lookups";
 import {
   createStoreAccessControlRule,
   getStoreAccessControlRuleById,
   listSearchCriteriaCountries,
-  listSearchCriteriaOrganizations,
-  listSearchCriteriaStores,
   searchStoreItemCategories,
   searchStores,
   updateStoreAccessControlRule,
 } from "~/api/services/marketplace";
+import { searchCriteriaOpportunities } from "~/api/services/opportunities";
+import { getOrganisations } from "~/api/services/organisations";
 import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
-import { getGenders } from "~/api/services/lookups";
-import AsyncSelect from "react-select/async";
 import FormRadio from "~/components/Common/FormRadio";
-import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
-import { getOrganisations } from "~/api/services/organisations";
+import MainLayout from "~/components/Layout/Main";
+import { PageBackground } from "~/components/PageBackground";
+import { ApiErrors } from "~/components/Status/ApiErrors";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Loading } from "~/components/Status/Loading";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import {
+  GA_ACTION_STORE_ACCESS_CONTROL_RULE_CREATE,
+  GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE,
+  GA_CATEGORY_STORE_ACCESS_CONTROL_RULE,
+  MAX_INT32,
+  PAGE_SIZE_MEDIUM,
+  THEME_BLUE,
+} from "~/lib/constants";
+import { trackGAEvent } from "~/lib/google-analytics";
+import { config } from "~/lib/react-query-config";
+import { debounce, getSafeUrl } from "~/lib/utils";
+import type { NextPageWithLayout } from "~/pages/_app";
+import { authOptions, type User } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   ruleId: string;
@@ -181,11 +152,6 @@ const StoreRuleDetails: NextPageWithLayout<{
   const modalContext = useConfirmationModalContext();
   const htmlRef = useRef<HTMLDivElement>(null);
 
-  // const opportunityOptions: SelectOption[] = [
-  //   { value: "0", label: "All" },
-  //   { value: "1", label: "Any" },
-  // ];
-
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -256,20 +222,21 @@ const StoreRuleDetails: NextPageWithLayout<{
 
   const [formData, setFormData] = useState<StoreAccessControlRuleRequestUpdate>(
     {
+      id: storeAccessControlRule?.id ?? "",
       name: storeAccessControlRule?.name ?? "",
       description: storeAccessControlRule?.description ?? "",
       organizationId: storeAccessControlRule?.organizationId ?? "",
       storeId: storeAccessControlRule?.store.id ?? "",
       storeItemCategories:
         storeAccessControlRule?.storeItemCategories?.map((x) => x.id) ?? [],
-      ageFrom: storeAccessControlRule?.ageMin ?? null,
-      ageTo: storeAccessControlRule?.ageMax ?? null,
+      ageFrom: storeAccessControlRule?.ageFrom ?? null,
+      ageTo: storeAccessControlRule?.ageTo ?? null,
       genderId: storeAccessControlRule?.genderId ?? null,
       opportunities:
         storeAccessControlRule?.opportunities?.map((x) => x.id) ?? [],
       opportunityOption: storeAccessControlRule?.opportunityOption ?? null,
-      storeCountryCodeAlpha2: "", //storeAccessControlRule?.storeCountryCodeAlpha2 ?? "",
-      id: storeAccessControlRule?.id ?? "",
+      storeCountryCodeAlpha2:
+        storeAccessControlRule?.store.countryCodeAlpha2 ?? "",
     },
   );
 
@@ -300,23 +267,6 @@ const StoreRuleDetails: NextPageWithLayout<{
       opportunityOption: z.string().nullable().optional(),
     })
     .superRefine((data, ctx) => {
-      // if (!data.ageFrom && data.ageTo) {
-      //   ctx.addIssue({
-      //     code: z.ZodIssueCode.custom,
-      //     message: "Both From and To must be specified together",
-      //     path: ["ageFrom"],
-      //     fatal: true,
-      //   });
-      // }
-      // if (!data.ageTo && data.ageFrom) {
-      //   ctx.addIssue({
-      //     code: z.ZodIssueCode.custom,
-      //     message: "Both From and To must be specified together",
-      //     path: ["ageTo"],
-      //     fatal: true,
-      //   });
-      // }
-
       // either ageFrom or ageTo or Gender or Opportunities (length > 0) must be specified
       if (
         !data.ageFrom &&
@@ -329,7 +279,7 @@ const StoreRuleDetails: NextPageWithLayout<{
           message:
             "Select at least one of the following: Age, Gender or Opportunities",
           fatal: true,
-          path: ["opportunityOption"],
+          path: ["opportunities"],
         });
       }
 
@@ -377,10 +327,13 @@ const StoreRuleDetails: NextPageWithLayout<{
     formState: formStateStep3,
     control: controlStep3,
     reset: resetStep3,
+    watch: watchStep3,
+    setValue: setValueStep3,
   } = useForm({
     resolver: zodResolver(schemaStep3),
     defaultValues: formData,
   });
+  const watchOpportunities = watchStep3("opportunities");
 
   const {
     handleSubmit: handleSubmitStep4,
@@ -422,7 +375,7 @@ const StoreRuleDetails: NextPageWithLayout<{
       if (step === 1 && isDirtyStep1) isDirtyStep = true;
       else if (step === 2 && isDirtyStep2) isDirtyStep = true;
       else if (step === 3 && isDirtyStep3) isDirtyStep = true;
-      else if (step === 4 && isDirtyStep3) isDirtyStep = true;
+      else if (step === 4 && isDirtyStep4) isDirtyStep = true;
 
       if (isDirtyStep) {
         setLastStepBeforeSaveChangesDialog(nextStep);
@@ -524,20 +477,10 @@ const StoreRuleDetails: NextPageWithLayout<{
         // dismiss all toasts
         toast.dismiss();
 
-        //  convert dates to string in format "YYYY-MM-DD"
-        // data.dateEnd = data.dateEnd
-        //   ? moment.utc(data.dateEnd).format(DATE_FORMAT_SYSTEM)
-        //   : null;
-
-        // // HACK: api want nulls and not empty arrays...
-        // if (data.distributionList?.length == 0) data.distributionList = null;
-
-        // //  clear distributionList if not locked
-        // if (!data.lockToDistributionList) data.distributionList = null;
-        // else {
-        //   data.usagesLimit = null;
-        //   data.dateEnd = null;
-        // }
+        // HACK: api want nulls and not empty arrays...
+        if (data.opportunities?.length == 0) data.opportunities = null;
+        //  clear opportunityOption if no opportunities
+        if (data.opportunities == null) data.opportunityOption = null;
 
         // update api
         if (ruleId == "create") {
@@ -546,22 +489,12 @@ const StoreRuleDetails: NextPageWithLayout<{
           await updateStoreAccessControlRule(data);
         }
         // invalidate cache
-        // this will match all queries with the following prefixes ['Links', id] (list data) & ['Links_TotalCount', id] (tab counts)
-        // await queryClient.invalidateQueries({
-        //   queryKey: ["Links", id],
-        //   exact: false,
-        // });
-        // await queryClient.invalidateQueries({
-        //   queryKey: ["Links_TotalCount", id],
-        //   exact: false,
-        // });
-        //TODO: check if this is correct
         await queryClient.invalidateQueries({
           queryKey: ["Admin", "StoreAccessControlRule"],
           exact: false,
         });
 
-        message = "Rule created";
+        message = ruleId == "create" ? "Rule created" : "Rule updated";
         toast(message, {
           type: "success",
           toastId: "rule",
@@ -588,7 +521,7 @@ const StoreRuleDetails: NextPageWithLayout<{
         void router.push(`/admin/stores`);
       }
     },
-    [setIsLoading, /* id,*/ queryClient, /* router,*/ modalContext],
+    [setIsLoading, /* id,*/ ruleId, queryClient, router, modalContext],
   );
 
   // form submission handler
@@ -632,6 +565,7 @@ const StoreRuleDetails: NextPageWithLayout<{
       setLastStepBeforeSaveChangesDialog(null);
     },
     [
+      ruleId,
       setStep,
       formData,
       setFormData,
@@ -707,31 +641,39 @@ const StoreRuleDetails: NextPageWithLayout<{
   // load data asynchronously for the opportunities dropdown
   // debounce is used to prevent the API from being called too frequently
   const loadOpportunities = useCallback(
-    debounce((inputValue: string, callback: (options: any) => void) => {
-      searchCriteriaOpportunities({
-        opportunities: [],
-        organization: watchOrganizationId ?? null,
-        titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
-        published: true,
-        verificationMethod: null,
-        verificationEnabled: true,
-        pageNumber: 1,
-        pageSize: PAGE_SIZE_MEDIUM,
-      }).then((data) => {
-        const options = data.items.map((item) => ({
-          value: item.id,
-          label: item.title,
-        }));
-        callback(options);
-        // add to cache
-        data.items.forEach((item) => {
-          if (!dataOpportunities.some((x) => x.id === item.id)) {
-            setDataOpportunities((prev) => [...prev, item]);
-          }
+    (inputValue: string, callback: (options: any) => void) => {
+      debounce(() => {
+        searchCriteriaOpportunities({
+          opportunities: [],
+          organization: watchOrganizationId ?? null,
+          countries: watchCountry
+            ? [
+                dataCountries?.find((x) => x.codeAlpha2 === watchCountry)?.id ??
+                  "",
+              ]
+            : null,
+          titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
+          published: true,
+          verificationMethod: null,
+          verificationEnabled: true,
+          pageNumber: 1,
+          pageSize: PAGE_SIZE_MEDIUM,
+        }).then((data) => {
+          const options = data.items.map((item) => ({
+            value: item.id,
+            label: item.title,
+          }));
+          callback(options);
+          // add to cache
+          data.items.forEach((item) => {
+            if (!dataOpportunities.some((x) => x.id === item.id)) {
+              setDataOpportunities((prev) => [...prev, item]);
+            }
+          });
         });
-      });
-    }, 1000),
-    [watchOrganizationId],
+      }, 1000)();
+    },
+    [watchOrganizationId, watchCountry, dataCountries, dataOpportunities],
   );
 
   if (error) {
@@ -813,25 +755,22 @@ const StoreRuleDetails: NextPageWithLayout<{
       <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-2 py-4">
         {/* BREADCRUMB */}
         <div className="flex flex-row items-center text-xs text-white">
-          <div
+          <Link
             className="flex items-center justify-center font-bold hover:text-gray"
-            // href={getSafeUrl(
-            //   returnUrl?.toString(),
-            //   `/organisations/${id}/links`,
-            // )}
+            href={getSafeUrl(returnUrl?.toString(), `/admin/stores`)}
           >
             <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-4 w-4" />
             Store Rules
-          </div>
+          </Link>
           <div className="mx-2 font-bold">|</div>
-          Create
+          {ruleId == "create" ? "Create" : "Edit"}
         </div>
-
-        <h3 className="mb-6 mt-2 font-bold text-white">New rule</h3>
+        <h3 className="mb-6 mt-2 font-bold text-white">
+          {ruleId == "create" ? "New rule" : storeAccessControlRule?.name}
+        </h3>
 
         {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
         <div ref={htmlRef} />
-
         <div className="flex flex-col gap-4 md:flex-row">
           {/* LEFT VERTICAL MENU */}
           <ul className="menu hidden h-max w-60 flex-none gap-3 rounded-lg bg-white p-4 font-semibold shadow-custom md:flex md:justify-center">
@@ -881,7 +820,7 @@ const StoreRuleDetails: NextPageWithLayout<{
               >
                 <span
                   className={`mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
-                    formStateStep2.isValid ? "bg-green" : "bg-gray-dark"
+                    formStateStep3.isValid ? "bg-green" : "bg-gray-dark"
                   }`}
                 >
                   3
@@ -965,54 +904,34 @@ const StoreRuleDetails: NextPageWithLayout<{
                       onSubmitStep(2, data),
                     )}
                   >
-                    <div className="form-control">
-                      <label className="flex flex-col">
-                        <div className="label-text font-bold">Name</div>
-                        <div className="label-text-alt my-2">
-                          The name of the rule that will be visible to you.
-                        </div>
-                      </label>
+                    <FormField
+                      label="Name"
+                      subLabel="The name of the rule that will be visible to you."
+                      showError={!!formStateStep1.errors.name}
+                      error={formStateStep1.errors.name?.message}
+                    >
                       <input
                         type="text"
                         className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
                         placeholder="Name"
                         {...registerStep1("name")}
-                        contentEditable
                         maxLength={255}
                       />
-                      {formStateStep1.errors.name && (
-                        <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.name.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                    </FormField>
 
-                    <div className="form-control">
-                      <label className="flex flex-col">
-                        <div className="label-text font-bold">Description</div>
-                        <div className="label-text-alt my-2">
-                          A brief description of the rule, outlining its purpose
-                          and any specific conditions or criteria it applies to.
-                          This will help you and others understand the rule's
-                          intent and scope.
-                        </div>
-                      </label>
+                    <FormField
+                      label="Description"
+                      subLabel="A brief description of the rule, outlining its purpose and any specific conditions or criteria it applies to. This will help you and others understand the rule's intent and scope."
+                      showError={!!formStateStep1.errors.description}
+                      error={formStateStep1.errors.description?.message}
+                    >
                       <textarea
                         className="input textarea textarea-bordered h-32 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
                         placeholder="Description"
                         {...registerStep1("description")}
                         maxLength={500}
                       />
-                      {formStateStep1.errors.description && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.description.message}`}
-                          </span>
-                        </label>
-                      )}
-                    </div>
+                    </FormField>
 
                     {/* BUTTONS */}
                     <div className="my-4 flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
@@ -1080,6 +999,9 @@ const StoreRuleDetails: NextPageWithLayout<{
                             }}
                             options={organisationOptions}
                             onChange={(val) => {
+                              // clear the opportunities
+                              setValueStep3("opportunities", []);
+
                               onChange(val?.value);
                             }}
                             value={organisationOptions?.find(
@@ -1102,7 +1024,6 @@ const StoreRuleDetails: NextPageWithLayout<{
                         )}
                       />
                     </FormField>
-
                     {/* COUNTRY */}
                     <FormField
                       label="Country"
@@ -1130,9 +1051,8 @@ const StoreRuleDetails: NextPageWithLayout<{
                               // clear store and store item categories
                               setValueStep2("storeId", "");
                               setValueStep2("storeItemCategories", []);
+                              setValueStep3("opportunities", []);
 
-                              // trigger change
-                              tri;
                               onChange(val?.value);
                             }}
                             value={countryOptions?.filter(
@@ -1207,7 +1127,6 @@ const StoreRuleDetails: NextPageWithLayout<{
                         />
                       </FormField>
                     )}
-
                     {watchStoreId && (
                       <FormField
                         label="Store Categories"
@@ -1230,7 +1149,8 @@ const StoreRuleDetails: NextPageWithLayout<{
                             <Select
                               instanceId="storeItemCategories"
                               classNames={{
-                                control: () => "input !border-gray",
+                                control: () =>
+                                  "input input-sm text-[1rem] h-fit !border-gray",
                               }}
                               isMulti={true}
                               options={dataStoreItemCategories}
@@ -1390,11 +1310,12 @@ const StoreRuleDetails: NextPageWithLayout<{
                             isMulti={false}
                             options={genderOptions}
                             onChange={(val) => {
-                              onChange(val?.value);
+                              onChange(val ? val.value : null);
                             }}
-                            value={genderOptions?.filter(
-                              (c) => value === c.value,
-                            )}
+                            value={
+                              genderOptions.find((c) => value === c.value) ||
+                              null
+                            }
                             placeholder="Genders"
                             styles={{
                               placeholder: (base) => ({
@@ -1403,6 +1324,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                               }),
                             }}
                             inputId="input_genderId" // e2e
+                            isClearable={true}
                           />
                         )}
                       />
@@ -1461,39 +1383,41 @@ const StoreRuleDetails: NextPageWithLayout<{
                     </FormField>
 
                     {/* OPPORTUNITY OPTION */}
-                    <FormField
-                      label="Opportunity Option"
-                      showError={
-                        !!formStateStep3.touchedFields.opportunityOption ||
-                        formStateStep3.isSubmitted
-                      }
-                      error={formStateStep3.errors.opportunityOption?.message}
-                    >
-                      <Controller
-                        control={controlStep3}
-                        name="opportunityOption"
-                        render={({ field: { onChange, value } }) => (
-                          <>
-                            <FormRadio
-                              id="opportunityOptionAny"
-                              label="Any - Users who have completed at least one of the selected opportunities will meet this condition."
-                              inputProps={{
-                                checked: value === "1",
-                                onChange: () => onChange("1"),
-                              }}
-                            />
-                            <FormRadio
-                              id="opportunityOptionAll"
-                              label="All - Users must have completed all of the selected opportunities to meet this condition."
-                              inputProps={{
-                                checked: value === "0",
-                                onChange: () => onChange("0"),
-                              }}
-                            />
-                          </>
-                        )}
-                      />
-                    </FormField>
+                    {!!watchOpportunities?.length && (
+                      <FormField
+                        label="Opportunity Option"
+                        showError={
+                          !!formStateStep3.touchedFields.opportunityOption ||
+                          formStateStep3.isSubmitted
+                        }
+                        error={formStateStep3.errors.opportunityOption?.message}
+                      >
+                        <Controller
+                          control={controlStep3}
+                          name="opportunityOption"
+                          render={({ field: { onChange, value } }) => (
+                            <>
+                              <FormRadio
+                                id="opportunityOptionAny"
+                                label="Any - Users must have completed at least one of the selected opportunities."
+                                inputProps={{
+                                  checked: value === "Any",
+                                  onChange: () => onChange("Any"),
+                                }}
+                              />
+                              <FormRadio
+                                id="opportunityOptionAll"
+                                label="All - Users must have completed all of the selected opportunities."
+                                inputProps={{
+                                  checked: value === "All",
+                                  onChange: () => onChange("All"),
+                                }}
+                              />
+                            </>
+                          )}
+                        />
+                      </FormField>
+                    )}
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
@@ -1541,7 +1465,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                     {formData.description && (
                       <FormField
                         label="Description"
-                        subLabel={formData.description!}
+                        subLabel={formData.description}
                       />
                     )}
 
@@ -1640,10 +1564,10 @@ const StoreRuleDetails: NextPageWithLayout<{
                         </FormField>
 
                         <FormField label="Opportunity Option">
-                          {formData.opportunityOption == "0" && (
+                          {formData.opportunityOption == "All" && (
                             <span className="text-xs text-gray-dark">All</span>
                           )}
-                          {formData.opportunityOption == "1" && (
+                          {formData.opportunityOption == "Any" && (
                             <span className="text-xs text-gray-dark">Any</span>
                           )}
                         </FormField>
@@ -1672,7 +1596,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                           )
                         }
                       >
-                        Publish
+                        Submit
                       </button>
                     </div>
                   </form>
@@ -1690,7 +1614,7 @@ StoreRuleDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-StoreRuleDetails.theme = function getTheme(page: ReactElement) {
+StoreRuleDetails.theme = function getTheme() {
   return THEME_BLUE;
 };
 
