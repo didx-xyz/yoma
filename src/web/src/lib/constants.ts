@@ -109,6 +109,8 @@ export const GA_ACTION_STORE_ACCESS_CONTROL_RULE_CREATE =
   "Created Store Access Control Rule";
 export const GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE =
   "Updated Store Access Control Rule";
+export const GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE_STATUS =
+  "Updated Status for Store Access Control Rule";
 
 // colors for green, organge, purple, blue, red, pink, teal, indigo, cyan
 export const CHART_COLORS = [

@@ -319,6 +319,7 @@ export interface OpportunitySearchFilterCriteria extends PaginationFilter {
   organization: string | null;
   titleContains: string | null;
   opportunities: string[] | null;
+  countries: string[] | null;
   published: boolean | null;
   verificationEnabled: boolean | null;
   verificationMethod: VerificationMethod | null;

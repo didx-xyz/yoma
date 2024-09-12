@@ -85,9 +85,10 @@ export interface WalletVoucherSearchFilter extends PaginationFilter {}
 // administrative models
 export interface StoreInfo {
   id: string;
-  name: string;
-  codeAlpha2: string;
+  name: string | null;
+  countryId: string;
   countryName: string;
+  countryCodeAlpha2: string;
 }
 
 export interface StoreAccessControlRuleInfo {
@@ -98,8 +99,8 @@ export interface StoreAccessControlRuleInfo {
   organizationName: string;
   store: StoreInfo;
   storeItemCategories: StoreItemCategoryInfo[] | null;
-  ageMin: number | null;
-  ageMax: number | null;
+  ageFrom: number | null;
+  ageTo: number | null;
   genderId: string | null;
   gender: string | null;
   opportunityOption: StoreAccessControlRuleOpportunityCondition | null | string; //NB: string for API compatibility
