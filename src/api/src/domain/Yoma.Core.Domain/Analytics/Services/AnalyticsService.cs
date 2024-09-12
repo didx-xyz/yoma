@@ -416,10 +416,7 @@ namespace Yoma.Core.Domain.Analytics.Services
               .Select(o => new
               {
                 o.UserDateOfBirth,
-                Age = o.UserDateOfBirth.HasValue ?
-                      (int?)(currentDate.Year - o.UserDateOfBirth.Value.Year -
-                      ((currentDate.Month < o.UserDateOfBirth.Value.Month) || (currentDate.Month == o.UserDateOfBirth.Value.Month && currentDate.Day < o.UserDateOfBirth.Value.Day) ? 1 : 0))
-                      : null
+                Age = o.UserDateOfBirth.HasValue ? (int?)o.UserDateOfBirth.Value.CalculateAge(currentDate) : null
               })
               .ToList()
               .Select(o =>

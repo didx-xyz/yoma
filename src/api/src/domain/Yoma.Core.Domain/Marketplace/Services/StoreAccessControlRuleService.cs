@@ -1,8 +1,13 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Transactions;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
@@ -10,6 +15,7 @@ using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Interfaces.Lookups;
 using Yoma.Core.Domain.Marketplace.Models;
 using Yoma.Core.Domain.Marketplace.Validators;
+using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
@@ -19,11 +25,15 @@ namespace Yoma.Core.Domain.Marketplace.Services
   public class StoreAccessControlRuleService : IStoreAccessControlRuleService
   {
     #region Class Variables
+    private readonly AppSettings _appSettings;
+    private readonly IMemoryCache _memoryCache;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IStoreAccessControlRuleStatusService _storeAccessControlRuleStatusService;
     private readonly IOrganizationService _organizationService;
     private readonly ICountryService _countryService;
     private readonly IGenderService _genderService;
     private readonly IOpportunityService _opportunityService;
+    private readonly IUserService _userService;
     private readonly StoreAccessControlRuleSearchFilterValidator _storeAccessControlRuleSearchFilterValidator;
     private readonly StoreAccessControlRuleRequestValidatorUpdate _storeAccessControlRuleRequestValidatorUpdate;
     private readonly StoreAccessControlRuleRequestValidatorCreate _storeAccessControlRuleRequestValidatorCreate;
@@ -38,12 +48,15 @@ namespace Yoma.Core.Domain.Marketplace.Services
     #endregion
 
     #region Constructor
-    public StoreAccessControlRuleService(
+    public StoreAccessControlRuleService(IOptions<AppSettings> appSettings,
+      IMemoryCache memoryCache,
+      IHttpContextAccessor httpContextAccessor,
       IStoreAccessControlRuleStatusService storeAccessControlRuleStatusService,
       IOrganizationService organizationService,
       ICountryService countryService,
       IGenderService genderService,
       IOpportunityService opportunityService,
+      IUserService userService,
       StoreAccessControlRuleSearchFilterValidator storeAccessControlRuleSearchFilterValidator,
       StoreAccessControlRuleRequestValidatorUpdate storeAccessControlRuleRequestValidatorUpdate,
       StoreAccessControlRuleRequestValidatorCreate storeAccessControlRuleRequestValidatorCreate,
@@ -51,11 +64,15 @@ namespace Yoma.Core.Domain.Marketplace.Services
       IRepository<StoreAccessControlRuleOpportunity> storeAccessControlRuleOpportunityRepository,
       IExecutionStrategyService executionStrategyService)
     {
+      _appSettings = appSettings.Value;
+      _memoryCache = memoryCache;
+      _httpContextAccessor = httpContextAccessor;
       _storeAccessControlRuleStatusService = storeAccessControlRuleStatusService;
       _organizationService = organizationService;
       _countryService = countryService;
       _genderService = genderService;
       _opportunityService = opportunityService;
+      _userService = userService;
       _storeAccessControlRuleSearchFilterValidator = storeAccessControlRuleSearchFilterValidator;
       _storeAccessControlRuleRequestValidatorUpdate = storeAccessControlRuleRequestValidatorUpdate;
       _storeAccessControlRuleRequestValidatorCreate = storeAccessControlRuleRequestValidatorCreate;
@@ -244,6 +261,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
         scope.Complete();
       });
 
+      _memoryCache.Remove(CacheHelper.GenerateKey<StoreAccessControlRule>());
+
       return result;
     }
 
@@ -299,8 +318,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
         result = await _storeAccessControlRuleRepistory.Update(result);
 
-        var opportunitiesToRemove = result.Opportunities?.Where(o => request.Opportunities != null && !request.Opportunities.Contains(o.Id)).ToList();
-        var opportunitiesToAdd = request.Opportunities?.Where(o => result.Opportunities != null && !result.Opportunities.Any(i => i.Id == o)).ToList();
+        var opportunitiesToRemove = result.Opportunities?.Where(o => request.Opportunities == null || !request.Opportunities.Contains(o.Id)).ToList();
+        var opportunitiesToAdd = request.Opportunities?.Where(o => result.Opportunities == null || !result.Opportunities.Any(i => i.Id == o)).ToList();
 
         if (opportunitiesToRemove != null && opportunitiesToRemove.Count > 0)
           foreach (var opportunity in opportunitiesToRemove)
@@ -319,6 +338,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
       });
 
       if (result.Opportunities?.Count == 0) result.Opportunities = null;
+
+      _memoryCache.Remove(CacheHelper.GenerateKey<StoreAccessControlRule>());
 
       return result;
     }
@@ -345,7 +366,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
           if (result.Status == StoreAccessControlRuleStatus.Deleted) return result;
           if (!Statuses_CanDelete.Contains(result.Status))
             throw new ValidationException($"{nameof(StoreAccessControlRule)} can not be deleted (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
-        break;
+          break;
 
         default:
           throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status}' not supported");
@@ -356,6 +377,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
       result.Status = status;
 
       result = await _storeAccessControlRuleRepistory.Update(result);
+
+      _memoryCache.Remove(CacheHelper.GenerateKey<StoreAccessControlRule>());
 
       return result;
     }
@@ -396,6 +419,134 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
         result.Opportunities.Add(opportunity.ToOpportunityItem());
       }
+    }
+
+    public StoreAccessControlRuleResult EvaluateStoreAccessControlRules(StoreItemCategory storeItemCategory, User? user, List<MyOpportunityInfo>? myCompletedOpportunities)
+    {
+      ArgumentNullException.ThrowIfNull(storeItemCategory, nameof(storeItemCategory));
+
+      var rules = RulesActiveCached();
+
+      var result = new StoreAccessControlRuleResult();
+      var matchingRules = rules.Where(o => o.StoreId == storeItemCategory.StoreId && (o.StoreItemCategories == null || o.StoreItemCategories.Contains(storeItemCategory.Id))).ToList();
+
+      //no matching rules, resulting in unlcoked status
+      if (matchingRules.Count == 0) return result;
+
+      if (user != null)
+      {
+        var userAge = user.DateOfBirth.HasValue ? (int?)user.DateOfBirth.Value.CalculateAge(null) : null;
+
+        // conditions within each rule are AND: all conditions must be met to discard the rule (allow access to the store)
+        matchingRules = matchingRules.Where(rule =>
+        {
+          // evaluate age condition
+          if (rule.AgeFrom.HasValue || rule.AgeTo.HasValue)
+          {
+            // user's age is not available, retain the rule (lock the store)
+            if (!userAge.HasValue) return true;
+
+            // user's age is below the minimum or above the maximum, retain the rule (lock the store)
+            if (rule.AgeFrom.HasValue && userAge.Value < rule.AgeFrom.Value) return true;
+            if (rule.AgeTo.HasValue && userAge.Value > rule.AgeTo.Value) return true;
+          }
+
+          // evaluate gender condition
+          if (rule.GenderId.HasValue)
+          {
+            // user's gender is not available, retain the rule (lock the store)
+            if (!user.GenderId.HasValue) return true;
+
+            // user's gender does not match the condition, retain the rule (lock the store)
+            if (user.GenderId.Value != rule.GenderId.Value) return true;
+          }
+
+          // evaluate opportunity condition
+          if (rule.Opportunities != null && rule.Opportunities.Count > 0)
+          {
+            // if user has no completed opportunities, retain the rule (lock the store)
+            if (myCompletedOpportunities == null || myCompletedOpportunities.Count == 0) return true;
+
+            if (rule.OpportunityOption == null)
+              throw new InvalidOperationException($"Opportunity option expected for rule '{rule.Name}'");
+
+            switch (rule.OpportunityOption.Value)
+            {
+              // user hasn't completed all, retain the rule (lock the store)
+              case StoreAccessControlRuleOpportunityCondition.All:
+                if (!rule.Opportunities.All(o => myCompletedOpportunities.Any(i => i.Id == o.Id))) return true;
+                break;
+
+              // user hasn't completed any, retain the rule (lock the store)
+              case StoreAccessControlRuleOpportunityCondition.Any:
+                if (!rule.Opportunities.Any(o => myCompletedOpportunities.Any(i => i.Id == o.Id))) return true;
+                break;
+
+              default:
+                throw new InvalidOperationException($"Opportunity option '{rule.OpportunityOption}' not supported");
+            }
+          }
+
+          // user meets all conditions, discard the rule (allow access to the store)
+          return false;
+        }).ToList();
+      }
+
+      // no matching rules remain, result in unlocked status
+      if (matchingRules.Count == 0) return result;
+
+      // rules are logically OR: if any rule is retained, the store remains locked
+      result.Locked = true;
+      foreach (var rule in matchingRules)
+      {
+        // age condition
+        var ageMessage = "Age must be ";
+
+        if (rule.AgeFrom.HasValue && rule.AgeTo.HasValue)
+          ageMessage += $"between {rule.AgeFrom.Value} and {rule.AgeTo.Value}";
+        else if (rule.AgeFrom.HasValue)
+          ageMessage += $"greater than or equal to {rule.AgeFrom.Value}";
+        else if (rule.AgeTo.HasValue)
+          ageMessage += $"less than or equal to {rule.AgeTo.Value}";
+
+        result.Reason.Add(ageMessage);
+
+        // gender condition
+        if (rule.GenderId.HasValue)
+        {
+          var genderMessage = $"Restricted to {rule.Gender} users";
+          result.Reason.Add(genderMessage);
+        }
+
+        // opportunity condition
+        if (rule.Opportunities != null && rule.Opportunities.Count > 0)
+        {
+          var opportunityTitles = string.Join(", ", rule.Opportunities.Select(o => o.Title));
+          var opportunityMessage = rule.OpportunityOption == StoreAccessControlRuleOpportunityCondition.All
+              ? $"Must complete the following opportunities: {opportunityTitles}"
+              : $"Must complete any of the following opportunities: {opportunityTitles}";
+          result.Reason.Add(opportunityMessage);
+        }
+      }
+
+      return result;
+    }  
+    #endregion
+
+    #region Private Members
+    private List<StoreAccessControlRule> RulesActiveCached()
+    {
+      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
+        return Search(new StoreAccessControlRuleSearchFilter { Statuses = [StoreAccessControlRuleStatus.Active] }).Items;
+
+      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<StoreAccessControlRule>(), entry =>
+      {
+        entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
+        return Search(new StoreAccessControlRuleSearchFilter { Statuses = [StoreAccessControlRuleStatus.Active] }).Items;
+      }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(StoreAccessControlRule)}s'");
+
+      return result;
     }
     #endregion
   }

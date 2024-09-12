@@ -28,5 +28,23 @@ namespace Yoma.Core.Domain.Core.Helpers
 
       return dateOneParsed >= dateTwoParsed ? dateOneParsed : dateTwoParsed;
     }
+
+    public static int CalculateAge(this DateTimeOffset dateOfBirth, DateTimeOffset? currentDate)
+    {
+      var effectiveCurrentDate = currentDate ?? DateTimeOffset.UtcNow;
+
+      if (dateOfBirth == default)
+        throw new ArgumentNullException(nameof(dateOfBirth));
+
+      if (dateOfBirth > effectiveCurrentDate)
+        throw new ArgumentException("Value in the future", nameof(dateOfBirth));
+
+      var age = effectiveCurrentDate.Year - dateOfBirth.Year;
+
+      if (effectiveCurrentDate.Month > dateOfBirth.Month ||
+       (effectiveCurrentDate.Month == dateOfBirth.Month && effectiveCurrentDate.Day >= dateOfBirth.Day)) return age;
+
+      return age -1;
+    }
   }
 }
