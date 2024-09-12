@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Marketplace.Models
@@ -11,5 +12,8 @@ namespace Yoma.Core.Domain.Marketplace.Models
     public List<Guid>? Organizations { get; set; }
 
     public List<StoreAccessControlRuleStatus>? Statuses { get; set; }
+
+    [JsonIgnore]
+    internal bool NonPaginatedQuery { get; set; } = false;
   }
 }

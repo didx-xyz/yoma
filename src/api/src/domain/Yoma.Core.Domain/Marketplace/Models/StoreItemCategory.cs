@@ -17,5 +17,7 @@ namespace Yoma.Core.Domain.Marketplace.Models
     public decimal Amount { get; set; }
 
     public int Count { get; set; }
+
+    public StoreAccessControlRuleResult? StoreAccessControlRuleResult { get; set; }
   }
 }

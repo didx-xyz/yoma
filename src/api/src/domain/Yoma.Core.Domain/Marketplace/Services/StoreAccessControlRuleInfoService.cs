@@ -1,9 +1,11 @@
+using FluentValidation;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Models;
+using Yoma.Core.Domain.Marketplace.Validators;
 
 namespace Yoma.Core.Domain.Marketplace.Services
 {
@@ -14,18 +16,24 @@ namespace Yoma.Core.Domain.Marketplace.Services
     private readonly IMemoryCache _memoryCache;
     private readonly IStoreAccessControlRuleService _storeAccessControlRuleService;
     private readonly IMarketplaceService _marketplaceService;
+    private readonly StoreAccessControlRuleRequestValidatorCreate _storeAccessControlRuleRequestValidatorCreate;
+    private readonly StoreAccessControlRuleRequestValidatorUpdate _storeAccessControlRuleRequestValidatorUpdate;
     #endregion
 
     #region Constructor
     public StoreAccessControlRuleInfoService(IOptions<AppSettings> appSettings,
       IMemoryCache memoryCache,
       IStoreAccessControlRuleService storeAccessControlRuleService,
-      IMarketplaceService marketplaceService)
+      IMarketplaceService marketplaceService,
+      StoreAccessControlRuleRequestValidatorCreate storeAccessControlRuleRequestValidatorCreate,
+      StoreAccessControlRuleRequestValidatorUpdate storeAccessControlRuleRequestValidatorUpdate)
     {
       _appSettings = appSettings.Value;
       _memoryCache = memoryCache;
       _storeAccessControlRuleService = storeAccessControlRuleService;
       _marketplaceService = marketplaceService;
+      _storeAccessControlRuleRequestValidatorCreate = storeAccessControlRuleRequestValidatorCreate;
+      _storeAccessControlRuleRequestValidatorUpdate = storeAccessControlRuleRequestValidatorUpdate;
     }
     #endregion
 
@@ -67,6 +75,10 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     public async Task<StoreAccessControlRuleInfo> Create(StoreAccessControlRuleRequestCreate request)
     {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      await _storeAccessControlRuleRequestValidatorCreate.ValidateAndThrowAsync(request);
+
       var result = await _storeAccessControlRuleService.Create(request);
 
       _memoryCache.Remove(CacheHelper.GenerateKey<StoreSearchResults>(result.StoreCountryCodeAlpha2));
@@ -77,6 +89,10 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     public async Task<StoreAccessControlRuleInfo> Update(StoreAccessControlRuleRequestUpdate request)
     {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      await _storeAccessControlRuleRequestValidatorUpdate.ValidateAndThrowAsync(request);
+
       var result = await _storeAccessControlRuleService.Update(request);
 
       _memoryCache.Remove(CacheHelper.GenerateKey<StoreSearchResults>(result.StoreCountryCodeAlpha2));
@@ -169,13 +185,13 @@ namespace Yoma.Core.Domain.Marketplace.Services
     private async Task<List<StoreItemCategory>> StoreItemCategoriesCached(string storeId)
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return (await _marketplaceService.SearchStoreItemCategories(new StoreItemCategorySearchFilter { StoreId = storeId })).Items;
+        return (await _marketplaceService.SearchStoreItemCategories(new StoreItemCategorySearchFilter { StoreId = storeId, EvaluateStoreAccessControlRules = false })).Items;
 
       var result = await _memoryCache.GetOrCreateAsync(CacheHelper.GenerateKey<StoreItemCategorySearchResults>(storeId), async entry =>
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-        return (await _marketplaceService.SearchStoreItemCategories(new StoreItemCategorySearchFilter { StoreId = storeId })).Items;
+        return (await _marketplaceService.SearchStoreItemCategories(new StoreItemCategorySearchFilter { StoreId = storeId, EvaluateStoreAccessControlRules = false })).Items;
       }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(StoreItemCategorySearchResults)}s'");
 
       return result;

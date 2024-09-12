@@ -320,13 +320,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return new MyOpportunityResponseVerifyCompletedExternal { Users = users.Count != 0 ? users : null };
     }
 
-    public MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter)
+    public MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter, User? user)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       //filter validated by SearchAdmin
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      user ??= _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var filterInternal = new MyOpportunitySearchFilterAdmin
       {
@@ -351,7 +351,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         UserId = user.Id,
         Action = Action.Verification,
         VerificationStatuses = [VerificationStatus.Pending, VerificationStatus.Completed, VerificationStatus.Rejected],
-        TimeIntervalSummaryQuery = true
+        NonPaginatedQuery = true
       };
 
       var searchResultVerification = Search(filterInternal, false);
@@ -525,7 +525,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         return result;
       }
 
-      if (!filter.TimeIntervalSummaryQuery)
+      if (!filter.NonPaginatedQuery)
       {
         orderInstructions.Add(new() { OrderBy = o => o.Id, SortOrder = FilterSortOrder.Ascending }); //ensure deterministic sorting / consistent pagination results 
         query = query.ApplyFiltersAndOrdering(orderInstructions);
@@ -540,7 +540,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var items = query.ToList();
 
-      if (!filter.TimeIntervalSummaryQuery)
+      if (!filter.NonPaginatedQuery)
       {
         items.ForEach(o =>
         {
@@ -550,7 +550,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         });
       }
       result.Items = items.Select(o => o.ToInfo()).ToList();
-      if (filter.TimeIntervalSummaryQuery) return result;
+      if (filter.NonPaginatedQuery) return result;
 
       result.Items.ForEach(o => SetEngagementCounts(o));
       return result;

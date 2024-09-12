@@ -167,7 +167,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
-      var result = _myOpportunityService.Search(filter);
+      var result = _myOpportunityService.Search(filter, null);
 
       _logger.LogInformation("Request {requestName} handled", nameof(Search));
 

@@ -1,5 +1,6 @@
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Marketplace.Models;
+using Yoma.Core.Domain.MyOpportunity.Models;
 
 namespace Yoma.Core.Domain.Marketplace.Interfaces
 {
@@ -20,5 +21,7 @@ namespace Yoma.Core.Domain.Marketplace.Interfaces
     Task<StoreAccessControlRule> Update(StoreAccessControlRuleRequestUpdate request);
 
     Task<StoreAccessControlRule> UpdateStatus(Guid id, StoreAccessControlRuleStatus status);
+
+    StoreAccessControlRuleResult EvaluateStoreAccessControlRules(StoreItemCategory storeItemCategory, User? user, List<MyOpportunityInfo>? myOpportunitiesCompleted);
   }
 }
