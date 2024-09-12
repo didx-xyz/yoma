@@ -178,11 +178,7 @@ const StoreItemsCarousel: React.FC<{
                   <ItemCardComponent
                     key={`storeCategoryItem_${id}_${index}`}
                     id={`storeCategoryItem_${id}_${index}`}
-                    company={item.name}
-                    name={item.name}
-                    imageURL={item.imageURL}
-                    amount={item.amount}
-                    count={item.count}
+                    item={item}
                     onClick={() => onClick(item)}
                   />
                 </div>
