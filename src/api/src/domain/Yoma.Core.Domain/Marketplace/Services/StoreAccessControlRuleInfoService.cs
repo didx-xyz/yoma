@@ -42,8 +42,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       foreach (var item in results)
       {
-        var storeSearchResults = await StoreSearchResultCached(item.CountryCodeAlpha2);
-        var store = storeSearchResults.Items.SingleOrDefault(o => o.Id == item.Id);
+        var stores = await StoresCached(item.CountryCodeAlpha2);
+        var store = stores.SingleOrDefault(o => o.Id == item.Id);
 
         item.Name = store?.Name ?? "Unknown";
       }
@@ -95,8 +95,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
     #region Private Members
     private async Task<StoreAccessControlRuleInfo> ToInfo(StoreAccessControlRule item)
     {
-      var storeSearchResults = await StoreSearchResultCached(item.StoreCountryCodeAlpha2);
-      var store = storeSearchResults.Items.SingleOrDefault(o => o.Id == item.StoreId);
+      var storeSearchResults = await StoresCached(item.StoreCountryCodeAlpha2);
+      var store = storeSearchResults.SingleOrDefault(o => o.Id == item.StoreId);
 
       var result = new StoreAccessControlRuleInfo
       {
@@ -127,11 +127,11 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       if (item.StoreItemCategories == null) return result;
 
-      var storeItemCategorySearchResults = store == null ? null : await StoreItemCategorySearchResultCached(store.Id);
+      var storeItemCategories = store == null ? null : await StoreItemCategoriesCached(store.Id);
 
       result.StoreItemCategories = item.StoreItemCategories.Select(item =>
       {
-        var storeItemCategory = storeItemCategorySearchResults?.Items.SingleOrDefault(x => x.Id == item);
+        var storeItemCategory = storeItemCategories?.SingleOrDefault(x => x.Id == item);
 
         return new StoreItemCategoryInfo
         {
@@ -144,38 +144,38 @@ namespace Yoma.Core.Domain.Marketplace.Services
     }
 
     /// <summary>
-    /// Caches the store search results for store info resolution. The cache expires based on the cache settings or when a rule is created or updated. The cache applies to existing rules.
+    /// Caches the stores for store info resolution. The cache expires based on the cache settings or when a rule is created or updated. The cache applies to existing rules.
     /// When a rule is created or updated, all stores become selectable, so expiring the store info cache is necessary to reflect the latest changes.
     /// </summary>
-    private async Task<StoreSearchResults> StoreSearchResultCached(string countryCodeAlpha2)
+    private async Task<List<Store>> StoresCached(string countryCodeAlpha2)
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return await _marketplaceService.SearchStores(new StoreSearchFilter { CountryCodeAlpha2 = countryCodeAlpha2 });
+        return (await _marketplaceService.SearchStores(new StoreSearchFilter { CountryCodeAlpha2 = countryCodeAlpha2 })).Items;
 
       var result = await _memoryCache.GetOrCreateAsync(CacheHelper.GenerateKey<StoreSearchResults>(countryCodeAlpha2), async entry =>
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-        return await _marketplaceService.SearchStores(new StoreSearchFilter { CountryCodeAlpha2 = countryCodeAlpha2 });
+        return (await _marketplaceService.SearchStores(new StoreSearchFilter { CountryCodeAlpha2 = countryCodeAlpha2 })).Items;
       }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(StoreSearchResults)}s'");
 
       return result;
     }
 
     /// <summary>
-    /// Caches the store item category search results for store item category resolution. The cache expires based on the cache settings or when a rule is created or updated. The cache applies to existing rules.
+    /// Caches the store item categories for store item category resolution. The cache expires based on the cache settings or when a rule is created or updated. The cache applies to existing rules.
     /// When a rule is created or updated, all store item categories become selectable, so expiring the store item category cache is necessary to reflect the latest changes.
     /// </summary>
-    private async Task<StoreItemCategorySearchResults> StoreItemCategorySearchResultCached(string storeId)
+    private async Task<List<StoreItemCategory>> StoreItemCategoriesCached(string storeId)
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return await _marketplaceService.SearchStoreItemCategories(new StoreItemCategorySearchFilter { StoreId = storeId });
+        return (await _marketplaceService.SearchStoreItemCategories(new StoreItemCategorySearchFilter { StoreId = storeId })).Items;
 
       var result = await _memoryCache.GetOrCreateAsync(CacheHelper.GenerateKey<StoreItemCategorySearchResults>(storeId), async entry =>
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-        return await _marketplaceService.SearchStoreItemCategories(new StoreItemCategorySearchFilter { StoreId = storeId });
+        return (await _marketplaceService.SearchStoreItemCategories(new StoreItemCategorySearchFilter { StoreId = storeId })).Items;
       }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(StoreItemCategorySearchResults)}s'");
 
       return result;
