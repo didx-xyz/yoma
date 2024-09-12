@@ -253,7 +253,7 @@ const StoreRuleDetails: NextPageWithLayout<{
 
   const schemaStep2 = z.object({
     organizationId: z.string().min(1, "Organization is required."),
-    storeCountryCodeAlpha2: z.string().nullable().optional(),
+    storeCountryCodeAlpha2: z.string().min(1, "Country is required."),
     storeId: z.string().min(1, "Store is required."),
     storeItemCategories: z.array(z.string()).optional(),
   });
@@ -286,8 +286,7 @@ const StoreRuleDetails: NextPageWithLayout<{
       if (!!data.opportunities?.length && !data.opportunityOption) {
         ctx.addIssue({
           code: z.ZodIssueCode.custom,
-          message:
-            "Opportunity option is required when opportunities are specified",
+          message: "Select an option",
           path: ["opportunityOption"],
           fatal: true,
         });
@@ -451,10 +450,7 @@ const StoreRuleDetails: NextPageWithLayout<{
       // confirm dialog
       const result = await modalContext.showConfirmation(
         "",
-        <div
-          key="confirm-dialog-content"
-          className="flex h-full flex-col space-y-2"
-        >
+        <div key="confirm-dialog-content" className="flex flex-col">
           <div className="flex flex-row items-center gap-2">
             <IoMdWarning className="h-6 w-6 text-warning" />
             <p className="text-lg">Submit</p>
@@ -889,7 +885,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold tracking-wider">General</h5>
-                    <p className="my-2 text-sm">
+                    <p className="text-sm">
                       Store Access Control Rules are conditions to control the
                       visibility of a ZLTO store and its item categories to
                       users. This system allows precise targeting based on user
@@ -907,6 +903,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                     <FormField
                       label="Name"
                       subLabel="The name of the rule that will be visible to you."
+                      showWarningIcon={!!formStateStep1.errors.name?.message}
                       showError={!!formStateStep1.errors.name}
                       error={formStateStep1.errors.name?.message}
                     >
@@ -922,6 +919,9 @@ const StoreRuleDetails: NextPageWithLayout<{
                     <FormField
                       label="Description"
                       subLabel="A brief description of the rule, outlining its purpose and any specific conditions or criteria it applies to. This will help you and others understand the rule's intent and scope."
+                      showWarningIcon={
+                        !!formStateStep1.errors.description?.message
+                      }
                       showError={!!formStateStep1.errors.description}
                       error={formStateStep1.errors.description?.message}
                     >
@@ -960,7 +960,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold tracking-wider">Store</h5>
-                    <p className="my-2 text-sm">
+                    <p className="text-sm">
                       Configure a ZLTO store for users by having a ZLTO
                       representative set up the store based on your
                       specifications. You can select the organization and a
@@ -1024,10 +1024,14 @@ const StoreRuleDetails: NextPageWithLayout<{
                         )}
                       />
                     </FormField>
+
                     {/* COUNTRY */}
                     <FormField
                       label="Country"
                       subLabel="Select the country."
+                      showWarningIcon={
+                        !!formStateStep2.errors.storeCountryCodeAlpha2?.message
+                      }
                       showError={
                         !!formStateStep2.touchedFields.storeCountryCodeAlpha2 ||
                         formStateStep2.isSubmitted
@@ -1206,7 +1210,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold">Conditions</h5>
-                    <p className="my-2 text-sm">
+                    <p className="text-sm">
                       These rules ensure the store is accessible only to users
                       who meet criteria like age, gender, and completed
                       opportunities. All specified conditions must be met for
@@ -1292,6 +1296,9 @@ const StoreRuleDetails: NextPageWithLayout<{
                     <FormField
                       label="Gender"
                       subLabel="Stores will NOT be visible to users with no gender specified or who have selected 'Prefer not to say', irrespective of the gender condition. If no gender condition is specified, the store or item categories will be visible to all genders."
+                      showWarningIcon={
+                        !!formStateStep3.errors.genderId?.message
+                      }
                       showError={
                         !!formStateStep3.touchedFields.genderId ||
                         formStateStep3.isSubmitted
@@ -1386,6 +1393,9 @@ const StoreRuleDetails: NextPageWithLayout<{
                     {!!watchOpportunities?.length && (
                       <FormField
                         label="Opportunity Option"
+                        showWarningIcon={
+                          !!formStateStep3.errors.opportunityOption?.message
+                        }
                         showError={
                           !!formStateStep3.touchedFields.opportunityOption ||
                           formStateStep3.isSubmitted
@@ -1445,9 +1455,9 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold">Preview</h5>
-                    {/* <p className="my-2 text-sm">
-                      Preview your rule before submitting it.
-                    </p> */}
+                    <p className="text-sm">
+                      Please review the details before submitting it.
+                    </p>
                   </div>
 
                   <form

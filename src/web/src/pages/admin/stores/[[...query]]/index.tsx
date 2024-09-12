@@ -15,9 +15,10 @@ import Moment from "react-moment";
 import { toast } from "react-toastify";
 import { LinkStatus } from "~/api/models/actionLinks";
 import {
+  StoreAccessControlRuleStatus,
+  type StoreAccessControlRuleInfo,
   type StoreAccessControlRuleSearchFilter,
   type StoreAccessControlRuleSearchResults,
-  StoreAccessControlRuleStatus,
 } from "~/api/models/marketplace";
 import {
   searchStoreAccessControlRule,
@@ -351,6 +352,61 @@ const Stores: NextPageWithLayout<{
     [queryClient, setIsLoading, modalContext],
   );
 
+  const renderDropdown = (
+    item: StoreAccessControlRuleInfo,
+    className = "dropdown-left",
+  ) => {
+    if (
+      item?.status !== "Inactive" &&
+      item?.status !== "Active" &&
+      item?.status !== "Declined"
+    ) {
+      return null;
+    }
+
+    return (
+      <div className={`dropdown ${className} -mr-3 w-10 md:-mr-4`}>
+        <button className="badge bg-green-light text-green">
+          <IoIosSettings className="h-4 w-4" />
+        </button>
+
+        <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
+          {(item?.status === "Active" || item?.status === "Inactive") && (
+            <>
+              <li>
+                <button
+                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                  onClick={() =>
+                    router.push(
+                      `/admin/stores/${item.id}?returnUrl=${encodeURIComponent(
+                        getSafeUrl(returnUrl, router.asPath),
+                      )}`,
+                    )
+                  }
+                >
+                  Edit
+                </button>
+              </li>
+              <li>
+                <button
+                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                  onClick={() =>
+                    updateRuleStatus(
+                      item.id,
+                      StoreAccessControlRuleStatus.Deleted,
+                    )
+                  }
+                >
+                  Delete
+                </button>
+              </li>
+            </>
+          )}
+        </ul>
+      </div>
+    );
+  };
+
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -368,7 +424,7 @@ const Stores: NextPageWithLayout<{
 
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
-          <h3 className="mb-6 mt-3 flex items-center text-3xl font-semibold tracking-normal text-white md:mb-9 md:mt-0">
+          <h3 className="mb-6 mt-3 flex items-center text-xl font-semibold tracking-normal text-white md:mb-9 md:mt-0 md:text-3xl">
             Store Access Control Rules
           </h3>
 
@@ -514,23 +570,99 @@ const Stores: NextPageWithLayout<{
                         }${`?returnUrl=${encodeURIComponent(
                           getSafeUrl(returnUrl, router.asPath),
                         )}`}`}
-                        className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-bold text-gray-dark underline"
+                        className="max-w-[340px] truncate text-sm font-bold text-black underline"
                       >
                         {item.organizationName}
                       </Link>
 
-                      <span className="mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark">
+                      <span className="mt-2 max-w-[340px] truncate text-sm font-semibold">
                         {item.name}
                       </span>
 
-                      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold text-gray-dark">
+                      <span className="font-semiboldx max-w-[340px] truncate text-xs text-gray-dark">
                         {item.description}
                       </span>
                     </div>
 
                     <div className="flex flex-col gap-2">
                       <div className="flex flex-row justify-between">
-                        <p className="text-sm tracking-wider">Date</p>
+                        <p className="text-xs font-bold tracking-widest">
+                          Store
+                        </p>
+                        {item.store ? (
+                          <span className="badge badge-primary">
+                            {item.store.name}
+                          </span>
+                        ) : (
+                          "N/A"
+                        )}
+                      </div>
+
+                      <div className="flex flex-row justify-between">
+                        <p className="text-xs font-bold tracking-widest">
+                          Store Categories
+                        </p>
+                        {item.store ? (
+                          <div className="flex flex-col">
+                            {item?.storeItemCategories?.map((o) => (
+                              <div key={o.id}>
+                                <div className="max-w-[200px] overflow-hidden truncate text-ellipsis whitespace-nowrap text-xs font-semibold text-gray-dark">
+                                  {o.name}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          "N/A"
+                        )}
+                      </div>
+
+                      <div className="flex flex-row justify-between">
+                        <span className="text-xs font-bold tracking-widest">
+                          Age:
+                        </span>
+                        <span className="text-xs font-semibold text-gray-dark">
+                          {item.ageFrom && item.ageTo
+                            ? `From ${item.ageFrom} To ${item.ageTo}`
+                            : item.ageFrom
+                              ? `From ${item.ageFrom}`
+                              : item.ageTo
+                                ? `To ${item.ageTo}`
+                                : "No age range specified"}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-row justify-between">
+                        <span className="text-xs font-bold tracking-widest">
+                          Gender:
+                        </span>
+                        <span className="text-xs font-semibold text-gray-dark">
+                          {item.gender}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-row justify-between">
+                        <span className="text-xs font-bold tracking-widest">
+                          Opportunities:
+                        </span>
+                        <span>
+                          {item?.opportunities?.map((o) => (
+                            <div key={o.id} className="w-[200px] truncate">
+                              <Link
+                                href={`/organisations/${item.organizationId}/opportunities/${o.id}`}
+                                className="text-xs font-semibold text-gray-dark underline"
+                              >
+                                {o.title}
+                              </Link>
+                            </div>
+                          ))}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-row justify-between">
+                        <p className="text-xs font-bold tracking-widest">
+                          Date
+                        </p>
                         {item.dateModified ? (
                           <span className="badge bg-yellow-light text-yellow">
                             <IoMdCalendar className="h-4 w-4" />
@@ -544,8 +676,11 @@ const Stores: NextPageWithLayout<{
                           "N/A"
                         )}
                       </div>
+
                       <div className="flex flex-row justify-between">
-                        <p className="text-sm tracking-wider">Status</p>
+                        <p className="text-xs font-bold tracking-widest">
+                          Status
+                        </p>
                         {item.status == "Active" && (
                           <span className="badge bg-blue-light text-blue">
                             Active
@@ -562,72 +697,32 @@ const Stores: NextPageWithLayout<{
                           </span>
                         )}
                       </div>
-                      <div className="flex flex-row justify-between">
-                        <p className="text-sm tracking-wider">Store</p>
-                        {item.store ? (
-                          <span className="badge badge-primary">
-                            {item.store.name}
-                          </span>
-                        ) : (
-                          "N/A"
-                        )}
+
+                      {/* ACTIONS */}
+                      <div className="flex flex-row justify-center">
+                        {renderDropdown(item, "dropdown-top")}
                       </div>
-                      <div className="flex flex-row justify-between">
-                        <p className="text-sm tracking-wider">Opportunities</p>
-                        {item.store ? (
-                          <div className="flex flex-col">
-                            {item?.opportunities?.map((o) => (
-                              <div key={o.id}>
-                                <Link
-                                  href={`/organisations/${item.organizationId}/opportunities/${o.id}}`}
-                                  className="w-[200px] overflow-hidden truncate text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark underline"
-                                >
-                                  {o.title}
-                                </Link>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          "N/A"
-                        )}
-                      </div>
-                      <div className="flex flex-row justify-between">
-                        <p className="text-sm tracking-wider">
-                          Store Categories
-                        </p>
-                        {item.store ? (
-                          <div className="flex flex-col">
-                            {item?.storeItemCategories?.map((o) => (
-                              <div key={o.id}>
-                                <div className="max-w-[200px] overflow-hidden truncate text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark">
-                                  {o.name}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          "N/A"
-                        )}
-                      </div>
-                      <div className="flex flex-row justify-between"></div>
                     </div>
                   </div>
                 ))}
               </div>
 
               {/* DEKSTOP */}
-              <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table">
+              <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table md:table-xs">
                 <thead>
                   <tr className="border-gray text-gray-dark">
                     <th className="border-b-2 border-gray-light !py-4">
                       Organisation
                     </th>
-                    <th className="border-b-2 border-gray-light !py-4">
-                      Opportunity
-                    </th>
                     <th className="border-b-2 border-gray-light !py-4">Name</th>
                     <th className="border-b-2 border-gray-light">
                       Description
+                    </th>
+                    <th className="border-b-2 border-gray-light !py-4">
+                      Store / Item Categories
+                    </th>
+                    <th className="border-b-2 border-gray-light !py-4">
+                      Conditions
                     </th>
                     <th className="border-b-2 border-gray-light">Date</th>
                     <th className="border-b-2 border-gray-light">Status</th>
@@ -636,8 +731,8 @@ const Stores: NextPageWithLayout<{
                 </thead>
                 <tbody>
                   {dataRules.items.map((item) => (
-                    <tr key={`grid_md_${item.id}`} className="">
-                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4">
+                    <tr key={`grid_md_${item.id}`}>
+                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4 !align-top">
                         <Link
                           href={`/organisations/${
                             item.organizationId
@@ -650,33 +745,83 @@ const Stores: NextPageWithLayout<{
                         </Link>
                       </td>
 
-                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4">
-                        <div className="flex flex-col">
-                          {item?.opportunities?.map((o) => (
-                            <div key={o.id}>
-                              <Link
-                                href={`/organisations/${item.organizationId}/opportunities/${o.id}}`}
-                                className="w-[200px] overflow-hidden truncate text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark underline"
-                              >
-                                {o.title}
-                              </Link>
-                            </div>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="max-w-[100px] truncate border-b-2 border-gray-light !py-4">
+                      <td className="max-w-[100px] truncate border-b-2 border-gray-light !py-4 !align-top">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.name}
                         </div>
                       </td>
 
-                      <td className="max-w-[100px] border-b-2 border-gray-light">
+                      <td className="max-w-[100px] truncate border-b-2 border-gray-light !py-4 !align-top">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.description}
                         </div>
                       </td>
 
-                      <td className="border-b-2 border-gray-light">
+                      {/* <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4 !align-top">
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
+                          <FormField
+                            label="Country"
+                            subLabel={item.store.countryName}
+                          />
+                        </div>
+                      </td> */}
+
+                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4 !align-top">
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
+                          {item.store.name!}
+                        </div>
+
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
+                          {item.storeItemCategories?.map((item, index) => {
+                            return (
+                              <span
+                                key={`storeItemCategories_${index}`}
+                                className="text-xs text-gray-dark"
+                              >
+                                {item.name}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      </td>
+
+                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4 !align-top">
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[300px]">
+                          <span className="mr-1 font-bold">Age:</span>
+                          <span>
+                            {item.ageFrom && item.ageTo
+                              ? `From ${item.ageFrom} To ${item.ageTo}`
+                              : item.ageFrom
+                                ? `From ${item.ageFrom}`
+                                : item.ageTo
+                                  ? `To ${item.ageTo}`
+                                  : "No age range specified"}
+                          </span>
+                        </div>
+
+                        <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                          <span className="mr-1 font-bold">Gender:</span>
+                          <span>{item.gender}</span>
+                        </div>
+
+                        <div className="flex flex-col">
+                          <span className="mr-1 font-bold">Opportunities:</span>
+                          <span>
+                            {item?.opportunities?.map((o) => (
+                              <div key={o.id} className="w-[120px] truncate">
+                                <Link
+                                  href={`/organisations/${item.organizationId}/opportunities/${o.id}`}
+                                  className="text-xs font-semibold text-gray-dark underline"
+                                >
+                                  {o.title}
+                                </Link>
+                              </div>
+                            ))}
+                          </span>
+                        </div>
+                      </td>
+
+                      <td className="border-b-2 border-gray-light !py-4 !align-top">
                         {item.dateModified ? (
                           <span className="badge bg-yellow-light text-yellow">
                             <IoMdCalendar className="h-4 w-4" />
@@ -692,7 +837,7 @@ const Stores: NextPageWithLayout<{
                       </td>
 
                       {/* STATUS */}
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-b-2 border-gray-light !py-4 !align-top">
                         {item.status == "Active" && (
                           <span className="badge bg-blue-light text-blue">
                             Active
@@ -711,81 +856,9 @@ const Stores: NextPageWithLayout<{
                         )}
                       </td>
 
-                      {/* LINK */}
-                      {/* <td className="border-b-2 border-gray-light">
-                        <button
-                          onClick={() =>
-                            onClick_CopyToClipboard(
-                              item?.shortURL ?? item?.uRL ?? "",
-                            )
-                          }
-                          className="badge bg-green-light text-green"
-                        >
-                          <IoIosLink className="h-4 w-4" />
-                        </button>
-                      </td> */}
-
-                      {/* QR */}
-                      {/* <td className="border-b-2 border-gray-light">
-                        <button
-                          onClick={() => onClick_GenerateQRCode(item)}
-                          className="badge bg-green-light text-green"
-                        >
-                          <IoQrCode className="h-4 w-4" />
-                        </button>
-                      </td> */}
-
                       {/* ACTIONS */}
-                      <td className="border-b-2 border-gray-light">
-                        {(item?.status == "Inactive" ||
-                          item?.status == "Active" ||
-                          item?.status == "Declined") && (
-                          <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
-                            <button className="badge bg-green-light text-green">
-                              <IoIosSettings className="h-4 w-4" />
-                            </button>
-
-                            <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
-                              {(item?.status == "Active" ||
-                                item?.status == "Inactive") && (
-                                <>
-                                  <li>
-                                    <button
-                                      className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                                      onClick={() =>
-                                        router.push(
-                                          `/admin/stores/${
-                                            item.id
-                                          }?returnUrl=${encodeURIComponent(
-                                            getSafeUrl(
-                                              returnUrl,
-                                              router.asPath,
-                                            ),
-                                          )}`,
-                                        )
-                                      }
-                                    >
-                                      Edit
-                                    </button>
-                                  </li>
-                                  <li>
-                                    <button
-                                      className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                                      onClick={() =>
-                                        updateRuleStatus(
-                                          item.id,
-                                          StoreAccessControlRuleStatus.Deleted,
-                                        )
-                                      }
-                                    >
-                                      Delete
-                                    </button>
-                                  </li>
-                                </>
-                              )}
-                            </ul>
-                          </div>
-                        )}
+                      <td className="border-b-2 border-gray-light !py-4 !align-top">
+                        {renderDropdown(item)}
                       </td>
                     </tr>
                   ))}
