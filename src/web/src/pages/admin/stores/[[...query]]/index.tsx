@@ -371,6 +371,34 @@ const Stores: NextPageWithLayout<{
         </button>
 
         <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
+          {item?.status === "Active" && (
+            <li>
+              <button
+                className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                onClick={() =>
+                  updateRuleStatus(
+                    item.id,
+                    StoreAccessControlRuleStatus.Inactive,
+                  )
+                }
+              >
+                Make in-activate
+              </button>
+            </li>
+          )}
+          {item?.status === "Inactive" && (
+            <li>
+              <button
+                className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                onClick={() =>
+                  updateRuleStatus(item.id, StoreAccessControlRuleStatus.Active)
+                }
+              >
+                Make activate
+              </button>
+            </li>
+          )}
+
           {(item?.status === "Active" || item?.status === "Inactive") && (
             <>
               <li>

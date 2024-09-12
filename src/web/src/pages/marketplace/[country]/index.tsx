@@ -9,6 +9,7 @@ import { env } from "process";
 import iconBell from "public/images/icon-bell.webp";
 import type { ParsedUrlQuery } from "querystring";
 import React, { useCallback, useRef, useState, type ReactElement } from "react";
+import { FaLock } from "react-icons/fa";
 import { IoMdClose, IoMdWarning } from "react-icons/io";
 import ReactModal from "react-modal";
 import Select from "react-select";
@@ -220,6 +221,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   const [buyDialogErrorMessages, setBuyDialogErrorMessages] = useState<
     ErrorResponseItem[] | null
   >(null);
+  const [itemLockedDialogVisible, setItemLockedDialogVisible] = useState(false);
   const [currentItem, setCurrentItem] = useState<StoreItemCategory | null>(
     null,
   );
@@ -297,7 +299,17 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     async (item: StoreItemCategory) => {
       if (!session || !userProfile) {
         setBuyDialogVisible(false);
+        setItemLockedDialogVisible(false);
         setLoginDialogVisible(true);
+        return;
+      }
+
+      setCurrentItem(item);
+
+      // check locked
+      if (item.storeAccessControlRuleResult?.locked) {
+        setItemLockedDialogVisible(true);
+
         return;
       }
 
@@ -355,7 +367,6 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         return;
       }
 
-      setCurrentItem(item);
       setBuyDialogVisible(true);
     },
     [
@@ -363,6 +374,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       setCurrentItem,
       setBuyDialogVisible,
       setLoginDialogVisible,
+      setItemLockedDialogVisible,
       userProfile,
       modalContext,
     ],
@@ -408,6 +420,30 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       setIsLoading,
     ],
   );
+
+  const LockedImage: React.FC<{ imageURL: string; isLocked: boolean }> = ({
+    imageURL,
+    isLocked,
+  }) => {
+    return (
+      <div className="relative h-10 w-10">
+        <Image
+          src={imageURL ?? ""}
+          alt="Icon Zlto"
+          width={40}
+          height={40}
+          sizes="100vw"
+          priority={true}
+          style={{ width: "40px", height: "40px" }}
+        />
+        {isLocked && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+            <FaLock className="text-white" />
+          </div>
+        )}
+      </div>
+    );
+  };
 
   if (!marketplace_enabled) return <MarketplaceDown />;
 
@@ -669,6 +705,80 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                 className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
                 onClick={() => {
                   setBuyDialogErrorVisible(false);
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </ReactModal>
+
+      {/* PURCHASE LOCKED DIALOG */}
+      <ReactModal
+        isOpen={itemLockedDialogVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setItemLockedDialogVisible(false);
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[550px] md:rounded-3xl`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
+          <div className="flex flex-row p-4">
+            <h1 className="flex-grow"></h1>
+            <button
+              type="button"
+              className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
+              onClick={() => {
+                setItemLockedDialogVisible(false);
+              }}
+            >
+              <IoMdClose className="h-6 w-6"></IoMdClose>
+            </button>
+          </div>
+
+          <div className="flex flex-col items-center justify-center gap-4">
+            {currentItem?.imageURL && (
+              <div className="relative -mt-8 flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                <Image
+                  src={currentItem?.imageURL ?? ""}
+                  alt="Icon Zlto"
+                  width={40}
+                  height={40}
+                  sizes="100vw"
+                  priority={true}
+                  style={{ width: "40px", height: "40px" }}
+                />
+                {currentItem?.storeAccessControlRuleResult?.locked && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                    <FaLock className="text-white" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            <h3 className="text-center">Purchase Locked</h3>
+
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="rounded-lg p-2 text-center md:w-[450px]">
+                This item is currently locked for purchase.
+                <br />
+                <br />
+                <ul className="list-inside list-disc text-left">
+                  {currentItem?.storeAccessControlRuleResult?.reasons?.map(
+                    (error, index) => <li key={`error_${index}`}>{error}</li>,
+                  )}
+                </ul>
+              </div>
+            </div>
+            <div className="mt-4 flex flex-grow gap-4">
+              <button
+                type="button"
+                className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
+                onClick={() => {
+                  setItemLockedDialogVisible(false);
                 }}
               >
                 Close

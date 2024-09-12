@@ -22,7 +22,6 @@ export interface StoreItem {
   imageURL: string;
   amount: number;
 }
-
 export interface StoreItemCategory {
   id: string;
   storeId: string;
@@ -32,6 +31,12 @@ export interface StoreItemCategory {
   imageURL: string | null;
   amount: number;
   count: number;
+  storeAccessControlRuleResult: StoreAccessControlRuleResult | null;
+}
+
+export interface StoreAccessControlRuleResult {
+  locked: boolean;
+  reasons: string[];
 }
 
 export interface StoreSearchFilter extends PaginationFilter {
