@@ -22,6 +22,6 @@ namespace Yoma.Core.Domain.Marketplace.Interfaces
 
     Task<StoreAccessControlRule> UpdateStatus(Guid id, StoreAccessControlRuleStatus status);
 
-    StoreAccessControlRuleResult EvaluateStoreAccessControlRules(StoreItemCategory storeItemCategory, User? user, List<MyOpportunityInfo>? myOpportunitiesCompleted);
+    StoreAccessControlRuleEvaluationResult EvaluateStoreAccessControlRules(StoreItemCategory storeItemCategory, User? user, List<MyOpportunityInfo>? myOpportunitiesCompleted);
   }
 }
