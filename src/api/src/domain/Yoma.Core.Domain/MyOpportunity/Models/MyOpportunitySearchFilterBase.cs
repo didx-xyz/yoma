@@ -14,7 +14,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     internal bool TotalCountOnly { get; set; }
 
     [JsonIgnore]
-    internal bool TimeIntervalSummaryQuery { get; set; } = false;
+    internal bool NonPaginatedQuery { get; set; } = false;
 
     /// <summary>
     /// Flag indicating whether to include only published records (relating to active opportunities, 

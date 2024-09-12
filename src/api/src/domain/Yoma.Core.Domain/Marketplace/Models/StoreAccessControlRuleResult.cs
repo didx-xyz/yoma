@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.Marketplace.Models
   {
     public bool Locked { get; set; }
 
-    public List<string> Reason { get; set; }
+    public List<string> Reasons { get; set; }
   }
 }

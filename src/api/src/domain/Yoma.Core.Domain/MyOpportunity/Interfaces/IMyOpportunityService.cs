@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity;
 
@@ -17,7 +18,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     List<MyOpportunitySearchCriteriaOpportunity> ListMyOpportunityVerificationSearchCriteriaOpportunity(List<Guid>? organizations, List<VerificationStatus>? verificationStatuses, bool ensureOrganizationAuthorization);
 
-    MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter);
+    MyOpportunitySearchResults Search(MyOpportunitySearchFilter filter, User? user);
 
     TimeIntervalSummary GetSummary();
 

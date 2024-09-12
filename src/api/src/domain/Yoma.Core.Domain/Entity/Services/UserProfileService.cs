@@ -194,17 +194,17 @@ namespace Yoma.Core.Domain.Entity.Services
         TotalCountOnly = true,
         Action = MyOpportunity.Action.Saved
       };
-      result.OpportunityCountSaved = _myOpportunityService.Search(filter).TotalCount ?? default;
+      result.OpportunityCountSaved = _myOpportunityService.Search(filter, user).TotalCount ?? default;
 
       filter.Action = MyOpportunity.Action.Verification;
       filter.VerificationStatuses = [VerificationStatus.Pending];
-      result.OpportunityCountPending = _myOpportunityService.Search(filter).TotalCount ?? default;
+      result.OpportunityCountPending = _myOpportunityService.Search(filter, user).TotalCount ?? default;
 
       filter.VerificationStatuses = [VerificationStatus.Completed];
-      result.OpportunityCountCompleted = _myOpportunityService.Search(filter).TotalCount ?? default;
+      result.OpportunityCountCompleted = _myOpportunityService.Search(filter, user).TotalCount ?? default;
 
       filter.VerificationStatuses = [VerificationStatus.Rejected];
-      result.OpportunityCountRejected = _myOpportunityService.Search(filter).TotalCount ?? default;
+      result.OpportunityCountRejected = _myOpportunityService.Search(filter, user).TotalCount ?? default;
 
       return result;
     }
