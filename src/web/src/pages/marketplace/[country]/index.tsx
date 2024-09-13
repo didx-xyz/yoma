@@ -24,7 +24,6 @@ import type {
   Store,
   StoreCategory,
   StoreItemCategory,
-  StoreItemCategorySearchFilter,
   StoreItemCategorySearchResults,
 } from "~/api/models/marketplace";
 import {
@@ -36,6 +35,7 @@ import {
 } from "~/api/services/marketplace";
 import { getUserProfile } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
+import Suspense from "~/components/Common/Suspense";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import StoreItemsCarousel from "~/components/Marketplace/StoreItemsCarousel";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -50,7 +50,6 @@ import {
   COUNTRY_WW,
   GA_ACTION_MARKETPLACE_ITEM_BUY,
   GA_CATEGORY_OPPORTUNITY,
-  PAGE_SIZE_MINIMUM,
   THEME_BLUE,
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
@@ -237,7 +236,6 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   marketplace_enabled,
 }) => {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const [buyDialogVisible, setBuyDialogVisible] = useState(false);
   const [buyDialogConfirmationVisible, setBuyDialogConfirmationVisible] =
     useState(false);
@@ -250,7 +248,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     null,
   );
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
   const setUserCountrySelection = useSetAtom(userCountrySelectionAtom);
@@ -259,7 +257,11 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   const [isLoading, setIsLoading] = useState(false);
 
   // 👇 authenticated query
-  const { data: data_storeItems_authenticated } = useQuery({
+  const {
+    data: data_storeItems_authenticated,
+    isLoading: isLoading_storeItems_authenticated,
+    error: error_storeItems_authenticated,
+  } = useQuery({
     queryKey: ["marketplace", "items", session?.user?.id, country],
     queryFn: async () => {
       return await fetchMarketplaceData(country);
@@ -294,39 +296,40 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   }, [lookups_countries]);
 
   // 🎠 CAROUSEL: data fetching
-  const fetchDataAndUpdateCache = useCallback(
-    async (
-      queryKey: string[],
-      filter: StoreItemCategorySearchFilter,
-    ): Promise<StoreItemCategorySearchResults> => {
-      const cachedData =
-        queryClient.getQueryData<StoreItemCategorySearchResults>(queryKey);
+  // NB: paging has been disabled for now because the data is already fetched at build time
+  // const fetchDataAndUpdateCache = useCallback(
+  //   async (
+  //     queryKey: string[],
+  //     filter: StoreItemCategorySearchFilter,
+  //   ): Promise<StoreItemCategorySearchResults> => {
+  //     const cachedData =
+  //       queryClient.getQueryData<StoreItemCategorySearchResults>(queryKey);
 
-      if (cachedData) {
-        return cachedData;
-      }
+  //     if (cachedData) {
+  //       return cachedData;
+  //     }
 
-      const data = await searchStoreItemCategories(filter);
+  //     const data = await searchStoreItemCategories(filter);
 
-      queryClient.setQueryData(queryKey, data);
+  //     queryClient.setQueryData(queryKey, data);
 
-      return data;
-    },
-    [queryClient],
-  );
+  //     return data;
+  //   },
+  //   [queryClient],
+  // );
 
-  const loadData = useCallback(
-    (startRow: number, storeId: string) => {
-      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+  // const loadData = useCallback(
+  //   (startRow: number, storeId: string) => {
+  //     const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
 
-      return fetchDataAndUpdateCache([storeId, pageNumber.toString()], {
-        pageNumber: pageNumber,
-        pageSize: PAGE_SIZE_MINIMUM,
-        storeId: storeId,
-      });
-    },
-    [fetchDataAndUpdateCache],
-  );
+  //     return fetchDataAndUpdateCache([storeId, pageNumber.toString()], {
+  //       pageNumber: pageNumber,
+  //       pageSize: PAGE_SIZE_MINIMUM,
+  //       storeId: storeId,
+  //     });
+  //   },
+  //   [fetchDataAndUpdateCache],
+  // );
 
   const onBuyClick = useCallback(
     async (item: StoreItemCategory) => {
@@ -454,37 +457,11 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     ],
   );
 
-  // const LockedImage: React.FC<{ imageURL: string; isLocked: boolean }> = ({
-  //   imageURL,
-  //   isLocked,
-  // }) => {
-  //   return (
-  //     <div className="relative h-10 w-10">
-  //       <Image
-  //         src={imageURL ?? ""}
-  //         alt="Icon Zlto"
-  //         width={40}
-  //         height={40}
-  //         sizes="100vw"
-  //         priority={true}
-  //         style={{ width: "40px", height: "40px" }}
-  //       />
-  //       {isLocked && (
-  //         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-  //           <FaLock className="text-white" />
-  //         </div>
-  //       )}
-  //     </div>
-  //   );
-  // };
-
   const renderStoreItems = (
     data_storeItems: {
       category: StoreCategory;
       storeItems: { store: Store; items: StoreItemCategorySearchResults }[];
     }[],
-    loadData: (startRow: number, storeId: string) => void,
-    // onBuyClick: () => void
   ) => {
     if (data_storeItems.length === 0) {
       return <NoRowsMessage title="No items found" />;
@@ -848,7 +825,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                   style={{ width: "40px", height: "40px" }}
                 />
                 {currentItem?.storeAccessControlRuleResult?.locked && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-dark bg-opacity-50">
                     <FaLock className="text-white" />
                   </div>
                 )}
@@ -859,14 +836,42 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
             <div className="flex flex-col items-center justify-center gap-4">
               <div className="rounded-lg p-2 text-center md:w-[450px]">
-                This item is currently locked for purchase.
+                This item is currently locked for purchase:
                 <br />
                 <br />
-                <ul className="list-inside list-disc text-left">
-                  {currentItem?.storeAccessControlRuleResult?.reasons?.map(
-                    (error, index) => <li key={`error_${index}`}>{error}</li>,
-                  )}
-                </ul>
+                {currentItem?.storeAccessControlRuleResult?.rules?.map(
+                  (rule, ruleIndex) => (
+                    <div key={`rule_${ruleIndex}`}>
+                      <ul>
+                        {rule.reasons.map((reason, reasonIndex) => (
+                          <li key={`reason_${reasonIndex}`}>
+                            <div className="flex flex-row items-center gap-2">
+                              <IoMdClose className="text-red-400" />
+
+                              <p className="text-sm">{reason.reason}</p>
+                            </div>
+
+                            <ul className="list-insidex ml-10 mt-2 list-disc text-left">
+                              {reason.links?.map((link, linkIndex) => (
+                                <li key={`link_${linkIndex}`}>
+                                  <Link
+                                    key={`link_${linkIndex}`}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue hover:underline"
+                                  >
+                                    {link.title}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ),
+                )}
               </div>
             </div>
             <div className="mt-4 flex flex-grow gap-4">
@@ -914,12 +919,25 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
         {/* RESULTS */}
         <div className="flex flex-col gap-6 px-2 pb-4 md:p-0 md:pb-0">
-          {!session && renderStoreItems(data_storeItems, loadData)}
-          {!!session &&
-            renderStoreItems(
-              data_storeItems_authenticated?.data_storeItems!,
-              loadData,
-            )}
+          {/* anonymous users */}
+          {!session &&
+            sessionStatus != "loading" &&
+            renderStoreItems(data_storeItems)}
+
+          {/* authenticated users */}
+          {!!session && sessionStatus == "authenticated" && (
+            <Suspense
+              isLoading={
+                isLoading_storeItems_authenticated ||
+                !data_storeItems_authenticated?.data_storeItems
+              }
+              error={error_storeItems_authenticated}
+            >
+              {renderStoreItems(
+                data_storeItems_authenticated?.data_storeItems ?? [],
+              )}
+            </Suspense>
+          )}
         </div>
       </div>
     </>

@@ -31,12 +31,28 @@ export interface StoreItemCategory {
   imageURL: string | null;
   amount: number;
   count: number;
-  storeAccessControlRuleResult: StoreAccessControlRuleResult | null;
+  storeAccessControlRuleResult: StoreAccessControlRuleEvaluationResult | null;
 }
 
-export interface StoreAccessControlRuleResult {
+export interface StoreAccessControlRuleEvaluationResult {
   locked: boolean;
-  reasons: string[];
+  rules: StoreAccessControlRuleEvaluationItem[] | null;
+}
+
+export interface StoreAccessControlRuleEvaluationItem {
+  id: string | null;
+  name: string | null;
+  reasons: StoreAccessControlRuleEvaluationItemReason[];
+}
+
+export interface StoreAccessControlRuleEvaluationItemReason {
+  reason: string;
+  links: StoreAccessControlRuleEvaluationItemReasonLink[] | null;
+}
+
+export interface StoreAccessControlRuleEvaluationItemReasonLink {
+  title: string;
+  url: string;
 }
 
 export interface StoreSearchFilter extends PaginationFilter {
