@@ -180,6 +180,7 @@ const StoreItemsCarousel: React.FC<{
                     key={`storeCategoryItem_${id}_${index}`}
                     id={`storeCategoryItem_${id}_${index}`}
                     item={item}
+                    company={title}
                     onClick={() => onClick(item)}
                   />
                 </div>
