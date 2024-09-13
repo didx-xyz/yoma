@@ -1348,7 +1348,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           //ensure DateEnd was updated for re-activation of previously expired opportunities
           if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
-            throw new ValidationException($"The {nameof(Models.Opportunity)} '{result.Title}' cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation.");
+            throw new ValidationException($"The {nameof(Models.Opportunity)} '{result.Title}' cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation");
 
           eventType = EventType.Update;
           break;

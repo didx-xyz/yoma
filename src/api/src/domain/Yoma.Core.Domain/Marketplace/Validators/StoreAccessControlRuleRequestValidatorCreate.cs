@@ -1,5 +1,4 @@
 using Yoma.Core.Domain.Lookups.Interfaces;
-using Yoma.Core.Domain.Marketplace.Interfaces;
 
 namespace Yoma.Core.Domain.Marketplace.Validators
 {
@@ -7,9 +6,8 @@ namespace Yoma.Core.Domain.Marketplace.Validators
   {
     #region Constructor
     public StoreAccessControlRuleRequestValidatorCreate(ICountryService countryService,
-      IMarketplaceService marketplaceService,
       IGenderService genderService)
-        : base(countryService, marketplaceService, genderService)
+        : base(countryService, genderService)
     {
     }
     #endregion

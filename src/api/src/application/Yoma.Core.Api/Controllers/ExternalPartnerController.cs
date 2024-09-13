@@ -32,7 +32,7 @@ namespace Yoma.Core.Api.Controllers
     #region Public Members
     #region Authenticated Actions
     [SwaggerOperation(Summary = "Get a list of users who completed verification for the specified opportunity",
-      Description = "Returns a list of users who have completed verification for the specified opportunity, including the date of completion. No user completions will be returned if the opportunity is not shared with partners. Additionally, users who opted not to share their email will not be included in the response.")]
+      Description = "Returns a list of users who have completed verification for the specified opportunity, including the date of completion. No user completions will be returned if the opportunity is not shared with partners. Additionally, users who opted not to share their email will not be included in the response")]
     [HttpGet("opportunity/{opportunityId}/verify/completed")]
     [ProducesResponseType(typeof(MyOpportunityResponseVerifyCompletedExternal), (int)HttpStatusCode.OK)]
     public IActionResult GetVerificationStatus([FromRoute] Guid opportunityId)
