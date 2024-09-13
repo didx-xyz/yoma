@@ -10,7 +10,7 @@ interface InputProps {
   id: string;
   item: StoreItemCategory;
   // imageURL: string | null;
-  // company: string;
+  company: string | undefined;
   // name: string;
   // amount: number | null;
   // count?: number;
@@ -22,7 +22,7 @@ const ItemCardComponent: React.FC<InputProps> = ({
   id,
   item,
   // imageURL,
-  // company,
+  company,
   // name,
   // amount,
   // count,
@@ -50,9 +50,9 @@ const ItemCardComponent: React.FC<InputProps> = ({
         {/* HEADER & IMAGE */}
         <div className="flex w-full flex-grow flex-row items-start justify-between">
           <div className="flex flex-col items-start justify-start gap-1">
-            {/* <p className="mr-1 max-w-[170px] truncate text-xs font-medium text-gray-dark md:max-w-[250px]">
-              {item.storeId}
-            </p> */}
+            <p className="mr-1 max-w-[170px] truncate text-xs font-medium text-gray-dark md:max-w-[250px]">
+              {company}
+            </p>
             <p className="mr-1 max-w-[170px] truncate text-[18px] font-semibold md:max-w-[250px]">
               {item.name}
             </p>

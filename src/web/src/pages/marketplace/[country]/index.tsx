@@ -814,15 +814,19 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
           <div className="flex flex-col items-center justify-center gap-4">
             {currentItem?.imageURL && (
-              <div className="relative -mt-8 flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+              <div className="relative -mt-8 h-12 w-12 cursor-pointer overflow-hidden rounded-full shadow">
                 <Image
-                  src={currentItem?.imageURL ?? ""}
-                  alt="Icon Zlto"
-                  width={40}
-                  height={40}
-                  sizes="100vw"
-                  priority={true}
-                  style={{ width: "40px", height: "40px" }}
+                  src={currentItem?.imageURL}
+                  alt={`${currentItem.name} Logo`}
+                  width={48}
+                  height={48}
+                  sizes="(max-width: 48px) 30vw, 50vw"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    maxWidth: "48px",
+                    maxHeight: "48px",
+                  }}
                 />
                 {currentItem?.storeAccessControlRuleResult?.locked && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-dark bg-opacity-50">
