@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import type {
   GetStaticPaths,
@@ -60,13 +60,13 @@ interface IParams extends ParsedUrlQuery {
   country: string;
 }
 
-type MarketplaceData = {
+interface MarketplaceData {
   lookups_countries: Country[];
   data_storeItems: {
     category: StoreCategory;
     storeItems: { store: Store; items: StoreItemCategorySearchResults }[];
   }[];
-};
+}
 
 async function fetchMarketplaceData(
   country: string,
