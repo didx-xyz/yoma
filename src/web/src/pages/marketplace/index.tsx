@@ -1,30 +1,30 @@
+import { useAtom, useSetAtom } from "jotai";
 import type { GetStaticProps } from "next";
 import Image from "next/image";
+import { useRouter } from "next/router";
+import { env } from "process";
+import iconLocation from "public/images/icon-location.svg";
 import React, {
   useCallback,
-  type ReactElement,
-  useState,
   useEffect,
   useRef,
+  useState,
+  type ReactElement,
 } from "react";
-import { type NextPageWithLayout } from "~/pages/_app";
+import ReactModal from "react-modal";
+import Select from "react-select";
+import type { Country } from "~/api/models/lookups";
 import { listSearchCriteriaCountries } from "~/api/services/marketplace";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
-import { COUNTRY_WW, THEME_BLUE } from "~/lib/constants";
-import type { Country } from "~/api/models/lookups";
-import Select from "react-select";
-import { useRouter } from "next/router";
-import ReactModal from "react-modal";
-import { LoadingInline } from "~/components/Status/LoadingInline";
-import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
-import { useAtom, useSetAtom } from "jotai";
-import iconLocation from "public/images/icon-location.svg";
 import { InternalServerError } from "~/components/Status/InternalServerError";
+import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
+import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { env } from "process";
-import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import { COUNTRY_WW, THEME_BLUE } from "~/lib/constants";
+import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
+import { type NextPageWithLayout } from "~/pages/_app";
 
 // 👇 SSG
 // This page undergoes static generation at run time on the server-side.
@@ -206,7 +206,7 @@ const Marketplace: NextPageWithLayout<{
           </ReactModal>
         </>
       )}
-      {!countrySelectorDialogVisible && <LoadingInline />}
+      {!countrySelectorDialogVisible && <LoadingSkeleton />}
     </div>
   );
 };
