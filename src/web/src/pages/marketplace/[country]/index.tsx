@@ -1,6 +1,10 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
-import type { GetStaticPaths, GetStaticProps } from "next";
+import type {
+  GetStaticPaths,
+  GetStaticProps,
+  GetStaticPropsContext,
+} from "next";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -57,24 +61,18 @@ interface IParams extends ParsedUrlQuery {
   country: string;
 }
 
-// 👇 SSG
-// This page undergoes static generation at run time on the server-side.
-// The build-time SSG has been disabled due to missing API url configuration in the CI pipeline (see getStaticPaths below).
-// This process ensures that the initial data required for the filter options
-// and the first four items in the carousels are readily available upon page load.
-// Subsequent client-side queries are executed and cached using the queryClient
-// whenever additional data is requested in the carousels (during paging).
-export const getStaticProps: GetStaticProps = async (context) => {
-  // check if marketplace is enabled
-  const marketplace_enabled =
-    env.MARKETPLACE_ENABLED?.toLowerCase() == "true" ? true : false;
+type MarketplaceData = {
+  lookups_countries: Country[];
+  data_storeItems: {
+    category: StoreCategory;
+    storeItems: { store: Store; items: StoreItemCategorySearchResults }[];
+  }[];
+};
 
-  if (!marketplace_enabled)
-    return {
-      props: { marketplace_enabled },
-    };
-
-  const { country } = context.params as IParams;
+async function fetchMarketplaceData(
+  country: string,
+  context?: GetStaticPropsContext,
+): Promise<MarketplaceData> {
   const lookups_countries = await listSearchCriteriaCountries(context);
   const lookups_categories = await listStoreCategories(
     country ?? COUNTRY_WW,
@@ -164,6 +162,32 @@ export const getStaticProps: GetStaticProps = async (context) => {
     }
   }
 
+  return { lookups_countries, data_storeItems };
+}
+
+// 👇 SSG
+// This page undergoes static generation at run time on the server-side for anonymous users.
+// For authenticated users, client-side queries are performed using react-query.
+// This process ensures that the initial data required for the filter options
+// and the first four items in the carousels are readily available upon page load for anonymous users.
+// Subsequent client-side queries are executed and cached using the queryClient
+// whenever additional data is requested in the carousels (during paging).
+export const getStaticProps: GetStaticProps = async (context) => {
+  // check if marketplace is enabled
+  const marketplace_enabled =
+    env.MARKETPLACE_ENABLED?.toLowerCase() == "true" ? true : false;
+
+  if (!marketplace_enabled)
+    return {
+      props: { marketplace_enabled },
+    };
+
+  const { country } = context.params as IParams;
+  const { lookups_countries, data_storeItems } = await fetchMarketplaceData(
+    country,
+    context,
+  );
+
   return {
     props: { country, lookups_countries, data_storeItems, marketplace_enabled },
 
@@ -233,6 +257,15 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   const modalContext = useConfirmationModalContext();
   const myRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // 👇 authenticated query
+  const { data: data_storeItems_authenticated } = useQuery({
+    queryKey: ["marketplace", "items", session?.user?.id, country],
+    queryFn: async () => {
+      return await fetchMarketplaceData(country);
+    },
+    enabled: !!session,
+  });
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(
@@ -421,28 +454,91 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     ],
   );
 
-  const LockedImage: React.FC<{ imageURL: string; isLocked: boolean }> = ({
-    imageURL,
-    isLocked,
-  }) => {
-    return (
-      <div className="relative h-10 w-10">
-        <Image
-          src={imageURL ?? ""}
-          alt="Icon Zlto"
-          width={40}
-          height={40}
-          sizes="100vw"
-          priority={true}
-          style={{ width: "40px", height: "40px" }}
-        />
-        {isLocked && (
-          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
-            <FaLock className="text-white" />
+  // const LockedImage: React.FC<{ imageURL: string; isLocked: boolean }> = ({
+  //   imageURL,
+  //   isLocked,
+  // }) => {
+  //   return (
+  //     <div className="relative h-10 w-10">
+  //       <Image
+  //         src={imageURL ?? ""}
+  //         alt="Icon Zlto"
+  //         width={40}
+  //         height={40}
+  //         sizes="100vw"
+  //         priority={true}
+  //         style={{ width: "40px", height: "40px" }}
+  //       />
+  //       {isLocked && (
+  //         <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50">
+  //           <FaLock className="text-white" />
+  //         </div>
+  //       )}
+  //     </div>
+  //   );
+  // };
+
+  const renderStoreItems = (
+    data_storeItems: {
+      category: StoreCategory;
+      storeItems: { store: Store; items: StoreItemCategorySearchResults }[];
+    }[],
+    loadData: (startRow: number, storeId: string) => void,
+    // onBuyClick: () => void
+  ) => {
+    if (data_storeItems.length === 0) {
+      return <NoRowsMessage title="No items found" />;
+    }
+
+    return data_storeItems.map((category_storeItems, index) => (
+      <div
+        key={`category_${category_storeItems.category.id}_${index}`}
+        className="mb-8 md:mb-4"
+      >
+        {/* CATEGORY NAME AND IMAGES */}
+        <div className="flex flex-row items-center justify-start gap-4 pb-4">
+          <h1 className="text-2xl">{category_storeItems.category.name}</h1>
+
+          <div className="flex flex-grow flex-row items-start overflow-hidden">
+            {category_storeItems.category.storeImageURLs.map(
+              (storeImage, index2) => (
+                <div
+                  className="relative -mr-4 overflow-hidden rounded-full shadow"
+                  style={{
+                    zIndex:
+                      category_storeItems.category.storeImageURLs.length -
+                      index,
+                  }}
+                  key={`storeItems_${category_storeItems.category.id}_${index}_${index2}`}
+                >
+                  <span className="z-0">
+                    <AvatarImage
+                      icon={storeImage ?? null}
+                      alt={`Store Image Logo ${index2}`}
+                      size={40}
+                    />
+                  </span>
+                </div>
+              ),
+            )}
           </div>
-        )}
+        </div>
+
+        {category_storeItems.storeItems.map((storeItem, index2) => (
+          <div
+            key={`category_${category_storeItems.category.id}_${index}_${index2}`}
+          >
+            <StoreItemsCarousel
+              id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
+              title={storeItem.store?.name}
+              data={storeItem.items}
+              //loadData={(startRow) => loadData(startRow, storeItem.store.id)}
+              onClick={onBuyClick}
+            />
+          </div>
+        ))}
       </div>
-    );
+    ));
   };
 
   if (!marketplace_enabled) return <MarketplaceDown />;
@@ -721,7 +817,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         onRequestClose={() => {
           setItemLockedDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[550px] md:rounded-3xl`}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[350px] md:w-[550px] md:rounded-3xl`}
         portalClassName={"fixed z-40"}
         overlayClassName="fixed inset-0 bg-overlay"
       >
@@ -818,63 +914,12 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
         {/* RESULTS */}
         <div className="flex flex-col gap-6 px-2 pb-4 md:p-0 md:pb-0">
-          {data_storeItems.length == 0 && (
-            <NoRowsMessage title="No items found" />
-          )}
-
-          {data_storeItems?.map((category_storeItems, index) => (
-            <div
-              key={`category_${category_storeItems.category.id}_${index}`}
-              className="mb-8 md:mb-4"
-            >
-              {/* CATEGORY NAME AND IMAGES */}
-              <div className="flex flex-row items-center justify-start gap-4 pb-4">
-                <h1 className="text-2xl">
-                  {category_storeItems.category.name}
-                </h1>
-
-                <div className="flex flex-grow flex-row items-start overflow-hidden">
-                  {category_storeItems.category.storeImageURLs.map(
-                    (storeImage, index2) => (
-                      <div
-                        className="relative -mr-4 overflow-hidden rounded-full shadow"
-                        style={{
-                          zIndex:
-                            category_storeItems.category.storeImageURLs.length -
-                            index,
-                        }}
-                        key={`storeItems_${category_storeItems.category.id}_${index}_${index2}`}
-                      >
-                        <span className="z-0">
-                          <AvatarImage
-                            icon={storeImage ?? null}
-                            alt={`Store Image Logo ${index2}`}
-                            size={40}
-                          />
-                        </span>
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
-
-              {category_storeItems?.storeItems?.map((storeItem, index2) => (
-                <div
-                  key={`category_${category_storeItems.category.id}_${index}_${index2}`}
-                >
-                  <StoreItemsCarousel
-                    id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
-                    title={storeItem.store?.name}
-                    data={storeItem.items}
-                    loadData={(startRow) =>
-                      loadData(startRow, storeItem.store.id)
-                    }
-                    onClick={onBuyClick}
-                  />
-                </div>
-              ))}
-            </div>
-          ))}
+          {!session && renderStoreItems(data_storeItems, loadData)}
+          {!!session &&
+            renderStoreItems(
+              data_storeItems_authenticated?.data_storeItems!,
+              loadData,
+            )}
         </div>
       </div>
     </>

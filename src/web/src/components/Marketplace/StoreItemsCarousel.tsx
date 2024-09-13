@@ -27,7 +27,7 @@ const StoreItemsCarousel: React.FC<{
   [id: string]: any;
   title?: string;
   viewAllUrl?: string;
-  loadData: (startRow: number) => Promise<StoreItemCategorySearchResults>;
+  loadData?: (startRow: number) => Promise<StoreItemCategorySearchResults>;
   onClick: (item: any) => void;
   data: StoreItemCategorySearchResults;
   options?: EmblaOptionsType;
@@ -96,6 +96,7 @@ const StoreItemsCarousel: React.FC<{
   const onScroll = useCallback(
     (emblaApi: EmblaCarouselType) => {
       if (!listenForScrollRef.current) return;
+      if (!loadData) return;
 
       setLoadingMore((loadingMore) => {
         const lastSlide = emblaApi.slideNodes().length - 1;
