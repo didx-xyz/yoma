@@ -342,7 +342,7 @@ namespace Yoma.Core.Domain.Entity.Services
           if (request.AddCurrentUserAsAdmin)
             admins.Add(user.Email);
           else if (HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor))
-            throw new ValidationException($"The registering user must be added as an organization admin by default ('{nameof(request.AddCurrentUserAsAdmin)}' must be true).");
+            throw new ValidationException($"The registering user must be added as an organization admin by default ('{nameof(request.AddCurrentUserAsAdmin)}' must be true)");
           result = await AssignAdmins(result, admins, OrganizationReapprovalAction.None);
 
           //upload documents

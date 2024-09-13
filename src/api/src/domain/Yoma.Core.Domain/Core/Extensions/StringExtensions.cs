@@ -140,7 +140,7 @@ namespace Yoma.Core.Domain.Core.Extensions
       input = input.NormalizeTrim();
 
       if (length < 1)
-        throw new ArgumentOutOfRangeException(nameof(length), "Must be at least 1 characters.");
+        throw new ArgumentOutOfRangeException(nameof(length), "Must be at least 1 characters");
 
       return input.Length <= length ? input : input[..length];
     }

@@ -336,7 +336,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         TotalCountOnly = filter.TotalCountOnly,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize,
-        SortOrder = filter.SortOrder
+        SortOrder = filter.SortOrder,
+        NonPaginatedQuery = filter.NonPaginatedQuery
       };
 
       return Search(filterInternal, false);

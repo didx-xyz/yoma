@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.Marketplace.Models
 {
   public class StoreAccessControlRuleRequestBase
@@ -23,5 +25,8 @@ namespace Yoma.Core.Domain.Marketplace.Models
     public List<Guid>? Opportunities { get; set; }
 
     public StoreAccessControlRuleOpportunityCondition? OpportunityOption { get; set; }
+
+    [JsonIgnore]
+    internal bool RequestValidationHandled { get; set; } = false;
   }
 }

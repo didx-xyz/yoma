@@ -35,6 +35,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
     private readonly IOpportunityService _opportunityService;
     private readonly IUserService _userService;
     private readonly StoreAccessControlRuleSearchFilterValidator _storeAccessControlRuleSearchFilterValidator;
+    private readonly StoreAccessControlRuleRequestValidatorCreate _storeAccessControlRuleRequestValidatorCreate;
+    private readonly StoreAccessControlRuleRequestValidatorUpdate _storeAccessControlRuleRequestValidatorUpdate;
     private readonly IRepositoryBatchedValueContainsWithNavigation<StoreAccessControlRule> _storeAccessControlRuleRepistory;
     private readonly IRepository<StoreAccessControlRuleOpportunity> _storeAccessControlRuleOpportunityRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
@@ -56,6 +58,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
       IOpportunityService opportunityService,
       IUserService userService,
       StoreAccessControlRuleSearchFilterValidator storeAccessControlRuleSearchFilterValidator,
+      StoreAccessControlRuleRequestValidatorCreate storeAccessControlRuleRequestValidatorCreate,
+      StoreAccessControlRuleRequestValidatorUpdate storeAccessControlRuleRequestValidatorUpdate,
       IRepositoryBatchedValueContainsWithNavigation<StoreAccessControlRule> storeAccessControlRuleRepistory,
       IRepository<StoreAccessControlRuleOpportunity> storeAccessControlRuleOpportunityRepository,
       IExecutionStrategyService executionStrategyService)
@@ -70,6 +74,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
       _opportunityService = opportunityService;
       _userService = userService;
       _storeAccessControlRuleSearchFilterValidator = storeAccessControlRuleSearchFilterValidator;
+      _storeAccessControlRuleRequestValidatorCreate = storeAccessControlRuleRequestValidatorCreate;
+      _storeAccessControlRuleRequestValidatorUpdate = storeAccessControlRuleRequestValidatorUpdate;
       _storeAccessControlRuleRepistory = storeAccessControlRuleRepistory;
       _storeAccessControlRuleOpportunityRepository = storeAccessControlRuleOpportunityRepository;
       _executionStrategyService = executionStrategyService;
@@ -204,6 +210,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
+      if (!request.RequestValidationHandled) await _storeAccessControlRuleRequestValidatorCreate.ValidateAndThrowAsync(request);
+
       var status = request.PostAsActive ? StoreAccessControlRuleStatus.Active : StoreAccessControlRuleStatus.Inactive;
 
       var organization = _organizationService.GetByIdOrNull(request.OrganizationId, false, false, false);
@@ -263,6 +271,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
+      if (!request.RequestValidationHandled) await _storeAccessControlRuleRequestValidatorUpdate.ValidateAndThrowAsync(request);
+
       var result = GetById(request.Id, true);
 
       if (!Statuses_Updatable.Contains(result.Status))
@@ -279,7 +289,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
 
       if (existingRuleByName != null && existingRuleByName.Id != request.Id)
-        throw new ValidationException($"A store access control rule with the name '{request.Name}' already exists for the selected organization.");
+        throw new ValidationException($"A store access control rule with the name '{request.Name}' already exists for the selected organization");
 
       //TODO: Duplicate rule validation
 
@@ -424,6 +434,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       //no matching rules, resulting in unlcoked status
       if (matchingRules.Count == 0) return result;
 
+      // user context avaliable; evaluate rules against the user profile; rule is retained if user does not meet the conditions, resulting in locked status
       if (user != null)
       {
         var userAge = user.DateOfBirth.HasValue ? (int?)user.DateOfBirth.Value.CalculateAge(null) : null;
@@ -490,59 +501,65 @@ namespace Yoma.Core.Domain.Marketplace.Services
       result.Locked = true;
       result.Rules = [];
 
-      foreach (var rule in matchingRules)
+      // no user context; default locked reason
+      if (user == null)
+        result.Rules.Add(new() { Reasons = [new() { Reason = "Please sign in or sign up to unlock this item" }] });
+      else
       {
-        var evaluationItem = new StoreAccessControlRuleEvaluationItem { Id = rule.Id, Name = rule.Name, Reasons = [] };
-
-        // age condition
-        if (rule.AgeFrom.HasValue || rule.AgeTo.HasValue)
+        foreach (var rule in matchingRules)
         {
-          var ageMessage = string.Empty;
+          var evaluationItem = new StoreAccessControlRuleEvaluationItem { Id = rule.Id, Name = rule.Name, Reasons = [] };
 
-          if (rule.AgeFrom.HasValue && rule.AgeTo.HasValue)
-            ageMessage = $"Age must be between {rule.AgeFrom.Value} and {rule.AgeTo.Value}.";
-          else if (rule.AgeFrom.HasValue)
-            ageMessage = $"Age must be greater than or equal to {rule.AgeFrom.Value}.";
-          else if (rule.AgeTo.HasValue)
-            ageMessage = $"Age must be less than or equal to {rule.AgeTo.Value}.";
-
-          evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
+          // age condition
+          if (rule.AgeFrom.HasValue || rule.AgeTo.HasValue)
           {
-            Reason = ageMessage
-          });
+            var ageMessage = string.Empty;
+
+            if (rule.AgeFrom.HasValue && rule.AgeTo.HasValue)
+              ageMessage = $"Age must be between {rule.AgeFrom.Value} and {rule.AgeTo.Value}";
+            else if (rule.AgeFrom.HasValue)
+              ageMessage = $"Age must be greater than or equal to {rule.AgeFrom.Value}";
+            else if (rule.AgeTo.HasValue)
+              ageMessage = $"Age must be less than or equal to {rule.AgeTo.Value}";
+
+            evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
+            {
+              Reason = ageMessage
+            });
+          }
+
+          // gender condition
+          if (rule.GenderId.HasValue)
+          {
+            var genderMessage = $"{rule.Gender} users only";
+
+            evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
+            {
+              Reason = genderMessage
+            });
+          }
+
+          // opportunity condition
+          if (rule.Opportunities != null && rule.Opportunities.Count > 0)
+          {
+            var opportunityMessage = rule.OpportunityOption == StoreAccessControlRuleOpportunityCondition.All
+              ? "Must complete the following opportunities:" : "Must complete at least one of the following opportunities:";
+
+            var opportunityLinks = rule.Opportunities.Select(o => new StoreAccessControlRuleEvaluationItemReasonLink
+            {
+              Title = o.Title,
+              URL = o.YomaInfoURL(_appSettings.AppBaseURL)
+            }).ToList();
+
+            evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
+            {
+              Reason = opportunityMessage,
+              Links = opportunityLinks
+            });
+          }
+
+          result.Rules.Add(evaluationItem);
         }
-
-        // gender condition
-        if (rule.GenderId.HasValue)
-        {
-          var genderMessage = $"{rule.Gender} users only.";
-
-          evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
-          {
-            Reason = genderMessage
-          });
-        }
-
-        // opportunity condition
-        if (rule.Opportunities != null && rule.Opportunities.Count > 0)
-        {
-          var opportunityMessage = rule.OpportunityOption == StoreAccessControlRuleOpportunityCondition.All
-            ? "Must complete the following opportunities:" : "Must complete at least one of the following opportunities:";
-
-          var opportunityLinks = rule.Opportunities.Select(o => new StoreAccessControlRuleEvaluationItemReasonLink
-          {
-            Title = o.Title,
-            URL = o.YomaInfoURL(_appSettings.AppBaseURL)
-          }).ToList();
-
-          evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
-          {
-            Reason = opportunityMessage,
-            Links = opportunityLinks
-          });
-        }
-
-        result.Rules.Add(evaluationItem);
       }
 
       return result;

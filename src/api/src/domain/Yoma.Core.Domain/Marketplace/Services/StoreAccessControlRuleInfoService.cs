@@ -79,6 +79,9 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       await _storeAccessControlRuleRequestValidatorCreate.ValidateAndThrowAsync(request);
 
+      await ValidateStoreInfo(request);
+
+      request.RequestValidationHandled = true;
       var result = await _storeAccessControlRuleService.Create(request);
 
       _memoryCache.Remove(CacheHelper.GenerateKey<StoreSearchResults>(result.StoreCountryCodeAlpha2));
@@ -93,6 +96,9 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       await _storeAccessControlRuleRequestValidatorUpdate.ValidateAndThrowAsync(request);
 
+      await ValidateStoreInfo(request);
+
+      request.RequestValidationHandled = true;
       var result = await _storeAccessControlRuleService.Update(request);
 
       _memoryCache.Remove(CacheHelper.GenerateKey<StoreSearchResults>(result.StoreCountryCodeAlpha2));
@@ -109,6 +115,33 @@ namespace Yoma.Core.Domain.Marketplace.Services
     #endregion
 
     #region Private Members
+    private async Task ValidateStoreInfo(StoreAccessControlRuleRequestBase request)
+    {
+      var storeExists = await StoreExists(request.StoreCountryCodeAlpha2, request.StoreId);
+      if (!storeExists)
+        throw new ValidationException($"Store does not exist in the specified country ('{request.StoreCountryCodeAlpha2}')");
+
+      if (request.StoreItemCategories != null && request.StoreItemCategories.Count > 0)
+        foreach (var category in request.StoreItemCategories)
+        {
+          var categoryExists = await StoreItemCategoryExists(request.StoreId, category);
+          if (!categoryExists)
+            throw new ValidationException($"One or more selected store item categories do not exist for the given store");
+        }
+    }
+
+    private async Task<bool> StoreExists(string countryCodeAlpha2, string storeId)
+    {
+      var result = await _marketplaceService.SearchStores(new StoreSearchFilter { CountryCodeAlpha2 = countryCodeAlpha2 });
+      return result.Items.Any(x => x.Id == storeId);
+    }
+
+    private async Task<bool> StoreItemCategoryExists(string storeId, string storeItemCategoryId)
+    {
+      var result = await _marketplaceService.SearchStoreItemCategories(new StoreItemCategorySearchFilter { StoreId = storeId });
+      return result.Items.Any(x => x.Id == storeItemCategoryId);
+    }
+
     private async Task<StoreAccessControlRuleInfo> ToInfo(StoreAccessControlRule item)
     {
       var storeSearchResults = await StoresCached(item.StoreCountryCodeAlpha2);

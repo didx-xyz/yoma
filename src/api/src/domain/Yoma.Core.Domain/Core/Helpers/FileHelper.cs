@@ -33,7 +33,7 @@ namespace Yoma.Core.Domain.Core.Helpers
       fileName = fileName.Trim();
 
       if (!Path.GetExtension(fileName).Equals(".zip", StringComparison.CurrentCultureIgnoreCase))
-        throw new ArgumentException("File name must end with '.zip' extension.", nameof(fileName));
+        throw new ArgumentException("File name must end with '.zip' extension", nameof(fileName));
 
       using var memoryStream = new MemoryStream();
       using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))

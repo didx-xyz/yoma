@@ -11,17 +11,14 @@ namespace Yoma.Core.Domain.Marketplace.Validators
   {
     #region Class Variables
     private readonly ICountryService _countryService;
-    private readonly IMarketplaceService _marketplaceService;
     private readonly IGenderService _genderService;
     #endregion
 
     #region Constructor
     public StoreAccessControlRuleRequestValidatorBase(ICountryService countryService,
-      IMarketplaceService marketplaceService,
       IGenderService genderService)
     {
       _countryService = countryService;
-      _marketplaceService = marketplaceService;
       _genderService = genderService;
 
       RuleFor(x => x.Name).NotEmpty().Length(1, 255).WithMessage("'{PropertyName}' is required and must be between 1 and 255 characters long.");
@@ -31,20 +28,11 @@ namespace Yoma.Core.Domain.Marketplace.Validators
       RuleFor(x => x.OrganizationId).NotEmpty().WithMessage("Organization is required.");
 
       RuleFor(x => x.StoreCountryCodeAlpha2).Must(value => !string.IsNullOrEmpty(value) && CountryExists(value)).WithMessage("{PropertyName} is required and must be a valid country alpha 2 code.");
-      RuleFor(x => x.StoreId).NotEmpty().MustAsync((request, storeId, cancellationToken) => StoreExists(request.StoreCountryCodeAlpha2, storeId)).WithMessage("{PropertyName} is required and must exist in the specified country.");
+      RuleFor(x => x.StoreId).NotEmpty().WithMessage("{PropertyName} is required.");
 
-      RuleFor(x => x.StoreItemCategories).Must(x => x == null || (x.Count > 0 && x.All(item => !string.IsNullOrWhiteSpace(item))))
-        .WithMessage("{PropertyName} must contain at least one item if provided, and cannot contain empty or invalid values.")
-        .MustAsync(async (request, categories, cancellationToken) =>
-        {
-          if (categories == null) return true;
-
-          foreach (var category in categories)
-            if (!await StoreItemCategoryExists(request.StoreId, category)) return false;
-          return true;
-        })
-        .When(x => x.StoreItemCategories != null && x.StoreItemCategories.Count > 0)
-        .WithMessage("One or more selected store item categories do not exist for the given store.");
+      RuleFor(x => x.StoreItemCategories)
+          .Must(x => x == null || (x.Count > 0 && x.All(item => !string.IsNullOrWhiteSpace(item))))
+          .WithMessage("{PropertyName} must contain at least one item if provided, and cannot contain empty values.");
 
       RuleFor(x => x.AgeFrom).GreaterThanOrEqualTo(0).When(x => x.AgeFrom.HasValue).WithMessage("From age must be 0 or greater.");
       RuleFor(x => x.AgeTo).GreaterThanOrEqualTo(0).When(x => x.AgeTo.HasValue).WithMessage("To age must be 0 or greater.");
@@ -65,24 +53,6 @@ namespace Yoma.Core.Domain.Marketplace.Validators
     {
       if (string.IsNullOrEmpty(countryCodeAlpha2)) return false;
       return _countryService.GetByCodeAplha2OrNull(countryCodeAlpha2) != null;
-    }
-
-    private async Task<bool> StoreExists(string countryCodeAlpha2, string storeId)
-    {
-      if (string.IsNullOrEmpty(countryCodeAlpha2)) return false;
-      if (string.IsNullOrEmpty(storeId)) return false;
-
-      var result = await _marketplaceService.SearchStores(new Models.StoreSearchFilter { CountryCodeAlpha2 = countryCodeAlpha2 });
-      return result.Items.Any(x => x.Id == storeId);
-    }
-
-    private async Task<bool> StoreItemCategoryExists(string storeId, string storeItemCategoryId)
-    {
-      if (string.IsNullOrEmpty(storeId)) return false;
-      if (string.IsNullOrEmpty(storeItemCategoryId)) return false;
-
-      var result = await _marketplaceService.SearchStoreItemCategories(new Models.StoreItemCategorySearchFilter { StoreId = storeId });
-      return result.Items.Any(x => x.Id == storeItemCategoryId);
     }
 
     private bool GenderExistsAndValid(Guid id)
