@@ -196,20 +196,35 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Search for store access control rules based on the supplied filter (Admin role required)")]
+    [SwaggerOperation(Summary = "Search for store access control rules based on the supplied filter (Admin or Organization Admin roles required)")]
     [HttpPost("store/rule/search")]
-    [ProducesResponseType(typeof(StoreAccessControlRuleSearchResults), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    [ProducesResponseType(typeof(StoreAccessControlRuleSearchResultsInfo), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> SearchStoreAccessControlRule([FromBody] StoreAccessControlRuleSearchFilter filter)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreAccessControlRule));
 
-      var result = await _storeAccessControlRuleInfoService.Search(filter);
+      var result = await _storeAccessControlRuleInfoService.Search(filter, true);
       _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreAccessControlRule));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Preview the creation of a store access control rule (Admin role required)")]
+    [HttpPost("store/rule/preview")]
+    [ProducesResponseType(typeof(StoreAccessControlRulePreviewInfo), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<IActionResult> CreateStoreAccessControlRulePreview([FromBody] StoreAccessControlRuleRequestCreate request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(CreateStoreAccessControlRulePreview));
+
+      var result = await _storeAccessControlRuleInfoService.CreatePreview(request);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(CreateStoreAccessControlRulePreview));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+     
     [SwaggerOperation(Summary = "Create a store access control rule (Admin role required)")]
     [HttpPost("store/rule")]
     [ProducesResponseType(typeof(StoreAccessControlRuleInfo), (int)HttpStatusCode.OK)]
@@ -221,6 +236,21 @@ namespace Yoma.Core.Api.Controllers
       var result = await _storeAccessControlRuleInfoService.Create(request);
 
       _logger.LogInformation("Request {requestName} handled", nameof(CreateStoreAccessControlRule));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Preview the update of the specified store access control rule (Admin role required)")]
+    [HttpPatch("store/rule/preview")]
+    [ProducesResponseType(typeof(StoreAccessControlRuleInfo), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<IActionResult> UpdateStoreAccessControlRulePreview([FromBody] StoreAccessControlRuleRequestUpdate request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UpdateStoreAccessControlRulePreview));
+
+      var result = await _storeAccessControlRuleInfoService.UpdatePreview(request);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UpdateStoreAccessControlRulePreview));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }

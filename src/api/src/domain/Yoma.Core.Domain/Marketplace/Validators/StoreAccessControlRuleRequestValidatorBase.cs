@@ -2,7 +2,6 @@ using FluentValidation;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Lookups.Interfaces;
-using Yoma.Core.Domain.Marketplace.Interfaces;
 
 namespace Yoma.Core.Domain.Marketplace.Validators
 {

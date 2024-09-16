@@ -156,7 +156,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
         .ToList();
     }
 
-    public StoreAccessControlRuleSearchResultsInternal Search(StoreAccessControlRuleSearchFilter filter)
+    public StoreAccessControlRuleSearchResults Search(StoreAccessControlRuleSearchFilter filter, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
@@ -176,11 +176,19 @@ namespace Yoma.Core.Domain.Marketplace.Services
       }
 
       //organizations
-      if (filter.Organizations != null && filter.Organizations.Count != 0)
+      if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
       {
-        filter.Organizations = filter.Organizations.Distinct().ToList();
-        query = query.Where(rule => filter.Organizations.Contains(rule.OrganizationId));
+        if (filter.Organizations != null && filter.Organizations.Count != 0)
+        {
+          filter.Organizations = filter.Organizations.Distinct().ToList();
+          _organizationService.IsAdminsOf(filter.Organizations, true);
+        }
+        else
+          filter.Organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
       }
+
+      if (filter.Organizations != null && filter.Organizations.Count != 0)
+        query = query.Where(o => filter.Organizations.Contains(o.OrganizationId));
 
       //statuses
       if (filter.Statuses != null && filter.Statuses.Count != 0)
@@ -193,7 +201,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       if (!filter.NonPaginatedQuery)
         query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
 
-      var result = new StoreAccessControlRuleSearchResultsInternal();
+      var result = new StoreAccessControlRuleSearchResults();
 
       //pagination
       if (filter.PaginationEnabled)
@@ -206,29 +214,35 @@ namespace Yoma.Core.Domain.Marketplace.Services
       return result;
     }
 
+    public StoreAccessControlRulePreview CreatePreview(StoreAccessControlRuleRequestCreate request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      if (!request.RequestValidationHandled) _storeAccessControlRuleRequestValidatorCreate.ValidateAndThrow(request);
+
+      var organization = _organizationService.GetById(request.OrganizationId, false, false, false);
+      var country = _countryService.GetByCodeAplha2(request.StoreCountryCodeAlpha2);
+
+      ValidateRuleOrganizationAndName(request, organization, null);
+      ValidateRuleDuplicatesAcrossOrganizations(request, null);
+      ValidateRuleOpportunities(country.Id, organization, request.Opportunities);
+
+      return new StoreAccessControlRulePreview
+      {
+        RulesRelated = PreviewRelatedRules(request.StoreId),
+      };
+    }
+
     public async Task<StoreAccessControlRule> Create(StoreAccessControlRuleRequestCreate request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       if (!request.RequestValidationHandled) await _storeAccessControlRuleRequestValidatorCreate.ValidateAndThrowAsync(request);
 
-      var status = request.PostAsActive ? StoreAccessControlRuleStatus.Active : StoreAccessControlRuleStatus.Inactive;
-
-      var organization = _organizationService.GetByIdOrNull(request.OrganizationId, false, false, false);
-      if (organization == null || organization.Status != Entity.OrganizationStatus.Active)
-        throw new ValidationException("The selected organization either does not exist or is inactive");
-
-#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-      var itemExisting = _storeAccessControlRuleRepistory.Query().Where(o => o.OrganizationId == organization.Id && o.Name.ToLower() == request.Name.ToLower()).SingleOrDefault();
-#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-      if (itemExisting != null)
-        throw new ValidationException($"A store access control rule with the name '{request.Name}' already exists for the selected organization");
-
-      //TODO: Duplicate rule validation
-
+      var organization = _organizationService.GetById(request.OrganizationId, false, false, false);
       var country = _countryService.GetByCodeAplha2(request.StoreCountryCodeAlpha2);
-
       var gender = request.GenderId.HasValue ? _genderService.GetById(request.GenderId.Value) : null;
+      var status = request.PostAsActive ? StoreAccessControlRuleStatus.Active : StoreAccessControlRuleStatus.Inactive;
 
       var result = new StoreAccessControlRule
       {
@@ -251,13 +265,17 @@ namespace Yoma.Core.Domain.Marketplace.Services
         Status = StoreAccessControlRuleStatus.Active,
       };
 
+      ValidateRuleOrganizationAndName(request, organization, null);
+      ValidateRuleDuplicatesAcrossOrganizations(request, null);
+      var opportunitiesValidated = ValidateRuleOpportunities(result.StoreCountryId, organization, request.Opportunities);
+
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
         result = await _storeAccessControlRuleRepistory.Create(result);
 
-        await AssignOpportunities(request.Opportunities, result, organization);
+        await AssignOpportunities(opportunitiesValidated, result);
 
         scope.Complete();
       });
@@ -267,6 +285,26 @@ namespace Yoma.Core.Domain.Marketplace.Services
       return result;
     }
 
+    public StoreAccessControlRulePreview UpdatePreview(StoreAccessControlRuleRequestUpdate request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      if (!request.RequestValidationHandled) _storeAccessControlRuleRequestValidatorUpdate.ValidateAndThrow(request);
+
+      var ruleExisting = GetById(request.Id, true);
+      var organization = _organizationService.GetById(request.OrganizationId, false, false, false);
+      var country = _countryService.GetByCodeAplha2(request.StoreCountryCodeAlpha2);
+
+      ValidateRuleOrganizationAndName(request, organization, ruleExisting.Id);
+      ValidateRuleDuplicatesAcrossOrganizations(request, ruleExisting.Id);
+      ValidateRuleOpportunities(country.Id, organization, request.Opportunities);
+
+      return new StoreAccessControlRulePreview
+      {
+        RulesRelated = PreviewRelatedRules(request.StoreId),
+      };
+    }
+
     public async Task<StoreAccessControlRule> Update(StoreAccessControlRuleRequestUpdate request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
@@ -274,27 +312,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
       if (!request.RequestValidationHandled) await _storeAccessControlRuleRequestValidatorUpdate.ValidateAndThrowAsync(request);
 
       var result = GetById(request.Id, true);
-
-      if (!Statuses_Updatable.Contains(result.Status))
-        throw new ValidationException($"Store access control rule can no longer be updated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
-
-      var organization = _organizationService.GetByIdOrNull(request.OrganizationId, false, false, false);
-      if (organization == null || organization.Status != Entity.OrganizationStatus.Active)
-        throw new ValidationException("The selected organization either does not exist or is inactive");
-
-#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-      var existingRuleByName = _storeAccessControlRuleRepistory.Query()
-          .Where(o => o.OrganizationId == organization.Id && o.Name.ToLower() == request.Name.ToLower())
-          .SingleOrDefault();
-#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-
-      if (existingRuleByName != null && existingRuleByName.Id != request.Id)
-        throw new ValidationException($"A store access control rule with the name '{request.Name}' already exists for the selected organization");
-
-      //TODO: Duplicate rule validation
-
+      var organization = _organizationService.GetById(request.OrganizationId, false, false, false);
       var country = _countryService.GetByCodeAplha2(request.StoreCountryCodeAlpha2);
-
       var gender = request.GenderId.HasValue ? _genderService.GetById(request.GenderId.Value) : null;
 
       result.Name = request.Name;
@@ -313,17 +332,22 @@ namespace Yoma.Core.Domain.Marketplace.Services
       result.Gender = gender?.Name;
       result.OpportunityOption = request.OpportunityOption;
 
+      var opportunityIdsToRemove = result.Opportunities?.Where(o => request.Opportunities == null || !request.Opportunities.Contains(o.Id)).ToList();
+      var opportunityIdsToAdd = request.Opportunities?.Where(o => result.Opportunities == null || !result.Opportunities.Any(i => i.Id == o)).ToList();
+
+      ValidateRuleOrganizationAndName(request, organization, null);
+      ValidateRuleDuplicatesAcrossOrganizations(request, null);
+      var opportunitiesValidated = ValidateRuleOpportunities(result.StoreCountryId, organization, request.Opportunities);
+      var opportunitiesToAdd = opportunitiesValidated?.Where(o => opportunityIdsToAdd == null || opportunityIdsToAdd.Contains(o.Id)).ToList();
+
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
         result = await _storeAccessControlRuleRepistory.Update(result);
 
-        var opportunitiesToRemove = result.Opportunities?.Where(o => request.Opportunities == null || !request.Opportunities.Contains(o.Id)).ToList();
-        var opportunitiesToAdd = request.Opportunities?.Where(o => result.Opportunities == null || !result.Opportunities.Any(i => i.Id == o)).ToList();
-
-        if (opportunitiesToRemove != null && opportunitiesToRemove.Count > 0)
-          foreach (var opportunity in opportunitiesToRemove)
+        if (opportunityIdsToRemove != null && opportunityIdsToRemove.Count > 0)
+          foreach (var opportunity in opportunityIdsToRemove)
           {
             var item = _storeAccessControlRuleOpportunityRepository.Query().SingleOrDefault(o => o.StoreAccessControlRuleId == result.Id && o.OpportunityId == opportunity.Id);
             if (item == null) continue;
@@ -333,7 +357,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
             result.Opportunities?.Remove(opportunity);
           }
 
-        await AssignOpportunities(opportunitiesToAdd, result, organization);
+        await AssignOpportunities(opportunitiesToAdd, result);
 
         scope.Complete();
       });
@@ -383,50 +407,12 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       return result;
     }
-    #endregion
-
-    #region Private Members
-    private async Task AssignOpportunities(List<Guid>? opportunities, StoreAccessControlRule result, Organization organization)
-    {
-      if (opportunities == null || opportunities.Count == 0) return;
-
-      result.Opportunities ??= [];
-
-      foreach (var opportunityId in opportunities)
-      {
-        var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
-        if (opportunity.OrganizationId != organization.Id)
-          throw new ValidationException($"Opportunity '{opportunity.Title}' does not belong to the specified organization");
-
-        if (!opportunity.Published)
-          throw new ValidationException($"Opportunity '{opportunity.Title}' is not published");
-
-        if (!opportunity.VerificationEnabled)
-          throw new ValidationException($"Opportunity '{opportunity.Title}' does not have verification enabled");
-
-        if (opportunity.Countries != null && !opportunity.Countries.Any(o => o.Id == result.StoreCountryId))
-          throw new ValidationException($"Opportunity '{opportunity.Title}' is not available in the selected store country");
-
-        var item = _storeAccessControlRuleOpportunityRepository.Query().SingleOrDefault(o => o.StoreAccessControlRuleId == result.Id && o.OpportunityId == opportunity.Id);
-        if (item != null) continue;
-
-        item = new StoreAccessControlRuleOpportunity
-        {
-          StoreAccessControlRuleId = result.Id,
-          OpportunityId = opportunity.Id
-        };
-
-        await _storeAccessControlRuleOpportunityRepository.Create(item);
-
-        result.Opportunities.Add(opportunity.ToOpportunityItem());
-      }
-    }
 
     public StoreAccessControlRuleEvaluationResult EvaluateStoreAccessControlRules(StoreItemCategory storeItemCategory, User? user, List<MyOpportunityInfo>? myOpportunitiesCompleted)
     {
       ArgumentNullException.ThrowIfNull(storeItemCategory, nameof(storeItemCategory));
 
-      var rules = RulesActiveCached();
+      var rules = RulesUpdatableCached().Where(o => o.Status == StoreAccessControlRuleStatus.Active).ToList();
 
       var result = new StoreAccessControlRuleEvaluationResult();
       var matchingRules = rules.Where(o => o.StoreId == storeItemCategory.StoreId && (o.StoreItemCategories == null || o.StoreItemCategories.Contains(storeItemCategory.Id))).ToList();
@@ -567,16 +553,160 @@ namespace Yoma.Core.Domain.Marketplace.Services
     #endregion
 
     #region Private Members
-    private List<StoreAccessControlRule> RulesActiveCached()
+    private List<StoreAccessControlRulePreviewItem> PreviewRelatedRules(string storeId)
+    {
+      var searchFilter = new StoreAccessControlRuleSearchFilter
+      {
+        Stores = [storeId],
+        Statuses = [StoreAccessControlRuleStatus.Active],
+        NonPaginatedQuery = true
+      };
+
+      var searchResults = Search(searchFilter, false);
+
+      return searchResults.Items.Select(o => new StoreAccessControlRulePreviewItem { Rule = o }).ToList();
+    }
+
+    private void ValidateRuleOrganizationAndName(StoreAccessControlRuleRequestBase request, Organization organization, Guid? existingRuleId)
+    {
+      if (organization.Status != Entity.OrganizationStatus.Active)
+        throw new ValidationException("The selected organization is inactive.");
+
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+      var existingRuleByName = _storeAccessControlRuleRepistory.Query()
+          .Where(o => o.OrganizationId == organization.Id && o.Name.ToLower() == request.Name.ToLower())
+          .SingleOrDefault();
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+
+      if (existingRuleByName != null && (existingRuleId == null || existingRuleByName.Id != existingRuleId))
+        throw new ValidationException($"A store access control rule with the name '{request.Name}' already exists for the selected organization.");
+    }
+
+    private void ValidateRuleDuplicatesAcrossOrganizations(StoreAccessControlRuleRequestBase request, Guid? existingRuleId)
+    {
+      // retrieve active rules excluding the one being updated, if applicable
+      var existingRules = RulesUpdatableCached()
+          .Where(o => o.Status != StoreAccessControlRuleStatus.Deleted && (!existingRuleId.HasValue || o.Id != existingRuleId.Value))
+          .ToList();
+
+      // check for direct match across all organizations
+      var duplicateRule = existingRules
+          .FirstOrDefault(o => o.StoreId == request.StoreId
+                    && (o.StoreItemCategories ?? []).SequenceEqual(request.StoreItemCategories ?? [])
+                    && o.AgeFrom == request.AgeFrom
+                    && o.AgeTo == request.AgeTo
+                    && o.GenderId == request.GenderId
+                    && ((o.Opportunities == null && request.Opportunities == null)
+                        || (o.Opportunities != null && request.Opportunities != null
+                            && o.Opportunities.Select(o => o.Id).OrderBy(x => x)
+                                .SequenceEqual(request.Opportunities.OrderBy(x => x))))
+                    && o.OpportunityOption == request.OpportunityOption);
+
+      if (duplicateRule != null)
+      {
+        var reasons = new List<string>();
+
+        // age condition
+        if (duplicateRule.AgeFrom.HasValue || duplicateRule.AgeTo.HasValue)
+        {
+          if (duplicateRule.AgeFrom.HasValue && duplicateRule.AgeTo.HasValue)
+            reasons.Add($"Age must be between {duplicateRule.AgeFrom.Value} and {duplicateRule.AgeTo.Value}.");
+          else if (duplicateRule.AgeFrom.HasValue)
+            reasons.Add($"Age must be greater than or equal to {duplicateRule.AgeFrom.Value}.");
+          else if (duplicateRule.AgeTo.HasValue)
+            reasons.Add($"Age must be less than or equal to {duplicateRule.AgeTo.Value}.");
+        }
+
+        // gender condition
+        if (duplicateRule.GenderId.HasValue)
+        {
+          var genderMessage = $"{duplicateRule.Gender} users only.";
+          reasons.Add(genderMessage);
+        }
+
+        // opportunity condition
+        if (duplicateRule.Opportunities != null && duplicateRule.Opportunities.Count > 0)
+        {
+          var opportunityMessage = duplicateRule.OpportunityOption == StoreAccessControlRuleOpportunityCondition.All
+              ? "Must complete the following opportunities:" : "Must complete at least one of the following opportunities:";
+
+          var opportunityTitles = string.Join(", ", duplicateRule.Opportunities.Select(o => o.Title));
+          reasons.Add($"{opportunityMessage} {opportunityTitles}.");
+        }
+
+        var message = $"Will result in a duplicate rule spanning all organizations. Conditions: {string.Join(" ", reasons)}";
+        throw new ValidationException(message);
+      }
+    }
+
+    private List<Opportunity.Models.Opportunity>? ValidateRuleOpportunities(Guid storeCountryId, Organization organization, List<Guid>? opportunities)
+    {
+      if (opportunities == null || opportunities.Count == 0) return null;
+
+      var validatedOpportunities = new List<Opportunity.Models.Opportunity>();
+
+      foreach (var opportunityId in opportunities)
+      {
+        var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
+
+        if (opportunity.OrganizationId != organization.Id)
+          throw new ValidationException($"Opportunity '{opportunity.Title}' does not belong to the specified organization");
+
+        if (!opportunity.Published)
+          throw new ValidationException($"Opportunity '{opportunity.Title}' is not published");
+
+        if (!opportunity.VerificationEnabled)
+          throw new ValidationException($"Opportunity '{opportunity.Title}' does not have verification enabled");
+
+        if (opportunity.Countries != null && !opportunity.Countries.Any(o => o.Id == storeCountryId))
+          throw new ValidationException($"Opportunity '{opportunity.Title}' is not available in the selected store country");
+
+        validatedOpportunities.Add(opportunity);
+      }
+
+      return validatedOpportunities;
+    }
+
+
+    private async Task AssignOpportunities(List<Opportunity.Models.Opportunity>? opportunities, StoreAccessControlRule result)
+    {
+      if (opportunities == null || opportunities.Count == 0) return;
+
+      result.Opportunities ??= [];
+
+      foreach (var opportunity in opportunities)
+      {
+        var item = _storeAccessControlRuleOpportunityRepository
+            .Query()
+            .SingleOrDefault(o => o.StoreAccessControlRuleId == result.Id && o.OpportunityId == opportunity.Id);
+
+        if (item != null) continue;
+
+        item = new StoreAccessControlRuleOpportunity
+        {
+          StoreAccessControlRuleId = result.Id,
+          OpportunityId = opportunity.Id
+        };
+
+        await _storeAccessControlRuleOpportunityRepository.Create(item);
+
+        result.Opportunities.Add(opportunity.ToOpportunityItem());
+      }
+    }
+
+    #endregion
+
+    #region Private Members
+    private List<StoreAccessControlRule> RulesUpdatableCached()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
-        return Search(new StoreAccessControlRuleSearchFilter { NonPaginatedQuery = true, Statuses = [StoreAccessControlRuleStatus.Active] }).Items;
+        return Search(new StoreAccessControlRuleSearchFilter { NonPaginatedQuery = true, Statuses = [.. Statuses_Updatable] }, false).Items;
 
       var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<StoreAccessControlRule>(), entry =>
       {
         entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
         entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-        return Search(new StoreAccessControlRuleSearchFilter { NonPaginatedQuery = true, Statuses = [StoreAccessControlRuleStatus.Active] }).Items;
+        return Search(new StoreAccessControlRuleSearchFilter { NonPaginatedQuery = true, Statuses = [.. Statuses_Updatable] }, false).Items;
       }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(StoreAccessControlRule)}s'");
 
       return result;
