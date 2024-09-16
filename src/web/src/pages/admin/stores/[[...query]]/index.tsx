@@ -382,7 +382,7 @@ const Stores: NextPageWithLayout<{
                   )
                 }
               >
-                Make in-activate
+                Make inactive
               </button>
             </li>
           )}
@@ -394,7 +394,7 @@ const Stores: NextPageWithLayout<{
                   updateRuleStatus(item.id, StoreAccessControlRuleStatus.Active)
                 }
               >
-                Make activate
+                Make active
               </button>
             </li>
           )}
