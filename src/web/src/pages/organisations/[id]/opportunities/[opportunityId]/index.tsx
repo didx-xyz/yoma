@@ -2235,6 +2235,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       Choose the reward that participants will earn after
                       successfully completing the opportunity.
                     </p>
+                    {organisation?.zltoRewardPool && (
+                      <div className="badge !rounded-full bg-orange px-4 text-white">
+                        Available Balance:{" "}
+                        {organisation?.zltoRewardBalance ?? 0}Z
+                      </div>
+                    )}
                     {!formStateStep3.isValid && <FormRequiredFieldMessage />}
                   </div>
 
@@ -2348,7 +2354,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       </div>
                     </FormField>
 
-                    {organisation?.zltoRewardPool != null && (
+                    {/* {organisation?.zltoRewardPool != null && (
                       <FormMessage messageType={FormMessageType.Warning}>
                         <strong>Organisation-Level Pool:</strong> The
                         organization&apos;s reward pool is checked first. If the
@@ -2366,7 +2372,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         </strong>
                         .
                       </FormMessage>
-                    )}
+                    )} */}
 
                     {opportunity?.zltoRewardPool != null && (
                       <FormMessage messageType={FormMessageType.Info}>
