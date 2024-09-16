@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.Marketplace.Models
   {
     public int? TotalCount { get; set; }
 
-    public List<StoreAccessControlRuleInfo> Items { get; set; }
+    public List<StoreAccessControlRule> Items { get; set; }
   }
 }

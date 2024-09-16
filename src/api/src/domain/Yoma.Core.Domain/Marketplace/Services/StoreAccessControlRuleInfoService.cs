@@ -61,15 +61,38 @@ namespace Yoma.Core.Domain.Marketplace.Services
       return results;
     }
 
-    public async Task<StoreAccessControlRuleSearchResults> Search(StoreAccessControlRuleSearchFilter filter)
+    public async Task<StoreAccessControlRuleSearchResultsInfo> Search(StoreAccessControlRuleSearchFilter filter, bool ensureOrganizationAuthorization)
     {
-      var results = _storeAccessControlRuleService.Search(filter);
+      var results = _storeAccessControlRuleService.Search(filter, ensureOrganizationAuthorization);
 
       var items = await Task.WhenAll(results.Items.Select(ToInfo));
-      return new StoreAccessControlRuleSearchResults
+      return new StoreAccessControlRuleSearchResultsInfo
       {
         TotalCount = results.TotalCount,
         Items = [.. items]
+      };
+    }
+
+    public async Task<StoreAccessControlRulePreviewInfo> CreatePreview(StoreAccessControlRuleRequestCreate request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      await _storeAccessControlRuleRequestValidatorCreate.ValidateAndThrowAsync(request);
+
+      await ValidateStoreInfo(request);
+
+      request.RequestValidationHandled = true;
+      var result = _storeAccessControlRuleService.CreatePreview(request);
+
+      return new StoreAccessControlRulePreviewInfo
+      {
+        UserCount = result.UserCount,
+        UserCountTotal = result.UserCountTotal,
+        RulesRelated = [.. (await Task.WhenAll(result.RulesRelated.Select(async item => new StoreAccessControlRulePreviewItemInfo
+        {
+          UserCount = item.UserCount,
+          Rule = await ToInfo(item.Rule)
+        })))]
       };
     }
 
@@ -88,6 +111,29 @@ namespace Yoma.Core.Domain.Marketplace.Services
       _memoryCache.Remove(CacheHelper.GenerateKey<StoreItemCategorySearchResults>(result.StoreId));
 
       return await ToInfo(result);
+    }
+
+    public async Task<StoreAccessControlRulePreviewInfo> UpdatePreview(StoreAccessControlRuleRequestUpdate request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      await _storeAccessControlRuleRequestValidatorUpdate.ValidateAndThrowAsync(request);
+
+      await ValidateStoreInfo(request);
+
+      request.RequestValidationHandled = true;
+      var result = _storeAccessControlRuleService.UpdatePreview(request);
+
+      return new StoreAccessControlRulePreviewInfo
+      {
+        UserCount = result.UserCount,
+        UserCountTotal = result.UserCountTotal,
+        RulesRelated = [.. (await Task.WhenAll(result.RulesRelated.Select(async item => new StoreAccessControlRulePreviewItemInfo
+        {
+          UserCount = item.UserCount,
+          Rule = await ToInfo(item.Rule)
+        })))]
+      };
     }
 
     public async Task<StoreAccessControlRuleInfo> Update(StoreAccessControlRuleRequestUpdate request)

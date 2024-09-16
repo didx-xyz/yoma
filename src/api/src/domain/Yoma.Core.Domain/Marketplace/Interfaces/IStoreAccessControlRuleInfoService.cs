@@ -8,9 +8,13 @@ namespace Yoma.Core.Domain.Marketplace.Interfaces
 
     Task<List<StoreInfo>> ListSearchCriteriaStores(Guid? organizationId);
 
-    Task<StoreAccessControlRuleSearchResults> Search(StoreAccessControlRuleSearchFilter filter);
+    Task<StoreAccessControlRuleSearchResultsInfo> Search(StoreAccessControlRuleSearchFilter filter, bool ensureOrganizationAuthorization);
+
+    Task<StoreAccessControlRulePreviewInfo> CreatePreview(StoreAccessControlRuleRequestCreate request);
 
     Task<StoreAccessControlRuleInfo> Create(StoreAccessControlRuleRequestCreate request);
+
+    Task<StoreAccessControlRulePreviewInfo> UpdatePreview(StoreAccessControlRuleRequestUpdate request);
 
     Task<StoreAccessControlRuleInfo> Update(StoreAccessControlRuleRequestUpdate request);
 
