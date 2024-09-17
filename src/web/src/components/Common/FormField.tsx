@@ -9,7 +9,7 @@ const FormField: React.FC<{
   showWarningIcon?: boolean;
   showError?: boolean;
   error?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }> = ({
   label,
   subLabel,

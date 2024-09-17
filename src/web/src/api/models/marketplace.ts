@@ -22,7 +22,6 @@ export interface StoreItem {
   imageURL: string;
   amount: number;
 }
-
 export interface StoreItemCategory {
   id: string;
   storeId: string;
@@ -32,6 +31,28 @@ export interface StoreItemCategory {
   imageURL: string | null;
   amount: number;
   count: number;
+  storeAccessControlRuleResult: StoreAccessControlRuleEvaluationResult | null;
+}
+
+export interface StoreAccessControlRuleEvaluationResult {
+  locked: boolean;
+  rules: StoreAccessControlRuleEvaluationItem[] | null;
+}
+
+export interface StoreAccessControlRuleEvaluationItem {
+  id: string | null;
+  name: string | null;
+  reasons: StoreAccessControlRuleEvaluationItemReason[];
+}
+
+export interface StoreAccessControlRuleEvaluationItemReason {
+  reason: string;
+  links: StoreAccessControlRuleEvaluationItemReasonLink[] | null;
+}
+
+export interface StoreAccessControlRuleEvaluationItemReasonLink {
+  title: string;
+  url: string;
 }
 
 export interface StoreSearchFilter extends PaginationFilter {
@@ -81,3 +102,97 @@ export interface WalletVoucherSearchResults {
 }
 
 export interface WalletVoucherSearchFilter extends PaginationFilter {}
+
+// administrative models
+export interface StoreInfo {
+  id: string;
+  name: string | null;
+  countryId: string;
+  countryName: string;
+  countryCodeAlpha2: string;
+}
+
+export interface StoreAccessControlRuleInfo {
+  id: string;
+  name: string;
+  description: string | null;
+  organizationId: string;
+  organizationName: string;
+  store: StoreInfo;
+  storeItemCategories: StoreItemCategoryInfo[] | null;
+  ageFrom: number | null;
+  ageTo: number | null;
+  genderId: string | null;
+  gender: string | null;
+  opportunityOption: StoreAccessControlRuleOpportunityCondition | null | string; //NB: string for API compatibility
+  statusId: string;
+  status: StoreAccessControlRuleStatus | string; //NB: string for API compatibility
+  dateCreated: string;
+  dateModified: string;
+  opportunities: OpportunityItem[] | null;
+}
+
+export interface StoreItemCategoryInfo {
+  id: string;
+  name: string;
+}
+
+export enum StoreAccessControlRuleOpportunityCondition {
+  All,
+  Any,
+}
+
+export enum StoreAccessControlRuleStatus {
+  Active,
+  Inactive,
+  Deleted,
+}
+
+export interface OpportunityItem {
+  id: string;
+  title: string;
+}
+export interface StoreAccessControlRuleSearchFilter extends PaginationFilter {
+  nameContains: string | null;
+  stores: string[] | null;
+  organizations: string[] | null;
+  statuses: StoreAccessControlRuleStatus[] | null | string[]; //NB: string[] for API compatibility
+}
+
+export interface StoreAccessControlRuleSearchResults {
+  totalCount: number | null;
+  items: StoreAccessControlRuleInfo[];
+}
+
+export interface StoreAccessControlRuleRequestBase {
+  name: string;
+  description: string | null;
+  organizationId: string;
+  storeCountryCodeAlpha2: string;
+  storeId: string;
+  storeItemCategories: string[] | null;
+  ageFrom: number | null;
+  ageTo: number | null;
+  genderId: string | null;
+  opportunities: string[] | null;
+  opportunityOption: StoreAccessControlRuleOpportunityCondition | null | string; //NB: string for API compatibility
+}
+
+export interface StoreAccessControlRuleRequestCreate
+  extends StoreAccessControlRuleRequestBase {}
+
+export interface StoreAccessControlRuleRequestUpdate
+  extends StoreAccessControlRuleRequestBase {
+  id: string;
+}
+
+export interface StoreAccessControlRulePreviewInfo {
+  userCount: number;
+  userCountTotal: number;
+  rulesRelated: StoreAccessControlRulePreviewItemInfo[];
+}
+
+export interface StoreAccessControlRulePreviewItemInfo {
+  userCount: number;
+  rule: StoreAccessControlRuleInfo;
+}

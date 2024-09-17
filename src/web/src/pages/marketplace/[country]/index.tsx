@@ -1,6 +1,10 @@
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
-import type { GetStaticPaths, GetStaticProps } from "next";
+import type {
+  GetStaticPaths,
+  GetStaticProps,
+  GetStaticPropsContext,
+} from "next";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,6 +13,7 @@ import { env } from "process";
 import iconBell from "public/images/icon-bell.webp";
 import type { ParsedUrlQuery } from "querystring";
 import React, { useCallback, useRef, useState, type ReactElement } from "react";
+import { FaLock } from "react-icons/fa";
 import { IoMdClose, IoMdWarning } from "react-icons/io";
 import ReactModal from "react-modal";
 import Select from "react-select";
@@ -19,7 +24,6 @@ import type {
   Store,
   StoreCategory,
   StoreItemCategory,
-  StoreItemCategorySearchFilter,
   StoreItemCategorySearchResults,
 } from "~/api/models/marketplace";
 import {
@@ -31,6 +35,7 @@ import {
 } from "~/api/services/marketplace";
 import { getUserProfile } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
+import Suspense from "~/components/Common/Suspense";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import StoreItemsCarousel from "~/components/Marketplace/StoreItemsCarousel";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -45,7 +50,6 @@ import {
   COUNTRY_WW,
   GA_ACTION_MARKETPLACE_ITEM_BUY,
   GA_CATEGORY_OPPORTUNITY,
-  PAGE_SIZE_MINIMUM,
   THEME_BLUE,
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
@@ -56,24 +60,18 @@ interface IParams extends ParsedUrlQuery {
   country: string;
 }
 
-// 👇 SSG
-// This page undergoes static generation at run time on the server-side.
-// The build-time SSG has been disabled due to missing API url configuration in the CI pipeline (see getStaticPaths below).
-// This process ensures that the initial data required for the filter options
-// and the first four items in the carousels are readily available upon page load.
-// Subsequent client-side queries are executed and cached using the queryClient
-// whenever additional data is requested in the carousels (during paging).
-export const getStaticProps: GetStaticProps = async (context) => {
-  // check if marketplace is enabled
-  const marketplace_enabled =
-    env.MARKETPLACE_ENABLED?.toLowerCase() == "true" ? true : false;
+interface MarketplaceData {
+  lookups_countries: Country[];
+  data_storeItems: {
+    category: StoreCategory;
+    storeItems: { store: Store; items: StoreItemCategorySearchResults }[];
+  }[];
+}
 
-  if (!marketplace_enabled)
-    return {
-      props: { marketplace_enabled },
-    };
-
-  const { country } = context.params as IParams;
+async function fetchMarketplaceData(
+  country: string,
+  context?: GetStaticPropsContext,
+): Promise<MarketplaceData> {
   const lookups_countries = await listSearchCriteriaCountries(context);
   const lookups_categories = await listStoreCategories(
     country ?? COUNTRY_WW,
@@ -163,6 +161,32 @@ export const getStaticProps: GetStaticProps = async (context) => {
     }
   }
 
+  return { lookups_countries, data_storeItems };
+}
+
+// 👇 SSG
+// This page undergoes static generation at run time on the server-side for anonymous users.
+// For authenticated users, client-side queries are performed using react-query.
+// This process ensures that the initial data required for the filter options
+// and the first four items in the carousels are readily available upon page load for anonymous users.
+// Subsequent client-side queries are executed and cached using the queryClient
+// whenever additional data is requested in the carousels (during paging).
+export const getStaticProps: GetStaticProps = async (context) => {
+  // check if marketplace is enabled
+  const marketplace_enabled =
+    env.MARKETPLACE_ENABLED?.toLowerCase() == "true" ? true : false;
+
+  if (!marketplace_enabled)
+    return {
+      props: { marketplace_enabled },
+    };
+
+  const { country } = context.params as IParams;
+  const { lookups_countries, data_storeItems } = await fetchMarketplaceData(
+    country,
+    context,
+  );
+
   return {
     props: { country, lookups_countries, data_storeItems, marketplace_enabled },
 
@@ -212,7 +236,6 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   marketplace_enabled,
 }) => {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const [buyDialogVisible, setBuyDialogVisible] = useState(false);
   const [buyDialogConfirmationVisible, setBuyDialogConfirmationVisible] =
     useState(false);
@@ -220,17 +243,31 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   const [buyDialogErrorMessages, setBuyDialogErrorMessages] = useState<
     ErrorResponseItem[] | null
   >(null);
+  const [itemLockedDialogVisible, setItemLockedDialogVisible] = useState(false);
   const [currentItem, setCurrentItem] = useState<StoreItemCategory | null>(
     null,
   );
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
-  const { data: session } = useSession();
+  const { data: session, status: sessionStatus } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
   const setUserCountrySelection = useSetAtom(userCountrySelectionAtom);
   const modalContext = useConfirmationModalContext();
   const myRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // 👇 authenticated query
+  const {
+    data: data_storeItems_authenticated,
+    isLoading: isLoading_storeItems_authenticated,
+    error: error_storeItems_authenticated,
+  } = useQuery({
+    queryKey: ["marketplace", "items", session?.user?.id, country],
+    queryFn: async () => {
+      return await fetchMarketplaceData(country);
+    },
+    enabled: !!session,
+  });
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(
@@ -259,45 +296,56 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
   }, [lookups_countries]);
 
   // 🎠 CAROUSEL: data fetching
-  const fetchDataAndUpdateCache = useCallback(
-    async (
-      queryKey: string[],
-      filter: StoreItemCategorySearchFilter,
-    ): Promise<StoreItemCategorySearchResults> => {
-      const cachedData =
-        queryClient.getQueryData<StoreItemCategorySearchResults>(queryKey);
+  // NB: paging has been disabled for now because the data is already fetched at build time
+  // const fetchDataAndUpdateCache = useCallback(
+  //   async (
+  //     queryKey: string[],
+  //     filter: StoreItemCategorySearchFilter,
+  //   ): Promise<StoreItemCategorySearchResults> => {
+  //     const cachedData =
+  //       queryClient.getQueryData<StoreItemCategorySearchResults>(queryKey);
 
-      if (cachedData) {
-        return cachedData;
-      }
+  //     if (cachedData) {
+  //       return cachedData;
+  //     }
 
-      const data = await searchStoreItemCategories(filter);
+  //     const data = await searchStoreItemCategories(filter);
 
-      queryClient.setQueryData(queryKey, data);
+  //     queryClient.setQueryData(queryKey, data);
 
-      return data;
-    },
-    [queryClient],
-  );
+  //     return data;
+  //   },
+  //   [queryClient],
+  // );
 
-  const loadData = useCallback(
-    (startRow: number, storeId: string) => {
-      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+  // const loadData = useCallback(
+  //   (startRow: number, storeId: string) => {
+  //     const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
 
-      return fetchDataAndUpdateCache([storeId, pageNumber.toString()], {
-        pageNumber: pageNumber,
-        pageSize: PAGE_SIZE_MINIMUM,
-        storeId: storeId,
-      });
-    },
-    [fetchDataAndUpdateCache],
-  );
+  //     return fetchDataAndUpdateCache([storeId, pageNumber.toString()], {
+  //       pageNumber: pageNumber,
+  //       pageSize: PAGE_SIZE_MINIMUM,
+  //       storeId: storeId,
+  //     });
+  //   },
+  //   [fetchDataAndUpdateCache],
+  // );
 
   const onBuyClick = useCallback(
     async (item: StoreItemCategory) => {
       if (!session || !userProfile) {
         setBuyDialogVisible(false);
+        setItemLockedDialogVisible(false);
         setLoginDialogVisible(true);
+        return;
+      }
+
+      setCurrentItem(item);
+
+      // check locked
+      if (item.storeAccessControlRuleResult?.locked) {
+        setItemLockedDialogVisible(true);
+
         return;
       }
 
@@ -355,7 +403,6 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         return;
       }
 
-      setCurrentItem(item);
       setBuyDialogVisible(true);
     },
     [
@@ -363,6 +410,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       setCurrentItem,
       setBuyDialogVisible,
       setLoginDialogVisible,
+      setItemLockedDialogVisible,
       userProfile,
       modalContext,
     ],
@@ -408,6 +456,67 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       setIsLoading,
     ],
   );
+
+  const renderStoreItems = (
+    data_storeItems: {
+      category: StoreCategory;
+      storeItems: { store: Store; items: StoreItemCategorySearchResults }[];
+    }[],
+  ) => {
+    if (data_storeItems.length === 0) {
+      return <NoRowsMessage title="No items found" />;
+    }
+
+    return data_storeItems.map((category_storeItems, index) => (
+      <div
+        key={`category_${category_storeItems.category.id}_${index}`}
+        className="mb-8 md:mb-4"
+      >
+        {/* CATEGORY NAME AND IMAGES */}
+        <div className="flex flex-row items-center justify-start gap-4 pb-4">
+          <h1 className="text-2xl">{category_storeItems.category.name}</h1>
+
+          <div className="flex flex-grow flex-row items-start overflow-hidden">
+            {category_storeItems.category.storeImageURLs.map(
+              (storeImage, index2) => (
+                <div
+                  className="relative -mr-4 overflow-hidden rounded-full shadow"
+                  style={{
+                    zIndex:
+                      category_storeItems.category.storeImageURLs.length -
+                      index,
+                  }}
+                  key={`storeItems_${category_storeItems.category.id}_${index}_${index2}`}
+                >
+                  <span className="z-0">
+                    <AvatarImage
+                      icon={storeImage ?? null}
+                      alt={`Store Image Logo ${index2}`}
+                      size={40}
+                    />
+                  </span>
+                </div>
+              ),
+            )}
+          </div>
+        </div>
+
+        {category_storeItems.storeItems.map((storeItem, index2) => (
+          <div
+            key={`category_${category_storeItems.category.id}_${index}_${index2}`}
+          >
+            <StoreItemsCarousel
+              id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
+              title={storeItem.store?.name}
+              data={storeItem.items}
+              //loadData={(startRow) => loadData(startRow, storeItem.store.id)}
+              onClick={onBuyClick}
+            />
+          </div>
+        ))}
+      </div>
+    ));
+  };
 
   if (!marketplace_enabled) return <MarketplaceDown />;
 
@@ -678,6 +787,112 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         </div>
       </ReactModal>
 
+      {/* PURCHASE LOCKED DIALOG */}
+      <ReactModal
+        isOpen={itemLockedDialogVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setItemLockedDialogVisible(false);
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[350px] md:w-[550px] md:rounded-3xl`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
+          <div className="flex flex-row p-4">
+            <h1 className="flex-grow"></h1>
+            <button
+              type="button"
+              className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
+              onClick={() => {
+                setItemLockedDialogVisible(false);
+              }}
+            >
+              <IoMdClose className="h-6 w-6"></IoMdClose>
+            </button>
+          </div>
+
+          <div className="flex flex-col items-center justify-center gap-4">
+            {currentItem?.imageURL && (
+              <div className="relative -mt-8 h-12 w-12 cursor-pointer overflow-hidden rounded-full shadow">
+                <Image
+                  src={currentItem?.imageURL}
+                  alt={`${currentItem.name} Logo`}
+                  width={48}
+                  height={48}
+                  sizes="(max-width: 48px) 30vw, 50vw"
+                  style={{
+                    width: "100%",
+                    height: "100%",
+                    maxWidth: "48px",
+                    maxHeight: "48px",
+                  }}
+                />
+                {currentItem?.storeAccessControlRuleResult?.locked && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-gray-dark bg-opacity-50">
+                    <FaLock className="text-white" />
+                  </div>
+                )}
+              </div>
+            )}
+
+            <h3 className="text-center">Purchase Locked</h3>
+
+            <div className="flex flex-col items-center justify-center gap-4">
+              <div className="rounded-lg p-2 text-center md:w-[450px]">
+                This item is currently locked for purchase:
+                <br />
+                <br />
+                {currentItem?.storeAccessControlRuleResult?.rules?.map(
+                  (rule, ruleIndex) => (
+                    <div key={`rule_${ruleIndex}`}>
+                      <ul>
+                        {rule.reasons.map((reason, reasonIndex) => (
+                          <li key={`reason_${reasonIndex}`}>
+                            <div className="flex flex-row items-center gap-2">
+                              <IoMdClose className="text-red-400" />
+
+                              <p className="text-sm">{reason.reason}</p>
+                            </div>
+
+                            <ul className="list-insidex ml-10 mt-2 list-disc text-left">
+                              {reason.links?.map((link, linkIndex) => (
+                                <li key={`link_${linkIndex}`}>
+                                  <Link
+                                    key={`link_${linkIndex}`}
+                                    href={link.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-sm text-blue hover:underline"
+                                  >
+                                    {link.title}
+                                  </Link>
+                                </li>
+                              ))}
+                            </ul>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ),
+                )}
+              </div>
+            </div>
+            <div className="mt-4 flex flex-grow gap-4">
+              <button
+                type="button"
+                className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
+                onClick={() => {
+                  setItemLockedDialogVisible(false);
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </ReactModal>
+
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
@@ -708,63 +923,25 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
         {/* RESULTS */}
         <div className="flex flex-col gap-6 px-2 pb-4 md:p-0 md:pb-0">
-          {data_storeItems.length == 0 && (
-            <NoRowsMessage title="No items found" />
-          )}
+          {/* anonymous users */}
+          {!session &&
+            sessionStatus != "loading" &&
+            renderStoreItems(data_storeItems)}
 
-          {data_storeItems?.map((category_storeItems, index) => (
-            <div
-              key={`category_${category_storeItems.category.id}_${index}`}
-              className="mb-8 md:mb-4"
+          {/* authenticated users */}
+          {!!session && sessionStatus == "authenticated" && (
+            <Suspense
+              isLoading={
+                isLoading_storeItems_authenticated ||
+                !data_storeItems_authenticated?.data_storeItems
+              }
+              error={error_storeItems_authenticated}
             >
-              {/* CATEGORY NAME AND IMAGES */}
-              <div className="flex flex-row items-center justify-start gap-4 pb-4">
-                <h1 className="text-2xl">
-                  {category_storeItems.category.name}
-                </h1>
-
-                <div className="flex flex-grow flex-row items-start overflow-hidden">
-                  {category_storeItems.category.storeImageURLs.map(
-                    (storeImage, index2) => (
-                      <div
-                        className="relative -mr-4 overflow-hidden rounded-full shadow"
-                        style={{
-                          zIndex:
-                            category_storeItems.category.storeImageURLs.length -
-                            index,
-                        }}
-                        key={`storeItems_${category_storeItems.category.id}_${index}_${index2}`}
-                      >
-                        <span className="z-0">
-                          <AvatarImage
-                            icon={storeImage ?? null}
-                            alt={`Store Image Logo ${index2}`}
-                            size={40}
-                          />
-                        </span>
-                      </div>
-                    ),
-                  )}
-                </div>
-              </div>
-
-              {category_storeItems?.storeItems?.map((storeItem, index2) => (
-                <div
-                  key={`category_${category_storeItems.category.id}_${index}_${index2}`}
-                >
-                  <StoreItemsCarousel
-                    id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
-                    title={storeItem.store?.name}
-                    data={storeItem.items}
-                    loadData={(startRow) =>
-                      loadData(startRow, storeItem.store.id)
-                    }
-                    onClick={onBuyClick}
-                  />
-                </div>
-              ))}
-            </div>
-          ))}
+              {renderStoreItems(
+                data_storeItems_authenticated?.data_storeItems ?? [],
+              )}
+            </Suspense>
+          )}
         </div>
       </div>
     </>

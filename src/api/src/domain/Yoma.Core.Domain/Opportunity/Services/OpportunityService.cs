@@ -244,6 +244,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var query = _opportunityRepository.Query();
 
+      //organization
       if (filter.Organization.HasValue)
       {
         if (ensureOrganizationAuthorization)
@@ -257,15 +258,26 @@ namespace Yoma.Core.Domain.Opportunity.Services
           throw new ValidationException($"Organization required for '{Constants.Role_OrganizationAdmin}' role only");
       }
 
+      //titleContains
       if (!string.IsNullOrEmpty(filter.TitleContains))
         query = _opportunityRepository.Contains(query, filter.TitleContains);
 
+      //opporunities
       if (filter.Opportunities != null && filter.Opportunities.Count != 0)
       {
         filter.Opportunities = filter.Opportunities.Distinct().ToList();
         query = query.Where(o => filter.Opportunities.Contains(o.Id));
       }
 
+      //countries
+      if (filter.Countries != null && filter.Countries.Count != 0)
+      {
+        filter.Countries = filter.Countries.Distinct().ToList();
+        query = query.Where(opportunity => _opportunityCountryRepository.Query().Any(
+          opportunityCountry => filter.Countries.Contains(opportunityCountry.CountryId) && opportunityCountry.OpportunityId == opportunity.Id));
+      }
+
+      //published
       if (filter.Published.HasValue)
       {
         var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
@@ -273,6 +285,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
         query = query.Where(o => o.StatusId == statusActiveId && o.OrganizationStatusId == statusOrganizationActiveId);
       }
 
+      //verificationEnabled
+      if (filter.VerificationEnabled.HasValue)
+        query = query.Where(o => o.VerificationEnabled == filter.VerificationEnabled.Value);
+
+      //verificationMethod
       if (filter.VerificationMethod.HasValue)
         query = query.Where(o => o.VerificationEnabled && o.VerificationMethodValue == filter.VerificationMethod.ToString());
 
@@ -284,7 +301,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         results.TotalCount = query.Count();
         query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
       }
-      results.Items = query.ToList().Select(o => o.ToOpportunitySearchCriteria()).ToList();
+      results.Items = query.ToList().Select(o => o.ToOpportunityItem()).ToList();
 
       return results;
     }
@@ -996,7 +1013,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
       if (organization.Status != OrganizationStatus.Active)
-        throw new ValidationException($"An opportunity cannot be created as the associated organization '{organization.Name}' is not currently active (pending approval)");
+        throw new ValidationException($"The opportunity cannot be created as the associated organization '{organization.Name}' is not currently active");
+
+      if (request.ZltoReward.HasValue && !organization.ZltoRewardPool.HasValue)
+        throw new ValidationException($"The opportunity cannot issue Zlto rewards upon completion because the associated organization '{organization.Name}' does not have a Zlto reward pool configured. Please configure an organization-level Zlto reward pool before proceeding");
+
+      if (request.YomaReward.HasValue && !organization.YomaRewardPool.HasValue)
+        throw new ValidationException($"The opportunity cannot issue Yoma rewards upon completion because the associated organization '{organization.Name}' does not have a Yoma reward pool configured. Please configure an organization-level Yoma reward pool before proceeding");
 
       var result = new Models.Opportunity
       {
@@ -1118,7 +1141,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
       if (organization.Status != OrganizationStatus.Active)
-        throw new ValidationException($"The opportunity cannot be updated as the associated organization '{organization.Name}' is not currently active (pending approval)");
+        throw new ValidationException($"The opportunity cannot be updated as the associated organization '{organization.Name}' is not currently active");
+
+      if (request.ZltoReward.HasValue && !organization.ZltoRewardPool.HasValue)
+        throw new ValidationException($"The opportunity cannot issue Zlto rewards upon completion because the associated organization '{organization.Name}' does not have a Zlto reward pool configured. Please configure an organization-level Zlto reward pool before proceeding");
+
+      if (request.YomaReward.HasValue && !organization.YomaRewardPool.HasValue)
+        throw new ValidationException($"The opportunity cannot issue Yoma rewards upon completion because the associated organization '{organization.Name}' does not have a Yoma reward pool configured. Please configure an organization-level Yoma reward pool before proceeding");
 
       //by default, status remains unchanged, except for immediate expiration based on DateEnd (status updated via UpdateStatus)
       if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
@@ -1331,7 +1360,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           //ensure DateEnd was updated for re-activation of previously expired opportunities
           if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
-            throw new ValidationException($"The {nameof(Models.Opportunity)} '{result.Title}' cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation.");
+            throw new ValidationException($"The {nameof(Models.Opportunity)} '{result.Title}' cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Models.Opportunity).ToLower()} before proceeding with activation");
 
           eventType = EventType.Update;
           break;

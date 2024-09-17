@@ -560,9 +560,11 @@ const LinkDetails: NextPageWithLayout<{
         searchCriteriaOpportunities({
           opportunities: [],
           organization: id,
+          countries: null,
           titleContains: inputValue,
           published: true,
           verificationMethod: VerificationMethod.Manual,
+          verificationEnabled: null,
           pageNumber: 1,
           pageSize: PAGE_SIZE_MEDIUM,
         }).then((data) => {

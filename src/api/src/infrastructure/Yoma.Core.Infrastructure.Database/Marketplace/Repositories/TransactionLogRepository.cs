@@ -27,7 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
         TransactionId = entity.TransactionId,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
-      }); ;
+      });
     }
 
     public async Task<TransactionLog> Create(TransactionLog item)

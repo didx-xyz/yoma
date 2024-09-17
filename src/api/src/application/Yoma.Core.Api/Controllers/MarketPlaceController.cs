@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.Net;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Marketplace;
 using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Models;
 using Yoma.Core.Domain.Reward.Interfaces;
@@ -19,17 +20,23 @@ namespace Yoma.Core.Api.Controllers
     private readonly ILogger<MarketplaceController> _logger;
     private readonly IMarketplaceService _marketplaceService;
     private readonly IWalletService _rewardWalletService;
+    private readonly IStoreAccessControlRuleService _storeAccessControlRuleService;
+    private readonly IStoreAccessControlRuleInfoService _storeAccessControlRuleInfoService;
     #endregion
 
     #region Constructor
     public MarketplaceController(
       ILogger<MarketplaceController> logger,
       IMarketplaceService marketplaceService,
-      IWalletService rewardWalletService)
+      IWalletService rewardWalletService,
+      IStoreAccessControlRuleService storeAccessControlRuleService,
+      IStoreAccessControlRuleInfoService storeAccessControlRuleInfoService)
     {
       _logger = logger;
       _marketplaceService = marketplaceService;
       _rewardWalletService = rewardWalletService;
+      _storeAccessControlRuleService = storeAccessControlRuleService;
+      _storeAccessControlRuleInfoService = storeAccessControlRuleInfoService;
     }
     #endregion
 
@@ -142,6 +149,142 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK);
     }
     #endregion Authenticated User Based Actions
+
+    #region Administrative Actions
+    [SwaggerOperation(Summary = "Return a list of organizations associated with store access control rules (Admin role required)")]
+    [HttpGet("store/rule/search/filter/organizations")]
+    [ProducesResponseType(typeof(List<Domain.Entity.Models.OrganizationInfo>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public IActionResult ListSearchCriteriaOrganizations()
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaOrganizations));
+
+      var result = _storeAccessControlRuleService.ListSearchCriteriaOrganizations();
+
+      _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaOrganizations));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Return a list of stores associated with store access control rules, optionally filter by organization (Admin or Organization Admin roles required)")]
+    [HttpGet("store/rule/search/filter/stores")]
+    [ProducesResponseType(typeof(List<StoreInfo>), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public async Task<IActionResult> ListSearchCriteriaStores([FromQuery] Guid? organizationId)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaStores));
+
+      var result = await _storeAccessControlRuleInfoService.ListSearchCriteriaStores(organizationId, true);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaStores));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Get the store access control rule by id (Admin role required)")]
+    [HttpGet("store/rule/{id}")]
+    [ProducesResponseType(typeof(StoreAccessControlRuleInfo), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<IActionResult> GetStoreAccessControlRuleById([FromRoute] Guid id)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetStoreAccessControlRuleById));
+
+      var result = await _storeAccessControlRuleInfoService.GetById(id);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetStoreAccessControlRuleById));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Search for store access control rules based on the supplied filter (Admin or Organization Admin roles required)")]
+    [HttpPost("store/rule/search")]
+    [ProducesResponseType(typeof(StoreAccessControlRuleSearchResultsInfo), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public async Task<IActionResult> SearchStoreAccessControlRule([FromBody] StoreAccessControlRuleSearchFilter filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchStoreAccessControlRule));
+
+      var result = await _storeAccessControlRuleInfoService.Search(filter, true);
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchStoreAccessControlRule));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Preview the creation of a store access control rule (Admin role required)")]
+    [HttpPost("store/rule/preview")]
+    [ProducesResponseType(typeof(StoreAccessControlRulePreviewInfo), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<IActionResult> CreateStoreAccessControlRulePreview([FromBody] StoreAccessControlRuleRequestCreate request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(CreateStoreAccessControlRulePreview));
+
+      var result = await _storeAccessControlRuleInfoService.CreatePreview(request);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(CreateStoreAccessControlRulePreview));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Create a store access control rule (Admin role required)")]
+    [HttpPost("store/rule")]
+    [ProducesResponseType(typeof(StoreAccessControlRuleInfo), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<IActionResult> CreateStoreAccessControlRule([FromBody] StoreAccessControlRuleRequestCreate request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(CreateStoreAccessControlRule));
+
+      var result = await _storeAccessControlRuleInfoService.Create(request);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(CreateStoreAccessControlRule));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Preview the update of the specified store access control rule (Admin role required)")]
+    [HttpPatch("store/rule/preview")]
+    [ProducesResponseType(typeof(StoreAccessControlRulePreviewInfo), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<IActionResult> UpdateStoreAccessControlRulePreview([FromBody] StoreAccessControlRuleRequestUpdate request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UpdateStoreAccessControlRulePreview));
+
+      var result = await _storeAccessControlRuleInfoService.UpdatePreview(request);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UpdateStoreAccessControlRulePreview));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Update the specified store access control rule (Admin role required)")]
+    [HttpPatch("store/rule")]
+    [ProducesResponseType(typeof(StoreAccessControlRuleInfo), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<IActionResult> UpdateStoreAccessControlRule([FromBody] StoreAccessControlRuleRequestUpdate request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UpdateStoreAccessControlRule));
+
+      var result = await _storeAccessControlRuleInfoService.Update(request);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UpdateStoreAccessControlRule));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(Summary = "Update the specified store access control rule status (Admin role required)")]
+    [HttpPatch("store/rule/{id}/{status}")]
+    [ProducesResponseType(typeof(StoreAccessControlRuleInfo), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<IActionResult> UpdateStatusStoreAccessControlRule([FromRoute] Guid id, [FromRoute] StoreAccessControlRuleStatus status)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatusStoreAccessControlRule));
+
+      var result = await _storeAccessControlRuleInfoService.UpdateStatus(id, status);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatusStoreAccessControlRule));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+    #endregion Administrative Actions
     #endregion
   }
 }

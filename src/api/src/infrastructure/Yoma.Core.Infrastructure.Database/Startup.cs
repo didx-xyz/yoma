@@ -113,9 +113,12 @@ namespace Yoma.Core.Infrastructure.Database
 
       #region Marketplace
       #region Lookups
+      services.AddScoped<IRepository<Domain.Marketplace.Models.Lookups.StoreAccessControlRuleStatus>, StoreAccessControlRuleStatusRepository>();
       services.AddScoped<IRepository<Domain.Marketplace.Models.Lookups.TransactionStatus>, TransactionStatusRepository>();
       #endregion Lookups
 
+      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Marketplace.Models.StoreAccessControlRule>, StoreAccessControlRuleRepository>();
+      services.AddScoped<IRepository<Domain.Marketplace.Models.StoreAccessControlRuleOpportunity>, StoreAccessControlRuleOpportunityRepository>();
       services.AddScoped<IRepository<Domain.Marketplace.Models.TransactionLog>, TransactionLogRepository>();
       #endregion Marketplace
 

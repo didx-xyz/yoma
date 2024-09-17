@@ -3,25 +3,21 @@ import { shimmer, toBase64 } from "src/lib/image";
 import iconZlto from "public/images/icon-zlto.svg";
 import Link from "next/link";
 import { useCallback } from "react";
+import { type StoreItemCategory } from "~/api/models/marketplace";
+import { IoMdLock } from "react-icons/io";
 
 interface InputProps {
   id: string;
-  imageURL: string | null;
-  company: string;
-  name: string;
-  amount: number | null;
-  count?: number;
+  item: StoreItemCategory;
+  company: string | undefined;
   href?: string;
   onClick?: () => void;
 }
 
 const ItemCardComponent: React.FC<InputProps> = ({
   id,
-  imageURL,
+  item,
   company,
-  name,
-  amount,
-  count,
   href,
   onClick,
 }) => {
@@ -50,16 +46,16 @@ const ItemCardComponent: React.FC<InputProps> = ({
               {company}
             </p>
             <p className="mr-1 max-w-[170px] truncate text-[18px] font-semibold md:max-w-[250px]">
-              {name}
+              {item.name}
             </p>
           </div>
 
-          {imageURL && (
+          {item.imageURL && (
             <div className="flex flex-row items-center">
               <div className="relative h-12 w-12 cursor-pointer overflow-hidden rounded-full shadow">
                 <Image
-                  src={imageURL}
-                  alt={`${name} Logo`}
+                  src={item.imageURL}
+                  alt={`${item.name} Logo`}
                   width={48}
                   height={48}
                   sizes="(max-width: 48px) 30vw, 50vw"
@@ -87,7 +83,7 @@ const ItemCardComponent: React.FC<InputProps> = ({
 
         {/* BADGES */}
         <div className="flex flex-row items-center justify-start gap-2">
-          {(amount ?? 0) > 0 && (
+          {(item.amount ?? 0) > 0 && (
             <div className="flex">
               <div className="badge h-6 whitespace-nowrap rounded-md bg-yellow-light text-yellow">
                 <Image
@@ -99,14 +95,24 @@ const ItemCardComponent: React.FC<InputProps> = ({
                   priority={true}
                   style={{ width: "16px", height: "16px" }}
                 />
-                <span className="ml-1 text-xs">{amount}</span>
+                <span className="ml-1 text-xs">{item.amount}</span>
               </div>
             </div>
           )}
           <div className="badge h-6 whitespace-nowrap rounded-md bg-gray text-gray-dark">
-            <span className="ml-1 text-xs">{count ?? 0} left</span>
+            <span className="ml-1 text-xs">{item.count ?? 0} left</span>
           </div>
         </div>
+
+        {/* LOCKED/UNLOCKED */}
+        {item.storeAccessControlRuleResult?.locked && (
+          <div className="absolute bottom-0 right-0 flex flex-col items-center justify-start gap-2 rounded-md bg-gray-light px-2 py-1">
+            <IoMdLock className="text-orange" />
+            <p className="text-red text-xs font-semibold tracking-wide">
+              Locked
+            </p>
+          </div>
+        )}
       </div>
     </Link>
   );

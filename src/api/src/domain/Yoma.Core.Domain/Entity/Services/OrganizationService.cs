@@ -120,13 +120,6 @@ namespace Yoma.Core.Domain.Entity.Services
     #endregion
 
     #region Public Members
-    public bool Updatable(Guid id, bool throwNotFound)
-    {
-      var org = throwNotFound ? GetById(id, false, false, false) : GetByIdOrNull(id, false, false, false);
-      if (org == null) return false;
-      return Statuses_Updatable.Contains(org.Status);
-    }
-
     public Organization GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
     {
       if (id == Guid.Empty)
@@ -349,7 +342,7 @@ namespace Yoma.Core.Domain.Entity.Services
           if (request.AddCurrentUserAsAdmin)
             admins.Add(user.Email);
           else if (HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor))
-            throw new ValidationException($"The registering user must be added as an organization admin by default ('{nameof(request.AddCurrentUserAsAdmin)}' must be true).");
+            throw new ValidationException($"The registering user must be added as an organization admin by default ('{nameof(request.AddCurrentUserAsAdmin)}' must be true)");
           result = await AssignAdmins(result, admins, OrganizationReapprovalAction.None);
 
           //upload documents

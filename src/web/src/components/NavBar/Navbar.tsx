@@ -84,6 +84,14 @@ const navBarLinksAdmin: TabItem[] = [
     selected: false,
     iconImage: "🔗",
   },
+  {
+    title: "Marketplace Store Rules",
+    description: "Marketplace Store Rules",
+    url: "/admin/stores",
+    badgeCount: null,
+    selected: false,
+    iconImage: "🛒",
+  },
   // {
   //   title: "Schemas",
   //   description: "Schemas",
@@ -176,6 +184,14 @@ export const Navbar: React.FC = () => {
           badgeCount: null,
           selected: false,
           iconImage: "🔗",
+        },
+        {
+          title: "Marketplace Store Rules",
+          description: "Marketplace Store Rules",
+          url: `/organisations/${currentOrganisationId}/stores`,
+          badgeCount: null,
+          selected: false,
+          iconImage: "🛒",
         },
         {
           title: "Settings",

@@ -77,8 +77,14 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
     #region Marketplace
     #region Lookups
+    public DbSet<StoreAccessControlRuleStatus> StoreAccessControlRuleStatus { get; set; }
+
     public DbSet<TransactionStatus> TransactionStatus { get; set; }
     #endregion
+
+    public DbSet<Marketplace.Entities.StoreAccessControlRuleOpportunity> StoreAccessControlRuleOpportunities { get; set; }
+
+    public DbSet<Marketplace.Entities.StoreAccessControlRule> StoreAccessControlRule { get; set; }
 
     public DbSet<Marketplace.Entities.TransactionLog> TransactionLog { get; set; }
 

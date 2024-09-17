@@ -67,11 +67,11 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       opportunity.Published = opportunity.Status == Status.Active && opportunity.OrganizationStatus == Entity.OrganizationStatus.Active;
     }
 
-    public static OpportunitySearchCriteriaItem ToOpportunitySearchCriteria(this Models.Opportunity value)
+    public static OpportunityItem ToOpportunityItem(this Models.Opportunity value)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
 
-      return new OpportunitySearchCriteriaItem
+      return new OpportunityItem
       {
         Id = value.Id,
         Title = value.Title.RemoveSpecialCharacters()
@@ -79,6 +79,13 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
     }
 
     public static string YomaInfoURL(this Models.Opportunity value, string appBaseURL)
+    {
+      ArgumentNullException.ThrowIfNull(value, nameof(value));
+
+      return appBaseURL.AppendPathSegment("opportunities").AppendPathSegment(value.Id).ToString();
+    }
+
+    public static string YomaInfoURL(this OpportunityItem value, string appBaseURL)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));
 

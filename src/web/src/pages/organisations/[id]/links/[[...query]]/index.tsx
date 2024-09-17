@@ -32,7 +32,7 @@ import {
   type LinkSearchResult,
 } from "~/api/models/actionLinks";
 import {
-  createLinkSharing,
+  getLinkById,
   searchLinks,
   updateLinkStatus,
 } from "~/api/services/actionLinks";
@@ -336,14 +336,7 @@ const Links: NextPageWithLayout<{
       queryClient
         .fetchQuery({
           queryKey: ["OpportunitySharingLinkQR", item.entityId],
-          queryFn: () =>
-            createLinkSharing({
-              name: null,
-              description: null,
-              entityType: item.entityType,
-              entityId: item.entityId,
-              includeQRCode: true,
-            }),
+          queryFn: () => getLinkById(item.id, true),
         })
         .then(() => {
           // get the QR code from the cache

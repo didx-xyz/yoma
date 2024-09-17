@@ -578,7 +578,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("PhotoId");
 
-                    b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified");
+                    b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified");
 
                     b.ToTable("User", "Entity");
                 });
@@ -853,6 +853,27 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.ToTable("TimeInterval", "Lookup");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups.StoreAccessControlRuleStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("StoreAccessControlRuleStatus", "Marketplace");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups.TransactionStatus", b =>
                 {
                     b.Property<Guid>("Id")
@@ -872,6 +893,93 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsUnique();
 
                     b.ToTable("TransactionStatus", "Marketplace");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Marketplace.Entities.StoreAccessControlRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("AgeFrom")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("AgeTo")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("DateModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<Guid?>("GenderId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("OpportunityOption")
+                        .HasColumnType("varchar(10)");
+
+                    b.Property<Guid>("OrganizationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StatusId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StoreCountryId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("StoreId")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("StoreItemCategories")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GenderId");
+
+                    b.HasIndex("OrganizationId");
+
+                    b.HasIndex("StatusId");
+
+                    b.HasIndex("StoreCountryId");
+
+                    b.HasIndex("Name", "OrganizationId", "StoreId", "StatusId", "DateCreated", "DateModified");
+
+                    b.ToTable("StoreAccessControlRule", "Marketplace");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Marketplace.Entities.StoreAccessControlRuleOpportunity", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OpportunityId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StoreAccessControlRuleId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OpportunityId");
+
+                    b.HasIndex("StoreAccessControlRuleId", "OpportunityId")
+                        .IsUnique();
+
+                    b.ToTable("StoreAccessControlRuleOpportunity", "Marketplace");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Marketplace.Entities.TransactionLog", b =>
@@ -2166,6 +2274,58 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("UserSkill");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Marketplace.Entities.StoreAccessControlRule", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Gender", "Gender")
+                        .WithMany()
+                        .HasForeignKey("GenderId");
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", "Organization")
+                        .WithMany()
+                        .HasForeignKey("OrganizationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups.StoreAccessControlRuleStatus", "Status")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Lookups.Entities.Country", "StoreCountry")
+                        .WithMany()
+                        .HasForeignKey("StoreCountryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Gender");
+
+                    b.Navigation("Organization");
+
+                    b.Navigation("Status");
+
+                    b.Navigation("StoreCountry");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Marketplace.Entities.StoreAccessControlRuleOpportunity", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Opportunity.Entities.Opportunity", "Opportunity")
+                        .WithMany()
+                        .HasForeignKey("OpportunityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Marketplace.Entities.StoreAccessControlRule", "StoreAccessControlRule")
+                        .WithMany("Opportunities")
+                        .HasForeignKey("StoreAccessControlRuleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Opportunity");
+
+                    b.Navigation("StoreAccessControlRule");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Marketplace.Entities.TransactionLog", b =>
                 {
                     b.HasOne("Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups.TransactionStatus", "Status")
@@ -2579,6 +2739,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.UserSkill", b =>
                 {
                     b.Navigation("Organizations");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Marketplace.Entities.StoreAccessControlRule", b =>
+                {
+                    b.Navigation("Opportunities");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.MyOpportunity", b =>

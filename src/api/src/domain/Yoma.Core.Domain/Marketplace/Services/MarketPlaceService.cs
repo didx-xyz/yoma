@@ -16,6 +16,9 @@ using Yoma.Core.Domain.Marketplace.Interfaces.Lookups;
 using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
 using Yoma.Core.Domain.Marketplace.Models;
 using Yoma.Core.Domain.Marketplace.Validators;
+using Yoma.Core.Domain.MyOpportunity;
+using Yoma.Core.Domain.MyOpportunity.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Reward.Interfaces;
 
 namespace Yoma.Core.Domain.Marketplace.Services
@@ -31,6 +34,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
     private readonly IWalletService _walletService;
     private readonly IMarketplaceProviderClient _marketplaceProviderClient;
     private readonly ITransactionStatusService _transactionStatusService;
+    private readonly IMyOpportunityService _myOpportunityService;
+    private readonly IStoreAccessControlRuleService _storeAccessControlRuleService;
     private readonly IRepository<TransactionLog> _transactionLogRepository;
     private readonly StoreSearchFilterValidator _storeSearchFilterValidator;
     private readonly StoreItemCategorySearchFilterValidator _storeItemCategorySearchFilterValidator;
@@ -48,6 +53,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
         IWalletService walletService,
         IMarketplaceProviderClientFactory marketplaceProviderClientFactory,
         ITransactionStatusService transactionStatusService,
+        IMyOpportunityService myOpportunityService,
+        IStoreAccessControlRuleService storeAccessControlRuleService,
         IRepository<TransactionLog> transactionLogRepository,
         StoreSearchFilterValidator storeSearchFilterValidator,
         StoreItemCategorySearchFilterValidator storeItemCategorySearchFilterValidator,
@@ -62,6 +69,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
       _walletService = walletService;
       _marketplaceProviderClient = marketplaceProviderClientFactory.CreateClient();
       _transactionStatusService = transactionStatusService;
+      _myOpportunityService = myOpportunityService;
+      _storeAccessControlRuleService = storeAccessControlRuleService;
       _transactionLogRepository = transactionLogRepository;
       _storeSearchFilterValidator = storeSearchFilterValidator;
       _storeItemCategorySearchFilterValidator = storeItemCategorySearchFilterValidator;
@@ -73,14 +82,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
     #region Public Members
     public List<Country> ListSearchCriteriaCountries()
     {
-      Country? country = null;
-      if (HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
-      {
-        var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-        country = user.CountryId.HasValue ? _countryService.GetByIdOrNull(user.CountryId.Value) : null;
-      }
-
-      var countryCodesAlpha2Available = _marketplaceProviderClient.ListSupportedCountryCodesAlpha2(country?.CodeAlpha2);
+      var countryCodesAlpha2Available = _marketplaceProviderClient.ListSupportedCountryCodesAlpha2(null);
 
       var results = _countryService.List().Where(o => countryCodesAlpha2Available.Contains(o.CodeAlpha2, StringComparer.InvariantCultureIgnoreCase))
           .OrderBy(o => o.CodeAlpha2 != Core.Country.Worldwide.ToDescription()).ThenBy(o => o.Name).ToList(); //esnure Worldwide appears first
@@ -107,6 +109,28 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var result = new StoreItemCategorySearchResults
       { Items = await _marketplaceProviderClient.ListStoreItemCategories(filter.StoreId, filter.PageSize, offset) };
+
+      if (filter.EvaluateStoreAccessControlRules)
+      {
+        User? user = null;
+        List<MyOpportunityInfo>? myOpportunitiesCompleted = null;
+        if (HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
+        {
+          user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+          var myOpportunitySearchFilter = new MyOpportunitySearchFilter
+          {
+            Action = MyOpportunity.Action.Verification,
+            VerificationStatuses = [VerificationStatus.Completed],
+            NonPaginatedQuery = true
+          };
+
+          myOpportunitiesCompleted = _myOpportunityService.Search(myOpportunitySearchFilter, user).Items;
+        }
+
+        foreach (var item in result.Items)
+          item.StoreAccessControlRuleResult = _storeAccessControlRuleService.EvaluateStoreAccessControlRules(item, user, myOpportunitiesCompleted);
+      }
 
       return result;
     }
