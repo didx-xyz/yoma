@@ -1,60 +1,42 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
+import type { ParsedUrlQuery } from "querystring";
 import { useCallback, useState, type ReactElement } from "react";
-import {
-  IoIosAdd,
-  IoIosSettings,
-  IoMdCalendar,
-  IoMdWarning,
-} from "react-icons/io";
+import { IoMdCalendar } from "react-icons/io";
 import Moment from "react-moment";
-import { toast } from "react-toastify";
 import { LinkStatus } from "~/api/models/actionLinks";
 import {
   StoreAccessControlRuleStatus,
-  type StoreAccessControlRuleInfo,
   type StoreAccessControlRuleSearchFilter,
   type StoreAccessControlRuleSearchResults,
 } from "~/api/models/marketplace";
-import {
-  searchStoreAccessControlRule,
-  updateStatusStoreAccessControlRule,
-} from "~/api/services/marketplace";
+import { searchStoreAccessControlRule } from "~/api/services/marketplace";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
-import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import {
-  StoreAccessControlRuleSearchFilterOptions,
-  StoreAccessControlRuleSearchFilters,
-} from "~/components/StoreAccessControlRule/StoreAccessControlRuleSearchFilter";
-import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import {
-  DATE_FORMAT_HUMAN,
-  GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE_STATUS,
-  GA_CATEGORY_STORE_ACCESS_CONTROL_RULE,
-  PAGE_SIZE,
-  THEME_BLUE,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
-import { getSafeUrl } from "~/lib/utils";
+import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
+import { getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
+interface IParams extends ParsedUrlQuery {
+  id: string; // org id
+}
+
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { nameContains, stores, organizations, statuses, page, returnUrl } =
-    context.query;
+  const { id } = context.params as IParams;
+  const { nameContains, stores, statuses, page } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   // 👇 ensure authenticated
@@ -66,47 +48,38 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
+  // 👇 set theme based on role
+  const theme = getThemeFromRole(session, id);
+
   return {
     props: {
+      id: id ?? null,
       nameContains: nameContains ?? null,
       stores: stores ?? null,
-      organizations: organizations ?? null,
       statuses: statuses ?? null,
       page: page ?? null,
+      theme: theme,
       error: null,
-      returnUrl: returnUrl ?? null,
     },
   };
 }
 
 const Stores: NextPageWithLayout<{
+  id: string;
   nameContains?: string;
   stores?: string;
-  organizations?: string;
   statuses?: string;
   page?: string;
   error?: number;
-  returnUrl?: string;
-}> = ({
-  nameContains,
-  stores,
-  organizations,
-  statuses,
-  page,
-  error,
-  returnUrl,
-}) => {
+}> = ({ id, nameContains, stores, statuses, page, error }) => {
   const router = useRouter();
-  const queryClient = useQueryClient();
-  const [isLoading, setIsLoading] = useState(false);
-  const modalContext = useConfirmationModalContext();
+  const [isLoading] = useState(false);
 
   // 👇 use prefetched queries from server
   const { data: dataRules } = useQuery<StoreAccessControlRuleSearchResults>({
     queryKey: [
-      "Admin",
       "StoreAccessControlRule",
-      `${nameContains}_${stores}_${organizations}_${statuses}_${page}`,
+      `${nameContains}_${stores}_${id}_${statuses}_${page}`,
     ],
     queryFn: () =>
       searchStoreAccessControlRule({
@@ -114,16 +87,15 @@ const Stores: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         nameContains: nameContains ?? null,
         stores: stores ? stores.split("|") : null,
-        organizations: organizations ? organizations.split("|") : null,
+        organizations: [id],
         statuses: statuses ? statuses.split("|") : null,
       }),
     enabled: !error,
   });
   const { data: totalCountAll } = useQuery<number>({
     queryKey: [
-      "Admin",
       "StoreAccessControlRule",
-      `${nameContains}_${stores}_${organizations}_${statuses}_${page}`,
+      `${nameContains}_${stores}_${id}_${statuses}_${page}`,
       "TotalCount",
       null,
     ],
@@ -133,16 +105,15 @@ const Stores: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         nameContains: nameContains ?? null,
         stores: stores ? stores.split("|") : null,
-        organizations: organizations ? organizations.split("|") : null,
+        organizations: [id],
         statuses: null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountActive } = useQuery<number>({
     queryKey: [
-      "Admin",
       "StoreAccessControlRule",
-      `${nameContains}_${stores}_${organizations}_${statuses}_${page}`,
+      `${nameContains}_${stores}_${id}_${statuses}_${page}`,
       "TotalCount",
       LinkStatus.Active,
     ],
@@ -152,16 +123,15 @@ const Stores: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         nameContains: nameContains ?? null,
         stores: stores ? stores.split("|") : null,
-        organizations: organizations ? organizations.split("|") : null,
+        organizations: [id],
         statuses: [StoreAccessControlRuleStatus.Active],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountInactive } = useQuery<number>({
     queryKey: [
-      "Admin",
       "StoreAccessControlRule",
-      `${nameContains}_${stores}_${organizations}_${statuses}_${page}`,
+      `${nameContains}_${stores}_${id}_${statuses}_${page}`,
       "TotalCount",
       LinkStatus.Inactive,
     ],
@@ -171,16 +141,15 @@ const Stores: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         nameContains: nameContains ?? null,
         stores: stores ? stores.split("|") : null,
-        organizations: organizations ? organizations.split("|") : null,
+        organizations: [id],
         statuses: [StoreAccessControlRuleStatus.Inactive],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountDeleted } = useQuery<number>({
     queryKey: [
-      "Admin",
       "StoreAccessControlRule",
-      `${nameContains}_${stores}_${organizations}_${statuses}_${page}`,
+      `${nameContains}_${stores}_${id}_${statuses}_${page}`,
       "TotalCount",
       LinkStatus.Deleted,
     ],
@@ -190,7 +159,7 @@ const Stores: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         nameContains: nameContains ?? null,
         stores: stores ? stores.split("|") : null,
-        organizations: organizations ? organizations.split("|") : null,
+        organizations: [id],
         statuses: [StoreAccessControlRuleStatus.Deleted],
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
@@ -202,7 +171,7 @@ const Stores: NextPageWithLayout<{
     pageSize: PAGE_SIZE,
     nameContains: nameContains ?? null,
     stores: stores ? stores.split("|") : null,
-    organizations: organizations ? organizations.split("|") : null,
+    organizations: [id],
     statuses: statuses ? statuses.split("|") : null,
   });
 
@@ -216,12 +185,6 @@ const Stores: NextPageWithLayout<{
 
       if (searchFilter?.nameContains)
         params.append("nameContains", searchFilter.nameContains);
-
-      if (
-        searchFilter?.organizations?.length !== undefined &&
-        searchFilter.organizations.length > 0
-      )
-        params.append("organizations", searchFilter.organizations.join("|"));
 
       if (
         searchFilter?.stores?.length !== undefined &&
@@ -251,22 +214,14 @@ const Stores: NextPageWithLayout<{
 
   const redirectWithSearchFilterParams = useCallback(
     (filter: StoreAccessControlRuleSearchFilter) => {
-      let url = `/admin/stores`;
+      let url = `/organisations/${id}/stores`;
       const params = getSearchFilterAsQueryString(filter);
       if (params != null && params.size > 0) url = `${url}?${params}`;
 
       if (url != router.asPath)
         void router.push(url, undefined, { scroll: false });
     },
-    [router, getSearchFilterAsQueryString],
-  );
-
-  // filter popup handlers
-  const onSubmitFilter = useCallback(
-    (val: StoreAccessControlRuleSearchFilter) => {
-      redirectWithSearchFilterParams(val);
-    },
-    [redirectWithSearchFilterParams],
+    [id, router, getSearchFilterAsQueryString],
   );
 
   // 🔔 pager change event
@@ -278,164 +233,6 @@ const Stores: NextPageWithLayout<{
     [searchFilter, redirectWithSearchFilterParams],
   );
 
-  const updateRuleStatus = useCallback(
-    async (id: string, status: StoreAccessControlRuleStatus) => {
-      // show confirmation dialog
-      // confirm dialog
-      const result = await modalContext.showConfirmation(
-        "",
-        <div
-          key="confirm-dialog-content"
-          className="text-gray-500 flex h-full flex-col space-y-2"
-        >
-          <div className="flex flex-row items-center gap-2">
-            <IoMdWarning className="h-6 w-6 text-warning" />
-            <p className="text-lg">Confirm</p>
-          </div>
-
-          <div>
-            <p className="text-sm leading-6">
-              {status === StoreAccessControlRuleStatus.Deleted && (
-                <>
-                  Are you sure you want to delete this rule?
-                  <br />
-                  This action cannot be undone.
-                </>
-              )}
-              {status === StoreAccessControlRuleStatus.Active && (
-                <>Are you sure you want to activate this rule?</>
-              )}
-              {status === StoreAccessControlRuleStatus.Inactive && (
-                <>Are you sure you want to inactivate this rule?</>
-              )}
-            </p>
-          </div>
-        </div>,
-      );
-      if (!result) return;
-
-      setIsLoading(true);
-
-      try {
-        // call api
-        await updateStatusStoreAccessControlRule(id, status);
-
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_STORE_ACCESS_CONTROL_RULE,
-          GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE_STATUS,
-          `Status Changed to ${status} for Store Access Control Rule ID: ${id}`,
-        );
-
-        // invalidate cache
-        // this will match all queries with the following prefixes ['Admin', 'Links', ...] (list data) & [''Admin', 'Links', 'TotalCount', ...] (tab counts)
-        await queryClient.invalidateQueries({
-          queryKey: ["Admin", "StoreAccessControlRule"],
-          exact: false,
-        });
-
-        toast.success("Rule status updated");
-      } catch (error) {
-        toast(<ApiErrors error={error} />, {
-          type: "error",
-          toastId: "rule",
-          autoClose: 2000,
-          icon: false,
-        });
-
-        setIsLoading(false);
-
-        return;
-      }
-
-      setIsLoading(false);
-    },
-    [queryClient, setIsLoading, modalContext],
-  );
-
-  const renderDropdown = (
-    item: StoreAccessControlRuleInfo,
-    className = "dropdown-left",
-  ) => {
-    if (
-      item?.status !== "Inactive" &&
-      item?.status !== "Active" &&
-      item?.status !== "Declined"
-    ) {
-      return null;
-    }
-
-    return (
-      <div className={`dropdown ${className} -mr-3 w-10 md:-mr-4`}>
-        <button className="badge bg-green-light text-green">
-          <IoIosSettings className="h-4 w-4" />
-        </button>
-
-        <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
-          {item?.status === "Active" && (
-            <li>
-              <button
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                onClick={() =>
-                  updateRuleStatus(
-                    item.id,
-                    StoreAccessControlRuleStatus.Inactive,
-                  )
-                }
-              >
-                Make inactive
-              </button>
-            </li>
-          )}
-          {item?.status === "Inactive" && (
-            <li>
-              <button
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                onClick={() =>
-                  updateRuleStatus(item.id, StoreAccessControlRuleStatus.Active)
-                }
-              >
-                Make active
-              </button>
-            </li>
-          )}
-
-          {(item?.status === "Active" || item?.status === "Inactive") && (
-            <>
-              <li>
-                <button
-                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                  onClick={() =>
-                    router.push(
-                      `/admin/stores/${item.id}?returnUrl=${encodeURIComponent(
-                        getSafeUrl(returnUrl, router.asPath),
-                      )}`,
-                    )
-                  }
-                >
-                  Edit
-                </button>
-              </li>
-              <li>
-                <button
-                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
-                  onClick={() =>
-                    updateRuleStatus(
-                      item.id,
-                      StoreAccessControlRuleStatus.Deleted,
-                    )
-                  }
-                >
-                  Delete
-                </button>
-              </li>
-            </>
-          )}
-        </ul>
-      </div>
-    );
-  };
-
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -445,7 +242,7 @@ const Stores: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Admin Marketplace Store Access Rules</title>
+        <title>Yoma | 🛒 Marketplace Store Access Rules</title>
       </Head>
       <PageBackground className="h-[14.5rem] md:h-[18rem]" />
 
@@ -469,7 +266,7 @@ const Stores: NextPageWithLayout<{
                   <ul className="-mb-px flex w-full justify-center gap-0 overflow-x-scroll md:justify-start">
                     <li className="whitespace-nowrap px-4">
                       <Link
-                        href={`/admin/stores`}
+                        href={`/organisations/${id}/stores`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           !statuses
                             ? "active border-orange"
@@ -487,7 +284,7 @@ const Stores: NextPageWithLayout<{
                     </li>
                     <li className="whitespace-nowrap px-4">
                       <Link
-                        href={`/admin/stores?statuses=active`}
+                        href={`/organisations/${id}/stores?statuses=active`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           statuses === "active"
                             ? "active border-orange"
@@ -505,7 +302,7 @@ const Stores: NextPageWithLayout<{
                     </li>
                     <li className="whitespace-nowrap px-4">
                       <Link
-                        href={`/admin/stores?statuses=inactive`}
+                        href={`/organisations/${id}/stores?statuses=inactive`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           statuses === "inactive"
                             ? "active border-orange"
@@ -523,7 +320,7 @@ const Stores: NextPageWithLayout<{
                     </li>
                     <li className="whitespace-nowrap px-4">
                       <Link
-                        href={`/admin/stores?statuses=deleted`}
+                        href={`/organisations/${id}/stores?statuses=deleted`}
                         className={`inline-block w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           statuses === "deleted"
                             ? "active border-orange"
@@ -547,32 +344,18 @@ const Stores: NextPageWithLayout<{
 
           <FormMessage messageType={FormMessageType.Info}>
             Marketplace Store Access Rules control the visibility of a ZLTO
-            store and its item categories to users.
+            store and its item categories to users. Contact support for
+            assistance with creating rules.
           </FormMessage>
 
           {/* SEARCH INPUT */}
           <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
             {/* FILTER */}
-            <StoreAccessControlRuleSearchFilters
+            {/* <StoreAccessControlRuleSearchFilters
               searchFilter={searchFilter}
-              filterOptions={[
-                StoreAccessControlRuleSearchFilterOptions.ORGANIZATIONS,
-                StoreAccessControlRuleSearchFilterOptions.STORES,
-              ]}
+              filterOptions={[StoreAccessControlRuleSearchFilterOptions.STORES]}
               onSubmit={(e) => onSubmitFilter(e)}
-            />
-
-            {/* ADD BUTTON */}
-            <Link
-              href={`/admin/stores/create${`?returnUrl=${encodeURIComponent(
-                getSafeUrl(returnUrl, router.asPath),
-              )}`}`}
-              className="bg-theme btn btn-circle btn-secondary btn-sm h-fit w-fit whitespace-nowrap !border-none p-1 text-xs text-white shadow-custom brightness-105 md:p-2 md:px-4"
-              id="btnCreateLink"
-            >
-              <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />
-              <span className="hidden md:inline">Add Rule</span>
-            </Link>
+            /> */}
           </div>
         </div>
 
@@ -598,17 +381,6 @@ const Stores: NextPageWithLayout<{
                     className="rounded-lg bg-white p-4 shadow-custom"
                   >
                     <div className="mb-2 flex flex-col">
-                      <Link
-                        href={`/organisations/${
-                          item.organizationId
-                        }${`?returnUrl=${encodeURIComponent(
-                          getSafeUrl(returnUrl, router.asPath),
-                        )}`}`}
-                        className="max-w-[340px] truncate text-sm font-bold text-black underline"
-                      >
-                        {item.organizationName}
-                      </Link>
-
                       <span className="mt-2 max-w-[340px] truncate text-sm font-semibold">
                         {item.name}
                       </span>
@@ -731,11 +503,6 @@ const Stores: NextPageWithLayout<{
                           </span>
                         )}
                       </div>
-
-                      {/* ACTIONS */}
-                      <div className="flex flex-row justify-center">
-                        {renderDropdown(item, "dropdown-top")}
-                      </div>
                     </div>
                   </div>
                 ))}
@@ -745,9 +512,6 @@ const Stores: NextPageWithLayout<{
               <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table md:table-xs">
                 <thead>
                   <tr className="border-gray text-gray-dark">
-                    <th className="border-b-2 border-gray-light !py-4">
-                      Organisation
-                    </th>
                     <th className="border-b-2 border-gray-light !py-4">Name</th>
                     <th className="border-b-2 border-gray-light">
                       Description
@@ -760,25 +524,11 @@ const Stores: NextPageWithLayout<{
                     </th>
                     <th className="border-b-2 border-gray-light">Date</th>
                     <th className="border-b-2 border-gray-light">Status</th>
-                    <th className="border-b-2 border-gray-light">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {dataRules.items.map((item) => (
                     <tr key={`grid_md_${item.id}`}>
-                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4 !align-top">
-                        <Link
-                          href={`/organisations/${
-                            item.organizationId
-                          }${`?returnUrl=${encodeURIComponent(
-                            getSafeUrl(returnUrl, router.asPath),
-                          )}`}`}
-                          className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap text-sm text-gray-dark underline"
-                        >
-                          {item.organizationName}
-                        </Link>
-                      </td>
-
                       <td className="max-w-[100px] truncate border-b-2 border-gray-light !py-4 !align-top">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.name}
@@ -790,15 +540,6 @@ const Stores: NextPageWithLayout<{
                           {item.description}
                         </div>
                       </td>
-
-                      {/* <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4 !align-top">
-                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
-                          <FormField
-                            label="Country"
-                            subLabel={item.store.countryName}
-                          />
-                        </div>
-                      </td> */}
 
                       <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4 !align-top">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
@@ -889,11 +630,6 @@ const Stores: NextPageWithLayout<{
                           </span>
                         )}
                       </td>
-
-                      {/* ACTIONS */}
-                      <td className="border-b-2 border-gray-light !py-4 !align-top">
-                        {renderDropdown(item)}
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -922,8 +658,10 @@ Stores.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
-Stores.theme = function getTheme() {
-  return THEME_BLUE;
+// 👇 return theme from component properties. this is set server-side (getServerSideProps)
+Stores.theme = function getTheme(page: ReactElement) {
+  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+  return page.props.theme;
 };
 
 export default Stores;
