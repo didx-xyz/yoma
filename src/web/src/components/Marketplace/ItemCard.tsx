@@ -9,11 +9,7 @@ import { IoMdLock } from "react-icons/io";
 interface InputProps {
   id: string;
   item: StoreItemCategory;
-  // imageURL: string | null;
   company: string | undefined;
-  // name: string;
-  // amount: number | null;
-  // count?: number;
   href?: string;
   onClick?: () => void;
 }
@@ -21,11 +17,7 @@ interface InputProps {
 const ItemCardComponent: React.FC<InputProps> = ({
   id,
   item,
-  // imageURL,
   company,
-  // name,
-  // amount,
-  // count,
   href,
   onClick,
 }) => {

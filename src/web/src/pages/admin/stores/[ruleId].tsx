@@ -34,21 +34,25 @@ import type { SelectOption } from "~/api/models/lookups";
 import type {
   OpportunityItem,
   StoreAccessControlRuleInfo,
+  StoreAccessControlRulePreviewInfo,
   StoreAccessControlRuleRequestUpdate,
 } from "~/api/models/marketplace";
 import { getGenders } from "~/api/services/lookups";
 import {
   createStoreAccessControlRule,
+  createStoreAccessControlRulePreview,
   getStoreAccessControlRuleById,
   listSearchCriteriaCountries,
   searchStoreItemCategories,
   searchStores,
   updateStoreAccessControlRule,
+  updateStoreAccessControlRulePreview,
 } from "~/api/services/marketplace";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
 import { getOrganisations } from "~/api/services/organisations";
 import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormRadio from "~/components/Common/FormRadio";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
@@ -671,6 +675,50 @@ const StoreRuleDetails: NextPageWithLayout<{
     },
     [watchOrganizationId, watchCountry, dataCountries, dataOpportunities],
   );
+
+  const [preview, setPreview] =
+    useState<StoreAccessControlRulePreviewInfo | null>(null);
+  const [previewError, setPreviewError] = useState<any>(null);
+
+  // when on step 4 (preview) call the createStoreAccessControlRulePreview endpoint
+  useEffect(() => {
+    if (step !== 4) return;
+
+    if (
+      !formData.organizationId ||
+      !formData.storeCountryCodeAlpha2 ||
+      !formData.storeId
+    )
+      return;
+
+    // set form data
+    const model = {
+      ...formData,
+    };
+    if (!model.opportunities?.length) model.opportunities = null;
+
+    if (ruleId == "create") {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { id, ...modelWithoutId } = model;
+
+      createStoreAccessControlRulePreview(modelWithoutId)
+        .then((data) => {
+          setPreview(data);
+          setPreviewError(null);
+        })
+        .catch((error) => {
+          setPreviewError(error);
+        });
+    } else
+      updateStoreAccessControlRulePreview(model)
+        .then((data) => {
+          setPreview(data);
+          setPreviewError(null);
+        })
+        .catch((error) => {
+          setPreviewError(error);
+        });
+  }, [ruleId, step, formData, setPreview, setPreviewError]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -1468,6 +1516,64 @@ const StoreRuleDetails: NextPageWithLayout<{
                     )}
                   >
                     {/* PREVIEW */}
+                    {/* data preview */}
+                    {previewError && <ApiErrors error={previewError} />}
+                    {preview && !previewError && (
+                      <>
+                        {preview.userCount == 0 && (
+                          <FormField label="Users">
+                            <FormMessage messageType={FormMessageType.Warning}>
+                              No users were found based on the specified
+                              conditions. Please review the conditions.
+                            </FormMessage>
+                          </FormField>
+                        )}
+                        {preview.userCount > 0 && (
+                          <FormField label="Users">
+                            <FormMessage messageType={FormMessageType.Success}>
+                              Your rule affects {preview.userCount} users out of
+                              a total of {preview.userCountTotal}.
+                            </FormMessage>
+                          </FormField>
+                        )}
+
+                        {!preview.rulesRelated?.length && (
+                          <FormField label="Rules">
+                            <FormMessage messageType={FormMessageType.Success}>
+                              No other rules were found based on the specified
+                              store info.
+                            </FormMessage>
+                          </FormField>
+                        )}
+
+                        {!!preview.rulesRelated?.length && (
+                          <FormField label="Rules">
+                            <FormMessage messageType={FormMessageType.Warning}>
+                              {preview.rulesRelated.length} rules based on the
+                              specified store info:
+                            </FormMessage>
+
+                            <table className="tabel">
+                              <thead>
+                                <tr>
+                                  <th>User Count</th>
+                                  <th>Rule Details</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {preview.rulesRelated.map((item, index) => (
+                                  <tr key={index}>
+                                    <td>{item.userCount}</td>
+                                    <td>{JSON.stringify(item.rule)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </FormField>
+                        )}
+                      </>
+                    )}
+
                     {formData.name && (
                       <FormField label="Name" subLabel={formData.name} />
                     )}

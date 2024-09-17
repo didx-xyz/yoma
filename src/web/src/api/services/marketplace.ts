@@ -7,6 +7,7 @@ import ApiServer from "~/lib/axiosServer";
 import type { Country } from "../models/lookups";
 import type {
   StoreAccessControlRuleInfo,
+  StoreAccessControlRulePreviewInfo,
   StoreAccessControlRuleRequestCreate,
   StoreAccessControlRuleRequestUpdate,
   StoreAccessControlRuleSearchFilter,
@@ -110,7 +111,6 @@ export const buyItem = async (
 
 //# administrative actions
 
-// ListSearchCriteriaOrganizations
 export const listSearchCriteriaOrganizations = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OrganizationInfo[]> => {
@@ -121,7 +121,6 @@ export const listSearchCriteriaOrganizations = async (
   return data;
 };
 
-// ListSearchCriteriaStores
 export const listSearchCriteriaStores = async (
   organizationId?: string,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
@@ -134,7 +133,6 @@ export const listSearchCriteriaStores = async (
   return data;
 };
 
-// GetStoreAccessControlRuleById
 export const getStoreAccessControlRuleById = async (
   id: string,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
@@ -146,7 +144,6 @@ export const getStoreAccessControlRuleById = async (
   return data;
 };
 
-// SearchStoreAccessControlRule
 export const searchStoreAccessControlRule = async (
   filter: StoreAccessControlRuleSearchFilter,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
@@ -160,7 +157,6 @@ export const searchStoreAccessControlRule = async (
   return data;
 };
 
-// CreateStoreAccessControlRule
 export const createStoreAccessControlRule = async (
   request: StoreAccessControlRuleRequestCreate,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
@@ -173,7 +169,6 @@ export const createStoreAccessControlRule = async (
   return data;
 };
 
-// UpdateStoreAccessControlRule
 export const updateStoreAccessControlRule = async (
   request: StoreAccessControlRuleRequestUpdate,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
@@ -186,7 +181,6 @@ export const updateStoreAccessControlRule = async (
   return data;
 };
 
-// UpdateStatusStoreAccessControlRule
 export const updateStatusStoreAccessControlRule = async (
   id: string,
   status: StoreAccessControlRuleStatus,
@@ -195,6 +189,30 @@ export const updateStatusStoreAccessControlRule = async (
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.patch<StoreAccessControlRuleInfo>(
     `/marketplace/store/rule/${id}/${status}`,
+  );
+  return data;
+};
+
+export const createStoreAccessControlRulePreview = async (
+  request: StoreAccessControlRuleRequestCreate,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<StoreAccessControlRulePreviewInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.post<StoreAccessControlRulePreviewInfo>(
+    "/marketplace/store/rule/preview",
+    request,
+  );
+  return data;
+};
+
+export const updateStoreAccessControlRulePreview = async (
+  request: StoreAccessControlRuleRequestUpdate,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<StoreAccessControlRulePreviewInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.patch<StoreAccessControlRulePreviewInfo>(
+    "/marketplace/store/rule/preview",
+    request,
   );
   return data;
 };
