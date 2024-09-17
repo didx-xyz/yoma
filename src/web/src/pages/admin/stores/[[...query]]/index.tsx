@@ -444,7 +444,7 @@ const Stores: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Admin Stores</title>
+        <title>Yoma | Admin Marketplace Store Access Rules</title>
       </Head>
       <PageBackground className="h-[14.5rem] md:h-[18rem]" />
 
@@ -453,7 +453,7 @@ const Stores: NextPageWithLayout<{
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
           <h3 className="mb-6 mt-3 flex items-center text-xl font-semibold tracking-normal text-white md:mb-9 md:mt-0 md:text-3xl">
-            Marketplace Rules
+            Marketplace Store Access Rules
           </h3>
 
           {/* TABBED NAVIGATION */}

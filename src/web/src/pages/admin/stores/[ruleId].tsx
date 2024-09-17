@@ -804,7 +804,7 @@ const StoreRuleDetails: NextPageWithLayout<{
             href={getSafeUrl(returnUrl?.toString(), `/admin/stores`)}
           >
             <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-4 w-4" />
-            Marketplace Rules
+            Marketplace Store Access Rules
           </Link>
           <div className="mx-2 font-bold">|</div>
           {ruleId == "create" ? "Create" : "Edit"}
@@ -934,10 +934,10 @@ const StoreRuleDetails: NextPageWithLayout<{
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold tracking-wider">General</h5>
                     <p className="text-sm">
-                      Marketplace Rules are conditions to control the visibility
-                      of a ZLTO store and its item categories to users. This
-                      system allows precise targeting based on user demographics
-                      and achievements.
+                      Marketplace Store Access Rules are conditions to control
+                      the visibility of a ZLTO store and its item categories to
+                      users. This system allows precise targeting based on user
+                      demographics and achievements.
                     </p>
                   </div>
 
