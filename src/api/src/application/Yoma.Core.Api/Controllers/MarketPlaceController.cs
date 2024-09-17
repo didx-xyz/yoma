@@ -166,15 +166,15 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Return a list of stores associated with store access control rules, optionally filter by organization (Admin role required)")]
+    [SwaggerOperation(Summary = "Return a list of stores associated with store access control rules, optionally filter by organization (Admin or Organization Admin roles required)")]
     [HttpGet("store/rule/search/filter/stores")]
     [ProducesResponseType(typeof(List<StoreInfo>), (int)HttpStatusCode.OK)]
-    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> ListSearchCriteriaStores([FromQuery] Guid? organizationId)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaStores));
 
-      var result = await _storeAccessControlRuleInfoService.ListSearchCriteriaStores(organizationId);
+      var result = await _storeAccessControlRuleInfoService.ListSearchCriteriaStores(organizationId, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaStores));
 

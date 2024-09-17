@@ -12,7 +12,7 @@ namespace Yoma.Core.Domain.Marketplace.Interfaces
 
     List<OrganizationInfo> ListSearchCriteriaOrganizations();
 
-    List<StoreInfo> ListSearchCriteriaStores(Guid? organizationId);
+    List<StoreInfo> ListSearchCriteriaStores(Guid? organizationId, bool ensureOrganizationAuthorization);
 
     StoreAccessControlRuleSearchResults Search(StoreAccessControlRuleSearchFilter filter, bool ensureOrganizationAuthorization);
 
