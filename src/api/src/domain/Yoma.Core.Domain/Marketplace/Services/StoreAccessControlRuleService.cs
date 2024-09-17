@@ -340,7 +340,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       {
         UserCount = userCount,
         RulesRelated = relatedRules,
-        UserCountTotal = totalUniqueUserIds.Count 
+        UserCountTotal = totalUniqueUserIds.Count
       };
 
       return result;
