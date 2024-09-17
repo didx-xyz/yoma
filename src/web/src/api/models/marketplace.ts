@@ -185,3 +185,14 @@ export interface StoreAccessControlRuleRequestUpdate
   extends StoreAccessControlRuleRequestBase {
   id: string;
 }
+
+export interface StoreAccessControlRulePreviewInfo {
+  userCount: number;
+  userCountTotal: number;
+  rulesRelated: StoreAccessControlRulePreviewItemInfo[];
+}
+
+export interface StoreAccessControlRulePreviewItemInfo {
+  userCount: number;
+  rule: StoreAccessControlRuleInfo;
+}

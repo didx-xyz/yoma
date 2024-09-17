@@ -224,7 +224,7 @@ namespace Yoma.Core.Api.Controllers
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
-     
+
     [SwaggerOperation(Summary = "Create a store access control rule (Admin role required)")]
     [HttpPost("store/rule")]
     [ProducesResponseType(typeof(StoreAccessControlRuleInfo), (int)HttpStatusCode.OK)]
@@ -242,7 +242,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Preview the update of the specified store access control rule (Admin role required)")]
     [HttpPatch("store/rule/preview")]
-    [ProducesResponseType(typeof(StoreAccessControlRuleInfo), (int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(StoreAccessControlRulePreviewInfo), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<IActionResult> UpdateStoreAccessControlRulePreview([FromBody] StoreAccessControlRuleRequestUpdate request)
     {
