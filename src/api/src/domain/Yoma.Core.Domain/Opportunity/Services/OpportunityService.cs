@@ -1013,7 +1013,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
       if (organization.Status != OrganizationStatus.Active)
-        throw new ValidationException($"An opportunity cannot be created as the associated organization '{organization.Name}' is not currently active");
+        throw new ValidationException($"The opportunity cannot be created as the associated organization '{organization.Name}' is not currently active");
+
+      if (request.ZltoReward.HasValue && !organization.ZltoRewardPool.HasValue)
+        throw new ValidationException($"The opportunity cannot issue Zlto rewards upon completion because the associated organization '{organization.Name}' does not have a Zlto reward pool configured. Please configure an organization-level Zlto reward pool before proceeding");
+
+      if (request.YomaReward.HasValue && !organization.YomaRewardPool.HasValue)
+        throw new ValidationException($"The opportunity cannot issue Yoma rewards upon completion because the associated organization '{organization.Name}' does not have a Yoma reward pool configured. Please configure an organization-level Yoma reward pool before proceeding");
 
       var result = new Models.Opportunity
       {
@@ -1137,13 +1143,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (organization.Status != OrganizationStatus.Active)
         throw new ValidationException($"The opportunity cannot be updated as the associated organization '{organization.Name}' is not currently active");
 
+      if (request.ZltoReward.HasValue && !organization.ZltoRewardPool.HasValue)
+        throw new ValidationException($"The opportunity cannot issue Zlto rewards upon completion because the associated organization '{organization.Name}' does not have a Zlto reward pool configured. Please configure an organization-level Zlto reward pool before proceeding");
+
+      if (request.YomaReward.HasValue && !organization.YomaRewardPool.HasValue)
+        throw new ValidationException($"The opportunity cannot issue Yoma rewards upon completion because the associated organization '{organization.Name}' does not have a Yoma reward pool configured. Please configure an organization-level Yoma reward pool before proceeding");
+
       //by default, status remains unchanged, except for immediate expiration based on DateEnd (status updated via UpdateStatus)
       if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
       {
         result.StatusId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
         result.Status = Status.Expired;
       }
-
+   
       if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
         throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative.Value:F0}) already allocated to participants");
 
