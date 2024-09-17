@@ -325,10 +325,15 @@ namespace Yoma.Core.Domain.Marketplace.Services
       ValidateRuleDuplicatesAcrossOrganizations(request, ruleExisting.Id);
       ValidateRuleOpportunities(country.Id, organization, request.Opportunities);
 
-      return new StoreAccessControlRulePreview
+      var result = new StoreAccessControlRulePreview
       {
+        UserCount = PreviewRuleMatchedUserCount(request.AgeFrom, request.AgeTo, request.GenderId, request.Opportunities, request.OpportunityOption),
         RulesRelated = PreviewRelatedRules(request.StoreId),
       };
+
+      result.UserCountTotal = result.UserCount + result.RulesRelated.Sum(o => o.UserCount);
+
+      return result;
     }
 
     public async Task<StoreAccessControlRule> Update(StoreAccessControlRuleRequestUpdate request)
