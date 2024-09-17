@@ -816,13 +816,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   );
   const watcSSISchemaName = watchStep7("ssiSchemaName");
 
-  const {
-    register: registerStep8,
-    handleSubmit: handleSubmitStep8,
-    formState: formStateStep8,
-    reset: resetStep8,
-    trigger: triggerStep8,
-  } = useForm({
+  const { handleSubmit: handleSubmitStep8, reset: resetStep8 } = useForm({
     resolver: zodResolver(schemaStep8),
     defaultValues: formData,
     mode: "all",
@@ -1070,6 +1064,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       else if (step === 4 && isDirtyStep4) isDirtyStep = true;
       else if (step === 5 && isDirtyStep5) isDirtyStep = true;
       else if (step === 6 && isDirtyStep6) isDirtyStep = true;
+      else if (step === 7 && isDirtyStep7) isDirtyStep = true;
 
       if (isDirtyStep) {
         setLastStepBeforeSaveChangesDialog(nextStep);
@@ -1086,6 +1081,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       isDirtyStep4,
       isDirtyStep5,
       isDirtyStep6,
+      isDirtyStep7,
       step,
       setStep,
       setSaveChangesDialogVisible,
@@ -2405,8 +2401,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               </FormField>
 
                               <FormField
-                                label="ZLTO Reward Pool"
-                                subLabel={`Setting a pool will limit the total amount of ZLTO awarded; once depleted, no ZLTO is awarded. ${
+                                label="Total Reward (pool)"
+                                subLabel={`Setting a total reward (or pool) will limit the amount of ZLTO awarded; once depleted, no ZLTO is awarded. ${
                                   watchParticipantLimit
                                     ? `A participant limit of ${watchParticipantLimit} is set, so the pool will default to ${
                                         watchParticipantLimit
