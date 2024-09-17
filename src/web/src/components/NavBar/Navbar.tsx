@@ -85,8 +85,8 @@ const navBarLinksAdmin: TabItem[] = [
     iconImage: "🔗",
   },
   {
-    title: "Stores",
-    description: "Stores",
+    title: "Marketplace Rules",
+    description: "Marketplace Rules",
     url: "/admin/stores",
     badgeCount: null,
     selected: false,
