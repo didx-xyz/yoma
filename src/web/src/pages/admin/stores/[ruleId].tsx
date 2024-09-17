@@ -680,7 +680,7 @@ const StoreRuleDetails: NextPageWithLayout<{
     useState<StoreAccessControlRulePreviewInfo | null>(null);
   const [previewError, setPreviewError] = useState<any>(null);
 
-  // when on step 4 (preview) call the createStoreAccessControlRulePreview endpoint
+  // when on step 4 (preview) call the preview endpoint
   useEffect(() => {
     if (step !== 4) return;
 
@@ -696,6 +696,7 @@ const StoreRuleDetails: NextPageWithLayout<{
       ...formData,
     };
     if (!model.opportunities?.length) model.opportunities = null;
+    if (!model.storeItemCategories?.length) model.storeItemCategories = null;
 
     if (ruleId == "create") {
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -1794,7 +1795,8 @@ const StoreRuleDetails: NextPageWithLayout<{
                           !(
                             formStateStep1.isValid &&
                             formStateStep2.isValid &&
-                            formStateStep3.isValid
+                            formStateStep3.isValid &&
+                            !previewError
                           )
                         }
                       >
