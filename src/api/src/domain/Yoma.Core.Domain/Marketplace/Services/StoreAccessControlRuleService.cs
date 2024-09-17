@@ -248,13 +248,18 @@ namespace Yoma.Core.Domain.Marketplace.Services
       ValidateRuleDuplicatesAcrossOrganizations(request, null);
       ValidateRuleOpportunities(country.Id, organization, request.Opportunities);
 
+      var (userCount, userIds) = PreviewRuleMatchedUserCount(request.AgeFrom, request.AgeTo, request.GenderId, request.Opportunities, request.OpportunityOption);
+
+      var (relatedRules, relatedUserIds) = PreviewRelatedRules(request.StoreId);
+
+      var totalUniqueUserIds = userIds.Union(relatedUserIds).Distinct().ToList();
+
       var result = new StoreAccessControlRulePreview
       {
-        UserCount = PreviewRuleMatchedUserCount(request.AgeFrom, request.AgeTo, request.GenderId, request.Opportunities, request.OpportunityOption),
-        RulesRelated = PreviewRelatedRules(request.StoreId),
+        UserCount = userCount,
+        RulesRelated = relatedRules,
+        UserCountTotal = totalUniqueUserIds.Count
       };
-
-      result.UserCountTotal = result.UserCount + result.RulesRelated.Sum(o => o.UserCount);
 
       return result;
     }
@@ -325,13 +330,18 @@ namespace Yoma.Core.Domain.Marketplace.Services
       ValidateRuleDuplicatesAcrossOrganizations(request, ruleExisting.Id);
       ValidateRuleOpportunities(country.Id, organization, request.Opportunities);
 
+      var (userCount, userIds) = PreviewRuleMatchedUserCount(request.AgeFrom, request.AgeTo, request.GenderId, request.Opportunities, request.OpportunityOption);
+
+      var (relatedRules, relatedUserIds) = PreviewRelatedRules(request.StoreId);
+
+      var totalUniqueUserIds = userIds.Union(relatedUserIds).Distinct().ToList();
+
       var result = new StoreAccessControlRulePreview
       {
-        UserCount = PreviewRuleMatchedUserCount(request.AgeFrom, request.AgeTo, request.GenderId, request.Opportunities, request.OpportunityOption),
-        RulesRelated = PreviewRelatedRules(request.StoreId),
+        UserCount = userCount,
+        RulesRelated = relatedRules,
+        UserCountTotal = totalUniqueUserIds.Count 
       };
-
-      result.UserCountTotal = result.UserCount + result.RulesRelated.Sum(o => o.UserCount);
 
       return result;
     }
@@ -584,7 +594,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
     #endregion
 
     #region Private Members
-    private List<StoreAccessControlRulePreviewItem> PreviewRelatedRules(string storeId)
+    private (List<StoreAccessControlRulePreviewItem> Items, List<Guid> RelatedUserIds) PreviewRelatedRules(string storeId)
     {
       var searchFilter = new StoreAccessControlRuleSearchFilter
       {
@@ -595,14 +605,32 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var searchResults = Search(searchFilter, false);
 
-      return searchResults.Items.Select(o => new StoreAccessControlRulePreviewItem
+      var relatedItems = new List<StoreAccessControlRulePreviewItem>();
+      var relatedUserIds = new List<Guid>();
+
+      foreach (var rule in searchResults.Items)
       {
-        UserCount = PreviewRuleMatchedUserCount(o.AgeFrom, o.AgeTo, o.GenderId, o.Opportunities?.Select(o => o.Id).ToList(), o.OpportunityOption),
-        Rule = o,
-      }).ToList();
+        var (userCount, userIds) = PreviewRuleMatchedUserCount(
+            rule.AgeFrom,
+            rule.AgeTo,
+            rule.GenderId,
+            rule.Opportunities?.Select(op => op.Id).ToList(),
+            rule.OpportunityOption
+        );
+
+        relatedItems.Add(new StoreAccessControlRulePreviewItem
+        {
+          UserCount = userCount,
+          Rule = rule
+        });
+
+        relatedUserIds.AddRange(userIds);
+      }
+
+      return (relatedItems, relatedUserIds.Distinct().ToList());
     }
 
-    private int PreviewRuleMatchedUserCount(int? ageFrom, int? ageTo, Guid? gender, List<Guid>? opportunities, StoreAccessControlRuleOpportunityCondition? opportunityCondition)
+    private (int UserCount, List<Guid> UserIds) PreviewRuleMatchedUserCount(int? ageFrom, int? ageTo, Guid? gender, List<Guid>? opportunities, StoreAccessControlRuleOpportunityCondition? opportunityCondition)
     {
       var currentDate = DateTimeOffset.UtcNow;
 
@@ -611,10 +639,10 @@ namespace Yoma.Core.Domain.Marketplace.Services
           {
             user,
             Age = user.DateOfBirth.HasValue
-                  ? (int?)(currentDate.Year - user.DateOfBirth.Value.Year -
-                      ((currentDate.Month < user.DateOfBirth.Value.Month) ||
-                      (currentDate.Month == user.DateOfBirth.Value.Month && currentDate.Day < user.DateOfBirth.Value.Day) ? 1 : 0))
-                  : null
+                    ? (int?)(currentDate.Year - user.DateOfBirth.Value.Year -
+                        ((currentDate.Month < user.DateOfBirth.Value.Month) ||
+                        (currentDate.Month == user.DateOfBirth.Value.Month && currentDate.Day < user.DateOfBirth.Value.Day) ? 1 : 0))
+                    : null
           });
 
       if (ageFrom.HasValue || ageTo.HasValue)
@@ -646,7 +674,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
         };
       }
 
-      return query.Count();
+      var userIds = query.Select(u => u.user.Id).Distinct().ToList();
+      return (userIds.Count, userIds);
     }
 
     private void ValidateRuleOrganizationAndName(StoreAccessControlRuleRequestBase request, Organization organization, Guid? existingRuleId)
