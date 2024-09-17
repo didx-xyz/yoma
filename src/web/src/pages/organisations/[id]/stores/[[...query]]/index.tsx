@@ -24,6 +24,10 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import {
+  StoreAccessControlRuleSearchFilterOptions,
+  StoreAccessControlRuleSearchFilters,
+} from "~/components/StoreAccessControlRule/StoreAccessControlRuleSearchFilter";
 import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -224,6 +228,14 @@ const Stores: NextPageWithLayout<{
     [id, router, getSearchFilterAsQueryString],
   );
 
+  // filter popup handlers
+  const onSubmitFilter = useCallback(
+    (val: StoreAccessControlRuleSearchFilter) => {
+      redirectWithSearchFilterParams(val);
+    },
+    [redirectWithSearchFilterParams],
+  );
+
   // 🔔 pager change event
   const handlePagerChange = useCallback(
     (value: number) => {
@@ -351,11 +363,11 @@ const Stores: NextPageWithLayout<{
           {/* SEARCH INPUT */}
           <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
             {/* FILTER */}
-            {/* <StoreAccessControlRuleSearchFilters
+            <StoreAccessControlRuleSearchFilters
               searchFilter={searchFilter}
               filterOptions={[StoreAccessControlRuleSearchFilterOptions.STORES]}
               onSubmit={(e) => onSubmitFilter(e)}
-            /> */}
+            />
           </div>
         </div>
 
