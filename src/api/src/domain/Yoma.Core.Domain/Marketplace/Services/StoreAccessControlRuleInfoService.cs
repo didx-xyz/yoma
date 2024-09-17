@@ -44,9 +44,9 @@ namespace Yoma.Core.Domain.Marketplace.Services
       return await ToInfo(result);
     }
 
-    public async Task<List<StoreInfo>> ListSearchCriteriaStores(Guid? organizationId)
+    public async Task<List<StoreInfo>> ListSearchCriteriaStores(Guid? organizationId, bool ensureOrganizationAuthorization)
     {
-      var results = _storeAccessControlRuleService.ListSearchCriteriaStores(organizationId);
+      var results = _storeAccessControlRuleService.ListSearchCriteriaStores(organizationId, ensureOrganizationAuthorization);
 
       foreach (var item in results)
       {

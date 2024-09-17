@@ -10,6 +10,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+      migrationBuilder.DropIndex(
+          name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalI~",
+          schema: "Entity",
+          table: "User");
+
       migrationBuilder.CreateTable(
           name: "StoreAccessControlRuleStatus",
           schema: "Marketplace",
@@ -106,6 +111,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           });
 
       migrationBuilder.CreateIndex(
+          name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_DateOfBir~",
+          schema: "Entity",
+          table: "User",
+          columns: ["FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified"]);
+
+      migrationBuilder.CreateIndex(
           name: "IX_StoreAccessControlRule_GenderId",
           schema: "Marketplace",
           table: "StoreAccessControlRule",
@@ -172,6 +183,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       migrationBuilder.DropTable(
           name: "StoreAccessControlRuleStatus",
           schema: "Marketplace");
+
+      migrationBuilder.DropIndex(
+          name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_DateOfBir~",
+          schema: "Entity",
+          table: "User");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_ExternalI~",
+          schema: "Entity",
+          table: "User",
+          columns: ["FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified"]);
     }
   }
 }

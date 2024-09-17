@@ -4,6 +4,7 @@ using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Transactions;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -15,6 +16,7 @@ using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Interfaces.Lookups;
 using Yoma.Core.Domain.Marketplace.Models;
 using Yoma.Core.Domain.Marketplace.Validators;
+using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Extensions;
@@ -34,11 +36,15 @@ namespace Yoma.Core.Domain.Marketplace.Services
     private readonly IGenderService _genderService;
     private readonly IOpportunityService _opportunityService;
     private readonly IUserService _userService;
+    private readonly IMyOpportunityActionService _myOpportunityActionService;
+    private readonly IMyOpportunityVerificationStatusService _myOpportunityVerificationStatusService;
     private readonly StoreAccessControlRuleSearchFilterValidator _storeAccessControlRuleSearchFilterValidator;
     private readonly StoreAccessControlRuleRequestValidatorCreate _storeAccessControlRuleRequestValidatorCreate;
     private readonly StoreAccessControlRuleRequestValidatorUpdate _storeAccessControlRuleRequestValidatorUpdate;
     private readonly IRepositoryBatchedValueContainsWithNavigation<StoreAccessControlRule> _storeAccessControlRuleRepistory;
     private readonly IRepository<StoreAccessControlRuleOpportunity> _storeAccessControlRuleOpportunityRepository;
+    private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
+    private readonly IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
 
     private static readonly StoreAccessControlRuleStatus[] Statuses_Updatable = [StoreAccessControlRuleStatus.Active, StoreAccessControlRuleStatus.Inactive];
@@ -57,11 +63,15 @@ namespace Yoma.Core.Domain.Marketplace.Services
       IGenderService genderService,
       IOpportunityService opportunityService,
       IUserService userService,
+      IMyOpportunityActionService myOpportunityActionService,
+      IMyOpportunityVerificationStatusService myOpportunityVerificationStatusService,
       StoreAccessControlRuleSearchFilterValidator storeAccessControlRuleSearchFilterValidator,
       StoreAccessControlRuleRequestValidatorCreate storeAccessControlRuleRequestValidatorCreate,
       StoreAccessControlRuleRequestValidatorUpdate storeAccessControlRuleRequestValidatorUpdate,
       IRepositoryBatchedValueContainsWithNavigation<StoreAccessControlRule> storeAccessControlRuleRepistory,
       IRepository<StoreAccessControlRuleOpportunity> storeAccessControlRuleOpportunityRepository,
+      IRepositoryValueContainsWithNavigation<User> userRepository,
+      IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
       IExecutionStrategyService executionStrategyService)
     {
       _appSettings = appSettings.Value;
@@ -73,11 +83,15 @@ namespace Yoma.Core.Domain.Marketplace.Services
       _genderService = genderService;
       _opportunityService = opportunityService;
       _userService = userService;
+      _myOpportunityActionService = myOpportunityActionService;
+      _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;
       _storeAccessControlRuleSearchFilterValidator = storeAccessControlRuleSearchFilterValidator;
       _storeAccessControlRuleRequestValidatorCreate = storeAccessControlRuleRequestValidatorCreate;
       _storeAccessControlRuleRequestValidatorUpdate = storeAccessControlRuleRequestValidatorUpdate;
       _storeAccessControlRuleRepistory = storeAccessControlRuleRepistory;
       _storeAccessControlRuleOpportunityRepository = storeAccessControlRuleOpportunityRepository;
+      _userRepository = userRepository;
+      _myOpportunityRepository = myOpportunityRepository;
       _executionStrategyService = executionStrategyService;
     }
     #endregion
@@ -122,14 +136,21 @@ namespace Yoma.Core.Domain.Marketplace.Services
       return [.. organizations.OrderBy(o => o.Name)];
     }
 
-    public List<StoreInfo> ListSearchCriteriaStores(Guid? organizationId)
+    public List<StoreInfo> ListSearchCriteriaStores(Guid? organizationId, bool ensureOrganizationAuthorization)
     {
       var query = _storeAccessControlRuleRepistory.Query(false);
 
-      if (organizationId.HasValue)
+      if (!organizationId.HasValue)
+      {
+        if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+          throw new ValidationException($"Organization required for '{Constants.Role_OrganizationAdmin}' role only");
+      }
+      else
       {
         if (organizationId == Guid.Empty)
           throw new ArgumentNullException(nameof(organizationId));
+
+        _organizationService.IsAdmin(organizationId.Value, ensureOrganizationAuthorization);
 
         query = query.Where(o => o.OrganizationId == organizationId.Value);
       }
@@ -227,10 +248,15 @@ namespace Yoma.Core.Domain.Marketplace.Services
       ValidateRuleDuplicatesAcrossOrganizations(request, null);
       ValidateRuleOpportunities(country.Id, organization, request.Opportunities);
 
-      return new StoreAccessControlRulePreview
+      var result = new StoreAccessControlRulePreview
       {
+        UserCount = PreviewRuleMatchedUserCount(request.AgeFrom, request.AgeTo, request.GenderId, request.Opportunities, request.OpportunityOption),
         RulesRelated = PreviewRelatedRules(request.StoreId),
       };
+
+      result.UserCountTotal = result.UserCount + result.RulesRelated.Sum(o => o.UserCount);
+
+      return result;
     }
 
     public async Task<StoreAccessControlRule> Create(StoreAccessControlRuleRequestCreate request)
@@ -564,7 +590,58 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var searchResults = Search(searchFilter, false);
 
-      return searchResults.Items.Select(o => new StoreAccessControlRulePreviewItem { Rule = o }).ToList();
+      return searchResults.Items.Select(o => new StoreAccessControlRulePreviewItem
+      {
+        UserCount = PreviewRuleMatchedUserCount(o.AgeFrom, o.AgeTo, o.GenderId, o.Opportunities?.Select(o => o.Id).ToList(), o.OpportunityOption),
+        Rule = o,
+      }).ToList();
+    }
+
+    private int PreviewRuleMatchedUserCount(int? ageFrom, int? ageTo, Guid? gender, List<Guid>? opportunities, StoreAccessControlRuleOpportunityCondition? opportunityCondition)
+    {
+      var currentDate = DateTimeOffset.UtcNow;
+
+      var query = _userRepository.Query(false)
+          .Select(user => new
+          {
+            user,
+            Age = user.DateOfBirth.HasValue
+                  ? (int?)(currentDate.Year - user.DateOfBirth.Value.Year -
+                      ((currentDate.Month < user.DateOfBirth.Value.Month) ||
+                      (currentDate.Month == user.DateOfBirth.Value.Month && currentDate.Day < user.DateOfBirth.Value.Day) ? 1 : 0))
+                  : null
+          });
+
+      if (ageFrom.HasValue || ageTo.HasValue)
+        query = query.Where(u => u.Age.HasValue &&
+            (!ageFrom.HasValue || u.Age >= ageFrom.Value) &&
+            (!ageTo.HasValue || u.Age <= ageTo.Value));
+
+      if (gender.HasValue)
+        query = query.Where(u => u.user.GenderId.HasValue && u.user.GenderId.Value == gender.Value);
+
+      if (opportunities != null && opportunities.Count != 0)
+      {
+        var actionId = _myOpportunityActionService.GetByName(MyOpportunity.Action.Verification.ToString()).Id;
+        var verificationStatusId = _myOpportunityVerificationStatusService.GetByName(MyOpportunity.VerificationStatus.Completed.ToString()).Id;
+
+        var opportunityQuery = _myOpportunityRepository.Query()
+            .Where(myOp =>
+                myOp.ActionId == actionId &&
+                myOp.VerificationStatusId == verificationStatusId &&
+                opportunities.Contains(myOp.OpportunityId));
+
+        query = opportunityCondition switch
+        {
+          StoreAccessControlRuleOpportunityCondition.All => query.Where(u =>
+                          opportunityQuery.Count(myOp => myOp.UserId == u.user.Id) == opportunities.Count),
+          StoreAccessControlRuleOpportunityCondition.Any => query.Where(u =>
+                          opportunityQuery.Any(myOp => myOp.UserId == u.user.Id)),
+          _ => throw new InvalidOperationException($"Opportunity option '{opportunityCondition}' not supported"),
+        };
+      }
+
+      return query.Count();
     }
 
     private void ValidateRuleOrganizationAndName(StoreAccessControlRuleRequestBase request, Organization organization, Guid? existingRuleId)
