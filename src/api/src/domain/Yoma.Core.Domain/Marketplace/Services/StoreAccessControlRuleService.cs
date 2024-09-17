@@ -376,8 +376,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
       var opportunityIdsToRemove = result.Opportunities?.Where(o => request.Opportunities == null || !request.Opportunities.Contains(o.Id)).ToList();
       var opportunityIdsToAdd = request.Opportunities?.Where(o => result.Opportunities == null || !result.Opportunities.Any(i => i.Id == o)).ToList();
 
-      ValidateRuleOrganizationAndName(request, organization, null);
-      ValidateRuleDuplicatesAcrossOrganizations(request, null);
+      ValidateRuleOrganizationAndName(request, organization, result.Id);
+      ValidateRuleDuplicatesAcrossOrganizations(request, result.Id);
       var opportunitiesValidated = ValidateRuleOpportunities(result.StoreCountryId, organization, request.Opportunities);
       var opportunitiesToAdd = opportunitiesValidated?.Where(o => opportunityIdsToAdd == null || opportunityIdsToAdd.Contains(o.Id)).ToList();
 
