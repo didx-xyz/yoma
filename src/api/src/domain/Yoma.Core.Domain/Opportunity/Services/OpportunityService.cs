@@ -1155,7 +1155,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result.StatusId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
         result.Status = Status.Expired;
       }
-   
+
       if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
         throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative.Value:F0}) already allocated to participants");
 

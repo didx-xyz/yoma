@@ -4,7 +4,7 @@ using Yoma.Core.Domain.Marketplace.Models;
 
 namespace Yoma.Core.Domain.Marketplace.Validators
 {
-  public class StoreAccessControlRuleSearchFilterValidator : PaginationFilterValidator<StoreAccessControlRuleSearchFilter>  
+  public class StoreAccessControlRuleSearchFilterValidator : PaginationFilterValidator<StoreAccessControlRuleSearchFilter>
   {
     #region Constructor
     public StoreAccessControlRuleSearchFilterValidator()

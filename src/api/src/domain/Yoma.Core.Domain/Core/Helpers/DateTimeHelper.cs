@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Core.Helpers
       if (effectiveCurrentDate.Month > dateOfBirth.Month ||
        (effectiveCurrentDate.Month == dateOfBirth.Month && effectiveCurrentDate.Day >= dateOfBirth.Day)) return age;
 
-      return age -1;
+      return age - 1;
     }
   }
 }
