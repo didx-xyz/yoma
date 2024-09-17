@@ -804,7 +804,7 @@ const StoreRuleDetails: NextPageWithLayout<{
             href={getSafeUrl(returnUrl?.toString(), `/admin/stores`)}
           >
             <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-4 w-4" />
-            Store Rules
+            Marketplace Rules
           </Link>
           <div className="mx-2 font-bold">|</div>
           {ruleId == "create" ? "Create" : "Edit"}
@@ -934,10 +934,10 @@ const StoreRuleDetails: NextPageWithLayout<{
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold tracking-wider">General</h5>
                     <p className="text-sm">
-                      Store Access Control Rules are conditions to control the
-                      visibility of a ZLTO store and its item categories to
-                      users. This system allows precise targeting based on user
-                      demographics and achievements.
+                      Marketplace Rules are conditions to control the visibility
+                      of a ZLTO store and its item categories to users. This
+                      system allows precise targeting based on user demographics
+                      and achievements.
                     </p>
                   </div>
 
@@ -1549,22 +1549,108 @@ const StoreRuleDetails: NextPageWithLayout<{
                         {!!preview.rulesRelated?.length && (
                           <FormField label="Rules">
                             <FormMessage messageType={FormMessageType.Warning}>
-                              {preview.rulesRelated.length} rules based on the
-                              specified store info:
+                              {preview.rulesRelated.length} rule(s) found based
+                              on the specified store info:
                             </FormMessage>
 
-                            <table className="tabel">
+                            <table className="table table-xs border-separate rounded-lg border-x-2 border-t-2 border-gray-light">
                               <thead>
-                                <tr>
-                                  <th>User Count</th>
-                                  <th>Rule Details</th>
+                                <tr className="border-gray">
+                                  <th className="border-b-2 border-gray-light !py-4">
+                                    Store
+                                  </th>
+                                  <th className="border-b-2 border-gray-light !py-4">
+                                    Conditions
+                                  </th>
+                                  <th className="border-b-2 border-gray-light !py-4">
+                                    User Count
+                                  </th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {preview.rulesRelated.map((item, index) => (
                                   <tr key={index}>
-                                    <td>{item.userCount}</td>
-                                    <td>{JSON.stringify(item.rule)}</td>
+                                    <td className="truncate border-b-2 border-gray-light !py-4 !align-top">
+                                      <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
+                                        {item.rule.store.name!}
+                                      </div>
+
+                                      <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
+                                        {item.rule.storeItemCategories?.map(
+                                          (item, index) => {
+                                            return (
+                                              <span
+                                                key={`storeItemCategories_${index}`}
+                                                className="text-xs text-gray-dark"
+                                              >
+                                                {item.name}
+                                              </span>
+                                            );
+                                          },
+                                        )}
+                                      </div>
+                                    </td>
+
+                                    <td className="truncate border-b-2 border-gray-light !py-4 !align-top">
+                                      {(item.rule.ageFrom ||
+                                        item.rule.ageTo) && (
+                                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[300px]">
+                                          <span className="mr-1 text-xs font-bold">
+                                            Age:
+                                          </span>
+                                          <span className="text-xs">
+                                            {item.rule.ageFrom &&
+                                            item.rule.ageTo
+                                              ? `From ${item.rule.ageFrom} To ${item.rule.ageTo}`
+                                              : item.rule.ageFrom
+                                                ? `From ${item.rule.ageFrom}`
+                                                : item.rule.ageTo
+                                                  ? `To ${item.rule.ageTo}`
+                                                  : "No age range specified"}
+                                          </span>
+                                        </div>
+                                      )}
+
+                                      {item?.rule?.gender && (
+                                        <div className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                          <span className="mr-1 text-xs font-bold">
+                                            Gender:
+                                          </span>
+                                          <span className="text-xs">
+                                            {item.rule.gender}
+                                          </span>
+                                        </div>
+                                      )}
+
+                                      {!!item?.rule?.opportunities?.length && (
+                                        <div className="flex flex-col">
+                                          <span className="mr-1 text-xs font-bold">
+                                            Opportunities:
+                                          </span>
+                                          <span className="text-xs">
+                                            {item?.rule.opportunities?.map(
+                                              (o) => (
+                                                <div
+                                                  key={o.id}
+                                                  className="w-[120px] truncate"
+                                                >
+                                                  <Link
+                                                    href={`/organisations/${item.rule.organizationId}/opportunities/${o.id}`}
+                                                    className="text-xs font-semibold text-gray-dark underline"
+                                                  >
+                                                    {o.title}
+                                                  </Link>
+                                                </div>
+                                              ),
+                                            )}
+                                          </span>
+                                        </div>
+                                      )}
+                                    </td>
+
+                                    <td className="truncate border-b-2 border-gray-light !py-4 !align-top">
+                                      {item.userCount}
+                                    </td>
                                   </tr>
                                 ))}
                               </tbody>
