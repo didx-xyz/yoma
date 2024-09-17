@@ -1,12 +1,12 @@
 dependencies:
 - name: common
   repository: oci://registry-1.docker.io/bitnamicharts
-  version: 2.22.0
+  version: 2.23.0
 - name: keycloakx
   repository: https://codecentric.github.io/helm-charts
   version: 2.2.2
 - name: keycloak-config-cli
   repository: git+https://github.com/didx-xyz/keycloak-config-cli@contrib/charts?ref=init-containers&sparse=0
   version: 5.8.1-SNAPSHOT
-digest: sha256:2ca0168754e5e4576697f30aec57c998a203324e375ef139eea37e5d3b4a474e
-generated: "2024-08-27T16:16:23.167974+02:00"
+digest: sha256:e1b377196467a5fba185d1141331771826a4fc15b3b3f8bad3ca8d22327ee971
+generated: "2024-09-17T13:54:36.502824+02:00"
