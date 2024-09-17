@@ -115,6 +115,11 @@ import {
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
 
+export interface OpportunityRequestViewModel extends OpportunityRequestBase {
+  showZltoReward: boolean;
+  showZltoRewardPool: boolean;
+}
+
 interface IParams extends ParsedUrlQuery {
   id: string;
   opportunityId: string;
@@ -360,8 +365,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   const formRef5 = useRef<HTMLFormElement>(null);
   const formRef6 = useRef<HTMLFormElement>(null);
   const formRef7 = useRef<HTMLFormElement>(null);
+  const formRef8 = useRef<HTMLFormElement>(null);
 
-  const [formData, setFormData] = useState<OpportunityRequestBase>({
+  const [formData, setFormData] = useState<OpportunityRequestViewModel>({
     id: opportunity?.id ?? null,
     title: opportunity?.title ?? "",
     summary: opportunity?.summary ?? "",
@@ -395,6 +401,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     instructions: opportunity?.instructions ?? "",
     postAsActive: opportunity?.published ?? false,
     shareWithPartners: opportunity?.shareWithPartners ?? false,
+
+    showZltoReward: !!opportunity?.zltoReward ?? false,
+    showZltoRewardPool: !!opportunity?.zltoRewardPool ?? false,
   });
 
   const schemaStep1 = z.object({
@@ -517,46 +526,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
   const schemaStep3 = z
     .object({
-      zltoReward: z
-        .union([z.nan(), z.null(), z.number()])
-        .superRefine((val, ctx) => {
-          if (val != null) {
-            if (val <= 0) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Reward amount must be greater than 0.",
-              });
-            }
-            if (val > 2000) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Reward amount must be less than or equal to 2000.",
-              });
-            }
-          }
-        }),
-      zltoRewardPool: z
-        .union([z.nan(), z.null(), z.number()])
-        .superRefine((val, ctx) => {
-          if (val != null) {
-            if (val <= 0) {
-              ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Reward pool must be greater than 0.",
-              });
-            }
-          }
-        }),
-      //   // eslint-disable-next-line
-      //   return val === null || Number.isNaN(val as any) ? undefined : val;
-      // }),
-      // yomaRewardPool: z
-      //   .union([z.nan(), z.null(), z.number()])
-      //   .transform((val) => {
-      //     // eslint-disable-next-line
-      //     return val === null || Number.isNaN(val as any) ? undefined : val;
-      //   }),
-      skills: z.array(z.string()).optional(),
+      showZltoReward: z.boolean().optional(),
+      showZltoRewardPool: z.boolean().optional(),
+      zltoReward: z.union([z.nan(), z.null(), z.number()]),
+      zltoRewardPool: z.union([z.nan(), z.null(), z.number()]),
     })
     .superRefine((val, ctx) => {
       if (val == null) return;
@@ -575,13 +548,74 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         });
         return z.NEVER;
       }
+
+      if (val.showZltoReward) {
+        if (val.zltoReward === null || isNaN(val.zltoReward)) {
+          ctx.addIssue({
+            message: "Reward amount is required.",
+            code: z.ZodIssueCode.custom,
+            path: ["zltoReward"],
+          });
+        } else {
+          if (val.zltoReward <= 0) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Reward amount must be greater than 0.",
+              path: ["zltoReward"],
+            });
+          }
+          if (val.zltoReward > 2000) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              message: "Reward amount must be less than or equal to 2000.",
+              path: ["zltoReward"],
+            });
+          }
+        }
+
+        if (val.showZltoRewardPool) {
+          if (
+            val.zltoRewardPool != null &&
+            organisation?.zltoRewardBalance != null &&
+            val.zltoRewardPool > organisation.zltoRewardBalance
+          ) {
+            ctx.addIssue({
+              message: `Reward pool cannot exceed the available balance of ${organisation?.zltoRewardBalance}.`,
+              code: z.ZodIssueCode.custom,
+              path: ["zltoRewardPool"],
+              fatal: true,
+            });
+            return z.NEVER;
+          }
+
+          if (val.zltoRewardPool === null || isNaN(val.zltoRewardPool)) {
+            ctx.addIssue({
+              message: "Reward pool is required.",
+              code: z.ZodIssueCode.custom,
+              path: ["zltoRewardPool"],
+            });
+          } else {
+            if (val.zltoRewardPool <= 0) {
+              ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Reward pool must be greater than 0.",
+                path: ["zltoRewardPool"],
+              });
+            }
+          }
+        }
+      }
     });
 
   const schemaStep4 = z.object({
+    skills: z.array(z.string()).optional(),
+  });
+
+  const schemaStep5 = z.object({
     keywords: z.array(z.string()).min(1, "Keyword is required."),
   });
 
-  const schemaStep5 = z
+  const schemaStep6 = z
     .object({
       verificationEnabled: z.union([z.boolean(), z.null()]),
       verificationMethod: z.union([z.number(), z.null()]).optional(),
@@ -649,7 +683,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       return values;
     });
 
-  const schemaStep6 = z
+  const schemaStep7 = z
     .object({
       credentialIssuanceEnabled: z.boolean(),
       ssiSchemaName: z.union([z.string(), z.null()]),
@@ -664,7 +698,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       }
     });
 
-  const schemaStep7 = z.object({
+  const schemaStep8 = z.object({
     postAsActive: z.boolean().optional(),
     shareWithPartners: z.boolean().optional(),
   });
@@ -697,12 +731,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     mode: "all",
   });
   const watchDateEnd = watchStep2("dateEnd");
+  const watchParticipantLimit = watchStep2("participantLimit");
 
   const {
     register: registerStep3,
     handleSubmit: handleSubmitStep3,
     formState: formStateStep3,
     control: controlStep3,
+    watch: watchStep3,
     getValues: getValuesStep3,
     setValue: setValueStep3,
     reset: resetStep3,
@@ -712,6 +748,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     defaultValues: formData,
     mode: "all",
   });
+  const watchZltoReward = watchStep3("zltoReward");
+  const watchShowZltoReward = watchStep3("showZltoReward");
+  const watchShowZltoRewardPool = watchStep3("showZltoRewardPool");
 
   const {
     handleSubmit: handleSubmitStep4,
@@ -727,29 +766,20 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
   const {
     handleSubmit: handleSubmitStep5,
-    getValues: getValuesStep5,
-    setValue: setValueStep5,
     formState: formStateStep5,
-    control: controlStep5,
-    watch: watchStep5,
     reset: resetStep5,
+    control: controlStep5,
     trigger: triggerStep5,
   } = useForm({
     resolver: zodResolver(schemaStep5),
     defaultValues: formData,
     mode: "all",
   });
-  const watchVerificationEnabled = watchStep5("verificationEnabled");
-  const watchVerificationMethod = watchStep5("verificationMethod");
-  const watchVerificationTypes = watchStep5("verificationTypes");
-  const { append, remove } = useFieldArray({
-    control: controlStep5,
-    name: "verificationTypes",
-  });
 
   const {
-    register: registerStep6,
     handleSubmit: handleSubmitStep6,
+    getValues: getValuesStep6,
+    setValue: setValueStep6,
     formState: formStateStep6,
     control: controlStep6,
     watch: watchStep6,
@@ -760,19 +790,34 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     defaultValues: formData,
     mode: "all",
   });
-  const watchCredentialIssuanceEnabled = watchStep6(
-    "credentialIssuanceEnabled",
-  );
-  const watcSSISchemaName = watchStep6("ssiSchemaName");
+  const watchVerificationEnabled = watchStep6("verificationEnabled");
+  const watchVerificationMethod = watchStep6("verificationMethod");
+  const watchVerificationTypes = watchStep6("verificationTypes");
+  const { append, remove } = useFieldArray({
+    control: controlStep6,
+    name: "verificationTypes",
+  });
 
   const {
     register: registerStep7,
     handleSubmit: handleSubmitStep7,
     formState: formStateStep7,
+    control: controlStep7,
+    watch: watchStep7,
     reset: resetStep7,
     trigger: triggerStep7,
   } = useForm({
     resolver: zodResolver(schemaStep7),
+    defaultValues: formData,
+    mode: "all",
+  });
+  const watchCredentialIssuanceEnabled = watchStep7(
+    "credentialIssuanceEnabled",
+  );
+  const watcSSISchemaName = watchStep7("ssiSchemaName");
+
+  const { handleSubmit: handleSubmitStep8, reset: resetStep8 } = useForm({
+    resolver: zodResolver(schemaStep8),
     defaultValues: formData,
     mode: "all",
   });
@@ -803,6 +848,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     () => Object.keys(formStateStep6.dirtyFields).length > 0,
     [formStateStep6],
   );
+  const isDirtyStep7 = useMemo(
+    () => Object.keys(formStateStep7.dirtyFields).length > 0,
+    [formStateStep7],
+  );
   //#endregion Form
 
   //#region Form Behavior
@@ -810,11 +859,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     { step: 1, label: "General", formState: formStateStep1 },
     { step: 2, label: "Details", formState: formStateStep2 },
     { step: 3, label: "Rewards", formState: formStateStep3 },
-    { step: 4, label: "Keywords", formState: formStateStep4 },
-    { step: 5, label: "Verification", formState: formStateStep5 },
-    { step: 6, label: "Credential", formState: formStateStep6 },
+    { step: 4, label: "Skills", formState: formStateStep4 },
+    { step: 5, label: "Keywords", formState: formStateStep5 },
+    { step: 6, label: "Verification", formState: formStateStep6 },
+    { step: 7, label: "Credential", formState: formStateStep7 },
     {
-      step: 7,
+      step: 8,
       label: "Preview",
       formState: {
         isValid:
@@ -823,7 +873,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           formStateStep3.isValid &&
           formStateStep4.isValid &&
           formStateStep5.isValid &&
-          formStateStep6.isValid,
+          formStateStep6.isValid &&
+          formStateStep7.isValid,
       },
     },
   ];
@@ -1013,6 +1064,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       else if (step === 4 && isDirtyStep4) isDirtyStep = true;
       else if (step === 5 && isDirtyStep5) isDirtyStep = true;
       else if (step === 6 && isDirtyStep6) isDirtyStep = true;
+      else if (step === 7 && isDirtyStep7) isDirtyStep = true;
 
       if (isDirtyStep) {
         setLastStepBeforeSaveChangesDialog(nextStep);
@@ -1029,6 +1081,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       isDirtyStep4,
       isDirtyStep5,
       isDirtyStep6,
+      isDirtyStep7,
       step,
       setStep,
       setSaveChangesDialogVisible,
@@ -1109,7 +1162,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   ]);
 
   const onSubmit = useCallback(
-    async (data: OpportunityRequestBase) => {
+    async (data: OpportunityRequestViewModel) => {
       setIsLoading(true);
 
       try {
@@ -1142,6 +1195,17 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         // if no end date, clear shareWithPartners flag
         if (!data.dateEnd) {
           data.shareWithPartners = false;
+        }
+
+        // clear the zlto reward if not shown
+        if (!data.showZltoReward) {
+          data.zltoReward = null;
+          data.zltoRewardPool = null;
+        }
+
+        // clear the zlto reward pool if not shown
+        if (!data.showZltoRewardPool) {
+          data.zltoRewardPool = null;
         }
 
         // update api
@@ -1235,6 +1299,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       resetStep5(model);
       resetStep6(model);
       resetStep7(model);
+      resetStep8(model);
 
       // trigger validation
       triggerValidation();
@@ -1260,6 +1325,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       resetStep5,
       resetStep6,
       resetStep7,
+      resetStep8,
       triggerValidation,
     ],
   );
@@ -2235,6 +2301,21 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       Choose the reward that participants will earn after
                       successfully completing the opportunity.
                     </p>
+                    {/* show warning message if no reward pool on organisation-level */}
+                    {!organisation?.zltoRewardPool && (
+                      <FormMessage messageType={FormMessageType.Warning}>
+                        Heads up! Your organisation does not have a ZLTO reward
+                        pool. Please contact support to set it up for your
+                        organisation.
+                      </FormMessage>
+                    )}
+                    {/* show available balance badge if reward pool is available on organisation-level */}
+                    {organisation?.zltoRewardPool && (
+                      <div className="badge !rounded-full bg-orange px-4 text-white">
+                        Available Balance:{" "}
+                        {organisation?.zltoRewardBalance ?? 0}Z
+                      </div>
+                    )}
                     {!formStateStep3.isValid && <FormRequiredFieldMessage />}
                   </div>
 
@@ -2245,157 +2326,262 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       onSubmitStep(4, data),
                     )}
                   >
-                    <FormField
-                      label="ZLTO Reward"
-                      subLabel="Amount rewarded for completing the opportunity. Setting a pool will limit the rewards; once depleted, no ZLTO is awarded. If a participant limit is set, then the pool will default to the limit * reward. This can be changed."
-                      showWarningIcon={
-                        !!formStateStep3.errors.zltoReward?.message ||
-                        !!formStateStep3.errors.participantLimit?.message
-                      }
-                    >
-                      <div className="grid gap-4 md:grid-cols-2">
-                        <FormField
-                          showError={
-                            !!formStateStep3.touchedFields.zltoReward ||
-                            formStateStep3.isSubmitted
-                          }
-                          error={formStateStep3.errors.zltoReward?.message}
-                        >
-                          <Controller
-                            control={controlStep3}
-                            name="zltoReward"
-                            render={({ field: { onBlur } }) => (
-                              <input
-                                type="number"
-                                className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
-                                placeholder="Enter reward amount..."
-                                {...registerStep3("zltoReward", {
-                                  valueAsNumber: true,
-                                })}
-                                onBlur={(e) => {
-                                  onBlur(); // mark the field as touched
+                    <>
+                      {/* block the Org Admin from setting a limit if their Org pool is undefined. */}
+                      {organisation?.zltoRewardPool && (
+                        <>
+                          <FormField
+                            label="ZLTO Reward"
+                            subLabel="Should a reward be issued upon completion of the opportunity?"
+                            showWarningIcon={
+                              !!formStateStep3.errors.showZltoReward?.message
+                            }
+                            showError={
+                              !!formStateStep3.touchedFields.showZltoReward ||
+                              formStateStep3.isSubmitted
+                            }
+                            error={
+                              formStateStep3.errors.showZltoReward?.message
+                            }
+                          >
+                            <FormCheckbox
+                              id="showZltoReward"
+                              label="I want to issue Zlto reward upon completion"
+                              inputProps={{
+                                ...registerStep3(`showZltoReward`),
+                              }}
+                            />
+                          </FormField>
 
-                                  // default pool to limit & reward
-                                  const participantLimit =
-                                    getValuesStep2("participantLimit");
-                                  const zltoReward = parseInt(e.target.value);
+                          {watchShowZltoReward && (
+                            <>
+                              <FormField
+                                showError={
+                                  !!formStateStep3.touchedFields.zltoReward ||
+                                  formStateStep3.isSubmitted
+                                }
+                                error={
+                                  formStateStep3.errors.zltoReward?.message
+                                }
+                              >
+                                <Controller
+                                  control={controlStep3}
+                                  name="zltoReward"
+                                  render={({ field: { onBlur } }) => (
+                                    <input
+                                      type="number"
+                                      className="input input-bordered w-1/2 rounded-md border-gray focus:border-gray focus:outline-none"
+                                      placeholder="Enter reward amount..."
+                                      {...registerStep3("zltoReward", {
+                                        valueAsNumber: true,
+                                      })}
+                                      onBlur={(e) => {
+                                        onBlur(); // mark the field as touched
 
-                                  if (
-                                    participantLimit !== null &&
-                                    !isNaN(zltoReward)
-                                  ) {
-                                    setValueStep3(
-                                      "zltoRewardPool",
-                                      participantLimit * zltoReward,
-                                    );
-                                  }
-                                }}
-                              />
-                            )}
-                          />
-                        </FormField>
+                                        // default pool to limit & reward
+                                        const participantLimit =
+                                          getValuesStep2("participantLimit");
+                                        const zltoReward = parseInt(
+                                          e.target.value,
+                                        );
 
-                        <FormField
-                          showError={
-                            !!formStateStep3.touchedFields.zltoRewardPool ||
-                            formStateStep3.isSubmitted
-                          }
-                          error={formStateStep3.errors.zltoRewardPool?.message}
-                        >
-                          <Controller
-                            control={controlStep3}
-                            name="zltoRewardPool"
-                            render={({ field: { onBlur } }) => (
-                              <input
-                                type="number"
-                                className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
-                                placeholder="Enter pool amount..."
-                                {...registerStep3("zltoRewardPool", {
-                                  valueAsNumber: true,
-                                })}
-                                onBlur={(e) => {
-                                  onBlur(); // mark the field as touched
+                                        if (
+                                          participantLimit !== null &&
+                                          !isNaN(zltoReward)
+                                        ) {
+                                          setValueStep3(
+                                            "zltoRewardPool",
+                                            participantLimit * zltoReward,
+                                          );
+                                        }
+                                      }}
+                                    />
+                                  )}
+                                />
+                              </FormField>
 
-                                  // default pool to limit & reward (when clearing the pool value)
-                                  const participantLimit =
-                                    getValuesStep2("participantLimit");
-                                  const zltoReward =
-                                    getValuesStep3("zltoReward");
-                                  const zltoRewardPool = parseInt(
-                                    e.target.value,
-                                  );
+                              <FormField
+                                label="Total Reward (pool)"
+                                subLabel={`Setting a total reward (or pool) will limit the amount of ZLTO awarded; once depleted, no ZLTO is awarded. ${
+                                  watchParticipantLimit
+                                    ? `A participant limit of ${watchParticipantLimit} is set, so the pool will default to ${
+                                        watchParticipantLimit
+                                          ? `${watchParticipantLimit} (limit)`
+                                          : "limit"
+                                      } * ${
+                                        watchZltoReward
+                                          ? `${watchZltoReward} (reward)`
+                                          : "reward"
+                                      }. This can be changed.`
+                                    : ""
+                                }`}
+                                showWarningIcon={
+                                  !!formStateStep3.errors.showZltoRewardPool
+                                    ?.message
+                                }
+                                showError={
+                                  !!formStateStep3.touchedFields
+                                    .showZltoRewardPool ||
+                                  formStateStep3.isSubmitted
+                                }
+                                error={
+                                  formStateStep3.errors.showZltoRewardPool
+                                    ?.message
+                                }
+                              >
+                                <FormCheckbox
+                                  id="showZltoRewardPool"
+                                  label="I want to limit the total amount of zlto rewarded"
+                                  inputProps={{
+                                    ...registerStep3(`showZltoRewardPool`),
+                                  }}
+                                />
+                              </FormField>
 
-                                  if (participantLimit !== null) {
-                                    if (
-                                      zltoReward !== null &&
-                                      zltoReward !== undefined &&
-                                      !isNaN(zltoReward) &&
-                                      (zltoRewardPool === null ||
-                                        zltoRewardPool === undefined ||
-                                        isNaN(zltoRewardPool))
-                                    ) {
-                                      setValueStep3(
-                                        "zltoRewardPool",
-                                        participantLimit * zltoReward,
-                                      );
+                              {watchShowZltoRewardPool && (
+                                <>
+                                  <FormField
+                                    showError={
+                                      !!formStateStep3.touchedFields
+                                        .zltoRewardPool ||
+                                      formStateStep3.isSubmitted
                                     }
-                                  }
-                                }}
-                              />
-                            )}
-                          />
-                        </FormField>
-                      </div>
-                    </FormField>
+                                    error={
+                                      formStateStep3.errors.zltoRewardPool
+                                        ?.message
+                                    }
+                                  >
+                                    <Controller
+                                      control={controlStep3}
+                                      name="zltoRewardPool"
+                                      render={({ field: { onBlur } }) => (
+                                        <input
+                                          type="number"
+                                          className="input input-bordered w-1/2 rounded-md border-gray focus:border-gray focus:outline-none"
+                                          placeholder="Enter pool amount..."
+                                          {...registerStep3("zltoRewardPool", {
+                                            valueAsNumber: true,
+                                          })}
+                                          onBlur={(e) => {
+                                            onBlur(); // mark the field as touched
 
-                    {organisation?.zltoRewardPool != null && (
-                      <FormMessage messageType={FormMessageType.Warning}>
-                        <strong>Organisation-Level Pool:</strong> The
-                        organization&apos;s reward pool is checked first. If the
-                        pool is depleted, no further rewards are allocated at
-                        the opportunity level. This organisation has a ZLTO pool
-                        of{" "}
-                        <strong>{organisation?.zltoRewardPool ?? "0"}</strong>.
-                        The cumulative ZLTO awarded is{" "}
-                        <strong>
-                          {organisation?.zltoRewardCumulative ?? "0"}
-                        </strong>
-                        . The remaining balance is{" "}
-                        <strong>
-                          {organisation?.zltoRewardBalance ?? "0"}
-                        </strong>
-                        .
-                      </FormMessage>
+                                            // default pool to limit & reward (when clearing the pool value)
+                                            const participantLimit =
+                                              getValuesStep2(
+                                                "participantLimit",
+                                              );
+                                            const zltoReward =
+                                              getValuesStep3("zltoReward");
+                                            const zltoRewardPool = parseInt(
+                                              e.target.value,
+                                            );
+
+                                            if (participantLimit !== null) {
+                                              if (
+                                                zltoReward !== null &&
+                                                zltoReward !== undefined &&
+                                                !isNaN(zltoReward) &&
+                                                (zltoRewardPool === null ||
+                                                  zltoRewardPool ===
+                                                    undefined ||
+                                                  isNaN(zltoRewardPool))
+                                              ) {
+                                                setValueStep3(
+                                                  "zltoRewardPool",
+                                                  participantLimit * zltoReward,
+                                                );
+                                              }
+                                            }
+                                          }}
+                                        />
+                                      )}
+                                    />
+                                  </FormField>
+
+                                  {opportunity?.zltoRewardPool != null && (
+                                    <FormMessage
+                                      messageType={FormMessageType.Info}
+                                    >
+                                      <strong>Opportunity-Level Pool:</strong>{" "}
+                                      This opportunity currently has a ZLTO pool
+                                      of{" "}
+                                      <strong>
+                                        {opportunity?.zltoRewardPool ?? "0"}
+                                      </strong>
+                                      . The cumulative ZLTO awarded is{" "}
+                                      <strong>
+                                        {opportunity?.zltoRewardCumulative ??
+                                          "0"}
+                                      </strong>
+                                      . The remaining balance is{" "}
+                                      <strong>
+                                        {opportunity?.zltoRewardBalance ?? "0"}
+                                      </strong>
+                                      . Once depleted, no more ZLTO can be
+                                      awarded for this opportunity.
+                                    </FormMessage>
+                                  )}
+                                </>
+                              )}
+                            </>
+                          )}
+                        </>
+                      )}
+                    </>
+
+                    {/* BUTTONS */}
+                    <div className="flex items-center justify-center gap-4 md:justify-end">
+                      <button
+                        type="button"
+                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        onClick={() => {
+                          onStep(2);
+                        }}
+                      >
+                        Back
+                      </button>
+
+                      <button
+                        type="submit"
+                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                      >
+                        Next
+                      </button>
+                    </div>
+                  </form>
+                </>
+              )}
+              {step === 4 && (
+                <>
+                  <div className="mb-4 flex flex-col gap-2">
+                    <h5 className="font-bold tracking-wider">Skills</h5>
+                    <p className="-mt-2 text-sm">
+                      Choose the skills that participants will earn after
+                      successfully completing the opportunity.
+                    </p>
+
+                    {!formStateStep4.isValid && <FormRequiredFieldMessage />}
+                  </div>
+
+                  <form
+                    ref={formRef4}
+                    className="flex flex-col gap-4"
+                    onSubmit={handleSubmitStep4((data) =>
+                      onSubmitStep(5, data),
                     )}
-
-                    {opportunity?.zltoRewardPool != null && (
-                      <FormMessage messageType={FormMessageType.Info}>
-                        <strong>Opportunity-Level Pool:</strong> This
-                        opportunity has a ZLTO pool of{" "}
-                        <strong>{opportunity?.zltoRewardPool ?? "0"}</strong>.
-                        The cumulative ZLTO awarded is{" "}
-                        <strong>
-                          {opportunity?.zltoRewardCumulative ?? "0"}
-                        </strong>
-                        . The remaining balance is{" "}
-                        <strong>{opportunity?.zltoRewardBalance ?? "0"}</strong>
-                        . Once depleted, no more ZLTO can be awarded for this
-                        opportunity.
-                      </FormMessage>
-                    )}
-
+                  >
                     <FormField
                       label="Skills"
                       subLabel="Which skills will the Youth be awarded with upon completion? This will be displayed on the opportunity page."
-                      showWarningIcon={!!formStateStep3.errors.skills?.message}
+                      showWarningIcon={!!formStateStep4.errors.skills?.message}
                       showError={
-                        !!formStateStep3.touchedFields.skills ||
-                        formStateStep3.isSubmitted
+                        !!formStateStep4.touchedFields.skills ||
+                        formStateStep4.isSubmitted
                       }
-                      error={formStateStep3.errors.skills?.message}
+                      error={formStateStep4.errors.skills?.message}
                     >
                       <Controller
-                        control={controlStep3}
+                        control={controlStep4}
                         name="skills"
                         render={({ field: { onChange, value, onBlur } }) => (
                           <>
@@ -2442,7 +2628,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         type="button"
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
-                          onStep(2);
+                          onStep(3);
                         }}
                       >
                         Back
@@ -2458,7 +2644,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                   </form>
                 </>
               )}
-              {step === 4 && (
+              {step === 5 && (
                 <>
                   <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Keywords</h5>
@@ -2466,29 +2652,29 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       Boost your chances of being found in searches by adding
                       keywords to your opportunity.
                     </p>
-                    {!formStateStep4.isValid && <FormRequiredFieldMessage />}
+                    {!formStateStep5.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
-                    ref={formRef4}
+                    ref={formRef5}
                     className="flex h-full flex-col gap-4"
-                    onSubmit={handleSubmitStep4((data) =>
-                      onSubmitStep(5, data),
+                    onSubmit={handleSubmitStep5((data) =>
+                      onSubmitStep(6, data),
                     )}
                   >
                     <FormField
                       label="Keywords"
                       showWarningIcon={
-                        !!formStateStep4.errors.keywords?.message
+                        !!formStateStep5.errors.keywords?.message
                       }
                       showError={
-                        !!formStateStep4.touchedFields.keywords ||
-                        formStateStep4.isSubmitted
+                        !!formStateStep5.touchedFields.keywords ||
+                        formStateStep5.isSubmitted
                       }
-                      error={formStateStep4.errors.keywords?.message}
+                      error={formStateStep5.errors.keywords?.message}
                     >
                       <Controller
-                        control={controlStep4}
+                        control={controlStep5}
                         name="keywords"
                         render={({ field: { onChange, value, onBlur } }) => (
                           <>
@@ -2535,7 +2721,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         type="button"
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
-                          onStep(3);
+                          onStep(4);
                         }}
                       >
                         Back
@@ -2551,21 +2737,21 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                   </form>
                 </>
               )}
-              {step === 5 && (
+              {step === 6 && (
                 <>
                   <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Verification</h5>
                     <p className="-mt-2 text-sm">
                       How can participants confirm their involvement?
                     </p>
-                    {!formStateStep5.isValid && <FormRequiredFieldMessage />}
+                    {!formStateStep6.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
-                    ref={formRef5}
+                    ref={formRef6}
                     className="flex flex-col gap-4"
-                    onSubmit={handleSubmitStep5((data) =>
-                      onSubmitStep(6, data),
+                    onSubmit={handleSubmitStep6((data) =>
+                      onSubmitStep(7, data),
                     )}
                   >
                     <FormField
@@ -2578,10 +2764,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         !!formStateStep5.touchedFields.verificationEnabled ||
                         formStateStep5.isSubmitted
                       }
-                      error={formStateStep5.errors.verificationEnabled?.message}
+                      error={formStateStep6.errors.verificationEnabled?.message}
                     >
                       <Controller
-                        control={controlStep5}
+                        control={controlStep6}
                         name="verificationEnabled"
                         render={({ field: { onChange, value } }) => (
                           <>
@@ -2592,11 +2778,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               inputProps={{
                                 checked:
                                   value === true &&
-                                  getValuesStep5("verificationMethod") ===
+                                  getValuesStep6("verificationMethod") ===
                                     VerificationMethod.Manual,
                                 onChange: () => {
-                                  setValueStep5("verificationEnabled", true);
-                                  setValueStep5(
+                                  setValueStep6("verificationEnabled", true);
+                                  setValueStep6(
                                     "verificationMethod",
                                     VerificationMethod.Manual,
                                   );
@@ -2613,7 +2799,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               inputProps={{
                                 checked: value === false,
                                 onChange: () => {
-                                  setValueStep5("verificationEnabled", false);
+                                  setValueStep6("verificationEnabled", false);
                                   onChange(false);
                                 },
                               }}
@@ -2628,14 +2814,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           label="Verification proof"
                           subLabel="Select the types of proof that participants need to upload as part of completing the opportuntity."
                           showWarningIcon={
-                            !!formStateStep5.errors.verificationTypes?.message
+                            !!formStateStep6.errors.verificationTypes?.message
                           }
                           showError={
-                            !!formStateStep5.touchedFields.verificationTypes ||
-                            formStateStep5.isSubmitted
+                            !!formStateStep6.touchedFields.verificationTypes ||
+                            formStateStep6.isSubmitted
                           }
                           error={
-                            formStateStep5.errors.verificationTypes?.message
+                            formStateStep6.errors.verificationTypes?.message
                           }
                         >
                           <div className="flex flex-col gap-2">
@@ -2771,7 +2957,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                         placeholder="Enter description"
                                         onChange={(e) => {
                                           // update the description in the verificationTypes array
-                                          setValueStep5(
+                                          setValueStep6(
                                             "verificationTypes",
                                             watchVerificationTypes?.map(
                                               (
@@ -2811,7 +2997,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         type="button"
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
-                          onStep(4);
+                          onStep(5);
                         }}
                       >
                         Back
@@ -2827,7 +3013,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                   </form>
                 </>
               )}
-              {step === 6 && (
+              {step === 7 && (
                 <>
                   <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Credential</h5>
@@ -2835,14 +3021,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       Information about the credential that participants will
                       receive upon completion of this opportunity.
                     </p>
-                    {!formStateStep6.isValid && <FormRequiredFieldMessage />}
+                    {!formStateStep7.isValid && <FormRequiredFieldMessage />}
                   </div>
 
                   <form
-                    ref={formRef6}
+                    ref={formRef7}
                     className="flex flex-col gap-4"
-                    onSubmit={handleSubmitStep6((data) =>
-                      onSubmitStep(7, data),
+                    onSubmit={handleSubmitStep7((data) =>
+                      onSubmitStep(8, data),
                     )}
                   >
                     <div className="form-control">
@@ -2851,16 +3037,16 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           label="Issuance"
                           subLabel="Should a credential be issued upon completion of the opportunity?"
                           showWarningIcon={
-                            !!formStateStep6.errors.credentialIssuanceEnabled
+                            !!formStateStep7.errors.credentialIssuanceEnabled
                               ?.message
                           }
                           showError={
-                            !!formStateStep6.touchedFields
+                            !!formStateStep7.touchedFields
                               .credentialIssuanceEnabled ||
-                            formStateStep6.isSubmitted
+                            formStateStep7.isSubmitted
                           }
                           error={
-                            formStateStep6.errors.credentialIssuanceEnabled
+                            formStateStep7.errors.credentialIssuanceEnabled
                               ?.message
                           }
                         >
@@ -2868,7 +3054,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             id="credentialIssuanceEnabled"
                             label="I want to issue a credential upon completion"
                             inputProps={{
-                              ...registerStep6(`credentialIssuanceEnabled`),
+                              ...registerStep7(`credentialIssuanceEnabled`),
                               disabled: !watchVerificationEnabled,
                             }}
                           />
@@ -2882,10 +3068,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         </FormMessage>
                       )}
 
-                      {formStateStep6.errors.credentialIssuanceEnabled && (
+                      {formStateStep7.errors.credentialIssuanceEnabled && (
                         <label className="label -mb-5 font-bold">
                           <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep6.errors.credentialIssuanceEnabled.message}`}
+                            {`${formStateStep7.errors.credentialIssuanceEnabled.message}`}
                           </span>
                         </label>
                       )}
@@ -2897,16 +3083,16 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           label="Schema"
                           subLabel="What information will be used to issue the credential?"
                           showWarningIcon={
-                            !!formStateStep6.errors.ssiSchemaName?.message
+                            !!formStateStep7.errors.ssiSchemaName?.message
                           }
                           showError={
-                            !!formStateStep6.touchedFields.ssiSchemaName ||
-                            formStateStep6.isSubmitted
+                            !!formStateStep7.touchedFields.ssiSchemaName ||
+                            formStateStep7.isSubmitted
                           }
-                          error={formStateStep6.errors.ssiSchemaName?.message}
+                          error={formStateStep7.errors.ssiSchemaName?.message}
                         >
                           <Controller
-                            control={controlStep6}
+                            control={controlStep7}
                             name="ssiSchemaName"
                             render={({
                               field: { onChange, value, onBlur },
@@ -2976,7 +3162,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         type="button"
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
-                          onStep(5);
+                          onStep(6);
                         }}
                       >
                         Back
@@ -2992,7 +3178,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                   </form>
                 </>
               )}
-              {step === 7 && (
+              {step === 8 && (
                 <>
                   <div className="mb-4 flex flex-col gap-2">
                     <h5 className="font-bold tracking-wider">Preview</h5>
@@ -3007,7 +3193,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     formStateStep3.isValid &&
                     formStateStep4.isValid &&
                     formStateStep5.isValid &&
-                    formStateStep6.isValid
+                    formStateStep6.isValid &&
+                    formStateStep7.isValid
                   ) && (
                     <FormMessage messageType={FormMessageType.Warning}>
                       Please complete the previous steps to preview and submit
@@ -3021,7 +3208,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     formStateStep3.isValid &&
                     formStateStep4.isValid &&
                     formStateStep5.isValid &&
-                    formStateStep6.isValid && (
+                    formStateStep6.isValid &&
+                    formStateStep7.isValid && (
                       <div className="flex flex-col gap-4">
                         {/* CARD PREVIEW */}
                         <div className="flex flex-col gap-2">
@@ -3066,10 +3254,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     )}
 
                   <form
-                    ref={formRef7}
+                    ref={formRef8}
                     className="mt-4 flex flex-col gap-4"
-                    onSubmit={handleSubmitStep7((data) =>
-                      onSubmitStep(8, data),
+                    onSubmit={handleSubmitStep8((data) =>
+                      onSubmitStep(9, data),
                     )}
                   >
                     {/* POST AS ACTIVE */}
@@ -3135,7 +3323,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         type="button"
                         className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
                         onClick={() => {
-                          onStep(6);
+                          onStep(7);
                         }}
                       >
                         Back
@@ -3151,7 +3339,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             formStateStep3.isValid &&
                             formStateStep4.isValid &&
                             formStateStep5.isValid &&
-                            formStateStep6.isValid
+                            formStateStep6.isValid &&
+                            formStateStep7.isValid
                           )
                         }
                       >
