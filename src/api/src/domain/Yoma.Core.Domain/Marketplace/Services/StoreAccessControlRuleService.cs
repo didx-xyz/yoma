@@ -455,138 +455,103 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var rules = RulesUpdatableCached().Where(o => o.Status == StoreAccessControlRuleStatus.Active).ToList();
 
-      var result = new StoreAccessControlRuleEvaluationResult();
+      var result = new StoreAccessControlRuleEvaluationResult { Locked = false };
       var matchingRules = rules.Where(o => o.StoreId == storeItemCategory.StoreId && (o.StoreItemCategories == null || o.StoreItemCategories.Contains(storeItemCategory.Id))).ToList();
 
       //no matching rules, resulting in unlcoked status
       if (matchingRules.Count == 0) return result;
 
-      // user context avaliable; evaluate rules against the user profile; rule is retained if user does not meet the conditions, resulting in locked status
-      if (user != null)
-      {
-        var userAge = user.DateOfBirth.HasValue ? (int?)user.DateOfBirth.Value.CalculateAge(null) : null;
-
-        // conditions within each rule are AND: all conditions must be met to discard the rule (allow access to the store)
-        matchingRules = matchingRules.Where(rule =>
-        {
-          // evaluate age condition
-          if (rule.AgeFrom.HasValue || rule.AgeTo.HasValue)
-          {
-            // user's age is not available, retain the rule (lock the store)
-            if (!userAge.HasValue) return true;
-
-            // user's age is below the minimum or above the maximum, retain the rule (lock the store)
-            if (rule.AgeFrom.HasValue && userAge.Value < rule.AgeFrom.Value) return true;
-            if (rule.AgeTo.HasValue && userAge.Value > rule.AgeTo.Value) return true;
-          }
-
-          // evaluate gender condition
-          if (rule.GenderId.HasValue)
-          {
-            // user's gender is not available, retain the rule (lock the store)
-            if (!user.GenderId.HasValue) return true;
-
-            // user's gender does not match the condition, retain the rule (lock the store)
-            if (user.GenderId.Value != rule.GenderId.Value) return true;
-          }
-
-          // evaluate opportunity condition
-          if (rule.Opportunities != null && rule.Opportunities.Count > 0)
-          {
-            // if user has no completed opportunities, retain the rule (lock the store)
-            if (myOpportunitiesCompleted == null || myOpportunitiesCompleted.Count == 0) return true;
-
-            if (rule.OpportunityOption == null)
-              throw new InvalidOperationException($"Opportunity option expected for rule '{rule.Name}'");
-
-            switch (rule.OpportunityOption.Value)
-            {
-              // user hasn't completed all, retain the rule (lock the store)
-              case StoreAccessControlRuleOpportunityCondition.All:
-                if (!rule.Opportunities.All(o => myOpportunitiesCompleted.Any(i => i.Id == o.Id))) return true;
-                break;
-
-              // user hasn't completed any, retain the rule (lock the store)
-              case StoreAccessControlRuleOpportunityCondition.Any:
-                if (!rule.Opportunities.Any(o => myOpportunitiesCompleted.Any(i => i.Id == o.Id))) return true;
-                break;
-
-              default:
-                throw new InvalidOperationException($"Opportunity option '{rule.OpportunityOption}' not supported");
-            }
-          }
-
-          // user meets all conditions, discard the rule (allow access to the store)
-          return false;
-        }).ToList();
-      }
-
-      // no matching rules remain, result in unlocked status
-      if (matchingRules.Count == 0) return result;
-
-      // rules are logically OR: if any rule is retained, the store remains locked
-      result.Locked = true;
+      // rules are logically OR: conditions within each rule are logically AND
       result.Rules = [];
 
-      // no user context; default locked reason
-      if (user == null)
-        result.Rules.Add(new() { Reasons = [new() { Reason = "Please sign in or sign up to unlock this item" }] });
-      else
+      foreach (var rule in matchingRules)
       {
-        foreach (var rule in matchingRules)
+        var evaluationItem = new StoreAccessControlRuleEvaluationItem { Id = rule.Id, Name = rule.Name, Reasons = [] };
+        var storeLocked = false;
+
+        // rules are logically OR: conditions within each rule are logically AND
+        if (rule.AgeFrom.HasValue || rule.AgeTo.HasValue)
         {
-          var evaluationItem = new StoreAccessControlRuleEvaluationItem { Id = rule.Id, Name = rule.Name, Reasons = [] };
+          var ageMessage = string.Empty;
+          var conditionPassed = true;
+          var userAge = user?.DateOfBirth.HasValue == true ? (int?)user.DateOfBirth.Value.CalculateAge(null) : null;
 
-          // age condition
-          if (rule.AgeFrom.HasValue || rule.AgeTo.HasValue)
+          if (rule.AgeFrom.HasValue && rule.AgeTo.HasValue)
+            ageMessage = $"Age must be between {rule.AgeFrom.Value} and {rule.AgeTo.Value}";
+          else if (rule.AgeFrom.HasValue)
+            ageMessage = $"Age must be greater than or equal to {rule.AgeFrom.Value}";
+          else if (rule.AgeTo.HasValue)
+            ageMessage = $"Age must be less than or equal to {rule.AgeTo.Value}";
+
+          if (!userAge.HasValue || (rule.AgeFrom.HasValue && userAge < rule.AgeFrom.Value) || (rule.AgeTo.HasValue && userAge > rule.AgeTo.Value))
           {
-            var ageMessage = string.Empty;
-
-            if (rule.AgeFrom.HasValue && rule.AgeTo.HasValue)
-              ageMessage = $"Age must be between {rule.AgeFrom.Value} and {rule.AgeTo.Value}";
-            else if (rule.AgeFrom.HasValue)
-              ageMessage = $"Age must be greater than or equal to {rule.AgeFrom.Value}";
-            else if (rule.AgeTo.HasValue)
-              ageMessage = $"Age must be less than or equal to {rule.AgeTo.Value}";
-
-            evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
-            {
-              Reason = ageMessage
-            });
+            conditionPassed = false;
+            storeLocked = true; // lock the store if users' age is not available or the condition is not met
           }
 
-          // gender condition
-          if (rule.GenderId.HasValue)
+          evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
           {
-            var genderMessage = $"{rule.Gender} users only";
-
-            evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
-            {
-              Reason = genderMessage
-            });
-          }
-
-          // opportunity condition
-          if (rule.Opportunities != null && rule.Opportunities.Count > 0)
-          {
-            var opportunityMessage = rule.OpportunityOption == StoreAccessControlRuleOpportunityCondition.All
-              ? "Must complete the following opportunities:" : "Must complete at least one of the following opportunities:";
-
-            var opportunityLinks = rule.Opportunities.Select(o => new StoreAccessControlRuleEvaluationItemReasonLink
-            {
-              Title = o.Title,
-              URL = o.YomaInfoURL(_appSettings.AppBaseURL)
-            }).ToList();
-
-            evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
-            {
-              Reason = opportunityMessage,
-              Links = opportunityLinks
-            });
-          }
-
-          result.Rules.Add(evaluationItem);
+            ConditionPassed = conditionPassed,
+            Reason = ageMessage
+          });
         }
+
+        // evaluate gender condition
+        if (rule.GenderId.HasValue)
+        {
+          var genderMessage = $"{rule.Gender} users only";
+          var conditionPassed = user?.GenderId.HasValue == true && user.GenderId.Value == rule.GenderId.Value;
+
+          if (!conditionPassed)
+            storeLocked = true; // lock the store if the users' gender is not available or condition is not met
+
+          evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
+          {
+            ConditionPassed = conditionPassed,
+            Reason = genderMessage
+          });
+        }
+
+        // evaluate opportunity condition
+        if (rule.Opportunities != null && rule.Opportunities.Count > 0)
+        {
+          var opportunityMessage = rule.OpportunityOption == StoreAccessControlRuleOpportunityCondition.All
+              ? "Must complete the following opportunities:"
+              : "Must complete at least one of the following opportunities:";
+
+          var opportunityLinks = rule.Opportunities.Select(o => new StoreAccessControlRuleEvaluationItemReasonLink
+          {
+            Title = o.Title,
+            URL = o.YomaInfoURL(_appSettings.AppBaseURL),
+            RequirementMet = myOpportunitiesCompleted?.Any(i => i.Id == o.Id) == true // check if user completed the opportunity
+          }).ToList();
+
+          if (rule.OpportunityOption == null)
+            throw new InvalidOperationException($"Opportunity option expected for rule '{rule.Name}'");
+
+          var conditionPassed = rule.OpportunityOption.Value switch
+          {
+            StoreAccessControlRuleOpportunityCondition.All => rule.Opportunities.All(o => myOpportunitiesCompleted?.Any(i => i.Id == o.Id) == true),
+            StoreAccessControlRuleOpportunityCondition.Any => rule.Opportunities.Any(o => myOpportunitiesCompleted?.Any(i => i.Id == o.Id) == true),
+            _ => throw new InvalidOperationException($"Opportunity option '{rule.OpportunityOption}' not supported")
+          };
+
+          if (!conditionPassed)
+            storeLocked = true; // lock the store if the user has no completed opportunities or the condition is not met
+
+          evaluationItem.Reasons.Add(new StoreAccessControlRuleEvaluationItemReason
+          {
+            ConditionPassed = conditionPassed,
+            Reason = opportunityMessage,
+            Links = opportunityLinks // attach the links with individual ConditionPassed flags
+          });
+        }
+
+        // if any condition in this rule is not met, lock the store
+        if (storeLocked)
+          result.Locked = true;
+
+        result.Rules.Add(evaluationItem);
       }
 
       return result;
