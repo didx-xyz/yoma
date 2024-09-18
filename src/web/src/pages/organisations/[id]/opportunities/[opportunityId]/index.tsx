@@ -534,22 +534,36 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     .superRefine((val, ctx) => {
       if (val == null) return;
 
-      if (
-        val.zltoRewardPool != null &&
-        val.zltoReward != null &&
-        val.zltoRewardPool < val.zltoReward
-      ) {
-        ctx.addIssue({
-          message:
-            "Reward pool must be greater than or equal to reward amount.",
-          code: z.ZodIssueCode.custom,
-          path: ["zltoRewardPool"],
-          fatal: true,
-        });
-        return z.NEVER;
-      }
-
       if (val.showZltoReward) {
+        if (
+          val.zltoReward != null &&
+          organisation?.zltoRewardBalance != null &&
+          val.zltoReward > organisation.zltoRewardBalance
+        ) {
+          ctx.addIssue({
+            message: `Reward cannot exceed the available balance of ${organisation?.zltoRewardBalance}.`,
+            code: z.ZodIssueCode.custom,
+            path: ["zltoReward"],
+            fatal: true,
+          });
+          return z.NEVER;
+        }
+
+        if (
+          val.zltoRewardPool != null &&
+          val.zltoReward != null &&
+          val.zltoRewardPool < val.zltoReward
+        ) {
+          ctx.addIssue({
+            message:
+              "Reward pool must be greater than or equal to reward amount.",
+            code: z.ZodIssueCode.custom,
+            path: ["zltoRewardPool"],
+            fatal: true,
+          });
+          return z.NEVER;
+        }
+
         if (val.zltoReward === null || isNaN(val.zltoReward)) {
           ctx.addIssue({
             message: "Reward amount is required.",
@@ -2313,7 +2327,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     {organisation?.zltoRewardPool && (
                       <div className="badge !rounded-full bg-orange px-4 text-white">
                         Available Balance:{" "}
-                        {organisation?.zltoRewardBalance ?? 0}Z
+                        {new Intl.NumberFormat().format(
+                          organisation?.zltoRewardBalance ?? 0,
+                        )}
                       </div>
                     )}
                     {!formStateStep3.isValid && <FormRequiredFieldMessage />}
@@ -2331,8 +2347,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       {organisation?.zltoRewardPool && (
                         <>
                           <FormField
-                            label="ZLTO Reward"
-                            subLabel="Should a reward be issued upon completion of the opportunity?"
+                            label="Individual Reward"
+                            subLabel="This will be the amount issued to the individual that completes the opportunity."
                             showWarningIcon={
                               !!formStateStep3.errors.showZltoReward?.message
                             }
@@ -2401,8 +2417,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               </FormField>
 
                               <FormField
-                                label="Total Reward (pool)"
-                                subLabel={`Setting a total reward (or pool) will limit the amount of ZLTO awarded; once depleted, no ZLTO is awarded. ${
+                                label="Total Reward"
+                                subLabel={`This is a limit you can set on the opportunity, meaning the first youth to complete the opportunity will receive rewards, until the limit is reached. ${
                                   watchParticipantLimit
                                     ? `A participant limit of ${watchParticipantLimit} is set, so the pool will default to ${
                                         watchParticipantLimit
