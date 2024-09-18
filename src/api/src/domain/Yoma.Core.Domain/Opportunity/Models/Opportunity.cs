@@ -1,4 +1,5 @@
 using Newtonsoft.Json;
+using System.ComponentModel.DataAnnotations.Schema;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;
@@ -34,6 +35,18 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public Guid OrganizationStatusId { get; set; }
 
     public OrganizationStatus OrganizationStatus { get; set; }
+
+    public decimal? OrganizationZltoRewardPool { get; set; }
+
+    public decimal? OrganizationZltoRewardCumulative { get; set; }
+
+    public decimal? OrganizationZltoRewardBalance { get; set; }
+
+    public decimal? OrganizationYomaRewardPool { get; set; }
+
+    public decimal? OrganizationYomaRewardCumulative { get; set; }
+
+    public decimal? OrganizationYomaRewardBalance { get; set; }
 
     public string? Summary { get; set; }
 
