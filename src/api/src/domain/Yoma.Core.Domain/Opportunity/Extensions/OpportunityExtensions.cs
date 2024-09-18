@@ -10,6 +10,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
 {
   public static class OpportunityExtensions
   {
+    #region Public Members
     public static int TimeIntervalToHours(this Models.Opportunity opportunity)
     {
       ArgumentNullException.ThrowIfNull(opportunity, nameof(opportunity));
@@ -124,9 +125,9 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Summary = value.Summary,
         Instructions = value.Instructions,
         URL = value.URL,
-        ZltoReward = value.ZltoReward,
+        ZltoReward = CalculateEstimatedReward(value.ZltoReward, value.OrganizationZltoRewardBalance, value.ZltoRewardBalance),
         ZltoRewardCumulative = value.ZltoRewardCumulative,
-        YomaReward = value.YomaReward,
+        YomaReward = CalculateEstimatedReward(value.YomaReward, value.OrganizationYomaRewardBalance, value.YomaRewardBalance),
         YomaRewardCumulative = value.YomaRewardCumulative,
         VerificationEnabled = value.VerificationEnabled,
         VerificationMethod = value.VerificationMethod,
@@ -154,5 +155,24 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         VerificationTypes = value.VerificationTypes
       };
     }
+    #endregion
+
+    #region Private Members
+    private static decimal? CalculateEstimatedReward(decimal? reward, decimal? organizationBalance, decimal? opportynityBalance)
+    {
+      if (!reward.HasValue) return null;
+
+      if (organizationBalance.HasValue)
+      {
+        reward = Math.Max(Math.Min(reward.Value, organizationBalance.Value), default);
+        if (reward == default) return default;
+      }
+
+      if (opportynityBalance.HasValue)
+        reward = Math.Max(Math.Min(reward.Value, opportynityBalance.Value), default);
+
+      return reward;
+    }
+    #endregion
   }
 }

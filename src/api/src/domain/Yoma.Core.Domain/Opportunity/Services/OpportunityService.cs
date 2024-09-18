@@ -187,6 +187,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         result.SetPublished();
         result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
+        result.OrganizationZltoRewardBalance = result.OrganizationZltoRewardPool.HasValue ? result.OrganizationZltoRewardPool - (result.OrganizationZltoRewardCumulative ?? default) : null;
+        result.OrganizationYomaRewardBalance = result.OrganizationYomaRewardPool.HasValue ? result.OrganizationYomaRewardPool - (result.OrganizationYomaRewardCumulative ?? default) : null;
         result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
         result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
       }
@@ -209,6 +211,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         result.SetPublished();
         result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
+        result.OrganizationZltoRewardBalance = result.OrganizationZltoRewardPool.HasValue ? result.OrganizationZltoRewardPool - (result.OrganizationZltoRewardCumulative ?? default) : null;
+        result.OrganizationYomaRewardBalance = result.OrganizationYomaRewardPool.HasValue ? result.OrganizationYomaRewardPool - (result.OrganizationYomaRewardCumulative ?? default) : null;
         result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
         result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
       }
@@ -229,6 +233,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           o.SetPublished();
           o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
+          o.OrganizationZltoRewardBalance = o.OrganizationZltoRewardPool.HasValue ? o.OrganizationZltoRewardPool - (o.OrganizationZltoRewardCumulative ?? default) : null;
+          o.OrganizationYomaRewardBalance = o.OrganizationYomaRewardPool.HasValue ? o.OrganizationYomaRewardPool - (o.OrganizationYomaRewardCumulative ?? default) : null;
           o.ZltoRewardBalance = o.ZltoRewardPool.HasValue ? o.ZltoRewardPool - (o.ZltoRewardCumulative ?? default) : null;
           o.YomaRewardBalance = o.YomaRewardPool.HasValue ? o.YomaRewardPool - (o.YomaRewardCumulative ?? default) : null;
         });
@@ -972,6 +978,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         o.SetPublished();
         o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
+        o.OrganizationZltoRewardBalance = o.OrganizationZltoRewardPool.HasValue ? o.OrganizationZltoRewardPool - (o.OrganizationZltoRewardCumulative ?? default) : null;
+        o.OrganizationYomaRewardBalance = o.OrganizationYomaRewardPool.HasValue ? o.OrganizationYomaRewardPool - (o.OrganizationYomaRewardCumulative ?? default) : null;
         o.ZltoRewardBalance = o.ZltoRewardPool.HasValue ? o.ZltoRewardPool - (o.ZltoRewardCumulative ?? default) : null;
         o.YomaRewardBalance = o.YomaRewardPool.HasValue ? o.YomaRewardPool - (o.YomaRewardCumulative ?? default) : null;
       });
@@ -1035,6 +1043,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OrganizationLogoURL = organization.LogoURL,
         OrganizationStatusId = organization.StatusId,
         OrganizationStatus = organization.Status,
+        OrganizationZltoRewardBalance = organization.ZltoRewardBalance,
+        OrganizationYomaRewardBalance = organization.YomaRewardBalance,
         Summary = request.Summary,
         Instructions = request.Instructions,
         URL = request.URL,
@@ -1170,6 +1180,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.OrganizationName = organization.Name;
       result.OrganizationLogoId = organization.LogoId;
       result.OrganizationLogoURL = organization.LogoURL;
+      result.OrganizationZltoRewardBalance = organization.ZltoRewardBalance;
+      result.OrganizationYomaRewardBalance = organization.YomaRewardBalance;
       result.Summary = request.Summary;
       result.Instructions = request.Instructions;
       result.URL = request.URL;
@@ -1317,6 +1329,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         scope.Complete();
       });
 
+      opportunity.OrganizationZltoRewardBalance = organization.ZltoRewardBalance;
+      opportunity.OrganizationYomaRewardBalance = organization.YomaRewardBalance;
       opportunity.ZltoRewardBalance = opportunity.ZltoRewardPool.HasValue ? opportunity.ZltoRewardPool - (opportunity.ZltoRewardCumulative ?? default) : null;
       opportunity.YomaRewardBalance = opportunity.YomaRewardPool.HasValue ? opportunity.YomaRewardPool - (opportunity.YomaRewardCumulative ?? default) : null;
 
