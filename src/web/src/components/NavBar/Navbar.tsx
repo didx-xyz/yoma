@@ -185,14 +185,14 @@ export const Navbar: React.FC = () => {
           selected: false,
           iconImage: "🔗",
         },
-        {
-          title: "Marketplace Store Rules",
-          description: "Marketplace Store Rules",
-          url: `/organisations/${currentOrganisationId}/stores`,
-          badgeCount: null,
-          selected: false,
-          iconImage: "🛒",
-        },
+        // {
+        //   title: "Marketplace Store Rules",
+        //   description: "Marketplace Store Rules",
+        //   url: `/organisations/${currentOrganisationId}/stores`,
+        //   badgeCount: null,
+        //   selected: false,
+        //   iconImage: "🛒",
+        // },
         {
           title: "Settings",
           description: "Settings",
