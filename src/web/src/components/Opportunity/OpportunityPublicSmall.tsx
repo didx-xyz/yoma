@@ -1,17 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
-import type { OpportunityInfo } from "~/api/models/opportunity";
 import iconClock from "public/images/icon-clock.svg";
 import iconUser from "public/images/icon-user.svg";
-import iconZlto from "public/images/icon-zlto.svg";
-import Moment from "react-moment";
-import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import {
   IoMdCalendar,
-  IoMdPlay,
   IoMdCloudUpload,
+  IoMdPlay,
   IoMdWarning,
 } from "react-icons/io";
+import Moment from "react-moment";
+import type { OpportunityInfo } from "~/api/models/opportunity";
+import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { AvatarImage } from "../AvatarImage";
 import ZltoRewardBadge from "./Badges/ZltoRewardBadge";
 interface InputProps {

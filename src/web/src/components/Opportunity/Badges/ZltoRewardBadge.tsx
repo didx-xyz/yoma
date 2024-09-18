@@ -1,7 +1,7 @@
 import Image from "next/image";
 import iconZlto from "public/images/icon-zlto.svg";
 import React from "react";
-import { OpportunityInfo } from "~/api/models/opportunity";
+import type { OpportunityInfo } from "~/api/models/opportunity";
 
 interface ZltoRewardBadgeProps {
   opportunity: OpportunityInfo;
