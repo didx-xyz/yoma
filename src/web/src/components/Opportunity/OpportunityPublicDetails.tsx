@@ -598,7 +598,6 @@ const OpportunityPublicDetails: React.FC<{
                       icon={opportunityInfo.organizationLogoURL ?? null}
                       alt="Company Logo"
                       size={60}
-                      // sizeMobile={42}
                     />
                   </div>
                 </div>

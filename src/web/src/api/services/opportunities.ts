@@ -198,6 +198,10 @@ export const searchOpportunities = async (
     `/opportunity/search`,
     filter,
   );
+
+  //HACK: ensure the first item has zltoReward of 0
+  data.items[0]!.zltoReward = 0;
+
   return data;
 };
 
