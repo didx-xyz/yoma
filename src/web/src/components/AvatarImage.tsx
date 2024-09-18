@@ -1,5 +1,5 @@
 import Image from "next/image";
-import React, { useState } from "react";
+import React from "react";
 import { IoMdPerson } from "react-icons/io";
 
 interface InputProps {
@@ -9,7 +9,6 @@ interface InputProps {
 }
 
 export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size }) => {
-  const [imageLoaded, setImageLoaded] = useState(false);
   const sizePixels: string = size + "px";
 
   return (
@@ -20,12 +19,6 @@ export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size }) => {
         height: sizePixels,
       }}
     >
-      {!imageLoaded && (
-        <div
-          className="bg-gray-200 absolute inset-0 flex items-center justify-center"
-          style={{ width: sizePixels, height: sizePixels }}
-        ></div>
-      )}
       {icon ? (
         <Image
           src={icon}
@@ -34,12 +27,9 @@ export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size }) => {
           height={size}
           sizes="100vw"
           priority={true}
-          onLoad={() => setImageLoaded(true)}
-          onError={() => setImageLoaded(true)} // Handle error case
           style={{
             width: sizePixels,
             height: sizePixels,
-            display: imageLoaded ? "block" : "none", // Hide image until loaded
           }}
         />
       ) : (

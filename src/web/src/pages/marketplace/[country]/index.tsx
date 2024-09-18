@@ -14,7 +14,12 @@ import iconBell from "public/images/icon-bell.webp";
 import type { ParsedUrlQuery } from "querystring";
 import React, { useCallback, useRef, useState, type ReactElement } from "react";
 import { FaLock } from "react-icons/fa";
-import { IoMdClose, IoMdWarning } from "react-icons/io";
+import {
+  IoMdCheckboxOutline,
+  IoMdClose,
+  IoMdCloseCircleOutline,
+  IoMdWarning,
+} from "react-icons/io";
 import ReactModal from "react-modal";
 import Select from "react-select";
 import { useConfirmationModalContext } from "src/context/modalConfirmationContext";
@@ -850,7 +855,11 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                         {rule.reasons.map((reason, reasonIndex) => (
                           <li key={`reason_${reasonIndex}`}>
                             <div className="flex flex-row items-center gap-2">
-                              <IoMdClose className="text-red-400" />
+                              {reason.conditionPassed ? (
+                                <IoMdCheckboxOutline className="h-6 w-6 text-green" />
+                              ) : (
+                                <IoMdCloseCircleOutline className="h-6 w-6 text-red-400" />
+                              )}
 
                               <p className="text-sm">{reason.reason}</p>
                             </div>

@@ -487,7 +487,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         <title>Yoma | Admin Opportunities</title>
       </Head>
 
-      <PageBackground />
+      <PageBackground className="h-[14.5rem] md:h-[18rem]" />
 
       {isLoading && <Loading />}
 
@@ -639,7 +639,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                 setFilterFullWindowVisible(!filterFullWindowVisible);
               }}
               filterOptions={[
-                OpportunityFilterOptions.CATEGORIES,
                 OpportunityFilterOptions.TYPES,
                 OpportunityFilterOptions.COUNTRIES,
                 OpportunityFilterOptions.LANGUAGES,
