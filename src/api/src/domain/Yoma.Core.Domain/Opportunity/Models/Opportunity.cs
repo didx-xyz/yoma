@@ -1,5 +1,4 @@
 using Newtonsoft.Json;
-using System.ComponentModel.DataAnnotations.Schema;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Models;

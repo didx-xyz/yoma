@@ -298,7 +298,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       {
         await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
-      #endregion
     }
+    #endregion
   }
 }
