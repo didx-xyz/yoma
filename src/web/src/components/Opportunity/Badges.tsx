@@ -1,17 +1,17 @@
 import Image from "next/image";
+import iconClock from "public/images/icon-clock.svg";
+import { useMemo } from "react";
 import {
-  IoMdPerson,
-  IoMdPlay,
   IoMdCalendar,
   IoMdCloudUpload,
+  IoMdPerson,
+  IoMdPlay,
   IoMdWarning,
 } from "react-icons/io";
-import iconClock from "public/images/icon-clock.svg";
-import iconZlto from "public/images/icon-zlto.svg";
-import { useMemo } from "react";
-import type { OpportunityInfo } from "~/api/models/opportunity";
 import Moment from "react-moment";
+import type { OpportunityInfo } from "~/api/models/opportunity";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
+import ZltoRewardBadge from "./Badges/ZltoRewardBadge";
 
 interface BadgesProps {
   opportunity: OpportunityInfo | undefined;
@@ -113,20 +113,7 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
         </>
       )}
 
-      {(opportunity?.zltoReward ?? 0) > 0 && (
-        <div className="badge bg-orange-light text-orange">
-          <Image
-            src={iconZlto}
-            alt="Icon Zlto"
-            width={16}
-            height={16}
-            sizes="100vw"
-            priority={true}
-            style={{ width: "16px", height: "16px" }}
-          />
-          <span className="ml-1 text-xs">{opportunity?.zltoReward}</span>
-        </div>
-      )}
+      {opportunity && <ZltoRewardBadge opportunity={opportunity} />}
 
       {/* STATUS BADGES */}
       {opportunity?.status == "Active" && (
