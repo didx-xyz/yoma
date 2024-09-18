@@ -46,6 +46,7 @@ export interface StoreAccessControlRuleEvaluationItem {
 }
 
 export interface StoreAccessControlRuleEvaluationItemReason {
+  conditionPassed: boolean;
   reason: string;
   links: StoreAccessControlRuleEvaluationItemReasonLink[] | null;
 }
