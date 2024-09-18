@@ -97,5 +97,11 @@ namespace Yoma.Core.Domain.Core.Models
     public string OpportunityPublishedNotificationSchedule { get; set; }
 
     public int OpportunityPublishedNotificationIntervalInDays { get; set; }
+
+    public string StoreAccessControlRuleDeletionSchedule { get; set; }
+
+    public int StoreAccessControlRuleDeletionScheduleBatchSize { get; set; }
+
+    public int StoreAccessControlRuleDeletionScheduleIntervalInDays { get; set; }
   }
 }

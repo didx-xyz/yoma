@@ -22,6 +22,7 @@ using Yoma.Core.Domain.Entity.Services;
 using Yoma.Core.Domain.Entity.Services.Lookups;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Services;
+using Yoma.Core.Domain.Marketplace;
 using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Interfaces.Lookups;
 using Yoma.Core.Domain.Marketplace.Services;
@@ -117,6 +118,7 @@ namespace Yoma.Core.Domain
       services.AddScoped<ITransactionStatusService, TransactionStatusService>();
       #endregion Lookups
 
+      services.AddScoped<IStoreAccessControlRuleBackgroundService, StoreAccessControlRuleBackgroundService>();
       services.AddScoped<IStoreAccessControlRuleInfoService, StoreAccessControlRuleInfoService>();
       services.AddScoped<IStoreAccessControlRuleService, StoreAccessControlRuleService>();
       services.AddScoped<IMarketplaceService, MarketplaceService>();
@@ -141,9 +143,9 @@ namespace Yoma.Core.Domain
       services.AddScoped<IOpportunityVerificationTypeService, OpportunityVerificationTypeService>();
       #endregion Lookups
 
+      services.AddScoped<IOpportunityBackgroundService, OpportunityBackgroundService>();
       services.AddScoped<IOpportunityService, OpportunityService>();
       services.AddScoped<IOpportunityInfoService, OpportunityInfoService>();
-      services.AddScoped<IOpportunityBackgroundService, OpportunityBackgroundService>();
       #endregion Opportunity
 
       #region PartnerSharing
@@ -245,6 +247,10 @@ namespace Yoma.Core.Domain
         s => s.ProcessDeclination(), options.ActionLinkDeclinationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<ILinkServiceBackgroundService>($"Action Link Deletion ({LinkStatus.Declined} for more than {options.ActionLinkDeletionScheduleIntervalInDays} days)",
         s => s.ProcessDeletion(), options.ActionLinkDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+      //store access control rule
+      RecurringJob.AddOrUpdate<IStoreAccessControlRuleBackgroundService>($"Store Access Control Rule Deletion ({StoreAccessControlRuleStatus.Inactive} for more than {options.StoreAccessControlRuleDeletionScheduleIntervalInDays} days)",
+        s => s.ProcessDeletion(), options.StoreAccessControlRuleDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //seeding of test data
       if (!appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(environment)) return;
