@@ -580,7 +580,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var searchResults = Search(searchFilter, false);
 
-      var searchResultsItems = searchResults.Items.Where(o => existingRuleId == null || o.Id != existingRuleId).ToList(); 
+      var searchResultsItems = searchResults.Items.Where(o => existingRuleId == null || o.Id != existingRuleId).ToList();
 
       var relatedItems = new List<StoreAccessControlRulePreviewItem>();
       var relatedUserIds = new List<Guid>();
