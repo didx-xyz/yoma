@@ -214,7 +214,10 @@ export const UserMenu: React.FC = () => {
                   className="drawer-close btn btn-sm absolute right-2 top-2 !rounded-full border-none text-black shadow-none hover:bg-orange"
                   aria-label="close sidebar"
                 >
-                  <IoMdClose className="h-5 w-5" />
+                  <IoMdClose
+                    className="h-5 w-5"
+                    tabIndex={isDrawerOpen ? 0 : -1}
+                  />
                 </label>
 
                 {/* BUTTONS */}
@@ -223,6 +226,7 @@ export const UserMenu: React.FC = () => {
                     href="/user/profile"
                     className="btn btn-warning btn-sm w-1/2 text-sm text-white"
                     onClick={() => setDrawerOpen(false)}
+                    tabIndex={isDrawerOpen ? 0 : -1}
                   >
                     Profile
                   </Link>
@@ -231,6 +235,7 @@ export const UserMenu: React.FC = () => {
                     href="/user/settings"
                     className="btn btn-warning btn-sm w-1/2 text-sm text-white"
                     onClick={() => setDrawerOpen(false)}
+                    tabIndex={isDrawerOpen ? 0 : -1}
                   >
                     Settings
                   </Link>
@@ -245,7 +250,11 @@ export const UserMenu: React.FC = () => {
                   My Yo-ID
                 </span>
                 {/* TOOLTIP */}
-                <button type="button" onClick={() => setYoIdModalVisible(true)}>
+                <button
+                  type="button"
+                  onClick={() => setYoIdModalVisible(true)}
+                  tabIndex={isDrawerOpen ? 0 : -1}
+                >
                   <IoIosInformationCircleOutline className="h-5 w-5" />
                 </button>
               </div>
@@ -256,6 +265,7 @@ export const UserMenu: React.FC = () => {
                     title="💸 Wallet"
                     url="/yoid/wallet"
                     className="text-xs font-bold text-black md:text-sm"
+                    tabIndex={isDrawerOpen ? 0 : -1}
                     onClick={() => setDrawerOpen(false)}
                   />
                   <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
@@ -271,11 +281,13 @@ export const UserMenu: React.FC = () => {
                     title="🏆 Opportunities"
                     url="/yoid/opportunities/completed"
                     className="text-xs font-bold text-black md:text-sm"
+                    tabIndex={isDrawerOpen ? 0 : -1}
                     onClick={() => setDrawerOpen(false)}
                   />
                   <button
                     onClick={() => setGraphView(!graphView)}
                     className="absolute left-[7.5rem] flex sm:left-[8.5rem] lg:left-[9rem]"
+                    tabIndex={isDrawerOpen ? 0 : -1}
                   >
                     {graphView ? "📋" : "📈"}&nbsp;
                     <span className="my-auto text-xs text-gray-dark underline">
@@ -311,6 +323,7 @@ export const UserMenu: React.FC = () => {
                     title="⚡ Skills"
                     url="/yoid/skills"
                     className="text-xs font-bold text-black md:text-sm"
+                    tabIndex={isDrawerOpen ? 0 : -1}
                     onClick={() => setDrawerOpen(false)}
                   />
                   <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
@@ -328,6 +341,7 @@ export const UserMenu: React.FC = () => {
                     <button
                       onClick={toggleCollapsePassport}
                       className="flex h-[24px] w-full flex-row items-center gap-2 text-xs text-gray-dark md:text-sm"
+                      tabIndex={isDrawerOpen ? 0 : -1}
                     >
                       <span className="w-full truncate text-start text-xs font-bold tracking-wider  text-black md:text-sm">
                         🌐 Passport
@@ -357,41 +371,13 @@ export const UserMenu: React.FC = () => {
                     className="btn btn-sm gap-2 border-0 border-none bg-orange px-4 text-white shadow-lg transition animate-in animate-out hover:bg-orange hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95"
                     onClick={() => setDrawerOpen(false)}
                     href={`/yoid/passport`}
+                    tabIndex={isDrawerOpen ? 0 : -1}
                   >
                     Open Passport
                     <FaArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
               </div>
-
-              {/* <div className="flex w-full flex-col gap-2">
-                <Header
-                  title="🌐 Passport"
-                  url="/yoid/passport"
-                  className="text-xs text-black md:text-sm"
-                  onClick={() => setDrawerOpen(false)}
-                />
-                <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-                  <Suspense
-                    isLoading={credentialsIsLoading}
-                    error={credentialsError}
-                  >
-                    {!credentials?.length && (
-                      <NoRowsMessage
-                        icon="💳"
-                        title={"No credentials."}
-                        description={
-                          "Complete opportunities to receive your credentials."
-                        }
-                      />
-                    )}
-
-                    {!!credentials?.length && (
-                      <PassportCard data={credentials} />
-                    )}
-                  </Suspense>
-                </div>
-              </div> */}
             </div>
           </div>
         </div>

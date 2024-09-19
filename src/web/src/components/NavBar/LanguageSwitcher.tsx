@@ -34,7 +34,8 @@ const LanguageSwitcher: React.FC<{
   className?: string;
   classNameIcon?: string;
   classNameSelect?: string;
-}> = ({ className, classNameIcon, classNameSelect }) => {
+  tabIndex?: number;
+}> = ({ className, classNameIcon, classNameSelect, tabIndex }) => {
   const [currentLanguage, setCurrentLanguage] = useState<string>();
   const [languageConfig, setLanguageConfig] = useState<any>();
 
@@ -113,6 +114,7 @@ const LanguageSwitcher: React.FC<{
           onChange={(e) => switchLanguage(e.target.value)}
           className={`cursor-pointer bg-transparent font-semibold focus:outline-none ${classNameSelect}`}
           title="Select Language"
+          tabIndex={tabIndex}
         >
           {languageConfig.languages.map((ld: LanguageDescriptor) => (
             <option

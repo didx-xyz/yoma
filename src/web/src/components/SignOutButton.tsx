@@ -3,9 +3,10 @@ import { IoMdLogOut } from "react-icons/io";
 import { handleUserSignOut } from "~/lib/authUtils";
 import { LoadingInline } from "./Status/LoadingInline";
 
-export const SignOutButton: React.FC<{ className?: string }> = ({
-  className,
-}) => {
+export const SignOutButton: React.FC<{
+  className?: string;
+  tabIndex?: number;
+}> = ({ className, tabIndex }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
 
   const handleLogout = useCallback(() => {
@@ -22,6 +23,7 @@ export const SignOutButton: React.FC<{ className?: string }> = ({
       onClick={handleLogout}
       disabled={isButtonLoading}
       id="btnSignOut"
+      tabIndex={tabIndex}
     >
       {isButtonLoading && (
         <LoadingInline

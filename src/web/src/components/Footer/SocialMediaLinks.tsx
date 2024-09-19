@@ -1,6 +1,8 @@
 import { FaInstagram, FaYoutube, FaLinkedin } from "react-icons/fa";
 
-export const SocialMediaLinks: React.FC = () => {
+export const SocialMediaLinks: React.FC<{
+  tabIndex?: number;
+}> = ({ tabIndex }) => {
   return (
     <div className="flex items-center justify-center gap-4">
       <a
@@ -9,6 +11,7 @@ export const SocialMediaLinks: React.FC = () => {
         rel="noopener noreferrer"
         className="text-gray-600 hover:text-gray-900"
         aria-label="Instagram"
+        tabIndex={tabIndex}
       >
         <FaInstagram className="h-6 w-6" />
       </a>
@@ -18,6 +21,7 @@ export const SocialMediaLinks: React.FC = () => {
         rel="noopener noreferrer"
         className="text-gray-600 hover:text-gray-900"
         aria-label="YouTube"
+        tabIndex={tabIndex}
       >
         <FaYoutube className="h-6 w-6" />
       </a>
@@ -27,6 +31,7 @@ export const SocialMediaLinks: React.FC = () => {
         rel="noopener noreferrer"
         className="text-gray-600 hover:text-gray-900"
         aria-label="LinkedIn"
+        tabIndex={tabIndex}
       >
         <FaLinkedin className="h-6 w-6" />
       </a>
