@@ -9,10 +9,8 @@ import {
   IoIosAdd,
   IoIosSettings,
   IoMdCalendar,
-  IoMdClose,
   IoMdWarning,
 } from "react-icons/io";
-import ReactModal from "react-modal";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
 import { LinkStatus } from "~/api/models/actionLinks";

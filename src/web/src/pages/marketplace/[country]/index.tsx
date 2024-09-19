@@ -14,12 +14,7 @@ import iconBell from "public/images/icon-bell.webp";
 import type { ParsedUrlQuery } from "querystring";
 import React, { useCallback, useRef, useState, type ReactElement } from "react";
 import { FaLock } from "react-icons/fa";
-import {
-  IoMdCheckboxOutline,
-  IoMdClose,
-  IoMdCloseCircleOutline,
-  IoMdWarning,
-} from "react-icons/io";
+import { IoMdClose, IoMdCloseCircleOutline, IoMdWarning } from "react-icons/io";
 import ReactModal from "react-modal";
 import Select from "react-select";
 import { useConfirmationModalContext } from "src/context/modalConfirmationContext";
