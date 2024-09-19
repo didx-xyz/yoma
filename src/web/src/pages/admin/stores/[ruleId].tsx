@@ -479,6 +479,7 @@ const StoreRuleDetails: NextPageWithLayout<{
 
         // HACK: api want nulls and not empty arrays...
         if (data.opportunities?.length == 0) data.opportunities = null;
+        if (!data.storeItemCategories?.length) data.storeItemCategories = null;
         //  clear opportunityOption if no opportunities
         if (data.opportunities == null) data.opportunityOption = null;
 
