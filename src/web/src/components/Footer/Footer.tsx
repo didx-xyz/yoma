@@ -38,7 +38,8 @@ export const Footer: React.FC<{
       </div>
       <div className="flex-none">
         {/* LOGO */}
-        <Link href="/">
+        <Link href="/" tabIndex={tabIndex}
+                    title="Go Home">
           <Image
             src={logoPicDark}
             alt="Logo"

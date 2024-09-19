@@ -11,6 +11,7 @@ export const Feedback: React.FC = () => {
       aria-label="Feedback"
       className="fixed right-0 top-1/2 z-20 -mr-12 hidden -translate-y-1/2 -rotate-90 transform !rounded-none !rounded-t-md bg-green px-8 py-2 pb-4 text-sm text-white hover:bg-purple md:block"
       onClick={handleClick}
+      title="Send us your feedback!"
     >
       Feedback
     </button>

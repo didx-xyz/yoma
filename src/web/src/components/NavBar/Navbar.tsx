@@ -285,13 +285,13 @@ export const Navbar: React.FC = () => {
         <div className="flex w-full justify-between md:flex md:justify-between">
           {/* hover menu */}
           <div
-            className="z-10x absolute left-0 top-1/5 h-[100vh] w-[2px] bg-transparent"
+            className="absolute left-0 top-1/5 h-[100vh] w-[2px] bg-transparent"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           ></div>
 
           {/* LEFT MENU */}
-          <div className="flex items-center justify-start">
+          <div className="flex items-center justify-start gap-1">
             {/* LEFT DRAWER */}
             <div
               className={`drawer ${isHovered || isDrawerOpen ? "open" : ""}`}
@@ -302,11 +302,19 @@ export const Navbar: React.FC = () => {
                 className="drawer-toggle"
                 checked={isDrawerOpen}
                 onChange={onToggle}
+                tabIndex={-1}
               />
               <div className="drawer-content">
                 <label
                   htmlFor="nav-drawer"
                   className="bg-theme btn drawer w-auto !rounded-md border-none px-1 text-white shadow-none duration-0 hover:brightness-95 md:px-3"
+                  tabIndex={isDrawerOpen ? -1 : 0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      onToggle();
+                    }
+                  }}
+                  title="Main Menu"
                 >
                   <IoMdMenu className="h-8 w-8" />
                 </label>
@@ -335,11 +343,15 @@ export const Navbar: React.FC = () => {
                         htmlFor="nav-drawer"
                         className="drawer-close btn btn-sm !rounded-full border-none text-gray-dark shadow-md hover:bg-gray"
                         aria-label="close sidebar"
+                        tabIndex={isDrawerOpen ? 0 : -1}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            onToggle();
+                          }
+                        }}
+                        title="Close"
                       >
-                        <IoMdClose
-                          className="h-5 w-5"
-                          tabIndex={isDrawerOpen ? 0 : -1}
-                        />
+                        <IoMdClose className="h-5 w-5" />
                       </label>
                     </div>
 
@@ -349,7 +361,7 @@ export const Navbar: React.FC = () => {
                       {currentNavbarLinks.map((link, index) => (
                         <li
                           key={`lnkNavbarMenuModal_${index}`}
-                          className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
+                          className="shadow-non e btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm   text-gray-dark hover:bg-gray-light"
                         >
                           <Link
                             href={link.url!}
@@ -466,38 +478,39 @@ export const Navbar: React.FC = () => {
             <Link
               href="/"
               className="bg-theme btn gap-2 !rounded-md border-none px-2 text-white shadow-none duration-0 animate-in animate-out hover:brightness-95 md:px-2"
-              tabIndex={isDrawerOpen ? 0 : -1}
+              tabIndex={isDrawerOpen ? -1 : 0}
+              title="Home"
             >
               <Image
                 src={logoPicLight}
                 alt="Logo"
                 width={85}
                 height={41}
-                tabIndex={isDrawerOpen ? 0 : -1}
+                tabIndex={-1}
               />
             </Link>
           </div>
 
           {/* CENTER MENU (DESKTOP) */}
           {/* <ul className="mx-auto hidden w-fit items-center justify-center lg:flex">
-            {currentNavbarLinks.map((link, index) => (
-              <li
-                key={index}
+          {currentNavbarLinks.map((link, index) => (
+            <li
+              key={index}
+              tabIndex={index}
+              className="bg-theme group btn !rounded-md border-none p-2 px-4 text-base text-white shadow-none duration-0 hover:brightness-95"
+            >
+              <Link
+                href={link.url!}
                 tabIndex={index}
-                className="bg-theme group btn !rounded-md border-none p-2 px-4 text-base text-white shadow-none duration-0 hover:brightness-95"
+                id={`lnkNavbarMenu_${link.title}`}
               >
-                <Link
-                  href={link.url!}
-                  tabIndex={index}
-                  id={`lnkNavbarMenu_${link.title}`}
-                >
-                  <span className="mr-2">{link.iconImage}</span>
-                  <span>{link.title}</span>
-                  <span className="block h-0.5 max-w-0 bg-gray-light transition-all duration-500 group-hover:max-w-full"></span>
-                </Link>
-              </li>
-            ))}
-          </ul> */}
+                <span className="mr-2">{link.iconImage}</span>
+                <span>{link.title}</span>
+                <span className="block h-0.5 max-w-0 bg-gray-light transition-all duration-500 group-hover:max-w-full"></span>
+              </Link>
+            </li>
+          ))}
+        </ul> */}
 
           {/* RIGHT MENU */}
           <div className="flex items-center justify-end gap-2 md:gap-4">
@@ -505,9 +518,9 @@ export const Navbar: React.FC = () => {
               className="bg-theme hover:brightness-95 md:px-3"
               classNameIcon="text-white"
               classNameSelect="text-white mobile-select"
+              tabIndex={isDrawerOpen ? -1 : 0}
             />
-
-            {!session && <SignInButton />}
+            {!session && <SignInButton tabIndex={isDrawerOpen ? -1 : 0} />}
             {session && <UserMenu />}
           </div>
         </div>
