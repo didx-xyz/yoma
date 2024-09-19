@@ -24,6 +24,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { InfoModal } from "~/components/StoreAccessControlRule/InfoModal";
 import {
   StoreAccessControlRuleSearchFilterOptions,
   StoreAccessControlRuleSearchFilters,
@@ -78,6 +79,7 @@ const Stores: NextPageWithLayout<{
 }> = ({ id, nameContains, stores, statuses, page, error }) => {
   const router = useRouter();
   const [isLoading] = useState(false);
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
 
   // 👇 use prefetched queries from server
   const { data: dataRules } = useQuery<StoreAccessControlRuleSearchResults>({
@@ -260,6 +262,11 @@ const Stores: NextPageWithLayout<{
 
       {isLoading && <Loading />}
 
+      <InfoModal
+        isOpen={infoModalVisible}
+        onClose={() => setInfoModalVisible(false)}
+      />
+
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
           <h3 className="mb-6 mt-3 flex items-center text-xl font-semibold tracking-normal text-white md:mb-9 md:mt-0 md:text-3xl">
@@ -354,10 +361,17 @@ const Stores: NextPageWithLayout<{
             </div>
           </div>
 
+          {/* INFO MESSAGE AND OPEN POPUP */}
           <FormMessage messageType={FormMessageType.Info}>
             Marketplace Store Access Rules control the visibility of a ZLTO
-            store and its item categories to users. Contact support for
-            assistance with creating rules.
+            store and its item categories to users. Click{" "}
+            <button
+              className="text-green underline"
+              onClick={() => setInfoModalVisible(true)}
+            >
+              here
+            </button>{" "}
+            to learn more.
           </FormMessage>
 
           {/* SEARCH INPUT */}
