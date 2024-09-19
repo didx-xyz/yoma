@@ -14,12 +14,7 @@ import iconBell from "public/images/icon-bell.webp";
 import type { ParsedUrlQuery } from "querystring";
 import React, { useCallback, useRef, useState, type ReactElement } from "react";
 import { FaLock } from "react-icons/fa";
-import {
-  IoMdCheckboxOutline,
-  IoMdClose,
-  IoMdCloseCircleOutline,
-  IoMdWarning,
-} from "react-icons/io";
+import { IoMdClose, IoMdCloseCircleOutline, IoMdWarning } from "react-icons/io";
 import ReactModal from "react-modal";
 import Select from "react-select";
 import { useConfirmationModalContext } from "src/context/modalConfirmationContext";
@@ -852,35 +847,33 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                   (rule, ruleIndex) => (
                     <div key={`rule_${ruleIndex}`}>
                       <ul>
-                        {rule.reasons.map((reason, reasonIndex) => (
-                          <li key={`reason_${reasonIndex}`}>
-                            <div className="flex flex-row items-center gap-2">
-                              {reason.conditionPassed ? (
-                                <IoMdCheckboxOutline className="h-6 w-6 text-green" />
-                              ) : (
+                        {rule.reasons
+                          .filter((x) => x.conditionPassed == false)
+                          .map((reason, reasonIndex) => (
+                            <li key={`reason_${reasonIndex}`}>
+                              <div className="flex flex-row items-center gap-2">
                                 <IoMdCloseCircleOutline className="h-6 w-6 text-red-400" />
-                              )}
 
-                              <p className="text-sm">{reason.reason}</p>
-                            </div>
+                                <p className="text-sm">{reason.reason}</p>
+                              </div>
 
-                            <ul className="list-insidex ml-10 mt-2 list-disc text-left">
-                              {reason.links?.map((link, linkIndex) => (
-                                <li key={`link_${linkIndex}`}>
-                                  <Link
-                                    key={`link_${linkIndex}`}
-                                    href={link.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-sm text-blue hover:underline"
-                                  >
-                                    {link.title}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          </li>
-                        ))}
+                              <ul className="list-insidex ml-10 mt-2 list-disc text-left">
+                                {reason.links?.map((link, linkIndex) => (
+                                  <li key={`link_${linkIndex}`}>
+                                    <Link
+                                      key={`link_${linkIndex}`}
+                                      href={link.url}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-sm text-blue hover:underline"
+                                    >
+                                      {link.title}
+                                    </Link>
+                                  </li>
+                                ))}
+                              </ul>
+                            </li>
+                          ))}
                       </ul>
                     </div>
                   ),

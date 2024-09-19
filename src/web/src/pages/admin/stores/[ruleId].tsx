@@ -1540,19 +1540,19 @@ const StoreRuleDetails: NextPageWithLayout<{
                         )}
 
                         {!preview.rulesRelated?.length && (
-                          <FormField label="Rules">
+                          <FormField label="Related rules">
                             <FormMessage messageType={FormMessageType.Success}>
-                              No other rules were found based on the specified
-                              store info.
+                              No other related rules were found based on the
+                              specified store info.
                             </FormMessage>
                           </FormField>
                         )}
 
                         {!!preview.rulesRelated?.length && (
-                          <FormField label="Rules">
+                          <FormField label="Related rules">
                             <FormMessage messageType={FormMessageType.Warning}>
-                              {preview.rulesRelated.length} rule(s) found based
-                              on the specified store info:
+                              {preview.rulesRelated.length} related rule(s)
+                              found based on the specified store info:
                             </FormMessage>
 
                             <table className="table table-xs border-separate rounded-lg border-x-2 border-t-2 border-gray-light">
