@@ -224,6 +224,7 @@ export const Navbar: React.FC = () => {
           onClick={() => setDrawerOpen(false)}
           id={`userMenu_orgs_${organisation.name}`} // e2e
           className="w-full"
+          tabIndex={isDrawerOpen ? 0 : -1}
         >
           <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
             <AvatarImage
@@ -267,6 +268,7 @@ export const Navbar: React.FC = () => {
                 className="tooltip tooltip-left tooltip-secondary rounded-full bg-white p-1 text-gray-dark shadow duration-300 hover:bg-gray-dark hover:text-gray-light"
                 onClick={() => setDrawerOpen(false)}
                 data-tip="Settings"
+                tabIndex={isDrawerOpen ? 0 : -1}
               >
                 <IoMdSettings className="h-4 w-4" />
               </Link>
@@ -326,6 +328,7 @@ export const Navbar: React.FC = () => {
                           alt="Logo"
                           width={85}
                           height={41}
+                          tabIndex={-1}
                         />
                       </div>
                       <label
@@ -333,7 +336,10 @@ export const Navbar: React.FC = () => {
                         className="drawer-close btn btn-sm !rounded-full border-none text-gray-dark shadow-md hover:bg-gray"
                         aria-label="close sidebar"
                       >
-                        <IoMdClose className="h-5 w-5" />
+                        <IoMdClose
+                          className="h-5 w-5"
+                          tabIndex={isDrawerOpen ? 0 : -1}
+                        />
                       </label>
                     </div>
 
@@ -350,6 +356,7 @@ export const Navbar: React.FC = () => {
                             onClick={() => setDrawerOpen(false)}
                             id={`lnkNavbarMenuModal_${link.title}`}
                             className="w-full"
+                            tabIndex={isDrawerOpen ? 0 : -1}
                           >
                             <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
                               {link.iconImage}
@@ -366,6 +373,7 @@ export const Navbar: React.FC = () => {
                       className="ml-1 bg-transparent !py-1 px-3 hover:bg-gray-light"
                       classNameIcon="text-gray-dark ml-1x !h-5 !w-5"
                       classNameSelect="text-gray-dark text-sm"
+                      tabIndex={isDrawerOpen ? 0 : -1}
                     />
 
                     <div className="divider my-2 grow-0 !bg-gray" />
@@ -385,6 +393,7 @@ export const Navbar: React.FC = () => {
                                 href="/organisations"
                                 onClick={() => setDrawerOpen(false)}
                                 id="userMenu_orgs_all"
+                                tabIndex={isDrawerOpen ? 0 : -1}
                               >
                                 <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
                                   🏢
@@ -413,6 +422,7 @@ export const Navbar: React.FC = () => {
                               href="/organisations"
                               onClick={() => setDrawerOpen(false)}
                               id="userMenu_admin"
+                              tabIndex={isDrawerOpen ? 0 : -1}
                             >
                               <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
                                 🛠️
@@ -426,16 +436,26 @@ export const Navbar: React.FC = () => {
                       </>
                     )}
 
-                    {!session && <SignInButton className="!btn-sm" />}
+                    {!session && (
+                      <SignInButton
+                        className="!btn-sm"
+                        tabIndex={isDrawerOpen ? 0 : -1}
+                      />
+                    )}
 
-                    {session && <SignOutButton className="!btn-sm" />}
+                    {session && (
+                      <SignOutButton
+                        className="!btn-sm"
+                        tabIndex={isDrawerOpen ? 0 : -1}
+                      />
+                    )}
 
                     <div className="divider my-2 grow-0 !bg-gray" />
 
-                    <SocialMediaLinks />
+                    <SocialMediaLinks tabIndex={isDrawerOpen ? 0 : -1} />
 
                     <div className="grow-0">
-                      <Footer />
+                      <Footer tabIndex={isDrawerOpen ? 0 : -1} />
                     </div>
                   </div>
                 </div>
@@ -446,13 +466,14 @@ export const Navbar: React.FC = () => {
             <Link
               href="/"
               className="bg-theme btn gap-2 !rounded-md border-none px-2 text-white shadow-none duration-0 animate-in animate-out hover:brightness-95 md:px-2"
+              tabIndex={isDrawerOpen ? 0 : -1}
             >
               <Image
                 src={logoPicLight}
                 alt="Logo"
-                //priority={true}
                 width={85}
                 height={41}
+                tabIndex={isDrawerOpen ? 0 : -1}
               />
             </Link>
           </div>

@@ -5,6 +5,7 @@ interface InputProps {
   title: string;
   url?: string | null;
   className?: string;
+  tabIndex?: number;
   onClick?: () => void;
 }
 
@@ -12,6 +13,7 @@ export const Header: React.FC<InputProps> = ({
   title,
   url,
   className = "text-sm font-semibold text-black",
+  tabIndex,
   onClick,
 }) => {
   return (
@@ -25,6 +27,7 @@ export const Header: React.FC<InputProps> = ({
           href={url}
           className="flex items-center whitespace-nowrap text-sm text-gray-dark"
           onClick={onClick}
+          tabIndex={tabIndex}
         >
           <MdKeyboardArrowRight className="mr-2 h-6 w-6"></MdKeyboardArrowRight>
         </Link>

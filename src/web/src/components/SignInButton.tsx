@@ -5,9 +5,10 @@ import { handleUserSignIn } from "~/lib/authUtils";
 import { currentLanguageAtom } from "~/lib/store";
 import { LoadingInline } from "./Status/LoadingInline";
 
-export const SignInButton: React.FC<{ className?: string }> = ({
-  className,
-}) => {
+export const SignInButton: React.FC<{
+  className?: string;
+  tabIndex?: number;
+}> = ({ className, tabIndex }) => {
   const [isButtonLoading, setIsButtonLoading] = useState(false);
   const currentLanguage = useAtomValue(currentLanguageAtom);
 
@@ -25,6 +26,7 @@ export const SignInButton: React.FC<{ className?: string }> = ({
       onClick={handleLogin}
       disabled={isButtonLoading}
       id="btnSignIn"
+      tabIndex={tabIndex}
     >
       {isButtonLoading && (
         <LoadingInline

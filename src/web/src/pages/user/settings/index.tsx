@@ -103,7 +103,7 @@ const MySettings: NextPageWithLayout<{
         <title>Yoma | ⚙️ Settings</title>
       </Head>
 
-      <PageBackground className="h-[16rem]" />
+      <PageBackground />
 
       <div className="z-10 mt-20 w-full max-w-2xl p-4 md:mt-24">
         <div className="mb-4 text-xs font-bold tracking-wider text-white md:text-base">
