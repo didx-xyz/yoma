@@ -250,7 +250,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var (userCount, userIds) = PreviewRuleMatchedUserCount(request.AgeFrom, request.AgeTo, request.GenderId, request.Opportunities, request.OpportunityOption);
 
-      var (relatedRules, relatedUserIds) = PreviewRelatedRules(request.StoreId);
+      var (relatedRules, relatedUserIds) = PreviewRelatedRules(request.StoreId, null);
 
       var totalUniqueUserIds = userIds.Union(relatedUserIds).Distinct().ToList();
 
@@ -332,7 +332,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var (userCount, userIds) = PreviewRuleMatchedUserCount(request.AgeFrom, request.AgeTo, request.GenderId, request.Opportunities, request.OpportunityOption);
 
-      var (relatedRules, relatedUserIds) = PreviewRelatedRules(request.StoreId);
+      var (relatedRules, relatedUserIds) = PreviewRelatedRules(request.StoreId, ruleExisting.Id);
 
       var totalUniqueUserIds = userIds.Union(relatedUserIds).Distinct().ToList();
 
@@ -451,6 +451,17 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     public StoreAccessControlRuleEvaluationResult EvaluateStoreAccessControlRules(StoreItemCategory storeItemCategory, User? user, List<MyOpportunityInfo>? myOpportunitiesCompleted)
     {
+      // Evaluate access control rules at the item category level.
+      // The logic follows a most restrictive approach:
+      // - Rules are evaluated using OR logic, meaning if any rule grants access, the user can access that item category.
+      // - However, each item category may have its own set of rules, and specific rules can override general ones.
+      // - If a more restrictive rule exists for a specific item category, it will take precedence, even if a general rule grants access at the store level.
+      // Example: 
+      // - Rule A grants males access to the Airtime Yoma SA store.
+      // - Rule B restricts access to the R10 Airtime item category to females.
+      // - In this case, males can access the store except for the R10 Airtime category, where Rule B takes precedence.
+      // - This ensures that the most restrictive rule determines access at the item category level.
+
       ArgumentNullException.ThrowIfNull(storeItemCategory, nameof(storeItemCategory));
 
       var rules = RulesUpdatableCached().Where(o => o.Status == StoreAccessControlRuleStatus.Active).ToList();
@@ -461,7 +472,6 @@ namespace Yoma.Core.Domain.Marketplace.Services
       //no matching rules, resulting in unlcoked status
       if (matchingRules.Count == 0) return result;
 
-      // rules are logically OR: conditions within each rule are logically AND
       result.Rules = [];
 
       foreach (var rule in matchingRules)
@@ -469,7 +479,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
         var evaluationItem = new StoreAccessControlRuleEvaluationItem { Id = rule.Id, Name = rule.Name, Reasons = [] };
         var storeLocked = false;
 
-        // rules are logically OR: conditions within each rule are logically AND
+        // evaluate age condition
         if (rule.AgeFrom.HasValue || rule.AgeTo.HasValue)
         {
           var ageMessage = string.Empty;
@@ -559,7 +569,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
     #endregion
 
     #region Private Members
-    private (List<StoreAccessControlRulePreviewItem> Items, List<Guid> RelatedUserIds) PreviewRelatedRules(string storeId)
+    private (List<StoreAccessControlRulePreviewItem> Items, List<Guid> RelatedUserIds) PreviewRelatedRules(string storeId, Guid? existingRuleId)
     {
       var searchFilter = new StoreAccessControlRuleSearchFilter
       {
@@ -570,10 +580,12 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var searchResults = Search(searchFilter, false);
 
+      var searchResultsItems = searchResults.Items.Where(o => existingRuleId == null || o.Id != existingRuleId).ToList(); 
+
       var relatedItems = new List<StoreAccessControlRulePreviewItem>();
       var relatedUserIds = new List<Guid>();
 
-      foreach (var rule in searchResults.Items)
+      foreach (var rule in searchResultsItems)
       {
         var (userCount, userIds) = PreviewRuleMatchedUserCount(
             rule.AgeFrom,
