@@ -25,11 +25,12 @@ export const Header: React.FC<InputProps> = ({
       {url && (
         <Link
           href={url}
-          className="flex items-center whitespace-nowrap text-sm text-gray-dark"
+          className="flex items-center whitespace-nowrap rounded-md text-sm text-gray-dark"
           onClick={onClick}
           tabIndex={tabIndex}
+          title="View all"
         >
-          <MdKeyboardArrowRight className="mr-2 h-6 w-6"></MdKeyboardArrowRight>
+          <MdKeyboardArrowRight className="h-6 w-6"></MdKeyboardArrowRight>
         </Link>
       )}
     </div>
