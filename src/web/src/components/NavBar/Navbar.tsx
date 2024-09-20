@@ -223,7 +223,7 @@ export const Navbar: React.FC = () => {
           }
           onClick={() => setDrawerOpen(false)}
           id={`userMenu_orgs_${organisation.name}`} // e2e
-          className="w-full"
+          className="w-full py-0"
           tabIndex={isDrawerOpen ? 0 : -1}
         >
           <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
@@ -314,7 +314,7 @@ export const Navbar: React.FC = () => {
                       onToggle();
                     }
                   }}
-                  title="Main Menu"
+                  title="Open main menu"
                 >
                   <IoMdMenu className="h-8 w-8" />
                 </label>
@@ -361,13 +361,13 @@ export const Navbar: React.FC = () => {
                       {currentNavbarLinks.map((link, index) => (
                         <li
                           key={`lnkNavbarMenuModal_${index}`}
-                          className="shadow-non e btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm   text-gray-dark hover:bg-gray-light"
+                          className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
                         >
                           <Link
                             href={link.url!}
                             onClick={() => setDrawerOpen(false)}
                             id={`lnkNavbarMenuModal_${link.title}`}
-                            className="w-full"
+                            className="w-full py-0"
                             tabIndex={isDrawerOpen ? 0 : -1}
                           >
                             <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
@@ -393,7 +393,7 @@ export const Navbar: React.FC = () => {
                     {(userProfile?.adminsOf?.length ?? 0) > 0 && (
                       <>
                         <div
-                          className="bg-white-shadex h-full max-h-[120px] overflow-x-hidden overflow-y-scroll"
+                          className="h-full max-h-[120px] overflow-x-hidden overflow-y-scroll"
                           id="organisations"
                         >
                           <ul className="menu grow p-0">
@@ -406,6 +406,7 @@ export const Navbar: React.FC = () => {
                                 onClick={() => setDrawerOpen(false)}
                                 id="userMenu_orgs_all"
                                 tabIndex={isDrawerOpen ? 0 : -1}
+                                className="w-full py-0"
                               >
                                 <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
                                   🏢

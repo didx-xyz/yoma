@@ -124,14 +124,14 @@ export const UserMenu: React.FC = () => {
         <div className="drawer-content flex flex-col">
           <label
             htmlFor="userMenu-drawer"
-            className="hover:cursor-pointer"
+            className="rounded-md hover:cursor-pointer"
             tabIndex={isDrawerOpen ? -1 : 0}
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 onToggle();
               }
             }}
-            title="User Menu"
+            title="Open user menu"
           >
             {/* BUTTON */}
             {/* USER/ADMIN, SHOW USER IMAGE */}
@@ -242,6 +242,7 @@ export const UserMenu: React.FC = () => {
                     className="btn btn-warning btn-sm w-1/2 text-sm text-white"
                     onClick={() => setDrawerOpen(false)}
                     tabIndex={isDrawerOpen ? 0 : -1}
+                    title="Edit your profile"
                   >
                     Profile
                   </Link>
@@ -251,6 +252,7 @@ export const UserMenu: React.FC = () => {
                     className="btn btn-warning btn-sm w-1/2 text-sm text-white"
                     onClick={() => setDrawerOpen(false)}
                     tabIndex={isDrawerOpen ? 0 : -1}
+                    title="Change your settings"
                   >
                     Settings
                   </Link>
@@ -267,8 +269,10 @@ export const UserMenu: React.FC = () => {
                 {/* TOOLTIP */}
                 <button
                   type="button"
+                  className="rounded-md"
                   onClick={() => setYoIdModalVisible(true)}
                   tabIndex={isDrawerOpen ? 0 : -1}
+                  title="What is Yo-ID?"
                 >
                   <IoIosInformationCircleOutline className="h-5 w-5" />
                 </button>
