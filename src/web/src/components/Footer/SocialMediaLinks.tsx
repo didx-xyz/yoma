@@ -12,6 +12,7 @@ export const SocialMediaLinks: React.FC<{
         className="text-gray-600 hover:text-gray-900"
         aria-label="Instagram"
         tabIndex={tabIndex}
+        title="Follow us on Instagram!"
       >
         <FaInstagram className="h-6 w-6" />
       </a>
@@ -22,6 +23,7 @@ export const SocialMediaLinks: React.FC<{
         className="text-gray-600 hover:text-gray-900"
         aria-label="YouTube"
         tabIndex={tabIndex}
+        title="Follow us on YouTube!"
       >
         <FaYoutube className="h-6 w-6" />
       </a>
@@ -32,6 +34,7 @@ export const SocialMediaLinks: React.FC<{
         className="text-gray-600 hover:text-gray-900"
         aria-label="LinkedIn"
         tabIndex={tabIndex}
+        title="Follow us on LinkedIn!"
       >
         <FaLinkedin className="h-6 w-6" />
       </a>

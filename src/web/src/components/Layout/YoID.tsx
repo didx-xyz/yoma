@@ -111,7 +111,12 @@ const YoIDLayout: TabProps = ({ children }) => {
                 </span>
 
                 {/* TOOLTIP */}
-                <button type="button" onClick={() => setYoIdModalVisible(true)}>
+                <button
+                  type="button"
+                  className="rounded-md"
+                  onClick={() => setYoIdModalVisible(true)}
+                  title="What is Yo-ID?"
+                >
                   <IoIosInformationCircleOutline className="h-6 w-6" />
                 </button>
               </div>
@@ -126,6 +131,7 @@ const YoIDLayout: TabProps = ({ children }) => {
                     className={`btn btn-xs flex h-8 items-center border-orange bg-orange text-xs tracking-wide text-white lg:btn-sm hover:border-orange hover:bg-purple hover:text-white ${
                       tab.selected ? "border-orange bg-purple text-white" : ""
                     }`}
+                    title={`Go to ${tab.title}`}
                   >
                     {tab.title}
                   </Link>

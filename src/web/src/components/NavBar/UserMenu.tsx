@@ -37,7 +37,7 @@ import { YoIdModal } from "../YoID/YoIdModal";
 
 export const UserMenu: React.FC = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
-  const toggle = () => setDrawerOpen(!isDrawerOpen);
+  const onToggle = () => setDrawerOpen(!isDrawerOpen);
   const userProfile = useAtomValue(userProfileAtom);
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationLogo = useAtomValue(currentOrganisationLogoAtom);
@@ -118,10 +118,21 @@ export const UserMenu: React.FC = () => {
           type="checkbox"
           className="drawer-toggle"
           checked={isDrawerOpen}
-          onChange={toggle}
+          onChange={onToggle}
+          tabIndex={-1}
         />
         <div className="drawer-content flex flex-col">
-          <label htmlFor="userMenu-drawer" className="hover:cursor-pointer">
+          <label
+            htmlFor="userMenu-drawer"
+            className="rounded-md hover:cursor-pointer"
+            tabIndex={isDrawerOpen ? -1 : 0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                onToggle();
+              }
+            }}
+            title="Open user menu"
+          >
             {/* BUTTON */}
             {/* USER/ADMIN, SHOW USER IMAGE */}
             {(activeRoleView == RoleView.User ||
@@ -213,11 +224,15 @@ export const UserMenu: React.FC = () => {
                   htmlFor="userMenu-drawer"
                   className="drawer-close btn btn-sm absolute right-2 top-2 !rounded-full border-none text-black shadow-none hover:bg-orange"
                   aria-label="close sidebar"
+                  tabIndex={isDrawerOpen ? 0 : -1}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      onToggle();
+                    }
+                  }}
+                  title="Close"
                 >
-                  <IoMdClose
-                    className="h-5 w-5"
-                    tabIndex={isDrawerOpen ? 0 : -1}
-                  />
+                  <IoMdClose className="h-5 w-5" tabIndex={-1} />
                 </label>
 
                 {/* BUTTONS */}
@@ -227,6 +242,7 @@ export const UserMenu: React.FC = () => {
                     className="btn btn-warning btn-sm w-1/2 text-sm text-white"
                     onClick={() => setDrawerOpen(false)}
                     tabIndex={isDrawerOpen ? 0 : -1}
+                    title="Edit your profile"
                   >
                     Profile
                   </Link>
@@ -236,6 +252,7 @@ export const UserMenu: React.FC = () => {
                     className="btn btn-warning btn-sm w-1/2 text-sm text-white"
                     onClick={() => setDrawerOpen(false)}
                     tabIndex={isDrawerOpen ? 0 : -1}
+                    title="Change your settings"
                   >
                     Settings
                   </Link>
@@ -252,8 +269,10 @@ export const UserMenu: React.FC = () => {
                 {/* TOOLTIP */}
                 <button
                   type="button"
+                  className="rounded-md"
                   onClick={() => setYoIdModalVisible(true)}
                   tabIndex={isDrawerOpen ? 0 : -1}
+                  title="What is Yo-ID?"
                 >
                   <IoIosInformationCircleOutline className="h-5 w-5" />
                 </button>

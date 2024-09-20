@@ -24,6 +24,7 @@ export const SignOutButton: React.FC<{
       disabled={isButtonLoading}
       id="btnSignOut"
       tabIndex={tabIndex}
+      title="Sign out"
     >
       {isButtonLoading && (
         <LoadingInline

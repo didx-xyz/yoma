@@ -27,6 +27,7 @@ export const SignInButton: React.FC<{
       disabled={isButtonLoading}
       id="btnSignIn"
       tabIndex={tabIndex}
+      title="Sign in"
     >
       {isButtonLoading && (
         <LoadingInline

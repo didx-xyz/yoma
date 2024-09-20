@@ -60,6 +60,7 @@ export const WalletCard: React.FC<{
             type="button"
             onClick={() => setZltoModalVisible(true)}
             className="ml-2 inline-block align-middle"
+            tabIndex={-1}
           >
             <IoIosInformationCircleOutline className="h-5 w-5 text-green" />
           </button>

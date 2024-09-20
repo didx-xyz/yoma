@@ -235,9 +235,10 @@ const MyWallet: NextPageWithLayout<{
         <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">
           <Breadcrumb
             items={[
-              { title: "💳 Yo-ID", url: "/yoid" },
+              { title: "Yo-ID", url: "/yoid", iconElement: <>💳</> },
               {
-                title: "💸 Wallet",
+                title: "Wallet",
+                iconElement: <>💸</>,
                 selected: true,
               },
             ]}
