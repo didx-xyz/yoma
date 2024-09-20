@@ -564,6 +564,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
         result.Rules.Add(evaluationItem);
       }
 
+      result.Rules = [.. result.Rules.OrderBy(o => o.Name)];
+
       return result;
     }
     #endregion
