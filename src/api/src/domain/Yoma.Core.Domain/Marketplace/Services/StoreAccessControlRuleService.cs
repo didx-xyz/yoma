@@ -312,6 +312,9 @@ namespace Yoma.Core.Domain.Marketplace.Services
         scope.Complete();
       });
 
+      if (result.Opportunities?.Count == 0) result.Opportunities = null;
+      result.Opportunities = result.Opportunities?.OrderBy(o => o.Title).ToList();
+
       _memoryCache.Remove(CacheHelper.GenerateKey<StoreAccessControlRule>());
 
       return result;
@@ -405,6 +408,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       });
 
       if (result.Opportunities?.Count == 0) result.Opportunities = null;
+      result.Opportunities = result.Opportunities?.OrderBy(o => o.Title).ToList();
 
       _memoryCache.Remove(CacheHelper.GenerateKey<StoreAccessControlRule>());
 
@@ -721,7 +725,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
           var opportunityMessage = duplicateRule.OpportunityOption == StoreAccessControlRuleOpportunityCondition.All
               ? "Must complete the following opportunities:" : "Must complete at least one of the following opportunities:";
 
-          var opportunityTitles = string.Join(", ", duplicateRule.Opportunities.Select(o => o.Title));
+          var opportunityTitles = string.Join(", ", duplicateRule.Opportunities.Select(o => o.Title.RemoveSpecialCharacters()));
           reasons.Add($"{opportunityMessage} {opportunityTitles}.");
         }
 
