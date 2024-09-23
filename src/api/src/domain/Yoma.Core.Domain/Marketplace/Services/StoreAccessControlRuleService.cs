@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using System.Transactions;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -531,9 +532,9 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
           var opportunityLinks = rule.Opportunities.Select(o => new StoreAccessControlRuleEvaluationItemReasonLink
           {
-            Title = o.Title,
+            Title = o.Title.RemoveSpecialCharacters(),
             URL = o.YomaInfoURL(_appSettings.AppBaseURL),
-            RequirementMet = myOpportunitiesCompleted?.Any(i => i.Id == o.Id) == true // check if user completed the opportunity
+            RequirementMet = myOpportunitiesCompleted?.Any(i => i.OpportunityId == o.Id) == true // check if user completed the opportunity
           }).ToList();
 
           if (rule.OpportunityOption == null)
@@ -541,8 +542,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
           var conditionPassed = rule.OpportunityOption.Value switch
           {
-            StoreAccessControlRuleOpportunityCondition.All => rule.Opportunities.All(o => myOpportunitiesCompleted?.Any(i => i.Id == o.Id) == true),
-            StoreAccessControlRuleOpportunityCondition.Any => rule.Opportunities.Any(o => myOpportunitiesCompleted?.Any(i => i.Id == o.Id) == true),
+            StoreAccessControlRuleOpportunityCondition.All => rule.Opportunities.All(o => myOpportunitiesCompleted?.Any(i => i.OpportunityId == o.Id) == true),
+            StoreAccessControlRuleOpportunityCondition.Any => rule.Opportunities.Any(o => myOpportunitiesCompleted?.Any(i => i.OpportunityId == o.Id) == true),
             _ => throw new InvalidOperationException($"Opportunity option '{rule.OpportunityOption}' not supported")
           };
 
