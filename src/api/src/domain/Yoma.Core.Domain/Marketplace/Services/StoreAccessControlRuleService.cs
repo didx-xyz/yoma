@@ -1,6 +1,5 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using System.Transactions;
@@ -29,7 +28,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
   {
     #region Class Variables
     private readonly AppSettings _appSettings;
-    private readonly IMemoryCache _memoryCache;
+    private readonly IDistributedCacheService _distributedCacheService;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IStoreAccessControlRuleStatusService _storeAccessControlRuleStatusService;
     private readonly IOrganizationService _organizationService;
@@ -56,7 +55,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     #region Constructor
     public StoreAccessControlRuleService(IOptions<AppSettings> appSettings,
-      IMemoryCache memoryCache,
+      IDistributedCacheService distributedCacheService,
       IHttpContextAccessor httpContextAccessor,
       IStoreAccessControlRuleStatusService storeAccessControlRuleStatusService,
       IOrganizationService organizationService,
@@ -76,7 +75,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       IExecutionStrategyService executionStrategyService)
     {
       _appSettings = appSettings.Value;
-      _memoryCache = memoryCache;
+      _distributedCacheService = distributedCacheService;
       _httpContextAccessor = httpContextAccessor;
       _storeAccessControlRuleStatusService = storeAccessControlRuleStatusService;
       _organizationService = organizationService;
@@ -315,7 +314,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       if (result.Opportunities?.Count == 0) result.Opportunities = null;
       result.Opportunities = result.Opportunities?.OrderBy(o => o.Title).ToList();
 
-      _memoryCache.Remove(CacheHelper.GenerateKey<StoreAccessControlRule>());
+      _distributedCacheService.Remove(CacheHelper.GenerateKey<StoreAccessControlRule>());
 
       return result;
     }
@@ -410,7 +409,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       if (result.Opportunities?.Count == 0) result.Opportunities = null;
       result.Opportunities = result.Opportunities?.OrderBy(o => o.Title).ToList();
 
-      _memoryCache.Remove(CacheHelper.GenerateKey<StoreAccessControlRule>());
+      _distributedCacheService.Remove(CacheHelper.GenerateKey<StoreAccessControlRule>());
 
       return result;
     }
@@ -449,7 +448,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       result = await _storeAccessControlRuleRepistory.Update(result);
 
-      _memoryCache.Remove(CacheHelper.GenerateKey<StoreAccessControlRule>());
+      _distributedCacheService.Remove(CacheHelper.GenerateKey<StoreAccessControlRule>());
 
       return result;
     }
@@ -794,15 +793,19 @@ namespace Yoma.Core.Domain.Marketplace.Services
     #region Private Members
     private List<StoreAccessControlRule> RulesUpdatableCached()
     {
-      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
+      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
         return Search(new StoreAccessControlRuleSearchFilter { NonPaginatedQuery = true, Statuses = [.. Statuses_Updatable] }, false).Items;
 
-      var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<StoreAccessControlRule>(), entry =>
-      {
-        entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
-        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-        return Search(new StoreAccessControlRuleSearchFilter { NonPaginatedQuery = true, Statuses = [.. Statuses_Updatable] }, false).Items;
-      }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(StoreAccessControlRule)}s'");
+      var result = _distributedCacheService.GetOrCreate(
+          CacheHelper.GenerateKey<StoreAccessControlRule>(),
+          () => Search(new StoreAccessControlRuleSearchFilter
+          {
+            NonPaginatedQuery = true,
+            Statuses = [.. Statuses_Updatable]
+          }, false).Items,
+          TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours),
+          TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays)
+        ) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(StoreAccessControlRule)}s'");
 
       return result;
     }

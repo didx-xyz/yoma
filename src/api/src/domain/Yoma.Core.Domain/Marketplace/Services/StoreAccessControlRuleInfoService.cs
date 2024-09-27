@@ -1,7 +1,7 @@
 using FluentValidation;
-using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Models;
@@ -13,7 +13,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
   {
     #region Class Variables
     private readonly AppSettings _appSettings;
-    private readonly IMemoryCache _memoryCache;
+    private readonly IDistributedCacheService _distributedCacheService;
     private readonly IStoreAccessControlRuleService _storeAccessControlRuleService;
     private readonly IMarketplaceService _marketplaceService;
     private readonly StoreAccessControlRuleRequestValidatorCreate _storeAccessControlRuleRequestValidatorCreate;
@@ -22,14 +22,14 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     #region Constructor
     public StoreAccessControlRuleInfoService(IOptions<AppSettings> appSettings,
-      IMemoryCache memoryCache,
+      IDistributedCacheService distributedCacheService,
       IStoreAccessControlRuleService storeAccessControlRuleService,
       IMarketplaceService marketplaceService,
       StoreAccessControlRuleRequestValidatorCreate storeAccessControlRuleRequestValidatorCreate,
       StoreAccessControlRuleRequestValidatorUpdate storeAccessControlRuleRequestValidatorUpdate)
     {
       _appSettings = appSettings.Value;
-      _memoryCache = memoryCache;
+      _distributedCacheService = distributedCacheService;
       _storeAccessControlRuleService = storeAccessControlRuleService;
       _marketplaceService = marketplaceService;
       _storeAccessControlRuleRequestValidatorCreate = storeAccessControlRuleRequestValidatorCreate;
@@ -107,9 +107,6 @@ namespace Yoma.Core.Domain.Marketplace.Services
       request.RequestValidationHandled = true;
       var result = await _storeAccessControlRuleService.Create(request);
 
-      _memoryCache.Remove(CacheHelper.GenerateKey<StoreSearchResults>(result.StoreCountryCodeAlpha2));
-      _memoryCache.Remove(CacheHelper.GenerateKey<StoreItemCategorySearchResults>(result.StoreId));
-
       return await ToInfo(result);
     }
 
@@ -146,9 +143,6 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       request.RequestValidationHandled = true;
       var result = await _storeAccessControlRuleService.Update(request);
-
-      _memoryCache.Remove(CacheHelper.GenerateKey<StoreSearchResults>(result.StoreCountryCodeAlpha2));
-      _memoryCache.Remove(CacheHelper.GenerateKey<StoreItemCategorySearchResults>(result.StoreId));
 
       return await ToInfo(result);
     }
@@ -239,39 +233,41 @@ namespace Yoma.Core.Domain.Marketplace.Services
     }
 
     /// <summary>
-    /// Caches the stores for store info resolution. The cache expires based on the cache settings or when a rule is created or updated. The cache applies to existing rules.
-    /// When a rule is created or updated, all stores become selectable, so expiring the store info cache is necessary to reflect the latest changes.
+    /// Caches the stores for store info resolution. The cache expires every hour based on sliding expiration settings.
     /// </summary>
     private async Task<List<Store>> StoresCached(string countryCodeAlpha2)
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
         return (await _marketplaceService.SearchStores(new StoreSearchFilter { CountryCodeAlpha2 = countryCodeAlpha2 })).Items;
 
-      var result = await _memoryCache.GetOrCreateAsync(CacheHelper.GenerateKey<StoreSearchResults>(countryCodeAlpha2), async entry =>
-      {
-        entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
-        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-        return (await _marketplaceService.SearchStores(new StoreSearchFilter { CountryCodeAlpha2 = countryCodeAlpha2 })).Items;
-      }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(StoreSearchResults)}s'");
+      var result = await _distributedCacheService.GetOrCreateAsync(
+          CacheHelper.GenerateKey<StoreSearchResults>(countryCodeAlpha2),
+          async () => (await _marketplaceService.SearchStores(new StoreSearchFilter { CountryCodeAlpha2 = countryCodeAlpha2 })).Items,
+          null, // No absolute expiration
+          TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours) // Sliding expiration as absolute ensures new stores/categories are picked up
+        ) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(StoreSearchResults)}s'");
 
       return result;
     }
 
     /// <summary>
-    /// Caches the store item categories for store item category resolution. The cache expires based on the cache settings or when a rule is created or updated. The cache applies to existing rules.
-    /// When a rule is created or updated, all store item categories become selectable, so expiring the store item category cache is necessary to reflect the latest changes.
+    /// Caches the categories for store item category resolution. The cache expires every hour based on sliding expiration settings
     /// </summary>
     private async Task<List<StoreItemCategory>> StoreItemCategoriesCached(string storeId)
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
         return (await _marketplaceService.SearchStoreItemCategories(new StoreItemCategorySearchFilter { StoreId = storeId, EvaluateStoreAccessControlRules = false })).Items;
 
-      var result = await _memoryCache.GetOrCreateAsync(CacheHelper.GenerateKey<StoreItemCategorySearchResults>(storeId), async entry =>
-      {
-        entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
-        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
-        return (await _marketplaceService.SearchStoreItemCategories(new StoreItemCategorySearchFilter { StoreId = storeId, EvaluateStoreAccessControlRules = false })).Items;
-      }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(StoreItemCategorySearchResults)}s'");
+      var result = await _distributedCacheService.GetOrCreateAsync(
+          CacheHelper.GenerateKey<StoreItemCategorySearchResults>(storeId),
+          async () => (await _marketplaceService.SearchStoreItemCategories(new StoreItemCategorySearchFilter
+          {
+            StoreId = storeId,
+            EvaluateStoreAccessControlRules = false
+          })).Items,
+          null, // No absolute expiration
+          TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours) // Sliding expiration as absolute ensures new stores/categories are picked up
+        ) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(StoreItemCategorySearchResults)}s'");
 
       return result;
     }
