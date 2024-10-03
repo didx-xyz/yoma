@@ -62,9 +62,18 @@ services:
     command: |
       sh -c 'curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.3.0/keycloak-webhook-0.3.0-all.jar \
       -o /opt/keycloak/providers/keycloak-webhook-0.3.0.jar && \
-      chown 1000:1000 /opt/keycloak/providers/keycloak-webhook-0.3.0.jar'
+      chown 1000:1000 /opt/keycloak/providers/keycloak-webhook-0.3.0.jar && \
+      cp /local-providers/keycloak-phone-provider.jar /opt/keycloak/providers/keycloak-phone-provider.jar && \
+      chown 1000:1000 /opt/keycloak/providers/keycloak-phone-provider.jar /opt/keycloak/providers/keycloak-phone-provider.jar && \
+      cp /local-providers/keycloak-phone-provider.resources.jar /opt/keycloak/providers/keycloak-phone-provider.resources.jar && \
+      chown 1000:1000 /opt/keycloak/providers/keycloak-phone-provider.resources.jar /opt/keycloak/providers/keycloak-phone-provider.resources.jar && \
+      cp /local-providers/keycloak-sms-provider-twilio.jar /opt/keycloak/providers/keycloak-sms-provider-twilio.jar && \
+      chown 1000:1000 /opt/keycloak/providers/keycloak-sms-provider-twilio.jar /opt/keycloak/providers/keycloak-sms-provider-twilio.jar && \
+      cp /local-providers/keycloak-sms-provider-dummy.jar /opt/keycloak/providers/keycloak-sms-provider-dummy.jar && \
+      chown 1000:1000 /opt/keycloak/providers/keycloak-sms-provider-dummy.jar /opt/keycloak/providers/keycloak-sms-provider-dummy.jar'
     volumes:
       - keycloak:/opt/keycloak/providers
+      - ../keycloak/providers:/local-providers # our custom JAR folder, mounted in a separate directory and copied to container
 
   keycloak-pg:
     image: postgres:16-alpine
@@ -99,6 +108,11 @@ services:
       KC_HOSTNAME: keycloak
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: password
+      KC_LOG_LEVEL: INFO
+      # Enable event logging for registration errors
+      KC_EVENTS_ENABLED: "true"
+      KC_EVENTS_LISTENERS: "jboss-logging"
+      KC_EVENTS_INCLUDE_EVENTS: "REGISTER, REGISTER_ERROR"
     ports:
       - 0.0.0.0:8080:8080
     command:
@@ -107,7 +121,23 @@ services:
       - "--features=declarative-user-profile"
       - "--spi-events-listener-jboss-logging-success-level=info"
       - "--spi-events-listener-jboss-logging-error-level=warn"
-      # - "--log-level=DEBUG"
+      # custom providers
+      - "--spi-phone-default-service=dummy" # Which sms provider
+      # - "--spi-phone-default-token-expires-in=60"  # sms expires, default 60 second
+      # - "--spi-phone-default-source-hour-maximum=10" # How many send from ip address sms count in one hour, Zero is no limit. default 10
+      # - "--spi-phone-default-target-hour-maximum=3" # How many send to phone number sms count in one hour, Zero is no limit, default 3
+      # - "--spi-phone-default-[$realm-]duplicate-phone=false" # allow one phone register multi user, default: false
+      - "--spi-phone-default-yoma-default-number-regex=^\\+?\\d+$" #Notice: will match after canonicalize number. eg: INTERNATIONAL: +41 44 668 18 00 , NATIONAL: 044 668 18 00 , E164: +41446681800
+      # - "--spi-phone-default-[$realm-]valid-phone=true" # valid phone number, default: true
+      # # whether to parse user-supplied phone numbers and put into canonical International E.163 format.  _Required for proper duplicate phone number detection_
+      # - "--spi-phone-default-[$realm-]canonicalize-phone-numbers=E164" #[E164,INTERNATIONAL,NATIONAL,RFC3966], default: "" un-canonicalize;
+      # # a default region to be used when parsing user-supplied phone numbers. Lookup codes at https://www.unicode.org/cldr/cldr-aux/charts/30/supplemental/territory_information.html
+      # - "--spi-phone-default-[$realm-]phone-default-region=US" #default: use realm setting's default Locate;
+      # # if compatible is true then search user will be use all format phone number
+      # - "--spi-phone-default-[$realm-]compatible=false" #default: false
+      # # Prevent 2FA from always happening for a period of time
+      # - "--spi-phone-default-[$realm-]otp-expires=3600" #default: 60 * 60; 1 hour
+
     depends_on:
       keycloak-init:
         condition: service_completed_successfully
