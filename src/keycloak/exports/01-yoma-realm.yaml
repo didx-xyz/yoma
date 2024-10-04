@@ -881,6 +881,93 @@ clients:
       - address
       - phone
       - microprofile-jwt
+  - clientId: youthhub
+    name: youthhub
+    description: YouthHub SSO and M2M Partner (private client)
+    rootUrl: $(env:CLIENT_YOUTHHUB_URL)
+    adminUrl: $(env:CLIENT_YOUTHHUB_URL)
+    baseUrl: $(env:CLIENT_YOUTHHUB_URL)
+    surrogateAuthRequired: false
+    enabled: true
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_YOUTHHUB_SECRET)
+    redirectUris:
+      - "/*"
+      - $(env:CLIENT_YOUTHHUB_URL_REDIRECT)
+    webOrigins:
+      - $(env:CLIENT_YOUTHHUB_URL)
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: false
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: true
+    publicClient: false
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      backchannel.logout.revoke.offline.tokens: "false"
+      backchannel.logout.session.required: "true"
+      backchannel.logout.url: ""
+      display.on.consent.screen: "false"
+      frontchannel.logout.url: ""
+      login_theme: ""
+      oauth2.device.authorization.grant.enabled: "false"
+      oidc.ciba.grant.enabled: "false"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: true
+    nodeReRegistrationTimeout: -1
+    protocolMappers:
+      - name: Client IP Address
+        protocol: openid-connect
+        protocolMapper: oidc-usersessionmodel-note-mapper
+        consentRequired: false
+        config:
+          user.session.note: clientAddress
+          id.token.claim: "true"
+          access.token.claim: "true"
+          claim.name: clientAddress
+          jsonType.label: String
+      - name: Client ID
+        protocol: openid-connect
+        protocolMapper: oidc-usersessionmodel-note-mapper
+        consentRequired: false
+        config:
+          user.session.note: client_id
+          id.token.claim: "true"
+          access.token.claim: "true"
+          claim.name: client_id
+          jsonType.label: String
+      - name: Client Host
+        protocol: openid-connect
+        protocolMapper: oidc-usersessionmodel-note-mapper
+        consentRequired: false
+        config:
+          user.session.note: clientHost
+          id.token.claim: "true"
+          access.token.claim: "true"
+          claim.name: clientHost
+          jsonType.label: String
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - offline_access
+      - roles
+      - profile
+      - yoma-api
+      - audience_scope
+      - email
+    optionalClientScopes:
+      - address
+      - phone
+      - microprofile-jwt
+    access:
+      view: true
+      configure: true
+      manage: true
+    authorizationServicesEnabled: false
 clientScopes:
   - id: ae0e217d-ecf2-4c4b-bfd8-1a564c182328
     name: email
