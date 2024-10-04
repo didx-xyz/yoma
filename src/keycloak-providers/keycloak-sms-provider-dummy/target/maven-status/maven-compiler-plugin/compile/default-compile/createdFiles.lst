@@ -1,0 +1,2 @@
+cc\coopersoft\keycloak\phone\providers\sender\DummyMessageSenderServiceProviderFactory.class
+cc\coopersoft\keycloak\phone\providers\sender\DummySmsSenderService.class
