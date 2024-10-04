@@ -225,13 +225,18 @@ body {
 }
 
 /* focus styles */
-.btn:focus-visible,
-a:focus-visible,
-input:focus-visible,
-select:focus-visible,
-textarea:focus-visible,
-button:focus-visible,
-label:focus-visible {
-  outline: 2px solid #565b6f !important;
-  outline-offset: 2px !important;
-}
+// .btn:focus-visible,
+// a:focus-visible,
+// input:focus-visible,
+// select:focus-visible,
+// textarea:focus-visible,
+// button:focus-visible,
+// label:focus-visible {
+//   outline: 2px solid #565b6f !important;
+//   outline-offset: 2px !important;
+// }
+
+// input[aria-haspopup="true"]:focus-visible {
+//   outline: 0px solid #565b6f !important;
+//   outline-offset: 0px !important;
+// }

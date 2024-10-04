@@ -402,8 +402,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     postAsActive: opportunity?.published ?? false,
     shareWithPartners: opportunity?.shareWithPartners ?? false,
 
-    showZltoReward: !!opportunity?.zltoReward ?? false,
-    showZltoRewardPool: !!opportunity?.zltoRewardPool ?? false,
+    showZltoReward: !!(opportunity?.zltoReward ?? false),
+    showZltoRewardPool: !!(opportunity?.zltoRewardPool ?? false),
   });
 
   const schemaStep1 = z.object({
@@ -830,7 +830,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   );
   const watcSSISchemaName = watchStep7("ssiSchemaName");
 
-  const { handleSubmit: handleSubmitStep8, reset: resetStep8 } = useForm({
+  const {
+    register: registerStep8,
+    handleSubmit: handleSubmitStep8,
+    formState: formStateStep8,
+    reset: resetStep8,
+  } = useForm({
     resolver: zodResolver(schemaStep8),
     defaultValues: formData,
     mode: "all",
@@ -3277,37 +3282,39 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     )}
                   >
                     {/* POST AS ACTIVE */}
-                    <FormField
-                      label="Visibility"
-                      subLabel="Make this opportunity active to be visible to the public. Inactive opportunities are only visible to you and your team members."
-                      showWarningIcon={
-                        !!formStateStep7.errors.postAsActive?.message
-                      }
-                      showError={
-                        !!formStateStep7.touchedFields.postAsActive ||
-                        formStateStep7.isSubmitted
-                      }
-                      error={formStateStep7.errors.postAsActive?.message}
-                    >
-                      <FormCheckbox
-                        id="postAsActive"
-                        label="Make this opportunity active"
-                        inputProps={{ ...registerStep7(`postAsActive`) }}
-                      />
-                    </FormField>
+                    {opportunityId == "create" && (
+                      <FormField
+                        label="Visibility"
+                        subLabel="Make this opportunity active to be visible to the public. Inactive opportunities are only visible to you and your team members."
+                        showWarningIcon={
+                          !!formStateStep8.errors.postAsActive?.message
+                        }
+                        showError={
+                          !!formStateStep8.touchedFields.postAsActive ||
+                          formStateStep8.isSubmitted
+                        }
+                        error={formStateStep8.errors.postAsActive?.message}
+                      >
+                        <FormCheckbox
+                          id="postAsActive"
+                          label="Make this opportunity active"
+                          inputProps={{ ...registerStep8(`postAsActive`) }}
+                        />
+                      </FormField>
+                    )}
 
                     {/* SHARE WITH PARTNERS */}
                     <FormField
                       label="Share With Partners"
                       subLabel="Enabling this allows for the posting of this opportunity to partner platforms. This increases discoverability and reach of your opportunity."
                       showWarningIcon={
-                        !!formStateStep7.errors.shareWithPartners?.message
+                        !!formStateStep8.errors.shareWithPartners?.message
                       }
                       showError={
-                        !!formStateStep7.touchedFields.shareWithPartners ||
-                        formStateStep7.isSubmitted
+                        !!formStateStep8.touchedFields.shareWithPartners ||
+                        formStateStep8.isSubmitted
                       }
-                      error={formStateStep7.errors.shareWithPartners?.message}
+                      error={formStateStep8.errors.shareWithPartners?.message}
                     >
                       {watchDateEnd && (
                         <>
@@ -3315,7 +3322,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             id="shareWithPartners"
                             label="Share with partners"
                             inputProps={{
-                              ...registerStep7(`shareWithPartners`),
+                              ...registerStep8(`shareWithPartners`),
                             }}
                           />
                           <FormMessage messageType={FormMessageType.Warning}>
