@@ -122,7 +122,11 @@ services:
       - "--spi-events-listener-jboss-logging-success-level=info"
       - "--spi-events-listener-jboss-logging-error-level=warn"
       # custom providers
-      - "--spi-phone-default-service=dummy" # Which sms provider
+      - "--spi-phone-default-service=dummy"
+      # - "--spi-phone-default-service=twilio" # Which sms provider
+      # - "--spi-message-sender-service-twilio-account=your_account_sid"
+      # - "--spi-message-sender-service-twilio-token=your_auth_token"
+      # - "--spi-message-sender-service-twilio-number=your_number"
       # - "--spi-phone-default-token-expires-in=60"  # sms expires, default 60 second
       # - "--spi-phone-default-source-hour-maximum=10" # How many send from ip address sms count in one hour, Zero is no limit. default 10
       # - "--spi-phone-default-target-hour-maximum=3" # How many send to phone number sms count in one hour, Zero is no limit, default 3
