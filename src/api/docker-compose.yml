@@ -149,7 +149,6 @@ services:
         condition: service_healthy
     volumes:
       - keycloak:/opt/keycloak/providers
-      - ../keycloak/themes:/opt/keycloak/themes
 
   keycloak-health: # Wait for Keycloak to be ready before running keycloak-config service
     image: curlimages/curl
