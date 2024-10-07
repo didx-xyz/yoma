@@ -1438,6 +1438,7 @@ enabledEventTypes:
   - VERIFY_PROFILE
   - GRANT_CONSENT_ERROR
   - IDENTITY_PROVIDER_FIRST_LOGIN_ERROR
+  - UPDATE_PHONE_NUMBER
 adminEventsEnabled: true
 adminEventsDetailsEnabled: false
 identityProviders: []
@@ -2155,26 +2156,33 @@ requiredActions:
     defaultAction: false
     priority: 50
     config: {}
+  - alias: UPDATE_PHONE_NUMBER
+    name: Update Phone Number
+    providerId: UPDATE_PHONE_NUMBER
+    enabled: true
+    defaultAction: false
+    priority: 60
+    config: {}
   - alias: delete_account
     name: Delete Account
     providerId: delete_account
     enabled: false
     defaultAction: false
-    priority: 60
+    priority: 70
     config: {}
   - alias: webauthn-register
     name: Webauthn Register
     providerId: webauthn-register
     enabled: true
     defaultAction: false
-    priority: 70
+    priority: 80
     config: {}
   - alias: webauthn-register-passwordless
     name: Webauthn Register Passwordless
     providerId: webauthn-register-passwordless
     enabled: true
     defaultAction: false
-    priority: 80
+    priority: 90
     config: {}
   - alias: update_user_locale
     name: Update User Locale

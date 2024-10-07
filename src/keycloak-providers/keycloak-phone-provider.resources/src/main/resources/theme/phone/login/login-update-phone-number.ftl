@@ -24,13 +24,13 @@
                   <label for="phoneNumber"
                          class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
                 </div>
-                <div class="col-xs-8" style="padding: 0 5px 0 0">
+                <div class="col-xs-8" style="padding: 0px 10px 10px 10px;">
                   <input tabindex="0" id="phoneNumber" class="${properties.kcInputClass!}"
                          name="phoneNumber" type="tel" <#if !phoneNumber??>autofocus</#if>
                          value="${phoneNumber!''}"
                          autocomplete="mobile tel"/>
                 </div>
-                <div class="col-xs-4" style="padding: 0 0 0 5px">
+                <div class="col-xs-4" style="padding: 5px 0 0 0">
                   <input tabindex="0" style="height: 36px"
                          class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
                          v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText'
