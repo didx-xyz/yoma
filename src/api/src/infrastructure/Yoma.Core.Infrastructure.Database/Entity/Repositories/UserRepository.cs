@@ -1,3 +1,4 @@
+using Hangfire.Storage.Monitoring;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.BlobProvider;
@@ -32,6 +33,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         Surname = entity.Surname,
         DisplayName = entity.DisplayName,
         PhoneNumber = entity.PhoneNumber,
+        PhoneNumberConfirmed = entity.PhoneNumberConfirmed,
         CountryId = entity.CountryId,
         Country = entity.Country == null ? null : entity.Country.Name,
         EducationId = entity.EducationId,
@@ -96,6 +98,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         Surname = item.Surname,
         DisplayName = item.DisplayName,
         PhoneNumber = item.PhoneNumber,
+        PhoneNumberConfirmed = item.PhoneNumberConfirmed,
         CountryId = item.CountryId,
         EducationId = item.EducationId,
         PhotoId = item.PhotoId,
@@ -129,6 +132,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       entity.Surname = item.Surname;
       entity.DisplayName = item.DisplayName;
       entity.PhoneNumber = item.PhoneNumber;
+      entity.PhoneNumberConfirmed = item.PhoneNumberConfirmed;
       entity.CountryId = item.CountryId;
       entity.EducationId = item.EducationId;
       entity.PhotoId = item.PhotoId;

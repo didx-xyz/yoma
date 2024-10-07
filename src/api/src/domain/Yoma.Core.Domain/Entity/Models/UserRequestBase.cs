@@ -2,7 +2,7 @@ namespace Yoma.Core.Domain.Entity.Models
 {
   public abstract class UserRequestBase
   {
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
     public string FirstName { get; set; }
 

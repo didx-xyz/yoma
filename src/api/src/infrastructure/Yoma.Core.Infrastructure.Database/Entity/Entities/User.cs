@@ -8,16 +8,15 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
   [Table("User", Schema = "Entity")]
   [Index(nameof(Email), IsUnique = true)]
-  [Index(nameof(FirstName), nameof(Surname), nameof(EmailConfirmed), nameof(PhoneNumber), nameof(DateOfBirth), nameof(DateLastLogin), nameof(ExternalId),
+  [Index(nameof(PhoneNumber), IsUnique = true)]
+  [Index(nameof(FirstName), nameof(Surname), nameof(EmailConfirmed), nameof(PhoneNumberConfirmed), nameof(DateOfBirth), nameof(DateLastLogin), nameof(ExternalId),
     nameof(YoIDOnboarded), nameof(DateYoIDOnboarded), nameof(DateCreated), nameof(DateModified))]
   public class User : BaseEntity<Guid>
   {
-    [Required]
     [Column(TypeName = "varchar(320)")]
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
-    [Required]
-    public bool EmailConfirmed { get; set; }
+    public bool? EmailConfirmed { get; set; }
 
     [Required]
     [Column(TypeName = "varchar(125)")]
@@ -33,6 +32,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 
     [Column(TypeName = "varchar(50)")]
     public string? PhoneNumber { get; set; }
+
+    public bool? PhoneNumberConfirmed { get; set; }
 
     [ForeignKey("CountryId")]
     public Guid? CountryId { get; set; }
