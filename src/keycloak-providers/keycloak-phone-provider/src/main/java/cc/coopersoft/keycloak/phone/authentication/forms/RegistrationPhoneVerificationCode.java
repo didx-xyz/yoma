@@ -142,53 +142,48 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
         logger.info("Validating phone number during registration: " + phoneNumber);
 
         // Check if phone number is blank
-        if (Validation.isBlank(phoneNumber)) {
-            logger.warn("Phone number is missing, triggering validation error.");
-            context.error(Errors.INVALID_REGISTRATION);
-            errors.add(new FormMessage(FIELD_PHONE_NUMBER, SupportPhonePages.Errors.MISSING));
-            context.validationError(formData, errors);
-            return;
-        }
+        if (!Validation.isBlank(phoneNumber)) {
+            // Try to canonicalize the phone number
+            try {
+                // ensure phone number starts with +
+                if (!phoneNumber.startsWith("+")) {
+                    phoneNumber = "+" + phoneNumber;
+                }
 
-        // Try to canonicalize the phone number
-        try {
-            // ensure phone number starts with +
-            if (!phoneNumber.startsWith("+")) {
-                phoneNumber = "+" + phoneNumber;
+                phoneNumber = Utils.canonicalizePhoneNumber(context.getSession(), phoneNumber);
+                logger.info("Canonicalized phone number: " + phoneNumber);
+            } catch (PhoneNumberInvalidException e) {
+                logger.error("Invalid phone number: " + phoneNumber + ", error: " + e.getMessage());
+                context.error(Errors.INVALID_REGISTRATION);
+                errors.add(new FormMessage(FIELD_PHONE_NUMBER, e.getErrorType().message()));
+                context.validationError(formData, errors);
+                return;
             }
 
-            phoneNumber = Utils.canonicalizePhoneNumber(context.getSession(), phoneNumber);
-            logger.info("Canonicalized phone number: " + phoneNumber);
-        } catch (PhoneNumberInvalidException e) {
-            logger.error("Invalid phone number: " + phoneNumber + ", error: " + e.getMessage());
-            context.error(Errors.INVALID_REGISTRATION);
-            errors.add(new FormMessage(FIELD_PHONE_NUMBER, e.getErrorType().message()));
-            context.validationError(formData, errors);
-            return;
+            // Store the phone number in event details
+            context.getEvent().detail(FIELD_PHONE_NUMBER, phoneNumber);
+
+            // Retrieve the verification code from the form data
+            String verificationCode = formData.getFirst(FIELD_VERIFICATION_CODE);
+            logger.info("Verification code entered: " + verificationCode);
+
+            // Retrieve ongoing token process based on the phone number
+            TokenCodeRepresentation tokenCode = getTokenCodeService(session).ongoingProcess(phoneNumber, TokenCodeType.REGISTRATION);
+
+            // Validate the verification code
+            if (Validation.isBlank(verificationCode) || tokenCode == null || !tokenCode.getCode().equals(verificationCode)) {
+                logger.warn("Verification code mismatch or not found for phone number: " + phoneNumber);
+                context.error(Errors.INVALID_REGISTRATION);
+                formData.remove(FIELD_VERIFICATION_CODE);
+                errors.add(new FormMessage(FIELD_VERIFICATION_CODE, SupportPhonePages.Errors.NOT_MATCH.message()));
+                context.validationError(formData, errors);
+                return;
+            }
+
+            // Set the tokenId in the session once verification succeeds
+            context.getSession().setAttribute("tokenId", tokenCode.getId());
+            logger.info("Phone number verified successfully. Token ID stored in session: " + tokenCode.getId());
         }
-
-        // Store the phone number in event details
-        context.getEvent().detail(FIELD_PHONE_NUMBER, phoneNumber);
-
-        // Retrieve the verification code from the form data
-        String verificationCode = formData.getFirst(FIELD_VERIFICATION_CODE);
-        logger.info("Verification code entered: " + verificationCode);
-
-        // Retrieve ongoing token process based on the phone number
-        TokenCodeRepresentation tokenCode = getTokenCodeService(session).ongoingProcess(phoneNumber, TokenCodeType.REGISTRATION);
-
-        // Validate the verification code
-        if (Validation.isBlank(verificationCode) || tokenCode == null || !tokenCode.getCode().equals(verificationCode)) {
-            logger.warn("Verification code mismatch or not found for phone number: " + phoneNumber);
-            context.error(Errors.INVALID_REGISTRATION);
-            formData.remove(FIELD_VERIFICATION_CODE);
-            errors.add(new FormMessage(FIELD_VERIFICATION_CODE, SupportPhonePages.Errors.NOT_MATCH.message()));
-            context.validationError(formData, errors);
-        }
-
-        // Set the tokenId in the session once verification succeeds
-        context.getSession().setAttribute("tokenId", tokenCode.getId());
-        logger.info("Phone number verified successfully. Token ID stored in session: " + tokenCode.getId());
 
         // Mark the context as successful
         context.success();
@@ -203,6 +198,10 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
 
         String phoneNumber = formData.getFirst(FIELD_PHONE_NUMBER);
+
+        if (Validation.isBlank(phoneNumber)) {
+            return;
+        }
 
         try {
             phoneNumber = Utils.canonicalizePhoneNumber(context.getSession(), phoneNumber);

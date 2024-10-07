@@ -82,18 +82,6 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
                 .helpText("Allow users to set phone number as username. If Realm has `email as username` set to true, this is invalid!")
                 .defaultValue(true)
                 .add()
-                .property().name(CONFIG_INPUT_NAME)
-                .type(BOOLEAN_TYPE)
-                .label("Input name")
-                .helpText("Allow users to input first and last name.")
-                .defaultValue(true)
-                .add()
-                .property().name(CONFIG_INPUT_EMAIL)
-                .type(BOOLEAN_TYPE)
-                .label("Input Email")
-                .helpText("Allow users to input e-mail. If Realm has `email as username` set to true, this is invalid!")
-                .defaultValue(true)
-                .add()
                 .build();
     }
 
@@ -145,50 +133,16 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
                 logger.warn("Realm set email as username, can't use phone number.");
                 return false;
             }
-            if (Utils.isDuplicatePhoneAllowed(context.getSession())) {
-                logger.warn("Duplicate phone allowed! phone number can't be used as username.");
-                return false;
-            }
+
             return true;
         }
         return false;
     }
 
-    private boolean isHideName(FormContext context) {
-        return context.getAuthenticatorConfig() == null
-                || !"true".equalsIgnoreCase(context.getAuthenticatorConfig().getConfig()
-                        .getOrDefault(CONFIG_INPUT_NAME, "true"));
-    }
-
-    private boolean isHideEmail(FormContext context) {
-        if (context.getAuthenticatorConfig() == null
-                || "true".equalsIgnoreCase(context.getAuthenticatorConfig().getConfig()
-                        .getOrDefault(CONFIG_INPUT_EMAIL, "true"))) {
-            return false;
-        }
-        if (context.getRealm().isRegistrationEmailAsUsername()) {
-            logger.warn("`email as username` is set, so can't hide email input.");
-            return false;
-        }
-
-        return true;
-    }
-
     @Override
     public void buildPage(FormContext context, LoginFormsProvider form) {
-
-        form.setAttribute("phoneNumberRequired", true);
-
         if (isPhoneNumberAsUsername(context)) {
             form.setAttribute("registrationPhoneNumberAsUsername", true);
-        }
-
-        if (isHideName(context)) {
-            form.setAttribute("hideName", true);
-        }
-
-        if (isHideEmail(context)) {
-            form.setAttribute("hideEmail", true);
         }
     }
 
@@ -199,103 +153,87 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         context.getEvent().detail(Details.REGISTER_METHOD, "form");
         String phoneNumber = formData.getFirst(FIELD_PHONE_NUMBER);
-
+        String email = formData.getFirst(UserModel.EMAIL);
         boolean success = true;
         List<FormMessage> errors = new ArrayList<>();
-        // Log the start of the validation process
-        logger.info("Starting validation for phone number: " + phoneNumber);
-        // Check if the phone number is blank
-        if (Validation.isBlank(phoneNumber)) {
-            logger.warn("Phone number is missing.");
-            errors.add(new FormMessage(FIELD_PHONE_NUMBER, SupportPhonePages.Errors.MISSING.message()));
+
+        // Check if both phoneNumber and email are blank
+        boolean isPhoneBlank = Validation.isBlank(phoneNumber);
+        boolean isEmailBlank = Validation.isBlank(email);
+        if (isPhoneBlank && isEmailBlank) {
+            String errorMsg = "Either phone number or email must be specified.";
+            errors.add(new FormMessage(FIELD_PHONE_NUMBER, errorMsg));
+            errors.add(new FormMessage(UserModel.EMAIL, errorMsg));
             context.error(Errors.INVALID_REGISTRATION);
-            context.validationError(formData, errors);
             success = false;
-        } else {
+        } // If phone number is used as username, it must be specified
+        else if (isPhoneNumberAsUsername(context) && isPhoneBlank) {
+            String errorMsg = "Phone number must be specified when it is used as username.";
+            errors.add(new FormMessage(FIELD_PHONE_NUMBER, errorMsg));
+            context.error(Errors.INVALID_REGISTRATION);
+            success = false;
+        } // Validate phone number if it's provided
+        else if (!isPhoneBlank) {
             try {
-                // ensure phone number starts with +
+                // Ensure phone number starts with '+'
                 if (!phoneNumber.startsWith("+")) {
                     phoneNumber = "+" + phoneNumber;
                 }
 
                 // Canonicalize phone number
                 phoneNumber = Utils.canonicalizePhoneNumber(session, phoneNumber);
-                logger.info("Canonicalized phone number: " + phoneNumber);
 
-                // Check if duplicate phone numbers are allowed
-                if (!Utils.isDuplicatePhoneAllowed(session)
-                        && Utils.findUserByPhone(session, context.getRealm(), phoneNumber).isPresent()) {
-                    logger.warn("Phone number already exists: " + phoneNumber);
-                    context.error(Errors.INVALID_REGISTRATION);
+                // Check for duplicate phone numbers
+                if (Utils.findUserByPhone(session, context.getRealm(), phoneNumber).isPresent()) {
                     errors.add(new FormMessage(FIELD_PHONE_NUMBER, SupportPhonePages.Errors.EXISTS.message()));
-                    context.validationError(formData, errors);
+                    context.error(Errors.INVALID_REGISTRATION);
                     success = false;
                 }
             } catch (PhoneNumberInvalidException e) {
-                logger.error("Phone number is invalid: " + phoneNumber, e);
-                context.error(Errors.INVALID_REGISTRATION);
                 errors.add(new FormMessage(FIELD_PHONE_NUMBER, e.getErrorType().message()));
-                context.validationError(formData, errors);
+                context.error(Errors.INVALID_REGISTRATION);
                 success = false;
             }
         }
-
-        // Add phone number to event details
-        context.getEvent().detail(FIELD_PHONE_NUMBER, phoneNumber);
-
-        // Set phone number as username if applicable
+        // Determine username based on provided information and settings
+        String username;
         if (isPhoneNumberAsUsername(context)) {
-            logger.info("Setting phone number as username: " + phoneNumber);
-            context.getEvent().detail(Details.USERNAME, phoneNumber);
-            formData.putSingle(UserModel.USERNAME, phoneNumber);
+            // Use phone number as username
+            username = phoneNumber;
+        } else if (!Validation.isBlank(email)) {
+            // Use email as username if provided, else use phone number
+            username = email;
+        } else {
+            username = phoneNumber;
         }
+
+        // Set the username in form data and event details
+        formData.putSingle(UserModel.USERNAME, username);
+        context.getEvent().detail(Details.USERNAME, username);
 
         // Get user profile provider and create user profile
         UserProfileProvider profileProvider = session.getProvider(UserProfileProvider.class);
         UserProfile profile = profileProvider.create(UserProfileContext.REGISTRATION_USER_CREATION, formData);
 
-        // Retrieve the username from the profile
-        String username = profile.getAttributes().getFirstValue(UserModel.USERNAME);
-        logger.info("Username set from profile: " + username);
-        context.getEvent().detail(Details.USERNAME, username);
+        // Retrieve other attributes from the profile
+        String firstName = profile.getAttributes().getFirstValue(UserModel.FIRST_NAME);
+        String lastName = profile.getAttributes().getFirstValue(UserModel.LAST_NAME);
+        String emailFromProfile = profile.getAttributes().getFirstValue(UserModel.EMAIL);
 
-        // Check for hidden fields: name and email
-        boolean hideName = isHideName(context);
-        boolean hideEmail = isHideEmail(context);
-
-        // If name is not hidden, set first name and last name
-        if (!hideName) {
-            String firstName = profile.getAttributes().getFirstValue(UserModel.FIRST_NAME);
-            String lastName = profile.getAttributes().getFirstValue(UserModel.LAST_NAME);
-            logger.info("First name: " + firstName + ", Last name: " + lastName);
-            context.getEvent().detail(Details.FIRST_NAME, firstName);
-            context.getEvent().detail(Details.LAST_NAME, lastName);
-        }
-
-        // If email is not hidden, set email and potentially username
-        if (!hideEmail) {
-            String email = profile.getAttributes().getFirstValue(UserModel.EMAIL);
-            logger.info("Email set from profile: " + email);
-            context.getEvent().detail(Details.EMAIL, email);
-            if (context.getRealm().isRegistrationEmailAsUsername()) {
-                context.getEvent().detail(Details.USERNAME, email);
-            }
-        }
+        // Set event details
+        context.getEvent().detail(Details.FIRST_NAME, firstName);
+        context.getEvent().detail(Details.LAST_NAME, lastName);
+        context.getEvent().detail(Details.EMAIL, emailFromProfile);
 
         // Validate the profile
         try {
             profile.validate();
-            logger.info("Profile validated successfully.");
         } catch (ValidationException pve) {
-            logger.error("Profile validation error.", pve);
             if (pve.hasError(Messages.EMAIL_EXISTS)) {
-                logger.warn("Email already in use.");
                 context.error(Errors.EMAIL_IN_USE);
             } else if (pve.hasError(Messages.MISSING_EMAIL, Messages.MISSING_USERNAME, Messages.INVALID_EMAIL)) {
-                logger.warn("Invalid or missing email/username.");
                 context.error(Errors.INVALID_REGISTRATION);
             } else if (pve.hasError(Messages.USERNAME_EXISTS)) {
-                logger.warn("Username already exists.");
                 context.error(Errors.USERNAME_IN_USE);
             }
             success = false;
@@ -304,11 +242,9 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
 
         // If validation was successful, mark context as success
         if (success) {
-            logger.info("User registration validation passed.");
             context.success();
         } else {
             // If validation failed, return errors
-            logger.warn("Validation failed with errors.");
             context.validationError(formData, errors);
         }
     }
@@ -320,54 +256,52 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
 
         String phoneNumber = formData.getFirst(FIELD_PHONE_NUMBER);
         String email = formData.getFirst(UserModel.EMAIL);
-        String username = formData.getFirst(UserModel.USERNAME);
+        String username = formData.getFirst(UserModel.USERNAME); // Already set during validation
 
         var session = context.getSession();
-        try {
-            phoneNumber = Utils.canonicalizePhoneNumber(session, phoneNumber);
-        } catch (PhoneNumberInvalidException e) {
-            // verified in validate process
-            throw new IllegalStateException();
+        if (!Validation.isBlank(phoneNumber)) {
+            try {
+                // Canonicalize phone number again to ensure consistent format
+                phoneNumber = Utils.canonicalizePhoneNumber(session, phoneNumber);
+            } catch (PhoneNumberInvalidException e) {
+                // Phone number was already validated during the validation process
+                throw new IllegalStateException();
+            }
         }
 
-        if (context.getRealm().isRegistrationEmailAsUsername()) {
-            username = email;
-        } else if (isPhoneNumberAsUsername(context)) {
-            username = phoneNumber;
-            formData.add(UserModel.USERNAME, phoneNumber);
-        }
-
+        // Add details to the event
         context.getEvent().detail(Details.USERNAME, username)
                 .detail(Details.REGISTER_METHOD, "form")
-                .detail(FIELD_PHONE_NUMBER, phoneNumber);
+                .detail(FIELD_PHONE_NUMBER, phoneNumber)
+                .detail(Details.EMAIL, email); // Always set email
 
-        if (!isHideEmail(context)) {
-            context.getEvent().detail(Details.EMAIL, email);
-        }
-
+        // Create the user profile and set the user
         UserProfileProvider profileProvider = session.getProvider(UserProfileProvider.class);
         UserProfile profile = profileProvider.create(UserProfileContext.REGISTRATION_USER_CREATION, formData);
         UserModel user = profile.create();
 
-//    UserModel user = context.getSession().users().addUser(context.getRealm(), username);
         user.setEnabled(true);
         context.setUser(user);
 
+        // Set additional session and event details
         context.getAuthenticationSession().setClientNote(OIDCLoginProtocol.LOGIN_HINT_PARAM, username);
-        //AttributeFormDataProcessor.process(formData);
 
         context.getEvent().user(user);
         context.getEvent().success();
+
+        // Start a new login event
         context.newEvent().event(EventType.LOGIN);
         context.getEvent().client(context.getAuthenticationSession().getClient().getClientId())
                 .detail(Details.REDIRECT_URI, context.getAuthenticationSession().getRedirectUri())
                 .detail(Details.AUTH_METHOD, context.getAuthenticationSession().getProtocol());
+
         String authType = context.getAuthenticationSession().getAuthNote(Details.AUTH_TYPE);
         if (authType != null) {
             context.getEvent().detail(Details.AUTH_TYPE, authType);
         }
 
-        logger.info(String.format("user: %s is created, user name is %s ", user.getId(), user.getUsername()));
+        // Logging the user creation info
+        logger.info(String.format("User: %s is created, username is %s", user.getId(), user.getUsername()));
     }
 
     @Override

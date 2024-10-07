@@ -2113,9 +2113,7 @@ authenticatorConfig:
   - id: 32768293-fec2-441d-ac42-71d304161394
     alias: registration phone user creation config
     config:
-      isInputName: "true"
-      phoneNumberAsUsername: "true"
-      isInputEmail: "true"
+      phoneNumberAsUsername: "false"
   - id: 1b3b08ec-1a23-4a26-8efd-ffb0ec2543e0
     alias: phone username password form config
     config:

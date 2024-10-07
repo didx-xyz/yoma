@@ -1,13 +1,7 @@
 package cc.coopersoft.keycloak.phone.authentication.authenticators.browser;
 
-import cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages;
-import cc.coopersoft.keycloak.phone.providers.constants.TokenCodeType;
-import cc.coopersoft.keycloak.phone.providers.exception.PhoneNumberInvalidException;
-import cc.coopersoft.keycloak.phone.providers.spi.PhoneVerificationCodeProvider;
-import cc.coopersoft.common.OptionalUtils;
-import cc.coopersoft.keycloak.phone.Utils;
-import jakarta.ws.rs.core.MultivaluedMap;
-import jakarta.ws.rs.core.Response;
+import java.util.List;
+import java.util.Objects;
 
 import org.jboss.logging.Logger;
 import org.keycloak.Config;
@@ -17,28 +11,41 @@ import org.keycloak.authentication.Authenticator;
 import org.keycloak.authentication.AuthenticatorFactory;
 import org.keycloak.authentication.authenticators.browser.AbstractUsernameFormAuthenticator;
 import org.keycloak.authentication.authenticators.browser.UsernamePasswordForm;
+import static org.keycloak.authentication.authenticators.util.AuthenticatorUtils.getDisabledByBruteForceEventError;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
 import org.keycloak.forms.login.LoginFormsProvider;
-import org.keycloak.models.*;
+import org.keycloak.models.AuthenticationExecutionModel;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.KeycloakSessionFactory;
+import org.keycloak.models.ModelDuplicateException;
+import org.keycloak.models.UserModel;
 import org.keycloak.models.credential.PasswordCredentialModel;
+import org.keycloak.models.utils.FormMessage;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.provider.ProviderConfigProperty;
+import static org.keycloak.provider.ProviderConfigProperty.BOOLEAN_TYPE;
 import org.keycloak.provider.ProviderConfigurationBuilder;
 import org.keycloak.services.ServicesLogger;
 import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.validation.Validation;
-
-import java.util.List;
-import java.util.Objects;
-
-import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.*;
-
-import static org.keycloak.authentication.authenticators.util.AuthenticatorUtils.getDisabledByBruteForceEventError;
-import org.keycloak.models.utils.FormMessage;
-import static org.keycloak.provider.ProviderConfigProperty.BOOLEAN_TYPE;
 import static org.keycloak.services.validation.Validation.FIELD_USERNAME;
+
+import cc.coopersoft.common.OptionalUtils;
+import cc.coopersoft.keycloak.phone.Utils;
+import cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTEMPTED_PHONE_ACTIVATED;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTEMPTED_PHONE_NUMBER;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTRIBUTE_SUPPORT_PHONE;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PATH_PHONE_ACTIVATED;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_VERIFICATION_CODE;
+import cc.coopersoft.keycloak.phone.providers.constants.TokenCodeType;
+import cc.coopersoft.keycloak.phone.providers.exception.PhoneNumberInvalidException;
+import cc.coopersoft.keycloak.phone.providers.spi.PhoneVerificationCodeProvider;
+import jakarta.ws.rs.core.MultivaluedMap;
+import jakarta.ws.rs.core.Response;
 
 public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements Authenticator, AuthenticatorFactory {
 
@@ -90,12 +97,9 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
         if (formData.size() > 0) {
             forms.setFormData(formData);
         }
-        if (Utils.isDuplicatePhoneAllowed(context.getSession())) {
-            forms.setError("duplicatePhoneAllowedCantLogin");
-            logger.warn("duplicate phone allowed! phone login is disabled!");
-        } else {
-            forms = assemblyForm(context, forms);
-        }
+
+        forms = assemblyForm(context, forms);
+
         return forms.createLoginUsernamePassword();
     }
 
@@ -106,9 +110,6 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
 
         if (!Objects.isNull(error)) {
             forms.addError(new FormMessage(field, error));
-        } else if (Utils.isDuplicatePhoneAllowed(context.getSession())) {
-            forms.setError("duplicatePhoneAllowedCantLogin");
-            logger.warn("duplicate phone allowed! phone login is disabled!");
         }
 
         return forms.createLoginUsernamePassword();
@@ -300,8 +301,7 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
         try {
             user = KeycloakModelUtils.findUserByNameOrEmail(context.getSession(), context.getRealm(), username);
             if (user == null
-                    && isLoginWithPhoneNumber(context)
-                    && !Utils.isDuplicatePhoneAllowed(context.getSession())) {
+                    && isLoginWithPhoneNumber(context)) {
                 user = Utils.findUserByPhone(context.getSession(), context.getRealm(), username).orElse(null);
             }
         } catch (ModelDuplicateException mde) {

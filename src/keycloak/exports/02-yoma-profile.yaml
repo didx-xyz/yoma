@@ -20,11 +20,11 @@ userProfile:
           - user
         edit:
           - user
-      required:
-        roles:
-          - user
-        scopes:
-          - phone
+      # required:
+      #   roles:
+      #     - user
+      #   scopes:
+      #     - phone
       selector:
         scopes: []
       validations:
