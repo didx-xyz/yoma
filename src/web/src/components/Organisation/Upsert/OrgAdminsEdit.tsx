@@ -4,7 +4,7 @@ import { Controller, type FieldValues, useForm } from "react-hook-form";
 import CreatableSelect from "react-select/creatable";
 import zod from "zod";
 import { type OrganizationRequestBase } from "~/api/models/organisation";
-import { validateEmail } from "~/lib/validate";
+import { validateEmail, validatePhoneNumber } from "~/lib/validate";
 
 export interface InputProps {
   organisation: OrganizationRequestBase | null;
@@ -24,7 +24,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
   const schema = zod
     .object({
       addCurrentUserAsAdmin: zod.boolean().optional(),
-      adminEmails: zod.array(zod.string().email()).optional(),
+      adminEmails: zod.array(zod.string()).optional(),
       ssoClientIdInbound: zod.string().optional(),
       ssoClientIdOutbound: zod.string().optional(),
     })
@@ -44,12 +44,15 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
     })
     .refine(
       (data) => {
-        // validate all items are valid email addresses
-        return data.adminEmails?.every((email) => validateEmail(email));
+        // validate all items are valid email addresses or phone numbers
+        return data.adminEmails?.every(
+          (userName) =>
+            validateEmail(userName) || validatePhoneNumber(userName),
+        );
       },
       {
         message:
-          "Please enter valid email addresses e.g. name@gmail.com. One or more email address are wrong.",
+          "Please enter valid email addresses (name@gmail.com) or phone numbers (+27125555555).",
         path: ["adminEmails"],
       },
     );
