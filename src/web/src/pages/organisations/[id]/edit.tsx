@@ -179,18 +179,11 @@ const OrganisationUpdate: NextPageWithLayout<{
       biography: organisation?.biography ?? "",
       providerTypes: organisation?.providerTypes?.map((x) => x.id) ?? [],
       logo: null,
-<<<<<<< HEAD
       addCurrentUserAsAdmin: isUserAdminOfCurrentOrg,
       admins:
         organisation?.administrators
           ?.map((x) => x.email ?? x.phoneNumber)
           .filter((x): x is string => x !== null) ?? [],
-=======
-      addCurrentUserAsAdmin:
-        organisation?.administrators?.find((x) => x.email == user?.email) !=
-        null,
-      adminEmails: organisation?.administrators?.map((x) => x.email) ?? [],
->>>>>>> when pasting multiple values, split them by ' ' & ';' characters and trim values (#1130)
       registrationDocuments: [],
       educationProviderDocuments: [],
       businessDocuments: [],
