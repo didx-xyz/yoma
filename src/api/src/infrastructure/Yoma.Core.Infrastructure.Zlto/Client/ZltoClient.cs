@@ -153,7 +153,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         TaskExternalId = request.Id.ToString(),
         TaskProgramId = "n/a",
         BankTransactionId = "n/a",
-        UserName = request.Username,
+        Username = request.Username,
         TaskSkills = (request.Skills != null && request.Skills.Count != 0) ? string.Join(",", request.Skills.Select(o => o.Name)) : "n/a",
         TaskCountry = (request.Countries != null && request.Countries.Count != 0) ? string.Join(",", request.Countries.Select(o => o.Name)) : "n/a",
         TaskLanguage = (request.Languages != null && request.Languages.Count != 0) ? string.Join(",", request.Languages.Select(o => o.Name)) : "n/a",
@@ -455,7 +455,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       {
         OwnerOrigin = _accessToken.PartnerName,
         OwnerName = request.DisplayName,
-        UserName = request.Username,
+        Username = request.Username,
         Balance = (int)request.Balance
         //OwnerId: system assigned; can not be specified
         //UserPassword: used with external wallet activation; with Yoma wallets are internal

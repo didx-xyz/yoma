@@ -1,17 +1,17 @@
 using Newtonsoft.Json;
 
-namespace Yoma.Core.Domain.EmailProvider.Models
+namespace Yoma.Core.Domain.Notification.Models
 {
-  public class EmailOpportunityExpiration : EmailBase
+  public class NotificationOpportunityExpiration : NotificationBase
   {
     [JsonProperty("withinNextDays")]
     public int? WithinNextDays { get; set; }
 
     [JsonProperty("opportunities")]
-    public List<EmailOpportunityExpirationItem> Opportunities { get; set; }
+    public List<NotificationOpportunityExpirationItem> Opportunities { get; set; }
   }
 
-  public class EmailOpportunityExpirationItem
+  public class NotificationOpportunityExpirationItem
   {
     [JsonProperty("title")]
     public string Title { get; set; }

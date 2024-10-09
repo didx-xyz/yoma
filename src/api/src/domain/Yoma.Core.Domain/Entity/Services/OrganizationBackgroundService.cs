@@ -7,8 +7,8 @@ using System.Reflection;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.EmailProvider.Interfaces;
-using Yoma.Core.Domain.EmailProvider.Models;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Entity.Events;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
@@ -25,10 +25,9 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly IOrganizationService _organizationService;
     private readonly IOrganizationStatusService _organizationStatusService;
-    private readonly IEmailProviderClient _emailProviderClient;
+    private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IUserService _userService;
-    private readonly IEmailURLFactory _emailURLFactory;
-    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
+    private readonly INotificationURLFactory _notificationURLFactory;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
     private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
     private readonly IDistributedLockService _distributedLockService;
@@ -44,10 +43,9 @@ namespace Yoma.Core.Domain.Entity.Services
         IEnvironmentProvider environmentProvider,
         IOrganizationService organizationService,
         IOrganizationStatusService organizationStatusService,
-        IEmailProviderClientFactory emailProviderClientFactory,
+        INotificationDeliveryService notificationDeliveryService,
         IUserService userService,
-        IEmailURLFactory emailURLFactory,
-        IEmailPreferenceFilterService emailPreferenceFilterService,
+        INotificationURLFactory notificationURLFactory,
         IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository,
         IRepository<OrganizationDocument> organizationDocumentRepository,
         IDistributedLockService distributedLockService,
@@ -59,10 +57,9 @@ namespace Yoma.Core.Domain.Entity.Services
       _environmentProvider = environmentProvider;
       _organizationService = organizationService;
       _organizationStatusService = organizationStatusService;
-      _emailProviderClient = emailProviderClientFactory.CreateClient();
+      _notificationDeliveryService = notificationDeliveryService;
       _userService = userService;
-      _emailURLFactory = emailURLFactory;
-      _emailPreferenceFilterService = emailPreferenceFilterService;
+      _notificationURLFactory = notificationURLFactory;
       _organizationRepository = organizationRepository;
       _organizationDocumentRepository = organizationDocumentRepository;
       _distributedLockService = distributedLockService;
@@ -103,7 +100,7 @@ namespace Yoma.Core.Domain.Entity.Services
              .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeclinationBatchSize).ToList();
             if (items.Count == 0) break;
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+            var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
             foreach (var item in items)
             {
@@ -123,36 +120,33 @@ namespace Yoma.Core.Domain.Entity.Services
                 .SelectMany(org => org.Administrators ?? Enumerable.Empty<UserInfo>(), (org, admin) => new { Administrator = admin, Organization = org })
                 .GroupBy(item => item.Administrator, item => item.Organization);
 
-            var emailType = EmailProvider.EmailType.Organization_Approval_Declined;
+            var notificationType = Notification.NotificationType.Organization_Approval_Declined;
             foreach (var group in groupedOrganizations)
             {
               try
               {
-                var recipients = new List<EmailRecipient>
+                var recipients = new List<NotificationRecipient>
                         {
-                            new() { Email = group.Key.Email, DisplayName = group.Key.DisplayName }
+                            new() { Username = group.Key.Username, PhoneNumber = group.Key.PhoneNumber, Email = group.Key.Email, DisplayName = group.Key.DisplayName }
                         };
 
-                recipients = _emailPreferenceFilterService.FilterRecipients(emailType, recipients);
-                if (recipients == null || recipients.Count == 0) continue;
-
-                var data = new EmailOrganizationApproval
+                var data = new NotificationOrganizationApproval
                 {
-                  Organizations = group.Select(org => new EmailOrganizationApprovalItem
+                  Organizations = group.Select(org => new NotificationOrganizationApprovalItem
                   {
                     Name = org.Name,
                     Comment = org.CommentApproval,
-                    URL = _emailURLFactory.OrganizationApprovalItemURL(emailType, org.Id)
+                    URL = _notificationURLFactory.OrganizationApprovalItemURL(notificationType, org.Id)
                   }).ToList()
                 };
 
-                await _emailProviderClient.Send(emailType, recipients, data);
+                await _notificationDeliveryService.Send(notificationType, recipients, data);
 
-                _logger.LogInformation("Successfully send email");
+                _logger.LogInformation("Successfully send notification");
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to send email");
+                _logger.LogError(ex, "Failed to send notification");
               }
             }
 
@@ -208,7 +202,7 @@ namespace Yoma.Core.Domain.Entity.Services
                 .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeletionBatchSize).ToList();
             if (items.Count == 0) break;
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+            var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
             foreach (var item in items)
             {

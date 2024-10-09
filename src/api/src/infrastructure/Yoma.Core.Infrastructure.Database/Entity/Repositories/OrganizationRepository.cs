@@ -85,6 +85,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
                 FirstName = o.User.FirstName,
                 Surname = o.User.Surname,
                 DisplayName = o.User.DisplayName,
+                PhoneNumber = o.User.PhoneNumber,
                 CountryId = o.User.CountryId
               }).OrderBy(o => o.DisplayName).ToList() : null
 

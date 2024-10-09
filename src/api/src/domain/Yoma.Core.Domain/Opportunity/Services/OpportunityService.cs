@@ -11,9 +11,9 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.EmailProvider;
-using Yoma.Core.Domain.EmailProvider.Interfaces;
-using Yoma.Core.Domain.EmailProvider.Models;
+using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
@@ -53,9 +53,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IBlobService _blobService;
     private readonly IUserService _userService;
-    private readonly IEmailURLFactory _emailURLFactory;
-    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
-    private readonly IEmailProviderClient _emailProviderClient;
+    private readonly INotificationURLFactory _notificationURLFactory;
+    private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IIdentityProviderClient _identityProviderClient;
     private readonly ISharingInfoService _sharingInfoService;
 
@@ -101,9 +100,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ITimeIntervalService timeIntervalService,
         IBlobService blobService,
         IUserService userService,
-        IEmailURLFactory emailURLFactory,
-        IEmailPreferenceFilterService emailPreferenceFilterService,
-        IEmailProviderClientFactory emailProviderClientFactory,
+        INotificationURLFactory notificationURLFactory,
+        INotificationDeliveryService notificationDeliveryService,
         IIdentityProviderClientFactory identityProviderClientFactory,
         ISharingInfoService sharingInfoService,
         OpportunityRequestValidatorCreate opportunityRequestValidatorCreate,
@@ -137,9 +135,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _timeIntervalService = timeIntervalService;
       _blobService = blobService;
       _userService = userService;
-      _emailURLFactory = emailURLFactory;
-      _emailPreferenceFilterService = emailPreferenceFilterService;
-      _emailProviderClient = emailProviderClientFactory.CreateClient();
+      _notificationURLFactory = notificationURLFactory;
+      _notificationDeliveryService = notificationDeliveryService;
       _identityProviderClient = identityProviderClientFactory.CreateClient();
       _sharingInfoService = sharingInfoService;
 
@@ -427,7 +424,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       Guid? userCountryId = null;
       if (HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
       {
-        var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
         userCountryId = user.CountryId;
       }
 
@@ -1016,7 +1013,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         status = Status.Expired;
       }
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
@@ -1113,7 +1110,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.SetPublished();
 
       //sent when activated irrespective of organization status (sent to admin)
-      if (result.Status == Status.Active) await SendEmail(result, EmailType.Opportunity_Posted_Admin);
+      if (result.Status == Status.Active) await SendNotification(result, NotificationType.Opportunity_Posted_Admin);
 
       await _mediator.Publish(new OpportunityEvent(EventType.Create, result));
 
@@ -1146,7 +1143,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (existingByTitle != null && result.Id != existingByTitle.Id)
         throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
 
@@ -1286,7 +1283,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         throw new ValidationException($"The number of participants cannot exceed the limit. The current count is '{opportunity.ParticipantCount ?? 0}', and the limit is '{opportunity.ParticipantLimit.Value}'. Please edit the opportunity to increase or remove the limit, or reject the verification request");
 
       var organization = _organizationService.GetById(opportunity.OrganizationId, false, false, false);
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
       var result = new OpportunityAllocateRewardResponse
       {
@@ -1344,7 +1341,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, false);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       AssertUpdatable(result);
 
@@ -1362,7 +1359,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       EventType? eventType = null;
       switch (status)
@@ -1410,7 +1407,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.SetPublished();
 
       //sent when activated irrespective of organization status (sent to admin)
-      if (status == Status.Active) await SendEmail(result, EmailType.Opportunity_Posted_Admin);
+      if (status == Status.Active) await SendNotification(result, NotificationType.Opportunity_Posted_Admin);
 
       await _mediator.Publish(new OpportunityEvent(eventType.Value, result));
 
@@ -1423,7 +1420,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1448,7 +1445,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1470,7 +1467,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1508,7 +1505,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1533,7 +1530,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1558,7 +1555,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1583,7 +1580,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1608,7 +1605,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1636,7 +1633,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (result.VerificationEnabled && (result.VerificationTypes == null || result.VerificationTypes.All(o => verificationTypes.Contains(o.Type))))
         throw new ValidationException("One or more verification types are required when verification is supported. Removal will result in no associated verification types");
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1707,16 +1704,16 @@ namespace Yoma.Core.Domain.Opportunity.Services
       throw new ValidationException($"The {nameof(Models.Opportunity)} has already been shared and cannot be updated for the following reasons: {reasonText}");
     }
 
-    private async Task SendEmail(Models.Opportunity opportunity, EmailType type)
+    private async Task SendNotification(Models.Opportunity opportunity, NotificationType type)
     {
       try
       {
-        List<EmailRecipient>? recipients = null;
+        List<NotificationRecipient>? recipients = null;
         switch (type)
         {
-          case EmailType.Opportunity_Posted_Admin:
+          case NotificationType.Opportunity_Posted_Admin:
             var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
-            recipients = superAdmins?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.ToDisplayName() }).ToList();
+            recipients = superAdmins?.Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.ToDisplayName() }).ToList();
 
             break;
 
@@ -1724,29 +1721,26 @@ namespace Yoma.Core.Domain.Opportunity.Services
             throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
         }
 
-        recipients = _emailPreferenceFilterService.FilterRecipients(type, recipients);
-        if (recipients == null || recipients.Count == 0) return;
-
-        var data = new EmailOpportunityAnnounced
+        var data = new NotificationOpportunityAnnounced
         {
           Opportunities = [new()
           {
             Title = opportunity.Title,
             DateStart = opportunity.DateStart,
             DateEnd = opportunity.DateEnd,
-            URL = _emailURLFactory.OpportunityAnnouncedItemURL(type, opportunity.Id, opportunity.OrganizationId),
+            URL = _notificationURLFactory.OpportunityAnnouncedItemURL(type, opportunity.Id, opportunity.OrganizationId),
             ZltoReward = opportunity.ZltoReward,
             YomaReward = opportunity.YomaReward
           }]
         };
 
-        await _emailProviderClient.Send(type, recipients, data);
+        await _notificationDeliveryService.Send(type, recipients, data);
 
-        _logger.LogInformation("Successfully send email");
+        _logger.LogInformation("Successfully send notification");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send email");
+        _logger.LogError(ex, "Failed to send notification");
       }
     }
 

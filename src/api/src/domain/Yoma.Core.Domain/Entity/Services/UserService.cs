@@ -84,26 +84,83 @@ namespace Yoma.Core.Domain.Entity.Services
     #endregion
 
     #region Public Members
-    public User GetByEmail(string? email, bool includeChildItems, bool includeComputed)
+    public User GetByUsername(string? username, bool includeChildItems, bool includeComputed)
     {
-      if (string.IsNullOrWhiteSpace(email))
-        throw new ArgumentNullException(nameof(email));
+      if (string.IsNullOrWhiteSpace(username))
+        throw new ArgumentNullException(nameof(username));
 
-      var result = GetByEmailOrNull(email, includeChildItems, includeComputed)
-          ?? throw new EntityNotFoundException($"User with email '{email}' does not exist");
+      var result = GetByUsername(username, includeChildItems, includeComputed)
+          ?? throw new EntityNotFoundException($"User with username '{username}' does not exist");
 
       return result;
     }
 
-    public User? GetByEmailOrNull(string email, bool includeChildItems, bool includeComputed)
+    public User? GetByUsernameOrNull(string? username, bool includeChildItems, bool includeComputed)
+    {
+      if (string.IsNullOrWhiteSpace(username))
+        throw new ArgumentNullException(nameof(username));
+      username = username.Trim();
+
+      if (username.Contains('@'))
+        return GetByEmailOrNull(username, includeChildItems, includeComputed);
+      else
+        return GetByPhoneOrNull(username, includeChildItems, includeComputed);
+    }
+
+    public User? GetByEmailOrNull(string? email, bool includeChildItems, bool includeComputed)
     {
       if (string.IsNullOrWhiteSpace(email))
         throw new ArgumentNullException(nameof(email));
       email = email.Trim();
 
+      var query = _userRepository.Query(includeChildItems)
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-      var result = _userRepository.Query(includeChildItems).SingleOrDefault(o => o.Email.ToLower() == email.ToLower());
+          .Where(o => !string.IsNullOrEmpty(o.Email) && o.Email.ToLower() == email.ToLower());
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+
+      var result = query.SingleOrDefault();
+
+      if (result == null) return null;
+
+      if (includeComputed)
+      {
+        result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
+        result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
+        result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
+      }
+
+      return result;
+    }
+
+    public User? GetByPhoneOrNull(string? phoneNumber, bool includeChildItems, bool includeComputed)
+    {
+      if (string.IsNullOrWhiteSpace(phoneNumber))
+        throw new ArgumentNullException(nameof(phoneNumber));
+      phoneNumber = phoneNumber.Trim();
+
+      var query = _userRepository.Query(includeChildItems)
+          .Where(o => !string.IsNullOrEmpty(o.PhoneNumber) && o.PhoneNumber == phoneNumber);
+
+      var result = query.SingleOrDefault();
+
+      if (result == null) return null;
+
+      if (includeComputed)
+      {
+        result.PhotoURL = GetBlobObjectURL(result.PhotoStorageType, result.PhotoKey);
+        result.Skills?.ForEach(o => o.Organizations?.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey)));
+        result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), result.SettingsRaw);
+      }
+
+      return result;
+    }
+
+    public User? GetByExternalIdOrNull(Guid externalId, bool includeChildItems, bool includeComputed)
+    {
+      if (externalId == Guid.Empty)
+        throw new ArgumentNullException(nameof(externalId));
+
+      var result = _userRepository.Query(includeChildItems).SingleOrDefault(o => o.ExternalId == externalId);
       if (result == null) return null;
 
       if (includeComputed)
@@ -145,15 +202,15 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public Settings GetSettingsByEmail(string email)
+    public Settings GetSettingsByUsername(string username)
     {
-      var user = GetByEmail(email, false, false);
+      var user = GetByUsername(username, false, false);
       return SettingsHelper.Parse(_settingsDefinitionService.ListByEntityType(EntityType.User), user.SettingsRaw);
     }
 
-    public SettingsInfo GetSettingsInfoByEmail(string email)
+    public SettingsInfo GetSettingsInfoByUsername(string username)
     {
-      var user = GetByEmail(email, false, false);
+      var user = GetByUsername(username, false, false);
       return SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), user.SettingsRaw);
     }
 
@@ -194,8 +251,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var query = _userRepository.Query();
 
-      //only includes users which email has been confirmed (implies linked to identity provider)
-      query = query.Where(o => o.PhoneNumberConfirmed == true || o.EmailConfirmed == true);
+      //only includes users with associated external id's (implies linked to identity provider)
+      query = query.Where(o => o.ExternalId.HasValue);
 
       //yoIDOnboarded
       if (filter.YoIDOnboarded == true)
@@ -232,18 +289,21 @@ namespace Yoma.Core.Domain.Entity.Services
       if (existingByEmail != null && (isNew || result.Id != existingByEmail.Id))
         throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
 
+      var existingByPhone = GetByPhoneOrNull(request.PhoneNumber, false, false);
+      if (existingByPhone != null && (isNew || result.Id != existingByPhone.Id))
+        throw new ValidationException($"{nameof(User)} with the specified phone number '{request.PhoneNumber}' already exists");
+
       // profile fields updatable via UserProfileService.Update; identity provider is source of truth
       if (isNew)
       {
-        var kcUser = await _identityProviderClient.GetUser(request.Email)
-            ?? throw new InvalidOperationException($"{nameof(User)} with email '{request.Email}' does not exist");
-        //preserve keycloak formatting for email, first name and surname
+        var kcUser = await _identityProviderClient.GetUser(request.Username)
+            ?? throw new InvalidOperationException($"{nameof(User)} with username '{request.Username}' does not exist");
+        //preserve keycloak formatting for email, phoneNumber, first name and surname
         result.Email = request.Email;
         result.FirstName = request.FirstName;
         result.Surname = request.Surname;
         result.DisplayName = request.DisplayName ?? string.Empty;
         result.SetDisplayName();
-        result.PhoneNumber = request.PhoneNumber;
         result.CountryId = request.CountryId;
         result.EducationId = request.EducationId;
         result.GenderId = request.GenderId;
@@ -251,7 +311,10 @@ namespace Yoma.Core.Domain.Entity.Services
         result.Settings = SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.User), (string?)null);
       }
 
+      result.Username = request.Username;
+      result.PhoneNumber = request.PhoneNumber;
       result.EmailConfirmed = request.EmailConfirmed;
+      result.PhoneNumberConfirmed = request.PhoneNumberConfirmed;
       result.DateLastLogin = request.DateLastLogin;
       result.ExternalId = request.ExternalId;
 
@@ -260,9 +323,9 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public async Task<User> UpsertPhoto(string? email, IFormFile? file)
+    public async Task<User> UpsertPhoto(string? username, IFormFile? file)
     {
-      var result = GetByEmail(email, true, true);
+      var result = GetByUsername(username, true, true);
 
       ArgumentNullException.ThrowIfNull(file, nameof(file));
 
@@ -300,13 +363,13 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public async Task<User> UpdateSettings(string? email, List<string>? roles, SettingsRequest request)
+    public async Task<User> UpdateSettings(string? username, List<string>? roles, SettingsRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       await _settingsRequestValidator.ValidateAndThrowAsync(request);
 
-      var result = GetByEmail(email, false, false);
+      var result = GetByUsername(username, false, false);
 
       var definitions = _settingsDefinitionService.ListByEntityType(EntityType.User);
 
@@ -363,12 +426,12 @@ namespace Yoma.Core.Domain.Entity.Services
       });
     }
 
-    public async Task<User> YoIDOnboard(string? email)
+    public async Task<User> YoIDOnboard(string? username)
     {
-      var result = GetByEmail(email, true, true);
+      var result = GetByUsername(username, true, true);
 
       if (result.YoIDOnboarded.HasValue && result.YoIDOnboarded.Value)
-        throw new ValidationException($"User with email '{email}' has already completed YoID onboarding");
+        throw new ValidationException($"User with username '{username}' has already completed YoID onboarding");
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {

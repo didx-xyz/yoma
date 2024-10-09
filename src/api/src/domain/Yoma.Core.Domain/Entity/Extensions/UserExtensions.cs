@@ -27,12 +27,14 @@ namespace Yoma.Core.Domain.Entity.Extensions
       return new UserRequest
       {
         Id = user.Id,
+        Username = user.Username,
         Email = user.Email,
         EmailConfirmed = user.EmailConfirmed,
         FirstName = user.FirstName,
         Surname = user.Surname,
         DisplayName = user.DisplayName,
         PhoneNumber = user.PhoneNumber,
+        PhoneNumberConfirmed = user.PhoneNumberConfirmed,
         CountryId = user.CountryId,
         EducationId = user.EducationId,
         GenderId = user.GenderId,
@@ -49,10 +51,12 @@ namespace Yoma.Core.Domain.Entity.Extensions
       return new UserInfo
       {
         Id = value.Id,
+        Username = value.Username,
         Email = value.Email,
         FirstName = value.FirstName,
         Surname = value.Surname,
         DisplayName = value.DisplayName,
+        PhoneNumber = value.PhoneNumber,
         CountryId = value.CountryId
       };
     }
@@ -64,12 +68,14 @@ namespace Yoma.Core.Domain.Entity.Extensions
       return new UserProfile
       {
         Id = value.Id,
+        Username = value.Username,
         Email = value.Email,
         EmailConfirmed = value.EmailConfirmed,
         FirstName = value.FirstName,
         Surname = value.Surname,
         DisplayName = value.DisplayName,
         PhoneNumber = value.PhoneNumber,
+        PhoneNumberConfirmed = value.PhoneNumberConfirmed,
         CountryId = value.CountryId,
         EducationId = value.EducationId,
         GenderId = value.GenderId,

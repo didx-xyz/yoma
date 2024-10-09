@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -60,15 +61,20 @@ namespace Yoma.Core.Domain.Reward.Services
     #endregion
 
     #region Public Members
-    public (string userEmail, string walletId) GetWalletId(Guid userId)
+    public (string username, string walletId) GetWalletId(Guid userId)
     {
-      var (userEmail, walletId) = GetWalletIdOrNull(userId);
+      var (username, walletId) = GetWalletIdOrNull(userId);
+
       if (string.IsNullOrEmpty(walletId))
         throw new EntityNotFoundException($"Wallet id not found for user with id '{userId}'");
-      return (userEmail, walletId);
+
+      if(string.IsNullOrEmpty(username))
+        throw new InvalidOperationException($"Wallet id found for user with id '{userId}' but username is empty");
+
+      return (username, walletId);
     }
 
-    public (string userEmail, string? walletId) GetWalletIdOrNull(Guid userId)
+    public (string? username, string? walletId) GetWalletIdOrNull(Guid userId)
     {
       var user = _userService.GetById(userId, false, false);
 
@@ -79,7 +85,7 @@ namespace Yoma.Core.Domain.Reward.Services
       if (result != null && string.IsNullOrEmpty(result.WalletId))
         throw new DataInconsistencyException($"Wallet id expected with wallet creation status of '{WalletCreationStatus.Created}' for item with id '{result.Id}'");
 
-      return (user.Email, result?.WalletId);
+      return (result?.Username, result?.WalletId);
     }
 
     public async Task<(WalletCreationStatus status, WalletBalance balance)> GetWalletStatusAndBalance(Guid userId)
@@ -107,6 +113,7 @@ namespace Yoma.Core.Domain.Reward.Services
             throw new DataInconsistencyException($"Wallet id expected with wallet creation status of 'Created' for item with id '{item.Id}'");
 
           balance.WalletId = item.WalletId;
+          balance.WalletUsername = item.Username;
 
           try
           {
@@ -133,7 +140,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
       await _walletVoucherSearchFilterValidator.ValidateAndThrowAsync(filter);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var item = _walletCreationRepository.Query().SingleOrDefault(o => o.UserId == user.Id) ?? throw new ValidationException($"Wallet creation for the user with email '{user.Email}' hasn't been scheduled. Kindly log out and log back in");
 
@@ -153,7 +160,7 @@ namespace Yoma.Core.Domain.Reward.Services
       return result;
     }
 
-    public async Task<Wallet> CreateWallet(Guid userId)
+    public async Task<(string username, Wallet wallet)> CreateWallet(Guid userId)
     {
       if (userId == Guid.Empty)
         throw new ArgumentNullException(nameof(userId));
@@ -165,10 +172,13 @@ namespace Yoma.Core.Domain.Reward.Services
       //query pending rewards and calculate balance
       var balance = rewardTransactions.Sum(o => o.Amount);
 
+      var username = user.Username;
+      if (!username.Contains('@')) username = $"{username}@{Constants.Domain_System}";
+
       //attempt wallet creation
       var request = new WalletRequestCreate
       {
-        Username = user.Email,
+        Username = username,
         DisplayName = user.DisplayName,
         Balance = balance
       };
@@ -194,7 +204,7 @@ namespace Yoma.Core.Domain.Reward.Services
           throw new InvalidOperationException($"Status of '{status}' not supported");
       }
 
-      return wallet;
+      return (username, wallet);
     }
 
     public async Task CreateWalletOrScheduleCreation(Guid? userId)
@@ -216,8 +226,9 @@ namespace Yoma.Core.Domain.Reward.Services
         var item = new WalletCreation { UserId = userId.Value };
         try
         {
-          var wallet = await CreateWallet(userId.Value);
+          var (username, wallet) = await CreateWallet(userId.Value);
 
+          item.Username = username;
           item.WalletId = wallet.Id;
           item.Balance = wallet.Balance; //track initial balance upon creation, if any
           item.StatusId = _walletCreationStatusService.GetByName(TenantCreationStatus.Created.ToString()).Id;
@@ -266,8 +277,13 @@ namespace Yoma.Core.Domain.Reward.Services
         case WalletCreationStatus.Created:
           if (string.IsNullOrEmpty(item.WalletId))
             throw new ArgumentNullException(nameof(item), "Wallet id required");
+
+          if(string.IsNullOrEmpty(item.Username))
+            throw new ArgumentNullException(nameof(item), "Wallet username required");
+
           if (!item.Balance.HasValue)
             throw new ArgumentNullException(nameof(item), "Balance required (even if 0)");
+
           item.ErrorReason = null;
           item.RetryCount = null;
           break;

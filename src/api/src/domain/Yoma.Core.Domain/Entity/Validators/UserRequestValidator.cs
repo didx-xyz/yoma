@@ -1,4 +1,5 @@
 using FluentValidation;
+using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 
@@ -14,6 +15,7 @@ namespace Yoma.Core.Domain.Entity.Validators
         IGenderService genderService) : base(countryService, educationService, genderService)
     {
       RuleFor(x => x.Id).NotEmpty().When(x => x.Id.HasValue);
+      RuleFor(x => x.PhoneNumber).Length(1, 50).Matches(RegExValidators.PhoneNumber()).WithMessage("'{PropertyName}' is invalid.").When(x => !string.IsNullOrEmpty(x.PhoneNumber));
       RuleFor(x => x.DateLastLogin).Must(NotInFuture).WithMessage("'{PropertyName}' is in the future.");
     }
     #endregion

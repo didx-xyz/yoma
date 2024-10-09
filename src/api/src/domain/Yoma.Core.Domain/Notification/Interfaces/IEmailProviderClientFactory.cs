@@ -1,4 +1,4 @@
-namespace Yoma.Core.Domain.EmailProvider.Interfaces
+namespace Yoma.Core.Domain.Notification.Interfaces
 {
   public interface IEmailProviderClientFactory
   {

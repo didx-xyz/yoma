@@ -1,14 +1,14 @@
 using Newtonsoft.Json;
 
-namespace Yoma.Core.Domain.EmailProvider.Models
+namespace Yoma.Core.Domain.Notification.Models
 {
-  public class EmailActionLinkVerifyApproval : EmailBase
+  public class NotificationActionLinkVerifyApproval : NotificationBase
   {
     [JsonProperty("links")]
-    public List<EmailActionLinkVerifyApprovalItem> Links { get; set; }
+    public List<NotificationActionLinkVerifyApprovalItem> Links { get; set; }
   }
 
-  public class EmailActionLinkVerifyApprovalItem
+  public class NotificationActionLinkVerifyApprovalItem
   {
     [JsonProperty("name")]
     public string Name { get; set; }

@@ -5,7 +5,7 @@ using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
-using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Lookups.Interfaces; 
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.Keycloak.Models;
@@ -142,7 +142,7 @@ namespace Yoma.Core.Api.Controllers
         return;
       }
 
-      var userRequest = _userService.GetByEmailOrNull(kcUser.Username, false, false)?.ToUserRequest();
+      var userRequest = _userService.GetByExternalIdOrNull(kcUser.Id, false, false)?.ToUserRequest();
 
       switch (type)
       {
@@ -158,11 +158,14 @@ namespace Yoma.Core.Api.Controllers
             userRequest = new UserRequest();
           }
 
-          userRequest.Email = kcUser.Username.Trim();
+          //TODO: Confirm phone number / email update, resulting in username change happens as a profile update event
+          userRequest.Username = kcUser.Username.Trim();  
+          userRequest.Email = kcUser.Email?.Trim();
           userRequest.FirstName = kcUser.FirstName.Trim();
           userRequest.Surname = kcUser.LastName.Trim();
           userRequest.EmailConfirmed = kcUser.EmailVerified;
-          userRequest.PhoneNumber = kcUser.PhoneNumber;
+          userRequest.PhoneNumber = kcUser.PhoneNumber?.Trim();
+          userRequest.PhoneNumberConfirmed = kcUser.PhoneNumberVerified;
 
           if (!string.IsNullOrEmpty(kcUser.Country))
           {
@@ -223,7 +226,8 @@ namespace Yoma.Core.Api.Controllers
             return;
           }
 
-          //after email verification a login event is raised
+          //after email verification login event is raised
+          userRequest.Username = kcUser.Username;
           userRequest.EmailConfirmed = kcUser.EmailVerified;
           userRequest.DateLastLogin = DateTimeOffset.UtcNow;
 

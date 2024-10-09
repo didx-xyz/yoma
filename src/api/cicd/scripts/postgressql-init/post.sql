@@ -10,20 +10,20 @@ SET TIMEZONE='UTC';
 -- testuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "EducationId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
-VALUES(gen_random_uuid(), 'testuser@gmail.com', TRUE, 'Test', 'User', 'Test User', '+27125555555', (SELECT "Id" FROM "Lookup"."Country" ORDER BY RANDOM() LIMIT 1), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
-        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '20 years', NULL, NULL, TRUE, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
+VALUES(gen_random_uuid(), 'testuser@gmail.com', TRUE, 'Test', 'User', 'Test User', NULL, (SELECT "Id" FROM "Lookup"."Country" ORDER BY RANDOM() LIMIT 1), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
+        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '20 years', NULL, 'B75A7A05-9F7D-4E68-9325-EF3EF269D690', TRUE, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
 
 -- testadminuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "EducationId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
-VALUES(gen_random_uuid(), 'testadminuser@gmail.com', TRUE, 'Test Admin', 'User', 'Test Admin User', '+27125555555', (SELECT "Id" FROM "Lookup"."Country" ORDER BY RANDOM() LIMIT 1), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
-        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '21 years', NULL, NULL, TRUE, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
+VALUES(gen_random_uuid(), 'testadminuser@gmail.com', TRUE, 'Test Admin', 'User', 'Test Admin User', NULL, (SELECT "Id" FROM "Lookup"."Country" ORDER BY RANDOM() LIMIT 1), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
+        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '21 years', NULL, '55BA2D33-EC40-4EFE-B09F-190E9CEF49EB', TRUE, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
 
 -- testorgadminuser@gmail.com (KeyCloak password: P@ssword1)
 INSERT INTO "Entity"."User"("Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "PhoneNumber", "CountryId", "EducationId",
             "PhotoId", "GenderId", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified")
-VALUES(gen_random_uuid(), 'testorgadminuser@gmail.com', TRUE, 'Test Organization Admin', 'User', 'Test Organization Admin User', '+27125555555', (SELECT "Id" FROM "Lookup"."Country" ORDER BY RANDOM() LIMIT 1), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
-        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '22 years', NULL, NULL, TRUE, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
+VALUES(gen_random_uuid(), 'testorgadminuser@gmail.com', TRUE, 'Test Organization Admin', 'User', 'Test Organization Admin User', NULL, (SELECT "Id" FROM "Lookup"."Country" ORDER BY RANDOM() LIMIT 1), (SELECT "Id" FROM "Lookup"."Education" ORDER BY RANDOM() LIMIT 1),
+        NULL, (SELECT "Id" FROM "Lookup"."Gender" ORDER BY RANDOM() LIMIT 1), CURRENT_DATE - INTERVAL '22 years', NULL, '398CBF5A-FB5C-49E8-96F4-B8D3D718F1A2', TRUE, (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'), (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'));
 
 -- SSI Tenant Creation (Pending) for YOID onboarded users
 INSERT INTO "SSI"."TenantCreation"("Id", "EntityType", "StatusId", "UserId", "OrganizationId", "TenantId", "ErrorReason", "RetryCount", "DateCreated", "DateModified")

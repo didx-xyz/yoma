@@ -123,6 +123,7 @@ if [ ! -z "${YOMA_SYSTEM_USER}" ]; then
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" \
     -d '{
+          "id": "160CE61E-E275-48AD-93B7-5FF4A7704525",
           "username": "'"${YOMA_SYSTEM_USER}"'",
           "enabled": true,
           "emailVerified": true,
@@ -168,6 +169,7 @@ if [ ! -z "${TEST_USER}" ]; then
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" \
     -d '{
+          "id": "B75A7A05-9F7D-4E68-9325-EF3EF269D690"
           "username": "'"${TEST_USER}"'",
           "enabled": true,
           "emailVerified": true,

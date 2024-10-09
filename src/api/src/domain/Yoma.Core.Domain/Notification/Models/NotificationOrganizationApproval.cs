@@ -1,14 +1,14 @@
 using Newtonsoft.Json;
 
-namespace Yoma.Core.Domain.EmailProvider.Models
+namespace Yoma.Core.Domain.Notification.Models
 {
-  public class EmailOrganizationApproval : EmailBase
+  public class NotificationOrganizationApproval : NotificationBase
   {
     [JsonProperty("organizations")]
-    public List<EmailOrganizationApprovalItem> Organizations { get; set; }
+    public List<NotificationOrganizationApprovalItem> Organizations { get; set; }
   }
 
-  public class EmailOrganizationApprovalItem
+  public class NotificationOrganizationApprovalItem
   {
     [JsonProperty("name")]
     public string Name { get; set; }

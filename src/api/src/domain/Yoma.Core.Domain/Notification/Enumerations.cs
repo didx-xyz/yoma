@@ -1,6 +1,6 @@
-namespace Yoma.Core.Domain.EmailProvider
+namespace Yoma.Core.Domain.Notification
 {
-  public enum EmailType
+  public enum NotificationType
   {
     Organization_Approval_Requested, //sent to admin
     Organization_Approval_Approved, //sent to organization admin
@@ -17,5 +17,11 @@ namespace Yoma.Core.Domain.EmailProvider
     ActionLink_Verify_Approval_Approved, //sent to organization admin
     ActionLink_Verify_Approval_Declined, //sent to organization admin
     Opportunity_Published //sent to youth
+  }
+
+  [Flags]
+  public enum DeliveryType
+  {
+    Email
   }
 }

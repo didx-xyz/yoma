@@ -57,11 +57,16 @@ namespace Yoma.Core.Domain.Entity.Validators
         .WithMessage("Business documents are optional, but if specified, cannot be empty."))
         .When(x => x.BusinessDocuments != null && x.BusinessDocuments.Count > 0);
 
-      RuleFor(x => x.AdminEmails).Must(emails => emails != null && emails.Count != 0).When(x => !x.AddCurrentUserAsAdmin)
-          .WithMessage("Additional administrative emails are required provided not adding the current user as an admin.");
-      RuleFor(x => x.AdminEmails).Must(emails => emails != null && emails.All(email => !string.IsNullOrWhiteSpace(email) && new EmailAddressAttribute().IsValid(email)))
-          .WithMessage("Additional administrative emails contain invalid addresses.")
-          .When(x => x.AdminEmails != null && x.AdminEmails.Count != 0);
+      RuleFor(x => x.Admins).Must(items => items != null && items.Count != 0).When(x => !x.AddCurrentUserAsAdmin)
+          .WithMessage("Additional administrators are required if not adding the current user as an admin.");
+
+      RuleFor(x => x.Admins)
+        .Must(items => items != null && items.All(admin =>
+            (!string.IsNullOrWhiteSpace(admin) &&
+            (new EmailAddressAttribute().IsValid(admin) || RegExValidators.PhoneNumber().IsMatch(admin))
+            )))
+        .WithMessage("Additional administrative username(s) must contain either a valid email address or phone number.")
+        .When(x => x.Admins != null && x.Admins.Count != 0);
 
       RuleFor(x => x.ZltoRewardPool)
           .GreaterThan(0).When(x => x.ZltoRewardPool.HasValue).WithMessage("'{PropertyName}' must be greater than 0.")

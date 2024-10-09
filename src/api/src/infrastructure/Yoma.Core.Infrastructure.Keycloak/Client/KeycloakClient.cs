@@ -102,7 +102,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       return kcUser.ToUser();
     }
 
-    public async Task UpdateUser(User user, bool resetPassword, bool sendVerifyEmail)
+    public async Task UpdateUser(User user, bool resetPassword, bool sendVerifyEmail, bool updatePhoneNumber)
     {
       using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
 
@@ -143,7 +143,10 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
         // send reset password email
         if (resetPassword)
-          await userApi.PutUsersExecuteActionsEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); //admin initiated email (executeActions)
+          await userApi.PutUsersExecuteActionsEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); //admin initiated verify email action (executeActions)
+
+        if (updatePhoneNumber)
+          await userApi.PutUsersExecuteActionsEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PHONE_NUMBER"]); //admin initiated update phone number action (executeActions)
       }
       catch (Exception ex)
       {

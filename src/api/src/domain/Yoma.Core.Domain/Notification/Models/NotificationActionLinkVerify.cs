@@ -1,20 +1,20 @@
 using Newtonsoft.Json;
 
-namespace Yoma.Core.Domain.EmailProvider.Models
+namespace Yoma.Core.Domain.Notification.Models
 {
-  public class EmailOpportunityVerification : EmailBase
+  public class NotificationActionLinkVerify : NotificationBase
   {
+    [JsonProperty("entityTypeDesc")]
+    public string EntityTypeDesc { get; set; }
+
     [JsonProperty("yoIDURL")]
     public string? YoIDURL { get; set; }
 
-    [JsonProperty("verificationURL")]
-    public string? VerificationURL { get; set; }
-
-    [JsonProperty("opportunities")]
-    public List<EmailOpportunityVerificationItem> Opportunities { get; set; }
+    [JsonProperty("items")]
+    public List<NotificationActionLinkVerifyItem> Items { get; set; }
   }
 
-  public class EmailOpportunityVerificationItem
+  public class NotificationActionLinkVerifyItem
   {
     [JsonProperty("title")]
     public string Title { get; set; }
@@ -30,12 +30,6 @@ namespace Yoma.Core.Domain.EmailProvider.Models
 
     [JsonProperty("dateEndFormatted")]
     public string DateEndFormatted => DateEnd.HasValue ? DateEnd.Value.ToString("ddd, MMM dd, yyyy HH:mm") : "No end date";
-
-    [JsonProperty("comment")]
-    public string? Comment { get; set; }
-
-    [JsonProperty("commentFormatted")]
-    public string? CommentFormatted => !string.IsNullOrEmpty(Comment) ? Comment : "No additional information";
 
     [JsonProperty("url")]
     public string URL { get; set; }

@@ -116,7 +116,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
         List<MyOpportunityInfo>? myOpportunitiesCompleted = null;
         if (HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
         {
-          user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+          user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
           var myOpportunitySearchFilter = new MyOpportunitySearchFilter
           {
@@ -177,7 +177,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
         throw new ArgumentNullException(nameof(itemCategoryId));
       itemCategoryId = itemCategoryId.Trim();
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var (walletStatus, walletBalance) = await _walletService.GetWalletStatusAndBalance(user.Id);
 
@@ -186,6 +186,9 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       if (string.IsNullOrEmpty(walletBalance.WalletId))
         throw new InvalidOperationException($"Wallet id expected with status '{walletStatus}'");
+
+      if (string.IsNullOrEmpty(walletBalance.WalletUsername))
+        throw new InvalidOperationException($"Wallet username expected with status '{walletStatus}'");
 
       //find the 1st available item for the specified store and item category
       var storeItems = await _marketplaceProviderClient.ListStoreItems(storeId, itemCategoryId, 1, 0);
@@ -214,7 +217,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
           await _transactionLogRepository.Create(transactionExisting);
 
           //create a new reservation
-          transaction = await BuyItemTransactionReserve(user, walletBalance.WalletId, itemCategoryId, storeItem);
+          transaction = await BuyItemTransactionReserve(user.Id, walletBalance.WalletUsername, walletBalance.WalletId, itemCategoryId, storeItem);
         }
         else
           //not expired; re-use existing reservation
@@ -223,20 +226,20 @@ namespace Yoma.Core.Domain.Marketplace.Services
       else
       {
         //no existing reservation; create a new one
-        transaction = await BuyItemTransactionReserve(user, walletBalance.WalletId, itemCategoryId, storeItem);
+        transaction = await BuyItemTransactionReserve(user.Id, walletBalance.WalletUsername, walletBalance.WalletId, itemCategoryId, storeItem);
       }
 
-      await BuyItemTransactionSold(transaction, user, walletBalance.WalletId);
+      await BuyItemTransactionSold(transaction, walletBalance.WalletUsername, walletBalance.WalletId);
     }
 
     /// <summary>
     /// Reserve item and log transaction; with failure attempt to reset / release reservation
     /// </summary>
-    private async Task<TransactionLog> BuyItemTransactionReserve(User user, string walletId, string itemCategoryId, StoreItem storeItem)
+    private async Task<TransactionLog> BuyItemTransactionReserve(Guid userId, string walletUsername, string walletId, string itemCategoryId, StoreItem storeItem)
     {
       var result = new TransactionLog
       {
-        UserId = user.Id,
+        UserId = userId,
         ItemCategoryId = itemCategoryId,
         ItemId = storeItem.Id,
         Amount = storeItem.Amount
@@ -245,7 +248,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       var reserved = false;
       try
       {
-        result.TransactionId = await _marketplaceProviderClient.ItemReserve(walletId, user.Email, storeItem.Id);
+        result.TransactionId = await _marketplaceProviderClient.ItemReserve(walletId, walletUsername, storeItem.Id);
         reserved = true;
 
         result.StatusId = _transactionStatusService.GetByName(TransactionStatus.Reserved.ToString()).Id;
@@ -265,7 +268,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
     /// <summary>
     /// Mark item as sold and log transaction; with failure attempt to reset / release reservation provided not sold
     /// </summary>
-    private async Task BuyItemTransactionSold(TransactionLog transaction, User user, string walletId)
+    private async Task BuyItemTransactionSold(TransactionLog transaction, string walletUsername, string walletId)
     {
       var sold = false;
       try
@@ -278,7 +281,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
           transaction.Status = TransactionStatus.Sold;
           transaction = await _transactionLogRepository.Create(transaction);
 
-          await _marketplaceProviderClient.ItemSold(walletId, user.Email, transaction.ItemId, transaction.TransactionId);
+          await _marketplaceProviderClient.ItemSold(walletId, walletUsername, transaction.ItemId, transaction.TransactionId);
           sold = true;
 
           scope.Complete();

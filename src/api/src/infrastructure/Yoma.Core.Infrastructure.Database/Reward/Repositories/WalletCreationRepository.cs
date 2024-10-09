@@ -21,6 +21,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
         StatusId = entity.StatusId,
         Status = Enum.Parse<WalletCreationStatus>(entity.Status.Name, true),
         UserId = entity.UserId,
+        Username = entity.Username,
         WalletId = entity.WalletId,
         Balance = entity.Balance,
         ErrorReason = entity.ErrorReason,
@@ -40,6 +41,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
         Id = item.Id,
         StatusId = item.StatusId,
         UserId = item.UserId,
+        Username = item.Username,
         WalletId = item.WalletId,
         Balance = item.Balance,
         ErrorReason = item.ErrorReason,
@@ -62,6 +64,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
 
       item.DateModified = DateTimeOffset.UtcNow;
 
+      entity.Username = item.Username;  
       entity.WalletId = item.WalletId;
       entity.Balance = item.Balance;
       entity.StatusId = item.StatusId;

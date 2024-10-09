@@ -1,4 +1,3 @@
-using Hangfire.Storage.Monitoring;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.BlobProvider;
@@ -27,6 +26,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       return _context.User.Select(entity => new Domain.Entity.Models.User()
       {
         Id = entity.Id,
+        Username = entity.Email ?? entity.PhoneNumber ?? string.Empty,
         Email = entity.Email,
         EmailConfirmed = entity.EmailConfirmed,
         FirstName = entity.FirstName,
@@ -73,13 +73,21 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
     public Expression<Func<Domain.Entity.Models.User, bool>> Contains(Expression<Func<Domain.Entity.Models.User, bool>> predicate, string value)
     {
       //MS SQL: Contains
-      return predicate.Or(o => EF.Functions.ILike(o.FirstName, $"%{value}%") || EF.Functions.ILike(o.Surname, $"%{value}%") || EF.Functions.ILike(o.Email, $"%{value}%") || EF.Functions.ILike(o.DisplayName, $"%{value}%"));
+      return predicate.Or(o => (!string.IsNullOrEmpty(o.Email) && EF.Functions.ILike(o.Email, $"%{value}%"))
+        || EF.Functions.ILike(o.FirstName, $"%{value}%")
+        || EF.Functions.ILike(o.Surname, $"%{value}%")
+        || EF.Functions.ILike(o.DisplayName, $"%{value}%")
+        || (!string.IsNullOrEmpty(o.PhoneNumber) && EF.Functions.ILike(o.PhoneNumber, $"%{value}%")));
     }
 
     public IQueryable<Domain.Entity.Models.User> Contains(IQueryable<Domain.Entity.Models.User> query, string value)
     {
       //MS SQL: Contains
-      return query.Where(o => EF.Functions.ILike(o.FirstName, $"%{value}%") || EF.Functions.ILike(o.Surname, $"%{value}%") || EF.Functions.ILike(o.Email, $"%{value}%") || EF.Functions.ILike(o.DisplayName, $"%{value}%"));
+      return query.Where(o => (!string.IsNullOrEmpty(o.Email) && EF.Functions.ILike(o.Email, $"%{value}%"))
+        || EF.Functions.ILike(o.FirstName, $"%{value}%")
+        || EF.Functions.ILike(o.Surname, $"%{value}%")
+        || EF.Functions.ILike(o.DisplayName, $"%{value}%")
+        || (!string.IsNullOrEmpty(o.PhoneNumber) && EF.Functions.ILike(o.PhoneNumber, $"%{value}%")));
     }
 
     public async Task<Domain.Entity.Models.User> Create(Domain.Entity.Models.User item)

@@ -26,6 +26,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
       return _context.MyOpportunity.Select(entity => new Domain.MyOpportunity.Models.MyOpportunity()
       {
         Id = entity.Id,
+        Username = entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,
         UserId = entity.UserId,
         UserEmail = entity.User.Email,
         UserDisplayName = entity.User.DisplayName,

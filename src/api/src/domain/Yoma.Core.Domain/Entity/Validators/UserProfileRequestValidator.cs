@@ -10,7 +10,9 @@ namespace Yoma.Core.Domain.Entity.Validators
 
     #region Constructor
     public UserProfileRequestValidator(ICountryService countryService, IEducationService educationService,
-        IGenderService genderService) : base(countryService, educationService, genderService) { }
+        IGenderService genderService) : base(countryService, educationService, genderService)
+    {
+    }
     #endregion
   }
 }

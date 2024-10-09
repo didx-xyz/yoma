@@ -1,14 +1,14 @@
 using Newtonsoft.Json;
 
-namespace Yoma.Core.Domain.EmailProvider.Models
+namespace Yoma.Core.Domain.Notification.Models
 {
-  public class EmailOpportunityAnnounced : EmailBase
+  public class NotificationOpportunityAnnounced : NotificationBase
   {
     [JsonProperty("opportunities")]
-    public List<EmailOpportunityAnnouncedItem> Opportunities { get; set; }
+    public List<NotificationOpportunityAnnouncedItem> Opportunities { get; set; }
   }
 
-  public class EmailOpportunityAnnouncedItem
+  public class NotificationOpportunityAnnouncedItem
   {
     [JsonIgnore]
     public Guid Id { get; set; }

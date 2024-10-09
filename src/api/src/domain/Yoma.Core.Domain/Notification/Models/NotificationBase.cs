@@ -1,8 +1,8 @@
 using Newtonsoft.Json;
 
-namespace Yoma.Core.Domain.EmailProvider.Models
+namespace Yoma.Core.Domain.Notification.Models
 {
-  public abstract class EmailBase
+  public abstract class NotificationBase
   {
     [JsonProperty("subjectSuffix")]
     public string SubjectSuffix { get; set; }

@@ -10,8 +10,6 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public string? DisplayName { get; set; }
 
-    public string? PhoneNumber { get; set; }
-
     public Guid? CountryId { get; set; }
 
     public Guid? EducationId { get; set; }

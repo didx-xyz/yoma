@@ -14,7 +14,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
       {
         Id = value.Id,
         UserId = value.UserId,
+        Username = value.Username,
         UserEmail = value.UserEmail,
+        UserPhoneNumer = value.UserPhoneNumber, 
         UserDisplayName = value.UserDisplayName,
         UserCountry = value.UserCountry,
         UserEducation = value.UserEducation,

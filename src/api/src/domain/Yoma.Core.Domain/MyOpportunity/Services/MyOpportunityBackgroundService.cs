@@ -8,9 +8,9 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.EmailProvider;
-using Yoma.Core.Domain.EmailProvider.Interfaces;
-using Yoma.Core.Domain.EmailProvider.Models;
+using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity;
@@ -29,9 +29,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IMyOpportunityVerificationStatusService _myOpportunityVerificationStatusService;
     private readonly IMyOpportunityActionService _myOpportunityActionService;
     private readonly IOpportunityService _opportunityService;
-    private readonly IEmailURLFactory _emailURLFactory;
-    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
-    private readonly IEmailProviderClient _emailProviderClient;
+    private readonly INotificationURLFactory _notificationURLFactory;
+    private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
     private readonly IDistributedLockService _distributedLockService;
@@ -48,9 +47,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         IMyOpportunityVerificationStatusService myOpportunityVerificationStatusService,
         IMyOpportunityActionService myOpportunityActionService,
         IOpportunityService opportunityService,
-        IEmailURLFactory emailURLFactory,
-        IEmailPreferenceFilterService emailPreferenceFilterService,
-        IEmailProviderClientFactory emailProviderClientFactory,
+        INotificationURLFactory notificationURLFactory,
+        INotificationDeliveryService notificationDeliveryService,
         IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
         IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
         IDistributedLockService distributedLockService)
@@ -63,9 +61,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;
       _myOpportunityActionService = myOpportunityActionService;
       _opportunityService = opportunityService;
-      _emailURLFactory = emailURLFactory;
-      _emailPreferenceFilterService = emailPreferenceFilterService;
-      _emailProviderClient = emailProviderClientFactory.CreateClient();
+      _notificationURLFactory = notificationURLFactory;
+      _notificationDeliveryService = notificationDeliveryService;
       _myOpportunityRepository = myOpportunityRepository;
       _myOpportunityVerificationRepository = myOpportunityVerificationRepository;
       _distributedLockService = distributedLockService;
@@ -114,48 +111,45 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
             items = await _myOpportunityRepository.Update(items);
 
-            var groupedMyOpportunities = items.GroupBy(item => new { item.UserEmail, item.UserDisplayName });
+            var groupedMyOpportunities = items.GroupBy(item => new { item.Username, item.UserEmail, item.UserPhoneNumber, item.UserDisplayName });
 
-            var emailType = EmailType.Opportunity_Verification_Rejected;
+            var notificationType = NotificationType.Opportunity_Verification_Rejected;
             foreach (var group in groupedMyOpportunities)
             {
               try
               {
-                var recipients = new List<EmailRecipient>
+                var recipients = new List<NotificationRecipient>
                         {
-                            new() { Email = group.Key.UserEmail, DisplayName = group.Key.UserDisplayName }
+                            new() { Username = group.Key.Username, PhoneNumber = group.Key.UserPhoneNumber, Email = group.Key.UserEmail, DisplayName = group.Key.UserDisplayName }
                         };
 
-                recipients = _emailPreferenceFilterService.FilterRecipients(emailType, recipients);
-                if (recipients == null || recipients.Count == 0) continue;
-
-                var data = new EmailOpportunityVerification
+                var data = new NotificationOpportunityVerification
                 {
-                  YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(emailType),
+                  YoIDURL = _notificationURLFactory.OpportunityVerificationYoIDURL(notificationType),
                   Opportunities = []
                 };
 
                 foreach (var myOp in group)
                 {
-                  data.Opportunities.Add(new EmailOpportunityVerificationItem
+                  data.Opportunities.Add(new NotificationOpportunityVerificationItem
                   {
                     Title = myOp.OpportunityTitle,
                     DateStart = myOp.DateStart,
                     DateEnd = myOp.DateEnd,
                     Comment = myOp.CommentVerification,
-                    URL = _emailURLFactory.OpportunityVerificationItemURL(emailType, myOp.OpportunityId, null),
+                    URL = _notificationURLFactory.OpportunityVerificationItemURL(notificationType, myOp.OpportunityId, null),
                     ZltoReward = myOp.ZltoReward,
                     YomaReward = myOp.YomaReward
                   });
                 }
 
-                await _emailProviderClient.Send(emailType, recipients, data);
+                await _notificationDeliveryService.Send(notificationType, recipients, data);
 
-                _logger.LogInformation("Successfully send email");
+                _logger.LogInformation("Successfully send notification");
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to send email");
+                _logger.LogError(ex, "Failed to send notification");
               }
             }
 
