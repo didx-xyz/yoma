@@ -31,6 +31,7 @@ if [ ! -z "${ADMIN_USER}" ]; then
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" \
     -d '{
+          "id": "'"55BA2D33-EC40-4EFE-B09F-190E9CEF49EB"'",
           "username": "'"${ADMIN_USER}"'",
           "enabled": true,
           "emailVerified": true,
@@ -78,6 +79,7 @@ if [ ! -z "${ORG_ADMIN_USER}" ]; then
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" \
     -d '{
+          "id": "'"398CBF5A-FB5C-49E8-96F4-B8D3D718F1A2"'",
           "username": "'"${ORG_ADMIN_USER}"'",
           "enabled": true,
           "emailVerified": true,
@@ -123,7 +125,7 @@ if [ ! -z "${YOMA_SYSTEM_USER}" ]; then
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" \
     -d '{
-          "id": "160CE61E-E275-48AD-93B7-5FF4A7704525",
+          "id": "'"160CE61E-E275-48AD-93B7-5FF4A7704525"'",
           "username": "'"${YOMA_SYSTEM_USER}"'",
           "enabled": true,
           "emailVerified": true,
@@ -169,7 +171,7 @@ if [ ! -z "${TEST_USER}" ]; then
     -H 'Content-Type: application/json' \
     -H "Authorization: bearer ${KC_JWT}" \
     -d '{
-          "id": "B75A7A05-9F7D-4E68-9325-EF3EF269D690"
+          "id": "'"B75A7A05-9F7D-4E68-9325-EF3EF269D690"'",
           "username": "'"${TEST_USER}"'",
           "enabled": true,
           "emailVerified": true,
