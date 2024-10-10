@@ -449,6 +449,27 @@ export const UserProfileForm: React.FC<{
           </div>
         )}
 
+        {filterOptions?.includes(UserProfileFilterOptions.PHONENUMBER) && (
+          <div className="form-control">
+            <label className="label font-bold">
+              <span className="label-text">Phone Number</span>
+            </label>
+            <input
+              type="text"
+              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray"
+              {...register("phoneNumber")}
+              disabled={true}
+            />
+            {formState.errors.phoneNumber && (
+              <label className="label font-bold">
+                <span className="label-text-alt italic text-red-500">
+                  {`${formState.errors.phoneNumber.message}`}
+                </span>
+              </label>
+            )}
+          </div>
+        )}
+
         {filterOptions?.includes(UserProfileFilterOptions.COUNTRY) && (
           <div className="form-control">
             <label className="label font-bold">
