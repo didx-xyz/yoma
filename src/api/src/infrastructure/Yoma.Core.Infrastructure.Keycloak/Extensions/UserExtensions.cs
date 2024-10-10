@@ -14,7 +14,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Extensions
       {
         Id = Guid.Parse(kcUser.Id),
         Username = kcUser.Username,
-        Email = kcUser.Email.Trim(),
+        Email = kcUser.Email?.Trim(),
         FirstName = kcUser.FirstName.Trim(),
         LastName = kcUser.LastName.Trim(),
         Country = kcUser.Attributes.ContainsKey(CustomAttributes.Country.ToDescription()) ? kcUser.Attributes[CustomAttributes.Country.ToDescription()].FirstOrDefault()?.Trim() : null,
