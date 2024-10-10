@@ -7,11 +7,6 @@ userProfile:
   attributes:
     - name: username
       displayName: "${username}"
-      # validations:
-      #   length:
-      #     min: 3
-      #     max: 255
-      #   username-prohibited-characters: {}
     - name: phoneNumber
       displayName: "Phone number"
       permissions:
@@ -20,11 +15,6 @@ userProfile:
           - user
         edit:
           - user
-      # required:
-      #   roles:
-      #     - user
-      #   scopes:
-      #     - phone
       selector:
         scopes: []
       validations:
@@ -350,16 +340,8 @@ userProfile:
             - Zambia
             - Zimbabwe
             - Worldwide
-      # required:
-      #   roles:
-      #     - user
-      #   scopes: []
     - name: dateOfBirth
       displayName: Date of birth
-      # required:
-      #   roles:
-      #     - user
-      #   scopes: []
       permissions:
         edit:
           - user
@@ -388,10 +370,6 @@ userProfile:
             - Male
             - Female
             - Prefer not to say
-      # required:
-      #   roles:
-      #     - user
-      #   scopes: []
     - name: education
       displayName: Education
       selector:
@@ -412,10 +390,6 @@ userProfile:
             - Secondary
             - Tertiary
             - No formal education
-      # required:
-      #   roles:
-      #     - user
-      #   scopes: []
     - name: terms_and_conditions
       displayName: "Terms & conditions accepted"
       required:
