@@ -84,12 +84,12 @@ namespace Yoma.Core.Domain.Entity.Services
     #endregion
 
     #region Public Members
-    public User GetByUsername(string? username, bool includeChildItems, bool includeComputed)
+    public User GetByUsername(string username, bool includeChildItems, bool includeComputed)
     {
       if (string.IsNullOrWhiteSpace(username))
         throw new ArgumentNullException(nameof(username));
 
-      var result = GetByUsername(username, includeChildItems, includeComputed)
+      var result = GetByUsernameOrNull(username, includeChildItems, includeComputed)
           ?? throw new EntityNotFoundException($"User with username '{username}' does not exist");
 
       return result;
@@ -97,9 +97,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public User? GetByUsernameOrNull(string? username, bool includeChildItems, bool includeComputed)
     {
-      if (string.IsNullOrWhiteSpace(username))
-        throw new ArgumentNullException(nameof(username));
-      username = username.Trim();
+      username = username?.Trim();
+      if (string.IsNullOrEmpty(username)) return null;
 
       if (username.Contains('@'))
         return GetByEmailOrNull(username, includeChildItems, includeComputed);
@@ -109,9 +108,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public User? GetByEmailOrNull(string? email, bool includeChildItems, bool includeComputed)
     {
-      if (string.IsNullOrWhiteSpace(email))
-        throw new ArgumentNullException(nameof(email));
-      email = email.Trim();
+      email = email?.Trim();
+      if (string.IsNullOrEmpty(email)) return null;
 
       var query = _userRepository.Query(includeChildItems)
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
@@ -134,10 +132,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public User? GetByPhoneOrNull(string? phoneNumber, bool includeChildItems, bool includeComputed)
     {
-      if (string.IsNullOrWhiteSpace(phoneNumber))
-        throw new ArgumentNullException(nameof(phoneNumber));
-      phoneNumber = phoneNumber.Trim();
-
+      phoneNumber = phoneNumber?.Trim();
+      if (string.IsNullOrEmpty(phoneNumber)) return null;
       var query = _userRepository.Query(includeChildItems)
           .Where(o => !string.IsNullOrEmpty(o.PhoneNumber) && o.PhoneNumber == phoneNumber);
 
@@ -323,7 +319,7 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public async Task<User> UpsertPhoto(string? username, IFormFile? file)
+    public async Task<User> UpsertPhoto(string username, IFormFile? file)
     {
       var result = GetByUsername(username, true, true);
 
@@ -363,7 +359,7 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public async Task<User> UpdateSettings(string? username, List<string>? roles, SettingsRequest request)
+    public async Task<User> UpdateSettings(string username, List<string>? roles, SettingsRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -426,7 +422,7 @@ namespace Yoma.Core.Domain.Entity.Services
       });
     }
 
-    public async Task<User> YoIDOnboard(string? username)
+    public async Task<User> YoIDOnboard(string username)
     {
       var result = GetByUsername(username, true, true);
 

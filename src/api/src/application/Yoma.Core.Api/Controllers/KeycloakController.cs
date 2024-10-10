@@ -5,7 +5,7 @@ using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
-using Yoma.Core.Domain.Lookups.Interfaces; 
+using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.Keycloak.Models;
@@ -142,7 +142,17 @@ namespace Yoma.Core.Api.Controllers
         return;
       }
 
+      // try to locate the user based on their external Keycloak ID.
+      // this is the preferred lookup since users who have already completed their first login
+      // will have an external ID stored in the system.
       var userRequest = _userService.GetByExternalIdOrNull(kcUser.Id, false, false)?.ToUserRequest();
+
+      // if no user is found by their external ID, fall back to locating the user by their username.
+      // this caters to cases where the user was created in Yoma (via B2B integration) before
+      // registering and completing their first login. In such cases, the external ID won't exist yet.
+      // also, handle test users on the development environment who might not have an associated external ID.
+      // a user cannot change their phone number or email address until they have completed their first login.
+      userRequest ??= _userService.GetByUsernameOrNull(kcUser.Username, false, false)?.ToUserRequest();
 
       switch (type)
       {
@@ -159,7 +169,7 @@ namespace Yoma.Core.Api.Controllers
           }
 
           //TODO: Confirm phone number / email update, resulting in username change happens as a profile update event
-          userRequest.Username = kcUser.Username.Trim();  
+          userRequest.Username = kcUser.Username.Trim();
           userRequest.Email = kcUser.Email?.Trim();
           userRequest.FirstName = kcUser.FirstName.Trim();
           userRequest.Surname = kcUser.LastName.Trim();

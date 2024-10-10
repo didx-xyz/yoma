@@ -5,7 +5,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 {
   public interface IUserService
   {
-    User GetByUsername(string? username, bool includeChildItems, bool includeComputed);
+    User GetByUsername(string username, bool includeChildItems, bool includeComputed);
 
     User? GetByUsernameOrNull(string? username, bool includeChildItems, bool includeComputed);
 
@@ -33,13 +33,13 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<User> Upsert(UserRequest request);
 
-    Task<User> UpsertPhoto(string? username, IFormFile? file);
+    Task<User> UpsertPhoto(string username, IFormFile? file);
 
-    Task<User> UpdateSettings(string? username, List<string> roles, SettingsRequest request);
+    Task<User> UpdateSettings(string username, List<string> roles, SettingsRequest request);
 
     Task AssignSkills(User user, Opportunity.Models.Opportunity opportunity);
 
-    Task<User> YoIDOnboard(string? username);
+    Task<User> YoIDOnboard(string username);
 
     Task TrackLogin(UserRequestLoginEvent request);
   }

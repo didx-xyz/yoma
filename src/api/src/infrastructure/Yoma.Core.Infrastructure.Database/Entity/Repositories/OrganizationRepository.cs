@@ -81,6 +81,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
               entity.Administrators.Select(o => new Domain.Entity.Models.UserInfo
               {
                 Id = o.UserId,
+                Username = o.User.Email ?? o.User.PhoneNumber ?? string.Empty,
                 Email = o.User.Email,
                 FirstName = o.User.FirstName,
                 Surname = o.User.Surname,
