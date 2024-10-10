@@ -63,7 +63,7 @@ import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import { validateEmail } from "~/lib/validate";
+import { validateEmail, validatePhoneNumber } from "~/lib/validate";
 import type { LinkRequestCreateVerify } from "~/api/models/actionLinks";
 import { createLinkInstantVerify } from "~/api/services/actionLinks";
 import SocialPreview from "~/components/Opportunity/SocialPreview";
@@ -185,9 +185,7 @@ const LinkDetails: NextPageWithLayout<{
       }),
       dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
       lockToDistributionList: z.boolean().optional(),
-      distributionList: z
-        .union([z.array(z.string().email()), z.null()])
-        .optional(),
+      distributionList: z.union([z.array(z.string()), z.null()]).optional(),
     })
     .refine(
       (data) => {
@@ -217,21 +215,21 @@ const LinkDetails: NextPageWithLayout<{
         );
       },
       {
-        message: "Please enter at least one email address.",
+        message: "Please enter at least one email address or phone number.",
         path: ["distributionList"],
       },
     )
     .refine(
       (data) => {
-        // validate all items are valid email addresses
-        return (
-          data.distributionList == null ||
-          data.distributionList?.every((email) => validateEmail(email))
+        // validate all items are valid email addresses or phone numbers
+        return data.distributionList?.every(
+          (userName) =>
+            validateEmail(userName) || validatePhoneNumber(userName),
         );
       },
       {
         message:
-          "Please enter valid email addresses e.g. name@domain.com. One or more email address are wrong.",
+          "Please enter valid email addresses (name@gmail.com) or phone numbers (+27125555555).",
         path: ["distributionList"],
       },
     )
@@ -978,7 +976,8 @@ const LinkDetails: NextPageWithLayout<{
                           className="checkbox-secondary checkbox"
                         />
                         <span className="label-text ml-4">
-                          Only emails entered below can use this link.
+                          Only emails or phone numbers entered below can use
+                          this link.
                         </span>
                       </label>
                       {formStateStep2.errors.lockToDistributionList && (

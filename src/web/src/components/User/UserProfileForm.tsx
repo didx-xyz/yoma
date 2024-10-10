@@ -68,6 +68,7 @@ export const UserProfileForm: React.FC<{
     genderId: userProfile?.genderId ?? "",
     dateOfBirth: userProfile?.dateOfBirth ?? "",
     resetPassword: false,
+    updatePhoneNumber: false,
   });
   const queryClient = useQueryClient();
 
@@ -90,13 +91,13 @@ export const UserProfileForm: React.FC<{
     firstName: zod.string().min(1, "First name is required."),
     surname: zod.string().min(1, "Last name is required."),
     displayName: zod.string().min(1, "Display name is required"),
-    phoneNumber: zod
-      .string()
-      .min(1, "Phone number is required.")
-      .regex(
-        /^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$/,
-        "Phone number is invalid",
-      ),
+    // phoneNumber: zod
+    //   .string()
+    //   .min(1, "Phone number is required.")
+    //   .regex(
+    //     /^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$/,
+    //     "Phone number is invalid",
+    //   ),
     countryId: zod.string().min(1, "Country is required."),
     educationId: zod.string().min(1, "Education is required."),
     genderId: zod.string().min(1, "Gender is required."),
@@ -327,8 +328,9 @@ export const UserProfileForm: React.FC<{
             </label>
             <input
               type="text"
-              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray"
               {...register("phoneNumber")}
+              disabled={true}
             />
             {formState.errors.phoneNumber && (
               <label className="label font-bold">

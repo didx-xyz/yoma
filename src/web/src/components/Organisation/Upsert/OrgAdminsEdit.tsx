@@ -24,28 +24,28 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
   const schema = zod
     .object({
       addCurrentUserAsAdmin: zod.boolean().optional(),
-      adminEmails: zod.array(zod.string()).optional(),
+      admins: zod.array(zod.string()).optional(),
       ssoClientIdInbound: zod.string().optional(),
       ssoClientIdOutbound: zod.string().optional(),
     })
     .superRefine((values, ctx) => {
-      // adminEmails is required if addCurrentUserAsAdmin is false
+      // admins is required if addCurrentUserAsAdmin is false
       if (
         !values.addCurrentUserAsAdmin &&
-        (values.adminEmails == null || values.adminEmails?.length < 1)
+        (values.admins == null || values.admins?.length < 1)
       ) {
         ctx.addIssue({
           message:
-            "At least one Admin Additional Email is required if you are not the organisation admin.",
+            "At least one user is required if you are not the organisation admin.",
           code: zod.ZodIssueCode.custom,
-          path: ["adminEmails"],
+          path: ["admins"],
         });
       }
     })
     .refine(
       (data) => {
         // validate all items are valid email addresses or phone numbers
-        return data.adminEmails?.every(
+        return data.admins?.every(
           (userName) =>
             validateEmail(userName) || validatePhoneNumber(userName),
         );
@@ -53,7 +53,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
       {
         message:
           "Please enter valid email addresses (name@gmail.com) or phone numbers (+27125555555).",
-        path: ["adminEmails"],
+        path: ["admins"],
       },
     );
 
@@ -113,13 +113,13 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
           </label>
 
           <Controller
-            name="adminEmails"
+            name="admins"
             control={form.control}
-            defaultValue={organisation?.adminEmails}
+            defaultValue={organisation?.admins}
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             render={({ field: { onChange, value } }) => (
               <CreatableSelect
-                options={organisation?.adminEmails?.map((val) => ({
+                options={organisation?.admins?.map((val) => ({
                   label: val,
                   value: val,
                 }))}
@@ -140,11 +140,11 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
               />
             )}
           />
-          {formState.errors.adminEmails && (
+          {formState.errors.admins && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
                 {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
-                {`${formState.errors.adminEmails.message}`}
+                {`${formState.errors.admins.message}`}
               </span>
             </label>
           )}

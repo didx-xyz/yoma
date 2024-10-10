@@ -8,6 +8,7 @@ export interface User {
   surname: string;
   displayName: string | null;
   phoneNumber: string | null;
+  phoneNumberConfirmed: boolean;
   countryId: string | null;
   countryOfResidenceId: string | null;
   genderId: string | null;
@@ -25,6 +26,7 @@ export interface User {
 }
 
 export interface UserRequestProfile extends UserRequestBase {
+  updatePhoneNumber: boolean;
   resetPassword: boolean;
 }
 
@@ -48,6 +50,7 @@ export interface UserProfile {
   surname: string;
   displayName: string | null;
   phoneNumber: string | null;
+  phoneNumberConfirmed: boolean;
   countryId: string | null;
   educationId: string | null;
   genderId: string | null;
