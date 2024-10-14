@@ -36,6 +36,7 @@ export enum UserProfileFilterOptions {
   GENDER = "gender",
   DATEOFBIRTH = "dateOfBirth",
   RESETPASSWORD = "resetPassword",
+  UPDATEPHONENUMBER = "updatePhoneNumber",
   LOGO = "logo",
 }
 
@@ -111,6 +112,7 @@ export const UserProfileForm: React.FC<{
       })
       .max(new Date(), { message: "Date of Birth cannot be in the future." }),
     resetPassword: zod.boolean(),
+    updatePhoneNumber: zod.boolean(),
   });
 
   const form = useForm({
@@ -143,7 +145,7 @@ export const UserProfileForm: React.FC<{
     if (!formData.educationId) formData.educationId = "";
     if (!formData.genderId) formData.genderId = "";
 
-    formData.resetPassword = false;
+    //formData.resetPassword = false;
 
     // reset form
     // setTimeout is needed to prevent the form from being reset before the default values are set
@@ -337,6 +339,21 @@ export const UserProfileForm: React.FC<{
                 <span className="label-text-alt italic text-red-500">
                   {`${formState.errors.phoneNumber.message}`}
                 </span>
+              </label>
+            )}
+
+            {!formState.errors.phoneNumber && (
+              <label
+                htmlFor="updatePhoneNumber"
+                className="label w-full cursor-pointer justify-normal"
+              >
+                <input
+                  {...register(`updatePhoneNumber`)}
+                  type="checkbox"
+                  id="updatePhoneNumber"
+                  className="checkbox-primary checkbox"
+                />
+                <span className="label-text ml-4">Update Phone Number</span>
               </label>
             )}
           </div>
