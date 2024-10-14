@@ -13,6 +13,7 @@ namespace Yoma.Core.Domain.IdentityProvider.Models
     public string LastName { get; set; }
 
     public string? PhoneNumber { get; set; }
+
     public string? Gender { get; set; }
 
     public string? Country { get; set; }

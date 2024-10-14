@@ -112,9 +112,10 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         FirstName = user.FirstName,
         LastName = user.LastName,
         Attributes = [],
-        Username = user.Email,
-        Email = user.Email,
-        EmailVerified = user.EmailVerified
+        Username = user.Username,
+        Email = user.Email ?? string.Empty,
+        EmailVerified = user.EmailVerified,
+        RequiredActions = []
       };
 
       if (!string.IsNullOrEmpty(user.Country))
@@ -129,28 +130,24 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (!string.IsNullOrEmpty(user.Gender))
         request.Attributes.Add(CustomAttributes.Gender.ToDescription(), new List<string> { { user.Gender } });
 
-      if (!string.IsNullOrEmpty(user.PhoneNumber))
-        request.Attributes.Add(CustomAttributes.PhoneNumber.ToDescription(), new List<string> { { user.PhoneNumber } });
-
       try
       {
-        // update user details and include the required actions for updating the phone number, if applicable
-        if (updatePhoneNumber)
-        {
-          request.RequiredActions ??= [];
-          if(!request.RequiredActions.Contains("UPDATE_PHONE_NUMBER")) request.RequiredActions.Add("UPDATE_PHONE_NUMBER");
-        }
+        // if updating the phone number, add the "UPDATE_PHONE_NUMBER" action
+        if (updatePhoneNumber) request.RequiredActions.Add("UPDATE_PHONE_NUMBER");
 
-        // update user details
+        // if resetting the password and the user has no email, add "UPDATE_PASSWORD" as a non - email action
+        if (resetPassword && string.IsNullOrEmpty(request.Email)) request.RequiredActions.Add("UPDATE_PASSWORD");
+
+        // update user details in keycloak
         await userApi.PutUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), request);
 
-        // send verify email
+        // send verify email if required
         if (sendVerifyEmail)
-          await userApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString()); //admin initiated email (executeActions); same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
+          await userApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString()); // same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
 
-        // send reset password email
-        if (resetPassword)
-          await userApi.PutUsersExecuteActionsEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); //admin initiated verify email action (executeActions)
+        // if resetting the password and the user has an email, trigger the password reset email action
+        if (resetPassword && !string.IsNullOrEmpty(request.Email))
+          await userApi.PutUsersExecuteActionsEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); // admin initiated update password email action (executeActions)
       }
       catch (Exception ex)
       {
