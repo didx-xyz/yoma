@@ -134,6 +134,13 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
       try
       {
+        // update user details and include the required actions for updating the phone number, if applicable
+        if (updatePhoneNumber)
+        {
+          request.RequiredActions ??= [];
+          if(!request.RequiredActions.Contains("UPDATE_PHONE_NUMBER")) request.RequiredActions.Add("UPDATE_PHONE_NUMBER");
+        }
+
         // update user details
         await userApi.PutUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), request);
 
@@ -144,9 +151,6 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         // send reset password email
         if (resetPassword)
           await userApi.PutUsersExecuteActionsEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); //admin initiated verify email action (executeActions)
-
-        if (updatePhoneNumber)
-          await userApi.PutUsersExecuteActionsEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PHONE_NUMBER"]); //admin initiated update phone number action (executeActions)
       }
       catch (Exception ex)
       {
