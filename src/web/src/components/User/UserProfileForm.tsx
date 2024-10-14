@@ -24,6 +24,7 @@ import { useSession } from "next-auth/react";
 import { useSetAtom } from "jotai";
 import { userProfileAtom } from "~/lib/store";
 import { Loading } from "../Status/Loading";
+import FormMessage, { FormMessageType } from "../Common/FormMessage";
 
 export enum UserProfileFilterOptions {
   EMAIL = "email",
@@ -36,7 +37,6 @@ export enum UserProfileFilterOptions {
   GENDER = "gender",
   DATEOFBIRTH = "dateOfBirth",
   RESETPASSWORD = "resetPassword",
-  UPDATEPHONENUMBER = "updatePhoneNumber",
   LOGO = "logo",
 }
 
@@ -119,7 +119,9 @@ export const UserProfileForm: React.FC<{
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { register, handleSubmit, formState, reset } = form;
+  const { register, handleSubmit, formState, reset, watch } = form;
+  const watchUpdatePhoneNumber = watch("updatePhoneNumber");
+  const watchResetPassword = watch("resetPassword");
 
   // set default values
   useEffect(() => {
@@ -328,34 +330,48 @@ export const UserProfileForm: React.FC<{
             <label className="label font-bold">
               <span className="label-text">Phone Number</span>
             </label>
-            <input
-              type="text"
-              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray"
-              {...register("phoneNumber")}
-              disabled={true}
-            />
+
             {formState.errors.phoneNumber && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.phoneNumber.message}`}
-                </span>
-              </label>
+              <>
+                <input
+                  type="text"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray"
+                  {...register("phoneNumber")}
+                  disabled={true}
+                />
+                {formState.errors.phoneNumber && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${formState.errors.phoneNumber.message}`}
+                    </span>
+                  </label>
+                )}
+              </>
             )}
 
             {/* allow update phone number if no phone number specified */}
             {!formState.errors.phoneNumber && (
-              <label
-                htmlFor="updatePhoneNumber"
-                className="label w-full cursor-pointer justify-normal"
-              >
-                <input
-                  {...register(`updatePhoneNumber`)}
-                  type="checkbox"
-                  id="updatePhoneNumber"
-                  className="checkbox-primary checkbox"
-                />
-                <span className="label-text ml-4">Update Phone Number</span>
-              </label>
+              <>
+                <label
+                  htmlFor="updatePhoneNumber"
+                  className="label w-full cursor-pointer justify-normal"
+                >
+                  <input
+                    {...register(`updatePhoneNumber`)}
+                    type="checkbox"
+                    id="updatePhoneNumber"
+                    className="checkbox-primary checkbox"
+                  />
+                  <span className="label-text ml-4">Update Phone Number</span>
+                </label>
+
+                {watchUpdatePhoneNumber && (
+                  <FormMessage messageType={FormMessageType.Info}>
+                    You will be prompted to verify your phone number on your
+                    next login.
+                  </FormMessage>
+                )}
+              </>
             )}
           </div>
         )}
@@ -484,6 +500,10 @@ export const UserProfileForm: React.FC<{
 
         {filterOptions?.includes(UserProfileFilterOptions.RESETPASSWORD) && (
           <div className="form-control">
+            <label className="label font-bold">
+              <span className="label-text">Password</span>
+            </label>
+
             <label
               htmlFor="resetPassword"
               className="label w-full cursor-pointer justify-normal"
@@ -503,6 +523,13 @@ export const UserProfileForm: React.FC<{
                   {`${formState.errors.resetPassword.message}`}
                 </span>
               </label>
+            )}
+
+            {watchResetPassword && (
+              <FormMessage messageType={FormMessageType.Info}>
+                You will receive an email with instructions on how to reset your
+                password.
+              </FormMessage>
             )}
           </div>
         )}
