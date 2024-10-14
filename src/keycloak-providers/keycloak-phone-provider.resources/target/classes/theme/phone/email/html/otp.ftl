@@ -1,1 +1,0 @@
-<html> <body> <p>Hello ${user.firstName} ${user.lastName},</p> <p>Your One-Time Password (OTP) is: <strong>${otp}</strong></p> <p>Please use this OTP to complete your login or verification process.</p> <p>If you did not request this OTP, please ignore this email.</p> <p>Best regards,<br>Your Company</p> </body> </html>

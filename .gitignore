@@ -9,6 +9,9 @@
 **/public/workbox-*.js.map
 **/public/worker-*.js.map
 
+# Ignore the Maven Target Dirs which contain build artifacts
+src/keycloak-providers/**/target
+
 # Created by https://www.toptal.com/developers/gitignore/api/node,yarn,linux,macos,csharp,nextjs,windows,aspnetcore,dotnetcore,sublimetext,intellij+all,visualstudio,visualstudiocode
 # Edit at https://www.toptal.com/developers/gitignore?templates=node,yarn,linux,macos,csharp,nextjs,windows,aspnetcore,dotnetcore,sublimetext,intellij+all,visualstudio,visualstudiocode
 
