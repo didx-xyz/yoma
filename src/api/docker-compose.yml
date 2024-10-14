@@ -102,20 +102,21 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: password
       KC_LOG_LEVEL: INFO
+      # Custom providers
+      KC_SPI_PHONE_DEFAULT_SERVICE: dummy
+      # KC_SPI_PHONE_DEFAULT_SERVICE: twilio
+      # KC_SPI_SENDER_SERVICE_TWILIO_SID: your_account_sid
+      # KC_SPI_SENDER_SERVICE_TWILIO_TOKEN: your_auth_token
+      # KC_SPI_SENDER_SERVICE_TWILIO_NUMBER: your_number
+      KC_SPI_PHONE_DEFAULT_TOKEN_EXPIRES_IN: 120 # sms expires, 120 seconds
+      # Notice: will match after canonicalize number. eg: INTERNATIONAL: +41 44 668 18 00 , NATIONAL: 044 668 18 00 , E164: +41446681800
+      KC_SPI_PHONE_DEFAULT_YOMA_DEFAULT_NUMBER_REGEX: ^\\+?\\d+$
     ports:
       - 0.0.0.0:8080:8080
     command:
-      - "start-dev"
-      - "--db=postgres"
-      - "--features=declarative-user-profile"
-      # custom providers
-      - "--spi-phone-default-service=dummy"
-      # - "--spi-phone-default-service=twilio" # Twilio sms provider
-      # - "--spi-message-sender-service-twilio-account=your_account_sid"
-      # - "--spi-message-sender-service-twilio-token=your_auth_token"
-      # - "--spi-message-sender-service-twilio-number=your_number"
-      - "--spi-phone-default-token-expires-in=120" # sms expires, 120 seconds
-      - "--spi-phone-default-yoma-default-number-regex=^\\+?\\d+$" #Notice: will match after canonicalize number. eg: INTERNATIONAL: +41 44 668 18 00 , NATIONAL: 044 668 18 00 , E164: +41446681800
+      - start-dev
+      - --db=postgres
+      - --features=declarative-user-profile
     depends_on:
       keycloak-init:
         condition: service_completed_successfully
