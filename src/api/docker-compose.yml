@@ -61,19 +61,12 @@ services:
     user: root
     command: |
       sh -c 'curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.3.0/keycloak-webhook-0.3.0-all.jar \
-      -o /opt/keycloak/providers/keycloak-webhook-0.3.0.jar && \
-      chown 1000:1000 /opt/keycloak/providers/keycloak-webhook-0.3.0.jar && \
-      cp /local-providers/keycloak-phone-provider.jar /opt/keycloak/providers/keycloak-phone-provider.jar && \
-      chown 1000:1000 /opt/keycloak/providers/keycloak-phone-provider.jar /opt/keycloak/providers/keycloak-phone-provider.jar && \
-      cp /local-providers/keycloak-phone-provider.resources.jar /opt/keycloak/providers/keycloak-phone-provider.resources.jar && \
-      chown 1000:1000 /opt/keycloak/providers/keycloak-phone-provider.resources.jar /opt/keycloak/providers/keycloak-phone-provider.resources.jar && \
-      cp /local-providers/keycloak-sms-provider-twilio.jar /opt/keycloak/providers/keycloak-sms-provider-twilio.jar && \
-      chown 1000:1000 /opt/keycloak/providers/keycloak-sms-provider-twilio.jar /opt/keycloak/providers/keycloak-sms-provider-twilio.jar && \
-      cp /local-providers/keycloak-sms-provider-dummy.jar /opt/keycloak/providers/keycloak-sms-provider-dummy.jar && \
-      chown 1000:1000 /opt/keycloak/providers/keycloak-sms-provider-dummy.jar /opt/keycloak/providers/keycloak-sms-provider-dummy.jar'
+        -o /opt/keycloak/providers/keycloak-webhook-0.3.0.jar && \
+        cp /local-providers/*.jar /opt/keycloak/providers/ && \
+        chown -R 1000:1000 /opt/keycloak/providers'
     volumes:
       - keycloak:/opt/keycloak/providers
-      - ../keycloak/providers:/local-providers # our custom JAR folder, mounted in a separate directory and copied to container
+      - ../keycloak/providers/jars:/local-providers # our custom JAR folder, mounted in a separate directory and copied to container
 
   keycloak-pg:
     image: postgres:16-alpine
