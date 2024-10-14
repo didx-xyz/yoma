@@ -290,17 +290,17 @@ keycloak:
       value: json
     - name: KC_SPI_PHONE_DEFAULT_SERVICE
       value: twilio
-    - name: KC_SPI_SENDER_SERVICE_TWILIO_SID
+    - name: KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_ACCOUNT
       valueFrom:
         secretKeyRef:
           name: {{ include "keycloak.fullname" . }}-twilio
           key: sid
-    - name: KC_SPI_SENDER_SERVICE_TWILIO_TOKEN
+    - name: KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_TOKEN
       valueFrom:
         secretKeyRef:
           name: {{ include "keycloak.fullname" . }}-twilio
           key: token
-    - name: KC_SPI_SENDER_SERVICE_TWILIO_NUMBER
+    - name: KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_NUMBER
       valueFrom:
         secretKeyRef:
           name: {{ include "keycloak.fullname" . }}-twilio
