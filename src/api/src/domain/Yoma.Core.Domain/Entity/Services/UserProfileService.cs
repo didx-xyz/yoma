@@ -127,7 +127,8 @@ namespace Yoma.Core.Domain.Entity.Services
       //if (_userService.GetByEmailOrNull(request.Email, false, false) != null)
       //throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
 
-      if (request.UpdatePhoneNumber)
+      //phone number updates: pending ZLTO integration and ability to update wallet phone number
+      if (!string.IsNullOrEmpty(user.PhoneNumber) && request.UpdatePhoneNumber)
         throw new ValidationException("Phone number updates are currently restricted. Please contact support for assistance");
 
       user.Email = request.Email?.ToLower();
