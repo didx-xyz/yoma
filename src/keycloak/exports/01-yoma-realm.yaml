@@ -1353,7 +1353,7 @@ smtpServer:
 loginTheme: phone
 accountTheme: ""
 adminTheme: ""
-emailTheme: yoma
+emailTheme: phone
 eventsEnabled: true
 eventsListeners:
   - jboss-logging

@@ -342,6 +342,7 @@ export const UserProfileForm: React.FC<{
               </label>
             )}
 
+            {/* allow update phone number if no phone number specified */}
             {!formState.errors.phoneNumber && (
               <label
                 htmlFor="updatePhoneNumber"
