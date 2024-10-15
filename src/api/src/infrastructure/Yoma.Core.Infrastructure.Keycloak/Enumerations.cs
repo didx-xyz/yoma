@@ -26,7 +26,7 @@ namespace Yoma.Core.Infrastructure.Keycloak
     [Description("REGISTER")]
     Register,
     [Description("UPDATE_PROFILE")]
-    UpdateProfile,
+    Update_Profile,
     [Description("LOGIN")]
     Login
   }

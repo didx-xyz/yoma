@@ -99,7 +99,7 @@ namespace Yoma.Core.Api.Controllers
             switch (type)
             {
               case WebhookRequestEventType.Register:
-              case WebhookRequestEventType.UpdateProfile:
+              case WebhookRequestEventType.Update_Profile:
               case WebhookRequestEventType.Login:
                 _logger.LogInformation("{type} event processing", type);
 
@@ -157,10 +157,10 @@ namespace Yoma.Core.Api.Controllers
       switch (type)
       {
         case WebhookRequestEventType.Register:
-        case WebhookRequestEventType.UpdateProfile:
+        case WebhookRequestEventType.Update_Profile:
           if (userRequest == null)
           {
-            if (type == WebhookRequestEventType.UpdateProfile)
+            if (type == WebhookRequestEventType.Update_Profile)
             {
               _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
               return;
@@ -168,7 +168,8 @@ namespace Yoma.Core.Api.Controllers
             userRequest = new UserRequest();
           }
 
-          //TODO: Confirm phone number / email update, resulting in username change happens as a profile update event
+          _logger.LogInformation("{type}: User phone number '{phoneNumber}'", type, kcUser.PhoneNumber?.Trim());
+
           userRequest.Username = kcUser.Username.Trim();
           userRequest.Email = kcUser.Email?.Trim();
           userRequest.FirstName = kcUser.FirstName.Trim();
@@ -216,7 +217,7 @@ namespace Yoma.Core.Api.Controllers
               userRequest.DateOfBirth = dateOfBirth;
           }
 
-          if (type == WebhookRequestEventType.UpdateProfile) break;
+          if (type == WebhookRequestEventType.Update_Profile) break;
 
           try
           {

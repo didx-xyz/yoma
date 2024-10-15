@@ -122,6 +122,7 @@ export const UserProfileForm: React.FC<{
   const { register, handleSubmit, formState, reset, watch } = form;
   const watchUpdatePhoneNumber = watch("updatePhoneNumber");
   const watchResetPassword = watch("resetPassword");
+  const watchPhoneNumber = watch("phoneNumber");
 
   // set default values
   useEffect(() => {
@@ -331,7 +332,7 @@ export const UserProfileForm: React.FC<{
               <span className="label-text">Phone Number</span>
             </label>
 
-            {formState.errors.phoneNumber && (
+            {watchPhoneNumber && (
               <>
                 <input
                   type="text"

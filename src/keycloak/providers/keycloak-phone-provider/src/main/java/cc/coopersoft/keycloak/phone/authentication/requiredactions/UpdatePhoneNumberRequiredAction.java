@@ -1,5 +1,13 @@
 package cc.coopersoft.keycloak.phone.authentication.requiredactions;
 
+import org.keycloak.authentication.RequiredActionContext;
+import org.keycloak.authentication.RequiredActionProvider;
+import org.keycloak.events.EventType;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.KeycloakTransaction;
+import org.keycloak.models.UserModel;
+import org.keycloak.services.validation.Validation;
+
 import cc.coopersoft.keycloak.phone.Utils;
 import cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages;
 import cc.coopersoft.keycloak.phone.providers.exception.PhoneNumberInvalidException;
@@ -7,14 +15,6 @@ import cc.coopersoft.keycloak.phone.providers.spi.PhoneVerificationCodeProvider;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.core.Response;
-
-import org.keycloak.authentication.RequiredActionContext;
-import org.keycloak.authentication.RequiredActionProvider;
-import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.UserModel;
-import org.keycloak.services.validation.Validation;
-import org.keycloak.userprofile.UserProfile;
-import org.keycloak.userprofile.UserProfileProvider;
 
 public class UpdatePhoneNumberRequiredAction implements RequiredActionProvider {
 
@@ -39,18 +39,20 @@ public class UpdatePhoneNumberRequiredAction implements RequiredActionProvider {
 
         // Extract the email from the user profile
         String email = context.getUser().getEmail();
+        // get user's current phone number
+        String currentPhoneNumber = context.getUser().getFirstAttribute("phoneNumber");
 
         KeycloakSession session = context.getSession();
 
         try {
             // Canonicalize phone number
-            phoneNumber = Utils.canonicalizePhoneNumber(context.getSession(), phoneNumber);
+            final String canonicalPhoneNumber = Utils.canonicalizePhoneNumber(context.getSession(), phoneNumber);
 
-            // Check for duplicate phone numbers
-            if (Utils.findUserByPhone(session, context.getRealm(), phoneNumber).isPresent()) {
+            // Check for duplicate phone numbers if user's phone number has changed
+            if (!canonicalPhoneNumber.equals(currentPhoneNumber) && Utils.findUserByPhone(session, context.getRealm(), canonicalPhoneNumber).isPresent()) {
                 // Handle duplicate phone number
                 Response challenge = context.form()
-                        .setAttribute("phoneNumber", phoneNumber)
+                        .setAttribute("phoneNumber", canonicalPhoneNumber)
                         .setError(SupportPhonePages.Errors.EXISTS.message())
                         .createForm("login-update-phone-number.ftl");
                 context.challenge(challenge);
@@ -58,16 +60,56 @@ public class UpdatePhoneNumberRequiredAction implements RequiredActionProvider {
             }
 
             // Validate the verification code
-            phoneVerificationCodeProvider.validateCode(context.getUser(), phoneNumber, code);
+            phoneVerificationCodeProvider.validateCode(context.getUser(), canonicalPhoneNumber, code);
 
             // If email is blank, set the username to the phone number
             if (Validation.isBlank(email)) {
                 UserModel user = context.getUser();
-                user.setUsername(phoneNumber);
+                user.setUsername(canonicalPhoneNumber);
             }
 
-            context.success();
+            // Register a transaction listener to fire the UPDATE_PROFILE event after the transaction is committed
+            // Get the KeycloakTransactionManager and register the transaction completion listener
+            session.getTransactionManager().enlistAfterCompletion(new KeycloakTransaction() {
+                @Override
+                public void begin() {
+                    // Optional: No action required at the beginning of the transaction
+                }
 
+                @Override
+                public void commit() {
+
+                    // Fire the UPDATE_PROFILE event after the transaction is committed
+                    context.getEvent().event(EventType.UPDATE_PROFILE)
+                            .client(context.getAuthenticationSession().getClient())
+                            .user(context.getUser())
+                            .realm(context.getRealm())
+                            .detail("updated_phone_number", canonicalPhoneNumber) // Add any relevant details
+                            .success();
+                }
+
+                @Override
+                public void rollback() {
+                    // Optional: handle rollback if necessary
+                }
+
+                @Override
+                public void setRollbackOnly() {
+                    // Optional: handle rollback-only case
+                }
+
+                @Override
+                public boolean getRollbackOnly() {
+                    return false;
+                }
+
+                @Override
+                public boolean isActive() {
+                    return true;
+                }
+            });
+
+            context.success();
         } catch (BadRequestException e) {
             // Handle bad request
             Response challenge = context.form()
