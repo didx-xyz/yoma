@@ -25,6 +25,7 @@ import { useSetAtom } from "jotai";
 import { userProfileAtom } from "~/lib/store";
 import { Loading } from "../Status/Loading";
 import FormMessage, { FormMessageType } from "../Common/FormMessage";
+import { validateEmail } from "~/lib/validate";
 
 export enum UserProfileFilterOptions {
   EMAIL = "email",
@@ -88,7 +89,19 @@ export const UserProfileForm: React.FC<{
   });
 
   const schema = zod.object({
-    email: zod.string().email().min(1, "Email is required."),
+    email: zod.string().refine(
+      (value) => {
+        // If userProfile.email exists, email is required and must be valid email
+        if (userProfile?.email) {
+          return value.length > 0 && validateEmail(value);
+        }
+        // If userProfile.email does not exist, email is optional
+        return true;
+      },
+      {
+        message: "Email is required.",
+      },
+    ),
     firstName: zod.string().min(1, "First name is required."),
     surname: zod.string().min(1, "Last name is required."),
     displayName: zod.string().min(1, "Display name is required"),
@@ -253,7 +266,6 @@ export const UserProfileForm: React.FC<{
             <input
               type="text"
               className="input input-bordered w-full rounded-md !border-gray !bg-gray-light focus:border-gray focus:outline-none"
-              disabled
               {...register("email")}
             />
             {formState.errors.email && (
@@ -351,29 +363,29 @@ export const UserProfileForm: React.FC<{
             )}
 
             {/* allow update phone number if no phone number specified */}
-            {!formState.errors.phoneNumber && (
-              <>
-                <label
-                  htmlFor="updatePhoneNumber"
-                  className="label w-full cursor-pointer justify-normal"
-                >
-                  <input
-                    {...register(`updatePhoneNumber`)}
-                    type="checkbox"
-                    id="updatePhoneNumber"
-                    className="checkbox-primary checkbox"
-                  />
-                  <span className="label-text ml-4">Update Phone Number</span>
-                </label>
+            {/* {!formState.errors.phoneNumber && ( */}
+            <>
+              <label
+                htmlFor="updatePhoneNumber"
+                className="label w-full cursor-pointer justify-normal"
+              >
+                <input
+                  {...register(`updatePhoneNumber`)}
+                  type="checkbox"
+                  id="updatePhoneNumber"
+                  className="checkbox-primary checkbox"
+                />
+                <span className="label-text ml-4">Update Phone Number</span>
+              </label>
 
-                {watchUpdatePhoneNumber && (
-                  <FormMessage messageType={FormMessageType.Info}>
-                    You will be prompted to verify your phone number on your
-                    next login.
-                  </FormMessage>
-                )}
-              </>
-            )}
+              {watchUpdatePhoneNumber && (
+                <FormMessage messageType={FormMessageType.Info}>
+                  You will be prompted to verify your phone number on your next
+                  login.
+                </FormMessage>
+              )}
+            </>
+            {/* )} */}
           </div>
         )}
 
