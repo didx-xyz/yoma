@@ -68,7 +68,7 @@ namespace Yoma.Core.Domain.Reward.Services
       if (string.IsNullOrEmpty(walletId))
         throw new EntityNotFoundException($"Wallet id not found for user with id '{userId}'");
 
-      if(string.IsNullOrEmpty(username))
+      if (string.IsNullOrEmpty(username))
         throw new InvalidOperationException($"Wallet id found for user with id '{userId}' but username is empty");
 
       return (username, walletId);
@@ -278,7 +278,7 @@ namespace Yoma.Core.Domain.Reward.Services
           if (string.IsNullOrEmpty(item.WalletId))
             throw new ArgumentNullException(nameof(item), "Wallet id required");
 
-          if(string.IsNullOrEmpty(item.Username))
+          if (string.IsNullOrEmpty(item.Username))
             throw new ArgumentNullException(nameof(item), "Wallet username required");
 
           if (!item.Balance.HasValue)

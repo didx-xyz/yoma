@@ -1216,7 +1216,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           NotificationType.Opportunity_Verification_Rejected or
           NotificationType.Opportunity_Verification_Completed or
           NotificationType.Opportunity_Verification_Pending =>
-              [ new() { Username = myOpportunity.Username, PhoneNumber = myOpportunity.UserPhoneNumber, Email = myOpportunity.UserEmail, DisplayName = myOpportunity.UserDisplayName } ],
+              [new() { Username = myOpportunity.Username, PhoneNumber = myOpportunity.UserPhoneNumber, Email = myOpportunity.UserEmail, DisplayName = myOpportunity.UserDisplayName }],
 
           NotificationType.Opportunity_Verification_Pending_Admin =>
               _organizationService.ListAdmins(myOpportunity.OrganizationId, false, false)

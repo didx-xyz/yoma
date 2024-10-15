@@ -31,7 +31,7 @@ namespace Yoma.Core.Domain.Notification.Services
       switch (type)
       {
         case NotificationType.ActionLink_Verify_Distribution:
-          return recipients; 
+          return recipients;
       }
 
       var setting = type switch
@@ -47,7 +47,7 @@ namespace Yoma.Core.Domain.Notification.Services
         // admin
         NotificationType.Organization_Approval_Requested => Setting.Admin_Notification_Organization_Approval,
         NotificationType.Opportunity_Posted_Admin => Setting.Admin_Notification_Opportunity_Posted,
-        NotificationType.ActionLink_Verify_Approval_Requested => Setting.Admin_Notification_ActionLink_Verify_Approval, 
+        NotificationType.ActionLink_Verify_Approval_Requested => Setting.Admin_Notification_ActionLink_Verify_Approval,
         _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported"),
       };
       var result = new List<NotificationRecipient>();

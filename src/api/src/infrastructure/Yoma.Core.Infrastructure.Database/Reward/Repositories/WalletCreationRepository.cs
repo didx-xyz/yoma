@@ -64,7 +64,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
 
       item.DateModified = DateTimeOffset.UtcNow;
 
-      entity.Username = item.Username;  
+      entity.Username = item.Username;
       entity.WalletId = item.WalletId;
       entity.Balance = item.Balance;
       entity.StatusId = item.StatusId;
