@@ -168,8 +168,6 @@ namespace Yoma.Core.Api.Controllers
             userRequest = new UserRequest();
           }
 
-          _logger.LogInformation("{type}: User phone number '{phoneNumber}'", type, kcUser.PhoneNumber?.Trim());
-
           userRequest.Username = kcUser.Username.Trim();
           userRequest.Email = kcUser.Email?.Trim();
           userRequest.FirstName = kcUser.FirstName.Trim();

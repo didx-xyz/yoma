@@ -120,16 +120,15 @@ namespace Yoma.Core.Domain.Entity.Services
         throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
       var externalId = user.ExternalId.Value;
 
+      if (!string.IsNullOrEmpty(user.Email) && string.IsNullOrEmpty(request.Email))
+        throw new ValidationException("Email is required");
+
       var emailUpdated = !(string.Equals(user.Email ?? string.Empty, request.Email ?? string.Empty, StringComparison.InvariantCultureIgnoreCase));
       if (emailUpdated)
-        //email address updates: pending ZLTO integration and ability to update wallet email address 
-        throw new ValidationException("Email address updates are currently restricted. Please contact support for assistance");
-      //if (_userService.GetByEmailOrNull(request.Email, false, false) != null)
-      //throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
-
-      //phone number updates: pending ZLTO integration and ability to update wallet phone number
-      if (!string.IsNullOrEmpty(user.PhoneNumber) && request.UpdatePhoneNumber)
-        throw new ValidationException("Phone number updates are currently restricted. Please contact support for assistance");
+      {
+        if (_userService.GetByEmailOrNull(request.Email, false, false) != null)
+          throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
+      }
 
       user.Email = request.Email?.ToLower();
       if (emailUpdated) user.EmailConfirmed = false;
@@ -174,6 +173,8 @@ namespace Yoma.Core.Domain.Entity.Services
       });
 
       HttpContextAccessorHelper.UpdateUsername(_httpContextAccessor, username);
+
+      //TODO: Update ZLTO username
 
       return await ToProfile(user);
     }
