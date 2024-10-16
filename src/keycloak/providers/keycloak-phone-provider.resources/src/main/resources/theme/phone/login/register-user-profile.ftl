@@ -1,5 +1,5 @@
 <#import "template.ftl" as layout>
-<@layout.registrationLayout displayMessage=!messagesPerField.existsError('firstName','lastName','email','username','password','password-confirm','phoneNumber','registerCode'); section>
+<@layout.registrationLayout displayMessage=!messagesPerField.existsError('firstName','lastName','email','username','password','password-confirm','phoneNumber','code'); section>
 
     <#if section = "header">
         ${msg("registerTitle")}
@@ -71,38 +71,48 @@
                 </div>
             </div>
 
-            <div class="${properties.kcFormGroupClass!} ${messagesPerField.printIfExists('phoneNumber',properties.kcFormGroupErrorClass!)}">
-                    <div class="${properties.kcLabelWrapperClass!}">
-                        <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
-                    </div>
-                    <div class="${properties.kcInputWrapperClass!}">
-                        <input id="phoneNumber" class="${properties.kcInputClass!}"
-                               name="phoneNumber" id="phoneNumber" type="tel"
-                               aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>"
-                               value="${(register.formData.phoneNumber!'')}"
-                               autocomplete="mobile tel"/>
-                        <#if messagesPerField.existsError('phoneNumber')>
-                            <span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                                ${kcSanitize(messagesPerField.get('phoneNumber'))?no_esc}
-                            </span>
-                        </#if>
-                    </div>
+         <div class="${properties.kcFormGroupClass!}">
+
+            <div class="${properties.kcFormGroupClass!}">
+                <div class="${properties.kcLabelWrapperClass!}">
+                    <label for="phoneNumberPartial" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
+                </div>
+                <div class="${properties.kcInputWrapperClass!}">
+                    <select id="phoneNumberCountryCode" name="phoneNumberCountryCode" class="${properties.kcInputClass!}">
+                        <option value="+27">South Africa (+27)</option>
+                        <option value="+234">Nigeria (+234)</option>
+                    </select>
+
+                    <input id="phoneNumberPartial" class="${properties.kcInputClass!}"
+                          name="phoneNumberPartial" type="tel"
+                          aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>"
+                          value="${(register.formData.phoneNumberPartial!'')}"
+                          autocomplete="mobile tel"/>
+                    <#if messagesPerField.existsError('phoneNumber')>
+                        <span id="input-error-phoneNumber" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                            ${kcSanitize(messagesPerField.get('phoneNumber'))?no_esc}
+                        </span>
+                    </#if>
+                </div>
             </div>
+
+            <!-- Hidden input to store the concatenated phone number -->
+            <input type="hidden" id="phoneNumber" name="phoneNumber" />
 
             <#if verifyPhone??>
             <div class=" ${properties.kcFormGroupClass!} row">
 
                     <div class="${properties.kcLabelWrapperClass!}" style="padding: 0">
-                        <label for="registerCode" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
+                        <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
                     </div>
                    <div class="col-xs-8" style="padding: 0px 10px 10px 10px;">
                         <input id="code" name="code"
-                               aria-invalid="<#if messagesPerField.existsError('registerCode')>true</#if>"
+                               aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
                                type="text" class="${properties.kcInputClass!}"
                                autocomplete="off"/>
-                        <#if messagesPerField.existsError('registerCode')>
+                        <#if messagesPerField.existsError('code')>
                             <span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                                ${kcSanitize(messagesPerField.get('registerCode'))?no_esc}
+                                ${kcSanitize(messagesPerField.get('code'))?no_esc}
                             </span>
                         </#if>
                     </div>
@@ -213,6 +223,9 @@
         </form>
         </div>
 
+        <link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/passwordIndicator.css">
+        <script src="${url.resourcesPath}/js/passwordIndicator.js"></script>
+
         <script type="text/javascript">
           function req(phoneNumber) {
               const params = {params: {phoneNumber}}
@@ -221,7 +234,7 @@
                   .catch(e => app.errorMessage = e.response.data.error);
           }
 
-          const app = new Vue({
+         const app = new Vue({
               el: '#vue-app',
               data: {
                   errorMessage: '',
@@ -232,6 +245,7 @@
                       if (seconds <= 0) {
                           app.sendButtonText = app.initSendButtonText;
                       } else {
+                          // Disable send button logic
                           const minutes = Math.floor(seconds / 60) + '';
                           const seconds_ = seconds % 60 + '';
                           app.sendButtonText = String(minutes.padStart(2, '0') + ":" + seconds_.padStart(2, '0'));
@@ -242,29 +256,47 @@
                   },
                   sendVerificationCode: function () {
                       this.errorMessage = '';
-                      const phoneNumber = document.getElementById('phoneNumber').value.trim();
-                      if (!phoneNumber) {
-                          this.errorMessage = '${msg("requiredPhoneNumber")}';
-                          document.getElementById('phoneNumber').focus();
+                      const phoneNumberPartial = document.getElementById('phoneNumberPartial').value.trim();
+                      const phoneNumberCountryCode = document.getElementById('phoneNumberCountryCode').value;
+                      const fullPhoneNumber = phoneNumberCountryCode + phoneNumberPartial;
+
+                      // Validate phone number
+                      const phoneRegex = /^\+?\d+$/;
+                      if (!phoneRegex.test(fullPhoneNumber)) {
+                          this.errorMessage = 'Invalid phone number format.';
                           return;
                       }
+
                       if (this.sendButtonText !== this.initSendButtonText) return;
-                      req(phoneNumber);
+                      req(fullPhoneNumber);
                   }
               }
           });
 
-        </script>
+          // Concatenate country code and phone number before form submission
+          document.getElementById('kc-register-form').addEventListener('submit', function(event) {
+              const phoneNumberPartial = document.getElementById('phoneNumberPartial').value.trim();
+              const phoneNumberCountryCode = document.getElementById('phoneNumberCountryCode').value;
+              const fullPhoneNumber = phoneNumberCountryCode + phoneNumberPartial;
+              document.getElementById('phoneNumber').value = fullPhoneNumber;
+          });
 
-        <link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/passwordIndicator.css">
-        <script src="${url.resourcesPath}/js/passwordIndicator.js"></script>
-        <script>
+          // Password indicator
           document.getElementById('email').addEventListener('input', function(e) {
             passwordIndicator("${url.resourcesPath}", '#email', '#register-password');
           });
           document.getElementById('register-password').addEventListener('input', function(e) {
             passwordIndicator("${url.resourcesPath}", '#email', '#register-password');
           });
+
+          // Set the selected country code based on form data
+          document.addEventListener('DOMContentLoaded', function() {
+              const phoneNumberCountryCode = "${register.formData.phoneNumberCountryCode!''}";
+              if (phoneNumberCountryCode) {
+                  document.getElementById('phoneNumberCountryCode').value = phoneNumberCountryCode;
+              }
+          });
         </script>
+
     </#if>
 </@layout.registrationLayout>

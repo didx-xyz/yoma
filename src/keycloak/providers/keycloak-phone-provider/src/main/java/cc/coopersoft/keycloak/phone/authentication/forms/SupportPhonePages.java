@@ -25,6 +25,8 @@ public class SupportPhonePages {
 
     public static final String ATTRIBUTE_SUPPORT_PHONE = "supportPhone";
 
+    public static final String FIELD_COUNTRY_CODE = "countryCode";
+
     public static final String FIELD_PHONE_NUMBER = "phoneNumber";
 
     public static final String FIELD_VERIFICATION_CODE = "code";

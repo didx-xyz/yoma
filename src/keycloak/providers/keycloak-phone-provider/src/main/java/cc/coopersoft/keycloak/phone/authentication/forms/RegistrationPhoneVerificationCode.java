@@ -137,12 +137,18 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
         // Get session and phone number from the form data
         KeycloakSession session = context.getSession();
         String phoneNumber = formData.getFirst(FIELD_PHONE_NUMBER);
+        //String countryCode = formData.getFirst(FIELD_COUNTRY_CODE); // Retrieve country code
 
         // Log initial validation step for phone number
         logger.info("Validating phone number during registration: " + phoneNumber);
 
         // Check if phone number is blank
         if (!Validation.isBlank(phoneNumber)) {
+            // // Concatenate country code and phone number
+            // if (!Validation.isBlank(countryCode)) {
+            //     phoneNumber = countryCode + phoneNumber;
+            // }
+
             // Try to canonicalize the phone number
             try {
                 // ensure phone number starts with +
@@ -198,15 +204,25 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
 
         String phoneNumber = formData.getFirst(FIELD_PHONE_NUMBER);
+        //String countryCode = formData.getFirst(FIELD_COUNTRY_CODE); // Retrieve country code
 
         if (Validation.isBlank(phoneNumber)) {
             return;
         }
 
+        //  log the country code and phone number
+        //logger.info(String.format("Country code: %s, Phone number: %s", countryCode, phoneNumber));
+        // // Concatenate country code and phone number
+        // if (!Validation.isBlank(countryCode)) {
+        //     phoneNumber = countryCode + phoneNumber;
+        // }
+        // log full phone number
+        logger.info(String.format("Full phone number: %s", phoneNumber));
+
         try {
             phoneNumber = Utils.canonicalizePhoneNumber(context.getSession(), phoneNumber);
         } catch (PhoneNumberInvalidException e) {
-            //verified in validate process
+            // verified in validate process
             throw new IllegalStateException();
         }
 
@@ -222,7 +238,6 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
                     .getProvider(CredentialProvider.class, PhoneOtpCredentialProviderFactory.PROVIDER_ID);
             ocp.createCredential(context.getRealm(), context.getUser(), PhoneOtpCredentialModel.create(phoneNumber, tokenId, 0));
         }
-
     }
 
     @Override
