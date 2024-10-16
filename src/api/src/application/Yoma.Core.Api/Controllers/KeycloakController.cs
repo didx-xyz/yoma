@@ -224,14 +224,14 @@ namespace Yoma.Core.Api.Controllers
           }
           catch (Exception ex)
           {
-            _logger.LogError(ex, "{type}: Failed to assign the default 'User' role to the newly register user with email '{email}'", type, userRequest.Email);
+            _logger.LogError(ex, "{type}: Failed to assign the default 'User' role to the newly register user with username '{username}'", type, userRequest.Username);
           }
           break;
 
         case WebhookRequestEventType.Login:
           if (userRequest == null)
           {
-            _logger.LogError("{type}: Failed to retrieve the Yoma user with email '{email}'", type, kcUser.Username);
+            _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
             return;
           }
 
@@ -259,7 +259,7 @@ namespace Yoma.Core.Api.Controllers
     {
       try
       {
-        _logger.LogInformation("Tracking login for user with email '{email}'", userRequest.Email);
+        _logger.LogInformation("Tracking login for user with username '{username}'", userRequest.Username);
         await _userService.TrackLogin(new UserRequestLoginEvent
         {
           UserId = userRequest.Id,
@@ -269,11 +269,11 @@ namespace Yoma.Core.Api.Controllers
           AuthType = payload.Details?.Auth_type
         });
 
-        _logger.LogInformation("Tracked login for user with email '{email}'", userRequest.Email);
+        _logger.LogInformation("Tracked login for user with username '{username}'", userRequest.Username);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to track login for user with email '{email}'", userRequest.Email);
+        _logger.LogError(ex, "Failed to track login for user with username '{username}'", userRequest.Username);
       }
     }
 
@@ -281,13 +281,13 @@ namespace Yoma.Core.Api.Controllers
     {
       try
       {
-        _logger.LogInformation("Creating or scheduling creation of rewards wallet for user with '{email}'", userRequest.Email);
+        _logger.LogInformation("Creating or scheduling creation of rewards wallet for user with username '{username}'", userRequest.Username);
         await _walletService.CreateWalletOrScheduleCreation(userRequest.Id);
-        _logger.LogInformation("Rewards wallet created or creation scheduled for user with '{email}'", userRequest.Email);
+        _logger.LogInformation("Rewards wallet created or creation scheduled for user with username '{username}'", userRequest.Username);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to create or schedule creation of rewards wallet for user with username '{email}'", userRequest.Email);
+        _logger.LogError(ex, "Failed to create or schedule creation of rewards wallet for user with username '{username}'", userRequest.Username);
       }
     }
   }
