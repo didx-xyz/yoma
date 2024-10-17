@@ -99,7 +99,7 @@ namespace Yoma.Core.Api.Controllers
             switch (type)
             {
               case WebhookRequestEventType.Register:
-              case WebhookRequestEventType.UpdateProfile:
+              case WebhookRequestEventType.Update_Profile:
               case WebhookRequestEventType.Login:
                 _logger.LogInformation("{type} event processing", type);
 
@@ -142,15 +142,25 @@ namespace Yoma.Core.Api.Controllers
         return;
       }
 
-      var userRequest = _userService.GetByEmailOrNull(kcUser.Username, false, false)?.ToUserRequest();
+      // try to locate the user based on their external Keycloak ID.
+      // this is the preferred lookup since users who have already completed their first login
+      // will have an external ID stored in the system.
+      var userRequest = _userService.GetByExternalIdOrNull(kcUser.Id, false, false)?.ToUserRequest();
+
+      // if no user is found by their external ID, fall back to locating the user by their username.
+      // this caters to cases where the user was created in Yoma (via B2B integration) before
+      // registering and completing their first login. In such cases, the external ID won't exist yet.
+      // also, handle test users on the development environment who might not have an associated external ID.
+      // a user cannot change their phone number or email address until they have completed their first login.
+      userRequest ??= _userService.GetByUsernameOrNull(kcUser.Username, false, false)?.ToUserRequest();
 
       switch (type)
       {
         case WebhookRequestEventType.Register:
-        case WebhookRequestEventType.UpdateProfile:
+        case WebhookRequestEventType.Update_Profile:
           if (userRequest == null)
           {
-            if (type == WebhookRequestEventType.UpdateProfile)
+            if (type == WebhookRequestEventType.Update_Profile)
             {
               _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
               return;
@@ -158,11 +168,13 @@ namespace Yoma.Core.Api.Controllers
             userRequest = new UserRequest();
           }
 
-          userRequest.Email = kcUser.Username.Trim();
+          userRequest.Username = kcUser.Username.Trim();
+          userRequest.Email = kcUser.Email?.Trim();
           userRequest.FirstName = kcUser.FirstName.Trim();
           userRequest.Surname = kcUser.LastName.Trim();
           userRequest.EmailConfirmed = kcUser.EmailVerified;
-          userRequest.PhoneNumber = kcUser.PhoneNumber;
+          userRequest.PhoneNumber = kcUser.PhoneNumber?.Trim();
+          userRequest.PhoneNumberConfirmed = kcUser.PhoneNumberVerified;
 
           if (!string.IsNullOrEmpty(kcUser.Country))
           {
@@ -203,7 +215,7 @@ namespace Yoma.Core.Api.Controllers
               userRequest.DateOfBirth = dateOfBirth;
           }
 
-          if (type == WebhookRequestEventType.UpdateProfile) break;
+          if (type == WebhookRequestEventType.Update_Profile) break;
 
           try
           {
@@ -212,18 +224,19 @@ namespace Yoma.Core.Api.Controllers
           }
           catch (Exception ex)
           {
-            _logger.LogError(ex, "{type}: Failed to assign the default 'User' role to the newly register user with email '{email}'", type, userRequest.Email);
+            _logger.LogError(ex, "{type}: Failed to assign the default 'User' role to the newly register user with username '{username}'", type, userRequest.Username);
           }
           break;
 
         case WebhookRequestEventType.Login:
           if (userRequest == null)
           {
-            _logger.LogError("{type}: Failed to retrieve the Yoma user with email '{email}'", type, kcUser.Username);
+            _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
             return;
           }
 
-          //after email verification a login event is raised
+          //after email verification login event is raised
+          userRequest.Username = kcUser.Username;
           userRequest.EmailConfirmed = kcUser.EmailVerified;
           userRequest.DateLastLogin = DateTimeOffset.UtcNow;
 
@@ -246,7 +259,7 @@ namespace Yoma.Core.Api.Controllers
     {
       try
       {
-        _logger.LogInformation("Tracking login for user with email '{email}'", userRequest.Email);
+        _logger.LogInformation("Tracking login for user with username '{username}'", userRequest.Username);
         await _userService.TrackLogin(new UserRequestLoginEvent
         {
           UserId = userRequest.Id,
@@ -256,11 +269,11 @@ namespace Yoma.Core.Api.Controllers
           AuthType = payload.Details?.Auth_type
         });
 
-        _logger.LogInformation("Tracked login for user with email '{email}'", userRequest.Email);
+        _logger.LogInformation("Tracked login for user with username '{username}'", userRequest.Username);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to track login for user with email '{email}'", userRequest.Email);
+        _logger.LogError(ex, "Failed to track login for user with username '{username}'", userRequest.Username);
       }
     }
 
@@ -268,13 +281,13 @@ namespace Yoma.Core.Api.Controllers
     {
       try
       {
-        _logger.LogInformation("Creating or scheduling creation of rewards wallet for user with '{email}'", userRequest.Email);
+        _logger.LogInformation("Creating or scheduling creation of rewards wallet for user with username '{username}'", userRequest.Username);
         await _walletService.CreateWalletOrScheduleCreation(userRequest.Id);
-        _logger.LogInformation("Rewards wallet created or creation scheduled for user with '{email}'", userRequest.Email);
+        _logger.LogInformation("Rewards wallet created or creation scheduled for user with username '{username}'", userRequest.Username);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to create or schedule creation of rewards wallet for user with username '{email}'", userRequest.Email);
+        _logger.LogError(ex, "Failed to create or schedule creation of rewards wallet for user with username '{username}'", userRequest.Username);
       }
     }
   }

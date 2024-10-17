@@ -179,10 +179,11 @@ const OrganisationUpdate: NextPageWithLayout<{
       biography: organisation?.biography ?? "",
       providerTypes: organisation?.providerTypes?.map((x) => x.id) ?? [],
       logo: null,
-      addCurrentUserAsAdmin:
-        organisation?.administrators?.find((x) => x.email == user?.email) !=
-          null ?? false,
-      adminEmails: organisation?.administrators?.map((x) => x.email) ?? [],
+      addCurrentUserAsAdmin: isUserAdminOfCurrentOrg,
+      admins:
+        organisation?.administrators
+          ?.map((x) => x.email ?? x.phoneNumber)
+          .filter((x): x is string => x !== null) ?? [],
       registrationDocuments: [],
       educationProviderDocuments: [],
       businessDocuments: [],

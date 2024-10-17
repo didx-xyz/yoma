@@ -1,6 +1,8 @@
 using FluentValidation;
+using System.ComponentModel.DataAnnotations;
 using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Validators;
 
 namespace Yoma.Core.Domain.ActionLink.Validators
 {
@@ -28,9 +30,11 @@ namespace Yoma.Core.Domain.ActionLink.Validators
         .DependentRules(() =>
         {
           RuleForEach(x => x.DistributionList)
-        .NotEmpty()
-        .EmailAddress()
-        .WithMessage("'Distribution List' contain(s) empty or invalid email address(es).");
+          .NotEmpty()
+          .Must(item =>
+              new EmailAddressAttribute().IsValid(item) ||
+              RegExValidators.PhoneNumber().IsMatch(item))
+          .WithMessage("'Distribution List' contain(s) empty, invalid email address(es) or phone number(s).");
         });
 
       RuleFor(x => x.DateEnd).Must(date => !date.HasValue || date.Value.ToEndOfDay() > DateTimeOffset.UtcNow).WithMessage("'{PropertyName}' must be in the future.");

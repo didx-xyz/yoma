@@ -10,6 +10,8 @@ namespace Yoma.Core.Domain.Reward.Models
 
     public Guid UserId { get; set; }
 
+    public string? Username { get; set; }
+
     public string? WalletId { get; set; }
 
     public decimal? Balance { get; set; }

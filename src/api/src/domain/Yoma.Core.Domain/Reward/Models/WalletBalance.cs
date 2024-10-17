@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.Reward.Models
   {
     public string? WalletId { get; set; }
 
+    public string? WalletUsername { get; set; }
+
     public decimal Available { get; set; }
 
     public decimal Pending { get; set; }

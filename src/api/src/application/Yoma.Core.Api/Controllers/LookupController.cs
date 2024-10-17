@@ -33,8 +33,7 @@ namespace Yoma.Core.Api.Controllers
         IGenderService genderService,
         ILanguageService languageService,
         ISkillService skillService,
-        ITimeIntervalService timeIntervalService
-        )
+        ITimeIntervalService timeIntervalService)
     {
       _logger = logger;
       _countryService = countryService;

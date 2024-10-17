@@ -40,10 +40,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       migrationBuilder.InsertData(
       table: "User",
-      columns: ["Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "DateCreated", "DateModified"],
+      columns: ["Id", "Email", "EmailConfirmed", "FirstName", "Surname", "DisplayName", "ExternalId", "DateCreated", "DateModified"],
       values: new object[,]
       {
-                    {"8929632E-2911-42FF-9A44-055DEF231B87",HttpContextAccessorHelper.GetUsernameSystem,true,"Yoma","System","Yoma System",DateTimeOffset.UtcNow,DateTimeOffset.UtcNow}
+                    {"8929632E-2911-42FF-9A44-055DEF231B87",HttpContextAccessorHelper.GetUsernameSystem,true,"Yoma","System","Yoma System","160CE61E-E275-48AD-93B7-5FF4A7704525",DateTimeOffset.UtcNow,DateTimeOffset.UtcNow}
       },
       schema: "Entity");
 

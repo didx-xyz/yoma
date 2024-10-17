@@ -17,7 +17,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public string OwnerName { get; set; }
 
     [JsonProperty("user_name")]
-    public string UserName { get; set; }
+    public string Username { get; set; }
 
     [JsonProperty("user_password")]
     public string UserPassword { get; set; }
@@ -57,7 +57,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public string OwnerOrigin { get; set; }
 
     [JsonProperty("user_name")]
-    public string UserName { get; set; }
+    public string Username { get; set; }
 
     [JsonProperty("last_updated")]
     public DateTime LastUpdated { get; set; }

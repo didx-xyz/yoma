@@ -448,6 +448,7 @@ jobs:
               --selector app=keycloak \
               --set config-cli.init.ref=${{ github.event_name == 'release' && github.ref_name || github.sha }} \
               --set keycloak.themes.ref=${{ github.event_name == 'release' && github.ref_name || github.sha }} \
+              --set keycloak.providers.ref=${{ github.event_name == 'release' && github.ref_name || github.sha }} \
               --set postInstallHook.ref=${{ github.event_name == 'release' && github.ref_name || github.sha }}
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}

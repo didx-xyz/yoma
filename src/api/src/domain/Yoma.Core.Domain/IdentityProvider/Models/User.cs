@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.IdentityProvider.Models
 
     public string Username { get; set; }
 
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
     public string FirstName { get; set; }
 
@@ -22,6 +22,8 @@ namespace Yoma.Core.Domain.IdentityProvider.Models
 
     public string? DateOfBirth { get; set; }
 
-    public bool EmailVerified { get; set; }
+    public bool? EmailVerified { get; set; }
+
+    public bool? PhoneNumberVerified { get; set; }
   }
 }

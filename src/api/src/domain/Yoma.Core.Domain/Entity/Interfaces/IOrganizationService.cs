@@ -37,9 +37,9 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<Organization> DeleteDocuments(Guid id, OrganizationDocumentType type, List<Guid> documentsIds, bool ensureOrganizationAuthorization);
 
-    Task<Organization> AssignAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization);
+    Task<Organization> AssignAdmins(Guid id, List<string> usernames, bool ensureOrganizationAuthorization);
 
-    Task<Organization> RemoveAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization);
+    Task<Organization> RemoveAdmins(Guid id, List<string> usernames, bool ensureOrganizationAuthorization);
 
     Task AllocateRewards(Organization organization, decimal? zltoReward, decimal? yomaReward);
 

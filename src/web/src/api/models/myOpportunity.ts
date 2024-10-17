@@ -53,6 +53,7 @@ export interface MyOpportunityInfo {
   id: string;
   userId: string;
   userEmail: string;
+  userPhoneNumber: string;
   userDisplayName: string | null;
   userCountry: string | null;
   userEducation: string | null;
