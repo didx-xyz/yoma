@@ -33,6 +33,8 @@ public class SupportPhonePages {
 
     public static final String FIELD_PATH_PHONE_ACTIVATED = "phoneActivated";
 
+    public static final String ATTEMPTED_PHONE_NUMBER_COUNTRY_CODE = "attemptedPhoneNumberCountryCode";
+
     public static final String ATTEMPTED_PHONE_NUMBER = "attemptedPhoneNumber";
 
     public static final String ATTEMPTED_PHONE_ACTIVATED = "attemptedPhoneActivated";

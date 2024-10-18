@@ -32,11 +32,15 @@ import org.keycloak.services.messages.Messages;
 import org.keycloak.services.validation.Validation;
 import static org.keycloak.services.validation.Validation.FIELD_USERNAME;
 
+import com.google.i18n.phonenumbers.NumberParseException;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+
 import cc.coopersoft.common.OptionalUtils;
 import cc.coopersoft.keycloak.phone.Utils;
 import cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTEMPTED_PHONE_ACTIVATED;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTEMPTED_PHONE_NUMBER;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTEMPTED_PHONE_NUMBER_COUNTRY_CODE;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTRIBUTE_SUPPORT_PHONE;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PATH_PHONE_ACTIVATED;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER;
@@ -127,6 +131,7 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
             return validateUserAndPassword(context, inputData);
         }
         String phoneNumber = inputData.getFirst(FIELD_PHONE_NUMBER);
+        String countryCode = getCountryCode(phoneNumber);
 
         if (Validation.isBlank(phoneNumber)) {
             context.getEvent().error(Errors.USERNAME_MISSING);
@@ -137,43 +142,56 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
             return false;
         }
 
-        // ensure phone number starts with +
-        if (!phoneNumber.startsWith("+")) {
-            phoneNumber = "+" + phoneNumber;
-        }
-
         String code = inputData.getFirst(FIELD_VERIFICATION_CODE);
         if (Validation.isBlank(code)) {
-            invalidVerificationCode(context, phoneNumber);
+            invalidVerificationCode(context, countryCode, phoneNumber);
             return false;
         }
 
-        return validatePhone(context, phoneNumber, code.trim());
+        return validatePhone(context, countryCode, phoneNumber, code.trim());
     }
 
-    private void invalidVerificationCode(AuthenticationFlowContext context, String number) {
+    private String getCountryCode(String phoneNumber) {
+        // get country code
+        var phoneNumberUtil = PhoneNumberUtil.getInstance();
+        com.google.i18n.phonenumbers.Phonenumber.PhoneNumber _phoneNumber = null;
+        try {
+            _phoneNumber = phoneNumberUtil.parse(phoneNumber, null);
+        } catch (NumberParseException ex) {
+        }
+        String countryCode = "+" + _phoneNumber.getCountryCode();
+        return countryCode;
+    }
+
+    private void invalidVerificationCode(AuthenticationFlowContext context, String countryCode, String phoneNumber) {
+        String phoneNumberPartial = getPhoneNumberPartial(countryCode, phoneNumber);
 
         context.getEvent().error(Errors.INVALID_USER_CREDENTIALS);
-        context.form().setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
-                .setAttribute(ATTEMPTED_PHONE_NUMBER, number);
+        context.form()
+                .setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
+                .setAttribute(ATTEMPTED_PHONE_NUMBER_COUNTRY_CODE, countryCode)
+                .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumberPartial);
         assemblyForm(context, context.form());
         Response challengeResponse = challenge(context, SupportPhonePages.Errors.NOT_MATCH.message(), FIELD_VERIFICATION_CODE);
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challengeResponse);
     }
 
-    private boolean validatePhone(AuthenticationFlowContext context, String phoneNumber, String code) {
+    private boolean validatePhone(AuthenticationFlowContext context, String countryCode, String phoneNumber, String code) {
+        String phoneNumberPartial = getPhoneNumberPartial(countryCode, phoneNumber);
 
         context.clearUser();
-        try {
 
+        try {
             var validPhoneNumber = Utils.canonicalizePhoneNumber(context.getSession(), phoneNumber);
 
             return Utils.findUserByPhone(context.getSession(), context.getRealm(), validPhoneNumber)
-                    .map(user -> validateVerificationCode(context, user, validPhoneNumber, code) && validateUser(context, user, validPhoneNumber))
+                    .map(user -> validateVerificationCode(context, user, countryCode, validPhoneNumber, code) && validateUser(context, user, countryCode, validPhoneNumber))
                     .orElseGet(() -> {
                         context.getEvent().error(Errors.USER_NOT_FOUND);
-                        context.form().setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
-                                .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumber);
+                        context.form()
+                                .setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
+                                .setAttribute(ATTEMPTED_PHONE_NUMBER_COUNTRY_CODE, countryCode)
+                                .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumberPartial);
                         assemblyForm(context, context.form());
                         Response challengeResponse = challenge(context, SupportPhonePages.Errors.USER_NOT_FOUND.message(), FIELD_PHONE_NUMBER);
                         context.failureChallenge(AuthenticationFlowError.INVALID_USER, challengeResponse);
@@ -181,8 +199,10 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
                     });
         } catch (PhoneNumberInvalidException e) {
             context.getEvent().error(Errors.USERNAME_MISSING);
-            context.form().setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
-                    .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumber);
+            context.form()
+                    .setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
+                    .setAttribute(ATTEMPTED_PHONE_NUMBER_COUNTRY_CODE, countryCode)
+                    .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumberPartial);
             assemblyForm(context, context.form());
             Response challengeResponse = challenge(context, e.getErrorType().message(), FIELD_PHONE_NUMBER);
             context.failureChallenge(AuthenticationFlowError.INVALID_USER, challengeResponse);
@@ -190,27 +210,35 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
         }
     }
 
-    private boolean validateVerificationCode(AuthenticationFlowContext context, UserModel user, String phoneNumber, String code) {
+    private String getPhoneNumberPartial(String countryCode, String phoneNumber) {
+        var phoneNumberPartial = phoneNumber.substring(countryCode.length());
+        return phoneNumberPartial;
+    }
+
+    private boolean validateVerificationCode(AuthenticationFlowContext context, UserModel user, String countryCode, String phoneNumber, String code) {
         try {
             context.getSession().getProvider(PhoneVerificationCodeProvider.class)
                     .validateCode(user, phoneNumber, code, TokenCodeType.AUTH);
-            logger.debug("verification code success!");
             return true;
         } catch (Exception e) {
 
             context.getEvent().user(user);
-            invalidVerificationCode(context, phoneNumber);
+            invalidVerificationCode(context, countryCode, phoneNumber);
             return false;
         }
     }
 
-    private boolean isDisabledByBruteForce(AuthenticationFlowContext context, UserModel user, String phoneNumber) {
+    private boolean isDisabledByBruteForce(AuthenticationFlowContext context, UserModel user, String countryCode, String phoneNumber) {
         String bruteForceError = getDisabledByBruteForceEventError(context, user);
         if (bruteForceError != null) {
+            String phoneNumberPartial = getPhoneNumberPartial(countryCode, phoneNumber);
+
             context.getEvent().user(user);
             context.getEvent().error(bruteForceError);
-            context.form().setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
-                    .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumber);
+            context.form()
+                    .setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
+                    .setAttribute(ATTEMPTED_PHONE_NUMBER_COUNTRY_CODE, countryCode)
+                    .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumberPartial);
             assemblyForm(context, context.form());
             Response challengeResponse = challenge(context, disabledByBruteForceError(), disabledByBruteForceFieldError());
             context.forceChallenge(challengeResponse);
@@ -219,15 +247,20 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
         return false;
     }
 
-    private boolean enabledUser(AuthenticationFlowContext context, UserModel user, String phoneNumber) {
-        if (isDisabledByBruteForce(context, user, phoneNumber)) {
+    private boolean enabledUser(AuthenticationFlowContext context, UserModel user, String countryCode, String phoneNumber) {
+        if (isDisabledByBruteForce(context, user, countryCode, phoneNumber)) {
             return false;
         }
         if (!user.isEnabled()) {
+
+            String phoneNumberPartial = getPhoneNumberPartial(countryCode, phoneNumber);
+
             context.getEvent().user(user);
             context.getEvent().error(Errors.USER_DISABLED);
-            context.form().setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
-                    .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumber);
+            context.form()
+                    .setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
+                    .setAttribute(ATTEMPTED_PHONE_NUMBER_COUNTRY_CODE, countryCode)
+                    .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumberPartial);
             assemblyForm(context, context.form());
             Response challengeResponse = challenge(context, Messages.ACCOUNT_DISABLED);
             context.forceChallenge(challengeResponse);
@@ -236,8 +269,8 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
         return true;
     }
 
-    private boolean validateUser(AuthenticationFlowContext context, UserModel user, String phoneNumber) {
-        if (!enabledUser(context, user, phoneNumber)) {
+    private boolean validateUser(AuthenticationFlowContext context, UserModel user, String countryCode, String phoneNumber) {
+        if (!enabledUser(context, user, countryCode, phoneNumber)) {
             return false;
         }
         context.getAuthenticationSession().setAuthNote(VERIFIED_PHONE_NUMBER, phoneNumber);

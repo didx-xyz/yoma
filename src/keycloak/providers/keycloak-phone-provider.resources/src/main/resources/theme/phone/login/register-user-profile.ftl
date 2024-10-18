@@ -75,10 +75,9 @@
                 <div class="${properties.kcInputWrapperClass!}">
                   <select id="phoneNumberCountryCode" name="phoneNumberCountryCode" class="${properties.kcInputClass!}">
                     <option value="+27">South Africa (+27)</option>
-                    <option value="+234">Nigeria (+234)</option>
                   </select>
                   <input id="phoneNumberPartial" class="${properties.kcInputClass!}"
-                    name="phoneNumberPartial" type="tel"
+                    name="phoneNumberPartial" type="tel" placeholder="Enter phone number"
                     aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>"
                     value="${(register.formData.phoneNumberPartial!'')}"
                     autocomplete="mobile tel" />
@@ -243,7 +242,6 @@
             }
           },
           sendVerificationCode() {
-            console.warn('Sending verification code!!!!!!!');
             this.errorMessage = '';
             const phoneNumberPartial = document.getElementById('phoneNumberPartial').value.trim();
             const phoneNumberCountryCode = document.getElementById('phoneNumberCountryCode').value;
