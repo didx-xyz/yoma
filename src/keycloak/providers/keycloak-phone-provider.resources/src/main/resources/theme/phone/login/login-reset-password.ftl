@@ -62,7 +62,8 @@
                                 <input type="text" id="username" name="username" class="${properties.kcInputClass!}"
                                        autofocus
                                        value="${(auth.attemptedUsername!'')}"
-                                       aria-invalid="<#if messagesPerField.existsError('username')>true</#if>"/>
+                                       aria-invalid="<#if messagesPerField.existsError('username')>true</#if>"
+                                       placeholder="${msg('enterEmail')}"/>
                                 <#if messagesPerField.existsError('username')>
                                     <span id="input-error-username" class="${properties.kcInputErrorMessageClass!}"
                                           aria-live="polite">
@@ -76,6 +77,18 @@
                     <#if supportPhone??>
                         <div v-if="phoneActivated">
                             <div class="${properties.kcFormGroupClass!}">
+                                <select id="phoneNumberCountryCode" name="phoneNumberCountryCode" class="${properties.kcInputClass!}" v-model="phoneNumberCountryCode">
+                                    <option value="+27">South Africa (+27)</option>
+                                </select>
+                                <input id="phoneNumberPartial" class="${properties.kcInputClass!}" name="phoneNumberPartial" type="tel" placeholder="${msg('enterPhoneNumber')}"
+                                    aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" autocomplete="mobile tel" />
+                                <#if messagesPerField.existsError('phoneNumber')>
+                                    <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                                        ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
+                                    </span>
+                                </#if>
+                            </div>
+                            <#--  <div class="${properties.kcFormGroupClass!}">
                                 <div class="${properties.kcLabelWrapperClass!}">
 
                                 <label for="phoneNumber"
@@ -93,7 +106,7 @@
                                     </span>
                                 </#if>
                                 </div>
-                            </div>
+                            </div>  -->
 
                             <div class="${properties.kcFormGroupClass!} row">
                                 <div class="${properties.kcLabelWrapperClass!}" style="padding: 0">
@@ -103,7 +116,8 @@
                                 <div class="col-xs-8" style="padding: 0px 10px 10px 10px;">
                                     <input type="text" id="code" name="code"
                                            aria-invalid="<#if messagesPerField.existsError('code','phoneNumber')>true</#if>"
-                                           class="${properties.kcInputClass!}" autocomplete="off"/>
+                                           class="${properties.kcInputClass!}" autocomplete="off"
+                                           placeholder="${msg('enterCode')}" />
                                 </div>
                                  <div class="col-xs-4" style="margin-left: -20px; padding: 5px 0 0 0;">
                                     <input tabindex="0" style="height: 36px"
@@ -134,55 +148,67 @@
             </div>
         </div>
 
-
         <#if supportPhone??>
-            <script type="text/javascript">
-
-                function req(phoneNumber) {
-                    const params = {params: {phoneNumber}}
-                    axios.get(window.location.origin + '/realms/${realm.name}/sms/reset-code', params)
-                        .then(res => app.disableSend(res.data.expires_in))
-                        .catch(e => app.errorMessage = e.response.data.error);
+          <script type="text/javascript">
+            new Vue({
+              el: '#vue-app',
+              data: {
+                errorMessage: '',
+                phoneActivated: <#if attemptedPhoneActivated??>true<#else>false</#if>,
+                phoneNumber: '${attemptedPhoneNumber!}',
+                sendButtonText: '${msg("sendVerificationCode")}',
+                initSendButtonText: '${msg("sendVerificationCode")}'
+              },
+              methods: {
+                req(phoneNumber) {
+                  const params = {params: {phoneNumber}
+                };
+                axios.get(window.location.origin + '/realms/${realm.name}/sms/reset-code', params)
+                .then(res => this.disableSend(res.data.expires_in))
+                .catch(e => this.errorMessage = e.response.data.error);
+              },
+              disableSend(seconds) {
+                if (seconds <= 0) {
+                  this.sendButtonText = this.initSendButtonText;
+                } else {
+                  const minutes = Math.floor(seconds / 60) + '';
+                  const seconds_ = seconds % 60 + '';
+                  this.sendButtonText = String(minutes.padStart(2, '0') + ":" + seconds_.padStart(2, '0'));
+                  setTimeout(() => {
+                    this.disableSend(seconds - 1);
+                  }, 1000);
                 }
+              },
+              sendVerificationCode() {
+                this.errorMessage = '';
+                const phoneNumberPartial = document.getElementById('phoneNumberPartial').value.trim();
+                const phoneNumberCountryCode = document.getElementById('phoneNumberCountryCode').value;
+                const fullPhoneNumber = phoneNumberCountryCode + phoneNumberPartial;
+                // Validate phone number
+                const phoneRegex = /^\+?\d+$/;
+                if (!phoneRegex.test(phoneNumberPartial)) {
+                  this.errorMessage = 'Invalid phone number format.';
+                  return;
+                }
+                if (this.sendButtonText !== this.initSendButtonText) return;
+                this.req(fullPhoneNumber);
+              },
+              concatenatePhoneNumber() {
+                const phoneNumberPartial = document.getElementById('phoneNumberPartial').value.trim();
+                const phoneNumberCountryCode = document.getElementById('phoneNumberCountryCode').value;
+                const fullPhoneNumber = phoneNumberCountryCode + phoneNumberPartial;
+                document.getElementById('phoneNumber').value = fullPhoneNumber;
+              },
+              setCountryCode() {
 
-                var app = new Vue({
-                    el: '#vue-app',
-                    data: {
-                        errorMessage: '',
-                        freezeSendCodeSeconds: 0,
-                        phoneActivated: <#if attemptedPhoneActivated??>true<#else>false</#if>,
-                        phoneNumber: '${attemptedPhoneNumber!}',
-                        sendButtonText: '${msg("sendVerificationCode")}',
-                        initSendButtonText: '${msg("sendVerificationCode")}',
-                        disableSend: function (seconds) {
-                            if (seconds <= 0) {
-                                app.sendButtonText = app.initSendButtonText;
-                            } else {
-                                const minutes = Math.floor(seconds / 60) + '';
-                                const seconds_ = seconds % 60 + '';
-                                app.sendButtonText = String(minutes.padStart(2, '0') + ":" + seconds_.padStart(2, '0'));
-                                setTimeout(function () {
-                                    app.disableSend(seconds - 1);
-                                }, 1000);
-                            }
-                        },
-                        sendVerificationCode: function () {
-
-                            const phoneNumber = document.getElementById('phoneNumber').value.trim();
-                            if (!phoneNumber) {
-                                this.errorMessage = '${msg("requiredPhoneNumber")}';
-                                document.getElementById('phoneNumber').focus();
-                                return;
-                            }
-                            if (this.sendButtonText !== this.initSendButtonText) {
-                                return;
-                            }
-                            req(phoneNumber);
-
-                        }
-                    }
-                });
-            </script>
+              },
+            },
+            mounted() {
+              this.setCountryCode();
+              document.getElementById('kc-register-form').addEventListener('submit', this.concatenatePhoneNumber);
+            }
+            });
+          </script>
         </#if>
 
     <#--  <#elseif section = "info" >

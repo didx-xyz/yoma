@@ -40,10 +40,12 @@ import cc.coopersoft.keycloak.phone.Utils;
 import cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTEMPTED_PHONE_ACTIVATED;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTEMPTED_PHONE_NUMBER;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTEMPTED_PHONE_NUMBER_AS_USERNAME;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTEMPTED_PHONE_NUMBER_COUNTRY_CODE;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTRIBUTE_SUPPORT_PHONE;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PATH_PHONE_ACTIVATED;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER_AS_USERNAME;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_VERIFICATION_CODE;
 import cc.coopersoft.keycloak.phone.providers.constants.TokenCodeType;
 import cc.coopersoft.keycloak.phone.providers.exception.PhoneNumberInvalidException;
@@ -128,10 +130,12 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
                 .orElse(false);
 
         if (!byPhone) {
+            logger.debug("Setting attempted use phone as username: " + inputData.getFirst(FIELD_PHONE_NUMBER_AS_USERNAME));
+            context.form().setAttribute(ATTEMPTED_PHONE_NUMBER_AS_USERNAME, inputData.getFirst(FIELD_PHONE_NUMBER_AS_USERNAME));
+
             return validateUserAndPassword(context, inputData);
         }
         String phoneNumber = inputData.getFirst(FIELD_PHONE_NUMBER);
-        String countryCode = getCountryCode(phoneNumber);
 
         if (Validation.isBlank(phoneNumber)) {
             context.getEvent().error(Errors.USERNAME_MISSING);
@@ -142,6 +146,7 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
             return false;
         }
 
+        String countryCode = getCountryCode(phoneNumber);
         String code = inputData.getFirst(FIELD_VERIFICATION_CODE);
         if (Validation.isBlank(code)) {
             invalidVerificationCode(context, countryCode, phoneNumber);
