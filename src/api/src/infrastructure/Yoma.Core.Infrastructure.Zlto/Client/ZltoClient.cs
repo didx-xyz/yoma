@@ -28,6 +28,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     private const string Image_Default_Empty_Value = "default";
 
     private static readonly HttpStatusCode[] StatusCode_WalletNotFound = [HttpStatusCode.NotFound, HttpStatusCode.Conflict];
+
+    private const int Limit_Default = 1000;
     #endregion
 
     #region Constructor
@@ -111,8 +113,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
        .SetQueryParam("wallet_id", walletId)
        .WithAuthHeaders(await GetAuthHeaders());
 
-      if (limit.HasValue && limit.Value > default(int))
-        query = query.SetQueryParam("limit", limit);
+      var effectiveLimit = limit.HasValue && limit.Value > default(int) ? limit.Value : Limit_Default;
+      query = query.SetQueryParam("limit", effectiveLimit);
 
       if (offset.HasValue && offset.Value >= default(int))
         query = query.SetQueryParam("offset", offset);
@@ -242,8 +244,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         .SetQueryParam("item_state", (int)StoreItemCategoryState.Active)
         .WithAuthHeaders(await GetAuthHeaders());
 
-      if (limit.HasValue && limit.Value > default(int))
-        query = query.SetQueryParam("limit", limit);
+      var effectiveLimit = limit.HasValue && limit.Value > default(int) ? limit.Value : Limit_Default;
+      query = query.SetQueryParam("limit", effectiveLimit);
 
       if (offset.HasValue && offset.Value >= default(int))
         query = query.SetQueryParam("offset", offset);
@@ -287,8 +289,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
           .SetQueryParam("item_state", (int)StoreItemState.Available)
           .WithAuthHeaders(await GetAuthHeaders());
 
-      if (limit.HasValue && limit.Value > default(int))
-        query = query.SetQueryParam("limit", limit);
+      var effectiveLimit = limit.HasValue && limit.Value > default(int) ? limit.Value : Limit_Default;
+      query = query.SetQueryParam("limit", effectiveLimit);
 
       if (offset.HasValue && offset.Value >= default(int))
         query = query.SetQueryParam("offset", offset);
@@ -496,9 +498,23 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
     private async Task<List<Domain.Marketplace.Models.StoreCategory>> ListStoreCategoriesInternal(string CountryCodeAlpha2)
     {
-      var resultSearch = await ListStoresInternal(CountryCodeAlpha2, null, null, null);
+      int offset = 0;
+      var items = new List<Models.StoreInfo>();
 
-      var results = resultSearch?.Items
+      StoreResponseSearch? resultSearch;
+      do
+      {
+        resultSearch = await ListStoresInternal(CountryCodeAlpha2, null, Limit_Default, offset);
+
+        if (resultSearch?.Items == null || resultSearch.Items.Count == 0)
+          break;
+
+        items.AddRange(resultSearch.Items);
+        offset += Limit_Default;
+      }
+      while (resultSearch?.Items?.Count == Limit_Default);
+
+      var results = items
           ?.GroupBy(store => store.Category.Id)
           .Select(group =>
           {
@@ -509,7 +525,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
                       {
                         Id = firstItem.Category.Id,
                         Name = firstItem.Category.CategoryName,
-                        StoreImageURLs = resultSearch?.Items
+                        StoreImageURLs = items
                           .Where(o => o.Category.Id == firstItem.Category.Id && o.StoreLogo != null && !string.Equals(o.StoreLogo, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase))
                           .OrderBy(o => o.StoreName)
                           .Select(o => o.StoreLogo)
@@ -553,8 +569,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
       query = query.SetQueryParam("country_owner_id", countryOwnerId);
 
-      if (limit.HasValue && limit.Value > default(int))
-        query = query.SetQueryParam("limit", limit);
+      var effectiveLimit = limit.HasValue && limit.Value > default(int) ? limit.Value : Limit_Default;
+      query = query.SetQueryParam("limit", effectiveLimit);
 
       if (offset.HasValue && offset.Value >= default(int))
         query = query.SetQueryParam("offset", offset);

@@ -137,6 +137,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     public async Task<StoreSearchResults> SearchStores(StoreSearchFilter filter)
     {
+      //TODO: Client side pagination provided categoryId is specified; not filtered on the server
+
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       await _storeSearchFilterValidator.ValidateAndThrowAsync(filter);
