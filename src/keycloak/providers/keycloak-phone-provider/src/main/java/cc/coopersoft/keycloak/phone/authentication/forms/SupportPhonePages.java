@@ -25,8 +25,6 @@ public class SupportPhonePages {
 
     public static final String ATTRIBUTE_SUPPORT_PHONE = "supportPhone";
 
-    public static final String FIELD_COUNTRY_CODE = "countryCode";
-
     public static final String FIELD_PHONE_NUMBER = "phoneNumber";
 
     public static final String FIELD_VERIFICATION_CODE = "code";
@@ -34,8 +32,6 @@ public class SupportPhonePages {
     public static final String FIELD_PATH_PHONE_ACTIVATED = "phoneActivated";
 
     public static final String FIELD_PHONE_NUMBER_AS_USERNAME = "phoneNumberAsUsername";
-
-    public static final String ATTEMPTED_PHONE_NUMBER_COUNTRY_CODE = "attemptedPhoneNumberCountryCode";
 
     public static final String ATTEMPTED_PHONE_NUMBER = "attemptedPhoneNumber";
 

@@ -525,3 +525,11 @@ input[type="checkbox"] {
   color: blue;
   cursor: pointer;
 }
+
+.iti.iti--inline-dropdown {
+  margin-left: 34px;
+  width: 100%;
+}
+.iti__search-input {
+  padding: 8px !important;
+}

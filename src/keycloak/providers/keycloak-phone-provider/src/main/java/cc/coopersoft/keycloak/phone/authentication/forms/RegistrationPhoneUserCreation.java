@@ -31,7 +31,6 @@ import org.keycloak.userprofile.UserProfileProvider;
 import org.keycloak.userprofile.ValidationException;
 
 import cc.coopersoft.keycloak.phone.Utils;
-import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_COUNTRY_CODE;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER;
 import cc.coopersoft.keycloak.phone.providers.exception.PhoneNumberInvalidException;
 import jakarta.ws.rs.core.MultivaluedMap;
