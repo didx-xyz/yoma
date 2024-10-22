@@ -10,15 +10,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-      migrationBuilder.Sql(
-        "UPDATE \"Entity\".\"User\" " +
-        "SET \"PhoneNumber\" = NULL " +
-        "WHERE \"PhoneNumber\" IS NOT NULL;");
-
       migrationBuilder.DropIndex(
           name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_DateOfBir~",
           schema: "Entity",
           table: "User");
+
+      migrationBuilder.AlterColumn<string>(
+          name: "Name",
+          schema: "Reward",
+          table: "WalletCreationStatus",
+          type: "varchar(50)",
+          nullable: false,
+          oldClrType: typeof(string),
+          oldType: "varchar(20)");
 
       migrationBuilder.AddColumn<string>(
           name: "Username",
@@ -114,6 +118,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "PhoneNumberConfirmed",
           schema: "Entity",
           table: "User");
+
+      migrationBuilder.AlterColumn<string>(
+          name: "Name",
+          schema: "Reward",
+          table: "WalletCreationStatus",
+          type: "varchar(20)",
+          nullable: false,
+          oldClrType: typeof(string),
+          oldType: "varchar(50)");
 
       migrationBuilder.AlterColumn<bool>(
           name: "EmailConfirmed",

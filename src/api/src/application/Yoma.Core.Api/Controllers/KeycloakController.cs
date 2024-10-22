@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
@@ -169,9 +170,9 @@ namespace Yoma.Core.Api.Controllers
           }
 
           userRequest.Username = kcUser.Username.Trim();
-          userRequest.Email = kcUser.Email?.Trim();
-          userRequest.FirstName = kcUser.FirstName.Trim();
-          userRequest.Surname = kcUser.LastName.Trim();
+          userRequest.Email = kcUser.Email?.Trim().ToLower();
+          userRequest.FirstName = kcUser.FirstName.Trim().TitleCase();
+          userRequest.Surname = kcUser.LastName.Trim().TitleCase();
           userRequest.EmailConfirmed = kcUser.EmailVerified;
           userRequest.PhoneNumber = kcUser.PhoneNumber?.Trim();
           userRequest.PhoneNumberConfirmed = kcUser.PhoneNumberVerified;
@@ -235,8 +236,10 @@ namespace Yoma.Core.Api.Controllers
             return;
           }
 
-          //after email verification login event is raised
-          userRequest.Username = kcUser.Username;
+          //after email verification, the login event is raised. 
+          //an admin may have reverted an email update request, so ensure the email matches Keycloak, which is the source of truth.
+          userRequest.Username = kcUser.Username.Trim();
+          userRequest.Email = kcUser.Email?.Trim().ToLower();
           userRequest.EmailConfirmed = kcUser.EmailVerified;
           userRequest.DateLastLogin = DateTimeOffset.UtcNow;
 
@@ -281,13 +284,13 @@ namespace Yoma.Core.Api.Controllers
     {
       try
       {
-        _logger.LogInformation("Creating or scheduling creation of rewards wallet for user with username '{username}'", userRequest.Username);
+        _logger.LogInformation("Creating or scheduling creation (create or update username) of rewards wallet for user with username '{username}'", userRequest.Username);
         await _walletService.CreateWalletOrScheduleCreation(userRequest.Id);
-        _logger.LogInformation("Rewards wallet created or creation scheduled for user with username '{username}'", userRequest.Username);
+        _logger.LogInformation("Rewards wallet created or creation scheduled (create or update username) for user with username '{username}'", userRequest.Username);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to create or schedule creation of rewards wallet for user with username '{username}'", userRequest.Username);
+        _logger.LogError(ex, "Failed to create or schedule creation (create or update username) of rewards wallet for user with username '{username}'", userRequest.Username);
       }
     }
   }

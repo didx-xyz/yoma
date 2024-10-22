@@ -174,8 +174,6 @@ namespace Yoma.Core.Domain.Entity.Services
 
       HttpContextAccessorHelper.UpdateUsername(_httpContextAccessor, username);
 
-      //TODO: Update ZLTO username
-
       return await ToProfile(user);
     }
     #endregion

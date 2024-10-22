@@ -18,6 +18,8 @@ namespace Yoma.Core.Domain.Reward.Interfaces
 
     List<WalletCreation> ListPendingCreationSchedule(int batchSize, List<Guid> idsToSkip);
 
-    Task UpdateScheduleCreation(WalletCreation item);
+    Task UpdateScheduleCreation(WalletCreation item, WalletCreationStatus retryStatusOnFailure);
+
+    Task<string> UpdateWalletUsername(Guid userId);
   }
 }

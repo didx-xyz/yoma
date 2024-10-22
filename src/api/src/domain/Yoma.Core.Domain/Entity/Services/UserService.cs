@@ -86,9 +86,6 @@ namespace Yoma.Core.Domain.Entity.Services
     #region Public Members
     public User GetByUsername(string username, bool includeChildItems, bool includeComputed)
     {
-      if (string.IsNullOrWhiteSpace(username))
-        throw new ArgumentNullException(nameof(username));
-
       var result = GetByUsernameOrNull(username, includeChildItems, includeComputed)
           ?? throw new EntityNotFoundException($"User with username '{username}' does not exist");
 
@@ -171,9 +168,6 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public User GetById(Guid id, bool includeChildItems, bool includeComputed)
     {
-      if (id == Guid.Empty)
-        throw new ArgumentNullException(nameof(id));
-
       var result = GetByIdOrNull(id, includeChildItems, includeComputed)
           ?? throw new EntityNotFoundException($"{nameof(User)} with id '{id}' does not exist");
 
@@ -277,6 +271,10 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _userRequestValidator.ValidateAndThrowAsync(request);
 
+      var usernameExpected = request.Email ?? request.PhoneNumber;
+      if (!string.Equals(request.Username, usernameExpected))
+        throw new InvalidOperationException($"Username '{request.Username}' does not match expected value '{usernameExpected}'");
+
       // check if user exists
       var isNew = !request.Id.HasValue;
       var result = !request.Id.HasValue ? new User { Id = Guid.NewGuid() } : GetById(request.Id.Value, false, false);
@@ -294,8 +292,6 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         var kcUser = await _identityProviderClient.GetUser(request.Username)
             ?? throw new InvalidOperationException($"{nameof(User)} with username '{request.Username}' does not exist");
-        //preserve keycloak formatting for email, phoneNumber, first name and surname
-        result.Email = request.Email;
         result.FirstName = request.FirstName;
         result.Surname = request.Surname;
         result.DisplayName = request.DisplayName ?? string.Empty;
@@ -308,8 +304,9 @@ namespace Yoma.Core.Domain.Entity.Services
       }
 
       result.Username = request.Username;
-      result.PhoneNumber = request.PhoneNumber;
+      result.Email = request.Email;
       result.EmailConfirmed = request.EmailConfirmed;
+      result.PhoneNumber = request.PhoneNumber;
       result.PhoneNumberConfirmed = request.PhoneNumberConfirmed;
       result.DateLastLogin = request.DateLastLogin;
       result.ExternalId = request.ExternalId;

@@ -10,7 +10,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups
   public class WalletCreationStatus : BaseEntity<Guid>
   {
     [Required]
-    [Column(TypeName = "varchar(20)")]
+    [Column(TypeName = "varchar(50)")]
     public string Name { get; set; }
 
     [Required]
