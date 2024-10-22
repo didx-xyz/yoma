@@ -5,6 +5,9 @@
       <#elseif section="form">
         <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+        <script src="${url.resourcesPath}/js/passwordIndicator.js"></script>
+        <link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/passwordIndicator.css">
+
         <div id="vue-app">
           <form id="kc-register-form" class="${properties.kcFormClass!}" action="${url.registrationAction}" method="post">
             <div class="alert-error ${properties.kcAlertClass!} pf-m-danger" v-show="errorMessage">
@@ -217,8 +220,7 @@
             </div>
           </form>
         </div>
-        <link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/passwordIndicator.css">
-        <script src="${url.resourcesPath}/js/passwordIndicator.js"></script>
+
         <script type="text/javascript">
           new Vue({
             el: '#vue-app',

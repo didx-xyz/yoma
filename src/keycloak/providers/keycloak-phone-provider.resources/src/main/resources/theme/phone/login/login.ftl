@@ -4,10 +4,11 @@
         ${msg("loginAccountTitle")}
     <#elseif section = "form">
         <#if !usernameHidden?? && supportPhone??>
+          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css">
           <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
           <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css">
           <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
+          <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
 
           <style>
               [v-cloak] > * {
@@ -103,7 +104,7 @@
                     <div :style="{ display: phoneActivated ? 'block' : 'none' }">
                         <div class="${properties.kcFormGroupClass!}">
                             <div class="${properties.kcLabelWrapperClass!}" style="padding: 0">
-                              <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
+                              <label for="phoneNumberPicker" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
                             </div>
 
                             <input id="phoneNumberPicker" class="${properties.kcInputClass!}" name="phoneNumberPicker" type="tel" placeholder="${msg('enterPhoneNumber')}"
@@ -114,15 +115,15 @@
                                     ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
                                 </span>
                             </#if>
-                        </div>
 
-                        <!-- Hidden input for phone number -->
-                        <input type="hidden" id="phoneNumber" name="phoneNumber" />
+                            <!-- Hidden input for phone number -->
+                            <input type="hidden" id="phoneNumber" name="phoneNumber" />
+                        </div>
 
                         <div class="${properties.kcFormGroupClass!}">
                             <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
 
-                            <div class="${properties.kcLabelWrapperClass!}" style="padding: 0 0 0px 25px;">
+                            <div class="${properties.kcInputWrapperClass!}" style="padding: 0 0 0px 25px;">
                                 <div style="display: flex; padding: 0px 13px 10px 10px;">
                                     <input tabindex="0" type="text" id="code" name="code" aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
                                           class="${properties.kcInputClass!}" autocomplete="off" placeholder="${msg('enterCode')}" style="flex: 2; margin-right: 10px;" />
@@ -154,16 +155,19 @@
                               </div>
                           </#if>
                       </div>
-                      <div class="${properties.kcFormOptionsWrapperClass!}">
-                          <#if realm.resetPasswordAllowed>
-                              <span><a tabindex="0" href="${url.loginResetCredentialsUrl}">${msg("doForgotPassword")}</a></span>
-                          </#if>
-                      </div>
                   </div>
 
                   <div id="kc-form-buttons" class="${properties.kcFormGroupClass!}">
                       <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if> />
                       <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit" value="${msg("doLogIn")}" />
+                  </div>
+
+                  <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
+                    <div class="${properties.kcFormOptionsWrapperClass!}">
+                        <#if realm.resetPasswordAllowed>
+                            <span><a tabindex="0" href="${url.loginResetCredentialsUrl}">${msg("doForgotPassword")}</a></span>
+                        </#if>
+                    </div>
                   </div>
               </form>
             </#if>
@@ -172,22 +176,6 @@
 
         <#if !usernameHidden?? && supportPhone??>
           <script type="text/javascript">
-            Vue.directive('intl-tel-input', {
-              inserted(el) {
-                intlTelInput(el, {
-                  loadUtilsOnInit: "https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/utils.js",
-                  onlyCountries: ['za'], // only South Africa for now
-                  initialCountry: "auto",
-                  geoIpLookup: callback => {
-                    fetch("https://ipapi.co/json")
-                      .then(res => res.json())
-                      .then(data => callback(data.country_code))
-                      .catch(() => callback("za"));
-                  }
-                });
-              }
-            });
-
             new Vue({
                 el: '#vue-app',
                 data: {
@@ -224,13 +212,19 @@
                     const iti = intlTelInput.getInstance(input);
                     const fullPhoneNumber = iti.getNumber();
 
-                    console.log('fullPhoneNumber: ' + fullPhoneNumber);
-
                     // Validate phone number
                     if (!iti.isValidNumber()) {
                       this.errorMessage = 'Invalid phone number format.';
                       return;
                     }
+
+                    // Validate phone number
+                    //const phoneRegex = /^\+?\d+$/;
+                    //if (!phoneRegex.test(phoneNumberPartial)) {
+                    //  this.errorMessage = 'Invalid phone number format.';
+                    //  return;
+                    //}
+
                     if (this.sendButtonText !== this.initSendButtonText) return;
                     this.req(fullPhoneNumber);
                   },
@@ -252,7 +246,6 @@
                   },
                 },
                 mounted() {
-                    // Concatenate the phone number when the form is submitted
                     document.getElementById('kc-form-login').addEventListener('submit', this.onSubmit);
                 }
             });

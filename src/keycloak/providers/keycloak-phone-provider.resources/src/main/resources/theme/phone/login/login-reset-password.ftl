@@ -5,8 +5,11 @@
     <#elseif section = "form">
 
         <#if supportPhone??>
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css">
             <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
             <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
+            <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
 
             <style>
                 [v-cloak] > * {
@@ -21,8 +24,7 @@
 
         <div id="vue-app">
             <div v-cloak>
-                <form id="kc-reset-password-form" class="${properties.kcFormClass!}" action="${url.loginAction}"
-                      method="post">
+                <form id="kc-reset-password-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
                     <#if supportPhone??>
                         <div class="${properties.kcFormClass!}">
                             <div class="alert-error ${properties.kcAlertClass!} pf-m-danger" v-show="errorMessage">
@@ -32,7 +34,6 @@
 
                                 <span class="${properties.kcAlertTitleClass!}">{{ errorMessage }}</span>
                             </div>
-
 
                             <div class="${properties.kcFormGroupClass!}">
                                 <div class="${properties.kcLabelWrapperClass!}">
@@ -55,8 +56,7 @@
                     <div <#if supportPhone??> v-if="!phoneActivated" </#if> >
                         <div class="${properties.kcFormGroupClass!}">
                             <div class="${properties.kcLabelWrapperClass!}">
-                                <label for="username"
-                                       class="${properties.kcLabelClass!}">${msg("email")}</label>
+                                <label for="username" class="${properties.kcLabelClass!}">${msg("email")}</label>
                             </div>
                             <div class="${properties.kcInputWrapperClass!}">
                                 <input type="text" id="username" name="username" class="${properties.kcInputClass!}"
@@ -65,82 +65,66 @@
                                        aria-invalid="<#if messagesPerField.existsError('username')>true</#if>"
                                        placeholder="${msg('enterEmail')}"/>
                                 <#if messagesPerField.existsError('username')>
-                                    <span id="input-error-username" class="${properties.kcInputErrorMessageClass!}"
-                                          aria-live="polite">
-                                    ${kcSanitize(messagesPerField.get('username'))?no_esc}
-                        </span>
+                                    <span id="input-error-username" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                                      ${kcSanitize(messagesPerField.get('username'))?no_esc}
+                                    </span>
                                 </#if>
                             </div>
                         </div>
                     </div>
 
                     <#if supportPhone??>
-                        <div v-if="phoneActivated">
-                            <div class="${properties.kcFormGroupClass!}">
-                                <select id="phoneNumberCountryCode" name="phoneNumberCountryCode" class="${properties.kcInputClass!}" v-model="phoneNumberCountryCode">
-                                    <option value="+27">South Africa (+27)</option>
-                                </select>
-                                <input id="phoneNumberPartial" class="${properties.kcInputClass!}" name="phoneNumberPartial" type="tel" placeholder="${msg('enterPhoneNumber')}"
-                                    aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" autocomplete="mobile tel" />
-                                <#if messagesPerField.existsError('phoneNumber')>
-                                    <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                                        ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
-                                    </span>
-                                </#if>
-                            </div>
-                            <#--  <div class="${properties.kcFormGroupClass!}">
-                                <div class="${properties.kcLabelWrapperClass!}">
-
-                                <label for="phoneNumber"
-                                       class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
-                                </div>
-                                <div class="${properties.kcInputWrapperClass!}">
-                                <input type="text" id="phoneNumber" name="phoneNumber" v-model="phoneNumber"
-                                       aria-invalid="<#if messagesPerField.existsError('code','phoneNumber')>true</#if>"
-                                       class="${properties.kcInputClass!}" autofocus/>
-
-                                <#if messagesPerField.existsError('code','phoneNumber')>
-                                    <span id="input-error" class="${properties.kcInputErrorMessageClass!}"
-                                          aria-live="polite">
-                                    ${kcSanitize(messagesPerField.getFirstError('phoneNumber','code'))?no_esc}
-                                    </span>
-                                </#if>
-                                </div>
-                            </div>  -->
-
-                            <div class="${properties.kcFormGroupClass!} row">
-                                <div class="${properties.kcLabelWrapperClass!}" style="padding: 0">
-                                    <label for="code"
-                                           class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
-                                </div>
-                                <div class="col-xs-8" style="padding: 0px 10px 10px 10px;">
-                                    <input type="text" id="code" name="code"
-                                           aria-invalid="<#if messagesPerField.existsError('code','phoneNumber')>true</#if>"
-                                           class="${properties.kcInputClass!}" autocomplete="off"
-                                           placeholder="${msg('enterCode')}" />
-                                </div>
-                                 <div class="col-xs-4" style="margin-left: -20px; padding: 5px 0 0 0;">
-                                    <input tabindex="0" style="height: 36px"
-                                           class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
-                                           type="button" v-model="sendButtonText"
-                                           :disabled='sendButtonText !== initSendButtonText'
-                                           v-on:click="sendVerificationCode()"/>
-                                </div>
-                            </div>
-
+                      <div v-if="phoneActivated">
+                        <div class="${properties.kcFormGroupClass!}">
+                          <div class="${properties.kcLabelWrapperClass!}">
+                            <label for="phoneNumberPicker" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
+                          </div>
+                          <div class="${properties.kcInputWrapperClass!}">
+                            <input id="phoneNumberPicker" class="${properties.kcInputClass!}" name="phoneNumberPicker" type="tel" placeholder="${msg('enterPhoneNumber')}"
+                              aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" v-intl-tel-input autocomplete="mobile tel" />
+                          </div>
+                          <#if messagesPerField.existsError('phoneNumber')>
+                            <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="padding-left: 20px;">
+                              ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
+                            </span>
+                          </#if>
+                          <!-- Hidden input for phone number -->
+                          <input type="hidden" id="phoneNumber" name="phoneNumber" />
                         </div>
+
+                        <div class="${properties.kcFormGroupClass!}">
+                          <div class="${properties.kcLabelWrapperClass!}">
+                            <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
+                          </div>
+
+                          <div class="${properties.kcInputWrapperClass!}" style="padding: 0 40px 0px 44px;">
+                              <div style="display: flex; padding: 0px 13px 10px 10px;">
+                                  <input tabindex="0" type="text" id="code" name="code" aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
+                                        class="${properties.kcInputClass!}" autocomplete="off" placeholder="${msg('enterCode')}" style="flex: 2; margin-right: 10px;" />
+                                  <input tabindex="0" style="height: 36px; flex: 1;margin-top: 5px;" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
+                                        type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
+                              </div>
+                          </div>
+
+                          <#if messagesPerField.existsError('code')>
+                              <div id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="padding-left: 20px;">
+                                  ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
+                              </div>
+                          </#if>
+                        </div>
+                      </div>
                     </#if>
 
                     <div class="${properties.kcFormGroupClass!} ${properties.kcFormSettingClass!}">
-                        <div id="kc-form-options" class="${properties.kcFormOptionsClass!}" style="padding-bottom: 5px;">
+                        <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
+                            <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
+                                   type="submit" value="${msg('doSubmit')}"/>
+                        </div>
+
+                        <div id="kc-form-options" class="${properties.kcFormOptionsClass!}" style="padding-top: 15px;">
                             <div class="${properties.kcFormOptionsWrapperClass!}">
                                 <span><a href="${url.loginUrl}">${kcSanitize(msg("backToLogin"))?no_esc}</a></span>
                             </div>
-                        </div>
-
-                        <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
-                            <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
-                                   type="submit" value="${msg("doSubmit")}"/>
                         </div>
                     </div>
 
@@ -181,31 +165,38 @@
               },
               sendVerificationCode() {
                 this.errorMessage = '';
-                const phoneNumberPartial = document.getElementById('phoneNumberPartial').value.trim();
-                const phoneNumberCountryCode = document.getElementById('phoneNumberCountryCode').value;
-                const fullPhoneNumber = phoneNumberCountryCode + phoneNumberPartial;
+                const input = document.querySelector('#phoneNumberPicker');
+                const iti = intlTelInput.getInstance(input);
+                const fullPhoneNumber = iti.getNumber();
+
                 // Validate phone number
-                const phoneRegex = /^\+?\d+$/;
-                if (!phoneRegex.test(phoneNumberPartial)) {
+                if (!iti.isValidNumber()) {
                   this.errorMessage = 'Invalid phone number format.';
                   return;
                 }
+
+                // Validate phone number
+                //const phoneRegex = /^\+?\d+$/;
+                //if (!phoneRegex.test(phoneNumberPartial)) {
+                //  this.errorMessage = 'Invalid phone number format.';
+                //  return;
+                //}
+
                 if (this.sendButtonText !== this.initSendButtonText) return;
                 this.req(fullPhoneNumber);
               },
-              concatenatePhoneNumber() {
-                const phoneNumberPartial = document.getElementById('phoneNumberPartial').value.trim();
-                const phoneNumberCountryCode = document.getElementById('phoneNumberCountryCode').value;
-                const fullPhoneNumber = phoneNumberCountryCode + phoneNumberPartial;
-                document.getElementById('phoneNumber').value = fullPhoneNumber;
-              },
-              setCountryCode() {
+              onSubmit() {
+                debugger;
+                const input = document.querySelector('#phoneNumberPicker');
+                const iti = intlTelInput.getInstance(input);
+                const fullPhoneNumber = iti.getNumber();
 
+                // Set the field value for the full phone number (this ensures the country code is always included)
+                document.getElementById('phoneNumber').value = fullPhoneNumber;
               },
             },
             mounted() {
-              this.setCountryCode();
-              document.getElementById('kc-register-form').addEventListener('submit', this.concatenatePhoneNumber);
+              document.getElementById('kc-reset-password-form').addEventListener('submit', this.onSubmit);
             }
             });
           </script>
