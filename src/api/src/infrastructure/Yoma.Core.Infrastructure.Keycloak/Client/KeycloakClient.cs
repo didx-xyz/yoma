@@ -109,8 +109,8 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       var request = new UserRepresentation
       {
         Id = user.Id.ToString(),
-        FirstName = user.FirstName,
-        LastName = user.LastName,
+        FirstName = user.FirstName ?? string.Empty,
+        LastName = user.LastName ?? string.Empty,
         Attributes = [],
         Username = user.Username,
         Email = user.Email ?? string.Empty,

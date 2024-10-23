@@ -29,6 +29,37 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       #endregion Lookups
       #endregion Entity
 
+      #region SSI
+      #region Lookups
+      migrationBuilder.UpdateData(
+        schema: "SSI",
+        table: "SchemaEntityProperty",
+        keyColumn: "Id",
+        keyValue: "32447353-1698-467C-8B5D-AD85E89235B0",
+        column: "Required",
+        value: false
+      );
+
+      migrationBuilder.UpdateData(
+        schema: "SSI",
+        table: "SchemaEntityProperty",
+        keyColumn: "Id",
+        keyValue: "D26B85E6-223E-48B6-A12F-6C2D0136DD2F",
+        column: "Required",
+        value: false
+      );
+
+      migrationBuilder.UpdateData(
+        schema: "SSI",
+        table: "SchemaEntityProperty",
+        keyColumn: "Id",
+        keyValue: "F7D89C98-0447-42DF-8A2D-A369B9FBAEBA",
+        column: "Required",
+        value: false
+      );
+      #endregion Lookups
+      #endregion SSI
+
       #region User
       // Replace specific key 'User_Share_Email_With_Partners' with 'User_Share_Contact_Info_With_Partners' in the Settings field
       migrationBuilder.Sql(
@@ -66,4 +97,3 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     }
   }
 }
-

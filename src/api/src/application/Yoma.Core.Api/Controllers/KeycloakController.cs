@@ -171,8 +171,8 @@ namespace Yoma.Core.Api.Controllers
 
           userRequest.Username = kcUser.Username.Trim();
           userRequest.Email = kcUser.Email?.Trim().ToLower();
-          userRequest.FirstName = kcUser.FirstName.Trim().TitleCase();
-          userRequest.Surname = kcUser.LastName.Trim().TitleCase();
+          userRequest.FirstName = kcUser.FirstName?.Trim().TitleCase();
+          userRequest.Surname = kcUser.LastName?.Trim().TitleCase();
           userRequest.EmailConfirmed = kcUser.EmailVerified;
           userRequest.PhoneNumber = kcUser.PhoneNumber?.Trim();
           userRequest.PhoneNumberConfirmed = kcUser.PhoneNumberVerified;

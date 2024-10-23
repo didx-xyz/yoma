@@ -526,7 +526,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("DisplayName")
-                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<Guid?>("EducationId")
@@ -542,7 +541,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("uuid");
 
                     b.Property<string>("FirstName")
-                        .IsRequired()
                         .HasColumnType("varchar(125)");
 
                     b.Property<Guid?>("GenderId")
@@ -561,7 +559,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Surname")
-                        .IsRequired()
                         .HasColumnType("varchar(125)");
 
                     b.Property<bool?>("YoIDOnboarded")
@@ -586,7 +583,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("PhotoId");
 
-                    b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumberConfirmed", "DateOfBirth", "DateLastLogin", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified");
+                    b.HasIndex("FirstName", "Surname", "DisplayName", "EmailConfirmed", "PhoneNumberConfirmed", "DateOfBirth", "DateLastLogin", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified");
 
                     b.ToTable("User", "Entity");
                 });

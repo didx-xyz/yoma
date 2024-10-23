@@ -74,9 +74,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
     {
       //MS SQL: Contains
       return predicate.Or(o => (!string.IsNullOrEmpty(o.Email) && EF.Functions.ILike(o.Email, $"%{value}%"))
-        || EF.Functions.ILike(o.FirstName, $"%{value}%")
-        || EF.Functions.ILike(o.Surname, $"%{value}%")
-        || EF.Functions.ILike(o.DisplayName, $"%{value}%")
+        || (!string.IsNullOrEmpty(o.FirstName) && EF.Functions.ILike(o.FirstName, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.Surname) && EF.Functions.ILike(o.Surname, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.DisplayName) && EF.Functions.ILike(o.DisplayName, $"%{value}%"))
         || (!string.IsNullOrEmpty(o.PhoneNumber) && EF.Functions.ILike(o.PhoneNumber, $"%{value}%")));
     }
 
@@ -84,9 +84,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
     {
       //MS SQL: Contains
       return query.Where(o => (!string.IsNullOrEmpty(o.Email) && EF.Functions.ILike(o.Email, $"%{value}%"))
-        || EF.Functions.ILike(o.FirstName, $"%{value}%")
-        || EF.Functions.ILike(o.Surname, $"%{value}%")
-        || EF.Functions.ILike(o.DisplayName, $"%{value}%")
+        || (!string.IsNullOrEmpty(o.FirstName) && EF.Functions.ILike(o.FirstName, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.Surname) && EF.Functions.ILike(o.Surname, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.DisplayName) && EF.Functions.ILike(o.DisplayName, $"%{value}%"))
         || (!string.IsNullOrEmpty(o.PhoneNumber) && EF.Functions.ILike(o.PhoneNumber, $"%{value}%")));
     }
 

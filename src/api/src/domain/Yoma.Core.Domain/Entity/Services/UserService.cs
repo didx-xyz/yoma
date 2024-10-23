@@ -294,7 +294,7 @@ namespace Yoma.Core.Domain.Entity.Services
             ?? throw new InvalidOperationException($"{nameof(User)} with username '{request.Username}' does not exist");
         result.FirstName = request.FirstName;
         result.Surname = request.Surname;
-        result.DisplayName = request.DisplayName ?? string.Empty;
+        result.DisplayName = request.DisplayName;
         result.SetDisplayName();
         result.CountryId = request.CountryId;
         result.EducationId = request.EducationId;

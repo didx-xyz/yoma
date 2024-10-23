@@ -22,7 +22,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public string? UserPhoneNumer { get; set; }
 
     [Name("Student Display Name")]
-    public string? UserDisplayName { get; set; }
+    public string UserDisplayName { get; set; }
 
     [Name("Student Country")]
     public string? UserCountry { get; set; }

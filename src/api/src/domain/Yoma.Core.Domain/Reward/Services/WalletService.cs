@@ -178,7 +178,7 @@ namespace Yoma.Core.Domain.Reward.Services
       var request = new WalletRequestCreate
       {
         Username = username,
-        DisplayName = user.DisplayName,
+        DisplayName = user.DisplayName ?? user.Username,
         Balance = balance
       };
 

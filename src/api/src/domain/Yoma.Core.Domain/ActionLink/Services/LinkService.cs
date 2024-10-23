@@ -646,7 +646,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           case NotificationType.ActionLink_Verify_Approval_Requested:
             //send notification to super administrators
             var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
-            recipients = superAdmins?.Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.ToDisplayName() }).ToList();
+            recipients = superAdmins?.Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.ToDisplayName() ?? o.Username }).ToList();
 
             dataLink.Comment = link.CommentApproval;
             dataLink.URL = _notificationURLFactory.ActionLinkVerifyApprovalItemUrl(type, null);

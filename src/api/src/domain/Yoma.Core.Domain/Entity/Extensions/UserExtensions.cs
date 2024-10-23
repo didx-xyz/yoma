@@ -10,6 +10,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
 
       if (!string.IsNullOrEmpty(user.DisplayName)) return;
       user.DisplayName = string.Join(' ', new[] { user.FirstName, user.Surname }.Where(o => !string.IsNullOrEmpty(o)));
+      if (string.IsNullOrEmpty(user.DisplayName)) user.DisplayName = null;
     }
 
     public static void SetDisplayName(this UserRequest user)
@@ -18,6 +19,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
 
       if (!string.IsNullOrEmpty(user.DisplayName)) return;
       user.DisplayName = string.Join(' ', new[] { user.FirstName, user.Surname }.Where(o => !string.IsNullOrEmpty(o)));
+      if (string.IsNullOrEmpty(user.DisplayName)) user.DisplayName = null;
     }
 
     public static UserRequest ToUserRequest(this User user)
@@ -32,7 +34,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
         EmailConfirmed = user.EmailConfirmed,
         FirstName = user.FirstName,
         Surname = user.Surname,
-        DisplayName = user.DisplayName,
+        DisplayName = user.DisplayName, //cannot default; used to update user
         PhoneNumber = user.PhoneNumber,
         PhoneNumberConfirmed = user.PhoneNumberConfirmed,
         CountryId = user.CountryId,
@@ -55,7 +57,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
         Email = value.Email,
         FirstName = value.FirstName,
         Surname = value.Surname,
-        DisplayName = value.DisplayName,
+        DisplayName = value.DisplayName ?? value.Username,
         PhoneNumber = value.PhoneNumber,
         CountryId = value.CountryId
       };
@@ -73,7 +75,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
         EmailConfirmed = value.EmailConfirmed,
         FirstName = value.FirstName,
         Surname = value.Surname,
-        DisplayName = value.DisplayName,
+        DisplayName = value.DisplayName, //cannot default; model returned on api for editing as authenticated user (simular to user returned on api as admin)
         PhoneNumber = value.PhoneNumber,
         PhoneNumberConfirmed = value.PhoneNumberConfirmed,
         CountryId = value.CountryId,

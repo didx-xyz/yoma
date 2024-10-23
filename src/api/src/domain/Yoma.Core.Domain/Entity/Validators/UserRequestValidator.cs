@@ -15,6 +15,8 @@ namespace Yoma.Core.Domain.Entity.Validators
         IGenderService genderService) : base(countryService, educationService, genderService)
     {
       RuleFor(x => x.Id).NotEmpty().When(x => x.Id.HasValue);
+      RuleFor(x => x.FirstName).Length(1, 125).When(x => !string.IsNullOrEmpty(x.FirstName));
+      RuleFor(x => x.Surname).Length(1, 125).When(x => !string.IsNullOrEmpty(x.Surname));
       RuleFor(x => x.PhoneNumber).Length(1, 50).Matches(RegExValidators.PhoneNumber()).WithMessage("'{PropertyName}' is invalid.").When(x => !string.IsNullOrEmpty(x.PhoneNumber));
       RuleFor(x => x.DateLastLogin).Must(NotInFuture).WithMessage("'{PropertyName}' is in the future.");
     }

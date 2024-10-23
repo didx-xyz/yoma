@@ -134,7 +134,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (emailUpdated) user.EmailConfirmed = false;
       user.FirstName = request.FirstName.TitleCase();
       user.Surname = request.Surname.TitleCase();
-      user.DisplayName = request.DisplayName ?? string.Empty;
+      user.DisplayName = request.DisplayName;
       user.SetDisplayName();
       user.CountryId = request.CountryId;
       user.EducationId = request.EducationId;

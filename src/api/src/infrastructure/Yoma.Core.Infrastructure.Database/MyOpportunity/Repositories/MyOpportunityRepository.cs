@@ -29,7 +29,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         Username = entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,
         UserId = entity.UserId,
         UserEmail = entity.User.Email,
-        UserDisplayName = entity.User.DisplayName,
+        UserDisplayName = entity.User.DisplayName ?? entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,
         UserDateOfBirth = entity.User.DateOfBirth,
         UserGender = entity.User.Gender == null ? null : entity.User.Gender.Name,
         UserCountryId = entity.User.Country == null ? null : entity.User.CountryId,

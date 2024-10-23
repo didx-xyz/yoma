@@ -8,9 +8,9 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public string? Email { get; set; }
 
-    public string FirstName { get; set; }
+    public string? FirstName { get; set; }
 
-    public string Surname { get; set; }
+    public string? Surname { get; set; }
 
     public string? DisplayName { get; set; }
 

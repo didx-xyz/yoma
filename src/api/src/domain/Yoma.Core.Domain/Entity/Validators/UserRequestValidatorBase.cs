@@ -25,8 +25,7 @@ namespace Yoma.Core.Domain.Entity.Validators
       _genderService = genderService;
 
       RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrEmpty(x.Email));
-      RuleFor(x => x.FirstName).NotEmpty().Length(1, 320);
-      RuleFor(x => x.Surname).NotEmpty().Length(1, 320);
+      RuleFor(x => x.DisplayName).Length(1, 255).When(x => !string.IsNullOrEmpty(x.DisplayName));
       RuleFor(x => x.CountryId).Must(CountryExists).WithMessage($"Specified country is invalid / does not exist. 'Worldwide' is not allowed as a country selection.");
       RuleFor(x => x.EducationId).Must(EducationExists).WithMessage($"Specified education is invalid / does not exist.");
       RuleFor(x => x.GenderId).Must(GenderExists).WithMessage($"Specified gender is invalid / does not exist.");

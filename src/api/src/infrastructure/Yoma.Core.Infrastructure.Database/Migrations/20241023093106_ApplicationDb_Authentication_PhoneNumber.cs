@@ -31,6 +31,24 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           type: "varchar(320)",
           nullable: true);
 
+      migrationBuilder.AlterColumn<string>(
+          name: "Surname",
+          schema: "Entity",
+          table: "User",
+          type: "varchar(125)",
+          nullable: true,
+          oldClrType: typeof(string),
+          oldType: "varchar(125)");
+
+      migrationBuilder.AlterColumn<string>(
+          name: "FirstName",
+          schema: "Entity",
+          table: "User",
+          type: "varchar(125)",
+          nullable: true,
+          oldClrType: typeof(string),
+          oldType: "varchar(125)");
+
       migrationBuilder.AlterColumn<bool>(
           name: "EmailConfirmed",
           schema: "Entity",
@@ -48,6 +66,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           nullable: true,
           oldClrType: typeof(string),
           oldType: "varchar(320)");
+
+      migrationBuilder.AlterColumn<string>(
+          name: "DisplayName",
+          schema: "Entity",
+          table: "User",
+          type: "varchar(255)",
+          nullable: true,
+          oldClrType: typeof(string),
+          oldType: "varchar(255)");
 
       migrationBuilder.AddColumn<bool>(
           name: "PhoneNumberConfirmed",
@@ -71,10 +98,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           unique: true);
 
       migrationBuilder.CreateIndex(
-          name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumberConfirmed_~",
+          name: "IX_User_FirstName_Surname_DisplayName_EmailConfirmed_PhoneNumb~",
           schema: "Entity",
           table: "User",
-          columns: ["FirstName", "Surname", "EmailConfirmed", "PhoneNumberConfirmed", "DateOfBirth", "DateLastLogin", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified"]);
+          columns: ["FirstName", "Surname", "DisplayName", "EmailConfirmed", "PhoneNumberConfirmed", "DateOfBirth", "DateLastLogin", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_User_PhoneNumber",
@@ -100,7 +127,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           table: "User");
 
       migrationBuilder.DropIndex(
-          name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumberConfirmed_~",
+          name: "IX_User_FirstName_Surname_DisplayName_EmailConfirmed_PhoneNumb~",
           schema: "Entity",
           table: "User");
 
@@ -128,6 +155,28 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           oldClrType: typeof(string),
           oldType: "varchar(50)");
 
+      migrationBuilder.AlterColumn<string>(
+          name: "Surname",
+          schema: "Entity",
+          table: "User",
+          type: "varchar(125)",
+          nullable: false,
+          defaultValue: "",
+          oldClrType: typeof(string),
+          oldType: "varchar(125)",
+          oldNullable: true);
+
+      migrationBuilder.AlterColumn<string>(
+          name: "FirstName",
+          schema: "Entity",
+          table: "User",
+          type: "varchar(125)",
+          nullable: false,
+          defaultValue: "",
+          oldClrType: typeof(string),
+          oldType: "varchar(125)",
+          oldNullable: true);
+
       migrationBuilder.AlterColumn<bool>(
           name: "EmailConfirmed",
           schema: "Entity",
@@ -148,6 +197,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           defaultValue: "",
           oldClrType: typeof(string),
           oldType: "varchar(320)",
+          oldNullable: true);
+
+      migrationBuilder.AlterColumn<string>(
+          name: "DisplayName",
+          schema: "Entity",
+          table: "User",
+          type: "varchar(255)",
+          nullable: false,
+          defaultValue: "",
+          oldClrType: typeof(string),
+          oldType: "varchar(255)",
           oldNullable: true);
 
       migrationBuilder.CreateIndex(

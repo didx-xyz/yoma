@@ -827,7 +827,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             OpportunityId = item.OpportunityId,
             OpportunityTitle = opportunity.Title,
             UserId = item.UserId,
-            UserDisplayName = user.DisplayName,
+            UserDisplayName = user.DisplayName ?? user.Username,
             Failure = null
           };
           resultItems.Add(successItem);
@@ -1190,7 +1190,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //used by notifications
       myOpportunity.UserPhoneNumber = user.PhoneNumber;
       myOpportunity.UserEmail = user.Email;
-      myOpportunity.UserDisplayName = user.DisplayName;
+      myOpportunity.UserDisplayName = user.DisplayName ?? user.Username;
       myOpportunity.OpportunityTitle = opportunity.Title;
       myOpportunity.OrganizationId = opportunity.OrganizationId;
       myOpportunity.ZltoReward = opportunity.ZltoReward;

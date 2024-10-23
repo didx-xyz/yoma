@@ -10,9 +10,9 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public bool? EmailConfirmed { get; set; }
 
-    public string FirstName { get; set; }
+    public string? FirstName { get; set; }
 
-    public string Surname { get; set; }
+    public string? Surname { get; set; }
 
     public string? DisplayName { get; set; }
 
