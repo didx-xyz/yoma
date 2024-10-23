@@ -45,7 +45,7 @@ export const handleUserSignOut = (signInAgain?: boolean) => {
   // Construct the callbackUrl with the loginAgain query parameter
   let callbackUrl = `${window.location.origin}/`;
 
-  if (signInAgain !== null) {
+  if (!!signInAgain) {
     callbackUrl += `?signInAgain=${signInAgain}`;
   }
 

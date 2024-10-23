@@ -214,7 +214,7 @@
 
                     // Validate phone number
                     if (!iti.isValidNumber()) {
-                      this.errorMessage = 'Invalid phone number format.';
+                      this.errorMessage = '${msg("invalidPhoneNumber")}';
                       return;
                     }
 

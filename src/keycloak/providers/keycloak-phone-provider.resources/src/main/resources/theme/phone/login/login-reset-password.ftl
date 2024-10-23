@@ -145,59 +145,57 @@
               },
               methods: {
                 req(phoneNumber) {
-                  const params = {params: {phoneNumber}
-                };
-                axios.get(window.location.origin + '/realms/${realm.name}/sms/reset-code', params)
-                .then(res => this.disableSend(res.data.expires_in))
-                .catch(e => this.errorMessage = e.response.data.error);
-              },
-              disableSend(seconds) {
-                if (seconds <= 0) {
-                  this.sendButtonText = this.initSendButtonText;
-                } else {
-                  const minutes = Math.floor(seconds / 60) + '';
-                  const seconds_ = seconds % 60 + '';
-                  this.sendButtonText = String(minutes.padStart(2, '0') + ":" + seconds_.padStart(2, '0'));
-                  setTimeout(() => {
-                    this.disableSend(seconds - 1);
-                  }, 1000);
-                }
-              },
-              sendVerificationCode() {
-                this.errorMessage = '';
-                const input = document.querySelector('#phoneNumberPicker');
-                const iti = intlTelInput.getInstance(input);
-                const fullPhoneNumber = iti.getNumber();
+                    const params = {params: {phoneNumber}};
+                    axios.get(window.location.origin + '/realms/${realm.name}/sms/reset-code', params)
+                    .then(res => this.disableSend(res.data.expires_in))
+                    .catch(e => this.errorMessage = e.response.data.error);
+                },
+                disableSend(seconds) {
+                  if (seconds <= 0) {
+                    this.sendButtonText = this.initSendButtonText;
+                  } else {
+                    const minutes = Math.floor(seconds / 60) + '';
+                    const seconds_ = seconds % 60 + '';
+                    this.sendButtonText = String(minutes.padStart(2, '0') + ":" + seconds_.padStart(2, '0'));
+                    setTimeout(() => {
+                      this.disableSend(seconds - 1);
+                    }, 1000);
+                  }
+                },
+                sendVerificationCode() {
+                  this.errorMessage = '';
+                  const input = document.querySelector('#phoneNumberPicker');
+                  const iti = intlTelInput.getInstance(input);
+                  const fullPhoneNumber = iti.getNumber();
 
-                // Validate phone number
-                if (!iti.isValidNumber()) {
-                  this.errorMessage = 'Invalid phone number format.';
-                  return;
-                }
+                  // Validate phone number
+                  if (!iti.isValidNumber()) {
+                    this.errorMessage = '${msg("invalidPhoneNumber")}';
+                    return;
+                  }
 
-                // Validate phone number
-                //const phoneRegex = /^\+?\d+$/;
-                //if (!phoneRegex.test(phoneNumberPartial)) {
-                //  this.errorMessage = 'Invalid phone number format.';
-                //  return;
-                //}
+                  // Validate phone number
+                  //const phoneRegex = /^\+?\d+$/;
+                  //if (!phoneRegex.test(phoneNumberPartial)) {
+                  //  this.errorMessage = 'Invalid phone number format.';
+                  //  return;
+                  //}
 
-                if (this.sendButtonText !== this.initSendButtonText) return;
-                this.req(fullPhoneNumber);
+                  if (this.sendButtonText !== this.initSendButtonText) return;
+                  this.req(fullPhoneNumber);
+                },
+                onSubmit() {
+                  const input = document.querySelector('#phoneNumberPicker');
+                  const iti = intlTelInput.getInstance(input);
+                  const fullPhoneNumber = iti.getNumber();
+
+                  // Set the field value for the full phone number (this ensures the country code is always included)
+                  document.getElementById('phoneNumber').value = fullPhoneNumber;
+                },
               },
-              onSubmit() {
-                debugger;
-                const input = document.querySelector('#phoneNumberPicker');
-                const iti = intlTelInput.getInstance(input);
-                const fullPhoneNumber = iti.getNumber();
-
-                // Set the field value for the full phone number (this ensures the country code is always included)
-                document.getElementById('phoneNumber').value = fullPhoneNumber;
-              },
-            },
-            mounted() {
-              document.getElementById('kc-reset-password-form').addEventListener('submit', this.onSubmit);
-            }
+              mounted() {
+                document.getElementById('kc-reset-password-form').addEventListener('submit', this.onSubmit);
+              }
             });
           </script>
         </#if>

@@ -3,9 +3,11 @@
     <#if section = "header">
         ${msg("updatePhoneNumber")}
     <#elseif section = "form">
-
+      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css">
       <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
+      <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
 
       <div id="vue-app">
           <div class="alert-error ${properties.kcAlertClass!} pf-m-danger" v-show="errorMessage">
@@ -19,31 +21,44 @@
         <div id="kc-form">
           <div id="kc-form-wrapper">
             <form id="kc-form-login" action="${url.loginAction}" method="post">
-              <div class="${properties.kcFormGroupClass!} row">
-                <div class="col-xs-12" style="padding: 0">
-                  <label for="phoneNumber"
-                         class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
+              <div class="${properties.kcFormGroupClass!}">
+                <div class="${properties.kcLabelWrapperClass!}">
+                  <label for="phoneNumberPicker" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
                 </div>
-                <div class="col-xs-8" style="padding: 0px 10px 10px 10px;">
-                  <input tabindex="0" id="phoneNumber" class="${properties.kcInputClass!}"
-                         name="phoneNumber" type="tel" <#if !phoneNumber??>autofocus</#if>
-                         value="${phoneNumber!''}"
-                         autocomplete="mobile tel"/>
+                <div class="${properties.kcInputWrapperClass!}">
+                  <input id="phoneNumberPicker" class="${properties.kcInputClass!}" name="phoneNumberPicker" type="tel" placeholder="${msg('enterPhoneNumber')}"
+                    aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" v-intl-tel-input autocomplete="mobile tel" />
                 </div>
-                <div class="col-xs-4" style="padding: 5px 0 0 0">
-                  <input tabindex="0" style="height: 36px"
-                         class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
-                         v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText'
-                         v-on:click="sendVerificationCode()"
-                         type="button" value="${msg("sendVerificationCode")}"/>
-                </div>
+                <#if messagesPerField.existsError('phoneNumber')>
+                  <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="padding-left: 20px;">
+                    ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
+                  </span>
+                </#if>
+                <!-- Hidden input for phone number -->
+                <input type="hidden" id="phoneNumber" name="phoneNumber" />
               </div>
-              <div class="${properties.kcFormGroupClass!} row">
-                <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
-                <input tabindex="0" id="code" class="${properties.kcInputClass!}" name="code"
-                       type="text" <#if phoneNumber??>autofocus</#if>
-                       autocomplete="off"/>
+
+              <div class="${properties.kcFormGroupClass!}">
+                <div class="${properties.kcLabelWrapperClass!}">
+                  <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
+                </div>
+
+                <div class="${properties.kcInputWrapperClass!}" style="padding: 0 40px 0px 44px;">
+                    <div style="display: flex; padding: 0px 13px 10px 10px;">
+                        <input tabindex="0" type="text" id="code" name="code" aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
+                              class="${properties.kcInputClass!}" autocomplete="off" placeholder="${msg('enterCode')}" style="flex: 2; margin-right: 10px;" />
+                        <input tabindex="0" style="height: 36px; flex: 1;margin-top: 5px;" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
+                              type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
+                    </div>
+                </div>
+
+                <#if messagesPerField.existsError('code')>
+                    <div id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="padding-left: 20px;">
+                        ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
+                    </div>
+                </#if>
               </div>
+
               <div id="kc-form-buttons" class="${properties.kcFormGroupClass!}">
                 <input type="hidden" id="id-hidden-input" name="credentialId"
                        <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if>/>
@@ -57,48 +72,78 @@
       </div>
 
       <script type="text/javascript">
-          function req(phoneNumber) {
-              const params = {params: {phoneNumber}}
+        const app = new Vue({
+          el: '#vue-app',
+          data: {
+            errorMessage: '',
+            phoneNumber: '',
+            sendButtonText: '${msg("sendVerificationCode")}',
+            initSendButtonText: '${msg("sendVerificationCode")}',
+          },
+          methods: {
+            req(phoneNumber) {
+              const params = { params: { phoneNumber } };
               axios.get(window.location.origin + '/realms/${realm.name}/sms/verification-code', params)
-                  .then(res => app.disableSend(res.data.expires_in))
-                  .catch(e => app.errorMessage = e.response.data.error);
-          }
-
-          const app = new Vue({
-              el: '#vue-app',
-              data: {
-                  errorMessage: '',
-                  phoneNumber: '',
-                  sendButtonText: '${msg("sendVerificationCode")}',
-                  initSendButtonText: '${msg("sendVerificationCode")}',
-                  disableSend: function (seconds) {
-                      if (seconds <= 0) {
-                          app.sendButtonText = app.initSendButtonText;
-                      } else {
-                          const minutes = Math.floor(seconds / 60) + '';
-                          const seconds_ = seconds % 60 + '';
-                          app.sendButtonText = String(minutes.padStart(2, '0') + ":" + seconds_.padStart(2, '0'));
-                          setTimeout(function () {
-                              app.disableSend(seconds - 1);
-                          }, 1000);
-                      }
-                  },
-                  sendVerificationCode: function () {
-                      this.errorMessage = '';
-                      const phoneNumber = document.getElementById('phoneNumber').value.trim();
-                      if (!phoneNumber) {
-                          this.errorMessage = '${msg("requiredPhoneNumber")}';
-                          document.getElementById('phoneNumber').focus();
-                          return;
-                      }
-                      if (this.sendButtonText !== this.initSendButtonText) return;
-                      req(phoneNumber);
-                  }
+                .then(res => this.disableSend(res.data.expires_in))
+                .catch(e => this.errorMessage = e.response.data.error);
+            },
+            disableSend(seconds) {
+              if (seconds <= 0) {
+                this.sendButtonText = this.initSendButtonText;
+              } else {
+                const minutes = Math.floor(seconds / 60) + '';
+                const seconds_ = seconds % 60 + '';
+                this.sendButtonText = String(minutes.padStart(2, '0') + ":" + seconds_.padStart(2, '0'));
+                setTimeout(() => {
+                  this.disableSend(seconds - 1);
+                }, 1000);
               }
-          });
-          <#if phoneNumber??>
-          req('${phoneNumber}');
-          </#if>
+            },
+            sendVerificationCode() {
+              this.errorMessage = '';
+              const input = document.querySelector('#phoneNumberPicker');
+              const iti = intlTelInput.getInstance(input);
+              const fullPhoneNumber = iti.getNumber();
+
+              // Validate phone number
+              if (!iti.isValidNumber()) {
+                this.errorMessage = '${msg("invalidPhoneNumber")}';
+                return;
+              }
+
+              // Validate phone number
+              //const phoneRegex = /^\+?\d+$/;
+              //if (!phoneRegex.test(phoneNumberPartial)) {
+              //  this.errorMessage = 'Invalid phone number format.';
+              //  return;
+              //}
+
+              if (this.sendButtonText !== this.initSendButtonText) return;
+              this.req(fullPhoneNumber);
+
+              //this.errorMessage = '';
+              //const phoneNumber = document.getElementById('phoneNumber').value.trim();
+              //if (!phoneNumber) {
+              //  this.errorMessage = '${msg("invalidPhoneNumber")}';
+              //  document.getElementById('phoneNumber').focus();
+              //  return;
+              //}
+              //if (this.sendButtonText !== this.initSendButtonText) return;
+              //this.req(phoneNumber);
+            },
+            onSubmit() {
+              const input = document.querySelector('#phoneNumberPicker');
+              const iti = intlTelInput.getInstance(input);
+              const fullPhoneNumber = iti.getNumber();
+
+              // Set the field value for the full phone number (this ensures the country code is always included)
+              document.getElementById('phoneNumber').value = fullPhoneNumber;
+            },
+          },
+          mounted() {
+            document.getElementById('kc-form-login').addEventListener('submit', this.onSubmit);
+          },
+        });
       </script>
     <#elseif section = "info">
         ${msg("updatePhoneNumberInfo")}
