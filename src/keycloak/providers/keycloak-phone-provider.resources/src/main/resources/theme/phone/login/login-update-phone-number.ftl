@@ -120,16 +120,6 @@
 
               if (this.sendButtonText !== this.initSendButtonText) return;
               this.req(fullPhoneNumber);
-
-              //this.errorMessage = '';
-              //const phoneNumber = document.getElementById('phoneNumber').value.trim();
-              //if (!phoneNumber) {
-              //  this.errorMessage = '${msg("invalidPhoneNumber")}';
-              //  document.getElementById('phoneNumber').focus();
-              //  return;
-              //}
-              //if (this.sendButtonText !== this.initSendButtonText) return;
-              //this.req(phoneNumber);
             },
             onSubmit() {
               const input = document.querySelector('#phoneNumberPicker');

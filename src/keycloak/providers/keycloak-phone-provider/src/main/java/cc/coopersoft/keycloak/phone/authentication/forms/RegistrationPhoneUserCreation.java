@@ -153,20 +153,12 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         context.getEvent().detail(Details.REGISTER_METHOD, "form");
         String phoneNumber = formData.getFirst(FIELD_PHONE_NUMBER);
-        //String countryCode = formData.getFirst(FIELD_COUNTRY_CODE); // Retrieve country code
         String email = formData.getFirst(UserModel.EMAIL);
         boolean success = true;
         List<FormMessage> errors = new ArrayList<>();
 
-        //  log the country code and phone number
-        //logger.info(String.format("Country code: %s, Phone number: %s", countryCode, phoneNumber));
-        // Concatenate country code and phone number
-        // if (!Validation.isBlank(countryCode) && !Validation.isBlank(phoneNumber)) {
-        //     phoneNumber = countryCode + phoneNumber;
-        // }
         // log full phone number
-        logger.info(String.format("Full phone number: %s", phoneNumber));
-
+        //logger.info(String.format("Full phone number: %s", phoneNumber));
         // Check if both phoneNumber and email are blank
         boolean isPhoneBlank = Validation.isBlank(phoneNumber);
         boolean isEmailBlank = Validation.isBlank(email);
@@ -265,16 +257,11 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
 
         String phoneNumber = formData.getFirst(FIELD_PHONE_NUMBER);
-        //String countryCode = formData.getFirst(FIELD_COUNTRY_CODE); // Retrieve country code
         String email = formData.getFirst(UserModel.EMAIL);
         String username = formData.getFirst(UserModel.USERNAME); // Already set during validation
 
         var session = context.getSession();
         if (!Validation.isBlank(phoneNumber)) {
-            // // Concatenate country code and phone number
-            // if (!Validation.isBlank(countryCode)) {
-            //     phoneNumber = countryCode + phoneNumber;
-            // }
 
             try {
                 // Canonicalize phone number again to ensure consistent format

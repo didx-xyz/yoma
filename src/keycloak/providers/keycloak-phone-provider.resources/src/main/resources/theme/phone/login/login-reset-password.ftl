@@ -120,7 +120,6 @@
                             <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
                                    type="submit" value="${msg('doSubmit')}"/>
                         </div>
-
                         <div id="kc-form-options" class="${properties.kcFormOptionsClass!}" style="padding-top: 15px;">
                             <div class="${properties.kcFormOptionsWrapperClass!}">
                                 <span><a href="${url.loginUrl}">${kcSanitize(msg("backToLogin"))?no_esc}</a></span>
