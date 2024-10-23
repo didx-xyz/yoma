@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.Analytics.Models
     public string UserDisplayName { get; set; }
 
     public Guid OpportunityId { get; set; }
-     
+
     public string OpportunityTitle { get; set; }
 
     public Status OpportunityStatus { get; set; }
