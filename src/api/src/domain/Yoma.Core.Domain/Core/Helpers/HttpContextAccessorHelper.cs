@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.Core.Helpers
 {
   public static class HttpContextAccessorHelper
   {
-    public static string GetUsernameSystem => Constants.ModifiedBy_System_Username;
+    public static string GetUsernameSystem => Constants.System_Username_ModifiedBy;
 
     public static HashSet<string> DefinedRoles => [Constants.Role_User, Constants.Role_Admin, Constants.Role_OrganizationAdmin];
 
@@ -25,7 +25,7 @@ namespace Yoma.Core.Domain.Core.Helpers
       if (string.IsNullOrEmpty(result))
       {
         if (!useSystemDefault) throw new SecurityException("Unauthorized: User context not available");
-        result = Constants.ModifiedBy_System_Username;
+        result = Constants.System_Username_ModifiedBy;
       }
 
       return result;

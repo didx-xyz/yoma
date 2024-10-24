@@ -3,4 +3,9 @@ const validateEmail = (email: string) => {
   return re.test(email);
 };
 
-export { validateEmail };
+const validatePhoneNumber = (phoneNumber: string) => {
+  const re = /^\+?\d+$/;
+  return re.test(phoneNumber);
+};
+
+export { validateEmail, validatePhoneNumber };

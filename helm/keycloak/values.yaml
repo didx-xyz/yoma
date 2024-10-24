@@ -196,8 +196,10 @@ keycloak:
   themes:
     enabled: false
     ref: develop
+  providers:
+    ref: develop
   extraInitContainers: |-
-    - name: download-extensions
+    - name: download-providers
       image: docker.io/busybox:stable
       imagePullPolicy: IfNotPresent
       command:
@@ -205,9 +207,15 @@ keycloak:
       args:
         - -c
         - |-
+          cd /providers
           wget -q \
             https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-{{ .Values.webhook.version }}-all.jar \
               -O /providers/keycloak-webhook-{{ .Values.webhook.version }}.jar
+          wget -qO - \
+            --header="Accept:application/vnd.github.v3.raw" \
+            https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.providers.ref }} | tar xz
+          cp -v ./didx-xyz-yoma-*/src/keycloak/providers/jars/*.jar /providers
+          rm -rf ./didx-xyz-yoma-*
       volumeMounts:
         - name: providers
           mountPath: /providers
@@ -281,6 +289,27 @@ keycloak:
       value: sslmode=prefer
     - name: KC_LOG_CONSOLE_OUTPUT
       value: json
+    - name: KC_SPI_PHONE_DEFAULT_SERVICE
+      value: twilio
+    - name: KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_ACCOUNT
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "keycloak.fullname" . }}-twilio
+          key: sid
+    - name: KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_TOKEN
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "keycloak.fullname" . }}-twilio
+          key: token
+    - name: KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_NUMBER
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "keycloak.fullname" . }}-twilio
+          key: number
+    - name: KC_SPI_PHONE_DEFAULT_TOKEN_EXPIRES_IN
+      value: "120"
+    - name: KC_SPI_PHONE_DEFAULT_YOMA_DEFAULT_NUMBER_REGEX
+      value: "^\\+?\\d+$"
 
   affinity: |-
     nodeAffinity:
@@ -328,7 +357,7 @@ keycloak:
     admission.datadoghq.com/enabled: "false" # disabled by default (for now)
   podAnnotations:
     # gcr.io/datadoghq/dd-lib-java-init
-    admission.datadoghq.com/java-lib.version: v1.39.0
+    admission.datadoghq.com/java-lib.version: v1.40.1
     ad.datadoghq.com/keycloak.logs: '[{ "service": "keycloak", "source": "jboss_wildfly" }]'
 
   lifecycleHooks: |
@@ -378,6 +407,13 @@ keycloak:
 
   http:
     relativePath: /auth
+
+  secrets:
+    twilio:
+      stringData:
+        sid: superDuperVerySecret
+        token: superDuperVerySecret
+        number: superDuperVerySecret
 
   autoscaling:
     # If `true`, an autoscaling/v2 HorizontalPodAutoscaler resource is created (requires Kubernetes 1.23 or above)

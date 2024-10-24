@@ -14,9 +14,9 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.EmailProvider;
-using Yoma.Core.Domain.EmailProvider.Interfaces;
-using Yoma.Core.Domain.EmailProvider.Models;
+using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -52,9 +52,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly ISSICredentialService _ssiCredentialService;
     private readonly IRewardService _rewardService;
     private readonly ILinkService _linkService;
-    private readonly IEmailURLFactory _emailURLFactory;
-    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
-    private readonly IEmailProviderClient _emailProviderClient;
+    private readonly INotificationURLFactory _notificationURLFactory;
+    private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
     private readonly MyOpportunityRequestValidatorVerifyFinalize _myOpportunityRequestValidatorVerifyFinalize;
@@ -64,7 +63,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IExecutionStrategyService _executionStrategyService;
 
     private const int List_Aggregated_Opportunity_By_Limit = 100;
-    private const string PlaceholderValue_HiddenEmail = "hidden";
+    private const string PlaceholderValue_HiddenDetails = "hidden";
 
     private static readonly VerificationType[] VerificationTypes_Downloadable = [VerificationType.FileUpload, VerificationType.Picture, VerificationType.VoiceNote];
     #endregion
@@ -84,9 +83,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         ISSICredentialService ssiCredentialService,
         IRewardService rewardService,
         ILinkService linkService,
-        IEmailURLFactory emailURLFactory,
-        IEmailPreferenceFilterService emailPreferenceFilterService,
-        IEmailProviderClientFactory emailProviderClientFactory,
+        INotificationURLFactory notificationURLFactory,
+        INotificationDeliveryService notificationDeliveryService,
         MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
         MyOpportunityRequestValidatorVerifyFinalize myOpportunityRequestValidatorVerifyFinalize,
@@ -109,9 +107,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _ssiCredentialService = ssiCredentialService;
       _rewardService = rewardService;
       _linkService = linkService;
-      _emailURLFactory = emailURLFactory;
-      _emailPreferenceFilterService = emailPreferenceFilterService;
-      _emailProviderClient = emailProviderClientFactory.CreateClient();
+      _notificationURLFactory = notificationURLFactory;
+      _notificationDeliveryService = notificationDeliveryService;
       _myOpportunitySearchFilterValidator = myOpportunitySearchFilterValidator;
       _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
       _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize;
@@ -223,7 +220,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
 
       var myOpportunity = _myOpportunityRepository.Query(true).SingleOrDefault(
@@ -280,7 +277,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
@@ -310,10 +307,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var users = completions.Where(completion =>
          SettingsHelper.GetValue<bool>(
              _userService.GetSettingsInfo(completion.UserSettings),
-             Setting.User_Share_Email_With_Partners.ToString()) == true
+             Setting.User_Share_Contact_Info_With_Partners.ToString()) == true
          ).Select(completion => new MyOpportunityResponseVerifyStatusExternalUser
          {
+           Username = completion.Username,
            Email = completion.UserEmail,
+           PhoneNumber = completion.UserPhoneNumber,
            DateCompleted = completion.DateCompleted
          }).ToList();
 
@@ -326,7 +325,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       //filter validated by SearchAdmin
 
-      user ??= _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      user ??= _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var filterInternal = new MyOpportunitySearchFilterAdmin
       {
@@ -345,7 +344,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public TimeIntervalSummary GetSummary()
     {
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var filterInternal = new MyOpportunitySearchFilterAdmin
       {
@@ -565,8 +564,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       foreach (var item in result.Items)
       {
-        if (SettingsHelper.GetValue<bool>(_userService.GetSettingsInfo(item.UserSettings), Setting.User_Share_Email_With_Partners.ToString()) == true) continue;
-        item.UserEmail = PlaceholderValue_HiddenEmail;
+        if (SettingsHelper.GetValue<bool>(_userService.GetSettingsInfo(item.UserSettings), Setting.User_Share_Contact_Info_With_Partners.ToString()) == true) continue;
+        item.UserEmail = PlaceholderValue_HiddenDetails;
+        item.UserPhoneNumer = PlaceholderValue_HiddenDetails;
       }
 
       var config = new CsvConfiguration(System.Globalization.CultureInfo.CurrentCulture);
@@ -589,7 +589,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (!opportunity.Published)
         throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var actionViewedId = _myOpportunityActionService.GetByName(Action.Viewed.ToString()).Id;
 
@@ -615,7 +615,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (!opportunity.Published)
         throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var actionViewedId = _myOpportunityActionService.GetByName(Action.NavigatedExternalLink.ToString()).Id;
 
@@ -640,7 +640,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
       if (!opportunity.Published) return false;
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
 
@@ -656,7 +656,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (!opportunity.Published)
         throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
 
@@ -682,7 +682,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (!opportunity.Published)
         throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var actionSavedId = _myOpportunityActionService.GetByName(Action.Saved.ToString()).Id;
       var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionSavedId);
@@ -703,7 +703,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public async Task PerformActionSendForVerificationManual(Guid opportunityId, MyOpportunityRequestVerify request)
     {
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       await PerformActionSendForVerificationManual(user, opportunityId, request);
     }
@@ -718,7 +718,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _linkService.AssertActive(link.Id);
 
       //send for verification
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
       var opportunity = _opportunityService.GetById(link.EntityId, true, true, false);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
@@ -738,7 +738,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public async Task PerformActionSendForVerificationManualDelete(Guid opportunityId)
     {
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       //opportunity can be updated whilst active, and can result in disabling support for verification; allow deletion provided verification is pending even if no longer supported
       //similar logic provided sent for verification prior to update that resulted in disabling support for verification i.e. enabled, method, types, 'published' status etc.
@@ -746,7 +746,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       var myOpportunity = _myOpportunityRepository.Query(true).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
-          ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Email}'");
+          ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Username}'");
 
       if (myOpportunity.VerificationStatus != VerificationStatus.Pending)
         throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
@@ -827,7 +827,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             OpportunityId = item.OpportunityId,
             OpportunityTitle = opportunity.Title,
             UserId = item.UserId,
-            UserDisplayName = user.DisplayName,
+            UserDisplayName = user.DisplayName ?? user.Username,
             Failure = null
           };
           resultItems.Add(successItem);
@@ -963,7 +963,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       var item = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
-          ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Email}'");
+          ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Username}'");
 
       if (item.VerificationStatus != VerificationStatus.Pending)
         throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
@@ -972,7 +972,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var statusId = _myOpportunityVerificationStatusService.GetByName(status.ToString()).Id;
 
-      EmailType? emailType = null;
+      NotificationType? notificationType = null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
@@ -983,7 +983,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         switch (status)
         {
           case VerificationStatus.Rejected:
-            emailType = EmailType.Opportunity_Verification_Rejected;
+            notificationType = NotificationType.Opportunity_Verification_Rejected;
             break;
 
           case VerificationStatus.Completed:
@@ -1020,7 +1020,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             else if (result.YomaRewardReduced == true)
               item.CommentVerification = CommentVerificationAppendInfo(item.CommentVerification, "Yoma partially awarded due to insufficient reward pool");
 
-            emailType = EmailType.Opportunity_Verification_Completed;
+            notificationType = NotificationType.Opportunity_Verification_Completed;
             break;
 
           default:
@@ -1032,10 +1032,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         scope.Complete();
       });
 
-      if (!emailType.HasValue)
-        throw new InvalidOperationException($"Email type expected");
+      if (!notificationType.HasValue)
+        throw new InvalidOperationException($"Notification type expected");
 
-      await SendEmail(item, emailType.Value);
+      await SendNotification(item, notificationType.Value);
     }
 
 
@@ -1187,45 +1187,49 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       await PerformActionSendForVerificationManualProcessVerificationTypes(request, opportunity, myOpportunity, isNew);
 
-      //used by emailer
+      //used by notifications
+      myOpportunity.UserPhoneNumber = user.PhoneNumber;
       myOpportunity.UserEmail = user.Email;
-      myOpportunity.UserDisplayName = user.DisplayName;
+      myOpportunity.UserDisplayName = user.DisplayName ?? user.Username;
       myOpportunity.OpportunityTitle = opportunity.Title;
       myOpportunity.OrganizationId = opportunity.OrganizationId;
       myOpportunity.ZltoReward = opportunity.ZltoReward;
       myOpportunity.YomaReward = opportunity.YomaReward;
 
-      if (request.InstantVerification) return; //with instant-verifications verification pending emails are not sent
+      if (request.InstantVerification) return; //with instant-verifications verification pending notifications are not sent
 
       //sent to youth
-      await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending);
+      await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending);
 
       //sent to organization admins
-      await SendEmail(myOpportunity, EmailType.Opportunity_Verification_Pending_Admin);
+      await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending_Admin);
     }
 
-    private async Task SendEmail(Models.MyOpportunity myOpportunity, EmailType type)
+    private async Task SendNotification(Models.MyOpportunity myOpportunity, NotificationType type)
     {
       try
       {
-        List<EmailRecipient>? recipients = null;
+        List<NotificationRecipient>? recipients = null;
+
         recipients = type switch
         {
-          EmailType.Opportunity_Verification_Rejected or EmailType.Opportunity_Verification_Completed or EmailType.Opportunity_Verification_Pending => [
-                          new() { Email = myOpportunity.UserEmail, DisplayName = myOpportunity.UserDisplayName }
-                      ],
-          EmailType.Opportunity_Verification_Pending_Admin => _organizationService.ListAdmins(myOpportunity.OrganizationId, false, false)
-                          .Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList(),
+          NotificationType.Opportunity_Verification_Rejected or
+          NotificationType.Opportunity_Verification_Completed or
+          NotificationType.Opportunity_Verification_Pending =>
+              [new() { Username = myOpportunity.Username, PhoneNumber = myOpportunity.UserPhoneNumber, Email = myOpportunity.UserEmail, DisplayName = myOpportunity.UserDisplayName }],
+
+          NotificationType.Opportunity_Verification_Pending_Admin =>
+              _organizationService.ListAdmins(myOpportunity.OrganizationId, false, false)
+                  .Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.DisplayName })
+                  .ToList(),
+
           _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported"),
         };
 
-        recipients = _emailPreferenceFilterService.FilterRecipients(type, recipients);
-        if (recipients == null || recipients.Count == 0) return;
-
-        var data = new EmailOpportunityVerification
+        var data = new NotificationOpportunityVerification
         {
-          YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(type),
-          VerificationURL = _emailURLFactory.OpportunityVerificationURL(type, myOpportunity.OrganizationId),
+          YoIDURL = _notificationURLFactory.OpportunityVerificationYoIDURL(type),
+          VerificationURL = _notificationURLFactory.OpportunityVerificationURL(type, myOpportunity.OrganizationId),
           Opportunities = [
             new()
             {
@@ -1233,20 +1237,20 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               DateStart = myOpportunity.DateStart,
               DateEnd = myOpportunity.DateEnd,
               Comment = myOpportunity.CommentVerification,
-              URL = _emailURLFactory.OpportunityVerificationItemURL(type, myOpportunity.OpportunityId, myOpportunity.OrganizationId),
+              URL = _notificationURLFactory.OpportunityVerificationItemURL(type, myOpportunity.OpportunityId, myOpportunity.OrganizationId),
               ZltoReward = myOpportunity.ZltoReward,
               YomaReward = myOpportunity.YomaReward
             }
             ]
         };
 
-        await _emailProviderClient.Send(type, recipients, data);
+        await _notificationDeliveryService.Send(type, recipients, data);
 
-        _logger.LogInformation("Successfully send email");
+        _logger.LogInformation("Successfully send notification");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send email");
+        _logger.LogError(ex, "Failed to send notification");
       }
     }
 

@@ -526,24 +526,21 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("DisplayName")
-                        .IsRequired()
                         .HasColumnType("varchar(255)");
 
                     b.Property<Guid?>("EducationId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("Email")
-                        .IsRequired()
                         .HasColumnType("varchar(320)");
 
-                    b.Property<bool>("EmailConfirmed")
+                    b.Property<bool?>("EmailConfirmed")
                         .HasColumnType("boolean");
 
                     b.Property<Guid?>("ExternalId")
                         .HasColumnType("uuid");
 
                     b.Property<string>("FirstName")
-                        .IsRequired()
                         .HasColumnType("varchar(125)");
 
                     b.Property<Guid?>("GenderId")
@@ -552,6 +549,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("varchar(50)");
 
+                    b.Property<bool?>("PhoneNumberConfirmed")
+                        .HasColumnType("boolean");
+
                     b.Property<Guid?>("PhotoId")
                         .HasColumnType("uuid");
 
@@ -559,7 +559,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Surname")
-                        .IsRequired()
                         .HasColumnType("varchar(125)");
 
                     b.Property<bool?>("YoIDOnboarded")
@@ -574,11 +573,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
+                    b.HasIndex("ExternalId")
+                        .IsUnique();
+
                     b.HasIndex("GenderId");
+
+                    b.HasIndex("PhoneNumber")
+                        .IsUnique();
 
                     b.HasIndex("PhotoId");
 
-                    b.HasIndex("FirstName", "Surname", "EmailConfirmed", "PhoneNumber", "DateOfBirth", "DateLastLogin", "ExternalId", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified");
+                    b.HasIndex("FirstName", "Surname", "DisplayName", "EmailConfirmed", "PhoneNumberConfirmed", "DateOfBirth", "DateLastLogin", "YoIDOnboarded", "DateYoIDOnboarded", "DateCreated", "DateModified");
 
                     b.ToTable("User", "Entity");
                 });
@@ -1671,7 +1676,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(50)");
 
                     b.HasKey("Id");
 
@@ -1757,12 +1762,18 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Username")
+                        .HasColumnType("varchar(320)");
+
                     b.Property<string>("WalletId")
                         .HasColumnType("varchar(50)");
 
                     b.HasKey("Id");
 
                     b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.HasIndex("Username")
                         .IsUnique();
 
                     b.HasIndex("StatusId", "DateCreated", "DateModified");

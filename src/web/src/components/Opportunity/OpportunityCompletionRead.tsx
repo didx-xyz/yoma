@@ -121,7 +121,9 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           <p className="h-6 text-lg font-bold text-black">
             {data?.userDisplayName}
           </p>
-          <p className="text-sm text-gray-dark">{data?.userEmail}</p>
+          <p className="text-sm text-gray-dark">
+            {data?.userEmail ?? data?.userPhoneNumber}
+          </p>
           <p className="mt-2 flex flex-row items-center text-sm text-gray-dark">
             <IoMdPin className="mr-2 h-4 w-4 text-gray-dark" />
             {data?.userCountry}

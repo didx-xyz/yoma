@@ -9,7 +9,7 @@ namespace Yoma.Core.Domain.IdentityProvider.Interfaces
 
     Task<User?> GetUser(string? username);
 
-    Task UpdateUser(User user, bool resetPassword, bool sendVerifyEmail);
+    Task UpdateUser(User user, bool resetPassword, bool sendVerifyEmail, bool updatePhoneNumber);
 
     Task EnsureRoles(Guid id, List<string> roles);
 

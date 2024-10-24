@@ -5,17 +5,23 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 {
   public interface IUserService
   {
-    User GetByEmail(string? email, bool includeChildItems, bool includeComputed);
+    User GetByUsername(string username, bool includeChildItems, bool includeComputed);
 
-    User? GetByEmailOrNull(string email, bool includeChildItems, bool includeComputed);
+    User? GetByUsernameOrNull(string? username, bool includeChildItems, bool includeComputed);
+
+    User? GetByEmailOrNull(string? email, bool includeChildItems, bool includeComputed);
+
+    User? GetByPhoneOrNull(string? phoneNumber, bool includeChildItems, bool includeComputed);
+
+    User? GetByExternalIdOrNull(Guid externalId, bool includeChildItems, bool includeComputed);
 
     User GetById(Guid Id, bool includeChildItems, bool includeComputed);
 
     User? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed);
 
-    Settings GetSettingsByEmail(string email);
+    Settings GetSettingsByUsername(string username);
 
-    SettingsInfo GetSettingsInfoByEmail(string email);
+    SettingsInfo GetSettingsInfoByUsername(string username);
 
     SettingsInfo GetSettingsInfoById(Guid id);
 
@@ -27,13 +33,13 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<User> Upsert(UserRequest request);
 
-    Task<User> UpsertPhoto(string? email, IFormFile? file);
+    Task<User> UpsertPhoto(string username, IFormFile? file);
 
-    Task<User> UpdateSettings(string? email, List<string> roles, SettingsRequest request);
+    Task<User> UpdateSettings(string username, List<string> roles, SettingsRequest request);
 
     Task AssignSkills(User user, Opportunity.Models.Opportunity opportunity);
 
-    Task<User> YoIDOnboard(string? email);
+    Task<User> YoIDOnboard(string username);
 
     Task TrackLogin(UserRequestLoginEvent request);
   }

@@ -1,8 +1,10 @@
 # https://github.com/jdx/mise
 [tools]
 dotnet = "8.0"
+java = "temurin-17"
+maven = "3.9"
 node = "18"
 tilt = "latest"
 
 [env]
-MISE_FETCH_REMOTE_VERSIONS_TIMEOUT="30s" # Because azure is slow
+MISE_FETCH_REMOTE_VERSIONS_TIMEOUT = "30s" # Because azure is slow

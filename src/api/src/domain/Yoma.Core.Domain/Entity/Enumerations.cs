@@ -31,7 +31,7 @@ namespace Yoma.Core.Domain.Entity
   {
     None,
     Reapproval,
-    ReapprovalWithEmail
+    ReapprovalWithNotification
   }
   public enum SettingType
   {
@@ -42,16 +42,16 @@ namespace Yoma.Core.Domain.Entity
 
   public enum Setting
   {
-    User_Email_Opportunity_Published,
-    User_Email_Opportunity_Completion,
-    Organization_Admin_Email_Opportunity_Expiration,
-    Organization_Admin_Email_Organization_Approval,
-    Organization_Admin_Email_Opportunity_Completion,
-    Organization_Admin_Email_ActionLink_Verify_Approval,
-    Admin_Email_Opportunity_Posted,
-    Admin_Email_Organization_Approval,
-    Admin_Email_ActionLink_Verify_Approval,
-    User_Share_Email_With_Partners,
+    User_Notification_Opportunity_Published,
+    User_Notification_Opportunity_Completion,
+    Organization_Admin_Notification_Opportunity_Expiration,
+    Organization_Admin_Notification_Organization_Approval,
+    Organization_Admin_Notification_Opportunity_Completion,
+    Organization_Admin_Notification_ActionLink_Verify_Approval,
+    Admin_Notification_Opportunity_Posted,
+    Admin_Notification_Organization_Approval,
+    Admin_Notification_ActionLink_Verify_Approval,
+    User_Share_Contact_Info_With_Partners,
     Organization_Share_Address_Details_With_Partners,
     Organization_Share_Contact_Info_With_Partners
   }

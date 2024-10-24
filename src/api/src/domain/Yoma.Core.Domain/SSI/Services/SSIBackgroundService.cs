@@ -163,7 +163,7 @@ namespace Yoma.Core.Domain.SSI.Services
                     {
                       // utilize user id, ensuring a consistent tenant reference or name even if the name is altered
                       Referent = user.Id.ToString(),
-                      Name = user.DisplayName.RemoveSpecialCharacters(),
+                      Name = user.DisplayName?.RemoveSpecialCharacters() ?? user.Username,
                       ImageUrl = user.PhotoURL,
                       Roles = [Role.Holder]
                     };
@@ -284,6 +284,7 @@ namespace Yoma.Core.Domain.SSI.Services
                     if (!item.UserId.HasValue)
                       throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'User id is null");
                     user = _userService.GetById(item.UserId.Value, true, true);
+                    user.DisplayName ??= user.Username; //default display name to username if null
 
                     var organization = _organizationService.GetByNameOrNull(_appSettings.YomaOrganizationName, true, true);
                     if (organization == null)

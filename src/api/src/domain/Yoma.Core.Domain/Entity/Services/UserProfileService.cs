@@ -29,7 +29,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IEducationService _educationService;
     private readonly IOrganizationService _organizationService;
     private readonly IMyOpportunityService _myOpportunityService;
-    private readonly IWalletService _rewardWalletService;
+    private readonly IWalletService _walletService;
     private readonly UserProfileRequestValidator _userProfileRequestValidator;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
@@ -44,7 +44,7 @@ namespace Yoma.Core.Domain.Entity.Services
         IEducationService educationService,
         IOrganizationService organizationService,
         IMyOpportunityService myOpportunityService,
-        IWalletService rewardWalletService,
+        IWalletService walletService,
         UserProfileRequestValidator userProfileRequestValidator,
         IRepositoryValueContainsWithNavigation<User> userRepository,
         IExecutionStrategyService executionStrategyService)
@@ -57,7 +57,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _educationService = educationService;
       _organizationService = organizationService;
       _myOpportunityService = myOpportunityService;
-      _rewardWalletService = rewardWalletService;
+      _walletService = walletService;
       _userProfileRequestValidator = userProfileRequestValidator;
       _userRepository = userRepository;
       _executionStrategyService = executionStrategyService;
@@ -68,21 +68,21 @@ namespace Yoma.Core.Domain.Entity.Services
     public UserProfile Get()
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = _userService.GetByEmail(username, true, true);
+      var user = _userService.GetByUsername(username, true, true);
       return ToProfile(user).Result;
     }
 
     public List<UserSkillInfo>? GetSkills()
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      var user = _userService.GetByEmail(username, true, true);
+      var user = _userService.GetByUsername(username, true, true);
       return user.Skills;
     }
 
     public Settings GetSettings()
     {
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
-      return SettingsHelper.FilterByRoles(_userService.GetSettingsByEmail(username), HttpContextAccessorHelper.GetRoles(_httpContextAccessor));
+      return SettingsHelper.FilterByRoles(_userService.GetSettingsByUsername(username), HttpContextAccessorHelper.GetRoles(_httpContextAccessor));
     }
 
     public async Task<UserProfile> UpsertPhoto(IFormFile file)
@@ -114,57 +114,65 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var username = HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false);
 
-      var user = _userService.GetByEmail(username, true, true);
+      var user = _userService.GetByUsername(username, true, true);
 
       if (!user.ExternalId.HasValue)
         throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
       var externalId = user.ExternalId.Value;
 
-      var emailUpdated = !string.Equals(user.Email, request.Email, StringComparison.InvariantCultureIgnoreCase);
-      if (emailUpdated)
-        //email address updates: pending ZLTO integration and ability to update wallet email address 
-        throw new ValidationException("Email address updates are currently restricted. Please contact support for assistance");
-      //if (_userService.GetByEmailOrNull(request.Email, false, false) != null)
-      //  throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
+      if (!string.IsNullOrEmpty(user.Email) && string.IsNullOrEmpty(request.Email))
+        throw new ValidationException("Email is required");
 
-      user.Email = request.Email.ToLower();
+      var emailUpdated = !(string.Equals(user.Email ?? string.Empty, request.Email ?? string.Empty, StringComparison.InvariantCultureIgnoreCase));
+      if (emailUpdated)
+      {
+        if (_userService.GetByEmailOrNull(request.Email, false, false) != null)
+          throw new ValidationException($"{nameof(User)} with the specified email address '{request.Email}' already exists");
+      }
+
+      user.Email = request.Email?.ToLower();
       if (emailUpdated) user.EmailConfirmed = false;
       user.FirstName = request.FirstName.TitleCase();
       user.Surname = request.Surname.TitleCase();
-      user.DisplayName = request.DisplayName ?? string.Empty;
+      user.DisplayName = request.DisplayName;
       user.SetDisplayName();
-      user.PhoneNumber = request.PhoneNumber;
       user.CountryId = request.CountryId;
       user.EducationId = request.EducationId;
       user.GenderId = request.GenderId;
       user.DateOfBirth = request.DateOfBirth;
+
+      if (string.IsNullOrEmpty(user.Email) && string.IsNullOrEmpty(user.PhoneNumber))
+        throw new InvalidOperationException("Email or phone number is required");
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
         user = await _userRepository.Update(user);
 
+        username = user.Email ?? user.PhoneNumber;
+        if (string.IsNullOrEmpty(username))
+          throw new InvalidOperationException("Username is required");
+
         var userIdentityProvider = new IdentityProvider.Models.User
         {
           Id = externalId,
           FirstName = user.FirstName,
           LastName = user.Surname,
-          Username = user.Email,
+          Username = username,
           Email = user.Email,
-          EmailVerified = user.EmailConfirmed,
-          PhoneNumber = user.PhoneNumber,
+          EmailVerified = user.EmailConfirmed ?? false,
           Gender = user.GenderId.HasValue ? _genderService.GetById(user.GenderId.Value).Name : null,
           Country = user.CountryId.HasValue ? _countryService.GetById(user.CountryId.Value).Name : null,
           Education = user.EducationId.HasValue ? _educationService.GetById(user.EducationId.Value).Name : null,
           DateOfBirth = user.DateOfBirth.HasValue ? user.DateOfBirth.Value.ToString("yyyy/MM/dd") : null
         };
 
-        await _identityProviderClient.UpdateUser(userIdentityProvider, request.ResetPassword, emailUpdated);
+        await _identityProviderClient.UpdateUser(userIdentityProvider, request.ResetPassword, emailUpdated, request.UpdatePhoneNumber);
 
         scope.Complete();
       });
 
-      HttpContextAccessorHelper.UpdateUsername(_httpContextAccessor, user.Email);
+      HttpContextAccessorHelper.UpdateUsername(_httpContextAccessor, username);
 
       return await ToProfile(user);
     }
@@ -177,7 +185,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       result.Settings = SettingsHelper.FilterByRoles(result.Settings, HttpContextAccessorHelper.GetRoles(_httpContextAccessor));
 
-      var (status, balance) = await _rewardWalletService.GetWalletStatusAndBalance(result.Id);
+      var (status, balance) = await _walletService.GetWalletStatusAndBalance(result.Id);
       result.Zlto = new UserProfileZlto
       {
         Pending = balance.Pending,

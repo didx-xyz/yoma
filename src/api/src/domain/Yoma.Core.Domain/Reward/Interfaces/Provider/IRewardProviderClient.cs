@@ -7,6 +7,8 @@ namespace Yoma.Core.Domain.Reward.Interfaces.Provider
   {
     Task<(Wallet wallet, Models.Provider.WalletCreationStatus status)> CreateWallet(WalletRequestCreate request);
 
+    Task<string> UpdateWalletUsername(string usernameCurrent, string username);
+
     Task<Wallet> GetWallet(string walletId);
 
     Task<List<WalletVoucher>> ListWalletVouchers(string walletId, int? limit, int? offset);

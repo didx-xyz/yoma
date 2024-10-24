@@ -15,7 +15,9 @@ namespace Yoma.Core.Infrastructure.Keycloak
     [Description("dateOfBirth")]
     DateOfBirth,
     [Description("terms_and_conditions")]
-    TermsAndConditions
+    TermsAndConditions,
+    [Description("phoneNumberVerified")]
+    PhoneNumberVerified
   }
 
   public enum WebhookRequestEventType

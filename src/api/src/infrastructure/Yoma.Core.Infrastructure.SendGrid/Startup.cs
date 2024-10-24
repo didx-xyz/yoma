@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SendGrid.Extensions.DependencyInjection;
-using Yoma.Core.Domain.EmailProvider.Interfaces;
+using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Infrastructure.SendGrid.Client;
 using Yoma.Core.Infrastructure.SendGrid.Models;
 

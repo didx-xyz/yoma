@@ -14,15 +14,18 @@ namespace Yoma.Core.Infrastructure.Keycloak.Extensions
       {
         Id = Guid.Parse(kcUser.Id),
         Username = kcUser.Username,
-        Email = kcUser.Email.Trim(),
-        FirstName = kcUser.FirstName.Trim(),
-        LastName = kcUser.LastName.Trim(),
+        Email = kcUser.Email?.Trim(),
+        FirstName = kcUser.FirstName?.Trim(),
+        LastName = kcUser.LastName?.Trim(),
         Country = kcUser.Attributes.ContainsKey(CustomAttributes.Country.ToDescription()) ? kcUser.Attributes[CustomAttributes.Country.ToDescription()].FirstOrDefault()?.Trim() : null,
         DateOfBirth = kcUser.Attributes.ContainsKey(CustomAttributes.DateOfBirth.ToDescription()) ? kcUser.Attributes[CustomAttributes.DateOfBirth.ToDescription()].FirstOrDefault()?.Trim() : null,
         Education = kcUser.Attributes.ContainsKey(CustomAttributes.Education.ToDescription()) ? kcUser.Attributes[CustomAttributes.Education.ToDescription()].FirstOrDefault()?.Trim() : null,
         Gender = kcUser.Attributes.ContainsKey(CustomAttributes.Gender.ToDescription()) ? kcUser.Attributes[CustomAttributes.Gender.ToDescription()].FirstOrDefault()?.Trim() : null,
         PhoneNumber = kcUser.Attributes.ContainsKey(CustomAttributes.PhoneNumber.ToDescription()) ? kcUser.Attributes[CustomAttributes.PhoneNumber.ToDescription()].FirstOrDefault()?.Trim() : null,
-        EmailVerified = kcUser.EmailVerified.HasValue && kcUser.EmailVerified.Value
+        EmailVerified = kcUser.EmailVerified.HasValue && kcUser.EmailVerified.Value,
+        PhoneNumberVerified = kcUser.Attributes.ContainsKey(CustomAttributes.PhoneNumberVerified.ToDescription())
+          ? bool.TryParse(kcUser.Attributes[CustomAttributes.PhoneNumberVerified.ToDescription()].FirstOrDefault(), out var phoneNumberVerified)
+            ? phoneNumberVerified : null : null
       };
 
       return result;

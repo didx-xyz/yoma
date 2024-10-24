@@ -77,6 +77,34 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       return (result, status);
     }
 
+    public async Task<string> UpdateWalletUsername(string usernameCurrent, string username)
+    {
+      ArgumentException.ThrowIfNullOrWhiteSpace(usernameCurrent, nameof(usernameCurrent));
+      usernameCurrent = usernameCurrent.Trim();
+
+      ArgumentException.ThrowIfNullOrWhiteSpace(username, nameof(username));
+      username = username.Trim();
+
+      if (string.Equals(usernameCurrent, username, StringComparison.InvariantCultureIgnoreCase))
+        return username;
+
+      var request = new WalletRequestUpdateUsername
+      {
+        UsernameCurrent = usernameCurrent,
+        Username = username
+      };
+
+      var response = await _options.Wallet.BaseUrl
+        .AppendPathSegment("update_external_account_username")
+        .AppendPathSegment(usernameCurrent)
+        .WithAuthHeaders(await GetAuthHeaders())
+        .PutJsonAsync(request)
+        .EnsureSuccessStatusCodeAsync()
+        .ReceiveJson<WalletAccountInfo>();
+
+      return response.WalletId;
+    }
+
     public async Task<Domain.Reward.Models.Wallet> GetWallet(string walletId)
     {
       if (string.IsNullOrWhiteSpace(walletId))
@@ -155,7 +183,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         TaskExternalId = request.Id.ToString(),
         TaskProgramId = "n/a",
         BankTransactionId = "n/a",
-        UserName = request.Username,
+        Username = request.Username,
         TaskSkills = (request.Skills != null && request.Skills.Count != 0) ? string.Join(",", request.Skills.Select(o => o.Name)) : "n/a",
         TaskCountry = (request.Countries != null && request.Countries.Count != 0) ? string.Join(",", request.Countries.Select(o => o.Name)) : "n/a",
         TaskLanguage = (request.Languages != null && request.Languages.Count != 0) ? string.Join(",", request.Languages.Select(o => o.Name)) : "n/a",
@@ -457,7 +485,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       {
         OwnerOrigin = _accessToken.PartnerName,
         OwnerName = request.DisplayName,
-        UserName = request.Username,
+        Username = request.Username,
         Balance = (int)request.Balance
         //OwnerId: system assigned; can not be specified
         //UserPassword: used with external wallet activation; with Yoma wallets are internal
@@ -558,6 +586,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         throw new ArgumentNullException(nameof(countryCodeAlpha2));
       countryCodeAlpha2 = countryCodeAlpha2.Trim();
 
+      categoryId = categoryId?.Trim();
+
       // attempt to find the country owner for the specified country code (countryCodeAlpha2)
       // if the country is not explicitly configured, default to the owner configured for the Worldwide (WW) store
       var countryOwner = _options.Store.Owners.SingleOrDefault(o => string.Equals(o.CountryCodeAlpha2, countryCodeAlpha2, StringComparison.InvariantCultureIgnoreCase));
@@ -570,20 +600,47 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       query = query.SetQueryParam("country_owner_id", countryOwnerId);
 
       var effectiveLimit = limit.HasValue && limit.Value > default(int) ? limit.Value : Limit_Default;
-      query = query.SetQueryParam("limit", effectiveLimit);
 
-      if (offset.HasValue && offset.Value >= default(int))
-        query = query.SetQueryParam("offset", offset);
+      StoreResponseSearch? responseSearch = null;
+      if (string.IsNullOrEmpty(categoryId))
+      {
+        query = query.SetQueryParam("limit", effectiveLimit);
 
-      var response = await query.PostAsync()
-          .EnsureSuccessStatusCodeAsync()
-          .ReceiveJson<StoreResponseSearch>();
+        if (offset.HasValue && offset.Value >= default(int))
+          query = query.SetQueryParam("offset", offset);
 
-      categoryId = categoryId?.Trim();
-      if (!string.IsNullOrEmpty(categoryId))
-        response.Items = response.Items.Where(o => string.Equals(o.Category.Id, categoryId, StringComparison.InvariantCultureIgnoreCase)).ToList();
+        responseSearch = await query.PostAsync()
+            .EnsureSuccessStatusCodeAsync()
+            .ReceiveJson<StoreResponseSearch>();
 
-      return response;
+        return responseSearch;
+      }
+
+      int offsetCurrent = 0;
+      var resultSearch = new StoreResponseSearch { Items = [] };
+
+      query = query.SetQueryParam("limit", Limit_Default);
+      do
+      {
+        query = query.SetQueryParam("offset", offsetCurrent);
+
+        responseSearch = await query.PostAsync()
+           .EnsureSuccessStatusCodeAsync()
+           .ReceiveJson<StoreResponseSearch>();
+
+        if (responseSearch?.Items == null || responseSearch.Items.Count == 0)
+          break;
+
+        resultSearch.Items.AddRange(responseSearch.Items);
+        offsetCurrent += Limit_Default;
+      }
+      while (responseSearch.Items.Count == Limit_Default);
+
+      resultSearch.Items = resultSearch.Items.Where(o => string.Equals(o.Category.Id, categoryId, StringComparison.InvariantCultureIgnoreCase))
+          .Skip(offset ?? default).Take(effectiveLimit)
+          .ToList();
+
+      return resultSearch;
     }
     #endregion
   }

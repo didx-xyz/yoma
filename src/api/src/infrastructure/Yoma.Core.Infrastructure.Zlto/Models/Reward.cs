@@ -38,7 +38,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public string ZltoWalletId { get; set; }
 
     [JsonProperty("user_name")]
-    public string UserName { get; set; }
+    public string Username { get; set; }
 
     [JsonProperty("task_zlto_reward")]
     public int TaskZltoReward { get; set; }
@@ -128,7 +128,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public string TaskTitle { get; set; }
 
     [JsonProperty("user_name")]
-    public string UserName { get; set; }
+    public string Username { get; set; }
 
     [JsonProperty("task_external_proof")]
     public string TaskExternalProof { get; set; }

@@ -5,6 +5,15 @@ using System.Runtime.Serialization;
 
 namespace Yoma.Core.Infrastructure.Zlto.Models
 {
+  public class WalletRequestUpdateUsername
+  {
+    [JsonProperty("user_name")]
+    public string UsernameCurrent { get; set; }
+
+    [JsonProperty("new_user_name")]
+    public string Username { get; set; }
+  }
+
   public class WalletRequestCreate
   {
     [JsonProperty("owner_id")]
@@ -17,7 +26,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public string OwnerName { get; set; }
 
     [JsonProperty("user_name")]
-    public string UserName { get; set; }
+    public string Username { get; set; }
 
     [JsonProperty("user_password")]
     public string UserPassword { get; set; }
@@ -57,7 +66,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public string OwnerOrigin { get; set; }
 
     [JsonProperty("user_name")]
-    public string UserName { get; set; }
+    public string Username { get; set; }
 
     [JsonProperty("last_updated")]
     public DateTime LastUpdated { get; set; }

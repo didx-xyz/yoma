@@ -23,7 +23,7 @@ export interface OrganizationRequestViewModel {
   educationProviderDocuments: FormFile[] | null;
   businessDocuments: FormFile[] | null;
   addCurrentUserAsAdmin: boolean;
-  adminEmails: string[];
+  admins: string[];
   registrationDocumentsDelete: string[] | null;
   educationProviderDocumentsDelete: string[] | null;
   businessDocumentsDelete: string[] | null;
