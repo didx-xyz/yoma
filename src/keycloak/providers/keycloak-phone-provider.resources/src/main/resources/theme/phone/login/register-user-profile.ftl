@@ -80,13 +80,15 @@
         <div class="${properties.kcFormGroupClass!}" :style="{ display: phoneNumberAsUsername ? 'block' : 'none' }">
           <div class="${properties.kcInputWrapperClass!}">
             <input id="phoneNumberPicker" class="${properties.kcInputClass!}" name="phoneNumberPicker" type="tel" placeholder="${msg('enterPhoneNumber')}"
-              aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" v-intl-tel-input autocomplete="mobile tel" />
+              aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" v-intl-tel-input autocomplete="mobile tel"
+              :disabled="phoneVerified" />
           </div>
           <#if messagesPerField.existsError('phoneNumber')>
             <span id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="padding-left: 20px;">
               ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
             </span>
           </#if>
+
           <!-- Hidden input for phone number -->
           <input type="hidden" id="phoneNumber" name="phoneNumber" />
         </div>
@@ -94,12 +96,12 @@
         <!-- Verification Code Input -->
         <#if verifyPhone??>
           <div :style="{ display: phoneNumberAsUsername ? 'block' : 'none' }">
-            <div class="${properties.kcFormGroupClass!}" :style="{ display: phoneVerified ? 'block' : 'none' }">
-              <div class="${properties.kcLabelWrapperClass!}" style="margin-top: -10px">
-                <label class="${properties.kcLabelClass!}" style="color: green;"><span style="margin-right: 5px;">✔</span> ${msg("phoneNumberVerified")}</label>
-              </div>
-                <#--  <a href="#" v-on:click="resetPhoneVerification">${msg("changePhoneNumber")}</a>  -->
-            </div>
+            <#--  message: phone verified  -->
+            <label class="${properties.kcLabelClass!}" :style="{ display: phoneVerified ? 'block' : 'none', margin: '-15px 0 10px 34px' }">
+              <span style="color: green;"><span style="margin-right: 5px;">✔</span> ${msg("phoneNumberVerified")}</span>
+              <span v-on:click="clearAndFocusPhoneNumberPicker" class="underline" style="margin-left: 10px">${msg("changePhoneNumber")}</span>
+            </label>
+
             <div class="${properties.kcFormGroupClass!}" :style="{ display: phoneVerified ? 'none' : 'block' }">
               <div class="${properties.kcLabelWrapperClass!}">
                 <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
@@ -112,23 +114,24 @@
                   <input tabindex="0" style="height: 36px; flex: 1;margin-top: 5px;" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
                     type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
                 </div>
-              </div>
 
-              <#-- message: success -->
-              <div v-if="messageSendCodeSuccess" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="color: green; padding-left: 20px; margin-top: -10px;">
-                <span style="margin-right: 5px;">✔</span> {{ messageSendCodeSuccess }}
-              </div>
-
-              <#-- message: error -->
-              <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="padding-left: 20px; margin-top: -10px;">
-                <span style="margin-right: 5px;">❌</span> {{ messageSendCodeError }}
-              </div>
-
-              <#if messagesPerField.existsError('code')>
-                <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="padding-left: 20px;">
-                  ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
+                <#-- message: client success -->
+                <div v-if="messageSendCodeSuccess" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="color: green; margin: -10px 0 10px 10px;">
+                  <span style="margin-right: 5px;">✔</span> {{ messageSendCodeSuccess }}
                 </div>
-              </#if>
+
+                <#-- message: client error -->
+                <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="margin: -10px 0 10px 10px;">
+                  {{ messageSendCodeError }}
+                </div>
+
+                <#-- message: server error -->
+                <#if messagesPerField.existsError('code')>
+                  <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="margin: -10px 0 10px 10px;">
+                    ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
+                  </div>
+                </#if>
+              </div>
             </div>
           </div>
         </#if>
@@ -241,7 +244,7 @@
 
                   // show success message
                   this.clearMessages();
-                  const phoneNumberPartial = phoneNumber.substring(0, 3) + '****' + phoneNumber.substring(phoneNumber.length - 2);
+                  const phoneNumberPartial = phoneNumber.substring(0, 3) + ' **** ' + phoneNumber.substring(phoneNumber.length - 2);
                   this.messageSendCodeSuccess = 'A code has been sent to ' + phoneNumberPartial + '.';
                 })
               .catch(e => this.messageSendCodeError = e.response.data.error);
@@ -294,6 +297,15 @@
             this.messageSendCodeSuccess = '';
             this.resetSendCodeButton = true;
             this.clearMessages();
+          },
+          clearAndFocusPhoneNumberPicker() {
+            this.phoneNumber = '';
+            const phoneNumberPicker = document.getElementById('phoneNumberPicker');
+            if (phoneNumberPicker) {
+              phoneNumberPicker.focus();
+            }
+
+            this.resetPhoneVerification();
           },
           initializePasswordIndicator() {
             document.getElementById('email').addEventListener('input', (e) => {
