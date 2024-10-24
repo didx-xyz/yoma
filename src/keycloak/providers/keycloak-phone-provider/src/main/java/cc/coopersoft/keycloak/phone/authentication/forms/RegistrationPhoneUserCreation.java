@@ -35,9 +35,6 @@ import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePage
 import cc.coopersoft.keycloak.phone.providers.exception.PhoneNumberInvalidException;
 import jakarta.ws.rs.core.MultivaluedMap;
 
-/**
- * replace org.keycloak.authentication.forms.RegistrationUserCreation.java
- */
 public class RegistrationPhoneUserCreation implements FormActionFactory, FormAction {
 
     private static final Logger logger = Logger.getLogger(RegistrationPhoneUserCreation.class);
@@ -141,6 +138,7 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
 
     @Override
     public void buildPage(FormContext context, LoginFormsProvider form) {
+
         if (isPhoneNumberAsUsername(context)) {
             form.setAttribute("registrationPhoneNumberAsUsername", true);
         }
@@ -157,8 +155,6 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
         boolean success = true;
         List<FormMessage> errors = new ArrayList<>();
 
-        // log full phone number
-        //logger.info(String.format("Full phone number: %s", phoneNumber));
         // Check if both phoneNumber and email are blank
         boolean isPhoneBlank = Validation.isBlank(phoneNumber);
         boolean isEmailBlank = Validation.isBlank(email);

@@ -544,3 +544,11 @@ input[type="checkbox"] {
   font-size: 22px;
   user-select: none;
 }
+
+.success-message {
+  color: green;
+}
+
+.success-message .icon {
+  margin-right: 5px;
+}
