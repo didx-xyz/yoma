@@ -107,9 +107,9 @@ namespace Yoma.Core.Domain.Core.Models
     /// Determines the expiration behavior for item reservations
     /// -1: Never expires
     /// 0: Expires immediately
-    /// >0: Specifies the expiration time in hours
+    /// >0: Specifies the expiration time in minutes
     /// </summary>
-    public int MarketplaceItemReservationExpirationInHours { get; set; }
+    public int MarketplaceItemReservationExpirationInMinutes { get; set; }
 
     public AppSettingsDatabaseRetryPolicy DatabaseRetryPolicy { get; set; }
 
