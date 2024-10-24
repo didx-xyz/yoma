@@ -207,8 +207,8 @@ namespace Yoma.Core.Domain.Marketplace.Services
       TransactionLog? transaction = null;
       if (transactionExisting != null && transactionExisting.Status == TransactionStatus.Reserved)
       {
-        //check if reservation expired (-1: never expires | 0: expires immediately | >0: expires in x hours)
-        if (_appSettings.MarketplaceItemReservationExpirationInHours >= 0 && transactionExisting.DateModified.AddHours(_appSettings.MarketplaceItemReservationExpirationInHours) <= DateTimeOffset.UtcNow)
+        //check if reservation expired (-1: never expires | 0: expires immediately | >0: expires in x minutes)
+        if (_appSettings.MarketplaceItemReservationExpirationInMinutes >= 0 && transactionExisting.DateModified.AddMinutes(_appSettings.MarketplaceItemReservationExpirationInMinutes) <= DateTimeOffset.UtcNow)
         {
           //expired; mark as released and create a new reservation
           transactionExisting.StatusId = _transactionStatusService.GetByName(TransactionStatus.Released.ToString()).Id;
