@@ -384,7 +384,7 @@ namespace Yoma.Core.Domain.Reward.Services
     private static string ParseWalletUsername(User user)
     {
       var username = user.Username;
-      if (!username.Contains('@')) username = $"{username}@{Constants.Domain_System}";
+      if (!username.Contains('@')) username = $"{username}@{Constants.System_Domain}";
       return username;
     }
     #endregion

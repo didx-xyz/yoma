@@ -24,16 +24,18 @@ namespace Yoma.Core.Domain.Notification.Services
     {
       if (recipients == null || recipients.Count == 0) return;
 
-      // future extensibility: Currently, only email is supported, determined based on user preferences/settings
+      // apply preference filtering
+      recipients = _notificationPreferenceFilterService.FilterRecipients(type, recipients);
+      if (recipients == null || recipients.Count == 0) return;
+
+      // future extensibility: Currently, only email is supported
       var deliveryType = DeliveryType.Email;
 
       if (deliveryType.HasFlag(DeliveryType.Email))
       {
-        recipients = _notificationPreferenceFilterService.FilterRecipients(type, recipients)?
-         .Where(r => !string.IsNullOrEmpty(r.Email))
-         .ToList();
+        recipients = recipients.Where(r => !string.IsNullOrEmpty(r.Email)).ToList();
+        if (recipients.Count == 0) return;
 
-        if (recipients == null || recipients.Count == 0) return;
         await _emailProviderClient.Send(type, recipients, data);
       }
     }
@@ -42,23 +44,33 @@ namespace Yoma.Core.Domain.Notification.Services
     {
       if (recipientDataGroups == null || recipientDataGroups.Count == 0) return;
 
-      // future extensibility: Currently, only email is supported, determined based on user preferences/settings
+      // apply preference filtering
+      recipientDataGroups = recipientDataGroups
+          .Select(group =>
+          (
+              Recipients: _notificationPreferenceFilterService.FilterRecipients(type, group.Recipients ?? []) ?? [],
+              group.Data
+          ))
+          .Where(group => group.Recipients.Count > 0)
+          .ToList();
+
+      if (recipientDataGroups.Count == 0) return;
+
+      // future extensibility: Currently, only email is supported
       var deliveryType = DeliveryType.Email;
 
       if (deliveryType.HasFlag(DeliveryType.Email))
       {
-        recipientDataGroups = recipientDataGroups?
+        recipientDataGroups = recipientDataGroups
             .Select(group =>
             (
-                Recipients: _notificationPreferenceFilterService.FilterRecipients(type, group.Recipients)?
-                    .Where(r => !string.IsNullOrEmpty(r.Email))
-                    .ToList() ?? [],
+                Recipients: group.Recipients.Where(r => !string.IsNullOrEmpty(r.Email)).ToList(),
                 group.Data
             ))
             .Where(group => group.Recipients.Count > 0)
             .ToList();
 
-        if (recipientDataGroups == null || recipientDataGroups.Count == 0) return;
+        if (recipientDataGroups.Count == 0) return;
         await _emailProviderClient.Send(type, recipientDataGroups);
       }
     }
