@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json.Linq;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
@@ -95,18 +96,19 @@ namespace Yoma.Core.Api.Controllers
             var sType = payload.Type;
             _logger.LogInformation("{sType} event received", sType);
 
-            Enum.TryParse<WebhookRequestEventType>(sType, true, out var type);
+            var type = EnumHelper.GetValueFromDescription<WebhookRequestEventType>(sType);
+            if (!type.HasValue) type = WebhookRequestEventType.Undefined;
 
             switch (type)
             {
               case WebhookRequestEventType.Register:
-              case WebhookRequestEventType.Update_Profile:
+              case WebhookRequestEventType.UpdateProfile:
               case WebhookRequestEventType.Login:
-                _logger.LogInformation("{type} event processing", type);
+                _logger.LogInformation("{type} event processing", type.Value);
 
-                await UpdateUserProfile(type, payload);
+                await UpdateUserProfile(type.Value, payload);
 
-                _logger.LogInformation("{type} event processed", type);
+                _logger.LogInformation("{type} event processed", type.Value);
                 break;
 
               default:
@@ -158,10 +160,10 @@ namespace Yoma.Core.Api.Controllers
       switch (type)
       {
         case WebhookRequestEventType.Register:
-        case WebhookRequestEventType.Update_Profile:
+        case WebhookRequestEventType.UpdateProfile:
           if (userRequest == null)
           {
-            if (type == WebhookRequestEventType.Update_Profile)
+            if (type == WebhookRequestEventType.UpdateProfile)
             {
               _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
               return;
@@ -216,7 +218,7 @@ namespace Yoma.Core.Api.Controllers
               userRequest.DateOfBirth = dateOfBirth;
           }
 
-          if (type == WebhookRequestEventType.Update_Profile) break;
+          if (type == WebhookRequestEventType.UpdateProfile) break;
 
           try
           {
