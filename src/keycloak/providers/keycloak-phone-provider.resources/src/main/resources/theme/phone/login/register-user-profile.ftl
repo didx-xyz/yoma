@@ -23,7 +23,7 @@
         </div>  -->
 
         <!-- First Name Input -->
-        <div class="${properties.kcFormGroupClass!}">
+        <#--  <div class="${properties.kcFormGroupClass!}">
           <div class="${properties.kcLabelWrapperClass!}">
             <label for="firstName" class="${properties.kcLabelClass!}">${msg("firstName")}</label> *
           </div>
@@ -37,10 +37,10 @@
               </span>
             </#if>
           </div>
-        </div>
+        </div>  -->
 
         <!-- Last Name Input -->
-        <div class="${properties.kcFormGroupClass!}">
+        <#--  <div class="${properties.kcFormGroupClass!}">
           <div class="${properties.kcLabelWrapperClass!}">
             <label for="lastName" class="${properties.kcLabelClass!}">${msg("lastName")}</label> *
           </div>
@@ -54,7 +54,7 @@
               </span>
             </#if>
           </div>
-        </div>
+        </div>  -->
 
         <!-- Phone Number or Email Selection -->
         <label class="${properties.kcLabelClass!}">

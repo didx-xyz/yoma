@@ -215,13 +215,9 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
         UserProfile profile = profileProvider.create(UserProfileContext.REGISTRATION_USER_CREATION, formData);
 
         // Retrieve other attributes from the profile
-        String firstName = profile.getAttributes().getFirstValue(UserModel.FIRST_NAME);
-        String lastName = profile.getAttributes().getFirstValue(UserModel.LAST_NAME);
         String emailFromProfile = profile.getAttributes().getFirstValue(UserModel.EMAIL);
 
         // Set event details
-        context.getEvent().detail(Details.FIRST_NAME, firstName);
-        context.getEvent().detail(Details.LAST_NAME, lastName);
         context.getEvent().detail(Details.EMAIL, emailFromProfile);
 
         // Validate the profile

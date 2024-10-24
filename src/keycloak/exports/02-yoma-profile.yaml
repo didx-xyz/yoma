@@ -38,10 +38,6 @@ userProfile:
           max: 255
     - name: firstName
       displayName: "${firstName}"
-      required:
-        roles:
-          - user
-        scopes: []
       permissions:
         view:
           - user
@@ -57,10 +53,6 @@ userProfile:
         scopes: []
     - name: lastName
       displayName: "${lastName}"
-      required:
-        roles:
-          - user
-        scopes: []
       permissions:
         view:
           - user

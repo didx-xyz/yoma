@@ -129,10 +129,11 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
 
     @Override
     public void validate(ValidationContext context) {
+        logger.info("************ RegistrationPhoneVerificationCode.validate ************");
+
         // Extract form data and initialize errors list
         MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
         List<FormMessage> errors = new ArrayList<>();
-
         context.getEvent().detail(Details.REGISTER_METHOD, "form");
 
         // Get session and phone number from the form data
@@ -140,7 +141,28 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
         AuthenticationSessionModel authSession = context.getAuthenticationSession();
         String phoneNumber = formData.getFirst(FIELD_PHONE_NUMBER);
 
-        // Ensure previousPhoneNumber and phoneVerified are set in the session
+        // Initialize session attributes
+        initializeSessionAttributes(authSession, phoneNumber);
+
+        // Log initial validation step for phone number
+        logger.info("Validating phone number during registration: " + phoneNumber);
+
+        // Validate phone number
+        if (Validation.isBlank(phoneNumber) || !validatePhoneNumber(context, session, authSession, phoneNumber, errors, formData)) {
+            return;
+        }
+
+        // Validate verification code if phone is not verified
+        if (!Boolean.parseBoolean(authSession.getAuthNote("phoneVerified")) && !validateVerificationCode(context, session, authSession, phoneNumber, errors, formData)) {
+            return;
+        }
+
+        // Mark the context as successful
+        context.success();
+        logger.info("Validation completed successfully for phone number: " + phoneNumber);
+    }
+
+    private void initializeSessionAttributes(AuthenticationSessionModel authSession, String phoneNumber) {
         String previousPhoneNumber = authSession.getAuthNote("previousPhoneNumber");
         if (previousPhoneNumber == null) {
             previousPhoneNumber = phoneNumber;
@@ -153,81 +175,54 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
             phoneVerified = false;
         }
         authSession.setAuthNote("phoneVerified", Boolean.toString(phoneVerified));
+    }
 
-        // Log initial validation step for phone number
-        logger.info("Validating phone number during registration: " + phoneNumber);
-        logger.info("Initial phoneVerified: " + phoneVerified);
-
-        // Check if phone number is blank
-        if (!Validation.isBlank(phoneNumber)) {
-            // Try to canonicalize the phone number
-            try {
-                // Ensure phone number starts with +
-                if (!phoneNumber.startsWith("+")) {
-                    phoneNumber = "+" + phoneNumber;
-                }
-
-                phoneNumber = Utils.canonicalizePhoneNumber(context.getSession(), phoneNumber);
-                logger.info("Canonicalized phone number: " + phoneNumber);
-            } catch (PhoneNumberInvalidException e) {
-                logger.error("Invalid phone number: " + phoneNumber + ", error: " + e.getMessage());
-                context.error(Errors.INVALID_REGISTRATION);
-                errors.add(new FormMessage(FIELD_PHONE_NUMBER, e.getErrorType().message()));
-                context.validationError(formData, errors);
-                authSession.setAuthNote("phoneVerified", "false");
-                return;
+    private boolean validatePhoneNumber(ValidationContext context, KeycloakSession session, AuthenticationSessionModel authSession, String phoneNumber, List<FormMessage> errors, MultivaluedMap<String, String> formData) {
+        try {
+            if (!phoneNumber.startsWith("+")) {
+                phoneNumber = "+" + phoneNumber;
             }
-
-            // Check if phone number has changed
-            if (!previousPhoneNumber.equals(phoneNumber)) {
-                // Clear phone verification status if phone number has changed
-                phoneVerified = false;
-                authSession.setAuthNote("phoneVerified", "false");
-                logger.info("Phone number has changed. Clearing phone verification status.");
-            }
-
-            // Store the phone number in event details
-            context.getEvent().detail(FIELD_PHONE_NUMBER, phoneNumber);
-
-            // Validate the verification code only if phoneVerified is false
-            if (!phoneVerified) {
-                // Retrieve the verification code from the form data
-                String verificationCode = formData.getFirst(FIELD_VERIFICATION_CODE);
-                logger.info("Verification code entered: " + verificationCode);
-
-                // Retrieve ongoing token process based on the phone number
-                TokenCodeRepresentation tokenCode = getTokenCodeService(session).ongoingProcess(phoneNumber, TokenCodeType.REGISTRATION);
-
-                // Validate the verification code
-                if (Validation.isBlank(verificationCode) || tokenCode == null || !tokenCode.getCode().equals(verificationCode)) {
-                    logger.warn("Verification code mismatch or not found for phone number: " + phoneNumber);
-                    context.error(Errors.INVALID_REGISTRATION);
-                    formData.remove(FIELD_VERIFICATION_CODE);
-                    errors.add(new FormMessage(FIELD_VERIFICATION_CODE, SupportPhonePages.Errors.NOT_MATCH.message()));
-                    context.validationError(formData, errors);
-                    authSession.setAuthNote("phoneVerified", "false");
-                    return;
-                }
-
-                // Set the tokenId in the session once verification succeeds
-                authSession.setAuthNote("tokenId", tokenCode.getId());
-                logger.info("Phone number verified successfully. Token ID stored in session: " + tokenCode.getId());
-
-                // Set phone verification status in session
-                phoneVerified = true;
-                authSession.setAuthNote("phoneVerified", "true");
-            }
-
-            // Update the previousPhoneNumber in the session
-            authSession.setAuthNote("previousPhoneNumber", phoneNumber);
+            phoneNumber = Utils.canonicalizePhoneNumber(session, phoneNumber);
+            logger.info("Canonicalized phone number: " + phoneNumber);
+        } catch (PhoneNumberInvalidException e) {
+            logger.error("Invalid phone number: " + phoneNumber + ", error: " + e.getMessage());
+            context.error(Errors.INVALID_REGISTRATION);
+            errors.add(new FormMessage(FIELD_PHONE_NUMBER, e.getErrorType().message()));
+            context.validationError(formData, errors);
+            authSession.setAuthNote("phoneVerified", "false");
+            return false;
         }
 
-        // Log final phoneVerified value
-        logger.info("Final phoneVerified: " + phoneVerified);
+        String previousPhoneNumber = authSession.getAuthNote("previousPhoneNumber");
+        if (!phoneNumber.equals(previousPhoneNumber)) {
+            authSession.setAuthNote("phoneVerified", "false");
+            logger.info("Phone number has changed. Clearing phone verification status.");
+        }
 
-        // Mark the context as successful
-        context.success();
-        logger.info("Validation completed successfully for phone number: " + phoneNumber);
+        context.getEvent().detail(FIELD_PHONE_NUMBER, phoneNumber);
+        authSession.setAuthNote("previousPhoneNumber", phoneNumber);
+        return true;
+    }
+
+    private boolean validateVerificationCode(ValidationContext context, KeycloakSession session, AuthenticationSessionModel authSession, String phoneNumber, List<FormMessage> errors, MultivaluedMap<String, String> formData) {
+        String verificationCode = formData.getFirst(FIELD_VERIFICATION_CODE);
+        logger.info("Verification code entered: " + verificationCode);
+
+        TokenCodeRepresentation tokenCode = getTokenCodeService(session).ongoingProcess(phoneNumber, TokenCodeType.REGISTRATION);
+        if (Validation.isBlank(verificationCode) || tokenCode == null || !tokenCode.getCode().equals(verificationCode)) {
+            logger.warn("Verification code mismatch or not found for phone number: " + phoneNumber);
+            context.error(Errors.INVALID_REGISTRATION);
+            formData.remove(FIELD_VERIFICATION_CODE);
+            errors.add(new FormMessage(FIELD_VERIFICATION_CODE, SupportPhonePages.Errors.NOT_MATCH.message()));
+            context.validationError(formData, errors);
+            authSession.setAuthNote("phoneVerified", "false");
+            return false;
+        }
+
+        authSession.setAuthNote("tokenId", tokenCode.getId());
+        logger.info("Phone number verified successfully. Token ID stored in session: " + tokenCode.getId());
+        authSession.setAuthNote("phoneVerified", "true");
+        return true;
     }
 
     @Override
@@ -267,14 +262,22 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
     public void buildPage(FormContext context, LoginFormsProvider form) {
         AuthenticationSessionModel authSession = context.getAuthenticationSession();
 
+        // get phone number from form
+        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+        String phoneNumber = formData.getFirst(FIELD_PHONE_NUMBER);
+
         // Retrieve the phoneVerified and previousPhoneNumber attributes from the session
         String previousPhoneNumber = authSession.getAuthNote("previousPhoneNumber");
         boolean phoneVerified = Boolean.parseBoolean(authSession.getAuthNote("phoneVerified"));
 
+        logger.info(String.format("Building page for phone verification: previousPhoneNumber=%s, phoneNumber=%s, phoneVerified=%s", previousPhoneNumber, phoneNumber, phoneVerified));
+
         // Set the attributes in the form
         form.setAttribute("verifyPhone", true);
-        form.setAttribute("phoneVerified", phoneVerified);
-        form.setAttribute("previousPhoneNumber", previousPhoneNumber);
+        if (phoneNumber != null && phoneNumber.equals(previousPhoneNumber)) {
+            form.setAttribute("phoneVerified", phoneVerified);
+            //form.setAttribute("previousPhoneNumber", previousPhoneNumber);
+        }
     }
 
     @Override
