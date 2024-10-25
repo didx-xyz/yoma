@@ -90,6 +90,15 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
         if (isLoginWithPhoneNumber(context)) {
             form.setAttribute("loginWithPhoneNumber", true);
         }
+
+        // Write out KC_HTTP_RELATIVE_PATH environment variable to the form (for client side requests)
+        String relativePath = "";
+        String envRelativePath = System.getenv("KC_HTTP_RELATIVE_PATH");
+        if (envRelativePath != null && !envRelativePath.isEmpty()) {
+            relativePath = envRelativePath;
+        }
+        form.setAttribute("KC_HTTP_RELATIVE_PATH", relativePath);
+
         return form;
     }
 

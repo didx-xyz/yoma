@@ -138,10 +138,17 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
 
     @Override
     public void buildPage(FormContext context, LoginFormsProvider form) {
-
         if (isPhoneNumberAsUsername(context)) {
             form.setAttribute("registrationPhoneNumberAsUsername", true);
         }
+
+        // write out KC_HTTP_RELATIVE_PATH environment variable to the form
+        String relativePath = "";
+        String envRelativePath = System.getenv("KC_HTTP_RELATIVE_PATH");
+        if (envRelativePath != null && !envRelativePath.isEmpty()) {
+            relativePath = envRelativePath;
+        }
+        form.setAttribute("KC_HTTP_RELATIVE_PATH", relativePath);
     }
 
     @Override

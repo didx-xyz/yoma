@@ -76,8 +76,19 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
     }
 
     protected Response challenge(AuthenticationFlowContext context) {
+        // Write out KC_HTTP_RELATIVE_PATH environment variable to the form (for client side requests)
+        String relativePath = "";
+        String envRelativePath = System.getenv("KC_HTTP_RELATIVE_PATH");
+        if (envRelativePath != null && !envRelativePath.isEmpty()) {
+            relativePath = envRelativePath;
+        }
+
+        logger.debug("KC_HTTP_RELATIVE_PATH1: " + relativePath);
+
+        var form = context.form();
         return context.form()
                 .setAttribute(ATTRIBUTE_SUPPORT_PHONE, true)
+                .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath)
                 .createPasswordReset();
     }
 
@@ -219,22 +230,38 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challenge);
     }
 
-    protected Response challenge(AuthenticationFlowContext context,
-            String field, String message,
-            String phoneNumber) {
+    protected Response challenge(AuthenticationFlowContext context, String field, String message, String phoneNumber) {
+        // Write out KC_HTTP_RELATIVE_PATH environment variable to the form (for client side requests)
+        String relativePath = "";
+        String envRelativePath = System.getenv("KC_HTTP_RELATIVE_PATH");
+        if (envRelativePath != null && !envRelativePath.isEmpty()) {
+            relativePath = envRelativePath;
+        }
+
+        logger.debug("KC_HTTP_RELATIVE_PATH2: " + relativePath);
+
         return context.form()
                 .addError(new FormMessage(field, message))
                 .setAttribute(ATTRIBUTE_SUPPORT_PHONE, true)
                 .setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
                 .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumber)
+                .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath)
                 .createPasswordReset();
     }
 
-    protected Response challenge(AuthenticationFlowContext context,
-            String field, String message) {
+    protected Response challenge(AuthenticationFlowContext context, String field, String message) {
+        // Write out KC_HTTP_RELATIVE_PATH environment variable to the form (for client side requests)
+        String relativePath = "";
+        String envRelativePath = System.getenv("KC_HTTP_RELATIVE_PATH");
+        if (envRelativePath != null && !envRelativePath.isEmpty()) {
+            relativePath = envRelativePath;
+        }
+        logger.debug("KC_HTTP_RELATIVE_PATH3: " + relativePath);
+
         return context.form()
                 .addError(new FormMessage(field, message))
                 .setAttribute(ATTRIBUTE_SUPPORT_PHONE, true)
+                .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath)
                 .createPasswordReset();
     }
 

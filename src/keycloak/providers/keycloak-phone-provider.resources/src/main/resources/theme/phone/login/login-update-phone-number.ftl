@@ -79,11 +79,12 @@
             phoneNumber: '',
             sendButtonText: '${msg("sendVerificationCode")}',
             initSendButtonText: '${msg("sendVerificationCode")}',
+            KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
           },
           methods: {
             req(phoneNumber) {
               const params = { params: { phoneNumber } };
-              axios.get(window.location.origin + '/realms/${realm.name}/sms/verification-code', params)
+              axios.get(window.location.origin + this.KC_HTTP_RELATIVE_PATH + '/realms/${realm.name}/sms/verification-code', params)
                 .then(res => this.disableSend(res.data.expires_in))
                 .catch(e => this.errorMessage = e.response.data.error);
             },

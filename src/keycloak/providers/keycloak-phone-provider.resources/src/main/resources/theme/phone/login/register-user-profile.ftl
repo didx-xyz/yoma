@@ -232,12 +232,13 @@
           initSendButtonText: '${msg("sendVerificationCode")}',
           messageSendCodeSuccess: '',
           messageSendCodeError: '',
-          resetSendCodeButton: false
+          resetSendCodeButton: false,
+          KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
         },
         methods: {
           req(phoneNumber) {
             const params = { params: { phoneNumber } };
-            axios.get(window.location.origin + '/realms/${realm.name}/sms/registration-code', params)
+            axios.get(window.location.origin + this.KC_HTTP_RELATIVE_PATH + '/realms/${realm.name}/sms/registration-code', params)
               .then(res =>
                 {
                   this.disableSend(res.data.expires_in);

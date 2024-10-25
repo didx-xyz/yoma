@@ -26,7 +26,15 @@ public class UpdatePhoneNumberRequiredAction implements RequiredActionProvider {
 
     @Override
     public void requiredActionChallenge(RequiredActionContext context) {
+        // Write out KC_HTTP_RELATIVE_PATH environment variable to the form (for client side requests)
+        String relativePath = "";
+        String envRelativePath = System.getenv("KC_HTTP_RELATIVE_PATH");
+        if (envRelativePath != null && !envRelativePath.isEmpty()) {
+            relativePath = envRelativePath;
+        }
+
         Response challenge = context.form()
+                .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath)
                 .createForm("login-update-phone-number.ftl");
         context.challenge(challenge);
     }
