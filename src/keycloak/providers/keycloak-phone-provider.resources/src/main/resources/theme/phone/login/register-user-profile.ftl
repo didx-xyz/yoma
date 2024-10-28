@@ -74,32 +74,41 @@
           </div>
         </div>
 
-        <!-- Verification Code Input -->
         <#if verifyPhone??>
-          <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: phoneNumberAsUsername && !phoneVerified ? 'block' : 'none' }">
-            <div class="${properties.kcLabelWrapperClass!}">
-                <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
+          <div v-bind:style="{ display: phoneNumberAsUsername && !phoneVerified ? 'block' : 'none' }">
+            <!-- Verification Code Input -->
+            <div class="${properties.kcFormGroupClass!}">
+              <div class="${properties.kcLabelWrapperClass!}">
+                  <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
+              </div>
+
+              <div class="${properties.kcInputWrapperClass!}">
+                  <div style="display: flex; gap: 10px;">
+                    <input tabindex="0" type="text" id="code" name="code" aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
+                      class="${properties.kcInputClass!}" autocomplete="off" placeholder="${msg('enterCode')}" style="flex: 2;" />
+
+                    <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}" style="width: 120px;"
+                      type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
+                  </div>
+                  <div v-if="messageSendCodeSuccess" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="color: green;">
+                    <span style="margin-right: 5px;">✔</span> {{ messageSendCodeSuccess }}
+                  </div>
+                  <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                    {{ messageSendCodeError }}
+                  </div>
+                  <#if messagesPerField.existsError('code')>
+                    <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                      ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
+                    </div>
+                  </#if>
+              </div>
             </div>
 
-            <div class="${properties.kcInputWrapperClass!}">
-                <div style="display: flex; gap: 10px;">
-                  <input tabindex="0" type="text" id="code" name="code" aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
-                    class="${properties.kcInputClass!}" autocomplete="off" placeholder="${msg('enterCode')}" style="flex: 2;" />
-
-                  <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}" style="width: 120px;"
-                    type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
-                </div>
-                <div v-if="messageSendCodeSuccess" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="color: green;">
-                  <span style="margin-right: 5px;">✔</span> {{ messageSendCodeSuccess }}
-                </div>
-                <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                  {{ messageSendCodeError }}
-                </div>
-                <#if messagesPerField.existsError('code')>
-                  <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                    ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
-                  </div>
-                </#if>
+            <!-- Verify Code (Submit Button) -->
+            <div class="${properties.kcFormGroupClass!}">
+              <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
+                <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg('verifyCode')}" v-on:click="verifyCode" />
+              </div>
             </div>
           </div>
         </#if>
@@ -158,9 +167,9 @@
         <!-- Terms and Conditions -->
         <div class="centered-div">
           <div class="centered-checkbox">
-            <input type="checkbox" id="terms_and_conditions" name="terms_and_conditions" value="Yes" required />
+            <input type="checkbox" id="terms_and_conditions" name="terms_and_conditions" value="Yes" required v-model="terms_and_conditions" />
             <label for="terms" id="terms-label"><span id="terms-prefix">${msg("termsText1")}</span>
-              <a href="https://app.yoma.world/terms-and-conditions" target="_blank" id="terms-text">${msg("termsText2")}</a>
+              <a href="https://yoma.world/terms" target="_blank" id="terms-text">${msg("termsText2")}</a>
             </label>
           </div>
         </div>
@@ -175,14 +184,12 @@
         </#if>
 
         <!-- Submit Button -->
-        <div class="${properties.kcFormGroupClass!}">
-          <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
-            <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg("doRegisterBtn")}" />
-          </div>
-          <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
-            <div class="${properties.kcFormOptionsWrapperClass!}">
-              <span><a href="${url.loginUrl}">${kcSanitize(msg("backToLoginBtn"))?no_esc}</a></span>
-            </div>
+        <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
+          <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg("doRegisterBtn")}" />
+        </div>
+        <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
+          <div class="${properties.kcFormOptionsWrapperClass!}">
+            <span><a href="${url.loginUrl}">${kcSanitize(msg("backToLoginBtn"))?no_esc}</a></span>
           </div>
         </div>
       </form>
@@ -201,6 +208,7 @@
           messageSendCodeError: '',
           resetSendCodeButton: false,
           KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
+          terms_and_conditions: false
         },
         methods: {
           req(phoneNumber) {
@@ -249,6 +257,10 @@
 
             if (this.sendButtonText !== this.initSendButtonText) return;
             this.req(fullPhoneNumber);
+          },
+          verifyCode(){
+            // auto check terms and conditions when verify code (prevent validation error)
+            this.terms_and_conditions = "Yes";
           },
           onSubmit() {
             const input = document.querySelector('#phoneNumberPicker');

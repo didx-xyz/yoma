@@ -90,7 +90,7 @@ h1,
 #register-password,
 #password-confirm,
 #password-new {
-  padding-left: 10%;
+  padding-left: 40px;
 }
 
 .password-container,
@@ -449,6 +449,56 @@ input[type="checkbox"] {
   width: 20px;
 }
 
+/* Miscellaneous */
+.nav-pills {
+  display: flex;
+}
+
+.nav-pills > li {
+  flex: 1;
+}
+
+.nav-pills > li.active > a,
+.nav-pills > li.active > a:focus,
+.nav-pills > li.active > a:hover {
+  background-color: #461d4d;
+  color: white;
+  border-radius: 8px;
+}
+
+.underline {
+  text-decoration: underline;
+  color: blue;
+  cursor: pointer;
+}
+
+.iti {
+  width: 100%;
+}
+
+.iti__search-input {
+  padding: 8px;
+}
+
+/* Style the checkboxes */
+.checkbox {
+  display: inline-block;
+  position: relative;
+  padding-left: 25px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 22px;
+  user-select: none;
+}
+
+.success-message {
+  color: green;
+}
+
+.success-message .icon {
+  margin-right: 5px;
+}
+
 /* Media Queries */
 @media screen and (max-width: 767px) {
   body {
@@ -482,52 +532,4 @@ input[type="checkbox"] {
   .fa-eye::before {
     margin-left: -0.5rem;
   }
-}
-
-/* @media screen and (max-width: 375px) {
-  #password-instructions {
-    padding-left: 0.7rem;
-  }
-} */
-
-/* Miscellaneous */
-.nav-pills > li.active > a,
-.nav-pills > li.active > a:focus,
-.nav-pills > li.active > a:hover {
-  background-color: #461d4d;
-  color: white;
-  border-radius: 8px;
-}
-
-.underline {
-  text-decoration: underline;
-  color: blue;
-  cursor: pointer;
-}
-
-.iti.iti--inline-dropdown {
-  width: 100%;
-}
-
-.iti__search-input {
-  padding: 8px;
-}
-
-/* Style the checkboxes */
-.checkbox {
-  display: inline-block;
-  position: relative;
-  padding-left: 25px;
-  margin-bottom: 12px;
-  cursor: pointer;
-  font-size: 22px;
-  user-select: none;
-}
-
-.success-message {
-  color: green;
-}
-
-.success-message .icon {
-  margin-right: 5px;
 }

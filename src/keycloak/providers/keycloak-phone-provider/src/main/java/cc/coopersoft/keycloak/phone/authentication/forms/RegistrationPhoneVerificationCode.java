@@ -223,6 +223,21 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
         AuthenticationSessionModel authSession = context.getAuthenticationSession();
         boolean phoneVerified = Boolean.parseBoolean(authSession.getAuthNote("phoneVerified"));
 
+        // Extract form data and initialize errors list
+        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+
+        // Retrieve the phone number from the form
+        String phoneNumber = formData.getFirst(FIELD_PHONE_NUMBER);
+
+        // Retrieve the verified phone number from the authentication session
+        String verifiedPhoneNumber = authSession.getAuthNote("verifiedPhoneNumber");
+
+        // Check if the phone numbers match
+        if (phoneNumber == null || !phoneNumber.equals(verifiedPhoneNumber)) {
+            phoneVerified = false;
+            authSession.setAuthNote("verifiedPhoneNumber", null);
+        }
+
         form.setAttribute("verifyPhone", true);
         form.setAttribute("phoneVerified", phoneVerified);
     }

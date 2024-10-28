@@ -150,7 +150,7 @@
                   </div>
                 </div>
 
-                <div id="kc-form-buttons" class="${properties.kcFormGroupClass!}">
+                <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
                   <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if> />
                   <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit" value="${msg("doLogIn")}" />
                 </div>
@@ -158,7 +158,9 @@
                 <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
                   <div class="${properties.kcFormOptionsWrapperClass!}">
                     <#if realm.resetPasswordAllowed>
-                      <span><a tabindex="0" href="${url.loginResetCredentialsUrl}">${msg("doForgotPassword")}</a></span>
+                      <div class="${properties.kcFormOptionsWrapperClass!}">
+                        <span><a tabindex="0" href="${url.loginResetCredentialsUrl}">${msg("doForgotPassword")}</a></span>
+                      </div>
                     </#if>
                   </div>
                 </div>
