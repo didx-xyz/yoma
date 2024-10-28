@@ -10,14 +10,6 @@
       <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
 
       <div id="vue-app">
-          <div class="alert-error ${properties.kcAlertClass!} pf-m-danger" v-show="errorMessage">
-              <div class="pf-c-alert__icon">
-                  <span class="${properties.kcFeedbackErrorIcon!}"></span>
-              </div>
-
-              <span class="${properties.kcAlertTitleClass!}">{{ errorMessage }}</span>
-          </div>
-
         <div id="kc-form">
           <div id="kc-form-wrapper">
             <form id="kc-form-login" action="${url.loginAction}" method="post">
@@ -30,7 +22,7 @@
                     aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" v-intl-tel-input autocomplete="mobile tel" />
                 </div>
                 <#if messagesPerField.existsError('phoneNumber')>
-                  <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                  <span id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
                     ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
                   </span>
                 </#if>
@@ -51,21 +43,24 @@
                     <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}" style="width: 120px;"
                       type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
                   </div>
-                </div>
-
-                <#if messagesPerField.existsError('code')>
-                    <div id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                        ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
+                  <div v-if="messageSendCodeSuccess" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="color: green;">
+                    <span style="margin-right: 5px;">✔</span> {{ messageSendCodeSuccess }}
+                  </div>
+                  <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                    {{ messageSendCodeError }}
+                  </div>
+                  <#if messagesPerField.existsError('code')>
+                    <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                      ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
                     </div>
-                </#if>
+                  </#if>
+                </div>
               </div>
 
               <div id="kc-form-buttons" class="${properties.kcFormGroupClass!}">
-                <input type="hidden" id="id-hidden-input" name="credentialId"
-                       <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if>/>
-                <input tabindex="0"
-                       class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
-                       name="save" id="kc-login" type="submit" value="${msg("doSubmit")}"/>
+                <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if>/>
+                <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
+                  name="save" id="kc-login" type="submit" value="${msg('doSubmit')}"/>
               </div>
             </form>
           </div>
@@ -76,18 +71,27 @@
         const app = new Vue({
           el: '#vue-app',
           data: {
-            errorMessage: '',
             phoneNumber: '',
             sendButtonText: '${msg("sendVerificationCode")}',
             initSendButtonText: '${msg("sendVerificationCode")}',
+            messageSendCodeSuccess: '',
+            messageSendCodeError: '',
             KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
           },
           methods: {
             req(phoneNumber) {
               const params = { params: { phoneNumber } };
               axios.get(window.location.origin + this.KC_HTTP_RELATIVE_PATH + '/realms/${realm.name}/sms/verification-code', params)
-                .then(res => this.disableSend(res.data.expires_in))
-                .catch(e => this.errorMessage = e.response.data.error);
+                .then(res =>
+                  {
+                    this.disableSend(res.data.expires_in);
+
+                    // show success message
+                    this.clearMessages();
+                    const phoneNumberPartial = phoneNumber.substring(0, 3) + ' **** ' + phoneNumber.substring(phoneNumber.length - 2);
+                    this.messageSendCodeSuccess = 'A code has been sent to ' + phoneNumberPartial + '.';
+                  })
+                .catch(e => this.messageSendCodeError = e.response.data.error);
             },
             disableSend(seconds) {
               if (seconds <= 0) {
@@ -131,9 +135,35 @@
               // Set the field value for the full phone number (this ensures the country code is always included)
               document.getElementById('phoneNumber').value = fullPhoneNumber;
             },
+            resetPhoneVerification() {
+              this.messageSendCodeSuccess = '';
+              this.resetSendCodeButton = true;
+              this.clearMessages();
+            },
+            clearAndFocusPhoneNumberPicker() {
+              this.phoneNumber = '';
+              const phoneNumberPicker = document.getElementById('phoneNumberPicker');
+              if (phoneNumberPicker) {
+                phoneNumberPicker.focus();
+              }
+
+              this.resetPhoneVerification();
+            },
+            clearMessages() {
+              this.messageSendCodeSuccess = '';
+              this.messageSendCodeError = '';
+
+              // clear server error messages
+              const inputErrorPhone = document.getElementById('input-error-phone');
+              const inputErrorCode = document.getElementById('input-error-code');
+
+              if (inputErrorPhone) inputErrorPhone.style.display = 'none';
+              if (inputErrorCode) inputErrorCode.style.display = 'none';
+            }
           },
           mounted() {
             document.getElementById('kc-form-login').addEventListener('submit', this.onSubmit);
+            document.getElementById('phoneNumberPicker').addEventListener('input', this.resetPhoneVerification);
           },
         });
       </script>
