@@ -77,14 +77,10 @@ h1,
   display: flex;
   flex-direction: column;
   gap: 10px;
+  padding: 0 20px;
 }
 .form-group:has(> div > input#terms_and_conditions) {
   display: none;
-}
-
-#password-instructions {
-  color: #72767b;
-  margin-inline: auto;
 }
 
 #register-password,
@@ -516,11 +512,6 @@ input[type="checkbox"] {
 
   #terms-prefix {
     margin-left: 0;
-  }
-
-  #password-instructions {
-    text-align: left;
-    display: block;
   }
 
   .password-container i,

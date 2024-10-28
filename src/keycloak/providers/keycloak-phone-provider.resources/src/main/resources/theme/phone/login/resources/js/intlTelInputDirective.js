@@ -1,4 +1,3 @@
-// intlTelInputDirective.js
 Vue.directive("intl-tel-input", {
   inserted(el) {
     intlTelInput(el, {

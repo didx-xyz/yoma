@@ -7,7 +7,7 @@
     <link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/passwordIndicator.css">
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <script src="${url.resourcesPath}/js/passwordIndicator.js"></script>
+    <script src="${url.resourcesPath}/js/passwordIndicatorDirective.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
     <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
 
@@ -118,7 +118,6 @@
           <div class="${properties.kcFormGroupClass!}">
             <div class="${properties.kcLabelWrapperClass!}">
               <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
-              <div id="password-instructions">${msg("passwordInstructions")}</div>
             </div>
             <div class="${properties.kcInputWrapperClass!}">
               <div class="password-container">
@@ -128,19 +127,24 @@
                   aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>"
                   placeholder="${msg('enterPassword')}" />
               </div>
+
               <#if messagesPerField.existsError('password')>
                 <span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
                   ${kcSanitize(messagesPerField.get('password'))?no_esc}
                 </span>
               </#if>
-              <div id="password-requirements">
-                <div id="label">Password requirements:</div>
-                <p id="length">10 Characters Long</p>
-                <p id="lowercase">1 lower case</p>
-                <p id="uppercase">1 UPPER CASE</p>
-                <p id="number">1 Numb3r</p>
-                <p id="email">Different from email</p>
-              </div>
+
+               <div class="password-requirements" v-password-indicator="{
+                  resourcesPath: '${url.resourcesPath}',
+                  passwordSelector: '#register-password',
+                  labels: {
+                    length: '${msg('password_requirement_length')}',
+                    lowercase: '${msg('password_requirement_lowercase')}',
+                    uppercase: '${msg('password_requirement_uppercase')}',
+                    number: '${msg('password_requirement_number')}',
+                    email: '${msg('password_requirement_email')}'
+                  }
+                }"></div>
             </div>
           </div>
           <div class="${properties.kcFormGroupClass!}">
@@ -287,14 +291,6 @@
 
             this.resetPhoneVerification();
           },
-          initializePasswordIndicator() {
-            document.getElementById('email').addEventListener('input', (e) => {
-              passwordIndicator("${url.resourcesPath}", '#email', '#register-password');
-            });
-            document.getElementById('register-password').addEventListener('input', (e) => {
-              passwordIndicator("${url.resourcesPath}", '#email', '#register-password');
-            });
-          },
           clearMessages() {
             this.messageSendCodeSuccess = '';
             this.messageSendCodeError = '';
@@ -308,7 +304,6 @@
           }
         },
         mounted() {
-          this.initializePasswordIndicator();
           document.getElementById('kc-register-form').addEventListener('submit', this.onSubmit);
           document.getElementById('phoneNumberPicker').addEventListener('input', this.resetPhoneVerification);
         }
