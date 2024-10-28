@@ -1,3 +1,10 @@
+/* General Layout */
+body {
+  padding: 0;
+  margin: 0 auto;
+  width: 96%;
+}
+
 .kc-locale-wrapper {
   margin-top: -80px;
 }
@@ -8,23 +15,15 @@
   right: 20px;
 }
 
-/* #kc-locale-dropdown {
-} */
-
 .login-pf-page .login-pf-page-header::before {
   content: "";
   display: inline-block;
-  background-image: url("https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png");
   width: 100px;
   height: 42px;
   margin-right: 10px;
   margin-left: -10px;
   margin-top: -10px;
   overflow: hidden;
-}
-
-#logout-sessions {
-  display: hidden;
 }
 
 #kc-current-locale-link {
@@ -36,12 +35,11 @@
 }
 
 #kc-current-locale-link::after {
-  /* content: "▶" !important; */
-  content: "" !important;
+  content: "";
   color: #461d4d;
   font-size: 14px;
   display: inline-block;
-  transform: rotate(90deg) !important;
+  transform: rotate(90deg);
 }
 
 .pf-c-dropdown__menu {
@@ -57,10 +55,10 @@
   color: black;
 }
 
+/* Forms and Inputs */
 .login-pf,
 .login-pf body {
   background: none;
-  /* background-image: linear-gradient(to right, rgb(249, 171, 63) 50%, #f5f6f8 50%); */
   background-color: rgb(249, 171, 63);
   color: #0a0c0d;
 }
@@ -75,45 +73,41 @@ h1,
   margin-top: 20px;
 }
 
+.form-horizontal {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .form-group:has(> div > input#terms_and_conditions) {
   display: none;
 }
 
 #password-instructions {
-  width: 85%;
   color: #72767b;
   margin-inline: auto;
-  padding-left: 2px;
-  margin-bottom: 0.5rem;
 }
-
-/* #toggle-password,
-#toggle-password-confirm {
-} */
 
 #register-password,
 #password-confirm,
 #password-new {
-  padding-left: calc(1px + 10%);
+  padding-left: 10%;
 }
 
 .password-container,
 .password-confirm-container {
   position: relative;
 }
+
 .password-container i,
 .password-confirm-container i {
   position: absolute;
   top: 50%;
-  left: 50px;
+  left: 10px;
   transform: translateY(-50%);
   cursor: pointer;
 }
 
-.fa-eye-slash::before {
-  font-size: 20px;
-}
-
+.fa-eye-slash::before,
 .fa-eye::before {
   font-size: 20px;
 }
@@ -125,6 +119,7 @@ h1,
 #terms-label {
   margin-block: auto;
   margin-top: 5px;
+  font-size: 12px;
 }
 
 #terms {
@@ -134,12 +129,13 @@ h1,
 
 #terms-prefix {
   color: #495057;
-  font-size: 14px;
+  font-size: 12px;
   margin-left: 5px;
 }
 
 #terms-text {
   display: inline;
+  font-size: 12px;
 }
 
 #email-icon {
@@ -222,7 +218,6 @@ h1,
 #kc-info-wrapper {
   padding: 15px 0;
   font-size: 16px;
-  width: 95%;
   margin: 10px auto 0 auto;
   display: flex;
   flex-direction: column;
@@ -233,14 +228,12 @@ h1,
 }
 
 .pf-c-button.pf-m-primary {
-  font-size: 13px;
+  font-size: 16px;
   background-color: #461d4d;
   color: white;
   border-radius: 50px;
   cursor: pointer;
-  font-size: 16px;
   height: 48px;
-  width: 85%;
   margin: 0 auto;
   display: block;
 }
@@ -264,7 +257,6 @@ h1,
   border-radius: 50px;
   height: 48px;
   margin: 0 auto;
-  width: 90%;
   position: relative;
   line-height: 1.8;
   color: #461d4d;
@@ -274,7 +266,7 @@ h1,
   color: #461d4d;
   font-size: 16px;
   margin-top: 8px;
-  outline: none !important;
+  outline: none;
 }
 
 p {
@@ -282,7 +274,6 @@ p {
   font-size: 1rem;
 }
 
-/* Hack to add divider above the register button, there is a DOM ghost stealing the hr element */
 #kc-registration::before {
   content: "";
   position: absolute;
@@ -302,7 +293,7 @@ p {
 }
 
 .login-pf-page .login-pf-signup a {
-  margin: 0 0 0 0;
+  margin: 0;
 }
 
 .pf-c-button.pf-m-primary:hover {
@@ -318,16 +309,14 @@ p {
 }
 
 .pf-c-form-control:not(textarea) {
-  font-size: 13px;
+  font-size: 14px;
   background-color: white;
   color: #495057;
   border-radius: 5px;
-  font-size: 14px;
   height: 48px;
-  width: 85%;
   margin: 0 auto;
   display: block;
-  border: 2px solid #e6e8eb !important;
+  border: 2px solid #e6e8eb;
   padding: 0 16px;
 }
 
@@ -347,8 +336,7 @@ a {
 .grey-hr {
   border: none;
   border-top: 1px solid #cccccc;
-  margin: 22px auto 22px auto;
-  width: 85%;
+  margin: 0 22px;
 }
 
 #kc-register-form div {
@@ -365,8 +353,6 @@ a {
 .login-pf body {
   color: #495057;
   text-align: left;
-  padding: 15px 35px;
-  margin-left: 10px;
 }
 
 .centered-div {
@@ -393,13 +379,12 @@ a {
 }
 
 .pf-c-form__label-text {
-  font-size: 12px;
+  font-size: 13.4px;
   color: black;
-  margin: 0 0 5px 35px;
 }
 
 .pf-c-form__helper-text {
-  margin: 0 0 0 35px;
+  margin: 0;
 }
 
 .centered-checkbox {
@@ -448,9 +433,8 @@ a {
   flex-direction: row;
   justify-content: center;
   align-items: center;
-  width: 85%;
-  margin: 25px auto;
 }
+
 .checkbox-update-password-label {
   display: flex;
   flex-direction: row;
@@ -465,15 +449,16 @@ input[type="checkbox"] {
   width: 20px;
 }
 
+/* Media Queries */
 @media screen and (max-width: 767px) {
   body {
-    padding: 0 0 !important;
-    margin: 0 auto !important;
-    width: 96% !important;
+    padding: 0;
+    margin: 0 auto;
+    width: 96%;
   }
   .card-pf {
-    margin: 30px 10px !important;
-    padding: 25px 0 25px 0 !important;
+    margin: 30px 10px;
+    padding: 25px 0;
     border-radius: 0;
     display: flex;
     flex-direction: column;
@@ -484,34 +469,28 @@ input[type="checkbox"] {
   }
 
   #password-instructions {
-    padding-left: 0.5rem;
-    text-align: left !important;
+    text-align: left;
     display: block;
-    margin-bottom: 0.5rem;
   }
 
-  .fa-eye-slash::before {
-    margin-left: -0.5rem !important;
+  .password-container i,
+  .password-confirm-container i {
+    left: 20px;
   }
 
+  .fa-eye-slash::before,
   .fa-eye::before {
-    margin-left: -0.5rem !important;
-  }
-
-  #register-password,
-  #password-confirm,
-  #password-new {
-    padding-left: calc(1px + 15%);
+    margin-left: -0.5rem;
   }
 }
 
-@media screen and (max-width: 375) {
+/* @media screen and (max-width: 375px) {
   #password-instructions {
     padding-left: 0.7rem;
   }
-}
+} */
 
-/* phone customisations */
+/* Miscellaneous */
 .nav-pills > li.active > a,
 .nav-pills > li.active > a:focus,
 .nav-pills > li.active > a:hover {
@@ -527,14 +506,14 @@ input[type="checkbox"] {
 }
 
 .iti.iti--inline-dropdown {
-  margin-left: 34px;
   width: 100%;
 }
+
 .iti__search-input {
-  padding: 8px !important;
+  padding: 8px;
 }
 
-/* style the checkboxes */
+/* Style the checkboxes */
 .checkbox {
   display: inline-block;
   position: relative;

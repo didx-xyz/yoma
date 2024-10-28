@@ -84,10 +84,11 @@
                               aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" v-intl-tel-input autocomplete="mobile tel" />
                           </div>
                           <#if messagesPerField.existsError('phoneNumber')>
-                            <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="padding-left: 20px;">
+                            <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
                               ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
                             </span>
                           </#if>
+
                           <!-- Hidden input for phone number -->
                           <input type="hidden" id="phoneNumber" name="phoneNumber" />
                         </div>
@@ -97,19 +98,20 @@
                             <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
                           </div>
 
-                          <div class="${properties.kcInputWrapperClass!}" style="padding: 0 40px 0px 44px;">
-                              <div style="display: flex; padding: 0px 13px 10px 10px;">
-                                  <input tabindex="0" type="text" id="code" name="code" aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
-                                        class="${properties.kcInputClass!}" autocomplete="off" placeholder="${msg('enterCode')}" style="flex: 2; margin-right: 10px;" />
-                                  <input tabindex="0" style="height: 36px; flex: 1;margin-top: 5px;" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
-                                        type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
-                              </div>
+                          <div class="${properties.kcInputWrapperClass!}">
+                            <div style="display: flex; gap: 10px;">
+                              <input tabindex="0" type="text" id="code" name="code" aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
+                                class="${properties.kcInputClass!}" autocomplete="off" placeholder="${msg('enterCode')}" style="flex: 2;" />
+
+                              <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}" style="width: 120px;"
+                                type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
+                            </div>
                           </div>
 
                           <#if messagesPerField.existsError('code')>
-                              <div id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="padding-left: 20px;">
-                                  ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
-                              </div>
+                            <div id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                                ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
+                            </div>
                           </#if>
                         </div>
                       </div>
@@ -120,7 +122,7 @@
                             <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
                                    type="submit" value="${msg('doSubmit')}"/>
                         </div>
-                        <div id="kc-form-options" class="${properties.kcFormOptionsClass!}" style="padding-top: 15px;">
+                        <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
                             <div class="${properties.kcFormOptionsWrapperClass!}">
                                 <span><a href="${url.loginUrl}">${kcSanitize(msg("backToLogin"))?no_esc}</a></span>
                             </div>
