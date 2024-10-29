@@ -1088,7 +1088,8 @@ const LinkDetails: NextPageWithLayout<{
                                     .flatMap((item) =>
                                       item.value.split(DELIMETER_PASTE_MULTI),
                                     )
-                                    .filter((email) => email.trim() !== "");
+                                    .map((email) => email.trim()) // Trim each email
+                                    .filter((email) => email !== ""); // Filter out empty strings
                                   onChange(emails);
                                 }}
                                 value={value?.map((val: any) => ({

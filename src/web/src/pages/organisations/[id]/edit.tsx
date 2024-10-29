@@ -181,7 +181,7 @@ const OrganisationUpdate: NextPageWithLayout<{
       logo: null,
       addCurrentUserAsAdmin:
         organisation?.administrators?.find((x) => x.email == user?.email) !=
-          null ?? false,
+        null,
       adminEmails: organisation?.administrators?.map((x) => x.email) ?? [],
       registrationDocuments: [],
       educationProviderDocuments: [],
