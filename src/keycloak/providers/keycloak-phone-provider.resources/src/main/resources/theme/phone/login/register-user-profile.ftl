@@ -8,6 +8,8 @@
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <script src="${url.resourcesPath}/js/passwordIndicatorDirective.js"></script>
+    <script src="${url.resourcesPath}/js/togglePasswordDirective.js"></script>
+    <script src="${url.resourcesPath}/js/passwordGeneratorDirective.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
     <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
 
@@ -15,98 +17,82 @@
       <form id="kc-register-form" class="${properties.kcFormClass!}" action="${url.registrationAction}" method="post">
         <!-- Tabs: Email or Phone Number Selection -->
         <div class="${properties.kcFormGroupClass!}">
-          <div class="${properties.kcLabelWrapperClass!}">
-            <ul class="nav nav-pills nav-justified">
-              <li role="presentation" v-bind:class="{ active: !phoneNumberAsUsername }" v-on:click="phoneNumberAsUsername = false">
-                <a href="#" tabindex="0">${msg("email")}</a>
-              </li>
-              <li role="presentation" v-bind:class="{ active: phoneNumberAsUsername }" v-on:click="phoneNumberAsUsername = true">
-                <a href="#" tabindex="0">${msg("phone")}</a>
-              </li>
-            </ul>
-          </div>
+          <ul class="nav nav-pills nav-justified">
+            <li role="presentation" v-bind:class="{ active: !phoneNumberAsUsername }" v-on:click="phoneNumberAsUsername = false">
+              <a href="#" tabindex="0">${msg("email")}</a>
+            </li>
+            <li role="presentation" v-bind:class="{ active: phoneNumberAsUsername }" v-on:click="phoneNumberAsUsername = true">
+              <a href="#" tabindex="0">${msg("phone")}</a>
+            </li>
+          </ul>
         </div>
 
         <input type="hidden" id="phoneNumberAsUsername" name="phoneNumberAsUsername" v-model="phoneNumberAsUsername" :true-value="true" :false-value="false">
 
         <!-- Email Input -->
         <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: phoneNumberAsUsername ? 'none' : 'block' }">
-          <div class="${properties.kcLabelWrapperClass!}">
-            <label for="username" class="${properties.kcLabelClass!}">${msg("email")}</label>
-          </div>
+          <label for="username" class="${properties.kcLabelClass!}">${msg("email")}</label>
 
-          <div class="${properties.kcInputWrapperClass!}">
-            <input type="text" id="email" class="${properties.kcInputClass!}" name="email"
-              value="${(register.formData.email!'')}" autocomplete="email"
-              aria-invalid="<#if messagesPerField.existsError('email')>true</#if>" placeholder="${msg('enterEmail')}" />
-            <#if messagesPerField.existsError('email')>
-              <span id="input-error-email" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                ${kcSanitize(messagesPerField.get('email'))?no_esc}
-              </span>
-            </#if>
-          </div>
+          <input type="text" id="email" class="${properties.kcInputClass!}" name="email"
+            value="${(register.formData.email!'')}" autocomplete="email"
+            aria-invalid="<#if messagesPerField.existsError('email')>true</#if>" placeholder="${msg('enterEmail')}" />
+          <#if messagesPerField.existsError('email')>
+            <span id="input-error-email" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+              ${kcSanitize(messagesPerField.get('email'))?no_esc}
+            </span>
+          </#if>
         </div>
 
         <!-- Phone Number Input -->
         <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: phoneNumberAsUsername ? 'block' : 'none' }">
-          <div class="${properties.kcLabelWrapperClass!}">
-            <label for="phoneNumberPicker" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
-          </div>
+          <label for="phoneNumberPicker" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
 
-          <div class="${properties.kcInputWrapperClass!}">
-            <input id="phoneNumberPicker" class="${properties.kcInputClass!}" name="phoneNumberPicker" type="tel" placeholder="${msg('enterPhoneNumber')}"
-              aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" v-intl-tel-input autocomplete="mobile tel"
-              :disabled="phoneVerified" />
-            <#if messagesPerField.existsError('phoneNumber')>
-              <span id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
-              </span>
-            </#if>
-          </div>
+          <input id="phoneNumberPicker" class="${properties.kcInputClass!}" name="phoneNumberPicker" type="tel" placeholder="${msg('enterPhoneNumber')}"
+            aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" v-intl-tel-input autocomplete="mobile tel"
+            :disabled="phoneVerified" />
+          <#if messagesPerField.existsError('phoneNumber')>
+            <span id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+              ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
+            </span>
+          </#if>
 
           <input type="hidden" id="phoneNumber" name="phoneNumber" />
 
-          <div class="${properties.kcLabelWrapperClass!}">
-            <label class="${properties.kcLabelClass!}" v-bind:style="{ display: phoneVerified ? 'block' : 'none' }">
-              <span style="color: green;"><span style="margin-right: 5px;">✔</span> ${msg("phoneNumberVerified")}</span>
-              <span v-on:click="clearAndFocusPhoneNumberPicker" class="underline" tabindex="0">${msg("changePhoneNumber")}</span>
-            </label>
-          </div>
+          <label class="${properties.kcLabelClass!}" v-bind:style="{ display: phoneVerified ? 'block' : 'none' }">
+            <span style="color: green;"><span style="margin-right: 5px;">✔</span> ${msg("phoneNumberVerified")}</span>
+            <span v-on:click="clearAndFocusPhoneNumberPicker" class="underline" tabindex="0">${msg("changePhoneNumber")}</span>
+          </label>
         </div>
 
         <#if verifyPhone??>
           <div v-bind:style="{ display: phoneNumberAsUsername && !phoneVerified ? 'block' : 'none' }">
             <!-- Verification Code Input -->
             <div class="${properties.kcFormGroupClass!}">
-              <div class="${properties.kcLabelWrapperClass!}">
-                  <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
-              </div>
+              <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
 
-              <div class="${properties.kcInputWrapperClass!}">
-                  <div style="display: flex; gap: 10px;">
-                    <input tabindex="0" type="text" id="code" name="code" aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
-                      class="${properties.kcInputClass!}" autocomplete="off" placeholder="${msg('enterCode')}" style="flex: 2;" />
+              <div style="display: flex; gap: 10px;">
+                <input tabindex="0" type="text" id="code" name="code" aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
+                  class="${properties.kcInputClass!}" autocomplete="off" placeholder="${msg('enterCode')}" style="flex: 2;" />
 
-                    <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}" style="width: 120px;"
-                      type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
-                  </div>
-                  <div v-if="messageSendCodeSuccess" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="color: green;">
-                    <span style="margin-right: 5px;">✔</span> {{ messageSendCodeSuccess }}
-                  </div>
-                  <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                    {{ messageSendCodeError }}
-                  </div>
-                  <#if messagesPerField.existsError('code')>
-                    <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                      ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
-                    </div>
-                  </#if>
+                <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}" style="width: 120px;"
+                  type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
               </div>
+              <div v-if="messageSendCodeSuccess" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="color: green;">
+                <span style="margin-right: 5px;">✔</span> {{ messageSendCodeSuccess }}
+              </div>
+              <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                {{ messageSendCodeError }}
+              </div>
+              <#if messagesPerField.existsError('code')>
+                <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                  ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
+                </div>
+              </#if>
             </div>
 
             <!-- Verify Code (Submit Button) -->
-            <div class="${properties.kcFormGroupClass!}">
-              <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
+            <div class="${properties.kcFormGroupClass!}" style="margin: 30px 0;">
+              <div id="kc-form-buttons">
                 <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg('verifyCode')}" v-on:click="verifyCode" />
               </div>
             </div>
@@ -115,56 +101,62 @@
 
         <!-- Password Inputs -->
         <#if passwordRequired??>
+          <#--  Generate password  -->
           <div class="${properties.kcFormGroupClass!}">
-            <div class="${properties.kcLabelWrapperClass!}">
-              <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
-            </div>
-            <div class="${properties.kcInputWrapperClass!}">
-              <div class="password-container">
-                <i class="fa fa-eye-slash" id="toggle-password" onclick="togglePassword('#register-password', '#toggle-password')" tabindex="0"></i>
-                <input type="password" id="register-password" class="${properties.kcInputClass!}" name="password"
-                  autocomplete="new-password"
-                  aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>"
-                  placeholder="${msg('enterPassword')}" />
-              </div>
+            <label class="${properties.kcLabelClass!}">${msg("createPassword")}</label>
 
-              <#if messagesPerField.existsError('password')>
-                <span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                  ${kcSanitize(messagesPerField.get('password'))?no_esc}
-                </span>
-              </#if>
-
-               <div class="password-requirements" v-password-indicator="{
-                  resourcesPath: '${url.resourcesPath}',
-                  passwordSelector: '#register-password',
-                  labels: {
-                    length: '${msg('password_requirement_length')}',
-                    lowercase: '${msg('password_requirement_lowercase')}',
-                    uppercase: '${msg('password_requirement_uppercase')}',
-                    number: '${msg('password_requirement_number')}',
-                    email: '${msg('password_requirement_email')}'
-                  }
-                }"></div>
+            <div class="radio-wrapper">
+              <span for="create-password-radio" class="pf-c-form__helper-text">${msg("createPasswordHelpText")}</span>
+              <input type="checkbox" id="create-password-checkbox" class="checkbox" v-password-generator="{ passwordSelector: '#register-password', confirmPasswordSelector: '#password-confirm' }">
             </div>
           </div>
+
           <div class="${properties.kcFormGroupClass!}">
-            <div class="${properties.kcLabelWrapperClass!}">
-              <label for="password-confirm" class="${properties.kcLabelClass!}">${msg("passwordConfirm")}</label>
+            <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
+
+             <div class="password-container">
+               <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#register-password' }" tabindex="0"></i>
+               <input type="password" id="register-password" class="${properties.kcInputClass!}" name="password"
+                 autocomplete="new-password"
+                 aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>"
+                 placeholder="${msg('enterPassword')}" />
+             </div>
+
+             <#if messagesPerField.existsError('password')>
+               <span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                 ${kcSanitize(messagesPerField.get('password'))?no_esc}
+               </span>
+             </#if>
+
+            <div class="password-requirements" v-password-indicator="{
+                 resourcesPath: '${url.resourcesPath}',
+                 passwordSelector: '#register-password',
+                 labels: {
+                   length: '${msg('password_requirement_length')}',
+                   lowercase: '${msg('password_requirement_lowercase')}',
+                   uppercase: '${msg('password_requirement_uppercase')}',
+                   number: '${msg('password_requirement_number')}',
+                   email: '${msg('password_requirement_email')}'
+                 }
+               }"></div>
+          </div>
+
+          <div class="${properties.kcFormGroupClass!}">
+            <label for="password-confirm" class="${properties.kcLabelClass!}">${msg("passwordConfirm")}</label>
+
+            <div class="password-container">
+              <i class="fa fa-eye-slash" id="toggle-password-confirm" v-toggle-password="{ passwordSelector: '#password-confirm' }" tabindex="0"></i>
+              <input type="password" id="password-confirm" class="${properties.kcInputClass!}"
+                name="password-confirm"
+                aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>"
+                placeholder="${msg('confirmPassword')}" />
             </div>
-            <div class="${properties.kcInputWrapperClass!}">
-              <div class="password-confirm-container">
-                <i class="fa fa-eye-slash" id="toggle-password-confirm" onclick="togglePassword('#password-confirm', '#toggle-password-confirm')" tabindex="0"></i>
-                <input type="password" id="password-confirm" class="${properties.kcInputClass!}"
-                  name="password-confirm"
-                  aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>"
-                  placeholder="${msg('confirmPassword')}" />
-              </div>
-              <#if messagesPerField.existsError('password-confirm')>
-                <span id="input-error-password-confirm" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                  ${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}
-                </span>
-              </#if>
-            </div>
+
+            <#if messagesPerField.existsError('password-confirm')>
+              <span id="input-error-password-confirm" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                ${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}
+              </span>
+            </#if>
           </div>
         </#if>
 
@@ -188,13 +180,11 @@
         </#if>
 
         <!-- Submit Button -->
-        <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
+        <div id="kc-form-buttons">
           <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg("doRegisterBtn")}" />
         </div>
-        <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
-          <div class="${properties.kcFormOptionsWrapperClass!}">
-            <span><a href="${url.loginUrl}">${kcSanitize(msg("backToLoginBtn"))?no_esc}</a></span>
-          </div>
+        <div id="kc-form-options">
+          <span><a href="${url.loginUrl}">${kcSanitize(msg("backToLoginBtn"))?no_esc}</a></span>
         </div>
       </form>
     </div>
@@ -302,7 +292,7 @@
 
             if (inputErrorPhone) inputErrorPhone.style.display = 'none';
             if (inputErrorCode) inputErrorCode.style.display = 'none';
-          }
+          },
         },
         mounted() {
           document.getElementById('kc-register-form').addEventListener('submit', this.onSubmit);

@@ -1,6 +1,6 @@
 Vue.directive("password-indicator", {
   inserted(el, binding) {
-    const { resourcesPath /*, emailSelector*/, passwordSelector, labels } = binding.value;
+    const { resourcesPath, /*emailSelector,*/ passwordSelector, labels } = binding.value;
 
     function updatePasswordIndicator() {
       //const email = document.querySelector(emailSelector).value;
@@ -11,7 +11,7 @@ Vue.directive("password-indicator", {
         lowercase: /[a-z]/.test(password),
         uppercase: /[A-Z]/.test(password),
         number: /\d/.test(password),
-        //email: !email || !password.includes(email),
+        // email: !email || !password.includes(email),
       };
 
       const passwordRequirements = el;
@@ -22,6 +22,8 @@ Vue.directive("password-indicator", {
       `;
       passwordRequirements.innerHTML = requirementText;
 
+      let allRequirementsMet = true;
+
       for (const requirement in requirements) {
         const element = passwordRequirements.querySelector(`#${requirement}`);
         if (requirements[requirement]) {
@@ -30,13 +32,14 @@ Vue.directive("password-indicator", {
         } else {
           element.classList.add("requirement-fail");
           element.classList.remove("requirement-success");
+          allRequirementsMet = false;
         }
       }
 
-      passwordRequirements.style.display = "block";
+      passwordRequirements.style.display = allRequirementsMet ? "none" : "block";
     }
 
     document.querySelector(passwordSelector).addEventListener("input", updatePasswordIndicator);
-    //document.querySelector(emailSelector).addEventListener("input", updatePasswordIndicator);
+    // document.querySelector(emailSelector).addEventListener("input", updatePasswordIndicator);
   },
 });

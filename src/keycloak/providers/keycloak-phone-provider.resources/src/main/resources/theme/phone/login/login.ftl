@@ -9,6 +9,7 @@
           <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
           <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
           <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
+           <script src="${url.resourcesPath}/js/togglePasswordDirective.js"></script>
 
           <style>
               [v-cloak] > * {
@@ -27,16 +28,14 @@
                 <#if !usernameHidden?? && supportPhone??>
                   <!-- Tabs: Email or Phone Number Selection -->
                   <div class="${properties.kcFormGroupClass!}">
-                        <div class="${properties.kcLabelWrapperClass!}">
-                          <ul class="nav nav-pills nav-justified">
-                            <li role="presentation" v-bind:class="{ active: !phoneActivated }" v-on:click="phoneActivated = false">
-                              <a href="#" tabindex="0">${msg("loginByPassword")}</a>
-                            </li>
-                            <li role="presentation" v-bind:class="{ active: phoneActivated }" v-on:click="phoneActivated = true">
-                              <a href="#" tabindex="0">${msg("loginByPhone")}</a>
-                            </li>
-                          </ul>
-                        </div>
+                    <ul class="nav nav-pills nav-justified">
+                      <li role="presentation" v-bind:class="{ active: !phoneActivated }" v-on:click="phoneActivated = false">
+                        <a href="#" tabindex="0">${msg("loginByPassword")}</a>
+                      </li>
+                      <li role="presentation" v-bind:class="{ active: phoneActivated }" v-on:click="phoneActivated = true">
+                        <a href="#" tabindex="0">${msg("loginByPhone")}</a>
+                      </li>
+                    </ul>
                   </div>
 
                   <input type="hidden" id="phoneActivated" name="phoneActivated" v-model="phoneActivated">
@@ -77,8 +76,15 @@
 
                   <div class="${properties.kcFormGroupClass!}">
                     <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
+
+                    <div class="password-container">
+                      <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#password' }" tabindex="0"></i>
+                      <input tabindex="0" id="password" class="${properties.kcInputClass!}" name="password" type="password" autocomplete="off"
+                        aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterPassword')}" />
+                    </div>
+                    <#--  <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
                     <input tabindex="0" id="password" class="${properties.kcInputClass!}" name="password" type="password" autocomplete="off"
-                      aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterPassword')}" />
+                      aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterPassword')}" />  -->
 
                     <#if usernameHidden?? && messagesPerField.existsError('username','password')>
                       <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
@@ -150,12 +156,12 @@
                   </div>
                 </div>
 
-                <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
+                <div id="kc-form-buttons">
                   <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if> />
                   <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit" value="${msg("doLogIn")}" />
                 </div>
 
-                <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
+                <div id="kc-form-options">
                   <div class="${properties.kcFormOptionsWrapperClass!}">
                     <#if realm.resetPasswordAllowed>
                       <div class="${properties.kcFormOptionsWrapperClass!}">
