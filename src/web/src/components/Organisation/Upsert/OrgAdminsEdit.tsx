@@ -4,6 +4,7 @@ import { Controller, type FieldValues, useForm } from "react-hook-form";
 import CreatableSelect from "react-select/creatable";
 import zod from "zod";
 import { type OrganizationRequestBase } from "~/api/models/organisation";
+import { DELIMETER_PASTE_MULTI } from "~/lib/constants";
 import { validateEmail } from "~/lib/validate";
 
 export interface InputProps {
@@ -122,8 +123,14 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
                 }))}
                 isMulti
                 className="form-control mb-2 w-full"
-                // eslint-disable-next-line
-                onChange={(val) => onChange(val.map((c) => c.value))}
+                onChange={(val) => {
+                  // when pasting multiple values, split them by DELIMETER_PASTE_MULTI
+                  const emails = val
+                    .flatMap((item) => item.value.split(DELIMETER_PASTE_MULTI))
+                    .map((email) => email.trim()) // Trim each email
+                    .filter((email) => email !== ""); // Filter out empty strings
+                  onChange(emails);
+                }}
                 value={value?.map((val: any) => ({
                   label: val,
                   value: val,
