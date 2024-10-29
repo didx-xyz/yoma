@@ -81,6 +81,10 @@ namespace Yoma.Core.Domain.Core.Models
 
     public Environment SentryEnabledEnvironmentsAsEnum => ParseEnvironmentInput(SentryEnabledEnvironments);
 
+    public string TwilioEnabledEnvironments { get; set; }
+
+    public Environment TwilioEnabledEnvironmentsAsEnum => ParseEnvironmentInput(TwilioEnabledEnvironments);
+
     public string HttpsRedirectionEnabledEnvironments { get; set; }
 
     public Environment HttpsRedirectionEnabledEnvironmentsAsEnum => ParseEnvironmentInput(HttpsRedirectionEnabledEnvironments);

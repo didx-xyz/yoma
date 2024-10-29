@@ -7,14 +7,17 @@ namespace Yoma.Core.Domain.Notification.Services
   {
     #region Class Variables
     private readonly IEmailProviderClient _emailProviderClient;
+    private readonly IMessageProviderClient _messageProviderClient;
     private readonly INotificationPreferenceFilterService _notificationPreferenceFilterService;
     #endregion
 
     #region Constructor
     public NotificationDeliveryService(IEmailProviderClientFactory emailProviderClientFactory,
+      IMessageProviderClientFactory messageProviderClientFactory,
       INotificationPreferenceFilterService notificationPreferenceFilterService)
     {
       _emailProviderClient = emailProviderClientFactory.CreateClient();
+      _messageProviderClient = messageProviderClientFactory.CreateClient();
       _notificationPreferenceFilterService = notificationPreferenceFilterService;
     }
     #endregion
@@ -28,16 +31,16 @@ namespace Yoma.Core.Domain.Notification.Services
       recipients = _notificationPreferenceFilterService.FilterRecipients(type, recipients);
       if (recipients == null || recipients.Count == 0) return;
 
-      // future extensibility: Currently, only email is supported
-      var deliveryType = DeliveryType.Email;
+      var emailRecipients = recipients.Where(r => !string.IsNullOrEmpty(r.Email)).ToList();
+      var messageRecipients = recipients.Except(emailRecipients).ToList();
 
-      if (deliveryType.HasFlag(DeliveryType.Email))
-      {
-        recipients = recipients.Where(r => !string.IsNullOrEmpty(r.Email)).ToList();
-        if (recipients.Count == 0) return;
+      // email notifications
+      if (emailRecipients.Count > 0)
+        await _emailProviderClient.Send(type, emailRecipients, data);
 
-        await _emailProviderClient.Send(type, recipients, data);
-      }
+      // message notifications
+      if (messageRecipients.Count > 0)
+        await _messageProviderClient.Send(MessageType.WhatsApp, type, messageRecipients, data);
     }
 
     public async Task Send<T>(NotificationType type, List<(List<NotificationRecipient> Recipients, T Data)>? recipientDataGroups) where T : NotificationBase
@@ -53,27 +56,38 @@ namespace Yoma.Core.Domain.Notification.Services
           ))
           .Where(group => group.Recipients.Count > 0)
           .ToList();
-
       if (recipientDataGroups.Count == 0) return;
 
-      // future extensibility: Currently, only email is supported
-      var deliveryType = DeliveryType.Email;
+      var emailRecipientGroups = recipientDataGroups
+          .SelectMany(group => new[]
+          {
+          (
+              Recipients: group.Recipients.Where(r => !string.IsNullOrEmpty(r.Email)).ToList(),
+              group.Data
+          )
+            })
+          .Where(group => group.Recipients.Count > 0)
+          .ToList();
 
-      if (deliveryType.HasFlag(DeliveryType.Email))
-      {
-        recipientDataGroups = recipientDataGroups
-            .Select(group =>
-            (
-                Recipients: group.Recipients.Where(r => !string.IsNullOrEmpty(r.Email)).ToList(),
-                group.Data
-            ))
-            .Where(group => group.Recipients.Count > 0)
-            .ToList();
+      var messageRecipientGroups = recipientDataGroups
+          .SelectMany(group => new[]
+          {
+          (
+              Recipients: group.Recipients.Where(r => string.IsNullOrEmpty(r.Email)).ToList(),
+              group.Data
+          )
+          })
+          .Where(group => group.Recipients.Count > 0)
+          .ToList();
 
-        if (recipientDataGroups.Count == 0) return;
-        await _emailProviderClient.Send(type, recipientDataGroups);
-      }
+      // email notifications
+      if (emailRecipientGroups.Count > 0)
+        await _emailProviderClient.Send(type, emailRecipientGroups);
+
+      // message notifications
+      if (messageRecipientGroups.Count > 0)
+        await _messageProviderClient.Send(MessageType.SMS, type, messageRecipientGroups);
     }
-    #endregion
   }
+  #endregion
 }

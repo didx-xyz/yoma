@@ -19,9 +19,9 @@ namespace Yoma.Core.Domain.Notification
     Opportunity_Published //sent to youth
   }
 
-  [Flags]
-  public enum DeliveryType
+  public enum MessageType
   {
-    Email
+    SMS,
+    WhatsApp
   }
 }

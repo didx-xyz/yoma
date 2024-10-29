@@ -107,7 +107,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
         foreach (var recipient in recipients)
         {
           var dataCopy = ObjectHelper.DeepCopy(data);
-          dataCopy.RecipientDisplayName = string.IsNullOrEmpty(recipient.DisplayName) ? recipient.Email! : recipient.DisplayName;
+          dataCopy.RecipientDisplayName = string.IsNullOrEmpty(recipient.DisplayName) ? recipient.Username : recipient.DisplayName;
 
           var item = new Personalization
           {

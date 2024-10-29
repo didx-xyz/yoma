@@ -12,6 +12,13 @@ namespace Yoma.Core.Domain.Notification.Models
 
     [JsonProperty("opportunities")]
     public List<NotificationOpportunityVerificationItem> Opportunities { get; set; }
+
+    [JsonIgnore]
+    public override Dictionary<string, string> ContentVariables => new()
+    {
+      { "1", SubjectSuffix },
+      { "2", RecipientDisplayName }
+    };
   }
 
   public class NotificationOpportunityVerificationItem
