@@ -89,7 +89,8 @@
                     // show success message
                     this.clearMessages();
                     const phoneNumberPartial = phoneNumber.substring(0, 3) + ' **** ' + phoneNumber.substring(phoneNumber.length - 2);
-                    this.messageSendCodeSuccess = 'A code has been sent to ' + phoneNumberPartial + '.';
+                    var format = '${msg("codeSent")}'; // 'A code has been sent to {0}.';
+                    this.messageSendCodeSuccess = format.replace('{0}', phoneNumberPartial);
                   })
                 .catch(e => this.messageSendCodeError = e.response.data.error);
             },
@@ -106,23 +107,16 @@
               }
             },
             sendVerificationCode() {
-              this.errorMessage = '';
+              this.messageSendCodeError = '';
               const input = document.querySelector('#phoneNumberPicker');
               const iti = intlTelInput.getInstance(input);
               const fullPhoneNumber = iti.getNumber();
 
               // Validate phone number
               if (!iti.isValidNumber()) {
-                this.errorMessage = '${msg("invalidPhoneNumber")}';
+                this.messageSendCodeError = '${msg("invalidPhoneNumber")}';
                 return;
               }
-
-              // Validate phone number
-              //const phoneRegex = /^\+?\d+$/;
-              //if (!phoneRegex.test(phoneNumberPartial)) {
-              //  this.errorMessage = 'Invalid phone number format.';
-              //  return;
-              //}
 
               if (this.sendButtonText !== this.initSendButtonText) return;
               this.req(fullPhoneNumber);
@@ -139,15 +133,6 @@
               this.messageSendCodeSuccess = '';
               this.resetSendCodeButton = true;
               this.clearMessages();
-            },
-            clearAndFocusPhoneNumberPicker() {
-              this.phoneNumber = '';
-              const phoneNumberPicker = document.getElementById('phoneNumberPicker');
-              if (phoneNumberPicker) {
-                phoneNumberPicker.focus();
-              }
-
-              this.resetPhoneVerification();
             },
             clearMessages() {
               this.messageSendCodeSuccess = '';

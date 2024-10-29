@@ -222,10 +222,11 @@
                 {
                   this.disableSend(res.data.expires_in);
 
-                  // show success message
-                  this.clearMessages();
-                  const phoneNumberPartial = phoneNumber.substring(0, 3) + ' **** ' + phoneNumber.substring(phoneNumber.length - 2);
-                  this.messageSendCodeSuccess = 'A code has been sent to ' + phoneNumberPartial + '.';
+                    // show success message
+                    this.clearMessages();
+                    const phoneNumberPartial = phoneNumber.substring(0, 3) + ' **** ' + phoneNumber.substring(phoneNumber.length - 2);
+                    var format = '${msg("codeSent")}'; // 'A code has been sent to {0}.';
+                    this.messageSendCodeSuccess = format.replace('{0}', phoneNumberPartial);
                 })
               .catch(e => this.messageSendCodeError = e.response.data.error);
           },
