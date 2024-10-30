@@ -17,7 +17,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public Guid UserId { get; set; }
 
-    public string? UserDisplayName { get; set; }
+    public string UserDisplayName { get; set; }
 
     public bool Success => Failure == null;
 

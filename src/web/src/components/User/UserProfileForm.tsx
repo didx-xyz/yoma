@@ -24,6 +24,9 @@ import { useSession } from "next-auth/react";
 import { useSetAtom } from "jotai";
 import { userProfileAtom } from "~/lib/store";
 import { Loading } from "../Status/Loading";
+import FormMessage, { FormMessageType } from "../Common/FormMessage";
+import { validateEmail } from "~/lib/validate";
+import { handleUserSignOut } from "~/lib/authUtils";
 
 export enum UserProfileFilterOptions {
   EMAIL = "email",
@@ -68,6 +71,7 @@ export const UserProfileForm: React.FC<{
     genderId: userProfile?.genderId ?? "",
     dateOfBirth: userProfile?.dateOfBirth ?? "",
     resetPassword: false,
+    updatePhoneNumber: false,
   });
   const queryClient = useQueryClient();
 
@@ -86,17 +90,29 @@ export const UserProfileForm: React.FC<{
   });
 
   const schema = zod.object({
-    email: zod.string().email().min(1, "Email is required."),
+    email: zod.string().refine(
+      (value) => {
+        // If userProfile.email exists, email is required and must be valid email
+        if (userProfile?.email) {
+          return value.length > 0 && validateEmail(value);
+        }
+        // If userProfile.email does not exist, email is optional
+        return true;
+      },
+      {
+        message: "Email is required.",
+      },
+    ),
     firstName: zod.string().min(1, "First name is required."),
     surname: zod.string().min(1, "Last name is required."),
     displayName: zod.string().min(1, "Display name is required"),
-    phoneNumber: zod
-      .string()
-      .min(1, "Phone number is required.")
-      .regex(
-        /^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$/,
-        "Phone number is invalid",
-      ),
+    // phoneNumber: zod
+    //   .string()
+    //   .min(1, "Phone number is required.")
+    //   .regex(
+    //     /^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$/,
+    //     "Phone number is invalid",
+    //   ),
     countryId: zod.string().min(1, "Country is required."),
     educationId: zod.string().min(1, "Education is required."),
     genderId: zod.string().min(1, "Gender is required."),
@@ -110,13 +126,18 @@ export const UserProfileForm: React.FC<{
       })
       .max(new Date(), { message: "Date of Birth cannot be in the future." }),
     resetPassword: zod.boolean(),
+    updatePhoneNumber: zod.boolean(),
   });
 
   const form = useForm({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { register, handleSubmit, formState, reset } = form;
+  const { register, handleSubmit, formState, reset, watch } = form;
+  const watchEmail = watch("email");
+  const watchUpdatePhoneNumber = watch("updatePhoneNumber");
+  const watchResetPassword = watch("resetPassword");
+  const watchPhoneNumber = watch("phoneNumber");
 
   // set default values
   useEffect(() => {
@@ -142,7 +163,7 @@ export const UserProfileForm: React.FC<{
     if (!formData.educationId) formData.educationId = "";
     if (!formData.genderId) formData.genderId = "";
 
-    formData.resetPassword = false;
+    //formData.resetPassword = false;
 
     // reset form
     // setTimeout is needed to prevent the form from being reset before the default values are set
@@ -182,6 +203,17 @@ export const UserProfileForm: React.FC<{
 
         // 📊 GOOGLE ANALYTICS: track event
         trackGAEvent(GA_CATEGORY_USER, GA_ACTION_USER_PROFILE_UPDATE, "");
+
+        // check if sign-in again is required
+        const emailUpdated =
+          (data.email ?? "").toLowerCase() !==
+          (userProfile.email ?? "").toLowerCase();
+
+        if (emailUpdated || data.updatePhoneNumber || data.resetPassword) {
+          // signout from keycloak
+          handleUserSignOut(true);
+          return;
+        }
 
         // update userProfile Atom (used by NavBar/UserMenu.tsx, refresh profile picture)
         setUserProfileAtom(userProfile);
@@ -247,15 +279,112 @@ export const UserProfileForm: React.FC<{
             <input
               type="text"
               className="input input-bordered w-full rounded-md !border-gray !bg-gray-light focus:border-gray focus:outline-none"
-              disabled
               {...register("email")}
             />
+
             {formState.errors.email && (
               <label className="label font-bold">
                 <span className="label-text-alt italic text-red-500">
                   {`${formState.errors.email.message}`}
                 </span>
               </label>
+            )}
+
+            {/* show message if email is different from the current email */}
+            {(watchEmail ?? "").toLowerCase() !==
+              (userProfile?.email ?? "") && (
+              <div className="mt-2">
+                <FormMessage messageType={FormMessageType.Warning}>
+                  Updating your email will sign you out. Check your email to
+                  verify it when you sign in again.
+                </FormMessage>
+              </div>
+            )}
+          </div>
+        )}
+
+        {filterOptions?.includes(UserProfileFilterOptions.PHONENUMBER) && (
+          <div className="form-control">
+            <label className="label font-bold">
+              <span className="label-text">Phone Number</span>
+            </label>
+
+            {watchPhoneNumber && (
+              <>
+                <input
+                  type="text"
+                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray"
+                  {...register("phoneNumber")}
+                  disabled={true}
+                />
+                {formState.errors.phoneNumber && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${formState.errors.phoneNumber.message}`}
+                    </span>
+                  </label>
+                )}
+              </>
+            )}
+
+            {/* allow update phone number if no phone number specified */}
+            <label
+              htmlFor="updatePhoneNumber"
+              className="label w-full cursor-pointer justify-normal"
+            >
+              <input
+                {...register(`updatePhoneNumber`)}
+                type="checkbox"
+                id="updatePhoneNumber"
+                className="checkbox-primary checkbox"
+              />
+              <span className="label-text ml-4">Update Phone Number</span>
+            </label>
+
+            {watchUpdatePhoneNumber && (
+              <FormMessage messageType={FormMessageType.Warning}>
+                You will need to sign in again and will be prompted to change
+                your phone number.
+              </FormMessage>
+            )}
+          </div>
+        )}
+
+        {filterOptions?.includes(UserProfileFilterOptions.RESETPASSWORD) && (
+          <div className="form-control">
+            <label className="label font-bold">
+              <span className="label-text">Password</span>
+            </label>
+
+            <label
+              htmlFor="resetPassword"
+              className="label w-full cursor-pointer justify-normal"
+            >
+              <input
+                {...register(`resetPassword`)}
+                type="checkbox"
+                id="resetPassword"
+                className="checkbox-primary checkbox"
+              />
+              <span className="label-text ml-4">Reset Password</span>
+            </label>
+
+            {formState.errors.resetPassword && (
+              <label className="label font-bold">
+                <span className="label-text-alt italic text-red-500">
+                  {`${formState.errors.resetPassword.message}`}
+                </span>
+              </label>
+            )}
+
+            {watchResetPassword && (
+              <FormMessage messageType={FormMessageType.Warning}>
+                {watchEmail
+                  ? "You will receive an email with instructions to reset your email."
+                  : formData.phoneNumber
+                    ? "You will be prompted to change your password upon signing in again."
+                    : "Changing your password will require you to sign in again."}
+              </FormMessage>
             )}
           </div>
         )}
@@ -327,8 +456,9 @@ export const UserProfileForm: React.FC<{
             </label>
             <input
               type="text"
-              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray"
               {...register("phoneNumber")}
+              disabled={true}
             />
             {formState.errors.phoneNumber && (
               <label className="label font-bold">
@@ -459,31 +589,6 @@ export const UserProfileForm: React.FC<{
                   : false
               }
             />
-          </div>
-        )}
-
-        {filterOptions?.includes(UserProfileFilterOptions.RESETPASSWORD) && (
-          <div className="form-control">
-            <label
-              htmlFor="resetPassword"
-              className="label w-full cursor-pointer justify-normal"
-            >
-              <input
-                {...register(`resetPassword`)}
-                type="checkbox"
-                id="resetPassword"
-                className="checkbox-primary checkbox"
-              />
-              <span className="label-text ml-4">Reset Password</span>
-            </label>
-
-            {formState.errors.resetPassword && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.resetPassword.message}`}
-                </span>
-              </label>
-            )}
           </div>
         )}
 

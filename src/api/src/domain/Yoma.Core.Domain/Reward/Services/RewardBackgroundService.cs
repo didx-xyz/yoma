@@ -74,7 +74,7 @@ namespace Yoma.Core.Domain.Reward.Services
           _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
             lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
-          _logger.LogInformation("Processing Reward wallet creation");
+          _logger.LogInformation("Processing reward wallet creation");
 
           var itemIdsToSkip = new List<Guid>();
           while (executeUntil > DateTimeOffset.UtcNow)
@@ -84,33 +84,59 @@ namespace Yoma.Core.Domain.Reward.Services
 
             foreach (var item in items)
             {
+              var pendingStatus = item.Status;
               try
               {
                 _logger.LogInformation("Processing reward wallet creation for item with id '{id}'", item.Id);
 
-                await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+                switch (pendingStatus)
                 {
-                  using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                  case WalletCreationStatus.Pending:
+                    _logger.LogInformation("Creating reward wallet");
 
-                  var wallet = await _walletService.CreateWallet(item.UserId);
+                    await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+                    {
+                      using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-                  item.WalletId = wallet.Id;
-                  item.Balance = wallet.Balance; //track initial balance upon creation, if any
-                  item.Status = WalletCreationStatus.Created;
-                  await _walletService.UpdateScheduleCreation(item);
+                      var (username, wallet) = await _walletService.CreateWallet(item.UserId);
 
-                  scope.Complete();
-                });
+                      item.Username = username;
+                      item.WalletId = wallet.Id;
+                      item.Balance = wallet.Balance; //track initial balance upon creation, if any
+                      item.Status = WalletCreationStatus.Created;
+                      await _walletService.UpdateScheduleCreation(item, pendingStatus);
+
+                      scope.Complete();
+                    });
+
+                    _logger.LogInformation("Created reward wallet");
+                    break;
+
+                  case WalletCreationStatus.PendingUsernameUpdate:
+                    _logger.LogInformation("Updating reward wallet username");
+
+                    var username = await _walletService.UpdateWalletUsername(item.UserId);
+
+                    item.Username = username;
+                    item.Status = WalletCreationStatus.Created;
+                    await _walletService.UpdateScheduleCreation(item, pendingStatus);
+
+                    _logger.LogInformation("Updated reward wallet username");
+                    break;
+
+                  default:
+                    throw new InvalidOperationException($"Pending status of '{pendingStatus}' not supported");
+                }
 
                 _logger.LogInformation("Processed reward wallet creation for item with id '{id}'", item.Id);
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to created reward wallet for item with id '{id}'", item.Id);
+                _logger.LogError(ex, "Failed to proceess reward wallet creation for item with id '{id}'", item.Id);
 
                 item.Status = WalletCreationStatus.Error;
                 item.ErrorReason = ex.Message;
-                await _walletService.UpdateScheduleCreation(item);
+                await _walletService.UpdateScheduleCreation(item, pendingStatus);
 
                 itemIdsToSkip.Add(item.Id);
               }
@@ -182,8 +208,8 @@ namespace Yoma.Core.Domain.Reward.Services
                 var request = new RewardAwardRequest
                 {
                   Type = sourceEntityType,
-                  Username = userEmail,
-                  UserWalletId = walletId,
+                  Username = userEmail!,
+                  UserWalletId = walletId!,
                   Amount = item.Amount
                 };
 
@@ -254,17 +280,17 @@ namespace Yoma.Core.Domain.Reward.Services
     #endregion
 
     #region Private Members
-    private (bool proceed, string userEmail, string walletId) GetWalletId(RewardTransaction item, Guid userId)
+    private (bool proceed, string? username, string? walletId) GetWalletId(RewardTransaction item, Guid userId)
     {
-      var (userEmail, walletId) = _walletService.GetWalletIdOrNull(userId);
+      var (username, walletId) = _walletService.GetWalletIdOrNull(userId);
       if (string.IsNullOrEmpty(walletId))
       {
         _logger.LogInformation(
             "Processing of reward transaction for item with id '{itemId}' " +
             "was skipped as the wallet creation for user with id '{userId}' has not been completed", item.Id, userId);
-        return (false, userEmail, string.Empty);
+        return (false, null, null);
       }
-      return (true, userEmail, walletId);
+      return (true, username, walletId);
     }
     #endregion
   }

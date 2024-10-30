@@ -111,7 +111,7 @@ namespace Yoma.Core.Domain.Entity.Services
       var fileExtension = Path.GetExtension(fileName)[1..];
 
       foreach (var item in items)
-        await _userService.UpsertPhoto(item.Email, FileHelper.FromByteArray(fileName, $"image/{fileExtension}", resourceBytes));
+        await _userService.UpsertPhoto(item.Username, FileHelper.FromByteArray(fileName, $"image/{fileExtension}", resourceBytes));
     }
     #endregion
   }

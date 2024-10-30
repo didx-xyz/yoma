@@ -1,7 +1,6 @@
 using FluentValidation;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
-using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 
@@ -25,10 +24,8 @@ namespace Yoma.Core.Domain.Entity.Validators
       _educationService = educationService;
       _genderService = genderService;
 
-      RuleFor(x => x.Email).NotEmpty().EmailAddress();
-      RuleFor(x => x.FirstName).NotEmpty().Length(1, 320);
-      RuleFor(x => x.Surname).NotEmpty().Length(1, 320);
-      RuleFor(x => x.PhoneNumber).Length(1, 50).Matches(RegExValidators.PhoneNumber()).WithMessage("'{PropertyName}' is invalid.").When(x => !string.IsNullOrEmpty(x.PhoneNumber));
+      RuleFor(x => x.Email).EmailAddress().When(x => !string.IsNullOrEmpty(x.Email));
+      RuleFor(x => x.DisplayName).Length(1, 255).When(x => !string.IsNullOrEmpty(x.DisplayName));
       RuleFor(x => x.CountryId).Must(CountryExists).WithMessage($"Specified country is invalid / does not exist. 'Worldwide' is not allowed as a country selection.");
       RuleFor(x => x.EducationId).Must(EducationExists).WithMessage($"Specified education is invalid / does not exist.");
       RuleFor(x => x.GenderId).Must(GenderExists).WithMessage($"Specified gender is invalid / does not exist.");

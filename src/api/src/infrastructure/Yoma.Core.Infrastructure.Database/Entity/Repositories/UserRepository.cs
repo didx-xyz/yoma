@@ -26,12 +26,14 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       return _context.User.Select(entity => new Domain.Entity.Models.User()
       {
         Id = entity.Id,
+        Username = entity.Email ?? entity.PhoneNumber ?? string.Empty,
         Email = entity.Email,
         EmailConfirmed = entity.EmailConfirmed,
         FirstName = entity.FirstName,
         Surname = entity.Surname,
         DisplayName = entity.DisplayName,
         PhoneNumber = entity.PhoneNumber,
+        PhoneNumberConfirmed = entity.PhoneNumberConfirmed,
         CountryId = entity.CountryId,
         Country = entity.Country == null ? null : entity.Country.Name,
         EducationId = entity.EducationId,
@@ -71,13 +73,21 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
     public Expression<Func<Domain.Entity.Models.User, bool>> Contains(Expression<Func<Domain.Entity.Models.User, bool>> predicate, string value)
     {
       //MS SQL: Contains
-      return predicate.Or(o => EF.Functions.ILike(o.FirstName, $"%{value}%") || EF.Functions.ILike(o.Surname, $"%{value}%") || EF.Functions.ILike(o.Email, $"%{value}%") || EF.Functions.ILike(o.DisplayName, $"%{value}%"));
+      return predicate.Or(o => (!string.IsNullOrEmpty(o.Email) && EF.Functions.ILike(o.Email, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.FirstName) && EF.Functions.ILike(o.FirstName, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.Surname) && EF.Functions.ILike(o.Surname, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.DisplayName) && EF.Functions.ILike(o.DisplayName, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.PhoneNumber) && EF.Functions.ILike(o.PhoneNumber, $"%{value}%")));
     }
 
     public IQueryable<Domain.Entity.Models.User> Contains(IQueryable<Domain.Entity.Models.User> query, string value)
     {
       //MS SQL: Contains
-      return query.Where(o => EF.Functions.ILike(o.FirstName, $"%{value}%") || EF.Functions.ILike(o.Surname, $"%{value}%") || EF.Functions.ILike(o.Email, $"%{value}%") || EF.Functions.ILike(o.DisplayName, $"%{value}%"));
+      return query.Where(o => (!string.IsNullOrEmpty(o.Email) && EF.Functions.ILike(o.Email, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.FirstName) && EF.Functions.ILike(o.FirstName, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.Surname) && EF.Functions.ILike(o.Surname, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.DisplayName) && EF.Functions.ILike(o.DisplayName, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.PhoneNumber) && EF.Functions.ILike(o.PhoneNumber, $"%{value}%")));
     }
 
     public async Task<Domain.Entity.Models.User> Create(Domain.Entity.Models.User item)
@@ -96,6 +106,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         Surname = item.Surname,
         DisplayName = item.DisplayName,
         PhoneNumber = item.PhoneNumber,
+        PhoneNumberConfirmed = item.PhoneNumberConfirmed,
         CountryId = item.CountryId,
         EducationId = item.EducationId,
         PhotoId = item.PhotoId,
@@ -129,6 +140,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       entity.Surname = item.Surname;
       entity.DisplayName = item.DisplayName;
       entity.PhoneNumber = item.PhoneNumber;
+      entity.PhoneNumberConfirmed = item.PhoneNumberConfirmed;
       entity.CountryId = item.CountryId;
       entity.EducationId = item.EducationId;
       entity.PhotoId = item.PhotoId;

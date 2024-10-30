@@ -24,7 +24,7 @@ export interface OrganizationRequestBase {
   educationProviderDocuments: FormFile[] | null;
   businessDocuments: FormFile[] | null;
   addCurrentUserAsAdmin: boolean;
-  adminEmails: string[];
+  admins: string[];
   registrationDocumentsDelete: string[] | null;
   educationProviderDocumentsDelete: string[] | null;
   businessDocumentsDelete: string[] | null;
@@ -80,14 +80,6 @@ export interface Organization {
   administrators: UserInfo[] | null;
 }
 
-export interface UserInfo {
-  id: string;
-  email: string;
-  firstName: string;
-  surname: string;
-  displayName: string | null;
-}
-
 export interface OrganizationDocument {
   fileId: string;
   type: string;
@@ -136,8 +128,11 @@ export interface OrganizationRequestUpdateStatus {
 
 export interface UserInfo {
   id: string;
-  email: string;
+  username: string;
+  email: string | null;
   firstName: string;
   surname: string;
   displayName: string | null;
+  phoneNumber: string | null;
+  countryId: string | null;
 }

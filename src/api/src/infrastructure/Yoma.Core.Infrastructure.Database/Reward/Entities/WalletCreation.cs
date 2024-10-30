@@ -9,6 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
 {
   [Table("WalletCreation", Schema = "Reward")]
   [Index(nameof(UserId), IsUnique = true)]
+  [Index(nameof(Username), IsUnique = true)]
   [Index(nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
   public class WalletCreation : BaseEntity<Guid>
   {
@@ -20,6 +21,9 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
     public User User { get; set; }
+
+    [Column(TypeName = "varchar(320)")]
+    public string? Username { get; set; }
 
     [Column(TypeName = "varchar(50)")]
     public string? WalletId { get; set; }

@@ -188,7 +188,11 @@ export const Global: React.FC = () => {
       const cookies = parseCookies();
       const existingSessionCookieValue = cookies[COOKIE_KEYCLOAK_SESSION];
 
-      if (existingSessionCookieValue) {
+      // check for 'signInAgain' query parameter (user profile email/phone/password reset)
+      const urlParams = new URLSearchParams(window.location.search);
+      const signInAgain = urlParams.get("signInAgain");
+
+      if (existingSessionCookieValue || signInAgain) {
         // sign in with keycloak
         handleUserSignIn(currentLanguage);
       }
@@ -519,7 +523,6 @@ export const Global: React.FC = () => {
                   UserProfileFilterOptions.FIRSTNAME,
                   UserProfileFilterOptions.SURNAME,
                   UserProfileFilterOptions.DISPLAYNAME,
-                  UserProfileFilterOptions.PHONENUMBER,
                   UserProfileFilterOptions.COUNTRY,
                   UserProfileFilterOptions.EDUCATION,
                   UserProfileFilterOptions.GENDER,

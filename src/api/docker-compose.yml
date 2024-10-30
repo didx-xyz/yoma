@@ -61,10 +61,12 @@ services:
     user: root
     command: |
       sh -c 'curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.3.0/keycloak-webhook-0.3.0-all.jar \
-      -o /opt/keycloak/providers/keycloak-webhook-0.3.0.jar && \
-      chown 1000:1000 /opt/keycloak/providers/keycloak-webhook-0.3.0.jar'
+        -o /opt/keycloak/providers/keycloak-webhook-0.3.0.jar && \
+        cp /local-providers/*.jar /opt/keycloak/providers/ && \
+        chown -R 1000:1000 /opt/keycloak/providers'
     volumes:
       - keycloak:/opt/keycloak/providers
+      - ../keycloak/providers/jars:/local-providers # our custom JAR folder, mounted in a separate directory and copied to container
 
   keycloak-pg:
     image: postgres:16-alpine
@@ -99,15 +101,22 @@ services:
       KC_HOSTNAME: keycloak
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: password
+      KC_LOG_LEVEL: INFO
+      # Custom providers
+      KC_SPI_PHONE_DEFAULT_SERVICE: dummy
+      # KC_SPI_PHONE_DEFAULT_SERVICE: twilio
+      # KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_ACCOUNT: your_account_sid
+      # KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_TOKEN: your_auth_token
+      # KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_NUMBER: your_number
+      KC_SPI_PHONE_DEFAULT_TOKEN_EXPIRES_IN: 120 # sms expires, 120 seconds
+      # Notice: will match after canonicalize number. eg: INTERNATIONAL: +41 44 668 18 00 , NATIONAL: 044 668 18 00 , E164: +41446681800
+      KC_SPI_PHONE_DEFAULT_YOMA_DEFAULT_NUMBER_REGEX: ^\\+?\\d+$
     ports:
       - 0.0.0.0:8080:8080
     command:
-      - "start-dev"
-      - "--db=postgres"
-      - "--features=declarative-user-profile"
-      - "--spi-events-listener-jboss-logging-success-level=info"
-      - "--spi-events-listener-jboss-logging-error-level=warn"
-      # - "--log-level=DEBUG"
+      - start-dev
+      - --db=postgres
+      - --features=declarative-user-profile
     depends_on:
       keycloak-init:
         condition: service_completed_successfully
@@ -115,7 +124,6 @@ services:
         condition: service_healthy
     volumes:
       - keycloak:/opt/keycloak/providers
-      - ../keycloak/themes:/opt/keycloak/themes
 
   keycloak-health: # Wait for Keycloak to be ready before running keycloak-config service
     image: curlimages/curl

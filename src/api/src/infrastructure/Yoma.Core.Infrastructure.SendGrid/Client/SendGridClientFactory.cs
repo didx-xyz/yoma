@@ -3,7 +3,7 @@ using Microsoft.Extensions.Options;
 using SendGrid;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.EmailProvider.Interfaces;
+using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Infrastructure.SendGrid.Models;
 
 namespace Yoma.Core.Infrastructure.SendGrid.Client
