@@ -10,7 +10,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
-      migrationBuilder.Sql("UPDATE [Entity].[User] SET [PhoneNumber] = NULL");
+      migrationBuilder.Sql("UPDATE \"Entity\".\"User\" SET \"PhoneNumber\" = NULL");
 
       migrationBuilder.DropIndex(
           name: "IX_User_FirstName_Surname_EmailConfirmed_PhoneNumber_DateOfBir~",
