@@ -8,9 +8,9 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.EmailProvider;
-using Yoma.Core.Domain.EmailProvider.Interfaces;
-using Yoma.Core.Domain.EmailProvider.Models;
+using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Infrastructure.SendGrid.Models;
 
 namespace Yoma.Core.Infrastructure.SendGrid.Client
@@ -41,14 +41,14 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
     #endregion
 
     #region Public Members
-    public async Task Send<T>(EmailType type, List<EmailRecipient> recipients, T data)
-      where T : EmailBase
+    public async Task Send<T>(NotificationType type, List<NotificationRecipient> recipients, T data)
+      where T : NotificationBase
     {
       await Send(type, [(recipients, data)]);
     }
 
-    public async Task Send<T>(EmailType type, List<(List<EmailRecipient> Recipients, T Data)> recipientDataGroups)
-      where T : EmailBase
+    public async Task Send<T>(NotificationType type, List<(List<NotificationRecipient> Recipients, T Data)> recipientDataGroups)
+      where T : NotificationBase
     {
       if (!_appSettings.SendGridEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
@@ -97,8 +97,8 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
     #endregion
 
     #region Private Members
-    private static List<Personalization> ProcessRecipients<T>(List<(List<EmailRecipient> recipients, T data)> recipientDataGroups)
-    where T : EmailBase
+    private static List<Personalization> ProcessRecipients<T>(List<(List<NotificationRecipient> recipients, T data)> recipientDataGroups)
+    where T : NotificationBase
     {
       var result = new List<Personalization>();
 
@@ -107,7 +107,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
         foreach (var recipient in recipients)
         {
           var dataCopy = ObjectHelper.DeepCopy(data);
-          dataCopy.RecipientDisplayName = string.IsNullOrEmpty(recipient.DisplayName) ? recipient.Email : recipient.DisplayName;
+          dataCopy.RecipientDisplayName = string.IsNullOrEmpty(recipient.DisplayName) ? recipient.Username : recipient.DisplayName;
 
           var item = new Personalization
           {

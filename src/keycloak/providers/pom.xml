@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xmlns="http://maven.apache.org/POM/4.0.0"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>cc.coopersoft</groupId>
+    <artifactId>keycloak-phone-provider-parent</artifactId>
+    <packaging>pom</packaging>
+    <version>2.3.4-snapshot</version>
+
+    <name>keycloak-phone-provider</name>
+    <description>keycloak phone support.</description>
+    <url>https://github.com/cooperlyt/keycloak-phone-provider</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>https://www.opensource.org/licenses/mit-license.php</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <scm>
+        <tag>${project.version}</tag>
+        <connection>scm:git@github.com:cooperlyt/keycloak-phone-provider.git</connection>
+        <developerConnection>scm:git@github.com:cooperlyt/keycloak-phone-provider.git</developerConnection>
+        <url>https://github.com/cooperlyt/keycloak-phone-provider</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>cooperlyt</id>
+            <name>cooper lee</name>
+            <email>lyt3131@163.com</email>
+            <organization>https://cooperlyt.github.io</organization>
+            <timezone>+8</timezone>
+            <roles>
+                <role>Developer</role>
+            </roles>
+        </developer>
+    </developers>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
+        <java.version>17</java.version>
+        <version.keycloak>22.0.1</version.keycloak>
+    </properties>
+
+    <modules>
+        <module>keycloak-phone-provider</module>
+        <module>keycloak-phone-provider.resources</module>
+        <module>keycloak-sms-provider-dummy</module>
+        <module>keycloak-sms-provider-twilio</module>
+    </modules>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.26</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-core</artifactId>
+            <version>${version.keycloak}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-services</artifactId>
+            <version>${version.keycloak}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-server-spi</artifactId>
+            <version>${version.keycloak}</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-server-spi-private</artifactId>
+            <version>${version.keycloak}</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Auto-service (for registering SPIs with Keycloak) -->
+        <dependency>
+            <groupId>com.google.auto.service</groupId>
+            <artifactId>auto-service</artifactId>
+            <version>1.0-rc7</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- Add SLF4J dependency -->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>1.7.32</version>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-simple</artifactId>
+            <version>1.7.32</version>
+            <scope>runtime</scope>
+        </dependency>
+
+        <!-- Exclude conflicting SLF4J dependencies -->
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-core</artifactId>
+            <version>${version.keycloak}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-services</artifactId>
+            <version>${version.keycloak}</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+    </dependencies>
+
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.10.0</version>
+                <configuration>
+                    <generateBackupPoms>false</generateBackupPoms>
+                </configuration>
+            </plugin>
+            <plugin>
+                <inherited>false</inherited>
+                <artifactId>maven-resources-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-resources</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${basedir}/target</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>docker</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

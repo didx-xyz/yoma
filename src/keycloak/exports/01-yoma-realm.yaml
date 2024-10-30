@@ -28,7 +28,7 @@ oauth2DevicePollingInterval: 5
 enabled: true
 sslRequired: external
 registrationAllowed: true
-registrationEmailAsUsername: true
+registrationEmailAsUsername: false #JASON:
 rememberMe: false
 verifyEmail: true
 loginWithEmailAllowed: true
@@ -1350,10 +1350,10 @@ smtpServer:
   fromDisplayName: Yoma
   user: apikey
   verifyLinkExpiration: 86400
-loginTheme: yoma
+loginTheme: phone
 accountTheme: ""
 adminTheme: ""
-emailTheme: yoma
+emailTheme: phone
 eventsEnabled: true
 eventsListeners:
   - jboss-logging
@@ -1438,6 +1438,7 @@ enabledEventTypes:
   - VERIFY_PROFILE
   - GRANT_CONSENT_ERROR
   - IDENTITY_PROVIDER_FIRST_LOGIN_ERROR
+  - UPDATE_PHONE_NUMBER
 adminEventsEnabled: true
 adminEventsDetailsEnabled: false
 identityProviders: []
@@ -1949,6 +1950,154 @@ authenticationFlows:
         priority: 10
         autheticatorFlow: false
         userSetupAllowed: false
+  - id: 367ab94c-3d18-453d-9480-ca28d87e9a51
+    alias: Registration with phone
+    description: registration flow with phone (custom)
+    providerId: basic-flow
+    topLevel: true
+    builtIn: false
+    authenticationExecutions:
+      - authenticator: registration-page-form
+        authenticatorFlow: true
+        requirement: REQUIRED
+        priority: 10
+        autheticatorFlow: true
+        flowAlias: Registration with phone registration form
+        userSetupAllowed: false
+  - id: 65aa62f7-db58-4467-b01f-152a7387e120
+    alias: Registration with phone registration form
+    description: registration form
+    providerId: form-flow
+    topLevel: false
+    builtIn: false
+    authenticationExecutions:
+      - authenticatorConfig: registration phone user creation config
+        authenticator: registration-phone-username-creation
+        authenticatorFlow: false
+        requirement: REQUIRED
+        priority: 20
+        autheticatorFlow: false
+        userSetupAllowed: false
+      - authenticator: registration-profile-action
+        authenticatorFlow: false
+        requirement: REQUIRED
+        priority: 50
+        autheticatorFlow: false
+        userSetupAllowed: false
+      - authenticator: registration-password-action
+        authenticatorFlow: false
+        requirement: REQUIRED
+        priority: 60
+        autheticatorFlow: false
+        userSetupAllowed: false
+      - authenticatorConfig: phone validation config
+        authenticator: registration-phone
+        authenticatorFlow: false
+        requirement: REQUIRED
+        priority: 61
+        autheticatorFlow: false
+        userSetupAllowed: false
+      - authenticator: registration-recaptcha-action
+        authenticatorFlow: false
+        requirement: DISABLED
+        priority: 62
+        autheticatorFlow: false
+        userSetupAllowed: false
+  - id: c80827d1-4db5-4541-b1ac-4a3131407bb4
+    alias: Browser with phone
+    description: browser with phone based authentication (custom)
+    providerId: basic-flow
+    topLevel: true
+    builtIn: false
+    authenticationExecutions:
+      - authenticator: auth-cookie
+        authenticatorFlow: false
+        requirement: ALTERNATIVE
+        priority: 10
+        autheticatorFlow: false
+        userSetupAllowed: false
+      - authenticator: auth-spnego
+        authenticatorFlow: false
+        requirement: DISABLED
+        priority: 20
+        autheticatorFlow: false
+        userSetupAllowed: false
+      - authenticator: identity-provider-redirector
+        authenticatorFlow: false
+        requirement: ALTERNATIVE
+        priority: 25
+        autheticatorFlow: false
+        userSetupAllowed: false
+      - authenticatorFlow: true
+        requirement: ALTERNATIVE
+        priority: 30
+        autheticatorFlow: true
+        flowAlias: Browser with phone forms
+        userSetupAllowed: false
+  - id: 7a1f2f13-cdfa-4a36-889c-ddb2f4a3c533
+    alias: Browser with phone Browser - Conditional OTP
+    description: Flow to determine if the OTP is required for the authentication
+    providerId: basic-flow
+    topLevel: false
+    builtIn: false
+    authenticationExecutions:
+      - authenticator: conditional-user-configured
+        authenticatorFlow: false
+        requirement: REQUIRED
+        priority: 10
+        autheticatorFlow: false
+        userSetupAllowed: false
+      - authenticator: auth-otp-form
+        authenticatorFlow: false
+        requirement: REQUIRED
+        priority: 20
+        autheticatorFlow: false
+        userSetupAllowed: false
+  - id: 34029838-49fa-4a78-8c37-77ce85c5dfc0
+    alias: Browser with phone forms
+    description: Username, password, otp and other auth forms.
+    providerId: basic-flow
+    topLevel: false
+    builtIn: false
+    authenticationExecutions:
+      - authenticatorConfig: phone username password form config
+        authenticator: auth-phone-username-password-form
+        authenticatorFlow: false
+        requirement: REQUIRED
+        priority: 10
+        autheticatorFlow: false
+        userSetupAllowed: false
+      - authenticatorFlow: true
+        requirement: CONDITIONAL
+        priority: 21
+        autheticatorFlow: true
+        flowAlias: Browser with phone Browser - Conditional OTP
+        userSetupAllowed: false
+  - id: 9e3caf1a-915f-47ff-a880-0bbba9029811
+    alias: Reset credentials with phone
+    description: Reset credentials with phone (custom)
+    providerId: basic-flow
+    topLevel: true
+    builtIn: false
+    authenticationExecutions:
+      - authenticator: reset-credentials-with-phone
+        authenticatorFlow: false
+        requirement: REQUIRED
+        priority: 0
+        autheticatorFlow: false
+        userSetupAllowed: false
+      - authenticator: reset-credential-email-with-phone
+        authenticatorFlow: false
+        requirement: CONDITIONAL
+        priority: 1
+        autheticatorFlow: false
+        userSetupAllowed: false
+      - authenticator: reset-password
+        authenticatorFlow: false
+        requirement: REQUIRED
+        priority: 2
+        autheticatorFlow: false
+        userSetupAllowed: false
 authenticatorConfig:
   - id: 577777dc-5d9d-492c-adcf-d84f0b9295b6
     alias: create unique user config
@@ -1958,6 +2107,19 @@ authenticatorConfig:
     alias: review profile config
     config:
       update.profile.on.first.login: missing
+  - id: 9d873a46-e2fc-4ba0-8b04-8c6f35a0436c
+    alias: phone validation config
+    config:
+      createOPTCredential: "true"
+  - id: 32768293-fec2-441d-ac42-71d304161394
+    alias: registration phone user creation config
+    config:
+      phoneNumberAsUsername: "false"
+  - id: 1b3b08ec-1a23-4a26-8efd-ffb0ec2543e0
+    alias: phone username password form config
+    config:
+      loginWithPhoneNumber: "true"
+      loginWithPhoneVerify: "true"
 requiredActions:
   - alias: CONFIGURE_TOTP
     name: Configure OTP
@@ -1994,26 +2156,33 @@ requiredActions:
     defaultAction: false
     priority: 50
     config: {}
+  - alias: UPDATE_PHONE_NUMBER
+    name: Update Phone Number
+    providerId: UPDATE_PHONE_NUMBER
+    enabled: true
+    defaultAction: false
+    priority: 60
+    config: {}
   - alias: delete_account
     name: Delete Account
     providerId: delete_account
     enabled: false
     defaultAction: false
-    priority: 60
+    priority: 70
     config: {}
   - alias: webauthn-register
     name: Webauthn Register
     providerId: webauthn-register
     enabled: true
     defaultAction: false
-    priority: 70
+    priority: 80
     config: {}
   - alias: webauthn-register-passwordless
     name: Webauthn Register Passwordless
     providerId: webauthn-register-passwordless
     enabled: true
     defaultAction: false
-    priority: 80
+    priority: 90
     config: {}
   - alias: update_user_locale
     name: Update User Locale
@@ -2022,10 +2191,10 @@ requiredActions:
     defaultAction: false
     priority: 1000
     config: {}
-browserFlow: browser
-registrationFlow: registration
+browserFlow: Browser with phone
+registrationFlow: Registration with phone
 directGrantFlow: direct grant
-resetCredentialsFlow: reset credentials
+resetCredentialsFlow: Reset credentials with phone
 clientAuthenticationFlow: clients
 dockerAuthenticationFlow: docker auth
 keycloakVersion: 22.0.1

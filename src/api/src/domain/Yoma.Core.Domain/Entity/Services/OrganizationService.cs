@@ -12,9 +12,9 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.EmailProvider;
-using Yoma.Core.Domain.EmailProvider.Interfaces;
-using Yoma.Core.Domain.EmailProvider.Models;
+using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Entity.Events;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Helpers;
@@ -41,9 +41,8 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IOrganizationProviderTypeService _providerTypeService;
     private readonly IBlobService _blobService;
     private readonly ISSITenantService _ssiTenantService;
-    private readonly IEmailURLFactory _emailURLFactory;
-    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
-    private readonly IEmailProviderClient _emailProviderClient;
+    private readonly INotificationURLFactory _notificationURLFactory;
+    private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly ISettingsDefinitionService _settingsDefinitionService;
     private readonly OrganizationRequestValidatorCreate _organizationCreateRequestValidator;
     private readonly OrganizationRequestValidatorUpdate _organizationUpdateRequestValidator;
@@ -76,9 +75,8 @@ namespace Yoma.Core.Domain.Entity.Services
         IOrganizationProviderTypeService providerTypeService,
         IBlobService blobService,
         ISSITenantService ssiTenantService,
-        IEmailURLFactory emailURLFactory,
-        IEmailPreferenceFilterService emailPreferenceFilterService,
-        IEmailProviderClientFactory emailProviderClientFactory,
+        INotificationURLFactory notificationURLFactory,
+        INotificationDeliveryService notificationDeliveryService,
         ISettingsDefinitionService settingsDefinitionService,
         OrganizationRequestValidatorCreate organizationCreateRequestValidator,
         OrganizationRequestValidatorUpdate organizationUpdateRequestValidator,
@@ -101,9 +99,8 @@ namespace Yoma.Core.Domain.Entity.Services
       _providerTypeService = providerTypeService;
       _blobService = blobService;
       _ssiTenantService = ssiTenantService;
-      _emailURLFactory = emailURLFactory;
-      _emailPreferenceFilterService = emailPreferenceFilterService;
-      _emailProviderClient = emailProviderClientFactory.CreateClient();
+      _notificationURLFactory = notificationURLFactory;
+      _notificationDeliveryService = notificationDeliveryService;
       _settingsDefinitionService = settingsDefinitionService;
       _organizationCreateRequestValidator = organizationCreateRequestValidator;
       _organizationUpdateRequestValidator = organizationUpdateRequestValidator;
@@ -283,7 +280,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (rewardPoolsSpecified && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
         throw new SecurityException("Unauthorized");
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var result = new Organization
       {
@@ -338,9 +335,9 @@ namespace Yoma.Core.Domain.Entity.Services
           }
 
           //assign admins
-          var admins = request.AdminEmails ??= [];
+          var admins = request.Admins ??= [];
           if (request.AddCurrentUserAsAdmin)
-            admins.Add(user.Email);
+            admins.Add(user.Username);
           else if (HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor))
             throw new ValidationException($"The registering user must be added as an organization admin by default ('{nameof(request.AddCurrentUserAsAdmin)}' must be true)");
           result = await AssignAdmins(result, admins, OrganizationReapprovalAction.None);
@@ -384,7 +381,7 @@ namespace Yoma.Core.Domain.Entity.Services
         throw;
       }
 
-      await SendEmail(result, EmailType.Organization_Approval_Requested);
+      await SendNotification(result, NotificationType.Organization_Approval_Requested);
 
       return result;
     }
@@ -431,7 +428,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (request.YomaRewardPool.HasValue && result.YomaRewardCumulative.HasValue && request.YomaRewardPool.Value < result.YomaRewardCumulative.Value)
         throw new ValidationException($"The Yoma reward pool cannot be less than the cumulative Yoma rewards ({result.YomaRewardCumulative.Value:F2}) already allocated to participants");
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       result.Name = request.Name.NormalizeTrim();
       result.WebsiteURL = request.WebsiteURL?.ToLower();
@@ -482,10 +479,10 @@ namespace Yoma.Core.Domain.Entity.Services
           }
 
           //admins
-          var admins = request.AdminEmails ??= [];
+          var admins = request.Admins ??= [];
           if (request.AddCurrentUserAsAdmin)
-            admins.Add(user.Email);
-          result = await RemoveAdmins(result, result.Administrators?.Where(o => !admins.Contains(o.Email)).Select(o => o.Email).ToList(), OrganizationReapprovalAction.None);
+            admins.Add(user.Username);
+          result = await RemoveAdmins(result, result.Administrators?.Where(o => !string.IsNullOrEmpty(o.Username) && !admins.Contains(o.Username)).Select(o => o.Username).ToList(), OrganizationReapprovalAction.None);
           result = await AssignAdmins(result, admins, OrganizationReapprovalAction.None);
 
           //documents
@@ -562,7 +559,7 @@ namespace Yoma.Core.Domain.Entity.Services
       }
 
       if (statusCurrent != OrganizationStatus.Inactive && result.Status == OrganizationStatus.Inactive)
-        await SendEmail(result, EmailType.Organization_Approval_Requested);
+        await SendNotification(result, NotificationType.Organization_Approval_Requested);
 
       if (statusCurrent != result.Status)
         await _mediator.Publish(new OrganizationStatusChangedEvent(result));
@@ -578,9 +575,9 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
-      EmailType? emailType = null;
+      NotificationType? notificationType = null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
@@ -602,7 +599,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             await _ssiTenantService.ScheduleCreation(EntityType.Organization, result.Id);
 
-            emailType = EmailType.Organization_Approval_Approved;
+            notificationType = NotificationType.Organization_Approval_Approved;
             break;
 
           case OrganizationStatus.Inactive:
@@ -613,7 +610,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
-            emailType = EmailType.Organization_Approval_Requested;
+            notificationType = NotificationType.Organization_Approval_Requested;
             break;
 
           case OrganizationStatus.Declined:
@@ -626,7 +623,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
             result.CommentApproval = request.Comment;
 
-            emailType = EmailType.Organization_Approval_Declined;
+            notificationType = NotificationType.Organization_Approval_Declined;
             break;
 
           case OrganizationStatus.Deleted:
@@ -651,7 +648,7 @@ namespace Yoma.Core.Domain.Entity.Services
         scope.Complete();
       });
 
-      if (emailType.HasValue) await SendEmail(result, emailType.Value);
+      if (notificationType.HasValue) await SendNotification(result, notificationType.Value);
 
       await _mediator.Publish(new OrganizationStatusChangedEvent(result));
 
@@ -698,14 +695,14 @@ namespace Yoma.Core.Domain.Entity.Services
       if (isProviderTypeMarketplace && (result.Documents == null || !result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).Any()))
         throw new ValidationException($"Business documents are required. Add the required documents before assigning the provider type");
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       var statusCurrent = result.Status;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-        result = await AssignProviderTypes(result, providerTypeIds, OrganizationReapprovalAction.ReapprovalWithEmail);
+        result = await AssignProviderTypes(result, providerTypeIds, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
         scope.Complete();
@@ -729,14 +726,14 @@ namespace Yoma.Core.Domain.Entity.Services
       if (result.ProviderTypes == null || result.ProviderTypes.All(o => providerTypeIds.Contains(o.Id)))
         throw new ValidationException("One or more provider types are required. Removal will result in no associated provider types");
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       var statusCurrent = result.Status;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-        result = await RemoveProviderTypes(result, providerTypeIds, OrganizationReapprovalAction.ReapprovalWithEmail);
+        result = await RemoveProviderTypes(result, providerTypeIds, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
         scope.Complete();
@@ -760,7 +757,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       ValidateUpdatable(result);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       // only allow a user to add a logo if: they are in a user-only role, the organization has no logo, they are the original creator, and the organization is inactive.
       if (userRoleOnly && (result.LogoId.HasValue || user.Id != result.CreatedByUserId || result.Status != OrganizationStatus.Inactive))
@@ -772,7 +769,7 @@ namespace Yoma.Core.Domain.Entity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-        resultLogo = await UpdateLogo(result, file, OrganizationReapprovalAction.ReapprovalWithEmail);
+        resultLogo = await UpdateLogo(result, file, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
         scope.Complete();
@@ -793,7 +790,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       ValidateUpdatable(result);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       var statusCurrent = result.Status;
 
@@ -801,7 +798,7 @@ namespace Yoma.Core.Domain.Entity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-        resultDocuments = await AddDocuments(result, type, documents, OrganizationReapprovalAction.ReapprovalWithEmail);
+        resultDocuments = await AddDocuments(result, type, documents, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
         scope.Complete();
@@ -833,7 +830,7 @@ namespace Yoma.Core.Domain.Entity.Services
       if (isProviderTypeMarketplace && (result.Documents == null || result.Documents.Where(o => o.Type == OrganizationDocumentType.Business).All(o => documentFileIds.Contains(o.FileId))))
         throw new ValidationException($"Business documents are required. Removal will result in no associated documents");
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       var statusCurrent = result.Status;
 
@@ -841,7 +838,7 @@ namespace Yoma.Core.Domain.Entity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-        resultDelete = await DeleteDocuments(result, type, documentFileIds, OrganizationReapprovalAction.ReapprovalWithEmail);
+        resultDelete = await DeleteDocuments(result, type, documentFileIds, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
         scope.Complete();
@@ -856,20 +853,20 @@ namespace Yoma.Core.Domain.Entity.Services
       return resultDelete.Organization;
     }
 
-    public async Task<Organization> AssignAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization)
+    public async Task<Organization> AssignAdmins(Guid id, List<string> usernames, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
       ValidateUpdatable(result);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       var statusCurrent = result.Status;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-        result = await AssignAdmins(result, emails, OrganizationReapprovalAction.ReapprovalWithEmail);
+        result = await AssignAdmins(result, usernames, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
         scope.Complete();
@@ -881,23 +878,23 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public async Task<Organization> RemoveAdmins(Guid id, List<string> emails, bool ensureOrganizationAuthorization)
+    public async Task<Organization> RemoveAdmins(Guid id, List<string> usernames, bool ensureOrganizationAuthorization)
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
-      if (emails == null || emails.Count == 0)
-        throw new ArgumentNullException(nameof(emails));
+      if (usernames == null || usernames.Count == 0)
+        throw new ArgumentNullException(nameof(usernames));
 
       ValidateUpdatable(result);
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       var statusCurrent = result.Status;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-        result = await RemoveAdmins(result, emails, OrganizationReapprovalAction.ReapprovalWithEmail);
+        result = await RemoveAdmins(result, usernames, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
         scope.Complete();
@@ -937,7 +934,7 @@ namespace Yoma.Core.Domain.Entity.Services
       organization.ZltoRewardBalance = organization.ZltoRewardPool.HasValue ? organization.ZltoRewardPool - (organization.ZltoRewardCumulative ?? default) : null;
       organization.YomaRewardBalance = organization.YomaRewardPool.HasValue ? organization.YomaRewardPool - (organization.YomaRewardCumulative ?? default) : null;
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
       organization.ModifiedByUserId = user.Id;
       await _organizationRepository.Update(organization);
@@ -953,7 +950,7 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       if (ids.Count == 0) throw new ArgumentNullException(nameof(ids));
 
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
       var orgIds = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).Select(o => o.OrganizationId).ToList();
 
       var result = !ids.Except(orgIds).Any();
@@ -971,7 +968,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
     public List<OrganizationInfo> ListAdminsOf(bool includeComputed)
     {
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
       var orgIds = _organizationUserRepository.Query().Where(o => o.UserId == user.Id).Select(o => o.OrganizationId).ToList();
 
       var organizations = _organizationRepository.Query().Where(o => orgIds.Contains(o.Id)).ToList();
@@ -983,7 +980,7 @@ namespace Yoma.Core.Domain.Entity.Services
     #region Private Members
     private bool IsAdmin(Organization organization, bool throwUnauthorized)
     {
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var isAdmin = HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor);
 
@@ -1123,18 +1120,18 @@ namespace Yoma.Core.Domain.Entity.Services
       return (organization, blobObject);
     }
 
-    private async Task<Organization> AssignAdmins(Organization organization, List<string> emails, OrganizationReapprovalAction reapprovalAction)
+    private async Task<Organization> AssignAdmins(Organization organization, List<string> usernames, OrganizationReapprovalAction reapprovalAction)
     {
-      if (emails == null || emails.Count == 0)
-        throw new ArgumentNullException(nameof(emails));
+      if (usernames == null || usernames.Count == 0)
+        throw new ArgumentNullException(nameof(usernames));
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
         var updated = false;
-        foreach (var email in emails)
+        foreach (var username in usernames)
         {
-          var user = _userService.GetByEmail(email, false, false);
+          var user = _userService.GetByUsername(username, false, false);
           if (!user.ExternalId.HasValue)
             throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
@@ -1168,19 +1165,19 @@ namespace Yoma.Core.Domain.Entity.Services
       return organization;
     }
 
-    private async Task<Organization> RemoveAdmins(Organization organization, List<string>? emails, OrganizationReapprovalAction reapprovalAction)
+    private async Task<Organization> RemoveAdmins(Organization organization, List<string>? usernames, OrganizationReapprovalAction reapprovalAction)
     {
-      if (emails == null || emails.Count == 0) return organization;
+      if (usernames == null || usernames.Count == 0) return organization;
 
-      emails = emails.Distinct().ToList();
+      usernames = usernames.Distinct().ToList();
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
         var updated = false;
-        foreach (var email in emails)
+        foreach (var username in usernames)
         {
-          var user = _userService.GetByEmail(email, false, false);
+          var user = _userService.GetByUsername(username, false, false);
           if (!user.ExternalId.HasValue)
             throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
 
@@ -1217,7 +1214,7 @@ namespace Yoma.Core.Domain.Entity.Services
           return organization;
 
         case OrganizationReapprovalAction.Reapproval:
-        case OrganizationReapprovalAction.ReapprovalWithEmail:
+        case OrganizationReapprovalAction.ReapprovalWithNotification:
           if (requiredStatus != null && organization.Status != requiredStatus) return organization;
 
           if (organization.Status == OrganizationStatus.Inactive) return organization;
@@ -1227,8 +1224,8 @@ namespace Yoma.Core.Domain.Entity.Services
           organization.Status = OrganizationStatus.Inactive;
           organization = await _organizationRepository.Update(organization);
 
-          if (action == OrganizationReapprovalAction.ReapprovalWithEmail)
-            await SendEmail(organization, EmailType.Organization_Approval_Requested);
+          if (action == OrganizationReapprovalAction.ReapprovalWithNotification)
+            await SendNotification(organization, NotificationType.Organization_Approval_Requested);
 
           break;
 
@@ -1361,52 +1358,49 @@ namespace Yoma.Core.Domain.Entity.Services
         throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
     }
 
-    private async Task SendEmail(Organization organization, EmailType type)
+    private async Task SendNotification(Organization organization, NotificationType type)
     {
       try
       {
-        List<EmailRecipient>? recipients = null;
+        List<NotificationRecipient>? recipients = null;
 
-        var dataOrg = new EmailOrganizationApprovalItem { Name = organization.Name };
+        var dataOrg = new NotificationOrganizationApprovalItem { Name = organization.Name };
         switch (type)
         {
-          case EmailType.Organization_Approval_Requested:
-            //send email to super administrators
+          case NotificationType.Organization_Approval_Requested:
+            //send notification to super administrators
             var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
-            recipients = superAdmins?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.ToDisplayName() }).ToList();
+            recipients = superAdmins?.Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.ToDisplayName() ?? o.Username }).ToList();
 
             dataOrg.Comment = organization.CommentApproval;
-            dataOrg.URL = _emailURLFactory.OrganizationApprovalItemURL(type, organization.Id);
+            dataOrg.URL = _notificationURLFactory.OrganizationApprovalItemURL(type, organization.Id);
             break;
 
-          case EmailType.Organization_Approval_Approved:
-          case EmailType.Organization_Approval_Declined:
-            //send email to organization administrators
-            recipients = organization.Administrators?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList();
+          case NotificationType.Organization_Approval_Approved:
+          case NotificationType.Organization_Approval_Declined:
+            //send notification to organization administrators
+            recipients = organization.Administrators?.Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.DisplayName }).ToList();
 
             dataOrg.Comment = organization.CommentApproval;
-            dataOrg.URL = _emailURLFactory.OrganizationApprovalItemURL(type, organization.Id);
+            dataOrg.URL = _notificationURLFactory.OrganizationApprovalItemURL(type, organization.Id);
             break;
 
           default:
             throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
         }
 
-        recipients = _emailPreferenceFilterService.FilterRecipients(type, recipients);
-        if (recipients == null || recipients.Count == 0) return;
-
-        var data = new EmailOrganizationApproval
+        var data = new NotificationOrganizationApproval
         {
           Organizations = [dataOrg]
         };
 
-        await _emailProviderClient.Send(type, recipients, data);
+        await _notificationDeliveryService.Send(type, recipients, data);
 
-        _logger.LogInformation("Successfully send email");
+        _logger.LogInformation("Successfully send notification");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send email");
+        _logger.LogError(ex, "Failed to send notification");
       }
     }
     #endregion

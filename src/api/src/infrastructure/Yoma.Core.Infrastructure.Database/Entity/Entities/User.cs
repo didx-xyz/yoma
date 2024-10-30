@@ -8,31 +8,30 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
   [Table("User", Schema = "Entity")]
   [Index(nameof(Email), IsUnique = true)]
-  [Index(nameof(FirstName), nameof(Surname), nameof(EmailConfirmed), nameof(PhoneNumber), nameof(DateOfBirth), nameof(DateLastLogin), nameof(ExternalId),
+  [Index(nameof(PhoneNumber), IsUnique = true)]
+  [Index(nameof(ExternalId), IsUnique = true)]
+  [Index(nameof(FirstName), nameof(Surname), nameof(DisplayName), nameof(EmailConfirmed), nameof(PhoneNumberConfirmed), nameof(DateOfBirth), nameof(DateLastLogin),
     nameof(YoIDOnboarded), nameof(DateYoIDOnboarded), nameof(DateCreated), nameof(DateModified))]
   public class User : BaseEntity<Guid>
   {
-    [Required]
     [Column(TypeName = "varchar(320)")]
-    public string Email { get; set; }
+    public string? Email { get; set; }
 
-    [Required]
-    public bool EmailConfirmed { get; set; }
+    public bool? EmailConfirmed { get; set; }
 
-    [Required]
     [Column(TypeName = "varchar(125)")]
-    public string FirstName { get; set; }
+    public string? FirstName { get; set; }
 
-    [Required]
     [Column(TypeName = "varchar(125)")]
-    public string Surname { get; set; }
+    public string? Surname { get; set; }
 
-    [Required]
     [Column(TypeName = "varchar(255)")]
-    public string DisplayName { get; set; }
+    public string? DisplayName { get; set; }
 
     [Column(TypeName = "varchar(50)")]
     public string? PhoneNumber { get; set; }
+
+    public bool? PhoneNumberConfirmed { get; set; }
 
     [ForeignKey("CountryId")]
     public Guid? CountryId { get; set; }

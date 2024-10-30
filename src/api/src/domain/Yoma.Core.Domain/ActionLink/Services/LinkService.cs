@@ -17,9 +17,9 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.EmailProvider;
-using Yoma.Core.Domain.EmailProvider.Interfaces;
-using Yoma.Core.Domain.EmailProvider.Models;
+using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.IdentityProvider.Extensions;
@@ -46,9 +46,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IRepositoryBatched<Link> _linkRepository;
     private readonly IRepository<LinkUsageLog> _linkUsageLogRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
-    private readonly IEmailProviderClient _emailProviderClient;
-    private readonly IEmailURLFactory _emailURLFactory;
-    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
+    private readonly INotificationDeliveryService _notificationDeliveryService;
+    private readonly INotificationURLFactory _notificationURLFactory;
     private readonly IIdentityProviderClient _identityProviderClient;
 
     private readonly LinkRequestCreateValidatorShare _linkRequestCreateValidatorShare;
@@ -75,9 +74,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
       IRepositoryBatched<Link> linkRepository,
       IRepository<LinkUsageLog> linkUsageLogRepository,
       IExecutionStrategyService executionStrategyService,
-      IEmailProviderClientFactory emailProviderClientFactory,
-      IEmailURLFactory emailURLFactory,
-      IEmailPreferenceFilterService emailPreferenceFilterService,
+      INotificationDeliveryService notificationDeliveryService,
+      INotificationURLFactory notificationURLFactory,
       IIdentityProviderClientFactory identityProviderClientFactory,
       LinkRequestCreateValidatorShare linkRequestCreateValidatorShare,
       LinkRequestCreateValidatorVerify linkRequestCreateValidatorVerify,
@@ -95,9 +93,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
       _linkRepository = linkRepository;
       _linkUsageLogRepository = linkUsageLogRepository;
       _executionStrategyService = executionStrategyService;
-      _emailProviderClient = emailProviderClientFactory.CreateClient();
-      _emailURLFactory = emailURLFactory;
-      _emailPreferenceFilterService = emailPreferenceFilterService;
+      _notificationDeliveryService = notificationDeliveryService;
+      _notificationURLFactory = notificationURLFactory;
       _identityProviderClient = identityProviderClientFactory.CreateClient();
       _linkRequestCreateValidatorShare = linkRequestCreateValidatorShare;
       _linkRequestCreateValidatorVerify = linkRequestCreateValidatorVerify;
@@ -288,7 +285,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           throw new InvalidOperationException($"Invalid / unsupported entity type of '{request.EntityType}'");
       }
 
-      await SendEmail(item, EmailType.ActionLink_Verify_Approval_Requested);
+      await SendNotification(item, NotificationType.ActionLink_Verify_Approval_Requested);
 
       return item.ToLinkInfo(request.IncludeQRCode);
     }
@@ -311,8 +308,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       var action = Enum.Parse<LinkAction>(link.Action);
 
-      EmailActionLinkVerify? emailDataDistributionList = null;
-      EmailType? emailType = null;
+      NotificationActionLinkVerify? notificationlDataDistributionList = null;
+      NotificationType? notificationType = null;
       switch (action)
       {
         case LinkAction.Share:
@@ -350,13 +347,13 @@ namespace Yoma.Core.Domain.ActionLink.Services
                   if (!opportunity.Published)
                     throw new ValidationException($"Link cannot be activated as the opportunity '{opportunity.Title}' has not been published");
 
-                  emailDataDistributionList = new EmailActionLinkVerify
+                  notificationlDataDistributionList = new NotificationActionLinkVerify
                   {
                     EntityTypeDesc = $"{entityType.ToString().ToLower()}(ies)",
-                    YoIDURL = _emailURLFactory.OpportunityVerificationYoIDURL(EmailType.ActionLink_Verify_Distribution),
+                    YoIDURL = _notificationURLFactory.OpportunityVerificationYoIDURL(NotificationType.ActionLink_Verify_Distribution),
                     Items =
                     [
-                      new EmailActionLinkVerifyItem
+                      new NotificationActionLinkVerifyItem
                       {
                         Title = opportunity.Title,
                         DateStart = opportunity.DateStart,
@@ -374,7 +371,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
                   throw new InvalidOperationException($"Invalid / unsupported entity type of '{entityType}'");
               }
 
-              emailType = EmailType.ActionLink_Verify_Approval_Approved;
+              notificationType = NotificationType.ActionLink_Verify_Approval_Approved;
               break;
 
             case LinkStatus.Inactive:
@@ -385,7 +382,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
               if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
-              emailType = EmailType.ActionLink_Verify_Approval_Requested;
+              notificationType = NotificationType.ActionLink_Verify_Approval_Requested;
               break;
 
             case LinkStatus.Declined:
@@ -398,7 +395,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
               link.CommentApproval = request.Comment;
 
-              emailType = EmailType.ActionLink_Verify_Approval_Declined;
+              notificationType = NotificationType.ActionLink_Verify_Approval_Declined;
               break;
 
             case LinkStatus.Deleted:
@@ -422,8 +419,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       link = await _linkRepository.Update(link);
 
-      if (emailDataDistributionList != null) await SendEmail_ActionLinkVerifyDistributionList(link, emailDataDistributionList);
-      if (emailType.HasValue) await SendEmail(link, emailType.Value);
+      if (notificationlDataDistributionList != null) await SendNotification_ActionLinkVerifyDistributionList(link, notificationlDataDistributionList);
+      if (notificationType.HasValue) await SendNotification(link, notificationType.Value);
 
       return link.ToLinkInfo(false);
     }
@@ -501,7 +498,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
     private Link LinkFromRequest(LinkRequestCreateBase request, LinkStatus status, bool ensureOrganizationAuthorization)
     {
-      var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       var item = new Link
       {
@@ -547,7 +544,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           //user context optional; only tracked provided executed with context
           if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor)) return link.ToLinkInfo(false);
 
-          user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+          user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
           usageLog = _linkUsageLogRepository.Query().SingleOrDefault(o => o.LinkId == link.Id && o.UserId == user.Id);
           if (usageLog != null) return link.ToLinkInfo(false);
@@ -557,7 +554,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           //user context required
           if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor)) throw new InvalidOperationException($"User context required for link with action '{action}'");
 
-          user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+          user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
           usageLog = _linkUsageLogRepository.Query().SingleOrDefault(o => o.LinkId == link.Id && o.UserId == user.Id);
           if (usageLog != null) throw new ValidationException($"This link has already been used / claimed on '{usageLog.DateCreated:yyyy-MM-dd HH:mm:ss}'");
@@ -573,12 +570,15 @@ namespace Yoma.Core.Domain.ActionLink.Services
         if (link.DistributionList == null)
           throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
 
-        var emails = JsonConvert.DeserializeObject<List<string>>(link.DistributionList);
+        var distributionList = JsonConvert.DeserializeObject<List<string>>(link.DistributionList);
 
-        if (emails == null || emails.Count == 0)
+        if (distributionList == null || distributionList.Count == 0)
           throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
 
-        if (!emails.Contains(user.Email, StringComparer.InvariantCultureIgnoreCase))
+        var isAuthorized = (!string.IsNullOrEmpty(user.Email) && distributionList.Contains(user.Email, StringComparer.InvariantCultureIgnoreCase)) ||
+                       (!string.IsNullOrEmpty(user.PhoneNumber) && distributionList.Contains(user.PhoneNumber));
+
+        if (!isAuthorized)
           throw new SecurityException("Unauthorized: You don't have access because this link is limited to specific users");
       }
 
@@ -606,45 +606,55 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return link.ToLinkInfo(false);
     }
 
-    private async Task SendEmail_ActionLinkVerifyDistributionList(Link link, EmailActionLinkVerify emailData)
+    private async Task SendNotification_ActionLinkVerifyDistributionList(Link link, NotificationActionLinkVerify data)
     {
       var distributionList = string.IsNullOrEmpty(link.DistributionList) ? null : JsonConvert.DeserializeObject<List<string>>(link.DistributionList);
       if (distributionList == null) return;
 
       try
       {
-        var recipients = distributionList.Select(o => new EmailRecipient { Email = o }).ToList();
-        await _emailProviderClient.Send(EmailType.ActionLink_Verify_Distribution, recipients, emailData);
-        _logger.LogInformation("Successfully send email");
+        var recipients = distributionList.Select(item =>
+        {
+          var isEmail = item.Contains('@');
+          return new NotificationRecipient
+          {
+            Email = isEmail ? item : null,
+            PhoneNumber = isEmail ? null : item,
+            Username = item
+          };
+        }).ToList();
+
+        await _notificationDeliveryService.Send(NotificationType.ActionLink_Verify_Distribution, recipients, data);
+        _logger.LogInformation("Successfully send notification");
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send email");
+        _logger.LogError(ex, "Failed to send notification");
       }
     }
 
-    private async Task SendEmail(Link link, EmailType type)
+    private async Task SendNotification(Link link, NotificationType type)
     {
       try
       {
-        List<EmailRecipient>? recipients = null;
+        List<NotificationRecipient>? recipients = null;
 
-        var dataLink = new EmailActionLinkVerifyApprovalItem { Name = link.Name, EntityType = link.EntityType };
+        var dataLink = new NotificationActionLinkVerifyApprovalItem { Name = link.Name, EntityType = link.EntityType };
 
         switch (type)
         {
-          case EmailType.ActionLink_Verify_Approval_Requested:
-            //send email to super administrators
+          case NotificationType.ActionLink_Verify_Approval_Requested:
+            //send notification to super administrators
             var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
-            recipients = superAdmins?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.ToDisplayName() }).ToList();
+            recipients = superAdmins?.Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.ToDisplayName() ?? o.Username }).ToList();
 
             dataLink.Comment = link.CommentApproval;
-            dataLink.URL = _emailURLFactory.ActionLinkVerifyApprovalItemUrl(type, null);
+            dataLink.URL = _notificationURLFactory.ActionLinkVerifyApprovalItemUrl(type, null);
 
             break;
 
-          case EmailType.ActionLink_Verify_Approval_Approved:
-          case EmailType.ActionLink_Verify_Approval_Declined:
+          case NotificationType.ActionLink_Verify_Approval_Approved:
+          case NotificationType.ActionLink_Verify_Approval_Declined:
             var entityType = Enum.Parse<LinkEntityType>(link.EntityType, true);
             switch (entityType)
             {
@@ -652,13 +662,13 @@ namespace Yoma.Core.Domain.ActionLink.Services
                 if (!link.OpportunityOrganizationId.HasValue)
                   throw new InvalidOperationException("Opportunity organization details expected");
 
-                //send email to organization administrators
+                //send notification to organization administrators
                 var organization = _organizationService.GetById(link.OpportunityOrganizationId.Value, true, false, false);
 
-                recipients = organization.Administrators?.Select(o => new EmailRecipient { Email = o.Email, DisplayName = o.DisplayName }).ToList();
+                recipients = organization.Administrators?.Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.DisplayName }).ToList();
 
                 dataLink.Comment = link.CommentApproval;
-                dataLink.URL = _emailURLFactory.ActionLinkVerifyApprovalItemUrl(type, organization.Id);
+                dataLink.URL = _notificationURLFactory.ActionLinkVerifyApprovalItemUrl(type, organization.Id);
                 break;
 
               default:
@@ -671,22 +681,19 @@ namespace Yoma.Core.Domain.ActionLink.Services
             throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
         }
 
-        recipients = _emailPreferenceFilterService.FilterRecipients(type, recipients);
-        if (recipients == null || recipients.Count == 0) return;
-
-        var data = new EmailActionLinkVerifyApproval
+        var data = new NotificationActionLinkVerifyApproval
         {
           Links = [dataLink]
         };
 
-        await _emailProviderClient.Send(type, recipients, data);
+        await _notificationDeliveryService.Send(type, recipients, data);
 
-        _logger.LogInformation("Successfully send email");
+        _logger.LogInformation("Successfully send notification");
 
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send email");
+        _logger.LogError(ex, "Failed to send notification");
       }
     }
     #endregion

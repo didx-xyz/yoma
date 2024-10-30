@@ -247,11 +247,11 @@ namespace Yoma.Core.Api.Controllers
     [HttpPatch("{id}/assign/admins")]
     [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> AssignAdmins([FromRoute] Guid id, [FromRoute] List<string> emails)
+    public async Task<IActionResult> AssignAdmins([FromRoute] Guid id, [FromRoute] List<string> usernames)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(AssignAdmins));
 
-      var result = await _organizationService.AssignAdmins(id, emails, true);
+      var result = await _organizationService.AssignAdmins(id, usernames, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(AssignAdmins));
 
@@ -262,11 +262,11 @@ namespace Yoma.Core.Api.Controllers
     [HttpPatch("{id}/remove/admins")]
     [ProducesResponseType(typeof(Organization), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> RemoveAdmins([FromRoute] Guid id, [FromRoute] List<string> emails)
+    public async Task<IActionResult> RemoveAdmins([FromRoute] Guid id, [FromRoute] List<string> usernames)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(RemoveAdmins));
 
-      var result = await _organizationService.RemoveAdmins(id, emails, true);
+      var result = await _organizationService.RemoveAdmins(id, usernames, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(RemoveAdmins));
 

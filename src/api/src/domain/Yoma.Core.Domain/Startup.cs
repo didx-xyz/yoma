@@ -13,8 +13,8 @@ using Yoma.Core.Domain.Analytics.Services;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Services;
-using Yoma.Core.Domain.EmailProvider.Interfaces;
-using Yoma.Core.Domain.EmailProvider.Services;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Services;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
@@ -84,11 +84,6 @@ namespace Yoma.Core.Domain
       services.AddScoped<IDistributedLockService, DistributedLockService>();
       #endregion Core
 
-      #region EmailProvider
-      services.AddScoped<IEmailPreferenceFilterService, EmailPreferenceFilterService>();
-      services.AddScoped<IEmailURLFactory, EmailURLFactory>();
-      #endregion EmailProvider
-
       #region Entity
       #region Lookups
       services.AddScoped<IOrganizationStatusService, OrganizationStatusService>();
@@ -134,6 +129,12 @@ namespace Yoma.Core.Domain
       services.AddScoped<IMyOpportunityService, MyOpportunityService>();
       services.AddScoped<IMyOpportunityBackgroundService, MyOpportunityBackgroundService>();
       #endregion My Opportunity
+
+      #region EmailProvider
+      services.AddScoped<INotificationDeliveryService, NotificationDeliveryService>();
+      services.AddScoped<INotificationPreferenceFilterService, NotificationPreferenceFilterService>();
+      services.AddScoped<INotificationURLFactory, NotificationURLFactory>();
+      #endregion EmailProvider
 
       #region Opportunity
       #region Lookups

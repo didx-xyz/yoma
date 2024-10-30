@@ -4,6 +4,7 @@ namespace Yoma.Core.Domain.Reward
   {
     Unscheduled,
     Pending,
+    PendingUsernameUpdate,
     Created,
     Error
   }

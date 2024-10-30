@@ -7,9 +7,9 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
-using Yoma.Core.Domain.EmailProvider;
-using Yoma.Core.Domain.EmailProvider.Interfaces;
-using Yoma.Core.Domain.EmailProvider.Models;
+using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
@@ -29,11 +29,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IOpportunityStatusService _opportunityStatusService;
     private readonly IOrganizationService _organizationService;
     private readonly IOrganizationStatusService _organizationStatusService;
-    private readonly IEmailProviderClient _emailProviderClient;
+    private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IUserService _userService;
     private readonly ICountryService _countryService;
-    private readonly IEmailURLFactory _emailURLFactory;
-    private readonly IEmailPreferenceFilterService _emailPreferenceFilterService;
+    private readonly INotificationURLFactory _notificationURLFactory;
     private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
     private readonly IDistributedLockService _distributedLockService;
     private readonly IMediator _mediator;
@@ -47,11 +46,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IOpportunityStatusService opportunityStatusService,
         IOrganizationService organizationService,
         IOrganizationStatusService organizationStatusService,
-        IEmailProviderClientFactory emailProviderClientFactory,
+        INotificationDeliveryService notificationDeliveryService,
         IUserService userService,
         ICountryService countryService,
-        IEmailURLFactory emailURLFactory,
-        IEmailPreferenceFilterService emailPreferenceFilterService,
+        INotificationURLFactory notificationURLFactory,
         IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> opportunityRepository,
         IDistributedLockService distributedLockService,
         IMediator mediator)
@@ -61,11 +59,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       _opportunityStatusService = opportunityStatusService;
       _organizationService = organizationService;
       _organizationStatusService = organizationStatusService;
-      _emailProviderClient = emailProviderClientFactory.CreateClient();
+      _notificationDeliveryService = notificationDeliveryService;
       _userService = userService;
       _countryService = countryService;
-      _emailURLFactory = emailURLFactory;
-      _emailPreferenceFilterService = emailPreferenceFilterService;
+      _notificationURLFactory = notificationURLFactory;
       _opportunityRepository = opportunityRepository;
       _distributedLockService = distributedLockService;
       _mediator = mediator;
@@ -106,7 +103,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             .OrderBy(o => o.DateStart).ThenBy(o => o.Title).ThenBy(o => o.Id).ToList();
           if (items.Count == 0) return;
 
-          await SendEmailPublished(items, executeUntil);
+          await SendNotificationPublished(items, executeUntil);
 
           _logger.LogInformation("Processed opportunity published notifications");
         }
@@ -156,7 +153,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
             if (items.Count == 0) break;
 
-            var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+            var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
             foreach (var item in items)
             {
@@ -168,7 +165,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             items = await _opportunityRepository.Update(items);
 
-            await SendEmailExpiration(items, EmailType.Opportunity_Expiration_Expired);
+            await SendNotificationExpiration(items, NotificationType.Opportunity_Expiration_Expired);
 
             foreach (var item in items)
               await _mediator.Publish(new OpportunityEvent(Core.EventType.Update, item));
@@ -222,7 +219,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
               .OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
           if (items.Count == 0) return;
 
-          await SendEmailExpiration(items, EmailType.Opportunity_Expiration_WithinNextDays);
+          await SendNotificationExpiration(items, NotificationType.Opportunity_Expiration_WithinNextDays);
 
           _logger.LogInformation("Processed opportunity expiration notifications");
         }
@@ -274,7 +271,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                   .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
               if (items.Count == 0) break;
 
-              var user = _userService.GetByEmail(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+              var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
               foreach (var item in items)
               {
@@ -312,9 +309,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #endregion
 
     #region Private Members
-    private async Task SendEmailPublished(List<Models.Opportunity> items, DateTimeOffset executeUntil)
+    private async Task SendNotificationPublished(List<Models.Opportunity> items, DateTimeOffset executeUntil)
     {
-      var emailType = EmailType.Opportunity_Published;
+      var notificationType = NotificationType.Opportunity_Published;
       var countryWorldWideId = _countryService.GetByCodeAplha2(Core.Country.Worldwide.ToDescription()).Id;
 
       try
@@ -324,10 +321,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
         int pageSize = 1000;
         while (executeUntil > DateTimeOffset.UtcNow)
         {
-          var recipientDataGroups = new List<(List<EmailRecipient> Recipients, EmailOpportunityAnnounced Data)>();
+          var recipientDataGroups = new List<(List<NotificationRecipient> Recipients, NotificationOpportunityAnnounced Data)>();
 
           var searchResult = _userService.Search(
-              new UserSearchFilter // implicitly includes only users with a confirmed email
+              new UserSearchFilter // implicitly includes only users with a confirmed notification
               {
                 YoIDOnboarded = true,
                 PageNumber = pageNumber,
@@ -358,15 +355,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 .ToList();
             if (countryOpportunities.Count == 0) continue;
 
-            var data = new EmailOpportunityAnnounced
+            var data = new NotificationOpportunityAnnounced
             {
-              Opportunities = countryOpportunities.Select(item => new EmailOpportunityAnnouncedItem
+              Opportunities = countryOpportunities.Select(item => new NotificationOpportunityAnnouncedItem
               {
                 Id = item.Id,
                 Title = item.Title,
                 DateStart = item.DateStart,
                 DateEnd = item.DateEnd,
-                URL = _emailURLFactory.OpportunityAnnouncedItemURL(emailType, item.Id, item.OrganizationId),
+                URL = _notificationURLFactory.OpportunityAnnouncedItemURL(notificationType, item.Id, item.OrganizationId),
                 ZltoReward = item.ZltoReward,
                 YomaReward = item.YomaReward
               }).ToList()
@@ -376,11 +373,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var existingGroup = recipientDataGroups.FirstOrDefault(group =>
                 new HashSet<Guid>(group.Data.Opportunities.Select(o => o.Id)).SetEquals(new HashSet<Guid>(countryOpportunities.Select(o => o.Id))));
 
-            if (existingGroup.Equals(default((List<EmailRecipient> Recipients, EmailOpportunityAnnounced Data))))
+            if (existingGroup.Equals(default((List<NotificationRecipient> Recipients, NotificationOpportunityAnnounced Data))))
             {
               // create a new recipient list
-              var recipients = userGroup.Value.Select(u => new EmailRecipient
+              var recipients = userGroup.Value.Select(u => new NotificationRecipient
               {
+                Username = u.Username,
+                PhoneNumber = u.PhoneNumber,
                 Email = u.Email,
                 DisplayName = u.DisplayName
               }).ToList();
@@ -390,23 +389,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
             else
             {
               // add recipients to the existing group
-              existingGroup.Recipients.AddRange(userGroup.Value.Select(u => new EmailRecipient
+              existingGroup.Recipients.AddRange(userGroup.Value.Select(u => new NotificationRecipient
               {
+                Username = u.Username,
+                PhoneNumber = u.PhoneNumber,
                 Email = u.Email,
                 DisplayName = u.DisplayName
               }).ToList());
             }
           }
 
-          // filter recipients by email preferences before proceeding to the next page
-          recipientDataGroups = recipientDataGroups
-              .Select(group => (Recipients: _emailPreferenceFilterService.FilterRecipients(emailType, group.Recipients) ?? [], group.Data))
-              .Where(group => group.Recipients.Count > 0)
-              .ToList();
-
-          // send emails in one go for the paged results
+          // send notifications in one go for the paged results
           if (recipientDataGroups.Count > 0)
-            await _emailProviderClient.Send(emailType, recipientDataGroups);
+            await _notificationDeliveryService.Send(notificationType, recipientDataGroups);
 
           pageNumber++;
 
@@ -415,29 +410,26 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send email");
+        _logger.LogError(ex, "Failed to send notification");
       }
     }
 
-    private async Task SendEmailExpiration(List<Models.Opportunity> items, EmailType type)
+    private async Task SendNotificationExpiration(List<Models.Opportunity> items, NotificationType type)
     {
       var groupedOpportunities = items
-          .SelectMany(op => _organizationService.ListAdmins(op.OrganizationId, false, false), (op, admin) => new { Administrator = admin, Opportunity = op })
-          .GroupBy(item => item.Administrator, item => item.Opportunity);
+        .SelectMany(op => _organizationService.ListAdmins(op.OrganizationId, false, false), (op, admin) => new { Administrator = admin, Opportunity = op })
+        .GroupBy(item => item.Administrator, item => item.Opportunity);
 
       foreach (var group in groupedOpportunities)
       {
         try
         {
-          var recipients = new List<EmailRecipient>
+          var recipients = new List<NotificationRecipient>
                         {
-                            new() { Email = group.Key.Email, DisplayName = group.Key.DisplayName }
+                            new() { Username = group.Key.Username, PhoneNumber = group.Key.PhoneNumber, Email = group.Key.Email, DisplayName = group.Key.DisplayName }
                         };
 
-          recipients = _emailPreferenceFilterService.FilterRecipients(type, recipients);
-          if (recipients == null || recipients.Count == 0) continue;
-
-          var data = new EmailOpportunityExpiration
+          var data = new NotificationOpportunityExpiration
           {
             WithinNextDays = _scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays,
             Opportunities = []
@@ -445,22 +437,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           foreach (var op in group)
           {
-            data.Opportunities.Add(new EmailOpportunityExpirationItem
+            data.Opportunities.Add(new NotificationOpportunityExpirationItem
             {
               Title = op.Title,
               DateStart = op.DateStart,
               DateEnd = op.DateEnd,
-              URL = _emailURLFactory.OpportunityExpirationItemURL(type, op.Id, op.OrganizationId)
+              URL = _notificationURLFactory.OpportunityExpirationItemURL(type, op.Id, op.OrganizationId)
             });
           }
 
-          await _emailProviderClient.Send(type, recipients, data);
+          await _notificationDeliveryService.Send(type, recipients, data);
 
-          _logger.LogInformation("Successfully send email");
+          _logger.LogInformation("Successfully send notification");
         }
         catch (Exception ex)
         {
-          _logger.LogError(ex, "Failed to send email");
+          _logger.LogError(ex, "Failed to send notification");
         }
       }
     }

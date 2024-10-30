@@ -39,7 +39,6 @@ if [ ! -z "${ADMIN_USER}" ]; then
           "email": "'"${ADMIN_USER}"'",
           "attributes": {
             "dateOfBirth": ["01/01/2001"],
-            "phoneNumber": ["202-918-2132"],
             "country": ["Afghanistan"],
             "gender": ["Male"]
           },
@@ -87,7 +86,6 @@ if [ ! -z "${ORG_ADMIN_USER}" ]; then
           "email": "'"${ORG_ADMIN_USER}"'",
           "attributes": {
             "dateOfBirth": ["01/01/2001"],
-            "phoneNumber": ["202-918-2132"],
             "country": ["Afghanistan"],
             "gender": ["Male"]
           },
@@ -133,7 +131,6 @@ if [ ! -z "${YOMA_SYSTEM_USER}" ]; then
           "email": "'"${YOMA_SYSTEM_USER}"'",
           "attributes": {
             "dateOfBirth": ["01/01/2001"],
-            "phoneNumber": ["202-918-2132"],
             "country": ["Afghanistan"],
             "gender": ["Male"]
           },
@@ -179,7 +176,6 @@ if [ ! -z "${TEST_USER}" ]; then
           "email": "'"${TEST_USER}"'",
           "attributes": {
             "dateOfBirth": ["01/01/2001"],
-            "phoneNumber": ["202-918-2132"],
             "country": ["Afghanistan"],
             "gender": ["Male"]
           },

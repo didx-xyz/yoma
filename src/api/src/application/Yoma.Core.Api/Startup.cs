@@ -26,6 +26,7 @@ using Yoma.Core.Infrastructure.Database;
 using Yoma.Core.Infrastructure.Emsi;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.SendGrid;
+using Yoma.Core.Infrastructure.Twilio;
 using Yoma.Core.Infrastructure.Zlto;
 using Yoma.Core.Infrastructure.SAYouth;
 using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
@@ -82,6 +83,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_LaborMarketProvider(_configuration);
       services.ConfigureServices_IdentityProvider(_configuration);
       services.ConfigureServices_EmailProvider(_configuration);
+      services.ConfigureServices_MessageProvider(_configuration);
       services.ConfigureServices_RewardProvider(_configuration);
       services.ConfigureServices_SharingProvider(_configuration);
       #endregion Configuration
@@ -128,6 +130,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_InfrastructureIdentityProvider();
       services.ConfigureServices_InfrastructureSharingProvider();
       services.ConfigureServices_InfrastructureEmailProvider(_configuration);
+      services.ConfigureServices_InfrastructureMessageProvider(_configuration);
       services.ConfigureServices_InfrastructureRewardProvider();
 
       services.ConfigureServices_DomainServicesCompositionFactory(sp =>
