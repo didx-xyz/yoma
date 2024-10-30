@@ -59,7 +59,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
       if (recipientDataGroups == null || recipientDataGroups.Count == 0)
         throw new ArgumentNullException(nameof(recipientDataGroups));
 
-      // Messages will only be sent if the 'From' number is configured based on the delivery type:
+      // Messages will only be sent if the 'From' number is configured based on the delivery type :
       // - For SMS: The 'From' number must be configured for SMS in _options.From
       // - For WhatsApp: The 'From' number must be configured for WhatsApp in _options.From
       if (_options.From == null || !_options.From.ContainsKey(deliveryType.ToString()))
