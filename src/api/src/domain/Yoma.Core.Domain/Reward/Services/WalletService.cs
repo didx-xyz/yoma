@@ -143,10 +143,10 @@ namespace Yoma.Core.Domain.Reward.Services
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      var item = _walletCreationRepository.Query().SingleOrDefault(o => o.UserId == user.Id) ?? throw new ValidationException($"Wallet creation for the user with email '{user.Email}' hasn't been scheduled. Kindly log out and log back in");
+      var item = _walletCreationRepository.Query().SingleOrDefault(o => o.UserId == user.Id) ?? throw new ValidationException($"Wallet creation for the user with username '{user.Username}' hasn't been scheduled. Kindly log out and log back in");
 
       if (item.Status != WalletCreationStatus.Created)
-        throw new ValidationException($"The wallet creation for the user with email '{user.Email}' is currently pending. Please try again later or contact technical support for assistance");
+        throw new ValidationException($"The wallet creation for the user with username '{user.Username}' is currently pending. Please try again later or contact technical support for assistance");
 
       if (string.IsNullOrEmpty(item.WalletId))
         throw new DataInconsistencyException($"Wallet id expected with wallet creation status of 'Created' for item with id '{item.Id}'");
