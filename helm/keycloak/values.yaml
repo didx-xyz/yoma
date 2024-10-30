@@ -193,9 +193,6 @@ keycloak:
 
   webhook:
     version: 0.3.0
-  themes:
-    enabled: false
-    ref: develop
   providers:
     ref: develop
   extraInitContainers: |-
@@ -219,25 +216,6 @@ keycloak:
       volumeMounts:
         - name: providers
           mountPath: /providers
-    {{- if .Values.themes.enabled }}
-    - name: download-themes
-      image: docker.io/busybox:stable
-      imagePullPolicy: IfNotPresent
-      command:
-        - sh
-      args:
-        - -c
-        - |-
-          cd /themes
-          wget -qO - \
-            --header="Accept:application/vnd.github.v3.raw" \
-            https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.themes.ref }} | tar xz
-          cp -R ./didx-xyz-yoma-*/src/keycloak/themes/yoma /themes
-          rm -rf ./didx-xyz-yoma-*
-      volumeMounts:
-        - name: themes
-          mountPath: /themes
-    {{- end }}
   extraEnv: |-
     - name: JAVA_OPTS_APPEND
       value: >-
