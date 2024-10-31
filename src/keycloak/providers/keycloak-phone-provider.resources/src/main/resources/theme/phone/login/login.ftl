@@ -51,7 +51,7 @@
 
                       <div :style="{ display: phoneNumberAsUsername ? 'none' : 'block' }">
                         <#if !usernameHidden??>
-                          <input tabindex="0" id="email" class="${properties.kcInputClass!}" name="email" v-model="email" type="email" autofocus autocomplete="off"
+                          <input tabindex="0" id="email" class="${properties.kcInputClass!}" name="email" v-model="email" type="email" autocomplete="off"
                             aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterEmail')}" />
                         </#if>
                       </div>
@@ -82,9 +82,6 @@
                       <input tabindex="0" id="password" class="${properties.kcInputClass!}" name="password" type="password" autocomplete="off"
                         aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterPassword')}" />
                     </div>
-                    <#--  <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
-                    <input tabindex="0" id="password" class="${properties.kcInputClass!}" name="password" type="password" autocomplete="off"
-                      aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterPassword')}" />  -->
 
                     <#if usernameHidden?? && messagesPerField.existsError('username','password')>
                       <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
