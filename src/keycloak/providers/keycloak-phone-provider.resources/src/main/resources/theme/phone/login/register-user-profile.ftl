@@ -287,7 +287,7 @@
           },
           clearAndFocusPhoneNumber() {
             this.phoneNumber = '';
-            const phoneNumber = ;
+            const phoneNumber = document.querySelector('#phoneNumber');
             if (phoneNumber) {
               phoneNumber.focus();
             }
