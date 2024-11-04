@@ -14,7 +14,7 @@
     <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
 
     <div id="vue-app">
-      <form id="kc-register-form" class="${properties.kcFormClass!}" action="${url.registrationAction}" method="post">
+      <form id="kc-register-form" class="${properties.kcFormClass!}" action="${url.registrationAction}" method="post" @submit="onSubmit">
         <!-- Tabs: Email or Phone Number Selection -->
         <div class="${properties.kcFormGroupClass!}">
           <ul class="nav nav-pills nav-justified">
@@ -45,22 +45,20 @@
 
         <!-- Phone Number Input -->
         <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: phoneNumberAsUsername ? 'block' : 'none' }">
-          <label for="phoneNumberPicker" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
+          <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
 
-          <input id="phoneNumberPicker" class="${properties.kcInputClass!}" name="phoneNumberPicker" type="tel" placeholder="${msg('enterPhoneNumber')}"
-            aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" v-intl-tel-input autocomplete="mobile tel"
-            :disabled="phoneVerified" />
+          <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel" placeholder="${msg('enterPhoneNumber')}"
+            aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
+            v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input :disabled="phoneVerified" />
           <#if messagesPerField.existsError('phoneNumber')>
             <span id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
               ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
             </span>
           </#if>
 
-          <input type="hidden" id="phoneNumber" name="phoneNumber" />
-
           <label class="${properties.kcLabelClass!}" v-bind:style="{ display: phoneVerified ? 'block' : 'none' }">
             <span style="color: green;"><span style="margin-right: 5px;">✔</span> ${msg("phoneNumberVerified")}</span>
-            <span v-on:click="clearAndFocusPhoneNumberPicker" class="underline" tabindex="0">${msg("changePhoneNumber")}</span>
+            <span v-on:click="clearAndFocusPhoneNumber" class="underline" tabindex="0">${msg("changePhoneNumber")}</span>
           </label>
         </div>
 
@@ -115,7 +113,7 @@
             <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
 
              <div class="password-container">
-               <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#register-password' }" tabindex="0"></i>
+               <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#register-password', formSelector: '#kc-register-form' }" tabindex="0"></i>
                <input type="password" id="register-password" class="${properties.kcInputClass!}" name="password"
                  autocomplete="new-password"
                  aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>"
@@ -145,7 +143,7 @@
             <label for="password-confirm" class="${properties.kcLabelClass!}">${msg("passwordConfirm")}</label>
 
             <div class="password-container">
-              <i class="fa fa-eye-slash" id="toggle-password-confirm" v-toggle-password="{ passwordSelector: '#password-confirm' }" tabindex="0"></i>
+              <i class="fa fa-eye-slash" id="toggle-password-confirm" v-toggle-password="{ passwordSelector: '#password-confirm', formSelector: '#kc-register-form' }" tabindex="0"></i>
               <input type="password" id="password-confirm" class="${properties.kcInputClass!}"
                 name="password-confirm"
                 aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>"
@@ -240,7 +238,7 @@
           },
           sendVerificationCode() {
             this.messageSendCodeError = '';
-            const input = document.querySelector('#phoneNumberPicker');
+            const input = document.querySelector('#phoneNumber');
             const iti = intlTelInput.getInstance(input);
             const fullPhoneNumber = iti.getNumber();
 
@@ -258,14 +256,28 @@
             this.terms_and_conditions = "Yes";
           },
           onSubmit() {
-            const input = document.querySelector('#phoneNumberPicker');
+            event.preventDefault(); // Prevent the default form submission
+
+            const input = document.querySelector('#phoneNumber');
             const iti = intlTelInput.getInstance(input);
             const fullPhoneNumber = iti.getNumber();
 
             // set hidden input value with country code
             if (this.phoneNumberAsUsername) {
-              document.getElementById('phoneNumber').value = fullPhoneNumber;
+              input.value = fullPhoneNumber;
             }
+
+            // ensure password inputs are of type "password" (toggle password)
+            const password = document.querySelector('#register-password');
+            if (password.type === "text") {
+              password.type = "password";
+            }
+            const passwordConfirm = document.querySelector('#password-confirm');
+            if (passwordConfirm.type === "text") {
+              passwordConfirm.type = "password";
+            }
+
+            event.target.submit(); // Programmatically submit the form
           },
           resetPhoneVerification() {
             this.phoneVerified = false;
@@ -273,11 +285,11 @@
             this.resetSendCodeButton = true;
             this.clearMessages();
           },
-          clearAndFocusPhoneNumberPicker() {
+          clearAndFocusPhoneNumber() {
             this.phoneNumber = '';
-            const phoneNumberPicker = document.getElementById('phoneNumberPicker');
-            if (phoneNumberPicker) {
-              phoneNumberPicker.focus();
+            const phoneNumber = ;
+            if (phoneNumber) {
+              phoneNumber.focus();
             }
 
             this.resetPhoneVerification();
@@ -287,16 +299,12 @@
             this.messageSendCodeError = '';
 
             // clear server error messages
-            const inputErrorPhone = document.getElementById('input-error-phone');
-            const inputErrorCode = document.getElementById('input-error-code');
+            const inputErrorPhone = document.querySelector('#input-error-phone');
+            const inputErrorCode = document.querySelector('#input-error-code');
 
             if (inputErrorPhone) inputErrorPhone.style.display = 'none';
             if (inputErrorCode) inputErrorCode.style.display = 'none';
           },
-        },
-        mounted() {
-          document.getElementById('kc-register-form').addEventListener('submit', this.onSubmit);
-          document.getElementById('phoneNumberPicker').addEventListener('input', this.resetPhoneVerification);
         }
       });
     </script>

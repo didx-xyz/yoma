@@ -4,7 +4,7 @@
       <h1>${msg("updatePasswordTitle")}</h1>
     <#elseif section = "form">
       <div id="vue-app">
-        <form id="kc-passwd-update-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
+        <form id="kc-passwd-update-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post" @submit="onSubmit">
           <input type="text" id="username" name="username" value="${username}" autocomplete="username" readonly="readonly" style="display:none;"/>
           <input type="password" id="password" name="password" autocomplete="current-password" style="display:none;"/>
 
@@ -22,7 +22,7 @@
             <label for="password-new" class="${properties.kcLabelClass!}">${msg("passwordNew")}</label>
 
             <div class="password-container">
-              <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#password-new' }" tabindex="0"></i>
+              <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#password-new', formSelector: '#kc-passwd-update-form' }" tabindex="0"></i>
               <input type="password" id="password-new" name="password-new" class="${properties.kcInputClass!}"
                   autofocus autocomplete="new-password"
                   aria-invalid="<#if messagesPerField.existsError('password','password-new')>true</#if>"
@@ -52,7 +52,7 @@
             <label for="password-confirm" class="${properties.kcLabelClass!}">${msg("passwordConfirm")}</label>
 
             <div class="password-container">
-              <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#password-confirm' }" tabindex="0"></i>
+              <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#password-confirm', formSelector: '#kc-form-login'  }" tabindex="0"></i>
               <input type="password" id="password-confirm" name="password-confirm" class="${properties.kcInputClass!}" autocomplete="new-password"
                 aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>"
             />
@@ -88,7 +88,26 @@
 
       <script>
         new Vue({
-          el: '#vue-app'
+          el: '#vue-app',
+          methods: {
+            onSubmit() {
+              event.preventDefault(); // Prevent the default form submission
+
+              // ensure password inputs are of type "password" (toggle password)
+              const passwordNew = document.querySelector('#password-new');
+              if (passwordNew && passwordNew.type === 'text') {
+                passwordNew.type = 'password';
+                console.log('passwordNew input type set to "password" on form submit');
+              }
+              const passwordConfirm = document.querySelector('#password-confirm');
+              if (passwordConfirm && passwordConfirm.type === 'text') {
+                passwordConfirm.type = 'password';
+                console.log('passwordConfirm input type set to "password" on form submit');
+              }
+
+              event.target.submit(); // Programmatically submit the form
+            },
+          },
         });
       </script>
     </#if>
