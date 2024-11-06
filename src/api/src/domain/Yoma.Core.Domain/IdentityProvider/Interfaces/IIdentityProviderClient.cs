@@ -7,7 +7,9 @@ namespace Yoma.Core.Domain.IdentityProvider.Interfaces
   {
     bool AuthenticateWebhook(HttpContext httpContext);
 
-    Task<User?> GetUser(string? username);
+    Task<User?> GetUserByUsername(string? username);
+
+    Task<User?> GetUserById(string? id);
 
     Task UpdateUser(User user, bool resetPassword, bool sendVerifyEmail, bool updatePhoneNumber);
 
