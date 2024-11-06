@@ -246,6 +246,7 @@ namespace Yoma.Core.Api.Controllers
           userRequest.Username = kcUser.Username.Trim();
           userRequest.Email = kcUser.Email?.Trim().ToLower();
           userRequest.EmailConfirmed = kcUser.EmailVerified;
+          userRequest.PhoneNumberConfirmed = kcUser.PhoneNumberVerified;
           userRequest.DateLastLogin = DateTimeOffset.UtcNow;
 
           _logger.LogInformation("{type}: Updating user with username '{username}' - EmailConfirmed {emailConfirmed}", type, userRequest.Username, userRequest.EmailConfirmed);
