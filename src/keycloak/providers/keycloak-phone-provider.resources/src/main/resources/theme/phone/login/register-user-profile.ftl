@@ -50,6 +50,7 @@
           <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel" placeholder="${msg('enterPhoneNumber')}"
             aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
             v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input :disabled="phoneVerified" />
+
           <#if messagesPerField.existsError('phoneNumber')>
             <span id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
               ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
@@ -265,6 +266,7 @@
             // set hidden input value with country code
             if (this.phoneNumberAsUsername) {
               input.value = fullPhoneNumber;
+              input.disabled = false;
             }
 
             // ensure password inputs are of type "password" (toggle password)
