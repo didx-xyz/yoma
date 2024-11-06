@@ -12,20 +12,19 @@
       <div id="vue-app">
         <div id="kc-form">
           <div id="kc-form-wrapper">
-            <form id="kc-form-login" action="${url.loginAction}" method="post">
+            <form id="kc-form-login" action="${url.loginAction}" method="post" @submit="onSubmit">
               <div class="${properties.kcFormGroupClass!}">
-                <label for="phoneNumberPicker" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
+                <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
 
-                <input id="phoneNumberPicker" class="${properties.kcInputClass!}" name="phoneNumberPicker" type="tel" placeholder="${msg('enterPhoneNumber')}"
-                    aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" v-intl-tel-input autocomplete="mobile tel" />
+                <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel" placeholder="${msg('enterPhoneNumber')}"
+                  aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
+                  v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
 
                 <#if messagesPerField.existsError('phoneNumber')>
                   <span id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
                     ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
                   </span>
                 </#if>
-                <!-- Hidden input for phone number -->
-                <input type="hidden" id="phoneNumber" name="phoneNumber" />
               </div>
 
               <div class="${properties.kcFormGroupClass!}">
@@ -102,7 +101,7 @@
             },
             sendVerificationCode() {
               this.messageSendCodeError = '';
-              const input = document.querySelector('#phoneNumberPicker');
+              const input = document.querySelector('#phoneNumber');
               const iti = intlTelInput.getInstance(input);
               const fullPhoneNumber = iti.getNumber();
 
@@ -116,12 +115,16 @@
               this.req(fullPhoneNumber);
             },
             onSubmit() {
-              const input = document.querySelector('#phoneNumberPicker');
+              event.preventDefault(); // Prevent the default form submission
+
+              const input = document.querySelector('#phoneNumber');
               const iti = intlTelInput.getInstance(input);
               const fullPhoneNumber = iti.getNumber();
 
               // Set the field value for the full phone number (this ensures the country code is always included)
-              document.getElementById('phoneNumber').value = fullPhoneNumber;
+              input.value = fullPhoneNumber;
+
+              event.target.submit(); // Programmatically submit the form
             },
             resetPhoneVerification() {
               this.messageSendCodeSuccess = '';
@@ -133,17 +136,13 @@
               this.messageSendCodeError = '';
 
               // clear server error messages
-              const inputErrorPhone = document.getElementById('input-error-phone');
-              const inputErrorCode = document.getElementById('input-error-code');
+              const inputErrorPhone = document.querySelector('#input-error-phone');
+              const inputErrorCode = document.querySelector('#input-error-code');
 
               if (inputErrorPhone) inputErrorPhone.style.display = 'none';
               if (inputErrorCode) inputErrorCode.style.display = 'none';
             }
-          },
-          mounted() {
-            document.getElementById('kc-form-login').addEventListener('submit', this.onSubmit);
-            document.getElementById('phoneNumberPicker').addEventListener('input', this.resetPhoneVerification);
-          },
+          }
         });
       </script>
     <#elseif section = "info">

@@ -28,7 +28,7 @@ oauth2DevicePollingInterval: 5
 enabled: true
 sslRequired: external
 registrationAllowed: true
-registrationEmailAsUsername: false #JASON:
+registrationEmailAsUsername: false
 rememberMe: false
 verifyEmail: true
 loginWithEmailAllowed: true

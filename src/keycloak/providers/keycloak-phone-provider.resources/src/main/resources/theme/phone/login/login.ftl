@@ -24,9 +24,10 @@
         <div id="vue-app">
           <div v-cloak>
             <#if realm.password>
-              <form id="kc-form-login" class="${properties.kcFormClass!}" onsubmit="login.disabled = true; return true;" action="${url.loginAction}" method="post">
+              <form id="kc-form-login" class="${properties.kcFormClass!}"
+                action="${url.loginAction}" method="post" @submit="onSubmit">
                 <#if !usernameHidden?? && supportPhone??>
-                  <!-- Tabs: Email or Phone Number Selection -->
+                  <!-- Tabs: Password or SMS Code Selection -->
                   <div class="${properties.kcFormGroupClass!}">
                     <ul class="nav nav-pills nav-justified">
                       <li role="presentation" v-bind:class="{ active: !phoneActivated }" v-on:click="phoneActivated = false">
@@ -44,33 +45,18 @@
                 <div <#if !usernameHidden?? && supportPhone??> v-if="!phoneActivated" </#if>>
                   <#if !usernameHidden??>
                     <div class="${properties.kcFormGroupClass!}">
-                      <label class="${properties.kcLabelClass!}">
-                        <input type="checkbox" hidden="true" id="phoneNumberAsUsername" name="phoneNumberAsUsername" v-model="phoneNumberAsUsername" :true-value="true" :false-value="false" class="styled-checkbox">
-                        <span :class="{'underline': phoneNumberAsUsername}"> ${msg("email")}</span> or <span :class="{'underline': !phoneNumberAsUsername}">${msg("phoneNumber")}</span>
-                      </label>
+                      <label class="${properties.kcLabelClass!}">${msg("emailOrPhoneNumber")}</label>
 
-                      <div :style="{ display: phoneNumberAsUsername ? 'none' : 'block' }">
-                        <#if !usernameHidden??>
-                          <input tabindex="0" id="email" class="${properties.kcInputClass!}" name="email" v-model="email" type="email" autofocus autocomplete="off"
-                            aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterEmail')}" />
-                        </#if>
-                      </div>
-
-                      <div :style="{ display: phoneNumberAsUsername ? 'block' : 'none' }">
-                        <input id="phoneNumberPicker" class="${properties.kcInputClass!}" name="phoneNumberPicker" type="tel" placeholder="${msg('enterPhoneNumber')}"
-                          aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" v-intl-tel-input autocomplete="mobile tel" />
-                      </div>
+                      <input tabindex="0" id="username" class="${properties.kcInputClass!}" name="username" type="text" autocomplete="username"
+                        aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterEmailOrPhoneNumber')}"
+                        v-model="username"   />
 
                       <!-- Error messages -->
-                      <#if messagesPerField.existsError('username','phoneNumber','password')>
+                      <#if messagesPerField.existsError('username','password')>
                         <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                          ${kcSanitize(messagesPerField.getFirstError('username','phoneNumber','password'))?no_esc}
+                          ${kcSanitize(messagesPerField.getFirstError('username','password'))?no_esc}
                         </span>
                       </#if>
-
-                      <!-- Hidden input for email or phone number -->
-                      <input type="hidden" id="username" name="username" />
-                      <input type="hidden" id="phoneNumber" name="phoneNumber" />
                     </div>
                   </#if>
 
@@ -78,13 +64,10 @@
                     <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
 
                     <div class="password-container">
-                      <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#password' }" tabindex="0"></i>
-                      <input tabindex="0" id="password" class="${properties.kcInputClass!}" name="password" type="password" autocomplete="off"
+                      <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#password', formSelector: '#kc-form-login' }" tabindex="0"></i>
+                      <input tabindex="0" id="password" class="${properties.kcInputClass!}" name="password" type="password" autocomplete="current-password"
                         aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterPassword')}" />
                     </div>
-                    <#--  <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
-                    <input tabindex="0" id="password" class="${properties.kcInputClass!}" name="password" type="password" autocomplete="off"
-                      aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterPassword')}" />  -->
 
                     <#if usernameHidden?? && messagesPerField.existsError('username','password')>
                       <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
@@ -97,19 +80,17 @@
                 <#if !usernameHidden?? && supportPhone??>
                   <div :style="{ display: phoneActivated ? 'block' : 'none' }">
                     <div class="${properties.kcFormGroupClass!}">
-                      <label for="phoneNumberPicker" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
+                      <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
 
-                      <input id="phoneNumberPicker" class="${properties.kcInputClass!}" name="phoneNumberPicker" type="tel" placeholder="${msg('enterPhoneNumber')}"
-                        aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" v-model="phoneNumber" v-intl-tel-input autocomplete="mobile tel" />
+                      <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel" placeholder="${msg('enterPhoneNumber')}"
+                        aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
+                        v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
 
                       <#if messagesPerField.existsError('phoneNumber')>
                         <span id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
                           ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
                         </span>
                       </#if>
-
-                      <!-- Hidden input for phone number -->
-                      <input type="hidden" id="phoneNumber" name="phoneNumber" />
                     </div>
 
                     <div class="${properties.kcFormGroupClass!}">
@@ -158,7 +139,7 @@
 
                 <div id="kc-form-buttons">
                   <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if> />
-                  <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit" value="${msg("doLogIn")}" />
+                  <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit" value="${msg('doLogIn')}" />
                 </div>
 
                 <div id="kc-form-options">
@@ -180,17 +161,30 @@
             new Vue({
                 el: '#vue-app',
                 data: {
-                    phoneNumber: <#if attemptedPhoneActivated??>'${attemptedPhoneNumber!}'<#elseif attemptedPhoneNumberAsUsername??>'${login.username!}'<#else>''</#if>,
+                    username: '${login.username!}' ,
+                    phoneNumber: '${attemptedPhoneNumber!}',
                     phoneActivated: <#if attemptedPhoneActivated??>true<#else>false</#if>,
                     sendButtonText: '${msg("sendVerificationCode")}',
                     initSendButtonText: '${msg("sendVerificationCode")}',
                     messageSendCodeSuccess: '',
                     messageSendCodeError: '',
-                    phoneNumberAsUsername: <#if attemptedPhoneNumberAsUsername??>true<#else>false</#if>,
-                    email: <#if !attemptedPhoneNumberAsUsername??>'${login.username!}'<#else>''</#if>,
                     KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
                 },
                 methods: {
+                  debounce(func, wait, immediate) {
+                    var timeout;
+                    return function() {
+                      var context = this, args = arguments;
+                      var later = function() {
+                        timeout = null;
+                        if (!immediate) func.apply(context, args);
+                      };
+                      var callNow = immediate && !timeout;
+                      clearTimeout(timeout);
+                      timeout = setTimeout(later, wait);
+                      if (callNow) func.apply(context, args);
+                    };
+                  },
                   req(phoneNumber) {
                     const params = { params: { phoneNumber } };
                     axios.get(window.location.origin + this.KC_HTTP_RELATIVE_PATH + '/realms/${realm.name}/sms/authentication-code', params)
@@ -220,7 +214,7 @@
                   },
                   sendVerificationCode() {
                     this.messageSendCodeError = '';
-                    const input = document.querySelector('#phoneNumberPicker');
+                    const input = document.querySelector('#phoneNumber');
                     const iti = intlTelInput.getInstance(input);
                     const fullPhoneNumber = iti.getNumber();
 
@@ -233,21 +227,49 @@
                     if (this.sendButtonText !== this.initSendButtonText) return;
                     this.req(fullPhoneNumber);
                   },
-                  onSubmit() {
-                      const input = document.querySelector('#phoneNumberPicker');
+                  onSubmit(event) {
+                    event.preventDefault(); // Prevent the default form submission
+
+                    if (!this.phoneActivated) {
+                      // ensure valid phone number is entered
+                      const input = document.querySelector('#username');
+                      const username = input.value.trim();
+                      // use the phone number input (sms code tab) to validate the user name
+                      const iti = intlTelInput.getInstance(document.querySelector('#phoneNumber'));
+                      // Set the input value to the new email value for validation
+                      iti.setNumber(username);
+
+                      // Validate the phone number using ITI
+                      if (iti.isValidNumber()) {
+                        // set the field value for the full phone number (this ensures the country code is always included)
+                        document.querySelector('#username').value = iti.getNumber();
+                        console.warn('phone number is valid: ' + iti.getNumber());
+                      }
+
+                      // ensure password inputs are of type "password" (toggle password)
+                      const password = document.querySelector('#password');
+                      if (password.type === "text") {
+                        password.type = "password";
+                      }
+                    }
+                    else
+                    {
+                      // check if phone number is valid
+                      const input = document.querySelector('#phoneNumber');
                       const iti = intlTelInput.getInstance(input);
                       const fullPhoneNumber = iti.getNumber();
 
-                      // Set the field value for the full phone number (this ensures the country code is always included)
-                      document.getElementById('phoneNumber').value = fullPhoneNumber;
-
-                      // Set the hidden field value for the full phone number or email
-                      if (this.phoneNumberAsUsername) {
-                          document.getElementById('username').value = fullPhoneNumber;
-                      } else {
-                          document.getElementById('username').value = this.email.trim();
+                      // Validate phone number
+                      if (!iti.isValidNumber()) {
+                        this.messageSendCodeError = '${msg("invalidPhoneNumber")}';
+                        return;
                       }
-                      document.getElementById('phoneNumberAsUsername').value = this.phoneNumberAsUsername;
+
+                      // Set the field value for the full phone number (this ensures the country code is always included)
+                      input.value = fullPhoneNumber;
+                    }
+
+                    event.target.submit(); // Programmatically submit the form
                   },
                   resetPhoneVerification() {
                     this.messageSendCodeSuccess = '';
@@ -259,16 +281,12 @@
                     this.messageSendCodeError = '';
 
                     // clear server error messages
-                    const inputErrorPhone = document.getElementById('input-error-phone');
-                    const inputErrorCode = document.getElementById('input-error-code');
+                    const inputErrorPhone = document.querySelector('#input-error-phone');
+                    const inputErrorCode = document.querySelector('#input-error-code');
 
                     if (inputErrorPhone) inputErrorPhone.style.display = 'none';
                     if (inputErrorCode) inputErrorCode.style.display = 'none';
-                  }
-                },
-                mounted() {
-                  document.getElementById('kc-form-login').addEventListener('submit', this.onSubmit);
-                  document.getElementById('phoneNumberPicker').addEventListener('input', this.resetPhoneVerification);
+                  },
                 }
             });
           </script>
