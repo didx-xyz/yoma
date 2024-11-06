@@ -179,6 +179,9 @@ namespace Yoma.Core.Api.Controllers
           userRequest.PhoneNumber = kcUser.PhoneNumber?.Trim();
           userRequest.PhoneNumberConfirmed = kcUser.PhoneNumberVerified;
 
+          _logger.LogInformation("{type}: Updating user with username '{username}' - EmailConfirmed {emailConfirmed}", type, userRequest.Username, userRequest.EmailConfirmed);
+          _logger.LogInformation("{type}: Updating user with username '{username}' - PhoneNumberConfirmed {phoneNumberConfirmed}", type, userRequest.Username, userRequest.PhoneNumberConfirmed);
+
           if (!string.IsNullOrEmpty(kcUser.Country))
           {
             var country = _countryService.GetByNameOrNull(kcUser.Country);
@@ -243,7 +246,11 @@ namespace Yoma.Core.Api.Controllers
           userRequest.Username = kcUser.Username.Trim();
           userRequest.Email = kcUser.Email?.Trim().ToLower();
           userRequest.EmailConfirmed = kcUser.EmailVerified;
+          userRequest.PhoneNumberConfirmed = kcUser.PhoneNumberVerified;
           userRequest.DateLastLogin = DateTimeOffset.UtcNow;
+
+          _logger.LogInformation("{type}: Updating user with username '{username}' - EmailConfirmed {emailConfirmed}", type, userRequest.Username, userRequest.EmailConfirmed);
+          _logger.LogInformation("{type}: Updating user with username '{username}' - PhoneNumberConfirmed {phoneNumberConfirmed}", type, userRequest.Username, userRequest.PhoneNumberConfirmed);
 
           await CreateWalletOrScheduleCreation(userRequest);
           await TrackLogin(payload, userRequest);
