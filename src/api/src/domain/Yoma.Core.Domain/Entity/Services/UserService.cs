@@ -290,7 +290,7 @@ namespace Yoma.Core.Domain.Entity.Services
       // profile fields updatable via UserProfileService.Update; identity provider is source of truth
       if (isNew)
       {
-        var kcUser = await _identityProviderClient.GetUser(request.Username)
+        var kcUser = await _identityProviderClient.GetUserByUsername(request.Username)
             ?? throw new InvalidOperationException($"{nameof(User)} with username '{request.Username}' does not exist");
         result.FirstName = request.FirstName;
         result.Surname = request.Surname;

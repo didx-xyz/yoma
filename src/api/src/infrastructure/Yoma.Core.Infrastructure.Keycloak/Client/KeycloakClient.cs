@@ -76,7 +76,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       return username == _keycloakAdminOptions.WebhookAdmin.Username && password == _keycloakAdminOptions.WebhookAdmin.Password;
     }
 
-    public async Task<User?> GetUser(string? username)
+    public async Task<User?> GetUserByUsername(string? username)
     {
       username = username?.Trim();
       if (string.IsNullOrEmpty(username))
@@ -101,6 +101,34 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
       return kcUser.ToUser();
     }
+
+    public async Task<User?> GetUserById(string? id)
+    {
+      id = id?.Trim();
+      if (string.IsNullOrEmpty(id))
+        throw new ArgumentNullException(nameof(id));
+
+      var timeout = 15000;
+      var startTime = DateTimeOffset.UtcNow;
+      UserRepresentation? kcUser = null;
+
+      using (var usersApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient))
+      {
+        while (true)
+        {
+          kcUser = await usersApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id);
+          if (kcUser != null) break;
+
+          if ((DateTimeOffset.UtcNow - startTime).TotalMilliseconds >= timeout) break;
+          Thread.Sleep(1000);
+        }
+      }
+
+      if (kcUser == null) return null;
+
+      return kcUser.ToUser();
+    }
+
 
     public async Task UpdateUser(User user, bool resetPassword, bool sendVerifyEmail, bool updatePhoneNumber)
     {

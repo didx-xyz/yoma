@@ -135,13 +135,13 @@ namespace Yoma.Core.Api.Controllers
         return;
       }
 
-      var username = payload.Details?.Username;
+      var userId = payload.UserId;
 
-      _logger.LogInformation("Trying to find the Keycloak user with username '{username}'", username);
-      var kcUser = await _identityProviderClient.GetUser(username);
+      _logger.LogInformation("Trying to find the Keycloak user with username '{userId}'", userId);
+      var kcUser = await _identityProviderClient.GetUserById(userId);
       if (kcUser == null)
       {
-        _logger.LogError("Failed to retrieve the Keycloak user with username '{username}'", username);
+        _logger.LogError("Failed to retrieve the Keycloak user with username '{userId}'", userId);
         return;
       }
 
