@@ -137,14 +137,21 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       var request = new UserRepresentation
       {
         Id = user.Id.ToString(),
-        FirstName = user.FirstName ?? string.Empty,
-        LastName = user.LastName ?? string.Empty,
-        Attributes = [],
         Username = user.Username,
         Email = user.Email ?? string.Empty,
+        FirstName = user.FirstName ?? string.Empty,
+        LastName = user.LastName ?? string.Empty,
         EmailVerified = user.EmailVerified,
+        Attributes = [],
         RequiredActions = []
       };
+
+
+      if (!string.IsNullOrEmpty(user.PhoneNumber))
+        request.Attributes.Add(CustomAttributes.PhoneNumber.ToDescription(), new List<string> { user.PhoneNumber.Trim() });
+
+      if (!string.IsNullOrEmpty(user.Gender))
+        request.Attributes.Add(CustomAttributes.Gender.ToDescription(), new List<string> { { user.Gender } });
 
       if (!string.IsNullOrEmpty(user.Country))
         request.Attributes.Add(CustomAttributes.Country.ToDescription(), new List<string> { { user.Country } });
@@ -155,8 +162,8 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (!string.IsNullOrEmpty(user.DateOfBirth))
         request.Attributes.Add(CustomAttributes.DateOfBirth.ToDescription(), new List<string> { { user.DateOfBirth } });
 
-      if (!string.IsNullOrEmpty(user.Gender))
-        request.Attributes.Add(CustomAttributes.Gender.ToDescription(), new List<string> { { user.Gender } });
+      if (user.PhoneNumberVerified.HasValue)
+        request.Attributes.Add(CustomAttributes.PhoneNumberVerified.ToDescription(), new List<string> { user.PhoneNumberVerified.Value.ToString().ToLower() });
 
       try
       {
