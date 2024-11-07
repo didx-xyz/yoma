@@ -24,7 +24,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Extensions
         DateOfBirth = kcUser.Attributes.ContainsKey(CustomAttributes.DateOfBirth.ToDescription()) ? kcUser.Attributes[CustomAttributes.DateOfBirth.ToDescription()].FirstOrDefault()?.Trim() : null,
         EmailVerified = kcUser.EmailVerified,
         PhoneNumberVerified = kcUser.Attributes.ContainsKey(CustomAttributes.PhoneNumberVerified.ToDescription()) &&
-          bool.TryParse(kcUser.Attributes[CustomAttributes.PhoneNumberVerified.ToDescription()].FirstOrDefault(), out var phoneNumberVerified) ? phoneNumberVerified :null
+          bool.TryParse(kcUser.Attributes[CustomAttributes.PhoneNumberVerified.ToDescription()].FirstOrDefault(), out var phoneNumberVerified) ? phoneNumberVerified : null
       };
 
       return result;

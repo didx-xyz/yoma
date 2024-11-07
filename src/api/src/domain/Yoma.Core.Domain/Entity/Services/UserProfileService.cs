@@ -166,7 +166,7 @@ namespace Yoma.Core.Domain.Entity.Services
           Education = user.EducationId.HasValue ? _educationService.GetById(user.EducationId.Value).Name : null,
           DateOfBirth = user.DateOfBirth.HasValue ? user.DateOfBirth.Value.ToString("yyyy/MM/dd") : null,
           EmailVerified = user.EmailConfirmed,
-          PhoneNumberVerified = user.PhoneNumberConfirmed 
+          PhoneNumberVerified = user.PhoneNumberConfirmed
         };
 
         await _identityProviderClient.UpdateUser(userIdentityProvider, request.ResetPassword, emailUpdated, request.UpdatePhoneNumber);
