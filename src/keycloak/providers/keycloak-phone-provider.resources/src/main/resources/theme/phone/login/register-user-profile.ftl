@@ -16,7 +16,7 @@
     <div id="vue-app">
       <form id="kc-register-form" class="${properties.kcFormClass!}" action="${url.registrationAction}" method="post" @submit="onSubmit">
         <!-- Tabs: Email or Phone Number Selection -->
-        <div class="${properties.kcFormGroupClass!}">
+        <#--  <div class="${properties.kcFormGroupClass!}">
           <ul class="nav nav-pills nav-justified">
             <li role="presentation" v-bind:class="{ active: !phoneNumberAsUsername }" v-on:click="phoneNumberAsUsername = false">
               <a href="#" tabindex="0">${msg("email")}</a>
@@ -25,9 +25,10 @@
               <a href="#" tabindex="0">${msg("phone")}</a>
             </li>
           </ul>
-        </div>
+        </div>  -->
 
-        <input type="hidden" id="phoneNumberAsUsername" name="phoneNumberAsUsername" v-model="phoneNumberAsUsername" :true-value="true" :false-value="false">
+        <input type="hidden" id="phoneNumberAsUsername" name="phoneNumberAsUsername" v-model="phoneNumberAsUsername">
+        <input type="hidden" id="isCodeSent" name="isCodeSent" v-model="isCodeSent">
 
         <!-- Email Input -->
         <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: phoneNumberAsUsername ? 'none' : 'block' }">
@@ -36,20 +37,40 @@
           <input type="text" id="email" class="${properties.kcInputClass!}" name="email"
             value="${(register.formData.email!'')}" autocomplete="email"
             aria-invalid="<#if messagesPerField.existsError('email')>true</#if>" placeholder="${msg('enterEmail')}" />
+
           <#if messagesPerField.existsError('email')>
             <span id="input-error-email" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
               ${kcSanitize(messagesPerField.get('email'))?no_esc}
             </span>
           </#if>
+
+          <#-- LINK: use phone number -->
+          <a class="form-link" style="margin-top: 1.2rem" href="#" v-on:click="phoneNumberAsUsername = true" tabindex="0">
+            <span class="icon">📲</span>
+            <span class="text">${msg("phoneNumberAsUsername")}</span>
+          </a>
         </div>
 
         <!-- Phone Number Input -->
         <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: phoneNumberAsUsername ? 'block' : 'none' }">
-          <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
+          <div v-bind:style="{ display: !isCodeSent && !phoneVerified ? 'block' : 'none' }">
+            <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
 
-          <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel" placeholder="${msg('enterPhoneNumber')}"
-            aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
-            v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input :disabled="phoneVerified" />
+            <!-- INPUT: phone number -->
+            <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel" placeholder="${msg('enterPhoneNumber')}"
+              aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
+              v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input :disabled="phoneVerified" />
+          </div>
+
+          <#-- LABEL: code send success -->
+          <label v-if="isCodeSent && !phoneVerified" class="${properties.kcLabelClass!}" aria-live="polite" style="color: green;">
+            <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
+          </label>
+
+          <#-- LABEL: code send error -->
+          <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+            {{ messageSendCodeError }}
+          </div>
 
           <#if messagesPerField.existsError('phoneNumber')>
             <span id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
@@ -57,131 +78,145 @@
             </span>
           </#if>
 
+          <#-- LABEL: phone number verified -->
           <label class="${properties.kcLabelClass!}" v-bind:style="{ display: phoneVerified ? 'block' : 'none' }">
-            <span style="color: green;"><span style="margin-right: 5px;">✔</span> ${msg("phoneNumberVerified")}</span>
-            <span v-on:click="clearAndFocusPhoneNumber" class="underline" tabindex="0">${msg("changePhoneNumber")}</span>
+            <span style="color: green;"><span style="margin-right: 5px;">✅</span> {{ messagePhoneVerified }}</span>
           </label>
+
+          <div style="margin-top: 1.2rem">
+            <#-- LINK: use email -->
+            <a v-if="!isCodeSent" class="form-link" href="#" v-on:click="phoneNumberAsUsername = false" tabindex="0">
+              <span class="icon">📩</span>
+              <span class="text">${msg("emailAsUsername")}</span>
+            </a>
+
+            <#-- LINK: change phone number -->
+            <a v-if="isCodeSent || phoneVerified" class="form-link" href="#" v-on:click="clearAndFocusPhoneNumber" tabindex="0">
+              <span class="icon">🔃</span>
+              <span class="text">${msg("changePhoneNumber")}</span>
+            </a>
+          </div>
         </div>
 
         <#if verifyPhone??>
           <div v-bind:style="{ display: phoneNumberAsUsername && !phoneVerified ? 'block' : 'none' }">
-            <!-- Verification Code Input -->
-            <div class="${properties.kcFormGroupClass!}">
+
+            <#-- BUTTON: send code -->
+            <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
+              <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}"
+                type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
+            </div>
+
+            <!-- INPUT: verification code -->
+            <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: isCodeSent ? 'block' : 'none' }">
               <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
 
-              <div style="display: flex; gap: 10px;">
-                <input tabindex="0" type="text" id="code" name="code" aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
-                  class="${properties.kcInputClass!}" autocomplete="off" placeholder="${msg('enterCode')}" style="flex: 2;" />
+              <input tabindex="0" type="text" id="code" name="code" aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
+                class="${properties.kcInputClass!}" autocomplete="off" placeholder="${msg('enterCode')}" />
 
-                <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}" style="width: 120px;"
-                  type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
-              </div>
-              <div v-if="messageSendCodeSuccess" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="color: green;">
-                <span style="margin-right: 5px;">✔</span> {{ messageSendCodeSuccess }}
-              </div>
-              <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                {{ messageSendCodeError }}
-              </div>
               <#if messagesPerField.existsError('code')>
                 <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
                   ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
                 </div>
               </#if>
-            </div>
 
-            <!-- Verify Code (Submit Button) -->
-            <div class="${properties.kcFormGroupClass!}" style="margin: 30px 0;">
-              <div id="kc-form-buttons">
-                <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg('verifyCode')}" v-on:click="verifyCode" />
+              <!-- BUTTON: verify code (submit) -->
+              <div class="${properties.kcFormGroupClass!}" style="margin: 30px 0;">
+                <div id="kc-form-buttons">
+                  <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg('verifyCode')}" v-on:click="verifyCode" />
+                </div>
               </div>
             </div>
           </div>
         </#if>
 
-        <!-- Password Inputs -->
-        <#if passwordRequired??>
-          <#--  Generate password  -->
-          <div class="${properties.kcFormGroupClass!}">
-            <label class="${properties.kcLabelClass!}">${msg("createPassword")}</label>
+        <div v-bind:style="{ display: !phoneNumberAsUsername || (phoneNumberAsUsername && phoneVerified) ? 'block' : 'none'}">
+          <!-- Password Inputs -->
+          <#if passwordRequired??>
+            <#--  Generate password  -->
+            <div class="${properties.kcFormGroupClass!}">
+              <label class="${properties.kcLabelClass!}">${msg("createPassword")}</label>
 
-            <div class="radio-wrapper">
-              <span for="create-password-radio" class="pf-c-form__helper-text">${msg("createPasswordHelpText")}</span>
-              <input type="checkbox" id="create-password-checkbox" class="checkbox" v-password-generator="{ passwordSelector: '#register-password', confirmPasswordSelector: '#password-confirm' }">
+              <div class="radio-wrapper">
+                <span for="create-password-radio" class="pf-c-form__helper-text">${msg("createPasswordHelpText")}</span>
+                <input type="checkbox" id="create-password-checkbox" class="checkbox" v-password-generator="{ passwordSelector: '#register-password', confirmPasswordSelector: '#password-confirm' }">
+              </div>
+            </div>
+
+            <div class="${properties.kcFormGroupClass!}">
+              <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
+
+              <div class="password-container">
+                <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#register-password', formSelector: '#kc-register-form' }" tabindex="0"></i>
+                <input type="password" id="register-password" class="${properties.kcInputClass!}" name="password"
+                  autocomplete="new-password"
+                  aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>"
+                  placeholder="${msg('enterPassword')}" />
+              </div>
+
+              <#if messagesPerField.existsError('password')>
+                <span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                  ${kcSanitize(messagesPerField.get('password'))?no_esc}
+                </span>
+              </#if>
+
+              <div class="password-requirements" v-password-indicator="{
+                  resourcesPath: '${url.resourcesPath}',
+                  passwordSelector: '#register-password',
+                  labels: {
+                    length: '${msg('password_requirement_length')}',
+                    lowercase: '${msg('password_requirement_lowercase')}',
+                    uppercase: '${msg('password_requirement_uppercase')}',
+                    number: '${msg('password_requirement_number')}',
+                    email: '${msg('password_requirement_email')}'
+                  }
+                }"></div>
+            </div>
+
+            <div class="${properties.kcFormGroupClass!}">
+              <label for="password-confirm" class="${properties.kcLabelClass!}">${msg("passwordConfirm")}</label>
+
+              <div class="password-container">
+                <i class="fa fa-eye-slash" id="toggle-password-confirm" v-toggle-password="{ passwordSelector: '#password-confirm', formSelector: '#kc-register-form' }" tabindex="0"></i>
+                <input type="password" id="password-confirm" class="${properties.kcInputClass!}"
+                  name="password-confirm"
+                  aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>"
+                  placeholder="${msg('confirmPassword')}" />
+              </div>
+
+              <#if messagesPerField.existsError('password-confirm')>
+                <span id="input-error-password-confirm" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                  ${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}
+                </span>
+              </#if>
+            </div>
+          </#if>
+
+          <!-- Terms and Conditions -->
+          <div class="centered-div">
+            <div class="centered-checkbox">
+              <input type="checkbox" id="terms_and_conditions" name="terms_and_conditions" value="Yes" required v-model="terms_and_conditions" />
+              <label for="terms" id="terms-label"><span id="terms-prefix">${msg("termsText1")}</span>
+                <a href="https://yoma.world/terms" target="_blank" id="terms-text">${msg("termsText2")}</a>
+              </label>
             </div>
           </div>
 
-          <div class="${properties.kcFormGroupClass!}">
-            <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
-
-             <div class="password-container">
-               <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#register-password', formSelector: '#kc-register-form' }" tabindex="0"></i>
-               <input type="password" id="register-password" class="${properties.kcInputClass!}" name="password"
-                 autocomplete="new-password"
-                 aria-invalid="<#if messagesPerField.existsError('password','password-confirm')>true</#if>"
-                 placeholder="${msg('enterPassword')}" />
-             </div>
-
-             <#if messagesPerField.existsError('password')>
-               <span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                 ${kcSanitize(messagesPerField.get('password'))?no_esc}
-               </span>
-             </#if>
-
-            <div class="password-requirements" v-password-indicator="{
-                 resourcesPath: '${url.resourcesPath}',
-                 passwordSelector: '#register-password',
-                 labels: {
-                   length: '${msg('password_requirement_length')}',
-                   lowercase: '${msg('password_requirement_lowercase')}',
-                   uppercase: '${msg('password_requirement_uppercase')}',
-                   number: '${msg('password_requirement_number')}',
-                   email: '${msg('password_requirement_email')}'
-                 }
-               }"></div>
-          </div>
-
-          <div class="${properties.kcFormGroupClass!}">
-            <label for="password-confirm" class="${properties.kcLabelClass!}">${msg("passwordConfirm")}</label>
-
-            <div class="password-container">
-              <i class="fa fa-eye-slash" id="toggle-password-confirm" v-toggle-password="{ passwordSelector: '#password-confirm', formSelector: '#kc-register-form' }" tabindex="0"></i>
-              <input type="password" id="password-confirm" class="${properties.kcInputClass!}"
-                name="password-confirm"
-                aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>"
-                placeholder="${msg('confirmPassword')}" />
+          <!-- Recaptcha -->
+          <#if recaptchaRequired??>
+            <div class="${properties.kcFormGroupClass!}">
+              <div class="${properties.kcInputWrapperClass!}">
+                <div class="g-recaptcha" data-size="compact" data-sitekey="${recaptchaSiteKey}"></div>
+              </div>
             </div>
+          </#if>
 
-            <#if messagesPerField.existsError('password-confirm')>
-              <span id="input-error-password-confirm" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                ${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}
-              </span>
-            </#if>
-          </div>
-        </#if>
-
-        <!-- Terms and Conditions -->
-        <div class="centered-div">
-          <div class="centered-checkbox">
-            <input type="checkbox" id="terms_and_conditions" name="terms_and_conditions" value="Yes" required v-model="terms_and_conditions" />
-            <label for="terms" id="terms-label"><span id="terms-prefix">${msg("termsText1")}</span>
-              <a href="https://yoma.world/terms" target="_blank" id="terms-text">${msg("termsText2")}</a>
-            </label>
+          <!-- Submit Button -->
+          <div id="kc-form-buttons">
+            <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg("doRegisterBtn")}" />
           </div>
         </div>
 
-        <!-- Recaptcha -->
-        <#if recaptchaRequired??>
-          <div class="${properties.kcFormGroupClass!}">
-            <div class="${properties.kcInputWrapperClass!}">
-              <div class="g-recaptcha" data-size="compact" data-sitekey="${recaptchaSiteKey}"></div>
-            </div>
-          </div>
-        </#if>
-
-        <!-- Submit Button -->
-        <div id="kc-form-buttons">
-          <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg("doRegisterBtn")}" />
-        </div>
         <div id="kc-form-options">
           <span><a href="${url.loginUrl}">${kcSanitize(msg("backToLoginBtn"))?no_esc}</a></span>
         </div>
@@ -193,7 +228,7 @@
         el: '#vue-app',
         data: {
           phoneNumber: '${register.formData.phoneNumber!}',
-          phoneNumberAsUsername: '${register.formData.phoneNumberAsUsername!}',
+          phoneNumberAsUsername: ${(register.formData.phoneNumberAsUsername!false)?string},
           phoneVerified: <#if phoneVerified?? && phoneVerified>true<#else>false</#if>,
           sendButtonText: '${msg("sendVerificationCode")}',
           initSendButtonText: '${msg("sendVerificationCode")}',
@@ -201,7 +236,23 @@
           messageSendCodeError: '',
           resetSendCodeButton: false,
           KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
-          terms_and_conditions: false
+          terms_and_conditions: false,
+          isCodeSent: ${(register.formData.isCodeSent!false)?string},
+        },
+        computed: {
+          maskedPhoneNumber() {
+            if (!this.phoneNumber) return '';
+            return this.phoneNumber.substring(0, 3) + ' **** ' +
+                  this.phoneNumber.substring(this.phoneNumber.length - 2);
+          },
+          messageCodeSent() {
+            const format = '${msg("codeSent")}'; // '{0} has been verified'
+            return format.replace('{0}', this.maskedPhoneNumber);
+          },
+          messagePhoneVerified() {
+            const format = '${msg("phoneNumberVerified")}'; // 'A code has been sent to {0}.'
+            return format.replace('{0}', this.maskedPhoneNumber);
+          }
         },
         methods: {
           req(phoneNumber) {
@@ -210,12 +261,13 @@
               .then(res =>
                 {
                   this.disableSend(res.data.expires_in);
+                  this.clearMessages();
+                  this.isCodeSent = true;
 
-                    // show success message
-                    this.clearMessages();
-                    const phoneNumberPartial = phoneNumber.substring(0, 3) + ' **** ' + phoneNumber.substring(phoneNumber.length - 2);
-                    var format = '${msg("codeSent")}'; // 'A code has been sent to {0}.';
-                    this.messageSendCodeSuccess = format.replace('{0}', phoneNumberPartial);
+                  // show success message
+                  //const phoneNumberPartial = phoneNumber.substring(0, 3) + ' **** ' + phoneNumber.substring(phoneNumber.length - 2);
+                  //var format = '${msg("codeSent")}'; // 'A code has been sent to {0}.';
+                  //this.messageSendCodeSuccess = format.replace('{0}', phoneNumberPartial);
                 })
               .catch(e => this.messageSendCodeError = e.response.data.error);
           },
@@ -283,6 +335,7 @@
           },
           resetPhoneVerification() {
             this.phoneVerified = false;
+            this.isCodeSent = false;
             this.messageSendCodeSuccess = '';
             this.resetSendCodeButton = true;
             this.clearMessages();

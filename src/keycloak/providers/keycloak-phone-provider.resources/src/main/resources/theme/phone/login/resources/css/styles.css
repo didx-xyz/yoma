@@ -448,6 +448,28 @@ input[type="checkbox"] {
   align-items: center;
 }
 
+a:focus {
+  outline: none;
+}
+
+.form-link {
+  text-align: start;
+  font-size: 13px;
+}
+
+.form-link:hover {
+  text-decoration: none;
+}
+
+.form-link .icon {
+  text-decoration: none;
+  margin-right: 5px;
+}
+
+.form-link .text {
+  text-decoration: underline;
+}
+
 /* Miscellaneous */
 .nav-pills {
   display: flex;
