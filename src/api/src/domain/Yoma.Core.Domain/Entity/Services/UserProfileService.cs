@@ -156,15 +156,17 @@ namespace Yoma.Core.Domain.Entity.Services
         var userIdentityProvider = new IdentityProvider.Models.User
         {
           Id = externalId,
-          FirstName = user.FirstName,
-          LastName = user.Surname,
           Username = username,
           Email = user.Email,
-          EmailVerified = user.EmailConfirmed ?? false,
+          FirstName = user.FirstName,
+          LastName = user.Surname,
+          PhoneNumber = user.PhoneNumber,
           Gender = user.GenderId.HasValue ? _genderService.GetById(user.GenderId.Value).Name : null,
           Country = user.CountryId.HasValue ? _countryService.GetById(user.CountryId.Value).Name : null,
           Education = user.EducationId.HasValue ? _educationService.GetById(user.EducationId.Value).Name : null,
-          DateOfBirth = user.DateOfBirth.HasValue ? user.DateOfBirth.Value.ToString("yyyy/MM/dd") : null
+          DateOfBirth = user.DateOfBirth.HasValue ? user.DateOfBirth.Value.ToString("yyyy/MM/dd") : null,
+          EmailVerified = user.EmailConfirmed,
+          PhoneNumberVerified = user.PhoneNumberConfirmed
         };
 
         await _identityProviderClient.UpdateUser(userIdentityProvider, request.ResetPassword, emailUpdated, request.UpdatePhoneNumber);

@@ -137,26 +137,33 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       var request = new UserRepresentation
       {
         Id = user.Id.ToString(),
-        FirstName = user.FirstName ?? string.Empty,
-        LastName = user.LastName ?? string.Empty,
-        Attributes = [],
         Username = user.Username,
         Email = user.Email ?? string.Empty,
+        FirstName = user.FirstName ?? string.Empty,
+        LastName = user.LastName ?? string.Empty,
         EmailVerified = user.EmailVerified,
+        Attributes = [],
         RequiredActions = []
       };
 
-      if (!string.IsNullOrEmpty(user.Country))
-        request.Attributes.Add(CustomAttributes.Country.ToDescription(), new List<string> { { user.Country } });
 
-      if (!string.IsNullOrEmpty(user.Education))
-        request.Attributes.Add(CustomAttributes.Education.ToDescription(), new List<string> { { user.Education } });
-
-      if (!string.IsNullOrEmpty(user.DateOfBirth))
-        request.Attributes.Add(CustomAttributes.DateOfBirth.ToDescription(), new List<string> { { user.DateOfBirth } });
+      if (!string.IsNullOrEmpty(user.PhoneNumber))
+        request.Attributes.Add(CustomAttributes.PhoneNumber.ToDescription(), [user.PhoneNumber.Trim()]);
 
       if (!string.IsNullOrEmpty(user.Gender))
-        request.Attributes.Add(CustomAttributes.Gender.ToDescription(), new List<string> { { user.Gender } });
+        request.Attributes.Add(CustomAttributes.Gender.ToDescription(), [user.Gender]);
+
+      if (!string.IsNullOrEmpty(user.Country))
+        request.Attributes.Add(CustomAttributes.Country.ToDescription(), [user.Country]);
+
+      if (!string.IsNullOrEmpty(user.Education))
+        request.Attributes.Add(CustomAttributes.Education.ToDescription(), [user.Education]);
+
+      if (!string.IsNullOrEmpty(user.DateOfBirth))
+        request.Attributes.Add(CustomAttributes.DateOfBirth.ToDescription(), [user.DateOfBirth]);
+
+      if (user.PhoneNumberVerified.HasValue)
+        request.Attributes.Add(CustomAttributes.PhoneNumberVerified.ToDescription(), [user.PhoneNumberVerified.Value.ToString().ToLower()]);
 
       try
       {

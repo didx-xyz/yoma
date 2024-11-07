@@ -34,7 +34,7 @@ verifyEmail: true
 loginWithEmailAllowed: true
 duplicateEmailsAllowed: false
 resetPasswordAllowed: true
-editUsernameAllowed: false
+editUsernameAllowed: true
 bruteForceProtected: true
 permanentLockout: false
 maxFailureWaitSeconds: 900
