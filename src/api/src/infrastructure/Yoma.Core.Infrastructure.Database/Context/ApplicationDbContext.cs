@@ -234,7 +234,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-      optionsBuilder.AddInterceptors(new UtcSaveChangesInterceptor());
+      optionsBuilder.AddInterceptors(new UtcSaveChangesInterceptor(), new EmptyStringToNullInterceptor());
     }
     #endregion
   }

@@ -38,7 +38,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Context
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
-      optionsBuilder.AddInterceptors(new UtcSaveChangesInterceptor());
+      optionsBuilder.AddInterceptors(new UtcSaveChangesInterceptor(), new EmptyStringToNullInterceptor());
     }
     #endregion
   }
