@@ -1,6 +1,6 @@
 Vue.directive("password-generator", {
   bind(el, binding) {
-    const { passwordSelector, confirmPasswordSelector } = binding.value;
+    const { onGenerate } = binding.value;
 
     const generateValidPassword = () => {
       const length = 10;
@@ -26,21 +26,11 @@ Vue.directive("password-generator", {
     };
 
     el.addEventListener("change", () => {
-      if (el.checked) {
-        const generatedPassword = generateValidPassword();
-        const passwordInput = document.querySelector(passwordSelector);
-        const confirmPasswordInput = document.querySelector(confirmPasswordSelector);
-
-        if (passwordInput) {
-          passwordInput.value = generatedPassword;
-          passwordInput.dispatchEvent(new Event("input")); // Trigger input event for v-model binding
-        }
-
-        if (confirmPasswordInput) {
-          confirmPasswordInput.value = generatedPassword;
-          confirmPasswordInput.dispatchEvent(new Event("input")); // Trigger input event for v-model binding
-        }
+      let generatedPassword = "";
+      if (el.checked && typeof onGenerate === "function") {
+        generatedPassword = generateValidPassword();
       }
+      onGenerate(el.checked, generatedPassword);
     });
   },
 });

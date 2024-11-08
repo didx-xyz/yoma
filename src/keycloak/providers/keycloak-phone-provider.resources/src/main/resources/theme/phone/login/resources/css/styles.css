@@ -70,7 +70,6 @@ h1,
   font-size: 28px;
   font-weight: 600;
   line-height: 1.2;
-  padding: 0 20px;
   margin-top: 20px;
 }
 
@@ -455,6 +454,7 @@ a:focus {
 .form-link {
   text-align: start;
   font-size: 13px;
+  display: inline-block;
 }
 
 .form-link:hover {
@@ -520,6 +520,38 @@ a:focus {
   margin-right: 5px;
 }
 
+#otp-input {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 10px;
+}
+
+#otp-input input {
+  flex: 1;
+  aspect-ratio: 1;
+  min-width: 32px;
+  max-width: 40px;
+  text-align: center;
+  font-size: 14px;
+  color: #000;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+
+  /* Hide cursor */
+  caret-color: transparent;
+
+  /* Hide text selection */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+#otp-input input::selection {
+  background-color: transparent;
+}
+
 /* Media Queries */
 @media screen and (max-width: 767px) {
   body {
@@ -527,6 +559,12 @@ a:focus {
     margin: 0 auto;
     width: 96%;
   }
+
+  h1,
+  #kc-page-title {
+    font-size: 22px;
+  }
+
   .card-pf {
     margin: 30px 10px;
     padding: 25px 0;
@@ -547,4 +585,12 @@ a:focus {
   .fa-eye::before {
     margin-left: -0.5rem;
   }
+
+  .form-horizontal {
+    padding: 0 10px;
+  }
+
+  /* #otp-input {
+    margin: 10px auto;
+  } */
 }
