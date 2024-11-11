@@ -403,7 +403,7 @@ jobs:
           version: ${{ env.TAILSCALE_VERSION }}
       - name: Helmfile Destroy
         if: github.event.inputs.reset-deployments == 'true'
-        uses: helmfile/helmfile-action@v1.9.4
+        uses: helmfile/helmfile-action@v2.0.0
         with:
           helmfile-args: |
             destroy \
@@ -419,7 +419,7 @@ jobs:
         run: kubectl delete pods,pvc --all --namespace yoma-v3-dev
       - name: Deploy fresh DBs
         if: github.event.inputs.reset-deployments == 'true'
-        uses: helmfile/helmfile-action@v1.9.4
+        uses: helmfile/helmfile-action@v2.0.0
         with:
           helmfile-args: |
             apply \
@@ -440,7 +440,7 @@ jobs:
           steps.filter.outputs.keycloak == 'true' ||
           github.event_name == 'workflow_dispatch'
           ) && steps.should-run.outputs.run == 'true'
-        uses: helmfile/helmfile-action@v1.9.4
+        uses: helmfile/helmfile-action@v2.0.0
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
@@ -461,7 +461,7 @@ jobs:
           steps.filter.outputs.api == 'true' ||
           github.event_name == 'workflow_dispatch'
           ) && steps.should-run.outputs.run == 'true'
-        uses: helmfile/helmfile-action@v1.9.4
+        uses: helmfile/helmfile-action@v2.0.0
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
@@ -485,7 +485,7 @@ jobs:
           steps.filter.outputs.web == 'true' ||
           github.event_name == 'workflow_dispatch'
           ) && steps.should-run.outputs.run == 'true'
-        uses: helmfile/helmfile-action@v1.9.4
+        uses: helmfile/helmfile-action@v2.0.0
         with:
           helmfile-args: |
             ${{ (github.event_name == 'pull_request' && github.event.pull_request.draft) && 'diff' || 'apply' }} \
