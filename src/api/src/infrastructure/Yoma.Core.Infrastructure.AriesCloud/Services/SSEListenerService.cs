@@ -46,7 +46,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Services
         throw new ArgumentNullException(nameof(desiredState));
       desiredState = desiredState.Trim();
 
-      return await CreateClient<T>(tenantId, topic, desiredState, fieldName, fieldValue);
+      return await CreateClient<T>(tenantId, topic, fieldName, fieldValue, desiredState);
     }
     #endregion
 
