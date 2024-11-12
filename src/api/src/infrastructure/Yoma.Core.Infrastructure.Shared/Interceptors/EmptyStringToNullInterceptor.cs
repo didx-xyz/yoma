@@ -1,7 +1,5 @@
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore;
-using System.Threading;
-using System.Threading.Tasks;
 
 namespace Yoma.Core.Infrastructure.Shared.Interceptors
 {

@@ -25,52 +25,35 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Services
     public async Task<WebhookEvent<T>?> Listen<T>(
         string tenantId,
         Topic topic,
-        string desiredState)
-        where T : class
-    {
-      tenantId = tenantId.Trim();
-      if (string.IsNullOrEmpty(tenantId))
-        throw new ArgumentNullException(nameof(tenantId));
-
-      desiredState = desiredState.Trim();
-      if (string.IsNullOrEmpty(tenantId))
-        throw new ArgumentNullException(nameof(desiredState));
-
-      return await CreateClient<T>(tenantId, topic, desiredState, null, null);
-    }
-
-    public async Task<WebhookEvent<T>?> Listen<T>(
-        string tenantId,
-        Topic topic,
         string fieldName,
         string fieldValue,
         string desiredState)
        where T : class
     {
-      tenantId = tenantId.Trim();
-      if (string.IsNullOrEmpty(tenantId))
+      if (string.IsNullOrWhiteSpace(tenantId))
         throw new ArgumentNullException(nameof(tenantId));
+      tenantId = tenantId.Trim();
 
-      fieldName = fieldName.Trim();
-      if (string.IsNullOrEmpty(fieldName))
+      if (string.IsNullOrWhiteSpace(fieldName))
         throw new ArgumentNullException(nameof(fieldName));
+      fieldName = fieldName.Trim();
 
-      fieldValue = fieldValue.Trim();
-      if (string.IsNullOrEmpty(tenantId))
+      if (string.IsNullOrWhiteSpace(tenantId))
         throw new ArgumentNullException(nameof(fieldValue));
+      fieldValue = fieldValue.Trim();
 
-      desiredState = desiredState.Trim();
-      if (string.IsNullOrEmpty(desiredState))
+      if (string.IsNullOrWhiteSpace(desiredState))
         throw new ArgumentNullException(nameof(desiredState));
+      desiredState = desiredState.Trim();
 
       return await CreateClient<T>(tenantId, topic, desiredState, fieldName, fieldValue);
     }
     #endregion
 
     #region Private Members
-    private async Task<WebhookEvent<T>?> CreateClient<T>(string tenantId, Topic topic, string desiredState, string? fieldName, string? fieldValue) where T : class
+    private async Task<WebhookEvent<T>?> CreateClient<T>(string tenantId, Topic topic, string fieldName, string fieldValue, string desiredState) where T : class
     {
-      using var stream = await _clientFactory.CreateTenantAdminSSEClientSingleEvent(tenantId, topic, desiredState, fieldName, fieldValue);
+      using var stream = await _clientFactory.CreateTenantAdminSSEClientSingleEvent(tenantId, topic, fieldName, fieldValue, desiredState);
       WebhookEvent<T>? result = null;
       using (var reader = new StreamReader(stream))
       {

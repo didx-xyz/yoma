@@ -222,7 +222,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
         case ArtifactType.LD_Proof:
         case ArtifactType.JWS:
-          var protocolVersion = _clientFactory.ProtocolVersion.TrimStart('v').TrimStart('V');
+          var protocolVersion = Constants.ProtocolVersion.TrimStart('v').TrimStart('V');
 
           var schemaPrefix = request.ArtifactType switch
           {
@@ -547,21 +547,28 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     /// </summary>
     private async Task<Models.Connection> EnsureConnectionCI(Tenant tenantIssuer, ITenantClient clientIssuer, Tenant tenantHolder, ITenantClient clientHolder)
     {
-      //try and find an existing connection
-#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-      var result = _connectionRepository.Query().SingleOrDefault(o =>
-          o.SourceTenantId == tenantIssuer.Wallet_id && o.TargetTenantId == tenantHolder.Wallet_id && o.Protocol.ToLower() == Connection_protocol.Connections_1_0.ToString().ToLower());
-#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+      var results = _connectionRepository.Query()
+          .Where(o =>
+              o.SourceTenantId == tenantIssuer.Wallet_id &&
+              o.TargetTenantId == tenantHolder.Wallet_id)
+          .ToList();
 
-      Connection? connectionAries = null;
+      var result = results
+          .OrderByDescending(o =>
+              Enum.TryParse<Connection_protocol>(o.Protocol, true, out var parsedProtocol)
+                  ? (int)parsedProtocol
+                  : throw new InvalidOperationException($"Unknown protocol: {o.Protocol}"))
+          .FirstOrDefault();
+
+      Connection? connectionIssuer = null;
       if (result != null)
       {
         try
         {
           //ensure connected (active)
-          connectionAries = await clientIssuer.GetConnectionByIdAsync(result.SourceConnectionId);
+          connectionIssuer = await clientIssuer.GetConnectionByIdAsync(result.SourceConnectionId);
 
-          if (connectionAries != null && string.Equals(connectionAries.State, ConnectionState.Completed.ToEnumMemberValue(), StringComparison.InvariantCultureIgnoreCase)) return result;
+          if (connectionIssuer != null && string.Equals(connectionIssuer.State, ConnectionState.Completed.ToEnumMemberValue(), StringComparison.InvariantCultureIgnoreCase)) return result;
 
           await _connectionRepository.Delete(result);
         }
@@ -571,43 +578,36 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         }
       }
 
-      //create invitation by issuer
-      var createInvitationRequest = new CreateInvitation
+      //find the issuer actor on the trust registry in order to get the public did
+      var clientPublic = _clientFactory.CreatePublicClient();
+      var actorIssuer = (await clientPublic.GetTrustRegistryActorsAsync(actor_id: tenantIssuer.Wallet_id)).SingleOrDefault()
+          ?? throw new InvalidOperationException($"Failed to retrieve actor with id (wallet id) '{tenantIssuer.Wallet_id}'");
+
+      Connection? connectionHolder = null;
+      WebhookEvent<Connection>? sseEvent = null;
+      await Task.Run(async () =>
       {
-        Alias = $"'{tenantIssuer.Wallet_label}' >> '{tenantHolder.Wallet_label}'",
-        Multi_use = false,
-        Use_public_did = false
-      };
+        //create connection to issuer as holder; issuer auto accepts connection
+        connectionHolder = await clientHolder.CreateDidExchangeRequestAsync(their_public_did: actorIssuer.Did, my_label: tenantHolder.Wallet_label);
 
-      var invitation = await clientIssuer.CreateInvitationAsync(createInvitationRequest);
+        //await sse event on issuer's side (in order to retrieve the issuer connection id to the holder used to issue the credential)  
+        sseEvent = await _sseListenerService.Listen<Connection>(tenantIssuer.Wallet_id,
+                Topic.Connections, "their_did", connectionHolder.My_did, ConnectionState.Completed.ToEnumMemberValue());
+      });
 
-      //accept invitation by holder
-      var acceptInvitationRequest = new AcceptInvitation
-      {
-        Alias = $"'{tenantIssuer.Wallet_label}' >> '{tenantHolder.Wallet_label}'",
-        Invitation = new ReceiveInvitationRequest
-        {
-          Did = invitation.Invitation.Did,
-          Id = invitation.Invitation.Id,
-          ImageUrl = invitation.Invitation.ImageUrl,
-          Label = invitation.Invitation.Label,
-          RecipientKeys = invitation.Invitation.RecipientKeys,
-          RoutingKeys = invitation.Invitation.RoutingKeys,
-          ServiceEndpoint = invitation.Invitation.ServiceEndpoint,
-          Type = invitation.Invitation.Type
-        }
-      };
+      if (connectionHolder == null)
+        throw new InvalidOperationException($"Failed to create connection to the issuer as holder");
 
-      connectionAries = await clientHolder.AcceptInvitationAsync(acceptInvitationRequest);
-      var protocol = (connectionAries.Connection_protocol?.ToString()) ?? throw new InvalidOperationException("Unable to obtain the required connection protocol");
+      if (sseEvent == null)
+        throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Connections}' and desired state '{ConnectionState.Completed}'");
 
       result = new Models.Connection
       {
         SourceTenantId = tenantIssuer.Wallet_id,
-        SourceConnectionId = invitation.Connection_id,
+        SourceConnectionId = sseEvent.Payload.Connection_id,
         TargetTenantId = tenantHolder.Wallet_id,
-        TargetConnectionId = connectionAries.Connection_id,
-        Protocol = protocol
+        TargetConnectionId = connectionHolder.Connection_id,
+        Protocol = (connectionHolder.Connection_protocol?.ToString()) ?? throw new InvalidOperationException("Unable to obtain the required connection protocol")
       };
 
       result = await _connectionRepository.Create(result);
@@ -643,7 +643,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
           return resultIndy;
 
         case ArtifactType.LD_Proof:
-          ICollection<W3CCredentialsListRequest>? credsW3C = null;
+          VCRecordList? credsW3C = null;
           try
           {
             credsW3C = await clientHolder.GetW3CCredentialsAsync(null, null, wqlQueryString);
@@ -653,10 +653,10 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
           }
 
-          if (credsW3C?.Count > 1)
+          if (credsW3C?.Results?.Count > 1)
             throw new InvalidOperationException($"More than one credential found for client referent '{clientReferent}'");
 
-          var credW3C = credsW3C?.SingleOrDefault();
+          var credW3C = credsW3C?.Results?.SingleOrDefault();
 
           if (credsW3C == null)
           {
