@@ -9,7 +9,7 @@
           <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
           <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
           <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
-           <script src="${url.resourcesPath}/js/togglePasswordDirective.js"></script>
+           <#--  <script src="${url.resourcesPath}/js/togglePasswordDirective.js"></script>  -->
 
           <style>
               [v-cloak] > * {
@@ -45,11 +45,11 @@
                 <div <#if !usernameHidden?? && supportPhone??> v-if="!phoneActivated" </#if>>
                   <#if !usernameHidden??>
                     <div class="${properties.kcFormGroupClass!}">
-                      <label class="${properties.kcLabelClass!}">${msg("emailOrPhoneNumber")}</label>
+                      <label class="${properties.kcLabelClass!}">${msg("username")}</label>
 
                       <input tabindex="0" id="username" class="${properties.kcInputClass!}" name="username" type="text" autocomplete="username"
                         aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterEmailOrPhoneNumber')}"
-                        v-model="username"   />
+                        v-model="username" />
 
                       <!-- Error messages -->
                       <#if messagesPerField.existsError('username','password')>
@@ -64,9 +64,9 @@
                     <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
 
                     <div class="password-container">
-                      <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#password', formSelector: '#kc-form-login' }" tabindex="0"></i>
                       <input tabindex="0" id="password" class="${properties.kcInputClass!}" name="password" type="password" autocomplete="current-password"
-                        aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterPassword')}" />
+                        aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterPassword')}"
+                        v-password-enhancements="{ allowToggle: true, allowCopy: false, allowPasswordIndicator: false }" />
                     </div>
 
                     <#if usernameHidden?? && messagesPerField.existsError('username','password')>
@@ -82,7 +82,7 @@
                     <div class="${properties.kcFormGroupClass!}">
                       <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
 
-                      <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel" placeholder="${msg('enterPhoneNumber')}"
+                      <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel" placeholder="+27"
                         aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
                         v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
 

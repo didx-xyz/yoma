@@ -77,7 +77,9 @@ h1,
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 0 40px;
+}
+.form-group {
+  margin: 0 0 20px 0 !important;
 }
 .form-group:has(> div > input#terms_and_conditions) {
   display: none;
@@ -85,23 +87,6 @@ h1,
 
 .password-container {
   position: relative;
-}
-
-.password-container i {
-  position: absolute;
-  top: 50%;
-  left: 10px;
-  transform: translateY(-50%);
-  cursor: pointer;
-}
-
-.password-container input {
-  padding-left: 40px !important;
-}
-
-.fa-eye-slash::before,
-.fa-eye::before {
-  font-size: 20px;
 }
 
 .alert-warning {
@@ -223,16 +208,11 @@ h1,
   font-size: 16px;
   background-color: #461d4d;
   color: white;
-  border-radius: 50px;
+  border-radius: 8px;
   cursor: pointer;
   height: 48px;
   margin: 0 auto;
   display: block;
-}
-
-#register-btn {
-  width: 95%;
-  border-radius: 50px;
 }
 
 #back-to-login-btn {
@@ -376,9 +356,9 @@ a {
   color: #333333;
 }
 
-/* .pf-c-form__helper-text {
-  color: #72767b;
-} */
+.required {
+  color: red !important;
+}
 
 .centered-checkbox {
   display: flex;
@@ -455,6 +435,11 @@ a:focus {
   text-align: start;
   font-size: 13px;
   display: inline-block;
+  color: #387f6a;
+  cursor: pointer;
+}
+.form-link:hover {
+  color: #00659c;
 }
 
 .form-link:hover {
@@ -586,9 +571,9 @@ a:focus {
     margin-left: -0.5rem;
   }
 
-  .form-horizontal {
+  /* .form-horizontal {
     padding: 0 10px;
-  }
+  } */
 
   /* #otp-input {
     margin: 10px auto;
