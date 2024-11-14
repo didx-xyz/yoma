@@ -4,13 +4,9 @@
     ${msg("registerTitle")}
   <#elseif section="form">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css">
-    <#--  <link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/passwordIndicator.css">  -->
     <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-    <#--  <script src="${url.resourcesPath}/js/passwordIndicatorDirective.js"></script>
-    <script src="${url.resourcesPath}/js/togglePasswordDirective.js"></script>  -->
     <script src="${url.resourcesPath}/js/passwordEnhancementsDirective.js"></script>
-    <#--  <script src="${url.resourcesPath}/js/passwordGeneratorDirective.js"></script>  -->
     <script src="${url.resourcesPath}/js/otp-input.directive.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
     <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
@@ -102,10 +98,10 @@
                 type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
             </div>
 
-            <!-- INPUT: verification code -->
             <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: isCodeSent ? 'block' : 'none' }">
               <label for="code" class="${properties.kcLabelClass!}">${msg("enterCode")}</label>
 
+              <!-- INPUT: verification code -->
               <div v-otp-input>
                 <div id="otp-input">
                   <input type="text"
@@ -127,7 +123,7 @@
               </#if>
 
               <!-- BUTTON: confirm code (submit) -->
-              <div style="margin: 30px 0 10px 0;">
+              <div style="margin-top: 30px;">
                 <div id="kc-form-buttons">
                   <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg('confirmCode')}" v-on:click="confirmCode" />
                 </div>
@@ -137,11 +133,11 @@
         </#if>
 
         <div v-bind:style="{ display: !phoneNumberAsUsername || (phoneNumberAsUsername && phoneVerified) ? 'block' : 'none'}">
-          <!-- Password Inputs -->
+
           <#if passwordRequired??>
-            <#--  Generate password  -->
+            <#--  Generate password -->
             <div class="${properties.kcFormGroupClass!}">
-              <label class="${properties.kcLabelClass!}">${msg("createPassword")}</label>
+              <label class="${properties.kcLabelClass!}" for="create-password-checkbox">${msg("createPassword")}</label>
 
               <div class="radio-wrapper">
                 <span id="createPasswordHelpText" for="create-password-checkbox" class="pf-c-form__helper-text">${msg("createPasswordHelpText")}</span>
@@ -149,6 +145,7 @@
               </div>
             </div>
 
+            <!-- Password -->
             <div class="${properties.kcFormGroupClass!}">
               <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
               <div class="password-container">
@@ -199,6 +196,7 @@
               </div>
             </div>
 
+            <!-- Confirm Password -->
             <div id="passwordConfirmContainer" class="${properties.kcFormGroupClass!}">
               <label for="password-confirm" class="${properties.kcLabelClass!}">${msg("passwordConfirm")}</label>
 
@@ -222,7 +220,7 @@
           <div class="centered-div">
             <div class="centered-checkbox">
               <input type="checkbox" id="terms_and_conditions" name="terms_and_conditions" value="Yes" required v-model="terms_and_conditions" />
-              <label for="terms" id="terms-label"><span id="terms-prefix">${msg("termsText1")}</span>
+              <label for="terms_and_conditions" id="terms-label"><span id="terms-prefix">${msg("termsText1")}</span>
                 <a href="https://yoma.world/terms" target="_blank" id="terms-text">${msg("termsText2")}</a>
               </label>
             </div>
@@ -269,7 +267,6 @@
           phoneVerified: <#if phoneVerified?? && phoneVerified>true<#else>false</#if>,
           sendButtonText: '${msg("sendVerificationCode")}',
           initSendButtonText: '${msg("sendVerificationCode")}',
-          messageSendCodeSuccess: '',
           messageSendCodeError: '',
           messagePasswordSuccess: '',
           resetSendCodeButton: false,
@@ -313,10 +310,7 @@
               this.isEmailTouched = true;
               const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
               this.isEmailValid = emailPattern.test(email);
-
             }
-
-            console.warn('email: {0} {1}', email, this.isEmailValid);
 
             return this.isEmailValid;
           },
@@ -379,8 +373,6 @@
 
             let validatePassword = false;
 
-            console.log('isEmailValid (submit): ', this.isEmailValid);
-
             // Validate the email for non-phone submissions
             if (!this.phoneNumberAsUsername) {
               if (!this.validateEmail(this.email)) {
@@ -435,7 +427,6 @@
           resetPhoneVerification() {
             this.phoneVerified = false;
             this.isCodeSent = false;
-            this.messageSendCodeSuccess = '';
             this.resetSendCodeButton = true;
             this.clearMessages();
           },
@@ -449,7 +440,6 @@
             this.resetPhoneVerification();
           },
           clearMessages() {
-            this.messageSendCodeSuccess = '';
             this.messageSendCodeError = '';
 
             // clear server error messages

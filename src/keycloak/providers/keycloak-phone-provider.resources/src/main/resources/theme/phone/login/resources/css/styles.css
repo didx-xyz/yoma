@@ -36,11 +36,7 @@ body {
 }
 
 #kc-current-locale-link::after {
-  content: "";
-  color: #461d4d;
-  font-size: 14px;
-  display: inline-block;
-  transform: rotate(90deg);
+  display: none;
 }
 
 .pf-c-dropdown__menu {
@@ -73,11 +69,6 @@ h1,
   margin-top: 20px;
 }
 
-.form-horizontal {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
 .form-group {
   margin: 0 0 20px 0 !important;
 }
@@ -230,15 +221,12 @@ h1,
   height: 48px;
   margin: 0 auto;
   position: relative;
-  line-height: 1.8;
   color: #461d4d;
-}
-
-#kc-registration a {
-  color: #461d4d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   font-size: 16px;
-  margin-top: 8px;
-  outline: none;
 }
 
 p {
@@ -280,6 +268,10 @@ p {
   margin-top: 0;
 }
 
+#kc-form-options {
+  margin: 10px auto 20px;
+}
+
 .pf-c-form-control:not(textarea) {
   font-size: 14px;
   background-color: white;
@@ -315,13 +307,6 @@ a {
   text-align: left;
 }
 
-#kc-form-login {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 30px;
-}
-
 .login-pf body {
   color: #495057;
   text-align: left;
@@ -331,7 +316,7 @@ a {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 20px;
+  margin: 20px auto;
 }
 
 .centered-subTitles {
@@ -400,22 +385,6 @@ a {
   font-size: 1rem;
 }
 
-.checkbox-update-password-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-}
-
-.checkbox-update-password-label {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  margin: 0 auto;
-  gap: 10px;
-}
-
 input[type="checkbox"] {
   height: 20px;
   width: 20px;
@@ -469,6 +438,10 @@ a:focus {
 .nav-pills > li.active > a:hover {
   background-color: #461d4d;
   color: white;
+  border-radius: 8px;
+}
+
+.nav-pills > li > a:hover {
   border-radius: 8px;
 }
 
@@ -565,17 +538,4 @@ a:focus {
   .password-container i {
     left: 20px;
   }
-
-  .fa-eye-slash::before,
-  .fa-eye::before {
-    margin-left: -0.5rem;
-  }
-
-  /* .form-horizontal {
-    padding: 0 10px;
-  } */
-
-  /* #otp-input {
-    margin: 10px auto;
-  } */
 }

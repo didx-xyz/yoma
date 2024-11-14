@@ -63,7 +63,6 @@ Vue.directive("password-enhancements", {
       button.type = "button";
       button.className = "pf-c-button pf-m-primary pf-m-block btn-lg";
       button.style.display = "none";
-      button.style.margin = "20px auto 32px";
 
       button.addEventListener("click", async (e) => {
         e.preventDefault();
@@ -425,7 +424,6 @@ Vue.directive("password-enhancements", {
           form.addEventListener(
             "submit",
             (e) => {
-              console.log("Form submit event triggered.");
               passwordValid = isValidPassword(passwordInput.value);
               validateConfirmPassword();
               updateValidationDisplay(messages);
