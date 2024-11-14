@@ -325,11 +325,22 @@ Vue.directive("password-enhancements", {
       const generateValidPassword = () => {
         const length = 10;
         const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+        // Helper function to get cryptographically secure random integer
+        const getSecureRandomInt = (max) => {
+          const array = new Uint32Array(1);
+          const maxUint = Math.pow(2, 32);
+          do {
+            window.crypto.getRandomValues(array);
+          } while (array[0] >= maxUint - (maxUint % max)); // Eliminate modulo bias
+          return array[0] % max;
+        };
+
         let password = "";
         while (!isValidPassword(password)) {
           password = "";
           for (let i = 0; i < length; i++) {
-            const randomIndex = Math.floor(Math.random() * charset.length);
+            const randomIndex = getSecureRandomInt(charset.length);
             password += charset[randomIndex];
           }
         }
