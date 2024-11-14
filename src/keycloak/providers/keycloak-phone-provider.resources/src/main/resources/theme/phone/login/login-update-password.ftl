@@ -3,70 +3,103 @@
     <#if section = "header">
       <h1>${msg("updatePasswordTitle")}</h1>
     <#elseif section = "form">
+      <link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/passwordIndicator.css">
+      <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+      <script src="${url.resourcesPath}/js/passwordEnhancementsDirective.js"></script>
+
       <div id="vue-app">
         <form id="kc-passwd-update-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post" @submit="onSubmit">
           <input type="text" id="username" name="username" value="${username}" autocomplete="username" readonly="readonly" style="display:none;"/>
           <input type="password" id="password" name="password" autocomplete="current-password" style="display:none;"/>
 
-          <#--  Generate password  -->
+          <#-- Generate password -->
           <div class="${properties.kcFormGroupClass!}">
-            <label class="${properties.kcLabelClass!}">${msg("createPassword")}</label>
+              <label class="${properties.kcLabelClass!}" for="create-password-checkbox">${msg("createPassword")}</label>
 
-            <div class="radio-wrapper">
-              <span for="create-password-radio" class="pf-c-form__helper-text">${msg("createPasswordHelpText")}</span>
-              <input type="checkbox" id="create-password-checkbox" class="checkbox" v-password-generator="{ passwordSelector: '#password-new', confirmPasswordSelector: '#password-confirm' }">
-            </div>
+              <div class="radio-wrapper">
+                <span id="createPasswordHelpText" for="create-password-checkbox" class="pf-c-form__helper-text">${msg("createPasswordHelpText")}</span>
+                <input type="checkbox" id="create-password-checkbox" class="checkbox" />
+              </div>
           </div>
 
+          <!-- Password -->
           <div class="${properties.kcFormGroupClass!}">
             <label for="password-new" class="${properties.kcLabelClass!}">${msg("passwordNew")}</label>
-
             <div class="password-container">
-              <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#password-new', formSelector: '#kc-passwd-update-form' }" tabindex="0"></i>
-              <input type="password" id="password-new" name="password-new" class="${properties.kcInputClass!}"
-                  autofocus autocomplete="new-password"
-                  aria-invalid="<#if messagesPerField.existsError('password','password-new')>true</#if>"
+              <!-- INPUT: password -->
+              <input
+                type="password"
+                id="password-new"
+                class="${properties.kcInputClass!}"
+                name="password-new"
+                autocomplete="new-password"
+                autofocus="autofocus"
+                placeholder="${msg('enterPassword')}"
+                aria-invalid="<#if messagesPerField.existsError('password')>true</#if>"
+                v-password-enhancements="{
+                  allowToggle: true,
+                  allowCopy: true,
+                  allowPasswordIndicator: true,
+                  allowGenerate: true,
+                  messages: {
+                    passwordInvalidMessage: '${msg('invalidPasswordMessage')?js_string}',
+                    passwordMismatchMessage: '${msg('invalidPasswordConfirmMessage')?js_string}',
+                    passwordCreated: '${msg('passwordCreated')?js_string}',
+                    passwordCopySuccess: '${msg('passwordCopied')?js_string}',
+                    passwordCopyFailed: '${msg('passwordCopyFailed')?js_string}',
+                    copyButtonText: '${msg('copyPassword')?js_string}',
+                    passwordRequirements: {
+                      instructions: '${msg('passwordInstructions')?js_string}',
+                      length: '${msg('password_requirement_length')?js_string}',
+                      lowercase: '${msg('password_requirement_lowercase')?js_string}',
+                      uppercase: '${msg('password_requirement_uppercase')?js_string}',
+                      number: '${msg('password_requirement_number')?js_string}',
+                      email: '${msg('password_requirement_email')?js_string}'
+                    }
+                  },
+                  confirmPasswordInputSelector: '#password-confirm',
+                  confirmPasswordContainerSelector: '#passwordConfirmContainer',
+                  createPasswordCheckboxSelector: '#create-password-checkbox',
+                  errorLabelSelector: '#input-error-password',
+                  copyPasswordButtonStyle: 'block',
+                  onValidityChange: onValidityChange
+                }"
               />
+
+              <#if messagesPerField.existsError('password')>
+                <div id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                  ${kcSanitize(messagesPerField.get('password'))?no_esc}
+                </div>
+              </#if>
             </div>
-
-            <#if messagesPerField.existsError('password')>
-                <span id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                    ${kcSanitize(messagesPerField.get('password'))?no_esc}
-                </span>
-            </#if>
-
-            <div class="password-requirements" v-password-indicator="{
-              resourcesPath: '${url.resourcesPath}',
-              passwordSelector: '#password-new',
-              labels: {
-                length: '${msg('password_requirement_length')}',
-                lowercase: '${msg('password_requirement_lowercase')}',
-                uppercase: '${msg('password_requirement_uppercase')}',
-                number: '${msg('password_requirement_number')}',
-                email: '${msg('password_requirement_email')}'
-              }
-            }"></div>
           </div>
 
-          <div class="${properties.kcFormGroupClass!}">
+          <!-- Confirm Password -->
+          <div id="passwordConfirmContainer" class="${properties.kcFormGroupClass!}">
             <label for="password-confirm" class="${properties.kcLabelClass!}">${msg("passwordConfirm")}</label>
 
             <div class="password-container">
-              <i class="fa fa-eye-slash" id="toggle-password" v-toggle-password="{ passwordSelector: '#password-confirm', formSelector: '#kc-form-login'  }" tabindex="0"></i>
-              <input type="password" id="password-confirm" name="password-confirm" class="${properties.kcInputClass!}" autocomplete="new-password"
-                aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>"
-            />
+              <!-- INPUT: confirm password -->
+              <input type="password" id="password-confirm" class="${properties.kcInputClass!}"
+                name="password-confirm" placeholder="${msg('confirmPassword')}" aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>"
+                v-password-enhancements="{ allowToggle: true, allowCopy: false, allowPasswordIndicator: false }"
+              />
+            </div>
 
             <#if messagesPerField.existsError('password-confirm')>
-                <span id="input-error-password-confirm" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                  ${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}
-                </span>
+              <div id="input-error-password-confirm" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                ${kcSanitize(messagesPerField.get('password-confirm'))?no_esc}
+              </div>
             </#if>
-            </div>
           </div>
 
-          <div class="checkbox-update-password-container">
-            <label class="checkbox-update-password-label"><input type="checkbox" id="logout-sessions" name="logout-sessions" value="on" checked> ${msg("logoutOtherSessions")}</label>
+          <div class="centered-div">
+            <div class="centered-checkbox">
+              <input type="checkbox" id="logout-sessions" name="logout-sessions" value="on" checked />
+              <label for="logout-sessions" id="logout-sessions-label" class="centered-label">
+                ${msg("logoutOtherSessions")}
+              </label>
+            </div>
           </div>
 
           <div id="kc-form-buttons">
@@ -80,32 +113,38 @@
         </form>
       </div>
 
-      <link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/passwordIndicator.css">
-      <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-      <script src="${url.resourcesPath}/js/passwordIndicatorDirective.js"></script>
-      <script src="${url.resourcesPath}/js/togglePasswordDirective.js"></script>
-      <script src="${url.resourcesPath}/js/passwordGeneratorDirective.js"></script>
-
       <script>
         new Vue({
           el: '#vue-app',
+          data: {
+            isPasswordValid: false,
+            isPasswordConfirmValid: false,
+            isFormValid: false,
+          },
           methods: {
+            onValidityChange(passwordValid, confirmPasswordValid) {
+              this.isPasswordValid = passwordValid;
+              this.isPasswordConfirmValid = confirmPasswordValid;
+            },
             onSubmit() {
-              event.preventDefault(); // Prevent the default form submission
+              event.preventDefault();
+
+              // Validate the passwords
+              const isValid = this.isPasswordValid && this.isPasswordConfirmValid;
+              this.isFormValid = isValid;
+              if (!isValid) return false;
 
               // ensure password inputs are of type "password" (toggle password)
               const passwordNew = document.querySelector('#password-new');
               if (passwordNew && passwordNew.type === 'text') {
                 passwordNew.type = 'password';
-                console.log('passwordNew input type set to "password" on form submit');
               }
               const passwordConfirm = document.querySelector('#password-confirm');
               if (passwordConfirm && passwordConfirm.type === 'text') {
                 passwordConfirm.type = 'password';
-                console.log('passwordConfirm input type set to "password" on form submit');
               }
 
-              event.target.submit(); // Programmatically submit the form
+              event.target.submit();
             },
           },
         });

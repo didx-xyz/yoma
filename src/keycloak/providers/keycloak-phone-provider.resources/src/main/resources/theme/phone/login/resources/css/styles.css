@@ -36,11 +36,7 @@ body {
 }
 
 #kc-current-locale-link::after {
-  content: "";
-  color: #461d4d;
-  font-size: 14px;
-  display: inline-block;
-  transform: rotate(90deg);
+  display: none;
 }
 
 .pf-c-dropdown__menu {
@@ -70,15 +66,11 @@ h1,
   font-size: 28px;
   font-weight: 600;
   line-height: 1.2;
-  padding: 0 20px;
   margin-top: 20px;
 }
 
-.form-horizontal {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  padding: 0 40px;
+.form-group {
+  margin: 0 0 20px 0 !important;
 }
 .form-group:has(> div > input#terms_and_conditions) {
   display: none;
@@ -86,23 +78,6 @@ h1,
 
 .password-container {
   position: relative;
-}
-
-.password-container i {
-  position: absolute;
-  top: 50%;
-  left: 10px;
-  transform: translateY(-50%);
-  cursor: pointer;
-}
-
-.password-container input {
-  padding-left: 40px !important;
-}
-
-.fa-eye-slash::before,
-.fa-eye::before {
-  font-size: 20px;
 }
 
 .alert-warning {
@@ -224,16 +199,11 @@ h1,
   font-size: 16px;
   background-color: #461d4d;
   color: white;
-  border-radius: 50px;
+  border-radius: 8px;
   cursor: pointer;
   height: 48px;
   margin: 0 auto;
   display: block;
-}
-
-#register-btn {
-  width: 95%;
-  border-radius: 50px;
 }
 
 #back-to-login-btn {
@@ -251,15 +221,12 @@ h1,
   height: 48px;
   margin: 0 auto;
   position: relative;
-  line-height: 1.8;
   color: #461d4d;
-}
-
-#kc-registration a {
-  color: #461d4d;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
   font-size: 16px;
-  margin-top: 8px;
-  outline: none;
 }
 
 p {
@@ -301,6 +268,10 @@ p {
   margin-top: 0;
 }
 
+#kc-form-options {
+  margin: 10px auto 20px;
+}
+
 .pf-c-form-control:not(textarea) {
   font-size: 14px;
   background-color: white;
@@ -336,13 +307,6 @@ a {
   text-align: left;
 }
 
-#kc-form-login {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  margin-bottom: 30px;
-}
-
 .login-pf body {
   color: #495057;
   text-align: left;
@@ -352,7 +316,7 @@ a {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 20px;
+  margin: 20px auto;
 }
 
 .centered-subTitles {
@@ -377,9 +341,9 @@ a {
   color: #333333;
 }
 
-/* .pf-c-form__helper-text {
-  color: #72767b;
-} */
+.required {
+  color: red !important;
+}
 
 .centered-checkbox {
   display: flex;
@@ -421,22 +385,6 @@ a {
   font-size: 1rem;
 }
 
-.checkbox-update-password-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-}
-
-.checkbox-update-password-label {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  margin: 0 auto;
-  gap: 10px;
-}
-
 input[type="checkbox"] {
   height: 20px;
   width: 20px;
@@ -446,6 +394,34 @@ input[type="checkbox"] {
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+a:focus {
+  outline: none;
+}
+
+.form-link {
+  text-align: start;
+  font-size: 13px;
+  display: inline-block;
+  color: #387f6a;
+  cursor: pointer;
+}
+.form-link:hover {
+  color: #00659c;
+}
+
+.form-link:hover {
+  text-decoration: none;
+}
+
+.form-link .icon {
+  text-decoration: none;
+  margin-right: 5px;
+}
+
+.form-link .text {
+  text-decoration: underline;
 }
 
 /* Miscellaneous */
@@ -462,6 +438,10 @@ input[type="checkbox"] {
 .nav-pills > li.active > a:hover {
   background-color: #461d4d;
   color: white;
+  border-radius: 8px;
+}
+
+.nav-pills > li > a:hover {
   border-radius: 8px;
 }
 
@@ -498,6 +478,38 @@ input[type="checkbox"] {
   margin-right: 5px;
 }
 
+#otp-input {
+  display: flex;
+  gap: 8px;
+  width: 100%;
+  max-width: 320px;
+  margin-bottom: 10px;
+}
+
+#otp-input input {
+  flex: 1;
+  aspect-ratio: 1;
+  min-width: 32px;
+  max-width: 40px;
+  text-align: center;
+  font-size: 14px;
+  color: #000;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+
+  /* Hide cursor */
+  caret-color: transparent;
+
+  /* Hide text selection */
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+#otp-input input::selection {
+  background-color: transparent;
+}
+
 /* Media Queries */
 @media screen and (max-width: 767px) {
   body {
@@ -505,6 +517,12 @@ input[type="checkbox"] {
     margin: 0 auto;
     width: 96%;
   }
+
+  h1,
+  #kc-page-title {
+    font-size: 22px;
+  }
+
   .card-pf {
     margin: 30px 10px;
     padding: 25px 0;
@@ -519,10 +537,5 @@ input[type="checkbox"] {
 
   .password-container i {
     left: 20px;
-  }
-
-  .fa-eye-slash::before,
-  .fa-eye::before {
-    margin-left: -0.5rem;
   }
 }

@@ -31,6 +31,8 @@ public class SupportPhonePages {
 
     public static final String FIELD_PATH_PHONE_ACTIVATED = "phoneActivated";
 
+    public static final String FIELD_PHONE_NUMBER_CODE_SENT = "isCodeSent";
+
     //public static final String FIELD_PHONE_NUMBER_AS_USERNAME = "phoneNumberAsUsername";
     public static final String ATTEMPTED_PHONE_NUMBER = "attemptedPhoneNumber";
 

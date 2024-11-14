@@ -33,6 +33,7 @@ import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePage
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTRIBUTE_SUPPORT_PHONE;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PATH_PHONE_ACTIVATED;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER_CODE_SENT;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_VERIFICATION_CODE;
 import cc.coopersoft.keycloak.phone.providers.constants.TokenCodeType;
 import cc.coopersoft.keycloak.phone.providers.exception.PhoneNumberInvalidException;
@@ -83,12 +84,17 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
             relativePath = envRelativePath;
         }
 
-        logger.debug("KC_HTTP_RELATIVE_PATH1: " + relativePath);
+        // Retrieve 'isCodeSent' from form data
+        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+        String isCodeSent = formData.getFirst(FIELD_PHONE_NUMBER_CODE_SENT);
+        if (isCodeSent == null) {
+            isCodeSent = "false";
+        }
 
-        var form = context.form();
         return context.form()
                 .setAttribute(ATTRIBUTE_SUPPORT_PHONE, true)
                 .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath)
+                .setAttribute(FIELD_PHONE_NUMBER_CODE_SENT, isCodeSent)
                 .createPasswordReset();
     }
 
@@ -238,7 +244,12 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
             relativePath = envRelativePath;
         }
 
-        logger.debug("KC_HTTP_RELATIVE_PATH2: " + relativePath);
+        // Retrieve 'isCodeSent' from form data
+        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+        String isCodeSent = formData.getFirst(FIELD_PHONE_NUMBER_CODE_SENT);
+        if (isCodeSent == null) {
+            isCodeSent = "false";
+        }
 
         return context.form()
                 .addError(new FormMessage(field, message))
@@ -246,6 +257,7 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
                 .setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
                 .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumber)
                 .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath)
+                .setAttribute(FIELD_PHONE_NUMBER_CODE_SENT, isCodeSent)
                 .createPasswordReset();
     }
 
@@ -256,12 +268,19 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
         if (envRelativePath != null && !envRelativePath.isEmpty()) {
             relativePath = envRelativePath;
         }
-        logger.debug("KC_HTTP_RELATIVE_PATH3: " + relativePath);
+
+        // Retrieve 'isCodeSent' from form data
+        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+        String isCodeSent = formData.getFirst(FIELD_PHONE_NUMBER_CODE_SENT);
+        if (isCodeSent == null) {
+            isCodeSent = "false";
+        }
 
         return context.form()
                 .addError(new FormMessage(field, message))
                 .setAttribute(ATTRIBUTE_SUPPORT_PHONE, true)
                 .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath)
+                .setAttribute(FIELD_PHONE_NUMBER_CODE_SENT, isCodeSent)
                 .createPasswordReset();
     }
 
