@@ -116,9 +116,12 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       {
         while (true)
         {
-          kcUser = await usersApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id);
+          try
+          {
+            kcUser = await usersApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id);
+          }
+          catch { }
           if (kcUser != null) break;
-
           if ((DateTimeOffset.UtcNow - startTime).TotalMilliseconds >= timeout) break;
           Thread.Sleep(1000);
         }
