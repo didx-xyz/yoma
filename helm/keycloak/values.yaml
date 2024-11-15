@@ -285,7 +285,7 @@ keycloak:
           name: {{ include "keycloak.fullname" . }}-twilio
           key: number
     - name: KC_SPI_PHONE_DEFAULT_TOKEN_EXPIRES_IN
-      value: "120"
+      value: "300"
     - name: KC_SPI_PHONE_DEFAULT_YOMA_DEFAULT_NUMBER_REGEX
       value: "^\\+?\\d+$"
 
