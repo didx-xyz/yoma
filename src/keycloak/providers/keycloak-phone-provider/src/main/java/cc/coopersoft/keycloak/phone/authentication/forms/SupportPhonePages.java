@@ -33,12 +33,7 @@ public class SupportPhonePages {
 
     public static final String FIELD_PHONE_NUMBER_CODE_SENT = "isCodeSent";
 
-    //public static final String FIELD_PHONE_NUMBER_AS_USERNAME = "phoneNumberAsUsername";
     public static final String ATTEMPTED_PHONE_NUMBER = "attemptedPhoneNumber";
 
     public static final String ATTEMPTED_PHONE_ACTIVATED = "attemptedPhoneActivated";
-
-    //public static final String ATTEMPTED_PHONE_NUMBER_AS_USERNAME = "attemptedPhoneNumberAsUsername";
-//  public static final String MESSAGE_PHONE_USER_NOT_FOUND = "phoneUserNotFound";
-//  public static final String MESSAGE_VERIFICATION_CODE_NOT_MATCH = "verificationCodeDoesNotMatch";
 }

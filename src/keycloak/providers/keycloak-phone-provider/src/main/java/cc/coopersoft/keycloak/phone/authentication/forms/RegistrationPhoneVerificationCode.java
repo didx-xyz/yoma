@@ -139,15 +139,11 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
         AuthenticationSessionModel authSession = context.getAuthenticationSession();
         String phoneNumber = formData.getFirst(FIELD_PHONE_NUMBER);
 
-        // Log initial validation step for phone number
-        logger.info("Validating phone number during registration: " + phoneNumber);
-
         // Check if phone number is blank
         if (Validation.isBlank(phoneNumber)) {
             authSession.setAuthNote("phoneVerified", "false");
             authSession.setAuthNote("verifiedPhoneNumber", null);
             context.success();
-            logger.info("Phone number is blank, skipping validation.");
             return;
         }
 
@@ -174,7 +170,6 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
 
         // Mark the context as successful
         context.success();
-        logger.info("Validation completed successfully for phone number: " + phoneNumber);
     }
 
     private boolean validatePhoneNumber(ValidationContext context, KeycloakSession session, AuthenticationSessionModel authSession, String phoneNumber, List<FormMessage> errors, MultivaluedMap<String, String> formData) {
@@ -183,9 +178,7 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
                 phoneNumber = "+" + phoneNumber;
             }
             phoneNumber = Utils.canonicalizePhoneNumber(session, phoneNumber);
-            logger.info("Canonicalized phone number: " + phoneNumber);
         } catch (PhoneNumberInvalidException e) {
-            logger.error("Invalid phone number: " + phoneNumber + ", error: " + e.getMessage());
             context.error(Errors.INVALID_REGISTRATION);
             errors.add(new FormMessage(FIELD_PHONE_NUMBER, e.getErrorType().message()));
             context.validationError(formData, errors);
@@ -199,11 +192,9 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
 
     private boolean validateVerificationCode(ValidationContext context, KeycloakSession session, AuthenticationSessionModel authSession, String phoneNumber, List<FormMessage> errors, MultivaluedMap<String, String> formData) {
         String verificationCode = formData.getFirst(FIELD_VERIFICATION_CODE);
-        logger.info("Verification code entered: " + verificationCode);
 
         TokenCodeRepresentation tokenCode = getTokenCodeService(session).ongoingProcess(phoneNumber, TokenCodeType.REGISTRATION);
         if (Validation.isBlank(verificationCode) || tokenCode == null || !tokenCode.getCode().equals(verificationCode)) {
-            logger.warn("Verification code mismatch or not found for phone number: " + phoneNumber);
             context.error(Errors.INVALID_REGISTRATION);
             formData.remove(FIELD_VERIFICATION_CODE);
             errors.add(new FormMessage(FIELD_VERIFICATION_CODE, SupportPhonePages.Errors.NOT_MATCH.message()));
@@ -212,7 +203,6 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
         }
 
         authSession.setAuthNote("tokenId", tokenCode.getId());
-        logger.info("Phone number verified successfully. Token ID stored in session: " + tokenCode.getId());
         authSession.setAuthNote("phoneVerified", "true");
         authSession.setAuthNote("verifiedPhoneNumber", phoneNumber);
         return true;
@@ -263,7 +253,6 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
         }
         String tokenId = authSession.getAuthNote("tokenId");
 
-        logger.info(String.format("registration user %s phone success, tokenId is: %s", user.getId(), tokenId));
         getTokenCodeService(context.getSession()).tokenValidated(user, phoneNumber, tokenId, false);
 
         AuthenticatorConfigModel config = context.getAuthenticatorConfig();

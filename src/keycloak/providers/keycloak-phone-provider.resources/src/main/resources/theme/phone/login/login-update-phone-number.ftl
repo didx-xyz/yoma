@@ -8,41 +8,71 @@
       <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
       <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
       <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
+      <script src="${url.resourcesPath}/js/otp-input.directive.js"></script>
 
       <div id="vue-app">
         <div id="kc-form">
           <div id="kc-form-wrapper">
             <form id="kc-form-login" action="${url.loginAction}" method="post" @submit="onSubmit">
               <div class="${properties.kcFormGroupClass!}">
-                <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("phoneNumber")}</label>
+                <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
+                  <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("enterPhoneNumber")}</label>
 
-                <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel" placeholder="${msg('enterPhoneNumber')}"
-                  aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
-                  v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
+                  <!-- INPUT: phone number -->
+                  <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel" placeholder="+27"
+                    aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
+                    v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
+                </div>
+
+                <#-- LABEL: code send success -->
+                <div v-if="isCodeSent" aria-live="polite" style="color: green;">
+                  <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
+                </div>
+
+                <#-- LABEL: code send error -->
+                <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                  {{ messageSendCodeError }}
+                </div>
 
                 <#if messagesPerField.existsError('phoneNumber')>
                   <span id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
                     ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
                   </span>
                 </#if>
+
+                <div style="margin-top: 0.8rem">
+                  <#-- LINK: change phone number -->
+                  <div v-if="isCodeSent" class="form-link" v-on:click="clearAndFocusPhoneNumber" tabindex="0">
+                    <span class="icon">🔃</span>
+                    <span class="text">${msg("changePhoneNumber")}</span>
+                  </div>
+                </div>
               </div>
 
-              <div class="${properties.kcFormGroupClass!}">
-                <label for="code" class="${properties.kcLabelClass!}">${msg("verificationCode")}</label>
+              <#-- BUTTON: send code -->
+              <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
+                <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}"
+                  type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
+              </div>
 
-                <div style="display: flex; gap: 10px;">
-                  <input tabindex="0" type="text" id="code" name="code" aria-invalid="<#if messagesPerField.existsError('code')>true</#if>"
-                    class="${properties.kcInputClass!}" autocomplete="off" placeholder="${msg('enterCode')}" style="flex: 2;" />
+              <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: isCodeSent ? 'block' : 'none' }">
+                <label for="code" class="${properties.kcLabelClass!}">${msg("enterCode")}</label>
 
-                  <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}" style="width: 120px;"
-                    type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
+                <!-- INPUT: verification code -->
+                <div v-otp-input>
+                  <div id="otp-input">
+                    <input type="text"
+                      maxlength="1"
+                      pattern="[0-9]*"
+                      inputmode="numeric"
+                      autocomplete="off"
+                      placeholder="_"
+                      v-for="n in 6"
+                      :key="n">
+                  </div>
+                  <input type="hidden" name="code">
                 </div>
-                <div v-if="messageSendCodeSuccess" class="${properties.kcInputErrorMessageClass!}" aria-live="polite" style="color: green;">
-                  <span style="margin-right: 5px;">✔</span> {{ messageSendCodeSuccess }}
-                </div>
-                <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                  {{ messageSendCodeError }}
-                </div>
+
                 <#if messagesPerField.existsError('code')>
                   <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
                     ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
@@ -50,10 +80,12 @@
                 </#if>
               </div>
 
-              <div id="kc-form-buttons">
-                <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if>/>
-                <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
-                  name="save" id="kc-login" type="submit" value="${msg('doSubmit')}"/>
+              <div v-bind:style="{ display: isCodeSent ? 'block' : 'none'}">
+                <div id="kc-form-buttons">
+                  <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if>/>
+                  <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
+                    name="save" id="kc-login" type="submit" value="${msg('doSubmit')}"/>
+                </div>
               </div>
             </form>
           </div>
@@ -69,7 +101,20 @@
             initSendButtonText: '${msg("sendVerificationCode")}',
             messageSendCodeSuccess: '',
             messageSendCodeError: '',
+            resetSendCodeButton: false,
             KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
+            isCodeSent: false,
+          },
+          computed: {
+            maskedPhoneNumber() {
+              if (!this.phoneNumber) return '';
+              return this.phoneNumber.substring(0, 3) + ' **** ' +
+                    this.phoneNumber.substring(this.phoneNumber.length - 2);
+            },
+            messageCodeSent() {
+              const format = '${msg("codeSent")}'; // '{0} has been verified'
+              return format.replace('{0}', this.maskedPhoneNumber);
+            },
           },
           methods: {
             req(phoneNumber) {
@@ -78,16 +123,18 @@
                 .then(res =>
                   {
                     this.disableSend(res.data.expires_in);
-
-                    // show success message
                     this.clearMessages();
-                    const phoneNumberPartial = phoneNumber.substring(0, 3) + ' **** ' + phoneNumber.substring(phoneNumber.length - 2);
-                    var format = '${msg("codeSent")}'; // 'A code has been sent to {0}.';
-                    this.messageSendCodeSuccess = format.replace('{0}', phoneNumberPartial);
+                    this.isCodeSent = true;
                   })
                 .catch(e => this.messageSendCodeError = e.response.data.error);
             },
             disableSend(seconds) {
+              if (this.resetSendCodeButton) {
+                this.sendButtonText = this.initSendButtonText;
+                this.resetSendCodeButton = false;
+                return;
+              }
+
               if (seconds <= 0) {
                 this.sendButtonText = this.initSendButtonText;
               } else {
@@ -127,12 +174,21 @@
               event.target.submit(); // Programmatically submit the form
             },
             resetPhoneVerification() {
-              this.messageSendCodeSuccess = '';
+              this.phoneVerified = false;
+              this.isCodeSent = false;
               this.resetSendCodeButton = true;
               this.clearMessages();
             },
+            clearAndFocusPhoneNumber() {
+              this.phoneNumber = '';
+              const phoneNumber = document.querySelector('#phoneNumber');
+              if (phoneNumber) {
+                phoneNumber.focus();
+              }
+
+              this.resetPhoneVerification();
+            },
             clearMessages() {
-              this.messageSendCodeSuccess = '';
               this.messageSendCodeError = '';
 
               // clear server error messages
@@ -141,11 +197,11 @@
 
               if (inputErrorPhone) inputErrorPhone.style.display = 'none';
               if (inputErrorCode) inputErrorCode.style.display = 'none';
-            }
+            },
           }
         });
       </script>
-    <#elseif section = "info">
-        ${msg("updatePhoneNumberInfo")}
+      <#-- <#elseif section = "info">
+        ${msg("updatePhoneNumberInfo")} -->
     </#if>
 </@layout.registrationLayout>

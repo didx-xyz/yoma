@@ -137,8 +137,6 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
                 .orElse(false);
 
         if (!byPhone) {
-            logger.warn("Setting attempted use phone as username.");
-
             return validateUserAndPassword(context, inputData);
         }
 
@@ -183,15 +181,12 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
     }
 
     private void invalidVerificationCode(AuthenticationFlowContext context, String phoneNumber) {
-        logger.warn("Invalid verification code for phone number: " + phoneNumber);
-
         context.getEvent().error(Errors.INVALID_USER_CREDENTIALS);
         context.form()
                 .setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
                 .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumber);
         assemblyForm(context, context.form());
-        Response challengeResponse = challenge(context, SupportPhonePages.Errors.NOT_MATCH.message(),
-                FIELD_VERIFICATION_CODE);
+        Response challengeResponse = challenge(context, SupportPhonePages.Errors.NOT_MATCH.message(), FIELD_VERIFICATION_CODE);
         context.failureChallenge(AuthenticationFlowError.INVALID_CREDENTIALS, challengeResponse);
     }
 
@@ -364,7 +359,6 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
 
         // Ensure the username used in events is from the UserModel
         if (user != null) {
-            logger.info("Username from UserModel: " + user.getUsername());
             context.getEvent().detail(Details.USERNAME, user.getUsername());
         }
 

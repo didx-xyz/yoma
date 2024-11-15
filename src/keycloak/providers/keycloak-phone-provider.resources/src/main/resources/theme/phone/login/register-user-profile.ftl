@@ -203,7 +203,7 @@
               <div class="password-container">
                 <!-- INPUT: confirm password -->
                 <input type="password" id="password-confirm" class="${properties.kcInputClass!}"
-                  name="password-confirm" placeholder="${msg('confirmPassword')}" aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>"
+                  name="password-confirm" autocomplete="new-password" placeholder="${msg('confirmPassword')}" aria-invalid="<#if messagesPerField.existsError('password-confirm')>true</#if>"
                   v-password-enhancements="{ allowToggle: true, allowCopy: false, allowPasswordIndicator: false }"
                 />
               </div>
