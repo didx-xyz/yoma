@@ -287,10 +287,8 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
     private boolean validateVerificationCode(AuthenticationFlowContext context, UserModel user, String phoneNumber, String code) {
         try {
             context.getSession().getProvider(PhoneVerificationCodeProvider.class).validateCode(user, phoneNumber, code, TokenCodeType.RESET);
-            logger.debug("verification code success!");
             return true;
         } catch (Exception e) {
-            logger.debug("verification code fail!");
             context.getEvent().user(user);
             invalidVerificationCode(context, phoneNumber);
             return false;
