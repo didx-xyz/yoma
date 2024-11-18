@@ -53,24 +53,18 @@
               v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input :disabled="phoneVerified" />
           </div>
 
+          <#-- LABEL: phone number error -->
+          <div v-if="messagePhoneNumberError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+            {{ messagePhoneNumberError }}
+          </div>
+
           <#-- LABEL: code send success -->
-          <span v-if="isCodeSent && !phoneVerified" aria-live="polite" style="color: green;">
+          <span v-if="isCodeSent && !phoneVerified && !messagePhoneNumberError" aria-live="polite" style="color: green;">
             <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
           </span>
 
-          <#-- LABEL: code send error -->
-          <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-            {{ messageSendCodeError }}
-          </div>
-
-          <#if messagesPerField.existsError('phoneNumber')>
-            <div id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-              ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
-            </div>
-          </#if>
-
           <#-- LABEL: phone number verified -->
-          <div v-bind:style="{ display: phoneVerified ? 'block' : 'none' }">
+          <div v-bind:style="{ display: phoneVerified && !messagePhoneNumberError ? 'block' : 'none' }">
             <span style="color: green;"><span style="margin-right: 5px;">✅</span> {{ messagePhoneVerified }}</span>
           </div>
 
@@ -264,11 +258,11 @@
           email: '${register.formData.email!}',
           phoneNumber: '${register.formData.phoneNumber!}',
           phoneNumberAsUsername: ${(register.formData.phoneNumberAsUsername!false)?string},
-          phoneVerified: <#if phoneVerified?? && phoneVerified>true<#else>false</#if>,
+          phoneVerified: <#if phoneVerified?? && phoneVerified && !messagesPerField.existsError('phoneNumber')>true<#else>false</#if>,
           sendButtonText: '${msg("sendVerificationCode")}',
           initSendButtonText: '${msg("sendVerificationCode")}',
-          messageSendCodeError: '',
           messagePasswordSuccess: '',
+          messagePhoneNumberError: <#if messagesPerField.existsError('phoneNumber')>'${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}'<#else>''</#if>,
           resetSendCodeButton: false,
           KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
           terms_and_conditions: false,
@@ -327,7 +321,7 @@
                   this.clearMessages();
                   this.isCodeSent = true;
                 })
-              .catch(e => this.messageSendCodeError = e.response.data.error);
+              .catch(e => this.messagePhoneNumberError = e.response.data.error);
           },
           disableSend(seconds) {
             if (this.resetSendCodeButton) {
@@ -348,14 +342,14 @@
             }
           },
           sendVerificationCode() {
-            this.messageSendCodeError = '';
+            this.messagePhoneNumberError = '';
             const input = document.querySelector('#phoneNumber');
             const iti = intlTelInput.getInstance(input);
             const fullPhoneNumber = iti.getNumber();
 
             // Validate phone number
             if (!iti.isValidNumber()) {
-              this.messageSendCodeError = '${msg("invalidPhoneNumber")}';
+              this.messagePhoneNumberError = '${msg("invalidPhoneNumber")}';
               return;
             }
 
@@ -440,7 +434,7 @@
             this.resetPhoneVerification();
           },
           clearMessages() {
-            this.messageSendCodeError = '';
+            this.messagePhoneNumberError = '';
 
             // clear server error messages
             const inputErrorPhone = document.querySelector('#input-error-phone');
