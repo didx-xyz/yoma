@@ -9,7 +9,7 @@ accessTokenLifespan: 300
 accessTokenLifespanForImplicitFlow: 900
 ssoSessionIdleTimeout: 1800
 ssoSessionMaxLifespan: 36000
-ssoSessionIdleTimeoutRememberMe: 0
+ssoSessionIdleTimeoutRememberMe: 2592000 # 30 days
 ssoSessionMaxLifespanRememberMe: 0
 offlineSessionIdleTimeout: 2592000
 offlineSessionMaxLifespanEnabled: false
@@ -29,7 +29,7 @@ enabled: true
 sslRequired: external
 registrationAllowed: true
 registrationEmailAsUsername: false
-rememberMe: false
+rememberMe: true
 verifyEmail: true
 loginWithEmailAllowed: true
 duplicateEmailsAllowed: false
