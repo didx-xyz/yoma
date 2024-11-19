@@ -146,24 +146,22 @@
                 </#if>
 
                 <div v-bind:style="{ display: !phoneActivated || (phoneActivated && isCodeSent) ? 'block' : 'none'}">
-                  <div class="${properties.kcFormGroupClass!} ${properties.kcFormSettingClass!}">
-                    <#if realm.rememberMe && !usernameHidden??>
-                      <div class="centered-div">
-                        <div class="centered-checkbox">
-                          <input
-                            type="checkbox"
-                            id="rememberMe"
-                            name="rememberMe"
-                            tabindex="0"
-                            <#if login.rememberMe??>checked</#if>
-                          />
-                          <label for="rememberMe" id="rememberMe-label">
-                            ${msg("rememberMe")}
-                          </label>
-                        </div>
+                  <#if realm.rememberMe && !usernameHidden??>
+                    <div class="centered-div">
+                      <div class="centered-checkbox">
+                        <input
+                          type="checkbox"
+                          id="rememberMe"
+                          name="rememberMe"
+                          tabindex="0"
+                          <#if login.rememberMe??>checked</#if>
+                        />
+                        <label for="rememberMe" id="rememberMe-label" class="centered-label">
+                          ${msg("rememberMe")}
+                        </label>
                       </div>
-                    </#if>
-                  </div>
+                    </div>
+                  </#if>
 
                   <div id="kc-form-buttons">
                     <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if> />
