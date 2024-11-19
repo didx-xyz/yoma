@@ -28,18 +28,6 @@
               <form id="kc-form-login" class="${properties.kcFormClass!}"
                 action="${url.loginAction}" method="post" @submit="onSubmit">
                 <#if !usernameHidden?? && supportPhone??>
-                  <!-- Tabs: Password or SMS Code Selection -->
-                  <div class="${properties.kcFormGroupClass!}">
-                    <ul class="nav nav-pills nav-justified">
-                      <li role="presentation" v-bind:class="{ active: !phoneActivated }" v-on:click="phoneActivated = false">
-                        <a href="#" tabindex="0">${msg("loginByPassword")}</a>
-                      </li>
-                      <li role="presentation" v-bind:class="{ active: phoneActivated }" v-on:click="phoneActivated = true">
-                        <a href="#" tabindex="0">${msg("loginByPhone")}</a>
-                      </li>
-                    </ul>
-                  </div>
-
                   <input type="hidden" id="phoneActivated" name="phoneActivated" v-model="phoneActivated">
                   <input type="hidden" id="isCodeSent" name="isCodeSent" v-model="isCodeSent">
                 </#if>
@@ -77,6 +65,12 @@
                       </span>
                     </#if>
                   </div>
+
+                  <#-- LINK: use phone -->
+                  <div class="form-link" v-on:click="phoneActivated = true" tabindex="0">
+                    <span class="icon">📲</span>
+                    <span class="text">${msg("signInWithPhone")}</span>
+                  </div>
                 </div>
 
                 <#if !usernameHidden?? && supportPhone??>
@@ -91,23 +85,23 @@
                           v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
                       </div>
 
+                      <#-- LABEL: phone number error -->
+                      <div v-if="messagePhoneNumberError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                        {{ messagePhoneNumberError }}
+                      </div>
+
                       <#-- LABEL: code send success -->
-                      <div v-if="isCodeSent" aria-live="polite" style="color: green;">
+                      <span v-if="isCodeSent && !phoneVerified && !messagePhoneNumberError" aria-live="polite" style="color: green;">
                         <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
-                      </div>
-
-                      <#-- LABEL: code send error -->
-                      <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                        {{ messageSendCodeError }}
-                      </div>
-
-                      <#if messagesPerField.existsError('phoneNumber')>
-                        <span id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                          ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
-                        </span>
-                      </#if>
+                      </span>
 
                       <div style="margin-top: 0.8rem">
+                        <#-- LINK: use password -->
+                        <div v-if="!isCodeSent" class="form-link" v-on:click="phoneActivated = false" tabindex="0">
+                          <span class="icon">🔑</span>
+                          <span class="text">${msg("signInWithPassword")}</span>
+                        </div>
+
                         <#-- LINK: change phone number -->
                         <div v-if="isCodeSent" class="form-link" v-on:click="clearAndFocusPhoneNumber" tabindex="0">
                           <span class="icon">🔃</span>
@@ -116,7 +110,7 @@
                       </div>
                     </div>
 
-                    <div v-bind:style="{ display: phoneActivated ? 'block' : 'none' }">
+                    <div v-bind:style="{ display: phoneActivated ? 'block' : 'none', marginTop: '2rem' }">
                       <#-- BUTTON: send code -->
                       <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
                         <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}"
@@ -201,7 +195,7 @@
                   phoneActivated: <#if attemptedPhoneActivated??>true<#else>false</#if>,
                   sendButtonText: '${msg("sendVerificationCode")}',
                   initSendButtonText: '${msg("sendVerificationCode")}',
-                  messageSendCodeError: '',
+                  messagePhoneNumberError: <#if messagesPerField.existsError('phoneNumber')>'${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}'<#else>''</#if>,
                   KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
                   resetSendCodeButton: false,
                   isCodeSent: <#if isCodeSent??>true<#else>false</#if>,
@@ -227,7 +221,7 @@
                           this.clearMessages();
                           this.isCodeSent = true;
                         })
-                      .catch(e => this.messageSendCodeError = e.response.data.error);
+                      .catch(e => this.messagePhoneNumberError = e.response.data.error);
                   },
                   disableSend(seconds) {
                     if (this.resetSendCodeButton) {
@@ -248,14 +242,14 @@
                     }
                   },
                   sendVerificationCode() {
-                    this.messageSendCodeError = '';
+                    this.messagePhoneNumberError = '';
                     const input = document.querySelector('#phoneNumber');
                     const iti = intlTelInput.getInstance(input);
                     const fullPhoneNumber = iti.getNumber();
 
                     // Validate phone number
                     if (!iti.isValidNumber()) {
-                      this.messageSendCodeError = '${msg("invalidPhoneNumber")}';
+                      this.messagePhoneNumberError = '${msg("invalidPhoneNumber")}';
                       return;
                     }
 
@@ -295,7 +289,7 @@
 
                       // Validate phone number
                       if (!iti.isValidNumber()) {
-                        this.messageSendCodeError = '${msg("invalidPhoneNumber")}';
+                        this.messagePhoneNumberError = '${msg("invalidPhoneNumber")}';
                         return;
                       }
 
@@ -320,7 +314,7 @@
                     this.resetPhoneVerification();
                   },
                   clearMessages() {
-                    this.messageSendCodeError = '';
+                    this.messagePhoneNumberError = '';
 
                     // clear server error messages
                     const inputErrorPhone = document.querySelector('#input-error-phone');
