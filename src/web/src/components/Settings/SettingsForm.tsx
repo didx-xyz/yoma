@@ -124,8 +124,6 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
       try {
         // call supplied handler
         await onSubmit(settingsRequest);
-
-        toast.success("Settings updated");
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -239,9 +237,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
 
           {/* BUTTONS */}
           <div
-            className={`mt-8 flex flex-row items-center gap-4 ${
-              onCancel ? "justify-center" : "justify-end"
-            }`}
+            className={`mt-8 flex flex-row items-center justify-center gap-4`}
           >
             {onCancel && (
               <button

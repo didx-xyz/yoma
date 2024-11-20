@@ -1,3 +1,4 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -11,13 +12,20 @@ import YoIDCard from "public/images/YoID-modal-card.webp";
 import { useCallback, useEffect, useState } from "react";
 import ReactModal from "react-modal";
 import { toast } from "react-toastify";
+import type { SettingsRequest } from "~/api/models/common";
 import type { UserProfile } from "~/api/models/user";
 import { getOrganisationById } from "~/api/services/organisations";
-import { getUserProfile, patchYoIDOnboarding } from "~/api/services/user";
+import {
+  getSettings,
+  getUserProfile,
+  patchYoIDOnboarding,
+  updateSettings,
+} from "~/api/services/user";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { handleUserSignIn } from "~/lib/authUtils";
 import {
   COOKIE_KEYCLOAK_SESSION,
+  GA_ACTION_APP_SETTING_UPDATE,
   GA_ACTION_USER_YOIDONBOARDINGCONFIRMED,
   GA_CATEGORY_USER,
   ROLE_ADMIN,
@@ -35,16 +43,19 @@ import {
   screenWidthAtom,
   userProfileAtom,
 } from "~/lib/store";
+import SettingsForm from "./Settings/SettingsForm";
 import { SignInButton } from "./SignInButton";
 import { ApiErrors } from "./Status/ApiErrors";
 import {
   UserProfileFilterOptions,
   UserProfileForm,
 } from "./User/UserProfileForm";
+import Suspense from "./Common/Suspense";
 
 // * GLOBAL APP CONCERNS
 // * needs to be done here as jotai atoms are not available in _app.tsx
 export const Global: React.FC = () => {
+  const queryClient = useQueryClient();
   const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
@@ -63,13 +74,26 @@ export const Global: React.FC = () => {
   const setScreenWidthAtom = useSetAtom(screenWidthAtom);
 
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
-  const [onboardingDialogVisible, setOnboardingDialogVisible] = useState(false);
   const [updateProfileDialogVisible, setUpdateProfileDialogVisible] =
+    useState(false);
+  const [onboardingDialogVisible, setOnboardingDialogVisible] = useState(false);
+  const [settingsDialogVisible, setSettingsDialogVisible] = useState(false);
+  const [photoUploadDialogVisible, setPhotoUploadDialogVisible] =
     useState(false);
 
   const [isYoIDOnboardingLoading, setIsYoIDOnboardingLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
   const currentLanguage = useAtomValue(currentLanguageAtom);
+
+  const {
+    data: settingsData,
+    isLoading: settingsIsLoading,
+    error: settingsError,
+  } = useQuery({
+    queryKey: ["user", "settings"],
+    queryFn: async () => await getSettings(),
+    enabled: settingsDialogVisible,
+  });
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(
@@ -78,7 +102,7 @@ export const Global: React.FC = () => {
 
   //#region Functions
   const postLoginChecks = useCallback(
-    (userProfile: UserProfile) => {
+    (userProfile: UserProfile, skipSettings = false) => {
       const isUserProfileCompleted = (userProfile: UserProfile) => {
         if (!userProfile) return null;
 
@@ -111,30 +135,31 @@ export const Global: React.FC = () => {
 
       if (!userProfile) return;
 
-      if (!userProfile.yoIDOnboarded) {
-        // show onboarding dialog if not onboarded
-        setOnboardingDialogVisible(true);
-      } else if (!isUserProfileCompleted(userProfile)) {
-        // show update profile dialog if profile completed
+      if (!isUserProfileCompleted(userProfile)) {
+        // show update profile dialog
         setUpdateProfileDialogVisible(true);
+      } else if (!userProfile.yoIDOnboarded) {
+        // show onboarding dialog
+        setOnboardingDialogVisible(true);
       } else if (
+        !skipSettings &&
         !userProfile?.settings?.items.find(
           (x) => x.key === SETTING_USER_SETTINGS_CONFIGURED,
         )?.value
-      )
-        // show toast if settings not configured
-        toast.warn(
-          "Your application settings have not be configured. Please click here to configure them now.",
-          {
-            onClick: () => {
-              router.push("/user/settings").then(() => null);
-            },
-            autoClose: false,
-            closeOnClick: true,
-          },
-        );
+      ) {
+        // show settings dialog
+        setSettingsDialogVisible(true);
+      } else if (!userProfile?.photoURL) {
+        // show photo upload dialog
+        setPhotoUploadDialogVisible(true);
+      }
     },
-    [router, setOnboardingDialogVisible, setUpdateProfileDialogVisible],
+    [
+      setOnboardingDialogVisible,
+      setUpdateProfileDialogVisible,
+      setSettingsDialogVisible,
+      setPhotoUploadDialogVisible,
+    ],
   );
   //#endregion Functions
 
@@ -323,9 +348,6 @@ export const Global: React.FC = () => {
       // update ATOM
       setUserProfile(userProfile);
 
-      // toast
-      toast.success("Yo-ID activated successfully", { autoClose: 5000 });
-
       // hide popup
       setOnboardingDialogVisible(false);
       setIsYoIDOnboardingLoading(false);
@@ -342,10 +364,106 @@ export const Global: React.FC = () => {
       });
     }
   }, [setUserProfile, setOnboardingDialogVisible, postLoginChecks]);
+
+  const handleSettingsSubmit = useCallback(
+    async (updatedSettings: SettingsRequest) => {
+      // ensure that the USER_SETTINGS_CONFIGURED is always set
+      // this prevents the "please update your settings" popup from showing again (Global.tsx)
+      updatedSettings.settings[SETTING_USER_SETTINGS_CONFIGURED] = true;
+
+      // call api
+      await updateSettings(updatedSettings);
+
+      // 📊 GOOGLE ANALYTICS: track event
+      trackGAEvent(
+        GA_CATEGORY_USER,
+        GA_ACTION_APP_SETTING_UPDATE,
+        JSON.stringify(updatedSettings),
+      );
+
+      // invalidate query
+      queryClient.invalidateQueries({
+        queryKey: ["user", "settings"],
+      });
+
+      // hide popup
+      setSettingsDialogVisible(false);
+
+      // perform login checks (again)
+      postLoginChecks(userProfile!, true);
+    },
+    [queryClient, userProfile, setSettingsDialogVisible, postLoginChecks],
+  );
   //#endregion Event Handlers
 
   return (
     <>
+      {/* UPDATE PROFILE DIALOG */}
+      <ReactModal
+        isOpen={updateProfileDialogVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setUpdateProfileDialogVisible(false);
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden overflow-y-auto bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:w-[500px] md:rounded-3xl`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+          <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
+          <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
+            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-purple-dark bg-white shadow-lg">
+              <Image
+                src={iconBell}
+                alt="Icon Bell"
+                width={28}
+                height={28}
+                sizes="100vw"
+                priority={true}
+                style={{ width: "28px", height: "28px" }}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <h4 className="text-2xl font-semibold tracking-wide">
+                Complete your profile
+              </h4>
+              <h5 className="text-sm font-semibold tracking-widest">
+                Information about you
+              </h5>
+            </div>
+
+            <p className="text-sm text-gray-dark">
+              Please take a moment to update your profile to ensure your details
+              are current. Your information will be used to issue credentials in
+              your Yo-ID wallet.
+            </p>
+
+            <div className="w-full">
+              <UserProfileForm
+                userProfile={userProfile}
+                onSubmit={(updatedUserProfile) => {
+                  // hide popup
+                  setUpdateProfileDialogVisible(false);
+
+                  // perform login checks (again)
+                  postLoginChecks(updatedUserProfile);
+                }}
+                filterOptions={[
+                  UserProfileFilterOptions.FIRSTNAME,
+                  UserProfileFilterOptions.SURNAME,
+                  UserProfileFilterOptions.DISPLAYNAME,
+                  UserProfileFilterOptions.COUNTRY,
+                  UserProfileFilterOptions.EDUCATION,
+                  UserProfileFilterOptions.GENDER,
+                  UserProfileFilterOptions.DATEOFBIRTH,
+                ]}
+              />
+            </div>
+          </div>
+        </div>
+      </ReactModal>
+
       {/* YoID ONBOARDING DIALOG */}
       <ReactModal
         isOpen={onboardingDialogVisible}
@@ -391,24 +509,32 @@ export const Global: React.FC = () => {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <h5 className="text-sm font-semibold tracking-widest">
-                EXCITING UPDATE
-              </h5>
               <h4 className="text-2xl font-semibold tracking-wide">
-                Connected with one profile!
+                Activate your Yo-ID
               </h4>
+              <h5 className="text-sm font-semibold tracking-widest">
+                Your identity for the Yoma ecosystem.
+              </h5>
             </div>
-            <p className="text-gray-dark">
-              Introducing Yo-ID, your Learning Identity Passport. Log in easily
-              across all Yoma Partners while we keep your info safe and secure.
-            </p>
-            <p className="text-gray-dark">
-              Please note to use your passport, and receive credentials, you
-              will need to activate your Yo-ID.{" "}
-              <br className="hidden md:inline" /> Your passport will be
-              populated with your Yo-ID and previously completed opportunities
-              within 24 hours.
-            </p>
+
+            <div className="flex max-w-xs flex-col gap-4 text-start text-sm text-gray-dark">
+              <div>
+                This will issue you a Yo-ID credential, viewable in your
+                passport.
+              </div>
+              <div>
+                We use the blockchain to anchor your achievements on the system.
+              </div>
+              <div>
+                This will in the future unlock verifiabilty behind your record
+                on Yoma.
+              </div>
+              <div>
+                So work hard, complete opportunities and build up your
+                verifiable impact and learning record.
+              </div>
+            </div>
+
             <div className="mt-4 flex flex-grow flex-col items-center gap-6">
               <button
                 type="button"
@@ -430,6 +556,137 @@ export const Global: React.FC = () => {
                 Find out more
               </Link>
             </div>
+          </div>
+        </div>
+      </ReactModal>
+
+      {/* SETTINGS DIALOG */}
+      <ReactModal
+        isOpen={settingsDialogVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setSettingsDialogVisible(false);
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden overflow-y-auto bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:w-[500px] md:rounded-3xl`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+          <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
+          <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 md:px-12">
+            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-purple-dark bg-white shadow-lg">
+              <Image
+                src={iconBell}
+                alt="Icon Bell"
+                width={28}
+                height={28}
+                sizes="100vw"
+                priority={true}
+                style={{ width: "28px", height: "28px" }}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2 text-center">
+              <h4 className="text-2xl font-semibold tracking-wide">
+                Choose your settings
+              </h4>
+              <h5 className="text-sm font-semibold tracking-widest">
+                Notifications and Privacy
+              </h5>
+            </div>
+
+            {/* <p className="text-sm text-gray-dark">
+              Please take a moment to update your profile to ensure your details
+              are current. Your information will be used to issue credentials in
+              your Yo-ID wallet.
+            </p> */}
+
+            <div className="w-full">
+              <Suspense isLoading={settingsIsLoading} error={settingsError}>
+                <SettingsForm
+                  data={settingsData}
+                  onSubmit={handleSettingsSubmit}
+                />
+              </Suspense>
+            </div>
+
+            {/* skip for now link */}
+            <button
+              type="button"
+              className="text-sm text-black underline hover:text-green"
+              onClick={() => {
+                setSettingsDialogVisible(false);
+                postLoginChecks(userProfile!, true);
+              }}
+            >
+              Skip for now
+            </button>
+          </div>
+        </div>
+      </ReactModal>
+
+      {/* UPLOAD PHOTO DIALOG */}
+      <ReactModal
+        isOpen={photoUploadDialogVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setPhotoUploadDialogVisible(false);
+        }}
+        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden overflow-y-auto bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:w-[500px] md:rounded-3xl`}
+        portalClassName={"fixed z-40"}
+        overlayClassName="fixed inset-0 bg-overlay"
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+          <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
+          <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
+            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-purple-dark bg-white shadow-lg">
+              <Image
+                src={iconBell}
+                alt="Icon Bell"
+                width={28}
+                height={28}
+                sizes="100vw"
+                priority={true}
+                style={{ width: "28px", height: "28px" }}
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <h4 className="text-2xl font-semibold tracking-wide">
+                Picture time!
+              </h4>
+              <h5 className="text-sm font-semibold tracking-widest">
+                Choose a profile picture
+              </h5>
+            </div>
+
+            {/* <p className="text-sm text-gray-dark">
+              Please take a moment to update your profile to ensure your details
+              are current. Your information will be used to issue credentials in
+              your Yo-ID wallet.
+            </p> */}
+
+            <div className="w-full">
+              <UserProfileForm
+                userProfile={userProfile}
+                onSubmit={() => {
+                  // hide popup
+                  setPhotoUploadDialogVisible(false);
+                }}
+                filterOptions={[UserProfileFilterOptions.LOGO]}
+              />
+            </div>
+
+            {/* skip for now link */}
+            <button
+              type="button"
+              className="text-sm text-black underline hover:text-green"
+              onClick={() => {
+                setPhotoUploadDialogVisible(false);
+              }}
+            >
+              Skip for now
+            </button>
           </div>
         </div>
       </ReactModal>
@@ -464,71 +721,6 @@ export const Global: React.FC = () => {
 
             <div className="mt-8 flex flex-grow gap-4">
               <SignInButton />
-            </div>
-          </div>
-        </div>
-      </ReactModal>
-
-      {/* UPDATE PROFILE DIALOG */}
-      <ReactModal
-        isOpen={updateProfileDialogVisible}
-        shouldCloseOnOverlayClick={false}
-        onRequestClose={() => {
-          setUpdateProfileDialogVisible(false);
-        }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden overflow-y-auto bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:w-[500px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
-      >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
-          <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
-          <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-purple-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                height={28}
-                sizes="100vw"
-                priority={true}
-                style={{ width: "28px", height: "28px" }}
-              />
-            </div>
-
-            <div className="flex flex-col gap-2">
-              <h5 className="text-sm font-semibold tracking-widest">
-                PROFILE UPDATE
-              </h5>
-              <h4 className="text-2xl font-semibold tracking-wide">
-                Update your Yo-ID
-              </h4>
-            </div>
-
-            <p className="text-sm text-gray-dark">
-              We want to make sure your details are up to date. Please take a
-              moment to review and update your profile.
-            </p>
-
-            <div className="max-w-[300px] md:max-w-md">
-              <UserProfileForm
-                userProfile={userProfile}
-                onSubmit={(updatedUserProfile) => {
-                  // hide popup
-                  setUpdateProfileDialogVisible(false);
-
-                  // perform login checks (again)
-                  postLoginChecks(updatedUserProfile);
-                }}
-                filterOptions={[
-                  UserProfileFilterOptions.FIRSTNAME,
-                  UserProfileFilterOptions.SURNAME,
-                  UserProfileFilterOptions.DISPLAYNAME,
-                  UserProfileFilterOptions.COUNTRY,
-                  UserProfileFilterOptions.EDUCATION,
-                  UserProfileFilterOptions.GENDER,
-                  UserProfileFilterOptions.DATEOFBIRTH,
-                ]}
-              />
             </div>
           </div>
         </div>

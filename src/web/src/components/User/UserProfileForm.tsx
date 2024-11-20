@@ -27,6 +27,8 @@ import { Loading } from "../Status/Loading";
 import FormMessage, { FormMessageType } from "../Common/FormMessage";
 import { validateEmail } from "~/lib/validate";
 import { handleUserSignOut } from "~/lib/authUtils";
+import FormField from "../Common/FormField";
+import FormInput from "../Common/FormInput";
 
 export enum UserProfileFilterOptions {
   EMAIL = "email",
@@ -105,7 +107,7 @@ export const UserProfileForm: React.FC<{
     ),
     firstName: zod.string().min(1, "First name is required."),
     surname: zod.string().min(1, "Last name is required."),
-    displayName: zod.string().min(1, "Display name is required"),
+    displayName: zod.string().optional(),
     // phoneNumber: zod
     //   .string()
     //   .min(1, "Phone number is required.")
@@ -133,7 +135,7 @@ export const UserProfileForm: React.FC<{
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { register, handleSubmit, formState, reset, watch } = form;
+  const { register, handleSubmit, formState, reset, watch, trigger } = form;
   const watchEmail = watch("email");
   const watchUpdatePhoneNumber = watch("updatePhoneNumber");
   const watchResetPassword = watch("resetPassword");
@@ -169,8 +171,9 @@ export const UserProfileForm: React.FC<{
     // setTimeout is needed to prevent the form from being reset before the default values are set
     setTimeout(() => {
       reset(formData);
+      trigger();
     }, 100);
-  }, [reset, formData]);
+  }, [reset, trigger, formData]);
 
   const { data: session, update } = useSession();
 
@@ -229,10 +232,10 @@ export const UserProfileForm: React.FC<{
           });
         }
 
-        toast("Your profile has been updated", {
-          type: "success",
-          toastId: "patchUserProfile",
-        });
+        // toast("Your profile has been updated", {
+        //   type: "success",
+        //   toastId: "patchUserProfile",
+        // });
 
         if (onSubmit) onSubmit(userProfile);
       } catch (error) {
@@ -272,25 +275,25 @@ export const UserProfileForm: React.FC<{
         className="flex flex-col gap-4"
       >
         {filterOptions?.includes(UserProfileFilterOptions.EMAIL) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">Email</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full rounded-md !border-gray !bg-gray-light focus:border-gray focus:outline-none"
-              {...register("email")}
-            />
+          <>
+            <FormField
+              label="Email"
+              showWarningIcon={!!formState.errors.email?.message}
+              showError={
+                !!formState.touchedFields.email || formState.isSubmitted
+              }
+              error={formState.errors.email?.message?.toString()}
+            >
+              <FormInput
+                inputProps={{
+                  type: "text",
+                  className:
+                    "input input-bordered w-full rounded-md !border-gray !bg-gray-light focus:border-gray focus:outline-none",
+                  ...register("email"),
+                }}
+              />
+            </FormField>
 
-            {formState.errors.email && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.email.message}`}
-                </span>
-              </label>
-            )}
-
-            {/* show message if email is different from the current email */}
             {(watchEmail ?? "").toLowerCase() !==
               (userProfile?.email ?? "") && (
               <div className="mt-2">
@@ -300,46 +303,51 @@ export const UserProfileForm: React.FC<{
                 </FormMessage>
               </div>
             )}
-          </div>
+          </>
         )}
 
         {filterOptions?.includes(UserProfileFilterOptions.PHONENUMBER) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">Phone Number</span>
-            </label>
-
+          <>
             {watchPhoneNumber && (
-              <>
-                <input
-                  type="text"
-                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray"
-                  {...register("phoneNumber")}
-                  disabled={true}
+              <FormField
+                label="Phone Number"
+                showWarningIcon={!!formState.errors.phoneNumber?.message}
+                showError={
+                  !!formState.touchedFields.phoneNumber || formState.isSubmitted
+                }
+                error={formState.errors.phoneNumber?.message?.toString()}
+              >
+                <FormInput
+                  inputProps={{
+                    type: "text",
+                    className:
+                      "input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray",
+                    ...register("phoneNumber"),
+                    disabled: true,
+                  }}
                 />
-                {formState.errors.phoneNumber && (
-                  <label className="label font-bold">
-                    <span className="label-text-alt italic text-red-500">
-                      {`${formState.errors.phoneNumber.message}`}
-                    </span>
-                  </label>
-                )}
-              </>
+              </FormField>
             )}
 
-            {/* allow update phone number if no phone number specified */}
-            <label
-              htmlFor="updatePhoneNumber"
-              className="label w-full cursor-pointer justify-normal"
+            <FormField
+              label=""
+              showWarningIcon={false}
+              showError={false}
+              error=""
             >
-              <input
-                {...register(`updatePhoneNumber`)}
-                type="checkbox"
-                id="updatePhoneNumber"
-                className="checkbox-primary checkbox"
-              />
-              <span className="label-text ml-4">Update Phone Number</span>
-            </label>
+              <label
+                htmlFor="updatePhoneNumber"
+                className="label w-full cursor-pointer justify-normal"
+              >
+                <input
+                  {...register(`updatePhoneNumber`)}
+                  type="checkbox"
+                  id="updatePhoneNumber"
+                  className="checkbox-primary checkbox"
+                />
+                <span className="label-text ml-4">Update Phone Number</span>
+              </label>
+            </FormField>
 
             {watchUpdatePhoneNumber && (
               <FormMessage messageType={FormMessageType.Warning}>
@@ -347,35 +355,32 @@ export const UserProfileForm: React.FC<{
                 your phone number.
               </FormMessage>
             )}
-          </div>
+          </>
         )}
 
         {filterOptions?.includes(UserProfileFilterOptions.RESETPASSWORD) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">Password</span>
-            </label>
-
-            <label
-              htmlFor="resetPassword"
-              className="label w-full cursor-pointer justify-normal"
+          <>
+            <FormField
+              label="Password"
+              showWarningIcon={!!formState.errors.resetPassword?.message}
+              showError={
+                !!formState.touchedFields.resetPassword || formState.isSubmitted
+              }
+              error={formState.errors.resetPassword?.message?.toString()}
             >
-              <input
-                {...register(`resetPassword`)}
-                type="checkbox"
-                id="resetPassword"
-                className="checkbox-primary checkbox"
-              />
-              <span className="label-text ml-4">Reset Password</span>
-            </label>
-
-            {formState.errors.resetPassword && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.resetPassword.message}`}
-                </span>
+              <label
+                htmlFor="resetPassword"
+                className="label w-full cursor-pointer justify-normal"
+              >
+                <input
+                  {...register(`resetPassword`)}
+                  type="checkbox"
+                  id="resetPassword"
+                  className="checkbox-primary checkbox"
+                />
+                <span className="label-text ml-4">Reset Password</span>
               </label>
-            )}
+            </FormField>
 
             {watchResetPassword && (
               <FormMessage messageType={FormMessageType.Warning}>
@@ -386,95 +391,78 @@ export const UserProfileForm: React.FC<{
                     : "Changing your password will require you to sign in again."}
               </FormMessage>
             )}
-          </div>
+          </>
         )}
 
         {filterOptions?.includes(UserProfileFilterOptions.FIRSTNAME) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">First name</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
-              {...register("firstName")}
+          <FormField
+            label="First name"
+            showWarningIcon={!!formState.errors.firstName?.message}
+            showError={
+              !!formState.touchedFields.firstName || formState.isSubmitted
+            }
+            error={formState.errors.firstName?.message?.toString()}
+          >
+            <FormInput
+              inputProps={{
+                type: "text",
+                className:
+                  "input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none",
+                ...register("firstName"),
+              }}
             />
-            {formState.errors.firstName && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.firstName.message}`}
-                </span>
-              </label>
-            )}
-          </div>
+          </FormField>
         )}
 
         {filterOptions?.includes(UserProfileFilterOptions.SURNAME) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">Last name</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
-              {...register("surname")}
+          <FormField
+            label="Last name"
+            showWarningIcon={!!formState.errors.surname?.message}
+            showError={
+              !!formState.touchedFields.surname || formState.isSubmitted
+            }
+            error={formState.errors.surname?.message?.toString()}
+          >
+            <FormInput
+              inputProps={{
+                type: "text",
+                className:
+                  "input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none",
+                ...register("surname"),
+              }}
             />
-            {formState.errors.surname && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.surname.message}`}
-                </span>
-              </label>
-            )}
-          </div>
+          </FormField>
         )}
 
         {filterOptions?.includes(UserProfileFilterOptions.DISPLAYNAME) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">Display name</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
-              {...register("displayName")}
+          <FormField
+            label="Display name"
+            showWarningIcon={!!formState.errors.displayName?.message}
+            showError={
+              !!formState.touchedFields.displayName || formState.isSubmitted
+            }
+            error={formState.errors.displayName?.message?.toString()}
+          >
+            <FormInput
+              inputProps={{
+                type: "text",
+                className:
+                  "input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none",
+                ...register("displayName"),
+              }}
             />
-            {formState.errors.displayName && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.displayName.message}`}
-                </span>
-              </label>
-            )}
-          </div>
-        )}
-
-        {filterOptions?.includes(UserProfileFilterOptions.PHONENUMBER) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">Phone Number</span>
-            </label>
-            <input
-              type="text"
-              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray"
-              {...register("phoneNumber")}
-              disabled={true}
-            />
-            {formState.errors.phoneNumber && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.phoneNumber.message}`}
-                </span>
-              </label>
-            )}
-          </div>
+          </FormField>
         )}
 
         {filterOptions?.includes(UserProfileFilterOptions.COUNTRY) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">Country</span>
-            </label>
+          <FormField
+            label="Country"
+            showWarningIcon={!!formState.errors.countryId?.message}
+            showError={
+              !!formState.touchedFields.countryId || formState.isSubmitted
+            }
+            error={formState.errors.countryId?.message?.toString()}
+          >
             <select
               className="select select-bordered border-gray focus:border-gray focus:outline-none"
               {...register("countryId")}
@@ -486,21 +474,18 @@ export const UserProfileForm: React.FC<{
                 </option>
               ))}
             </select>
-            {formState.errors.countryId && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.countryId.message}`}
-                </span>
-              </label>
-            )}
-          </div>
+          </FormField>
         )}
 
         {filterOptions?.includes(UserProfileFilterOptions.EDUCATION) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">Education</span>
-            </label>
+          <FormField
+            label="Education"
+            showWarningIcon={!!formState.errors.educationId?.message}
+            showError={
+              !!formState.touchedFields.educationId || formState.isSubmitted
+            }
+            error={formState.errors.educationId?.message?.toString()}
+          >
             <select
               className="select select-bordered border-gray focus:border-gray focus:outline-none"
               {...register("educationId")}
@@ -512,21 +497,18 @@ export const UserProfileForm: React.FC<{
                 </option>
               ))}
             </select>
-            {formState.errors.educationId && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.educationId.message}`}
-                </span>
-              </label>
-            )}
-          </div>
+          </FormField>
         )}
 
         {filterOptions?.includes(UserProfileFilterOptions.GENDER) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">Gender</span>
-            </label>
+          <FormField
+            label="Gender"
+            showWarningIcon={!!formState.errors.genderId?.message}
+            showError={
+              !!formState.touchedFields.genderId || formState.isSubmitted
+            }
+            error={formState.errors.genderId?.message?.toString()}
+          >
             <select
               className="select select-bordered border-gray focus:border-gray focus:outline-none"
               {...register("genderId")}
@@ -538,43 +520,31 @@ export const UserProfileForm: React.FC<{
                 </option>
               ))}
             </select>
-            {formState.errors.genderId && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.genderId.message}`}
-                </span>
-              </label>
-            )}
-          </div>
+          </FormField>
         )}
 
         {filterOptions?.includes(UserProfileFilterOptions.DATEOFBIRTH) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">Date of Birth</span>
-            </label>
-            <input
-              type="date"
-              className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
-              {...register("dateOfBirth")}
+          <FormField
+            label="Date of Birth"
+            showWarningIcon={!!formState.errors.dateOfBirth?.message}
+            showError={
+              !!formState.touchedFields.dateOfBirth || formState.isSubmitted
+            }
+            error={formState.errors.dateOfBirth?.message?.toString()}
+          >
+            <FormInput
+              inputProps={{
+                type: "date",
+                className:
+                  "input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none",
+                ...register("dateOfBirth"),
+              }}
             />
-            {formState.errors.dateOfBirth && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {`${formState.errors.dateOfBirth.message}`}
-                </span>
-              </label>
-            )}
-          </div>
+          </FormField>
         )}
 
         {filterOptions?.includes(UserProfileFilterOptions.LOGO) && (
-          <div className="form-control">
-            <label className="label font-bold">
-              <span className="label-text">Picture</span>
-            </label>
-
-            {/* upload image */}
+          <FormField label="Picture">
             <AvatarUpload
               onUploadComplete={(files) => {
                 setLogoFiles(files);
@@ -589,7 +559,7 @@ export const UserProfileForm: React.FC<{
                   : false
               }
             />
-          </div>
+          </FormField>
         )}
 
         {/* BUTTONS */}
