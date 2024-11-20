@@ -4,6 +4,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import router from "next/router";
 import { type ReactElement } from "react";
+import { toast } from "react-toastify";
 import {
   getCountries,
   getEducations,
@@ -97,6 +98,12 @@ const MyProfile: NextPageWithLayout<{
           {!isLoading && (
             <UserProfileForm
               userProfile={userProfile}
+              onSubmit={() => {
+                toast("Your profile has been updated", {
+                  type: "success",
+                  toastId: "patchUserProfile",
+                });
+              }}
               onCancel={handleCancel}
               filterOptions={[
                 UserProfileFilterOptions.EMAIL,
