@@ -11,6 +11,8 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems, bool includeComputed);
 
+    Models.Opportunity? GetByExternalIdOrNull(string externalId, bool includeChildItems, bool includeComputed);
+
     List<Models.Opportunity> Contains(string value, bool includeChildItems, bool includeComputed);
 
     OpportunitySearchResultsCriteria SearchCriteriaOpportunities(OpportunitySearchFilterCriteria filter, bool ensureOrganizationAuthorization);
@@ -44,6 +46,8 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
     Task<OpportunityAllocateRewardResponse> AllocateRewards(Guid id, bool ensureOrganizationAuthorization);
 
     Task<Models.Opportunity> UpdateFeatured(Guid id, bool featured);
+
+    Task<Models.Opportunity> UpdateHidden(Guid id, bool hidden, bool ensureOrganizationAuthorization);
 
     Task<Models.Opportunity> UpdateStatus(Guid id, Status status, bool ensureOrganizationAuthorization);
 

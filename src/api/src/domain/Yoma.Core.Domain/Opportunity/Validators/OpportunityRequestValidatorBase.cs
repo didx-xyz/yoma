@@ -135,6 +135,18 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       RuleFor(x => x.VerificationTypes)
           .Must(types => types == null || types.All(type => VerificationTypeExists(type.Type)))
           .WithMessage("Verification types must exist if specified.");
+
+      //ensure that if an opportunity is shared with partners, it cannot be flagged as hidden.
+      //this allows 'Hidden' to be 'null' or 'false' when 'ShareWithPartners' is true.
+      RuleFor(opportunity => opportunity.Hidden)
+          .Must((opportunity, hidden) => hidden != true || opportunity.ShareWithPartners != true)
+          .WithMessage("An opportunity shared with partners cannot be flagged as hidden.");
+
+      //ensure that if an opportunity is flagged as hidden, it cannot be shared with partners.
+      //this allows 'ShareWithPartners' to be 'null' or 'false' when 'Hidden' is true.
+      RuleFor(opportunity => opportunity.ShareWithPartners)
+          .Must((opportunity, shareWithPartners) => shareWithPartners != true || opportunity.Hidden != true)
+          .WithMessage("A hidden opportunity cannot be shared with partners.");
     }
     #endregion
 

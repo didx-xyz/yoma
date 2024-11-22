@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.Opportunity.Models
 {
   public abstract class OpportunityRequestBase
@@ -49,6 +51,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public Guid? EngagementTypeId { get; set; }
 
     public bool? ShareWithPartners { get; set; }
+
+    public bool? Hidden { get; set; }
+
+    [JsonIgnore]
+    internal string? ExternalId { get; set; }
 
     public List<Guid> Categories { get; set; }
 

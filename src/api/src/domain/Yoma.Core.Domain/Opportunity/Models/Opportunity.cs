@@ -119,6 +119,11 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public bool? ShareWithPartners { get; set; }
 
+    public bool? Hidden { get; set; }
+
+    [JsonIgnore]
+    public string? ExternalId { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
 
     public Guid CreatedByUserId { get; set; }

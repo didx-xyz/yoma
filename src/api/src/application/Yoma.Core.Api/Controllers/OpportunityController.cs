@@ -436,6 +436,21 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Update opportunity hidden state")]
+    [HttpPatch("{id}/hidden/{hidden}")]
+    [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public async Task<IActionResult> UpdateHidden([FromRoute] Guid id, [FromRoute] bool hidden)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UpdateHidden));
+
+      var result = await _opportunityService.UpdateHidden(id, hidden, true);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UpdateHidden));
+
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
     [SwaggerOperation(Summary = "Update opportunity featured state (Admin role required)")]
     [HttpPatch("{id}/featured/{featured}")]
     [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]

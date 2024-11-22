@@ -106,6 +106,9 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
               continue;
             }
 
+            if (opportunity.Hidden == true)
+              throw new InvalidOperationException($"Invalid state detected: Entity {EntityType.Opportunity} with id {entityId} is hidden but has sharing enabled");
+
             switch (partner)
             {
               case Partner.SAYouth:
