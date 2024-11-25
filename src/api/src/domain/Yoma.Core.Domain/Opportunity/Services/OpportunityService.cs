@@ -413,7 +413,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           Categories = [item.Id],
           PublishedStates = publishedStates,
-          TotalCountOnly = true
+          TotalCountOnly = true,
+          ExcludeHidden = true
         };
 
         item.Count = Search(filter, false).TotalCount;
