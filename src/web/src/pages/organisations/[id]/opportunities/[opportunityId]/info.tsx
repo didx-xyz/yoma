@@ -4,65 +4,70 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import axios, { type AxiosError } from "axios";
+import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import { type ParsedUrlQuery } from "querystring";
-import { useState, type ReactElement, useCallback } from "react";
-import { type OpportunityInfo, Status } from "~/api/models/opportunity";
-import {
-  getOpportunityInfoByIdAdminOrgAdminOrUser,
-  updateFeatured,
-  updateOpportunityStatus,
-} from "~/api/services/opportunities";
-import MainLayout from "~/components/Layout/Main";
-import { authOptions, type User } from "~/server/auth";
-import { PageBackground } from "~/components/PageBackground";
+import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
+import iconClock from "public/images/icon-clock.svg";
+import iconDifficulty from "public/images/icon-difficulty.svg";
+import iconLanguage from "public/images/icon-language.svg";
+import iconLocation from "public/images/icon-location.svg";
+import iconSkills from "public/images/icon-skills.svg";
+import iconTopics from "public/images/icon-topics.svg";
+import { type ParsedUrlQuery } from "querystring";
+import { useCallback, useState, type ReactElement } from "react";
+import {
+  FaClock,
+  FaExclamation,
+  FaEye,
+  FaEyeSlash,
+  FaPencilAlt,
+  FaTrash,
+} from "react-icons/fa";
 import {
   IoIosSettings,
   IoMdArrowRoundBack,
   IoMdPerson,
-  IoMdPause,
-  IoMdPlay,
   IoMdWarning,
 } from "react-icons/io";
-import type { NextPageWithLayout } from "~/pages/_app";
 import ReactModal from "react-modal";
-import { FaClock, FaExclamation, FaPencilAlt, FaTrash } from "react-icons/fa";
-import Image from "next/image";
-import iconClock from "public/images/icon-clock.svg";
-import iconDifficulty from "public/images/icon-difficulty.svg";
-import iconLanguage from "public/images/icon-language.svg";
-import iconTopics from "public/images/icon-topics.svg";
-import iconSkills from "public/images/icon-skills.svg";
-import iconZlto from "public/images/icon-zlto.svg";
-import iconLocation from "public/images/icon-location.svg";
+import Moment from "react-moment";
 import { toast } from "react-toastify";
+import { Status, type OpportunityInfo } from "~/api/models/opportunity";
+import {
+  getOpportunityInfoByIdAdminOrgAdminOrUser,
+  updateFeatured,
+  updateOpportunityHidden,
+  updateOpportunityStatus,
+} from "~/api/services/opportunities";
+import { AvatarImage } from "~/components/AvatarImage";
+import MainLayout from "~/components/Layout/Main";
+import OrgAdminBadges from "~/components/Opportunity/Badges/OrgAdminBadges";
+import { PageBackground } from "~/components/PageBackground";
+import { Editor } from "~/components/RichText/Editor";
 import { ApiErrors } from "~/components/Status/ApiErrors";
-import { type AxiosError } from "axios";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { Loading } from "~/components/Status/Loading";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_UPDATE,
   GA_CATEGORY_OPPORTUNITY,
   ROLE_ADMIN,
 } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
-import { useAtomValue } from "jotai";
-import { currentOrganisationInactiveAtom } from "~/lib/store";
-import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { trackGAEvent } from "~/lib/google-analytics";
-import Moment from "react-moment";
-import { useRouter } from "next/router";
+import { config } from "~/lib/react-query-config";
+import { currentOrganisationInactiveAtom } from "~/lib/store";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import { AvatarImage } from "~/components/AvatarImage";
-import axios from "axios";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import { Editor } from "~/components/RichText/Editor";
+import type { NextPageWithLayout } from "~/pages/_app";
+import { authOptions, type User } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -159,6 +164,7 @@ const OpportunityDetails: NextPageWithLayout<{
   const updateStatus = useCallback(
     async (status: Status) => {
       setManageOpportunityMenuVisible(false);
+
       // confirm dialog
       const result = await modalContext.showConfirmation(
         "",
@@ -215,6 +221,76 @@ const OpportunityDetails: NextPageWithLayout<{
         });
 
         toast.success("Opportunity status updated");
+      } catch (error) {
+        toast(<ApiErrors error={error as AxiosError} />, {
+          type: "error",
+          toastId: "opportunity",
+          autoClose: false,
+          icon: false,
+        });
+      }
+      setIsLoading(false);
+
+      return;
+    },
+    [
+      id,
+      opportunityId,
+      queryClient,
+      setManageOpportunityMenuVisible,
+      modalContext,
+    ],
+  );
+
+  const updateHidden = useCallback(
+    async (hidden: boolean) => {
+      setManageOpportunityMenuVisible(false);
+
+      // confirm dialog
+      const result = await modalContext.showConfirmation(
+        "",
+        <div
+          key="confirm-dialog-content"
+          className="text-gray-500 flex h-full flex-col space-y-2"
+        >
+          <div className="flex flex-row items-center gap-2">
+            <IoMdWarning className="h-6 w-6 text-warning" />
+            <p className="text-lg">Confirm</p>
+          </div>
+
+          <div>
+            <p className="text-sm leading-6">
+              {hidden && <>Are you sure you want to hide this opportunity?</>}
+              {!hidden && <>Are you sure you want to show this opportunity?</>}
+            </p>
+          </div>
+        </div>,
+      );
+      if (!result) return;
+
+      setIsLoading(true);
+
+      try {
+        // call api
+        await updateOpportunityHidden(opportunityId, hidden);
+
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_OPPORTUNITY,
+          GA_ACTION_OPPORTUNITY_UPDATE,
+          `Opportunity Hidden Changed to ${hidden} for Opportunity ID: ${opportunityId}`,
+        );
+
+        // invalidate cache
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunityInfo", opportunityId],
+        });
+        //NB: this is the query on the opportunities page
+        await queryClient.invalidateQueries({
+          queryKey: ["opportunities", id],
+        });
+
+        toast.success("Opportunity updated");
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -356,7 +432,6 @@ const OpportunityDetails: NextPageWithLayout<{
                   Edit
                 </Link>
               )}
-
               {/* if active or expired, then org admins can make it inactive
                   if deleted, admins can make it inactive */}
               {(opportunity?.status == "Active" ||
@@ -371,7 +446,6 @@ const OpportunityDetails: NextPageWithLayout<{
                   Make Inactive
                 </button>
               )}
-
               {opportunity?.status == "Inactive" && (
                 <button
                   className="flex flex-row items-center text-gray-dark hover:brightness-50"
@@ -379,6 +453,26 @@ const OpportunityDetails: NextPageWithLayout<{
                 >
                   <FaClock className="mr-2 h-3 w-3" />
                   Make Active
+                </button>
+              )}
+
+              {/* hidden status */}
+              {opportunity?.hidden && (
+                <button
+                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                  onClick={() => updateHidden(false)}
+                >
+                  <FaEye className="mr-2 h-3 w-3" />
+                  Make Visible
+                </button>
+              )}
+              {!opportunity?.hidden && (
+                <button
+                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                  onClick={() => updateHidden(true)}
+                >
+                  <FaEyeSlash className="mr-2 h-3 w-3" />
+                  Make Hidden
                 </button>
               )}
 
@@ -406,7 +500,6 @@ const OpportunityDetails: NextPageWithLayout<{
                   )}
                 </>
               )}
-
               {/* TODO */}
               {/* <Link
                 href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
@@ -458,119 +551,9 @@ const OpportunityDetails: NextPageWithLayout<{
                 <h6 className="line-clamp-2 text-sm text-gray-dark">
                   By {opportunity.organizationName}
                 </h6>
-                <div className="flex flex-row flex-wrap gap-2 border-none font-bold text-green-dark">
-                  <div className="badge rounded-md border-none bg-green-light text-xs text-green">
-                    <Image
-                      src={iconClock}
-                      alt="Icon Clock"
-                      width={20}
-                      height={20}
-                      sizes="100vw"
-                      priority={true}
-                      style={{ width: "20px", height: "20px" }}
-                    />
 
-                    <span className="ml-1 text-xs">{`${
-                      opportunity.commitmentIntervalCount
-                    } ${opportunity.commitmentInterval}${
-                      opportunity.commitmentIntervalCount > 1 ? "s" : ""
-                    }`}</span>
-                  </div>
-
-                  <div className="badge border-none bg-blue-light text-xs text-blue">
-                    <IoMdPerson className="h-4 w-4" />
-
-                    <span className="ml-1">
-                      {opportunity?.participantCountCompleted} enrolled
-                    </span>
-                  </div>
-
-                  {opportunity?.type && (
-                    <>
-                      {opportunity?.type === "Learning" && (
-                        <div className="badge bg-[#E7E8F5] text-[#5F65B9]">
-                          📚 {opportunity.type}
-                        </div>
-                      )}
-                      {opportunity?.type === "Micro-task" && (
-                        <div className="badge bg-yellow-tint text-yellow">
-                          ⚡ {opportunity.type}
-                        </div>
-                      )}
-                      {opportunity?.type === "Event" && (
-                        <div className="badge bg-[#E7E8F5] text-[#5F65B9]">
-                          🎉 {opportunity.type}
-                        </div>
-                      )}
-                      {opportunity?.type === "Other" && (
-                        <div className="badge bg-[#fda6d3] text-[#ad3f7c]">
-                          💡 {opportunity.type}
-                        </div>
-                      )}
-                    </>
-                  )}
-
-                  {(opportunity.zltoReward ?? 0) > 0 && (
-                    <div className="badge whitespace-nowrap border-none bg-orange-light text-orange">
-                      <Image
-                        src={iconZlto}
-                        alt="Icon Zlto"
-                        width={16}
-                        height={16}
-                        sizes="100vw"
-                        priority={true}
-                        style={{ width: "16px", height: "16px" }}
-                      />
-                      <span className="ml-1 text-xs">
-                        {opportunity.zltoReward}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* STATUS BADGES */}
-                  {opportunity?.status == "Active" && (
-                    <>
-                      <div className="badge bg-blue-light text-blue ">
-                        Active
-                      </div>
-
-                      {new Date(opportunity.dateStart) > new Date() && (
-                        <div className="badge bg-yellow-tint text-yellow ">
-                          <IoMdPause />
-                          <p className="ml-1">Not started</p>
-                        </div>
-                      )}
-                      {new Date(opportunity.dateStart) < new Date() && (
-                        <div className="badge bg-purple-tint text-purple ">
-                          <IoMdPlay />
-                          <span className="ml-1 text-xs">Started</span>
-                        </div>
-                      )}
-                    </>
-                  )}
-                  {opportunity?.status == "Expired" && (
-                    <div className="badge bg-green-light text-yellow ">
-                      Expired
-                    </div>
-                  )}
-                  {opportunity?.status == "Inactive" && (
-                    <div className="badge bg-yellow-tint text-yellow ">
-                      Inactive
-                    </div>
-                  )}
-                  {opportunity?.status == "Deleted" && (
-                    <div className="badge bg-green-light text-red-400">
-                      Deleted
-                    </div>
-                  )}
-
-                  {/* ADMINS CAN SEE THE FEATURED FLAG */}
-                  {isAdmin && opportunity?.featured && (
-                    <div className="badge bg-blue-light text-blue ">
-                      Featured
-                    </div>
-                  )}
-                </div>
+                {/* BADGES */}
+                <OrgAdminBadges opportunity={opportunity} isAdmin={isAdmin} />
 
                 {/* DATES */}
                 <div className="flex flex-col text-sm text-gray-dark">

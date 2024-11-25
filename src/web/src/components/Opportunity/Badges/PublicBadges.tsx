@@ -11,13 +11,13 @@ import {
 import Moment from "react-moment";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import ZltoRewardBadge from "./Badges/ZltoRewardBadge";
+import ZltoRewardBadge from "./ZltoRewardBadge";
 
 interface BadgesProps {
   opportunity: OpportunityInfo | undefined;
 }
 
-const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
+const PublicBadges: React.FC<BadgesProps> = ({ opportunity }) => {
   // memo for spots left i.e participantLimit - participantCountTotal
   const spotsLeft = useMemo(() => {
     const participantLimit = opportunity?.participantLimit ?? 0;
@@ -158,4 +158,4 @@ const Badges: React.FC<BadgesProps> = ({ opportunity }) => {
   );
 };
 
-export default Badges;
+export default PublicBadges;

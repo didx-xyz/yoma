@@ -69,6 +69,7 @@ export interface Opportunity {
   languages: Language[] | null;
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
+  hidden: boolean;
 }
 
 export interface OpportunityInfo {
@@ -113,6 +114,7 @@ export interface OpportunityInfo {
   languages: Language[] | null;
   skills: Skill[] | null;
   verificationTypes: OpportunityVerificationType[] | null;
+  hidden: boolean;
 }
 
 export interface OpportunitySearchFilter extends OpportunitySearchFilterBase {
@@ -240,6 +242,7 @@ export interface OpportunityRequestBase {
   verificationTypes: OpportunityVerificationType[] | null;
   postAsActive: boolean;
   shareWithPartners: boolean;
+  hidden: boolean | null;
 }
 
 export interface OpportunityRequestVerificationType {

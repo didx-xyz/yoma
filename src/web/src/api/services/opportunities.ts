@@ -330,6 +330,19 @@ export const updateOpportunityStatus = async (
   return data;
 };
 
+export const updateOpportunityHidden = async (
+  opportunityId: string,
+  hidden: boolean,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<Opportunity> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.patch<Opportunity>(
+    `/opportunity/${opportunityId}/hidden/${hidden}`,
+  );
+  return data;
+};
+
 export const getOpportunitiesAdminExportToCSV = async (
   filter: OpportunitySearchFilterAdmin,
 
