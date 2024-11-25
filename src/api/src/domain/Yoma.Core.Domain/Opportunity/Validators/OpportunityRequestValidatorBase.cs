@@ -106,10 +106,17 @@ namespace Yoma.Core.Domain.Opportunity.Validators
           .GreaterThanOrEqualTo(model => model.DateStart)
           .When(model => model.DateEnd.HasValue)
           .WithMessage("{PropertyName} is earlier than the Start Date.");
+
       RuleFor(x => x.CredentialIssuanceEnabled)
           .Equal(false)
           .When(x => !x.VerificationEnabled)
           .WithMessage("Credential issuance cannot be enabled when verification is disabled.");
+
+      RuleFor(x => x.CredentialIssuanceEnabled)
+          .Equal(true)
+          .When(x => x.VerificationEnabled)
+          .WithMessage("Credential issuance is required when verification is enabled.");
+
       RuleFor(x => x.SSISchemaName)
           .NotEmpty()
           .When(x => x.CredentialIssuanceEnabled)
