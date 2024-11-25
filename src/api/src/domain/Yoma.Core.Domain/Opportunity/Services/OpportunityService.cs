@@ -1045,8 +1045,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (ensureOrganizationAuthorization)
         _organizationService.IsAdmin(request.OrganizationId, true);
 
-      if (request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
-        throw new ValidationException("The start date cannot be in the past, it can be today or later");
+      //[2024.11.25] backdated opportunities now allowed
+      //if (request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
+      //  throw new ValidationException("The start date cannot be in the past, it can be today or later");
 
       var existingByTitle = GetByTitleOrNull(request.Title, false, false);
       if (existingByTitle != null)
@@ -1193,8 +1194,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       AssertUpdatable(result);
 
-      if (!result.DateStart.Equals(request.DateStart) && request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
-        throw new ValidationException("The start date cannot be in the past. The start date has been updated and must be today or later");
+      //[2024.11.25] backdated opportunities now allowed
+      //if (!result.DateStart.Equals(request.DateStart) && request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
+      //  throw new ValidationException("The start date cannot be in the past. The start date has been updated and must be today or later");
 
       var existingByTitle = GetByTitleOrNull(request.Title, false, false);
       if (existingByTitle != null && result.Id != existingByTitle.Id)
