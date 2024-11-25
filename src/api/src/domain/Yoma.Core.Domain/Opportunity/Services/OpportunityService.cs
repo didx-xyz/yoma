@@ -217,6 +217,30 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
+    public Models.Opportunity? GetByExternalIdOrNull(string externalId, bool includeChildItems, bool includeComputed)
+    {
+      if (string.IsNullOrWhiteSpace(externalId))
+        throw new ArgumentNullException(nameof(externalId));
+      externalId = externalId.Trim();
+
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+      var result = _opportunityRepository.Query(includeChildItems).SingleOrDefault(o => !string.IsNullOrEmpty(o.ExternalId) && o.ExternalId.ToLower() == externalId.ToLower());
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+      if (result == null) return null;
+
+      if (includeComputed)
+      {
+        result.SetPublished();
+        result.OrganizationLogoURL = GetBlobObjectURL(result.OrganizationLogoStorageType, result.OrganizationLogoKey);
+        result.OrganizationZltoRewardBalance = result.OrganizationZltoRewardPool.HasValue ? result.OrganizationZltoRewardPool - (result.OrganizationZltoRewardCumulative ?? default) : null;
+        result.OrganizationYomaRewardBalance = result.OrganizationYomaRewardPool.HasValue ? result.OrganizationYomaRewardPool - (result.OrganizationYomaRewardCumulative ?? default) : null;
+        result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
+        result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
+      }
+
+      return result;
+    }
+
     public List<Models.Opportunity> Contains(string value, bool includeChildItems, bool includeComputed)
     {
       if (string.IsNullOrWhiteSpace(value))
@@ -348,6 +372,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var query = _opportunityCategoryRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
 
+      //exclude hidden
+      query = query.Where(o => !o.OpporunityHidden.HasValue || o.OpporunityHidden == false);
+
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
 
@@ -386,7 +413,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           Categories = [item.Id],
           PublishedStates = publishedStates,
-          TotalCountOnly = true
+          TotalCountOnly = true,
+          ExcludeHidden = true
         };
 
         item.Count = Search(filter, false).TotalCount;
@@ -417,6 +445,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var query = _opportunityCountryRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
+
+      //exclude hidden
+      query = query.Where(o => !o.OpporunityHidden.HasValue || o.OpporunityHidden == false);
 
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
@@ -490,6 +521,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var query = _opportunityLanguageRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
 
+      //exclude hidden
+      query = query.Where(o => !o.OpporunityHidden.HasValue || o.OpporunityHidden == false);
+
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
 
@@ -556,6 +590,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var query = _opportunityRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
 
+      //exclude hidden
+      query = query.Where(o => !o.Hidden.HasValue || o.Hidden == false);
+
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
 
@@ -612,6 +649,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var query = _opportunityRepository.Query().Where(o => o.OrganizationStatusId == organizationStatusActiveId);
+
+      //exclude hidden
+      query = query.Where(o => !o.Hidden.HasValue || o.Hidden == false);
 
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
@@ -682,6 +722,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
       var query = _opportunityRepository.Query().Where(o => o.ZltoReward.HasValue && o.OrganizationStatusId == organizationStatusActiveId);
+
+      //exclude hidden
+      query = query.Where(o => !o.Hidden.HasValue || o.Hidden == false);
 
       var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
@@ -922,6 +965,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (filter.ShareWithPartners == true)
         query = query.Where(o => o.ShareWithPartners == true);
 
+      //hidden
+      if (filter.ExcludeHidden)
+        query = query.Where(o => !o.Hidden.HasValue || o.Hidden == false);
+
       //valueContains (includes organizations, types, categories, opportunities and skills)
       if (!string.IsNullOrEmpty(filter.ValueContains))
       {
@@ -1005,12 +1052,20 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (existingByTitle != null)
         throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
 
+      if (!string.IsNullOrEmpty(request.ExternalId))
+      {
+        var existingByExternalId = GetByExternalIdOrNull(request.ExternalId, false, false);
+        if (existingByTitle != null)
+          throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists");
+      }
+
       var status = request.PostAsActive ? Status.Active : Status.Inactive;
       if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
       {
         if (request.PostAsActive)
           throw new ValidationException($"{nameof(Models.Opportunity)} has already ended and can not be posted as active");
         status = Status.Expired;
+        //allow an expired opportunity to be flagged as hidden during creation; expired opportunities cannot be updated
       }
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
@@ -1070,6 +1125,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         EngagementTypeId = request.EngagementTypeId,
         EngagementType = request.EngagementTypeId.HasValue ? Enum.Parse<EngagementTypeOption>(_engagementTypeService.GetById(request.EngagementTypeId.Value).Name, true) : null,
         ShareWithPartners = request.ShareWithPartners.HasValue ? request.ShareWithPartners : null,
+        Hidden = request.Hidden.HasValue ? request.Hidden : null,
+        ExternalId = request.ExternalId,
         StatusId = _opportunityStatusService.GetByName(status.ToString()).Id,
         Status = status,
         CreatedByUserId = user.Id,
@@ -1143,6 +1200,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (existingByTitle != null && result.Id != existingByTitle.Id)
         throw new ValidationException($"{nameof(Models.Opportunity)} with the specified name '{request.Title}' already exists");
 
+      if (!string.IsNullOrEmpty(request.ExternalId))
+      {
+        var existingByExternalId = GetByExternalIdOrNull(request.ExternalId, false, false);
+        if (existingByExternalId != null && result.Id != existingByExternalId.Id)
+          throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists");
+      }
+
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
       var organization = _organizationService.GetById(request.OrganizationId, false, true, false);
@@ -1206,6 +1270,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.EngagementTypeId = request.EngagementTypeId;
       result.EngagementType = request.EngagementTypeId.HasValue ? Enum.Parse<EngagementTypeOption>(_engagementTypeService.GetById(request.EngagementTypeId.Value).Name, true) : null;
       result.ShareWithPartners = request.ShareWithPartners.HasValue ? request.ShareWithPartners : result.ShareWithPartners;
+      result.Hidden = request.Hidden.HasValue ? request.Hidden : result.Hidden;
+      result.ExternalId = !string.IsNullOrEmpty(request.ExternalId) ? request.ExternalId : result.ExternalId;
       result.ModifiedByUserId = user.Id;
 
       if (result.DateEnd.HasValue)
@@ -1346,6 +1412,27 @@ namespace Yoma.Core.Domain.Opportunity.Services
       AssertUpdatable(result);
 
       result.Featured = featured;
+      result.ModifiedByUserId = user.Id;
+
+      result = await _opportunityRepository.Update(result);
+
+      await _mediator.Publish(new OpportunityEvent(EventType.Update, result));
+
+      return result;
+    }
+
+    public async Task<Models.Opportunity> UpdateHidden(Guid id, bool hidden, bool ensureOrganizationAuthorization)
+    {
+      var result = GetById(id, true, true, false);
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+
+      AssertUpdatable(result);
+
+      if (result.ShareWithPartners == true && hidden)
+        throw new ValidationException("An opportunity that is shared with partners cannot be made hidden.");
+
+      result.Hidden = hidden;
       result.ModifiedByUserId = user.Id;
 
       result = await _opportunityRepository.Update(result);

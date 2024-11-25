@@ -76,6 +76,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         EngagementTypeId = entity.EngagementTypeId,
         EngagementType = entity.EngagementType == null ? null : Enum.Parse<EngagementTypeOption>(entity.EngagementType.Name, true),
         ShareWithPartners = entity.ShareWithPartners,
+        Hidden = entity.Hidden,
+        ExternalId = entity.ExternalId,
         DateCreated = entity.DateCreated,
         CreatedByUserId = entity.CreatedByUserId,
         DateModified = entity.DateModified,
@@ -174,6 +176,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         Featured = item.Featured,
         EngagementTypeId = item.EngagementTypeId,
         ShareWithPartners = item.ShareWithPartners,
+        Hidden = item.Hidden,
+        ExternalId = item.ExternalId,
         DateCreated = item.DateCreated,
         CreatedByUserId = item.CreatedByUserId,
         DateModified = item.DateModified,
@@ -225,6 +229,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
           Featured = item.Featured,
           EngagementTypeId = item.EngagementTypeId,
           ShareWithPartners = item.ShareWithPartners,
+          Hidden = item.Hidden,
+          ExternalId = item.ExternalId,
           DateCreated = DateTimeOffset.UtcNow,
           CreatedByUserId = item.CreatedByUserId,
           DateModified = DateTimeOffset.UtcNow,
@@ -281,6 +287,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       entity.Featured = item.Featured;
       entity.EngagementTypeId = item.EngagementTypeId;
       entity.ShareWithPartners = item.ShareWithPartners;
+      entity.Hidden = item.Hidden;
+      entity.ExternalId = item.ExternalId;
       entity.DateModified = item.DateModified;
       entity.ModifiedByUserId = item.ModifiedByUserId;
 
@@ -332,6 +340,8 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
         entity.Featured = item.Featured;
         entity.EngagementTypeId = item.EngagementTypeId;
         entity.ShareWithPartners = item.ShareWithPartners;
+        entity.Hidden = item.Hidden;
+        entity.ExternalId = item.ExternalId;
         entity.DateModified = item.DateModified;
         entity.ModifiedByUserId = item.ModifiedByUserId;
       }

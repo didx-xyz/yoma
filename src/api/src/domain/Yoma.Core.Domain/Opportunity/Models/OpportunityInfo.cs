@@ -119,6 +119,14 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [BooleanFalseValues("No")]
     [BooleanTrueValues("Yes")]
+    public bool Hidden { get; set; }
+
+    [JsonIgnore]
+    [Name("Partner External ID")]
+    public string? ExternalId { get; set; }
+
+    [BooleanFalseValues("No")]
+    [BooleanTrueValues("Yes")]
     public bool Published { get; set; }
 
     [Ignore]

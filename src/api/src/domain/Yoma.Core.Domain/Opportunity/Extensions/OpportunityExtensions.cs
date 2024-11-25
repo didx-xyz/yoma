@@ -146,6 +146,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Featured = value.Featured ?? false,
         EngagementType = value.EngagementType,
         ShareWithPartners = value.ShareWithPartners ?? false,
+        Hidden = value.Hidden ?? false,
+        ExternalId = value.ExternalId,
         Published = value.Published,
         YomaInfoURL = value.YomaInfoURL(appBaseURL),
         Categories = value.Categories,

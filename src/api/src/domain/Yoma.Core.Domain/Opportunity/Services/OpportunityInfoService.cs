@@ -62,6 +62,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         throw new EntityNotFoundException(message);
       }
 
+      //do not exclude hidden; instant verify links supports hidden opportunities
+
       var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
       SetEngagementCounts(result);
       return result;
@@ -79,6 +81,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ArgumentException.ThrowIfNullOrEmpty(message);
         throw new EntityNotFoundException(message);
       }
+
+      if (opportunity.Hidden == true)
+        throw new EntityNotFoundException($"Opportunity with id '{opportunity.Id}' is hidden");
 
       var result = opportunity.ToOpportunityInfo(_appSettings.AppBaseURL);
       SetEngagementCounts(result);
@@ -119,6 +124,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         ShareWithPartners = filter.ShareWithPartners,
         EngagementTypes = filter.EngagementTypes,
         ValueContains = filter.ValueContains,
+        ExcludeHidden = true,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize,
         OrderInstructions =
