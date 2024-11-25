@@ -10,7 +10,7 @@ import { useRouter } from "next/router";
 import iconZlto from "public/images/icon-zlto.svg";
 import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useMemo, type ReactElement } from "react";
-import { IoIosAdd, IoIosLink, IoIosWarning } from "react-icons/io";
+import { IoIosAdd, IoIosLink, IoIosWarning, IoMdEyeOff } from "react-icons/io";
 import { toast } from "react-toastify";
 import {
   Status,
@@ -20,6 +20,7 @@ import {
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { SearchInput } from "~/components/SearchInput";
@@ -715,6 +716,21 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           )}
                         </div>
+
+                        <div className="flex justify-between">
+                          <p className="text-sm tracking-wider">Status</p>
+                          <div className="flex justify-start gap-2">
+                            <OpportunityStatus
+                              status={opportunity?.status?.toString()}
+                            />
+                            {opportunity?.hidden && (
+                              <div className="badge bg-red-400 text-red-800">
+                                <IoMdEyeOff />
+                                <span className="ml-1 text-xs">Hidden</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -745,12 +761,15 @@ const Opportunities: NextPageWithLayout<{
                       <th className="border-b-2 border-gray-light text-center">
                         Pending
                       </th>
+                      <th className="border-b-2 border-gray-light text-start">
+                        Status
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {opportunities.items.map((opportunity) => (
                       <tr key={`md_${opportunity.id}`}>
-                        <td className="truncate border-b-2 border-gray-light md:max-w-[270px] lg:max-w-[580px]">
+                        <td className="truncate border-b-2 border-gray-light md:max-w-[240px] lg:max-w-[550px]">
                           <Link
                             href={`/organisations/${id}/opportunities/${
                               opportunity.id
@@ -829,6 +848,18 @@ const Opportunities: NextPageWithLayout<{
                                 {opportunity.participantCountPending}
                               </span>
                             </Link>
+                          )}
+                        </td>
+                        <td className="flex gap-2 border-b-2 border-gray-light text-center">
+                          <OpportunityStatus
+                            status={opportunity?.status?.toString()}
+                          />
+
+                          {opportunity?.hidden && (
+                            <div className="badge bg-red-400 text-red-800">
+                              <IoMdEyeOff />
+                              <span className="ml-1 text-xs">Hidden</span>
+                            </div>
                           )}
                         </td>
                       </tr>

@@ -16,7 +16,12 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import { IoIosLink, IoMdDownload, IoMdPerson } from "react-icons/io";
+import {
+  IoIosLink,
+  IoMdDownload,
+  IoMdEyeOff,
+  IoMdPerson,
+} from "react-icons/io";
 import ReactModal from "react-modal";
 import { toast } from "react-toastify";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
@@ -617,7 +622,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         </div>
 
         {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
-
         {lookups_categories &&
           lookups_countries &&
           lookups_languages &&
@@ -760,9 +764,17 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
                           <div className="flex justify-between">
                             <p className="text-sm tracking-wider">Status</p>
-                            <OpportunityStatus
-                              status={opportunity?.status?.toString()}
-                            />
+                            <div className="flex justify-start gap-2">
+                              <OpportunityStatus
+                                status={opportunity?.status?.toString()}
+                              />
+                              {opportunity?.hidden && (
+                                <div className="badge bg-red-400 text-red-800">
+                                  <IoMdEyeOff />
+                                  <span className="ml-1 text-xs">Hidden</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </Link>
@@ -785,7 +797,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                         <th className="border-b-2 border-gray-light text-center">
                           Participants
                         </th>
-                        <th className="border-b-2 border-gray-light text-center">
+                        <th className="border-b-2 border-gray-light text-start">
                           Status
                         </th>
                       </tr>
@@ -793,7 +805,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                     <tbody>
                       {searchResults.items.map((opportunity) => (
                         <tr key={`md_${opportunity.id}`}>
-                          <td className="truncate border-b-2 border-gray-light md:max-w-[270px] lg:max-w-[580px]">
+                          <td className="truncate border-b-2 border-gray-light md:max-w-[240px] lg:max-w-[550px]">
                             <Link
                               href={`/organisations/${
                                 opportunity.organizationId
@@ -849,10 +861,17 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               </span>
                             </span>
                           </td>
-                          <td className="border-b-2 border-gray-light text-center">
+                          <td className="flex gap-2 border-b-2 border-gray-light text-center">
                             <OpportunityStatus
                               status={opportunity?.status?.toString()}
                             />
+
+                            {opportunity?.hidden && (
+                              <div className="badge bg-red-400 text-red-800">
+                                <IoMdEyeOff />
+                                <span className="ml-1 text-xs">Hidden</span>
+                              </div>
+                            )}
                           </td>
                         </tr>
                       ))}

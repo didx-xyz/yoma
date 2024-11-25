@@ -8,7 +8,7 @@ import {
 } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { AvatarImage } from "../AvatarImage";
-import Badges from "./Badges";
+import PublicBadges from "~/components/Opportunity/Badges/PublicBadges";
 import Image from "next/image";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
@@ -157,7 +157,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
             </div>
 
             {/* BADGES */}
-            <Badges opportunity={opportunity} />
+            <PublicBadges opportunity={opportunity} />
 
             {/* DATES */}
             {opportunity?.status == "Active" && (

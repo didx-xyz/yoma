@@ -401,6 +401,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     instructions: opportunity?.instructions ?? "",
     postAsActive: opportunity?.published ?? false,
     shareWithPartners: opportunity?.shareWithPartners ?? false,
+    hidden: opportunity?.hidden ?? false,
 
     showZltoReward: !!(opportunity?.zltoReward ?? false),
     showZltoRewardPool: !!(opportunity?.zltoRewardPool ?? false),
@@ -715,6 +716,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   const schemaStep8 = z.object({
     postAsActive: z.boolean().optional(),
     shareWithPartners: z.boolean().optional(),
+    hidden: z.boolean().optional(),
   });
 
   const {
@@ -835,11 +837,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     handleSubmit: handleSubmitStep8,
     formState: formStateStep8,
     reset: resetStep8,
+    watch: watchStep8,
   } = useForm({
     resolver: zodResolver(schemaStep8),
     defaultValues: formData,
     mode: "all",
   });
+  const watchHidden = watchStep8("hidden");
 
   // memo for dirty fields
   // because the "isDirty" property on useForm is not working as expected
@@ -1027,6 +1031,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               .filter((skill): skill is Skill => Boolean(skill))
           : [],
       verificationTypes: formData.verificationTypes,
+      hidden: formData.hidden ?? false,
     }),
     [
       formData,
@@ -1184,6 +1189,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     async (data: OpportunityRequestViewModel) => {
       setIsLoading(true);
 
+      let createdOpportunity = null;
+
       try {
         let message = "";
 
@@ -1227,6 +1234,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           data.zltoRewardPool = null;
         }
 
+        // disable sharing if hidden
+        if (data.hidden) {
+          data.shareWithPartners = false;
+        }
+
         // update api
         if (opportunity) {
           await updateOpportunity(data);
@@ -1240,7 +1252,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
           message = "Opportunity updated";
         } else {
-          await createOpportunity(data);
+          createdOpportunity = await createOpportunity(data);
 
           // 📊 GOOGLE ANALYTICS: track event
           trackGAEvent(
@@ -1280,11 +1292,25 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
       setIsLoading(false);
 
-      // redirect to list after create
+      // redirect to opportunity info page after create
       if (opportunityId === "create")
-        void router.push(`/organisations/${id}/opportunities`);
+        void router.push(
+          `/organisations/${id}/opportunities/${createdOpportunity?.id}/info${
+            returnUrl
+              ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
+              : ""
+          }`,
+        );
     },
-    [setIsLoading, id, opportunityId, opportunity, queryClient, router],
+    [
+      setIsLoading,
+      id,
+      opportunityId,
+      opportunity,
+      queryClient,
+      router,
+      returnUrl,
+    ],
   );
 
   const onSubmitStep = useCallback(
@@ -3281,11 +3307,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       onSubmitStep(9, data),
                     )}
                   >
-                    {/* POST AS ACTIVE */}
+                    {/* CREATE: POST AS ACTIVE & HIDDEN */}
                     {opportunityId == "create" && (
                       <FormField
                         label="Visibility"
-                        subLabel="Make this opportunity active to be visible to the public. Inactive opportunities are only visible to you and your team members."
+                        subLabel="Make this opportunity active to allow participation and completions. Inactive opportunities are only visible and manageable by you and your team members."
                         showWarningIcon={
                           !!formStateStep8.errors.postAsActive?.message
                         }
@@ -3299,6 +3325,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           id="postAsActive"
                           label="Make this opportunity active"
                           inputProps={{ ...registerStep8(`postAsActive`) }}
+                        />
+
+                        <FormCheckbox
+                          id="hidden"
+                          label="Optionally hide the active opportunity from public listings"
+                          inputProps={{ ...registerStep8(`hidden`) }}
                         />
                       </FormField>
                     )}
@@ -3316,7 +3348,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       }
                       error={formStateStep8.errors.shareWithPartners?.message}
                     >
-                      {watchDateEnd && (
+                      {watchDateEnd && !watchHidden && (
                         <>
                           <FormCheckbox
                             id="shareWithPartners"
@@ -3332,10 +3364,15 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           </FormMessage>
                         </>
                       )}
-                      {!watchDateEnd && (
+                      {!watchDateEnd && !watchHidden && (
                         <FormMessage messageType={FormMessageType.Warning}>
                           An end date is required to share this opportunity with
                           partners.
+                        </FormMessage>
+                      )}
+                      {watchHidden && (
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          Hidden opportunities cannot be shared with partners.
                         </FormMessage>
                       )}
                     </FormField>

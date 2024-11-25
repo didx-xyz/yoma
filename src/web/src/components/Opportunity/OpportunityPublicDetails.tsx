@@ -35,7 +35,7 @@ import {
 } from "~/api/services/myOpportunities";
 import { updateSettings } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
-import Badges from "~/components/Opportunity/Badges";
+import PublicBadges from "~/components/Opportunity/Badges/PublicBadges";
 import { OpportunityCompletionEdit } from "~/components/Opportunity/OpportunityCompletionEdit";
 import Share from "~/components/Opportunity/Share";
 import { SignInButton } from "~/components/SignInButton";
@@ -607,7 +607,7 @@ const OpportunityPublicDetails: React.FC<{
                 </h6>
 
                 {/* BADGES */}
-                <Badges opportunity={opportunityInfo} />
+                <PublicBadges opportunity={opportunityInfo} />
 
                 {/* DATES */}
                 {opportunityInfo.status == "Active" && (
