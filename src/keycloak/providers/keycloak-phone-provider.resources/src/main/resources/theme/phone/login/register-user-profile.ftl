@@ -22,20 +22,15 @@
           <label for="email" class="${properties.kcLabelClass!}">${msg("enterEmail")}</label>
 
           <input type="text" id="email" class="${properties.kcInputClass!}" name="email" placeholder="example@email.com"
-            autocomplete="email" :aria-invalid="!isEmailValid"
+            autocomplete="email" :aria-invalid="!!messageEmailError"
             v-model="email" />
 
-          <div v-if="!isEmailValid" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-            ${msg("invalidEmailMessage")}
+          <#-- LABEL: email error -->
+          <div v-if="messageEmailError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+            {{ messageEmailError }}
           </div>
 
-          <#if messagesPerField.existsError('email')>
-            <div id="input-error-email" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-              ${kcSanitize(messagesPerField.get('email'))?no_esc}
-            </div>
-          </#if>
-
-          <#-- LINK: use phone number -->
+          <#-- LINK: use phone -->
           <div class="form-link" style="margin-top: 0.8rem" v-on:click="phoneNumberAsUsername = true" tabindex="0">
             <span class="icon">📲</span>
             <span class="text">${msg("phoneNumberAsUsername")}</span>
@@ -84,8 +79,7 @@
         </div>
 
         <#if verifyPhone??>
-          <div v-bind:style="{ display: phoneNumberAsUsername && !phoneVerified ? 'block' : 'none' }">
-
+          <div v-bind:style="{ display: phoneNumberAsUsername && !phoneVerified ? 'block' : 'none', marginTop: '2rem' }">
             <#-- BUTTON: send code -->
             <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
               <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}"
@@ -258,16 +252,14 @@
           email: '${register.formData.email!}',
           phoneNumber: '${register.formData.phoneNumber!}',
           phoneNumberAsUsername: ${(register.formData.phoneNumberAsUsername!false)?string},
-          phoneVerified: <#if phoneVerified?? && phoneVerified && !messagesPerField.existsError('phoneNumber')>true<#else>false</#if>,
+          phoneVerified: <#if phoneVerified?? && phoneVerified>true<#else>false</#if>,
           sendButtonText: '${msg("sendVerificationCode")}',
           initSendButtonText: '${msg("sendVerificationCode")}',
-          messagePasswordSuccess: '',
           messagePhoneNumberError: <#if messagesPerField.existsError('phoneNumber')>'${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}'<#else>''</#if>,
+          messageEmailError: <#if messagesPerField.existsError('email')>'${kcSanitize(messagesPerField.getFirstError('email'))?no_esc}'<#else>''</#if>,
           resetSendCodeButton: false,
           KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
           terms_and_conditions: false,
-          isEmailValid: <#if messagesPerField.existsError('email')>false<#else>true</#if>,
-          isEmailTouched: false,
           isCodeSent: ${(register.formData.isCodeSent!false)?string},
           isPasswordValid: false,
           isPasswordConfirmValid: false,
@@ -292,21 +284,19 @@
         watch: {
           email(newValue) {
             this.validateEmail(newValue);
-
-            // clear server error messages
-            const inputErrorEmail = document.querySelector('#input-error-email');
-            if (inputErrorEmail) inputErrorEmail.style.display = 'none';
           },
         },
         methods: {
           validateEmail(email) {
+            let isEmailValid = false;
+
             if (email !== undefined) {
-              this.isEmailTouched = true;
               const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-              this.isEmailValid = emailPattern.test(email);
+              isEmailValid = emailPattern.test(email);
+              this.messageEmailError = isEmailValid ? '' : '${msg("invalidEmailMessage")}';
             }
 
-            return this.isEmailValid;
+            return isEmailValid;
           },
           onValidityChange(passwordValid, confirmPasswordValid) {
             this.isPasswordValid = passwordValid;
@@ -371,10 +361,6 @@
             if (!this.phoneNumberAsUsername) {
               if (!this.validateEmail(this.email)) {
                 this.isFormValid = false;
-
-                // clear server error messages
-                const inputErrorEmail = document.querySelector('#input-error-email');
-                if (inputErrorEmail) inputErrorEmail.style.display = 'none';
 
                 return false;
               }
@@ -443,9 +429,6 @@
             if (inputErrorPhone) inputErrorPhone.style.display = 'none';
             if (inputErrorCode) inputErrorCode.style.display = 'none';
           },
-        },
-        mounted: function() {
-          if (this.email) this.validateEmail(this.email);
         }
       });
     </script>

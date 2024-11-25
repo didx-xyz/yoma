@@ -9,6 +9,7 @@ import { getServerSession } from "next-auth";
 import Head from "next/head";
 import router from "next/router";
 import { useCallback, type ReactElement } from "react";
+import { toast } from "react-toastify";
 import type { SettingsRequest } from "~/api/models/common";
 import { getSettings, updateSettings } from "~/api/services/user";
 import Suspense from "~/components/Common/Suspense";
@@ -87,6 +88,8 @@ const MySettings: NextPageWithLayout<{
       queryClient.invalidateQueries({
         queryKey: ["user", "settings"],
       });
+
+      toast.success("Settings updated");
     },
     [queryClient],
   );
