@@ -99,7 +99,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
 
           var items = _opportunityRepository.Query(true).Where(o => o.OrganizationStatusId == organizationStatusActiveId //include children / countries
-             && o.StatusId == statusActiveId && o.DateStart >= datetimeFrom && o.DateStart <= datetimeTo)
+             && o.StatusId == statusActiveId && (!o.Hidden.HasValue || o.Hidden == false) && o.DateStart >= datetimeFrom && o.DateStart <= datetimeTo)
             .OrderBy(o => o.DateStart).ThenBy(o => o.Title).ThenBy(o => o.Id).ToList();
           if (items.Count == 0) return;
 
