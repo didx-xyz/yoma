@@ -29,6 +29,11 @@ using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Validators;
 using Yoma.Core.Domain.PartnerSharing.Interfaces;
+using System.Globalization;
+using System.Reflection;
+using CsvHelper.Configuration.Attributes;
+using Yoma.Core.Domain.SSI.Helpers;
+using Yoma.Core.Domain.SSI;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
@@ -1031,7 +1036,93 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization)
+    public async Task ImportFromCSV(IFormFile file, Guid organizationId, bool ensureOrganizationAuthorization)
+    {
+      if (file == null || file.Length == 0)
+        throw new ArgumentNullException(nameof(file));
+
+      var organization = _organizationService.GetById(organizationId, false, false, false);
+
+      if (ensureOrganizationAuthorization)
+        _organizationService.IsAdmin(organization.Id, true);
+
+      using var stream = file.OpenReadStream();
+      using var reader = new StreamReader(stream);
+
+      var config = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
+      {
+        Delimiter = ",",
+        HasHeaderRecord = true,
+        MissingFieldFound = args =>
+        {
+          if (args.Context?.Reader?.HeaderRecord == null)
+            throw new ValidationException("The file is missing a header row");
+
+          var fieldName = args.HeaderNames?[args.Index] ?? $"Field at index {args.Index}";
+
+          var modelType = typeof(OpportunityInfoCsvImport);
+
+          var property = modelType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+              .FirstOrDefault(p =>
+                  string.Equals(
+                      p.GetCustomAttributes(typeof(NameAttribute), true)
+                          .Cast<NameAttribute>()
+                          .FirstOrDefault()?.Names.FirstOrDefault() ?? p.Name,
+                      fieldName,
+                      StringComparison.OrdinalIgnoreCase));
+
+          if (property == null) return;
+
+          var isRequired = property.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.RequiredAttribute), true).Length > 0;
+
+          if (isRequired)
+          {
+            var rowNumber = args.Context?.Parser?.Row.ToString() ?? "Unknown";
+            throw new ValidationException($"Missing required field '{fieldName}' in row '{rowNumber}'");
+          }
+        },
+        BadDataFound = args =>
+        {
+          var rowNumber = args.Context?.Parser?.Row.ToString() ?? "Unknown";
+          throw new ValidationException($"Bad data format in row '{rowNumber}': Raw field data: '{args.Field}'");
+        }
+      };
+
+      using var csv = new CsvHelper.CsvReader(reader, config);
+
+      if (!csv.Read() || csv.Context?.Reader?.HeaderRecord?.Length == 0)
+        throw new ValidationException("The file is missing a header row");
+
+      csv.ReadHeader();
+
+      var results = new List<(Models.Opportunity Opportunity, EventType ActionTaken)>();
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+        while (await csv.ReadAsync())
+        {
+          var rowNumber = csv.Context?.Parser?.Row ?? -1;
+          try
+          {
+            var record = csv.GetRecord<OpportunityInfoCsvImport>();
+
+            var (opportunity, actionTaken) = await ProcessImportAndUpsertOpportunity(organizationId, record);
+            results.Add((opportunity, actionTaken));
+          }
+          catch (Exception ex)
+          {
+            throw new ValidationException($"Error parsing row '{(rowNumber == -1 ? "Unknown" : rowNumber)}': {ex.Message}");
+          }
+        }
+        scope.Complete();
+      });
+
+      //raise events post transaction completion
+      await Task.WhenAll(results.Select(result => _mediator.Publish(new OpportunityEvent(result.ActionTaken, result.Opportunity))));
+    }
+
+    public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -1170,7 +1261,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //sent when activated irrespective of organization status (sent to admin)
       if (result.Status == Status.Active) await SendNotification(result, NotificationType.Opportunity_Posted_Admin);
 
-      await _mediator.Publish(new OpportunityEvent(EventType.Create, result));
+      if (raiseEvent)
+        await _mediator.Publish(new OpportunityEvent(EventType.Create, result));
 
       return result;
     }
@@ -1740,6 +1832,80 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #endregion
 
     #region Private Members
+    private async Task<(Models.Opportunity Opporunity, EventType ActionTaken)> ProcessImportAndUpsertOpportunity(Guid organizationId, OpportunityInfoCsvImport item)
+    {
+      if (string.IsNullOrWhiteSpace(item.ExternalId))
+        throw new ValidationException("External id is required");
+      item.ExternalId = item.ExternalId.Trim();
+
+      var type = _opportunityTypeService.GetByName(item.Type);
+
+      var engagementType = string.IsNullOrWhiteSpace(item.Engagement) ? null : _engagementTypeService.GetByName(item.Engagement);
+
+      var categories = item.Categories?
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Select(name => _opportunityCategoryService.GetByName(name))
+        .ToList() ?? [];
+
+      var languages = item.Languages?
+        .Where(code => !string.IsNullOrWhiteSpace(code))
+        .Select(code => _languageService.GetByCodeAplha2(code))
+        .ToList() ?? [];
+
+      var countries = item.Countries?
+       .Where(code => !string.IsNullOrWhiteSpace(code))
+       .Select(code => _countryService.GetByCodeAplha2(code))
+       .ToList() ?? [];
+
+      var dofficulty = _opportunityDifficultyService.GetByName(item.Difficulty);
+
+      var commitmentInterval = _timeIntervalService.GetByName(item.CommitmentInterval);
+
+      var skills = item.Skills?
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Select(name => _skillService.GetByName(name))
+        .ToList() ?? [];
+
+      var keywords = item.Keywords?.Where(o => !string.IsNullOrWhiteSpace(o)).Select(o => o.Trim()).ToList();
+
+      var request = new OpportunityRequestCreate
+      {
+        //defualts 
+        OrganizationId = organizationId,
+        VerificationEnabled = true,
+        VerificationMethod = VerificationMethod.Automatic,
+        CredentialIssuanceEnabled = true,
+        SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
+
+        //imported
+        Title = item.Title,
+        TypeId = type.Id,
+        EngagementTypeId = engagementType?.Id,
+        Categories = categories.Select(o => o.Id).ToList(),
+        URL = item.URL,
+        Summary = item.Summary,
+        Description = item.Description,
+        Languages = languages.Select(o => o.Id).ToList(),
+        Countries = countries.Select(o => o.Id).ToList(),
+        DifficultyId = dofficulty.Id,
+        CommitmentIntervalCount = item.CommitmentIntervalCount,
+        CommitmentIntervalId = commitmentInterval.Id,
+        DateStart = item.DateStart.ToDateTimeOffset(),
+        DateEnd = item.DateEnd?.ToDateTimeOffset(),
+        ParticipantLimit = item.ParticipantLimit,
+        ZltoReward = item.ZltoReward,
+        ZltoRewardPool = item.ZltoRewardPool,
+        Skills = skills.Select(o => o.Id).ToList(),
+        Keywords = keywords,
+        Hidden = item.Hidden,
+        ExternalId = item.ExternalId
+      };
+      request.PostAsActive = !request.DateEnd.HasValue || request.DateEnd.Value > DateTimeOffset.UtcNow;
+
+      var result = await Create(request, false, false); //events raised by incoking method upon transaction completion
+      return (result, EventType.Create);
+    }
+
     private static (decimal? Reward, bool? RewardReduced, bool? RewardPoolDepleted) ProcessRewardAllocation(decimal? reward, decimal? rewardPool, decimal? rewardCumulative, bool? rewardReduced, bool? rewardPoolDepleted)
     {
       if (!reward.HasValue) return (reward, rewardReduced, rewardPoolDepleted);

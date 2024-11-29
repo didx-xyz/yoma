@@ -24,6 +24,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		src\scripts\index_fragmentation_postgre.sql = src\scripts\index_fragmentation_postgre.sql
 		src\scripts\index_rebuild_reorganize_ms.sql = src\scripts\index_rebuild_reorganize_ms.sql
 		src\scripts\index_rebuild_reorganize_postgre.sql = src\scripts\index_rebuild_reorganize_postgre.sql
+		src\other\OpportunityInfoCsvImport_Sample.csv = src\other\OpportunityInfoCsvImport_Sample.csv
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.Keycloak", "src\infrastructure\Yoma.Core.Infrastructure.Keycloak\Yoma.Core.Infrastructure.Keycloak.csproj", "{CDD4E64E-0B96-4AB6-A6D6-4BC4FB29D169}"

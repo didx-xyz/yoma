@@ -391,6 +391,21 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
+    [SwaggerOperation(Summary = "Import opportunities for the specified organization from a CSV file")]
+    [HttpPost("import/{organizationId}/csv")]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public async Task<IActionResult> ImportFromCSV([FromRoute] Guid organizationId, [Required] IFormFile file)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(ImportFromCSV));
+
+      await _opportunityService.ImportFromCSV(file, organizationId, true);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(ImportFromCSV));
+
+      return StatusCode((int)HttpStatusCode.OK);
+    }
+
     [SwaggerOperation(Summary = "Create a new opportunity")]
     [HttpPost()]
     [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
