@@ -112,7 +112,7 @@ const OpportunityDetails: NextPageWithLayout<{
             <ul>
               <li className="inline">
                 <button
-                  className="inline text-white hover:text-gray "
+                  className="inline text-white hover:text-gray"
                   onClick={() => router.back()}
                 >
                   <IoMdArrowRoundBack className="mb-[2px] mr-1 inline h-4 w-4" />

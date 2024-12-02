@@ -20,7 +20,7 @@ const SocialPreview: React.FC<{
           <h4 className="overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold leading-7 text-black md:text-xl md:leading-8">
             {name}
           </h4>
-          <h6 className=" overflow-hidden text-ellipsis whitespace-nowrap text-xs text-gray-dark">
+          <h6 className="overflow-hidden text-ellipsis whitespace-nowrap text-xs text-gray-dark">
             {description}
           </h6>
         </div>

@@ -529,7 +529,7 @@ const OpportunityDetails: NextPageWithLayout<{
             <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-6 shadow-custom">
               <div className="flex flex-col gap-2 md:flex-grow">
                 <div className="relative">
-                  <h4 className="line-clamp-2 max-w-[80%] flex-grow text-xl font-semibold text-black md:text-2xl ">
+                  <h4 className="line-clamp-2 max-w-[80%] flex-grow text-xl font-semibold text-black md:text-2xl">
                     {opportunity.title}
                   </h4>
                   <span className="absolute right-0 top-0">

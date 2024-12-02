@@ -372,8 +372,8 @@ const SchemaCreateEdit: NextPageWithLayout<{
               <a
                 className={`${
                   step === 1
-                    ? "bg-green-light text-green  hover:bg-green-light"
-                    : "bg-gray text-gray-dark  hover:bg-gray"
+                    ? "bg-green-light text-green hover:bg-green-light"
+                    : "bg-gray text-gray-dark hover:bg-gray"
                 }`}
               >
                 <span

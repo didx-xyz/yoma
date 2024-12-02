@@ -235,7 +235,7 @@ const OrganisationDetails: NextPageWithLayout<{
           <p>{organisation?.name} has been added to your organisations.</p>
         </div>
 
-        <div className=" mb-4 flex flex-row place-items-center justify-center px-6 py-4 pt-2">
+        <div className="mb-4 flex flex-row place-items-center justify-center px-6 py-4 pt-2">
           <button
             className="btn btn-outline btn-sm flex-nowrap rounded-full px-10 py-5 text-green hover:border-green hover:bg-green hover:text-white"
             onClick={() => router.push("/organisations")}
@@ -258,7 +258,7 @@ const OrganisationDetails: NextPageWithLayout<{
           <p>{organisation?.name} has been rejected.</p>
         </div>
 
-        <div className=" mb-4 flex flex-row place-items-center justify-center px-6 py-4 pt-2">
+        <div className="mb-4 flex flex-row place-items-center justify-center px-6 py-4 pt-2">
           <button
             className="btn btn-outline btn-sm flex-nowrap rounded-full px-10 py-5 text-green hover:border-green hover:bg-green hover:text-white"
             onClick={() => router.push("/organisations")}

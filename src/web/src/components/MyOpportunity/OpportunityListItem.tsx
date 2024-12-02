@@ -35,7 +35,7 @@ const OpportunityListItem: React.FC<{
           size={60}
         />
 
-        <div className="flex flex-col justify-center gap-1 overflow-ellipsis ">
+        <div className="flex flex-col justify-center gap-1 overflow-ellipsis">
           <h1 className="line-clamp-1 text-xs font-medium text-gray-dark">
             {data.organizationName}
           </h1>

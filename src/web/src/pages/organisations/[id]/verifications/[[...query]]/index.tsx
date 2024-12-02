@@ -809,7 +809,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
 
           {/* BUTTON */}
-          <div className=" flex flex-row place-items-center justify-end px-6 py-4 pt-2">
+          <div className="flex flex-row place-items-center justify-end px-6 py-4 pt-2">
             <button
               className="btn btn-outline btn-sm flex-nowrap rounded-full px-10 py-5 text-green hover:border-green hover:bg-green hover:text-white"
               onClick={onCloseVerificationResultModal}
@@ -1052,7 +1052,7 @@ const OpportunityVerifications: NextPageWithLayout<{
               </div>
 
               {/* RIGHT BUTTON MOBILE */}
-              <div className="-mr-1 mb-1 flex items-center md:hidden ">
+              <div className="-mr-1 mb-1 flex items-center md:hidden">
                 <button
                   className="ease-bounce focus:outline-none active:scale-90"
                   onClick={() => {
@@ -1240,14 +1240,14 @@ const OpportunityVerifications: NextPageWithLayout<{
                             {item.verificationStatus &&
                               item.verificationStatus == "Completed" && (
                                 <div className="flex flex-row">
-                                  <IoMdCheckmark className="mr-2 h-6 w-6  text-green" />
+                                  <IoMdCheckmark className="mr-2 h-6 w-6 text-green" />
                                   Completed
                                 </div>
                               )}
                             {item.verificationStatus &&
                               item.verificationStatus == "Rejected" && (
                                 <div className="flex flex-row">
-                                  <IoMdClose className="mr-2 h-6 w-6  text-red-400" />
+                                  <IoMdClose className="mr-2 h-6 w-6 text-red-400" />
                                   Rejected
                                 </div>
                               )}
