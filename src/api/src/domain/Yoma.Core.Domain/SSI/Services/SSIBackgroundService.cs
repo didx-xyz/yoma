@@ -25,6 +25,7 @@ namespace Yoma.Core.Domain.SSI.Services
     #region Class Variables
     private readonly ILogger<SSIBackgroundService> _logger;
     private readonly AppSettings _appSettings;
+    private readonly IEnvironmentProvider _environmentProvider;
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IUserService _userService;
     private readonly IOrganizationService _organizationService;
@@ -40,6 +41,7 @@ namespace Yoma.Core.Domain.SSI.Services
     #region Constructor
     public SSIBackgroundService(ILogger<SSIBackgroundService> logger,
         IOptions<AppSettings> appSettings,
+        IEnvironmentProvider environmentProvider,
         IOptions<ScheduleJobOptions> scheduleJobOptions,
         IUserService userService,
         IOrganizationService organizationService,
@@ -53,6 +55,7 @@ namespace Yoma.Core.Domain.SSI.Services
     {
       _logger = logger;
       _appSettings = appSettings.Value;
+      _environmentProvider = environmentProvider;
       _scheduleJobOptions = scheduleJobOptions.Value;
       _userService = userService;
       _organizationService = organizationService;
@@ -74,6 +77,12 @@ namespace Yoma.Core.Domain.SSI.Services
     {
       const string lockIdentifier = "ssi_seed_schemas";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      {
+        _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(SeedSchemas), _environmentProvider.Environment, DateTimeOffset.UtcNow);
+        return;
+      }
 
       if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
       {
@@ -121,6 +130,12 @@ namespace Yoma.Core.Domain.SSI.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSITenantCreationScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      {
+        _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(ProcessTenantCreation), _environmentProvider.Environment, DateTimeOffset.UtcNow);
+        return;
+      }
 
       if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
       {
@@ -233,6 +248,12 @@ namespace Yoma.Core.Domain.SSI.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSICredentialIssuanceScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
+      {
+        _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(ProcessCredentialIssuance), _environmentProvider.Environment, DateTimeOffset.UtcNow);
+        return;
+      }
 
       if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
       {

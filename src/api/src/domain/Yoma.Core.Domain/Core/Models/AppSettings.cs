@@ -97,6 +97,10 @@ namespace Yoma.Core.Domain.Core.Models
 
     public Environment PartnerSharingEnabledEnvironmentsAsEnum => ParseEnvironmentInput(PartnerSharingEnabledEnvironments);
 
+    public string SSIEnabledEnvironments { get; set; }
+
+    public Environment SSIEnabledEnvironmentsAsEnum => ParseEnvironmentInput(SSIEnabledEnvironments);
+
     /// <summary>
     /// -1: Represents infinite retries. Never transitions to an error state.
     /// 0: Represents no retries. Immediately transitions to an error state.
