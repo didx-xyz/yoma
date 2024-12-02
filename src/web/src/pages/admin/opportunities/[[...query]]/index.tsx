@@ -22,7 +22,6 @@ import {
   IoMdEyeOff,
   IoMdPerson,
 } from "react-icons/io";
-import ReactModal from "react-modal";
 import { toast } from "react-toastify";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
@@ -42,6 +41,7 @@ import {
   getOpportunityTypes,
   getOrganisationsAdmin,
 } from "~/api/services/opportunities";
+import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { OpportunityAdminFilterHorizontal } from "~/components/Opportunity/OpportunityAdminFilterHorizontal";
@@ -51,7 +51,6 @@ import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { SearchInputLarge } from "~/components/SearchInputLarge";
 import { Loading } from "~/components/Status/Loading";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { PAGE_SIZE, PAGE_SIZE_MAXIMUM, THEME_BLUE } from "~/lib/constants";
 import { screenWidthAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -483,9 +482,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     toast.success("URL copied to clipboard!", { autoClose: 2000 });
   }, []);
 
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(filterFullWindowVisible || exportDialogOpen);
-
   return (
     <>
       <Head>
@@ -497,15 +493,13 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       {isLoading && <Loading />}
 
       {/* POPUP FILTER */}
-      <ReactModal
+      <CustomModal
         isOpen={filterFullWindowVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[600px] md:w-[800px]`}
       >
         {lookups_categories &&
           lookups_countries &&
@@ -537,18 +531,16 @@ const OpportunitiesAdmin: NextPageWithLayout<{
               />
             </div>
           )}
-      </ReactModal>
+      </CustomModal>
 
       {/* EXPORT DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={exportDialogOpen}
         shouldCloseOnOverlayClick={true}
         onRequestClose={() => {
           setExportDialogOpen(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[480px] md:w-[600px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[480px] md:w-[600px]`}
       >
         <div className="flex flex-col gap-2">
           <div className="flex h-20 flex-row bg-blue p-4 shadow-lg"></div>
@@ -558,10 +550,9 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                 src={iconBell}
                 alt="Icon Bell"
                 width={28}
-                height={28}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
-                style={{ width: "28px", height: "28px" }}
               />
             </div>
 
@@ -599,7 +590,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
@@ -734,7 +725,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                   src={iconZlto}
                                   alt="Zlto icon"
                                   width={16}
-                                  height={16}
+                                  className="h-auto"
                                 />
                                 <span className="ml-1 text-xs">
                                   {opportunity?.zltoReward}
@@ -838,7 +829,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                     src={iconZlto}
                                     alt="Zlto icon"
                                     width={16}
-                                    height={16}
+                                    className="h-auto"
                                   />
                                   <span className="ml-1 text-xs">
                                     {opportunity?.zltoReward}

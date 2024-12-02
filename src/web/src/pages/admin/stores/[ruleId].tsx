@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { captureException } from "@sentry/nextjs";
 import {
   QueryClient,
   dehydrate,
@@ -25,7 +24,6 @@ import {
 import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import { IoMdArrowRoundBack, IoMdClose, IoMdWarning } from "react-icons/io";
-import ReactModal from "react-modal";
 import Select from "react-select";
 import Async from "react-select/async";
 import { toast } from "react-toastify";
@@ -50,6 +48,7 @@ import {
 } from "~/api/services/marketplace";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
 import { getOrganisations } from "~/api/services/organisations";
+import CustomModal from "~/components/Common/CustomModal";
 import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
@@ -62,7 +61,6 @@ import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   GA_ACTION_STORE_ACCESS_CONTROL_RULE_CREATE,
   GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE,
@@ -406,8 +404,10 @@ const StoreRuleDetails: NextPageWithLayout<{
     resetStep3(formData);
     resetStep4(formData);
     setSaveChangesDialogVisible(false);
-    lastStepBeforeSaveChangesDialog && setStep(lastStepBeforeSaveChangesDialog);
     setLastStepBeforeSaveChangesDialog(null);
+    if (lastStepBeforeSaveChangesDialog) {
+      setStep(lastStepBeforeSaveChangesDialog);
+    }
   }, [
     formData,
     resetStep1,
@@ -509,7 +509,6 @@ const StoreRuleDetails: NextPageWithLayout<{
           icon: false,
         });
 
-        captureException(error);
         setIsLoading(false);
 
         return;
@@ -579,9 +578,6 @@ const StoreRuleDetails: NextPageWithLayout<{
       resetStep4,
     ],
   );
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(saveChangesDialogVisible);
 
   // load stores (based on watchOrganizationId)
   const [dataStores, setDataStores] = useState<SelectOption[]>([]);
@@ -735,15 +731,13 @@ const StoreRuleDetails: NextPageWithLayout<{
       <PageBackground />
 
       {/* SAVE CHANGES DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={saveChangesDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setSaveChangesDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[310px] md:w-[450px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[310px] md:w-[450px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="flex flex-row bg-green p-4 shadow-lg">
@@ -764,10 +758,9 @@ const StoreRuleDetails: NextPageWithLayout<{
                 src={iconBell}
                 alt="Icon Bell"
                 width={28}
-                height={28}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
-                style={{ width: "28px", height: "28px" }}
               />
             </div>
 
@@ -795,7 +788,7 @@ const StoreRuleDetails: NextPageWithLayout<{
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* PAGE */}
       <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-2 py-4">
@@ -1211,8 +1204,8 @@ const StoreRuleDetails: NextPageWithLayout<{
                               onChange={(val) => {
                                 onChange(val.map((c) => c.value));
                               }}
-                              value={dataStoreItemCategories?.filter(
-                                (c) => value?.includes(c.value),
+                              value={dataStoreItemCategories?.filter((c) =>
+                                value?.includes(c.value),
                               )}
                               placeholder="Store Item Categories"
                               styles={{

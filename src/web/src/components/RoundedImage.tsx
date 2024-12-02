@@ -3,36 +3,31 @@ import Image from "next/image";
 export const RoundedImage: React.FC<{
   icon: any;
   alt: string;
-  imageWidth: number;
-  imageHeight: number;
-  containerWidth?: number;
-  containerHeight?: number;
+  imageSize: number;
+  containerSize?: number;
   priority?: boolean;
 }> = ({
   icon,
   alt = "Icon",
-  imageWidth = 28,
-  imageHeight = 28,
-  containerWidth = imageWidth + 20,
-  containerHeight = imageHeight + 20,
+  imageSize: imageWidth = 28,
+  containerSize = imageWidth + 20,
   priority = true,
 }) => {
   return (
     <div
       className="h-[${containerHeight}px] w-[${containerWidth}px] flex items-center justify-center rounded-full bg-white shadow-lg"
       style={{
-        width: `${containerWidth}px`,
-        height: `${containerHeight}px`,
+        width: `${containerSize}px`,
+        height: `${containerSize}px`,
       }}
     >
       <Image
         src={icon}
         alt={alt}
         width={imageWidth}
-        height={imageHeight}
+        className="h-auto"
         sizes="100vw"
         priority={priority}
-        style={{ width: `${imageWidth}px`, height: `${imageHeight}px` }}
       />
     </div>
   );

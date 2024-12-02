@@ -42,10 +42,14 @@ export const Editor: React.FC<{
           }),
         ]}
         onBlur={() => {
-          onBlur && onBlur();
+          if (onBlur) {
+            onBlur();
+          }
         }}
         onChange={(val) => {
-          onChange && onChange(val);
+          if (onChange) {
+            onChange(val);
+          }
         }}
         readOnly={readonly}
         placeholder={placeholder}

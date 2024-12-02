@@ -19,7 +19,7 @@ export const SignOutButton: React.FC<{
   return (
     <button
       type="button"
-      className={`bg-theme btn btn-sm gap-2 border-0 border-none px-4 shadow-lg transition animate-in animate-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95 ${className}`}
+      className={`bg-theme btn btn-sm transform gap-2 border-0 border-none px-4 opacity-100 shadow-lg transition-all duration-300 ease-in-out hover:scale-[0.98] hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95 ${className}`}
       onClick={handleLogout}
       disabled={isButtonLoading}
       id="btnSignOut"

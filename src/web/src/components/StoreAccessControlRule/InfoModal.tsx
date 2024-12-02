@@ -1,8 +1,7 @@
-import ReactModal from "react-modal";
 import Image from "next/image";
-import iconPassport from "../../../public/images/passport.webp";
 import { IoMdClose } from "react-icons/io";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import iconPassport from "../../../public/images/passport.webp";
+import CustomModal from "../Common/CustomModal";
 
 export const InfoModal = ({
   isOpen,
@@ -11,18 +10,13 @@ export const InfoModal = ({
   isOpen: boolean;
   onClose: () => void;
 }) => {
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(isOpen);
-
   return (
     <>
-      <ReactModal
+      <CustomModal
         isOpen={isOpen}
         shouldCloseOnOverlayClick={false}
         onRequestClose={onClose}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:max-w-[600px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[700px] md:max-w-[600px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
           <div className="flex flex-row p-4">
@@ -41,10 +35,9 @@ export const InfoModal = ({
                 src={iconPassport}
                 alt="Icon Zlto"
                 width={40}
-                height={40}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
-                style={{ width: "40px", height: "40px" }}
               />
             </div>
             <h3>How Store Access Rules Work</h3>
@@ -117,7 +110,7 @@ export const InfoModal = ({
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
     </>
   );
 };

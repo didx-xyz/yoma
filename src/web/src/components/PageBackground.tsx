@@ -16,8 +16,8 @@ export const PageBackground: React.FC<{
         src={worldMap}
         alt="world-map"
         width={640}
-        height={360}
-        className="user-select-none pointer-events-none fixed mt-14 h-[14rem] object-scale-down opacity-10"
+        className="user-select-none pointer-events-none fixed mt-14 h-auto object-scale-down opacity-10"
+        priority={true}
       />
 
       {/* STAMPS */}
@@ -26,20 +26,18 @@ export const PageBackground: React.FC<{
           <Image
             src={stamp1}
             alt="Stamp1"
-            height={179}
             width={135}
             sizes="100vw"
             priority={true}
-            className="absolute left-2 z-0 -rotate-3 mix-blend-plus-lighter"
+            className="absolute left-2 z-0 h-auto -rotate-3 mix-blend-plus-lighter"
           />
           <Image
             src={stamp2}
             alt="Stamp2"
-            height={184}
             width={161}
             sizes="100vw"
             priority={true}
-            className="absolute -top-6 right-0 z-0 mix-blend-plus-lighter"
+            className="absolute -top-6 right-0 z-0 h-auto mix-blend-plus-lighter"
           />
         </div>
       )}

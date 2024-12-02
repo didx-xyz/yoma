@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import Image from "next/image";
 import Link from "next/link";
 import { IoMdImage } from "react-icons/io";
 import { type Organization, type UserInfo } from "~/api/models/organisation";
@@ -73,11 +74,10 @@ export const VerifyOverview: React.FC<InputProps> = ({ organisation }) => {
           {organisation?.logoURL && (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                className="ml-1 rounded-lg"
+              <Image
+                className="ml-1 h-auto rounded-lg"
                 alt="company logo"
                 width={50}
-                height={500}
                 src={organisation.logoURL}
               />
             </>

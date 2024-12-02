@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { captureException } from "@sentry/nextjs";
 import {
   QueryClient,
   dehydrate,
@@ -38,7 +37,6 @@ import {
   IoMdClose,
   IoMdImage,
 } from "react-icons/io";
-import ReactModal from "react-modal";
 import Select from "react-select";
 import Async from "react-select/async";
 import CreatableSelect from "react-select/creatable";
@@ -75,6 +73,7 @@ import {
 } from "~/api/services/opportunities";
 import { getOrganisationById } from "~/api/services/organisations";
 import { AvatarImage } from "~/components/AvatarImage";
+import CustomModal from "~/components/Common/CustomModal";
 import FormCheckbox from "~/components/Common/FormCheckbox";
 import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
@@ -91,7 +90,6 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   ACCEPTED_AUDIO_TYPES_LABEL,
   ACCEPTED_DOC_TYPES_LABEL,
@@ -202,9 +200,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   const [isLoading, setIsLoading] = useState(false);
   const [cacheSkills, setCacheSkills] = useState<Skill[]>([]);
   const htmlRef = useRef<HTMLDivElement>(null);
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(oppExpiredModalVisible || saveChangesDialogVisible);
 
   //#region Queries
 
@@ -959,8 +954,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       description: formData.description,
       type:
         formData.typeId && opportunityTypesData
-          ? opportunityTypesData.find((x) => x.id == formData.typeId)?.name ??
-            ""
+          ? (opportunityTypesData.find((x) => x.id == formData.typeId)?.name ??
+            "")
           : "",
       organizationId: id,
       organizationName: organisation ? organisation.name : "",
@@ -976,13 +971,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       verificationMethod: formData.verificationMethod,
       difficulty:
         formData.difficultyId && difficultiesData
-          ? difficultiesData.find((x) => x.id == formData.difficultyId)?.name ??
-            ""
+          ? (difficultiesData.find((x) => x.id == formData.difficultyId)
+              ?.name ?? "")
           : "",
       commitmentInterval:
         formData.commitmentIntervalId && timeIntervalsData
-          ? timeIntervalsData.find((x) => x.id == formData.commitmentIntervalId)
-              ?.name ?? ""
+          ? (timeIntervalsData.find(
+              (x) => x.id == formData.commitmentIntervalId,
+            )?.name ?? "")
           : "",
       commitmentIntervalCount: formData.commitmentIntervalCount ?? 0,
       commitmentIntervalDescription: "",
@@ -1001,8 +997,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       featured: false,
       engagementType:
         formData.engagementTypeId && engagementTypesData
-          ? engagementTypesData.find((x) => x.id == formData.engagementTypeId)
-              ?.name ?? ""
+          ? (engagementTypesData.find((x) => x.id == formData.engagementTypeId)
+              ?.name ?? "")
           : "",
       published: true,
       yomaInfoURL: "",
@@ -1123,8 +1119,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     resetStep7(formData);
     triggerValidation();
     setSaveChangesDialogVisible(false);
-    lastStepBeforeSaveChangesDialog && setStep(lastStepBeforeSaveChangesDialog);
     setLastStepBeforeSaveChangesDialog(null);
+    if (lastStepBeforeSaveChangesDialog) {
+      setStep(lastStepBeforeSaveChangesDialog);
+    }
   }, [
     resetStep1,
     formData,
@@ -1284,7 +1282,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           icon: false,
         });
 
-        captureException(error);
         setIsLoading(false);
 
         return;
@@ -1455,15 +1452,13 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       <div ref={htmlRef} />
 
       {/* OPPORTUNITY EXPIRED MODAL */}
-      <ReactModal
+      <CustomModal
         isOpen={oppExpiredModalVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setOppExpiredModalVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[450px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[450px] md:w-[450px]`}
       >
         <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
           <div className="flex flex-row bg-green p-4 shadow-lg">
@@ -1484,10 +1479,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                 src={iconBell}
                 alt="Icon Bell"
                 width={28}
-                height={28}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
-                style={{ width: "28px", height: "28px" }}
               />
             </div>
 
@@ -1523,18 +1517,16 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* SAVE CHANGES DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={saveChangesDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setSaveChangesDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[310px] md:w-[450px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[310px] md:w-[450px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="flex flex-row bg-green p-4 shadow-lg">
@@ -1555,10 +1547,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                 src={iconBell}
                 alt="Icon Bell"
                 width={28}
-                height={28}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
-                style={{ width: "28px", height: "28px" }}
               />
             </div>
 
@@ -1586,7 +1577,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* PAGE */}
       <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-2 py-4">
@@ -1857,8 +1848,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             onChange={(val) =>
                               onChange(val?.map((c) => c.value ?? ""))
                             }
-                            value={categoriesOptions?.filter(
-                              (c) => value?.includes(c.value),
+                            value={categoriesOptions?.filter((c) =>
+                              value?.includes(c.value),
                             )}
                             // fix menu z-index issue
                             menuPortalTarget={htmlRef.current}
@@ -2012,8 +2003,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             onChange={(val) =>
                               onChange(val.map((c) => c.value))
                             }
-                            value={languagesOptions?.filter(
-                              (c) => value?.includes(c.value),
+                            value={languagesOptions?.filter((c) =>
+                              value?.includes(c.value),
                             )}
                             // fix menu z-index issue
                             menuPortalTarget={htmlRef.current}
@@ -2059,8 +2050,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             onChange={(val) =>
                               onChange(val.map((c) => c.value))
                             }
-                            value={countriesOptions?.filter(
-                              (c) => value?.includes(c.value),
+                            value={countriesOptions?.filter((c) =>
+                              value?.includes(c.value),
                             )}
                             // fix menu z-index issue
                             menuPortalTarget={htmlRef.current}
@@ -3181,19 +3172,18 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                   </tr>
                                 </thead>
                                 <tbody>
-                                  {schemaAttributes?.map(
-                                    (attribute) =>
-                                      attribute.properties?.map(
-                                        (property, index) => (
-                                          <tr
-                                            key={`schemaAttributes_${attribute.id}_${index}_${property.id}`}
-                                            className="border-gray text-gray-dark"
-                                          >
-                                            <td>{attribute?.name}</td>
-                                            <td>{property.nameDisplay}</td>
-                                          </tr>
-                                        ),
+                                  {schemaAttributes?.map((attribute) =>
+                                    attribute.properties?.map(
+                                      (property, index) => (
+                                        <tr
+                                          key={`schemaAttributes_${attribute.id}_${index}_${property.id}`}
+                                          className="border-gray text-gray-dark"
+                                        >
+                                          <td>{attribute?.name}</td>
+                                          <td>{property.nameDisplay}</td>
+                                        </tr>
                                       ),
+                                    ),
                                   )}
                                 </tbody>
                               </table>
@@ -3423,7 +3413,9 @@ OpportunityAdminDetails.getLayout = function getLayout(page: ReactElement) {
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-OpportunityAdminDetails.theme = function getTheme(page: ReactElement) {
+OpportunityAdminDetails.theme = function getTheme(
+  page: ReactElement<{ theme: string }>,
+) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };

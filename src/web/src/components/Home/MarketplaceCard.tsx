@@ -23,10 +23,8 @@ const MarketplaceCard: React.FC<{
           <RoundedImage
             icon={image}
             alt="Organisation logo"
-            containerWidth={40}
-            containerHeight={40}
-            imageWidth={40}
-            imageHeight={40}
+            containerSize={40}
+            imageSize={40}
           />
         </div>
       </div>
@@ -38,10 +36,9 @@ const MarketplaceCard: React.FC<{
             src={iconZlto}
             alt="Icon Zlto"
             width={18}
-            height={18}
+            className="h-auto"
             sizes="100vw"
             priority={true}
-            style={{ width: "18px", height: "18px" }}
           />
           <span className="ml-1 text-xs">{zlto}</span>
         </div>

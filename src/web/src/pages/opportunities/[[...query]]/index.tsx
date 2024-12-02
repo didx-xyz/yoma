@@ -11,7 +11,6 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import ReactModal from "react-modal";
 import type {
   EngagementType,
   SelectOption,
@@ -34,18 +33,20 @@ import {
   getOpportunityTypes,
   searchOpportunities,
 } from "~/api/services/opportunities";
+import CustomModal from "~/components/Common/CustomModal";
 import FilterBadges from "~/components/FilterBadges";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import AnimatedText from "~/components/Opportunity/AnimatedText";
+import FilterTab from "~/components/Opportunity/FilterTab";
 import OpportunitiesCarousel from "~/components/Opportunity/OpportunitiesCarousel";
 import { OpportunitiesGrid } from "~/components/Opportunity/OpportunitiesGrid";
 import OpportunityCategoriesHorizontalFilter from "~/components/Opportunity/OpportunityCategoriesHorizontalFilter";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
+import { OppSearchInputLarge } from "~/components/Opportunity/OppSearchInputLarge";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { Loading } from "~/components/Status/Loading";
-import FilterTab from "~/components/Opportunity/FilterTab";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   OPPORTUNITY_TYPES_EVENT,
   OPPORTUNITY_TYPES_LEARNING,
@@ -56,8 +57,6 @@ import {
 } from "~/lib/constants";
 import { currentLanguageAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
-import AnimatedText from "~/components/Opportunity/AnimatedText";
-import { OppSearchInputLarge } from "~/components/Opportunity/OppSearchInputLarge";
 
 // 👇 SSG
 // This page is statically generated at build time on server-side
@@ -310,7 +309,6 @@ const Opportunities: NextPageWithLayout<{
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
   const queryClient = useQueryClient();
-  useDisableBodyScroll(filterFullWindowVisible);
   const currentLanguage = useAtomValue(currentLanguageAtom);
 
   const { data: lookups_countries } = useQuery({
@@ -1106,15 +1104,13 @@ const Opportunities: NextPageWithLayout<{
       <div ref={myRef} />
 
       {/* POPUP FILTER */}
-      <ReactModal
+      <CustomModal
         isOpen={filterFullWindowVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[600px] md:w-[800px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className="md:max-h-[600px] md:w-[700px]"
       >
         {lookups_countries != undefined && lookups_languages != undefined && (
           <OpportunityFilterVertical
@@ -1134,7 +1130,7 @@ const Opportunities: NextPageWithLayout<{
             session={session}
           />
         )}
-      </ReactModal>
+      </CustomModal>
 
       <div className="container z-10 mt-16 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
         <div className="mb-3 flex flex-col items-center justify-center gap-2 pt-6 text-white md:mb-9">

@@ -104,11 +104,9 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
               src={IconRingBuoy}
               alt="Icon Ring Buoy"
               width={100}
-              height={100}
               sizes="100vw"
               priority={true}
-              style={{ width: "100px", height: "100px" }}
-              className="mt-2 rounded-full p-4 shadow-custom"
+              className="mt-2 h-auto rounded-full p-4 shadow-custom"
             />
             <h2 className="-mb-6 font-bold">Almost there...</h2>
 
@@ -133,11 +131,9 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
               src={IconRingBuoy}
               alt="Icon Ring Bouy"
               width={100}
-              height={100}
               sizes="100vw"
               priority={true}
-              style={{ width: "100px", height: "100px" }}
-              className="mt-2 rounded-full p-4 shadow-custom"
+              className="mt-2 h-auto rounded-full p-4 shadow-custom"
             />
             <h2 className="-mb-6 font-bold">Error</h2>
 
@@ -193,11 +189,9 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
               src={IconSuccess}
               alt="Icon Success"
               width={80}
-              height={80}
               sizes="100vw"
               priority={true}
-              style={{ width: "80px", height: "80px" }}
-              className="mt-2 rounded-full p-4 shadow-custom"
+              className="mt-2 h-auto rounded-full p-4 shadow-custom"
             />
             <h2 className="-mb-6 font-bold">Congratulations!</h2>
 

@@ -17,7 +17,6 @@ import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
 import { getUserSkills } from "~/api/services/user";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { MAXINT32 } from "~/lib/constants";
 import {
   RoleView,
@@ -46,9 +45,6 @@ export const UserMenu: React.FC = () => {
   const [isCollapsedPassport, setCollapsedPassport] = useState(true);
   const toggleCollapsePassport = () =>
     setCollapsedPassport(!isCollapsedPassport);
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(isDrawerOpen || yoIdModalVisible);
 
   //#region YoID Dashboard
   const [graphView, setGraphView] = useState(false);
@@ -176,30 +172,28 @@ export const UserMenu: React.FC = () => {
                 <Image
                   src={worldMap}
                   alt="Worldmap"
-                  height={300}
                   width={400}
                   sizes="100vw"
-                  className="user-select-none pointer-events-none absolute top-10 z-0 px-4 opacity-70"
+                  priority={true}
+                  className="user-select-none pointer-events-none absolute top-10 z-0 h-auto px-4 opacity-70"
                 />
                 {/* STAMP 2 */}
                 <Image
                   src={stamp2}
                   alt="Stamp2"
-                  height={184}
                   width={161}
                   sizes="100vw"
                   priority={true}
-                  className="user-select-none pointer-events-none absolute left-32 top-56 -z-10 -rotate-6 opacity-50"
+                  className="user-select-none pointer-events-none absolute left-32 top-56 -z-10 h-auto -rotate-6 opacity-50"
                 />
                 {/* STAMP 1 */}
                 <Image
                   src={stamp1}
                   alt="Stamp1"
-                  height={179}
                   width={135}
                   sizes="100vw"
                   priority={true}
-                  className="user-select-none pointer-events-none absolute inset-x-2 left-32 top-[500px] -z-10 -rotate-3 opacity-50"
+                  className="user-select-none pointer-events-none absolute inset-x-2 left-32 top-[500px] -z-10 h-auto -rotate-3 opacity-50"
                 />
 
                 <div className="relative z-10 mr-2 mt-6 overflow-hidden rounded-full shadow">
@@ -362,7 +356,7 @@ export const UserMenu: React.FC = () => {
                       className="flex h-[24px] w-full flex-row items-center gap-2 text-xs text-gray-dark md:text-sm"
                       tabIndex={isDrawerOpen ? 0 : -1}
                     >
-                      <span className="w-full truncate text-start text-xs font-bold tracking-wider  text-black md:text-sm">
+                      <span className="w-full truncate text-start text-xs font-bold tracking-wider text-black md:text-sm">
                         🌐 Passport
                       </span>
 
@@ -387,7 +381,7 @@ export const UserMenu: React.FC = () => {
 
                   {/* open passport button */}
                   <Link
-                    className="btn btn-sm gap-2 border-0 border-none bg-orange px-4 text-white shadow-lg transition animate-in animate-out hover:bg-orange hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95"
+                    className="btn btn-sm gap-2 border-0 border-none bg-orange px-4 text-white shadow-lg hover:bg-orange hover:brightness-95 disabled:!cursor-wait disabled:brightness-95"
                     onClick={() => setDrawerOpen(false)}
                     href={`/yoid/passport`}
                     tabIndex={isDrawerOpen ? 0 : -1}

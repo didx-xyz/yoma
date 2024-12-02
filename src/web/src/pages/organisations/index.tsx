@@ -414,7 +414,7 @@ const Organisations: NextPageWithLayout<{
               >
                 <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
                   <ul className="-mb-px flex w-full justify-between gap-4 overflow-x-auto md:justify-start md:gap-0">
-                    <li className=" md:w-24">
+                    <li className="md:w-24">
                       <Link
                         href={`/organisations`}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -432,7 +432,7 @@ const Organisations: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
-                    <li className=" md:w-24">
+                    <li className="md:w-24">
                       <Link
                         href={`/organisations?status=Active`}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -450,7 +450,7 @@ const Organisations: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
-                    <li className=" md:w-24">
+                    <li className="md:w-24">
                       <Link
                         href={`/organisations?status=Inactive`}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -468,7 +468,7 @@ const Organisations: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
-                    <li className=" md:w-24">
+                    <li className="md:w-24">
                       <Link
                         href={`/organisations?status=Declined`}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -486,7 +486,7 @@ const Organisations: NextPageWithLayout<{
                         )}
                       </Link>
                     </li>
-                    <li className=" md:w-24">
+                    <li className="md:w-24">
                       <Link
                         href={`/organisations?status=Deleted`}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
@@ -508,7 +508,7 @@ const Organisations: NextPageWithLayout<{
                 </div>
               </div>
               {/* RIGHT BUTTON MOBILE */}
-              <div className="-mr-1 mb-1 flex items-center md:hidden ">
+              <div className="-mr-1 mb-1 flex items-center md:hidden">
                 <button
                   className="ease-bounce focus:outline-none active:scale-90"
                   onClick={() => {
@@ -617,7 +617,7 @@ Organisations.getLayout = function getLayout(page: ReactElement) {
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-Organisations.theme = function getTheme(page: ReactElement) {
+Organisations.theme = function getTheme(page: ReactElement<{ theme: string }>) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };

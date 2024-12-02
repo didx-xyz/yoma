@@ -30,10 +30,8 @@ const OpportunityCard: React.FC<{
           <RoundedImage
             icon={image}
             alt="Organisation logo"
-            containerWidth={40}
-            containerHeight={40}
-            imageWidth={40}
-            imageHeight={40}
+            containerSize={40}
+            imageSize={40}
           />
         </div>
       </div>
@@ -50,11 +48,9 @@ const OpportunityCard: React.FC<{
               src={iconClock}
               alt="Icon Clock"
               width={20}
-              height={20}
+              className="ml-2 h-auto"
               sizes="100vw"
               priority={true}
-              style={{ width: "20px", height: "20px" }}
-              className="ml-2"
             />
 
             <span className="mx-1 mr-2 text-xs">{`${hours} hour${
@@ -66,10 +62,9 @@ const OpportunityCard: React.FC<{
               src={iconUser}
               alt="Icon User"
               width={18}
-              height={18}
+              className="h-auto"
               sizes="100vw"
               priority={true}
-              style={{ width: "18px", height: "18px" }}
             />
             <span className="ml-1 text-xs">{students}</span>
           </div> */}
@@ -82,10 +77,9 @@ const OpportunityCard: React.FC<{
               src={iconZlto}
               alt="Icon Zlto"
               width={18}
-              height={18}
+              className="h-auto"
               sizes="100vw"
               priority={true}
-              style={{ width: "18px", height: "18px" }}
             />
             <span className="ml-1 text-xs">{reward}</span>
           </div>

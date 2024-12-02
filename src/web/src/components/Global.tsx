@@ -10,7 +10,6 @@ import stamp1 from "public/images/stamp-1.png";
 import stamp2 from "public/images/stamp-2.png";
 import YoIDCard from "public/images/YoID-modal-card.webp";
 import { useCallback, useEffect, useState } from "react";
-import ReactModal from "react-modal";
 import { toast } from "react-toastify";
 import type { SettingsRequest } from "~/api/models/common";
 import type { UserProfile } from "~/api/models/user";
@@ -21,7 +20,6 @@ import {
   patchYoIDOnboarding,
   updateSettings,
 } from "~/api/services/user";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { handleUserSignIn } from "~/lib/authUtils";
 import {
   COOKIE_KEYCLOAK_SESSION,
@@ -43,6 +41,8 @@ import {
   screenWidthAtom,
   userProfileAtom,
 } from "~/lib/store";
+import CustomModal from "./Common/CustomModal";
+import Suspense from "./Common/Suspense";
 import SettingsForm from "./Settings/SettingsForm";
 import { SignInButton } from "./SignInButton";
 import { ApiErrors } from "./Status/ApiErrors";
@@ -50,7 +50,6 @@ import {
   UserProfileFilterOptions,
   UserProfileForm,
 } from "./User/UserProfileForm";
-import Suspense from "./Common/Suspense";
 
 // * GLOBAL APP CONCERNS
 // * needs to be done here as jotai atoms are not available in _app.tsx
@@ -94,11 +93,6 @@ export const Global: React.FC = () => {
     queryFn: async () => await getSettings(),
     enabled: settingsDialogVisible,
   });
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(
-    loginDialogVisible || onboardingDialogVisible || updateProfileDialogVisible,
-  );
 
   //#region Functions
   const postLoginChecks = useCallback(
@@ -152,6 +146,8 @@ export const Global: React.FC = () => {
       } else if (!userProfile?.photoURL) {
         // show photo upload dialog
         setPhotoUploadDialogVisible(true);
+      } else {
+        toast.success("Welcome back!", { autoClose: 0 });
       }
     },
     [
@@ -399,15 +395,12 @@ export const Global: React.FC = () => {
   return (
     <>
       {/* UPDATE PROFILE DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={updateProfileDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setUpdateProfileDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden overflow-y-auto bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:w-[500px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
@@ -417,10 +410,9 @@ export const Global: React.FC = () => {
                 src={iconBell}
                 alt="Icon Bell"
                 width={28}
-                height={28}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
-                style={{ width: "28px", height: "28px" }}
               />
             </div>
 
@@ -462,18 +454,15 @@ export const Global: React.FC = () => {
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* YoID ONBOARDING DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={onboardingDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setOnboardingDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden overflow-y-auto bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:w-[500px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex flex-col gap-2">
           <div className="relative flex h-32 flex-row bg-green p-4">
@@ -481,20 +470,18 @@ export const Global: React.FC = () => {
             <Image
               src={stamp1}
               alt="Stamp1"
-              height={179}
               width={135}
               sizes="100vw"
               priority={true}
-              className="absolute left-[10%] z-0 -rotate-3 opacity-70 mix-blend-plus-lighter"
+              className="absolute left-[10%] z-0 h-auto -rotate-3 opacity-70 mix-blend-plus-lighter"
             />
             <Image
               src={stamp2}
               alt="Stamp2"
-              height={184}
               width={161}
               sizes="100vw"
               priority={true}
-              className="absolute right-0 z-0 rotate-12 opacity-70 mix-blend-plus-lighter"
+              className="absolute right-0 z-0 h-auto rotate-12 opacity-70 mix-blend-plus-lighter"
             />
           </div>
           <div className="flex flex-col items-center justify-center gap-8 px-6 pb-8 text-center md:px-12">
@@ -503,7 +490,7 @@ export const Global: React.FC = () => {
                 src={YoIDCard}
                 alt="Yo-ID Card"
                 width={300}
-                height={300}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
               />
@@ -558,18 +545,15 @@ export const Global: React.FC = () => {
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* SETTINGS DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={settingsDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setSettingsDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden overflow-y-auto bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:w-[500px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
@@ -579,10 +563,9 @@ export const Global: React.FC = () => {
                 src={iconBell}
                 alt="Icon Bell"
                 width={28}
-                height={28}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
-                style={{ width: "28px", height: "28px" }}
               />
             </div>
 
@@ -623,18 +606,15 @@ export const Global: React.FC = () => {
             </button>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* UPLOAD PHOTO DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={photoUploadDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setPhotoUploadDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden overflow-y-auto bg-white animate-in fade-in md:m-auto md:max-h-[700px] md:w-[500px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
@@ -644,10 +624,9 @@ export const Global: React.FC = () => {
                 src={iconBell}
                 alt="Icon Bell"
                 width={28}
-                height={28}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
-                style={{ width: "28px", height: "28px" }}
               />
             </div>
 
@@ -689,18 +668,15 @@ export const Global: React.FC = () => {
             </button>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* LOGIN AGAIN DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={loginDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setLoginDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white outline-1 animate-in fade-in hover:outline-1 md:m-auto md:max-h-[280px] md:w-[450px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="bg-theme flex h-16 flex-row p-4 shadow-lg"></div>
@@ -710,10 +686,9 @@ export const Global: React.FC = () => {
                 src={iconBell}
                 alt="Icon Bell"
                 width={28}
-                height={28}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
-                style={{ width: "28px", height: "28px" }}
               />
             </div>
 
@@ -724,7 +699,7 @@ export const Global: React.FC = () => {
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
     </>
   );
 };

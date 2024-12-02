@@ -72,16 +72,19 @@ const Home: NextPageWithLayout = () => {
 
   return (
     <>
-      <PageBackground className="h-[375px] md:h-[300px] lg:h-[415px]" />
+      <PageBackground
+        className="h-[350px] lg:h-[422px]"
+        //className="h-[320px]"
+      />
 
-      <div className="z-10 mt-4 flex flex-col items-center justify-center overflow-hidden px-4 pt-8 lg:mt-20">
+      <div className="z-10 mt-8 flex flex-col items-center justify-center overflow-hidden px-4 pt-8 lg:mt-20">
         <div className="grid grid-cols-1 gap-6 md:max-w-5xl lg:grid-cols-2">
           {/* LEFT: HEADERS AND TEXT */}
-          <div className="flex flex-col gap-2 overflow-hidden pt-8 text-white md:py-8">
+          <div className="flex min-h-80 max-w-md flex-col gap-2 overflow-hidden pt-8 text-white md:py-8">
             <h6 className="text-sm uppercase tracking-widest">
               Welcome to Yoma
             </h6>
-            <h1 className="text-3xl font-bold tracking-wide">
+            <h1 className="text-lg font-bold tracking-wide sm:text-xl md:text-3xl">
               A world of opportunities
             </h1>
             <p className="text-sm">
@@ -89,7 +92,7 @@ const Home: NextPageWithLayout = () => {
               the freshest opportunities to keep your skills sharp and stay in
               the loop with what&apos;s happening in the working world.
             </p>
-            <div className="mb-4 md:my-4">
+            <div className="mb-4xx md:my-4xx">
               <div className="my-2 flex w-full flex-row justify-start md:my-4">
                 <HomeSearchInputLarge
                   onSearch={onSearchInputSubmit}
@@ -112,8 +115,6 @@ const Home: NextPageWithLayout = () => {
                   reward={11}
                   students={1}
                   image={imageLogoUCT}
-                  // width={250}
-                  // height={200}
                 />
               </div>
               <div className="absolute left-[7.5rem] top-32 z-10">
@@ -126,8 +127,6 @@ const Home: NextPageWithLayout = () => {
                   reward={11}
                   students={1}
                   image={imageLogoAtingi}
-                  // width={250}
-                  // height={200}
                 />
               </div>
             </div>
@@ -135,21 +134,18 @@ const Home: NextPageWithLayout = () => {
               src={imageWoman}
               alt="Woman smiling"
               width={345}
-              height={345}
               sizes="100vw"
               priority={true}
               style={{
-                width: "345px",
-                height: "368px",
                 zIndex: 0,
               }}
-              className="absolute right-0 top-12"
+              className="absolute right-0 top-12 h-auto"
             />
           </div>
         </div>
 
         {/* CENTER: OUR MISSION HEADER AND PARAGRAPH */}
-        <div className="mt-8 flex flex-col items-center gap-2 md:mt-0">
+        <div className="mt-8x flex flex-col items-center gap-2 md:mt-0">
           <h2 className="text-2xl font-semibold tracking-wide text-black">
             Our mission
           </h2>
@@ -177,10 +173,8 @@ const Home: NextPageWithLayout = () => {
                   <RoundedImage
                     icon={imageLogoCartedo}
                     alt="Cartedo logo"
-                    containerWidth={49}
-                    containerHeight={40}
-                    imageWidth={49}
-                    imageHeight={40}
+                    containerSize={49}
+                    imageSize={49}
                   />
                 </div>
 
@@ -214,10 +208,8 @@ const Home: NextPageWithLayout = () => {
                   src={iconImpact}
                   alt="People sitting at table"
                   width={130}
-                  height={130}
                   sizes="100vw"
-                  className="drop-shadow-[0_16px_4px_rgba(0,0,0,0.16)]"
-                  style={{ height: "130px", width: "130px" }}
+                  className="h-auto drop-shadow-[0_16px_4px_rgba(0,0,0,0.16)]"
                 />
               </div>
             </div>
@@ -239,9 +231,8 @@ const Home: NextPageWithLayout = () => {
                   src={imageThrive}
                   alt="People sitting at table"
                   width={140}
-                  height={250}
+                  className="h-auto"
                   sizes="100vw"
-                  // style={{ width: "300px", height: "189px" }}
                 />
               </div>
             </div>
@@ -266,34 +257,27 @@ const Home: NextPageWithLayout = () => {
                 <Image
                   src={stamp1}
                   alt="Stamp1"
-                  height={179}
                   width={135}
                   sizes="100vw"
                   priority={true}
-                  className="user-select-none pointer-events-none absolute z-0 rotate-[-6deg] grayscale md:top-32"
+                  className="user-select-none pointer-events-none absolute z-0 h-auto rotate-[-6deg] md:top-32"
                 />
                 <Image
                   src={stamp2}
                   alt="Stamp2"
-                  height={184}
-                  width={161}
+                  width={135}
                   sizes="100vw"
                   priority={true}
-                  className="user-select-none pointer-events-none absolute -bottom-5 right-0 z-0 rotate-12 mix-blend-plus-lighter"
+                  className="user-select-none pointer-events-none absolute -bottom-5 right-0 z-0 h-auto rotate-12 mix-blend-plus-lighter"
                 />
                 <Image
                   src={imageCardID}
                   alt="ID Card"
                   width={420}
-                  height={250}
+                  className="z-10 h-auto"
                   sizes="100vw"
                   priority={true}
                   quality={100}
-                  style={{
-                    width: "420px",
-                    height: "250px",
-                    zIndex: 1,
-                  }}
                 />
               </div>
 
@@ -316,20 +300,15 @@ const Home: NextPageWithLayout = () => {
         </div>
 
         {/* ROW OF 3 CARDS */}
-        <div className=" -mt-12 grid max-w-5xl grid-cols-1 gap-8 md:-mt-8 md:gap-4 lg:grid-cols-3">
+        <div className="-mt-12 grid max-w-5xl grid-cols-1 gap-8 md:-mt-8 md:gap-4 lg:grid-cols-3">
           {/* GOODWALL */}
           <div className="flex h-[298px] max-w-[380px] flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:py-8">
             <Image
               src={imageLogoGoodwall}
               alt="Logo Goodwall"
               width={200}
-              height={45}
+              className="h-auto"
               sizes="100vw"
-              style={{
-                width: "200px",
-                height: "45px",
-                zIndex: 1,
-              }}
             />
 
             <h1 className="text-center text-base font-semibold">
@@ -346,32 +325,22 @@ const Home: NextPageWithLayout = () => {
               >
                 <Image
                   src={imageLogoAppStore}
-                  alt="Logo App Store"
-                  width={100}
-                  height={40}
-                  sizes="120vw"
-                  style={{
-                    width: "120px",
-                    height: "40px",
-                    zIndex: 1,
-                  }}
+                  alt="App Store"
+                  width={120}
+                  className="h-auto"
+                  sizes="100vw"
                 />
-              </Link>{" "}
+              </Link>
               <Link
                 href="https://play.google.com/store/apps/details?id=org.goodwall.app&hl=en&gl=US&pli=1"
                 target="_blank"
               >
                 <Image
                   src={imageLogoPlayStore}
-                  alt="Logo Play Store"
+                  alt="Play Store"
                   width={120}
-                  height={40}
+                  className="h-auto"
                   sizes="100vw"
-                  style={{
-                    width: "120px",
-                    height: "40px",
-                    zIndex: 1,
-                  }}
                 />
               </Link>
             </div>
@@ -383,13 +352,8 @@ const Home: NextPageWithLayout = () => {
               src={imageLogoYoma}
               alt="Logo Yoma"
               width={100}
-              height={45}
+              className="h-auto"
               sizes="100vw"
-              style={{
-                width: "100px",
-                height: "45px",
-                zIndex: 1,
-              }}
             />
 
             <h1 className="text-center text-base font-semibold">
@@ -416,11 +380,9 @@ const Home: NextPageWithLayout = () => {
               src={imageLogoWhatsapp}
               alt="Logo Whatsapp"
               width={150}
-              height={55}
+              className="h-auto"
               sizes="100vw"
               style={{
-                width: "150px",
-                height: "55px",
                 zIndex: 1,
               }}
             />
@@ -458,11 +420,9 @@ const Home: NextPageWithLayout = () => {
                 src={imageLogoZltoBig}
                 alt="Logo Zlto"
                 width={134}
-                height={74}
+                className="h-auto"
                 sizes="100vw"
                 style={{
-                  width: "130px",
-                  height: "74px",
                   zIndex: 1,
                 }}
               />
@@ -490,9 +450,8 @@ const Home: NextPageWithLayout = () => {
                   src={iconGreenCheck}
                   alt="Green Check"
                   width={70}
-                  height={70}
+                  className="h-auto"
                   sizes="100vw"
-                  style={{ width: "70px", height: "70px" }}
                 />
                 <p className="mt-3 font-bold text-black">
                   Complete Opportunities
@@ -503,9 +462,8 @@ const Home: NextPageWithLayout = () => {
                   src={iconBlueUpload}
                   alt="Green Check"
                   width={70}
-                  height={70}
+                  className="h-auto"
                   sizes="100vw"
-                  style={{ width: "70px", height: "70px" }}
                 />
                 <p className="mt-3 font-bold text-black">
                   Upload Proof of Completion
@@ -516,9 +474,8 @@ const Home: NextPageWithLayout = () => {
                   src={iconOrangeZlto}
                   alt="Green Check"
                   width={70}
-                  height={70}
+                  className="h-auto"
                   sizes="100vw"
-                  style={{ width: "70px", height: "70px" }}
                 />
                 <p className="mt-3 font-bold text-black">Earn your Rewards</p>
               </div>
@@ -562,7 +519,7 @@ const Home: NextPageWithLayout = () => {
               {/* MARKETPLACE BUTTON */}
               <Link
                 href="/marketplace"
-                className="btn mt-8 w-[260px] rounded-xl border-none bg-purple normal-case text-white hover:bg-purple hover:text-white hover:brightness-110  lg:mr-auto"
+                className="btn mt-8 w-[260px] rounded-xl border-none bg-purple normal-case text-white hover:bg-purple hover:text-white hover:brightness-110 lg:mr-auto"
               >
                 Start shopping
               </Link>
@@ -581,78 +538,48 @@ const Home: NextPageWithLayout = () => {
                 src={iconUnicef}
                 alt="UNICEF"
                 width={126}
-                height={35}
-                style={{ width: 126, height: 35 }}
+                className="h-auto"
               />
-              <Image
-                src={iconDidx}
-                alt="DIDX"
-                width={70}
-                height={35}
-                style={{ width: 70, height: 35 }}
-              />
+              <Image src={iconDidx} alt="DIDX" width={70} className="h-auto" />
               <Image
                 src={iconUnlimitedGeneration}
                 alt="Unlimited Generation"
                 width={112}
-                height={35}
-                style={{ width: 112, height: 35 }}
+                className="h-auto"
               />
-              <Image
-                src={iconGiz}
-                alt="GIZ"
-                width={47}
-                height={35}
-                style={{ width: 47, height: 35 }}
-              />
+              <Image src={iconGiz} alt="GIZ" width={47} className="h-auto" />
               <Image
                 src={imageLogoGoodwall}
                 alt="Goodwall"
                 width={160}
-                height={38}
-                style={{ width: 160, height: 38 }}
+                className="h-auto"
               />
               <Image
                 src={iconRlabs}
                 alt="RLabs"
                 width={50}
-                height={50}
-                style={{ width: 50, height: 50 }}
+                className="h-auto"
               />
               <Image
                 src={iconFoundationBotnar}
                 alt="Foundation Botnar"
                 width={95}
-                height={35}
-                style={{ width: 95, height: 35 }}
+                className="h-auto"
               />
               <Image
                 src={iconUmuzi}
                 alt="Umuzi"
                 width={67}
-                height={60}
-                style={{ width: 67, height: 60 }}
+                className="h-auto"
               />
               <Image
                 src={iconAccenture}
                 alt="Accenture"
                 width={135}
-                height={50}
+                className="h-auto"
               />
-              <Image
-                src={iconSap}
-                alt="SAP"
-                width={68}
-                height={35}
-                style={{ width: 68, height: 35 }}
-              />
-              <Image
-                src={iconIxo}
-                alt="IXO"
-                width={70}
-                height={70}
-                style={{ width: 70, height: 70 }}
-              />
+              <Image src={iconSap} alt="SAP" width={68} className="h-auto" />
+              <Image src={iconIxo} alt="IXO" width={70} className="h-auto" />
             </div>
 
             {/* SIGN UP AS PARTNER BUTTON */}

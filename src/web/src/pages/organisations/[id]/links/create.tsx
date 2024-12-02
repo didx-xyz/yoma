@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { captureException } from "@sentry/nextjs";
 import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
@@ -50,7 +49,6 @@ import moment from "moment";
 import { getThemeFromRole, debounce, getSafeUrl } from "~/lib/utils";
 import Async from "react-select/async";
 import { useRouter } from "next/router";
-import ReactModal from "react-modal";
 import Image from "next/image";
 import iconBell from "public/images/icon-bell.webp";
 import { IoMdClose } from "react-icons/io";
@@ -62,12 +60,12 @@ import {
 import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { validateEmail, validatePhoneNumber } from "~/lib/validate";
 import type { LinkRequestCreateVerify } from "~/api/models/actionLinks";
 import { createLinkInstantVerify } from "~/api/services/actionLinks";
 import SocialPreview from "~/components/Opportunity/SocialPreview";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
+import CustomModal from "~/components/Common/CustomModal";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -340,8 +338,10 @@ const LinkDetails: NextPageWithLayout<{
     resetStep2(formData);
     resetStep3(formData);
     setSaveChangesDialogVisible(false);
-    lastStepBeforeSaveChangesDialog && setStep(lastStepBeforeSaveChangesDialog);
     setLastStepBeforeSaveChangesDialog(null);
+    if (lastStepBeforeSaveChangesDialog) {
+      setStep(lastStepBeforeSaveChangesDialog);
+    }
   }, [
     formData,
     resetStep1,
@@ -447,7 +447,6 @@ const LinkDetails: NextPageWithLayout<{
           icon: false,
         });
 
-        captureException(error);
         setIsLoading(false);
 
         return;
@@ -508,9 +507,6 @@ const LinkDetails: NextPageWithLayout<{
       resetStep3,
     ],
   );
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(saveChangesDialogVisible);
 
   //  look up the opportunity when watchEntityId changes (for link preview)
   const [selectedOpportuntity, setSelectedOpportuntity] =
@@ -593,15 +589,13 @@ const LinkDetails: NextPageWithLayout<{
       <PageBackground />
 
       {/* SAVE CHANGES DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={saveChangesDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setSaveChangesDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[310px] md:w-[450px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[310px] md:w-[450px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="flex flex-row bg-green p-4 shadow-lg">
@@ -622,10 +616,9 @@ const LinkDetails: NextPageWithLayout<{
                 src={iconBell}
                 alt="Icon Bell"
                 width={28}
-                height={28}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
-                style={{ width: "28px", height: "28px" }}
               />
             </div>
 
@@ -653,7 +646,7 @@ const LinkDetails: NextPageWithLayout<{
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* PAGE */}
       <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-2 py-4">
@@ -1163,7 +1156,7 @@ const LinkDetails: NextPageWithLayout<{
                         <span className="label-text font-semibold">Type</span>
                       </label>
 
-                      <label className="label label-text pt-0 text-sm ">
+                      <label className="label label-text pt-0 text-sm">
                         {
                           linkEntityTypes?.find(
                             (x) => x.value == formData.entityType,
@@ -1269,7 +1262,7 @@ const LinkDetails: NextPageWithLayout<{
 
                           {/* PARTICIPANTS */}
                           {(formData.distributionList?.length ?? 0) > 0 && (
-                            <label className="label label-text pt-0 text-xs ">
+                            <label className="label label-text pt-0 text-xs">
                               <ul className="list-none">
                                 {formData.distributionList?.map(
                                   (item, index) => <li key={index}>{item}</li>,
@@ -1322,7 +1315,7 @@ LinkDetails.getLayout = function getLayout(page: ReactElement) {
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-LinkDetails.theme = function getTheme(page: ReactElement) {
+LinkDetails.theme = function getTheme(page: ReactElement<{ theme: string }>) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };

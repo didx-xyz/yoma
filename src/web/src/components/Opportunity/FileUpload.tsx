@@ -58,10 +58,9 @@ export const FileUpload: React.FC<InputProps> = ({
             src={icon ?? iconCertificate}
             alt="Icon Certificate"
             width={28}
-            height={28}
+            className="h-auto"
             sizes="100vw"
             priority={true}
-            style={{ width: "28px", height: "28px" }}
           />
         </div>
         <div className="flex flex-grow flex-col items-start justify-center p-4 pb-0 md:p-0">
@@ -77,10 +76,9 @@ export const FileUpload: React.FC<InputProps> = ({
               src={iconUpload}
               alt="Icon Upload"
               width={14}
-              height={14}
+              className="h-auto"
               sizes="100vw"
               priority={true}
-              style={{ width: "14px", height: "14px" }}
             />
             <span className="hidden md:inline">Upload</span>
           </button>

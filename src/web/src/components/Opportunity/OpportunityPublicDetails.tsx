@@ -19,7 +19,6 @@ import {
   IoMdClose,
   IoMdShare,
 } from "react-icons/io";
-import ReactModal from "react-modal";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
 import { SettingType } from "~/api/models/common";
@@ -43,7 +42,6 @@ import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_CANCELED,
@@ -55,6 +53,7 @@ import {
 import { trackGAEvent } from "~/lib/google-analytics";
 import { userProfileAtom } from "~/lib/store";
 import { type User } from "~/server/auth";
+import CustomModal from "../Common/CustomModal";
 import FormCheckbox from "../Common/FormCheckbox";
 import { Editor } from "../RichText/Editor";
 
@@ -85,16 +84,6 @@ const OpportunityPublicDetails: React.FC<{
   const [isOppSaved, setIsOppSaved] = useState(false);
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(
-    loginDialogVisible ||
-      gotoOpportunityDialogVisible ||
-      completeOpportunityDialogVisible ||
-      completeOpportunitySuccessDialogVisible ||
-      cancelOpportunityDialogVisible ||
-      shareOpportunityDialogVisible,
-  );
 
   const { data: verificationStatus, isLoading: verificationStatusIsLoading } =
     useQuery<MyOpportunityResponseVerify | null>({
@@ -265,15 +254,13 @@ const OpportunityPublicDetails: React.FC<{
       {!preview && (
         <>
           {/* LOGIN DIALOG */}
-          <ReactModal
+          <CustomModal
             isOpen={loginDialogVisible}
             shouldCloseOnOverlayClick={false}
             onRequestClose={() => {
               setLoginDialogVisible(false);
             }}
-            className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[300px] md:w-[450px] md:rounded-3xl`}
-            portalClassName={"fixed z-40"}
-            overlayClassName="fixed inset-0 bg-overlay"
+            className={`md:max-h-[300px] md:w-[450px]`}
           >
             <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
               <div className="flex flex-row bg-green p-4 shadow-lg">
@@ -294,10 +281,9 @@ const OpportunityPublicDetails: React.FC<{
                     src={iconBell}
                     alt="Icon Bell"
                     width={28}
-                    height={28}
+                    className="h-auto"
                     sizes="100vw"
                     priority={true}
-                    style={{ width: "28px", height: "28px" }}
                   />
                 </div>
 
@@ -312,22 +298,20 @@ const OpportunityPublicDetails: React.FC<{
                     <IoMdClose className="h-5 w-5 text-purple" /> Cancel
                   </button>
 
-                  <SignInButton className="btn gap-2 border-0 border-none bg-purple px-4 shadow-lg transition animate-in animate-out hover:bg-purple-light hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:bg-purple-light md:w-[150px]" />
+                  <SignInButton className="btn transform gap-2 border-0 border-none bg-purple px-4 shadow-lg transition-all duration-300 ease-in-out hover:bg-purple-light hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:bg-purple-light md:w-[150px]" />
                 </div>
               </div>
             </div>
-          </ReactModal>
+          </CustomModal>
 
           {/* GO-TO OPPORTUNITY DIALOG */}
-          <ReactModal
+          <CustomModal
             isOpen={gotoOpportunityDialogVisible}
             shouldCloseOnOverlayClick={false}
             onRequestClose={() => {
               setGotoOpportunityDialogVisible(false);
             }}
-            className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[440px] md:w-[600px] md:rounded-3xl`}
-            portalClassName={"fixed z-40"}
-            overlayClassName="fixed inset-0 bg-overlay"
+            className={`md:max-h-[440px] md:w-[600px]`}
           >
             <div className="pb-10x flex h-full flex-col gap-2 overflow-y-auto">
               <div className="flex flex-row bg-green p-4 shadow-lg">
@@ -348,10 +332,9 @@ const OpportunityPublicDetails: React.FC<{
                     src={iconBell}
                     alt="Icon Bell"
                     width={28}
-                    height={28}
+                    className="h-auto"
                     sizes="100vw"
                     priority={true}
-                    style={{ width: "28px", height: "28px" }}
                   />
                 </div>
                 <h3>You are now leaving Yoma</h3>
@@ -414,10 +397,9 @@ const OpportunityPublicDetails: React.FC<{
                       src={iconOpen}
                       alt="Icon Open"
                       width={20}
-                      height={20}
+                      className="h-auto"
                       sizes="100vw"
                       priority={true}
-                      style={{ width: "20px", height: "20px" }}
                     />
 
                     <span className="ml-1">Proceed</span>
@@ -425,18 +407,16 @@ const OpportunityPublicDetails: React.FC<{
                 </div>
               </div>
             </div>
-          </ReactModal>
+          </CustomModal>
 
           {/* UPLOAD/COMPLETE OPPORTUNITY DIALOG */}
-          <ReactModal
+          <CustomModal
             isOpen={completeOpportunityDialogVisible}
             shouldCloseOnOverlayClick={false}
             onRequestClose={() => {
               setCompleteOpportunityDialogVisible(false);
             }}
-            className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[650px] md:w-[600px] md:rounded-3xl`}
-            portalClassName={"fixed z-40"}
-            overlayClassName="fixed inset-0 bg-overlay"
+            className={`md:max-h-[650px] md:w-[600px]`}
           >
             <OpportunityCompletionEdit
               id="op-complete"
@@ -446,18 +426,16 @@ const OpportunityPublicDetails: React.FC<{
               }}
               onSave={onOpportunityCompleted}
             />
-          </ReactModal>
+          </CustomModal>
 
           {/* COMPLETE SUCCESS DIALOG */}
-          <ReactModal
+          <CustomModal
             isOpen={completeOpportunitySuccessDialogVisible}
             shouldCloseOnOverlayClick={false}
             onRequestClose={() => {
               setCompleteOpportunitySuccessDialogVisible(false);
             }}
-            className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-3xl`}
-            portalClassName={"fixed z-40"}
-            overlayClassName="fixed inset-0 bg-overlay"
+            className={`md:max-h-[400px] md:w-[600px]`}
           >
             <div className="flex w-full flex-col gap-2">
               <div className="flex flex-row bg-green p-4 shadow-lg">
@@ -478,10 +456,9 @@ const OpportunityPublicDetails: React.FC<{
                     src={iconSmiley}
                     alt="Icon Smiley"
                     width={28}
-                    height={28}
+                    className="h-auto"
                     sizes="100vw"
                     priority={true}
-                    style={{ width: "28px", height: "28px" }}
                   />
                 </div>
                 <h3>Submitted!</h3>
@@ -504,18 +481,16 @@ const OpportunityPublicDetails: React.FC<{
                 </div>
               </div>
             </div>
-          </ReactModal>
+          </CustomModal>
 
           {/* CANCEL OPPORTUNITY COMPLETION DIALOG */}
-          <ReactModal
+          <CustomModal
             isOpen={cancelOpportunityDialogVisible}
             shouldCloseOnOverlayClick={false}
             onRequestClose={() => {
               setCancelOpportunityDialogVisible(false);
             }}
-            className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-y-scroll bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:overflow-y-hidden md:rounded-3xl`}
-            portalClassName={"fixed z-40"}
-            overlayClassName="fixed inset-0 bg-overlay"
+            className={`md:max-h-[450px] md:w-[600px]`}
           >
             <div className="flex flex-col gap-2">
               <div className="flex flex-row bg-green p-4 shadow-lg">
@@ -536,10 +511,9 @@ const OpportunityPublicDetails: React.FC<{
                     src={iconBell}
                     alt="Icon Bell"
                     width={28}
-                    height={28}
+                    className="h-auto"
                     sizes="100vw"
                     priority={true}
-                    style={{ width: "28px", height: "28px" }}
                   />
                 </div>
                 <h3>Your application is pending verification.</h3>
@@ -561,25 +535,23 @@ const OpportunityPublicDetails: React.FC<{
                 </div>
               </div>
             </div>
-          </ReactModal>
+          </CustomModal>
 
           {/* SHARE OPPORTUNITY DIALOG */}
           {opportunityInfo && (
-            <ReactModal
+            <CustomModal
               isOpen={shareOpportunityDialogVisible}
               shouldCloseOnOverlayClick={false}
               onRequestClose={() => {
                 setShareOpportunityDialogVisible(false);
               }}
-              className={`fixed bottom-0 left-0 right-0 top-0 w-full flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[500px] md:w-[600px] md:rounded-3xl`}
-              portalClassName={"fixed z-40"}
-              overlayClassName="fixed inset-0 bg-overlay"
+              className={`md:max-h-[500px] md:w-[600px]`}
             >
               <Share
                 opportunity={opportunityInfo}
                 onClose={() => setShareOpportunityDialogVisible(false)}
               />
-            </ReactModal>
+            </CustomModal>
           )}
         </>
       )}
@@ -654,10 +626,9 @@ const OpportunityPublicDetails: React.FC<{
                             src={iconOpen}
                             alt="Icon Open"
                             width={20}
-                            height={20}
+                            className="h-auto"
                             sizes="100vw"
                             priority={true}
-                            style={{ width: "20px", height: "20px" }}
                           />
 
                           <span className="ml-1">Go to opportunity</span>
@@ -690,13 +661,9 @@ const OpportunityPublicDetails: React.FC<{
                                   src={iconUpload}
                                   alt="Icon Upload"
                                   width={20}
-                                  height={20}
+                                  className="h-auto"
                                   sizes="100vw"
                                   priority={true}
-                                  style={{
-                                    width: "20px",
-                                    height: "20px",
-                                  }}
                                 />
 
                                 <span className="ml-1">
@@ -792,10 +759,9 @@ const OpportunityPublicDetails: React.FC<{
                       src={iconSkills}
                       alt="Icon Skills"
                       width={20}
-                      height={20}
+                      className="h-auto"
                       sizes="100vw"
                       priority={true}
-                      style={{ width: "20px", height: "20px" }}
                     />
                     <span className="ml-1">Skills you will learn</span>
                   </div>
@@ -817,10 +783,9 @@ const OpportunityPublicDetails: React.FC<{
                       src={iconClock}
                       alt="Icon Clock"
                       width={23}
-                      height={23}
+                      className="h-auto"
                       sizes="100vw"
                       priority={true}
-                      style={{ width: "23px", height: "23px" }}
                     />
 
                     <span className="ml-1">How much time you will need</span>
@@ -849,10 +814,9 @@ const OpportunityPublicDetails: React.FC<{
                       src={iconTopics}
                       alt="Icon Topics"
                       width={20}
-                      height={20}
+                      className="h-auto"
                       sizes="100vw"
                       priority={true}
-                      style={{ width: "20px", height: "20px" }}
                     />
 
                     <span className="ml-1">Topics</span>
@@ -861,7 +825,7 @@ const OpportunityPublicDetails: React.FC<{
                     {opportunityInfo.categories?.map((item) => (
                       <div
                         key={item.id}
-                        className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                        className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                       >
                         {item.name}
                       </div>
@@ -875,10 +839,9 @@ const OpportunityPublicDetails: React.FC<{
                       src={iconLanguage}
                       alt="Icon Language"
                       width={20}
-                      height={20}
+                      className="h-auto"
                       sizes="100vw"
                       priority={true}
-                      style={{ width: "20px", height: "20px" }}
                     />
 
                     <span className="ml-1">Languages</span>
@@ -887,7 +850,7 @@ const OpportunityPublicDetails: React.FC<{
                     {opportunityInfo.languages?.map((item) => (
                       <div
                         key={item.id}
-                        className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                        className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                       >
                         {item.name}
                       </div>
@@ -901,10 +864,9 @@ const OpportunityPublicDetails: React.FC<{
                       src={iconDifficulty}
                       alt="Icon Difficulty"
                       width={20}
-                      height={20}
+                      className="h-auto"
                       sizes="100vw"
                       priority={true}
-                      style={{ width: "20px", height: "20px" }}
                     />
 
                     <span className="ml-1">Course difficulty</span>
@@ -920,10 +882,9 @@ const OpportunityPublicDetails: React.FC<{
                       src={iconLocation}
                       alt="Icon Location"
                       width={20}
-                      height={20}
+                      className="h-auto"
                       sizes="100vw"
                       priority={true}
-                      style={{ width: "20px", height: "20px" }}
                     />
 
                     <span className="ml-1">Countries</span>
@@ -932,7 +893,7 @@ const OpportunityPublicDetails: React.FC<{
                     {opportunityInfo.countries?.map((country) => (
                       <div
                         key={country.id}
-                        className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                        className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                       >
                         {country.name}
                       </div>

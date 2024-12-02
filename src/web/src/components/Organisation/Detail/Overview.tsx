@@ -69,10 +69,9 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
             {/* EXISTING IMAGE */}
             {organisation?.logoURL && (
               <Image
-                className="rounded-lg"
+                className="h-auto rounded-lg"
                 alt="Company logo"
                 width={150}
-                height={150}
                 src={organisation.logoURL}
               />
             )}

@@ -22,7 +22,7 @@ export const SignInButton: React.FC<{
   return (
     <button
       type="button"
-      className={`bg-theme btn gap-2 border-0 border-none px-4 shadow-lg transition animate-in animate-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95 ${className}`}
+      className={`bg-theme btn gap-2 border-0 border-none px-4 shadow-lg transition-all duration-300 ease-in-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95 ${className}`}
       onClick={handleLogin}
       disabled={isButtonLoading}
       id="btnSignIn"
