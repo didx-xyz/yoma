@@ -1,4 +1,3 @@
-import { captureException } from "@sentry/nextjs";
 import {
   QueryClient,
   dehydrate,
@@ -286,7 +285,6 @@ const OrganisationUpdate: NextPageWithLayout<{
           icon: false,
         });
 
-        captureException(error);
         setIsLoading(false);
 
         return;
@@ -606,8 +604,9 @@ OrganisationUpdate.getLayout = function getLayout(page: ReactElement) {
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-OrganisationUpdate.theme = function getTheme(page: ReactElement) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+OrganisationUpdate.theme = function getTheme(
+  page: ReactElement<{ theme: string }>,
+) {
   return page.props.theme;
 };
 

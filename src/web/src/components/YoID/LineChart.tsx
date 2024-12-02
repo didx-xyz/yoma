@@ -63,7 +63,7 @@ export const LineChart: React.FC<{
       {data?.legend.map((name, index) => (
         <Link
           key={index}
-          className={`flex flex-row flex-nowrap gap-2 border-b-2 px-2 pb-1  ${
+          className={`flex flex-row flex-nowrap gap-2 border-b-2 px-2 pb-1 ${
             selectedLegendIndex === index ? "font-bold" : ""
           }`}
           style={{ borderColor: colors[index] }}
@@ -160,7 +160,7 @@ export const LineChart: React.FC<{
           chartEvents={[
             {
               eventName: "select",
-              callback: ({ chartWrapper }) => handleSelect(chartWrapper),
+              callback: ({ chartWrapper }) => handleSelect(chartWrapper!),
             },
           ]}
         />

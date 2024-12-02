@@ -11,17 +11,16 @@ import React, {
   useState,
   type ReactElement,
 } from "react";
-import ReactModal from "react-modal";
 import Select from "react-select";
 import type { Country } from "~/api/models/lookups";
 import { listSearchCriteriaCountries } from "~/api/services/marketplace";
+import CustomModal from "~/components/Common/CustomModal";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { COUNTRY_WW, THEME_BLUE } from "~/lib/constants";
 import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -78,9 +77,6 @@ const Marketplace: NextPageWithLayout<{
     useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string | null>();
   const myRef = useRef<HTMLDivElement>(null);
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(countrySelectorDialogVisible);
 
   const onFilterCountry = useCallback(
     (value: string) => {
@@ -141,70 +137,62 @@ const Marketplace: NextPageWithLayout<{
       <div ref={myRef} />
 
       {countrySelectorDialogVisible && (
-        <>
-          <ReactModal
-            isOpen={countrySelectorDialogVisible}
-            shouldCloseOnOverlayClick={false}
-            className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:max-w-[600px] md:rounded-3xl`}
-            portalClassName={"fixed z-40"}
-            overlayClassName="fixed inset-0 bg-overlay"
-          >
-            <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
-              <div className="mt-20 flex flex-col items-center justify-center gap-4 p-4 md:p-0">
-                <div className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-                  <Image
-                    src={iconLocation}
-                    alt="Icon Location"
-                    width={40}
-                    height={40}
-                    sizes="100vw"
-                    priority={true}
-                    style={{ width: "40px", height: "40px" }}
-                  />
-                </div>
-                <h3>What is your Country?</h3>
-                <p className="rounded-lg bg-gray-light p-4 text-center md:w-[450px]">
-                  Select your country to view the available stores and items
-                </p>
-
-                <Select
-                  instanceId={"country"}
-                  classNames={{
-                    control: () => "input input-xs w-[200px]",
-                  }}
-                  options={countryOptions}
-                  onChange={(val) => setSelectedCountry(val?.value ?? "")}
-                  value={countryOptions?.find(
-                    (c) => c.value === selectedCountry,
-                  )}
-                  placeholder="Country"
-                  inputId="input_country" // e2e
-                  // fix menu z-index issue
-                  // menuPortalTarget={myRef.current!}
-                  // styles={{
-                  //   menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                  // }}
+        <CustomModal
+          isOpen={countrySelectorDialogVisible}
+          className={`md:max-h-[450px] md:max-w-[600px]`}
+        >
+          <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
+            <div className="mt-20 flex flex-col items-center justify-center gap-4 p-4 md:p-0">
+              <div className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                <Image
+                  src={iconLocation}
+                  alt="Icon Location"
+                  width={40}
+                  className="h-auto"
+                  sizes="100vw"
+                  priority={true}
                 />
+              </div>
+              <h3>What is your Country?</h3>
+              <p className="rounded-lg bg-gray-light p-4 text-center md:w-[450px]">
+                Select your country to view the available stores and items
+              </p>
 
-                <div className="mt-4 flex w-full flex-grow justify-center gap-4">
-                  <button
-                    id="letsGoButton"
-                    type="button"
-                    className="btn w-3/4 max-w-[300px] rounded-full border-purple bg-purple normal-case text-white hover:bg-purple disabled:bg-gray disabled:text-gray-dark disabled:brightness-90"
-                    onClick={() => {
-                      setUserCountrySelection(selectedCountry ?? "");
-                      setCountrySelectorDialogVisible(false);
-                      onFilterCountry(selectedCountry ?? "");
-                    }}
-                    disabled={!selectedCountry}
-                  >
-                    Let&apos;s go!
-                  </button>
-                </div>
+              <Select
+                instanceId={"country"}
+                classNames={{
+                  control: () => "input input-xs w-[200px]",
+                }}
+                options={countryOptions}
+                onChange={(val) => setSelectedCountry(val?.value ?? "")}
+                value={countryOptions?.find((c) => c.value === selectedCountry)}
+                placeholder="Country"
+                inputId="input_country" // e2e
+                // fix menu z-index issue
+                // menuPortalTarget={myRef.current!}
+                // styles={{
+                //   menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                // }}
+              />
+
+              <div className="mt-4 flex w-full flex-grow justify-center gap-4">
+                <button
+                  id="letsGoButton"
+                  type="button"
+                  className="btn w-3/4 max-w-[300px] rounded-full border-purple bg-purple normal-case text-white hover:bg-purple disabled:bg-gray disabled:text-gray-dark disabled:brightness-90"
+                  onClick={() => {
+                    setUserCountrySelection(selectedCountry ?? "");
+                    setCountrySelectorDialogVisible(false);
+                    onFilterCountry(selectedCountry ?? "");
+                  }}
+                  disabled={!selectedCountry}
+                >
+                  Let&apos;s go!
+                </button>
               </div>
             </div>
-          </ReactModal>
-        </>
+          </div>
+        </CustomModal>
       )}
       {!countrySelectorDialogVisible && <LoadingSkeleton />}
     </div>

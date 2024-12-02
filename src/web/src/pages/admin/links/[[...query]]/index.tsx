@@ -15,7 +15,6 @@ import {
   IoMdPerson,
 } from "react-icons/io";
 import { IoQrCode, IoShareSocialOutline } from "react-icons/io5";
-import ReactModal from "react-modal";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
 import {
@@ -31,6 +30,7 @@ import {
   searchLinks,
   updateLinkStatus,
 } from "~/api/services/actionLinks";
+import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import {
   LinkFilterOptions,
@@ -44,7 +44,6 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
@@ -116,9 +115,6 @@ const Links: NextPageWithLayout<{
   const [verifyComments, setVerifyComments] = useState("");
   const [linkStatus, setLinkStatus] = useState<LinkStatus | null>(null);
   const [selectedRow, setSelectedRow] = useState<LinkInfo | null>();
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(showQRCode);
 
   // 👇 use prefetched queries from server
   const { data: links } = useQuery<LinkSearchResult>({
@@ -440,13 +436,11 @@ const Links: NextPageWithLayout<{
       {isLoading && <Loading />}
 
       {/* MODAL DIALOG FOR ACTIONS */}
-      <ReactModal
+      <CustomModal
         isOpen={modalActionVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseCommentsDialog}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[400px] md:w-[600px]`}
       >
         <div className="flex h-full flex-col space-y-2">
           <div className="flex flex-row items-center bg-white px-4 pt-2">
@@ -527,19 +521,17 @@ const Links: NextPageWithLayout<{
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* QR CODE DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={showQRCode}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setShowQRCode(false);
           setQRCodeImageData(null);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[650px] md:w-[600px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[650px] md:w-[600px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           {/* HEADER WITH CLOSE BUTTON */}
@@ -570,8 +562,7 @@ const Links: NextPageWithLayout<{
                   src={qrCodeImageData}
                   alt="QR Code"
                   width={200}
-                  height={200}
-                  style={{ width: 200, height: 200 }}
+                  className="h-auto"
                 />
               </>
             )}
@@ -588,7 +579,7 @@ const Links: NextPageWithLayout<{
             </button>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">

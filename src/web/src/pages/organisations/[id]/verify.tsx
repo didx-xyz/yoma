@@ -1,4 +1,3 @@
-import { captureException } from "@sentry/nextjs";
 import {
   QueryClient,
   dehydrate,
@@ -15,13 +14,13 @@ import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useState, type ReactElement } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import {
+  IoIosCheckmark,
+  IoMdArrowRoundBack,
   IoMdClose,
   IoMdThumbsDown,
   IoMdThumbsUp,
   IoMdWarning,
-  IoMdArrowRoundBack,
 } from "react-icons/io";
-import ReactModal from "react-modal";
 import { toast } from "react-toastify";
 import {
   OrganizationStatus,
@@ -32,26 +31,25 @@ import {
   getOrganisationById,
   patchOrganisationStatus,
 } from "~/api/services/organisations";
+import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import { VerifyOverview } from "~/components/Organisation/Detail/VerifyOverview";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
-import { ApiErrors } from "~/components/Status/ApiErrors";
-import { Loading } from "~/components/Status/Loading";
-import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
+import { ApiErrors } from "~/components/Status/ApiErrors";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Loading } from "~/components/Status/Loading";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   GA_ACTION_ORGANISATION_VERIFY,
   GA_CATEGORY_ORGANISATION,
 } from "~/lib/constants";
-import type { NextPageWithLayout } from "~/pages/_app";
-import { config } from "~/lib/react-query-config";
 import { trackGAEvent } from "~/lib/google-analytics";
-import { IoIosCheckmark } from "react-icons/io";
+import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import type { NextPageWithLayout } from "~/pages/_app";
+import { authOptions, type User } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -130,9 +128,6 @@ const OrganisationDetails: NextPageWithLayout<{
   const [approved, setApproved] = useState(false);
   const [rejected, setRejected] = useState(false);
 
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(modalVerifySingleVisible);
-
   // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
     queryKey: ["organisation", id],
@@ -179,7 +174,6 @@ const OrganisationDetails: NextPageWithLayout<{
         icon: false,
       });
 
-      captureException(error);
       setIsLoading(false);
 
       return;
@@ -285,17 +279,15 @@ const OrganisationDetails: NextPageWithLayout<{
       <PageBackground />
 
       {/* MODAL DIALOG FOR VERIFY (SINGLE) */}
-      <ReactModal
+      <CustomModal
         isOpen={modalVerifySingleVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={() => {
           setModalVerifySingleVisible(false);
         }}
-        className={`text-gray-700 fixed inset-0 m-auto h-[230px] w-[380px] rounded-lg bg-white p-4 font-nunito duration-100 animate-in fade-in zoom-in`}
-        overlayClassName="fixed inset-0 bg-black modal-overlay"
-        portalClassName={"fixed z-20"}
+        className={`h-[230px] w-[380px]`}
       >
-        <div className="flex h-full flex-col space-y-2">
+        <div className="flex h-full flex-col space-y-2 p-4">
           <div className="flex flex-row space-x-2">
             <IoMdWarning className="gl-icon-yellow h-6 w-6" />
             <p className="text-lg">Confirm</p>
@@ -351,7 +343,7 @@ const OrganisationDetails: NextPageWithLayout<{
             )}
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
         {isLoading && <Loading />}
@@ -395,7 +387,9 @@ OrganisationDetails.getLayout = function getLayout(page: ReactElement) {
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-OrganisationDetails.theme = function getTheme(page: ReactElement) {
+OrganisationDetails.theme = function getTheme(
+  page: ReactElement<{ theme: string }>,
+) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };

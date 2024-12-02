@@ -5,7 +5,6 @@ import Head from "next/head";
 import router from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { IoMdCheckmark, IoMdClose } from "react-icons/io";
-import ReactModal from "react-modal";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
 import type {
@@ -18,13 +17,13 @@ import {
 } from "~/api/services/credentials";
 import { AvatarImage } from "~/components/AvatarImage";
 import Breadcrumb from "~/components/Breadcrumb";
+import CustomModal from "~/components/Common/CustomModal";
 import Suspense from "~/components/Common/Suspense";
 import YoID from "~/components/Layout/YoID";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { PaginationInfoComponent } from "~/components/PaginationInfo";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { DATETIME_FORMAT_SYSTEM, PAGE_SIZE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { authOptions } from "~/server/auth";
@@ -77,9 +76,6 @@ const MyPassport: NextPageWithLayout<{
   const [activeCredential, setActiveCredential] =
     useState<SSICredentialInfo | null>(null);
 
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(credentialDialogVisible);
-
   // 👇 use prefetched queries from server
   const {
     data: data,
@@ -129,15 +125,13 @@ const MyPassport: NextPageWithLayout<{
       </Head>
 
       {/* CREDENTIAL DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={credentialDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setCredentialDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden overflow-y-auto bg-white animate-in fade-in md:m-auto md:max-h-[650px] md:w-[600px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[650px] md:w-[600px]`}
       >
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-2">
@@ -248,7 +242,7 @@ const MyPassport: NextPageWithLayout<{
             )}
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       <div className="w-full lg:max-w-7xl">
         <div className="mb-4 text-xs font-bold tracking-wider text-black md:text-base">

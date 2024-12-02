@@ -25,12 +25,9 @@ export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size }) => {
           alt={alt}
           width={size}
           height={size}
+          className="h-auto"
           sizes="100vw"
           priority={true}
-          style={{
-            width: sizePixels,
-            height: sizePixels,
-          }}
         />
       ) : (
         <IoMdPerson

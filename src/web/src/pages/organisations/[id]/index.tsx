@@ -876,9 +876,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 alt="Icon Bookmark"
                                 width={20}
                                 height={20}
+                                className="h-auto"
                                 sizes="100vw"
                                 priority={true}
-                                style={{ width: "20px", height: "20px" }}
                               />
                             </div>
                             <div className="text-sm font-semibold">
@@ -961,9 +961,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 alt="Icon Zlto"
                                 width={20}
                                 height={20}
+                                className="h-auto"
                                 sizes="100vw"
                                 priority={true}
-                                style={{ width: "20px", height: "20px" }}
                               />
                             </div>
                             <div className="whitespace-nowrap text-sm font-semibold">
@@ -976,9 +976,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                               alt="Icon Zlto"
                               width={35}
                               height={35}
+                              className="h-auto"
                               sizes="100vw"
                               priority={true}
-                              style={{ width: "35px", height: "35px" }}
                             />
                             <div className="flex-grow text-3xl font-semibold">
                               {engagementData?.opportunities.reward.totalAmount.toLocaleString() ??
@@ -1008,9 +1008,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                               alt="Icon Skills"
                               width={20}
                               height={20}
+                              className="h-auto"
                               sizes="100vw"
                               priority={true}
-                              style={{ width: "20px", height: "20px" }}
                             />
                           </div>
                           <div className="text-sm font-semibold">
@@ -1022,7 +1022,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                             (x) => (
                               <div
                                 key={x.id}
-                                className=" md:truncate-none flex h-9 w-max items-center text-ellipsis rounded border-[1px] border-green bg-white px-2 text-xs text-gray-dark md:w-fit md:max-w-none"
+                                className="md:truncate-none flex h-9 w-max items-center text-ellipsis rounded border-[1px] border-green bg-white px-2 text-xs text-gray-dark md:w-fit md:max-w-none"
                               >
                                 {x.name}
                               </div>
@@ -1215,9 +1215,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                           alt="Icon Status"
                           width={20}
                           height={20}
+                          className="h-auto"
                           sizes="100vw"
                           priority={true}
-                          style={{ width: "20px", height: "20px" }}
                         />
                       </div>
                       <div className="text-sm font-semibold">
@@ -1238,9 +1238,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                           alt="Icon Status"
                           width={20}
                           height={20}
+                          className="h-auto"
                           sizes="100vw"
                           priority={true}
-                          style={{ width: "20px", height: "20px" }}
                         />
                       </div>
                       <div className="text-sm font-semibold">
@@ -1425,7 +1425,9 @@ OrganisationDashboard.getLayout = function getLayout(page: ReactElement) {
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-OrganisationDashboard.theme = function getTheme(page: ReactElement) {
+OrganisationDashboard.theme = function getTheme(
+  page: ReactElement<{ theme: string }>,
+) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };

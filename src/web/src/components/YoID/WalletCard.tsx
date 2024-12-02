@@ -35,7 +35,9 @@ export const WalletCard: React.FC<{
         description={
           "You will receive ZLTO for completing opportunities, which can be spent on the marketplace."
         }
-        icon={<Image src={iconZltoColor} alt="ZLTO" width={48} height={48} />}
+        icon={
+          <Image src={iconZltoColor} alt="ZLTO" width={48} className="h-auto" />
+        }
         classNameIcon={"h-[60px] w-[60px]"}
       />
     );
@@ -72,10 +74,9 @@ export const WalletCard: React.FC<{
             <div className="flex items-center text-xs font-semibold text-black">
               <Image
                 src={iconZltoColor}
-                className="mr-2"
+                className="mr-2 h-auto"
                 alt="ZLTO"
                 width={18}
-                height={18}
               />
               {available ?? "Loading..."}
             </div>
@@ -86,10 +87,9 @@ export const WalletCard: React.FC<{
             <div className="flex items-center text-xs font-semibold text-black">
               <Image
                 src={iconZltoColor}
-                className="mr-2"
+                className="mr-2 h-auto"
                 alt="ZLTO"
                 width={18}
-                height={18}
               />
               {processing ?? "Loading..."}
             </div>
@@ -100,10 +100,9 @@ export const WalletCard: React.FC<{
           <div className="badge -ml-2 !rounded-full bg-white px-2 py-2 !font-semibold text-black">
             <Image
               src={iconZltoColor}
-              className="mr-2"
+              className="mr-2 h-auto"
               alt="ZLTO"
               width={18}
-              height={18}
             />
             {total ?? "Loading..."}
           </div>

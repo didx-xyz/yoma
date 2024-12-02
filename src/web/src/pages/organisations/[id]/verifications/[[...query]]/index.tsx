@@ -4,19 +4,24 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
+import axios from "axios";
+import FileSaver from "file-saver";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Image from "next/image";
-import { useRouter } from "next/router";
-import { useCallback, type ReactElement, useState, useMemo } from "react";
-import MainLayout from "~/components/Layout/Main";
-import { authOptions } from "~/server/auth";
-import { type NextPageWithLayout } from "~/pages/_app";
-import { type ParsedUrlQuery } from "querystring";
 import Link from "next/link";
-import { PageBackground } from "~/components/PageBackground";
+import { useRouter } from "next/router";
+import iconBell from "public/images/icon-bell.webp";
+import { type ParsedUrlQuery } from "querystring";
+import React, {
+  useCallback,
+  useMemo,
+  useState,
+  type ReactElement,
+} from "react";
 import {
+  IoIosCheckmark,
   IoIosClose,
   IoMdAlert,
   IoMdCheckmark,
@@ -26,7 +31,40 @@ import {
   IoMdThumbsDown,
   IoMdThumbsUp,
 } from "react-icons/io";
+import Moment from "react-moment";
+import Select from "react-select";
+import { toast } from "react-toastify";
+import { type SelectOption } from "~/api/models/lookups";
+import {
+  Action,
+  VerificationStatus,
+  type MyOpportunityInfo,
+  type MyOpportunityRequestVerifyFinalizeBatch,
+  type MyOpportunityResponseVerifyFinalizeBatch,
+  type MyOpportunitySearchFilterAdmin,
+  type MyOpportunitySearchResults,
+} from "~/api/models/myOpportunity";
+import {
+  getMyOpportunitiesExportToCSV,
+  getOpportunitiesForVerification,
+  performActionVerifyBulk,
+  searchMyOpportunitiesAdmin,
+} from "~/api/services/myOpportunities";
+import CustomModal from "~/components/Common/CustomModal";
+import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { OpportunityCompletionRead } from "~/components/Opportunity/OpportunityCompletionRead";
+import MobileCard from "~/components/Organisation/Verifications/MobileCard";
+import { PageBackground } from "~/components/PageBackground";
+import { PaginationButtons } from "~/components/PaginationButtons";
+import { SearchInput } from "~/components/SearchInput";
+import { ApiErrors } from "~/components/Status/ApiErrors";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
+import { Loading } from "~/components/Status/Loading";
+import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_COMPLETION_VERIFY,
@@ -34,46 +72,11 @@ import {
   PAGE_SIZE,
   PAGE_SIZE_MAXIMUM,
 } from "~/lib/constants";
-import { PaginationButtons } from "~/components/PaginationButtons";
-import {
-  getMyOpportunitiesExportToCSV,
-  getOpportunitiesForVerification,
-  performActionVerifyBulk,
-  searchMyOpportunitiesAdmin,
-} from "~/api/services/myOpportunities";
-import {
-  Action,
-  type MyOpportunityInfo,
-  type MyOpportunityRequestVerifyFinalizeBatch,
-  type MyOpportunitySearchResults,
-  VerificationStatus,
-  type MyOpportunityResponseVerifyFinalizeBatch,
-  type MyOpportunitySearchFilterAdmin,
-} from "~/api/models/myOpportunity";
-import ReactModal from "react-modal";
-import { ApiErrors } from "~/components/Status/ApiErrors";
-import { toast } from "react-toastify";
-import { SearchInput } from "~/components/SearchInput";
-import Select from "react-select";
-import { type SelectOption } from "~/api/models/lookups";
-import { Loading } from "~/components/Status/Loading";
-import { OpportunityCompletionRead } from "~/components/Opportunity/OpportunityCompletionRead";
-import Moment from "react-moment";
-import { Unauthorized } from "~/components/Status/Unauthorized";
-import { config } from "~/lib/react-query-config";
-import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
-import { IoIosCheckmark } from "react-icons/io";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import axios from "axios";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import MobileCard from "~/components/Organisation/Verifications/MobileCard";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
-import React from "react";
-import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
-import FileSaver from "file-saver";
-import iconBell from "public/images/icon-bell.webp";
+import { type NextPageWithLayout } from "~/pages/_app";
+import { authOptions } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -547,9 +550,8 @@ const OpportunityVerifications: NextPageWithLayout<{
           row,
         ]);
       } else {
-        setSelectedRows(
-          (prev: MyOpportunityInfo[] | undefined) =>
-            prev?.filter((item) => item.id !== row.id),
+        setSelectedRows((prev: MyOpportunityInfo[] | undefined) =>
+          prev?.filter((item) => item.id !== row.id),
         );
       }
     },
@@ -625,11 +627,6 @@ const OpportunityVerifications: NextPageWithLayout<{
   );
   //#endregion Event Handlers
 
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(
-    modalVerifyVisible || modalVerificationResultVisible || exportDialogOpen,
-  );
-
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -647,13 +644,11 @@ const OpportunityVerifications: NextPageWithLayout<{
       <PageBackground className="h-[21rem] md:h-[17rem]" />
 
       {/* MODAL DIALOG FOR VERIFY */}
-      <ReactModal
+      <CustomModal
         isOpen={modalVerifyVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseVerificationModal}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[600px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[400px] md:w-[600px]`}
       >
         <div className="flex h-full flex-col space-y-2">
           <div className="flex flex-row items-center bg-white px-4 pt-2">
@@ -726,16 +721,14 @@ const OpportunityVerifications: NextPageWithLayout<{
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* MODAL DIALOG FOR VERIFICATION RESULT */}
-      <ReactModal
+      <CustomModal
         isOpen={modalVerificationResultVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseVerificationResultModal}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[450px] md:w-[600px] md:rounded-lg`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[450px] md:w-[600px]`}
       >
         <div className="flex h-full flex-col space-y-2 overflow-y-auto">
           <div className="flex flex-row items-center bg-white px-4 pt-2">
@@ -825,18 +818,16 @@ const OpportunityVerifications: NextPageWithLayout<{
             </button>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* EXPORT DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={exportDialogOpen}
         shouldCloseOnOverlayClick={true}
         onRequestClose={() => {
           setExportDialogOpen(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[480px] md:w-[600px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[480px] md:w-[600px]`}
       >
         <div className="flex flex-col gap-2">
           <div className="flex h-20 flex-row bg-blue p-4 shadow-lg"></div>
@@ -846,10 +837,9 @@ const OpportunityVerifications: NextPageWithLayout<{
                 src={iconBell}
                 alt="Icon Bell"
                 width={28}
-                height={28}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
-                style={{ width: "28px", height: "28px" }}
               />
             </div>
 
@@ -887,7 +877,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* PAGE */}
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[4.9rem]">
@@ -1312,7 +1302,9 @@ OpportunityVerifications.getLayout = function getLayout(page: ReactElement) {
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-OpportunityVerifications.theme = function getTheme(page: ReactElement) {
+OpportunityVerifications.theme = function getTheme(
+  page: ReactElement<{ theme: string }>,
+) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };

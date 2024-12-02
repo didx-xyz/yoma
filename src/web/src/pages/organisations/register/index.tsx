@@ -1,4 +1,3 @@
-import { captureException } from "@sentry/nextjs";
 import { QueryClient, dehydrate } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
 import { useSetAtom } from "jotai";
@@ -176,7 +175,6 @@ const OrganisationCreate: NextPageWithLayout<{
           icon: false,
         });
 
-        captureException(error);
         setIsLoading(false);
 
         return;
@@ -358,7 +356,9 @@ OrganisationCreate.getLayout = function getLayout(page: ReactElement) {
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-OrganisationCreate.theme = function getTheme(page: ReactElement) {
+OrganisationCreate.theme = function getTheme(
+  page: ReactElement<{ theme: string }>,
+) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };

@@ -17,14 +17,13 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
           src={iconClock}
           alt="Icon Clock"
           width={20}
-          height={20}
+          className="h-auto"
           sizes="100vw"
           priority={true}
-          style={{ width: "20px", height: "20px" }}
         />
 
         <span className="ml-1 text-xs">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
-          opportunity?.commitmentIntervalCount ?? 0 > 1 ? "s" : ""
+          (opportunity?.commitmentIntervalCount ?? 0 > 1) ? "s" : ""
         }`}</span>
       </div>
 
@@ -67,10 +66,9 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
             src={iconZlto}
             alt="Icon Zlto"
             width={16}
-            height={16}
+            className="h-auto"
             sizes="100vw"
             priority={true}
-            style={{ width: "16px", height: "16px" }}
           />
           <span className="ml-1 text-xs">{opportunity?.zltoReward}</span>
         </div>

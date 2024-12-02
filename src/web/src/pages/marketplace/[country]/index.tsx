@@ -15,7 +15,6 @@ import type { ParsedUrlQuery } from "querystring";
 import React, { useCallback, useRef, useState, type ReactElement } from "react";
 import { FaLock } from "react-icons/fa";
 import { IoMdClose, IoMdCloseCircleOutline, IoMdWarning } from "react-icons/io";
-import ReactModal from "react-modal";
 import Select from "react-select";
 import { useConfirmationModalContext } from "src/context/modalConfirmationContext";
 import type { ErrorResponseItem } from "~/api/models/common";
@@ -35,6 +34,7 @@ import {
 } from "~/api/services/marketplace";
 import { getUserProfile } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
+import CustomModal from "~/components/Common/CustomModal";
 import Suspense from "~/components/Common/Suspense";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import StoreItemsCarousel from "~/components/Marketplace/StoreItemsCarousel";
@@ -45,7 +45,6 @@ import { Loading } from "~/components/Status/Loading";
 import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   COUNTRY_WW,
   GA_ACTION_MARKETPLACE_ITEM_BUY,
@@ -268,14 +267,6 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     },
     enabled: !!session,
   });
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(
-    loginDialogVisible ||
-      buyDialogVisible ||
-      buyDialogConfirmationVisible ||
-      buyDialogErrorVisible,
-  );
 
   const onFilterCountry = useCallback(
     (value: string) => {
@@ -531,15 +522,13 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       {isLoading && <Loading />}
 
       {/* LOGIN DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={loginDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setLoginDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[300px] md:w-[450px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[300px] md:w-[450px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
           <div className="flex flex-row bg-blue p-4 shadow-lg">
@@ -560,10 +549,9 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                 src={iconBell}
                 alt="Icon Bell"
                 width={28}
-                height={28}
+                className="h-auto"
                 sizes="100vw"
                 priority={true}
-                style={{ width: "28px", height: "28px" }}
               />
             </div>
 
@@ -578,22 +566,20 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                 Cancel
               </button>
 
-              <SignInButton className="btn gap-2 border-0 border-none bg-purple px-4 shadow-lg transition animate-in animate-out hover:bg-purple-light hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:bg-purple-light md:w-[150px]" />
+              <SignInButton className="btn transform gap-2 border-0 border-none bg-purple px-4 shadow-lg transition-all duration-300 ease-in-out hover:bg-purple-light hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:bg-purple-light md:w-[150px]" />
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* PURCHASE DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={buyDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setBuyDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[400px] md:w-[550px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[400px] md:w-[550px]`}
       >
         {currentItem && (
           <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
@@ -616,10 +602,9 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                     src={currentItem?.imageURL ?? ""}
                     alt="Icon Zlto"
                     width={40}
-                    height={40}
+                    className="h-auto"
                     sizes="100vw"
                     priority={true}
-                    style={{ width: "40px", height: "40px" }}
                   />
                 </div>
               )}
@@ -656,18 +641,16 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             </div>
           </div>
         )}
-      </ReactModal>
+      </CustomModal>
 
       {/* PURCHASE CONFIRMATION DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={buyDialogConfirmationVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setBuyDialogConfirmationVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[520px] md:w-[550px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[520px] md:w-[550px]`}
       >
         {currentItem && (
           <div className="pb-12x flex h-full flex-col gap-2 overflow-y-auto pb-6">
@@ -733,18 +716,16 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             </div>
           </div>
         )}
-      </ReactModal>
+      </CustomModal>
 
       {/* PURCHASE ERROR DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={buyDialogErrorVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setBuyDialogErrorVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[350px] md:w-[550px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[350px] md:w-[550px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
           <div className="flex flex-row p-4">
@@ -785,18 +766,16 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* PURCHASE LOCKED DIALOG */}
-      <ReactModal
+      <CustomModal
         isOpen={itemLockedDialogVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setItemLockedDialogVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:max-h-[350px] md:w-[550px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[350px] md:w-[550px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
           <div className="flex flex-row p-4">
@@ -819,14 +798,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                   src={currentItem?.imageURL}
                   alt={`${currentItem.name} Logo`}
                   width={48}
-                  height={48}
-                  sizes="(max-width: 48px) 30vw, 50vw"
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    maxWidth: "48px",
-                    maxHeight: "48px",
-                  }}
+                  className="h-auto"
                 />
                 {currentItem?.storeAccessControlRuleResult?.locked && (
                   <div className="absolute inset-0 flex items-center justify-center bg-gray-dark bg-opacity-50">
@@ -893,7 +865,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             </div>
           </div>
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />

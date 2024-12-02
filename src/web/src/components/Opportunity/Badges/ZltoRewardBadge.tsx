@@ -20,10 +20,9 @@ const ZltoRewardBadge: React.FC<ZltoRewardBadgeProps> = ({ opportunity }) => {
             src={iconZlto}
             alt="Icon Zlto"
             width={16}
-            height={16}
+            className="h-auto"
             sizes="100vw"
             priority={true}
-            style={{ width: "16px", height: "16px" }}
           />
           <span className="ml-1">Depleted</span>
         </div>
@@ -34,10 +33,9 @@ const ZltoRewardBadge: React.FC<ZltoRewardBadgeProps> = ({ opportunity }) => {
             src={iconZlto}
             alt="Icon Zlto"
             width={16}
-            height={16}
+            className="h-auto"
             sizes="100vw"
             priority={true}
-            style={{ width: "16px", height: "16px" }}
           />
           <span className="ml-1">{opportunity.zltoReward}</span>
         </div>

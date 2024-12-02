@@ -58,18 +58,13 @@ const ItemCardComponent: React.FC<InputProps> = ({
                   alt={`${item.name} Logo`}
                   width={48}
                   height={48}
-                  sizes="(max-width: 48px) 30vw, 50vw"
+                  className="h-auto"
+                  sizes="100vw"
                   priority={true}
                   placeholder="blur"
                   blurDataURL={`data:image/svg+xml;base64,${toBase64(
                     shimmer(48, 48),
                   )}`}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    maxWidth: "48px",
-                    maxHeight: "48px",
-                  }}
                 />
               </div>
             </div>
@@ -90,10 +85,9 @@ const ItemCardComponent: React.FC<InputProps> = ({
                   src={iconZlto}
                   alt="Icon Zlto"
                   width={16}
-                  height={16}
+                  className="h-auto"
                   sizes="100vw"
                   priority={true}
-                  style={{ width: "16px", height: "16px" }}
                 />
                 <span className="ml-1 text-xs">{item.amount}</span>
               </div>

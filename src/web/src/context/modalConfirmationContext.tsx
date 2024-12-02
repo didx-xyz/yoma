@@ -1,6 +1,7 @@
 import React, { useContext, useMemo, useRef, useState } from "react";
-import ReactModal from "react-modal";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+import CustomModal from "~/components/Common/CustomModal";
+
+type ResolverType = (value: boolean) => void;
 
 interface UseModalShowReturnType {
   show: boolean;
@@ -49,11 +50,7 @@ const ConfirmationModalContextProvider: React.FC<
     showCancelButton?: boolean;
     showOkButton?: boolean;
   } | null>();
-  //eslint-disable-next-line @typescript-eslint/ban-types
-  const resolver = useRef<Function>();
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(show);
+  const resolver = useRef<ResolverType | null>(null);
 
   const handleShow = useMemo(
     () =>
@@ -70,7 +67,7 @@ const ConfirmationModalContextProvider: React.FC<
           showOkButton,
         });
         setShow(true);
-        return new Promise(function (resolve) {
+        return new Promise<boolean>((resolve) => {
           resolver.current = resolve;
         });
       },
@@ -85,14 +82,12 @@ const ConfirmationModalContextProvider: React.FC<
   );
 
   const handleOk = () => {
-    // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-    if (resolver?.current) resolver.current(true);
+    resolver.current?.(true);
     onHide();
   };
 
   const handleCancel = () => {
-    // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
-    if (resolver?.current) resolver.current(false);
+    resolver.current?.(false);
     onHide();
   };
 
@@ -101,15 +96,13 @@ const ConfirmationModalContextProvider: React.FC<
       {props.children}
 
       {content && (
-        <ReactModal
+        <CustomModal
           isOpen={show}
           shouldCloseOnOverlayClick={true}
           onRequestClose={onHide}
-          className="f-full fixed inset-0 z-50 m-auto min-h-[180px] w-full rounded-lg bg-white p-4 font-nunito outline-2 duration-100 animate-in zoom-in md:h-fit md:w-[380px]"
-          portalClassName={"fixed z-40"}
-          overlayClassName="fixed inset-0 bg-overlay"
+          className="md:h-fit md:w-[380px]"
         >
-          <div className="flex flex-col">
+          <div className="flex flex-col p-4">
             {/* TITLE */}
             {content.title && <p className="text-lg">{content.title}</p>}
 
@@ -135,7 +128,7 @@ const ConfirmationModalContextProvider: React.FC<
               )}
             </div>
           </div>
-        </ReactModal>
+        </CustomModal>
       )}
     </ConfirmationModalContext.Provider>
   );

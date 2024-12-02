@@ -1,7 +1,9 @@
+// Import Tailwind CSS base styles
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* Base Typography Styles */
 @layer base {
   h1 {
     @apply text-2xl tracking-tighter md:text-4xl;
@@ -23,58 +25,67 @@
   }
 }
 
-.badge {
-  @apply h-6 overflow-hidden whitespace-nowrap rounded-md border-none text-xs font-bold;
-}
-
-.btn {
-  @apply rounded-full;
-}
-
-.btn-success {
-  @apply text-white;
-}
-
-.divider {
-  @apply h-[2px] rounded-full bg-gray-light;
-}
-
+/* Body Styles */
 body {
   background-color: theme("colors.white");
 }
 
+/* Button Styles */
+.btn {
+  @apply rounded-full;
+}
+.btn-success {
+  @apply text-white;
+}
+
+/* Badge Styles */
+.badge {
+  @apply h-6 overflow-hidden whitespace-nowrap rounded-md border-none text-xs font-bold;
+}
+
+/* Divider Styles */
+.divider {
+  @apply h-[2px] rounded-full bg-gray-light;
+}
+
+/* Modal Overlay */
 .modal-overlay {
   background-color: rgba(0, 0, 0, 0.5);
 }
 
-// SCROLLBARS
+/* Scrollbar Customization */
 :root {
   --primary: theme("colors.gray-light");
   --secondary: theme("colors.gray-dark");
 }
-
 /* Chrome, Edge, and Safari */
 *::-webkit-scrollbar {
   width: 12px;
 }
-
 *::-webkit-scrollbar-track {
   background: var(--primary);
   border-radius: 5px;
-  background-color: var(--secondary) var(--primary);
 }
-
 *::-webkit-scrollbar-thumb {
   background-color: var(--secondary);
   border-radius: 14px;
   border: 3px solid var(--primary);
 }
 
-// STYLE OVERRIDES PER THEME (PURPLE/GREEN/BLUE)
+/* Side-Drawer Scroll Fix */
+/* Prevent white-space on the right of the side-drawer when open */
+/* https://github.com/saadeghi/daisyui/issues/2859 */
+html {
+  scrollbar-gutter: auto !important;
+}
+html:has(body.content-overflow-y) {
+  scrollbar-gutter: stable !important;
+}
+
+/* Theme Overrides */
 :root .bg-theme {
   @apply bg-purple;
 }
-
 [data-theme="purple"] .bg-theme {
   @apply bg-purple;
 }
@@ -88,51 +99,51 @@ body {
   @apply bg-orange;
 }
 
-// hide the google translate toolbar
+/* Miscellaneous Styles */
+/* Hide the Google Translate toolbar */
 .skiptranslate {
   display: none !important;
 }
 
-// carousel item alignment fix
+/* Carousel Item Alignment Fix */
 .slide {
   text-align: inherit !important;
 }
 
-@media (max-width: 760px) {
-  // Help scout
-  #beacon-container {
-    display: none !important;
-  }
-  // Gleac chat
-  .widget {
-    visibility: hidden !important;
-  }
-  #hubspot-messages-iframe-container {
-    visibility: hidden !important;
-  }
+/* Prevent Dragging of Elements on iOS */
+.no-drag {
+  -webkit-user-drag: none;
 }
 
-// prevent the feedback button from covering the user menu drawer (right)
+/* Opportunity Horizontal Filter Carousel Pill Color */
+.rssas-circle {
+  background: theme("colors.purple") !important;
+}
+.rssas-slider-tray {
+  overflow-x: hidden !important;
+}
+
+/* Adjust Z-Index for Feedback Button */
+/* Prevent the feedback button from covering the user menu drawer */
 #beacon-container .BeaconFabButtonFrame {
   z-index: 30 !important;
 }
 
-// NProgress
+/* Third-Party Library Overrides */
+/* NProgress Styles */
 #nprogress .bar {
   height: 5.5px !important;
   background: theme("colors.white") !important;
   opacity: 0.3 !important;
 }
-
 #nprogress .peg {
   display: none !important;
 }
 
-// React-Toastify
+/* React-Toastify Styles */
 .Toastify__toast {
   @apply rounded-lg;
 }
-
 .Toastify__toast-theme--colored.Toastify__toast--default {
   @apply bg-white;
 }
@@ -148,14 +159,12 @@ body {
 .Toastify__toast-theme--colored.Toastify__toast--error {
   @apply bg-error;
 }
-
 .Toastify__progress-bar-theme--colored.Toastify__progress-bar--info,
 .Toastify__progress-bar-theme--colored.Toastify__progress-bar--success,
 .Toastify__progress-bar-theme--colored.Toastify__progress-bar--warning,
 .Toastify__progress-bar-theme--colored.Toastify__progress-bar--error {
   @apply bg-white bg-opacity-30;
 }
-
 .Toastify__close-button {
   @apply text-white opacity-100;
 }
@@ -164,21 +173,10 @@ body {
   @apply scale-110;
 }
 
-// Opportunity horizontal filter carousel pill colour
-.rssas-circle {
-  background: theme("colors.purple") !important;
-}
-
-// prevent dragging of elements on ios
-.no-drag {
-  -webkit-user-drag: none;
-}
-
-/* MDXEditor overrides */
+/* MDXEditor Overrides */
 .mdxeditor-popup-container {
   z-index: 2000 !important;
 }
-
 .editor.editable .mdxeditor {
   border-style: solid;
   border-width: 1px;
@@ -189,11 +187,9 @@ body {
   padding: 0;
   margin: 0;
 }
-
 .editor.readonly .mdxeditor-toolbar {
   display: none;
 }
-
 .mdxeditor ol,
 .mdxeditor ul {
   list-style-type: disc !important;
@@ -207,11 +203,9 @@ body {
 .mdxeditor li[role="checkbox"]::after {
   margin-top: 5px;
 }
-
 .mdxeditor ol {
   list-style-type: decimal !important;
 }
-
 .mdxeditor :where(blockquote):not(:where([class~="not-prose"] *)) {
   font-weight: 500 !important;
   font-style: italic !important;
@@ -224,19 +218,19 @@ body {
   padding-left: 1em !important;
 }
 
-/* focus styles */
-// .btn:focus-visible,
-// a:focus-visible,
-// input:focus-visible,
-// select:focus-visible,
-// textarea:focus-visible,
-// button:focus-visible,
-// label:focus-visible {
-//   outline: 2px solid #565b6f !important;
-//   outline-offset: 2px !important;
-// }
-
-// input[aria-haspopup="true"]:focus-visible {
-//   outline: 0px solid #565b6f !important;
-//   outline-offset: 0px !important;
-// }
+/* Media Queries */
+/* Hide widgets on mobile devices */
+@media (max-width: 760px) {
+  /* Hide Help Scout */
+  #beacon-container {
+    display: none !important;
+  }
+  /* Hide Gleac Chat */
+  .widget {
+    visibility: hidden !important;
+  }
+  /* Hide HubSpot Messages */
+  #hubspot-messages-iframe-container {
+    visibility: hidden !important;
+  }
+}

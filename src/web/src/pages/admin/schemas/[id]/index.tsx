@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { captureException } from "@sentry/nextjs";
 import {
   QueryClient,
   dehydrate,
@@ -191,7 +190,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
           icon: false,
         });
 
-        captureException(error);
         setIsLoading(false);
 
         return;
@@ -313,8 +311,8 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
   const renderAttribute = useCallback(
     (attributeName: string, index: number) => {
-      const schemaEntity = schemaEntities?.find(
-        (x) => x.properties?.some((y) => y.attributeName == attributeName),
+      const schemaEntity = schemaEntities?.find((x) =>
+        x.properties?.some((y) => y.attributeName == attributeName),
       );
       const dataSource = schemaEntity?.name;
       const nameDisplay = schemaEntity?.properties?.find(
@@ -806,21 +804,20 @@ const SchemaCreateEdit: NextPageWithLayout<{
                             </tr>
                           </thead>
                           <tbody>
-                            {systemSchemaEntities?.map(
-                              (x) =>
-                                ({
-                                  ...x,
-                                  properties: x.properties?.filter(
-                                    (x) => x.system == true,
-                                  ),
-                                }).properties?.map((attribute, index) => (
-                                  <>
-                                    {renderAttribute(
-                                      attribute.attributeName,
-                                      index,
-                                    )}
-                                  </>
-                                )),
+                            {systemSchemaEntities?.map((x) =>
+                              ({
+                                ...x,
+                                properties: x.properties?.filter(
+                                  (x) => x.system == true,
+                                ),
+                              }).properties?.map((attribute, index) => (
+                                <>
+                                  {renderAttribute(
+                                    attribute.attributeName,
+                                    index,
+                                  )}
+                                </>
+                              )),
                             ) ?? []}
                           </tbody>
                         </table>

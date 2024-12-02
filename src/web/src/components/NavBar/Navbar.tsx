@@ -2,13 +2,13 @@ import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import logoPicDark from "public/images/logo-dark.webp";
 import logoPicLight from "public/images/logo-light.webp";
 import { useMemo, useState } from "react";
 import { IoMdClose, IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import type { OrganizationInfo } from "~/api/models/user";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { ROLE_ADMIN } from "~/lib/constants";
 import {
   RoleView,
@@ -111,6 +111,7 @@ const navBarLinksAdmin: TabItem[] = [
 ];
 
 export const Navbar: React.FC = () => {
+  const router = useRouter();
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
   const { data: session } = useSession();
@@ -119,6 +120,9 @@ export const Navbar: React.FC = () => {
 
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+
+  // 👇 prevent scrolling on the page when the dialogs are open
+  //useDisableBodyScroll(isDrawerOpen);
 
   // open/close drawer
   const onToggle = () => {
@@ -136,9 +140,6 @@ export const Navbar: React.FC = () => {
       setIsHovered(false);
     }
   };
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(isDrawerOpen);
 
   const currentNavbarLinks = useMemo<TabItem[]>(() => {
     if (activeRoleView == RoleView.Admin) {
@@ -233,7 +234,7 @@ export const Navbar: React.FC = () => {
               size={20}
             />
           </span>
-          <div className="flex flex-row items-center gap-2">
+          <div className="flex flex-row items-center">
             <div className="w-[170px] truncate text-sm">
               {organisation.name}
             </div>
@@ -261,17 +262,20 @@ export const Navbar: React.FC = () => {
             </div>
 
             {/* SETTING BUTTON */}
-            <div className="pl-2x flex items-center">
-              <Link
+            <div className="flex items-center">
+              <button
                 key={organisation.id}
-                href={`/organisations/${organisation.id}/edit`}
                 className="tooltip tooltip-left tooltip-secondary rounded-full bg-white p-1 text-gray-dark shadow duration-300 hover:bg-gray-dark hover:text-gray-light"
-                onClick={() => setDrawerOpen(false)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  setDrawerOpen(false);
+                  router.push(`/organisations/${organisation.id}/edit`);
+                }}
                 data-tip="Settings"
                 tabIndex={isDrawerOpen ? 0 : -1}
               >
                 <IoMdSettings className="h-4 w-4" />
-              </Link>
+              </button>
             </div>
           </div>
         </Link>
@@ -335,7 +339,9 @@ export const Navbar: React.FC = () => {
                           src={logoPicDark}
                           alt="Logo"
                           width={85}
-                          height={41}
+                          className="h-auto"
+                          sizes="100vw"
+                          priority={true}
                           tabIndex={-1}
                         />
                       </div>
@@ -478,7 +484,7 @@ export const Navbar: React.FC = () => {
             {/* LOGO */}
             <Link
               href="/"
-              className="bg-theme btn gap-2 !rounded-md border-none px-2 text-white shadow-none duration-0 animate-in animate-out hover:brightness-95 md:px-2"
+              className="bg-theme btn gap-2 !rounded-md border-none px-2 text-white shadow-none hover:brightness-95 md:px-2"
               tabIndex={isDrawerOpen ? -1 : 0}
               title="Home"
             >
@@ -486,7 +492,7 @@ export const Navbar: React.FC = () => {
                 src={logoPicLight}
                 alt="Logo"
                 width={85}
-                height={41}
+                className="h-auto"
                 tabIndex={-1}
               />
             </Link>

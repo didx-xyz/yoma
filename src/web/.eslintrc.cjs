@@ -1,16 +1,9 @@
-/** @type {import("eslint").Linter.Config} */
 const config = {
   root: true,
-  parser: "@typescript-eslint/parser",
   parserOptions: {
     project: true,
   },
-  plugins: ["@typescript-eslint"],
-  extends: [
-    "next/core-web-vitals",
-    "plugin:@typescript-eslint/recommended-type-checked",
-    "plugin:@typescript-eslint/stylistic-type-checked",
-  ],
+  extends: ["next", "next/core-web-vitals", "next/typescript", "prettier"],
   ignorePatterns: ["/public/**/*"],
   rules: {
     "@typescript-eslint/consistent-type-imports": [
@@ -36,6 +29,7 @@ const config = {
     "@typescript-eslint/no-floating-promises": "off",
     "@typescript-eslint/no-unsafe-return": "off",
     "@typescript-eslint/prefer-nullish-coalescing": "off",
+    "@typescript-eslint/no-empty-object-type": "off",
     "prefer-spread": "off",
   },
 };
