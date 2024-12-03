@@ -12,7 +12,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems, bool includeComputed);
 
-    Models.Opportunity? GetByExternalIdOrNull(string externalId, bool includeChildItems, bool includeComputed);
+    Models.Opportunity? GetByExternalIdOrNull(Guid organizationId, string externalId, bool includeChildItems, bool includeComputed);
 
     List<Models.Opportunity> Contains(string value, bool includeChildItems, bool includeComputed);
 

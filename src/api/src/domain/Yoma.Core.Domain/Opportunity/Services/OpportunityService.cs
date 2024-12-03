@@ -222,14 +222,17 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public Models.Opportunity? GetByExternalIdOrNull(string externalId, bool includeChildItems, bool includeComputed)
+    public Models.Opportunity? GetByExternalIdOrNull(Guid organizationId, string externalId, bool includeChildItems, bool includeComputed)
     {
+      if (organizationId == Guid.Empty)
+        throw new ArgumentNullException(nameof(organizationId));
+
       if (string.IsNullOrWhiteSpace(externalId))
         throw new ArgumentNullException(nameof(externalId));
       externalId = externalId.Trim();
 
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-      var result = _opportunityRepository.Query(includeChildItems).SingleOrDefault(o => !string.IsNullOrEmpty(o.ExternalId) && o.ExternalId.ToLower() == externalId.ToLower());
+      var result = _opportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.OrganizationId == organizationId && !string.IsNullOrEmpty(o.ExternalId) && o.ExternalId.ToLower() == externalId.ToLower());
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       if (result == null) return null;
 
@@ -1112,7 +1115,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           }
           catch (Exception ex)
           {
-            throw new ValidationException($"Error parsing row '{(rowNumber == -1 ? "Unknown" : rowNumber)}': {ex.Message}");
+            throw new ValidationException($"Error processing row '{(rowNumber == -1 ? "Unknown" : rowNumber)}': {ex.Message}");
           }
         }
         scope.Complete();
@@ -1146,9 +1149,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       if (!string.IsNullOrEmpty(request.ExternalId))
       {
-        var existingByExternalId = GetByExternalIdOrNull(request.ExternalId, false, false);
+        var existingByExternalId = GetByExternalIdOrNull(request.OrganizationId, request.ExternalId, false, false);
         if (existingByTitle != null)
-          throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists");
+          throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists for the specified organization");
       }
 
       var status = request.PostAsActive ? Status.Active : Status.Inactive;
@@ -1296,9 +1299,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       if (!string.IsNullOrEmpty(request.ExternalId))
       {
-        var existingByExternalId = GetByExternalIdOrNull(request.ExternalId, false, false);
+        var existingByExternalId = GetByExternalIdOrNull(request.OrganizationId, request.ExternalId, false, false);
         if (existingByExternalId != null && result.Id != existingByExternalId.Id)
-          throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists");
+          throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists for the specified organization");
       }
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
@@ -1868,42 +1871,58 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       var keywords = item.Keywords?.Where(o => !string.IsNullOrWhiteSpace(o)).Select(o => o.Trim()).ToList();
 
-      var request = new OpportunityRequestCreate
+      var existingByExternalId = GetByExternalIdOrNull(organizationId, item.ExternalId, false, false);
+
+      var dateEnd = item.DateEnd?.ToDateTimeOffset();
+
+      OpportunityRequestBase? request = null;
+      var isNew = false;
+      if (existingByExternalId == null)
       {
-        //defualts 
-        OrganizationId = organizationId,
-        VerificationEnabled = true,
-        VerificationMethod = VerificationMethod.Automatic,
-        CredentialIssuanceEnabled = true,
-        SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
+        isNew = true;
+        request = new OpportunityRequestCreate { PostAsActive = !dateEnd.HasValue || dateEnd.Value > DateTimeOffset.UtcNow };
+      }
+      else
+        request = new OpportunityRequestUpdate { Id = existingByExternalId.Id };
 
-        //imported
-        Title = item.Title,
-        TypeId = type.Id,
-        EngagementTypeId = engagementType?.Id,
-        Categories = categories.Select(o => o.Id).ToList(),
-        URL = item.URL,
-        Summary = item.Summary,
-        Description = item.Description,
-        Languages = languages.Select(o => o.Id).ToList(),
-        Countries = countries.Select(o => o.Id).ToList(),
-        DifficultyId = dofficulty.Id,
-        CommitmentIntervalCount = item.CommitmentIntervalCount,
-        CommitmentIntervalId = commitmentInterval.Id,
-        DateStart = item.DateStart.ToDateTimeOffset(),
-        DateEnd = item.DateEnd?.ToDateTimeOffset(),
-        ParticipantLimit = item.ParticipantLimit,
-        ZltoReward = item.ZltoReward,
-        ZltoRewardPool = item.ZltoRewardPool,
-        Skills = skills.Select(o => o.Id).ToList(),
-        Keywords = keywords,
-        Hidden = item.Hidden,
-        ExternalId = item.ExternalId
-      };
-      request.PostAsActive = !request.DateEnd.HasValue || request.DateEnd.Value > DateTimeOffset.UtcNow;
+      //defualts 
+      request.OrganizationId = organizationId;
+      request.VerificationEnabled = true;
+      request.VerificationMethod = VerificationMethod.Automatic;
+      request.CredentialIssuanceEnabled = true;
+      request.SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default");
 
-      var result = await Create(request, false, false); //events raised by incoking method upon transaction completion
-      return (result, EventType.Create);
+      //imported
+      request.Title = item.Title;
+      request.TypeId = type.Id;
+      request.EngagementTypeId = engagementType?.Id;
+      request.Categories = categories.Select(o => o.Id).ToList();
+      request.URL = item.URL;
+      request.Summary = item.Summary;
+      request.Description = item.Description;
+      request.Languages = languages.Select(o => o.Id).ToList();
+      request.Countries = countries.Select(o => o.Id).ToList();
+      request.DifficultyId = dofficulty.Id;
+      request.CommitmentIntervalCount = item.CommitmentIntervalCount;
+      request.CommitmentIntervalId = commitmentInterval.Id;
+      request.DateStart = item.DateStart.ToDateTimeOffset();
+      request.DateEnd = item.DateEnd?.ToDateTimeOffset();
+      request.ParticipantLimit = item.ParticipantLimit;
+      request.ZltoReward = item.ZltoReward;
+      request.ZltoRewardPool = item.ZltoRewardPool;
+      request.Skills = skills.Select(o => o.Id).ToList();
+      request.Keywords = keywords;
+      request.Hidden = item.Hidden;
+      request.ExternalId = item.ExternalId;
+      //Instructions
+      //ShareWithPartners
+
+      // Events raised by invoking method upon transaction completion
+      var result = isNew
+        ? await Create((OpportunityRequestCreate)request, false, false)
+        : await Update((OpportunityRequestUpdate)request, false);
+
+      return (result, isNew ? EventType.Create : EventType.Update);
     }
 
     private static (decimal? Reward, bool? RewardReduced, bool? RewardPoolDepleted) ProcessRewardAllocation(decimal? reward, decimal? rewardPool, decimal? rewardCumulative, bool? rewardReduced, bool? rewardPoolDepleted)
