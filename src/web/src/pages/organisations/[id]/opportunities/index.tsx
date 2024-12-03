@@ -650,7 +650,7 @@ const Opportunities: NextPageWithLayout<{
                                 src={iconZlto}
                                 alt="Zlto icon"
                                 width={16}
-                                height={16}
+                                className="h-auto"
                               />
                               <span className="ml-1 text-xs">
                                 {opportunity?.zltoReward}
@@ -800,7 +800,7 @@ const Opportunities: NextPageWithLayout<{
                                   src={iconZlto}
                                   alt="Zlto icon"
                                   width={16}
-                                  height={16}
+                                  className="h-auto"
                                 />
                                 <span className="ml-1 text-xs">
                                   {opportunity?.zltoReward}
@@ -892,7 +892,7 @@ Opportunities.getLayout = function getLayout(page: ReactElement) {
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-Opportunities.theme = function getTheme(page: ReactElement) {
+Opportunities.theme = function getTheme(page: ReactElement<{ theme: string }>) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };

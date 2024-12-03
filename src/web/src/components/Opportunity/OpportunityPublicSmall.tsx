@@ -68,10 +68,9 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
               src={iconClock}
               alt="Icon Clock"
               width={17}
-              height={17}
+              className="h-auto"
               sizes="100vw"
               priority={true}
-              style={{ width: "18px", height: "18px" }}
             />
             <span className="ml-1">{`${data.commitmentIntervalCount} ${
               data.commitmentInterval
@@ -84,11 +83,9 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
                 src={iconUser}
                 alt="Icon User"
                 width={16}
-                height={16}
                 sizes="100vw"
                 priority={true}
-                style={{ width: "16px", height: "16px" }}
-                className="mr-1"
+                className="mr-1 h-auto"
               />
               {data?.participantCountTotal}
             </div>

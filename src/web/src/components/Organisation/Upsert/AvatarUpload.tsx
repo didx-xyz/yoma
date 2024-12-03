@@ -1,10 +1,13 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import AvatarEditor from "react-avatar-editor";
-import ReactModal from "react-modal";
 import { IoMdClose, IoMdCrop } from "react-icons/io";
 import { AvatarImage } from "~/components/AvatarImage";
+import CustomModal from "~/components/Common/CustomModal";
 import styles from "./AvatarUpload.module.css";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
+
+// Type assertion to bypass React component type mismatch with AvatarEditor library
+// "@types/react-avatar-editor" is not compatible with react 19
+const Editor = AvatarEditor as any;
 
 interface AvatarUploadProps {
   onUploadComplete?: (data: any[]) => void;
@@ -25,9 +28,6 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
   const inputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<AvatarEditor>(null);
   const [cropModalVisible, setCropModalVisible] = useState(false);
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(cropModalVisible);
 
   const handleImageUpload = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,15 +83,13 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
   return (
     <div className="form-control flex flex-col items-center justify-center rounded-lg bg-gray-light p-4">
       {/* CROPPING MODAL */}
-      <ReactModal
+      <CustomModal
         isOpen={cropModalVisible}
         shouldCloseOnOverlayClick={false}
         onRequestClose={() => {
           setCropModalVisible(false);
         }}
-        className={`fixed bottom-0 left-0 right-0 top-0 flex-grow overflow-hidden bg-white animate-in fade-in md:m-auto md:h-fit md:max-h-[650px] md:w-[600px] md:rounded-3xl`}
-        portalClassName={"fixed z-40"}
-        overlayClassName="fixed inset-0 bg-overlay"
+        className={`md:max-h-[650px] md:w-[600px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex flex-row items-center p-4 shadow-lg">
@@ -108,7 +106,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
           </div>
           {selectedImage && (
             <div className="my-12 flex flex-col items-center gap-6">
-              <AvatarEditor
+              <Editor
                 ref={editorRef}
                 image={selectedImage}
                 width={200}
@@ -154,7 +152,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
             </div>
           )}
         </div>
-      </ReactModal>
+      </CustomModal>
 
       {/* IMAGE UPLOAD */}
 

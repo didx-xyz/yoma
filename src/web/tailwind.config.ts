@@ -64,9 +64,36 @@ export default {
           "0%, 50%, 100%": { transform: "rotate(-3deg)" },
           "25%, 75%": { transform: "rotate(3deg)" },
         },
+        enter: {
+          "0%": { opacity: "0", transform: "scale(0.95)" },
+          "100%": {
+            opacity: "1",
+            transform: "scale(1)",
+            visibility: "visible",
+          },
+        },
+        exit: {
+          "0%": { opacity: "1", transform: "scale(1)", visibility: "visible" },
+          "100%": {
+            opacity: "0",
+            transform: "scale(0.95)",
+            visibility: "hidden",
+          },
+        },
+        pulse: {
+          "0%, 100%": { opacity: "1" },
+          "50%": { opacity: ".5" },
+        },
+        fadeIn: {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
       },
       animation: {
         wiggle: "wiggle 2s ease-in-out",
+        pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        enter: "enter 0.3s ease-out forwards",
+        exit: "exit 0.3s ease-in forwards",
       },
       inset: {
         "1/5": "20%", // Custom class for top: 20%
@@ -74,7 +101,7 @@ export default {
     },
   },
   darkMode: "class",
-  plugins: [require("daisyui"), require("tailwindcss-animate")],
+  plugins: [require("daisyui")],
   daisyui: {
     logs: false,
     themes: [

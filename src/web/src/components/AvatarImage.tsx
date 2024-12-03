@@ -13,7 +13,7 @@ export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size }) => {
 
   return (
     <div
-      className={`flex aspect-square flex-shrink-0 overflow-hidden rounded-full bg-white bg-opacity-20 shadow-custom `}
+      className={`flex aspect-square flex-shrink-0 overflow-hidden rounded-full bg-white bg-opacity-20 shadow-custom`}
       style={{
         width: sizePixels,
         height: sizePixels,
@@ -25,12 +25,9 @@ export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size }) => {
           alt={alt}
           width={size}
           height={size}
+          className="h-auto"
           sizes="100vw"
           priority={true}
-          style={{
-            width: sizePixels,
-            height: sizePixels,
-          }}
         />
       ) : (
         <IoMdPerson

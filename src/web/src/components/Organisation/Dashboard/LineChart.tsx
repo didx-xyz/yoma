@@ -69,8 +69,8 @@ export const LineChart: React.FC<{
               className="h-3 w-3 md:h-5 md:w-5"
               src="/images/icon-skills-green.svg"
               alt="Icon"
-              height={20}
               width={20}
+              height={20}
             />
           </span>
           <span className="text-xs font-semibold md:text-sm">
@@ -96,8 +96,8 @@ export const LineChart: React.FC<{
                 className={`h-3 w-3 md:h-5 md:w-5`}
                 src={`/images/icon-${name.toLowerCase()}-green.svg`}
                 alt="Icon"
-                height={20}
                 width={20}
+                height={20}
               />
             </span>
             <span className="text-xs font-semibold md:text-sm">{name}</span>
@@ -177,7 +177,7 @@ export const LineChart: React.FC<{
             chartEvents={[
               {
                 eventName: "select",
-                callback: ({ chartWrapper }) => handleSelect(chartWrapper),
+                callback: ({ chartWrapper }) => handleSelect(chartWrapper!),
               },
             ]}
           />

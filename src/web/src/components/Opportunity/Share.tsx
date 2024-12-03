@@ -227,6 +227,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
                 alt="QR Code"
                 width={320}
                 height={320}
+                className="h-auto"
               />
             </span>
           )}

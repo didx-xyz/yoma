@@ -70,22 +70,16 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                     src={iconZltoWhite}
                     alt="Zlto Logo"
                     width={60}
-                    height={60}
+                    className="h-auto"
                     sizes="(max-width: 60px) 30vw, 50vw"
                     priority={true}
                     placeholder="blur"
                     blurDataURL={`data:image/svg+xml;base64,${toBase64(
                       shimmer(44, 44),
                     )}`}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      maxWidth: "60px",
-                      maxHeight: "60px",
-                    }}
                   />
                 </div>
-                <div className="flex flex-grow flex-col">
+                <div className="flex flex-grow flex-col justify-center">
                   <h1>0</h1>
                 </div>
               </div>
@@ -120,7 +114,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                       src={iconZltoWhite}
                       alt="Zlto Logo"
                       width={70}
-                      height={70}
+                      className="h-auto"
                       sizes="(max-width: 60px) 30vw, 50vw"
                       priority={true}
                       placeholder="blur"
@@ -139,10 +133,9 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                       <div className="flex items-center text-xs font-bold text-white">
                         <Image
                           src={iconZltoCircle}
-                          className="mr-2"
                           alt="ZLTO"
                           width={20}
-                          height={20}
+                          className="mr-2 h-auto"
                         />
                         {processing ?? "Loading..."}
                       </div>
@@ -156,10 +149,9 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                       <div className="flex items-center text-xs font-bold text-white">
                         <Image
                           src={iconZltoCircle}
-                          className="mr-2"
                           alt="ZLTO"
                           width={20}
-                          height={20}
+                          className="mr-2 h-auto"
                         />
                         {available ?? "Loading..."}
                       </div>
@@ -172,10 +164,9 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                       <div className="flex items-center text-xs font-bold text-white">
                         <Image
                           src={iconZltoCircle}
-                          className="mr-2"
                           alt="ZLTO"
                           width={20}
-                          height={20}
+                          className="mr-2 h-auto"
                         />
                         {total ?? "Loading..."}
                       </div>

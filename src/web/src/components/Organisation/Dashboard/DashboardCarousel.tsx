@@ -1,6 +1,9 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import type { EmblaCarouselType, EmblaOptionsType } from "embla-carousel";
-import type { EngineType } from "embla-carousel/components/Engine";
+import type {
+  EmblaCarouselType,
+  EmblaOptionsType,
+  EngineType,
+} from "embla-carousel";
 import {
   PrevButton,
   NextButton,
@@ -176,7 +179,7 @@ const DashboardCarousel: React.FC<PropType> = (props: PropType) => {
             {hasMoreToLoad && (
               <div
                 className={"embla-infinite-scroll".concat(
-                  loadingMore ? " embla-infinite-scroll--loading-more" : "",
+                  loadingMore ? "embla-infinite-scroll--loading-more" : "",
                 )}
               >
                 <span className="embla-infinite-scroll__spinner" />

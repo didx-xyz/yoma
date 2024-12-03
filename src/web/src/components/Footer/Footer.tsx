@@ -44,7 +44,8 @@ export const Footer: React.FC<{
             alt="Logo"
             priority={false}
             width={85}
-            height={41}
+            className="h-auto"
+            sizes="100vw"
             tabIndex={tabIndex}
           />
         </Link>

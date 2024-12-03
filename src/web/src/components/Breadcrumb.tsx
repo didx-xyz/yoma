@@ -31,12 +31,6 @@ const Breadcrumb: React.FC<InputProps> = ({ items }) => {
                     blurDataURL={`data:image/svg+xml;base64,${toBase64(
                       shimmer(20, 20),
                     )}`}
-                    style={{
-                      width: "100%",
-                      height: "100%",
-                      maxWidth: "20px",
-                      maxHeight: "20px",
-                    }}
                   />
                 )}
                 {item.iconElement && <>{item.iconElement}</>}

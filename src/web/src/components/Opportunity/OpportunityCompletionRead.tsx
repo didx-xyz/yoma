@@ -44,10 +44,9 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
               src={icon}
               alt={`Icon ${label}`}
               width={28}
-              height={28}
+              className="h-auto"
               sizes="100vw"
               priority={true}
-              style={{ width: "28px", height: "28px" }}
             />
           </div>
           <div className="flex items-center">View {label}</div>
@@ -164,10 +163,9 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
                       src={iconLocation}
                       alt={`Icon Location`}
                       width={28}
-                      height={28}
+                      className="h-auto"
                       sizes="100vw"
                       priority={true}
-                      style={{ width: "28px", height: "28px" }}
                     />
                   </div>
                   <div className="flex items-center">

@@ -33,7 +33,6 @@ import {
   IoMdPerson,
   IoMdWarning,
 } from "react-icons/io";
-import ReactModal from "react-modal";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
 import { Status, type OpportunityInfo } from "~/api/models/opportunity";
@@ -44,6 +43,7 @@ import {
   updateOpportunityStatus,
 } from "~/api/services/opportunities";
 import { AvatarImage } from "~/components/AvatarImage";
+import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import OrgAdminBadges from "~/components/Opportunity/Badges/OrgAdminBadges";
 import { PageBackground } from "~/components/PageBackground";
@@ -55,7 +55,6 @@ import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_UPDATE,
@@ -147,9 +146,6 @@ const OpportunityDetails: NextPageWithLayout<{
   );
   const modalContext = useConfirmationModalContext();
   const isAdmin = user?.roles.includes(ROLE_ADMIN);
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  useDisableBodyScroll(currentOrganisationInactive);
 
   // 👇 use prefetched queries from server
   const { data: opportunity } = useQuery<OpportunityInfo>({
@@ -408,15 +404,13 @@ const OpportunityDetails: NextPageWithLayout<{
           </div>
 
           {/* MANAGE OPPORTUNITY MODAL MENU */}
-          <ReactModal
+          <CustomModal
             isOpen={manageOpportunityMenuVisible}
             shouldCloseOnOverlayClick={true}
             onRequestClose={() => {
               setManageOpportunityMenuVisible(false);
             }}
-            className={`fixed left-2 right-2 top-[175px] flex-grow rounded-lg bg-gray-light animate-in fade-in md:left-[80%] md:right-[5%] md:top-[145px] md:w-44 xl:left-[76.7%] xl:right-[23%]`}
-            portalClassName={"fixed z-50"}
-            overlayClassName="fixed inset-0"
+            className={`!bottom-auto left-2 right-2 top-[175px] md:left-[80%] md:right-[5%] md:top-[145px] md:w-44 xl:left-[76.7%] xl:right-[23%]`}
           >
             <div className="flex flex-col gap-4 p-4 text-xs">
               {opportunity?.status != "Deleted" && (
@@ -527,7 +521,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 </button>
               )}
             </div>
-          </ReactModal>
+          </CustomModal>
         </div>
 
         {opportunity && (
@@ -535,7 +529,7 @@ const OpportunityDetails: NextPageWithLayout<{
             <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-6 shadow-custom">
               <div className="flex flex-col gap-2 md:flex-grow">
                 <div className="relative">
-                  <h4 className="line-clamp-2 max-w-[80%] flex-grow text-xl font-semibold text-black md:text-2xl ">
+                  <h4 className="line-clamp-2 max-w-[80%] flex-grow text-xl font-semibold text-black md:text-2xl">
                     {opportunity.title}
                   </h4>
                   <span className="absolute right-0 top-0">
@@ -629,10 +623,9 @@ const OpportunityDetails: NextPageWithLayout<{
                         src={iconSkills}
                         alt="Icon Skills"
                         width={20}
-                        height={20}
+                        className="h-auto"
                         sizes="100vw"
                         priority={true}
-                        style={{ width: "20px", height: "20px" }}
                       />
 
                       <span className="ml-1">Skills you will learn</span>
@@ -641,7 +634,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.skills?.map((item) => (
                         <div
                           key={item.id}
-                          className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                          className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                         >
                           {item.name}
                         </div>
@@ -655,10 +648,9 @@ const OpportunityDetails: NextPageWithLayout<{
                         src={iconClock}
                         alt="Icon Clock"
                         width={20}
-                        height={20}
+                        className="h-auto"
                         sizes="100vw"
                         priority={true}
-                        style={{ width: "20px", height: "20px" }}
                       />
 
                       <span className="ml-1">How much time you will need</span>
@@ -684,10 +676,9 @@ const OpportunityDetails: NextPageWithLayout<{
                         src={iconTopics}
                         alt="Icon Topics"
                         width={20}
-                        height={20}
+                        className="h-auto"
                         sizes="100vw"
                         priority={true}
-                        style={{ width: "20px", height: "20px" }}
                       />
 
                       <span className="ml-1">Topics</span>
@@ -696,7 +687,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.categories?.map((item) => (
                         <div
                           key={item.id}
-                          className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                          className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                         >
                           {item.name}
                         </div>
@@ -710,10 +701,9 @@ const OpportunityDetails: NextPageWithLayout<{
                         src={iconLanguage}
                         alt="Icon Language"
                         width={20}
-                        height={20}
+                        className="h-auto"
                         sizes="100vw"
                         priority={true}
-                        style={{ width: "20px", height: "20px" }}
                       />
 
                       <span className="ml-1">Languages</span>
@@ -722,7 +712,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.languages?.map((item) => (
                         <div
                           key={item.id}
-                          className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                          className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                         >
                           {item.name}
                         </div>
@@ -736,10 +726,9 @@ const OpportunityDetails: NextPageWithLayout<{
                         src={iconDifficulty}
                         alt="Icon Difficulty"
                         width={20}
-                        height={20}
+                        className="h-auto"
                         sizes="100vw"
                         priority={true}
-                        style={{ width: "20px", height: "20px" }}
                       />
 
                       <span className="ml-1">Course difficulty</span>
@@ -753,10 +742,9 @@ const OpportunityDetails: NextPageWithLayout<{
                         src={iconLocation}
                         alt="Icon Location"
                         width={20}
-                        height={20}
+                        className="h-auto"
                         sizes="100vw"
                         priority={true}
-                        style={{ width: "20px", height: "20px" }}
                       />
 
                       <span className="ml-1">Countries</span>
@@ -765,7 +753,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.countries?.map((country) => (
                         <div
                           key={country.id}
-                          className="min-h-6 badge h-full rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                          className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
                         >
                           {country.name}
                         </div>
@@ -787,7 +775,9 @@ OpportunityDetails.getLayout = function getLayout(page: ReactElement) {
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-OpportunityDetails.theme = function getTheme(page: ReactElement) {
+OpportunityDetails.theme = function getTheme(
+  page: ReactElement<{ theme: string }>,
+) {
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };

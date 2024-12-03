@@ -1,6 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import type { EngineType } from "embla-carousel/components/Engine";
-import type { EmblaCarouselType, EmblaOptionsType } from "embla-carousel";
+import type {
+  EmblaCarouselType,
+  EmblaOptionsType,
+  EngineType,
+} from "embla-carousel";
 import useEmblaCarousel from "embla-carousel-react";
 import type { StoreItemCategorySearchResults } from "~/api/models/marketplace";
 import { ItemCardComponent } from "./ItemCard";
@@ -189,7 +192,7 @@ const StoreItemsCarousel: React.FC<{
             {hasMoreToLoad && (
               <div
                 className={"embla-infinite-scroll".concat(
-                  loadingMore ? " embla-infinite-scroll--loading-more" : "",
+                  loadingMore ? "embla-infinite-scroll--loading-more" : "",
                 )}
               >
                 <span className="embla-infinite-scroll__spinner" />

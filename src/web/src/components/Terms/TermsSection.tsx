@@ -206,7 +206,7 @@ const TermsSection: React.FC = () => {
         currency on the marketplace.
       </p>
 
-      <p className=" font-bold text-black">Opportunity Provider (OP)</p>
+      <p className="font-bold text-black">Opportunity Provider (OP)</p>
       <p className="mb-4">
         OPs provide challenges, courses, and tasks for Yoma Youth to engage
         with. They are also responsible for issuing verified credentials to the
@@ -220,7 +220,7 @@ const TermsSection: React.FC = () => {
         youth member&apos;s name, surname, and email address.
       </p>
 
-      <p className=" font-bold text-black">Employment Provider (EP)</p>
+      <p className="font-bold text-black">Employment Provider (EP)</p>
       <p className="mb-4">
         Much like OPs, EPs are not able to initiate a connection with Yoma
         Youth. Rather, the EP lists an employment opportunity for Yoma Youth to
@@ -231,7 +231,7 @@ const TermsSection: React.FC = () => {
         portal, and between the Yoma Youth and EP.
       </p>
 
-      <p className=" font-bold text-black">Yoma Technical Team</p>
+      <p className="font-bold text-black">Yoma Technical Team</p>
       <p className="mb-4">
         This is the design and development team responsible with building and
         maintaining the platform. Only members of this team have access to the

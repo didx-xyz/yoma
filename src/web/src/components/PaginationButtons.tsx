@@ -122,7 +122,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
             <span>Page</span>
             <input
               type="number"
-              className="input input-bordered input-sm rounded-md border-gray font-bold focus:border-gray focus:outline-none"
+              className="input input-sm input-bordered rounded-md border-gray font-bold focus:border-gray focus:outline-none"
               value={inputValue}
               onChange={handleInputChange}
               onBlur={handleInputChange}

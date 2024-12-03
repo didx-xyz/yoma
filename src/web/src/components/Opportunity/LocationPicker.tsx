@@ -69,7 +69,9 @@ const LocationPicker: React.FC<InputProps> = ({
         lng: event.latLng.lng(),
       };
       setMarkerPosition(result);
-      onSelect && onSelect(result);
+      if (onSelect) {
+        onSelect(result);
+      }
     },
     [onSelect],
   );
@@ -81,7 +83,9 @@ const LocationPicker: React.FC<InputProps> = ({
         lng: event.latLng.lng(),
       };
       setMarkerPosition(result);
-      onSelect && onSelect(result);
+      if (onSelect) {
+        onSelect(result);
+      }
     },
     [onSelect],
   );

@@ -99,7 +99,9 @@ export const OrganisationCardComponent: React.FC<{
 
         toast.success("Organisation status updated");
 
-        onUpdateStatus && onUpdateStatus();
+        if (onUpdateStatus) {
+          onUpdateStatus();
+        }
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",

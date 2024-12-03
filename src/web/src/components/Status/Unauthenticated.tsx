@@ -15,11 +15,9 @@ export const Unauthenticated: React.FC = () => {
             src={IconRingBuoy}
             alt="Icon Ring Buoy"
             width={100}
-            height={100}
             sizes="100vw"
             priority={true}
-            style={{ width: "100px", height: "100px" }}
-            className="mt-2 rounded-full p-4 shadow-custom"
+            className="mt-2 h-auto rounded-full p-4 shadow-custom"
           />
           <h4>401 - Unauthenticated</h4>
           <p className="p-4 text-sm">You don’t have access to this page.</p>

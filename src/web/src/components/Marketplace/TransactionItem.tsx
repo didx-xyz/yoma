@@ -67,10 +67,9 @@ const TransactionItemComponent: React.FC<{
               src={iconZlto}
               alt="Icon Zlto"
               width={16}
-              height={16}
+              className="h-auto"
               sizes="100vw"
               priority={true}
-              style={{ width: "16px", height: "16px" }}
             />
             <span className="ml-1">{Math.ceil(data?.amount)}</span>
           </div>

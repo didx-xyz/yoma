@@ -34,10 +34,9 @@ const PublicBadges: React.FC<BadgesProps> = ({ opportunity }) => {
             src={iconClock}
             alt="Icon Clock"
             width={20}
-            height={20}
+            className="h-auto"
             sizes="100vw"
             priority={true}
-            style={{ width: "20px", height: "20px" }}
           />
 
           <span className="ml-1 text-xs">{`${
