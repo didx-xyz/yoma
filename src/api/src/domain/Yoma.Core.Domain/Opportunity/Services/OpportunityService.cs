@@ -29,6 +29,11 @@ using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Opportunity.Validators;
 using Yoma.Core.Domain.PartnerSharing.Interfaces;
+using System.Globalization;
+using System.Reflection;
+using CsvHelper.Configuration.Attributes;
+using Yoma.Core.Domain.SSI.Helpers;
+using Yoma.Core.Domain.SSI;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
@@ -217,14 +222,17 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public Models.Opportunity? GetByExternalIdOrNull(string externalId, bool includeChildItems, bool includeComputed)
+    public Models.Opportunity? GetByExternalIdOrNull(Guid organizationId, string externalId, bool includeChildItems, bool includeComputed)
     {
+      if (organizationId == Guid.Empty)
+        throw new ArgumentNullException(nameof(organizationId));
+
       if (string.IsNullOrWhiteSpace(externalId))
         throw new ArgumentNullException(nameof(externalId));
       externalId = externalId.Trim();
 
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-      var result = _opportunityRepository.Query(includeChildItems).SingleOrDefault(o => !string.IsNullOrEmpty(o.ExternalId) && o.ExternalId.ToLower() == externalId.ToLower());
+      var result = _opportunityRepository.Query(includeChildItems).SingleOrDefault(o => o.OrganizationId == organizationId && !string.IsNullOrEmpty(o.ExternalId) && o.ExternalId.ToLower() == externalId.ToLower());
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
       if (result == null) return null;
 
@@ -1031,7 +1039,93 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization)
+    public async Task ImportFromCSV(IFormFile file, Guid organizationId, bool ensureOrganizationAuthorization)
+    {
+      if (file == null || file.Length == 0)
+        throw new ArgumentNullException(nameof(file));
+
+      var organization = _organizationService.GetById(organizationId, false, false, false);
+
+      if (ensureOrganizationAuthorization)
+        _organizationService.IsAdmin(organization.Id, true);
+
+      using var stream = file.OpenReadStream();
+      using var reader = new StreamReader(stream);
+
+      var config = new CsvHelper.Configuration.CsvConfiguration(CultureInfo.InvariantCulture)
+      {
+        Delimiter = ",",
+        HasHeaderRecord = true,
+        MissingFieldFound = args =>
+        {
+          if (args.Context?.Reader?.HeaderRecord == null)
+            throw new ValidationException("The file is missing a header row");
+
+          var fieldName = args.HeaderNames?[args.Index] ?? $"Field at index {args.Index}";
+
+          var modelType = typeof(OpportunityInfoCsvImport);
+
+          var property = modelType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+              .FirstOrDefault(p =>
+                  string.Equals(
+                      p.GetCustomAttributes(typeof(NameAttribute), true)
+                          .Cast<NameAttribute>()
+                          .FirstOrDefault()?.Names.FirstOrDefault() ?? p.Name,
+                      fieldName,
+                      StringComparison.OrdinalIgnoreCase));
+
+          if (property == null) return;
+
+          var isRequired = property.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.RequiredAttribute), true).Length > 0;
+
+          if (isRequired)
+          {
+            var rowNumber = args.Context?.Parser?.Row.ToString() ?? "Unknown";
+            throw new ValidationException($"Missing required field '{fieldName}' in row '{rowNumber}'");
+          }
+        },
+        BadDataFound = args =>
+        {
+          var rowNumber = args.Context?.Parser?.Row.ToString() ?? "Unknown";
+          throw new ValidationException($"Bad data format in row '{rowNumber}': Raw field data: '{args.Field}'");
+        }
+      };
+
+      using var csv = new CsvHelper.CsvReader(reader, config);
+
+      if (!csv.Read() || csv.Context?.Reader?.HeaderRecord?.Length == 0)
+        throw new ValidationException("The file is missing a header row");
+
+      csv.ReadHeader();
+
+      var results = new List<(Models.Opportunity Opportunity, EventType ActionTaken)>();
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+        while (await csv.ReadAsync())
+        {
+          var rowNumber = csv.Context?.Parser?.Row ?? -1;
+          try
+          {
+            var record = csv.GetRecord<OpportunityInfoCsvImport>();
+
+            var (opportunity, actionTaken) = await ProcessImportAndUpsertOpportunity(organizationId, record);
+            results.Add((opportunity, actionTaken));
+          }
+          catch (Exception ex)
+          {
+            throw new ValidationException($"Error processing row '{(rowNumber == -1 ? "Unknown" : rowNumber)}': {ex.Message}");
+          }
+        }
+        scope.Complete();
+      });
+
+      //raise events post transaction completion
+      await Task.WhenAll(results.Select(result => _mediator.Publish(new OpportunityEvent(result.ActionTaken, result.Opportunity))));
+    }
+
+    public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -1055,9 +1149,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       if (!string.IsNullOrEmpty(request.ExternalId))
       {
-        var existingByExternalId = GetByExternalIdOrNull(request.ExternalId, false, false);
+        var existingByExternalId = GetByExternalIdOrNull(request.OrganizationId, request.ExternalId, false, false);
         if (existingByTitle != null)
-          throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists");
+          throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists for the specified organization");
       }
 
       var status = request.PostAsActive ? Status.Active : Status.Inactive;
@@ -1170,7 +1264,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //sent when activated irrespective of organization status (sent to admin)
       if (result.Status == Status.Active) await SendNotification(result, NotificationType.Opportunity_Posted_Admin);
 
-      await _mediator.Publish(new OpportunityEvent(EventType.Create, result));
+      if (raiseEvent)
+        await _mediator.Publish(new OpportunityEvent(EventType.Create, result));
 
       return result;
     }
@@ -1204,9 +1299,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       if (!string.IsNullOrEmpty(request.ExternalId))
       {
-        var existingByExternalId = GetByExternalIdOrNull(request.ExternalId, false, false);
+        var existingByExternalId = GetByExternalIdOrNull(request.OrganizationId, request.ExternalId, false, false);
         if (existingByExternalId != null && result.Id != existingByExternalId.Id)
-          throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists");
+          throw new ValidationException($"{nameof(Models.Opportunity)} with the specified external id '{request.ExternalId}' already exists for the specified organization");
       }
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
@@ -1740,6 +1835,96 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #endregion
 
     #region Private Members
+    private async Task<(Models.Opportunity Opporunity, EventType ActionTaken)> ProcessImportAndUpsertOpportunity(Guid organizationId, OpportunityInfoCsvImport item)
+    {
+      if (string.IsNullOrWhiteSpace(item.ExternalId))
+        throw new ValidationException("External id is required");
+      item.ExternalId = item.ExternalId.Trim();
+
+      var type = _opportunityTypeService.GetByName(item.Type);
+
+      var engagementType = string.IsNullOrWhiteSpace(item.Engagement) ? null : _engagementTypeService.GetByName(item.Engagement);
+
+      var categories = item.Categories?
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Select(name => _opportunityCategoryService.GetByName(name))
+        .ToList() ?? [];
+
+      var languages = item.Languages?
+        .Where(code => !string.IsNullOrWhiteSpace(code))
+        .Select(code => _languageService.GetByCodeAplha2(code))
+        .ToList() ?? [];
+
+      var countries = item.Countries?
+       .Where(code => !string.IsNullOrWhiteSpace(code))
+       .Select(code => _countryService.GetByCodeAplha2(code))
+       .ToList() ?? [];
+
+      var dofficulty = _opportunityDifficultyService.GetByName(item.Difficulty);
+
+      var commitmentInterval = _timeIntervalService.GetByName(item.CommitmentInterval);
+
+      var skills = item.Skills?
+        .Where(name => !string.IsNullOrWhiteSpace(name))
+        .Select(name => _skillService.GetByName(name))
+        .ToList() ?? [];
+
+      var keywords = item.Keywords?.Where(o => !string.IsNullOrWhiteSpace(o)).Select(o => o.Trim()).ToList();
+
+      var existingByExternalId = GetByExternalIdOrNull(organizationId, item.ExternalId, false, false);
+
+      var dateEnd = item.DateEnd?.ToDateTimeOffset();
+
+      OpportunityRequestBase? request = null;
+      var isNew = false;
+      if (existingByExternalId == null)
+      {
+        isNew = true;
+        request = new OpportunityRequestCreate { PostAsActive = !dateEnd.HasValue || dateEnd.Value > DateTimeOffset.UtcNow };
+      }
+      else
+        request = new OpportunityRequestUpdate { Id = existingByExternalId.Id };
+
+      //defualts 
+      request.OrganizationId = organizationId;
+      request.VerificationEnabled = true;
+      request.VerificationMethod = VerificationMethod.Automatic;
+      request.CredentialIssuanceEnabled = true;
+      request.SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default");
+
+      //imported
+      request.Title = item.Title;
+      request.TypeId = type.Id;
+      request.EngagementTypeId = engagementType?.Id;
+      request.Categories = categories.Select(o => o.Id).ToList();
+      request.URL = item.URL;
+      request.Summary = item.Summary;
+      request.Description = item.Description;
+      request.Languages = languages.Select(o => o.Id).ToList();
+      request.Countries = countries.Select(o => o.Id).ToList();
+      request.DifficultyId = dofficulty.Id;
+      request.CommitmentIntervalCount = item.CommitmentIntervalCount;
+      request.CommitmentIntervalId = commitmentInterval.Id;
+      request.DateStart = item.DateStart.ToDateTimeOffset();
+      request.DateEnd = item.DateEnd?.ToDateTimeOffset();
+      request.ParticipantLimit = item.ParticipantLimit;
+      request.ZltoReward = item.ZltoReward;
+      request.ZltoRewardPool = item.ZltoRewardPool;
+      request.Skills = skills.Select(o => o.Id).ToList();
+      request.Keywords = keywords;
+      request.Hidden = item.Hidden;
+      request.ExternalId = item.ExternalId;
+      //Instructions
+      //ShareWithPartners
+
+      // Events raised by invoking method upon transaction completion
+      var result = isNew
+        ? await Create((OpportunityRequestCreate)request, false, false)
+        : await Update((OpportunityRequestUpdate)request, false);
+
+      return (result, isNew ? EventType.Create : EventType.Update);
+    }
+
     private static (decimal? Reward, bool? RewardReduced, bool? RewardPoolDepleted) ProcessRewardAllocation(decimal? reward, decimal? rewardPool, decimal? rewardCumulative, bool? rewardReduced, bool? rewardPoolDepleted)
     {
       if (!reward.HasValue) return (reward, rewardReduced, rewardPoolDepleted);

@@ -74,7 +74,6 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-
     [SwaggerOperation(Summary = "Return a list of provider types (Authenticated User)")]
     [HttpGet("lookup/providerType")]
     [ProducesResponseType(typeof(List<Domain.Entity.Models.Lookups.OrganizationProviderType>), (int)HttpStatusCode.OK)]

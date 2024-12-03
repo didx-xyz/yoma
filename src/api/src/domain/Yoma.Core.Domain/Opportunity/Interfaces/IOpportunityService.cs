@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Opportunity.Models;
 
@@ -11,7 +12,7 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     Models.Opportunity? GetByTitleOrNull(string title, bool includeChildItems, bool includeComputed);
 
-    Models.Opportunity? GetByExternalIdOrNull(string externalId, bool includeChildItems, bool includeComputed);
+    Models.Opportunity? GetByExternalIdOrNull(Guid organizationId, string externalId, bool includeChildItems, bool includeComputed);
 
     List<Models.Opportunity> Contains(string value, bool includeChildItems, bool includeComputed);
 
@@ -39,7 +40,9 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
-    Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization);
+    Task ImportFromCSV(IFormFile file, Guid organizationId, bool ensureOrganizationAuthorization);
+
+    Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true);
 
     Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization);
 
