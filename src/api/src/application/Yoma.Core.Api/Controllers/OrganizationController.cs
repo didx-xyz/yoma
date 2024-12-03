@@ -72,7 +72,7 @@ namespace Yoma.Core.Api.Controllers
       _logger.LogInformation("Request {requestName} handled", nameof(UpdateLogo));
 
       return StatusCode((int)HttpStatusCode.OK, result);
-    } 
+    }
 
     [SwaggerOperation(Summary = "Return a list of provider types (Authenticated User)")]
     [HttpGet("lookup/providerType")]
