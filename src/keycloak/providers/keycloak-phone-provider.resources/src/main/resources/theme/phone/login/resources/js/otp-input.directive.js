@@ -133,3 +133,40 @@ Vue.directive("otp-input", {
     });
   },
 });
+
+Vue.directive("otp-input", {
+  inserted(el) {
+    const inputs = el.querySelectorAll('#otp-input input[type="text"]');
+    const hiddenInput = el.querySelector("input#code");
+
+    // Listen for changes in the hidden input (auto-fill from SMS)
+    hiddenInput.addEventListener("input", function (e) {
+      const code = e.target.value;
+      const digits = code.split("");
+      inputs.forEach((input, index) => {
+        input.value = digits[index] || "";
+      });
+    });
+
+    // Listen for manual input in individual inputs
+    inputs.forEach((input, index) => {
+      input.addEventListener("input", () => {
+        // Move to the next input if a digit is entered
+        if (input.value.length === 1 && index < inputs.length - 1) {
+          inputs[index + 1].focus();
+        }
+        // Update the hidden input value
+        hiddenInput.value = Array.from(inputs)
+          .map((i) => i.value)
+          .join("");
+      });
+
+      // Handle backspace to move to the previous input
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Backspace" && input.value === "" && index > 0) {
+          inputs[index - 1].focus();
+        }
+      });
+    });
+  },
+});

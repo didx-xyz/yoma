@@ -61,16 +61,25 @@
                 <!-- INPUT: verification code -->
                 <div v-otp-input>
                   <div id="otp-input">
-                    <input type="text"
+                    <input
+                      type="text"
                       maxlength="1"
                       pattern="[0-9]*"
                       inputmode="numeric"
                       autocomplete="off"
                       placeholder="_"
-                      v-for="n in 6"
-                      :key="n">
+                      v-for="(n, index) in 6"
+                      :key="index"
+                    />
                   </div>
-                  <input type="hidden" name="code">
+                  <input
+                    type="text"
+                    name="code"
+                    id="code"
+                    autocomplete="one-time-code"
+                    inputmode="numeric"
+                    style="position: absolute; left: -9999px;"
+                  />
                 </div>
 
                 <#if messagesPerField.existsError('code')>
