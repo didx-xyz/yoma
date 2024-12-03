@@ -155,7 +155,7 @@
                 </#if>
 
                 <div v-bind:style="{ display: !phoneActivated || (phoneActivated && isCodeSent) ? 'block' : 'none'}">
-                  <#if realm.rememberMe && !usernameHidden??>
+                  <#--  <#if realm.rememberMe && !usernameHidden??>
                     <div class="centered-div">
                       <div class="centered-checkbox">
                         <input
@@ -170,7 +170,7 @@
                         </label>
                       </div>
                     </div>
-                  </#if>
+                  </#if>  -->
 
                   <div id="kc-form-buttons">
                     <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if> />
