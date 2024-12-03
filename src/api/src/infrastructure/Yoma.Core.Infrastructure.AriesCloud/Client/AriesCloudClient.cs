@@ -618,11 +618,11 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     private async Task<string?> GetCredentialReferentByClientReferentOrNull(ITenantClient clientHolder, ArtifactType artifactType,
         KeyValuePair<string, string> clientReferent, bool throwNotFound)
     {
-      var wqlQueryString = $"{{\"attr::{clientReferent.Key}::value\":\"{clientReferent.Value}\"}}";
-
       switch (artifactType)
       {
         case ArtifactType.Indy:
+          var wqlQueryString = $"{{\"attr::{clientReferent.Key}::value\":\"{clientReferent.Value}\"}}";
+
           var credsIndy = await clientHolder.GetIndyCredentialsAsync(null, null, wqlQueryString);
 
           if (credsIndy?.Results?.Count > 1)
@@ -637,7 +637,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
             return null;
           }
 
-          var resultIndy = credIndy?.Referent?.Trim();
+          var resultIndy = credIndy?.Credential_id?.Trim();
           if (string.IsNullOrEmpty(resultIndy))
             throw new InvalidOperationException($"Credential referent expected but is null / empty client referent '{clientReferent}'");
           return resultIndy;
@@ -646,7 +646,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
           VCRecordList? credsW3C = null;
           try
           {
-            credsW3C = await clientHolder.GetW3CCredentialsAsync(null, null, wqlQueryString);
+            credsW3C = await clientHolder.GetW3CCredentialsAsync(null, null, null);
+            //TODO: filter based on clientReferent.Value 
           }
           catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
           {
