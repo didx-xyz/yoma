@@ -13,7 +13,7 @@ export const Footer: React.FC<{
         {/* LINKS */}
         <div className="flex flex-col gap-1 text-xs">
           <div className="flex flex-wrap gap-1">
-            <span>© 2023 Yoma.</span>
+            <span className="notranslate">© 2023 Yoma.</span>
             <span>All Rights Reserved</span>
           </div>
           <div className="flex flex-row flex-wrap gap-1">
@@ -25,7 +25,7 @@ export const Footer: React.FC<{
               Terms and Conditions
             </Link>
             <Link
-              className="text-green hover:underline"
+              className="notranslate text-green hover:underline"
               href="mailto:help@yoma.world"
               tabIndex={tabIndex}
             >
