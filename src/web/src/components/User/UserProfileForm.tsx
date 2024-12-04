@@ -260,6 +260,7 @@ export const UserProfileForm: React.FC<{
       setUserProfileAtom,
       queryClient,
       formData.countryId,
+      userProfile,
     ],
   );
 
