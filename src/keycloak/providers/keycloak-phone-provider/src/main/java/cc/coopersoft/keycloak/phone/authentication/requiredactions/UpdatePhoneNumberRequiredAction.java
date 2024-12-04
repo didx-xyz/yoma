@@ -42,7 +42,8 @@ public class UpdatePhoneNumberRequiredAction implements RequiredActionProvider {
     @Override
     public void processAction(RequiredActionContext context) {
         // check if we should cancel this action
-        if (context.getHttpRequest().getDecodedFormParameters().containsKey(SupportPhonePages.FIELD_CANCEL)) {
+        String cancelParam = context.getHttpRequest().getDecodedFormParameters().getFirst(SupportPhonePages.FIELD_CANCEL);
+        if (cancelParam != null && Boolean.parseBoolean(cancelParam)) {
             context.getUser().removeRequiredAction(PROVIDER_ID);
             context.success();
             return;
