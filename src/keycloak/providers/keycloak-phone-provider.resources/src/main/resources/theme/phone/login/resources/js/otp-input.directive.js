@@ -1,45 +1,38 @@
 Vue.directive("otp-input", {
-  bind(el, binding) {
+  bind(el) {
     const inputs = el.querySelectorAll('input[type="text"]');
-    const hiddenInput = el.querySelector('input[type="hidden"]');
+    const hiddenInput = el.querySelector('input[type="hidden"], input#code');
     let isFocusing = false;
 
     const updateHiddenInput = () => {
       const value = Array.from(inputs)
         .map((input) => input.value || " ")
         .join("");
-      hiddenInput.value = value;
+      hiddenInput.value = value.trim();
     };
 
-    const handlePaste = (e, index) => {
-      // Only handle paste for first input
-      if (index === 0) {
-        e.preventDefault();
-        const pastedText = (e.clipboardData || window.clipboardData).getData("text");
-        const sanitizedValue = pastedText.replace(/[^0-9]/g, "");
+    const handlePaste = (e) => {
+      e.preventDefault();
+      const pastedText = (e.clipboardData || window.clipboardData).getData("text");
+      const sanitizedValue = pastedText.replace(/[^0-9]/g, "");
 
-        // Distribute digits across inputs
-        const chars = sanitizedValue.split("");
-        chars.forEach((char, pos) => {
-          if (pos >= inputs.length) return;
-          inputs[pos].value = char;
-        });
+      const chars = sanitizedValue.split("");
+      inputs.forEach((input, index) => {
+        input.value = chars[index] || "";
+      });
 
-        // Focus last filled input or last input
-        const focusIndex = Math.min(inputs.length - 1, chars.length - 1);
-        if (focusIndex >= 0) {
-          inputs[focusIndex].focus();
-          inputs[focusIndex].select();
-        }
-
-        updateHiddenInput();
+      const focusIndex = Math.min(inputs.length - 1, chars.length - 1);
+      if (focusIndex >= 0) {
+        inputs[focusIndex].focus();
+        inputs[focusIndex].select();
       }
+
+      updateHiddenInput();
     };
 
     const handleInput = (input, index) => {
       if (isFocusing) return;
 
-      // Ensure only digits
       input.value = input.value.replace(/[^0-9]/g, "");
 
       if (input.value.length === 1 && index + 1 < inputs.length) {
@@ -52,22 +45,14 @@ Vue.directive("otp-input", {
       }
 
       if (input.value.length > 1) {
-        // Sanitize pasted input to digits only
         const sanitizedValue = input.value.replace(/[^0-9]/g, "");
-
-        if (!sanitizedValue) {
-          input.value = "";
-          return;
-        }
-
         const chars = sanitizedValue.split("");
-        chars.forEach((char, pos) => {
-          if (pos + index >= inputs.length) return;
-          inputs[pos + index].value = char;
+        inputs.forEach((input, idx) => {
+          input.value = chars[idx - index] || input.value;
         });
 
         isFocusing = true;
-        const focusIndex = Math.min(inputs.length - 1, index + chars.length);
+        const focusIndex = Math.min(inputs.length - 1, index + chars.length - 1);
         inputs[focusIndex].focus();
         inputs[focusIndex].select();
         setTimeout(() => {
@@ -79,57 +64,68 @@ Vue.directive("otp-input", {
     };
 
     const handleKeydown = (e, input, index) => {
-      // Left arrow
-      if (e.keyCode === 37 && index > 0) {
-        e.preventDefault();
-        inputs[index - 1].focus();
-        inputs[index - 1].select();
-      }
-
-      // Right arrow
-      if (e.keyCode === 39 && index + 1 < inputs.length) {
-        e.preventDefault();
-        inputs[index + 1].focus();
-        inputs[index + 1].select();
-      }
-
-      // Backspace
-      if (e.keyCode === 8 && input.value === "" && index !== 0) {
-        for (let i = index; i < inputs.length - 1; i++) {
-          inputs[i].value = inputs[i + 1].value;
-        }
-        inputs[inputs.length - 1].value = "";
-        inputs[index - 1].focus();
-        inputs[index - 1].select();
-        updateHiddenInput();
-      }
-
-      // Delete
-      if (e.keyCode === 46 && index !== inputs.length - 1) {
-        for (let i = index; i < inputs.length - 1; i++) {
-          inputs[i].value = inputs[i + 1].value;
-        }
-        inputs[inputs.length - 1].value = "";
-        input.focus();
-        input.select();
-        e.preventDefault();
-        updateHiddenInput();
+      switch (e.keyCode) {
+        case 37: // Left arrow
+          if (index > 0) {
+            inputs[index - 1].focus();
+            inputs[index - 1].select();
+          }
+          e.preventDefault();
+          break;
+        case 39: // Right arrow
+          if (index + 1 < inputs.length) {
+            inputs[index + 1].focus();
+            inputs[index + 1].select();
+          }
+          e.preventDefault();
+          break;
+        case 8: // Backspace
+          if (input.value === "" && index > 0) {
+            inputs[index - 1].focus();
+            inputs[index - 1].select();
+            inputs[index - 1].value = "";
+            updateHiddenInput();
+            e.preventDefault();
+          }
+          break;
+        case 46: // Delete
+          if (index < inputs.length - 1) {
+            for (let i = index; i < inputs.length - 1; i++) {
+              inputs[i].value = inputs[i + 1].value;
+            }
+            inputs[inputs.length - 1].value = "";
+            updateHiddenInput();
+            e.preventDefault();
+          }
+          break;
       }
     };
 
     inputs.forEach((input, index) => {
-      // Set input attributes for better mobile experience
       input.setAttribute("maxlength", "1");
       input.setAttribute("pattern", "[0-9]*");
       input.setAttribute("inputmode", "numeric");
       input.setAttribute("autocomplete", "off");
       input.classList.add("otp-input");
 
-      // Add focus event to select text
       input.addEventListener("focus", () => input.select());
       input.addEventListener("input", () => handleInput(input, index));
       input.addEventListener("keydown", (e) => handleKeydown(e, input, index));
-      input.addEventListener("paste", (e) => handlePaste(e, index)); // Add paste handler
+    });
+
+    // Handle paste event on the first input
+    inputs[0].addEventListener("paste", handlePaste);
+
+    // Listen for changes in the hidden input (auto-fill from SMS)
+    hiddenInput.addEventListener("input", function (e) {
+      const code = e.target.value.replace(/[^0-9]/g, "");
+      const digits = code.split("");
+
+      inputs.forEach((input, index) => {
+        input.value = digits[index] || "";
+      });
+
+      updateHiddenInput();
     });
   },
 });

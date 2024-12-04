@@ -58,6 +58,8 @@ export const UserProfileForm: React.FC<{
   submitButtonText = "Submit",
   filterOptions,
 }) => {
+  const queryClient = useQueryClient();
+  const { data: session, update } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [logoFiles, setLogoFiles] = useState<File[]>([]);
   const setUserProfileAtom = useSetAtom(userProfileAtom);
@@ -74,7 +76,6 @@ export const UserProfileForm: React.FC<{
     resetPassword: false,
     updatePhoneNumber: false,
   });
-  const queryClient = useQueryClient();
 
   // 👇 use prefetched queries from server (if available)
   const { data: genders } = useQuery({
@@ -174,8 +175,6 @@ export const UserProfileForm: React.FC<{
     }, 100);
   }, [reset, trigger, formData]);
 
-  const { data: session, update } = useSession();
-
   // form submission handler
   const onSubmitHandler = useCallback(
     async (data: FieldValues) => {
@@ -188,7 +187,7 @@ export const UserProfileForm: React.FC<{
         }
 
         // update api
-        const userProfile = await patchUser(data as UserRequestProfile);
+        const userProfileResult = await patchUser(data as UserRequestProfile);
 
         // update session
         // eslint-disable
@@ -209,7 +208,7 @@ export const UserProfileForm: React.FC<{
         // check if sign-in again is required
         const emailUpdated =
           (data.email ?? "").toLowerCase() !==
-          (userProfile.email ?? "").toLowerCase();
+          (userProfile!.email ?? "").toLowerCase();
 
         if (emailUpdated || data.updatePhoneNumber || data.resetPassword) {
           // signout from keycloak
@@ -218,7 +217,7 @@ export const UserProfileForm: React.FC<{
         }
 
         // update userProfile Atom (used by NavBar/UserMenu.tsx, refresh profile picture)
-        setUserProfileAtom(userProfile);
+        setUserProfileAtom(userProfileResult);
 
         // invalidate queries
         await queryClient.invalidateQueries({
@@ -236,7 +235,7 @@ export const UserProfileForm: React.FC<{
         //   toastId: "patchUserProfile",
         // });
 
-        if (onSubmit) onSubmit(userProfile);
+        if (onSubmit) onSubmit(userProfileResult);
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
@@ -261,6 +260,7 @@ export const UserProfileForm: React.FC<{
       setUserProfileAtom,
       queryClient,
       formData.countryId,
+      userProfile,
     ],
   );
 

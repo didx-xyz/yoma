@@ -124,6 +124,7 @@ export const LineChart: React.FC<{
           <Chart
             key={key}
             chartType="AreaChart"
+            chartVersion="50" // NB: fixes animation bug in latest verson of google charts. TODO: remove when fixed
             loader={
               <div className="mt-20 flex w-full items-center justify-center">
                 <span className="loading loading-spinner loading-lg text-green"></span>

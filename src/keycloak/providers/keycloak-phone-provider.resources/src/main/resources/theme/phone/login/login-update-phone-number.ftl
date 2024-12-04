@@ -25,7 +25,7 @@
                 </div>
 
                 <#-- LABEL: code send success -->
-                <div v-if="isCodeSent" aria-live="polite" style="color: green;">
+                <div v-if="isCodeSent" class="form-label" aria-live="polite" style="color: green;">
                   <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
                 </div>
 
@@ -61,16 +61,25 @@
                 <!-- INPUT: verification code -->
                 <div v-otp-input>
                   <div id="otp-input">
-                    <input type="text"
+                    <input
+                      type="text"
                       maxlength="1"
                       pattern="[0-9]*"
                       inputmode="numeric"
                       autocomplete="off"
                       placeholder="_"
-                      v-for="n in 6"
-                      :key="n">
+                      v-for="(n, index) in 6"
+                      :key="index"
+                    />
                   </div>
-                  <input type="hidden" name="code">
+                  <input
+                    type="text"
+                    name="code"
+                    id="code"
+                    autocomplete="one-time-code"
+                    inputmode="numeric"
+                    style="position: absolute; left: -9999px;"
+                  />
                 </div>
 
                 <#if messagesPerField.existsError('code')>
@@ -86,6 +95,14 @@
                   <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
                     name="save" id="kc-login" type="submit" value="${msg('doSubmit')}"/>
                 </div>
+              </div>
+
+              <#-- cancel button -->
+              <div id="kc-form-options" style="text-align: center;">
+                <input type="hidden" id="cancel" name="cancel" v-model="cancel">
+                <button class="form-link" tabindex="0" @click="() => { cancel = true; $event.target.closest('form').submit(); }">
+                  <span class="text">${msg("doCancel")}</span>
+                </button>
               </div>
             </form>
           </div>
@@ -104,6 +121,7 @@
             resetSendCodeButton: false,
             KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
             isCodeSent: false,
+            cancel: false,
           },
           computed: {
             maskedPhoneNumber() {

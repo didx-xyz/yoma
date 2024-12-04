@@ -33,6 +33,8 @@ public class SupportPhonePages {
 
     public static final String FIELD_PHONE_NUMBER_CODE_SENT = "isCodeSent";
 
+    public static final String FIELD_CANCEL = "cancel";
+
     public static final String ATTEMPTED_PHONE_NUMBER = "attemptedPhoneNumber";
 
     public static final String ATTEMPTED_PHONE_ACTIVATED = "attemptedPhoneActivated";

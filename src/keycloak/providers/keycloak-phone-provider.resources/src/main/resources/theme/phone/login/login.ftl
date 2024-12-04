@@ -67,7 +67,7 @@
                   </div>
 
                   <#-- LINK: use phone -->
-                  <div class="form-link" v-on:click="phoneActivated = true" tabindex="0">
+                  <div class="form-link" v-on:click="phoneActivated = true" tabindex="0" style="margin-bottom: 2rem">
                     <span class="icon">📲</span>
                     <span class="text">${msg("signInWithPhone")}</span>
                   </div>
@@ -123,16 +123,25 @@
                         <!-- INPUT: verification code -->
                         <div v-otp-input>
                           <div id="otp-input">
-                            <input type="text"
+                            <input
+                              type="text"
                               maxlength="1"
                               pattern="[0-9]*"
                               inputmode="numeric"
                               autocomplete="off"
                               placeholder="_"
-                              v-for="n in 6"
-                              :key="n">
+                              v-for="(n, index) in 6"
+                              :key="index"
+                            />
                           </div>
-                          <input type="hidden" name="code">
+                          <input
+                            type="text"
+                            name="code"
+                            id="code"
+                            autocomplete="one-time-code"
+                            inputmode="numeric"
+                            style="position: absolute; left: -9999px;"
+                          />
                         </div>
 
                         <#if messagesPerField.existsError('code')>
@@ -146,7 +155,7 @@
                 </#if>
 
                 <div v-bind:style="{ display: !phoneActivated || (phoneActivated && isCodeSent) ? 'block' : 'none'}">
-                  <#if realm.rememberMe && !usernameHidden??>
+                  <#--  <#if realm.rememberMe && !usernameHidden??>
                     <div class="centered-div">
                       <div class="centered-checkbox">
                         <input
@@ -161,7 +170,7 @@
                         </label>
                       </div>
                     </div>
-                  </#if>
+                  </#if>  -->
 
                   <div id="kc-form-buttons">
                     <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if> />
