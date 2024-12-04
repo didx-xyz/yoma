@@ -698,17 +698,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       request.OverridePending = overridePending;
 
-      await PerformActionSendForVerificationManual(user, opportunityId, request);
+      await PerformActionSendForVerification(user, opportunityId, request, VerificationMethod.Manual);
     }
 
     public async Task PerformActionSendForVerificationManual(Guid opportunityId, MyOpportunityRequestVerify request)
     {
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      await PerformActionSendForVerificationManual(user, opportunityId, request);
+      await PerformActionSendForVerification(user, opportunityId, request, VerificationMethod.Manual);
     }
 
-    public async Task PerformActionInstantVerificationManual(Guid linkId)
+    public async Task PerformActionInstantVerification(Guid linkId)
     {
       var link = _linkService.GetById(linkId, false, false);
 
@@ -728,9 +728,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         await _linkService.LogUsage(link.Id);
 
         var request = new MyOpportunityRequestVerify { InstantVerification = true };
-        await PerformActionSendForVerificationManual(user, link.EntityId, request);
+        await PerformActionSendForVerification(user, link.EntityId, request, null); //any verification method
 
-        await FinalizeVerificationManual(user, opportunity, VerificationStatus.Completed, true, "Auto-verification");
+        await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, "Auto-verification");
 
         scope.Complete();
       });
@@ -820,7 +820,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           user = _userService.GetById(item.UserId, false, false);
           opportunity = _opportunityService.GetById(item.OpportunityId, true, true, false);
 
-          await FinalizeVerificationManual(user, opportunity, request.Status, false, request.Comment);
+          await FinalizeVerification(user, opportunity, request.Status, false, request.Comment);
 
           var successItem = new MyOpportunityResponseVerifyFinalizeBatchItem
           {
@@ -868,7 +868,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var user = _userService.GetById(request.UserId, false, false);
       var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
 
-      await FinalizeVerificationManual(user, opportunity, request.Status, false, request.Comment);
+      await FinalizeVerification(user, opportunity, request.Status, false, request.Comment);
     }
 
     public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(bool includeExpired)
@@ -953,7 +953,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     }
 
     //supported statuses: Rejected or Completed
-    private async Task FinalizeVerificationManual(User user, Opportunity.Models.Opportunity opportunity, VerificationStatus status, bool instantVerification, string? comment)
+    private async Task FinalizeVerification(User user, Opportunity.Models.Opportunity opportunity, VerificationStatus status, bool instantVerification, string? comment)
     {
       //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)
       var canFinalize = opportunity.Status == Status.Expired;
@@ -1038,7 +1038,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       await SendNotification(item, notificationType.Value);
     }
 
-
     private void EnsureNoEarlierPendingVerificationsForOtherStudents(User user, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity currentItem, bool instantVerification)
     {
       //ensure no pending verifications for other students who applied earlier
@@ -1109,7 +1108,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return $"Opportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again";
     }
 
-    private async Task PerformActionSendForVerificationManual(User user, Guid opportunityId, MyOpportunityRequestVerify request)
+    private async Task PerformActionSendForVerification(User user, Guid opportunityId, MyOpportunityRequestVerify request, VerificationMethod? requiredVerificationMethod)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -1128,11 +1127,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (!opportunity.VerificationEnabled)
         throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
 
-      if (opportunity.VerificationMethod == null || opportunity.VerificationMethod != VerificationMethod.Manual)
-        throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / requires verification method manual");
+      if (!opportunity.VerificationMethod.HasValue)
+        throw new DataInconsistencyException($"Data inconsistency detected: The opportunity '{opportunity.Title}' has verification enabled, but no verification method is set");
 
-      if (opportunity.VerificationTypes == null || opportunity.VerificationTypes.Count == 0)
+      if (opportunity.VerificationMethod == VerificationMethod.Manual && (opportunity.VerificationTypes == null || opportunity.VerificationTypes.Count == 0))
         throw new DataInconsistencyException("Manual verification enabled but opportunity has no mapped verification types");
+
+      if (requiredVerificationMethod.HasValue && opportunity.VerificationMethod != requiredVerificationMethod.Value)
+        throw new ValidationException($"Opportunity '{opportunity.Title}' cannot be completed / requires verification method {requiredVerificationMethod}");
 
       if (request.DateStart.HasValue && request.DateStart.Value < opportunity.DateStart)
         throw new ValidationException($"Start date can not be earlier than the opportunity start date of '{opportunity.DateStart:yyyy-MM-dd}'");
@@ -1185,7 +1187,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.DateStart = request.DateStart;
       myOpportunity.DateEnd = request.DateEnd;
 
-      await PerformActionSendForVerificationManualProcessVerificationTypes(request, opportunity, myOpportunity, isNew);
+      await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, isNew);
 
       //used by notifications
       myOpportunity.UserPhoneNumber = user.PhoneNumber;
@@ -1196,7 +1198,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.ZltoReward = opportunity.ZltoReward;
       myOpportunity.YomaReward = opportunity.YomaReward;
 
-      if (request.InstantVerification) return; //with instant-verifications verification pending notifications are not sent
+      if (request.InstantVerification || opportunity.VerificationMethod == VerificationMethod.Automatic) return; //with instant-verifications or automatic verification pending notifications are not sent
 
       //sent to youth
       await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending);
@@ -1254,7 +1256,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
     }
 
-    private async Task PerformActionSendForVerificationManualProcessVerificationTypes(MyOpportunityRequestVerify request,
+    private async Task PerformActionSendForVerificationProcessVerificationTypes(MyOpportunityRequestVerify request,
       Opportunity.Models.Opportunity opportunity,
       Models.MyOpportunity myOpportunity,
       bool isNew)
@@ -1289,7 +1291,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           }
 
           //new items
-          await PerformActionSendForVerificationManualProcessVerificationTypes(request, opportunity, myOpportunity, itemsNewBlobs);
+          await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, itemsNewBlobs);
 
           //delete existing items in blob storage (deleted in db above)
           foreach (var item in itemsExisting)
@@ -1321,7 +1323,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
     }
 
-    private async Task PerformActionSendForVerificationManualProcessVerificationTypes(MyOpportunityRequestVerify request,
+    private async Task PerformActionSendForVerificationProcessVerificationTypes(MyOpportunityRequestVerify request,
       Opportunity.Models.Opportunity opportunity,
       Models.MyOpportunity myOpportunity,
       List<BlobObject> itemsNewBlobs)
