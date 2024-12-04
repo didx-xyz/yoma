@@ -283,13 +283,13 @@ namespace Yoma.Core.Api.Controllers
     [HttpPut("action/link/{linkId}/verify")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public async Task<IActionResult> PerformActionInstantVerificationManual([FromRoute] Guid linkId)
+    public async Task<IActionResult> PerformActionInstantVerification([FromRoute] Guid linkId)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionInstantVerificationManual));
+      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionInstantVerification));
 
-      await _myOpportunityService.PerformActionInstantVerificationManual(linkId);
+      await _myOpportunityService.PerformActionInstantVerification(linkId);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionInstantVerificationManual));
+      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionInstantVerification));
 
       return StatusCode((int)HttpStatusCode.OK);
     }

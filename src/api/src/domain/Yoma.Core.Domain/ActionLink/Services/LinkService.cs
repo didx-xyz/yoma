@@ -262,8 +262,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
         case LinkEntityType.Opportunity:
           var opportunity = ValidateAndInitializeOpportunity(request, item, false, ensureOrganizationAuthorization);
 
-          if (!opportunity.VerificationEnabled || opportunity.VerificationMethod != VerificationMethod.Manual)
-            throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' does not support manual verification");
+          if (!opportunity.VerificationEnabled)
+            throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' does not support verification");
+
+          if (!opportunity.VerificationMethod.HasValue) //support any verification method
+            throw new DataInconsistencyException($"Data inconsistency detected: The opportunity '{opportunity.Title}' has verification enabled, but no verification method is set");
 
           if (!opportunity.Published)
             throw new ValidationException($"Link cannot be created as the opportunity '{opportunity.Title}' has not been published");
@@ -341,8 +344,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
                   var opportunity = _opportunityService.GetById(link.OpportunityId.Value, false, true, ensureOrganizationAuthorization);
 
-                  if (!opportunity.VerificationEnabled || opportunity.VerificationMethod != VerificationMethod.Manual)
-                    throw new ValidationException($"Link cannot be activated as the opportunity '{opportunity.Title}' does not support manual verification");
+                  if (!opportunity.VerificationEnabled)
+                    throw new ValidationException($"Link cannot be activated as the opportunity '{opportunity.Title}' does not support verification");
+
+                  if (!opportunity.VerificationMethod.HasValue) //support any verification method
+                    throw new DataInconsistencyException($"Data inconsistency detected: The opportunity '{opportunity.Title}' has verification enabled, but no verification method is set");
 
                   if (!opportunity.Published)
                     throw new ValidationException($"Link cannot be activated as the opportunity '{opportunity.Title}' has not been published");

@@ -50,6 +50,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     Dictionary<Guid, int>? ListAggregatedOpportunityByCompleted(bool includeExpired);
 
-    Task PerformActionInstantVerificationManual(Guid linkId);
+    Task PerformActionInstantVerification(Guid linkId);
   }
 }
