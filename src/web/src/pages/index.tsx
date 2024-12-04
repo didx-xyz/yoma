@@ -72,10 +72,7 @@ const Home: NextPageWithLayout = () => {
 
   return (
     <>
-      <PageBackground
-        className="h-[350px] lg:h-[422px]"
-        //className="h-[320px]"
-      />
+      <PageBackground className="h-[360px] lg:h-[422px]" />
 
       <div className="z-10 mt-8 flex flex-col items-center justify-center overflow-hidden px-4 pt-8 lg:mt-20">
         <div className="grid grid-cols-1 gap-6 md:max-w-5xl lg:grid-cols-2">
@@ -84,21 +81,19 @@ const Home: NextPageWithLayout = () => {
             <h6 className="text-sm uppercase tracking-widest">
               Welcome to Yoma
             </h6>
-            <h1 className="text-lg font-bold tracking-wide sm:text-xl md:text-3xl">
+            <h1 className="text-xl tracking-wide sm:text-xl md:text-2xl">
               A world of opportunities
             </h1>
-            <p className="text-sm">
+            <p className="text-md lg:text-md tracking-tight md:text-sm">
               Yoma is your friendly platform of trusted partners, bringing you
               the freshest opportunities to keep your skills sharp and stay in
               the loop with what&apos;s happening in the working world.
             </p>
-            <div className="mb-4xx md:my-4xx">
-              <div className="my-2 flex w-full flex-row justify-start md:my-4">
-                <HomeSearchInputLarge
-                  onSearch={onSearchInputSubmit}
-                  maxWidth={0}
-                />
-              </div>
+            <div className="my-2 flex w-full flex-row justify-start md:my-4">
+              <HomeSearchInputLarge
+                onSearch={onSearchInputSubmit}
+                maxWidth={0}
+              />
             </div>
           </div>
 
