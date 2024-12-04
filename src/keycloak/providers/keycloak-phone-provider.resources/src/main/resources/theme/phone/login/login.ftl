@@ -67,7 +67,7 @@
                   </div>
 
                   <#-- LINK: use phone -->
-                  <div class="form-link" v-on:click="phoneActivated = true" tabindex="0">
+                  <div class="form-link" v-on:click="phoneActivated = true" tabindex="0" style="margin-bottom: 2rem">
                     <span class="icon">📲</span>
                     <span class="text">${msg("signInWithPhone")}</span>
                   </div>

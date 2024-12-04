@@ -249,6 +249,7 @@
                 },
                 resetPhoneVerification() {
                   this.phoneVerified = false;
+                  this.isCodeSent = false;
                   this.resetSendCodeButton = true;
                   this.clearMessages();
                 },
