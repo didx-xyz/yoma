@@ -402,13 +402,14 @@ a:focus {
 
 .form-link {
   text-align: start;
-  font-size: 13px;
-  display: inline-block;
-  color: #387f6a;
   cursor: pointer;
+  color: #387f6a;
+  font-size: 14px;
+  background-color: transparent;
+  border: none;
 }
 .form-link:hover {
-  color: #00659c;
+  color: #0099d3;
 }
 
 .form-link:hover {
@@ -424,6 +425,9 @@ a:focus {
   text-decoration: underline;
 }
 
+.form-label {
+  font-size: 14px;
+}
 /* Miscellaneous */
 .nav-pills {
   display: flex;

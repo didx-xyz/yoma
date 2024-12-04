@@ -84,7 +84,7 @@ const Home: NextPageWithLayout = () => {
             <h1 className="text-xl tracking-wide sm:text-xl md:text-2xl">
               A world of opportunities
             </h1>
-            <p className="text-md lg:text-md tracking-tight md:text-sm">
+            <p className="text-md tracking-tight">
               Yoma is your friendly platform of trusted partners, bringing you
               the freshest opportunities to keep your skills sharp and stay in
               the loop with what&apos;s happening in the working world.

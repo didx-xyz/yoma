@@ -41,6 +41,13 @@ public class UpdatePhoneNumberRequiredAction implements RequiredActionProvider {
 
     @Override
     public void processAction(RequiredActionContext context) {
+        // check if we should cancel this action
+        if (context.getHttpRequest().getDecodedFormParameters().containsKey(SupportPhonePages.FIELD_CANCEL)) {
+            context.getUser().removeRequiredAction(PROVIDER_ID);
+            context.success();
+            return;
+        }
+
         PhoneVerificationCodeProvider phoneVerificationCodeProvider = context.getSession().getProvider(PhoneVerificationCodeProvider.class);
         String phoneNumber = context.getHttpRequest().getDecodedFormParameters().getFirst(SupportPhonePages.FIELD_PHONE_NUMBER);
         String code = context.getHttpRequest().getDecodedFormParameters().getFirst(SupportPhonePages.FIELD_VERIFICATION_CODE);

@@ -25,7 +25,7 @@
                 </div>
 
                 <#-- LABEL: code send success -->
-                <div v-if="isCodeSent" aria-live="polite" style="color: green;">
+                <div v-if="isCodeSent" class="form-label" aria-live="polite" style="color: green;">
                   <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
                 </div>
 
@@ -96,6 +96,14 @@
                     name="save" id="kc-login" type="submit" value="${msg('doSubmit')}"/>
                 </div>
               </div>
+
+              <#-- cancel button -->
+              <div id="kc-form-options" style="text-align: center;">
+                <input type="hidden" id="cancel" name="cancel" v-model="cancel">
+                <button class="form-link" tabindex="0" @click="() => { cancel = true; $event.target.closest('form').submit(); }">
+                  <span class="text">${msg("doCancel")}</span>
+                </button>
+              </div>
             </form>
           </div>
         </div>
@@ -113,6 +121,7 @@
             resetSendCodeButton: false,
             KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
             isCodeSent: false,
+            cancel: false,
           },
           computed: {
             maskedPhoneNumber() {
