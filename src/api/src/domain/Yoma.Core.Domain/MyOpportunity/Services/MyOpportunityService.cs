@@ -32,6 +32,10 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
+using CsvHelper.Configuration.Attributes;
+using System.Globalization;
+using System.Reflection;
+using Yoma.Core.Domain.Lookups.Interfaces;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -54,10 +58,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly ILinkService _linkService;
     private readonly INotificationURLFactory _notificationURLFactory;
     private readonly INotificationDeliveryService _notificationDeliveryService;
+    private readonly ICountryService _countryService;
+    private readonly IGenderService _genderService;
     private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
     private readonly MyOpportunityRequestValidatorVerifyFinalize _myOpportunityRequestValidatorVerifyFinalize;
     private readonly MyOpportunityRequestValidatorVerifyFinalizeBatch _myOpportunityRequestValidatorVerifyFinalizeBatch;
+    private readonly MyOpportunityRequestValidatorVerifyImportCsv _myOpportunityRequestValidatorVerifyImportCsv;
     private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
@@ -85,10 +92,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         ILinkService linkService,
         INotificationURLFactory notificationURLFactory,
         INotificationDeliveryService notificationDeliveryService,
+        ICountryService countryService,
+        IGenderService genderService,
         MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
         MyOpportunityRequestValidatorVerifyFinalize myOpportunityRequestValidatorVerifyFinalize,
         MyOpportunityRequestValidatorVerifyFinalizeBatch myOpportunityRequestValidatorVerifyFinalizeBatch,
+        MyOpportunityRequestValidatorVerifyImportCsv myOpportunityRequestValidatorVerifyImportCsv,
         IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
         IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
         IExecutionStrategyService executionStrategyService)
@@ -109,10 +119,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _linkService = linkService;
       _notificationURLFactory = notificationURLFactory;
       _notificationDeliveryService = notificationDeliveryService;
+      _countryService = countryService;
+      _genderService = genderService;
       _myOpportunitySearchFilterValidator = myOpportunitySearchFilterValidator;
       _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
       _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize;
       _myOpportunityRequestValidatorVerifyFinalizeBatch = myOpportunityRequestValidatorVerifyFinalizeBatch;
+      _myOpportunityRequestValidatorVerifyImportCsv = myOpportunityRequestValidatorVerifyImportCsv;
       _myOpportunityRepository = myOpportunityRepository;
       _myOpportunityVerificationRepository = myOpportunityVerificationRepository;
       _executionStrategyService = executionStrategyService;
@@ -727,7 +740,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         await _linkService.LogUsage(link.Id);
 
-        var request = new MyOpportunityRequestVerify { InstantVerification = true };
+        var request = new MyOpportunityRequestVerify { InstantOrImportedVerification = true };
         await PerformActionSendForVerification(user, link.EntityId, request, null); //any verification method
 
         await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, "Auto-verification");
@@ -932,9 +945,148 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       return queryGrouped.ToDictionary(o => o.OpportunityId, o => o.Count);
     }
+
+    public async Task PerformActionImportVerificationFromCSV(MyOpportunityRequestVerifyImportCsv request, bool ensureOrganizationAuthorization)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      await _myOpportunityRequestValidatorVerifyImportCsv.ValidateAndThrowAsync(request);
+
+      var organization = _organizationService.GetById(request.OrganizationId, false, false, ensureOrganizationAuthorization);
+
+      request.Comment = request.Comment?.Trim();
+      if (string.IsNullOrEmpty(request.Comment)) request.Comment = "Auto-verification";
+
+      using var stream = request.File.OpenReadStream();
+      using var reader = new StreamReader(stream);
+
+      var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+      {
+        Delimiter = ",",
+        HasHeaderRecord = true,
+        MissingFieldFound = args =>
+        {
+          if (args.Context?.Reader?.HeaderRecord == null)
+            throw new ValidationException("The file is missing a header row");
+
+          var fieldName = args.HeaderNames?[args.Index] ?? $"Field at index {args.Index}";
+
+          var modelType = typeof(MyOpportunityInfoCsvImport);
+
+          var property = modelType.GetProperties(BindingFlags.Public | BindingFlags.Instance)
+              .FirstOrDefault(p =>
+                  string.Equals(
+                      p.GetCustomAttributes(typeof(NameAttribute), true)
+                          .Cast<NameAttribute>()
+                          .FirstOrDefault()?.Names.FirstOrDefault() ?? p.Name,
+                      fieldName,
+                      StringComparison.OrdinalIgnoreCase));
+
+          if (property == null) return;
+
+          var isRequired = property.GetCustomAttributes(typeof(System.ComponentModel.DataAnnotations.RequiredAttribute), true).Length > 0;
+
+          if (isRequired)
+          {
+            var rowNumber = args.Context?.Parser?.Row.ToString() ?? "Unknown";
+            throw new ValidationException($"Missing required field '{fieldName}' in row '{rowNumber}'");
+          }
+        },
+        BadDataFound = args =>
+        {
+          var rowNumber = args.Context?.Parser?.Row.ToString() ?? "Unknown";
+          throw new ValidationException($"Bad data format in row '{rowNumber}': Raw field data: '{args.Field}'");
+        }
+      };
+
+      using var csv = new CsvHelper.CsvReader(reader, config);
+
+      if (!csv.Read() || csv.Context?.Reader?.HeaderRecord?.Length == 0)
+        throw new ValidationException("The file is missing a header row");
+
+      csv.ReadHeader();
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+        while (await csv.ReadAsync())
+        {
+          var rowNumber = csv.Context?.Parser?.Row ?? -1;
+          try
+          {
+            var record = csv.GetRecord<MyOpportunityInfoCsvImport>();
+
+            await ProcessImportVerification(request, record);
+          }
+          catch (Exception ex)
+          {
+            throw new ValidationException($"Error processing row '{(rowNumber == -1 ? "Unknown" : rowNumber)}': {ex.Message}");
+          }
+        }
+        scope.Complete();
+      });
+    }
     #endregion
 
     #region Private Members
+    private async Task ProcessImportVerification(MyOpportunityRequestVerifyImportCsv requestImport, MyOpportunityInfoCsvImport item)
+    {
+      item.Email = string.IsNullOrWhiteSpace(item.Email) ? null : item.Email.Trim();
+      item.PhoneNumber = string.IsNullOrWhiteSpace(item.PhoneNumber) ? null : item.PhoneNumber.Trim();
+      item.FirstName = string.IsNullOrWhiteSpace(item.FirstName) ? null : item.FirstName.Trim();
+      item.Surname = string.IsNullOrWhiteSpace(item.Surname) ? null : item.Surname.Trim();
+
+      Domain.Lookups.Models.Country? country = null;
+      if (!string.IsNullOrEmpty(item.Country)) country = _countryService.GetByCodeAplha2(item.Country);
+
+      Domain.Lookups.Models.Gender? gender = null;
+      if (!string.IsNullOrEmpty(item.Gender)) gender = _genderService.GetByName(item.Gender);
+
+      var username = item.Email ?? item.PhoneNumber;
+      if (string.IsNullOrEmpty(username))
+        throw new ValidationException("Email or phone number required");
+
+      if (string.IsNullOrWhiteSpace(item.OpporunityExternalId))
+        throw new ValidationException("Opportunity external id required");
+
+      var opportunity = _opportunityService.GetByExternalId(requestImport.OrganizationId, item.OpporunityExternalId, true, true);
+      if(opportunity.VerificationMethod != VerificationMethod.Automatic)
+        throw new ValidationException($"Verification import not supported for opporunity '{opportunity.Title}'. The verification method must be set to 'Automatic'");
+
+      var user = _userService.GetByUsernameOrNull(username, false, false);
+      //user is created if not existing, or updated if not linked to an identity provider
+      if (user == null || !user.ExternalId.HasValue)
+      {
+        var request = new UserRequest
+        {
+          Username = username,
+          Email = item.Email,
+          FirstName = item.FirstName,
+          Surname = item.Surname,
+          EmailConfirmed = item.Email == null ? null : false,
+          PhoneNumberConfirmed = item.PhoneNumber == null ? null : false,
+          CountryId = country?.Id,
+          GenderId = gender?.Id
+        };
+
+        user = await _userService.Upsert(request);
+      }
+
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+
+        var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true };
+        await PerformActionSendForVerification(user, opportunity.Id, requestVerify, null); //any verification method
+
+        await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, requestImport.Comment);
+
+        scope.Complete();
+      });
+
+    }
+
     private static List<(DateTime WeekEnding, int Count)> SummaryGroupByWeekItems(List<MyOpportunityInfo> items)
     {
       var results = items
@@ -1198,7 +1350,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       myOpportunity.ZltoReward = opportunity.ZltoReward;
       myOpportunity.YomaReward = opportunity.YomaReward;
 
-      if (request.InstantVerification || opportunity.VerificationMethod == VerificationMethod.Automatic) return; //with instant-verifications or automatic verification pending notifications are not sent
+      if (request.InstantOrImportedVerification) return; //with instant or imported verifications, pending notifications are not sent
 
       //sent to youth
       await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending);
@@ -1328,7 +1480,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       Models.MyOpportunity myOpportunity,
       List<BlobObject> itemsNewBlobs)
     {
-      if (request.InstantVerification) return; //with instant-verifications bypass any verification type requirements
+      if (request.InstantOrImportedVerification) return; //with instant or imported verifications bypass any verification type requirements
       if (opportunity.VerificationTypes == null) return;
 
       foreach (var verificationType in opportunity.VerificationTypes)

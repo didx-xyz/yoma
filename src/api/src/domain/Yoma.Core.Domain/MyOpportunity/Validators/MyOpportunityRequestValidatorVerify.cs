@@ -20,7 +20,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
           .WithMessage("3 or more coordinate points expected per coordinate set i.e. Point: X-coordinate (longitude -180 to +180), Y-coordinate (latitude -90 to +90), Z-elevation.")
           .When(x => x.Geometry != null && x.Geometry.Type != Core.SpatialType.None);
       //with instant-verifications start or end date not captured
-      RuleFor(x => x.DateStart).NotEmpty().When(x => !x.InstantVerification).WithMessage("{PropertyName} is required.");
+      RuleFor(x => x.DateStart).NotEmpty().When(x => !x.InstantOrImportedVerification).WithMessage("{PropertyName} is required.");
       RuleFor(model => model.DateEnd)
           .GreaterThanOrEqualTo(model => model.DateStart)
           .When(model => model.DateEnd.HasValue)
