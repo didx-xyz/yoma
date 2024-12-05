@@ -81,7 +81,7 @@ const Home: NextPageWithLayout = () => {
             <h6 className="text-sm uppercase tracking-widest">
               Welcome to Yoma
             </h6>
-            <h1 className="text-xl tracking-wide sm:text-xl md:text-2xl">
+            <h1 className="text-xl font-bold tracking-wide sm:text-xl md:text-2xl">
               A world of opportunities
             </h1>
             <p className="text-md tracking-tight">

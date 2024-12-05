@@ -91,7 +91,7 @@
                       </div>
 
                       <#-- LABEL: code send success -->
-                      <span v-if="isCodeSent && !phoneVerified && !messagePhoneNumberError" aria-live="polite" style="color: green;">
+                      <span v-if="isCodeSent && !messagePhoneNumberError" aria-live="polite" style="color: green;">
                         <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
                       </span>
 
