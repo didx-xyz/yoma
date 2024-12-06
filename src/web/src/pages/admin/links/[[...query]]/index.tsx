@@ -26,7 +26,7 @@ import {
   type LinkSearchResult,
 } from "~/api/models/actionLinks";
 import {
-  createLinkSharing,
+  createLinkInstantVerify,
   searchLinks,
   updateLinkStatus,
 } from "~/api/services/actionLinks";
@@ -324,20 +324,24 @@ const Links: NextPageWithLayout<{
       // fetch the QR code
       queryClient
         .fetchQuery({
-          queryKey: ["OpportunitySharingLinkQR", item.entityId],
+          queryKey: ["OpportunityInstantVerificationLinkQR", item.entityId],
           queryFn: () =>
-            createLinkSharing({
+            createLinkInstantVerify({
               name: null,
               description: null,
               entityType: item.entityType,
               entityId: item.entityId,
               includeQRCode: true,
+              usagesLimit: null,
+              dateEnd: null,
+              distributionList: null,
+              lockToDistributionList: false,
             }),
         })
         .then(() => {
           // get the QR code from the cache
           const qrCode = queryClient.getQueryData<LinkInfo | null>([
-            "OpportunitySharingLinkQR",
+            "OpportunityInstantVerificationLinkQR",
             item.entityId,
           ]);
 
@@ -562,6 +566,7 @@ const Links: NextPageWithLayout<{
                   src={qrCodeImageData}
                   alt="QR Code"
                   width={200}
+                  height={200}
                   className="h-auto"
                 />
               </>
