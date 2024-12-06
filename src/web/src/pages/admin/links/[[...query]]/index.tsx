@@ -27,6 +27,7 @@ import {
 } from "~/api/models/actionLinks";
 import {
   createLinkInstantVerify,
+  getLinkById,
   searchLinks,
   updateLinkStatus,
 } from "~/api/services/actionLinks";
@@ -324,31 +325,49 @@ const Links: NextPageWithLayout<{
       // fetch the QR code
       queryClient
         .fetchQuery({
-          queryKey: ["OpportunityInstantVerificationLinkQR", item.entityId],
-          queryFn: () =>
-            createLinkInstantVerify({
-              name: null,
-              description: null,
-              entityType: item.entityType,
-              entityId: item.entityId,
-              includeQRCode: true,
-              usagesLimit: null,
-              dateEnd: null,
-              distributionList: null,
-              lockToDistributionList: false,
-            }),
+          queryKey: ["OpportunityLink", item.id],
+          queryFn: () => getLinkById(item.id, true),
         })
         .then(() => {
           // get the QR code from the cache
           const qrCode = queryClient.getQueryData<LinkInfo | null>([
-            "OpportunityInstantVerificationLinkQR",
-            item.entityId,
+            "OpportunityLink",
+            item.id,
           ]);
 
           // show the QR code
           setQRCodeImageData(qrCode?.qrCodeBase64);
           setShowQRCode(true);
         });
+
+      // // fetch the QR code
+      // queryClient
+      //   .fetchQuery({
+      //     queryKey: ["OpportunityInstantVerificationLinkQR", item.entityId],
+      //     queryFn: () =>
+      //       createLinkInstantVerify({
+      //         name: null,
+      //         description: null,
+      //         entityType: item.entityType,
+      //         entityId: item.entityId,
+      //         includeQRCode: true,
+      //         usagesLimit: item.usagesLimit,
+      //         dateEnd: item.dateEnd,
+      //         distributionList: item.distributionList,
+      //         lockToDistributionList: item.lockToDistributionList,
+      //       }),
+      //   })
+      //   .then(() => {
+      //     // get the QR code from the cache
+      //     const qrCode = queryClient.getQueryData<LinkInfo | null>([
+      //       "OpportunityInstantVerificationLinkQR",
+      //       item.entityId,
+      //     ]);
+
+      //     // show the QR code
+      //     setQRCodeImageData(qrCode?.qrCodeBase64);
+      //     setShowQRCode(true);
+      //   });
     },
     [queryClient],
   );
