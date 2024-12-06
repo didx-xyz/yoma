@@ -26,7 +26,6 @@ import {
   type LinkSearchResult,
 } from "~/api/models/actionLinks";
 import {
-  createLinkInstantVerify,
   getLinkById,
   searchLinks,
   updateLinkStatus,
