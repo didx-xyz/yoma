@@ -1051,7 +1051,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         throw new ValidationException("Opportunity external id required");
 
       var opportunity = _opportunityService.GetByExternalId(requestImport.OrganizationId, item.OpporunityExternalId, true, true);
-      if(opportunity.VerificationMethod != VerificationMethod.Automatic)
+      if (opportunity.VerificationMethod != VerificationMethod.Automatic)
         throw new ValidationException($"Verification import not supported for opporunity '{opportunity.Title}'. The verification method must be set to 'Automatic'");
 
       var user = _userService.GetByUsernameOrNull(username, false, false);
@@ -1060,8 +1060,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         var request = new UserRequest
         {
+          Id = user?.Id,
           Username = username,
           Email = item.Email,
+          PhoneNumber = item.PhoneNumber,
           FirstName = item.FirstName,
           Surname = item.Surname,
           EmailConfirmed = item.Email == null ? null : false,
@@ -1084,7 +1086,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         scope.Complete();
       });
-
     }
 
     private static List<(DateTime WeekEnding, int Count)> SummaryGroupByWeekItems(List<MyOpportunityInfo> items)
