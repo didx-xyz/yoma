@@ -22,6 +22,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     internal bool OverridePending { get; set; }
 
     [JsonIgnore]
-    internal bool InstantVerification { get; set; }
+    internal bool InstantOrImportedVerification { get; set; }
   }
 }

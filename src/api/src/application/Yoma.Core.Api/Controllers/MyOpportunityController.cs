@@ -126,6 +126,21 @@ namespace Yoma.Core.Api.Controllers
 
       return StatusCode((int)HttpStatusCode.OK);
     }
+
+    [SwaggerOperation(Summary = "Import completions for the specified organization from a CSV file (Admin or Organization Admin roles required)")]
+    [HttpPost("action/verify/csv")]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public async Task<IActionResult> PerformActionImportVerificationFromCSV([FromForm] MyOpportunityRequestVerifyImportCsv request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(PerformActionImportVerificationFromCSV));
+
+      await _myOpportunityService.PerformActionImportVerificationFromCSV(request, true);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(PerformActionImportVerificationFromCSV));
+
+      return StatusCode((int)HttpStatusCode.OK);
+    }
     #endregion Administrative Actions
 
     #region Authenticated User Based Actions
@@ -309,6 +324,6 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK);
     }
     #endregion Authenticated User Based Actions
-    #endregion
+    #endregion Public Members
   }
 }

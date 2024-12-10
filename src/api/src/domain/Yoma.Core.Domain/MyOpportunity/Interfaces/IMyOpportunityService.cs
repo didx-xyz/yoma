@@ -51,5 +51,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
     Dictionary<Guid, int>? ListAggregatedOpportunityByCompleted(bool includeExpired);
 
     Task PerformActionInstantVerification(Guid linkId);
+
+    Task PerformActionImportVerificationFromCSV(MyOpportunityRequestVerifyImportCsv request, bool ensureOrganizationAuthorization);
   }
 }

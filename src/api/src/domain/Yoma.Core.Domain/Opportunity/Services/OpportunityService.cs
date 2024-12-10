@@ -165,9 +165,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #region Public Members
     public Models.Opportunity GetById(Guid id, bool includeChildItems, bool includeComputed, bool ensureOrganizationAuthorization)
     {
-      if (id == Guid.Empty)
-        throw new ArgumentNullException(nameof(id));
-
       var result = GetByIdOrNull(id, includeChildItems, includeComputed, ensureOrganizationAuthorization)
           ?? throw new EntityNotFoundException($"{nameof(Models.Opportunity)} with id '{id}' does not exist");
 
@@ -218,6 +215,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
         result.ZltoRewardBalance = result.ZltoRewardPool.HasValue ? result.ZltoRewardPool - (result.ZltoRewardCumulative ?? default) : null;
         result.YomaRewardBalance = result.YomaRewardPool.HasValue ? result.YomaRewardPool - (result.YomaRewardCumulative ?? default) : null;
       }
+
+      return result;
+    }
+
+    public Models.Opportunity GetByExternalId(Guid organizationId, string externalId, bool includeChildItems, bool includeComputed)
+    {
+      var result = GetByExternalIdOrNull(organizationId, externalId, includeChildItems, includeComputed)
+          ?? throw new EntityNotFoundException($"Opportunity with external id '{externalId}' does not exist for the specified organization with id {organizationId}");
 
       return result;
     }
@@ -1044,10 +1049,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (file == null || file.Length == 0)
         throw new ArgumentNullException(nameof(file));
 
-      var organization = _organizationService.GetById(organizationId, false, false, false);
-
-      if (ensureOrganizationAuthorization)
-        _organizationService.IsAdmin(organization.Id, true);
+      var organization = _organizationService.GetById(organizationId, false, false, ensureOrganizationAuthorization);
 
       using var stream = file.OpenReadStream();
       using var reader = new StreamReader(stream);
