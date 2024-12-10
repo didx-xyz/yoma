@@ -84,7 +84,7 @@
                           </div>
 
                           <#-- LABEL: code send success -->
-                          <span v-if="isCodeSent && !phoneVerified && !messagePhoneNumberError" aria-live="polite" style="color: green;">
+                          <span v-if="isCodeSent && !messagePhoneNumberError" aria-live="polite" style="color: green;">
                             <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
                           </span>
 
@@ -248,7 +248,6 @@
                   event.target.submit(); // Programmatically submit the form
                 },
                 resetPhoneVerification() {
-                  this.phoneVerified = false;
                   this.isCodeSent = false;
                   this.resetSendCodeButton = true;
                   this.clearMessages();

@@ -192,7 +192,6 @@
               event.target.submit(); // Programmatically submit the form
             },
             resetPhoneVerification() {
-              this.phoneVerified = false;
               this.isCodeSent = false;
               this.resetSendCodeButton = true;
               this.clearMessages();

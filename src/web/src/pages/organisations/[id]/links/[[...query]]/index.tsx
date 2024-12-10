@@ -331,14 +331,14 @@ const Links: NextPageWithLayout<{
       // fetch the QR code
       queryClient
         .fetchQuery({
-          queryKey: ["OpportunitySharingLinkQR", item.entityId],
+          queryKey: ["OpportunityLink", item.id],
           queryFn: () => getLinkById(item.id, true),
         })
         .then(() => {
           // get the QR code from the cache
           const qrCode = queryClient.getQueryData<LinkInfo | null>([
-            "OpportunitySharingLinkQR",
-            item.entityId,
+            "OpportunityLink",
+            item.id,
           ]);
 
           // show the QR code
@@ -517,6 +517,7 @@ const Links: NextPageWithLayout<{
                   src={qrCodeImageData}
                   alt="QR Code"
                   width={200}
+                  height={200}
                   className="h-auto"
                 />
               </>

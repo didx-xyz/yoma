@@ -132,12 +132,8 @@ h1,
   font-size: 16px;
 }
 
-.verify-instructions {
-  display: flex;
-  flex-direction: column;
-  gap: 0px;
-  align-items: center;
-  justify-content: center;
+.instruction a {
+  display: inline;
 }
 
 #forget-password-text {
