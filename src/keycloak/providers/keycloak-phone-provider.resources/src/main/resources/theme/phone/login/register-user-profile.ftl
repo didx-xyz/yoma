@@ -12,7 +12,7 @@
     <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
 
     <div id="vue-app">
-      <form id="kc-register-form" class="${properties.kcFormClass!}" action="${url.registrationAction}" method="post" @submit="onSubmit">
+      <form ref="form" @submit.prevent="confirmCode" id="kc-register-form" class="${properties.kcFormClass!}" action="${url.registrationAction}" method="post" @submit="onSubmit">
 
         <input type="hidden" id="phoneNumberAsUsername" name="phoneNumberAsUsername" v-model="phoneNumberAsUsername">
         <input type="hidden" id="isCodeSent" name="isCodeSent" v-model="isCodeSent">
@@ -358,6 +358,9 @@
           confirmCode(){
             // auto check terms and conditions when verify code (prevent validation error)
             this.terms_and_conditions = "Yes";
+
+             // submit the form
+            this.$refs.form.submit();
           },
           onSubmit(event) {
             this.isSubmitAttempted = true;
