@@ -14,7 +14,6 @@ import { useRouter } from "next/router";
 import type { ReactElement, ReactNode } from "react";
 import { useState } from "react";
 import { ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
 import { Navbar } from "~/components/NavBar/Navbar";
 import { Global } from "~/components/Global";
 import ConfirmationModalContextProvider from "~/context/modalConfirmationContext";
@@ -90,10 +89,7 @@ const MyApp = ({
                   <Global />
                   <Navbar />
                   {getLayout(component)}
-                  <ToastContainer
-                    containerId="toastContainer"
-                    theme="colored"
-                  />
+                  <ToastContainer theme="colored" closeOnClick={true} />
                   <GoogleAnalytics />
                 </ConfirmationModalContextProvider>
               </div>

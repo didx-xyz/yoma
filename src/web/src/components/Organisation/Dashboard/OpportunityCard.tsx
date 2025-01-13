@@ -41,9 +41,7 @@ export const OpportunityCard: React.FC<{
         <div className="tracking-wider">Conversion ratio:</div>
         <div className="badge bg-green-light text-green">
           <IoIosCalculator className="mr-1 text-sm" />
-          {
-            opportunity.conversionRatioPercentage
-          }%
+          {opportunity.conversionRatioPercentage}%
         </div>
       </div>
       <div className="flex items-center justify-between px-2">

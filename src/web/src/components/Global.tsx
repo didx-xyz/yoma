@@ -147,7 +147,7 @@ export const Global: React.FC = () => {
         // show photo upload dialog
         setPhotoUploadDialogVisible(true);
       } else {
-        toast.success("Welcome back!", { autoClose: 0 });
+        //toast.success("Welcome back!", { autoClose: false });
       }
     },
     [
