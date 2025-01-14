@@ -1263,8 +1263,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       result.SetPublished();
 
-      //sent when activated irrespective of organization status (sent to admin)
-      if (result.Status == Status.Active) await SendNotification(result, NotificationType.Opportunity_Posted_Admin);
+      //sent when created irrespective of the opportunity status; only trigger point; trigger point on status update has been removed (sent to admin)
+      await SendNotification(result, NotificationType.Opportunity_Posted_Admin);
 
       if (raiseEvent)
         await _mediator.Publish(new OpportunityEvent(EventType.Create, result));
@@ -1591,9 +1591,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result = await _opportunityRepository.Update(result);
 
       result.SetPublished();
-
-      //sent when activated irrespective of organization status (sent to admin)
-      if (status == Status.Active) await SendNotification(result, NotificationType.Opportunity_Posted_Admin);
 
       await _mediator.Publish(new OpportunityEvent(eventType.Value, result));
 
