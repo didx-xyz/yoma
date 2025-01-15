@@ -154,7 +154,7 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
           <div className="flex flex-col">
             <div className="flex flex-col items-center justify-center gap-4">
               <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
-                <FaCloudUploadAlt className="h-8 w-8 animate-spin text-green" />
+                <FaCloudUploadAlt className="h-8 w-8 text-green" />
               </div>
             </div>
             <div className="flex flex-col gap-4 px-4">
