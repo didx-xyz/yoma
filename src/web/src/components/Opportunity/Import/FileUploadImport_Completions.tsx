@@ -8,8 +8,8 @@ import { FaCloudUploadAlt } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
-import { ErrorResponseItem } from "~/api/models/common";
-import { MyOpportunityRequestVerifyImportCsv } from "~/api/models/myOpportunity";
+import type { ErrorResponseItem } from "~/api/models/common";
+import type { MyOpportunityRequestVerifyImportCsv } from "~/api/models/myOpportunity";
 import { performActionImportVerificationFromCSV } from "~/api/services/myOpportunities";
 import {
   ACCEPTED_CSV_TYPES,
@@ -127,8 +127,7 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
   const {
     handleSubmit,
     setValue,
-    formState: { errors: errors, isValid: isValid },
-    control,
+    formState: { errors: errors },
   } = useForm({
     resolver: zodResolver(schema),
   });
@@ -229,7 +228,7 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
                       <ul className="ml-5 list-disc text-sm">
                         <li>
                           If the user already exists but has not registered, the
-                          imported values will update the user's profile
+                          imported values will update the user&apos;s profile
                           properties.
                         </li>
                         <li>
@@ -316,16 +315,6 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
                     )}
                   </>
                 )}
-
-              {/* {!isValid && (
-                <div className="flex-growx flex justify-center">
-                  <label className="label">
-                    <span className="label-text-alt px-4 text-center text-base italic text-red-500">
-                      Please fill out the required information above.
-                    </span>
-                  </label>
-                </div>
-              )} */}
 
               <div className="mb-10 mt-4 flex flex-grow gap-4">
                 <button

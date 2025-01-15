@@ -8,6 +8,7 @@ import { FaCloudUploadAlt } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
+import type { ErrorResponseItem } from "~/api/models/common";
 import { importFromCSV } from "~/api/services/opportunities";
 import {
   ACCEPTED_CSV_TYPES,
@@ -15,10 +16,9 @@ import {
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
+import FormMessage, { FormMessageType } from "../../Common/FormMessage";
 import { Loading } from "../../Status/Loading";
 import { FileUpload } from "../FileUpload";
-import FormMessage, { FormMessageType } from "../../Common/FormMessage";
-import { ErrorResponseItem } from "~/api/models/common";
 
 interface InputProps {
   [id: string]: any;
@@ -118,8 +118,7 @@ export const FileUploadImport_Opportunities: React.FC<InputProps> = ({
   const {
     handleSubmit,
     setValue,
-    formState: { errors: errors, isValid: isValid },
-    control,
+    formState: { errors: errors },
   } = useForm({
     resolver: zodResolver(schema),
   });
@@ -249,8 +248,8 @@ export const FileUploadImport_Opportunities: React.FC<InputProps> = ({
 
                   <ul className="ml-5 list-disc">
                     <li>
-                      Use the "|" delimiter for multiple Categories, Languages,
-                      Skills.
+                      Use the &quot;|&quot; delimiter for multiple Categories,
+                      Languages, Skills.
                     </li>
                     <li>Ensure ExternalId is unique for each organization.</li>
                   </ul>
@@ -313,16 +312,6 @@ export const FileUploadImport_Opportunities: React.FC<InputProps> = ({
                     )}
                   </>
                 )}
-
-              {/* {!isValid && (
-                <div className="flex-growx flex justify-center">
-                  <label className="label">
-                    <span className="label-text-alt px-4 text-center text-base italic text-red-500">
-                      Please fill out the required information above.
-                    </span>
-                  </label>
-                </div>
-              )} */}
 
               <div className="mb-10 mt-4 flex flex-grow gap-4">
                 <button
