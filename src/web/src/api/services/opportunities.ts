@@ -403,3 +403,26 @@ export const updateFeatured = async (
   ).patch<Opportunity>(`/opportunity/${id}/featured/${featured}`);
   return data;
 };
+
+export const importFromCSV = async (
+  organisationId: string,
+  file: any,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+) => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const { data } = await instance.post(
+    `/opportunity/import/${organisationId}/csv`,
+    formData,
+    {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    },
+  );
+
+  return data;
+};

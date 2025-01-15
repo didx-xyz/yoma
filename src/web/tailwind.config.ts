@@ -80,6 +80,10 @@ export default {
             visibility: "hidden",
           },
         },
+        spin: {
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
         pulse: {
           "0%, 100%": { opacity: "1" },
           "50%": { opacity: ".5" },
@@ -92,6 +96,7 @@ export default {
       animation: {
         wiggle: "wiggle 2s ease-in-out",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        spin: "spin 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards",
         enter: "enter 0.3s ease-out forwards",
         exit: "exit 0.3s ease-in forwards",
       },
