@@ -54,7 +54,7 @@ import {
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { OpportunitiesImportEditCompletions } from "~/components/Opportunity/OpportunitiesImportEditCompletions";
+import { FileUploadImport_Completions } from "~/components/Opportunity/Import/FileUploadImport_Completions";
 import { OpportunityCompletionRead } from "~/components/Opportunity/OpportunityCompletionRead";
 import MobileCard from "~/components/Organisation/Verifications/MobileCard";
 import { PageBackground } from "~/components/PageBackground";
@@ -1300,7 +1300,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           }}
           className={`md:max-h-[650px] md:w-[600px]`}
         >
-          <OpportunitiesImportEditCompletions
+          <FileUploadImport_Completions
             id={id}
             onClose={() => {
               setImportDialogOpen(false);

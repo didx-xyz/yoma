@@ -33,7 +33,7 @@ import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { OpportunitiesImportEdit } from "~/components/Opportunity/OpportunitiesImportEdit";
+import { FileUploadImport_Opportunities } from "~/components/Opportunity/Import/FileUploadImport_Opportunities";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -911,7 +911,7 @@ const Opportunities: NextPageWithLayout<{
           }}
           className={`md:max-h-[650px] md:w-[600px]`}
         >
-          <OpportunitiesImportEdit
+          <FileUploadImport_Opportunities
             id={id}
             onClose={() => {
               setImportDialogOpen(false);

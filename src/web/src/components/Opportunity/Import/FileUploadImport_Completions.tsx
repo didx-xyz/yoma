@@ -8,17 +8,18 @@ import { FaCloudUploadAlt } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
-import { importFromCSV } from "~/api/services/opportunities";
+import { ErrorResponseItem } from "~/api/models/common";
+import { MyOpportunityRequestVerifyImportCsv } from "~/api/models/myOpportunity";
+import { performActionImportVerificationFromCSV } from "~/api/services/myOpportunities";
 import {
   ACCEPTED_CSV_TYPES,
   ACCEPTED_CSV_TYPES_LABEL,
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
-import { Loading } from "../Status/Loading";
-import { FileUpload } from "./FileUpload";
-import FormMessage, { FormMessageType } from "../Common/FormMessage";
-import { ErrorResponseItem } from "~/api/models/common";
+import FormMessage, { FormMessageType } from "../../Common/FormMessage";
+import { Loading } from "../../Status/Loading";
+import { FileUpload } from "../FileUpload";
 
 interface InputProps {
   [id: string]: any;
@@ -26,7 +27,7 @@ interface InputProps {
   onSave?: () => void;
 }
 
-export const OpportunitiesImportEdit: React.FC<InputProps> = ({
+export const FileUploadImport_Completions: React.FC<InputProps> = ({
   id,
   onClose,
   onSave,
@@ -91,7 +92,15 @@ export const OpportunitiesImportEdit: React.FC<InputProps> = ({
 
       setIsLoading(true);
 
-      importFromCSV(id, data.importFile)
+      /* eslint-disable @typescript-eslint/no-unsafe-argument */
+      const request: MyOpportunityRequestVerifyImportCsv = {
+        file: data.importFile,
+        organizationId: id,
+        comment: data.comment,
+      };
+      /* eslint-enable @typescript-eslint/no-unsafe-argument */
+
+      performActionImportVerificationFromCSV(request)
         .then(() => {
           setIsLoading(false);
           if (onSave) {
@@ -152,11 +161,11 @@ export const OpportunitiesImportEdit: React.FC<InputProps> = ({
             <div className="flex flex-col gap-4 px-4">
               <div className="mb-4 flex flex-col items-center gap-1 text-center">
                 <h4 className="font-semibold tracking-wide">
-                  Import opportunities from a file
+                  Import verifications from a file
                 </h4>
                 <div className="tracking-wide text-gray-dark">
                   <p>
-                    Upload a CSV file to import opportunities for your
+                    Upload a CSV file to import verifications for your
                     organisation.
                   </p>
                 </div>
@@ -175,24 +184,12 @@ export const OpportunitiesImportEdit: React.FC<InputProps> = ({
                       The following properties must be provided for each
                       opportunity:
                     </p>
-                    <ul className="ml-5 list-disc">
-                      <li>Title</li>
-                      <li>Type (Learning, Event, Other, Micro-task)</li>
-                      <li>Categories (use | to separate multiple)</li>
-                      <li>Summary</li>
-                      <li>Description</li>
-                      <li>Languages (use Language Lookup endpoint)</li>
-                      <li>Location (Countries, use Country Lookup endpoint)</li>
+                    <ul className="ml-5 list-disc text-sm">
+                      <li>Email or Phone Number (at least one required)</li>
                       <li>
-                        Difficulty (Beginner, Intermediate, Advanced, Any Level)
+                        Opportunity External Id (must match existing
+                        opportunity)
                       </li>
-                      <li>EffortCount (numeric value)</li>
-                      <li>EffortInterval (Hour, Day, Week, Month, Minute)</li>
-                      <li>DateStart</li>
-                      <li>Skills (use Skill Lookup endpoint)</li>
-                      <li>Keywords</li>
-                      <li>Hidden</li>
-                      <li>ExternalId</li>
                     </ul>
                   </div>
 
@@ -201,30 +198,46 @@ export const OpportunitiesImportEdit: React.FC<InputProps> = ({
                     <p className="mb-3">
                       These properties can be included if applicable:
                     </p>
-                    <ul className="ml-5 list-disc">
-                      <li>Engagement (Online, Offline, Hybrid)</li>
-                      <li>Link</li>
-                      <li>DateEnd</li>
-                      <li>ParticipantLimit</li>
-                      <li>ZltoReward</li>
-                      <li>ZltoRewardPool</li>
+                    <ul className="ml-5 list-disc text-sm">
+                      <li>FirstName</li>
+                      <li>Surname</li>
+                      <li>Gender (Male, Female, Prefer not to say)</li>
+                      <li>Country (Alpha-2 code, use Country Lookup API)</li>
                     </ul>
                   </div>
 
-                  <div>
-                    <p className="font-semibold">Default Properties</p>
-                    <p className="mb-3">
-                      The following properties default to the following and can
-                      not be explicitly set:
-                    </p>
-                    <ul className="ml-5 list-disc">
-                      <li>VerificationEnabled: Enabled</li>
-                      <li>VerificationMethod: Automatic</li>
-                      <li>CredentialIssuanceEnabled: Enabled</li>
-                      <li>SSISchemaName: Opportunity|Default</li>
-                      <li>Instructions: Not used (deprecated)</li>
-                      <li>ShareWithPartners: null or false</li>
-                    </ul>
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-semibold">User Creation</p>
+                      <ul className="ml-5 list-disc text-sm">
+                        <li>
+                          If a user does not exist, a new user account will be
+                          created in the database.
+                        </li>
+                        <li>
+                          When the user later registers in the system, the
+                          database account will be automatically linked to their
+                          Keycloak account.
+                        </li>
+                      </ul>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-semibold">
+                        User Profile Updates
+                      </p>
+                      <ul className="ml-5 list-disc text-sm">
+                        <li>
+                          If the user already exists but has not registered, the
+                          imported values will update the user's profile
+                          properties.
+                        </li>
+                        <li>
+                          If the user has already registered, their profile data
+                          will not be updated to reflect the imported values.
+                        </li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -236,7 +249,7 @@ export const OpportunitiesImportEdit: React.FC<InputProps> = ({
                   <p>
                     Download a{" "}
                     <a
-                      href="/docs/OpportunityInfoCsvImport_Sample.csv"
+                      href="/docs/MyOpportunityInfoCsvImport_Sample.csv"
                       target="_blank"
                       className="text-blue-600 underline"
                     >
@@ -244,16 +257,6 @@ export const OpportunitiesImportEdit: React.FC<InputProps> = ({
                     </a>{" "}
                     for reference.
                   </p>
-
-                  <p className="mt-3">Note:</p>
-
-                  <ul className="ml-5 list-disc">
-                    <li>
-                      Use the "|" delimiter for multiple Categories, Languages,
-                      Skills.
-                    </li>
-                    <li>Ensure ExternalId is unique for each organization.</li>
-                  </ul>
                 </div>
               </div>
 
