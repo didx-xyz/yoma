@@ -3,6 +3,7 @@ import type { Opportunity } from "../models/opportunity";
 import type {
   MyOpportunityRequestVerify,
   MyOpportunityRequestVerifyFinalizeBatch,
+  MyOpportunityRequestVerifyImportCsv,
   MyOpportunityResponseVerify,
   MyOpportunityResponseVerifyFinalizeBatch,
   MyOpportunitySearchCriteriaOpportunity,
@@ -191,7 +192,6 @@ export const performActionInstantVerificationManual = async (
 
 export const getMyOpportunitiesExportToCSV = async (
   filter: MyOpportunitySearchFilterAdmin,
-
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<File> => {
   const instance = context ? ApiServer(context) : await ApiClient;
@@ -276,4 +276,16 @@ export const downloadVerificationFiles = async (
     console.error("Error downloading verification files:", error);
     throw error;
   }
+};
+
+export const performActionImportVerificationFromCSV = async (
+  model: MyOpportunityRequestVerifyImportCsv,
+): Promise<any> => {
+  const formData = objectToFormData(model);
+
+  await (
+    await ApiClient
+  ).post(`/myopportunity/action/verify/csv`, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 };

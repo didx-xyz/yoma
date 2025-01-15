@@ -139,3 +139,9 @@ export interface MyOpportunitySearchCriteriaOpportunity {
   id: string;
   title: string;
 }
+
+export interface MyOpportunityRequestVerifyImportCsv {
+  file: FormFile;
+  organizationId: string;
+  comment: string | null;
+}

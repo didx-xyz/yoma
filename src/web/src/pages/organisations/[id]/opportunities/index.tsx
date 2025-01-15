@@ -159,10 +159,7 @@ const Opportunities: NextPageWithLayout<{
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
   );
-  const [
-    importOpportunitiesDialogVisible,
-    setImportOpportunitiesDialogVisible,
-  ] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   // search filter state
   const searchFilter = useMemo<OpportunitySearchFilterAdmin>(
@@ -566,7 +563,7 @@ const Opportunities: NextPageWithLayout<{
             <li className="bg-theme btn-secondaryx btn btn-circle btn-sm h-fit w-fit whitespace-nowrap !border-none text-xs text-white shadow-custom hover:brightness-105">
               <a
                 className={`${currentOrganisationInactive ? "disabled" : ""} `}
-                onClick={() => setImportOpportunitiesDialogVisible(true)}
+                onClick={() => setImportDialogOpen(true)}
               >
                 <IoMdCloudUpload className="h-5 w-5" /> Import
               </a>
@@ -907,17 +904,17 @@ const Opportunities: NextPageWithLayout<{
 
         {/* IMPORT OPPORTUNITIES DIALOG */}
         <CustomModal
-          isOpen={importOpportunitiesDialogVisible}
+          isOpen={importDialogOpen}
           shouldCloseOnOverlayClick={false}
           onRequestClose={() => {
-            setImportOpportunitiesDialogVisible(false);
+            setImportDialogOpen(false);
           }}
           className={`md:max-h-[650px] md:w-[600px]`}
         >
           <OpportunitiesImportEdit
             id={id}
             onClose={() => {
-              setImportOpportunitiesDialogVisible(false);
+              setImportDialogOpen(false);
             }}
             onSave={async () => {
               // invalidate queries
