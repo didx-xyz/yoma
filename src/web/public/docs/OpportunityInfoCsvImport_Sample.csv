@@ -1,0 +1,6 @@
+Title,Type,Engagement,Categories,Link,Summary,Description,Languages,Location,Difficulty,EffortCount,EffortInterval,DateStart,DateEnd,ParticipantLimit,ZltoReward,ZltoRewardPool,Skills,Keywords,Hidden,ExternalId
+Opportunity A,Learning,Online,Agriculture|Technology and Digitization,http://example.com/A,Summary A,Description A,AF|EN,US|GB,Beginner,5,Hour,2024/01/01,2024/12/31,100,10,5000,Adapters|Adobe CreatePDF,Keyword1|Keyword2,No,External_ID1
+Opportunity B,Other,Offline,Other|Tourism and Hospitality,http://example.com/B,Summary B,Description B,IK|EN,CA|AU,Intermediate,10,Day,2024/02/01,,50,15,,Adobe Director|Alimony,Keyword3|Keyword4,Yes,External_ID2
+Opportunity C,Event,Hybrid,Other|Technology and Digitization,http://example.com/C,Summary C,Description C,IO|JV,FR|DE,Advanced,15,Hour,2024/03/01,2024/10/31,,,,ADABAS|Actionform,Keyword5|Keyword6,No,External_ID3
+Opportunity D,Learning,,Agriculture|Other,,Summary D,Description D,SN|MK,IT|ES,Beginner,20,Week,2024/04/01,,200,12,3000,Adview|Activeandroid,Keyword7|Keyword8,Yes,External_ID4
+Opportunity E,Micro-task,Online,Other|Technology and Digitization,http://example.com/E,Summary E,Description E,KR|SR,US|IT,Any Level,25,Minute,2024/05/01,2024/09/30,150,18,4000,Advisories|Agrep,Keyword9|Keyword10,No,External_ID5

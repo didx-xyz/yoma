@@ -49,7 +49,7 @@ const FormMessage: React.FC<MessageProps> = ({
 
   return (
     <div
-      className={`flex w-full flex-row items-center rounded-lg border-[1px] p-2 ${borderColorClass} ${className}`}
+      className={`flex w-full flex-row rounded-lg border-[1px] p-2 ${borderColorClass} ${className}`}
     >
       <Icon className={`mr-2 h-6 w-6 flex-none ${iconColorClass}`} />
       <span className={`text-xs ${classNameLabel}`}>{children}</span>

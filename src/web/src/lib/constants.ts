@@ -32,7 +32,6 @@ export const ACCEPTED_AUDIO_TYPES = [
   "audio/ogg",
   "audio/3gpp",
 ];
-
 export const ACCEPTED_AUDIO_TYPES_LABEL = [
   ".mp3",
   ".wav",
@@ -41,6 +40,9 @@ export const ACCEPTED_AUDIO_TYPES_LABEL = [
   ".ogg",
   ".3gp",
 ];
+export const ACCEPTED_CSV_TYPES = ["text/csv", "application/vnd.ms-excel"];
+export const ACCEPTED_CSV_TYPES_LABEL = [".csv"];
+
 export const REGEX_URL_VALIDATION =
   /^(https?:\/\/)?((www\.)?)[-a-zA-Z0-9@:%._\+~#=]{2,256}\.[a-z]{2,6}\b([-a-zA-Z0-9@:%_\+.~#?&//=]*)$/;
 

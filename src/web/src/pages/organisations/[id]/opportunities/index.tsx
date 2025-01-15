@@ -1,4 +1,9 @@
-import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import {
+  QueryClient,
+  dehydrate,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import axios from "axios";
 import { useAtomValue } from "jotai";
 import { type GetServerSidePropsContext } from "next";
@@ -9,8 +14,15 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import iconZlto from "public/images/icon-zlto.svg";
 import { type ParsedUrlQuery } from "querystring";
-import { useCallback, useMemo, type ReactElement } from "react";
-import { IoIosAdd, IoIosLink, IoIosWarning, IoMdEyeOff } from "react-icons/io";
+import { useCallback, useMemo, useState, type ReactElement } from "react";
+import {
+  IoIosAdd,
+  IoIosLink,
+  IoIosWarning,
+  IoMdAddCircle,
+  IoMdCloudUpload,
+  IoMdEyeOff,
+} from "react-icons/io";
 import { toast } from "react-toastify";
 import {
   Status,
@@ -18,8 +30,10 @@ import {
   type OpportunitySearchResults,
 } from "~/api/models/opportunity";
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
+import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { FileUploadImport_Opportunities } from "~/components/Opportunity/Import/FileUploadImport_Opportunities";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -141,9 +155,11 @@ const Opportunities: NextPageWithLayout<{
   returnUrl?: string;
 }> = ({ id, query, page, status, error, returnUrl }) => {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const currentOrganisationInactive = useAtomValue(
     currentOrganisationInactiveAtom,
   );
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   // search filter state
   const searchFilter = useMemo<OpportunitySearchFilterAdmin>(
@@ -532,24 +548,27 @@ const Opportunities: NextPageWithLayout<{
           </div>
 
           {/* BUTTONS */}
-          <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
-            {currentOrganisationInactive ? (
-              <span className="bg-theme flex w-56 cursor-not-allowed flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-75">
-                Add opportunity (disabled)
-              </span>
-            ) : (
+          <ul className="menu menu-horizontal flex w-full flex-grow items-center justify-between gap-1 sm:justify-end">
+            <li className="bg-theme btn-secondaryx btn btn-circle btn-sm h-fit w-fit whitespace-nowrap !border-none text-xs text-white shadow-custom hover:brightness-105">
               <Link
                 href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
                   getSafeUrl(returnUrl?.toString(), router.asPath),
                 )}`}`}
-                className="bg-theme btn btn-circle btn-secondary btn-sm h-fit w-fit whitespace-nowrap !border-none p-1 text-xs text-white shadow-custom brightness-105 md:p-2 md:px-4"
+                className={`${currentOrganisationInactive ? "disabled" : ""}`}
                 id="btnCreateOpportunity" // e2e
               >
-                <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />
-                <span className="hidden md:inline">Add opportunity</span>
+                <IoMdAddCircle className="h-5 w-5" /> Add
               </Link>
-            )}
-          </div>
+            </li>
+            <li className="bg-theme btn-secondaryx btn btn-circle btn-sm h-fit w-fit whitespace-nowrap !border-none text-xs text-white shadow-custom hover:brightness-105">
+              <a
+                className={`${currentOrganisationInactive ? "disabled" : ""} `}
+                onClick={() => setImportDialogOpen(true)}
+              >
+                <IoMdCloudUpload className="h-5 w-5" /> Import
+              </a>
+            </li>
+          </ul>
         </div>
 
         {/* MAIN CONTENT */}
@@ -882,6 +901,30 @@ const Opportunities: NextPageWithLayout<{
             </div>
           </div>
         )}
+
+        {/* IMPORT OPPORTUNITIES DIALOG */}
+        <CustomModal
+          isOpen={importDialogOpen}
+          shouldCloseOnOverlayClick={false}
+          onRequestClose={() => {
+            setImportDialogOpen(false);
+          }}
+          className={`md:max-h-[650px] md:w-[600px]`}
+        >
+          <FileUploadImport_Opportunities
+            id={id}
+            onClose={() => {
+              setImportDialogOpen(false);
+            }}
+            onSave={async () => {
+              // invalidate queries
+              //NB: this is the query on the opportunities page
+              await queryClient.invalidateQueries({
+                queryKey: ["opportunities", id],
+              });
+            }}
+          />
+        </CustomModal>
       </div>
     </>
   );

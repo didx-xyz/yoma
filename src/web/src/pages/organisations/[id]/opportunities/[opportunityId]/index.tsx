@@ -2830,6 +2830,27 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               }}
                             />
 
+                            {/* AUTOMATIC */}
+                            <FormRadio
+                              id="verificationEnabledAutomatic"
+                              label="Verification should happen automatically (if available)"
+                              inputProps={{
+                                checked:
+                                  value === true &&
+                                  getValuesStep6("verificationMethod") ===
+                                    VerificationMethod.Automatic,
+                                onChange: () => {
+                                  setValueStep6("verificationEnabled", true);
+                                  setValueStep6(
+                                    "verificationMethod",
+                                    VerificationMethod.Automatic,
+                                  );
+
+                                  onChange(true);
+                                },
+                              }}
+                            />
+
                             {/* NOT REQUIRED */}
                             <FormRadio
                               id="verificationEnabledNo"

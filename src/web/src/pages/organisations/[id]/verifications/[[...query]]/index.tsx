@@ -26,6 +26,7 @@ import {
   IoMdAlert,
   IoMdCheckmark,
   IoMdClose,
+  IoMdCloudUpload,
   IoMdDownload,
   IoMdFlame,
   IoMdThumbsDown,
@@ -53,6 +54,7 @@ import {
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { FileUploadImport_Completions } from "~/components/Opportunity/Import/FileUploadImport_Completions";
 import { OpportunityCompletionRead } from "~/components/Opportunity/OpportunityCompletionRead";
 import MobileCard from "~/components/Organisation/Verifications/MobileCard";
 import { PageBackground } from "~/components/PageBackground";
@@ -178,7 +180,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 // 👇 PAGE COMPONENT: Opportunity Verifications (Single & Bulk)
 // this page is accessed from the /organisations/[id]/.. pages (OrgAdmin role)
-// or from the /admin/opportunities/.. pages (Admin role). the retunUrl query param is used to redirect back to the admin page
+// or from the /admin/opportunities/.. pages (Admin role). the returnUrl query param is used to redirect back to the admin page
 const OpportunityVerifications: NextPageWithLayout<{
   id: string;
   query?: string;
@@ -211,6 +213,8 @@ const OpportunityVerifications: NextPageWithLayout<{
 
   const [isExportButtonLoading, setIsExportButtonLoading] = useState(false);
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
+
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   // search filter state
   const searchFilter = useMemo<MyOpportunitySearchFilterAdmin>(
@@ -258,20 +262,6 @@ const OpportunityVerifications: NextPageWithLayout<{
       })),
     enabled: !error,
   });
-  //   {
-  //   pageNumber: 1,
-  //   pageSize: 1,
-  //   valueContains: query?.toString() ?? null,
-  //   organizations: [id],
-  //   opportunity: opportunity?.toString() ?? null,
-  //   userId: null,
-  //   action: Action.Verification,
-  //   verificationStatuses: [
-  //     VerificationStatus.Pending,
-  //     VerificationStatus.Completed,
-  //     VerificationStatus.Rejected,
-  //   ],
-  // }
   const { data: totalCountAll } = useQuery<number>({
     queryKey: [
       "Verifications",
@@ -1116,6 +1106,14 @@ const OpportunityVerifications: NextPageWithLayout<{
                 )}
               </button>
 
+              <button
+                //className={`${currentOrganisationInactive ? "disabled" : ""} `}
+                className="btn btn-sm w-[120px] flex-nowrap border-green bg-green text-white hover:bg-green hover:text-white disabled:bg-green disabled:brightness-90"
+                onClick={() => setImportDialogOpen(true)}
+              >
+                <IoMdCloudUpload className="h-5 w-5" /> Import
+              </button>
+
               {/* show approve/reject buttons for 'all' & 'pending' tabs */}
               {(!verificationStatus || verificationStatus === "Pending") &&
                 !isLoadingData &&
@@ -1292,6 +1290,33 @@ const OpportunityVerifications: NextPageWithLayout<{
             </div>
           </>
         )}
+
+        {/* IMPORT OPPORTUNITIES DIALOG */}
+        <CustomModal
+          isOpen={importDialogOpen}
+          shouldCloseOnOverlayClick={false}
+          onRequestClose={() => {
+            setImportDialogOpen(false);
+          }}
+          className={`md:max-h-[650px] md:w-[600px]`}
+        >
+          <FileUploadImport_Completions
+            id={id}
+            onClose={() => {
+              setImportDialogOpen(false);
+            }}
+            onSave={async () => {
+              // invalidate queries
+              //NB: this is the query on the opportunities page
+              await queryClient.invalidateQueries({
+                queryKey: ["Verifications", id],
+              });
+              await queryClient.invalidateQueries({
+                queryKey: ["OpportunitiesForVerification", id],
+              });
+            }}
+          />
+        </CustomModal>
       </div>
     </>
   );
