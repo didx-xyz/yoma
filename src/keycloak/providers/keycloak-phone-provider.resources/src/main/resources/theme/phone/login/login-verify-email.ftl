@@ -11,6 +11,10 @@
             <br/>
             ${msg("emailVerifyInstruction3")}
             <a href="${url.loginAction}" class="form-link">${msg("doClickHere")}</a> ${msg("emailVerifyInstruction4")}
+            <br/>
+            <br/>
+             ${msg("emailVerifyInstruction5")}
+            <a href="mailto:help@yoma.world" class="form-link">${msg("doClickHere")}</a> ${msg("emailVerifyInstruction6")}
         </p>
     </#if>
 </@layout.registrationLayout>
