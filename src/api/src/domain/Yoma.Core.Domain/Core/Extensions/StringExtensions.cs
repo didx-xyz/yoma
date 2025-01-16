@@ -144,6 +144,16 @@ namespace Yoma.Core.Domain.Core.Extensions
 
       return input.Length <= length ? input : input[..length];
     }
+
+    public static string RemoveMarkdownAsterisks(this string input)
+    {
+      if (string.IsNullOrEmpty(input))
+        throw new ArgumentNullException(nameof(input));
+
+      // Replace all asterisks (*) used in Markdown formatting
+      return MarkdownAsterisks().Replace(input, string.Empty);
+    }
+
     #endregion
 
     #region Private Members
@@ -158,6 +168,9 @@ namespace Yoma.Core.Domain.Core.Extensions
 
     [GeneratedRegex("[^a-zA-Z0-9 ]")] // include a space in the regex pattern
     private static partial Regex NonAplhaNumberic();
+
+    [GeneratedRegex(@"\*")]
+    private static partial Regex MarkdownAsterisks();
     #endregion
   }
 }
