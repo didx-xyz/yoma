@@ -186,11 +186,11 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
         Holder = request.Opportunity.OrganizationName.RemoveSpecialCharacters().TrimToLength(200),
         SponsoringPartner = request.OrganizationYoma.Name.RemoveSpecialCharacters().TrimToLength(200),
         Title = request.Opportunity.Title.RemoveSpecialCharacters().TrimToLength(200),
-        Description = request.Opportunity.Description,
+        Description = request.Opportunity.Description.RemoveMarkdownAsterisks(),
         // ensure 'HasCertification' of type 'NonAccreditedCertification' when 'VerificationEnabled'; Yoma's certification is not accredited 
         HasCertification = request.Opportunity.VerificationEnabled ? YesNoOption.Yes : YesNoOption.No,
         CertificationType = request.Opportunity.VerificationEnabled ? CertificateType.NonAccreditedCertification.ToString() : null,
-        CertificationDescription = request.Opportunity.VerificationEnabled ? request.Opportunity.Summary : null,
+        CertificationDescription = request.Opportunity.VerificationEnabled ? request.Opportunity.Summary?.RemoveMarkdownAsterisks() : null,
         CloseDate = request.Opportunity.DateEnd,
         Duration = request.Opportunity.ToDuration(),
         Requirements = "Instructions can be found in the description",
