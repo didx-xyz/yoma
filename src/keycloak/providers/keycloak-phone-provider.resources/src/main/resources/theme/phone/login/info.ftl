@@ -17,6 +17,8 @@
                 <p><a href="${actionUri}">${kcSanitize(msg("proceedWithAction"))?no_esc}</a></p>
             <#elseif (client.baseUrl)?has_content>
                 <p><a href="${client.baseUrl}">${kcSanitize(msg("backToApplication"))?no_esc}</a></p>
+            <#else>
+                <p><a href="/">${kcSanitize(msg("backToApplication"))?no_esc}</a></p>
             </#if>
         </#if>
     </div>
