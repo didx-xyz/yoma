@@ -11,25 +11,25 @@ export const ApiErrors: Props = ({ error }) => {
 
   if (error.response?.status) {
     return (
-      <>
+      <div className="flex flex-col">
         {(() => {
           switch (error.response?.status) {
             case 401:
               return (
-                <>
-                  <div className="flex flex-row text-sm font-bold">
+                <div className="flex flex-col">
+                  <div className="flex flex-row items-center text-sm font-bold">
                     <IoMdFlame className="mr-2 h-full max-h-8 w-full max-w-8 text-xl text-white" />
                     Access Denied
                   </div>
                   <p className="text-sm">
                     Your session has expired. Please sign-in and try again.
                   </p>
-                </>
+                </div>
               );
             case 403:
               return (
-                <>
-                  <div className="flex flex-row text-sm font-bold">
+                <div className="flex flex-col">
+                  <div className="flex flex-row items-center text-sm font-bold">
                     <IoMdFlame className="mr-2 h-full max-h-8 w-full max-w-8 text-xl text-white" />
                     Access Denied
                   </div>
@@ -37,26 +37,26 @@ export const ApiErrors: Props = ({ error }) => {
                     You don&apos;t have access to perform this action. Please
                     contact us to request access.
                   </p>
-                </>
+                </div>
               );
             case 500:
               return (
-                <>
-                  <div className="flex flex-row text-sm font-bold">
+                <div className="flex flex-col">
+                  <div className="flex flex-row items-center text-sm font-bold">
                     <IoMdFlame className="mr-2 h-full max-h-8 w-full max-w-8 text-xl text-white" />
-                    Access Denied
+                    Error
                   </div>
                   <p className="text-sm">
                     An unknown error has occurred. Please contact us or try
                     again later. ☹️
                   </p>
-                </>
+                </div>
               );
             default:
               if (customErrors?.length === 0) {
                 return (
-                  <>
-                    <div className="flex flex-row text-sm font-bold">
+                  <div className="flex flex-col">
+                    <div className="flex flex-row items-center text-sm font-bold">
                       <IoMdFlame className="mr-2 h-full max-h-8 w-full max-w-8 text-xl text-white" />
                       Error
                     </div>
@@ -64,12 +64,12 @@ export const ApiErrors: Props = ({ error }) => {
                       An unknown error has occurred. Please contact us or try
                       again later. ☹️
                     </p>
-                  </>
+                  </div>
                 );
               }
               if (customErrors?.length === 1) {
                 return (
-                  <div className="flex flex-row text-sm font-bold">
+                  <div className="flex flex-row items-center text-sm font-bold">
                     <IoMdFlame className="mr-2 h-full max-h-8 w-full max-w-8 text-xl text-white" />
                     {customErrors[0]?.message}
                   </div>
@@ -77,8 +77,8 @@ export const ApiErrors: Props = ({ error }) => {
               }
               if (customErrors?.length > 1) {
                 return (
-                  <>
-                    <div className="flex flex-row text-sm font-bold">
+                  <div className="flex flex-col">
+                    <div className="flex flex-row items-center text-sm font-bold">
                       <IoMdFlame className="mr-2 h-full max-h-8 w-full max-w-8 text-xl text-white" />
                       The following errors occurred:
                     </div>
@@ -89,20 +89,20 @@ export const ApiErrors: Props = ({ error }) => {
                         </li>
                       ))}
                     </ul>
-                  </>
+                  </div>
                 );
               }
               return null;
           }
         })()}
-      </>
+      </div>
     );
   }
 
   const axiosErrors = error as AxiosError;
   if (axiosErrors?.isAxiosError) {
     return (
-      <div className="flex flex-row text-sm font-bold">
+      <div className="flex flex-row items-center text-sm font-bold">
         <IoMdFlame className="mr-2 text-xl text-white" />
         {axiosErrors.message}
       </div>
@@ -110,7 +110,7 @@ export const ApiErrors: Props = ({ error }) => {
   }
 
   return (
-    <div className="flex flex-row text-sm font-bold">
+    <div className="flex flex-row items-center text-sm font-bold">
       <IoMdFlame className="mr-2 text-xl text-white" />
       Unknown error: {JSON.stringify(error)}
     </div>
