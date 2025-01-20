@@ -55,12 +55,14 @@ public class TokenCodeResource {
             throw new BadRequestException("Phone number is invalid");
         }
 
-        // everybody phones authenticator send AUTH code
-        if (!TokenCodeType.REGISTRATION.equals(tokenCodeType)
-                && !TokenCodeType.AUTH.equals(tokenCodeType)
-                && !TokenCodeType.VERIFY.equals(tokenCodeType)
-                && Utils.findUserByPhone(session, session.getContext().getRealm(), phoneNumber).isEmpty()) {
-            throw new ForbiddenException("Phone number not found");
+        // check if phone number exists
+        boolean phoneNumberExists = !Utils.findUserByPhone(session, session.getContext().getRealm(), phoneNumber).isEmpty();
+
+        // check if the phone number is valid for the requested operation
+        if ((TokenCodeType.AUTH.equals(tokenCodeType) || TokenCodeType.RESET.equals(tokenCodeType)) && !phoneNumberExists) {
+            throw new ForbiddenException("We can't find your number, sign up first if you haven't.");
+        } else if (TokenCodeType.REGISTRATION.equals(tokenCodeType) && phoneNumberExists) {
+            throw new ForbiddenException("This phone number is already registered. Sign in or use a different number.");
         }
 
         logger.info(String.format("Requested %s code to %s", tokenCodeType.label, phoneNumber));
