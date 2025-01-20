@@ -19,7 +19,7 @@
                   <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("enterPhoneNumber")}</label>
 
                   <!-- INPUT: phone number -->
-                  <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel" placeholder="+27"
+                  <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel"
                     aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
                     v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
                 </div>
