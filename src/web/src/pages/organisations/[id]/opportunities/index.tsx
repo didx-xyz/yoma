@@ -21,6 +21,7 @@ import {
   IoIosWarning,
   IoMdAddCircle,
   IoMdCloudUpload,
+  IoMdEye,
   IoMdEyeOff,
 } from "react-icons/io";
 import { toast } from "react-toastify";
@@ -742,11 +743,23 @@ const Opportunities: NextPageWithLayout<{
                             <OpportunityStatus
                               status={opportunity?.status?.toString()}
                             />
+                          </div>
+                        </div>
+
+                        <div className="flex justify-between">
+                          <p className="text-sm tracking-wider">Visible</p>
+                          <div className="flex justify-start gap-2">
                             {opportunity?.hidden && (
-                              <div className="badge bg-red-400 text-red-800">
-                                <IoMdEyeOff />
-                                <span className="ml-1 text-xs">Hidden</span>
-                              </div>
+                              <span className="badge bg-blue-light text-gray-dark">
+                                <IoMdEyeOff className="mr-1 text-sm" />
+                                Hidden
+                              </span>
+                            )}
+                            {!opportunity?.hidden && (
+                              <span className="badge bg-blue-light text-black">
+                                <IoMdEye className="mr-1 text-sm" />
+                                Visible
+                              </span>
                             )}
                           </div>
                         </div>
@@ -756,7 +769,7 @@ const Opportunities: NextPageWithLayout<{
                 </div>
 
                 {/* DEKSTOP */}
-                <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table">
+                <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table md:table-auto">
                   <thead>
                     <tr className="border-gray text-gray-dark">
                       <th className="border-b-2 border-gray-light !py-4">
@@ -783,12 +796,15 @@ const Opportunities: NextPageWithLayout<{
                       <th className="border-b-2 border-gray-light text-start">
                         Status
                       </th>
+                      <th className="border-b-2 border-gray-light text-center">
+                        Visible
+                      </th>
                     </tr>
                   </thead>
                   <tbody>
                     {opportunities.items.map((opportunity) => (
                       <tr key={`md_${opportunity.id}`}>
-                        <td className="truncate border-b-2 border-gray-light md:max-w-[240px] lg:max-w-[550px]">
+                        <td className="truncate border-b-2 border-gray-light md:max-w-[200px] lg:max-w-[500px]">
                           <Link
                             href={`/organisations/${id}/opportunities/${
                               opportunity.id
@@ -811,7 +827,7 @@ const Opportunities: NextPageWithLayout<{
                             </button>
                           )}
                         </td>
-                        <td className="w-28 border-b-2 border-gray-light text-center">
+                        <td className="w-24 border-b-2 border-gray-light text-center">
                           <div className="flex flex-col">
                             {opportunity.zltoReward && (
                               <span className="badge bg-orange-light px-4 text-orange">
@@ -869,16 +885,27 @@ const Opportunities: NextPageWithLayout<{
                             </Link>
                           )}
                         </td>
-                        <td className="flex gap-2 border-b-2 border-gray-light text-center">
+                        <td className="border-b-2 border-gray-light text-center">
                           <OpportunityStatus
                             status={opportunity?.status?.toString()}
                           />
-
+                        </td>
+                        <td className="border-b-2 border-gray-light text-center">
                           {opportunity?.hidden && (
-                            <div className="badge bg-red-400 text-red-800">
-                              <IoMdEyeOff />
-                              <span className="ml-1 text-xs">Hidden</span>
-                            </div>
+                            <span
+                              className="tooltip tooltip-left tooltip-secondary"
+                              data-tip="Hidden"
+                            >
+                              <IoMdEyeOff className="size-5 text-gray-dark" />
+                            </span>
+                          )}
+                          {!opportunity?.hidden && (
+                            <span
+                              className="tooltip tooltip-left tooltip-secondary"
+                              data-tip="Visible"
+                            >
+                              <IoMdEye className="size-5 text-black" />
+                            </span>
                           )}
                         </td>
                       </tr>
