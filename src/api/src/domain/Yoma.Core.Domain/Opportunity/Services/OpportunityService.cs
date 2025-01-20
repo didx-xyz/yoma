@@ -1879,17 +1879,29 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (existingByExternalId == null)
       {
         isNew = true;
-        request = new OpportunityRequestCreate { PostAsActive = !dateEnd.HasValue || dateEnd.Value > DateTimeOffset.UtcNow };
+        request = new OpportunityRequestCreate
+        {
+          PostAsActive = !dateEnd.HasValue || dateEnd.Value > DateTimeOffset.UtcNow,
+          VerificationMethod = VerificationMethod.Automatic,
+          SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default")
+        };
       }
       else
-        request = new OpportunityRequestUpdate { Id = existingByExternalId.Id };
+      {
+        request = new OpportunityRequestUpdate
+        {
+          Id = existingByExternalId.Id,
+          VerificationMethod = !existingByExternalId.VerificationMethod.HasValue ? VerificationMethod.Automatic : existingByExternalId.VerificationMethod.Value, //preserve existing method if set
+          SSISchemaName = string.IsNullOrEmpty(existingByExternalId.SSISchemaName) ? SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default") : existingByExternalId.SSISchemaName //preserve existing schema if set
+        };
+      }
 
       //defualts 
       request.OrganizationId = organizationId;
+      //VerificationMethod: see above
       request.VerificationEnabled = true;
-      request.VerificationMethod = VerificationMethod.Automatic;
       request.CredentialIssuanceEnabled = true;
-      request.SSISchemaName = SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default");
+      //SSISchemaName: see above
 
       //imported
       request.Title = item.Title;
