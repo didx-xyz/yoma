@@ -17,117 +17,144 @@
         <input type="hidden" id="phoneNumberAsUsername" name="phoneNumberAsUsername" v-model="phoneNumberAsUsername">
         <input type="hidden" id="isCodeSent" name="isCodeSent" v-model="isCodeSent">
 
-        <!-- Email Input -->
-        <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: phoneNumberAsUsername ? 'none' : 'block' }">
-          <label for="email" class="${properties.kcLabelClass!}">${msg("enterEmail")}</label>
+        <!-- PatternFly tabs for email/phone toggle -->
+        <div class="pf-c-tabs pf-m-fill" id="register-tabs">
+          <button class="pf-c-tabs__scroll-button" type="button" disabled aria-hidden="true" aria-label="Scroll left">
+            <i class="fa fa-angle-left" aria-hidden="true"></i>
+          </button>
 
-          <input type="text" id="email" class="${properties.kcInputClass!}" name="email" placeholder="example@email.com"
-            autocomplete="email" :aria-invalid="!!messageEmailError"
-            v-model="email" />
+          <ul class="pf-c-tabs__list">
+            <li class="pf-c-tabs__item" :class="{ 'pf-m-current': !phoneNumberAsUsername }">
+              <button class="pf-c-tabs__link" type="button" @click="phoneNumberAsUsername = false" :aria-selected="!phoneNumberAsUsername" aria-controls="emailPanel" id="email-tab-link">
+                <span class="pf-c-tabs__item-icon">
+                  <i class="fa fa-envelope" aria-hidden="true"></i>
+                </span>
+                <span class="pf-c-tabs__item-text">${msg("email")}</span>
+              </button>
+            </li>
 
-          <#-- LABEL: email error -->
-          <div v-if="messageEmailError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-            {{ messageEmailError }}
-          </div>
+            <li class="pf-c-tabs__item text">
+              ${msg("orText")}
+            </li>
 
-          <#-- LINK: use phone -->
-          <div class="form-link" style="margin-top: 0.8rem" v-on:click="phoneNumberAsUsername = true" tabindex="0">
-            <span class="icon">📲</span>
-            <span class="text">${msg("phoneNumberAsUsername")}</span>
-          </div>
+            <li class="pf-c-tabs__item" :class="{ 'pf-m-current': phoneNumberAsUsername }">
+              <button class="pf-c-tabs__link" type="button" @click="phoneNumberAsUsername = true" :aria-selected="phoneNumberAsUsername" aria-controls="phonePanel" id="phone-tab-link">
+                <span class="pf-c-tabs__item-icon">
+                  <i class="fa fa-phone" aria-hidden="true"></i>
+                </span>
+                <span class="pf-c-tabs__item-text">${msg("phone")}</span>
+              </button>
+            </li>
+          </ul>
+
+          <button class="pf-c-tabs__scroll-button" type="button" disabled aria-hidden="true" aria-label="Scroll right">
+            <i class="fa fa-angle-right" aria-hidden="true"></i>
+          </button>
         </div>
 
-        <!-- Phone Number Input -->
-        <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: phoneNumberAsUsername ? 'block' : 'none' }">
-          <div v-bind:style="{ display: !isCodeSent && !phoneVerified ? 'block' : 'none' }">
-            <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("enterPhoneNumber")}</label>
+        <!-- Email tab content -->
+        <div class="pf-c-tab-content" v-show="!phoneNumberAsUsername" id="emailPanel">
+          <div class="pf-c-tab-content__body">
+            <div class="${properties.kcFormGroupClass!}">
+              <label for="email" class="${properties.kcLabelClass!}">${msg("enterEmail")}</label>
 
-            <!-- INPUT: phone number -->
-            <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel"
-              aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
-              v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input :disabled="phoneVerified" />
-          </div>
+              <input type="text" id="email" class="${properties.kcInputClass!}" name="email"
+                placeholder="example@email.com" autocomplete="email"
+                :aria-invalid="!!messageEmailError" v-model="email" />
 
-          <#-- LABEL: phone number error -->
-          <div v-if="messagePhoneNumberError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-            {{ messagePhoneNumberError }}
-          </div>
-
-          <#-- LABEL: code send success -->
-          <span v-if="isCodeSent && !phoneVerified && !messagePhoneNumberError" aria-live="polite" style="color: green;">
-            <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
-          </span>
-
-          <#-- LABEL: phone number verified -->
-          <div v-bind:style="{ display: phoneVerified && !messagePhoneNumberError ? 'block' : 'none' }">
-            <span style="color: green;"><span style="margin-right: 5px;">✅</span> {{ messagePhoneVerified }}</span>
-          </div>
-
-          <div style="margin-top: 0.8rem">
-            <#-- LINK: use email -->
-            <div v-if="!isCodeSent" class="form-link" v-on:click="phoneNumberAsUsername = false" tabindex="0">
-              <span class="icon">📩</span>
-              <span class="text">${msg("emailAsUsername")}</span>
-            </div>
-
-            <#-- LINK: change phone number -->
-            <div v-if="isCodeSent || phoneVerified" class="form-link" v-on:click="clearAndFocusPhoneNumber" tabindex="0">
-              <span class="icon">🔃</span>
-              <span class="text">${msg("changePhoneNumber")}</span>
+              <div v-if="messageEmailError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                {{ messageEmailError }}
+              </div>
             </div>
           </div>
         </div>
 
-        <#if verifyPhone??>
-          <div v-bind:style="{ display: phoneNumberAsUsername && !phoneVerified ? 'block' : 'none', marginTop: '2rem' }">
-            <#-- BUTTON: send code -->
-            <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
-              <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}"
-                type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
-            </div>
+        <!-- Phone tab content -->
+        <div class="pf-c-tab-content" v-show="phoneNumberAsUsername" id="phonePanel">
+          <div class="pf-c-tab-content__body">
+            <div class="${properties.kcFormGroupClass!}">
+              <div v-bind:style="{ display: !isCodeSent && !phoneVerified ? 'block' : 'none' }">
+                <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("enterPhoneNumber")}</label>
 
-            <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: isCodeSent ? 'block' : 'none' }">
-              <label for="code" class="${properties.kcLabelClass!}">${msg("enterCode")}</label>
-
-              <!-- INPUT: verification code -->
-              <div v-otp-input>
-                <div id="otp-input">
-                  <input
-                    type="text"
-                    maxlength="1"
-                    pattern="[0-9]*"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    placeholder="_"
-                    v-for="(n, index) in 6"
-                    :key="index"
-                  />
-                </div>
-                <input
-                  type="text"
-                  name="code"
-                  id="code"
-                  autocomplete="one-time-code"
-                  inputmode="numeric"
-                  style="position: absolute; left: -9999px;"
-                />
+                <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel"
+                  aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>"
+                  autocomplete="mobile tel" v-model="phoneNumber"
+                  @input="resetPhoneVerification" v-intl-tel-input :disabled="phoneVerified" />
               </div>
 
-              <#if messagesPerField.existsError('code')>
-                <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                  ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
-                </div>
-              </#if>
+              <div v-if="messagePhoneNumberError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                {{ messagePhoneNumberError }}
+              </div>
 
-              <!-- BUTTON: confirm code (submit) -->
-              <div style="margin-top: 30px;">
-                <div id="kc-form-buttons">
-                  <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg('confirmCode')}" v-on:click="confirmCode" />
+              <span v-if="isCodeSent && !phoneVerified && !messagePhoneNumberError" aria-live="polite" style="color: green;">
+                <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
+              </span>
+
+              <div v-bind:style="{ display: phoneVerified && !messagePhoneNumberError ? 'block' : 'none' }">
+                <span style="color: green;"><span style="margin-right: 5px;">✅</span> {{ messagePhoneVerified }}</span>
+              </div>
+
+              <div v-if="isCodeSent || phoneVerified" style="margin-top: 0.8rem">
+                <div class="form-link" v-on:click="clearAndFocusPhoneNumber" tabindex="0">
+                  <span class="icon">🔃</span>
+                  <span class="text">${msg("changePhoneNumber")}</span>
                 </div>
               </div>
             </div>
+
+            <#if verifyPhone??>
+              <!-- Phone verification -->
+              <div v-bind:style="{ display: !phoneVerified ? 'block' : 'none', marginTop: '2rem' }">
+                <#-- BUTTON: send code -->
+                <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
+                  <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}"
+                    type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
+                </div>
+
+                <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: isCodeSent ? 'block' : 'none' }">
+                  <label for="code" class="${properties.kcLabelClass!}">${msg("enterCode")}</label>
+
+                  <!-- INPUT: verification code -->
+                  <div v-otp-input>
+                    <div id="otp-input">
+                      <input
+                        type="text"
+                        maxlength="1"
+                        pattern="[0-9]*"
+                        inputmode="numeric"
+                        autocomplete="off"
+                        placeholder="_"
+                        v-for="(n, index) in 6"
+                        :key="index"
+                      />
+                    </div>
+                    <input
+                      type="text"
+                      name="code"
+                      id="code"
+                      autocomplete="one-time-code"
+                      inputmode="numeric"
+                      style="position: absolute; left: -9999px;"
+                    />
+                  </div>
+
+                  <#if messagesPerField.existsError('code')>
+                    <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                      ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
+                    </div>
+                  </#if>
+
+                  <!-- BUTTON: confirm code (submit) -->
+                  <div style="margin-top: 30px;">
+                    <div id="kc-form-buttons">
+                      <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg('confirmCode')}" v-on:click="confirmCode" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </#if>
           </div>
-        </#if>
+        </div>
 
         <div v-bind:style="{ display: !phoneNumberAsUsername || (phoneNumberAsUsername && phoneVerified) ? 'block' : 'none'}">
 
@@ -232,11 +259,11 @@
             </div>
           </#if>
 
-          <#--  <div v-if="isSubmitAttempted && !isFormValid" class="centered-div">
+          <#--<div v-if="isSubmitAttempted && !isFormValid" class="centered-div">
             <span class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
                 ${msg("invalidForm")}
             </span>
-          </div>  -->
+          </div>-->
 
           <!-- Submit Button -->
           <div id="kc-form-buttons">

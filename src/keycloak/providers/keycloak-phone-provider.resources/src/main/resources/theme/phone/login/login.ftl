@@ -32,129 +32,169 @@
                   <input type="hidden" id="isCodeSent" name="isCodeSent" v-model="isCodeSent">
                 </#if>
 
-                <div <#if !usernameHidden?? && supportPhone??> v-if="!phoneActivated" </#if>>
-                  <#if !usernameHidden??>
-                    <div class="${properties.kcFormGroupClass!}">
-                      <label class="${properties.kcLabelClass!}">${msg("username")}</label>
+                <!-- PatternFly tabs to toggle between password and phone login -->
+                <div class="pf-c-tabs pf-m-fill" id="login-tabs">
+                  <button class="pf-c-tabs__scroll-button" type="button" disabled aria-hidden="true" aria-label="Scroll left">
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                  </button>
 
-                      <input tabindex="0" id="username" class="${properties.kcInputClass!}" name="username" type="text" autocomplete="username"
-                        aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterEmailOrPhoneNumber')}"
-                        v-model="username" />
-
-                      <!-- Error messages -->
-                      <#if messagesPerField.existsError('username','password')>
-                        <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                          ${kcSanitize(messagesPerField.getFirstError('username','password'))?no_esc}
+                  <ul class="pf-c-tabs__list">
+                    <li class="pf-c-tabs__item" :class="{ 'pf-m-current': !phoneActivated }">
+                      <button class="pf-c-tabs__link" type="button" @click="phoneActivated = false" :aria-selected="!phoneActivated" aria-controls="passwordPanel" id="password-tab-link">
+                        <span class="pf-c-tabs__item-icon">
+                          <i class="fa fa-key" aria-hidden="true"></i>
                         </span>
-                      </#if>
-                    </div>
-                  </#if>
+                        <span class="pf-c-tabs__item-text">${msg("password")}</span>
+                      </button>
+                    </li>
 
-                  <div class="${properties.kcFormGroupClass!}">
-                    <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
+                    <li class="pf-c-tabs__item text">
+                      ${msg("orText")}
+                    </li>
 
-                    <div class="password-container">
-                      <input tabindex="0" id="password" class="${properties.kcInputClass!}" name="password" type="password" autocomplete="current-password"
-                        aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterPassword')}"
-                        v-password-enhancements="{ allowToggle: true, allowCopy: false, allowPasswordIndicator: false }" />
-                    </div>
+                    <li class="pf-c-tabs__item" :class="{ 'pf-m-current': phoneActivated }">
+                      <button class="pf-c-tabs__link" type="button" @click="phoneActivated = true" :aria-selected="phoneActivated" aria-controls="phonePanel" id="phone-tab-link">
+                        <span class="pf-c-tabs__item-icon">
+                          <i class="fa fa-phone" aria-hidden="true"></i>
+                        </span>
+                        <span class="pf-c-tabs__item-text">${msg("phone")}</span>
+                      </button>
+                    </li>
+                  </ul>
 
-                    <#if usernameHidden?? && messagesPerField.existsError('username','password')>
-                      <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                        ${kcSanitize(messagesPerField.getFirstError('username','password'))?no_esc}
-                      </span>
-                    </#if>
-                  </div>
-
-                  <#-- LINK: use phone -->
-                  <div class="form-link" v-on:click="phoneActivated = true" tabindex="0" style="margin-bottom: 2rem">
-                    <span class="icon">📲</span>
-                    <span class="text">${msg("signInWithPhone")}</span>
-                  </div>
+                  <button class="pf-c-tabs__scroll-button" type="button" disabled aria-hidden="true" aria-label="Scroll right">
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                  </button>
                 </div>
 
-                <#if !usernameHidden?? && supportPhone??>
-                  <div :style="{ display: phoneActivated ? 'block' : 'none' }">
-                    <div class="${properties.kcFormGroupClass!}">
-                      <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
-                        <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("enterPhoneNumber")}</label>
+                <!-- Password tab content -->
+                <div class="pf-c-tab-content" v-show="!phoneActivated" id="passwordPanel">
+                  <div class="pf-c-tab-content__body">
+                    <div <#if !usernameHidden?? && supportPhone??> </#if>>
+                      <#if !usernameHidden??>
+                        <div class="${properties.kcFormGroupClass!}">
+                          <label class="${properties.kcLabelClass!}">${msg("username")}</label>
 
-                        <!-- INPUT: phone number -->
-                        <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel"
-                          aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
-                          v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
-                      </div>
+                          <input tabindex="0" id="username" class="${properties.kcInputClass!}" name="username" type="text" autocomplete="username"
+                            aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterEmailOrPhoneNumber')}"
+                            v-model="username" />
 
-                      <#-- LABEL: phone number error -->
-                      <div v-if="messagePhoneNumberError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                        {{ messagePhoneNumberError }}
-                      </div>
+                          <!-- Error messages -->
+                          <#if messagesPerField.existsError('username','password')>
+                            <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                              ${kcSanitize(messagesPerField.getFirstError('username','password'))?no_esc}
+                            </span>
+                          </#if>
+                        </div>
+                      </#if>
 
-                      <#-- LABEL: code send success -->
-                      <span v-if="isCodeSent && !messagePhoneNumberError" aria-live="polite" style="color: green;">
-                        <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
-                      </span>
+                      <div class="${properties.kcFormGroupClass!}">
+                        <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
 
-                      <div style="margin-top: 0.8rem">
-                        <#-- LINK: use password -->
-                        <div v-if="!isCodeSent" class="form-link" v-on:click="phoneActivated = false" tabindex="0">
-                          <span class="icon">🔑</span>
-                          <span class="text">${msg("signInWithPassword")}</span>
+                        <div class="password-container">
+                          <input tabindex="0" id="password" class="${properties.kcInputClass!}" name="password" type="password" autocomplete="current-password"
+                            aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterPassword')}"
+                            v-password-enhancements="{ allowToggle: true, allowCopy: false, allowPasswordIndicator: false }" />
                         </div>
 
-                        <#-- LINK: change phone number -->
-                        <div v-if="isCodeSent" class="form-link" v-on:click="clearAndFocusPhoneNumber" tabindex="0">
-                          <span class="icon">🔃</span>
-                          <span class="text">${msg("changePhoneNumber")}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div v-bind:style="{ display: phoneActivated ? 'block' : 'none', marginTop: '2rem' }">
-                      <#-- BUTTON: send code -->
-                      <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
-                        <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}"
-                          type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
-                      </div>
-
-                      <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: isCodeSent ? 'block' : 'none' }">
-                        <label for="code" class="${properties.kcLabelClass!}">${msg("enterCode")}</label>
-
-                        <!-- INPUT: verification code -->
-                        <div v-otp-input>
-                          <div id="otp-input">
-                            <input
-                              type="text"
-                              maxlength="1"
-                              pattern="[0-9]*"
-                              inputmode="numeric"
-                              autocomplete="off"
-                              placeholder="_"
-                              v-for="(n, index) in 6"
-                              :key="index"
-                            />
-                          </div>
-                          <input
-                            type="text"
-                            name="code"
-                            id="code"
-                            autocomplete="one-time-code"
-                            inputmode="numeric"
-                            style="position: absolute; left: -9999px;"
-                          />
-                        </div>
-
-                        <#if messagesPerField.existsError('code')>
-                          <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                            ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
-                          </div>
+                        <#if usernameHidden?? && messagesPerField.existsError('username','password')>
+                          <span id="input-error" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                            ${kcSanitize(messagesPerField.getFirstError('username','password'))?no_esc}
+                          </span>
                         </#if>
                       </div>
                     </div>
-                  </div>
-                </#if>
 
-                <div v-bind:style="{ display: !phoneActivated || (phoneActivated && isCodeSent) ? 'block' : 'none'}">
+                    <div v-bind:style="{ display: !isCodeSent ? 'none' : 'block' }">
+                      <div id="kc-form-buttons">
+                        <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if> />
+                        <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit" value="${msg('doLogIn')}" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Phone tab content -->
+                <div class="pf-c-tab-content" v-show="phoneActivated" id="phonePanel">
+                  <div class="pf-c-tab-content__body">
+                    <#if !usernameHidden?? && supportPhone??>
+
+                        <div class="${properties.kcFormGroupClass!}">
+                          <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
+                            <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("enterPhoneNumber")}</label>
+
+                            <!-- INPUT: phone number -->
+                            <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel"
+                              aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
+                              v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
+                          </div>
+
+                          <#-- LABEL: phone number error -->
+                          <div v-if="messagePhoneNumberError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                            {{ messagePhoneNumberError }}
+                          </div>
+
+                          <#-- LABEL: code send success -->
+                          <span v-if="isCodeSent && !messagePhoneNumberError" aria-live="polite" style="color: green;">
+                            <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
+                          </span>
+
+                          <div style="margin-top: 0.8rem">
+                            <#-- LINK: change phone number -->
+                            <div v-if="isCodeSent" class="form-link" v-on:click="clearAndFocusPhoneNumber" tabindex="0">
+                              <span class="icon">🔃</span>
+                              <span class="text">${msg("changePhoneNumber")}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div style="margin-top: 2rem;">
+                          <#-- BUTTON: send code -->
+                          <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
+                            <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}"
+                              type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
+                          </div>
+
+                          <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: isCodeSent ? 'block' : 'none' }">
+                            <label for="code" class="${properties.kcLabelClass!}">${msg("enterCode")}</label>
+
+                            <!-- INPUT: verification code -->
+                            <div v-otp-input>
+                              <div id="otp-input">
+                                <input
+                                  type="text"
+                                  maxlength="1"
+                                  pattern="[0-9]*"
+                                  inputmode="numeric"
+                                  autocomplete="off"
+                                  placeholder="_"
+                                  v-for="(n, index) in 6"
+                                  :key="index"
+                                />
+                              </div>
+                              <input
+                                type="text"
+                                name="code"
+                                id="code"
+                                autocomplete="one-time-code"
+                                inputmode="numeric"
+                                style="position: absolute; left: -9999px;"
+                              />
+                            </div>
+
+                            <#if messagesPerField.existsError('code')>
+                              <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                                ${kcSanitize(messagesPerField.getFirstError('code'))?no_esc}
+                              </div>
+                            </#if>
+                          </div>
+                        </div>
+
+                    </#if>
+                  </div>
+                </div>
+
+                <div v-if="!phoneActivated || (phoneActivated && isCodeSent)">
                   <#--  <#if realm.rememberMe && !usernameHidden??>
                     <div class="centered-div">
                       <div class="centered-checkbox">
@@ -217,6 +257,12 @@
                     const format = '${msg("codeSent")}'; // '{0} has been verified'
                     return format.replace('{0}', this.maskedPhoneNumber);
                   },
+                  messageSignInWithPassword() {
+                    return '${msg("signInWithPassword")}';
+                  },
+                  messageChangePhoneNumber() {
+                    return '${msg("changePhoneNumber")}';
+                  },
                 },
                 methods: {
                   req(phoneNumber) {
@@ -228,7 +274,13 @@
                           this.clearMessages();
                           this.isCodeSent = true;
                         })
-                      .catch(e => this.messagePhoneNumberError = e.response.data.error);
+                      .catch(e => {
+                        if (e.response.data.error && e.response.data.error.includes('OTP')) {
+                            this.isCodeSent = true;
+                            this.disableSend(e.response.data.expires_in || 300); // 5 minutes default
+                        }
+                        this.messagePhoneNumberError = e.response.data.error;
+                      });
                   },
                   disableSend(seconds) {
                     if (this.resetSendCodeButton) {
