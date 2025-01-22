@@ -33,22 +33,38 @@
                 </#if>
 
                 <!-- PatternFly tabs to toggle between password and phone login -->
-                <div class="pf-c-tabs" id="login-tabs">
+                <div class="pf-c-tabs pf-m-fill" id="login-tabs">
+                  <button class="pf-c-tabs__scroll-button" type="button" disabled aria-hidden="true" aria-label="Scroll left">
+                    <i class="fa fa-angle-left" aria-hidden="true"></i>
+                  </button>
+
                   <ul class="pf-c-tabs__list">
                     <li class="pf-c-tabs__item" :class="{ 'pf-m-current': !phoneActivated }">
-                      <button class="pf-c-tabs__link" type="button" @click="phoneActivated = false" :aria-selected="!phoneActivated" aria-controls="passwordPanel">
-                        <span class="pf-c-tabs__item-text">🔑 ${msg("password")}</span>
+                      <button class="pf-c-tabs__link" type="button" @click="phoneActivated = false" :aria-selected="!phoneActivated" aria-controls="passwordPanel" id="password-tab-link">
+                        <span class="pf-c-tabs__item-icon">
+                          <i class="fa fa-key" aria-hidden="true"></i>
+                        </span>
+                        <span class="pf-c-tabs__item-text">${msg("password")}</span>
                       </button>
                     </li>
+
                     <li class="pf-c-tabs__item text">
-                      OR
+                      ${msg("orText")}
                     </li>
+
                     <li class="pf-c-tabs__item" :class="{ 'pf-m-current': phoneActivated }">
-                      <button class="pf-c-tabs__link" type="button" @click="phoneActivated = true" :aria-selected="phoneActivated" aria-controls="phonePanel">
-                        <span class="pf-c-tabs__item-text">📲 ${msg("phone")}</span>
+                      <button class="pf-c-tabs__link" type="button" @click="phoneActivated = true" :aria-selected="phoneActivated" aria-controls="phonePanel" id="phone-tab-link">
+                        <span class="pf-c-tabs__item-icon">
+                          <i class="fa fa-phone" aria-hidden="true"></i>
+                        </span>
+                        <span class="pf-c-tabs__item-text">${msg("phone")}</span>
                       </button>
                     </li>
                   </ul>
+
+                  <button class="pf-c-tabs__scroll-button" type="button" disabled aria-hidden="true" aria-label="Scroll right">
+                    <i class="fa fa-angle-right" aria-hidden="true"></i>
+                  </button>
                 </div>
 
                 <!-- Password tab content -->

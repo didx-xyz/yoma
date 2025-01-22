@@ -568,10 +568,20 @@ a:focus {
 }
 
 .pf-c-tabs__item.text {
+  justify-content: center;
   align-items: center;
   padding: 0px 15px;
 }
 
+.pf-c-tabs.pf-m-fill .pf-c-tabs__item {
+  border-radius: 5px;
+}
+
 .pf-c-tabs__link {
   font-size: 14px;
+}
+
+/* Make all icons blue when tab is selected */
+.pf-c-tabs__item.pf-m-current .pf-c-tabs__item-icon i {
+  color: #06c;
 }
