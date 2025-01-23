@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.MyOpportunity;
@@ -65,11 +66,17 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         VerificationStatusId = entity.VerificationStatusId,
         VerificationStatus = entity.VerificationStatus != null ? Enum.Parse<VerificationStatus>(entity.VerificationStatus.Name, true) : null,
         CommentVerification = entity.CommentVerification,
+        CommitmentIntervalId = entity.CommitmentIntervalId,
+        CommitmentInterval = entity.CommitmentInterval != null ? Enum.Parse<TimeIntervalOption>(entity.CommitmentInterval.Name, true) : null,
+        CommitmentIntervalCount = entity.CommitmentIntervalCount,
         DateStart = entity.DateStart,
         DateEnd = entity.DateEnd,
         DateCompleted = entity.DateCompleted,
         ZltoReward = entity.ZltoReward,
         YomaReward = entity.YomaReward,
+        Recommendable = entity.Recommendable,
+        StarRating = entity.StarRating,
+        Feedback = entity.Feedback,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified,
         Verifications = entity.Verifications == null ? null : includeChildItems ?
@@ -108,11 +115,15 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         ActionId = item.ActionId,
         VerificationStatusId = item.VerificationStatusId,
         CommentVerification = item.CommentVerification,
+        CommitmentIntervalId = item.CommitmentIntervalId,
         DateStart = item.DateStart,
         DateEnd = item.DateEnd,
         DateCompleted = item.DateCompleted,
         ZltoReward = item.ZltoReward,
         YomaReward = item.YomaReward,
+        Recommendable = item.Recommendable,
+        StarRating = item.StarRating,
+        Feedback = item.Feedback,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified,
       };
@@ -138,11 +149,16 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
           ActionId = item.ActionId,
           VerificationStatusId = item.VerificationStatusId,
           CommentVerification = item.CommentVerification,
+          CommitmentIntervalId = item.CommitmentIntervalId,
+          CommitmentIntervalCount = item.CommitmentIntervalCount,
           DateStart = item.DateStart,
           DateEnd = item.DateEnd,
           DateCompleted = item.DateCompleted,
           ZltoReward = item.ZltoReward,
           YomaReward = item.YomaReward,
+          Recommendable = item.Recommendable,
+          StarRating = item.StarRating,
+          Feedback = item.Feedback,
           DateCreated = DateTimeOffset.UtcNow,
           DateModified = DateTimeOffset.UtcNow,
         });
@@ -171,11 +187,16 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
       entity.ActionId = item.ActionId;
       entity.VerificationStatusId = item.VerificationStatusId;
       entity.CommentVerification = item.CommentVerification;
+      entity.CommitmentIntervalId = item.CommitmentIntervalId;
+      entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
       entity.DateStart = item.DateStart;
       entity.DateEnd = item.DateEnd;
       entity.DateCompleted = item.DateCompleted;
       entity.ZltoReward = item.ZltoReward;
       entity.YomaReward = item.YomaReward;
+      entity.Recommendable = item.Recommendable;
+      entity.StarRating = item.StarRating;
+      entity.Feedback = item.Feedback;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();
@@ -200,11 +221,16 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         entity.ActionId = item.ActionId;
         entity.VerificationStatusId = item.VerificationStatusId;
         entity.CommentVerification = item.CommentVerification;
+        entity.CommitmentIntervalId = item.CommitmentIntervalId;
+        entity.CommitmentIntervalCount = item.CommitmentIntervalCount;
         entity.DateStart = item.DateStart;
         entity.DateEnd = item.DateEnd;
         entity.DateCompleted = item.DateCompleted;
         entity.ZltoReward = item.ZltoReward;
         entity.YomaReward = item.YomaReward;
+        entity.Recommendable = item.Recommendable;
+        entity.StarRating = item.StarRating;
+        entity.Feedback = item.Feedback;
         entity.DateModified = item.DateModified;
       }
 

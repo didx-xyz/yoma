@@ -40,11 +40,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Extensions
         VerificationStatusId = value.VerificationStatusId,
         VerificationStatus = value.VerificationStatus,
         CommentVerification = value.CommentVerification,
+        CommitmentInterval = value.CommitmentInterval,
+        CommitmentIntervalCount = value.CommitmentIntervalCount,
         DateStart = value.DateStart,
         DateEnd = value.DateEnd,
         DateCompleted = value.DateCompleted,
         ZltoReward = value.ZltoReward,
         YomaReward = value.YomaReward,
+        Recommendable = value.Recommendable,
+        StarRating = value.StarRating,
+        Feedback = value.Feedback,
         DateModified = value.DateModified,
         Verifications = value.Verifications?.Select(o =>
             new MyOpportunityInfoVerification

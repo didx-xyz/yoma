@@ -54,7 +54,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       RuleFor(x => x.Description).NotEmpty();
       RuleFor(x => x.TypeId).NotEmpty().Must(TypeExists).WithMessage($"Specified type is invalid / does not exist.");
       RuleFor(x => x.OrganizationId).NotEmpty().Must(OrganizationActive).WithMessage("The selected organization is either invalid or inactive.");
-      RuleFor(x => x.Summary).NotEmpty().Length(1, 150).WithMessage("'{PropertyName}' must be between 1 and 150 characters.");
+      RuleFor(x => x.Summary).NotEmpty().Length(1, 150).WithMessage("'{PropertyName}' is required and must be between 1 and 150 characters.");
       //instructions (varchar(max); auto trimmed
       RuleFor(x => x.URL).Length(1, 2048).Must(ValidURL).When(x => !string.IsNullOrEmpty(x.URL)).WithMessage("'{PropertyName}' must be between 1 and 2048 characters long and be a valid URL if specified.");
 

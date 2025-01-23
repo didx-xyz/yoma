@@ -3,13 +3,15 @@ using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
+using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups;
 
 namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
 {
   [Table("MyOpportunity", Schema = "Opportunity")]
   [Index(nameof(UserId), nameof(OpportunityId), nameof(ActionId), IsUnique = true)]
-  [Index(nameof(VerificationStatusId), nameof(DateCompleted), nameof(ZltoReward), nameof(YomaReward), nameof(DateCreated), nameof(DateModified))]
+  [Index(nameof(VerificationStatusId), nameof(DateStart), nameof(DateEnd), nameof(DateCompleted), nameof(ZltoReward), nameof(YomaReward),
+    nameof(Recommendable), nameof(StarRating), nameof(DateCreated), nameof(DateModified))]
   public class MyOpportunity : BaseEntity<Guid>
   {
     [Required]
@@ -34,6 +36,12 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
     [Column(TypeName = "varchar(500)")]
     public string? CommentVerification { get; set; }
 
+    [ForeignKey("CommitmentIntervalId")]
+    public Guid? CommitmentIntervalId { get; set; }
+    public TimeInterval? CommitmentInterval { get; set; }
+
+    public short? CommitmentIntervalCount { get; set; }
+
     public DateTimeOffset? DateStart { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }
@@ -45,6 +53,14 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
 
     [Column(TypeName = "decimal(8,2)")]
     public decimal? YomaReward { get; set; }
+
+    public bool? Recommendable { get; set; }
+
+    public byte? StarRating { get; set; }
+
+    //support specials characters like emojis  
+    [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(500)
+    public string? Feedback { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }
