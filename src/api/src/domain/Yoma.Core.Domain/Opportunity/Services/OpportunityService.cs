@@ -1891,7 +1891,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         request = new OpportunityRequestUpdate
         {
           Id = existingByExternalId.Id,
-          VerificationMethod = !existingByExternalId.VerificationMethod.HasValue ? VerificationMethod.Automatic : existingByExternalId.VerificationMethod.Value, //preserve existing method if set
+          VerificationMethod = existingByExternalId.VerificationMethod ?? VerificationMethod.Automatic, //preserve existing method if set
           SSISchemaName = string.IsNullOrEmpty(existingByExternalId.SSISchemaName) ? SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default") : existingByExternalId.SSISchemaName //preserve existing schema if set
         };
       }

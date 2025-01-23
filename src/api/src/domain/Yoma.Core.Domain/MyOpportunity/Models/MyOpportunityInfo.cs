@@ -93,6 +93,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     [Name("Comment")]
     public string? CommentVerification { get; set; }
 
+    [Name("Completion Interval")]
+    public Core.TimeIntervalOption? CommitmentInterval { get; set; }
+
+    [Name("Completion Interval Count")]
+    public short? CommitmentIntervalCount { get; set; }
+
     [Name("Date Start")]
     public DateTimeOffset? DateStart { get; set; }
 
@@ -107,6 +113,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     [Ignore] //reserved for future use
     public decimal? YomaReward { get; set; }
+
+    [Ignore]
+    public bool? Recommendable { get; set; }
+
+    [Ignore]
+    public byte? StarRating { get; set; }
+
+    [Name("Feedback")]
+    public string? Feedback { get; set; }
 
     [Name("Date Connected")]
     public DateTimeOffset DateModified { get; set; }

@@ -28,6 +28,23 @@ namespace Yoma.Core.Domain.Lookups.Helpers
       return minutes;
     }
 
+    public static (TimeIntervalOption Interval, short Count) ConvertToCommitmentInterval(DateTimeOffset dateStart, DateTimeOffset dateEnd)
+    {
+      if (dateEnd < dateStart)
+        throw new ArgumentOutOfRangeException(nameof(dateEnd), "End date is earlier than the start date");
+
+      var totalMinutes = (dateEnd - dateStart).TotalMinutes;
+
+      return totalMinutes switch
+      {
+        < 60 => (TimeIntervalOption.Minute, (short)Math.Round(totalMinutes)),
+        < 60 * 24 => (TimeIntervalOption.Hour, (short)Math.Round(totalMinutes / 60)),
+        < 60 * 24 * 7 => (TimeIntervalOption.Day, (short)Math.Round(totalMinutes / (60 * 24))),
+        < 60 * 24 * 30 => (TimeIntervalOption.Week, (short)Math.Round(totalMinutes / (60 * 24 * 7))),
+        _ => (TimeIntervalOption.Month, (short)Math.Round(totalMinutes / (60 * 24 * 30))),
+      };
+    }
+
     public static int GetOrder(string intervalAsString)
     {
       if (Enum.TryParse<TimeIntervalOption>(intervalAsString, out var interval))

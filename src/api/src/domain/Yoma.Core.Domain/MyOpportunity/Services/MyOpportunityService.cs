@@ -36,6 +36,8 @@ using CsvHelper.Configuration.Attributes;
 using System.Globalization;
 using System.Reflection;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Lookups.Helpers;
+using Yoma.Core.Domain.Lookups.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -60,6 +62,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly ICountryService _countryService;
     private readonly IGenderService _genderService;
+    private readonly ITimeIntervalService _timeIntervalService;
     private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
     private readonly MyOpportunityRequestValidatorVerifyFinalize _myOpportunityRequestValidatorVerifyFinalize;
@@ -94,6 +97,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         INotificationDeliveryService notificationDeliveryService,
         ICountryService countryService,
         IGenderService genderService,
+        ITimeIntervalService timeIntervalService,
         MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
         MyOpportunityRequestValidatorVerifyFinalize myOpportunityRequestValidatorVerifyFinalize,
@@ -121,6 +125,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _notificationDeliveryService = notificationDeliveryService;
       _countryService = countryService;
       _genderService = genderService;
+      _timeIntervalService = timeIntervalService;
       _myOpportunitySearchFilterValidator = myOpportunitySearchFilterValidator;
       _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
       _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize;
@@ -1261,33 +1266,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return $"Opportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again";
     }
 
-    private async Task PerformActionSendForVerification(User user, Guid opportunityId, MyOpportunityRequestVerify request, VerificationMethod? requiredVerificationMethod)
+    private void PerformActionSendForVerificationParseCommitment(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity)
     {
-      ArgumentNullException.ThrowIfNull(request, nameof(request));
-
-      await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
-
       if (request.DateStart.HasValue) request.DateStart = request.DateStart.RemoveTime();
       if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.ToEndOfDay();
-
-      //provided opportunity is published (and started) or expired
-      var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
-      var canSendForVerification = opportunity.Status == Status.Expired;
-      if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
-      if (!canSendForVerification)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be sent for verification"));
-
-      if (!opportunity.VerificationEnabled)
-        throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
-
-      if (!opportunity.VerificationMethod.HasValue)
-        throw new DataInconsistencyException($"Data inconsistency detected: The opportunity '{opportunity.Title}' has verification enabled, but no verification method is set");
-
-      if (opportunity.VerificationMethod == VerificationMethod.Manual && (opportunity.VerificationTypes == null || opportunity.VerificationTypes.Count == 0))
-        throw new DataInconsistencyException("Manual verification enabled but opportunity has no mapped verification types");
-
-      if (requiredVerificationMethod.HasValue && opportunity.VerificationMethod != requiredVerificationMethod.Value)
-        throw new ValidationException($"Opportunity '{opportunity.Title}' cannot be completed / requires verification method {requiredVerificationMethod}");
 
       if (request.DateStart.HasValue && request.DateStart.Value < opportunity.DateStart)
         throw new ValidationException($"Start date can not be earlier than the opportunity start date of '{opportunity.DateStart:yyyy-MM-dd}'");
@@ -1300,6 +1282,65 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         if (request.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
           throw new ValidationException($"End date cannot be in the future. Please select today's date or earlier");
       }
+
+      TimeInterval? timeInterval;
+
+      //validation should ensure either the start date or commitment interval is provided; failsafe ensuring commitement takes preference
+      if (request.CommitmentInterval != null)
+      {
+        if (!request.DateEnd.HasValue) return;
+
+        timeInterval = _timeIntervalService.GetById(request.CommitmentInterval.Id);
+
+        request.CommitmentInterval.Option = Enum.Parse<TimeIntervalOption>(timeInterval.Name, true);
+
+        var totalMinutes = TimeIntervalHelper.ConvertToMinutes(timeInterval.Name, request.CommitmentInterval.Count);
+        request.DateStart = request.DateEnd.Value.AddMinutes(-totalMinutes).RemoveTime();
+
+        return;
+      }
+
+      //validation should ensure both start (provided no commitment was specified) and end dates are provided; failsafe by not setting commitement if not provided
+      if (!request.DateStart.HasValue || !request.DateEnd.HasValue) return;
+
+      var (Interval, Count) = TimeIntervalHelper.ConvertToCommitmentInterval(request.DateStart.Value, request.DateEnd.Value);
+
+      timeInterval = _timeIntervalService.GetByName(Interval.ToString());
+
+      request.CommitmentInterval = new MyOpportunityRequestVerifyCommitmentInterval
+      {
+        Id = timeInterval.Id,
+        Count = Count,
+        Option = Enum.Parse<TimeIntervalOption>(timeInterval.Name, true)
+      };
+    }
+
+    private async Task PerformActionSendForVerification(User user, Guid opportunityId, MyOpportunityRequestVerify request, VerificationMethod? requiredVerificationMethod)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
+
+      //provided opportunity is published (and started) or expired
+      var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
+      var canSendForVerification = opportunity.Status == Status.Expired;
+      if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
+      if (!canSendForVerification)
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be sent for verification"));
+
+      PerformActionSendForVerificationParseCommitment(request, opportunity);
+
+      if (!opportunity.VerificationEnabled)
+        throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
+
+      if (!opportunity.VerificationMethod.HasValue)
+        throw new DataInconsistencyException($"Data inconsistency detected: The opportunity '{opportunity.Title}' has verification enabled, but no verification method is set");
+
+      if (opportunity.VerificationMethod == VerificationMethod.Manual && (opportunity.VerificationTypes == null || opportunity.VerificationTypes.Count == 0))
+        throw new DataInconsistencyException("Manual verification enabled but opportunity has no mapped verification types");
+
+      if (requiredVerificationMethod.HasValue && opportunity.VerificationMethod != requiredVerificationMethod.Value)
+        throw new ValidationException($"Opportunity '{opportunity.Title}' cannot be completed / requires verification method {requiredVerificationMethod}");
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       var verificationStatusPendingId = _myOpportunityVerificationStatusService.GetByName(VerificationStatus.Pending.ToString()).Id;
@@ -1337,8 +1378,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
 
       myOpportunity.VerificationStatusId = verificationStatusPendingId;
+      myOpportunity.CommitmentIntervalId = request.CommitmentInterval?.Id;
+      myOpportunity.CommitmentIntervalCount = request.CommitmentInterval?.Count;
+      myOpportunity.CommitmentInterval = request.CommitmentInterval?.Option;
       myOpportunity.DateStart = request.DateStart;
       myOpportunity.DateEnd = request.DateEnd;
+      myOpportunity.Recommendable = request.Recommendable;
+      myOpportunity.StarRating = request.StarRating;
+      myOpportunity.Feedback = request.Feedback;
 
       await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, isNew);
 

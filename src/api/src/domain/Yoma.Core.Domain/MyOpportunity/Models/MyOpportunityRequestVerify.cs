@@ -18,6 +18,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public DateTimeOffset? DateEnd { get; set; }
 
+    public MyOpportunityRequestVerifyCommitmentInterval? CommitmentInterval { get; set; }
+
+    public bool? Recommendable { get; set; }
+
+    public byte? StarRating { get; set; }
+
+    public string? Feedback { get; set; }
+
     [JsonIgnore]
     internal bool OverridePending { get; set; }
 
