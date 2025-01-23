@@ -19,6 +19,7 @@ import {
 import {
   IoIosLink,
   IoMdDownload,
+  IoMdEye,
   IoMdEyeOff,
   IoMdPerson,
 } from "react-icons/io";
@@ -759,11 +760,23 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               <OpportunityStatus
                                 status={opportunity?.status?.toString()}
                               />
+                            </div>
+                          </div>
+
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">Visible</p>
+                            <div className="flex justify-start gap-2">
                               {opportunity?.hidden && (
-                                <div className="badge bg-red-400 text-red-800">
-                                  <IoMdEyeOff />
-                                  <span className="ml-1 text-xs">Hidden</span>
-                                </div>
+                                <span className="badge bg-blue-light text-gray-dark">
+                                  <IoMdEyeOff className="mr-1 text-sm" />
+                                  Hidden
+                                </span>
+                              )}
+                              {!opportunity?.hidden && (
+                                <span className="badge bg-blue-light text-black">
+                                  <IoMdEye className="mr-1 text-sm" />
+                                  Visible
+                                </span>
                               )}
                             </div>
                           </div>
@@ -773,7 +786,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   </div>
 
                   {/* DESKTOP */}
-                  <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table">
+                  <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table md:table-auto">
                     <thead>
                       <tr className="!border-gray-light text-gray-dark">
                         <th className="border-b-2 border-gray-light !py-4">
@@ -791,12 +804,15 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                         <th className="border-b-2 border-gray-light text-start">
                           Status
                         </th>
+                        <th className="border-b-2 border-gray-light text-center">
+                          Visible
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {searchResults.items.map((opportunity) => (
                         <tr key={`md_${opportunity.id}`}>
-                          <td className="truncate border-b-2 border-gray-light md:max-w-[240px] lg:max-w-[550px]">
+                          <td className="truncate border-b-2 border-gray-light md:max-w-[220px] lg:max-w-[525px]">
                             <Link
                               href={`/organisations/${
                                 opportunity.organizationId
@@ -856,12 +872,23 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             <OpportunityStatus
                               status={opportunity?.status?.toString()}
                             />
-
+                          </td>
+                          <td className="border-b-2 border-gray-light text-center">
                             {opportunity?.hidden && (
-                              <div className="badge bg-red-400 text-red-800">
-                                <IoMdEyeOff />
-                                <span className="ml-1 text-xs">Hidden</span>
-                              </div>
+                              <span
+                                className="tooltip tooltip-left tooltip-secondary"
+                                data-tip="Hidden"
+                              >
+                                <IoMdEyeOff className="size-5 text-gray-dark" />
+                              </span>
+                            )}
+                            {!opportunity?.hidden && (
+                              <span
+                                className="tooltip tooltip-left tooltip-secondary"
+                                data-tip="Visible"
+                              >
+                                <IoMdEye className="size-5 text-black" />
+                              </span>
                             )}
                           </td>
                         </tr>

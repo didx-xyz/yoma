@@ -119,8 +119,14 @@ html:has(body.content-overflow-y) {
 .rssas-circle {
   background: theme("colors.purple") !important;
 }
+
+/* Hide the scrollbar on the slider tray */
 .rssas-slider-tray {
-  overflow-x: hidden !important;
+  &::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
 }
 
 /* Adjust Z-Index for Feedback Button */
