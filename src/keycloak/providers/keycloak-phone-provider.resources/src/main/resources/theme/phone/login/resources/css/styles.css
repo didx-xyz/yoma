@@ -15,10 +15,6 @@ body {
   right: 20px;
 }
 
-.login-pf-page .login-pf-header {
-  margin-bottom: -20px !important;
-}
-
 .login-pf-page .login-pf-page-header::before {
   content: "";
   display: inline-block;
@@ -542,46 +538,4 @@ a:focus {
   .password-container i {
     left: 20px;
   }
-}
-
-/* tabs */
-.pf-c-tabs {
-  display: flex;
-  justify-content: center;
-  /* background-color: #f9f9f9; */
-  border-radius: 6px;
-  margin-bottom: 1rem;
-}
-
-.pf-c-tabs::before {
-  border: none !important;
-}
-
-.pf-c-tabs__item {
-  text-align: center;
-  padding: 0.5rem 0.5rem;
-  transition: background-color 0.2s ease-in-out;
-}
-
-.pf-c-tabs__item:hover {
-  background-color: #e2e2e2;
-}
-
-.pf-c-tabs__item.text {
-  justify-content: center;
-  align-items: center;
-  padding: 0px 15px;
-}
-
-.pf-c-tabs.pf-m-fill .pf-c-tabs__item {
-  border-radius: 5px;
-}
-
-.pf-c-tabs__link {
-  font-size: 14px;
-}
-
-/* Make all icons blue when tab is selected */
-.pf-c-tabs__item.pf-m-current .pf-c-tabs__item-icon i {
-  color: #06c;
 }
