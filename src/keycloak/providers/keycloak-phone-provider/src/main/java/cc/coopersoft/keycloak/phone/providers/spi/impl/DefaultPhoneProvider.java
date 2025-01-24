@@ -15,6 +15,7 @@ import cc.coopersoft.keycloak.phone.providers.representations.TokenCodeRepresent
 import cc.coopersoft.keycloak.phone.providers.spi.MessageSenderService;
 import cc.coopersoft.keycloak.phone.providers.spi.PhoneProvider;
 import cc.coopersoft.keycloak.phone.providers.spi.PhoneVerificationCodeProvider;
+import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.ServiceUnavailableException;
 
@@ -126,7 +127,9 @@ public class DefaultPhoneProvider implements PhoneProvider {
         TokenCodeRepresentation ongoing = getTokenCodeService().ongoingProcess(phoneNumber, type);
         if (ongoing != null) {
             logger.info(String.format("No need of sending a new %s code for %s", type.label, phoneNumber));
-            return (int) (ongoing.getExpiresAt().getTime() - Instant.now().toEpochMilli()) / 1000;
+            int expiryTime = (int) ((ongoing.getExpiresAt().getTime() - Instant.now().toEpochMilli()) / 1000);
+
+            throw new BadRequestException(String.format("%d", expiryTime));
         }
 
         TokenCodeRepresentation token = TokenCodeRepresentation.forPhoneNumber(phoneNumber);
