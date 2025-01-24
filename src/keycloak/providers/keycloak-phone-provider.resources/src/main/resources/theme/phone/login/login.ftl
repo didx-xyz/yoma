@@ -114,11 +114,11 @@
                         <#-- LINK: change phone number / send again (start over) -->
                         <div v-if="codeSendStatus !== 'NOT_SENT'">
                           <a v-if="codeSendStatus === 'EXPIRED'" v-on:click="clearAndFocusPhoneNumber(false)" tabindex="0">
-                            <i class="link-icon fa fa-key" aria-hidden="true"></i>
+                            <i class="link-icon fa fa-undo" aria-hidden="true"></i>
                             <span class="link-text">${msg("codeSendAgain")}</span>
                           </a>
                           <a v-else v-on:click="clearAndFocusPhoneNumber(true)" tabindex="0">
-                            <i class="link-icon fa fa-phone" aria-hidden="true"></i>
+                            <i class="link-icon fa fa-undo" aria-hidden="true"></i>
                             <span class="link-text">${msg("changePhoneNumber")}</span>
                           </a>
                         </div>
