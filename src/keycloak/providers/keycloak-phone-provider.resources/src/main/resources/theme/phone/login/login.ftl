@@ -30,6 +30,7 @@
                 <#if !usernameHidden?? && supportPhone??>
                   <input type="hidden" id="phoneActivated" name="phoneActivated" v-model="phoneActivated">
                   <input type="hidden" id="codeSendStatus" name="codeSendStatus" v-model="codeSendStatus">
+                  <input type="hidden" id="codeExpiresIn" name="codeExpiresIn" v-model="codeExpiresIn">
                 </#if>
 
                 <div <#if !usernameHidden?? && supportPhone??> v-if="!phoneActivated" </#if>>
@@ -129,7 +130,7 @@
                       <#-- BUTTON: send code -->
                       <div v-bind:style="{ display: codeSendStatus === 'NOT_SENT' ? 'block' : 'none' }">
                         <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}"
-                          type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
+                            type="button" value="${msg('sendVerificationCode')}" v-on:click="sendVerificationCode()" />
                       </div>
 
                       <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: codeSendStatus !== 'NOT_SENT' ? 'block' : 'none' }">
@@ -223,13 +224,18 @@
                   username: '${login.username!}' ,
                   phoneNumber: '${attemptedPhoneNumber!}',
                   phoneActivated: <#if attemptedPhoneActivated??>true<#else>false</#if>,
-                  sendButtonText: '${msg("sendVerificationCode")}',
-                  initSendButtonText: '${msg("sendVerificationCode")}',
+                  //sendButtonText: '${msg("sendVerificationCode")}',
+                  //initSendButtonText: '${msg("sendVerificationCode")}',
                   messagePhoneNumberError: <#if messagesPerField.existsError('phoneNumber')>'${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}'<#else>''</#if>,
                   KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
                   resetSendCodeButton: false,
                   codeSendStatus: <#if codeSendStatus??>'${codeSendStatus}'<#else>'NOT_SENT'</#if>,
-                  expires_in: 0,
+                  codeExpiresIn: <#if codeExpiresIn??>${codeExpiresIn}<#else>0</#if>,
+                },
+                mounted() {
+                    if (this.codeExpiresIn > 0) {
+                        this.countDownExpiresIn(this.codeExpiresIn);
+                    }
                 },
                 computed: {
                   maskedPhoneNumber() {
@@ -237,8 +243,8 @@
                     return this.phoneNumber.substring(0, 3) + ' **** ' + this.phoneNumber.substring(this.phoneNumber.length - 2);
                   },
                   formattedCountdown() {
-                    const minutes = Math.floor(this.expires_in / 60);
-                    const seconds = this.expires_in % 60;
+                    const minutes = Math.floor(this.codeExpiresIn / 60);
+                    const seconds = this.codeExpiresIn % 60;
                     return minutes + ':' + seconds.toString().padStart(2, '0');
                   },
                   codeSendStatusAlertConfig() {
@@ -261,7 +267,7 @@
                       'EXPIRED': {
                         message: "${msg('codeExpired')?no_esc}",
                         icon: 'fa-clock',
-                        type: 'pf-m-custom'
+                        type: 'pf-m-danger'
                       }
                     };
 
@@ -303,7 +309,7 @@
                   countDownExpiresIn(seconds) {
                     clearTimeout(this.countdownTimer);
 
-                    this.expires_in = Math.max(0, seconds);
+                    this.codeExpiresIn = Math.max(0, seconds);
 
                     if (seconds > 0) {
                       this.countdownTimer = setTimeout(() => {
@@ -326,7 +332,7 @@
                       return;
                     }
 
-                    if (this.sendButtonText !== this.initSendButtonText) return;
+                    //if (this.sendButtonText !== this.initSendButtonText) return;
                     this.req(fullPhoneNumber);
                   },
                   onSubmit(event) {
@@ -368,6 +374,9 @@
 
                       // Set the field value for the full phone number (this ensures the country code is always included)
                       input.value = fullPhoneNumber;
+
+                      // set the codeExpiresIn hidden input to the current expiration time
+                      document.querySelector('#codeExpiresIn').value = this.codeExpiresIn;
                     }
 
                     event.target.submit(); // Programmatically submit the form

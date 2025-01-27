@@ -35,6 +35,8 @@ public class SupportPhonePages {
 
     public static final String FIELD_SMS_CODE_SEND_STATUS = "codeSendStatus";
 
+    public static final String FIELD_SMS_CODE_EXPIRES_IN = "codeExpiresIn";
+
     public static final String FIELD_CANCEL = "cancel";
 
     public static final String ATTEMPTED_PHONE_NUMBER = "attemptedPhoneNumber";

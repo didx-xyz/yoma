@@ -16,7 +16,6 @@ import cc.coopersoft.keycloak.phone.providers.spi.MessageSenderService;
 import cc.coopersoft.keycloak.phone.providers.spi.PhoneProvider;
 import cc.coopersoft.keycloak.phone.providers.spi.PhoneVerificationCodeProvider;
 import jakarta.ws.rs.BadRequestException;
-import jakarta.ws.rs.ForbiddenException;
 import jakarta.ws.rs.ServiceUnavailableException;
 
 public class DefaultPhoneProvider implements PhoneProvider {
@@ -120,16 +119,19 @@ public class DefaultPhoneProvider implements PhoneProvider {
 
         logger.info("send code to:" + phoneNumber);
 
-        if (getTokenCodeService().isAbusing(phoneNumber, type, sourceAddr, sourceHourMaximum, targetHourMaximum)) {
-            throw new ForbiddenException("You requested the maximum number of messages the last hour");
-        }
+        // if (getTokenCodeService().isAbusing(phoneNumber, type, sourceAddr, sourceHourMaximum, targetHourMaximum)) {
+        //     throw new ForbiddenException("You have used your hourly limit of OTPs, please try again in an hour.");
+        // }
+        getTokenCodeService().isAbusing(phoneNumber, type, sourceAddr, sourceHourMaximum, targetHourMaximum);
 
         TokenCodeRepresentation ongoing = getTokenCodeService().ongoingProcess(phoneNumber, type);
         if (ongoing != null) {
             logger.info(String.format("No need of sending a new %s code for %s", type.label, phoneNumber));
             int expiryTime = (int) ((ongoing.getExpiresAt().getTime() - Instant.now().toEpochMilli()) / 1000);
 
+            // We have already sent an OTP to {0}, use this pin, or wait {1} before requesting a new one.
             throw new BadRequestException(String.format("%d", expiryTime));
+            //throw new BadRequestException(String.format("We have already sent an OTP to {0}, use this pin, or wait %d before requesting a new one.", expiryTime));
         }
 
         TokenCodeRepresentation token = TokenCodeRepresentation.forPhoneNumber(phoneNumber);

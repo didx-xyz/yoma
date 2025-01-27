@@ -40,6 +40,7 @@ import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePage
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTRIBUTE_SUPPORT_PHONE;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PATH_PHONE_ACTIVATED;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_SMS_CODE_EXPIRES_IN;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_SMS_CODE_SEND_STATUS;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_VERIFICATION_CODE;
 import cc.coopersoft.keycloak.phone.providers.constants.TokenCodeType;
@@ -148,6 +149,14 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
 
         // Set 'codeSendStatus' as a form attribute
         context.form().setAttribute(FIELD_SMS_CODE_SEND_STATUS, codeSendStatus);
+
+        // Set expires time if code was sent
+        if ("SENT".equals(codeSendStatus) || "ALREADY_SENT".equals(codeSendStatus)) {
+            String expiresIn = inputData.getFirst(FIELD_SMS_CODE_EXPIRES_IN);
+            if (expiresIn != null) {
+                context.form().setAttribute(FIELD_SMS_CODE_EXPIRES_IN, expiresIn);
+            }
+        }
 
         String phoneNumber = inputData.getFirst(FIELD_PHONE_NUMBER);
 
