@@ -105,7 +105,7 @@
                         </h4>
                       </div>
 
-                      <div style="margin-top: 0.8rem">
+                      <div class="links">
                         <#-- LINK: use password -->
                         <a v-if="codeSendStatus === 'NOT_SENT'" v-on:click="phoneActivated = false" tabindex="0">
                           <i class="link-icon fa fa-key" aria-hidden="true"></i>
@@ -224,8 +224,6 @@
                   username: '${login.username!}' ,
                   phoneNumber: '${attemptedPhoneNumber!}',
                   phoneActivated: <#if attemptedPhoneActivated??>true<#else>false</#if>,
-                  //sendButtonText: '${msg("sendVerificationCode")}',
-                  //initSendButtonText: '${msg("sendVerificationCode")}',
                   messagePhoneNumberError: <#if messagesPerField.existsError('phoneNumber')>'${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}'<#else>''</#if>,
                   KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
                   resetSendCodeButton: false,
@@ -332,7 +330,6 @@
                       return;
                     }
 
-                    //if (this.sendButtonText !== this.initSendButtonText) return;
                     this.req(fullPhoneNumber);
                   },
                   onSubmit(event) {

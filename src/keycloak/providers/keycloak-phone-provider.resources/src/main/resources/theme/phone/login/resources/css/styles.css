@@ -385,6 +385,10 @@ input[type="checkbox"] {
 }
 
 /* LINKS */
+.links {
+  margin-top: 0.8rem;
+}
+
 a {
   color: #387f6a;
   display: inline-flex;

@@ -1,5 +1,5 @@
 <#import "template.ftl" as layout>
-<@layout.registrationLayout displayInfo=true; section>
+<@layout.registrationLayout displayInfo=true displayMessage=!messagesPerField.existsError('code','phoneNumber'); section>
     <#if section = "header">
         ${msg("updatePhoneNumber")}
     <#elseif section = "form">
@@ -14,8 +14,12 @@
         <div id="kc-form">
           <div id="kc-form-wrapper">
             <form id="kc-form-login" action="${url.loginAction}" method="post" @submit="onSubmit">
+
+              <input type="hidden" id="codeSendStatus" name="codeSendStatus" v-model="codeSendStatus">
+              <input type="hidden" id="codeExpiresIn" name="codeExpiresIn" v-model="codeExpiresIn">
+
               <div class="${properties.kcFormGroupClass!}">
-                <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
+                <div v-bind:style="{ display: codeSendStatus === 'NOT_SENT' ? 'block' : 'none' }">
                   <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("enterPhoneNumber")}</label>
 
                   <!-- INPUT: phone number -->
@@ -24,38 +28,47 @@
                     v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
                 </div>
 
-                <#-- LABEL: code send success -->
-                <div v-if="isCodeSent" class="form-label" aria-live="polite" style="color: green;">
-                  <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
+                <#-- LABEL: phone number error -->
+                <div v-if="messagePhoneNumberError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
+                  {{ messagePhoneNumberError }}
                 </div>
 
-                <#-- LABEL: code send error -->
-                <div v-if="messageSendCodeError" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                  {{ messageSendCodeError }}
+                <#-- ALERT: code send status -->
+                <div v-if="codeSendStatus !== 'NOT_SENT' && !messagePhoneNumberError"
+                    class="pf-c-alert"
+                    :class="codeSendStatusAlertConfig.type"
+                    data-ouia-component-type="PF6/Alert"
+                    data-ouia-safe="true">
+                  <div class="pf-c-alert__icon">
+                    <i :class="['fa', codeSendStatusAlertConfig.icon]" aria-hidden="true"></i>
+                  </div>
+                  <h4 class="pf-c-alert__title">
+                    {{ codeSendStatusAlertConfig.message }}
+                  </h4>
                 </div>
 
-                <#if messagesPerField.existsError('phoneNumber')>
-                  <span id="input-error-phone" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                    ${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}
-                  </span>
-                </#if>
-
-                <div style="margin-top: 0.8rem">
-                  <#-- LINK: change phone number -->
-                  <div v-if="isCodeSent" class="form-link" v-on:click="clearAndFocusPhoneNumber" tabindex="0">
-                    <span class="icon">🔃</span>
-                    <span class="text">${msg("changePhoneNumber")}</span>
+                <div class="links">
+                  <#-- LINK: change phone number / send again (start over) -->
+                  <div v-if="codeSendStatus !== 'NOT_SENT'">
+                    <a v-if="codeSendStatus === 'EXPIRED'" v-on:click="clearAndFocusPhoneNumber(false)" tabindex="0">
+                      <i class="link-icon fa fa-undo" aria-hidden="true"></i>
+                      <span class="link-text">${msg("codeSendAgain")}</span>
+                    </a>
+                    <a v-else v-on:click="clearAndFocusPhoneNumber(true)" tabindex="0">
+                      <i class="link-icon fa fa-undo" aria-hidden="true"></i>
+                      <span class="link-text">${msg("changePhoneNumber")}</span>
+                    </a>
                   </div>
                 </div>
               </div>
 
               <#-- BUTTON: send code -->
-              <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
+              <div v-bind:style="{ display: codeSendStatus === 'NOT_SENT' ? 'block' : 'none' }">
                 <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}"
-                  type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
+                  type="button" value="${msg('sendVerificationCode')}" v-on:click="sendVerificationCode()" />
               </div>
 
-              <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: isCodeSent ? 'block' : 'none' }">
+              <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: codeSendStatus !== 'NOT_SENT' ? 'block' : 'none' }">
                 <label for="code" class="${properties.kcLabelClass!}">${msg("enterCode")}</label>
 
                 <!-- INPUT: verification code -->
@@ -89,7 +102,7 @@
                 </#if>
               </div>
 
-              <div v-bind:style="{ display: isCodeSent ? 'block' : 'none'}">
+              <div v-bind:style="{ display: codeSendStatus !== 'NOT_SENT' ? 'block' : 'none'}">
                 <div id="kc-form-buttons">
                   <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if>/>
                   <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
@@ -110,28 +123,71 @@
       </div>
 
       <script type="text/javascript">
+        const CODE_SEND_STATUS = {
+          NOT_SENT: 'NOT_SENT',
+          SENT: 'SENT',
+          ALREADY_SENT: 'ALREADY_SENT',
+          ERROR: 'ERROR',
+          EXPIRED: 'EXPIRED'
+        };
+
         const app = new Vue({
           el: '#vue-app',
           data: {
-            phoneNumber: '',
-            sendButtonText: '${msg("sendVerificationCode")}',
-            initSendButtonText: '${msg("sendVerificationCode")}',
-            messageSendCodeSuccess: '',
-            messageSendCodeError: '',
+            phoneNumber: '${phoneNumber!}',
+            messagePhoneNumberError: <#if messagesPerField.existsError('phoneNumber')>'${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}'<#else>''</#if>,
             resetSendCodeButton: false,
             KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
-            isCodeSent: false,
+            codeSendStatus: <#if codeSendStatus??>'${codeSendStatus}'<#else>'NOT_SENT'</#if>,
+            codeExpiresIn: <#if codeExpiresIn??>${codeExpiresIn}<#else>0</#if>,
             cancel: false,
+          },
+          mounted() {
+              if (this.codeExpiresIn > 0) {
+                  this.countDownExpiresIn(this.codeExpiresIn);
+              }
           },
           computed: {
             maskedPhoneNumber() {
               if (!this.phoneNumber) return '';
-              return this.phoneNumber.substring(0, 3) + ' **** ' +
-                    this.phoneNumber.substring(this.phoneNumber.length - 2);
+              return this.phoneNumber.substring(0, 3) + ' **** ' + this.phoneNumber.substring(this.phoneNumber.length - 2);
             },
-            messageCodeSent() {
-              const format = '${msg("codeSent")}'; // '{0} has been verified'
-              return format.replace('{0}', this.maskedPhoneNumber);
+            formattedCountdown() {
+              const minutes = Math.floor(this.codeExpiresIn / 60);
+              const seconds = this.codeExpiresIn % 60;
+              return minutes + ':' + seconds.toString().padStart(2, '0');
+            },
+            codeSendStatusAlertConfig() {
+                const configs = {
+                  'SENT': {
+                    message: "${msg('codeSent')?no_esc}",
+                    icon: 'fa-check-circle',
+                    type: 'pf-m-success'
+                  },
+                  'ALREADY_SENT': {
+                    message: "${msg('codeSentAlready')?no_esc}",
+                    icon: 'fa-exclamation-triangle',
+                    type: 'pf-m-warning'
+                  },
+                  'ERROR': {
+                    message: "${msg('codeSendError')?no_esc}",
+                    icon: 'fa-exclamation-circle',
+                    type: 'pf-m-danger'
+                  },
+                  'EXPIRED': {
+                    message: "${msg('codeExpired')?no_esc}",
+                    icon: 'fa-clock',
+                    type: 'pf-m-danger'
+                  }
+                };
+
+                const config = configs[this.codeSendStatus] || {};
+                if (config.message) {
+                  config.message = config.message
+                    .replace('{0}', this.maskedPhoneNumber)
+                    .replace('{1}', this.formattedCountdown);
+                }
+                return config;
             },
           },
           methods: {
@@ -140,43 +196,52 @@
               axios.get(window.location.origin + this.KC_HTTP_RELATIVE_PATH + '/realms/${realm.name}/sms/verification-code', params)
                 .then(res =>
                   {
-                    this.disableSend(res.data.expires_in);
-                    this.clearMessages();
-                    this.isCodeSent = true;
-                  })
-                .catch(e => this.messageSendCodeError = e.response.data.error);
-            },
-            disableSend(seconds) {
-              if (this.resetSendCodeButton) {
-                this.sendButtonText = this.initSendButtonText;
-                this.resetSendCodeButton = false;
-                return;
-              }
+                    // set code send status to SENT
+                    this.codeSendStatus = CODE_SEND_STATUS.SENT;
 
-              if (seconds <= 0) {
-                this.sendButtonText = this.initSendButtonText;
-              } else {
-                const minutes = Math.floor(seconds / 60) + '';
-                const seconds_ = seconds % 60 + '';
-                this.sendButtonText = String(minutes.padStart(2, '0') + ":" + seconds_.padStart(2, '0'));
-                setTimeout(() => {
-                  this.disableSend(seconds - 1);
+                    this.countDownExpiresIn(res.data.expires_in);
+                    this.clearMessages();
+                  })
+                  .catch(e => {
+                    if (e?.response?.status === 400) {
+                        // set code send status to ALREADY_SENT
+                        this.codeSendStatus = CODE_SEND_STATUS.ALREADY_SENT;
+
+                        this.countDownExpiresIn(e.response.data.error || 300); // 5 minutes default
+
+                        return;
+                    }
+
+                    // show server error
+                    this.messagePhoneNumberError = e.response.data.error;
+                  });
+            },
+            countDownExpiresIn(seconds) {
+              clearTimeout(this.countdownTimer);
+
+              this.codeExpiresIn = Math.max(0, seconds);
+
+              if (seconds > 0) {
+                this.countdownTimer = setTimeout(() => {
+                  this.countDownExpiresIn(seconds - 1);
                 }, 1000);
+              } else {
+                // set code send status to EXPIRED
+                this.codeSendStatus = CODE_SEND_STATUS.EXPIRED;
               }
             },
             sendVerificationCode() {
-              this.messageSendCodeError = '';
+              this.messagePhoneNumberError = '';
               const input = document.querySelector('#phoneNumber');
               const iti = intlTelInput.getInstance(input);
               const fullPhoneNumber = iti.getNumber();
 
               // Validate phone number
               if (!iti.isValidNumber()) {
-                this.messageSendCodeError = '${msg("invalidPhoneNumber")}';
+                this.messagePhoneNumberError = '${msg("invalidPhoneNumber")}';
                 return;
               }
 
-              if (this.sendButtonText !== this.initSendButtonText) return;
               this.req(fullPhoneNumber);
             },
             onSubmit() {
@@ -189,15 +254,19 @@
               // Set the field value for the full phone number (this ensures the country code is always included)
               input.value = fullPhoneNumber;
 
+              // set the codeExpiresIn hidden input to the current expiration time
+              document.querySelector('#codeExpiresIn').value = this.codeExpiresIn;
+
               event.target.submit(); // Programmatically submit the form
             },
             resetPhoneVerification() {
-              this.isCodeSent = false;
+              this.codeSendStatus = CODE_SEND_STATUS.NOT_SENT;
               this.resetSendCodeButton = true;
               this.clearMessages();
             },
-            clearAndFocusPhoneNumber() {
-              this.phoneNumber = '';
+            clearAndFocusPhoneNumber(clearPhoneNumber) {
+              if (clearPhoneNumber) this.phoneNumber = '';
+
               const phoneNumber = document.querySelector('#phoneNumber');
               if (phoneNumber) {
                 phoneNumber.focus();
@@ -206,7 +275,7 @@
               this.resetPhoneVerification();
             },
             clearMessages() {
-              this.messageSendCodeError = '';
+              this.messagePhoneNumberError = '';
 
               // clear server error messages
               const inputErrorPhone = document.querySelector('#input-error-phone');

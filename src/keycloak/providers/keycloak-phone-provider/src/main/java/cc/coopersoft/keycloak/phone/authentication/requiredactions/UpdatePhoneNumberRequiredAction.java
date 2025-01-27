@@ -3,17 +3,24 @@ package cc.coopersoft.keycloak.phone.authentication.requiredactions;
 import org.keycloak.authentication.RequiredActionContext;
 import org.keycloak.authentication.RequiredActionProvider;
 import org.keycloak.events.EventType;
+import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.KeycloakTransaction;
 import org.keycloak.models.UserModel;
+import org.keycloak.models.utils.FormMessage;
 import org.keycloak.services.validation.Validation;
 
 import cc.coopersoft.keycloak.phone.Utils;
 import cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_SMS_CODE_EXPIRES_IN;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_SMS_CODE_SEND_STATUS;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_VERIFICATION_CODE;
 import cc.coopersoft.keycloak.phone.providers.exception.PhoneNumberInvalidException;
 import cc.coopersoft.keycloak.phone.providers.spi.PhoneVerificationCodeProvider;
 import jakarta.ws.rs.BadRequestException;
 import jakarta.ws.rs.ForbiddenException;
+import jakarta.ws.rs.core.MultivaluedMap;
 import jakarta.ws.rs.core.Response;
 
 public class UpdatePhoneNumberRequiredAction implements RequiredActionProvider {
@@ -26,16 +33,7 @@ public class UpdatePhoneNumberRequiredAction implements RequiredActionProvider {
 
     @Override
     public void requiredActionChallenge(RequiredActionContext context) {
-        // Write out KC_HTTP_RELATIVE_PATH environment variable to the form (for client side requests)
-        String relativePath = "";
-        String envRelativePath = System.getenv("KC_HTTP_RELATIVE_PATH");
-        if (envRelativePath != null && !envRelativePath.isEmpty()) {
-            relativePath = envRelativePath;
-        }
-
-        Response challenge = context.form()
-                .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath)
-                .createForm("login-update-phone-number.ftl");
+        Response challenge = setFormAttributes(context).createForm("login-update-phone-number.ftl");
         context.challenge(challenge);
     }
 
@@ -48,6 +46,8 @@ public class UpdatePhoneNumberRequiredAction implements RequiredActionProvider {
             context.success();
             return;
         }
+
+        LoginFormsProvider form = setFormAttributes(context);
 
         PhoneVerificationCodeProvider phoneVerificationCodeProvider = context.getSession().getProvider(PhoneVerificationCodeProvider.class);
         String phoneNumber = context.getHttpRequest().getDecodedFormParameters().getFirst(SupportPhonePages.FIELD_PHONE_NUMBER);
@@ -67,11 +67,12 @@ public class UpdatePhoneNumberRequiredAction implements RequiredActionProvider {
             // Check for duplicate phone numbers if user's phone number has changed
             if (!canonicalPhoneNumber.equals(currentPhoneNumber) && Utils.findUserByPhone(session, context.getRealm(), canonicalPhoneNumber).isPresent()) {
                 // Handle duplicate phone number
-                Response challenge = context.form()
+                form
+                        .addError(new FormMessage(FIELD_PHONE_NUMBER, SupportPhonePages.Errors.EXISTS.message()))
                         .setAttribute("phoneNumber", canonicalPhoneNumber)
-                        .setError(SupportPhonePages.Errors.EXISTS.message())
+                        //.setError(SupportPhonePages.Errors.EXISTS.message())
                         .createForm("login-update-phone-number.ftl");
-                context.challenge(challenge);
+                context.challenge(form.createForm("login-update-phone-number.ftl"));
                 return;
             }
 
@@ -128,24 +129,26 @@ public class UpdatePhoneNumberRequiredAction implements RequiredActionProvider {
             context.success();
         } catch (BadRequestException e) {
             // Handle bad request
-            Response challenge = context.form()
+            Response challenge = form
                     .setError(SupportPhonePages.Errors.NO_PROCESS.message())
                     .createForm("login-update-phone-number.ftl");
             context.challenge(challenge);
 
         } catch (ForbiddenException e) {
             // Handle forbidden error (wrong code)
-            Response challenge = context.form()
+            Response challenge = form
                     .setAttribute("phoneNumber", phoneNumber)
-                    .setError(SupportPhonePages.Errors.NOT_MATCH.message())
+                    .addError(new FormMessage(FIELD_VERIFICATION_CODE, SupportPhonePages.Errors.NOT_MATCH.message()))
+                    //.setError(SupportPhonePages.Errors.NOT_MATCH.message())
                     .createForm("login-update-phone-number.ftl");
             context.challenge(challenge);
 
         } catch (PhoneNumberInvalidException e) {
             // Handle invalid phone number
-            Response challenge = context.form()
+            Response challenge = form
                     .setAttribute("phoneNumber", phoneNumber)
-                    .setError(e.getErrorType().message())
+                    .addError(new FormMessage(FIELD_PHONE_NUMBER, e.getErrorType().message()))
+                    // .setError(e.getErrorType().message())
                     .createForm("login-update-phone-number.ftl");
             context.challenge(challenge);
         }
@@ -153,5 +156,32 @@ public class UpdatePhoneNumberRequiredAction implements RequiredActionProvider {
 
     @Override
     public void close() {
+    }
+
+    private LoginFormsProvider setFormAttributes(RequiredActionContext context) {
+        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+
+        // Get codeSendStatus
+        String codeSendStatus = formData.getFirst(FIELD_SMS_CODE_SEND_STATUS);
+        if (codeSendStatus == null) {
+            codeSendStatus = "NOT_SENT";
+        }
+        // Get expiresIn if code was sent
+        String expiresIn = null;
+        if ("SENT".equals(codeSendStatus) || "ALREADY_SENT".equals(codeSendStatus)) {
+            expiresIn = formData.getFirst(FIELD_SMS_CODE_EXPIRES_IN);
+        }
+        // Get relative path
+        String relativePath = "";
+        String envRelativePath = System.getenv("KC_HTTP_RELATIVE_PATH");
+        if (envRelativePath != null && !envRelativePath.isEmpty()) {
+            relativePath = envRelativePath;
+        }
+        // Create form with all attributes in single chain
+        LoginFormsProvider form = context.form()
+                .setAttribute(FIELD_SMS_CODE_SEND_STATUS, codeSendStatus)
+                .setAttribute(FIELD_SMS_CODE_EXPIRES_IN, expiresIn)
+                .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath);
+        return form;
     }
 }
