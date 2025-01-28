@@ -25,7 +25,6 @@ namespace Yoma.Core.Domain.Entity.Services
   {
     #region Class Variables
     private readonly AppSettings _appSettings;
-    private readonly IIdentityProviderClient _identityProviderClient;
     private readonly IBlobService _blobService;
     private readonly IGenderService _genderService;
     private readonly ICountryService _countryService;
@@ -46,7 +45,6 @@ namespace Yoma.Core.Domain.Entity.Services
     #region Constructor
     public UserService(
         IOptions<AppSettings> appSettings,
-        IIdentityProviderClientFactory identityProviderClientFactory,
         IBlobService blobService,
         IGenderService genderService,
         ICountryService countryService,
@@ -64,7 +62,6 @@ namespace Yoma.Core.Domain.Entity.Services
         IExecutionStrategyService executionStrategyService)
     {
       _appSettings = appSettings.Value;
-      _identityProviderClient = identityProviderClientFactory.CreateClient();
       _blobService = blobService;
       _genderService = genderService;
       _countryService = countryService;

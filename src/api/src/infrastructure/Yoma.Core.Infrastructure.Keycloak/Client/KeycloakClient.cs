@@ -193,6 +193,33 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       }
     }
 
+    public async Task EnsureVerifyEmailActionRemovedIfNoEmail(Guid id)
+    {
+      using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
+
+      var userRepresentation = await userApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
+      _logger.LogInformation("Fetched user representation for user ID: {id} - RequiredActions: {actions}", id, string.Join(", ", userRepresentation.RequiredActions ?? Enumerable.Empty<string>()));
+
+      if (!string.IsNullOrEmpty(userRepresentation.Email))
+      {
+        _logger.LogInformation("No action required for user ID: {id} because email is not empty.", id);
+        return;
+      }
+
+      if (userRepresentation.RequiredActions == null || !userRepresentation.RequiredActions.Contains("VERIFY_EMAIL"))
+      {
+        _logger.LogInformation("No action required for user ID: {id} because 'VERIFY_EMAIL' is not present in RequiredActions.", id);
+        return;
+      }
+
+      userRepresentation.RequiredActions.Remove("VERIFY_EMAIL");
+      _logger.LogInformation("'VERIFY_EMAIL' action removed for user ID: {id}.", id);
+
+      // Persist the updated user representation
+      await userApi.PutUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString(), userRepresentation);
+      _logger.LogInformation("Updated user representation persisted for user ID: {id}.", id);
+    }
+
     public async Task EnsureRoles(Guid id, List<string> roles)
     {
       if (id == Guid.Empty)

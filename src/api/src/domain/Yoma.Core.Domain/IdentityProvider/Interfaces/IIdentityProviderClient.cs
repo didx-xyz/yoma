@@ -13,6 +13,8 @@ namespace Yoma.Core.Domain.IdentityProvider.Interfaces
 
     Task UpdateUser(User user, bool resetPassword, bool sendVerifyEmail, bool updatePhoneNumber);
 
+    Task EnsureVerifyEmailActionRemovedIfNoEmail(Guid id);
+
     Task EnsureRoles(Guid id, List<string> roles);
 
     Task RemoveRoles(Guid id, List<string> roles);
