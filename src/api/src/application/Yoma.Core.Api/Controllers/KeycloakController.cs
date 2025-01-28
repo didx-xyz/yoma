@@ -254,6 +254,15 @@ namespace Yoma.Core.Api.Controllers
           _logger.LogInformation("{type}: Updating user with username '{username}' - EmailConfirmed {emailConfirmed}", type, userRequest.Username, userRequest.EmailConfirmed);
           _logger.LogInformation("{type}: Updating user with username '{username}' - PhoneNumberConfirmed {phoneNumberConfirmed}", type, userRequest.Username, userRequest.PhoneNumberConfirmed);
 
+          try
+          {
+            await _identityProviderClient.EnsureVerifyEmailActionRemovedIfNoEmail(kcUser.Id);
+          }
+          catch (Exception ex)
+          {
+            _logger.LogError(ex, "Failed to remove the 'VERIFY_EMAIL' action for the newly registered user with username '{username}' when no email is provided.", userRequest.Username);
+          }
+
           await CreateWalletOrScheduleCreation(userRequest);
           await TrackLogin(payload, userRequest);
 
