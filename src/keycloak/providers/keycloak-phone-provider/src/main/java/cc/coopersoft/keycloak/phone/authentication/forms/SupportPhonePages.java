@@ -31,7 +31,9 @@ public class SupportPhonePages {
 
     public static final String FIELD_PATH_PHONE_ACTIVATED = "phoneActivated";
 
-    public static final String FIELD_PHONE_NUMBER_CODE_SENT = "isCodeSent";
+    public static final String FIELD_SMS_CODE_SEND_STATUS = "codeSendStatus";
+
+    public static final String FIELD_SMS_CODE_EXPIRES_IN = "codeExpiresIn";
 
     public static final String FIELD_CANCEL = "cancel";
 

@@ -15,7 +15,8 @@
       <form ref="form" @submit.prevent="confirmCode" id="kc-register-form" class="${properties.kcFormClass!}" action="${url.registrationAction}" method="post" @submit="onSubmit">
 
         <input type="hidden" id="phoneNumberAsUsername" name="phoneNumberAsUsername" v-model="phoneNumberAsUsername">
-        <input type="hidden" id="isCodeSent" name="isCodeSent" v-model="isCodeSent">
+        <input type="hidden" id="codeSendStatus" name="codeSendStatus" v-model="codeSendStatus">
+        <input type="hidden" id="codeExpiresIn" name="codeExpiresIn" v-model="codeExpiresIn">
 
         <!-- Email Input -->
         <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: phoneNumberAsUsername ? 'none' : 'block' }">
@@ -30,22 +31,25 @@
             {{ messageEmailError }}
           </div>
 
-          <#-- LINK: use phone -->
-          <div class="form-link" style="margin-top: 0.8rem" v-on:click="phoneNumberAsUsername = true" tabindex="0">
-            <span class="icon">📲</span>
-            <span class="text">${msg("phoneNumberAsUsername")}</span>
+
+          <div class="links">
+            <#-- LINK: use phone -->
+            <a v-on:click="phoneNumberAsUsername = true" tabindex="0">
+              <i aria-hidden="true" class="link-icon fa fa-phone"></i>
+              <span class="link-text">${msg("phoneNumberAsUsername")}</span>
+            </a>
           </div>
         </div>
 
         <!-- Phone Number Input -->
         <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: phoneNumberAsUsername ? 'block' : 'none' }">
-          <div v-bind:style="{ display: !isCodeSent && !phoneVerified ? 'block' : 'none' }">
+          <div v-bind:style="{ display: codeSendStatus === 'NOT_SENT' && !phoneVerified ? 'block' : 'none' }">
             <label for="phoneNumber" class="${properties.kcLabelClass!}">${msg("enterPhoneNumber")}</label>
 
             <!-- INPUT: phone number -->
             <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel"
               aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
-              v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input :disabled="phoneVerified" />
+              v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
           </div>
 
           <#-- LABEL: phone number error -->
@@ -53,27 +57,50 @@
             {{ messagePhoneNumberError }}
           </div>
 
-          <#-- LABEL: code send success -->
-          <span v-if="isCodeSent && !phoneVerified && !messagePhoneNumberError" aria-live="polite" style="color: green;">
-            <span style="margin-right: 5px;">✅</span> {{ messageCodeSent }}
-          </span>
-
-          <#-- LABEL: phone number verified -->
-          <div v-bind:style="{ display: phoneVerified && !messagePhoneNumberError ? 'block' : 'none' }">
-            <span style="color: green;"><span style="margin-right: 5px;">✅</span> {{ messagePhoneVerified }}</span>
+          <#-- ALERT: code send status -->
+          <div v-if="!phoneVerified && codeSendStatus !== 'NOT_SENT' && !messagePhoneNumberError"
+              class="pf-c-alert"
+              :class="codeSendStatusAlertConfig.type"
+              data-ouia-component-type="PF6/Alert"
+              data-ouia-safe="true">
+            <div class="pf-c-alert__icon">
+              <i :class="['fa', codeSendStatusAlertConfig.icon]" aria-hidden="true"></i>
+            </div>
+            <h4 class="pf-c-alert__title">
+              {{ codeSendStatusAlertConfig.message }}
+            </h4>
           </div>
 
-          <div style="margin-top: 0.8rem">
-            <#-- LINK: use email -->
-            <div v-if="!isCodeSent" class="form-link" v-on:click="phoneNumberAsUsername = false" tabindex="0">
-              <span class="icon">📩</span>
-              <span class="text">${msg("emailAsUsername")}</span>
+          <#-- ALERT: phone number verified -->
+          <div v-if="phoneVerified && !messagePhoneNumberError"
+              class="pf-c-alert pf-m-success"
+              data-ouia-component-type="PF6/Alert"
+              data-ouia-safe="true">
+            <div class="pf-c-alert__icon">
+              <i class="fa fa-check-circle" aria-hidden="true"></i>
             </div>
+            <h4 class="pf-c-alert__title">
+             {{ messagePhoneVerified }}
+            </h4>
+          </div>
 
-            <#-- LINK: change phone number -->
-            <div v-if="isCodeSent || phoneVerified" class="form-link" v-on:click="clearAndFocusPhoneNumber" tabindex="0">
-              <span class="icon">🔃</span>
-              <span class="text">${msg("changePhoneNumber")}</span>
+          <div class="links">
+            <#-- LINK: use email -->
+            <a v-if="codeSendStatus === 'NOT_SENT'" v-on:click="phoneNumberAsUsername = false" tabindex="0">
+              <i class="link-icon fa fa-key" aria-hidden="true"></i>
+              <span class="link-text">${msg("emailAsUsername")}</span>
+            </a>
+
+            <#-- LINK: change phone number / send again (start over) -->
+            <div v-if="codeSendStatus !== 'NOT_SENT'">
+              <a v-if="codeSendStatus === 'EXPIRED'" v-on:click="clearAndFocusPhoneNumber(false)" tabindex="0">
+                <i class="link-icon fa fa-undo" aria-hidden="true"></i>
+                <span class="link-text">${msg("codeSendAgain")}</span>
+              </a>
+              <a v-else v-on:click="clearAndFocusPhoneNumber(true)" tabindex="0">
+                <i class="link-icon fa fa-undo" aria-hidden="true"></i>
+                <span class="link-text">${msg("changePhoneNumber")}</span>
+              </a>
             </div>
           </div>
         </div>
@@ -81,12 +108,12 @@
         <#if verifyPhone??>
           <div v-bind:style="{ display: phoneNumberAsUsername && !phoneVerified ? 'block' : 'none', marginTop: '2rem' }">
             <#-- BUTTON: send code -->
-            <div v-bind:style="{ display: !isCodeSent ? 'block' : 'none' }">
+            <div v-bind:style="{ display: codeSendStatus === 'NOT_SENT' ? 'block' : 'none' }">
               <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!}"
-                type="button" v-model="sendButtonText" :disabled='sendButtonText !== initSendButtonText' v-on:click="sendVerificationCode()" />
+                type="button" value="${msg('sendVerificationCode')}" v-on:click="sendVerificationCode()" />
             </div>
 
-            <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: isCodeSent ? 'block' : 'none' }">
+            <div class="${properties.kcFormGroupClass!}" v-bind:style="{ display: codeSendStatus !== 'NOT_SENT' ? 'block' : 'none' }">
               <label for="code" class="${properties.kcLabelClass!}">${msg("enterCode")}</label>
 
               <!-- INPUT: verification code -->
@@ -255,6 +282,14 @@
     </div>
 
     <script type="text/javascript">
+        const CODE_SEND_STATUS = {
+          NOT_SENT: 'NOT_SENT',
+          SENT: 'SENT',
+          ALREADY_SENT: 'ALREADY_SENT',
+          ERROR: 'ERROR',
+          EXPIRED: 'EXPIRED'
+        };
+
       new Vue({
         el: '#vue-app',
         data: {
@@ -262,28 +297,64 @@
           phoneNumber: '${register.formData.phoneNumber!}',
           phoneNumberAsUsername: ${(register.formData.phoneNumberAsUsername!false)?string},
           phoneVerified: <#if phoneVerified?? && phoneVerified>true<#else>false</#if>,
-          sendButtonText: '${msg("sendVerificationCode")}',
-          initSendButtonText: '${msg("sendVerificationCode")}',
           messagePhoneNumberError: <#if messagesPerField.existsError('phoneNumber')>'${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}'<#else>''</#if>,
           messageEmailError: <#if messagesPerField.existsError('email')>'${kcSanitize(messagesPerField.getFirstError('email'))?no_esc}'<#else>''</#if>,
           resetSendCodeButton: false,
           KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
           terms_and_conditions: false,
-          isCodeSent: ${(register.formData.isCodeSent!false)?string},
+          codeSendStatus: <#if codeSendStatus??>'${codeSendStatus}'<#else>'NOT_SENT'</#if>,
+          codeExpiresIn: <#if codeExpiresIn??>${codeExpiresIn}<#else>0</#if>,
           isPasswordValid: false,
           isPasswordConfirmValid: false,
           isFormValid: false,
           isSubmitAttempted: false,
         },
+        mounted() {
+            if (this.codeExpiresIn > 0) {
+                this.countDownExpiresIn(this.codeExpiresIn);
+            }
+        },
         computed: {
           maskedPhoneNumber() {
             if (!this.phoneNumber) return '';
-            return this.phoneNumber.substring(0, 3) + ' **** ' +
-                  this.phoneNumber.substring(this.phoneNumber.length - 2);
+            return this.phoneNumber.substring(0, 3) + ' **** ' + this.phoneNumber.substring(this.phoneNumber.length - 2);
           },
-          messageCodeSent() {
-            const format = '${msg("codeSent")}'; // '{0} has been verified'
-            return format.replace('{0}', this.maskedPhoneNumber);
+          formattedCountdown() {
+            const minutes = Math.floor(this.codeExpiresIn / 60);
+            const seconds = this.codeExpiresIn % 60;
+            return minutes + ':' + seconds.toString().padStart(2, '0');
+          },
+          codeSendStatusAlertConfig() {
+              const configs = {
+                'SENT': {
+                  message: "${msg('codeSent')?no_esc}",
+                  icon: 'fa-check-circle',
+                  type: 'pf-m-success'
+                },
+                'ALREADY_SENT': {
+                  message: "${msg('codeSentAlready')?no_esc}",
+                  icon: 'fa-exclamation-triangle',
+                  type: 'pf-m-warning'
+                },
+                'ERROR': {
+                  message: "${msg('codeSendError')?no_esc}",
+                  icon: 'fa-exclamation-circle',
+                  type: 'pf-m-danger'
+                },
+                'EXPIRED': {
+                  message: "${msg('codeExpired')?no_esc}",
+                  icon: 'fa-clock',
+                  type: 'pf-m-danger'
+                }
+              };
+
+              const config = configs[this.codeSendStatus] || {};
+              if (config.message) {
+                config.message = config.message
+                  .replace('{0}', this.maskedPhoneNumber)
+                  .replace('{1}', this.formattedCountdown);
+              }
+              return config;
           },
           messagePhoneVerified() {
             const format = '${msg("phoneNumberVerified")}'; // 'A code has been sent to {0}.'
@@ -316,28 +387,38 @@
             axios.get(window.location.origin + this.KC_HTTP_RELATIVE_PATH + '/realms/${realm.name}/sms/registration-code', params)
               .then(res =>
                 {
-                  this.disableSend(res.data.expires_in);
-                  this.clearMessages();
-                  this.isCodeSent = true;
-                })
-              .catch(e => this.messagePhoneNumberError = e.response.data.error);
-          },
-          disableSend(seconds) {
-            if (this.resetSendCodeButton) {
-              this.sendButtonText = this.initSendButtonText;
-              this.resetSendCodeButton = false;
-              return;
-            }
+                  // set code send status to SENT
+                  this.codeSendStatus = CODE_SEND_STATUS.SENT;
 
-            if (seconds <= 0) {
-              this.sendButtonText = this.initSendButtonText;
-            } else {
-              const minutes = Math.floor(seconds / 60) + '';
-              const seconds_ = seconds % 60 + '';
-              this.sendButtonText = String(minutes.padStart(2, '0') + ":" + seconds_.padStart(2, '0'));
-              setTimeout(() => {
-                this.disableSend(seconds - 1);
+                  this.countDownExpiresIn(res.data.expires_in);
+                  this.clearMessages();
+                })
+                .catch(e => {
+                  if (e?.response?.status === 400) {
+                      // set code send status to ALREADY_SENT
+                      this.codeSendStatus = CODE_SEND_STATUS.ALREADY_SENT;
+
+                      this.countDownExpiresIn(e.response.data.error || 300); // 5 minutes default
+
+                      return;
+                  }
+
+                  // show server error
+                  this.messagePhoneNumberError = e.response.data.error;
+                });
+          },
+          countDownExpiresIn(seconds) {
+            clearTimeout(this.countdownTimer);
+
+            this.codeExpiresIn = Math.max(0, seconds);
+
+            if (seconds > 0) {
+              this.countdownTimer = setTimeout(() => {
+                this.countDownExpiresIn(seconds - 1);
               }, 1000);
+            } else {
+              // set code send status to EXPIRED
+              this.codeSendStatus = CODE_SEND_STATUS.EXPIRED;
             }
           },
           sendVerificationCode() {
@@ -352,7 +433,6 @@
               return;
             }
 
-            if (this.sendButtonText !== this.initSendButtonText) return;
             this.req(fullPhoneNumber);
           },
           confirmCode(){
@@ -414,16 +494,20 @@
               passwordConfirm.type = "password";
             }
 
+            // set the codeExpiresIn hidden input to the current expiration time
+            document.querySelector('#codeExpiresIn').value = this.codeExpiresIn;
+
             event.target.submit(); // Programmatically submit the form
           },
           resetPhoneVerification() {
             this.phoneVerified = false;
-            this.isCodeSent = false;
+            this.codeSendStatus = CODE_SEND_STATUS.NOT_SENT;
             this.resetSendCodeButton = true;
             this.clearMessages();
           },
-          clearAndFocusPhoneNumber() {
-            this.phoneNumber = '';
+          clearAndFocusPhoneNumber(clearPhoneNumber) {
+            if (clearPhoneNumber) this.phoneNumber = '';
+
             const phoneNumber = document.querySelector('#phoneNumber');
             if (phoneNumber) {
               phoneNumber.focus();

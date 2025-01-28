@@ -260,9 +260,9 @@ p {
   justify-content: center;
 }
 
-#kc-form-buttons {
+/* #kc-form-buttons {
   margin-top: 0;
-}
+} */
 
 #kc-form-options {
   margin: 10px auto 20px;
@@ -283,14 +283,6 @@ p {
 .pf-c-form-control:not(textarea)::placeholder {
   color: #a0a0a0;
   font-size: 16px;
-}
-
-a {
-  color: #387f6a;
-  text-align: center;
-  display: block;
-  width: 100%;
-  font-size: 14px;
 }
 
 .grey-hr {
@@ -392,9 +384,65 @@ input[type="checkbox"] {
   align-items: center;
 }
 
+/* LINKS */
+.links {
+  margin-top: 0.8rem;
+}
+
+a {
+  color: #387f6a;
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+}
+
+a:has(.link-icon) {
+  text-decoration: none;
+}
+
 a:focus {
   outline: none;
 }
+
+a .link-icon {
+  margin-right: 8px;
+  text-decoration: none;
+}
+
+a:hover .link-icon {
+  text-decoration: none;
+}
+
+a .link-text {
+  text-decoration: none;
+}
+
+a:hover .link-text {
+  text-decoration: underline;
+}
+
+#kc-form-options a {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+/* a i {
+  text-decoration: none !important;
+  margin-right: 8px;
+}
+
+a:hover i {
+  text-decoration: none !important;
+} */
+
+/* .pf-c-button.pf-m-link {
+  color: #387f6a;
+  font-size: 14px;
+}
+.pf-c-button__icon.pf-m-start {
+  margin-right: 5px;
+} */
 
 .form-link {
   text-align: start;
@@ -538,4 +586,11 @@ a:focus {
   .password-container i {
     left: 20px;
   }
+}
+
+/* alerts */
+.pf-c-alert__title {
+  /* display: flex; */
+  align-self: center;
+  /* justify-content: flex-start; */
 }
