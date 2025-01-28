@@ -93,7 +93,7 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
                     .setParameter("type", tokenCodeType.name())
                     .getSingleResult());
             if (targetCount > targetHourMaximum) {
-                return true;
+                throw new ForbiddenException(String.format("You have sent your maximum (%d) OTPs to this number, please wait one hour before trying again.", targetHourMaximum));
             }
         }
 
@@ -106,7 +106,7 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
                     .setParameter("type", tokenCodeType.name())
                     .getSingleResult());
             if (sourceCount > sourceHourMaximum) {
-                return true;
+                throw new ForbiddenException(String.format("This device has sent it's maximum (%d) OTPs, please wait an hour before trying again.", sourceHourMaximum));
             }
         }
 

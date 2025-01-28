@@ -28,6 +28,8 @@ import org.keycloak.sessions.AuthenticationSessionModel;
 
 import cc.coopersoft.keycloak.phone.Utils;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_SMS_CODE_EXPIRES_IN;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_SMS_CODE_SEND_STATUS;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_VERIFICATION_CODE;
 import cc.coopersoft.keycloak.phone.credential.PhoneOtpCredentialModel;
 import cc.coopersoft.keycloak.phone.credential.PhoneOtpCredentialProvider;
@@ -230,6 +232,23 @@ public class RegistrationPhoneVerificationCode implements FormAction, FormAction
 
         form.setAttribute("verifyPhone", true);
         form.setAttribute("phoneVerified", phoneVerified);
+
+        // Retrieve 'codeSendStatus' from form data
+        String codeSendStatus = formData.getFirst(FIELD_SMS_CODE_SEND_STATUS);
+        if (codeSendStatus == null) {
+            codeSendStatus = "NOT_SENT";
+        }
+
+        // Set 'codeSendStatus' as a form attribute
+        form.setAttribute(FIELD_SMS_CODE_SEND_STATUS, codeSendStatus);
+
+        // Set expires time if code was sent
+        if ("SENT".equals(codeSendStatus) || "ALREADY_SENT".equals(codeSendStatus)) {
+            String expiresIn = formData.getFirst(FIELD_SMS_CODE_EXPIRES_IN);
+            if (expiresIn != null) {
+                form.setAttribute(FIELD_SMS_CODE_EXPIRES_IN, expiresIn);
+            }
+        }
     }
 
     @Override

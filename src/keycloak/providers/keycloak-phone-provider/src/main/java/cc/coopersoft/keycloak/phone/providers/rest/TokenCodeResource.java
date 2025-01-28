@@ -66,8 +66,7 @@ public class TokenCodeResource {
         }
 
         logger.info(String.format("Requested %s code to %s", tokenCodeType.label, phoneNumber));
-        int tokenExpiresIn = phoneProvider.sendTokenCode(phoneNumber,
-                session.getContext().getConnection().getRemoteAddr(), tokenCodeType, kind);
+        int tokenExpiresIn = phoneProvider.sendTokenCode(phoneNumber, session.getContext().getConnection().getRemoteAddr(), tokenCodeType, kind);
 
         String response = String.format("{\"expires_in\":%s}", tokenExpiresIn);
 

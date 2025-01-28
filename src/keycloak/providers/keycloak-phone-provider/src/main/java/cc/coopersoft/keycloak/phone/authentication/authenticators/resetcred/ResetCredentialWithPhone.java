@@ -13,6 +13,7 @@ import org.keycloak.authentication.authenticators.browser.AbstractUsernameFormAu
 import static org.keycloak.authentication.authenticators.util.AuthenticatorUtils.getDisabledByBruteForceEventError;
 import org.keycloak.events.Details;
 import org.keycloak.events.Errors;
+import org.keycloak.forms.login.LoginFormsProvider;
 import org.keycloak.models.AuthenticationExecutionModel;
 import org.keycloak.models.DefaultActionTokenKey;
 import org.keycloak.models.KeycloakSession;
@@ -33,7 +34,8 @@ import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePage
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTRIBUTE_SUPPORT_PHONE;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PATH_PHONE_ACTIVATED;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER;
-import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER_CODE_SENT;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_SMS_CODE_EXPIRES_IN;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_SMS_CODE_SEND_STATUS;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_VERIFICATION_CODE;
 import cc.coopersoft.keycloak.phone.providers.constants.TokenCodeType;
 import cc.coopersoft.keycloak.phone.providers.exception.PhoneNumberInvalidException;
@@ -77,24 +79,10 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
     }
 
     protected Response challenge(AuthenticationFlowContext context) {
-        // Write out KC_HTTP_RELATIVE_PATH environment variable to the form (for client side requests)
-        String relativePath = "";
-        String envRelativePath = System.getenv("KC_HTTP_RELATIVE_PATH");
-        if (envRelativePath != null && !envRelativePath.isEmpty()) {
-            relativePath = envRelativePath;
-        }
-
-        // Retrieve 'isCodeSent' from form data
-        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
-        String isCodeSent = formData.getFirst(FIELD_PHONE_NUMBER_CODE_SENT);
-        if (isCodeSent == null) {
-            isCodeSent = "false";
-        }
+        LoginFormsProvider form = setFormAttributes(context);
 
         return context.form()
                 .setAttribute(ATTRIBUTE_SUPPORT_PHONE, true)
-                .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath)
-                .setAttribute(FIELD_PHONE_NUMBER_CODE_SENT, isCodeSent)
                 .createPasswordReset();
     }
 
@@ -237,51 +225,23 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
     }
 
     protected Response challenge(AuthenticationFlowContext context, String field, String message, String phoneNumber) {
-        // Write out KC_HTTP_RELATIVE_PATH environment variable to the form (for client side requests)
-        String relativePath = "";
-        String envRelativePath = System.getenv("KC_HTTP_RELATIVE_PATH");
-        if (envRelativePath != null && !envRelativePath.isEmpty()) {
-            relativePath = envRelativePath;
-        }
+        LoginFormsProvider form = setFormAttributes(context);
 
-        // Retrieve 'isCodeSent' from form data
-        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
-        String isCodeSent = formData.getFirst(FIELD_PHONE_NUMBER_CODE_SENT);
-        if (isCodeSent == null) {
-            isCodeSent = "false";
-        }
-
-        return context.form()
+        return form
                 .addError(new FormMessage(field, message))
                 .setAttribute(ATTRIBUTE_SUPPORT_PHONE, true)
                 .setAttribute(ATTEMPTED_PHONE_ACTIVATED, true)
                 .setAttribute(ATTEMPTED_PHONE_NUMBER, phoneNumber)
-                .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath)
-                .setAttribute(FIELD_PHONE_NUMBER_CODE_SENT, isCodeSent)
                 .createPasswordReset();
     }
 
     protected Response challenge(AuthenticationFlowContext context, String field, String message) {
-        // Write out KC_HTTP_RELATIVE_PATH environment variable to the form (for client side requests)
-        String relativePath = "";
-        String envRelativePath = System.getenv("KC_HTTP_RELATIVE_PATH");
-        if (envRelativePath != null && !envRelativePath.isEmpty()) {
-            relativePath = envRelativePath;
-        }
+        LoginFormsProvider form = setFormAttributes(context);
 
-        // Retrieve 'isCodeSent' from form data
-        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
-        String isCodeSent = formData.getFirst(FIELD_PHONE_NUMBER_CODE_SENT);
-        if (isCodeSent == null) {
-            isCodeSent = "false";
-        }
-
-        return context.form()
-                .addError(new FormMessage(field, message))
+        return form
                 .setAttribute(ATTRIBUTE_SUPPORT_PHONE, true)
-                .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath)
-                .setAttribute(FIELD_PHONE_NUMBER_CODE_SENT, isCodeSent)
                 .createPasswordReset();
+
     }
 
     private boolean validateVerificationCode(AuthenticationFlowContext context, UserModel user, String phoneNumber, String code) {
@@ -370,5 +330,32 @@ public class ResetCredentialWithPhone implements Authenticator, AuthenticatorFac
     @Override
     public void close() {
 
+    }
+
+    private LoginFormsProvider setFormAttributes(AuthenticationFlowContext context) {
+        MultivaluedMap<String, String> formData = context.getHttpRequest().getDecodedFormParameters();
+
+        // Get codeSendStatus
+        String codeSendStatus = formData.getFirst(FIELD_SMS_CODE_SEND_STATUS);
+        if (codeSendStatus == null) {
+            codeSendStatus = "NOT_SENT";
+        }
+        // Get expiresIn if code was sent
+        String expiresIn = null;
+        if ("SENT".equals(codeSendStatus) || "ALREADY_SENT".equals(codeSendStatus)) {
+            expiresIn = formData.getFirst(FIELD_SMS_CODE_EXPIRES_IN);
+        }
+        // Get relative path
+        String relativePath = "";
+        String envRelativePath = System.getenv("KC_HTTP_RELATIVE_PATH");
+        if (envRelativePath != null && !envRelativePath.isEmpty()) {
+            relativePath = envRelativePath;
+        }
+        // Create form with all attributes in single chain
+        LoginFormsProvider form = context.form()
+                .setAttribute(FIELD_SMS_CODE_SEND_STATUS, codeSendStatus)
+                .setAttribute(FIELD_SMS_CODE_EXPIRES_IN, expiresIn)
+                .setAttribute("KC_HTTP_RELATIVE_PATH", relativePath);
+        return form;
     }
 }

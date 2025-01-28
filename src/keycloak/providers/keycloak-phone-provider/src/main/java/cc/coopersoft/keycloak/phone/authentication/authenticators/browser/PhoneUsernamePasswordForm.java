@@ -40,7 +40,8 @@ import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePage
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.ATTRIBUTE_SUPPORT_PHONE;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PATH_PHONE_ACTIVATED;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER;
-import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER_CODE_SENT;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_SMS_CODE_EXPIRES_IN;
+import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_SMS_CODE_SEND_STATUS;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_VERIFICATION_CODE;
 import cc.coopersoft.keycloak.phone.providers.constants.TokenCodeType;
 import cc.coopersoft.keycloak.phone.providers.exception.PhoneNumberInvalidException;
@@ -140,23 +141,31 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
             return validateUserAndPassword(context, inputData);
         }
 
-        // Retrieve 'isCodeSent' from form data
-        String isCodeSent = inputData.getFirst(FIELD_PHONE_NUMBER_CODE_SENT);
-        if (isCodeSent == null) {
-            isCodeSent = "false";
+        // Retrieve 'codeSendStatus' from form data
+        String codeSendStatus = inputData.getFirst(FIELD_SMS_CODE_SEND_STATUS);
+        if (codeSendStatus == null) {
+            codeSendStatus = "NOT_SENT";
         }
 
-        // Set 'isCodeSent' as a form attribute
-        context.form().setAttribute(FIELD_PHONE_NUMBER_CODE_SENT, isCodeSent);
+        // Set 'codeSendStatus' as a form attribute
+        context.form().setAttribute(FIELD_SMS_CODE_SEND_STATUS, codeSendStatus);
+
+        // Set expires time if code was sent
+        if ("SENT".equals(codeSendStatus) || "ALREADY_SENT".equals(codeSendStatus)) {
+            String expiresIn = inputData.getFirst(FIELD_SMS_CODE_EXPIRES_IN);
+            if (expiresIn != null) {
+                context.form().setAttribute(FIELD_SMS_CODE_EXPIRES_IN, expiresIn);
+            }
+        }
 
         String phoneNumber = inputData.getFirst(FIELD_PHONE_NUMBER);
 
         if (Validation.isBlank(phoneNumber)) {
             context.getEvent().error(Errors.USERNAME_MISSING);
 
-            // Step 2: Set 'isCodeSent' before rendering the form
+            // Set form attributes before rendering
             LoginFormsProvider form = context.form();
-            form.setAttribute(FIELD_PHONE_NUMBER_CODE_SENT, isCodeSent);
+            form.setAttribute(FIELD_SMS_CODE_SEND_STATUS, codeSendStatus);
             form.setAttribute(ATTEMPTED_PHONE_ACTIVATED, true);
             assemblyForm(context, form);
 
@@ -168,9 +177,9 @@ public class PhoneUsernamePasswordForm extends UsernamePasswordForm implements A
         String code = inputData.getFirst(FIELD_VERIFICATION_CODE);
 
         if (Validation.isBlank(code)) {
-            // Step 2: Set 'isCodeSent' before rendering the form
+            // Set form attributes before rendering
             LoginFormsProvider form = context.form();
-            form.setAttribute(FIELD_PHONE_NUMBER_CODE_SENT, isCodeSent);
+            form.setAttribute(FIELD_SMS_CODE_SEND_STATUS, codeSendStatus);
             assemblyForm(context, form);
 
             invalidVerificationCode(context, phoneNumber);
