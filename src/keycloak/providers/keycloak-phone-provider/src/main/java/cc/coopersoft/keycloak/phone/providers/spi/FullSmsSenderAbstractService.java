@@ -15,6 +15,7 @@ import org.keycloak.models.UserModel;
 import org.keycloak.theme.Theme;
 
 public abstract class FullSmsSenderAbstractService implements MessageSenderService {
+
     private static final Logger logger = Logger.getLogger(FullSmsSenderAbstractService.class);
 
     private final String realmDisplay;
@@ -45,48 +46,75 @@ public abstract class FullSmsSenderAbstractService implements MessageSenderServi
 
     /**
      * Localizes sms code message template from login theme.
-     * 
-     * @param type        the type of code sent
+     *
+     * @param type the type of code sent
      * @param phoneNumber the user's phone number (if applicable)
-     * @param code        the verification code
-     * @param expires     code expiration in seconds
+     * @param code the verification code
+     * @param expires code expiration in seconds
      * @return The localized string, else empty.
      */
+    // private Optional<String> localizeMessage(TokenCodeType type, String phoneNumber, String code, int expires) {
+    //     if (this.session != null) {
+    //         try {
+    //             // Get login theme
+    //             final String loginThemeName = session.getContext().getRealm().getLoginTheme();
+    //             final Theme loginTheme = session.theme().getTheme(loginThemeName, Theme.Type.LOGIN);
+    //             // Try get locale from user associated with phone number (if any)
+    //             final Optional<UserModel> user = Utils.findUserByPhone(session, session.getContext().getRealm(),
+    //                     phoneNumber);
+    //             final Optional<String> userLocale = user.map(u -> u.getFirstAttribute(UserModel.LOCALE));
+    //             // Use locale from user or default to realm locale
+    //             final String localeName = userLocale.isPresent() ? userLocale.get()
+    //                     : session.getContext().getRealm().getDefaultLocale();
+    //             final Locale locale = Locale.forLanguageTag(localeName);
+    //             // Get message template from login theme bundle
+    //             final Properties messages = loginTheme.getMessages(locale);
+    //             final String messageTemplate = messages.getProperty("smsCodeMessage");
+    //             // Return nothing when template can't be found
+    //             if (messageTemplate == null || messageTemplate.isBlank()) {
+    //                 return Optional.empty();
+    //             }
+    //             // Format message
+    //             MessageFormat mf = new MessageFormat(messageTemplate, locale);
+    //             return Optional.of(mf.format(new Object[] { realmDisplay, type.label, code, expires / 60 }));
+    //         } catch (Exception ex) {
+    //             logger.error("Error while trying to localize message", ex);
+    //             return Optional.empty();
+    //         }
+    //     }
+    //     return Optional.empty();
+    // }
     private Optional<String> localizeMessage(TokenCodeType type, String phoneNumber, String code, int expires) {
         if (this.session != null) {
             try {
-                // Get login theme
                 final String loginThemeName = session.getContext().getRealm().getLoginTheme();
                 final Theme loginTheme = session.theme().getTheme(loginThemeName, Theme.Type.LOGIN);
 
-                // Try get locale from user associated with phone number (if any)
-                final Optional<UserModel> user = Utils.findUserByPhone(session, session.getContext().getRealm(),
-                        phoneNumber);
+                // Ensure user locale is set
+                final Optional<UserModel> user = Utils.findUserByPhone(session, session.getContext().getRealm(), phoneNumber);
                 final Optional<String> userLocale = user.map(u -> u.getFirstAttribute(UserModel.LOCALE));
+                final String localeName = userLocale.orElseGet(() -> {
+                    String realmLocale = session.getContext().getRealm().getDefaultLocale();
+                    return (realmLocale != null && !realmLocale.isEmpty()) ? realmLocale : "en";
+                });
 
-                // Use locale from user or default to realm locale
-                final String localeName = userLocale.isPresent() ? userLocale.get()
-                        : session.getContext().getRealm().getDefaultLocale();
                 final Locale locale = Locale.forLanguageTag(localeName);
-
-                // Get message template from login theme bundle
                 final Properties messages = loginTheme.getMessages(locale);
-                final String messageTemplate = messages.getProperty("smsCodeMessage");
+                final String messageTemplate = messages.getProperty("smsCodeMessage", "");
 
-                // Return nothing when template can't be found
-                if (messageTemplate == null || messageTemplate.isBlank()) {
+                // Log if template is missing
+                if (messageTemplate.isBlank()) {
+                    logger.warn("smsCodeMessage key not found in theme bundle for locale: " + localeName);
                     return Optional.empty();
                 }
 
-                // Format message
                 MessageFormat mf = new MessageFormat(messageTemplate, locale);
-                return Optional.of(mf.format(new Object[] { realmDisplay, type.label, code, expires / 60 }));
+                return Optional.of(mf.format(new Object[]{realmDisplay, type.label, code, expires / 60}));
             } catch (Exception ex) {
                 logger.error("Error while trying to localize message", ex);
                 return Optional.empty();
             }
         }
-
         return Optional.empty();
     }
 }

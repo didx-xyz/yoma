@@ -12,7 +12,7 @@
     <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
 
     <div id="vue-app">
-      <form ref="form" @submit.prevent="confirmCode" id="kc-register-form" class="${properties.kcFormClass!}" action="${url.registrationAction}" method="post" @submit="onSubmit">
+      <form ref="form" @submit.prevent="[onConfirmCode, onSubmit]" id="kc-register-form" class="${properties.kcFormClass!}" action="${url.registrationAction}" method="post" @submit="onSubmit">
 
         <input type="hidden" id="phoneNumberAsUsername" name="phoneNumberAsUsername" v-model="phoneNumberAsUsername">
         <input type="hidden" id="codeSendStatus" name="codeSendStatus" v-model="codeSendStatus">
@@ -33,11 +33,11 @@
 
 
           <div class="links">
-            <#-- LINK: use phone -->
-            <a v-on:click="phoneNumberAsUsername = true" tabindex="0">
+            <#-- BUTTON: use phone -->
+            <button type="button" class="link" v-on:click="phoneNumberAsUsername = true" tabindex="0">
               <i aria-hidden="true" class="link-icon fa fa-phone"></i>
               <span class="link-text">${msg("phoneNumberAsUsername")}</span>
-            </a>
+            </button>
           </div>
         </div>
 
@@ -85,22 +85,22 @@
           </div>
 
           <div class="links">
-            <#-- LINK: use email -->
-            <a v-if="codeSendStatus === 'NOT_SENT'" v-on:click="phoneNumberAsUsername = false" tabindex="0">
+            <#-- BUTTON: use email -->
+            <button type="button" class="link" v-if="codeSendStatus === 'NOT_SENT'" v-on:click="phoneNumberAsUsername = false" tabindex="0">
               <i class="link-icon fa fa-key" aria-hidden="true"></i>
               <span class="link-text">${msg("emailAsUsername")}</span>
-            </a>
+            </button>
 
-            <#-- LINK: change phone number / send again (start over) -->
+            <#-- BUTTON: change phone number / send again (start over) -->
             <div v-if="codeSendStatus !== 'NOT_SENT'">
-              <a v-if="codeSendStatus === 'EXPIRED'" v-on:click="clearAndFocusPhoneNumber(false)" tabindex="0">
+              <button type="button" class="link" v-if="codeSendStatus === 'EXPIRED' && !phoneVerified" v-on:click="clearAndFocusPhoneNumber(false)" tabindex="0">
                 <i class="link-icon fa fa-undo" aria-hidden="true"></i>
                 <span class="link-text">${msg("codeSendAgain")}</span>
-              </a>
-              <a v-else v-on:click="clearAndFocusPhoneNumber(true)" tabindex="0">
+              </button>
+              <button type="button" class="link" v-else v-on:click="clearAndFocusPhoneNumber(true)" tabindex="0">
                 <i class="link-icon fa fa-undo" aria-hidden="true"></i>
                 <span class="link-text">${msg("changePhoneNumber")}</span>
-              </a>
+              </button>
             </div>
           </div>
         </div>
@@ -117,28 +117,16 @@
               <label for="code" class="${properties.kcLabelClass!}">${msg("enterCode")}</label>
 
               <!-- INPUT: verification code -->
-              <div v-otp-input>
-                <div id="otp-input">
-                  <input
-                    type="text"
-                    maxlength="1"
-                    pattern="[0-9]*"
-                    inputmode="numeric"
-                    autocomplete="off"
-                    placeholder="_"
-                    v-for="(n, index) in 6"
-                    :key="index"
-                  />
-                </div>
-                <input
-                  type="text"
-                  name="code"
-                  id="code"
-                  autocomplete="one-time-code"
-                  inputmode="numeric"
-                  style="position: absolute; left: -9999px;"
-                />
-              </div>
+              <input
+                type="text"
+                id="code"
+                name="code"
+                v-otp-input="{ onSubmit: onConfirmCode }"
+                autocomplete="one-time-code" autofocus
+                inputmode="numeric"
+                maxlength="6"
+                class="${properties.kcInputClass!}"
+              />
 
               <#if messagesPerField.existsError('code')>
                 <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
@@ -149,7 +137,8 @@
               <!-- BUTTON: confirm code (submit) -->
               <div style="margin-top: 30px;">
                 <div id="kc-form-buttons">
-                  <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg('confirmCode')}" v-on:click="confirmCode" />
+                  <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
+                    type="button" v-model="confirmCodeButtonText" v-bind:disabled="confirmCodeButtonText != confirmCodeButtonDefaultText" v-on:click="onConfirmCode" />
                 </div>
               </div>
             </div>
@@ -206,7 +195,8 @@
                     confirmPasswordInputSelector: '#password-confirm',
                     confirmPasswordContainerSelector: '#passwordConfirmContainer',
                     createPasswordCheckboxSelector: '#create-password-checkbox',
-                    errorLabelSelector: '#input-error-password',
+                    passwordServerErrorLabelSelector: '#input-error-password',
+                    confirmPasswordServerErrorLabelSelector: '#input-error-password-confirm',
                     copyPasswordButtonStyle: 'block',
                     onValidityChange: onValidityChange
                   }"
@@ -259,20 +249,11 @@
             </div>
           </#if>
 
-          <#--  <div v-if="isSubmitAttempted && !isFormValid" class="centered-div">
-            <span class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-                ${msg("invalidForm")}
-            </span>
-          </div>  -->
-
-          <!-- Submit Button -->
+           <!-- Submit Button -->
           <div id="kc-form-buttons">
             <input class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
-              type="submit" value="${msg('doRegisterBtn')}" />
+              type="submit" v-model="submitButtonText" v-bind:disabled="submitButtonText != submitButtonDefaultText" />
           </div>
-          <#--  <span v-if="!isFormValid" id="input-error-password" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
-            ${msg("invalidForm")}
-          </span>  -->
         </div>
 
         <div id="kc-form-options">
@@ -282,13 +263,13 @@
     </div>
 
     <script type="text/javascript">
-        const CODE_SEND_STATUS = {
-          NOT_SENT: 'NOT_SENT',
-          SENT: 'SENT',
-          ALREADY_SENT: 'ALREADY_SENT',
-          ERROR: 'ERROR',
-          EXPIRED: 'EXPIRED'
-        };
+      const CODE_SEND_STATUS = {
+        NOT_SENT: 'NOT_SENT',
+        SENT: 'SENT',
+        ALREADY_SENT: 'ALREADY_SENT',
+        ERROR: 'ERROR',
+        EXPIRED: 'EXPIRED'
+      };
 
       new Vue({
         el: '#vue-app',
@@ -299,6 +280,10 @@
           phoneVerified: <#if phoneVerified?? && phoneVerified>true<#else>false</#if>,
           messagePhoneNumberError: <#if messagesPerField.existsError('phoneNumber')>'${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}'<#else>''</#if>,
           messageEmailError: <#if messagesPerField.existsError('email')>'${kcSanitize(messagesPerField.getFirstError('email'))?no_esc}'<#else>''</#if>,
+          confirmCodeButtonText: "${msg('confirmCode')}",
+          confirmCodeButtonDefaultText: "${msg('confirmCode')}",
+          submitButtonText: "${msg('doRegisterBtn')}",
+          submitButtonDefaultText: "${msg('doRegisterBtn')}",
           resetSendCodeButton: false,
           KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
           terms_and_conditions: false,
@@ -307,7 +292,6 @@
           isPasswordValid: false,
           isPasswordConfirmValid: false,
           isFormValid: false,
-          isSubmitAttempted: false,
         },
         mounted() {
             if (this.codeExpiresIn > 0) {
@@ -435,18 +419,35 @@
 
             this.req(fullPhoneNumber);
           },
-          confirmCode(){
+          onConfirmCode(event){
             // auto check terms and conditions when verify code (prevent validation error)
             this.terms_and_conditions = "Yes";
 
-             // submit the form
-            this.$refs.form.submit();
+            // set essential form fields
+            this.setFormFields();
+
+            // submit the form
+            this.$refs.form.submit(event);
+
+            // show button loading state
+            this.confirmCodeButtonText = "${msg('loading')}";
           },
           onSubmit(event) {
-            this.isSubmitAttempted = true;
-
             event.preventDefault(); // Prevent the default form submission
 
+            // validate form fields
+            if (!this.validateForm()) return false;
+
+            // set essential form fields
+            this.setFormFields();
+
+            // submit the form
+            this.$refs.form.submit();
+
+            // show button loading state
+            this.submitButtonText = "${msg('loading')}";
+          },
+          validateForm() {
             let validatePassword = false;
 
             // Validate the email for non-phone submissions
@@ -469,6 +470,9 @@
               if (!isValid) return false;
             }
 
+            return true;
+          },
+          setFormFields(){
             // Additional processing
             const inputPhone = document.querySelector('#phoneNumber');
             const inputEmail = document.querySelector('#email');
@@ -496,8 +500,6 @@
 
             // set the codeExpiresIn hidden input to the current expiration time
             document.querySelector('#codeExpiresIn').value = this.codeExpiresIn;
-
-            event.target.submit(); // Programmatically submit the form
           },
           resetPhoneVerification() {
             this.phoneVerified = false;
