@@ -479,24 +479,34 @@ namespace Yoma.Core.Domain.Analytics.Services
       _organizationService.IsAdmin(filter.Organization, true);
 
       var query = MyOpportunityQueryCompleted(filter, MyOpportunityQueryBase(filter))
-          .Select(o => new YouthInfo
+          .GroupBy(o => new { o.UserId, o.UserDisplayName, o.UserDateOfBirth, o.UserCountry })
+          .Select(g => new
           {
-            UserId = o.UserId,
-            UserDisplayName = o.UserDisplayName,
-            OpportunityId = o.OpportunityId,
-            OpportunityTitle = o.OpportunityTitle,
-            OpportunityStatus = o.OpportunityStatus,
-            OrganizationLogoId = o.OrganizationLogoId,
-            OrganizationLogoStorageType = o.OrganizationLogoStorageType,
-            OrganizationLogoKey = o.OrganizationLogoKey,
-            DateCompleted = o.DateCompleted,
-            Verified = o.OpportunityCredentialIssuanceEnabled
+            g.Key.UserId,
+            g.Key.UserDisplayName,
+            g.Key.UserDateOfBirth,
+            g.Key.UserCountry,
+            ZltoRewardTotal = g.Sum(o => o.ZltoReward ?? 0),
+            YomaRewardTotal = g.Sum(o => o.YomaReward ?? 0),
+            OpportunityCount = g.Count(),
+            Opportunities = g.Select(o => new
+            {
+              Id = o.OpportunityId,
+              Title = o.OpportunityTitle,
+              Status = o.OpportunityStatus,
+              o.OrganizationLogoId,
+              o.OrganizationLogoStorageType,
+              o.OrganizationLogoKey,
+              o.DateCompleted,
+              o.OpportunityCredentialIssuanceEnabled
+            })
           });
 
       var result = new OrganizationSearchResultsYouth();
 
-      query = query.OrderByDescending(o => o.DateCompleted).ThenBy(o => o.UserDisplayName).ThenBy(o => o.OpportunityTitle)
-        .ThenBy(o => o.UserId).ThenBy(o => o.OpportunityId); //ensure deterministic sorting / consistent pagination results
+      query = query.OrderByDescending(o => o.OpportunityCount)
+        .ThenBy(o => o.UserDisplayName)
+        .ThenBy(o => o.UserId); //ensure deterministic sorting / consistent pagination results
 
       //pagination
       if (filter.PaginationEnabled)
@@ -505,8 +515,30 @@ namespace Yoma.Core.Domain.Analytics.Services
         query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
       }
 
-      result.Items = [.. query];
-      result.Items.ForEach(o => o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey));
+      result.Items = query.ToList().Select(youth => new YouthInfo
+      {
+        Id = youth.UserId,
+        DisplayName = youth.UserDisplayName,
+        Country = youth.UserCountry,
+        Age = youth.UserDateOfBirth?.CalculateAge(null),
+        ZltoRewardTotal = youth.ZltoRewardTotal,
+        YomaRewardTotal = youth.YomaRewardTotal,
+        OpporunityCount = youth.OpportunityCount,
+        Opportunities = youth.Opportunities.Select(op => new YouthInfoOpportunity
+        {
+          Id = op.Id,
+          Title = op.Title,
+          Status = op.Status,
+          OrganizationLogoId = op.OrganizationLogoId,
+          OrganizationLogoStorageType = op.OrganizationLogoStorageType,
+          OrganizationLogoKey = op.OrganizationLogoKey,
+          DateCompleted = op.DateCompleted,
+          Verified = op.OpportunityCredentialIssuanceEnabled
+        }).ToList()
+      }).ToList();
+
+      result.Items.ForEach(youthInfo => youthInfo.Opportunities.ForEach(
+        opportunity => opportunity.OrganizationLogoURL = GetBlobObjectURL(opportunity.OrganizationLogoStorageType, opportunity.OrganizationLogoKey)));
 
       result.DateStamp = DateTimeOffset.UtcNow;
       return result;
