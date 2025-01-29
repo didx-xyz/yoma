@@ -7,6 +7,5 @@ namespace Yoma.Core.Domain.Analytics.Models
     public int TotalCount { get; set; }
 
     public DateTimeOffset DateStamp { get; set; }
-
   }
 }

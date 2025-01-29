@@ -6,15 +6,30 @@ namespace Yoma.Core.Domain.Analytics.Models
 {
   public class YouthInfo
   {
-    public Guid UserId { get; set; }
+    public Guid Id { get; set; }
 
-    public string UserDisplayName { get; set; }
+    public string DisplayName { get; set; }
 
-    public Guid OpportunityId { get; set; }
+    public string? Country { get; set; }
 
-    public string OpportunityTitle { get; set; }
+    public int? Age { get; set; }
 
-    public Status OpportunityStatus { get; set; }
+    public decimal ZltoRewardTotal { get; set; }
+
+    public decimal YomaRewardTotal { get; set; }
+
+    public int OpporunityCount { get; set; }
+
+    public List<YouthInfoOpportunity> Opportunities { get; set; }
+  }
+
+  public class YouthInfoOpportunity
+  {
+    public Guid Id { get; set; }
+
+    public string Title { get; set; }
+
+    public Status Status { get; set; }
 
     public Guid? OrganizationLogoId { get; set; }
 
