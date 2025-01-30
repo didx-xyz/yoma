@@ -810,7 +810,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   });
 
   const {
-    register: registerStep7,
     handleSubmit: handleSubmitStep7,
     formState: formStateStep7,
     control: controlStep7,
