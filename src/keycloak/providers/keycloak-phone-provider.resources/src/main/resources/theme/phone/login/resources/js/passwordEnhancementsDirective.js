@@ -221,14 +221,6 @@ Vue.directive("password-enhancements", {
         number: /\d/.test(password),
       };
 
-      // if (password === "") {
-      //   passwordMessageLabel.innerHTML = "";
-      //   passwordMessageLabel.style.display = "none";
-      //   passwordValid = false;
-      //   emitValidityChange();
-      //   return;
-      // }
-
       passwordValid = Object.values(requirements).every(Boolean);
 
       if (passwordValid) {

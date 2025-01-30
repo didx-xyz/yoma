@@ -61,7 +61,7 @@
                           <#-- BUTTON: use phone -->
                           <button type="button" class="link" v-on:click="phoneActivated = true" tabindex="0">
                             <i aria-hidden="true" class="link-icon fa fa-phone"></i>
-                            <span class="link-text">${msg("signInWithPhone")}</span>
+                            <span class="link-text">${msg("resetWithPhone")}</span>
                           </button>
                         </div>
                       </div>
@@ -102,7 +102,7 @@
                             <#-- BUTTON: use password -->
                             <button type="button" class="link" v-if="codeSendStatus === 'NOT_SENT'" v-on:click="phoneActivated = false" tabindex="0">
                               <i class="link-icon fa fa-key" aria-hidden="true"></i>
-                              <span class="link-text">${msg("signInWithPassword")}</span>
+                              <span class="link-text">${msg("resetWithEmail")}</span>
                             </button>
 
                             <#-- BUTTON: change phone number / send again (start over) -->
