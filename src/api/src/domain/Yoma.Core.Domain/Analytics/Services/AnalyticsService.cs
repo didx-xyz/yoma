@@ -312,14 +312,15 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       result.Opportunities.ConversionRate = new OpportunityConversionRatio
       {
-        Legend = "Conversion rate (average)",
         ViewedCount = viewedCount,
         CompletedCount = completedCount,
-        //calculate average percentage based on individual opportunity conversion ratio rather than global counts (more accurate)
-        Percentage = viewedCount > 0 ? Math.Min(100M, Math.Round((decimal)completedCount / viewedCount * 100, 2)) : (completedCount > 0 ? 100M : 0M)
-        //Percentage = items.Count != 0
-        //      ? Math.Min(100M, Math.Round(items.Sum(o => o.ConversionRatioPercentage) / items.Count))
-        //      : 0M
+        NavigatedExternalLinkCount = navigatedExternalLinkCount,
+
+        // percentage of users who viewed and then navigated to an external link
+        ViewedToNavigatedExternalLinkPercentage = viewedCount > 0 ? Math.Min(100M, Math.Round((decimal)navigatedExternalLinkCount / viewedCount * 100, 2)) : (navigatedExternalLinkCount > 0 ? 100M : 0M),
+
+        // percentage of users who navigated to an external link and then completed
+        NavigatedExternalLinkToCompletedPercentage = navigatedExternalLinkCount > 0 ? Math.Min(100M, Math.Round((decimal)completedCount / navigatedExternalLinkCount * 100, 2)) : (completedCount > 0 ? 100M : 0M)
       };
 
       //zlto rewards
