@@ -810,7 +810,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   });
 
   const {
-    register: registerStep7,
     handleSubmit: handleSubmitStep7,
     formState: formStateStep7,
     control: controlStep7,
@@ -904,9 +903,16 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     }
   }, [opportunity?.status, setOppExpiredModalVisible]);
 
+  // credential issuance can only be enabled provided verification is enabled
   useEffect(() => {
-    // if verification is disabled, uncheck credential issuance, clear verification method, clear schema, clear participantLimit
-    if (!watchVerificationEnabled) {
+    if (watchVerificationEnabled) {
+      // check credential issuance if verification is enabled
+      setFormData((prev) => ({
+        ...prev,
+        credentialIssuanceEnabled: watchVerificationEnabled,
+      }));
+    } else if (!watchVerificationEnabled) {
+      // uncheck credential issuance, clear verification method, clear schema, clear participantLimit
       setFormData((prev) => ({
         ...prev,
         credentialIssuanceEnabled: false,
@@ -3091,33 +3097,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     )}
                   >
                     <div className="form-control">
-                      {watchVerificationEnabled === true && (
-                        <FormField
-                          label="Issuance"
-                          subLabel="Should a credential be issued upon completion of the opportunity?"
-                          showWarningIcon={
-                            !!formStateStep7.errors.credentialIssuanceEnabled
-                              ?.message
-                          }
-                          showError={
-                            !!formStateStep7.touchedFields
-                              .credentialIssuanceEnabled ||
-                            formStateStep7.isSubmitted
-                          }
-                          error={
-                            formStateStep7.errors.credentialIssuanceEnabled
-                              ?.message
-                          }
-                        >
-                          <FormCheckbox
-                            id="credentialIssuanceEnabled"
-                            label="I want to issue a credential upon completion"
-                            inputProps={{
-                              ...registerStep7(`credentialIssuanceEnabled`),
-                              disabled: !watchVerificationEnabled,
-                            }}
-                          />
-                        </FormField>
+                      {watchVerificationEnabled == true && (
+                        <FormMessage messageType={FormMessageType.Info}>
+                          Verification is enabled. The opportunity will issue a
+                          credential based on the selected schema upon
+                          completion.
+                        </FormMessage>
                       )}
 
                       {watchVerificationEnabled !== true && (
