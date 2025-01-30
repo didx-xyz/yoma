@@ -60,7 +60,8 @@
                   confirmPasswordInputSelector: '#password-confirm',
                   confirmPasswordContainerSelector: '#passwordConfirmContainer',
                   createPasswordCheckboxSelector: '#create-password-checkbox',
-                  errorLabelSelector: '#input-error-password',
+                  passwordServerErrorLabelSelector: '#input-error-password',
+                  confirmPasswordServerErrorLabelSelector: '#input-error-password-confirm',
                   copyPasswordButtonStyle: 'block',
                   onValidityChange: onValidityChange
                 }"
@@ -129,7 +130,7 @@
             onSubmit() {
               event.preventDefault();
 
-              // Validate the passwords
+              // vValidate the passwords
               const isValid = this.isPasswordValid && this.isPasswordConfirmValid;
               this.isFormValid = isValid;
               if (!isValid) return false;

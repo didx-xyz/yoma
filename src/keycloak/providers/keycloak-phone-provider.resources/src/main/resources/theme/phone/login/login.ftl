@@ -25,7 +25,7 @@
         <div id="vue-app">
           <div v-cloak>
             <#if realm.password>
-              <form id="kc-form-login" class="${properties.kcFormClass!}"
+              <form ref="form" id="kc-form-login" class="${properties.kcFormClass!}"
                 action="${url.loginAction}" method="post" @submit="onSubmit">
                 <#if !usernameHidden?? && supportPhone??>
                   <input type="hidden" id="phoneActivated" name="phoneActivated" v-model="phoneActivated">
@@ -38,8 +38,17 @@
                     <div class="${properties.kcFormGroupClass!}">
                       <label class="${properties.kcLabelClass!}">${msg("username")}</label>
 
-                      <input tabindex="0" id="username" class="${properties.kcInputClass!}" name="username" type="text" autocomplete="username"
-                        aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterEmailOrPhoneNumber')}"
+                      <!-- INPUT: username -->
+                      <input
+                        tabindex="0"
+                        id="username"
+                        class="${properties.kcInputClass!}"
+                        name="username"
+                        type="text"
+                        autocomplete="username"
+                        autofocus
+                        aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>"
+                        placeholder="${msg('enterEmailOrPhoneNumber')}"
                         v-model="username" />
 
                       <!-- Error messages -->
@@ -55,6 +64,7 @@
                     <label for="password" class="${properties.kcLabelClass!}">${msg("password")}</label>
 
                     <div class="password-container">
+                      <!-- INPUT: password -->
                       <input tabindex="0" id="password" class="${properties.kcInputClass!}" name="password" type="password" autocomplete="current-password"
                         aria-invalid="<#if messagesPerField.existsError('username','password')>true</#if>" placeholder="${msg('enterPassword')}"
                         v-password-enhancements="{ allowToggle: true, allowCopy: false, allowPasswordIndicator: false }" />
@@ -67,11 +77,11 @@
                     </#if>
                   </div>
 
-                  <#-- LINK: use phone -->
-                  <a v-on:click="phoneActivated = true" tabindex="0">
+                  <#-- BUTTON: use phone -->
+                  <button type="button" class="link" v-on:click="phoneActivated = true" tabindex="0" >
                     <i aria-hidden="true" class="link-icon fa fa-phone"></i>
                     <span class="link-text">${msg("signInWithPhone")}</span>
-                  </a>
+                  </button>
                 </div>
 
                 <#if !usernameHidden?? && supportPhone??>
@@ -106,22 +116,22 @@
                       </div>
 
                       <div class="links">
-                        <#-- LINK: use password -->
-                        <a v-if="codeSendStatus === 'NOT_SENT'" v-on:click="phoneActivated = false" tabindex="0">
+                        <#-- BUTTON: use password -->
+                        <button type="button" class="link" v-if="codeSendStatus === 'NOT_SENT'" v-on:click="phoneActivated = false" tabindex="0">
                           <i class="link-icon fa fa-key" aria-hidden="true"></i>
                           <span class="link-text">${msg("signInWithPassword")}</span>
-                        </a>
+                        </button>
 
-                        <#-- LINK: change phone number / send again (start over) -->
+                        <#-- BUTTON: change phone number / send again (start over) -->
                         <div v-if="codeSendStatus !== 'NOT_SENT'">
-                          <a v-if="codeSendStatus === 'EXPIRED'" v-on:click="clearAndFocusPhoneNumber(false)" tabindex="0">
+                          <button type="button" class="link" v-if="codeSendStatus === 'EXPIRED'" v-on:click="clearAndFocusPhoneNumber(false)" tabindex="0">
                             <i class="link-icon fa fa-undo" aria-hidden="true"></i>
                             <span class="link-text">${msg("codeSendAgain")}</span>
-                          </a>
-                          <a v-else v-on:click="clearAndFocusPhoneNumber(true)" tabindex="0">
+                          </button>
+                          <button type="button" class="link" v-else v-on:click="clearAndFocusPhoneNumber(true)" tabindex="0">
                             <i class="link-icon fa fa-undo" aria-hidden="true"></i>
                             <span class="link-text">${msg("changePhoneNumber")}</span>
-                          </a>
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -137,28 +147,16 @@
                         <label for="code" class="${properties.kcLabelClass!}">${msg("enterCode")}</label>
 
                         <!-- INPUT: verification code -->
-                        <div v-otp-input>
-                          <div id="otp-input">
-                            <input
-                              type="text"
-                              maxlength="1"
-                              pattern="[0-9]*"
-                              inputmode="numeric"
-                              autocomplete="off"
-                              placeholder="_"
-                              v-for="(n, index) in 6"
-                              :key="index"
-                            />
-                          </div>
-                          <input
-                            type="text"
-                            name="code"
-                            id="code"
-                            autocomplete="one-time-code"
-                            inputmode="numeric"
-                            style="position: absolute; left: -9999px;"
-                          />
-                        </div>
+                        <input
+                          type="text"
+                          id="code"
+                          name="code"
+                          v-otp-input="{ onSubmit: onSubmit }"
+                          autocomplete="one-time-code" autofocus
+                          inputmode="numeric"
+                          maxlength="6"
+                          class="${properties.kcInputClass!}"
+                        />
 
                         <#if messagesPerField.existsError('code')>
                           <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
@@ -190,7 +188,10 @@
 
                   <div id="kc-form-buttons">
                     <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if> />
-                    <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" name="login" id="kc-login" type="submit" value="${msg('doLogIn')}" />
+
+                    <!-- submit button -->
+                    <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
+                      name="login" id="kc-login" type="submit" v-model="submitButtonText" v-bind:disabled="submitButtonText != submitButtonDefaultText" />
                   </div>
                 </div>
 
@@ -225,6 +226,8 @@
                   phoneNumber: '${attemptedPhoneNumber!}',
                   phoneActivated: <#if attemptedPhoneActivated??>true<#else>false</#if>,
                   messagePhoneNumberError: <#if messagesPerField.existsError('phoneNumber')>'${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}'<#else>''</#if>,
+                  submitButtonText: "${msg('doLogin')}",
+                  submitButtonDefaultText: "${msg('doLogin')}",
                   KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
                   resetSendCodeButton: false,
                   codeSendStatus: <#if codeSendStatus??>'${codeSendStatus}'<#else>'NOT_SENT'</#if>,
@@ -376,7 +379,11 @@
                       document.querySelector('#codeExpiresIn').value = this.codeExpiresIn;
                     }
 
-                    event.target.submit(); // Programmatically submit the form
+                    // submit the form
+                    this.$refs.form.submit();
+
+                    // show button loading state
+                    this.submitButtonText = "${msg('loading')}";
                   },
                   resetPhoneVerification() {
                     this.codeSendStatus = CODE_SEND_STATUS.NOT_SENT;

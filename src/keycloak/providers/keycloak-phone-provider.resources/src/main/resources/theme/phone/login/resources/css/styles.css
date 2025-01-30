@@ -202,6 +202,10 @@ h1,
   display: block;
 }
 
+.pf-c-button:disabled {
+  cursor: not-allowed;
+}
+
 #back-to-login-btn {
   width: 95%;
   background: white;
@@ -389,84 +393,60 @@ input[type="checkbox"] {
   margin-top: 0.8rem;
 }
 
-a {
+a,
+button.link {
   color: #387f6a;
   display: inline-flex;
   align-items: center;
   font-size: 14px;
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
-a:has(.link-icon) {
+a:has(.link-icon),
+button.link:has(.link-icon) {
   text-decoration: none;
 }
 
-a:focus {
+a:focus,
+button.link:focus {
   outline: none;
 }
 
-a .link-icon {
+a .link-icon,
+button.link .link-icon {
   margin-right: 8px;
   text-decoration: none;
 }
 
-a:hover .link-icon {
+a:hover .link-icon,
+a:focus .link-icon,
+button.link:hover .link-icon,
+button.link:focus .link-icon {
   text-decoration: none;
-}
-
-a .link-text {
-  text-decoration: none;
-}
-
-a:hover .link-text {
-  text-decoration: underline;
-}
-
-#kc-form-options a {
-  display: block;
-  width: 100%;
-  text-align: center;
-}
-
-/* a i {
-  text-decoration: none !important;
-  margin-right: 8px;
-}
-
-a:hover i {
-  text-decoration: none !important;
-} */
-
-/* .pf-c-button.pf-m-link {
-  color: #387f6a;
-  font-size: 14px;
-}
-.pf-c-button__icon.pf-m-start {
-  margin-right: 5px;
-} */
-
-.form-link {
-  text-align: start;
-  cursor: pointer;
-  color: #387f6a;
-  font-size: 14px;
-  background-color: transparent;
-  border: none;
-}
-.form-link:hover {
   color: #0099d3;
 }
 
-.form-link:hover {
+a .link-text,
+button.link .link-text {
   text-decoration: none;
 }
 
-.form-link .icon {
-  text-decoration: none;
-  margin-right: 5px;
-}
-
-.form-link .text {
+a:hover .link-text,
+a:focus .link-text,
+button.link:hover .link-text,
+button.link:focus .link-text {
   text-decoration: underline;
+  color: #0099d3;
+}
+
+#kc-form-options a,
+#kc-form-options button.link {
+  display: block;
+  width: 100%;
+  text-align: center;
 }
 
 .form-label {
@@ -526,36 +506,11 @@ a:hover i {
   margin-right: 5px;
 }
 
-#otp-input {
-  display: flex;
-  gap: 8px;
+input#code {
+  letter-spacing: 1em;
   width: 100%;
-  max-width: 320px;
-  margin-bottom: 10px;
-}
-
-#otp-input input {
-  flex: 1;
-  aspect-ratio: 1;
-  min-width: 32px;
-  max-width: 40px;
-  text-align: center;
-  font-size: 14px;
-  color: #000;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-
-  /* Hide cursor */
-  caret-color: transparent;
-
-  /* Hide text selection */
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  user-select: none;
-}
-#otp-input input::selection {
-  background-color: transparent;
+  box-sizing: border-box;
+  font-size: 1.2rem;
 }
 
 /* Media Queries */

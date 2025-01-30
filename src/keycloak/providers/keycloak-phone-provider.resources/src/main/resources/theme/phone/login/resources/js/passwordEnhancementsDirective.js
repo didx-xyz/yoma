@@ -9,7 +9,8 @@ Vue.directive("password-enhancements", {
       confirmPasswordInputSelector,
       confirmPasswordContainerSelector,
       createPasswordCheckboxSelector,
-      errorLabelSelector,
+      passwordServerErrorLabelSelector,
+      confirmPasswordServerErrorLabelSelector,
       copyPasswordButtonStyle = "block",
       onValidityChange,
     } = binding.value;
@@ -18,7 +19,8 @@ Vue.directive("password-enhancements", {
     const confirmPasswordInput = document.querySelector(confirmPasswordInputSelector);
     const confirmPasswordContainer = document.querySelector(confirmPasswordContainerSelector);
     const createPasswordCheckbox = document.querySelector(createPasswordCheckboxSelector);
-    const errorLabel = document.querySelector(errorLabelSelector);
+    const passwordServerErrorLabel = document.querySelector(passwordServerErrorLabelSelector);
+    const confirmPasswordServerErrorLabel = document.querySelector(confirmPasswordServerErrorLabelSelector);
 
     const passwordMessageLabel = document.createElement("span");
     passwordMessageLabel.id = "password-message-label";
@@ -153,16 +155,13 @@ Vue.directive("password-enhancements", {
       passwordMessageLabel.style.display = "block";
       passwordMessageLabel.style.color = "green";
       passwordMessageLabel.textContent = "✔ " + messages.passwordCopySuccess;
-      // setTimeout(() => {
-      //   passwordMessageLabel.textContent = "";
-      // }, 2000);
     }
 
     function updatePasswordStyles() {
-      if (errorLabel) {
+      if (passwordServerErrorLabel) {
         // Hide server message when validation messages are shown
         if (passwordInput.value) {
-          errorLabel.style.display = "none";
+          passwordServerErrorLabel.style.display = "none";
         }
       }
 
@@ -221,14 +220,6 @@ Vue.directive("password-enhancements", {
         uppercase: /[A-Z]/.test(password),
         number: /\d/.test(password),
       };
-
-      if (password === "") {
-        passwordMessageLabel.innerHTML = "";
-        passwordMessageLabel.style.display = "none";
-        passwordValid = false;
-        emitValidityChange();
-        return;
-      }
 
       passwordValid = Object.values(requirements).every(Boolean);
 
@@ -348,7 +339,7 @@ Vue.directive("password-enhancements", {
       };
 
       const handleGeneratedPassword = (generated, password) => {
-        if (errorLabel) errorLabel.style.display = "none";
+        if (passwordServerErrorLabel) passwordServerErrorLabel.style.display = "none";
 
         if (generated) {
           passwordInput.value = password;
@@ -407,6 +398,11 @@ Vue.directive("password-enhancements", {
       if (allowPasswordIndicator) {
         if (confirmPasswordInput) {
           confirmPasswordInput.addEventListener("input", () => {
+            // Hide server message as soon as user starts typing
+            if (confirmPasswordServerErrorLabel) {
+              confirmPasswordServerErrorLabel.style.display = "none";
+            }
+
             validateConfirmPassword();
             updateValidationDisplay(messages);
           });
@@ -416,8 +412,8 @@ Vue.directive("password-enhancements", {
 
         passwordInput.addEventListener("input", () => {
           // Hide server message as soon as user starts typing
-          if (errorLabel) {
-            errorLabel.style.display = "none";
+          if (passwordServerErrorLabel) {
+            passwordServerErrorLabel.style.display = "none";
           }
 
           passwordValid = isValidPassword(passwordInput.value);
@@ -442,11 +438,25 @@ Vue.directive("password-enhancements", {
               if (!passwordValid || !confirmPasswordValid) {
                 e.preventDefault();
                 if (!passwordValid) {
-                  passwordMessageLabel.style.display = "block";
-                  passwordMessageLabel.style.color = "red";
-                  passwordMessageLabel.textContent = messages.passwordInvalidMessage;
+                  if (passwordServerErrorLabel) {
+                    // Hide server message when validation messages are shown
+                    passwordServerErrorLabel.style.display = "none";
+                  }
+
+                  // passwordMessageLabel.style.display = "block";
+                  // passwordMessageLabel.style.color = "red";
+                  // passwordMessageLabel.textContent = messages.passwordInvalidMessage;
+
+                  // show the password requirements
+                  updatePasswordIndicator();
                 }
                 if (!confirmPasswordValid && confirmPasswordInput) {
+                  // Hide server message when validation messages are shown
+                  if (confirmPasswordServerErrorLabel) {
+                    confirmPasswordServerErrorLabel.style.display = "none";
+                  }
+
+                  // show the mismatch message
                   confirmMessageLabel.style.display = "block";
                   confirmMessageLabel.style.color = "red";
                   confirmMessageLabel.textContent = messages.passwordMismatchMessage;

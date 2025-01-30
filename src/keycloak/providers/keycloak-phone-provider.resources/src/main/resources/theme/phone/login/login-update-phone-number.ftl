@@ -13,7 +13,7 @@
       <div id="vue-app">
         <div id="kc-form">
           <div id="kc-form-wrapper">
-            <form id="kc-form-login" action="${url.loginAction}" method="post" @submit="onSubmit">
+            <form ref="form" id="kc-form-login" action="${url.loginAction}" method="post" @submit="onSubmit">
 
               <input type="hidden" id="codeSendStatus" name="codeSendStatus" v-model="codeSendStatus">
               <input type="hidden" id="codeExpiresIn" name="codeExpiresIn" v-model="codeExpiresIn">
@@ -24,7 +24,7 @@
 
                   <!-- INPUT: phone number -->
                   <input id="phoneNumber" class="${properties.kcInputClass!}" name="phoneNumber" type="tel"
-                    aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel"
+                    aria-invalid="<#if messagesPerField.existsError('phoneNumber')>true</#if>" autocomplete="mobile tel" autofocus
                     v-model="phoneNumber" @input="resetPhoneVerification" v-intl-tel-input />
                 </div>
 
@@ -48,16 +48,16 @@
                 </div>
 
                 <div class="links">
-                  <#-- LINK: change phone number / send again (start over) -->
+                  <#-- BUTTON: change phone number / send again (start over) -->
                   <div v-if="codeSendStatus !== 'NOT_SENT'">
-                    <a v-if="codeSendStatus === 'EXPIRED'" v-on:click="clearAndFocusPhoneNumber(false)" tabindex="0">
+                    <button type="button" class="link" v-if="codeSendStatus === 'EXPIRED'" v-on:click="clearAndFocusPhoneNumber(false)" tabindex="0">
                       <i class="link-icon fa fa-undo" aria-hidden="true"></i>
                       <span class="link-text">${msg("codeSendAgain")}</span>
-                    </a>
-                    <a v-else v-on:click="clearAndFocusPhoneNumber(true)" tabindex="0">
+                    </button>
+                    <button type="button" class="link" v-else v-on:click="clearAndFocusPhoneNumber(true)" tabindex="0">
                       <i class="link-icon fa fa-undo" aria-hidden="true"></i>
                       <span class="link-text">${msg("changePhoneNumber")}</span>
-                    </a>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -72,28 +72,16 @@
                 <label for="code" class="${properties.kcLabelClass!}">${msg("enterCode")}</label>
 
                 <!-- INPUT: verification code -->
-                <div v-otp-input>
-                  <div id="otp-input">
-                    <input
-                      type="text"
-                      maxlength="1"
-                      pattern="[0-9]*"
-                      inputmode="numeric"
-                      autocomplete="off"
-                      placeholder="_"
-                      v-for="(n, index) in 6"
-                      :key="index"
-                    />
-                  </div>
-                  <input
-                    type="text"
-                    name="code"
-                    id="code"
-                    autocomplete="one-time-code"
-                    inputmode="numeric"
-                    style="position: absolute; left: -9999px;"
-                  />
-                </div>
+                <input
+                  type="text"
+                  id="code"
+                  name="code"
+                  v-otp-input="{ onSubmit: onSubmit }"
+                  autocomplete="one-time-code" autofocus
+                  inputmode="numeric"
+                  maxlength="6"
+                  class="${properties.kcInputClass!}"
+                />
 
                 <#if messagesPerField.existsError('code')>
                   <div id="input-error-code" class="${properties.kcInputErrorMessageClass!}" aria-live="polite">
@@ -105,16 +93,18 @@
               <div v-bind:style="{ display: codeSendStatus !== 'NOT_SENT' ? 'block' : 'none'}">
                 <div id="kc-form-buttons">
                   <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if>/>
+
+                  <!-- submit button -->
                   <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
-                    name="save" id="kc-login" type="submit" value="${msg('doSubmit')}"/>
+                    name="save" id="kc-login" type="submit" v-model="submitButtonText" v-bind:disabled="submitButtonText != submitButtonDefaultText" />
                 </div>
               </div>
 
               <#-- cancel button -->
               <div id="kc-form-options" style="text-align: center;">
                 <input type="hidden" id="cancel" name="cancel" v-model="cancel">
-                <button class="form-link" tabindex="0" @click="() => { cancel = true; $event.target.closest('form').submit(); }">
-                  <span class="text">${msg("doCancel")}</span>
+                <button class="link" tabindex="0" @click="() => { cancel = true; $event.target.closest('form').submit(); }">
+                  <span class="link-text">${msg("doCancel")}</span>
                 </button>
               </div>
             </form>
@@ -136,6 +126,8 @@
           data: {
             phoneNumber: '${phoneNumber!}',
             messagePhoneNumberError: <#if messagesPerField.existsError('phoneNumber')>'${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}'<#else>''</#if>,
+            submitButtonText: "${msg('doSubmit')}",
+            submitButtonDefaultText: "${msg('doSubmit')}",
             resetSendCodeButton: false,
             KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
             codeSendStatus: <#if codeSendStatus??>'${codeSendStatus}'<#else>'NOT_SENT'</#if>,
@@ -257,7 +249,11 @@
               // set the codeExpiresIn hidden input to the current expiration time
               document.querySelector('#codeExpiresIn').value = this.codeExpiresIn;
 
-              event.target.submit(); // Programmatically submit the form
+              // submit the form
+              this.$refs.form.submit();
+
+              // show button loading state
+              this.submitButtonText = "${msg('loading')}";
             },
             resetPhoneVerification() {
               this.codeSendStatus = CODE_SEND_STATUS.NOT_SENT;
