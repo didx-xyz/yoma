@@ -17,7 +17,7 @@ import {
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import { useSession } from "next-auth/react";
 import type { MyOpportunityRequestVerify } from "~/api/models/myOpportunity";
@@ -32,6 +32,11 @@ import { toISOStringForTimezone } from "~/lib/utils";
 import { Loading } from "../Status/Loading";
 import { performActionSendForVerificationManual } from "~/api/services/myOpportunities";
 import { ApiErrors } from "../Status/ApiErrors";
+import SelectButtons from "../Common/SelectButtons";
+import { useQuery } from "@tanstack/react-query";
+import { getTimeIntervals } from "~/api/services/lookups";
+import FormMessage, { FormMessageType } from "../Common/FormMessage";
+import { Certificate } from "crypto";
 
 interface InputProps {
   [id: string]: any;
@@ -50,167 +55,159 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
 
+  const { data: timeIntervalsData } = useQuery({
+    queryKey: ["timeIntervals"],
+    queryFn: async () => getTimeIntervals(),
+  });
+
   const schema = z
     .object({
       certificate: z.any().optional(),
       picture: z.any().optional(),
       voiceNote: z.any().optional(),
       geometry: z.any().optional(),
-      dateStart: z.union([z.null(), z.string()]).optional(),
+      dateStart: z.union([z.string(), z.null()]).optional(),
       dateEnd: z.union([z.string(), z.null()]).optional(),
+      commitmentInterval: z
+        .object({
+          id: z
+            .any()
+            .transform((value) => (Array.isArray(value) ? value[0] : value)), // SelectButtons returns array
+          count: z.preprocess(
+            (val) => (val === "" ? undefined : Number(val)),
+            z.number(),
+          ),
+        })
+        .nullable()
+        .optional(),
+      recommendable: z.boolean().nullable().optional(),
+      starRating: z.number().nullable().optional(),
+      feedback: z.string().nullable().optional(),
     })
     .superRefine((values, ctx) => {
-      if (
-        opportunityInfo?.verificationEnabled &&
-        opportunityInfo.verificationMethod == "Manual"
-      ) {
-        const isFileUpload = opportunityInfo.verificationTypes?.some(
-          (x) => x.type == "FileUpload",
-        );
+      const hasDateRange = Boolean(values.dateStart && values.dateEnd);
+      const hasInterval = Boolean(
+        values.commitmentInterval &&
+          values.commitmentInterval.id &&
+          (values.commitmentInterval.count ?? 0) > 0,
+      );
 
-        if (isFileUpload) {
-          // validate required
-          if (values.certificate == null) {
-            ctx.addIssue({
-              message: "Please upload a file.",
-              code: z.ZodIssueCode.custom,
-              path: ["certificate"],
-              fatal: true,
-            });
-          } else {
-            if (values.certificate?.type) {
-              // validate file type
-              const fileType = values.certificate?.type;
-              if (
-                fileType &&
-                !(
-                  ACCEPTED_DOC_TYPES.includes(fileType) ||
-                  ACCEPTED_IMAGE_TYPES.includes(fileType)
-                )
-              ) {
-                ctx.addIssue({
-                  message: `File type not supported. Please upload a file of type ${[
-                    ...ACCEPTED_DOC_TYPES_LABEL,
-                    ...ACCEPTED_IMAGE_TYPES_LABEL,
-                  ].join(", ")}.`,
-                  code: z.ZodIssueCode.custom,
-                  path: ["certificate"],
-                  fatal: true,
-                });
-              }
-              // validate file size
-              if (values.certificate?.size > MAX_FILE_SIZE) {
-                ctx.addIssue({
-                  message: `File size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
-                  code: z.ZodIssueCode.custom,
-                  path: ["certificate"],
-                  fatal: true,
-                });
-              }
-            }
-          }
-        }
+      // Ensure exactly one of the options is selected
+      if (hasDateRange === hasInterval) {
+        ctx.addIssue({
+          message:
+            "Either a date range (Start & End date) or commitment interval (time to complete) must be specified, but not both.",
+          code: z.ZodIssueCode.custom,
+          path: ["dateStart"], // or "commitmentInterval"
+          fatal: true,
+        });
+        return;
+      }
 
-        const isPicture = opportunityInfo.verificationTypes?.some(
-          (x) => x.type == "Picture",
-        );
+      // If user chose date range, validate dateStart & dateEnd
+      if (hasDateRange) {
+        // Store dates without time
+        const startDate = values.dateStart
+          ? new Date(values.dateStart).setHours(0, 0, 0, 0)
+          : null;
+        const endDate = values.dateEnd
+          ? new Date(values.dateEnd).setHours(0, 0, 0, 0)
+          : null;
+        const oppStartDate = opportunityInfo?.dateStart
+          ? new Date(opportunityInfo.dateStart).setHours(0, 0, 0, 0)
+          : null;
+        const oppEndDate = opportunityInfo?.dateEnd
+          ? new Date(opportunityInfo.dateEnd).setHours(0, 0, 0, 0)
+          : null;
+        const today = new Date().setHours(0, 0, 0, 0);
 
-        if (isPicture) {
-          // validate required
-          if (values.picture == null) {
-            ctx.addIssue({
-              message: "Please upload a file.",
-              code: z.ZodIssueCode.custom,
-              path: ["picture"],
-              fatal: true,
-            });
-          } else {
-            // validate file type
-            if (values.picture?.type) {
-              const fileType = values.picture?.type;
-              if (fileType && !ACCEPTED_IMAGE_TYPES.includes(fileType)) {
-                ctx.addIssue({
-                  message: `File type not supported. Please upload a file of type ${ACCEPTED_IMAGE_TYPES_LABEL.join(
-                    ", ",
-                  )}.`,
-                  code: z.ZodIssueCode.custom,
-                  path: ["picture"],
-                  fatal: true,
-                });
-              }
-            }
-            // validate file size
-            if (values.picture?.size > MAX_FILE_SIZE) {
-              ctx.addIssue({
-                message: `File size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
-                code: z.ZodIssueCode.custom,
-                path: ["picture"],
-                fatal: true,
-              });
-            }
-          }
-        }
-
-        const isVoiceNote = opportunityInfo.verificationTypes?.some(
-          (x) => x.type == "VoiceNote",
-        );
-
-        if (isVoiceNote) {
-          // validate required
-          if (values.voiceNote == null) {
-            ctx.addIssue({
-              message: "Please upload a file.",
-              code: z.ZodIssueCode.custom,
-              path: ["voiceNote"],
-              fatal: true,
-            });
-          } else {
-            // validate file type
-            if (values.voiceNote?.type) {
-              const fileType = values.voiceNote?.type;
-              if (fileType && !ACCEPTED_AUDIO_TYPES.includes(fileType)) {
-                ctx.addIssue({
-                  message: `File type not supported. Please upload a file of type ${ACCEPTED_AUDIO_TYPES_LABEL.join(
-                    ", ",
-                  )}.`,
-                  code: z.ZodIssueCode.custom,
-                  path: ["voiceNote"],
-                  fatal: true,
-                });
-              }
-            }
-            // validate file size
-            if (values.voiceNote?.size > MAX_FILE_SIZE) {
-              ctx.addIssue({
-                message: `File size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
-                code: z.ZodIssueCode.custom,
-                path: ["voiceNote"],
-                fatal: true,
-              });
-            }
-          }
-        }
-
-        if (
-          opportunityInfo.verificationTypes?.find(
-            (x) => x.type == "Location",
-          ) &&
-          values.geometry == null
-        ) {
+        if (startDate && oppStartDate && startDate < oppStartDate) {
           ctx.addIssue({
-            message: "Please select a pin location.",
+            message: `Start date cannot be earlier than the opportunity start date of '${oppStartDate}'.`,
             code: z.ZodIssueCode.custom,
-            path: ["geometry"],
+            path: ["dateStart"],
+            fatal: true,
+          });
+        }
+
+        if (endDate) {
+          if (startDate && endDate < startDate) {
+            ctx.addIssue({
+              message: "End date is earlier than the start date.",
+              code: z.ZodIssueCode.custom,
+              path: ["dateEnd"],
+              fatal: true,
+            });
+          }
+
+          if (endDate > today) {
+            ctx.addIssue({
+              message:
+                "End date cannot be in the future. Please select today's date or earlier.",
+              code: z.ZodIssueCode.custom,
+              path: ["dateEnd"],
+              fatal: true,
+            });
+          }
+
+          if (oppEndDate && endDate > oppEndDate) {
+            ctx.addIssue({
+              message: `End date cannot be later than the opportunity end date of '${oppEndDate}'.`,
+              code: z.ZodIssueCode.custom,
+              path: ["dateEnd"],
+              fatal: true,
+            });
+          }
+        }
+      }
+
+      // If user chose commitment interval, validate that
+      if (hasInterval) {
+        const { id, count } = values.commitmentInterval!;
+        if (id === "00000000-0000-0000-0000-000000000000") {
+          ctx.addIssue({
+            message: "Commitment interval is empty or does not exist.",
+            code: z.ZodIssueCode.custom,
+            path: ["commitmentInterval", "id"],
+            fatal: true,
+          });
+        }
+        // Placeholder check to ensure existence in the system
+        // if (!commitmentIntervalExistsInSystem(id)) { ... }
+
+        if (count! < 1) {
+          ctx.addIssue({
+            message:
+              "Commitment interval count must be greater than or equal to 1.",
+            code: z.ZodIssueCode.custom,
+            path: ["commitmentInterval", "count"],
             fatal: true,
           });
         }
       }
 
-      if (!values.dateStart) {
+      // StarRating validation
+      if (
+        values.starRating != null &&
+        (values.starRating < 1 || values.starRating > 5)
+      ) {
         ctx.addIssue({
-          message: "Please select a date.",
+          message: "Star rating must be between 1 and 5 if specified.",
           code: z.ZodIssueCode.custom,
-          path: ["dateStart"],
+          path: ["starRating"],
+          fatal: true,
+        });
+      }
+
+      // Feedback validation
+      if (
+        values.feedback != null &&
+        (values.feedback.length < 1 || values.feedback.length > 500)
+      ) {
+        ctx.addIssue({
+          message: "Feedback must be between 1 and 500 characters.",
+          code: z.ZodIssueCode.custom,
+          path: ["feedback"],
           fatal: true,
         });
       }
@@ -229,16 +226,26 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         return;
       }
 
-      /* eslint-disable @typescript-eslint/no-unsafe-argument */
       const request: MyOpportunityRequestVerify = {
         certificate: data.certificate,
         picture: data.picture,
         voiceNote: data.voiceNote,
         geometry: data.geometry,
-        dateStart: data.dateStart ? data.dateStart : null,
-        dateEnd: data.dateEnd ? data.dateEnd : null,
+        dateStart: data.dateStart || null,
+        dateEnd: data.dateEnd || null,
+        commitmentInterval: data.commitmentInterval
+          ? {
+              id:
+                timeIntervalsData?.find(
+                  (x) => x.name === data.commitmentInterval?.id,
+                )?.id ?? "",
+              count: data.commitmentInterval.count,
+            }
+          : null,
+        recommendable: data.recommendable || null,
+        starRating: data.starRating || null,
+        feedback: data.feedback || null,
       };
-      /* eslint-enable @typescript-eslint/no-unsafe-argument */
 
       setIsLoading(true);
 
@@ -268,9 +275,59 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
     setValue,
     formState: { errors: errors, isValid: isValid },
     control,
+    watch,
   } = useForm({
     resolver: zodResolver(schema),
   });
+  const watchIntervalId = watch("commitmentInterval.id");
+  const watchIntervalCount = watch("commitmentInterval.count");
+
+  //* commitment interval slider
+  const [timeIntervalMax, setTimeIntervalMax] = useState(100);
+
+  // set the maximum based on the selected time interval
+  useEffect(() => {
+    // if watchIntervalId is an array (from SelectButtons) get the first value, else use the value
+    const watchInterval = Array.isArray(watchIntervalId)
+      ? watchIntervalId[0]
+      : watchIntervalId;
+
+    let max = 0;
+    switch (watchInterval) {
+      case "Minute":
+        max = 60;
+        break;
+      case "Hour":
+        max = 24;
+        break;
+      case "Day":
+        max = 30;
+        break;
+      case "Week":
+        max = 12;
+        break;
+      case "Month":
+        max = 60;
+        break;
+    }
+
+    setTimeIntervalMax(max);
+
+    if (watchIntervalCount > max) {
+      setValue("commitmentInterval.count", max);
+    }
+  }, [watchIntervalId, watchIntervalCount, setTimeIntervalMax, setValue]);
+
+  // set default values
+  useEffect(() => {
+    // start date to current date
+    setValue("dateStart", toISOStringForTimezone(new Date()));
+
+    //setValue("commitmentInterval.count", 0);
+
+    // commitment interval type
+    setValue("commitmentInterval.id", "Day");
+  }, [setValue]);
 
   return (
     <>
@@ -305,7 +362,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               </div>
             </div>
             <div className="flex flex-col gap-4 px-4">
-              <div className="mb-8 flex flex-col items-center gap-1 text-center">
+              <div className="mb-2x flex flex-col items-center gap-1 text-center">
                 <h4 className="font-semibold tracking-wide">
                   Well done for completing this opportunity!
                 </h4>
@@ -313,6 +370,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   Upload the required documents below, and once approved,
                   we&apos;ll add the accreditation to your CV!
                 </div>
+                {/* <FormMessage messageType={FormMessageType.Success}>
+                  Upload the required documents below, and once approved,
+                  we&apos;ll add the accreditation to your CV!
+                </FormMessage> */}
               </div>
 
               <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
@@ -332,12 +393,13 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       When did you complete this opportunity?
                     </div>
                     <div className="text-sm text-gray-dark">
-                      Select a start date (end date is optional)
+                      Select a date range, or the time taken to complete
                     </div>
                   </div>
                 </div>
 
-                <div className="grid gap-4 px-4 pb-4 md:-mt-2 md:grid-cols-2">
+                {/* DATES */}
+                <div className="flex flex-row items-center justify-center gap-2">
                   <div className="form-control">
                     {/* eslint-disable @typescript-eslint/no-unsafe-argument */}
                     <Controller
@@ -345,24 +407,24 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       name="dateStart"
                       render={({ field: { onChange, value } }) => (
                         <DatePicker
-                          className="input input-sm input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                          className="input input-sm input-bordered w-32 rounded-md border-gray focus:border-gray focus:outline-none"
                           onChange={(date) =>
                             onChange(toISOStringForTimezone(date))
                           }
                           selected={value ? new Date(value) : null}
-                          placeholderText="Select Start Date"
+                          placeholderText="Start Date"
                         />
                       )}
                     />
 
                     {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
-                    {errors.dateStart && (
+                    {/* {errors.dateStart && (
                       <label className="label">
                         <span className="label-text-alt px-4 text-base italic text-red-500">
                           {`${errors.dateStart.message}`}
                         </span>
                       </label>
-                    )}
+                    )} */}
                   </div>
 
                   <div className="form-control">
@@ -372,25 +434,126 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       name="dateEnd"
                       render={({ field: { onChange, value } }) => (
                         <DatePicker
-                          className="input input-sm input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                          className="input input-sm input-bordered w-32 rounded-md border-gray focus:border-gray focus:outline-none"
                           onChange={(date) =>
                             onChange(toISOStringForTimezone(date))
                           }
                           selected={value ? new Date(value) : null}
-                          placeholderText="Select End Date"
+                          placeholderText="End Date"
                         />
                       )}
                     />
 
                     {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
-                    {errors.dateEnd && (
+                    {/* {errors.dateEnd && (
                       <label className="label">
                         <span className="label-text-alt px-4 text-base italic text-red-500">
                           {`${errors.dateEnd.message}`}
                         </span>
                       </label>
-                    )}
+                    )} */}
                   </div>
+                </div>
+
+                <div className="divider">OR</div>
+
+                {/* COMMITMENT INTERVALS */}
+                <div className="flex flex-col items-center justify-center pb-2">
+                  <div className="flex flex-row justify-start gap-4">
+                    <span className="mt-1 text-xs font-semibold text-gray-dark">
+                      0
+                    </span>
+
+                    <Controller
+                      name="commitmentInterval.count"
+                      control={control}
+                      // defaultValue={
+                      //   searchFilter?.commitmentInterval?.interval?.count ?? 0
+                      // }
+                      render={({ field: { onChange, value } }) => (
+                        <div className="flex w-full flex-col justify-center text-center md:w-64">
+                          <input
+                            type="range"
+                            className="range range-warning bg-white"
+                            min="0"
+                            max={timeIntervalMax}
+                            value={value}
+                            onChange={(val) => onChange(val)}
+                          />
+                          <span className="-mb-3 mt-2 h-8 text-xs font-semibold text-gray-dark">
+                            {value > 0 && watchIntervalId != null && (
+                              <>
+                                {`${value} ${
+                                  value > 1
+                                    ? `${watchIntervalId}s`
+                                    : watchIntervalId
+                                }`}
+                              </>
+                            )}
+                          </span>
+                        </div>
+                      )}
+                    />
+
+                    <span className="mt-1 text-xs font-semibold text-gray-dark">
+                      {timeIntervalMax}
+                    </span>
+                  </div>
+                  <div className="flex flex-row justify-start gap-4">
+                    <Controller
+                      name="commitmentInterval.id"
+                      control={control}
+                      render={({ field: { onChange, value } }) => (
+                        <SelectButtons
+                          id="selectButtons_commitmentIntervals"
+                          buttons={(timeIntervalsData ?? []).map((x) => ({
+                            id: x.id,
+                            title: x.name,
+                            selected: value?.includes(x.name) ?? false,
+                          }))}
+                          onChange={(val) => {
+                            const selectedButtons = val.filter(
+                              (btn) => btn.selected,
+                            );
+                            onChange(selectedButtons.map((c) => c.title));
+                          }}
+                        />
+                      )}
+                    />
+                  </div>
+                </div>
+
+                {/* ERRORS */}
+                {errors && (
+                  <label className="label">
+                    <span className="label-text-alt px-4 text-base italic text-red-500">
+                      {`${JSON.stringify(errors)}`}
+                    </span>
+                  </label>
+                )}
+
+                <div className="flex flex-col gap-2">
+                  {errors.dateStart && (
+                    // <label className="label">
+                    //   <span className="label-text-alt px-4 text-base italic text-red-500">
+                    //     {`${errors.dateStart.message}`}
+                    //   </span>
+                    // </label>
+
+                    <FormMessage messageType={FormMessageType.Warning}>
+                      {`${errors.dateStart.message}`}
+                    </FormMessage>
+                  )}
+                  {errors.dateEnd && (
+                    // <label className="label">
+                    //   <span className="label-text-alt px-4 text-base italic text-red-500">
+                    //     {`${errors.dateEnd.message}`}
+                    //   </span>
+                    // </label>
+                    <FormMessage messageType={FormMessageType.Warning}>
+                      {`${errors.dateEnd.message}`}
+                    </FormMessage>
+                  )}
                 </div>
               </div>
 
@@ -404,11 +567,11 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                     fileTypes={[
                       ...ACCEPTED_DOC_TYPES,
                       ...ACCEPTED_IMAGE_TYPES,
-                    ].join(",")}
+                    ].join(", ")}
                     fileTypesLabels={[
                       ...ACCEPTED_DOC_TYPES_LABEL,
                       ...ACCEPTED_IMAGE_TYPES_LABEL,
-                    ].join(",")}
+                    ].join(", ")}
                     allowMultiple={false}
                     label={
                       opportunityInfo?.verificationTypes?.find(
@@ -440,8 +603,8 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   <FileUpload
                     id="fileUploadPicture"
                     files={[]}
-                    fileTypes={ACCEPTED_IMAGE_TYPES.join(",")}
-                    fileTypesLabels={ACCEPTED_IMAGE_TYPES_LABEL.join(",")}
+                    fileTypes={ACCEPTED_IMAGE_TYPES.join(", ")}
+                    fileTypesLabels={ACCEPTED_IMAGE_TYPES_LABEL.join(", ")}
                     allowMultiple={false}
                     label={
                       opportunityInfo?.verificationTypes?.find(
@@ -471,8 +634,8 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   <FileUpload
                     id="fileUploadVoiceNote"
                     files={[]}
-                    fileTypes={ACCEPTED_AUDIO_TYPES.join(",")}
-                    fileTypesLabels={ACCEPTED_AUDIO_TYPES_LABEL.join(",")}
+                    fileTypes={ACCEPTED_AUDIO_TYPES.join(", ")}
+                    fileTypesLabels={ACCEPTED_AUDIO_TYPES_LABEL.join(", ")}
                     allowMultiple={false}
                     label={
                       opportunityInfo?.verificationTypes?.find(
@@ -534,13 +697,16 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               </div>
 
               {!isValid && (
-                <div className="flex-growx flex justify-center">
-                  <label className="label">
-                    <span className="label-text-alt px-4 text-center text-base italic text-red-500">
-                      Please fill out the required information above.
-                    </span>
-                  </label>
-                </div>
+                // <div className="flex-growx flex justify-center">
+                //   <label className="label">
+                //     <span className="label-text-alt px-4 text-center text-base italic text-red-500">
+                //       Please fill out the required information above.
+                //     </span>
+                //   </label>
+                // </div>
+                <FormMessage messageType={FormMessageType.Warning}>
+                  Please fill out the required information above.
+                </FormMessage>
               )}
 
               <div className="mb-10 mt-4 flex flex-grow gap-4">

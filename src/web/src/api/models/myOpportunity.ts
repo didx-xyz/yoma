@@ -13,6 +13,15 @@ export interface MyOpportunityRequestVerify {
   geometry: Geometry | null;
   dateStart: string | null;
   dateEnd: string | null;
+  commitmentInterval: MyOpportunityRequestVerifyCommitmentInterval | null;
+  recommendable: boolean | null;
+  starRating: number | null;
+  feedback: string | null;
+}
+
+export interface MyOpportunityRequestVerifyCommitmentInterval {
+  id: string;
+  count: number;
 }
 
 export enum VerificationStatus {
@@ -52,9 +61,10 @@ export interface MyOpportunitySearchResults {
 export interface MyOpportunityInfo {
   id: string;
   userId: string;
-  userEmail: string;
-  userPhoneNumber: string;
-  userDisplayName: string | null;
+  username: string;
+  userEmail: string | null;
+  userPhoneNumer: string | null;
+  userDisplayName: string;
   userCountry: string | null;
   userEducation: string | null;
   userPhotoId: string | null;
@@ -76,14 +86,27 @@ export interface MyOpportunityInfo {
   verificationStatusId: string | null;
   verificationStatus: VerificationStatus | null | string; //NB: string
   commentVerification: string | null;
+  commitmentInterval: TimeIntervalOption | null;
+  commitmentIntervalCount: number | null;
   dateStart: string | null;
   dateEnd: string | null;
   dateCompleted: string | null;
   zltoReward: number | null;
   yomaReward: number | null;
+  recommendable: boolean | null;
+  starRating: number | null;
+  feedback: string | null;
   dateModified: string;
   verifications: MyOpportunityInfoVerification[] | null;
   skills: Skill[] | null;
+}
+
+export enum TimeIntervalOption {
+  Minute,
+  Hour,
+  Day,
+  Week,
+  Month,
 }
 
 export interface Skill {
