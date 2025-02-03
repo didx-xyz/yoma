@@ -14,6 +14,7 @@ import {
   ACCEPTED_DOC_TYPES_LABEL,
   ACCEPTED_IMAGE_TYPES,
   ACCEPTED_IMAGE_TYPES_LABEL,
+  DATE_FORMAT_SYSTEM,
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
@@ -28,7 +29,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import LocationPicker from "./LocationPicker";
 import { SpatialType } from "~/api/models/common";
-import { toISOStringForTimezone } from "~/lib/utils";
+import { toISOStringForTimezone, toUTCDate } from "~/lib/utils";
 import { Loading } from "../Status/Loading";
 import { performActionSendForVerificationManual } from "~/api/services/myOpportunities";
 import { ApiErrors } from "../Status/ApiErrors";
@@ -37,7 +38,8 @@ import { useQuery } from "@tanstack/react-query";
 import { getTimeIntervals } from "~/api/services/lookups";
 import FormMessage, { FormMessageType } from "../Common/FormMessage";
 import { Certificate } from "crypto";
-
+import { FcClock } from "react-icons/fc";
+import moment from "moment";
 interface InputProps {
   [id: string]: any;
   opportunityInfo: OpportunityInfo | undefined;
@@ -62,17 +64,17 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
   const schema = z
     .object({
-      certificate: z.any().optional(),
-      picture: z.any().optional(),
-      voiceNote: z.any().optional(),
-      geometry: z.any().optional(),
+      certificate: z.any(),
+      picture: z.any(),
+      voiceNote: z.any(),
+      geometry: z.any(),
       dateStart: z.union([z.string(), z.null()]).optional(),
       dateEnd: z.union([z.string(), z.null()]).optional(),
       commitmentInterval: z
         .object({
           id: z
             .any()
-            .transform((value) => (Array.isArray(value) ? value[0] : value)), // SelectButtons returns array
+            .transform((value) => (Array.isArray(value) ? value[0] : value)),
           count: z.preprocess(
             (val) => (val === "" ? undefined : Number(val)),
             z.number(),
@@ -98,10 +100,8 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           message:
             "Either a date range (Start & End date) or commitment interval (time to complete) must be specified, but not both.",
           code: z.ZodIssueCode.custom,
-          path: ["dateStart"], // or "commitmentInterval"
-          fatal: true,
+          path: ["dateStart"],
         });
-        return;
       }
 
       // If user chose date range, validate dateStart & dateEnd
@@ -126,17 +126,15 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
             message: `Start date cannot be earlier than the opportunity start date of '${oppStartDate}'.`,
             code: z.ZodIssueCode.custom,
             path: ["dateStart"],
-            fatal: true,
           });
         }
 
         if (endDate) {
           if (startDate && endDate < startDate) {
             ctx.addIssue({
-              message: "End date is earlier than the start date.",
+              message: "End date cannot be earlier than the start date.",
               code: z.ZodIssueCode.custom,
               path: ["dateEnd"],
-              fatal: true,
             });
           }
 
@@ -146,7 +144,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 "End date cannot be in the future. Please select today's date or earlier.",
               code: z.ZodIssueCode.custom,
               path: ["dateEnd"],
-              fatal: true,
             });
           }
 
@@ -155,35 +152,127 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               message: `End date cannot be later than the opportunity end date of '${oppEndDate}'.`,
               code: z.ZodIssueCode.custom,
               path: ["dateEnd"],
-              fatal: true,
             });
           }
         }
       }
 
-      // If user chose commitment interval, validate that
-      if (hasInterval) {
-        const { id, count } = values.commitmentInterval!;
-        if (id === "00000000-0000-0000-0000-000000000000") {
+      // Certificate validation
+      if (!values.certificate) {
+        ctx.addIssue({
+          message: "Please upload a certificate.",
+          code: z.ZodIssueCode.custom,
+          path: ["certificate"],
+          fatal: true,
+        });
+      } else {
+        const fileType = values.certificate.type;
+        if (
+          fileType &&
+          ![...ACCEPTED_DOC_TYPES, ...ACCEPTED_IMAGE_TYPES].includes(fileType)
+        ) {
           ctx.addIssue({
-            message: "Commitment interval is empty or does not exist.",
+            message: `Certificate file type not supported. Please upload a file of type ${[
+              ...ACCEPTED_DOC_TYPES,
+              ...ACCEPTED_IMAGE_TYPES,
+            ].join(", ")}.`,
             code: z.ZodIssueCode.custom,
-            path: ["commitmentInterval", "id"],
+            path: ["certificate"],
             fatal: true,
           });
         }
-        // Placeholder check to ensure existence in the system
-        // if (!commitmentIntervalExistsInSystem(id)) { ... }
+        if (
+          values.certificate.size &&
+          values.certificate.size > MAX_FILE_SIZE
+        ) {
+          ctx.addIssue({
+            message: `Certificate file size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
+            code: z.ZodIssueCode.custom,
+            path: ["certificate"],
+            fatal: true,
+          });
+        }
+      }
 
-        if (count! < 1) {
+      // Picture validation
+      if (!values.picture) {
+        ctx.addIssue({
+          message: "Please upload a picture.",
+          code: z.ZodIssueCode.custom,
+          path: ["picture"],
+          fatal: true,
+        });
+      } else {
+        const fileType = values.picture.type;
+        if (fileType && !ACCEPTED_IMAGE_TYPES.includes(fileType)) {
           ctx.addIssue({
-            message:
-              "Commitment interval count must be greater than or equal to 1.",
+            message: `Picture file type not supported. Please upload a file of type ${ACCEPTED_IMAGE_TYPES_LABEL.join(
+              ", ",
+            )}.`,
             code: z.ZodIssueCode.custom,
-            path: ["commitmentInterval", "count"],
+            path: ["picture"],
             fatal: true,
           });
         }
+        if (values.picture.size && values.picture.size > MAX_FILE_SIZE) {
+          ctx.addIssue({
+            message: `Picture file size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
+            code: z.ZodIssueCode.custom,
+            path: ["picture"],
+            fatal: true,
+          });
+        }
+      }
+
+      // VoiceNote validation
+      if (!values.voiceNote) {
+        ctx.addIssue({
+          message: "Please upload a voice note.",
+          code: z.ZodIssueCode.custom,
+          path: ["voiceNote"],
+          fatal: true,
+        });
+      } else {
+        const fileType = values.voiceNote.type;
+        if (fileType && !ACCEPTED_AUDIO_TYPES.includes(fileType)) {
+          ctx.addIssue({
+            message: `Voice note file type not supported. Please upload a file of type ${ACCEPTED_AUDIO_TYPES_LABEL.join(
+              ", ",
+            )}.`,
+            code: z.ZodIssueCode.custom,
+            path: ["voiceNote"],
+            fatal: true,
+          });
+        }
+        if (values.voiceNote.size && values.voiceNote.size > MAX_FILE_SIZE) {
+          ctx.addIssue({
+            message: `Voice note file size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
+            code: z.ZodIssueCode.custom,
+            path: ["voiceNote"],
+            fatal: true,
+          });
+        }
+      }
+
+      // Geometry validation
+      if (!values.geometry) {
+        ctx.addIssue({
+          message: "Please select a location.",
+          code: z.ZodIssueCode.custom,
+          path: ["geometry"],
+          fatal: true,
+        });
+      } else if (
+        !values.geometry.coordinates ||
+        !Array.isArray(values.geometry.coordinates) ||
+        values.geometry.coordinates.length === 0
+      ) {
+        ctx.addIssue({
+          message: "The selected location is invalid.",
+          code: z.ZodIssueCode.custom,
+          path: ["geometry"],
+          fatal: true,
+        });
       }
 
       // StarRating validation
@@ -195,7 +284,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           message: "Star rating must be between 1 and 5 if specified.",
           code: z.ZodIssueCode.custom,
           path: ["starRating"],
-          fatal: true,
         });
       }
 
@@ -208,7 +296,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           message: "Feedback must be between 1 and 500 characters.",
           code: z.ZodIssueCode.custom,
           path: ["feedback"],
-          fatal: true,
         });
       }
     });
@@ -247,6 +334,33 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         feedback: data.feedback || null,
       };
 
+      // convert dates to string in format "YYYY-MM-DD"
+      if (request.dateStart) {
+        request.dateStart = request.dateStart
+          ? moment.utc(data.dateStart).format(DATE_FORMAT_SYSTEM)
+          : null;
+      }
+      if (request.dateEnd) {
+        request.dateEnd = request.dateEnd
+          ? moment.utc(data.dateEnd).format(DATE_FORMAT_SYSTEM)
+          : null;
+      }
+
+      // force mutal exclusion of date range and interval
+      const hasDateRange = Boolean(request.dateStart && request.dateEnd);
+      const hasInterval = Boolean(
+        request.commitmentInterval &&
+          request.commitmentInterval.id &&
+          (request.commitmentInterval.count ?? 0) > 0,
+      );
+
+      if (hasDateRange) {
+        request.commitmentInterval = null;
+      } else if (hasInterval) {
+        request.dateStart = null;
+        request.dateEnd = null;
+      }
+
       setIsLoading(true);
 
       performActionSendForVerificationManual(opportunityInfo.id, request)
@@ -276,9 +390,14 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
     formState: { errors: errors, isValid: isValid },
     control,
     watch,
+    trigger,
   } = useForm({
+    mode: "onChange", // Validates on change
+    reValidateMode: "onChange", // Re-validates on change
     resolver: zodResolver(schema),
   });
+  const watchDateStart = watch("dateStart");
+  const watchDateEnd = watch("dateEnd");
   const watchIntervalId = watch("commitmentInterval.id");
   const watchIntervalCount = watch("commitmentInterval.count");
 
@@ -329,6 +448,18 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
     setValue("commitmentInterval.id", "Day");
   }, [setValue]);
 
+  // trigger validations when these related field change
+  // because the schema validation is based on these fields
+  useEffect(() => {
+    trigger();
+  }, [
+    watchDateStart,
+    watchDateEnd,
+    watchIntervalId,
+    watchIntervalCount,
+    trigger,
+  ]);
+
   return (
     <>
       {isLoading && <Loading />}
@@ -376,9 +507,9 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 </FormMessage> */}
               </div>
 
-              <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
+              <div className="flex flex-col rounded-lg border-dotted bg-gray-light p-2">
                 <div className="flex w-full flex-row">
-                  <div className="ml-2 hidden items-center p-2 md:flex md:p-6">
+                  <div className="ml-2 hidden items-start p-2 md:flex md:p-4">
                     <Image
                       src={iconClock}
                       alt="Icon Clock"
@@ -388,168 +519,140 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       priority={true}
                     />
                   </div>
-                  <div className="flex flex-grow flex-col items-center justify-center py-2 md:items-start">
-                    <div className="pl-4 md:pl-0">
-                      When did you complete this opportunity?
-                    </div>
-                    <div className="text-sm text-gray-dark">
-                      Select a date range, or the time taken to complete
-                    </div>
-                  </div>
-                </div>
 
-                {/* DATES */}
-                <div className="flex flex-row items-center justify-center gap-2">
-                  <div className="form-control">
-                    {/* eslint-disable @typescript-eslint/no-unsafe-argument */}
-                    <Controller
-                      control={control}
-                      name="dateStart"
-                      render={({ field: { onChange, value } }) => (
-                        <DatePicker
-                          className="input input-sm input-bordered w-32 rounded-md border-gray focus:border-gray focus:outline-none"
-                          onChange={(date) =>
-                            onChange(toISOStringForTimezone(date))
-                          }
-                          selected={value ? new Date(value) : null}
-                          placeholderText="Start Date"
-                        />
-                      )}
-                    />
+                  <div className="flex flex-grow flex-col items-center justify-center p-4 md:items-start">
+                    <div className="flex flex-col gap-2">
+                      {/* <div className="text-sm text-gray-dark">
+                    Select start & end date
+                  </div> */}
+                      <div className="text-centerx">
+                        When did you complete this opportunity?
+                      </div>
 
-                    {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
-                    {/* {errors.dateStart && (
-                      <label className="label">
-                        <span className="label-text-alt px-4 text-base italic text-red-500">
-                          {`${errors.dateStart.message}`}
-                        </span>
-                      </label>
-                    )} */}
-                  </div>
-
-                  <div className="form-control">
-                    {/* eslint-disable @typescript-eslint/no-unsafe-argument */}
-                    <Controller
-                      control={control}
-                      name="dateEnd"
-                      render={({ field: { onChange, value } }) => (
-                        <DatePicker
-                          className="input input-sm input-bordered w-32 rounded-md border-gray focus:border-gray focus:outline-none"
-                          onChange={(date) =>
-                            onChange(toISOStringForTimezone(date))
-                          }
-                          selected={value ? new Date(value) : null}
-                          placeholderText="End Date"
-                        />
-                      )}
-                    />
-
-                    {/* eslint-enable @typescript-eslint/no-unsafe-argument */}
-                    {/* {errors.dateEnd && (
-                      <label className="label">
-                        <span className="label-text-alt px-4 text-base italic text-red-500">
-                          {`${errors.dateEnd.message}`}
-                        </span>
-                      </label>
-                    )} */}
-                  </div>
-                </div>
-
-                <div className="divider">OR</div>
-
-                {/* COMMITMENT INTERVALS */}
-                <div className="flex flex-col items-center justify-center pb-2">
-                  <div className="flex flex-row justify-start gap-4">
-                    <span className="mt-1 text-xs font-semibold text-gray-dark">
-                      0
-                    </span>
-
-                    <Controller
-                      name="commitmentInterval.count"
-                      control={control}
-                      // defaultValue={
-                      //   searchFilter?.commitmentInterval?.interval?.count ?? 0
-                      // }
-                      render={({ field: { onChange, value } }) => (
-                        <div className="flex w-full flex-col justify-center text-center md:w-64">
-                          <input
-                            type="range"
-                            className="range range-warning bg-white"
-                            min="0"
-                            max={timeIntervalMax}
-                            value={value}
-                            onChange={(val) => onChange(val)}
-                          />
-                          <span className="-mb-3 mt-2 h-8 text-xs font-semibold text-gray-dark">
-                            {value > 0 && watchIntervalId != null && (
-                              <>
-                                {`${value} ${
-                                  value > 1
-                                    ? `${watchIntervalId}s`
-                                    : watchIntervalId
-                                }`}
-                              </>
+                      {/* DATES */}
+                      <div className="flex flex-row items-center justify-center gap-2">
+                        <div className="form-control">
+                          <Controller
+                            control={control}
+                            name="dateStart"
+                            render={({ field: { onChange, value } }) => (
+                              <DatePicker
+                                className="input input-sm input-bordered w-32 rounded-md border-gray focus:border-gray focus:outline-none"
+                                onChange={(date) =>
+                                  onChange(toISOStringForTimezone(date))
+                                }
+                                selected={value ? new Date(value) : null}
+                                placeholderText="Start Date"
+                              />
                             )}
+                          />
+                        </div>
+
+                        <div className="form-control">
+                          <Controller
+                            control={control}
+                            name="dateEnd"
+                            render={({ field: { onChange, value } }) => (
+                              <DatePicker
+                                className="input input-sm input-bordered w-32 rounded-md border-gray focus:border-gray focus:outline-none"
+                                onChange={(date) =>
+                                  onChange(toISOStringForTimezone(date))
+                                }
+                                selected={value ? new Date(value) : null}
+                                placeholderText="End Date"
+                              />
+                            )}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="text-centerx">
+                        or how long did it take to complete?
+                      </div>
+
+                      {/* COMMITMENT INTERVALS */}
+                      <div className="flex flex-col items-center justify-center pb-2">
+                        <div className="flex flex-row justify-start gap-4">
+                          <span className="mt-1 text-xs font-semibold text-gray-dark">
+                            0
+                          </span>
+
+                          <Controller
+                            name="commitmentInterval.count"
+                            control={control}
+                            defaultValue={0}
+                            render={({ field: { onChange, value } }) => (
+                              <div className="flex w-full flex-col justify-center text-center md:w-64">
+                                <input
+                                  type="range"
+                                  className="range range-warning bg-white"
+                                  min="0"
+                                  max={timeIntervalMax}
+                                  value={value}
+                                  onChange={(val) => onChange(val)}
+                                />
+                                <span className="-mb-3 mt-2 h-8 text-xs font-semibold text-gray-dark">
+                                  {value > 0 && watchIntervalId != null && (
+                                    <>
+                                      {`${value} ${
+                                        value > 1
+                                          ? `${watchIntervalId}s`
+                                          : watchIntervalId
+                                      }`}
+                                    </>
+                                  )}
+                                </span>
+                              </div>
+                            )}
+                          />
+
+                          <span className="mt-1 text-xs font-semibold text-gray-dark">
+                            {timeIntervalMax}
                           </span>
                         </div>
-                      )}
-                    />
+                        <div className="flex flex-row justify-start gap-4">
+                          <Controller
+                            name="commitmentInterval.id"
+                            control={control}
+                            render={({ field: { onChange, value } }) => (
+                              <SelectButtons
+                                id="selectButtons_commitmentIntervals"
+                                buttons={(timeIntervalsData ?? []).map((x) => ({
+                                  id: x.id,
+                                  title: x.name,
+                                  selected: value?.includes(x.name) ?? false,
+                                }))}
+                                onChange={(val) => {
+                                  const selectedButtons = val.filter(
+                                    (btn) => btn.selected,
+                                  );
+                                  onChange(selectedButtons.map((c) => c.title));
+                                }}
+                              />
+                            )}
+                          />
+                        </div>
+                      </div>
 
-                    <span className="mt-1 text-xs font-semibold text-gray-dark">
-                      {timeIntervalMax}
-                    </span>
-                  </div>
-                  <div className="flex flex-row justify-start gap-4">
-                    <Controller
-                      name="commitmentInterval.id"
-                      control={control}
-                      render={({ field: { onChange, value } }) => (
-                        <SelectButtons
-                          id="selectButtons_commitmentIntervals"
-                          buttons={(timeIntervalsData ?? []).map((x) => ({
-                            id: x.id,
-                            title: x.name,
-                            selected: value?.includes(x.name) ?? false,
-                          }))}
-                          onChange={(val) => {
-                            const selectedButtons = val.filter(
-                              (btn) => btn.selected,
-                            );
-                            onChange(selectedButtons.map((c) => c.title));
-                          }}
-                        />
-                      )}
-                    />
+                      {/* {errors && (
+                        <label className="label">
+                          <span className="label-text-alt text-base italic text-red-500">
+                            {`${JSON.stringify(errors)}`}
+                          </span>
+                        </label>
+                      )} */}
+                    </div>
                   </div>
                 </div>
 
                 {/* ERRORS */}
-                {errors && (
-                  <label className="label">
-                    <span className="label-text-alt px-4 text-base italic text-red-500">
-                      {`${JSON.stringify(errors)}`}
-                    </span>
-                  </label>
-                )}
-
-                <div className="flex flex-col gap-2">
+                <div className="flex w-full flex-col gap-2 px-5">
                   {errors.dateStart && (
-                    // <label className="label">
-                    //   <span className="label-text-alt px-4 text-base italic text-red-500">
-                    //     {`${errors.dateStart.message}`}
-                    //   </span>
-                    // </label>
-
                     <FormMessage messageType={FormMessageType.Warning}>
                       {`${errors.dateStart.message}`}
                     </FormMessage>
                   )}
                   {errors.dateEnd && (
-                    // <label className="label">
-                    //   <span className="label-text-alt px-4 text-base italic text-red-500">
-                    //     {`${errors.dateEnd.message}`}
-                    //   </span>
-                    // </label>
                     <FormMessage messageType={FormMessageType.Warning}>
                       {`${errors.dateEnd.message}`}
                     </FormMessage>
@@ -585,15 +688,13 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       });
                     }}
                   >
-                    <>
+                    <div className="pb-2">
                       {errors.certificate && (
-                        <label className="label">
-                          <span className="label-text-alt text-base italic text-red-500">
-                            {`${errors.certificate.message}`}
-                          </span>
-                        </label>
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          {`${errors.certificate.message}`}
+                        </FormMessage>
                       )}
-                    </>
+                    </div>
                   </FileUpload>
                 )}
 
@@ -616,15 +717,13 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       setValue("picture", files[0], { shouldValidate: true });
                     }}
                   >
-                    <>
+                    <div className="pb-2">
                       {errors.picture && (
-                        <label className="label">
-                          <span className="label-text-alt text-base italic text-red-500">
-                            {`${errors.picture.message}`}
-                          </span>
-                        </label>
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          {`${errors.picture.message}`}
+                        </FormMessage>
                       )}
-                    </>
+                    </div>
                   </FileUpload>
                 )}
 
@@ -649,15 +748,13 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       });
                     }}
                   >
-                    <>
+                    <div className="pb-2">
                       {errors.voiceNote && (
-                        <label className="label">
-                          <span className="label-text-alt text-base italic text-red-500">
-                            {`${errors.voiceNote.message}`}
-                          </span>
-                        </label>
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          {`${errors.voiceNote.message}`}
+                        </FormMessage>
                       )}
-                    </>
+                    </div>
                   </FileUpload>
                 )}
 
@@ -683,29 +780,20 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       setValue("geometry", result, { shouldValidate: true });
                     }}
                   >
-                    <>
+                    <div className="pb-2">
                       {errors.geometry && (
-                        <label className="label">
-                          <span className="label-text-alt text-base italic text-red-500">
-                            {`${errors.geometry.message}`}
-                          </span>
-                        </label>
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          {`${errors.geometry.message}`}
+                        </FormMessage>
                       )}
-                    </>
+                    </div>
                   </LocationPicker>
                 )}
               </div>
 
               {!isValid && (
-                // <div className="flex-growx flex justify-center">
-                //   <label className="label">
-                //     <span className="label-text-alt px-4 text-center text-base italic text-red-500">
-                //       Please fill out the required information above.
-                //     </span>
-                //   </label>
-                // </div>
                 <FormMessage messageType={FormMessageType.Warning}>
-                  Please fill out the required information above.
+                  Please supply the required information above.
                 </FormMessage>
               )}
 
