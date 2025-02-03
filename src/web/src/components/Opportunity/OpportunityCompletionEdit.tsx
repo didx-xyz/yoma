@@ -446,6 +446,9 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
     // commitment interval type
     setValue("commitmentInterval.id", "Day");
+
+    // star rating
+    setValue("starRating", 0);
   }, [setValue]);
 
   // trigger validations when these related field change
@@ -501,10 +504,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   Upload the required documents below, and once approved,
                   we&apos;ll add the accreditation to your CV!
                 </div>
-                {/* <FormMessage messageType={FormMessageType.Success}>
-                  Upload the required documents below, and once approved,
-                  we&apos;ll add the accreditation to your CV!
-                </FormMessage> */}
               </div>
 
               <div className="flex flex-col rounded-lg border-dotted bg-gray-light p-2">
@@ -525,9 +524,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       {/* <div className="text-sm text-gray-dark">
                     Select start & end date
                   </div> */}
-                      <div className="text-centerx">
-                        When did you complete this opportunity?
-                      </div>
+                      <div>When did you complete this opportunity?</div>
 
                       {/* DATES */}
                       <div className="flex flex-row items-center justify-center gap-2">
@@ -566,9 +563,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         </div>
                       </div>
 
-                      <div className="text-centerx">
-                        or how long did it take to complete?
-                      </div>
+                      <div>or how long did it take to complete?</div>
 
                       {/* COMMITMENT INTERVALS */}
                       <div className="flex flex-col items-center justify-center pb-2">
@@ -633,14 +628,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                           />
                         </div>
                       </div>
-
-                      {/* {errors && (
-                        <label className="label">
-                          <span className="label-text-alt text-base italic text-red-500">
-                            {`${JSON.stringify(errors)}`}
-                          </span>
-                        </label>
-                      )} */}
                     </div>
                   </div>
                 </div>
@@ -660,6 +647,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 </div>
               </div>
 
+              {/* FILE UPLOADS */}
               <div className="flex w-full flex-col items-center justify-center gap-4">
                 {opportunityInfo?.verificationTypes?.find(
                   (x) => x.type == "FileUpload",
@@ -791,11 +779,120 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 )}
               </div>
 
+              {/* FEEDBACK */}
+              <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
+                <div className="flex w-full flex-row">
+                  <div className="ml-2 hidden items-center p-2 md:flex md:p-6">
+                    <Image
+                      src={iconClock}
+                      alt="Icon Clock"
+                      width={32}
+                      height={32}
+                      sizes="100vw"
+                      priority={true}
+                      style={{ width: "32px", height: "32px" }}
+                    />
+                  </div>
+                  <div className="flex flex-grow flex-col items-center justify-center py-2 md:items-start">
+                    <div className="pl-4 md:pl-0">Before you go!</div>
+                    <div className="text-sm text-gray-dark">
+                      Please rate your experience & provide feedback.
+                    </div>
+                  </div>
+                </div>
+
+                {/* STAR RATING */}
+                <div className="mb-4 flex flex-col gap-2 px-4">
+                  <div>Rating</div>
+
+                  <Controller
+                    control={control}
+                    name="starRating"
+                    render={({ field: { onChange, value } }) => (
+                      <div className="rating">
+                        {[1, 2, 3, 4, 5].map((x) => (
+                          <input
+                            key={x}
+                            type="radio"
+                            name="rating-2"
+                            className="mask mask-star-2 bg-orange"
+                            checked={value === x}
+                            onChange={() => onChange(x)}
+                          />
+                        ))}
+                      </div>
+                    )}
+                  />
+
+                  {errors.starRating && (
+                    <FormMessage messageType={FormMessageType.Warning}>
+                      {`${errors.starRating.message}`}
+                    </FormMessage>
+                  )}
+                </div>
+
+                {/* FEEBACK */}
+                <div className="mb-4 flex flex-col gap-2 px-4">
+                  <div>Feedback</div>
+
+                  <Controller
+                    control={control}
+                    name="feedback"
+                    render={({ field: { onChange, value } }) => (
+                      <textarea
+                        className="textarea textarea-bordered w-full"
+                        placeholder="Enter your feedback"
+                        value={value || ""}
+                        onChange={onChange}
+                      />
+                    )}
+                  />
+
+                  {errors.feedback && (
+                    <FormMessage messageType={FormMessageType.Warning}>
+                      {`${errors.feedback.message}`}
+                    </FormMessage>
+                  )}
+                </div>
+
+                {/* RECOMMENDABLE */}
+                <div className="mb-4 flex flex-col gap-2 px-4">
+                  <div>Would you recommend this opportunity to a friend?</div>
+
+                  <Controller
+                    control={control}
+                    name="recommendable"
+                    render={({ field: { onChange, value } }) => (
+                      <input
+                        type="checkbox"
+                        className="toggle toggle-success"
+                        checked={value || false}
+                        onChange={(e) => onChange(e.target.checked)}
+                      />
+                    )}
+                  />
+
+                  {errors.recommendable && (
+                    <FormMessage messageType={FormMessageType.Warning}>
+                      {`${errors.recommendable.message}`}
+                    </FormMessage>
+                  )}
+                </div>
+              </div>
+
               {!isValid && (
                 <FormMessage messageType={FormMessageType.Warning}>
                   Please supply the required information above.
                 </FormMessage>
               )}
+
+              {/* {errors && (
+                        <label className="label">
+                          <span className="label-text-alt text-base italic text-red-500">
+                            {`${JSON.stringify(errors)}`}
+                          </span>
+                        </label>
+                      )} */}
 
               <div className="mb-10 mt-4 flex flex-grow gap-4">
                 <button
