@@ -121,7 +121,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
             {data?.userDisplayName}
           </p>
           <p className="text-sm text-gray-dark">
-            {data?.userEmail ?? data?.userPhoneNumber}
+            {data?.userEmail ?? data?.userPhoneNumer}
           </p>
           <p className="mt-2 flex flex-row items-center text-sm text-gray-dark">
             <IoMdPin className="mr-2 h-4 w-4 text-gray-dark" />
@@ -235,6 +235,14 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
               {data.dateEnd}
             </Moment>
+          </div>
+        </div>
+      )}
+      {data?.commitmentInterval && (data?.commitmentIntervalCount ?? 0) > 0 && (
+        <div className="flex flex-row gap-2 text-sm text-gray-dark">
+          <div>Time to complete: </div>
+          <div className="font-bold">
+            {data.commitmentIntervalCount} {data.commitmentInterval}
           </div>
         </div>
       )}
