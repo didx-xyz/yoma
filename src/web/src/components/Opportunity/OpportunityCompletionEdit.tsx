@@ -1,12 +1,25 @@
-import type { OpportunityInfo } from "~/api/models/opportunity";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery } from "@tanstack/react-query";
+import moment from "moment";
+import { useSession } from "next-auth/react";
 import Image from "next/image";
-import iconSuccess from "public/images/icon-success.png";
-import iconClock from "public/images/icon-clock.svg";
 import iconCertificate from "public/images/icon-certificate.svg";
+import iconClock from "public/images/icon-clock.svg";
 import iconPicture from "public/images/icon-picture.svg";
+import iconSuccess from "public/images/icon-success.png";
 import iconVideo from "public/images/icon-video.svg";
+import { useCallback, useEffect, useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { Controller, useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
-import { FileUpload } from "./FileUpload";
+import { toast } from "react-toastify";
+import z from "zod";
+import { SpatialType } from "~/api/models/common";
+import type { MyOpportunityRequestVerify } from "~/api/models/myOpportunity";
+import type { OpportunityInfo } from "~/api/models/opportunity";
+import { getTimeIntervals } from "~/api/services/lookups";
+import { performActionSendForVerificationManual } from "~/api/services/myOpportunities";
 import {
   ACCEPTED_AUDIO_TYPES,
   ACCEPTED_AUDIO_TYPES_LABEL,
@@ -18,28 +31,14 @@ import {
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
-import { useCallback, useEffect, useState } from "react";
-import { toast } from "react-toastify";
-import { useSession } from "next-auth/react";
-import type { MyOpportunityRequestVerify } from "~/api/models/myOpportunity";
-import { zodResolver } from "@hookform/resolvers/zod";
-import z from "zod";
-import { Controller, useForm } from "react-hook-form";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import LocationPicker from "./LocationPicker";
-import { SpatialType } from "~/api/models/common";
-import { toISOStringForTimezone, toUTCDate } from "~/lib/utils";
-import { Loading } from "../Status/Loading";
-import { performActionSendForVerificationManual } from "~/api/services/myOpportunities";
-import { ApiErrors } from "../Status/ApiErrors";
-import SelectButtons from "../Common/SelectButtons";
-import { useQuery } from "@tanstack/react-query";
-import { getTimeIntervals } from "~/api/services/lookups";
+import { toISOStringForTimezone } from "~/lib/utils";
 import FormMessage, { FormMessageType } from "../Common/FormMessage";
-import { Certificate } from "crypto";
-import { FcClock } from "react-icons/fc";
-import moment from "moment";
+import SelectButtons from "../Common/SelectButtons";
+import { ApiErrors } from "../Status/ApiErrors";
+import { Loading } from "../Status/Loading";
+import { FileUpload } from "./FileUpload";
+import LocationPicker from "./LocationPicker";
+
 interface InputProps {
   [id: string]: any;
   opportunityInfo: OpportunityInfo | undefined;
@@ -83,7 +82,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         .nullable()
         .optional(),
       recommendable: z.boolean().nullable().optional(),
-      starRating: z.number().nullable().optional(),
+      starRating: z.preprocess(
+        (val) => (val === 0 ? null : val),
+        z.number().nullable().optional(),
+      ),
       feedback: z.string().nullable().optional(),
     })
     .superRefine((values, ctx) => {
@@ -257,7 +259,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       // Geometry validation
       if (!values.geometry) {
         ctx.addIssue({
-          message: "Please select a location.",
+          message: "Please select a location from the map.",
           code: z.ZodIssueCode.custom,
           path: ["geometry"],
           fatal: true,
@@ -272,18 +274,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           code: z.ZodIssueCode.custom,
           path: ["geometry"],
           fatal: true,
-        });
-      }
-
-      // StarRating validation
-      if (
-        values.starRating != null &&
-        (values.starRating < 1 || values.starRating > 5)
-      ) {
-        ctx.addIssue({
-          message: "Star rating must be between 1 and 5 if specified.",
-          code: z.ZodIssueCode.custom,
-          path: ["starRating"],
         });
       }
 
@@ -810,6 +800,12 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                     name="starRating"
                     render={({ field: { onChange, value } }) => (
                       <div className="rating">
+                        <input
+                          type="radio"
+                          name="rating-2"
+                          className="rating-hidden"
+                          checked={value === 0}
+                        />
                         {[1, 2, 3, 4, 5].map((x) => (
                           <input
                             key={x}
