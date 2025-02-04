@@ -2,7 +2,7 @@ namespace Yoma.Core.Domain.Analytics.Interfaces
 {
   public interface IOrganizationSearchFilterBase
   {
-    Guid Organization { get; set; }
+    List<Guid>? Organizations { get; set; }
 
     List<Guid>? Opportunities { get; set; }
 
@@ -11,5 +11,7 @@ namespace Yoma.Core.Domain.Analytics.Interfaces
     DateTimeOffset? StartDate { get; set; }
 
     DateTimeOffset? EndDate { get; set; }
+
+    void SanitizeCollections();
   }
 }

@@ -302,23 +302,23 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Return a list of countries associated with users that engaged with opportunities (viewed and / or completed) for the specified organization")]
+    [SwaggerOperation(Summary = "Return a list of countries associated with users that engaged with opportunities (viewed and / or completed) for the specified organization(s)")]
     [HttpGet("search/analytics/country")]
     [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListSearchCriteriaCountriesEngaged([FromQuery] Guid organizationId)
+    public IActionResult ListSearchCriteriaCountriesEngaged([FromQuery, SwaggerParameter("Optional for Admin role. Required for Organization Admin role", Required = false)] List<Guid>? organizations)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListSearchCriteriaCountriesEngaged));
 
-      var result = _analyticsService.ListSearchCriteriaCountriesEngaged(organizationId);
+      var result = _analyticsService.ListSearchCriteriaCountriesEngaged(organizations);
 
       _logger.LogInformation("Request {requestName} handled", nameof(ListSearchCriteriaCountriesEngaged));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-
-    [SwaggerOperation(Summary = "Search for engagement analytics based on the supplied filter")]
+    [SwaggerOperation(Summary = "Search for engagement analytics based on the supplied filter",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
     [HttpPost("search/analytics/engagement")]
     [ProducesResponseType(typeof(OrganizationSearchResultsEngagement), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
@@ -333,7 +333,8 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Search for opportunity analytics based on the supplied filter")]
+    [SwaggerOperation(Summary = "Search for opportunity analytics based on the supplied filter",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
     [HttpPost("search/analytics/opportunities")]
     [ProducesResponseType(typeof(OrganizationSearchResultsOpportunity), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
@@ -348,7 +349,8 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Search for youth analytics based on the supplied filter")]
+    [SwaggerOperation(Summary = "Search for youth analytics based on the supplied filter",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
     [HttpPost("search/analytics/youth")]
     [ProducesResponseType(typeof(OrganizationSearchResultsYouth), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
