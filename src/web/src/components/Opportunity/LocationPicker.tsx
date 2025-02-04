@@ -122,7 +122,7 @@ const LocationPicker: React.FC<InputProps> = ({
     >
       <div className="flex w-full flex-row">
         <div className="hidden items-center p-8 md:flex">
-          <IoMdPin className="h-6 w-6 text-gray-dark" />
+          <IoMdPin className="h-10 w-10 text-purple" />
         </div>
         <div className="flex flex-grow flex-col items-start justify-center p-4 md:p-0">
           <div>{label}</div>
