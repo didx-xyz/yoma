@@ -371,7 +371,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           });
         });
     },
-    [onSave, opportunityInfo, session],
+    [onSave, opportunityInfo, session, timeIntervalsData],
   );
 
   const {
