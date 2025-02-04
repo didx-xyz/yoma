@@ -125,8 +125,8 @@ const LocationPicker: React.FC<InputProps> = ({
           <IoMdPin className="h-10 w-10 text-purple" />
         </div>
         <div className="flex flex-grow flex-col items-start justify-center p-4 md:p-0">
-          <div>{label}</div>
-          <div className="text-sm text-gray-dark">
+          <div className="font-bold">{label}</div>
+          <div className="text-sm italic text-gray-dark">
             Select a pin location below or{" "}
             <button
               onClick={onClick_UseCurrentLocation}
@@ -164,7 +164,7 @@ const LocationPicker: React.FC<InputProps> = ({
           />
         </GoogleMap>
       </div>
-      <div className="px-8">{children && children}</div>
+      <div>{children && children}</div>
     </div>
   );
 };

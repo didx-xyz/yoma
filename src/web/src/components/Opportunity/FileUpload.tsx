@@ -64,8 +64,8 @@ export const FileUpload: React.FC<InputProps> = ({
           />
         </div>
         <div className="flex flex-grow flex-col items-start justify-center p-4 pb-0 md:p-0">
-          <div>{label}</div>
-          <div className="text-sm text-gray-dark">{fileTypesLabels}</div>
+          <div className="font-bold">{label}</div>
+          <div className="text-sm italic text-gray-dark">{fileTypesLabels}</div>
         </div>
         <div className="flex justify-end p-4 md:items-center md:justify-center">
           <button
@@ -100,8 +100,8 @@ export const FileUpload: React.FC<InputProps> = ({
               className="flex flex-row"
             >
               <div className="flex flex-grow flex-col items-start justify-center pl-2 md:pl-0">
-                <div>{file.name}</div>
-                <div className="text-sm text-gray-dark">{file.size}</div>
+                <div className="text-xs font-bold">{file.name}</div>
+                <div className="text-xs italic text-gray-dark">{file.size}</div>
               </div>
               <div className="flex w-[100px] items-center justify-end">
                 <button
@@ -122,7 +122,7 @@ export const FileUpload: React.FC<InputProps> = ({
         </div>
       )}
 
-      <div className="px-8">{children && children}</div>
+      <div>{children && children}</div>
     </div>
   );
 };
