@@ -1,10 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
-import iconCertificate from "public/images/icon-certificate.svg";
 import { useCallback, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { useForm } from "react-hook-form";
 import { FaCloudUploadAlt } from "react-icons/fa";
+import { FcDocument } from "react-icons/fc";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
@@ -265,7 +265,7 @@ export const FileUploadImport_Opportunities: React.FC<InputProps> = ({
                     fileTypes={[...ACCEPTED_CSV_TYPES].join(",")}
                     fileTypesLabels={[...ACCEPTED_CSV_TYPES_LABEL].join(",")}
                     allowMultiple={false}
-                    icon={iconCertificate}
+                    iconAlt={<FcDocument className="size-10" />}
                     onUploadComplete={(files) => {
                       setValue("importFile", files[0], {
                         shouldValidate: true,
@@ -274,11 +274,9 @@ export const FileUploadImport_Opportunities: React.FC<InputProps> = ({
                   >
                     <>
                       {errors.importFile && (
-                        <label className="label">
-                          <span className="label-text-alt text-base italic text-red-500">
-                            {`${errors.importFile.message}`}
-                          </span>
-                        </label>
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          {`${errors.importFile.message}`}
+                        </FormMessage>
                       )}
                     </>
                   </FileUpload>

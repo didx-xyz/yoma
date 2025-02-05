@@ -3,15 +3,19 @@ import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import iconCertificate from "public/images/icon-certificate.svg";
-import iconClock from "public/images/icon-clock.svg";
-import iconPicture from "public/images/icon-picture.svg";
 import iconSuccess from "public/images/icon-success.png";
-import iconVideo from "public/images/icon-video.svg";
 import { useCallback, useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm } from "react-hook-form";
+import {
+  FcAlarmClock,
+  FcCalendar,
+  FcComments,
+  FcCompactCamera,
+  FcGraduationCap,
+  FcIdea,
+} from "react-icons/fc";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
@@ -399,7 +403,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   }, [setValue]);
 
   // trigger validation when these related field change
-  // because the schema validation is based on these fields
   useEffect(() => {
     trigger();
   }, [watchIntervalId, watchIntervalCount, trigger]);
@@ -451,23 +454,15 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               {/* When did you finish? */}
               <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
                 <div className="flex w-full flex-row">
-                  <div className="ml-2 hidden p-2 md:flex md:p-6">
-                    <Image
-                      src={iconClock}
-                      alt="Icon Clock"
-                      width={32}
-                      height={32}
-                      sizes="100vw"
-                      priority={true}
-                      style={{ width: "32px", height: "32px" }}
-                    />
+                  <div className="ml-2 p-4 md:p-6">
+                    <FcCalendar className="size-10" />
                   </div>
                   <div className="flex flex-grow flex-col p-4">
-                    <div className="text-center font-bold md:text-start">
+                    <div className="font-bold md:text-start">
                       When did you finish?
                     </div>
 
-                    <div className="text-center text-sm italic text-gray-dark md:text-start">
+                    <div className="text-sm italic text-gray-dark">
                       Choose the date that you completed this opportunity.
                     </div>
 
@@ -503,23 +498,13 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               {/* how long did it take? */}
               <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
                 <div className="flex w-full flex-row">
-                  <div className="ml-2 hidden p-2 md:flex md:p-6">
-                    <Image
-                      src={iconClock}
-                      alt="Icon Clock"
-                      width={32}
-                      height={32}
-                      sizes="100vw"
-                      priority={true}
-                      style={{ width: "32px", height: "32px" }}
-                    />
+                  <div className="ml-2 p-4 md:p-6">
+                    <FcAlarmClock className="size-10" />
                   </div>
                   <div className="flex flex-grow flex-col p-4">
-                    <div className="text-center font-bold md:text-start">
-                      How long did it take?
-                    </div>
+                    <div className="font-bold">How long did it take?</div>
 
-                    <div className="text-center text-sm italic text-gray-dark md:text-start">
+                    <div className="text-sm italic text-gray-dark">
                       Choose the time it took to complete this opportunity.
                     </div>
 
@@ -623,20 +608,20 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         (x) => x.type == "FileUpload",
                       )?.description
                     }
-                    icon={iconCertificate}
+                    iconAlt={<FcGraduationCap className="size-10" />}
                     onUploadComplete={(files) => {
                       setValue("certificate", files[0], {
                         shouldValidate: true,
                       });
                     }}
                   >
-                    <div className="px-4 pb-2 md:pl-20">
+                    <>
                       {errors.certificate && (
                         <FormMessage messageType={FormMessageType.Warning}>
                           {`${errors.certificate.message}`}
                         </FormMessage>
                       )}
-                    </div>
+                    </>
                   </FileUpload>
                 )}
 
@@ -654,18 +639,18 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         (x) => x.type == "Picture",
                       )?.description
                     }
-                    icon={iconPicture}
+                    iconAlt={<FcCompactCamera className="size-10" />}
                     onUploadComplete={(files) => {
                       setValue("picture", files[0], { shouldValidate: true });
                     }}
                   >
-                    <div className="px-4 pb-2 md:pl-20">
+                    <>
                       {errors.picture && (
                         <FormMessage messageType={FormMessageType.Warning}>
                           {`${errors.picture.message}`}
                         </FormMessage>
                       )}
-                    </div>
+                    </>
                   </FileUpload>
                 )}
 
@@ -683,20 +668,20 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         (x) => x.type == "VoiceNote",
                       )?.description
                     }
-                    icon={iconVideo}
+                    iconAlt={<FcComments className="size-10" />}
                     onUploadComplete={(files) => {
                       setValue("voiceNote", files[0], {
                         shouldValidate: true,
                       });
                     }}
                   >
-                    <div className="px-4 pb-2 md:pl-20">
+                    <>
                       {errors.voiceNote && (
                         <FormMessage messageType={FormMessageType.Warning}>
                           {`${errors.voiceNote.message}`}
                         </FormMessage>
                       )}
-                    </div>
+                    </>
                   </FileUpload>
                 )}
 
@@ -736,22 +721,12 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               {/* FEEDBACK */}
               <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
                 <div className="flex w-full flex-row">
-                  <div className="ml-2 hidden p-2 md:flex md:p-6">
-                    <Image
-                      src={iconClock}
-                      alt="Icon Clock"
-                      width={32}
-                      height={32}
-                      sizes="100vw"
-                      priority={true}
-                      style={{ width: "32px", height: "32px" }}
-                    />
+                  <div className="ml-2 p-4 md:p-6">
+                    <FcIdea className="size-10" />
                   </div>
                   <div className="flex flex-grow flex-col p-4">
-                    <div className="text-center font-bold md:text-start">
-                      Before you go!
-                    </div>
-                    <div className="text-center text-sm italic text-gray-dark md:text-start">
+                    <div className="font-bold">Before you go!</div>
+                    <div className="text-sm italic text-gray-dark">
                       Please rate your experience & provide feedback.
                     </div>
                     <div className="form-control mt-4 gap-2">

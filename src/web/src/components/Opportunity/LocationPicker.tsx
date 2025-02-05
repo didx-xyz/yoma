@@ -4,6 +4,7 @@ import { IoMdPin } from "react-icons/io";
 import { toast } from "react-toastify";
 import { fetchClientEnv } from "~/lib/utils";
 import { Loader } from "@googlemaps/js-api-loader";
+import { FcGlobe } from "react-icons/fc";
 
 export interface InputProps {
   [id: string]: any;
@@ -121,21 +122,20 @@ const LocationPicker: React.FC<InputProps> = ({
       className="flex w-full flex-col rounded-lg border-dotted bg-gray-light"
     >
       <div className="flex w-full flex-row">
-        <div className="hidden items-center p-8 md:flex">
-          <IoMdPin className="h-10 w-10 text-purple" />
+        <div className="ml-2 p-4 md:p-6">
+          <FcGlobe className="size-10" />
         </div>
-        <div className="flex flex-grow flex-col items-start justify-center p-4 md:p-0">
+        <div className="flex flex-grow flex-col p-4">
           <div className="font-bold">{label}</div>
           <div className="text-sm italic text-gray-dark">
-            Select a pin location below or{" "}
+            Select a pin location below or
             <button
               onClick={onClick_UseCurrentLocation}
               type="button"
-              className="text-sm text-purple underline"
+              className="ml-1 text-sm text-purple underline"
             >
               use your current location
             </button>
-            .
           </div>
         </div>
       </div>

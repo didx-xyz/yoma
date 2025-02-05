@@ -1,7 +1,6 @@
 import { type ReactElement, useRef, useState } from "react";
 import Image from "next/image";
 import { IoMdClose } from "react-icons/io";
-import iconCertificate from "public/images/icon-certificate.svg";
 import iconUpload from "public/images/icon-upload.svg";
 
 export interface InputProps {
@@ -12,6 +11,7 @@ export interface InputProps {
   allowMultiple: boolean;
   label?: string;
   icon?: any;
+  iconAlt?: ReactElement | undefined;
   children: ReactElement | undefined;
   onUploadComplete?: (data: any[]) => void;
 }
@@ -24,6 +24,7 @@ export const FileUpload: React.FC<InputProps> = ({
   allowMultiple,
   label = "Upload file",
   icon,
+  iconAlt,
   children,
   onUploadComplete,
 }) => {
@@ -52,77 +53,83 @@ export const FileUpload: React.FC<InputProps> = ({
       key={`OpportunityFileUpload_${id}`}
       className="flex w-full flex-col rounded-lg border-dotted bg-gray-light"
     >
-      <div className="flex w-full flex-col md:flex-row">
-        <div className="hidden items-center p-8 md:flex">
-          <Image
-            src={icon ?? iconCertificate}
-            alt="Icon Certificate"
-            width={28}
-            className="h-auto"
-            sizes="100vw"
-            priority={true}
-          />
-        </div>
-        <div className="flex flex-grow flex-col items-start justify-center p-4 pb-0 md:p-0">
-          <div className="font-bold">{label}</div>
-          <div className="text-sm italic text-gray-dark">{fileTypesLabels}</div>
-        </div>
-        <div className="flex justify-end p-4 md:items-center md:justify-center">
-          <button
-            className="btn btn-circle btn-sm -mt-[54px] scale-[1.15] border-green bg-transparent normal-case text-green hover:border-green md:mr-2 md:mt-0 md:w-[95px] md:scale-100"
-            onClick={fileUpload}
-          >
+      <div className="flex w-full flex-row">
+        <div className="ml-2 p-4 md:p-6">
+          {icon && (
             <Image
-              src={iconUpload}
-              alt="Icon Upload"
-              width={14}
+              src={icon}
+              alt="Icon Certificate"
+              width={28}
               className="h-auto"
               sizes="100vw"
               priority={true}
             />
-            <span className="hidden md:inline">Upload</span>
-          </button>
-          <input
-            hidden
-            ref={inputRef}
-            type="file"
-            accept={fileTypes}
-            onChange={onFileInputChange}
-          />
+          )}
+          {iconAlt && <div>{iconAlt}</div>}
+        </div>
+        <div className="flex flex-grow flex-col p-4">
+          <div className="font-bold">{label}</div>
+          <div className="text-sm italic text-gray-dark">{fileTypesLabels}</div>
+
+          <div className="mt-4 flex flex-col gap-4">
+            <button
+              type="button"
+              className="md:mr-2x md:scale-100x btn btn-circle btn-sm w-[95px] scale-[1.15x] border-green bg-transparent normal-case text-green hover:border-green"
+              onClick={fileUpload}
+            >
+              <Image
+                src={iconUpload}
+                alt="Icon Upload"
+                width={14}
+                className="h-auto"
+                sizes="100vw"
+                priority={true}
+              />
+              <span className="inline">Upload</span>
+            </button>
+            <input
+              hidden
+              ref={inputRef}
+              type="file"
+              accept={fileTypes}
+              onChange={onFileInputChange}
+            />
+
+            {/* render each file with remove button */}
+            {data && data.length > 0 && (
+              <div className="flex flex-col">
+                {data.map((file, index) => (
+                  <div
+                    key={`OpportunityFileUpload_${id}_${index}`}
+                    className="flex flex-row items-center justify-between"
+                  >
+                    <div className="flex flex-grow flex-col">
+                      <div className="text-xs font-bold">{file.name}</div>
+                      <div className="text-xs italic text-gray-dark">
+                        {file.size}
+                      </div>
+                    </div>
+                    <button
+                      className="btn btn-sm !rounded-full border-none text-gray-dark shadow-md hover:bg-gray"
+                      onClick={() => {
+                        const newData = data.filter((_, i) => i !== index);
+                        setFiles(newData);
+                        if (onUploadComplete) {
+                          onUploadComplete(newData);
+                        }
+                      }}
+                    >
+                      <IoMdClose className="h-6 w-6" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {children && <div>{children}</div>}
+          </div>
         </div>
       </div>
-      {/* render each file with remove button */}
-      {data && data.length > 0 && (
-        <div className="flex w-full flex-col p-2 pt-0 md:p-6">
-          {data.map((file, index) => (
-            <div
-              key={`OpportunityFileUpload_${id}_${index}`}
-              className="flex flex-row"
-            >
-              <div className="flex flex-grow flex-col items-start justify-center pl-2 md:pl-0">
-                <div className="text-xs font-bold">{file.name}</div>
-                <div className="text-xs italic text-gray-dark">{file.size}</div>
-              </div>
-              <div className="flex w-[100px] items-center justify-end">
-                <button
-                  className="btn scale-75 rounded-full border-green-dark bg-green-dark p-3 text-white md:scale-100"
-                  onClick={() => {
-                    const newData = data.filter((_, i) => i !== index);
-                    setFiles(newData);
-                    if (onUploadComplete) {
-                      onUploadComplete(newData);
-                    }
-                  }}
-                >
-                  <IoMdClose className="h-6 w-6"></IoMdClose>
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      <div>{children && children}</div>
     </div>
   );
 };

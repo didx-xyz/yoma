@@ -1,11 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 import React, { useEffect, useMemo, useState } from "react";
 import { IoMdPin } from "react-icons/io";
-import iconCertificate from "public/images/icon-certificate.svg";
-import iconPicture from "public/images/icon-picture.svg";
-import iconVideo from "public/images/icon-video.svg";
-import iconLocation from "public/images/icon-location.svg";
 import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import { GoogleMap, MarkerF } from "@react-google-maps/api";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
@@ -13,6 +8,12 @@ import Moment from "react-moment";
 import { Loader } from "@googlemaps/js-api-loader";
 import { fetchClientEnv } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
+import {
+  FcGraduationCap,
+  FcCompactCamera,
+  FcComments,
+  FcGlobe,
+} from "react-icons/fc";
 
 interface InputProps {
   [id: string]: any;
@@ -40,14 +41,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
       >
         <div className="flex w-full flex-row">
           <div className="flex items-center px-4 py-2">
-            <Image
-              src={icon}
-              alt={`Icon ${label}`}
-              width={28}
-              className="h-auto"
-              sizes="100vw"
-              priority={true}
-            />
+            {icon && <div>{icon}</div>}
           </div>
           <div className="flex items-center">View {label}</div>
         </div>
@@ -141,14 +135,22 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
         <div key={item.fileId}>
           {item.verificationType == "FileUpload" &&
             renderVerificationFile(
-              iconCertificate,
+              <FcGraduationCap className="size-10" />,
               "Certificate",
               item.fileURL,
             )}
           {item.verificationType == "Picture" &&
-            renderVerificationFile(iconPicture, "Picture", item.fileURL)}
+            renderVerificationFile(
+              <FcCompactCamera className="size-10" />,
+              "Picture",
+              item.fileURL,
+            )}
           {item.verificationType == "VoiceNote" &&
-            renderVerificationFile(iconVideo, "Voice Note", item.fileURL)}
+            renderVerificationFile(
+              <FcComments className="size-10" />,
+              "Voice Note",
+              item.fileURL,
+            )}
           {item.verificationType == "Location" && (
             <>
               <button
@@ -159,14 +161,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
               >
                 <div className="flex w-full flex-row">
                   <div className="flex items-center px-4 py-2">
-                    <Image
-                      src={iconLocation}
-                      alt={`Icon Location`}
-                      width={28}
-                      className="h-auto"
-                      sizes="100vw"
-                      priority={true}
-                    />
+                    <FcGlobe className="size-10" />
                   </div>
                   <div className="flex items-center">
                     {showLocation ? "Hide" : "View"} Location
