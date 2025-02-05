@@ -315,14 +315,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           : null;
       }
 
-      // force mutal exclusion of date range and interval
-      const hasDateRange = Boolean(request.dateStart && request.dateEnd);
-      const hasInterval = Boolean(
-        request.commitmentInterval &&
-          request.commitmentInterval.id &&
-          (request.commitmentInterval.count ?? 0) > 0,
-      );
-
       setIsLoading(true);
 
       performActionSendForVerificationManual(opportunityInfo.id, request)
@@ -402,7 +394,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
     setValue("commitmentInterval.id", "Hour");
   }, [setValue]);
 
-  // trigger validation when these related field change
+  // trigger validation for these related fields
   useEffect(() => {
     trigger();
   }, [watchIntervalId, watchIntervalCount, trigger]);

@@ -1,10 +1,9 @@
-import React, { useEffect, useState, type ReactElement } from "react";
+import { Loader } from "@googlemaps/js-api-loader";
 import { GoogleMap, MarkerF } from "@react-google-maps/api";
-import { IoMdPin } from "react-icons/io";
+import React, { useEffect, useState, type ReactElement } from "react";
+import { FcGlobe } from "react-icons/fc";
 import { toast } from "react-toastify";
 import { fetchClientEnv } from "~/lib/utils";
-import { Loader } from "@googlemaps/js-api-loader";
-import { FcGlobe } from "react-icons/fc";
 
 export interface InputProps {
   [id: string]: any;
