@@ -3,15 +3,19 @@ import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import iconCertificate from "public/images/icon-certificate.svg";
-import iconClock from "public/images/icon-clock.svg";
-import iconPicture from "public/images/icon-picture.svg";
 import iconSuccess from "public/images/icon-success.png";
-import iconVideo from "public/images/icon-video.svg";
 import { useCallback, useEffect, useState } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm } from "react-hook-form";
+import {
+  FcAlarmClock,
+  FcCalendar,
+  FcComments,
+  FcCompactCamera,
+  FcGraduationCap,
+  FcIdea,
+} from "react-icons/fc";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
@@ -89,74 +93,49 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       feedback: z.string().nullable().optional(),
     })
     .superRefine((values, ctx) => {
-      const hasDateRange = Boolean(values.dateStart && values.dateEnd);
-      const hasInterval = Boolean(
-        values.commitmentInterval &&
-          values.commitmentInterval.id &&
-          (values.commitmentInterval.count ?? 0) > 0,
-      );
-
-      // Ensure exactly one of the options is selected
-      if (hasDateRange === hasInterval) {
+      // Validate that both dateEnd and commitmentInterval are provided
+      if (!values.dateEnd) {
         ctx.addIssue({
-          message:
-            "Either a date range (Start & End date) or commitment interval (time to complete) must be specified, but not both.",
+          message: "End date is required.",
           code: z.ZodIssueCode.custom,
-          path: ["dateStart"],
+          path: ["dateEnd"],
         });
-      }
-
-      // If user chose date range, validate dateStart & dateEnd
-      if (hasDateRange) {
-        // Store dates without time
-        const startDate = values.dateStart
-          ? new Date(values.dateStart).setHours(0, 0, 0, 0)
-          : null;
-        const endDate = values.dateEnd
-          ? new Date(values.dateEnd).setHours(0, 0, 0, 0)
-          : null;
-        const oppStartDate = opportunityInfo?.dateStart
-          ? new Date(opportunityInfo.dateStart).setHours(0, 0, 0, 0)
-          : null;
+      } else {
+        // Validate dateEnd
+        const endDate = new Date(values.dateEnd).setHours(0, 0, 0, 0);
+        const today = new Date().setHours(0, 0, 0, 0);
         const oppEndDate = opportunityInfo?.dateEnd
           ? new Date(opportunityInfo.dateEnd).setHours(0, 0, 0, 0)
           : null;
-        const today = new Date().setHours(0, 0, 0, 0);
 
-        if (startDate && oppStartDate && startDate < oppStartDate) {
+        if (endDate > today) {
           ctx.addIssue({
-            message: `Start date cannot be earlier than the opportunity start date of '${oppStartDate}'.`,
+            message:
+              "End date cannot be in the future. Please select today's date or earlier.",
             code: z.ZodIssueCode.custom,
-            path: ["dateStart"],
+            path: ["dateEnd"],
           });
         }
 
-        if (endDate) {
-          if (startDate && endDate < startDate) {
-            ctx.addIssue({
-              message: "End date cannot be earlier than the start date.",
-              code: z.ZodIssueCode.custom,
-              path: ["dateEnd"],
-            });
-          }
-
-          if (endDate > today) {
-            ctx.addIssue({
-              message:
-                "End date cannot be in the future. Please select today's date or earlier.",
-              code: z.ZodIssueCode.custom,
-              path: ["dateEnd"],
-            });
-          }
-
-          if (oppEndDate && endDate > oppEndDate) {
-            ctx.addIssue({
-              message: `End date cannot be later than the opportunity end date of '${oppEndDate}'.`,
-              code: z.ZodIssueCode.custom,
-              path: ["dateEnd"],
-            });
-          }
+        if (oppEndDate && endDate > oppEndDate) {
+          ctx.addIssue({
+            message: `End date cannot be later than the opportunity end date of '${oppEndDate}'.`,
+            code: z.ZodIssueCode.custom,
+            path: ["dateEnd"],
+          });
         }
+      }
+
+      if (
+        !values.commitmentInterval ||
+        !values.commitmentInterval.id ||
+        (values.commitmentInterval.count ?? 0) <= 0
+      ) {
+        ctx.addIssue({
+          message: "Commitment interval is required.",
+          code: z.ZodIssueCode.custom,
+          path: ["commitmentInterval"],
+        });
       }
 
       // Certificate validation
@@ -336,26 +315,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           : null;
       }
 
-      // force mutal exclusion of date range and interval
-      const hasDateRange = Boolean(request.dateStart && request.dateEnd);
-      const hasInterval = Boolean(
-        request.commitmentInterval &&
-          request.commitmentInterval.id &&
-          (request.commitmentInterval.count ?? 0) > 0,
-      );
-
-      if (hasDateRange) {
-        request.commitmentInterval = null;
-      } else if (hasInterval) {
-        request.dateStart = null;
-        request.dateEnd = null;
-      }
-
       setIsLoading(true);
 
       performActionSendForVerificationManual(opportunityInfo.id, request)
         .then(() => {
-          //toast.success("Opportunity saved");
           setIsLoading(false);
           if (onSave) {
             onSave();
@@ -386,8 +349,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
     reValidateMode: "onChange", // Re-validates on change
     resolver: zodResolver(schema),
   });
-  const watchDateStart = watch("dateStart");
-  const watchDateEnd = watch("dateEnd");
   const watchIntervalId = watch("commitmentInterval.id");
   const watchIntervalCount = watch("commitmentInterval.count");
 
@@ -429,29 +390,14 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
   // set default values
   useEffect(() => {
-    // start date to current date
-    setValue("dateStart", toISOStringForTimezone(new Date()));
-
-    //setValue("commitmentInterval.count", 0);
-
-    // commitment interval type
-    setValue("commitmentInterval.id", "Day");
-
-    // star rating
-    setValue("starRating", 0);
+    setValue("dateEnd", toISOStringForTimezone(new Date()));
+    setValue("commitmentInterval.id", "Hour");
   }, [setValue]);
 
-  // trigger validations when these related field change
-  // because the schema validation is based on these fields
+  // trigger validation for these related fields
   useEffect(() => {
     trigger();
-  }, [
-    watchDateStart,
-    watchDateEnd,
-    watchIntervalId,
-    watchIntervalCount,
-    trigger,
-  ]);
+  }, [watchIntervalId, watchIntervalCount, trigger]);
 
   return (
     <>
@@ -485,8 +431,9 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 />
               </div>
             </div>
+
             <div className="flex flex-col gap-4 px-4">
-              <div className="mb-2x flex flex-col items-center gap-1 text-center">
+              <div className="flex flex-col items-center gap-1 text-center">
                 <h4 className="font-semibold tracking-wide">
                   Well done for completing this opportunity!
                 </h4>
@@ -496,67 +443,66 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 </div>
               </div>
 
-              <div className="flex flex-col rounded-lg border-dotted bg-gray-light p-2">
+              {/* When did you finish? */}
+              <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
                 <div className="flex w-full flex-row">
-                  <div className="ml-2 hidden items-start p-2 md:flex md:p-4">
-                    <Image
-                      src={iconClock}
-                      alt="Icon Clock"
-                      width={32}
-                      className="h-auto"
-                      sizes="100vw"
-                      priority={true}
-                    />
+                  <div className="ml-2 p-4 md:p-6">
+                    <FcCalendar className="size-10" />
                   </div>
+                  <div className="flex flex-grow flex-col p-4">
+                    <div className="font-bold md:text-start">
+                      When did you finish?
+                    </div>
 
-                  <div className="flex flex-grow flex-col items-center justify-center p-4 md:items-start">
-                    <div className="flex flex-col gap-2">
-                      {/* <div className="text-sm text-gray-dark">
-                    Select start & end date
-                  </div> */}
-                      <div>When did you complete this opportunity?</div>
+                    <div className="text-sm italic text-gray-dark">
+                      Choose the date that you completed this opportunity.
+                    </div>
 
-                      {/* DATES */}
-                      <div className="flex flex-row items-center justify-center gap-2">
-                        <div className="form-control">
-                          <Controller
-                            control={control}
-                            name="dateStart"
-                            render={({ field: { onChange, value } }) => (
-                              <DatePicker
-                                className="input input-sm input-bordered w-32 rounded-md border-gray focus:border-gray focus:outline-none"
-                                onChange={(date) =>
-                                  onChange(toISOStringForTimezone(date))
-                                }
-                                selected={value ? new Date(value) : null}
-                                placeholderText="Start Date"
-                              />
-                            )}
+                    <div className="form-control mt-4 gap-2">
+                      <Controller
+                        control={control}
+                        name="dateEnd"
+                        render={({ field: { onChange, value } }) => (
+                          <DatePicker
+                            className="input input-sm input-bordered block rounded-md border-gray focus:border-gray focus:outline-none"
+                            onChange={(date) =>
+                              onChange(toISOStringForTimezone(date))
+                            }
+                            selected={value ? new Date(value) : null}
+                            placeholderText="End Date"
                           />
-                        </div>
+                        )}
+                      />
 
-                        <div className="form-control">
-                          <Controller
-                            control={control}
-                            name="dateEnd"
-                            render={({ field: { onChange, value } }) => (
-                              <DatePicker
-                                className="input input-sm input-bordered w-32 rounded-md border-gray focus:border-gray focus:outline-none"
-                                onChange={(date) =>
-                                  onChange(toISOStringForTimezone(date))
-                                }
-                                selected={value ? new Date(value) : null}
-                                placeholderText="End Date"
-                              />
-                            )}
-                          />
-                        </div>
-                      </div>
+                      {errors.dateEnd && (
+                        <FormMessage
+                          messageType={FormMessageType.Warning}
+                          className="p-0"
+                        >
+                          {`${errors.dateEnd.message}`}
+                        </FormMessage>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
 
-                      <div>or how long did it take to complete?</div>
+              {/* how long did it take? */}
+              <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
+                <div className="flex w-full flex-row">
+                  <div className="ml-2 p-4 md:p-6">
+                    <FcAlarmClock className="size-10" />
+                  </div>
+                  <div className="flex flex-grow flex-col p-4">
+                    <div className="font-bold">How long did it take?</div>
 
+                    <div className="text-sm italic text-gray-dark">
+                      Choose the time it took to complete this opportunity.
+                    </div>
+
+                    <div className="form-control mt-4 gap-2">
                       {/* COMMITMENT INTERVALS */}
-                      <div className="flex flex-col items-center justify-center pb-2">
+                      <div className="flex flex-col pb-2">
                         <div className="flex flex-row justify-start gap-4">
                           <span className="mt-1 text-xs font-semibold text-gray-dark">
                             0
@@ -618,22 +564,17 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                           />
                         </div>
                       </div>
+
+                      {errors.commitmentInterval && (
+                        <FormMessage
+                          messageType={FormMessageType.Warning}
+                          className="p-0"
+                        >
+                          {`${errors.commitmentInterval.root?.message}`}
+                        </FormMessage>
+                      )}
                     </div>
                   </div>
-                </div>
-
-                {/* ERRORS */}
-                <div className="flex w-full flex-col gap-2 px-5">
-                  {errors.dateStart && (
-                    <FormMessage messageType={FormMessageType.Warning}>
-                      {`${errors.dateStart.message}`}
-                    </FormMessage>
-                  )}
-                  {errors.dateEnd && (
-                    <FormMessage messageType={FormMessageType.Warning}>
-                      {`${errors.dateEnd.message}`}
-                    </FormMessage>
-                  )}
                 </div>
               </div>
 
@@ -659,20 +600,20 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         (x) => x.type == "FileUpload",
                       )?.description
                     }
-                    icon={iconCertificate}
+                    iconAlt={<FcGraduationCap className="size-10" />}
                     onUploadComplete={(files) => {
                       setValue("certificate", files[0], {
                         shouldValidate: true,
                       });
                     }}
                   >
-                    <div className="pb-2">
+                    <>
                       {errors.certificate && (
                         <FormMessage messageType={FormMessageType.Warning}>
                           {`${errors.certificate.message}`}
                         </FormMessage>
                       )}
-                    </div>
+                    </>
                   </FileUpload>
                 )}
 
@@ -690,18 +631,18 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         (x) => x.type == "Picture",
                       )?.description
                     }
-                    icon={iconPicture}
+                    iconAlt={<FcCompactCamera className="size-10" />}
                     onUploadComplete={(files) => {
                       setValue("picture", files[0], { shouldValidate: true });
                     }}
                   >
-                    <div className="pb-2">
+                    <>
                       {errors.picture && (
                         <FormMessage messageType={FormMessageType.Warning}>
                           {`${errors.picture.message}`}
                         </FormMessage>
                       )}
-                    </div>
+                    </>
                   </FileUpload>
                 )}
 
@@ -719,20 +660,20 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         (x) => x.type == "VoiceNote",
                       )?.description
                     }
-                    icon={iconVideo}
+                    iconAlt={<FcComments className="size-10" />}
                     onUploadComplete={(files) => {
                       setValue("voiceNote", files[0], {
                         shouldValidate: true,
                       });
                     }}
                   >
-                    <div className="pb-2">
+                    <>
                       {errors.voiceNote && (
                         <FormMessage messageType={FormMessageType.Warning}>
                           {`${errors.voiceNote.message}`}
                         </FormMessage>
                       )}
-                    </div>
+                    </>
                   </FileUpload>
                 )}
 
@@ -758,7 +699,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       setValue("geometry", result, { shouldValidate: true });
                     }}
                   >
-                    <div className="pb-2">
+                    <div className="px-4 pb-2">
                       {errors.geometry && (
                         <FormMessage messageType={FormMessageType.Warning}>
                           {`${errors.geometry.message}`}
@@ -772,107 +713,97 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               {/* FEEDBACK */}
               <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
                 <div className="flex w-full flex-row">
-                  <div className="ml-2 hidden items-center p-2 md:flex md:p-6">
-                    <Image
-                      src={iconClock}
-                      alt="Icon Clock"
-                      width={32}
-                      height={32}
-                      sizes="100vw"
-                      priority={true}
-                      style={{ width: "32px", height: "32px" }}
-                    />
+                  <div className="ml-2 p-4 md:p-6">
+                    <FcIdea className="size-10" />
                   </div>
-                  <div className="flex flex-grow flex-col items-center justify-center py-2 md:items-start">
-                    <div className="pl-4 md:pl-0">Before you go!</div>
-                    <div className="text-sm text-gray-dark">
+                  <div className="flex flex-grow flex-col p-4">
+                    <div className="font-bold">Before you go!</div>
+                    <div className="text-sm italic text-gray-dark">
                       Please rate your experience & provide feedback.
                     </div>
-                  </div>
-                </div>
-
-                {/* STAR RATING */}
-                <div className="mb-4 flex flex-col gap-2 px-4">
-                  <div>Rating</div>
-
-                  <Controller
-                    control={control}
-                    name="starRating"
-                    render={({ field: { onChange, value } }) => (
-                      <div className="rating">
-                        <input
-                          type="radio"
-                          name="rating-2"
-                          className="rating-hidden"
-                          checked={value === 0}
+                    <div className="form-control mt-4 gap-2">
+                      {/* STAR RATING */}
+                      <div className="mb-4 flex flex-col gap-2">
+                        <div>Rating</div>
+                        <Controller
+                          control={control}
+                          name="starRating"
+                          defaultValue={0}
+                          render={({ field: { onChange, value } }) => (
+                            <div className="rating">
+                              <input
+                                type="radio"
+                                name="rating-2"
+                                className="rating-hidden"
+                                checked={value === 0}
+                              />
+                              {[1, 2, 3, 4, 5].map((x) => (
+                                <input
+                                  key={x}
+                                  type="radio"
+                                  name="rating-2"
+                                  className="mask mask-star-2 bg-orange"
+                                  checked={value === x}
+                                  onChange={() => onChange(x)}
+                                />
+                              ))}
+                            </div>
+                          )}
                         />
-                        {[1, 2, 3, 4, 5].map((x) => (
-                          <input
-                            key={x}
-                            type="radio"
-                            name="rating-2"
-                            className="mask mask-star-2 bg-orange"
-                            checked={value === x}
-                            onChange={() => onChange(x)}
-                          />
-                        ))}
+                        {errors.starRating && (
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            {`${errors.starRating.message}`}
+                          </FormMessage>
+                        )}
                       </div>
-                    )}
-                  />
 
-                  {errors.starRating && (
-                    <FormMessage messageType={FormMessageType.Warning}>
-                      {`${errors.starRating.message}`}
-                    </FormMessage>
-                  )}
-                </div>
+                      {/* FEEDBACK */}
+                      <div className="mb-4 flex flex-col gap-2">
+                        <div>Feedback</div>
+                        <Controller
+                          control={control}
+                          name="feedback"
+                          render={({ field: { onChange, value } }) => (
+                            <textarea
+                              className="textarea textarea-bordered w-full"
+                              placeholder="Enter your feedback"
+                              value={value || ""}
+                              onChange={onChange}
+                            />
+                          )}
+                        />
+                        {errors.feedback && (
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            {`${errors.feedback.message}`}
+                          </FormMessage>
+                        )}
+                      </div>
 
-                {/* FEEBACK */}
-                <div className="mb-4 flex flex-col gap-2 px-4">
-                  <div>Feedback</div>
-
-                  <Controller
-                    control={control}
-                    name="feedback"
-                    render={({ field: { onChange, value } }) => (
-                      <textarea
-                        className="textarea textarea-bordered w-full"
-                        placeholder="Enter your feedback"
-                        value={value || ""}
-                        onChange={onChange}
-                      />
-                    )}
-                  />
-
-                  {errors.feedback && (
-                    <FormMessage messageType={FormMessageType.Warning}>
-                      {`${errors.feedback.message}`}
-                    </FormMessage>
-                  )}
-                </div>
-
-                {/* RECOMMENDABLE */}
-                <div className="mb-4 flex flex-col gap-2 px-4">
-                  <div>Would you recommend this opportunity to a friend?</div>
-
-                  <Controller
-                    control={control}
-                    name="recommendable"
-                    render={({ field: { onChange, value } }) => (
-                      <input
-                        type="checkbox"
-                        className="toggle toggle-success"
-                        checked={value || false}
-                        onChange={(e) => onChange(e.target.checked)}
-                      />
-                    )}
-                  />
-
-                  {errors.recommendable && (
-                    <FormMessage messageType={FormMessageType.Warning}>
-                      {`${errors.recommendable.message}`}
-                    </FormMessage>
-                  )}
+                      {/* RECOMMENDABLE */}
+                      <div className="mb-4 flex flex-col gap-2">
+                        <div>
+                          Would you recommend this opportunity to a friend?
+                        </div>
+                        <Controller
+                          control={control}
+                          name="recommendable"
+                          render={({ field: { onChange, value } }) => (
+                            <input
+                              type="checkbox"
+                              className="toggle toggle-success"
+                              checked={value || false}
+                              onChange={(e) => onChange(e.target.checked)}
+                            />
+                          )}
+                        />
+                        {errors.recommendable && (
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            {`${errors.recommendable.message}`}
+                          </FormMessage>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -883,12 +814,12 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               )}
 
               {/* {errors && (
-                        <label className="label">
-                          <span className="label-text-alt text-base italic text-red-500">
-                            {`${JSON.stringify(errors)}`}
-                          </span>
-                        </label>
-                      )} */}
+                <label className="label">
+                  <span className="label-text-alt text-base italic text-red-500">
+                    {`${JSON.stringify(errors)}`}
+                  </span>
+                </label>
+              )} */}
 
               <div className="mb-10 mt-4 flex flex-grow gap-4">
                 <button
