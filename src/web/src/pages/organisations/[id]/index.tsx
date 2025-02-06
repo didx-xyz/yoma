@@ -846,7 +846,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         key={opportunity.id || index}
                         className="border-gray-light"
                       >
-                        <td className="p-2x">
+                        <td>
                           <Link
                             href={`/organisations/${id}/opportunities/${
                               opportunity.id
@@ -1371,7 +1371,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               </div>
 
               {/* DIVIDER */}
-              <div className="border-px mb-2 mt-4 border-t border-gray" />
+              <div className="mb-2 mt-4 border-t border-gray" />
 
               {/* SELECTED OPPORTUNITIES */}
               <div className="flex flex-col">

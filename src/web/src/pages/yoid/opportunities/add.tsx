@@ -11,12 +11,14 @@ import {
 } from "~/api/models/myOpportunity";
 import { searchMyOpportunities } from "~/api/services/myOpportunities";
 import Breadcrumb from "~/components/Breadcrumb";
+import CustomCarousel from "~/components/Carousel/CustomCarousel";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
 import YoIDLayout from "~/components/Layout/YoID";
-import OpportunitiesCarousel, {
+import {
   DisplayType,
-} from "~/components/MyOpportunity/OpportunitiesCarousel";
+  OpportunityCard,
+} from "~/components/MyOpportunity/OpportunityCard";
 import { SearchInputLarge } from "~/components/SearchInputLarge";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -182,14 +184,20 @@ const MyOpportunitiesAdd: NextPageWithLayout<{
         <div className="p-4x flex flex-col gap-4">
           {/* VIEWED */}
           <Suspense isLoading={viewedIsLoading} error={viewedError}>
-            <OpportunitiesCarousel
+            <CustomCarousel
               id={`myopportunities_viewed`}
               title="👀 Recently viewed"
               description="Opportunities that you have viewed recently."
-              noRowsDescription="You haven't viewed any opportunities yet."
-              data={viewedData!}
+              data={viewedData?.items ?? []}
               loadData={viewedLoadData}
-              displayType={DisplayType.Viewed}
+              totalAll={viewedData?.totalCount ?? 0}
+              renderSlide={(item, index) => (
+                <OpportunityCard
+                  key={`myopportunities_viewed_${item.id}_${index}`}
+                  data={item}
+                  displayType={DisplayType.Viewed}
+                />
+              )}
             />
           </Suspense>
         </div>

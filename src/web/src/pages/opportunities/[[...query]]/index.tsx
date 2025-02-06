@@ -33,16 +33,17 @@ import {
   getOpportunityTypes,
   searchOpportunities,
 } from "~/api/services/opportunities";
+import CustomCarousel from "~/components/Carousel/CustomCarousel";
 import CustomModal from "~/components/Common/CustomModal";
 import FilterBadges from "~/components/FilterBadges";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import AnimatedText from "~/components/Opportunity/AnimatedText";
 import FilterTab from "~/components/Opportunity/FilterTab";
-import OpportunitiesCarousel from "~/components/Opportunity/OpportunitiesCarousel";
 import { OpportunitiesGrid } from "~/components/Opportunity/OpportunitiesGrid";
 import OpportunityCategoriesHorizontalFilter from "~/components/Opportunity/OpportunityCategoriesHorizontalFilter";
 import { OpportunityFilterVertical } from "~/components/Opportunity/OpportunityFilterVertical";
+import { OpportunityPublicSmallComponent } from "~/components/Opportunity/OpportunityPublicSmall";
 import { OppSearchInputLarge } from "~/components/Opportunity/OppSearchInputLarge";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -1198,97 +1199,153 @@ const Opportunities: NextPageWithLayout<{
             <>
               {/* FEATURED */}
               {(opportunities_featured?.totalCount ?? 0) > 0 && (
-                <OpportunitiesCarousel
+                <CustomCarousel
                   id={`opportunities_featured`}
                   title="Featured 🌟"
-                  description="Explore our featured opportunities"
-                  data={opportunities_featured}
-                  loadData={loadDataFeatured}
+                  escription="Explore our featured opportunities"
                   viewAllUrl="/opportunities?featured=true"
+                  data={opportunities_featured.items}
+                  loadData={loadDataFeatured}
+                  totalAll={opportunities_featured.totalCount!}
+                  renderSlide={(item, index) => (
+                    <OpportunityPublicSmallComponent
+                      key={`opportunities_featured_${item.id}_${index}`}
+                      data={item}
+                    />
+                  )}
                 />
               )}
 
               {/* TRENDING */}
               {(opportunities_trending?.totalCount ?? 0) > 0 && (
-                <OpportunitiesCarousel
+                <CustomCarousel
                   id={`opportunities_trending`}
                   title="Trending 🔥"
                   description="The most viewed opportunities"
-                  data={opportunities_trending}
-                  loadData={loadDataTrending}
                   viewAllUrl="/opportunities?mostViewed=true"
+                  data={opportunities_trending.items}
+                  loadData={loadDataTrending}
+                  totalAll={opportunities_trending.totalCount!}
+                  renderSlide={(item, index) => (
+                    <OpportunityPublicSmallComponent
+                      key={`opportunities_trending_${item.id}_${index}`}
+                      data={item}
+                    />
+                  )}
                 />
               )}
 
               {/* MOST COMPLETED */}
               {(opportunities_mostCompleted?.totalCount ?? 0) > 0 && (
-                <OpportunitiesCarousel
+                <CustomCarousel
                   id={`opportunities_mostCompleted`}
                   title="Most completed 🏆"
                   description="The most completed opportunities"
-                  data={opportunities_mostCompleted}
-                  loadData={loadDataMostCompleted}
                   viewAllUrl="/opportunities?mostCompleted=true"
+                  data={opportunities_mostCompleted.items}
+                  loadData={loadDataMostCompleted}
+                  totalAll={opportunities_mostCompleted.totalCount!}
+                  renderSlide={(item, index) => (
+                    <OpportunityPublicSmallComponent
+                      key={`opportunities_mostCompleted_${item.id}_${index}`}
+                      data={item}
+                    />
+                  )}
                 />
               )}
 
               {/* LEARNING COURSES */}
               {(opportunities_learning?.totalCount ?? 0) > 0 && (
-                <OpportunitiesCarousel
+                <CustomCarousel
                   id={`opportunities_learning`}
                   title="Learning Courses 📚"
                   description="Discover exciting online courses"
-                  data={opportunities_learning}
-                  loadData={loadDataLearning}
                   viewAllUrl="/opportunities?types=Learning"
+                  data={opportunities_learning.items}
+                  loadData={loadDataLearning}
+                  totalAll={opportunities_learning.totalCount!}
+                  renderSlide={(item, index) => (
+                    <OpportunityPublicSmallComponent
+                      key={`opportunities_learning_${item.id}_${index}`}
+                      data={item}
+                    />
+                  )}
                 />
               )}
 
               {/* TASKS */}
               {(opportunities_tasks?.totalCount ?? 0) > 0 && (
-                <OpportunitiesCarousel
+                <CustomCarousel
                   id={`opportunities_tasks`}
                   title="Micro-tasks ⚡"
                   description="Contribute to real-world projects"
-                  data={opportunities_tasks}
-                  loadData={loadDataTasks}
                   viewAllUrl="/opportunities?types=Micro-task"
+                  data={opportunities_tasks.items}
+                  loadData={loadDataTasks}
+                  totalAll={opportunities_tasks.totalCount!}
+                  renderSlide={(item, index) => (
+                    <OpportunityPublicSmallComponent
+                      key={`opportunities_tasks_${item.id}_${index}`}
+                      data={item}
+                    />
+                  )}
                 />
               )}
 
               {/* EVENTS */}
               {(opportunities_events?.totalCount ?? 0) > 0 && (
-                <OpportunitiesCarousel
+                <CustomCarousel
                   id={`opportunities_events`}
                   title="Events 🎉"
                   description="Explore events to attend"
-                  data={opportunities_events}
-                  loadData={loadDataEvents}
                   viewAllUrl="/opportunities?types=Event"
+                  data={opportunities_events.items}
+                  loadData={loadDataEvents}
+                  totalAll={opportunities_events.totalCount!}
+                  renderSlide={(item, index) => (
+                    <OpportunityPublicSmallComponent
+                      key={`opportunities_events_${item.id}_${index}`}
+                      data={item}
+                    />
+                  )}
                 />
               )}
 
               {/* OTHER */}
               {(opportunities_other?.totalCount ?? 0) > 0 && (
-                <OpportunitiesCarousel
+                <CustomCarousel
                   id={`opportunities_other`}
                   title="Other 💡"
                   description="Explore other opportunities"
-                  data={opportunities_other}
-                  loadData={loadDataOther}
                   viewAllUrl="/opportunities?types=Other"
+                  data={opportunities_other.items}
+                  loadData={loadDataOther}
+                  totalAll={opportunities_other.totalCount!}
+                  renderSlide={(item, index) => (
+                    <OpportunityPublicSmallComponent
+                      key={`opportunities_other_${item.id}_${index}`}
+                      data={item}
+                    />
+                  )}
                 />
               )}
 
               {/* ALL OPPORTUNITIES */}
               {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
-                <OpportunitiesCarousel
+                <CustomCarousel
                   id={`opportunities_allOpportunities`}
                   title="All Opportunities 🌍"
                   description="Explore all available opportunities"
-                  data={opportunities_allOpportunities}
-                  loadData={loadDataOpportunities}
                   viewAllUrl="/opportunities?page=1"
+                  data={opportunities_allOpportunities.items}
+                  loadData={loadDataOpportunities}
+                  totalAll={opportunities_allOpportunities.totalCount!}
+                  renderSlide={(item, index) => (
+                    <OpportunityPublicSmallComponent
+                      key={`opportunities_allOpportunities_${item.id}_${index}`}
+                      data={item}
+                    />
+                  )}
                 />
               )}
             </>
