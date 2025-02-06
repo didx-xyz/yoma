@@ -1,6 +1,6 @@
 import {
-  QueryClient,
   dehydrate,
+  QueryClient,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
@@ -24,12 +24,10 @@ import {
   type ReactElement,
 } from "react";
 import "react-datepicker/dist/react-datepicker.css";
+import { FcAdvance } from "react-icons/fc";
 import {
   IoIosArrowBack,
   IoIosArrowForward,
-  IoIosCheckboxOutline,
-  IoIosCloseCircleOutline,
-  IoMdArrowDropright,
   IoMdCheckmarkCircleOutline,
   IoMdClose,
   IoMdCloseCircleOutline,
@@ -37,6 +35,7 @@ import {
   IoMdPerson,
   IoMdTrophy,
 } from "react-icons/io";
+import Moment from "react-moment";
 import type { Country } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
@@ -65,17 +64,23 @@ import {
   searchOrganizationYouth,
 } from "~/api/services/organizationDashboard";
 import { AvatarImage } from "~/components/AvatarImage";
+import CustomCarousel from "~/components/Carousel/CustomCarousel";
+import CustomModal from "~/components/Common/CustomModal";
+import { Header } from "~/components/Common/Header";
 import Suspense from "~/components/Common/Suspense";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { EngagementRowFilter } from "~/components/Organisation/Dashboard/EngagementRowFilter";
 import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
+import { OpportunityCard } from "~/components/Organisation/Dashboard/OpportunityCard";
 import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
 import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
 import { SkillsChart } from "~/components/Organisation/Dashboard/SkillsChart";
 import { SsoChart } from "~/components/Organisation/Dashboard/SsoChart";
 import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
+import { YouthCompletedCard } from "~/components/Organisation/Dashboard/YouthCompletedCard";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -83,7 +88,6 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { Header } from "~/components/Common/Header";
 import {
   CHART_COLORS,
   DATE_FORMAT_HUMAN,
@@ -96,22 +100,6 @@ import { config } from "~/lib/react-query-config";
 import { getThemeFromRole, getTimeOfDayAndEmoji } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
-import { YouthCompletedCard } from "~/components/Organisation/Dashboard/YouthCompletedCard";
-import { OpportunityCard } from "~/components/Organisation/Dashboard/OpportunityCard";
-import CustomCarousel from "~/components/Carousel/CustomCarousel";
-import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import {
-  IoCheckboxSharp,
-  IoInformationCircle,
-  IoTrophyOutline,
-  IoTrophySharp,
-} from "react-icons/io5";
-import { MdOutlineCheckCircleOutline, MdOutlineClose } from "react-icons/md";
-import Moment from "react-moment";
-import CustomModal from "~/components/Common/CustomModal";
-import { FaTrophy } from "react-icons/fa";
-import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
-import { FcAdvance } from "react-icons/fc";
 
 export interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -226,7 +214,6 @@ const OrganisationDashboard: NextPageWithLayout<{
   const [expiredOpportunitiesCount, setExpiredOpportunitiesCount] = useState(0);
   const queryClient = useQueryClient();
   const isAdmin = user?.roles?.includes(ROLE_ADMIN);
-  const modalContext = useConfirmationModalContext();
   const [
     completedYouthOpportunitiesDialogVisible,
     setCompletedYouthOpportunitiesDialogVisible,
@@ -1379,7 +1366,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                               <YouthCompletedCard
                                 key={`CompletedYouth_CustomCarousel_YouthCompletedCard_${item.id}_${index}`}
                                 opportunity={item}
-                                orgId={id}
                                 showOpportunityModal={() => {
                                   setCompletedYouthOpportunities(item);
                                   setCompletedYouthOpportunitiesDialogVisible(

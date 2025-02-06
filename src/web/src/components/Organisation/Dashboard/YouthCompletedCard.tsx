@@ -4,9 +4,8 @@ import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 
 export const YouthCompletedCard: React.FC<{
   opportunity: YouthInfo;
-  orgId: string;
   showOpportunityModal?: (opportunity: YouthInfo) => void;
-}> = ({ opportunity, orgId, showOpportunityModal }) => {
+}> = ({ opportunity, showOpportunityModal }) => {
   return (
     <div className="m-2 flex h-72 w-72 flex-col gap-2 rounded-lg bg-white px-2 py-4 text-xs shadow">
       <div className="mb-1 flex items-center gap-2 text-sm">
