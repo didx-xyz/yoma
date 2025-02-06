@@ -1202,7 +1202,7 @@ const Opportunities: NextPageWithLayout<{
                 <CustomCarousel
                   id={`opportunities_featured`}
                   title="Featured 🌟"
-                  escription="Explore our featured opportunities"
+                  description="Explore our featured opportunities"
                   viewAllUrl="/opportunities?featured=true"
                   data={opportunities_featured.items}
                   loadData={loadDataFeatured}
