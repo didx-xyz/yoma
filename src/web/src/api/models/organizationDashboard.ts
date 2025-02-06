@@ -67,11 +67,20 @@ export interface OpportunityCompletion {
 }
 
 export interface OpportunityConversionRatio {
-  legend: string;
-  completedCount: number;
   viewedCount: number;
-  percentage: number;
+  navigatedExternalLinkCount: number; //new
+  completedCount: number;
+  viewedToNavigatedExternalLinkPercentage: number; //new
+  navigatedExternalLinkToCompletedPercentage: number; //new
+  //percentage: number; // removed
 }
+
+// export interface OpportunityConversionRatio {
+//   legend: string; // removed
+//   completedCount: number;
+//   viewedCount: number;
+//   percentage: number; // removed
+// }
 
 export interface OpportunityReward {
   legend: string;

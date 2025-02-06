@@ -29,9 +29,11 @@ import {
   IoIosArrowForward,
   IoIosCheckboxOutline,
   IoIosCloseCircleOutline,
+  IoMdArrowDropright,
   IoMdCheckmarkCircleOutline,
   IoMdClose,
   IoMdCloseCircleOutline,
+  IoMdInformationCircleOutline,
   IoMdPerson,
   IoMdTrophy,
 } from "react-icons/io";
@@ -109,6 +111,7 @@ import Moment from "react-moment";
 import CustomModal from "~/components/Common/CustomModal";
 import { FaTrophy } from "react-icons/fa";
 import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
+import { FcAdvance } from "react-icons/fc";
 
 export interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -1017,7 +1020,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                     <div className="flex flex-col gap-2">
                       <div className="flex flex-col gap-4">
-                        {/* AVERAGE CONVERSION RATE */}
+                        {/* GOTO/COMPLETED CONVERSION RATE */}
                         <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow md:w-[333px]">
                           <div className="flex flex-row items-center gap-3">
                             <div className="rounded-lg bg-green-light p-1">
@@ -1032,29 +1035,51 @@ const OrganisationDashboard: NextPageWithLayout<{
                               />
                             </div>
                             <div className="text-sm font-semibold">
-                              Average conversion rate
+                              Go-To/Completed Conversion Ratio
                             </div>
                           </div>
 
                           <div className="flex flex-grow flex-col">
-                            <div className="flex-grow text-4xl font-semibold">
-                              {`${
-                                engagementData?.opportunities?.conversionRate
-                                  ?.percentage ?? 0
-                              } %`}
+                            <div className="flex flex-grow flex-nowrap items-center gap-2 text-lg font-semibold tracking-tighter md:text-2xl">
+                              <div>
+                                {`${engagementData?.opportunities?.conversionRate?.viewedToNavigatedExternalLinkPercentage ?? 0} %`}
+                              </div>
+                              <div>
+                                <FcAdvance className="size-10 text-green" />
+                              </div>
+                              <div>
+                                {`${engagementData?.opportunities?.conversionRate?.navigatedExternalLinkToCompletedPercentage ?? 0} %`}
+                              </div>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-dark min-[380px]:w-64 md:w-72">
-                            Please note this data may be skewed as tracking of
-                            views was only recently introduced.
+
+                          <div className="flex flex-row gap-1 text-xs text-gray-dark">
+                            <IoMdInformationCircleOutline className="size-4 text-blue" />
+                            Tracking started on{" "}
+                            <div className="font-bold italic underline">
+                              14 June 2024
+                            </div>
+                          </div>
+
+                          <div>
+                            <button
+                              type="button"
+                              className="tooltip tooltip-top tooltip-secondary text-xs text-blue"
+                              data-tip="This displays the percentage of users who viewed the
+                            content and clicked on an external link, and the
+                            percentage of users who clicked the external link
+                            and completed the process."
+                            >
+                              Learn more
+                            </button>
                           </div>
                         </div>
 
-                        {/* OVERALL RATIO */}
+                        {/* OVERALL CONVERSION RATE */}
                         {engagementData?.opportunities?.conversionRate && (
                           <PieChart
                             id="conversionRate"
-                            title="Overall ratio"
+                            title="Overall Conversion Ratio"
                             subTitle=""
                             colors={CHART_COLORS}
                             data={[
