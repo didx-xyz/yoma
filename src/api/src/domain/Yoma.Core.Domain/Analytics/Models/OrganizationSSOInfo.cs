@@ -1,4 +1,4 @@
-﻿using Newtonsoft.Json;
+using Newtonsoft.Json;
 using Yoma.Core.Domain.BlobProvider;
 
 namespace Yoma.Core.Domain.Analytics.Models
