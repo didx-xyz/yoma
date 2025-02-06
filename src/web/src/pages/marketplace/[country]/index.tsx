@@ -37,8 +37,9 @@ import { AvatarImage } from "~/components/AvatarImage";
 import CustomModal from "~/components/Common/CustomModal";
 import Suspense from "~/components/Common/Suspense";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
-import StoreItemsCarousel from "~/components/Marketplace/StoreItemsCarousel";
+import { ItemCardComponent } from "~/components/Marketplace/ItemCard";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import CustomCarousel from "~/components/Carousel/CustomCarousel";
 import { SignInButton } from "~/components/SignInButton";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
@@ -461,47 +462,24 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     return data_storeItems.map((category_storeItems, index) => (
       <div
         key={`category_${category_storeItems.category.id}_${index}`}
-        className="mb-8 md:mb-4"
+        className="mb-8x md:mb-4x"
       >
-        {/* CATEGORY NAME AND IMAGES */}
-        <div className="flex flex-row items-center justify-start gap-4 pb-4">
-          <h1 className="text-2xl">{category_storeItems.category.name}</h1>
-
-          <div className="flex flex-grow flex-row items-start overflow-hidden">
-            {category_storeItems.category.storeImageURLs.map(
-              (storeImage, index2) => (
-                <div
-                  className="relative -mr-4 overflow-hidden rounded-full shadow"
-                  style={{
-                    zIndex:
-                      category_storeItems.category.storeImageURLs.length -
-                      index,
-                  }}
-                  key={`storeItems_${category_storeItems.category.id}_${index}_${index2}`}
-                >
-                  <span className="z-0">
-                    <AvatarImage
-                      icon={storeImage ?? null}
-                      alt={`Store Image Logo ${index2}`}
-                      size={40}
-                    />
-                  </span>
-                </div>
-              ),
-            )}
-          </div>
-        </div>
-
         {category_storeItems.storeItems.map((storeItem, index2) => (
           <div
             key={`category_${category_storeItems.category.id}_${index}_${index2}`}
           >
-            <StoreItemsCarousel
-              id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
-              title={storeItem.store?.name}
-              data={storeItem.items}
-              //loadData={(startRow) => loadData(startRow, storeItem.store.id)}
-              onClick={onBuyClick}
+            <CustomCarousel
+              id={`CompletedOpportunities_CustomCarousel`}
+              title={category_storeItems.category.name}
+              data={storeItem.items.items}
+              renderSlide={(item, index) => (
+                <ItemCardComponent
+                  id={`storeItem_${category_storeItems.category.id}_${index}_${index2}`}
+                  item={item}
+                  company={storeItem.store?.name}
+                  onClick={() => onBuyClick(item)}
+                />
+              )}
             />
           </div>
         ))}
@@ -896,7 +874,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         </div>
 
         {/* RESULTS */}
-        <div className="flex flex-col gap-6 px-2 pb-4 md:p-0 md:pb-0">
+        <div className="mt-4 flex flex-col">
           {/* anonymous users */}
           {!session &&
             sessionStatus != "loading" &&

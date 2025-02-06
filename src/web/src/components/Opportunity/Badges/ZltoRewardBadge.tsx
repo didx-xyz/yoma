@@ -1,20 +1,17 @@
 import Image from "next/image";
 import iconZlto from "public/images/icon-zlto.svg";
 import React from "react";
-import type { OpportunityInfo } from "~/api/models/opportunity";
 
-interface ZltoRewardBadgeProps {
-  opportunity: OpportunityInfo;
-}
-
-const ZltoRewardBadge: React.FC<ZltoRewardBadgeProps> = ({ opportunity }) => {
-  if (opportunity?.zltoReward == null) {
+const ZltoRewardBadge: React.FC<{
+  amount: number | null;
+}> = ({ amount }) => {
+  if (amount == null) {
     return null;
   }
 
   return (
     <>
-      {opportunity.zltoReward === 0 && (
+      {amount === 0 && (
         <div className="badge bg-orange-light text-orange">
           <Image
             src={iconZlto}
@@ -27,7 +24,7 @@ const ZltoRewardBadge: React.FC<ZltoRewardBadgeProps> = ({ opportunity }) => {
           <span className="ml-1">Depleted</span>
         </div>
       )}
-      {opportunity.zltoReward > 0 && (
+      {amount > 0 && (
         <div className="badge bg-orange-light text-orange">
           <Image
             src={iconZlto}
@@ -37,7 +34,7 @@ const ZltoRewardBadge: React.FC<ZltoRewardBadgeProps> = ({ opportunity }) => {
             sizes="100vw"
             priority={true}
           />
-          <span className="ml-1">{opportunity.zltoReward}</span>
+          <span className="ml-1">{amount}</span>
         </div>
       )}
     </>

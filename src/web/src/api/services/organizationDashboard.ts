@@ -62,14 +62,18 @@ export const searchOrganizationSso = async (
 };
 
 export const getCountries = async (
-  organisationId: string | null,
+  organizations: string[],
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Country[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  let query = "";
+  if (organizations && organizations.length > 0) {
+    const params = new URLSearchParams();
+    organizations.forEach((org) => params.append("organizations", org));
+    query = `?${params.toString()}`;
+  }
   const { data } = await instance.get<Country[]>(
-    `/organization/search/analytics/country${
-      organisationId ? `?organizationId=${organisationId}` : ""
-    }`,
+    `/organization/search/analytics/country${query}`,
   );
   return data;
 };

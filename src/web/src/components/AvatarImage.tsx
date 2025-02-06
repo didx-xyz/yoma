@@ -31,7 +31,7 @@ export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size }) => {
         />
       ) : (
         <IoMdPerson
-          className={`p-3 text-gray`}
+          className={`p-2 text-gray`}
           style={{
             width: sizePixels,
             height: sizePixels,

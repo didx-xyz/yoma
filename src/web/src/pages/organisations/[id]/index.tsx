@@ -24,7 +24,17 @@ import {
   type ReactElement,
 } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import { IoIosArrowBack, IoIosArrowForward, IoMdPerson } from "react-icons/io";
+import {
+  IoIosArrowBack,
+  IoIosArrowForward,
+  IoIosCheckboxOutline,
+  IoIosCloseCircleOutline,
+  IoMdCheckmarkCircleOutline,
+  IoMdClose,
+  IoMdCloseCircleOutline,
+  IoMdPerson,
+  IoMdTrophy,
+} from "react-icons/io";
 import type { Country } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
@@ -38,6 +48,7 @@ import type {
   OrganizationSearchResultsSummary,
   OrganizationSearchResultsYouth,
   OrganizationSearchSso,
+  YouthInfo,
 } from "~/api/models/organizationDashboard";
 import {
   getCategoriesAdmin,
@@ -56,7 +67,6 @@ import Suspense from "~/components/Common/Suspense";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
-import DashboardCarousel from "~/components/Organisation/Dashboard/DashboardCarousel";
 import { EngagementRowFilter } from "~/components/Organisation/Dashboard/EngagementRowFilter";
 import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
 import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
@@ -74,6 +84,7 @@ import { Unauthorized } from "~/components/Status/Unauthorized";
 import { Header } from "~/components/Common/Header";
 import {
   CHART_COLORS,
+  DATE_FORMAT_HUMAN,
   DATETIME_FORMAT_HUMAN,
   PAGE_SIZE,
   PAGE_SIZE_MINIMUM,
@@ -83,6 +94,21 @@ import { config } from "~/lib/react-query-config";
 import { getThemeFromRole, getTimeOfDayAndEmoji } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
+import { YouthCompletedCard } from "~/components/Organisation/Dashboard/YouthCompletedCard";
+import { OpportunityCard } from "~/components/Organisation/Dashboard/OpportunityCard";
+import CustomCarousel from "~/components/Carousel/CustomCarousel";
+import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
+import {
+  IoCheckboxSharp,
+  IoInformationCircle,
+  IoTrophyOutline,
+  IoTrophySharp,
+} from "react-icons/io5";
+import { MdOutlineCheckCircleOutline, MdOutlineClose } from "react-icons/md";
+import Moment from "react-moment";
+import CustomModal from "~/components/Common/CustomModal";
+import { FaTrophy } from "react-icons/fa";
+import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 
 export interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -124,7 +150,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   try {
     const dataOrganisation = await getOrganisationById(id, context);
     const dataCategories = await getCategoriesAdmin(id, context);
-    const dataCountries = await getCountries(id, context);
+    const dataCountries = await getCountries([id], context);
 
     // 👇 prefetch queries on server
     await Promise.all([
@@ -197,6 +223,13 @@ const OrganisationDashboard: NextPageWithLayout<{
   const [expiredOpportunitiesCount, setExpiredOpportunitiesCount] = useState(0);
   const queryClient = useQueryClient();
   const isAdmin = user?.roles?.includes(ROLE_ADMIN);
+  const modalContext = useConfirmationModalContext();
+  const [
+    completedYouthOpportunitiesDialogVisible,
+    setCompletedYouthOpportunitiesDialogVisible,
+  ] = useState(false);
+  const [completedYouthOpportunities, setCompletedYouthOpportunities] =
+    useState<YouthInfo | null>();
 
   // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
@@ -218,7 +251,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     error: countriesError,
   } = useQuery<Country[]>({
     queryKey: ["organisationCountries", id],
-    queryFn: () => getCountries(id),
+    queryFn: () => getCountries([id]),
     enabled: !error,
   });
 
@@ -250,7 +283,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     ],
     queryFn: async () => {
       return await searchOrganizationEngagement({
-        organization: id,
+        organizations: [id],
         categories:
           categories != undefined
             ? categories
@@ -301,7 +334,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     ],
     queryFn: () =>
       searchOrganizationYouth({
-        organization: id,
+        organizations: [id],
         categories:
           categories != undefined
             ? categories
@@ -353,7 +386,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     ],
     queryFn: () =>
       searchOrganizationOpportunities({
-        organization: id,
+        organizations: [id],
         categories:
           categories != undefined
             ? categories
@@ -509,7 +542,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         {
           pageNumber: pageNumber,
           pageSize: PAGE_SIZE_MINIMUM,
-          organization: id,
+          organizations: [id],
           categories:
             categories != undefined
               ? categories
@@ -564,7 +597,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         {
           pageNumber: pageNumber,
           pageSize: PAGE_SIZE_MINIMUM,
-          organization: id,
+          organizations: [id],
           categories:
             categories != undefined
               ? categories
@@ -759,6 +792,123 @@ const OrganisationDashboard: NextPageWithLayout<{
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
+
+      {/* completed Youth Opportunities DIALOG */}
+      <CustomModal
+        isOpen={completedYouthOpportunitiesDialogVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setCompletedYouthOpportunitiesDialogVisible(false);
+        }}
+        className="md:max-h-[500px] md:w-[550px]"
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+          <div className="bg-theme flex h-16 flex-row justify-end p-8 shadow-lg">
+            <button
+              type="button"
+              className="btn -mr-4 -mt-6 rounded-full border-0 bg-gray-light p-3 text-gray-dark hover:bg-gray"
+              onClick={() => setCompletedYouthOpportunitiesDialogVisible(false)}
+            >
+              <IoMdClose className="h-6 w-6"></IoMdClose>
+            </button>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
+            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
+              <IoMdTrophy className="size-7 text-orange" />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <h4 className="text-xl font-semibold tracking-wide">
+                Completed Opportunities
+              </h4>
+              <div className="flex flex-row gap-1 text-sm">
+                <div className="text-sm font-semibold italic tracking-widest">
+                  {completedYouthOpportunities?.displayName}
+                </div>
+                <div>has completed the following opportunities:</div>
+              </div>
+            </div>
+
+            {/* OPPORTUNITIES */}
+            <div className="px-4">
+              <table className="table">
+                <thead>
+                  <tr className="border-gray-light text-gray-dark">
+                    <th className="p-2 text-left">Opportunity</th>
+                    <th className="p-2 text-left">Date Completed</th>
+                    <th className="p-2 text-left">Verified</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {completedYouthOpportunities?.opportunities.map(
+                    (opportunity, index) => (
+                      <tr
+                        key={opportunity.id || index}
+                        className="border-gray-light"
+                      >
+                        <td className="p-2x">
+                          <Link
+                            href={`/organisations/${id}/opportunities/${
+                              opportunity.id
+                            }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
+                            className="line-clamp-1 w-40 underline md:w-64"
+                            target="_blank"
+                            title={opportunity.title}
+                          >
+                            {opportunity.title}
+                          </Link>
+                        </td>
+                        <td className="p-2x">
+                          {opportunity.dateCompleted ? (
+                            <Moment
+                              format={DATE_FORMAT_HUMAN}
+                              utc={true}
+                              className="text-xs italic"
+                            >
+                              {opportunity.dateCompleted}
+                            </Moment>
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
+                        <td className="p-2x flex items-center">
+                          {opportunity.verified ? (
+                            <IoMdCheckmarkCircleOutline className="size-5 text-green" />
+                          ) : (
+                            <IoMdCloseCircleOutline className="size-5 text-red-500" />
+                          )}
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div>
+              <p className="text-sm leading-6">
+                <strong>Total opportunities:</strong>{" "}
+                {completedYouthOpportunities?.opporunityCount}
+              </p>
+            </div>
+
+            {/* BUTTONS */}
+            <div
+              className={`mt-8 flex flex-row items-center justify-center gap-4`}
+            >
+              <button
+                type="button"
+                className="w-1/2z btn btn-warning btn-wide flex-shrink normal-case"
+                onClick={() => {
+                  setCompletedYouthOpportunitiesDialogVisible(false);
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </CustomModal>
 
       <div className="container z-10 mt-[6rem] max-w-7xl overflow-hidden p-4">
         <div className="flex flex-col gap-4">
@@ -1119,46 +1269,56 @@ const OrganisationDashboard: NextPageWithLayout<{
                             <thead>
                               <tr className="border-gray-light text-gray-dark">
                                 <th>Student</th>
-                                <th>Opportunity</th>
-                                <th>Date completed</th>
-                                <th className="text-center">Verified</th>
+                                <th>Country</th>
+                                <th className="text-center">Age</th>
+                                <th className="text-center">Reward Total</th>
+                                <th className="text-center">
+                                  Opportunity Count
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
                               {completedOpportunitiesData.items.map(
-                                (opportunity) => (
+                                (youthInfo) => (
                                   <tr
-                                    key={`completedYouth_${opportunity.opportunityId}_${opportunity.userId}`}
+                                    key={`youth_${youthInfo.id}`}
                                     className="border-gray-light"
                                   >
                                     <td>
-                                      <div className="w-max py-2">
-                                        {opportunity.userDisplayName}
+                                      <div className="-ml-4 flex items-center gap-2">
+                                        <AvatarImage
+                                          alt="Student Image"
+                                          size={40}
+                                        />
+                                        {youthInfo.displayName}
                                       </div>
                                     </td>
-                                    <td>
-                                      <Link
-                                        href={`/organisations/${id}/opportunities/${
-                                          opportunity.opportunityId
-                                        }/info?returnUrl=${encodeURIComponent(
-                                          router.asPath,
-                                        )}`}
-                                        className="text-center"
+                                    <td>{youthInfo.country || "N/A"}</td>
+                                    <td className="text-center">
+                                      {youthInfo.age !== null
+                                        ? youthInfo.age
+                                        : "N/A"}
+                                    </td>
+                                    <td className="text-center">
+                                      <ZltoRewardBadge
+                                        amount={youthInfo.zltoRewardTotal}
+                                      />
+                                    </td>
+                                    <td className="text-center">
+                                      <button
+                                        type="button"
+                                        className="badge bg-orange"
+                                        onClick={() => {
+                                          setCompletedYouthOpportunities(
+                                            youthInfo,
+                                          );
+                                          setCompletedYouthOpportunitiesDialogVisible(
+                                            true,
+                                          );
+                                        }}
                                       >
-                                        {opportunity.opportunityTitle}
-                                      </Link>
-                                    </td>
-                                    <td className="whitespace-nowrap text-center">
-                                      {opportunity.dateCompleted
-                                        ? moment(
-                                            new Date(opportunity.dateCompleted),
-                                          ).format("MMM D YYYY")
-                                        : ""}
-                                    </td>
-                                    <td className="whitespace-nowrap text-center">
-                                      {opportunity.verified
-                                        ? "Verified"
-                                        : "Not verified"}
+                                        {youthInfo.opporunityCount}
+                                      </button>
                                     </td>
                                   </tr>
                                 ),
@@ -1185,11 +1345,24 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                         {/* MOBILE */}
                         <div className="flex flex-col gap-2 md:hidden">
-                          <DashboardCarousel
-                            orgId={id}
-                            slides={completedOpportunitiesData.items}
-                            totalSildes={completedOpportunitiesData?.totalCount}
+                          <CustomCarousel
+                            id={`CompletedYouth_CustomCarousel`}
+                            data={completedOpportunitiesData.items}
                             loadData={loadData_Youth}
+                            totalAll={completedOpportunitiesData.totalCount}
+                            renderSlide={(item, index) => (
+                              <YouthCompletedCard
+                                key={`CompletedYouth_CustomCarousel_YouthCompletedCard_${item.id}_${index}`}
+                                opportunity={item}
+                                orgId={id}
+                                showOpportunityModal={() => {
+                                  setCompletedYouthOpportunities(item);
+                                  setCompletedYouthOpportunitiesDialogVisible(
+                                    true,
+                                  );
+                                }}
+                              />
+                            )}
                           />
                         </div>
                       </>
@@ -1359,11 +1532,18 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                         {/* MOBILE */}
                         <div className="flex flex-col gap-2 md:hidden">
-                          <DashboardCarousel
-                            orgId={id}
-                            slides={selectedOpportunitiesData.items}
+                          <CustomCarousel
+                            id={`CompletedOpportunities_CustomCarousel`}
+                            data={selectedOpportunitiesData.items}
                             loadData={loadData_Opportunities}
-                            totalSildes={selectedOpportunitiesData?.totalCount}
+                            totalAll={selectedOpportunitiesData.totalCount}
+                            renderSlide={(item, index) => (
+                              <OpportunityCard
+                                key={`CompletedOpportunities_CustomCarousel_OpportunityCard_${item.id}_${index}`}
+                                opportunity={item}
+                                orgId={id}
+                              />
+                            )}
                           />
                         </div>
                       </div>

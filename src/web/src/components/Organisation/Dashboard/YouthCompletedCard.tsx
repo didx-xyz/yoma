@@ -1,67 +1,52 @@
-import moment from "moment";
-import Link from "next/link";
-import { useRouter } from "next/router";
-import {
-  IoIosCalendar,
-  IoIosCheckmarkCircle,
-  IoIosCloseCircle,
-  IoMdPerson,
-} from "react-icons/io";
 import type { YouthInfo } from "~/api/models/organizationDashboard";
 import { AvatarImage } from "~/components/AvatarImage";
-import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
+import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 
 export const YouthCompletedCard: React.FC<{
   opportunity: YouthInfo;
   orgId: string;
-}> = ({ opportunity, orgId }) => {
-  const router = useRouter();
-
+  showOpportunityModal?: (opportunity: YouthInfo) => void;
+}> = ({ opportunity, orgId, showOpportunityModal }) => {
   return (
-    <Link
-      href={`/organisations/${orgId}/opportunities/${
-        opportunity.opportunityId
-      }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
-      className="flex w-full flex-col gap-2 overflow-hidden rounded-lg bg-white px-2 py-4 text-xs shadow"
-    >
+    <div className="m-2 flex h-72 w-72 flex-col gap-2 rounded-lg bg-white px-2 py-4 text-xs shadow">
       <div className="mb-1 flex items-center gap-2 text-sm">
-        <AvatarImage
-          icon={opportunity?.organizationLogoURL}
-          alt="Organization Logo"
-          size={40}
-        />
-        <p className="line-clamp-2">{opportunity.opportunityTitle}</p>
-      </div>
-      <div className="flex items-center justify-between px-2">
-        <div className="tracking-wider">Student:</div>
-        <div className="badge bg-green-light text-green">
-          <IoMdPerson className="mr-1 text-sm" /> {opportunity.userDisplayName}
+        <AvatarImage alt="Person Image" size={40} />
+        <div className="line-clamp-2 flex h-10 w-full items-center whitespace-break-spaces text-sm font-semibold">
+          {opportunity.displayName}
         </div>
       </div>
       <div className="flex items-center justify-between px-2">
-        <div className="tracking-wider">Date completed:</div>
-        <div className="badge bg-green-light text-green">
-          <IoIosCalendar className="mr-1 text-sm" />
-          {opportunity.dateCompleted
-            ? moment(new Date(opportunity.dateCompleted)).format("MMM D YYYY")
-            : ""}
+        <div className="tracking-wider">Country:</div>
+        <div className="badge bg-blue-light text-blue">
+          {opportunity.country || "N/A"}
         </div>
       </div>
-
       <div className="flex items-center justify-between px-2">
-        <div className="tracking-wider">Status:</div>
-        <OpportunityStatus
-          status={opportunity?.opportunityStatus?.toString()}
-        />
+        <div className="tracking-wider">Age:</div>
+        <div className="badge">
+          {opportunity.age !== null ? opportunity.age : "N/A"}
+        </div>
       </div>
       <div className="flex items-center justify-between px-2">
-        <div className="tracking-wider">Verified:</div>
-        {opportunity.verified ? (
-          <IoIosCheckmarkCircle className="text-[1.5rem] text-green" />
-        ) : (
-          <IoIosCloseCircle className="text-[1.5rem] text-warning" />
-        )}
+        <div className="tracking-wider">Reward Total:</div>
+        <ZltoRewardBadge amount={opportunity.zltoRewardTotal} />
       </div>
-    </Link>
+      <div className="flex items-center justify-between px-2">
+        <div className="tracking-wider">Yoma Reward Total:</div>
+        <div className="badge">{opportunity.yomaRewardTotal}</div>
+      </div>
+      <div className="flex items-center justify-between px-2">
+        <div className="tracking-wider">Opportunity Count:</div>
+        <button
+          type="button"
+          className="badge bg-orange"
+          onClick={() =>
+            showOpportunityModal && showOpportunityModal(opportunity)
+          }
+        >
+          {opportunity.opporunityCount}
+        </button>
+      </div>
+    </div>
   );
 };
