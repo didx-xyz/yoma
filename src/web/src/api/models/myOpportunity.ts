@@ -86,7 +86,7 @@ export interface MyOpportunityInfo {
   verificationStatusId: string | null;
   verificationStatus: VerificationStatus | null | string; //NB: string
   commentVerification: string | null;
-  commitmentInterval: TimeIntervalOption | null;
+  commitmentInterval: TimeIntervalOption | null | string; //NB: string
   commitmentIntervalCount: number | null;
   dateStart: string | null;
   dateEnd: string | null;
