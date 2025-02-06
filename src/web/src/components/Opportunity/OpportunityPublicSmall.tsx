@@ -91,7 +91,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
             </div>
           )}
 
-          <ZltoRewardBadge opportunity={data} />
+          <ZltoRewardBadge amount={data.zltoReward} />
 
           {data?.status == "Active" && (
             <>

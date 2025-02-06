@@ -4,7 +4,14 @@ import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { AvatarImage } from "../AvatarImage";
 import { useRouter } from "next/router";
-import { DisplayType } from "./OpportunitiesCarousel";
+
+export enum DisplayType {
+  Completed = "Completed",
+  Pending = "Pending",
+  Rejected = "Rejected",
+  Saved = "Saved",
+  Viewed = "Viewed",
+}
 
 interface InputProps {
   data: MyOpportunityInfo;

@@ -112,7 +112,7 @@ const PublicBadges: React.FC<BadgesProps> = ({ opportunity }) => {
         </>
       )}
 
-      {opportunity && <ZltoRewardBadge opportunity={opportunity} />}
+      {opportunity && <ZltoRewardBadge amount={opportunity.zltoReward} />}
 
       {/* STATUS BADGES */}
       {opportunity?.status == "Active" && (

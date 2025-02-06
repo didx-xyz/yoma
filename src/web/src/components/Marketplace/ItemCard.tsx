@@ -33,7 +33,7 @@ const ItemCardComponent: React.FC<InputProps> = ({
   return (
     <Link
       key={id}
-      className="relative ml-1 flex aspect-square h-56 w-full flex-col flex-wrap items-start justify-start gap-4 overflow-hidden rounded-lg bg-white p-4 shadow-sm md:ml-0 md:w-[340px]"
+      className="m-2 flex h-56 w-64 flex-col gap-2 rounded-lg bg-white px-2 py-4 text-xs shadow"
       href={href ?? "/"}
       onClick={onClick2}
       onAuxClick={onClick2}
@@ -45,7 +45,7 @@ const ItemCardComponent: React.FC<InputProps> = ({
             <p className="mr-1 max-w-[170px] truncate text-xs font-medium text-gray-dark md:max-w-[250px]">
               {company}
             </p>
-            <p className="mr-1 max-w-[170px] truncate text-[18px] font-semibold md:max-w-[250px]">
+            <p className="items-centerx line-clamp-2 flex h-10 w-full whitespace-break-spaces text-sm font-semibold">
               {item.name}
             </p>
           </div>

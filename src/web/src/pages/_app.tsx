@@ -22,7 +22,6 @@ import "~/styles/globals.scss";
 import "~/styles/FileUpload.css";
 import { THEME_PURPLE } from "~/lib/constants";
 import { GoogleAnalytics } from "~/components/GoogleAnalytics";
-import "~/styles/embla.css";
 import Router from "next/router";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";

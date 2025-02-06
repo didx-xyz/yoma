@@ -13,26 +13,37 @@ import {
   Slider,
   type OnSlideProps,
 } from "react-scroll-snap-anime-slider";
-import type { OpportunitySearchResultsInfo } from "~/api/models/opportunity";
+import { NavigationButtons } from "~/components/Carousel/NavigationButtons";
+import { SelectedSnapDisplay } from "~/components/Carousel/SelectedSnapDisplay";
 import { screenWidthAtom } from "~/lib/store";
-import { SelectedSnapDisplay } from "../Carousel/SelectedSnapDisplay";
-import { OpportunityPublicSmallComponent } from "./OpportunityPublicSmall";
-import { NavigationButtons } from "../Carousel/NavigationButtons";
 
-const OpportunitiesCarousel: React.FC<{
+const CustomCarousel: React.FC<{
   [id: string]: any;
   title?: string;
   description?: string;
   viewAllUrl?: string;
-  loadData: (startRow: number) => Promise<OpportunitySearchResultsInfo>;
-  data: OpportunitySearchResultsInfo;
-}> = ({ id, title, description, viewAllUrl, loadData, data }) => {
-  const [slides, setSlides] = useState(data.items);
+  loadData?: (startRow: number) => Promise<any>;
+  data: any[];
+  renderSlide: (item: any, index: number) => React.ReactElement;
+  totalAll?: number;
+}> = ({
+  id,
+  title,
+  description,
+  viewAllUrl,
+  loadData,
+  data,
+  renderSlide,
+  totalAll,
+}) => {
+  const [slides, setSlides] = useState(data);
   const screenWidth = useAtomValue(screenWidthAtom);
   const [visibleSlides, setVisibleSlides] = useState(1);
   const [currentSlide, setCurrentSlide] = useState(0);
   const totalSlides = useMemo(() => slides.length, [slides]);
-  const totalAll = data.totalCount ?? 0;
+  // use the provided totalAll or default to initial data length
+  const effectiveTotalAll = totalAll ?? data.length;
+
   const lastSlideRef = useRef(-1);
   const hasMoreToLoadRef = useRef(true);
   const loadingMoreRef = useRef(false);
@@ -56,38 +67,27 @@ const OpportunitiesCarousel: React.FC<{
       // Large desktop
       setVisibleSlides(4);
     }
-  }, [screenWidth, setVisibleSlides]);
+  }, [screenWidth]);
 
   const onSlide = useCallback(
     (props: OnSlideProps) => {
-      // prevent multiple calls if current slide remains unchanged during scroll
       if (lastSlideRef.current === props.currentSlide) return;
-
-      // update the lastSlideRef with the new current slide
       lastSlideRef.current = props.currentSlide;
       setCurrentSlide(props.currentSlide);
-      // console.warn(
-      //   `currentSlide: ${props.currentSlide} totalSlides: ${totalSlides}`,
-      // );
 
-      // check if more slides need to be loaded
+      // only attempt loading more slides if loadData is provided
       if (
+        loadData &&
         props.currentSlide + 1 + visibleSlides > totalSlides &&
         hasMoreToLoadRef.current &&
         !loadingMoreRef.current
       ) {
         loadingMoreRef.current = true;
-        //console.warn("Loading more...");
-
         loadData(totalSlides + 1).then((data) => {
-          //console.warn("Loaded more", data.items.length);
-
           if (data.items.length === 0) {
             hasMoreToLoadRef.current = false;
           }
-
           setSlides((prevSlides) => [...prevSlides, ...data.items]);
-
           loadingMoreRef.current = false;
         });
       }
@@ -99,15 +99,17 @@ const OpportunitiesCarousel: React.FC<{
     return (
       <NavigationButtons
         prevDisabled={currentSlide === 0}
-        nextDisabled={selectedSnap + 1 >= totalAll && !loadingMoreRef.current} //TODO: remove +1 when SelectedSnapDisplay has been fixed
+        nextDisabled={
+          selectedSnap + 1 >= effectiveTotalAll && !loadingMoreRef.current
+        }
       />
     );
-  }, [currentSlide, selectedSnap, totalAll]);
+  }, [currentSlide, selectedSnap, effectiveTotalAll]);
 
   return (
     <Carousel
       id={`${id}-carousel`}
-      totalSlides={totalAll}
+      totalSlides={effectiveTotalAll}
       visibleSlides={visibleSlides}
       onSlide={onSlide}
       currentSlide={currentSlide}
@@ -127,7 +129,7 @@ const OpportunitiesCarousel: React.FC<{
               <div className="hidden w-full gap-4 md:flex">
                 <SelectedSnapDisplay
                   selectedSnap={selectedSnap}
-                  snapCount={totalAll}
+                  snapCount={effectiveTotalAll}
                 />
                 {renderButtons()}
               </div>
@@ -149,14 +151,11 @@ const OpportunitiesCarousel: React.FC<{
         {slides.map((item, index) => {
           return (
             <Slide
-              key={`categories_${index}`}
-              className="mt-2 flex justify-center"
+              key={`slide_${id}_${index}`}
+              className="flex justify-center md:justify-start"
               id={`${id}_${item.id}`}
             >
-              <OpportunityPublicSmallComponent
-                key={`${id}_${item.id}_component`}
-                data={item}
-              />
+              {renderSlide(item, index)}
             </Slide>
           );
         })}
@@ -167,7 +166,7 @@ const OpportunitiesCarousel: React.FC<{
           {screenWidth < 768 && (
             <SelectedSnapDisplay
               selectedSnap={selectedSnap}
-              snapCount={totalAll}
+              snapCount={effectiveTotalAll}
             />
           )}
         </div>
@@ -176,4 +175,4 @@ const OpportunitiesCarousel: React.FC<{
   );
 };
 
-export default OpportunitiesCarousel;
+export default CustomCarousel;

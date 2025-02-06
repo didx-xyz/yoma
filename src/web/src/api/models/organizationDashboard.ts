@@ -3,7 +3,7 @@ import type { Skill } from "./lookups";
 import type { Status } from "./opportunity";
 
 export interface OrganizationSearchFilterBase extends PaginationFilter {
-  organization: string;
+  organizations: string[] | null;
   opportunities: string[] | null;
   categories: string[] | null;
   startDate: string | null;
@@ -19,7 +19,7 @@ export interface OrganizationSearchFilterOpportunity
   extends OrganizationSearchFilterBase {}
 
 export interface OrganizationSearchFilterEngagement {
-  organization: string;
+  organizations: string[] | null;
   opportunities: string[] | null;
   categories: string[] | null;
   countries: string[] | null;
@@ -67,11 +67,20 @@ export interface OpportunityCompletion {
 }
 
 export interface OpportunityConversionRatio {
-  legend: string;
-  completedCount: number;
   viewedCount: number;
-  percentage: number;
+  navigatedExternalLinkCount: number; //new
+  completedCount: number;
+  viewedToNavigatedExternalLinkPercentage: number; //new
+  navigatedExternalLinkToCompletedPercentage: number; //new
+  //percentage: number; // removed
 }
+
+// export interface OpportunityConversionRatio {
+//   legend: string; // removed
+//   completedCount: number;
+//   viewedCount: number;
+//   percentage: number; // removed
+// }
 
 export interface OpportunityReward {
   legend: string;
@@ -139,22 +148,31 @@ export enum OrganisationDashboardFilterOptions {
   VIEWALLFILTERSBUTTON = "viewAllFiltersButton",
 }
 
-export interface YouthInfo {
-  userId: string;
-  userDisplayName: string;
-  opportunityId: string;
-  opportunityTitle: string;
-  opportunityStatus: Status;
-  organizationLogoId: string | null;
-  organizationLogoURL: string | null;
-  dateCompleted: string | null;
-  verified: boolean;
-}
-
 export interface OrganizationSearchResultsYouth {
   items: YouthInfo[];
   totalCount: number;
   dateStamp: string;
+}
+
+export interface YouthInfo {
+  id: string;
+  displayName: string;
+  country: string | null;
+  age: number | null;
+  zltoRewardTotal: number;
+  yomaRewardTotal: number;
+  opporunityCount: number;
+  opportunities: YouthInfoOpportunity[];
+}
+
+export interface YouthInfoOpportunity {
+  id: string;
+  title: string;
+  status: Status;
+  organizationLogoId: string | null;
+  organizationLogoURL: string | null;
+  dateCompleted: string | null;
+  verified: boolean;
 }
 
 export interface OrganizationSearchSso {

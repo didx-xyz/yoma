@@ -17,19 +17,20 @@ export const OpportunityCard: React.FC<{
   const router = useRouter();
 
   return (
-    <Link
-      href={`/organisations/${orgId}/opportunities/${
-        opportunity.id
-      }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
-      className="flex w-full flex-col gap-2 overflow-hidden overflow-ellipsis rounded-lg bg-white px-2 py-4 text-xs shadow"
-    >
-      <div className="mb-1 flex items-center gap-2 text-sm">
+    <div className="m-2 flex h-72 w-72 flex-col gap-2 rounded-lg bg-white px-2 py-4 text-xs shadow">
+      <div className="mb-1 flex gap-2 text-sm">
         <AvatarImage
           icon={opportunity?.organizationLogoURL}
           alt="Organization Logo"
           size={40}
         />
-        <p className="line-clamp-2">{opportunity.title}</p>
+        <Link
+          href={`/organisations/${orgId}/opportunities/${opportunity.id}/info?returnUrl=${encodeURIComponent(router.asPath)}`}
+          className="line-clamp-2 h-10 w-full whitespace-break-spaces text-sm font-semibold underline"
+          title={opportunity.title}
+        >
+          {opportunity.title}
+        </Link>
       </div>
       <div className="flex items-center justify-between px-2">
         <div className="tracking-wider">Views:</div>
@@ -62,6 +63,6 @@ export const OpportunityCard: React.FC<{
         <div className="tracking-wider">Status:</div>
         <OpportunityStatus status={opportunity?.status?.toString()} />
       </div>
-    </Link>
+    </div>
   );
 };

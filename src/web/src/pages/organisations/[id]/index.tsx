@@ -1,6 +1,6 @@
 import {
-  QueryClient,
   dehydrate,
+  QueryClient,
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
@@ -24,7 +24,18 @@ import {
   type ReactElement,
 } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import { IoIosArrowBack, IoIosArrowForward, IoMdPerson } from "react-icons/io";
+import { FcAdvance } from "react-icons/fc";
+import {
+  IoIosArrowBack,
+  IoIosArrowForward,
+  IoMdCheckmarkCircleOutline,
+  IoMdClose,
+  IoMdCloseCircleOutline,
+  IoMdInformationCircleOutline,
+  IoMdPerson,
+  IoMdTrophy,
+} from "react-icons/io";
+import Moment from "react-moment";
 import type { Country } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
@@ -38,6 +49,7 @@ import type {
   OrganizationSearchResultsSummary,
   OrganizationSearchResultsYouth,
   OrganizationSearchSso,
+  YouthInfo,
 } from "~/api/models/organizationDashboard";
 import {
   getCategoriesAdmin,
@@ -52,18 +64,23 @@ import {
   searchOrganizationYouth,
 } from "~/api/services/organizationDashboard";
 import { AvatarImage } from "~/components/AvatarImage";
+import CustomCarousel from "~/components/Carousel/CustomCarousel";
+import CustomModal from "~/components/Common/CustomModal";
+import { Header } from "~/components/Common/Header";
 import Suspense from "~/components/Common/Suspense";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
-import DashboardCarousel from "~/components/Organisation/Dashboard/DashboardCarousel";
 import { EngagementRowFilter } from "~/components/Organisation/Dashboard/EngagementRowFilter";
 import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
+import { OpportunityCard } from "~/components/Organisation/Dashboard/OpportunityCard";
 import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
 import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
 import { SkillsChart } from "~/components/Organisation/Dashboard/SkillsChart";
 import { SsoChart } from "~/components/Organisation/Dashboard/SsoChart";
 import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
+import { YouthCompletedCard } from "~/components/Organisation/Dashboard/YouthCompletedCard";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { InternalServerError } from "~/components/Status/InternalServerError";
@@ -71,9 +88,9 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { LoadingInline } from "~/components/Status/LoadingInline";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { Header } from "~/components/Common/Header";
 import {
   CHART_COLORS,
+  DATE_FORMAT_HUMAN,
   DATETIME_FORMAT_HUMAN,
   PAGE_SIZE,
   PAGE_SIZE_MINIMUM,
@@ -124,7 +141,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   try {
     const dataOrganisation = await getOrganisationById(id, context);
     const dataCategories = await getCategoriesAdmin(id, context);
-    const dataCountries = await getCountries(id, context);
+    const dataCountries = await getCountries([id], context);
 
     // 👇 prefetch queries on server
     await Promise.all([
@@ -197,6 +214,12 @@ const OrganisationDashboard: NextPageWithLayout<{
   const [expiredOpportunitiesCount, setExpiredOpportunitiesCount] = useState(0);
   const queryClient = useQueryClient();
   const isAdmin = user?.roles?.includes(ROLE_ADMIN);
+  const [
+    completedYouthOpportunitiesDialogVisible,
+    setCompletedYouthOpportunitiesDialogVisible,
+  ] = useState(false);
+  const [completedYouthOpportunities, setCompletedYouthOpportunities] =
+    useState<YouthInfo | null>();
 
   // 👇 use prefetched queries from server
   const { data: organisation } = useQuery<Organization>({
@@ -218,7 +241,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     error: countriesError,
   } = useQuery<Country[]>({
     queryKey: ["organisationCountries", id],
-    queryFn: () => getCountries(id),
+    queryFn: () => getCountries([id]),
     enabled: !error,
   });
 
@@ -250,7 +273,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     ],
     queryFn: async () => {
       return await searchOrganizationEngagement({
-        organization: id,
+        organizations: [id],
         categories:
           categories != undefined
             ? categories
@@ -301,7 +324,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     ],
     queryFn: () =>
       searchOrganizationYouth({
-        organization: id,
+        organizations: [id],
         categories:
           categories != undefined
             ? categories
@@ -353,7 +376,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     ],
     queryFn: () =>
       searchOrganizationOpportunities({
-        organization: id,
+        organizations: [id],
         categories:
           categories != undefined
             ? categories
@@ -509,7 +532,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         {
           pageNumber: pageNumber,
           pageSize: PAGE_SIZE_MINIMUM,
-          organization: id,
+          organizations: [id],
           categories:
             categories != undefined
               ? categories
@@ -564,7 +587,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         {
           pageNumber: pageNumber,
           pageSize: PAGE_SIZE_MINIMUM,
-          organization: id,
+          organizations: [id],
           categories:
             categories != undefined
               ? categories
@@ -760,6 +783,123 @@ const OrganisationDashboard: NextPageWithLayout<{
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
+      {/* completed Youth Opportunities DIALOG */}
+      <CustomModal
+        isOpen={completedYouthOpportunitiesDialogVisible}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setCompletedYouthOpportunitiesDialogVisible(false);
+        }}
+        className="md:max-h-[500px] md:w-[550px]"
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+          <div className="bg-theme flex h-16 flex-row justify-end p-8 shadow-lg">
+            <button
+              type="button"
+              className="btn -mr-4 -mt-6 rounded-full border-0 bg-gray-light p-3 text-gray-dark hover:bg-gray"
+              onClick={() => setCompletedYouthOpportunitiesDialogVisible(false)}
+            >
+              <IoMdClose className="h-6 w-6"></IoMdClose>
+            </button>
+          </div>
+          <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
+            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
+              <IoMdTrophy className="size-7 text-orange" />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <h4 className="text-xl font-semibold tracking-wide">
+                Completed Opportunities
+              </h4>
+              <div className="flex flex-row gap-1 text-sm">
+                <div className="text-sm font-semibold italic tracking-widest">
+                  {completedYouthOpportunities?.displayName}
+                </div>
+                <div>has completed the following opportunities:</div>
+              </div>
+            </div>
+
+            {/* OPPORTUNITIES */}
+            <div className="px-4">
+              <table className="table">
+                <thead>
+                  <tr className="border-gray-light text-gray-dark">
+                    <th className="p-2 text-left">Opportunity</th>
+                    <th className="p-2 text-left">Date Completed</th>
+                    <th className="p-2 text-left">Verified</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {completedYouthOpportunities?.opportunities.map(
+                    (opportunity, index) => (
+                      <tr
+                        key={opportunity.id || index}
+                        className="border-gray-light"
+                      >
+                        <td>
+                          <Link
+                            href={`/organisations/${id}/opportunities/${
+                              opportunity.id
+                            }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
+                            className="line-clamp-1 w-40 underline md:w-64"
+                            target="_blank"
+                            title={opportunity.title}
+                          >
+                            {opportunity.title}
+                          </Link>
+                        </td>
+                        <td className="p-2x">
+                          {opportunity.dateCompleted ? (
+                            <Moment
+                              format={DATE_FORMAT_HUMAN}
+                              utc={true}
+                              className="text-xs italic"
+                            >
+                              {opportunity.dateCompleted}
+                            </Moment>
+                          ) : (
+                            "N/A"
+                          )}
+                        </td>
+                        <td className="p-2x flex items-center">
+                          {opportunity.verified ? (
+                            <IoMdCheckmarkCircleOutline className="size-5 text-green" />
+                          ) : (
+                            <IoMdCloseCircleOutline className="size-5 text-red-500" />
+                          )}
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div>
+              <p className="text-sm leading-6">
+                <strong>Total opportunities:</strong>{" "}
+                {completedYouthOpportunities?.opporunityCount}
+              </p>
+            </div>
+
+            {/* BUTTONS */}
+            <div
+              className={`mt-8 flex flex-row items-center justify-center gap-4`}
+            >
+              <button
+                type="button"
+                className="w-1/2z btn btn-warning btn-wide flex-shrink normal-case"
+                onClick={() => {
+                  setCompletedYouthOpportunitiesDialogVisible(false);
+                }}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </CustomModal>
+
       <div className="container z-10 mt-[6rem] max-w-7xl overflow-hidden p-4">
         <div className="flex flex-col gap-4">
           {/* HEADER */}
@@ -867,7 +1007,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                     <div className="flex flex-col gap-2">
                       <div className="flex flex-col gap-4">
-                        {/* AVERAGE CONVERSION RATE */}
+                        {/* GOTO/COMPLETED CONVERSION RATE */}
                         <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow md:w-[333px]">
                           <div className="flex flex-row items-center gap-3">
                             <div className="rounded-lg bg-green-light p-1">
@@ -882,29 +1022,51 @@ const OrganisationDashboard: NextPageWithLayout<{
                               />
                             </div>
                             <div className="text-sm font-semibold">
-                              Average conversion rate
+                              Go-To/Completed Conversion Ratio
                             </div>
                           </div>
 
                           <div className="flex flex-grow flex-col">
-                            <div className="flex-grow text-4xl font-semibold">
-                              {`${
-                                engagementData?.opportunities?.conversionRate
-                                  ?.percentage ?? 0
-                              } %`}
+                            <div className="flex flex-grow flex-nowrap items-center gap-2 text-lg font-semibold tracking-tighter md:text-2xl">
+                              <div>
+                                {`${engagementData?.opportunities?.conversionRate?.viewedToNavigatedExternalLinkPercentage ?? 0} %`}
+                              </div>
+                              <div>
+                                <FcAdvance className="size-10 text-green" />
+                              </div>
+                              <div>
+                                {`${engagementData?.opportunities?.conversionRate?.navigatedExternalLinkToCompletedPercentage ?? 0} %`}
+                              </div>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-dark min-[380px]:w-64 md:w-72">
-                            Please note this data may be skewed as tracking of
-                            views was only recently introduced.
+
+                          <div className="flex flex-row gap-1 text-xs text-gray-dark">
+                            <IoMdInformationCircleOutline className="size-4 text-blue" />
+                            Tracking started on{" "}
+                            <div className="font-bold italic underline">
+                              14 June 2024
+                            </div>
+                          </div>
+
+                          <div>
+                            <button
+                              type="button"
+                              className="tooltip tooltip-top tooltip-secondary text-xs text-blue"
+                              data-tip="This displays the percentage of users who viewed the
+                            content and clicked on an external link, and the
+                            percentage of users who clicked the external link
+                            and completed the process."
+                            >
+                              Learn more
+                            </button>
                           </div>
                         </div>
 
-                        {/* OVERALL RATIO */}
+                        {/* OVERALL CONVERSION RATE */}
                         {engagementData?.opportunities?.conversionRate && (
                           <PieChart
                             id="conversionRate"
-                            title="Overall ratio"
+                            title="Overall Conversion Ratio"
                             subTitle=""
                             colors={CHART_COLORS}
                             data={[
@@ -1119,46 +1281,56 @@ const OrganisationDashboard: NextPageWithLayout<{
                             <thead>
                               <tr className="border-gray-light text-gray-dark">
                                 <th>Student</th>
-                                <th>Opportunity</th>
-                                <th>Date completed</th>
-                                <th className="text-center">Verified</th>
+                                <th>Country</th>
+                                <th className="text-center">Age</th>
+                                <th className="text-center">Reward Total</th>
+                                <th className="text-center">
+                                  Opportunity Count
+                                </th>
                               </tr>
                             </thead>
                             <tbody>
                               {completedOpportunitiesData.items.map(
-                                (opportunity) => (
+                                (youthInfo) => (
                                   <tr
-                                    key={`completedYouth_${opportunity.opportunityId}_${opportunity.userId}`}
+                                    key={`youth_${youthInfo.id}`}
                                     className="border-gray-light"
                                   >
                                     <td>
-                                      <div className="w-max py-2">
-                                        {opportunity.userDisplayName}
+                                      <div className="-ml-4 flex items-center gap-2">
+                                        <AvatarImage
+                                          alt="Student Image"
+                                          size={40}
+                                        />
+                                        {youthInfo.displayName}
                                       </div>
                                     </td>
-                                    <td>
-                                      <Link
-                                        href={`/organisations/${id}/opportunities/${
-                                          opportunity.opportunityId
-                                        }/info?returnUrl=${encodeURIComponent(
-                                          router.asPath,
-                                        )}`}
-                                        className="text-center"
+                                    <td>{youthInfo.country || "N/A"}</td>
+                                    <td className="text-center">
+                                      {youthInfo.age !== null
+                                        ? youthInfo.age
+                                        : "N/A"}
+                                    </td>
+                                    <td className="text-center">
+                                      <ZltoRewardBadge
+                                        amount={youthInfo.zltoRewardTotal}
+                                      />
+                                    </td>
+                                    <td className="text-center">
+                                      <button
+                                        type="button"
+                                        className="badge bg-orange"
+                                        onClick={() => {
+                                          setCompletedYouthOpportunities(
+                                            youthInfo,
+                                          );
+                                          setCompletedYouthOpportunitiesDialogVisible(
+                                            true,
+                                          );
+                                        }}
                                       >
-                                        {opportunity.opportunityTitle}
-                                      </Link>
-                                    </td>
-                                    <td className="whitespace-nowrap text-center">
-                                      {opportunity.dateCompleted
-                                        ? moment(
-                                            new Date(opportunity.dateCompleted),
-                                          ).format("MMM D YYYY")
-                                        : ""}
-                                    </td>
-                                    <td className="whitespace-nowrap text-center">
-                                      {opportunity.verified
-                                        ? "Verified"
-                                        : "Not verified"}
+                                        {youthInfo.opporunityCount}
+                                      </button>
                                     </td>
                                   </tr>
                                 ),
@@ -1185,11 +1357,23 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                         {/* MOBILE */}
                         <div className="flex flex-col gap-2 md:hidden">
-                          <DashboardCarousel
-                            orgId={id}
-                            slides={completedOpportunitiesData.items}
-                            totalSildes={completedOpportunitiesData?.totalCount}
+                          <CustomCarousel
+                            id={`CompletedYouth_CustomCarousel`}
+                            data={completedOpportunitiesData.items}
                             loadData={loadData_Youth}
+                            totalAll={completedOpportunitiesData.totalCount}
+                            renderSlide={(item, index) => (
+                              <YouthCompletedCard
+                                key={`CompletedYouth_CustomCarousel_YouthCompletedCard_${item.id}_${index}`}
+                                opportunity={item}
+                                showOpportunityModal={() => {
+                                  setCompletedYouthOpportunities(item);
+                                  setCompletedYouthOpportunitiesDialogVisible(
+                                    true,
+                                  );
+                                }}
+                              />
+                            )}
                           />
                         </div>
                       </>
@@ -1198,7 +1382,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               </div>
 
               {/* DIVIDER */}
-              <div className="border-px mb-2 mt-4 border-t border-gray" />
+              <div className="mb-2 mt-4 border-t border-gray" />
 
               {/* SELECTED OPPORTUNITIES */}
               <div className="flex flex-col">
@@ -1359,11 +1543,18 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                         {/* MOBILE */}
                         <div className="flex flex-col gap-2 md:hidden">
-                          <DashboardCarousel
-                            orgId={id}
-                            slides={selectedOpportunitiesData.items}
+                          <CustomCarousel
+                            id={`CompletedOpportunities_CustomCarousel`}
+                            data={selectedOpportunitiesData.items}
                             loadData={loadData_Opportunities}
-                            totalSildes={selectedOpportunitiesData?.totalCount}
+                            totalAll={selectedOpportunitiesData.totalCount}
+                            renderSlide={(item, index) => (
+                              <OpportunityCard
+                                key={`CompletedOpportunities_CustomCarousel_OpportunityCard_${item.id}_${index}`}
+                                opportunity={item}
+                                orgId={id}
+                              />
+                            )}
                           />
                         </div>
                       </div>
