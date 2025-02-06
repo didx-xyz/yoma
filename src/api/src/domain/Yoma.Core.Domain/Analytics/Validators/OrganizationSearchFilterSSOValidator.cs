@@ -15,7 +15,8 @@ namespace Yoma.Core.Domain.Analytics.Validators
     {
       _organizationService = organizationService;
 
-      RuleFor(x => x.Organization).NotEmpty().Must(OrganizationExists).WithMessage($"Specified organization is invalid / does not exist.");
+      RuleFor(x => x.Organizations).Must(x => x == null || x.Count == 0 || x.All(OrganizationExists)).WithMessage("{PropertyName} contains empty or invalid value(s).");
+      RuleFor(x => x.PaginationEnabled).Equal(true).When(x => x.Organizations == null).WithMessage("Pagination is required when no organizations are specified.");
       RuleFor(x => x.EndDate).GreaterThanOrEqualTo(x => x.StartDate).When(x => x.EndDate.HasValue && x.StartDate.HasValue).WithMessage("{PropertyName} is earlier than the Start Date.");
     }
     #endregion

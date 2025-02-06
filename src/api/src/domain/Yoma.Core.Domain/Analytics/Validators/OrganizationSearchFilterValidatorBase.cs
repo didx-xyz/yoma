@@ -7,10 +7,16 @@ namespace Yoma.Core.Domain.Analytics.Validators
   public class OrganizationSearchFilterValidatorBase<TRequest> : AbstractValidator<TRequest>
         where TRequest : IOrganizationSearchFilterBase
   {
+    #region Class Variables
+    private readonly IOrganizationService _organizationService;
+    #endregion
+
     #region Constructor
     public OrganizationSearchFilterValidatorBase(IOrganizationService organizationService)
     {
-      RuleFor(x => x.Organizations).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
+      _organizationService = organizationService;
+
+      RuleFor(x => x.Organizations).Must(x => x == null || x.Count == 0 || x.All(OrganizationExists)).WithMessage("{PropertyName} contains empty or invalid value(s).");
       RuleFor(x => x)
           .Custom((model, context) =>
           {
@@ -25,6 +31,14 @@ namespace Yoma.Core.Domain.Analytics.Validators
       RuleFor(x => x.Opportunities).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.Categories).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.EndDate).GreaterThanOrEqualTo(x => x.StartDate).When(x => x.EndDate.HasValue && x.StartDate.HasValue).WithMessage("{PropertyName} is earlier than the Start Date.");
+    }
+    #endregion
+
+    #region Private Members
+    private bool OrganizationExists(Guid id)
+    {
+      if (id == Guid.Empty) return false;
+      return _organizationService.GetByIdOrNull(id, false, false, false) != null;
     }
     #endregion
   }

@@ -41,6 +41,7 @@ namespace Yoma.Core.Domain.Analytics.Services
     private readonly IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<OpportunityCategory> _opportunityCategoryRepository;
     private readonly IRepository<UserLoginHistory> _userLoginHistoryRepository;
+    private readonly IRepositoryBatchedValueContainsWithNavigation<Organization> _organizationRepository;
 
     private const int Skill_Count = 10;
     private const int Country_Count = 5;
@@ -66,7 +67,8 @@ namespace Yoma.Core.Domain.Analytics.Services
         IRepositoryBatchedValueContainsWithNavigation<Opportunity.Models.Opportunity> opportunityRepository,
         IRepositoryBatchedWithNavigation<MyOpportunity.Models.MyOpportunity> myOpportunityRepository,
         IRepository<OpportunityCategory> opportunityCategoryRepository,
-        IRepository<UserLoginHistory> userLoginHistoryRepository)
+        IRepository<UserLoginHistory> userLoginHistoryRepository,
+        IRepositoryBatchedValueContainsWithNavigation<Organization> organizationRepository)
     {
       _appSettings = appSettings.Value;
       _memoryCache = memoryCache;
@@ -84,6 +86,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       _myOpportunityRepository = myOpportunityRepository;
       _opportunityCategoryRepository = opportunityCategoryRepository;
       _userLoginHistoryRepository = userLoginHistoryRepository;
+      _organizationRepository = organizationRepository;
     }
     #endregion
 
@@ -92,6 +95,9 @@ namespace Yoma.Core.Domain.Analytics.Services
     {
       organizations = organizations?.Distinct().ToList();
       if (organizations?.Count == 0) organizations = null;
+
+      if (organizations != null && _organizationRepository.Query().Count(o => organizations.Contains(o.Id)) != organizations.Count)
+        throw new ValidationException("One or more organizations do not exist or are invalid");
 
       EnsureOrganizationAuthorization(organizations);
 
@@ -110,9 +116,9 @@ namespace Yoma.Core.Domain.Analytics.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      _organizationSearchFilterEngagementValidator.ValidateAndThrow(filter);
-
       filter.SanitizeCollections();
+
+      _organizationSearchFilterEngagementValidator.ValidateAndThrow(filter);
 
       EnsureOrganizationAuthorization(filter.Organizations);
 
@@ -131,9 +137,9 @@ namespace Yoma.Core.Domain.Analytics.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      _organizationSearchFilterOpportunityValidator.ValidateAndThrow(filter);
-
       filter.SanitizeCollections();
+
+      _organizationSearchFilterOpportunityValidator.ValidateAndThrow(filter);
 
       EnsureOrganizationAuthorization(filter.Organizations);
 
@@ -152,9 +158,9 @@ namespace Yoma.Core.Domain.Analytics.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      _organizationSearchFilterYouthValidator.ValidateAndThrow(filter);
-
       filter.SanitizeCollections();
+
+      _organizationSearchFilterYouthValidator.ValidateAndThrow(filter);
 
       EnsureOrganizationAuthorization(filter.Organizations);
 
@@ -173,9 +179,11 @@ namespace Yoma.Core.Domain.Analytics.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
+      filter.SanitizeCollections();
+
       _organizationSearchFilterSSOValidator.ValidateAndThrow(filter);
 
-      EnsureOrganizationAuthorization([filter.Organization]);
+      EnsureOrganizationAuthorization(filter.Organizations);
 
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Analytics))
         return SearchOrganizationSSOInternal(filter);
@@ -490,7 +498,6 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     private OrganizationSearchResultsOpportunity SearchOrganizationOpportunitiesInternal(OrganizationSearchFilterOpportunity filter)
     {
-
       var query = SearchOrganizationOpportunitiesQueryBase(filter);
 
       query = query.OrderByDescending(o => o.ConversionRatioPercentage).ThenBy(o => o.Title).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results
@@ -580,42 +587,68 @@ namespace Yoma.Core.Domain.Analytics.Services
 
     private OrganizationSearchResultsSSO SearchOrganizationSSOInternal(OrganizationSearchFilterSSO filter)
     {
-      var organization = _organizationService.GetById(filter.Organization, false, false, true);
+      var queryOrganization = _organizationRepository.Query();
 
-      var result = new OrganizationSearchResultsSSO
+      if (filter.Organizations != null && filter.Organizations.Count != 0)
+        queryOrganization = queryOrganization.Where(o => filter.Organizations.Contains(o.Id));
+
+      queryOrganization = queryOrganization.OrderBy(o => o.Name).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results
+
+      var result = new OrganizationSearchResultsSSO();
+
+      //pagination
+      if (filter.PaginationEnabled)
       {
-        Outbound = new OrganizationSSO
-        {
-          Legend = "Outbound",
-          ClientId = organization.SSOClientIdOutbound
-        },
-        Inbound = new OrganizationSSO
-        {
-          Legend = "Inbound",
-          ClientId = organization.SSOClientIdInbound
-        },
-      };
+        result.TotalCount = queryOrganization.Count();
+        queryOrganization = queryOrganization.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+      }
 
-      var query = _userLoginHistoryRepository.Query();
+      result.Items = [.. queryOrganization
+        .Select(o => new OrganizationSSOInfo
+        {
+          Name = o.Name,
+          LogoId = o.LogoId,
+          LogoStorageType = o.LogoStorageType,
+          LogoKey = o.LogoKey,
+          Outbound = new OrganizationSSO
+          {
+            Legend = "Outbound",
+            ClientId = o.SSOClientIdOutbound
+          },
+          Inbound = new OrganizationSSO
+          {
+            Legend = "Inbound",
+            ClientId = o.SSOClientIdInbound
+          }
+        })];
+
+      var queryLogins = _userLoginHistoryRepository.Query();
 
       //date range
       if (filter.StartDate.HasValue)
       {
         var startDate = filter.StartDate.Value.RemoveTime();
-        query = query.Where(o => o.DateCreated >= startDate);
+        queryLogins = queryLogins.Where(o => o.DateCreated >= startDate);
       }
 
       if (filter.EndDate.HasValue)
       {
         var endDate = filter.EndDate.Value.ToEndOfDay();
-        query = query.Where(o => o.DateCreated <= endDate);
+        queryLogins = queryLogins.Where(o => o.DateCreated <= endDate);
       }
 
-      if (result.Outbound.Enabled)
-        result.Outbound.Logins = GetSSODistinctLoginSummary(query, result.Outbound.ClientId);
+      foreach (var item in result.Items)
+      {
+        item.LogoURL = GetBlobObjectURL(item.LogoStorageType, item.LogoKey);
+        if (item.Outbound.Enabled)
+          item.Outbound.Logins = GetSSODistinctLoginSummary(queryLogins, item.Outbound.ClientId);
 
-      if (result.Inbound.Enabled)
-        result.Inbound.Logins = GetSSODistinctLoginSummary(query, result.Inbound.ClientId);
+        if (item.Inbound.Enabled)
+          item.Inbound.Logins = GetSSODistinctLoginSummary(queryLogins, item.Inbound.ClientId);
+      }
+
+      result.OutboundLoginCount = result.Items.Where(o => o.Outbound.Enabled).Sum(o => o.Outbound.Logins?.Count.First());
+      result.InboundLoginCount = result.Items.Where(o => o.Inbound.Enabled).Sum(o => o.Inbound.Logins?.Count.First());
 
       result.DateStamp = DateTimeOffset.UtcNow;
       return result;

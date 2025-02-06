@@ -9,7 +9,7 @@ namespace Yoma.Core.Domain.Analytics.Validators
     #region Constructor
     public OrganizationSearchFilterOpportunityValidator(IOrganizationService organizationService) : base(organizationService)
     {
-      RuleFor(x => x.PaginationEnabled).Equal(true).WithMessage("Pagination required");
+      RuleFor(x => x.PaginationEnabled).Equal(true).WithMessage("Pagination is required.");
     }
     #endregion
   }
