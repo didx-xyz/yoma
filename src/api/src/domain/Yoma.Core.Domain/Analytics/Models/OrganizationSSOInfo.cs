@@ -5,6 +5,8 @@ namespace Yoma.Core.Domain.Analytics.Models
 {
   public class OrganizationSSOInfo
   {
+    public Guid Id { get; set; }
+
     public string Name { get; set; }
 
     public Guid? LogoId { get; set; }

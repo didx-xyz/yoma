@@ -9,8 +9,7 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public List<OrganizationStatus>? Statuses { get; set; }
 
-    [JsonIgnore]
-    internal List<Guid> Organizations { get; set; }
+    public List<Guid>? Organizations { get; set; }
 
     [JsonIgnore]
     internal bool InternalUse { get; set; }

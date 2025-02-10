@@ -96,8 +96,8 @@ namespace Yoma.Core.Domain.Analytics.Services
       organizations = organizations?.Distinct().ToList();
       if (organizations?.Count == 0) organizations = null;
 
-      if (organizations != null && _organizationRepository.Query().Count(o => organizations.Contains(o.Id)) != organizations.Count)
-        throw new ValidationException("One or more organizations do not exist or are invalid");
+      if (organizations != null)
+        _organizationService.EnsureExist(organizations, true);
 
       EnsureOrganizationAuthorization(organizations);
 
@@ -209,7 +209,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       if (HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) return;
 
       if (organizations is not { Count: > 0 })
-        throw new ValidationException("One or more organizations are required");
+        throw new ValidationException($"One or more organizations are required for '{Constants.Role_OrganizationAdmin}' role only");
 
       _organizationService.IsAdminsOf(organizations, true);
     }
@@ -535,6 +535,7 @@ namespace Yoma.Core.Domain.Analytics.Services
               Id = o.OpportunityId,
               Title = o.OpportunityTitle,
               Status = o.OpportunityStatus,
+              o.OrganizationId,
               o.OrganizationLogoId,
               o.OrganizationLogoStorageType,
               o.OrganizationLogoKey,
@@ -570,6 +571,7 @@ namespace Yoma.Core.Domain.Analytics.Services
           Id = op.Id,
           Title = op.Title,
           Status = op.Status,
+          OrganizationId = op.OrganizationId,
           OrganizationLogoId = op.OrganizationLogoId,
           OrganizationLogoStorageType = op.OrganizationLogoStorageType,
           OrganizationLogoKey = op.OrganizationLogoKey,
@@ -606,6 +608,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       result.Items = [.. queryOrganization
         .Select(o => new OrganizationSSOInfo
         {
+          Id = o.Id,
           Name = o.Name,
           LogoId = o.LogoId,
           LogoStorageType = o.LogoStorageType,
@@ -717,6 +720,7 @@ namespace Yoma.Core.Domain.Analytics.Services
             Id = result.Opportunity.Id,
             Title = result.Opportunity.Title,
             Status = result.Opportunity.Status,
+            OrganizationId = result.Opportunity.OrganizationId,
             OrganizationLogoId = result.Opportunity.OrganizationLogoId,
             OrganizationLogoStorageType = result.Opportunity.OrganizationLogoStorageType,
             OrganizationLogoKey = result.Opportunity.OrganizationLogoKey,

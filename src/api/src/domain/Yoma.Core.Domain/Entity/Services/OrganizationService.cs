@@ -185,6 +185,22 @@ namespace Yoma.Core.Domain.Entity.Services
       return SettingsHelper.ParseInfo(_settingsDefinitionService.ListByEntityType(EntityType.Organization), organization.SettingsRaw);
     }
 
+    public bool EnsureExist(List<Guid> ids, bool throwValidationException)
+    {
+      ArgumentNullException.ThrowIfNull(ids, nameof(ids));
+
+      var distinctIds = ids.Where(o => o != Guid.Empty).Distinct().ToList();
+      if (distinctIds.Count == 0)
+        throw new ArgumentException("Empty or invalid", nameof(ids));
+
+      if (_organizationRepository.Query().Count(o => distinctIds.Contains(o.Id)) != distinctIds.Count)
+      {
+        if (throwValidationException) throw new ValidationException("One or more organizations do not exist or are invalid");
+        return false;
+      }
+      return true;
+    }
+
     public List<Organization> Contains(string value, bool includeChildItems, bool includeComputed)
     {
       ArgumentException.ThrowIfNullOrWhiteSpace(value, nameof(value));
@@ -215,9 +231,17 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var query = _organizationRepository.Query();
 
-      var organizationIds = new List<Guid>();
+      filter.Organizations = filter.Organizations?.Distinct().ToList();
       if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
-        organizationIds.AddRange(ListAdminsOf(false).Select(o => o.Id).ToList());
+      {
+        if (filter.Organizations != null && filter.Organizations.Count != 0)
+          IsAdminsOf(filter.Organizations, true);
+        else
+          filter.Organizations = ListAdminsOf(false).Select(o => o.Id).ToList();
+      }
+
+      if (filter.Organizations != null && filter.Organizations.Count != 0)
+        query = query.Where(o => filter.Organizations.Contains(o.Id));
 
       if (filter.Statuses != null && filter.Statuses.Count != 0)
       {
@@ -228,15 +252,6 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (!string.IsNullOrEmpty(filter.ValueContains))
         query = _organizationRepository.Contains(query, filter.ValueContains);
-
-      if (filter.Organizations != null && filter.Organizations.Count != 0)
-      {
-        filter.Organizations = filter.Organizations.Distinct().ToList();
-        organizationIds = organizationIds.Count != 0 ? organizationIds.Intersect(filter.Organizations).ToList() : filter.Organizations;
-      }
-
-      if (organizationIds.Count != 0)
-        query = query.Where(o => organizationIds.Contains(o.Id));
 
       var results = new OrganizationSearchResults();
       query = query.OrderBy(o => o.Name).ThenBy(o => o.Id); //ensure deterministic sorting / consistent pagination results

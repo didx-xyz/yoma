@@ -12,6 +12,8 @@ namespace Yoma.Core.Domain.Analytics.Models
 
     public Status Status { get; set; }
 
+    public Guid OrganizationId { get; set; }
+
     public Guid? OrganizationLogoId { get; set; }
 
     [JsonIgnore]
