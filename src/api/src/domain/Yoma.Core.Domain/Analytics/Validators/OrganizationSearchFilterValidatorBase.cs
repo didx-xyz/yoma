@@ -38,7 +38,7 @@ namespace Yoma.Core.Domain.Analytics.Validators
     private bool OrganizationsExists(List<Guid>? organizations)
     {
       if (organizations == null || organizations.Count == 0) return false;
-      if(organizations.Any(o => o == Guid.Empty)) return false;
+      if (organizations.Any(o => o == Guid.Empty)) return false;
 
       return _organizationService.EnsureExist(organizations, false);
     }
