@@ -15,6 +15,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     SettingsInfo GetSettingsInfoById(Guid id, bool ensureOrganizationAuthorization);
 
+    bool EnsureExist(List<Guid> ids, bool throwValidationException);
+
     List<Organization> Contains(string value, bool includeChildItems, bool includeComputed);
 
     OrganizationSearchResults Search(OrganizationSearchFilter filter, bool ensureOrganizationAuthorization);

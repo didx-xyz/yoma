@@ -17,9 +17,7 @@ namespace Yoma.Core.Domain.Opportunity.Validators
       _organizationService = organizationService;
 
       RuleFor(x => x.PaginationEnabled).Equal(true).WithMessage("Pagination required");
-      RuleFor(x => x.Organization)
-          .Must(organizationId => !organizationId.HasValue || (organizationId != Guid.Empty && OrganizationExists(organizationId.Value)))
-          .WithMessage("If specified, the organization must not be empty and must exist.");
+      RuleFor(x => x.Organizations).Must(x => x == null || x.Count == 0 || OrganizationsExists(x)).WithMessage("{PropertyName} contains empty or invalid value(s).");
       RuleFor(x => x.TitleContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.TitleContains)).WithMessage("{PropertyName} is optional, but when specified,m must be between 3 and 50 characters");
       RuleFor(x => x.Opportunities).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.Countries).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
@@ -28,10 +26,12 @@ namespace Yoma.Core.Domain.Opportunity.Validators
     #endregion
 
     #region Private Members
-    private bool OrganizationExists(Guid id)
+    private bool OrganizationsExists(List<Guid>? organizations)
     {
-      if (id == Guid.Empty) return false;
-      return _organizationService.GetByIdOrNull(id, false, false, false) != null;
+      if (organizations == null || organizations.Count == 0) return false;
+      if (organizations.Any(o => o == Guid.Empty)) return false;
+
+      return _organizationService.EnsureExist(organizations, false);
     }
     #endregion
   }

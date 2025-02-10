@@ -16,7 +16,7 @@ namespace Yoma.Core.Domain.Analytics.Validators
     {
       _organizationService = organizationService;
 
-      RuleFor(x => x.Organizations).Must(x => x == null || x.Count == 0 || x.All(OrganizationExists)).WithMessage("{PropertyName} contains empty or invalid value(s).");
+      RuleFor(x => x.Organizations).Must(x => x == null || x.Count == 0 || OrganizationsExists(x)).WithMessage("{PropertyName} contains empty or invalid value(s).");
       RuleFor(x => x)
           .Custom((model, context) =>
           {
@@ -35,10 +35,12 @@ namespace Yoma.Core.Domain.Analytics.Validators
     #endregion
 
     #region Private Members
-    private bool OrganizationExists(Guid id)
+    private bool OrganizationsExists(List<Guid>? organizations)
     {
-      if (id == Guid.Empty) return false;
-      return _organizationService.GetByIdOrNull(id, false, false, false) != null;
+      if (organizations == null || organizations.Count == 0) return false;
+      if(organizations.Any(o => o == Guid.Empty)) return false;
+
+      return _organizationService.EnsureExist(organizations, false);
     }
     #endregion
   }

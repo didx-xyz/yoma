@@ -282,21 +282,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       _opportunitySearchFilterCriteriaValidator.ValidateAndThrow(filter);
 
+      filter.Organizations = SearchCriteriaAdminValidateRequest(filter.Organizations, ensureOrganizationAuthorization);
+
       var query = _opportunityRepository.Query();
 
       //organization
-      if (filter.Organization.HasValue)
-      {
-        if (ensureOrganizationAuthorization)
-          _organizationService.IsAdmin(filter.Organization.Value, true);
-
-        query = query.Where(o => o.OrganizationId == filter.Organization.Value);
-      }
-      else
-      {
-        if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
-          throw new ValidationException($"Organization required for '{Constants.Role_OrganizationAdmin}' role only");
-      }
+      if (filter.Organizations != null && filter.Organizations.Count != 0)
+        query = query.Where(o => filter.Organizations.Contains(o.OrganizationId));
 
       //titleContains
       if (!string.IsNullOrEmpty(filter.TitleContains))
@@ -346,14 +338,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return results;
     }
 
-    public List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategoriesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization)
+    public List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategoriesAdmin(List<Guid>? organizations, bool ensureOrganizationAuthorization)
     {
-      var org = SearchCriteriaAdminValidateRequest(organizationId, ensureOrganizationAuthorization);
+      organizations = SearchCriteriaAdminValidateRequest(organizations, ensureOrganizationAuthorization);
 
       var query = _opportunityCategoryRepository.Query();
 
-      if (org != null)
-        query = query.Where(o => o.OrganizationId == org.Id);
+      if (organizations != null && organizations.Count > 0)
+        query = query.Where(o => organizations.Contains(o.OrganizationId));
 
       var categoryIds = query.Select(o => o.CategoryId).Distinct().ToList();
 
@@ -366,7 +358,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         var filter = new OpportunitySearchFilterAdmin
         {
-          Organizations = org == null ? null : [org.Id],
+          Organizations = organizations,
           Categories = [item.Id],
           TotalCountOnly = true
         };
@@ -436,14 +428,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return results;
     }
 
-    public List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountriesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization)
+    public List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountriesAdmin(List<Guid>? organizations, bool ensureOrganizationAuthorization)
     {
-      var org = SearchCriteriaAdminValidateRequest(organizationId, ensureOrganizationAuthorization);
+      organizations = SearchCriteriaAdminValidateRequest(organizations, ensureOrganizationAuthorization);
 
       var query = _opportunityCountryRepository.Query();
 
-      if (org != null)
-        query = query.Where(o => o.OrganizationId == org.Id);
+      if (organizations != null && organizations.Count != 0)
+        query = query.Where(o => organizations.Contains(o.OrganizationId));
 
       var countryIds = query.Select(o => o.CountryId).Distinct().ToList();
 
@@ -512,14 +504,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return results;
     }
 
-    public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguagesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization)
+    public List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguagesAdmin(List<Guid>? organizations, bool ensureOrganizationAuthorization)
     {
-      var org = SearchCriteriaAdminValidateRequest(organizationId, ensureOrganizationAuthorization);
+      organizations = SearchCriteriaAdminValidateRequest(organizations, ensureOrganizationAuthorization);
 
       var query = _opportunityLanguageRepository.Query();
 
-      if (org != null)
-        query = query.Where(o => o.OrganizationId == org.Id);
+      if (organizations != null && organizations.Count != 0)
+        query = query.Where(o => organizations.Contains(o.OrganizationId));
 
       var languageIds = query.Select(o => o.LanguageId).Distinct().ToList();
 
@@ -2029,20 +2021,19 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
     }
 
-    private Organization? SearchCriteriaAdminValidateRequest(Guid? organizationId, bool ensureOrganizationAuthorization)
+    private List<Guid>? SearchCriteriaAdminValidateRequest(List<Guid>? organizations, bool ensureOrganizationAuthorization)
     {
-      if (!organizationId.HasValue)
-      {
-        if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
-          throw new ValidationException($"Organization required for '{Constants.Role_OrganizationAdmin}' role only");
+      organizations = organizations?.Distinct().ToList();
+      if (organizations?.Count == 0) organizations = null;
 
-        return null;
-      }
+      if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor) && organizations is not { Count: > 0 })
+        throw new ValidationException($"One or more organizations are required for '{Constants.Role_OrganizationAdmin}' role only");
 
-      if (organizationId.Value == Guid.Empty)
-        throw new ArgumentNullException(nameof(organizationId));
+      //validate existence
+      if (organizations != null)
+        _organizationService.EnsureExist(organizations, true);
 
-      return _organizationService.GetById(organizationId.Value, false, false, ensureOrganizationAuthorization);
+      return organizations;
     }
 
     private static void ParseOpportunitySearchFilterCommitmentInterval(OpportunitySearchFilterAdmin filter)

@@ -226,45 +226,48 @@ namespace Yoma.Core.Api.Controllers
     #endregion Authenticated User Based Actions
 
     #region Administrative Actions
-    [SwaggerOperation(Summary = "Return a list of categories associated with opportunities, optionally filter by organization")]
+    [SwaggerOperation(Summary = "Return a list of categories associated with opportunities",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
     [HttpGet("search/filter/category/admin")]
     [ProducesResponseType(typeof(List<Domain.Opportunity.Models.Lookups.OpportunityCategory>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListOpportunitySearchCriteriaCategoriesAdmin([FromQuery] Guid? organizationId)
+    public IActionResult ListOpportunitySearchCriteriaCategoriesAdmin([FromQuery] List<Guid>? organizations)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCategoriesAdmin));
 
-      var result = _opportunityService.ListOpportunitySearchCriteriaCategoriesAdmin(organizationId, true);
+      var result = _opportunityService.ListOpportunitySearchCriteriaCategoriesAdmin(organizations, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCategoriesAdmin));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Return a list of countries associated with opportunities, optionally filter by organization")]
+    [SwaggerOperation(Summary = "Return a list of countries associated with opportunities",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
     [HttpGet("search/filter/country/admin")]
     [ProducesResponseType(typeof(List<Domain.Lookups.Models.Country>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListOpportunitySearchCriteriaCountriesAdmin([FromQuery] Guid? organizationId)
+    public IActionResult ListOpportunitySearchCriteriaCountriesAdmin([FromQuery] List<Guid>? organizations)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaCountriesAdmin));
 
-      var result = _opportunityService.ListOpportunitySearchCriteriaCountriesAdmin(organizationId, true);
+      var result = _opportunityService.ListOpportunitySearchCriteriaCountriesAdmin(organizations, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaCountriesAdmin));
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Return a list of languages associated with opportunities, optionally filter by organization")]
+    [SwaggerOperation(Summary = "Return a list of languages associated with opportunities",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
     [HttpGet("search/filter/language/admin")]
     [ProducesResponseType(typeof(List<Domain.Lookups.Models.Language>), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public IActionResult ListOpportunitySearchCriteriaLanguagesAdmin([FromQuery] Guid? organizationId)
+    public IActionResult ListOpportunitySearchCriteriaLanguagesAdmin([FromQuery] List<Guid>? organizations)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListOpportunitySearchCriteriaLanguagesAdmin));
 
-      var result = _opportunityService.ListOpportunitySearchCriteriaLanguagesAdmin(organizationId, true);
+      var result = _opportunityService.ListOpportunitySearchCriteriaLanguagesAdmin(organizations, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(ListOpportunitySearchCriteriaLanguagesAdmin));
 
@@ -286,7 +289,8 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter, returning a lightweight result set/list for search filter input")]
+    [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter, returning a lightweight result set/list for search filter input",
+      Description = "Organizations: optional for Admin role. Required for Organization Admin role")]
     [HttpPost("search/filter/opportunity")]
     [ProducesResponseType(typeof(OpportunitySearchResultsCriteria), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]

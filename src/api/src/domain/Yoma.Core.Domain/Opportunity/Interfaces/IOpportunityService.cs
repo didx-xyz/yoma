@@ -20,15 +20,15 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     OpportunitySearchResultsCriteria SearchCriteriaOpportunities(OpportunitySearchFilterCriteria filter, bool ensureOrganizationAuthorization);
 
-    List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategoriesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization);
+    List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategoriesAdmin(List<Guid>? organizations, bool ensureOrganizationAuthorization);
 
     List<Models.Lookups.OpportunityCategory> ListOpportunitySearchCriteriaCategories(List<PublishedState>? publishedStates);
 
-    List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountriesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization);
+    List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountriesAdmin(List<Guid>? organizations, bool ensureOrganizationAuthorization);
 
     List<Domain.Lookups.Models.Country> ListOpportunitySearchCriteriaCountries(List<PublishedState>? publishedStates);
 
-    List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguagesAdmin(Guid? organizationId, bool ensureOrganizationAuthorization);
+    List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguagesAdmin(List<Guid>? organizations, bool ensureOrganizationAuthorization);
 
     List<Domain.Lookups.Models.Language> ListOpportunitySearchCriteriaLanguages(List<PublishedState>? publishedStates, string? languageCodeAlpha2Site);
 
