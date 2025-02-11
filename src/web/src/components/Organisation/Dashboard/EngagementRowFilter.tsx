@@ -49,11 +49,11 @@ export const EngagementRowFilter: React.FC<{
   onSubmit?: (fieldValues: OrganizationSearchFilterSummaryViewModel) => void;
 }> = ({ htmlRef, searchFilter, lookups_countries, onSubmit }) => {
   const schema = zod.object({
-    organization: zod.string().optional().nullable(),
-    opportunities: zod.array(zod.string()).optional().nullable(),
-    categories: zod.array(zod.string()).optional().nullable(),
-    startDate: zod.string().optional().nullable(),
-    endDate: zod.string().optional().nullable(),
+    // organization: zod.string().optional().nullable(),
+    // opportunities: zod.array(zod.string()).optional().nullable(),
+    // categories: zod.array(zod.string()).optional().nullable(),
+    // startDate: zod.string().optional().nullable(),
+    // endDate: zod.string().optional().nullable(),
     countries: zod.array(zod.string()).optional().nullable(),
   });
 
@@ -79,9 +79,15 @@ export const EngagementRowFilter: React.FC<{
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      if (onSubmit) onSubmit(data as OrganizationSearchFilterSummaryViewModel);
+      if (onSubmit) {
+        const mergedData = {
+          ...searchFilter, // Keep existing filter values
+          countries: data.countries, // Update countries with form data
+        };
+        onSubmit(mergedData as OrganizationSearchFilterSummaryViewModel);
+      }
     },
-    [onSubmit],
+    [onSubmit, searchFilter],
   );
 
   return (

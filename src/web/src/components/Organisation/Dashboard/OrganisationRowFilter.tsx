@@ -102,9 +102,19 @@ export const OrganisationRowFilter: React.FC<{
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      if (onSubmit) onSubmit(data as OrganizationSearchFilterSummaryViewModel);
+      if (onSubmit) {
+        const mergedData = {
+          ...searchFilter, // Keep existing filter values
+          organizations: data.organizations,
+          opportunities: data.opportunities,
+          categories: data.categories,
+          startDate: data.startDate,
+          endDate: data.endDate,
+        };
+        onSubmit(mergedData as OrganizationSearchFilterSummaryViewModel);
+      }
     },
-    [onSubmit],
+    [onSubmit, searchFilter],
   );
 
   // load data asynchronously for the organisations dropdown
