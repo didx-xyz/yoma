@@ -68,19 +68,11 @@ export interface OpportunityCompletion {
 
 export interface OpportunityConversionRatio {
   viewedCount: number;
-  navigatedExternalLinkCount: number; //new
+  navigatedExternalLinkCount: number;
   completedCount: number;
-  viewedToNavigatedExternalLinkPercentage: number; //new
-  navigatedExternalLinkToCompletedPercentage: number; //new
-  //percentage: number; // removed
+  viewedToNavigatedExternalLinkPercentage: number;
+  navigatedExternalLinkToCompletedPercentage: number;
 }
-
-// export interface OpportunityConversionRatio {
-//   legend: string; // removed
-//   completedCount: number;
-//   viewedCount: number;
-//   percentage: number; // removed
-// }
 
 export interface OpportunityReward {
   legend: string;
@@ -129,6 +121,7 @@ export interface OpportunityInfoAnalytics {
   id: string;
   title: string;
   status: Status;
+  organizationId: string;
   organizationLogoId: string | null;
   organizationLogoURL: string | null;
   viewedCount: number;
@@ -163,6 +156,17 @@ export interface YouthInfo {
   yomaRewardTotal: number;
   opporunityCount: number;
   opportunities: YouthInfoOpportunity[];
+}
+
+export interface YouthInfoOpportunity {
+  id: string;
+  title: string;
+  status: Status;
+  organizationId: string;
+  organizationLogoId: string | null;
+  organizationLogoURL: string | null;
+  dateCompleted: string | null;
+  verified: boolean;
 }
 
 export interface YouthInfoOpportunity {

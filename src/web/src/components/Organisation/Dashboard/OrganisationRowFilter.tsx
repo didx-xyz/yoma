@@ -36,7 +36,7 @@ const ValueContainer = ({
       const pluralMapping: Record<string, string> = {
         Category: "Categories",
         Opportunity: "Opportunities",
-        Organization: "Organizations",
+        Organization: "Organisations",
       };
 
       const pluralize = (word: string, count: number): string => {
@@ -112,6 +112,7 @@ export const OrganisationRowFilter: React.FC<{
   const loadOrganisations = debounce(
     (inputValue: string, callback: (options: any) => void) => {
       getOrganisations({
+        organizations: [],
         valueContains: (inputValue ?? []).length > 2 ? inputValue : null,
         statuses: null,
         pageNumber: 1,
@@ -148,9 +149,7 @@ export const OrganisationRowFilter: React.FC<{
     (inputValue: string, callback: (options: any) => void) => {
       searchCriteriaOpportunities({
         opportunities: [],
-        organization: searchFilter?.organizations
-          ? searchFilter.organizations.toString()
-          : null, //searchFilter?.organizations, //TODO
+        organizations: searchFilter?.organizations ?? [],
         countries: null,
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
         published: null,
@@ -193,7 +192,7 @@ export const OrganisationRowFilter: React.FC<{
         <div className="flex w-full flex-col items-center justify-center gap-2 lg:flex-row lg:justify-start">
           <div className="flex w-full flex-grow flex-col flex-wrap items-center gap-2 lg:w-fit lg:flex-row">
             <div className="mr-4 flex text-sm font-bold text-gray">
-              Search by:
+              Filter by:
             </div>
 
             {/* ORGANISATIONS */}
@@ -217,14 +216,11 @@ export const OrganisationRowFilter: React.FC<{
                       menuPortal: (base) => ({ ...base, zIndex: 9999 }),
                     }}
                     onChange={(val) => {
-                      // clear categories
-                      //setValue("categories", []);
-
                       onChange(val.map((c: any) => c.value));
                       void handleSubmit(onSubmitHandler)();
                     }}
                     value={defaultOrganisationOptions}
-                    placeholder="Organization"
+                    placeholder="Organisation"
                     components={{
                       ValueContainer,
                     }}
@@ -283,7 +279,6 @@ export const OrganisationRowFilter: React.FC<{
                 </label>
               )}
             </span>
-
             <div className="flex w-full flex-grow flex-col items-center gap-2 lg:w-fit lg:flex-row">
               <div className="mx-auto flex items-center text-center text-xs font-bold text-gray md:mx-1 md:text-left">
                 or

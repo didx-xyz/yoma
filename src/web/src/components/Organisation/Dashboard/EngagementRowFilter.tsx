@@ -153,7 +153,7 @@ export const EngagementRowFilter: React.FC<{
           "pageSelectedOpportunities",
           "pageCompletedYouth",
           "pageSize",
-          "organization",
+          "organizations",
           "opportunities",
           "categories",
           "startDate",

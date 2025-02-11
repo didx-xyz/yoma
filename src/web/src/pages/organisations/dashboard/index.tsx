@@ -1,12 +1,7 @@
-import {
-  dehydrate,
-  QueryClient,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import moment from "moment";
-import type { GetServerSidePropsContext } from "next";
+import { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Image from "next/image";
@@ -15,11 +10,9 @@ import { useRouter } from "next/router";
 import iconBookmark from "public/images/icon-completions-green.svg";
 import iconSkills from "public/images/icon-skills-green.svg";
 import iconZlto from "public/images/icon-zlto-green.svg";
-import { type ParsedUrlQuery } from "querystring";
 import {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
   type ReactElement,
@@ -39,14 +32,10 @@ import {
 import Moment from "react-moment";
 import type { Country } from "~/api/models/lookups";
 import type {
-  Opportunity,
   OpportunityCategory,
   OpportunitySearchResultsInfo,
 } from "~/api/models/opportunity";
-import type {
-  Organization,
-  OrganizationSearchResults,
-} from "~/api/models/organisation";
+import type { OrganizationSearchResults } from "~/api/models/organisation";
 import type {
   OrganizationSearchFilterOpportunity,
   OrganizationSearchFilterYouth,
@@ -60,10 +49,7 @@ import {
   getCategoriesAdmin,
   searchCriteriaOpportunities,
 } from "~/api/services/opportunities";
-import {
-  getOrganisationById,
-  getOrganisations,
-} from "~/api/services/organisations";
+import { getOrganisations } from "~/api/services/organisations";
 import {
   getCountries,
   searchOrganizationEngagement,
@@ -101,12 +87,12 @@ import {
   DATE_FORMAT_HUMAN,
   DATETIME_FORMAT_HUMAN,
   PAGE_SIZE,
-  PAGE_SIZE_MEDIUM,
   PAGE_SIZE_MINIMUM,
   ROLE_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
 } from "~/lib/constants";
-import { config } from "~/lib/react-query-config";
-import { getThemeFromRole, getTimeOfDayAndEmoji } from "~/lib/utils";
+import { getTimeOfDayAndEmoji } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -126,93 +112,7 @@ export interface OrganizationSearchFilterSummaryViewModel {
 // }
 
 // ⚠️ SSR
-// export async function getServerSideProps(context: GetServerSidePropsContext) {
-//   //const { id } = context.params as IParams;
-//   const { opportunities } = context.query;
-
-//   const session = await getServerSession(context.req, context.res, authOptions);
-//   let errorCode = null;
-
-//   // 👇 ensure authenticated
-//   if (!session) {
-//     return {
-//       props: {
-//         error: 401,
-//       },
-//     };
-//   }
-//   // 👇 set theme based on role
-//   const theme = getThemeFromRole(session, id);
-
-//   const queryClient = new QueryClient(config);
-//   let lookups_selectedOpportunities;
-
-//   try {
-//     const dataOrganisation = await getOrganisationById(id, context);
-//     const dataCategories = await getCategoriesAdmin(id, context);
-//     const dataCountries = await getCountries([id], context);
-
-//     // 👇 prefetch queries on server
-//     await Promise.all([
-//       await queryClient.prefetchQuery({
-//         queryKey: ["organisation", id],
-//         queryFn: () => dataOrganisation,
-//       }),
-//       await queryClient.prefetchQuery({
-//         queryKey: ["organisationCategories", id],
-//         queryFn: () => dataCategories,
-//       }),
-//       await queryClient.prefetchQuery({
-//         queryKey: ["organisationCountries", id],
-//         queryFn: () => dataCountries,
-//       }),
-//     ]);
-
-//     // HACK: lookup each of the opportunities (to resolve ids to titles for filter badges)
-//     if (opportunities) {
-//       lookups_selectedOpportunities = await searchCriteriaOpportunities(
-//         {
-//           opportunities: opportunities.toString().split("|") ?? [],
-//           organization: id,
-//           countries: null,
-//           titleContains: null,
-//           published: null,
-//           verificationMethod: null,
-//           verificationEnabled: null,
-//           pageNumber: 1,
-//           pageSize: opportunities.length,
-//         },
-//         context,
-//       );
-//     }
-//   } catch (error) {
-//     console.error(error);
-//     if (axios.isAxiosError(error) && error.response?.status) {
-//       if (error.response.status === 404) {
-//         return {
-//           notFound: true,
-//           props: { theme: theme },
-//         };
-//       } else errorCode = error.response.status;
-//     } else errorCode = 500;
-//   }
-
-//   return {
-//     props: {
-//       dehydratedState: dehydrate(queryClient),
-//       user: session?.user ?? null,
-//       theme: theme,
-//       id,
-//       error: errorCode,
-//       lookups_selectedOpportunities: lookups_selectedOpportunities ?? null,
-//     },
-//   };
-// }
-
-// OrgAdmin dashboard page
-const OrganisationDashboard: NextPageWithLayout = () => {
-  const router = useRouter();
-
+export async function getServerSideProps(context: GetServerSidePropsContext) {
   // get filter parameters from route
   const {
     pageSelectedOpportunities,
@@ -223,7 +123,7 @@ const OrganisationDashboard: NextPageWithLayout = () => {
     endDate,
     countries,
     organisations,
-  } = router.query;
+  } = context.query;
 
   const searchFilter = {
     pageSelectedOpportunities: pageSelectedOpportunities
@@ -239,6 +139,143 @@ const OrganisationDashboard: NextPageWithLayout = () => {
     endDate: endDate ? endDate.toString() : "",
     countries: countries ? countries?.toString().split("|") : null,
   };
+
+  const session = await getServerSession(context.req, context.res, authOptions);
+  let errorCode = null;
+
+  // 👇 ensure authenticated
+  if (!session) {
+    return {
+      props: {
+        error: 401,
+      },
+    };
+  }
+  // 👇 set theme based on role
+  let theme = THEME_GREEN;
+  if (session?.user?.roles.includes(ROLE_ADMIN)) theme = THEME_BLUE;
+
+  let lookups_selectedOpportunities;
+  let lookups_selectedOrganisations;
+
+  try {
+    // const dataOrganisation = await getOrganisationById(id, context);
+    // const dataCategories = await getCategoriesAdmin(id, context);
+    // const dataCountries = await getCountries([id], context);
+
+    // // 👇 prefetch queries on server
+    // await Promise.all([
+    //   await queryClient.prefetchQuery({
+    //     queryKey: ["organisation", id],
+    //     queryFn: () => dataOrganisation,
+    //   }),
+    //   await queryClient.prefetchQuery({
+    //     queryKey: ["organisationCategories", id],
+    //     queryFn: () => dataCategories,
+    //   }),
+    //   await queryClient.prefetchQuery({
+    //     queryKey: ["organisationCountries", id],
+    //     queryFn: () => dataCountries,
+    //   }),
+    // ]);
+
+    // HACK: lookup each of the opportunities (to resolve ids to titles for filter badges)
+    if (searchFilter.opportunities) {
+      lookups_selectedOpportunities = await searchCriteriaOpportunities(
+        {
+          opportunities: searchFilter.opportunities ?? [],
+          organizations: searchFilter.organizations ?? null,
+          countries: null,
+          titleContains: null,
+          published: null,
+          verificationMethod: null,
+          verificationEnabled: null,
+          pageNumber: 1,
+          pageSize: searchFilter.opportunities?.length ?? 0,
+        },
+        context,
+      );
+    }
+
+    // HACK: lookup each of the organizations (to resolve ids to titles for filter badges)
+    if (searchFilter.organizations) {
+      lookups_selectedOrganisations = await getOrganisations(
+        {
+          organizations: searchFilter.organizations ?? [],
+          valueContains: null,
+          statuses: null,
+          pageNumber: 1,
+          pageSize: searchFilter.organizations?.length ?? 0,
+        },
+        context,
+      );
+    }
+  } catch (error) {
+    console.error(error);
+    if (axios.isAxiosError(error) && error.response?.status) {
+      if (error.response.status === 404) {
+        return {
+          notFound: true,
+          props: { theme: theme },
+        };
+      } else errorCode = error.response.status;
+    } else errorCode = 500;
+  }
+
+  return {
+    props: {
+      user: session?.user ?? null,
+      searchFilter: searchFilter,
+      lookups_selectedOpportunities: lookups_selectedOpportunities ?? null,
+      lookups_selectedOrganisations: lookups_selectedOrganisations ?? null,
+      theme: theme,
+      error: errorCode,
+    },
+  };
+}
+
+// OrgAdmin dashboard page
+const OrganisationDashboard: NextPageWithLayout<{
+  user?: any;
+  searchFilter: OrganizationSearchFilterSummaryViewModel;
+  lookups_selectedOpportunities?: OpportunitySearchResultsInfo;
+  lookups_selectedOrganisations?: OrganizationSearchResults;
+  error?: number;
+}> = ({
+  user,
+  searchFilter,
+  lookups_selectedOpportunities,
+  lookups_selectedOrganisations,
+  error,
+}) => {
+  const router = useRouter();
+
+  // // get filter parameters from route
+  // const {
+  //   pageSelectedOpportunities,
+  //   pageCompletedYouth,
+  //   categories,
+  //   opportunities,
+  //   startDate,
+  //   endDate,
+  //   countries,
+  //   organisations,
+  // } = router.query;
+
+  // const searchFilter = {
+  //   pageSelectedOpportunities: pageSelectedOpportunities
+  //     ? parseInt(pageSelectedOpportunities.toString())
+  //     : 1,
+  //   pageCompletedYouth: pageCompletedYouth
+  //     ? parseInt(pageCompletedYouth.toString())
+  //     : 1,
+  //   organizations: organisations ? organisations?.toString().split("|") : null,
+  //   categories: categories ? categories?.toString().split("|") : null,
+  //   opportunities: opportunities ? opportunities?.toString().split("|") : null,
+  //   startDate: startDate ? startDate.toString() : "",
+  //   endDate: endDate ? endDate.toString() : "",
+  //   countries: countries ? countries?.toString().split("|") : null,
+  // };
 
   const myRef = useRef<HTMLDivElement>(null);
   const [inactiveOpportunitiesCount, setInactiveOpportunitiesCount] =
@@ -301,13 +338,8 @@ const OrganisationDashboard: NextPageWithLayout = () => {
     error: categoriesError,
   } = useQuery<OpportunityCategory[]>({
     queryKey: ["organisationCategories", searchFilter],
-    queryFn: () =>
-      //TODO:
-      // getCategoriesAdmin(
-      //   organisations ? organisations?.toString().split("|") : [],
-      // ),
-      getCategoriesAdmin(searchFilter?.organizations?.toString() ?? null),
-    enabled: !!searchFilter.organizations,
+    queryFn: () => getCategoriesAdmin(searchFilter.organizations ?? []),
+    enabled: !error && !!searchFilter.organizations,
   });
   const {
     data: countriesData,
@@ -316,7 +348,7 @@ const OrganisationDashboard: NextPageWithLayout = () => {
   } = useQuery<Country[]>({
     queryKey: ["organisationCountries", searchFilter],
     queryFn: () => getCountries(searchFilter.organizations ?? []),
-    enabled: !!searchFilter.organizations,
+    enabled: !error && !!searchFilter.organizations,
   });
 
   // QUERY: SEARCH RESULTS
@@ -354,7 +386,7 @@ const OrganisationDashboard: NextPageWithLayout = () => {
             : null,
       });
     },
-    enabled: !!searchFilter.organizations,
+    enabled: !error && !!searchFilter.organizations,
   });
 
   // QUERY: COMPLETED YOUTH
@@ -363,7 +395,11 @@ const OrganisationDashboard: NextPageWithLayout = () => {
     isLoading: completedOpportunitiesIsLoading,
     error: completedOpportunitiesError,
   } = useQuery<OrganizationSearchResultsYouth>({
-    queryKey: ["organisationCompletedYouth", searchFilter, pageCompletedYouth],
+    queryKey: [
+      "organisationCompletedYouth",
+      searchFilter,
+      searchFilter.pageCompletedYouth,
+    ],
     queryFn: () =>
       searchOrganizationYouth({
         organizations: searchFilter.organizations ?? [],
@@ -381,8 +417,8 @@ const OrganisationDashboard: NextPageWithLayout = () => {
           ? searchFilter.startDate.toString()
           : "",
         endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
-        pageNumber: pageCompletedYouth
-          ? parseInt(pageCompletedYouth.toString())
+        pageNumber: searchFilter.pageCompletedYouth
+          ? searchFilter.pageCompletedYouth
           : 1,
         pageSize: PAGE_SIZE,
         countries:
@@ -395,7 +431,7 @@ const OrganisationDashboard: NextPageWithLayout = () => {
                 .filter((x) => x != "")
             : null,
       }),
-    enabled: !!searchFilter.organizations,
+    enabled: !error && !!searchFilter.organizations,
   });
 
   // QUERY: SELECTED OPPORTUNITIES
@@ -407,7 +443,7 @@ const OrganisationDashboard: NextPageWithLayout = () => {
     queryKey: [
       "organisationSelectedOpportunities",
       searchFilter,
-      pageSelectedOpportunities,
+      searchFilter.pageSelectedOpportunities,
     ],
     queryFn: () =>
       searchOrganizationOpportunities({
@@ -426,12 +462,13 @@ const OrganisationDashboard: NextPageWithLayout = () => {
           ? searchFilter.startDate.toString()
           : "",
         endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
-        pageNumber: pageSelectedOpportunities
-          ? parseInt(pageSelectedOpportunities.toString())
+        pageNumber: searchFilter.pageSelectedOpportunities
+          ? searchFilter.pageSelectedOpportunities
           : 1,
         pageSize: PAGE_SIZE,
       }),
-    enabled: !!opportunities && !!searchFilter.organizations,
+    enabled:
+      !error && !!searchFilter.opportunities && !!searchFilter.organizations,
   });
 
   // QUERY: SSO
@@ -449,50 +486,48 @@ const OrganisationDashboard: NextPageWithLayout = () => {
           : "",
         endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
       }),
-    enabled: !!searchFilter.organizations,
+    enabled: !error && !!searchFilter.organizations,
   });
 
   // HACK: lookup each of the opportunities (to resolve ids to titles for filter badges)
-  const {
-    data: lookups_selectedOpportunities,
-    isLoading: opportunitiesIsLoading,
-    error: opportunitiesError,
-  } = useQuery<OpportunitySearchResultsInfo>({
-    queryKey: ["selectedOpportunities", searchFilter],
-    queryFn: () =>
-      searchCriteriaOpportunities({
-        opportunities: searchFilter.opportunities ?? [],
-        organization: searchFilter.organizations
-          ? searchFilter.organizations[0]!
-          : null,
-        countries: null,
-        titleContains: null,
-        published: null,
-        verificationMethod: null,
-        verificationEnabled: null,
-        pageNumber: 1,
-        pageSize: searchFilter.opportunities?.length ?? 0,
-      }),
-    enabled: !!searchFilter.opportunities && !!searchFilter.organizations,
-  });
+  // const {
+  //   data: lookups_selectedOpportunities,
+  //   isLoading: opportunitiesIsLoading,
+  //   error: opportunitiesError,
+  // } = useQuery<OpportunitySearchResultsInfo>({
+  //   queryKey: ["selectedOpportunities", searchFilter],
+  //   queryFn: () =>
+  //     searchCriteriaOpportunities({
+  //       opportunities: searchFilter.opportunities ?? [],
+  //       organizations: searchFilter.organizations ?? null,
+  //       countries: null,
+  //       titleContains: null,
+  //       published: null,
+  //       verificationMethod: null,
+  //       verificationEnabled: null,
+  //       pageNumber: 1,
+  //       pageSize: searchFilter.opportunities?.length ?? 0,
+  //     }),
+  //   enabled: !!searchFilter.opportunities && !!searchFilter.organizations,
+  // });
 
   // HACK: lookup each of the organisations (to resolve ids to titles for filter badges)
-  //TODO: add orgs filter
-  const {
-    data: lookups_selectedOrganisations,
-    isLoading: organisationsIsLoading,
-    error: organisationsError,
-  } = useQuery<OrganizationSearchResults>({
-    queryKey: ["selectedOrganisations", searchFilter],
-    queryFn: () =>
-      getOrganisations({
-        valueContains: null,
-        statuses: null,
-        pageNumber: 1,
-        pageSize: PAGE_SIZE_MEDIUM,
-      }),
-    enabled: !!searchFilter.organizations,
-  });
+  // const {
+  //   data: lookups_selectedOrganisations,
+  //   isLoading: organisationsIsLoading,
+  //   error: organisationsError,
+  // } = useQuery<OrganizationSearchResults>({
+  //   queryKey: ["selectedOrganisations", searchFilter],
+  //   queryFn: () =>
+  //     getOrganisations({
+  //       organizations: searchFilter.organizations ?? [],
+  //       valueContains: null,
+  //       statuses: null,
+  //       pageNumber: 1,
+  //       pageSize: PAGE_SIZE_MEDIUM,
+  //     }),
+  //   enabled: !!searchFilter.organizations,
+  // });
 
   // carousel data
   const fetchDataAndUpdateCache_Opportunities = useCallback(
@@ -551,21 +586,19 @@ const OrganisationDashboard: NextPageWithLayout = () => {
         [
           "OrganizationSearchResultsSelectedOpportunities",
           pageNumber,
-          organisations,
-          categories,
-          opportunities,
-          startDate,
-          endDate,
+          searchFilter.organizations,
+          searchFilter.categories,
+          searchFilter.opportunities,
+          searchFilter.startDate,
+          searchFilter.endDate,
         ],
         {
           pageNumber: pageNumber,
           pageSize: PAGE_SIZE_MINIMUM,
-          organizations: organisations
-            ? organisations?.toString().split("|")
-            : [],
+          organizations: searchFilter.organizations ?? [],
           categories:
-            categories != undefined
-              ? categories
+            searchFilter.categories != undefined
+              ? searchFilter.categories
                   ?.toString()
                   .split("|")
                   .map((x) => {
@@ -574,22 +607,24 @@ const OrganisationDashboard: NextPageWithLayout = () => {
                   })
                   .filter((x) => x != "")
               : null,
-          opportunities: opportunities
-            ? opportunities?.toString().split("|")
+          opportunities: searchFilter.opportunities
+            ? searchFilter.opportunities?.toString().split("|")
             : null,
-          startDate: startDate ? startDate.toString() : "",
-          endDate: endDate ? endDate.toString() : "",
+          startDate: searchFilter.startDate
+            ? searchFilter.startDate.toString()
+            : "",
+          endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
         },
       );
     },
     [
       selectedOpportunitiesData,
       fetchDataAndUpdateCache_Opportunities,
-      categories,
-      opportunities,
-      startDate,
-      endDate,
-      organisations,
+      searchFilter.categories,
+      searchFilter.opportunities,
+      searchFilter.startDate,
+      searchFilter.endDate,
+      searchFilter.organizations,
       categoriesData,
     ],
   );
@@ -607,22 +642,20 @@ const OrganisationDashboard: NextPageWithLayout = () => {
         [
           "OrganizationSearchResultsCompletedYouth",
           pageNumber,
-          organisations,
-          categories,
-          opportunities,
-          startDate,
-          endDate,
-          countries,
+          searchFilter.organizations,
+          searchFilter.categories,
+          searchFilter.opportunities,
+          searchFilter.startDate,
+          searchFilter.endDate,
+          searchFilter.countries,
         ],
         {
           pageNumber: pageNumber,
           pageSize: PAGE_SIZE_MINIMUM,
-          organizations: organisations
-            ? organisations?.toString().split("|")
-            : [],
+          organizations: searchFilter.organizations ?? [],
           categories:
-            categories != undefined
-              ? categories
+            searchFilter.categories != undefined
+              ? searchFilter.categories
                   ?.toString()
                   .split("|")
                   .map((x) => {
@@ -631,14 +664,16 @@ const OrganisationDashboard: NextPageWithLayout = () => {
                   })
                   .filter((x) => x != "")
               : null,
-          opportunities: opportunities
-            ? opportunities?.toString().split("|")
+          opportunities: searchFilter.opportunities
+            ? searchFilter.opportunities?.toString().split("|")
             : null,
-          startDate: startDate ? startDate.toString() : "",
-          endDate: endDate ? endDate.toString() : "",
+          startDate: searchFilter.startDate
+            ? searchFilter.startDate.toString()
+            : "",
+          endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
           countries:
-            countries != undefined
-              ? countries
+            searchFilter.countries != undefined
+              ? searchFilter.countries
                   ?.toString()
                   .split("|")
                   .map((x) => {
@@ -653,12 +688,12 @@ const OrganisationDashboard: NextPageWithLayout = () => {
     [
       completedOpportunitiesData,
       fetchDataAndUpdateCache_Youth,
-      categories,
-      opportunities,
-      startDate,
-      endDate,
-      countries,
-      organisations,
+      searchFilter.categories,
+      searchFilter.opportunities,
+      searchFilter.startDate,
+      searchFilter.endDate,
+      searchFilter.countries,
+      searchFilter.organizations,
       categoriesData,
       countriesData,
     ],
@@ -753,7 +788,7 @@ const OrganisationDashboard: NextPageWithLayout = () => {
   );
   const redirectWithSearchFilterParams = useCallback(
     (filter: OrganizationSearchFilterSummaryViewModel) => {
-      let url = `/organisations`;
+      let url = `/organisations/dashboard`;
       const params = getSearchFilterAsQueryString(filter);
       if (params != null && params.size > 0)
         url = `${url}?${params.toString()}`;
@@ -773,21 +808,21 @@ const OrganisationDashboard: NextPageWithLayout = () => {
         opportunities: val.opportunities,
         startDate: val.startDate,
         endDate: val.endDate,
-        pageSelectedOpportunities: pageSelectedOpportunities
-          ? parseInt(pageSelectedOpportunities.toString())
+        pageSelectedOpportunities: searchFilter.pageSelectedOpportunities
+          ? searchFilter.pageSelectedOpportunities
           : 1,
-        pageCompletedYouth: pageCompletedYouth
-          ? parseInt(pageCompletedYouth.toString())
+        pageCompletedYouth: searchFilter.pageCompletedYouth
+          ? searchFilter.pageCompletedYouth
           : 1,
         organizations: val.organizations,
         countries: val.countries,
       });
     },
     [
-      organisations,
+      searchFilter.organizations,
       redirectWithSearchFilterParams,
-      pageSelectedOpportunities,
-      pageCompletedYouth,
+      searchFilter.pageSelectedOpportunities,
+      searchFilter.pageCompletedYouth,
     ],
   );
   const handlePagerChangeSelectedOpportunities = useCallback(
@@ -806,6 +841,12 @@ const OrganisationDashboard: NextPageWithLayout = () => {
   );
 
   const [timeOfDay, timeOfDayEmoji] = getTimeOfDayAndEmoji();
+
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>
@@ -872,12 +913,10 @@ const OrganisationDashboard: NextPageWithLayout = () => {
                         className="border-gray-light"
                       >
                         <td>
-                          {/* TODO */}
                           <Link
-                            // href={`/organisations/${id}/opportunities/${
-                            //   opportunity.id
-                            // }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
-                            href=""
+                            href={`/organisations/${opportunity.organizationId}/opportunities/${
+                              opportunity.id
+                            }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
                             className="line-clamp-1 w-40 underline md:w-64"
                             target="_blank"
                             title={opportunity.title}
@@ -945,7 +984,7 @@ const OrganisationDashboard: NextPageWithLayout = () => {
             <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-white md:text-2xl">
               <span>
                 {timeOfDayEmoji} Good {timeOfDay}&nbsp;
-                {/* <span className="">{user?.name}!</span> */}
+                <span className="">{user?.name}!</span>
               </span>
             </div>
 
@@ -955,6 +994,22 @@ const OrganisationDashboard: NextPageWithLayout = () => {
               {/* <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap font-bold">
                 {organisation?.name}
               </span> */}
+              {/* {searchFilter.organizations?.map((organisation, index) => (
+                <span key={index} className="font-semibold">
+                  {lookups_selectedOrganisations?.items.find(
+                    (x) => x.id == organisation,
+                  )?.name ?? organisation}
+                </span>
+              ))} */}
+              {searchFilter.organizations && (
+                <span className="font-semibold">
+                  {lookups_selectedOrganisations?.items?.find(
+                    (x) => x.id === searchFilter.organizations![0],
+                  )?.name ?? searchFilter.organizations![0]}
+                  {searchFilter.organizations.length > 1 &&
+                    ` & ${searchFilter.organizations.length - 1} more organisation${searchFilter.organizations.length > 2 ? "s" : ""}`}
+                </span>
+              )}
             </div>
 
             <div className="h-6 text-sm">
@@ -978,12 +1033,12 @@ const OrganisationDashboard: NextPageWithLayout = () => {
             <Suspense
               isLoading={
                 categoriesIsLoading ||
-                opportunitiesIsLoading ||
-                organisationsIsLoading ||
+                // opportunitiesIsLoading ||
+                // organisationsIsLoading ||
                 !searchFilter
               }
               error={
-                categoriesError || opportunitiesError || organisationsError
+                categoriesError //|| opportunitiesError || organisationsError
               }
               loader={
                 <LoadingInline
@@ -994,7 +1049,6 @@ const OrganisationDashboard: NextPageWithLayout = () => {
               }
             >
               <OrganisationRowFilter
-                //organisationId={id}
                 htmlRef={myRef.current!}
                 searchFilter={searchFilter}
                 lookups_categories={categoriesData}
@@ -1012,7 +1066,7 @@ const OrganisationDashboard: NextPageWithLayout = () => {
               engagementIsLoading ||
               completedOpportunitiesIsLoading ||
               selectedOpportunitiesIsLoading ||
-              organisationsIsLoading ||
+              //organisationsIsLoading ||
               ssoIsLoading ||
               !searchFilter
             }
@@ -1023,7 +1077,7 @@ const OrganisationDashboard: NextPageWithLayout = () => {
               engagementError ||
               completedOpportunitiesError ||
               selectedOpportunitiesError ||
-              organisationsError ||
+              //organisationsError ||
               ssoError
             }
           >
@@ -1390,8 +1444,8 @@ const OrganisationDashboard: NextPageWithLayout = () => {
                           <div className="mt-2">
                             <PaginationButtons
                               currentPage={
-                                pageCompletedYouth
-                                  ? parseInt(pageCompletedYouth.toString())
+                                searchFilter.pageCompletedYouth
+                                  ? searchFilter.pageCompletedYouth
                                   : 1
                               }
                               totalItems={completedOpportunitiesData.totalCount}
@@ -1525,14 +1579,12 @@ const OrganisationDashboard: NextPageWithLayout = () => {
                                     className="border-gray-light"
                                   >
                                     <td>
-                                      {/* TODO */}
                                       <Link
-                                        // href={`/organisations/${id}/opportunities/${
-                                        //   opportunity.id
-                                        // }/info?returnUrl=${encodeURIComponent(
-                                        //   router.asPath,
-                                        // )}`}
-                                        href=""
+                                        href={`/organisations/${opportunity.organizationId}/opportunities/${
+                                          opportunity.id
+                                        }/info?returnUrl=${encodeURIComponent(
+                                          router.asPath,
+                                        )}`}
                                       >
                                         <div className="-ml-4 flex items-center gap-2">
                                           <AvatarImage
@@ -1576,10 +1628,8 @@ const OrganisationDashboard: NextPageWithLayout = () => {
                           <div className="mt-2">
                             <PaginationButtons
                               currentPage={
-                                pageSelectedOpportunities
-                                  ? parseInt(
-                                      pageSelectedOpportunities.toString(),
-                                    )
+                                searchFilter.pageSelectedOpportunities
+                                  ? searchFilter.pageSelectedOpportunities
                                   : 1
                               }
                               totalItems={selectedOpportunitiesData.totalCount}
@@ -1599,12 +1649,11 @@ const OrganisationDashboard: NextPageWithLayout = () => {
                             loadData={loadData_Opportunities}
                             totalAll={selectedOpportunitiesData.totalCount}
                             renderSlide={(item, index) => (
-                              <>{/* TODO */}</>
-                              // <OpportunityCard
-                              //   key={`CompletedOpportunities_CustomCarousel_OpportunityCard_${item.id}_${index}`}
-                              //   opportunity={item}
-                              //   orgId={id}
-                              // />
+                              <OpportunityCard
+                                key={`CompletedOpportunities_CustomCarousel_OpportunityCard_${item.id}_${index}`}
+                                opportunity={item}
+                                orgId={item.organizationId}
+                              />
                             )}
                           />
                         </div>
