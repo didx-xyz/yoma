@@ -492,6 +492,51 @@ namespace Yoma.Core.Domain.Analytics.Services
       };
 #pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
 
+      //cumulative data: Monthly completion counts per organization
+      var itemsCumulative = MyOpportunityQueryCompleted(filter, queryBase)
+        .Select(o => new { o.OrganizationName, o.DateModified })
+        .ToList() //transition to client-side processing avoiding translation issue : function pg_catalog.timezone(unknown, interval) does not exist
+        .GroupBy(x => new
+        {
+          x.OrganizationName,
+          MonthEnding = new DateTime(x.DateModified.Year, x.DateModified.Month, 1, 0, 0, 0).AddMonths(1).AddDays(-1)
+        })
+        .Select(group => new
+        {
+          group.Key.OrganizationName,
+          group.Key.MonthEnding,
+          Count = group.Count()
+        })
+        .OrderBy(result => result.MonthEnding)
+        .ThenBy(result => result.OrganizationName)
+        .ToList();
+
+      //extract unique organization names in alphabetical order for the Legend
+      var organizationNames = itemsCumulative.Select(x => x.OrganizationName).Distinct().OrderBy(name => name).ToArray();
+
+      //prepare cumulative results grouped by MonthEnding
+      var resultsCumulative = new List<TimeValueEntry>();
+      itemsCumulative
+        .GroupBy(o => o.MonthEnding)
+        .ToList()
+        .ForEach(group =>
+        {
+          //generate the values/counts for all organization names in the current month-ending group
+          var values = organizationNames.Select(name => group.SingleOrDefault(o => o.OrganizationName == name)?.Count ?? 0).ToArray();
+          resultsCumulative.Add(new TimeValueEntry(group.Key, values));
+        });
+
+      //finalize the cumulative summary
+      result.Cumulative = new OrganizationCumulative
+      {
+        Completions = new TimeIntervalSummary
+        {
+          Legend = organizationNames,
+          Data = resultsCumulative,
+          Count = organizationNames.Select(name => itemsCumulative.Where(o => o.OrganizationName == name).Sum(o => o.Count)).ToArray()
+        }
+      };
+
       result.DateStamp = DateTimeOffset.UtcNow;
       return result;
     }

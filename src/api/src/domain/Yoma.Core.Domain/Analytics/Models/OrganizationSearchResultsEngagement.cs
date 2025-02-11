@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.Analytics.Models
 
     public OrganizationDemographic Demographics { get; set; }
 
+    public OrganizationCumulative Cumulative { get; set; }
+
     public DateTimeOffset DateStamp { get; set; }
   }
 }
