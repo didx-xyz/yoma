@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Hosting;
-
 namespace Yoma.Core.Domain.Analytics.Models
 {
   public class OrganizationSearchResultsSSO
