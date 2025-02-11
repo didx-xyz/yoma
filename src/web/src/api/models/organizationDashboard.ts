@@ -28,7 +28,7 @@ export interface OrganizationSearchFilterEngagement {
 }
 
 export interface OrganizationSearchFilterSSO {
-  organization: string;
+  organizations: string[] | null;
   startDate: string | null;
   endDate: string | null;
 }

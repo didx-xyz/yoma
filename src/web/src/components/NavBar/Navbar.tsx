@@ -219,7 +219,7 @@ export const Navbar: React.FC = () => {
         <Link
           href={
             organisation.status == "Active"
-              ? `/organisations/${organisation.id}`
+              ? `/organisations/dashboard?organisations=${organisation.id}`
               : `/organisations/${organisation.id}/edit`
           }
           onClick={() => setDrawerOpen(false)}

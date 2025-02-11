@@ -19,6 +19,7 @@ import { type ParsedUrlQuery } from "querystring";
 import {
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactElement,
@@ -38,10 +39,14 @@ import {
 import Moment from "react-moment";
 import type { Country } from "~/api/models/lookups";
 import type {
+  Opportunity,
   OpportunityCategory,
   OpportunitySearchResultsInfo,
 } from "~/api/models/opportunity";
-import type { Organization } from "~/api/models/organisation";
+import type {
+  Organization,
+  OrganizationSearchResults,
+} from "~/api/models/organisation";
 import type {
   OrganizationSearchFilterOpportunity,
   OrganizationSearchFilterYouth,
@@ -55,7 +60,10 @@ import {
   getCategoriesAdmin,
   searchCriteriaOpportunities,
 } from "~/api/services/opportunities";
-import { getOrganisationById } from "~/api/services/organisations";
+import {
+  getOrganisationById,
+  getOrganisations,
+} from "~/api/services/organisations";
 import {
   getCountries,
   searchOrganizationEngagement,
@@ -93,6 +101,7 @@ import {
   DATE_FORMAT_HUMAN,
   DATETIME_FORMAT_HUMAN,
   PAGE_SIZE,
+  PAGE_SIZE_MEDIUM,
   PAGE_SIZE_MINIMUM,
   ROLE_ADMIN,
 } from "~/lib/constants";
@@ -112,138 +121,97 @@ export interface OrganizationSearchFilterSummaryViewModel {
   countries: string[] | null;
 }
 
-interface IParams extends ParsedUrlQuery {
-  id: string;
-}
+// interface IParams extends ParsedUrlQuery {
+//   id: string;
+// }
 
 // ⚠️ SSR
-export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { id } = context.params as IParams;
-  const { opportunities } = context.query;
+// export async function getServerSideProps(context: GetServerSidePropsContext) {
+//   //const { id } = context.params as IParams;
+//   const { opportunities } = context.query;
 
-  const session = await getServerSession(context.req, context.res, authOptions);
-  let errorCode = null;
+//   const session = await getServerSession(context.req, context.res, authOptions);
+//   let errorCode = null;
 
-  // 👇 ensure authenticated
-  if (!session) {
-    return {
-      props: {
-        error: 401,
-      },
-    };
-  }
-  // 👇 set theme based on role
-  const theme = getThemeFromRole(session, id);
+//   // 👇 ensure authenticated
+//   if (!session) {
+//     return {
+//       props: {
+//         error: 401,
+//       },
+//     };
+//   }
+//   // 👇 set theme based on role
+//   const theme = getThemeFromRole(session, id);
 
-  const queryClient = new QueryClient(config);
-  let lookups_selectedOpportunities;
+//   const queryClient = new QueryClient(config);
+//   let lookups_selectedOpportunities;
 
-  try {
-    const dataOrganisation = await getOrganisationById(id, context);
-    const dataCategories = await getCategoriesAdmin(id, context);
-    const dataCountries = await getCountries([id], context);
+//   try {
+//     const dataOrganisation = await getOrganisationById(id, context);
+//     const dataCategories = await getCategoriesAdmin(id, context);
+//     const dataCountries = await getCountries([id], context);
 
-    // 👇 prefetch queries on server
-    await Promise.all([
-      await queryClient.prefetchQuery({
-        queryKey: ["organisation", id],
-        queryFn: () => dataOrganisation,
-      }),
-      await queryClient.prefetchQuery({
-        queryKey: ["organisationCategories", id],
-        queryFn: () => dataCategories,
-      }),
-      await queryClient.prefetchQuery({
-        queryKey: ["organisationCountries", id],
-        queryFn: () => dataCountries,
-      }),
-    ]);
+//     // 👇 prefetch queries on server
+//     await Promise.all([
+//       await queryClient.prefetchQuery({
+//         queryKey: ["organisation", id],
+//         queryFn: () => dataOrganisation,
+//       }),
+//       await queryClient.prefetchQuery({
+//         queryKey: ["organisationCategories", id],
+//         queryFn: () => dataCategories,
+//       }),
+//       await queryClient.prefetchQuery({
+//         queryKey: ["organisationCountries", id],
+//         queryFn: () => dataCountries,
+//       }),
+//     ]);
 
-    // HACK: lookup each of the opportunities (to resolve ids to titles for filter badges)
-    if (opportunities) {
-      lookups_selectedOpportunities = await searchCriteriaOpportunities(
-        {
-          opportunities: opportunities.toString().split("|") ?? [],
-          organization: id,
-          countries: null,
-          titleContains: null,
-          published: null,
-          verificationMethod: null,
-          verificationEnabled: null,
-          pageNumber: 1,
-          pageSize: opportunities.length,
-        },
-        context,
-      );
-    }
-  } catch (error) {
-    console.error(error);
-    if (axios.isAxiosError(error) && error.response?.status) {
-      if (error.response.status === 404) {
-        return {
-          notFound: true,
-          props: { theme: theme },
-        };
-      } else errorCode = error.response.status;
-    } else errorCode = 500;
-  }
+//     // HACK: lookup each of the opportunities (to resolve ids to titles for filter badges)
+//     if (opportunities) {
+//       lookups_selectedOpportunities = await searchCriteriaOpportunities(
+//         {
+//           opportunities: opportunities.toString().split("|") ?? [],
+//           organization: id,
+//           countries: null,
+//           titleContains: null,
+//           published: null,
+//           verificationMethod: null,
+//           verificationEnabled: null,
+//           pageNumber: 1,
+//           pageSize: opportunities.length,
+//         },
+//         context,
+//       );
+//     }
+//   } catch (error) {
+//     console.error(error);
+//     if (axios.isAxiosError(error) && error.response?.status) {
+//       if (error.response.status === 404) {
+//         return {
+//           notFound: true,
+//           props: { theme: theme },
+//         };
+//       } else errorCode = error.response.status;
+//     } else errorCode = 500;
+//   }
 
-  return {
-    props: {
-      dehydratedState: dehydrate(queryClient),
-      user: session?.user ?? null,
-      theme: theme,
-      id,
-      error: errorCode,
-      lookups_selectedOpportunities: lookups_selectedOpportunities ?? null,
-    },
-  };
-}
+//   return {
+//     props: {
+//       dehydratedState: dehydrate(queryClient),
+//       user: session?.user ?? null,
+//       theme: theme,
+//       id,
+//       error: errorCode,
+//       lookups_selectedOpportunities: lookups_selectedOpportunities ?? null,
+//     },
+//   };
+// }
 
 // OrgAdmin dashboard page
-const OrganisationDashboard: NextPageWithLayout<{
-  id: string;
-  error?: number;
-  user?: any;
-  lookups_selectedOpportunities?: OpportunitySearchResultsInfo;
-}> = ({ id, error, user, lookups_selectedOpportunities }) => {
+const OrganisationDashboard: NextPageWithLayout = () => {
   const router = useRouter();
-  const myRef = useRef<HTMLDivElement>(null);
-  const [inactiveOpportunitiesCount, setInactiveOpportunitiesCount] =
-    useState(0);
-  const [expiredOpportunitiesCount, setExpiredOpportunitiesCount] = useState(0);
-  const queryClient = useQueryClient();
-  const isAdmin = user?.roles?.includes(ROLE_ADMIN);
-  const [
-    completedYouthOpportunitiesDialogVisible,
-    setCompletedYouthOpportunitiesDialogVisible,
-  ] = useState(false);
-  const [completedYouthOpportunities, setCompletedYouthOpportunities] =
-    useState<YouthInfo | null>();
-
-  // 👇 use prefetched queries from server
-  const { data: organisation } = useQuery<Organization>({
-    queryKey: ["organisation", id],
-    enabled: !error,
-  });
-  const {
-    data: categoriesData,
-    isLoading: categoriesIsLoading,
-    error: categoriesError,
-  } = useQuery<OpportunityCategory[]>({
-    queryKey: ["organisationCategories", id],
-    queryFn: () => getCategoriesAdmin(id),
-    enabled: !error,
-  });
-  const {
-    data: countriesData,
-    isLoading: countriesIsLoading,
-    error: countriesError,
-  } = useQuery<Country[]>({
-    queryKey: ["organisationCountries", id],
-    queryFn: () => getCountries([id]),
-    enabled: !error,
-  });
 
   // get filter parameters from route
   const {
@@ -254,7 +222,102 @@ const OrganisationDashboard: NextPageWithLayout<{
     startDate,
     endDate,
     countries,
+    organisations,
   } = router.query;
+
+  const searchFilter = {
+    pageSelectedOpportunities: pageSelectedOpportunities
+      ? parseInt(pageSelectedOpportunities.toString())
+      : 1,
+    pageCompletedYouth: pageCompletedYouth
+      ? parseInt(pageCompletedYouth.toString())
+      : 1,
+    organizations: organisations ? organisations?.toString().split("|") : null,
+    categories: categories ? categories?.toString().split("|") : null,
+    opportunities: opportunities ? opportunities?.toString().split("|") : null,
+    startDate: startDate ? startDate.toString() : "",
+    endDate: endDate ? endDate.toString() : "",
+    countries: countries ? countries?.toString().split("|") : null,
+  };
+
+  const myRef = useRef<HTMLDivElement>(null);
+  const [inactiveOpportunitiesCount, setInactiveOpportunitiesCount] =
+    useState(0);
+  const [expiredOpportunitiesCount, setExpiredOpportunitiesCount] = useState(0);
+  const queryClient = useQueryClient();
+  //const isAdmin = user?.roles?.includes(ROLE_ADMIN);
+  const [
+    completedYouthOpportunitiesDialogVisible,
+    setCompletedYouthOpportunitiesDialogVisible,
+  ] = useState(false);
+  const [completedYouthOpportunities, setCompletedYouthOpportunities] =
+    useState<YouthInfo | null>();
+
+  // search filter state
+  // this is the current filter state based on the querystring parameters
+  // it contains human-readable values (e.g. category name, country name) instead of id's
+  // these values are mapped to the corresponding id's when executing the search query (see below)
+  // const searchFilter: OrganizationSearchFilterSummaryViewModel = useMemo(() => {
+  //   return {
+  //     pageSelectedOpportunities: pageSelectedOpportunities
+  //       ? parseInt(pageSelectedOpportunities.toString())
+  //       : 1,
+  //     pageCompletedYouth: pageCompletedYouth
+  //       ? parseInt(pageCompletedYouth.toString())
+  //       : 1,
+  //     organizations: organisations
+  //       ? organisations?.toString().split("|")
+  //       : null,
+  //     categories:
+  //       categories != undefined ? categories?.toString().split("|") : null,
+  //     opportunities:
+  //       opportunities != undefined && opportunities != null
+  //         ? opportunities?.toString().split("|")
+  //         : null,
+  //     startDate: startDate != undefined ? startDate.toString() : "",
+  //     endDate: endDate != undefined ? endDate.toString() : "",
+  //     countries:
+  //       countries != undefined ? countries?.toString().split("|") : null,
+  //   };
+  // }, [
+  //   organisations,
+  //   pageSelectedOpportunities,
+  //   pageCompletedYouth,
+  //   categories,
+  //   opportunities,
+  //   startDate,
+  //   endDate,
+  //   countries,
+  // ]);
+
+  // 👇 use prefetched queries from server
+  // const { data: organisation } = useQuery<Organization>({
+  //   queryKey: ["organisation", id],
+  // });
+
+  const {
+    data: categoriesData,
+    isLoading: categoriesIsLoading,
+    error: categoriesError,
+  } = useQuery<OpportunityCategory[]>({
+    queryKey: ["organisationCategories", searchFilter],
+    queryFn: () =>
+      //TODO:
+      // getCategoriesAdmin(
+      //   organisations ? organisations?.toString().split("|") : [],
+      // ),
+      getCategoriesAdmin(searchFilter?.organizations?.toString() ?? null),
+    enabled: !!searchFilter.organizations,
+  });
+  const {
+    data: countriesData,
+    isLoading: countriesIsLoading,
+    error: countriesError,
+  } = useQuery<Country[]>({
+    queryKey: ["organisationCountries", searchFilter],
+    queryFn: () => getCountries(searchFilter.organizations ?? []),
+    enabled: !!searchFilter.organizations,
+  });
 
   // QUERY: SEARCH RESULTS
   const {
@@ -262,40 +325,28 @@ const OrganisationDashboard: NextPageWithLayout<{
     isLoading: engagementIsLoading,
     error: engagementError,
   } = useQuery<OrganizationSearchResultsSummary>({
-    queryKey: [
-      "organisationEngagement",
-      id,
-      categories,
-      opportunities,
-      startDate,
-      endDate,
-      countries,
-    ],
+    queryKey: ["organisationEngagement", searchFilter],
     queryFn: async () => {
       return await searchOrganizationEngagement({
-        organizations: [id],
+        organizations: searchFilter.organizations ?? [],
         categories:
-          categories != undefined
-            ? categories
-                ?.toString()
-                .split("|")
-                .map((x) => {
+          searchFilter.categories != undefined
+            ? searchFilter.categories
+                ?.map((x) => {
                   const item = categoriesData?.find((y) => y.name === x);
                   return item ? item?.id : "";
                 })
                 .filter((x) => x != "")
             : null,
-        opportunities: opportunities
-          ? opportunities?.toString().split("|")
-          : null,
-        startDate: startDate ? startDate.toString() : "",
-        endDate: endDate ? endDate.toString() : "",
+        opportunities: searchFilter.opportunities ?? null,
+        startDate: searchFilter.startDate
+          ? searchFilter.startDate.toString()
+          : "",
+        endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
         countries:
-          countries != undefined
-            ? countries
-                ?.toString()
-                .split("|")
-                .map((x) => {
+          searchFilter.countries != undefined
+            ? searchFilter.countries
+                ?.map((x) => {
                   const item = countriesData?.find((y) => y.name === x);
                   return item ? item?.id : "";
                 })
@@ -303,7 +354,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             : null,
       });
     },
-    enabled: !error,
+    enabled: !!searchFilter.organizations,
   });
 
   // QUERY: COMPLETED YOUTH
@@ -312,51 +363,39 @@ const OrganisationDashboard: NextPageWithLayout<{
     isLoading: completedOpportunitiesIsLoading,
     error: completedOpportunitiesError,
   } = useQuery<OrganizationSearchResultsYouth>({
-    queryKey: [
-      "organisationCompletedYouth",
-      id,
-      pageCompletedYouth,
-      categories,
-      opportunities,
-      startDate,
-      endDate,
-      countries,
-    ],
+    queryKey: ["organisationCompletedYouth", searchFilter, pageCompletedYouth],
     queryFn: () =>
       searchOrganizationYouth({
-        organizations: [id],
+        organizations: searchFilter.organizations ?? [],
         categories:
-          categories != undefined
-            ? categories
-                ?.toString()
-                .split("|")
-                .map((x) => {
+          searchFilter.categories != undefined
+            ? searchFilter.categories
+                ?.map((x) => {
                   const item = categoriesData?.find((y) => y.name === x);
                   return item ? item?.id : "";
                 })
                 .filter((x) => x != "")
             : null,
-        opportunities: opportunities
-          ? opportunities?.toString().split("|")
-          : null,
-        startDate: startDate ? startDate.toString() : "",
-        endDate: endDate ? endDate.toString() : "",
+        opportunities: searchFilter.opportunities ?? null,
+        startDate: searchFilter.startDate
+          ? searchFilter.startDate.toString()
+          : "",
+        endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
         pageNumber: pageCompletedYouth
           ? parseInt(pageCompletedYouth.toString())
           : 1,
         pageSize: PAGE_SIZE,
         countries:
-          countries != undefined
-            ? countries
-                ?.toString()
-                .split("|")
-                .map((x) => {
+          searchFilter.countries != undefined
+            ? searchFilter.countries
+                ?.map((x) => {
                   const item = countriesData?.find((y) => y.name === x);
                   return item ? item?.id : "";
                 })
                 .filter((x) => x != "")
             : null,
       }),
+    enabled: !!searchFilter.organizations,
   });
 
   // QUERY: SELECTED OPPORTUNITIES
@@ -367,38 +406,32 @@ const OrganisationDashboard: NextPageWithLayout<{
   } = useQuery<OrganizationSearchResultsOpportunity>({
     queryKey: [
       "organisationSelectedOpportunities",
-      id,
+      searchFilter,
       pageSelectedOpportunities,
-      categories,
-      opportunities,
-      startDate,
-      endDate,
     ],
     queryFn: () =>
       searchOrganizationOpportunities({
-        organizations: [id],
+        organizations: searchFilter.organizations ?? [],
         categories:
-          categories != undefined
-            ? categories
-                ?.toString()
-                .split("|")
-                .map((x) => {
+          searchFilter.categories != undefined
+            ? searchFilter.categories
+                ?.map((x) => {
                   const item = categoriesData?.find((y) => y.name === x);
                   return item ? item?.id : "";
                 })
                 .filter((x) => x != "")
             : null,
-        opportunities: opportunities
-          ? opportunities?.toString().split("|")
-          : null,
-        startDate: startDate ? startDate.toString() : "",
-        endDate: endDate ? endDate.toString() : "",
+        opportunities: searchFilter.opportunities ?? null,
+        startDate: searchFilter.startDate
+          ? searchFilter.startDate.toString()
+          : "",
+        endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
         pageNumber: pageSelectedOpportunities
           ? parseInt(pageSelectedOpportunities.toString())
           : 1,
         pageSize: PAGE_SIZE,
       }),
-    enabled: !error,
+    enabled: !!opportunities && !!searchFilter.organizations,
   });
 
   // QUERY: SSO
@@ -407,64 +440,59 @@ const OrganisationDashboard: NextPageWithLayout<{
     isLoading: ssoIsLoading,
     error: ssoError,
   } = useQuery<OrganizationSearchSso>({
-    queryKey: ["organisationSSO", id, startDate, endDate],
+    queryKey: ["organisationSSO", searchFilter],
     queryFn: () =>
       searchOrganizationSso({
-        organization: id,
-        startDate: startDate ? startDate.toString() : "",
-        endDate: endDate ? endDate.toString() : "",
+        organizations: searchFilter.organizations ?? [],
+        startDate: searchFilter.startDate
+          ? searchFilter.startDate.toString()
+          : "",
+        endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
       }),
+    enabled: !!searchFilter.organizations,
   });
 
-  // search filter state
-  const [searchFilter, setSearchFilter] =
-    useState<OrganizationSearchFilterSummaryViewModel>({
-      pageSelectedOpportunities: pageSelectedOpportunities
-        ? parseInt(pageSelectedOpportunities.toString())
-        : 1,
-      pageCompletedYouth: pageCompletedYouth
-        ? parseInt(pageCompletedYouth.toString())
-        : 1,
-      organization: id,
-      categories: null,
-      opportunities: null,
-      startDate: "",
-      endDate: "",
-      countries: null,
-    });
-
-  // sets the filter values from the querystring to the filter state
-  useEffect(() => {
-    setSearchFilter({
-      pageSelectedOpportunities: pageSelectedOpportunities
-        ? parseInt(pageSelectedOpportunities.toString())
-        : 1,
-      pageCompletedYouth: pageCompletedYouth
-        ? parseInt(pageCompletedYouth.toString())
-        : 1,
-      organization: id,
-      categories:
-        categories != undefined ? categories?.toString().split("|") : null,
-      opportunities:
-        opportunities != undefined && opportunities != null
-          ? opportunities?.toString().split("|")
+  // HACK: lookup each of the opportunities (to resolve ids to titles for filter badges)
+  const {
+    data: lookups_selectedOpportunities,
+    isLoading: opportunitiesIsLoading,
+    error: opportunitiesError,
+  } = useQuery<OpportunitySearchResultsInfo>({
+    queryKey: ["selectedOpportunities", searchFilter],
+    queryFn: () =>
+      searchCriteriaOpportunities({
+        opportunities: searchFilter.opportunities ?? [],
+        organization: searchFilter.organizations
+          ? searchFilter.organizations[0]!
           : null,
-      startDate: startDate != undefined ? startDate.toString() : "",
-      endDate: endDate != undefined ? endDate.toString() : "",
-      countries:
-        countries != undefined ? countries?.toString().split("|") : null,
-    });
-  }, [
-    setSearchFilter,
-    id,
-    pageSelectedOpportunities,
-    pageCompletedYouth,
-    categories,
-    opportunities,
-    startDate,
-    endDate,
-    countries,
-  ]);
+        countries: null,
+        titleContains: null,
+        published: null,
+        verificationMethod: null,
+        verificationEnabled: null,
+        pageNumber: 1,
+        pageSize: searchFilter.opportunities?.length ?? 0,
+      }),
+    enabled: !!searchFilter.opportunities && !!searchFilter.organizations,
+  });
+
+  // HACK: lookup each of the organisations (to resolve ids to titles for filter badges)
+  //TODO: add orgs filter
+  const {
+    data: lookups_selectedOrganisations,
+    isLoading: organisationsIsLoading,
+    error: organisationsError,
+  } = useQuery<OrganizationSearchResults>({
+    queryKey: ["selectedOrganisations", searchFilter],
+    queryFn: () =>
+      getOrganisations({
+        valueContains: null,
+        statuses: null,
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MEDIUM,
+      }),
+    enabled: !!searchFilter.organizations,
+  });
 
   // carousel data
   const fetchDataAndUpdateCache_Opportunities = useCallback(
@@ -523,7 +551,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         [
           "OrganizationSearchResultsSelectedOpportunities",
           pageNumber,
-          id,
+          organisations,
           categories,
           opportunities,
           startDate,
@@ -532,7 +560,9 @@ const OrganisationDashboard: NextPageWithLayout<{
         {
           pageNumber: pageNumber,
           pageSize: PAGE_SIZE_MINIMUM,
-          organizations: [id],
+          organizations: organisations
+            ? organisations?.toString().split("|")
+            : [],
           categories:
             categories != undefined
               ? categories
@@ -559,7 +589,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       opportunities,
       startDate,
       endDate,
-      id,
+      organisations,
       categoriesData,
     ],
   );
@@ -577,7 +607,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         [
           "OrganizationSearchResultsCompletedYouth",
           pageNumber,
-          id,
+          organisations,
           categories,
           opportunities,
           startDate,
@@ -587,7 +617,9 @@ const OrganisationDashboard: NextPageWithLayout<{
         {
           pageNumber: pageNumber,
           pageSize: PAGE_SIZE_MINIMUM,
-          organizations: [id],
+          organizations: organisations
+            ? organisations?.toString().split("|")
+            : [],
           categories:
             categories != undefined
               ? categories
@@ -626,7 +658,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       startDate,
       endDate,
       countries,
-      id,
+      organisations,
       categoriesData,
       countriesData,
     ],
@@ -654,6 +686,15 @@ const OrganisationDashboard: NextPageWithLayout<{
 
       // construct querystring parameters from filter
       const params = new URLSearchParams();
+
+      if (
+        opportunitySearchFilter?.organizations?.length !== undefined &&
+        opportunitySearchFilter.organizations.length > 0
+      )
+        params.append(
+          "organisations",
+          opportunitySearchFilter.organizations.join("|"),
+        );
 
       if (
         opportunitySearchFilter?.categories?.length !== undefined &&
@@ -712,7 +753,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   );
   const redirectWithSearchFilterParams = useCallback(
     (filter: OrganizationSearchFilterSummaryViewModel) => {
-      let url = `/organisations/${id}`;
+      let url = `/organisations`;
       const params = getSearchFilterAsQueryString(filter);
       if (params != null && params.size > 0)
         url = `${url}?${params.toString()}`;
@@ -720,7 +761,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       if (url != router.asPath)
         void router.push(url, undefined, { scroll: false });
     },
-    [id, router, getSearchFilterAsQueryString],
+    [router, getSearchFilterAsQueryString],
   );
 
   // 🔔 EVENTS
@@ -738,12 +779,12 @@ const OrganisationDashboard: NextPageWithLayout<{
         pageCompletedYouth: pageCompletedYouth
           ? parseInt(pageCompletedYouth.toString())
           : 1,
-        organization: id,
+        organizations: val.organizations,
         countries: val.countries,
       });
     },
     [
-      id,
+      organisations,
       redirectWithSearchFilterParams,
       pageSelectedOpportunities,
       pageCompletedYouth,
@@ -765,12 +806,6 @@ const OrganisationDashboard: NextPageWithLayout<{
   );
 
   const [timeOfDay, timeOfDayEmoji] = getTimeOfDayAndEmoji();
-
-  if (error) {
-    if (error === 401) return <Unauthenticated />;
-    else if (error === 403) return <Unauthorized />;
-    else return <InternalServerError />;
-  }
 
   return (
     <>
@@ -837,10 +872,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                         className="border-gray-light"
                       >
                         <td>
+                          {/* TODO */}
                           <Link
-                            href={`/organisations/${id}/opportunities/${
-                              opportunity.id
-                            }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
+                            // href={`/organisations/${id}/opportunities/${
+                            //   opportunity.id
+                            // }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
+                            href=""
                             className="line-clamp-1 w-40 underline md:w-64"
                             target="_blank"
                             title={opportunity.title}
@@ -908,16 +945,16 @@ const OrganisationDashboard: NextPageWithLayout<{
             <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-white md:text-2xl">
               <span>
                 {timeOfDayEmoji} Good {timeOfDay}&nbsp;
-                <span className="">{user?.name}!</span>
+                {/* <span className="">{user?.name}!</span> */}
               </span>
             </div>
 
             {/* DESCRIPTION */}
             <div className="gap-2 overflow-hidden text-ellipsis whitespace-nowrap text-white">
               Here&apos;s your reports for{" "}
-              <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap font-bold">
+              {/* <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap font-bold">
                 {organisation?.name}
-              </span>
+              </span> */}
             </div>
 
             <div className="h-6 text-sm">
@@ -939,8 +976,15 @@ const OrganisationDashboard: NextPageWithLayout<{
           {/* FILTERS */}
           <div className="flex h-[236px] items-center justify-center lg:h-[92px]">
             <Suspense
-              isLoading={categoriesIsLoading}
-              error={categoriesError}
+              isLoading={
+                categoriesIsLoading ||
+                opportunitiesIsLoading ||
+                organisationsIsLoading ||
+                !searchFilter
+              }
+              error={
+                categoriesError || opportunitiesError || organisationsError
+              }
               loader={
                 <LoadingInline
                   className="flex-col md:flex-row"
@@ -950,11 +994,12 @@ const OrganisationDashboard: NextPageWithLayout<{
               }
             >
               <OrganisationRowFilter
-                organisationId={id}
+                //organisationId={id}
                 htmlRef={myRef.current!}
                 searchFilter={searchFilter}
                 lookups_categories={categoriesData}
                 lookups_selectedOpportunities={lookups_selectedOpportunities}
+                lookups_selectedOrganisations={lookups_selectedOrganisations}
                 onSubmit={(e) => onSubmitFilter(e)}
               />
             </Suspense>
@@ -967,7 +1012,9 @@ const OrganisationDashboard: NextPageWithLayout<{
               engagementIsLoading ||
               completedOpportunitiesIsLoading ||
               selectedOpportunitiesIsLoading ||
-              ssoIsLoading
+              organisationsIsLoading ||
+              ssoIsLoading ||
+              !searchFilter
             }
             error={
               engagementError ||
@@ -976,6 +1023,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               engagementError ||
               completedOpportunitiesError ||
               selectedOpportunitiesError ||
+              organisationsError ||
               ssoError
             }
           >
@@ -1477,12 +1525,14 @@ const OrganisationDashboard: NextPageWithLayout<{
                                     className="border-gray-light"
                                   >
                                     <td>
+                                      {/* TODO */}
                                       <Link
-                                        href={`/organisations/${id}/opportunities/${
-                                          opportunity.id
-                                        }/info?returnUrl=${encodeURIComponent(
-                                          router.asPath,
-                                        )}`}
+                                        // href={`/organisations/${id}/opportunities/${
+                                        //   opportunity.id
+                                        // }/info?returnUrl=${encodeURIComponent(
+                                        //   router.asPath,
+                                        // )}`}
+                                        href=""
                                       >
                                         <div className="-ml-4 flex items-center gap-2">
                                           <AvatarImage
@@ -1549,11 +1599,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                             loadData={loadData_Opportunities}
                             totalAll={selectedOpportunitiesData.totalCount}
                             renderSlide={(item, index) => (
-                              <OpportunityCard
-                                key={`CompletedOpportunities_CustomCarousel_OpportunityCard_${item.id}_${index}`}
-                                opportunity={item}
-                                orgId={id}
-                              />
+                              <>{/* TODO */}</>
+                              // <OpportunityCard
+                              //   key={`CompletedOpportunities_CustomCarousel_OpportunityCard_${item.id}_${index}`}
+                              //   opportunity={item}
+                              //   orgId={id}
+                              // />
                             )}
                           />
                         </div>
@@ -1563,46 +1614,45 @@ const OrganisationDashboard: NextPageWithLayout<{
               </div>
 
               {/* SSO */}
-              {isAdmin && (
-                <div className="my-8 flex flex-col gap-4">
-                  <Header title="🔑 Single Sign-On" />
 
-                  <div className="grid grid-rows-2 gap-4 md:grid-cols-2">
-                    <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
-                      <div className="flex items-center gap-2 text-lg font-semibold">
-                        <div>Outbound</div>{" "}
-                        <IoIosArrowForward className="rounded-lg bg-green-light p-px pl-[2px] text-2xl text-green" />
-                      </div>
-                      {ssoData?.outbound?.enabled ? (
-                        <>
-                          <div className="-mb-4 font-semibold">
-                            {ssoData?.outbound?.clientId}
-                          </div>
-                          <SsoChart data={ssoData?.outbound?.logins} />
-                        </>
-                      ) : (
-                        <div>Disabled</div>
-                      )}
+              <div className="my-8 flex flex-col gap-4">
+                <Header title="🔑 Single Sign-On" />
+
+                <div className="grid grid-rows-2 gap-4 md:grid-cols-2">
+                  <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
+                    <div className="flex items-center gap-2 text-lg font-semibold">
+                      <div>Outbound</div>{" "}
+                      <IoIosArrowForward className="rounded-lg bg-green-light p-px pl-[2px] text-2xl text-green" />
                     </div>
-                    <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
-                      <div className="flex items-center gap-2 text-lg font-semibold">
-                        <div>Inbound</div>{" "}
-                        <IoIosArrowBack className="rounded-lg bg-green-light p-px pr-[2px] text-2xl text-green" />
-                      </div>
-                      {ssoData?.inbound?.enabled ? (
-                        <>
-                          <div className="-mb-4 font-semibold">
-                            {ssoData?.inbound?.clientId}
-                          </div>
-                          <SsoChart data={ssoData?.inbound?.logins} />
-                        </>
-                      ) : (
-                        <div>Disabled</div>
-                      )}
+                    {ssoData?.outbound?.enabled ? (
+                      <>
+                        <div className="-mb-4 font-semibold">
+                          {ssoData?.outbound?.clientId}
+                        </div>
+                        <SsoChart data={ssoData?.outbound?.logins} />
+                      </>
+                    ) : (
+                      <div>Disabled</div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
+                    <div className="flex items-center gap-2 text-lg font-semibold">
+                      <div>Inbound</div>{" "}
+                      <IoIosArrowBack className="rounded-lg bg-green-light p-px pr-[2px] text-2xl text-green" />
                     </div>
+                    {ssoData?.inbound?.enabled ? (
+                      <>
+                        <div className="-mb-4 font-semibold">
+                          {ssoData?.inbound?.clientId}
+                        </div>
+                        <SsoChart data={ssoData?.inbound?.logins} />
+                      </>
+                    ) : (
+                      <div>Disabled</div>
+                    )}
                   </div>
                 </div>
-              )}
+              </div>
             </>
           </Suspense>
         </div>

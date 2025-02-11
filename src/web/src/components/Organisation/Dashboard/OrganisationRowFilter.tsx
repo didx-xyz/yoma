@@ -17,6 +17,8 @@ import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 import { debounce } from "~/lib/utils";
 import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/[id]";
 import FilterBadges from "~/components/FilterBadges";
+import { getOrganisations } from "~/api/services/organisations";
+import type { OrganizationSearchResults } from "~/api/models/organisation";
 
 const ValueContainer = ({
   children,
@@ -34,6 +36,7 @@ const ValueContainer = ({
       const pluralMapping: Record<string, string> = {
         Category: "Categories",
         Opportunity: "Opportunities",
+        Organization: "Organizations",
       };
 
       const pluralize = (word: string, count: number): string => {
@@ -54,22 +57,22 @@ const ValueContainer = ({
 };
 
 export const OrganisationRowFilter: React.FC<{
-  organisationId: string;
   htmlRef: HTMLDivElement;
   searchFilter: OrganizationSearchFilterSummaryViewModel | null;
   lookups_categories?: OpportunityCategory[];
   lookups_selectedOpportunities?: OpportunitySearchResultsInfo;
+  lookups_selectedOrganisations?: OrganizationSearchResults;
   onSubmit?: (fieldValues: OrganizationSearchFilterSummaryViewModel) => void;
 }> = ({
-  organisationId,
   htmlRef,
   searchFilter,
   lookups_categories,
   lookups_selectedOpportunities,
+  lookups_selectedOrganisations,
   onSubmit,
 }) => {
   const schema = zod.object({
-    organization: zod.string().optional().nullable(),
+    organizations: zod.array(zod.string()).optional().nullable(),
     opportunities: zod.array(zod.string()).optional().nullable(),
     categories: zod.array(zod.string()).optional().nullable(),
     startDate: zod.string().optional().nullable(),
@@ -104,13 +107,50 @@ export const OrganisationRowFilter: React.FC<{
     [onSubmit],
   );
 
+  // load data asynchronously for the organisations dropdown
+  // debounce is used to prevent the API from being called too frequently
+  const loadOrganisations = debounce(
+    (inputValue: string, callback: (options: any) => void) => {
+      getOrganisations({
+        valueContains: (inputValue ?? []).length > 2 ? inputValue : null,
+        statuses: null,
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MEDIUM,
+      }).then((data) => {
+        const options = data.items.map((item) => ({
+          value: item.id,
+          label: item.name,
+        }));
+        callback(options);
+      });
+    },
+    1000,
+  );
+
+  // the AsyncSelect component requires the defaultOptions to be set in the state
+  const [defaultOrganisationOptions, setDefaultOrganisationOptions] =
+    useState<any>([]);
+
+  useEffect(() => {
+    if (searchFilter?.organizations) {
+      setDefaultOrganisationOptions(
+        searchFilter?.organizations?.map((c: any) => ({
+          value: c,
+          label: c,
+        })),
+      );
+    }
+  }, [setDefaultOrganisationOptions, searchFilter?.organizations]);
+
   // load data asynchronously for the opportunities dropdown
   // debounce is used to prevent the API from being called too frequently
   const loadOpportunities = debounce(
     (inputValue: string, callback: (options: any) => void) => {
       searchCriteriaOpportunities({
         opportunities: [],
-        organization: organisationId,
+        organization: searchFilter?.organizations
+          ? searchFilter.organizations.toString()
+          : null, //searchFilter?.organizations, //TODO
         countries: null,
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
         published: null,
@@ -130,24 +170,24 @@ export const OrganisationRowFilter: React.FC<{
   );
 
   // the AsyncSelect component requires the defaultOptions to be set in the state
-  const [defaultOpportunityOptions, setdefaultOpportunityOptions] =
+  const [defaultOpportunityOptions, setDefaultOpportunityOptions] =
     useState<any>([]);
 
   useEffect(() => {
     if (searchFilter?.opportunities) {
-      setdefaultOpportunityOptions(
+      setDefaultOpportunityOptions(
         searchFilter?.opportunities?.map((c: any) => ({
           value: c,
           label: c,
         })),
       );
     }
-  }, [setdefaultOpportunityOptions, searchFilter?.opportunities]);
+  }, [setDefaultOpportunityOptions, searchFilter?.opportunities]);
 
   return (
     <div className="flex flex-grow flex-col gap-3">
       <form
-        onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
+        onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-2"
       >
         <div className="flex w-full flex-col items-center justify-center gap-2 lg:flex-row lg:justify-start">
@@ -155,6 +195,50 @@ export const OrganisationRowFilter: React.FC<{
             <div className="mr-4 flex text-sm font-bold text-gray">
               Search by:
             </div>
+
+            {/* ORGANISATIONS */}
+            <span className="w-full md:w-72">
+              <Controller
+                name="organizations"
+                control={form.control}
+                render={({ field: { onChange } }) => (
+                  <Async
+                    instanceId="organizations"
+                    classNames={{
+                      control: () =>
+                        "input input-xs h-fit !border-none w-full md:w-72",
+                    }}
+                    isMulti={true}
+                    defaultOptions={true} // calls loadOrganisations for initial results when clicking on the dropdown
+                    cacheOptions
+                    loadOptions={loadOrganisations}
+                    menuPortalTarget={htmlRef} // fix menu z-index issue
+                    styles={{
+                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    }}
+                    onChange={(val) => {
+                      // clear categories
+                      //setValue("categories", []);
+
+                      onChange(val.map((c: any) => c.value));
+                      void handleSubmit(onSubmitHandler)();
+                    }}
+                    value={defaultOrganisationOptions}
+                    placeholder="Organization"
+                    components={{
+                      ValueContainer,
+                    }}
+                  />
+                )}
+              />
+              {formState.errors.organizations && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {`${formState.errors.organizations.message}`}
+                  </span>
+                </label>
+              )}
+            </span>
 
             {/* OPPORTUNITIES */}
             <span className="w-full md:w-72">
@@ -180,7 +264,6 @@ export const OrganisationRowFilter: React.FC<{
                       // clear categories
                       setValue("categories", []);
 
-                      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                       onChange(val.map((c: any) => c.value));
                       void handleSubmit(onSubmitHandler)();
                     }}
@@ -356,6 +439,12 @@ export const OrganisationRowFilter: React.FC<{
                 (x) => x.id === value,
               );
               return lookup?.title ?? value;
+            } else if (key === "organizations") {
+              // HACK: resolve organisation ids to titles
+              const lookup = lookups_selectedOrganisations?.items.find(
+                (x) => x.id === value,
+              );
+              return lookup?.name ?? value;
             } else {
               return value;
             }

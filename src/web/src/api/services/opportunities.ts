@@ -52,6 +52,7 @@ export const getCategoriesAdmin = async (
   organisationId: string | null,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityCategory[]> => {
+  console.warn("organisationId: ", organisationId);
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<OpportunityCategory[]>(
     `/opportunity/search/filter/category/admin${
@@ -60,6 +61,23 @@ export const getCategoriesAdmin = async (
   );
   return data;
 };
+//TODO:
+// export const getCategoriesAdmin = async (
+//   organizations: string[],
+//   context?: GetServerSidePropsContext | GetStaticPropsContext,
+// ): Promise<OpportunityCategory[]> => {
+//   const instance = context ? ApiServer(context) : await ApiClient;
+//   let query = "";
+//   if (organizations && organizations.length > 0) {
+//     const params = new URLSearchParams();
+//     organizations.forEach((org) => params.append("organizations", org));
+//     query = `?${params.toString()}`;
+//   }
+//   const { data } = await instance.get<OpportunityCategory[]>(
+//     `/opportunity/search/filter/category/admin${query}`,
+//   );
+//   return data;
+// };
 
 // this is used for orgAdmin dashboards, admin pages etc
 export const getCountriesAdmin = async (
