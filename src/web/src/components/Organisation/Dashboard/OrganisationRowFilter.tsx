@@ -199,11 +199,11 @@ export const OrganisationRowFilter: React.FC<{
         onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-2"
       >
-        <div className="flex w-full flex-col items-center justify-center gap-2 lg:flex-row lg:justify-start">
-          <div className="flex w-full flex-grow flex-col flex-wrap items-center gap-2 lg:w-fit lg:flex-row">
-            <div className="mr-4 flex text-sm font-bold text-gray">
+        <div className="md:flex-rowx items-centerx justify-centerx md:justify-startx flex w-full flex-col gap-2">
+          <div className="items-centerx flex w-full flex-grow flex-col flex-wrap gap-2 md:w-fit md:flex-row">
+            {/* <div className="mr-4 flex text-sm font-bold text-gray">
               Filter by:
-            </div>
+            </div> */}
 
             {/* ORGANISATIONS */}
             <span className="w-full md:w-72">
@@ -246,6 +246,66 @@ export const OrganisationRowFilter: React.FC<{
               )}
             </span>
 
+            <div className="justify-startx md:justify-endx flex w-full items-start gap-2 md:w-fit">
+              {/* DATE START */}
+              <span className="flex">
+                <Controller
+                  control={form.control}
+                  name="startDate"
+                  render={({ field: { onChange, value } }) => (
+                    <DatePicker
+                      className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
+                      onChange={(date) => {
+                        onChange(toISOStringForTimezone(date));
+                        void handleSubmit(onSubmitHandler)();
+                      }}
+                      selected={value ? new Date(value) : null}
+                      placeholderText="Start Date"
+                    />
+                  )}
+                />
+
+                {formState.errors.startDate && (
+                  <label className="label">
+                    <span className="label-text-alt px-4 text-base italic text-red-500">
+                      {`${formState.errors.startDate.message}`}
+                    </span>
+                  </label>
+                )}
+              </span>
+
+              {/* DATE END */}
+              <span className="flex">
+                <Controller
+                  control={form.control}
+                  name="endDate"
+                  render={({ field: { onChange, value } }) => (
+                    <DatePicker
+                      className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
+                      onChange={(date) => {
+                        // change time to 1 second to midnight
+                        if (date) date.setHours(23, 59, 59, 999);
+                        onChange(toISOStringForTimezone(date));
+                        void handleSubmit(onSubmitHandler)();
+                      }}
+                      selected={value ? new Date(value) : null}
+                      placeholderText="End Date"
+                    />
+                  )}
+                />
+
+                {formState.errors.endDate && (
+                  <label className="label">
+                    <span className="label-text-alt px-4 text-base italic text-red-500">
+                      {`${formState.errors.endDate.message}`}
+                    </span>
+                  </label>
+                )}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-row gap-2">
             {/* OPPORTUNITIES */}
             <span className="w-full md:w-72">
               <Controller
@@ -289,135 +349,62 @@ export const OrganisationRowFilter: React.FC<{
                 </label>
               )}
             </span>
-            <div className="flex w-full flex-grow flex-col items-center gap-2 lg:w-fit lg:flex-row">
-              <div className="mx-auto flex items-center text-center text-xs font-bold text-gray md:mx-1 md:text-left">
-                or
-              </div>
 
-              {/* CATEGORIES */}
-              {lookups_categories && (
-                <span className="w-full md:w-72">
-                  <Controller
-                    name="categories"
-                    control={form.control}
-                    defaultValue={searchFilter?.categories}
-                    render={({ field: { onChange, value } }) => (
-                      <Select
-                        instanceId="categories"
-                        classNames={{
-                          control: () =>
-                            "input input-xs h-fit !border-none w-full md:w-72",
-                        }}
-                        isMulti={true}
-                        options={lookups_categories.map((c) => ({
-                          value: c.name,
-                          label: c.name,
-                        }))}
-                        // fix menu z-index issue
-                        menuPortalTarget={htmlRef}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                        onChange={(val) => {
-                          // clear opportunities
-                          setValue("opportunities", []);
-
-                          onChange(val.map((c) => c.value));
-                          void handleSubmit(onSubmitHandler)();
-                        }}
-                        value={lookups_categories
-                          .filter((c) => value?.includes(c.name))
-                          .map((c) => ({ value: c.name, label: c.name }))}
-                        placeholder="Category"
-                        components={{
-                          ValueContainer,
-                        }}
-                      />
-                    )}
-                  />
-
-                  {formState.errors.categories && (
-                    <label className="label font-bold">
-                      <span className="label-text-alt italic text-red-500">
-                        {`${formState.errors.categories.message}`}
-                      </span>
-                    </label>
-                  )}
-                </span>
-              )}
+            <div className="mx-auto flex items-center text-center text-xs font-bold text-gray md:mx-1 md:text-left">
+              or
             </div>
-          </div>
 
-          <div className="flex w-full justify-center gap-4 lg:w-fit lg:justify-end">
-            {/* DATE START */}
-            <span className="flex">
-              <Controller
-                control={form.control}
-                name="startDate"
-                render={({ field: { onChange, value } }) => (
-                  <DatePicker
-                    className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none lg:w-32"
-                    onChange={(date) => {
-                      onChange(toISOStringForTimezone(date));
-                      void handleSubmit(onSubmitHandler)();
-                    }}
-                    selected={value ? new Date(value) : null}
-                    placeholderText="Start Date"
-                  />
+            {/* CATEGORIES */}
+            {lookups_categories && (
+              <span className="w-full md:w-72">
+                <Controller
+                  name="categories"
+                  control={form.control}
+                  defaultValue={searchFilter?.categories}
+                  render={({ field: { onChange, value } }) => (
+                    <Select
+                      instanceId="categories"
+                      classNames={{
+                        control: () =>
+                          "input input-xs h-fit !border-none w-full md:w-72",
+                      }}
+                      isMulti={true}
+                      options={lookups_categories.map((c) => ({
+                        value: c.name,
+                        label: c.name,
+                      }))}
+                      // fix menu z-index issue
+                      menuPortalTarget={htmlRef}
+                      styles={{
+                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                      }}
+                      onChange={(val) => {
+                        // clear opportunities
+                        setValue("opportunities", []);
+
+                        onChange(val.map((c) => c.value));
+                        void handleSubmit(onSubmitHandler)();
+                      }}
+                      value={lookups_categories
+                        .filter((c) => value?.includes(c.name))
+                        .map((c) => ({ value: c.name, label: c.name }))}
+                      placeholder="Category"
+                      components={{
+                        ValueContainer,
+                      }}
+                    />
+                  )}
+                />
+
+                {formState.errors.categories && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${formState.errors.categories.message}`}
+                    </span>
+                  </label>
                 )}
-              />
-
-              {formState.errors.startDate && (
-                <label className="label">
-                  <span className="label-text-alt px-4 text-base italic text-red-500">
-                    {`${formState.errors.startDate.message}`}
-                  </span>
-                </label>
-              )}
-            </span>
-
-            {/* DATE END */}
-            <span className="flex">
-              <Controller
-                control={form.control}
-                name="endDate"
-                render={({ field: { onChange, value } }) => (
-                  <DatePicker
-                    className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none lg:w-32"
-                    onChange={(date) => {
-                      // change time to 1 second to midnight
-                      if (date) date.setHours(23, 59, 59, 999);
-                      onChange(toISOStringForTimezone(date));
-                      void handleSubmit(onSubmitHandler)();
-                    }}
-                    selected={value ? new Date(value) : null}
-                    placeholderText="End Date"
-                  />
-                )}
-              />
-
-              {formState.errors.endDate && (
-                <label className="label">
-                  <span className="label-text-alt px-4 text-base italic text-red-500">
-                    {`${formState.errors.endDate.message}`}
-                  </span>
-                </label>
-              )}
-            </span>
-
-            {/* EXPORT TO CSV */}
-            {/* {exportToCsv && (
-              <div className="flex flex-row items-center justify-end">
-                <IoMdDownload className="cursor-pointer text-white" />
-                <button
-                  type="button"
-                  className="btn btn-sm h-[2.4rem] rounded-md border-2 border-green text-xs font-semibold text-green"
-                  onClick={() => exportToCsv(true)}
-                >
-                  Export to CSV
-                </button>
-              </div>
-            )} */}
+              </span>
+            )}
           </div>
         </div>
       </form>

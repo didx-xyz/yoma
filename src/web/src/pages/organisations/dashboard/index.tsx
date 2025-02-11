@@ -854,7 +854,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground className="h-[450px] lg:h-[320px]" />
+      <PageBackground className="h-[430px] md:h-[390px] lg:h-[400px]" />
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
@@ -982,9 +982,9 @@ const OrganisationDashboard: NextPageWithLayout<{
           <div className="flex flex-col gap-2">
             {/* WELCOME MSG */}
             <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-white md:text-2xl">
-              <span>
-                {timeOfDayEmoji} Good {timeOfDay}&nbsp;
-                <span className="">{user?.name}!</span>
+              {timeOfDayEmoji} Good {timeOfDay}&nbsp;
+              <span className="overflow-hiddenx text-ellipsisx">
+                {user?.name}!
               </span>
             </div>
 
@@ -1012,7 +1012,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               )}
             </div>
 
-            <div className="h-6 text-sm">
+            <div className="h-6 text-sm italic">
               {engagementData?.dateStamp && (
                 <>
                   Last updated on{" "}
@@ -1029,17 +1029,12 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
 
           {/* FILTERS */}
-          <div className="flex h-[236px] items-center justify-center lg:h-[92px]">
+          <div
+          //className="flex h-[236px] items-center justify-center lg:h-[92px]"
+          >
             <Suspense
-              isLoading={
-                categoriesIsLoading ||
-                // opportunitiesIsLoading ||
-                // organisationsIsLoading ||
-                !searchFilter
-              }
-              error={
-                categoriesError //|| opportunitiesError || organisationsError
-              }
+              isLoading={categoriesIsLoading || !searchFilter}
+              error={categoriesError}
               loader={
                 <LoadingInline
                   className="flex-col md:flex-row"
@@ -1048,14 +1043,17 @@ const OrganisationDashboard: NextPageWithLayout<{
                 />
               }
             >
-              <OrganisationRowFilter
-                htmlRef={myRef.current!}
-                searchFilter={searchFilter}
-                lookups_categories={categoriesData}
-                lookups_selectedOpportunities={lookups_selectedOpportunities}
-                lookups_selectedOrganisations={lookups_selectedOrganisations}
-                onSubmit={(e) => onSubmitFilter(e)}
-              />
+              <div className="flex flex-col gap-2">
+                <Header title="Filter" />
+                <OrganisationRowFilter
+                  htmlRef={myRef.current!}
+                  searchFilter={searchFilter}
+                  lookups_categories={categoriesData}
+                  lookups_selectedOpportunities={lookups_selectedOpportunities}
+                  lookups_selectedOrganisations={lookups_selectedOrganisations}
+                  onSubmit={(e) => onSubmitFilter(e)}
+                />
+              </div>
             </Suspense>
           </div>
 
@@ -1066,7 +1064,6 @@ const OrganisationDashboard: NextPageWithLayout<{
               engagementIsLoading ||
               completedOpportunitiesIsLoading ||
               selectedOpportunitiesIsLoading ||
-              //organisationsIsLoading ||
               ssoIsLoading ||
               !searchFilter
             }
@@ -1077,7 +1074,6 @@ const OrganisationDashboard: NextPageWithLayout<{
               engagementError ||
               completedOpportunitiesError ||
               selectedOpportunitiesError ||
-              //organisationsError ||
               ssoError
             }
           >
