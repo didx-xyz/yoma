@@ -59,6 +59,7 @@ import {
 } from "~/api/services/organizationDashboard";
 import { AvatarImage } from "~/components/AvatarImage";
 import CustomCarousel from "~/components/Carousel/CustomCarousel";
+import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import { Header } from "~/components/Common/Header";
 import Suspense from "~/components/Common/Suspense";
@@ -106,10 +107,6 @@ export interface OrganizationSearchFilterSummaryViewModel {
   pageCompletedYouth: number;
   countries: string[] | null;
 }
-
-// interface IParams extends ParsedUrlQuery {
-//   id: string;
-// }
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -250,33 +247,6 @@ const OrganisationDashboard: NextPageWithLayout<{
 }) => {
   const router = useRouter();
 
-  // // get filter parameters from route
-  // const {
-  //   pageSelectedOpportunities,
-  //   pageCompletedYouth,
-  //   categories,
-  //   opportunities,
-  //   startDate,
-  //   endDate,
-  //   countries,
-  //   organisations,
-  // } = router.query;
-
-  // const searchFilter = {
-  //   pageSelectedOpportunities: pageSelectedOpportunities
-  //     ? parseInt(pageSelectedOpportunities.toString())
-  //     : 1,
-  //   pageCompletedYouth: pageCompletedYouth
-  //     ? parseInt(pageCompletedYouth.toString())
-  //     : 1,
-  //   organizations: organisations ? organisations?.toString().split("|") : null,
-  //   categories: categories ? categories?.toString().split("|") : null,
-  //   opportunities: opportunities ? opportunities?.toString().split("|") : null,
-  //   startDate: startDate ? startDate.toString() : "",
-  //   endDate: endDate ? endDate.toString() : "",
-  //   countries: countries ? countries?.toString().split("|") : null,
-  // };
-
   const myRef = useRef<HTMLDivElement>(null);
   const [inactiveOpportunitiesCount, setInactiveOpportunitiesCount] =
     useState(0);
@@ -289,6 +259,31 @@ const OrganisationDashboard: NextPageWithLayout<{
   ] = useState(false);
   const [completedYouthOpportunities, setCompletedYouthOpportunities] =
     useState<YouthInfo | null>();
+
+  //#region Tab state
+  const [activeTab, setActiveTab] = useState("engagement");
+
+  useEffect(() => {
+    if (router.query.tab) {
+      setActiveTab(router.query.tab.toString());
+    }
+  }, [router.query.tab]);
+
+  // const handleTabChange = useCallback(
+  //   (tab: string) => {
+  //     setActiveTab(tab);
+  //     router.push(
+  //       {
+  //         pathname: router.pathname,
+  //         query: { ...router.query, tab: tab },
+  //       },
+  //       undefined,
+  //       { shallow: true, scroll: false },
+  //     );
+  //   },
+  //   [router],
+  // );
+  //#endregion Tab state
 
   // search filter state
   // this is the current filter state based on the querystring parameters
@@ -781,10 +776,13 @@ const OrganisationDashboard: NextPageWithLayout<{
           opportunitySearchFilter.pageCompletedYouth.toString(),
         );
 
+      // current tab
+      params.append("tab", activeTab);
+
       if (params.size === 0) return null;
       return params;
     },
-    [],
+    [activeTab],
   );
   const redirectWithSearchFilterParams = useCallback(
     (filter: OrganizationSearchFilterSummaryViewModel) => {
@@ -854,7 +852,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground className="h-[430px] md:h-[390px] lg:h-[400px]" />
+      <PageBackground className="h-[484px] md:h-[442px] lg:h-[442px]" />
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
@@ -991,16 +989,6 @@ const OrganisationDashboard: NextPageWithLayout<{
             {/* DESCRIPTION */}
             <div className="gap-2 overflow-hidden text-ellipsis whitespace-nowrap text-white">
               Here&apos;s your reports for{" "}
-              {/* <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap font-bold">
-                {organisation?.name}
-              </span> */}
-              {/* {searchFilter.organizations?.map((organisation, index) => (
-                <span key={index} className="font-semibold">
-                  {lookups_selectedOrganisations?.items.find(
-                    (x) => x.id == organisation,
-                  )?.name ?? organisation}
-                </span>
-              ))} */}
               {searchFilter.organizations && (
                 <span className="font-semibold">
                   {lookups_selectedOrganisations?.items?.find(
@@ -1029,32 +1017,86 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
 
           {/* FILTERS */}
-          <div
-          //className="flex h-[236px] items-center justify-center lg:h-[92px]"
+          <Suspense
+            isLoading={categoriesIsLoading || !searchFilter}
+            error={categoriesError}
+            loader={
+              <LoadingInline
+                className="flex-col md:flex-row"
+                classNameSpinner="border-white h-6 w-6"
+                classNameLabel="text-white"
+              />
+            }
           >
-            <Suspense
-              isLoading={categoriesIsLoading || !searchFilter}
-              error={categoriesError}
-              loader={
-                <LoadingInline
-                  className="flex-col md:flex-row"
-                  classNameSpinner="border-white h-6 w-6"
-                  classNameLabel="text-white"
-                />
-              }
-            >
-              <div className="flex flex-col gap-2">
-                <Header title="Filter" />
-                <OrganisationRowFilter
-                  htmlRef={myRef.current!}
-                  searchFilter={searchFilter}
-                  lookups_categories={categoriesData}
-                  lookups_selectedOpportunities={lookups_selectedOpportunities}
-                  lookups_selectedOrganisations={lookups_selectedOrganisations}
-                  onSubmit={(e) => onSubmitFilter(e)}
-                />
-              </div>
-            </Suspense>
+            <div className="flex flex-col gap-2">
+              <Header title="Filter" />
+              <OrganisationRowFilter
+                htmlRef={myRef.current!}
+                searchFilter={searchFilter}
+                lookups_categories={categoriesData}
+                lookups_selectedOpportunities={lookups_selectedOpportunities}
+                lookups_selectedOrganisations={lookups_selectedOrganisations}
+                onSubmit={(e) => onSubmitFilter(e)}
+              />
+            </div>
+          </Suspense>
+
+          {/* TABS */}
+          <div className="relative flex items-center">
+            <CustomSlider className="tabs tabs-lifted !gap-0">
+              <a
+                role="tab"
+                className={`group tab relative duration-0 ${
+                  activeTab === "engagement" ? "tab-active" : ""
+                }`}
+                onClick={() => setActiveTab("engagement")}
+              >
+                🤝 Engagement
+              </a>
+              <a
+                role="tab"
+                className={`group tab relative duration-0 ${
+                  activeTab === "rewards" ? "tab-active" : ""
+                }`}
+                onClick={() => setActiveTab("rewards")}
+              >
+                ⚡ Rewards & Skills
+              </a>
+              <a
+                role="tab"
+                className={`group tab relative duration-0 ${
+                  activeTab === "demographics" ? "tab-active" : ""
+                }`}
+                onClick={() => setActiveTab("demographics")}
+              >
+                📊 Demographics
+              </a>
+              <a
+                role="tab"
+                className={`group tab relative duration-0 ${
+                  activeTab === "completedYouth" ? "tab-active" : ""
+                }`}
+                onClick={() => setActiveTab("completedYouth")}
+              >
+                ✅ Completed Youth
+              </a>
+              <a
+                role="tab"
+                className={`group tab relative duration-0 ${
+                  activeTab === "selectedOpportunities" ? "tab-active" : ""
+                }`}
+                onClick={() => setActiveTab("selectedOpportunities")}
+              >
+                🏆 Selected Opportunities
+              </a>
+              <a
+                role="tab"
+                className={`group tab relative duration-0 ${activeTab === "sso" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("sso")}
+              >
+                🔑 SSO
+              </a>
+            </CustomSlider>
           </div>
 
           <Suspense
@@ -1077,9 +1119,8 @@ const OrganisationDashboard: NextPageWithLayout<{
               ssoError
             }
           >
-            <>
-              {/* SUMMARY */}
-              <div className="flex flex-col gap-4">
+            {activeTab === "engagement" && (
+              <div className="flex flex-col gap-4 pt-4">
                 {/* ENGAGEMENT */}
                 <div className="flex flex-col gap-2">
                   <Header title="🤝 Engagement" />
@@ -1187,171 +1228,153 @@ const OrganisationDashboard: NextPageWithLayout<{
                     </div>
                   </div>
                 </div>
+              </div>
+            )}
 
-                <div className="flex flex-col gap-4 md:flex-row">
-                  {/* COUNTRIES */}
-                  <div className="flex grow flex-col gap-1">
-                    <Header title="🌐 Countries" />
+            {activeTab === "rewards" && (
+              <div className="flex flex-col gap-4 pt-4 md:flex-row">
+                {/* REWARDS */}
+                <div className="flex flex-col gap-1">
+                  <Header title="💸 Rewards" />
 
-                    <div className="h-full rounded-lg bg-white p-4 shadow">
-                      {engagementData?.demographics?.countries?.items && (
-                        <WorldMapChart
-                          data={[
-                            ["Country", "Opportunities"],
-                            ...Object.entries(
-                              engagementData?.demographics?.countries?.items ||
-                                {},
-                            ),
-                          ]}
+                  <div className="h-[176px] rounded-lg bg-white p-4 shadow md:w-[275px]">
+                    <div className="flex flex-row items-center gap-3">
+                      <div className="rounded-lg bg-green-light p-1">
+                        <Image
+                          src={iconZlto}
+                          alt="Icon Zlto"
+                          width={20}
+                          height={20}
+                          className="h-auto"
+                          sizes="100vw"
+                          priority={true}
                         />
-                      )}
+                      </div>
+                      <div className="whitespace-nowrap text-sm font-semibold">
+                        ZLTO amount awarded
+                      </div>
+                    </div>
+                    <div className="-ml-1 mt-4 flex flex-grow items-center gap-2">
+                      <Image
+                        src={iconZlto}
+                        alt="Icon Zlto"
+                        width={35}
+                        height={35}
+                        className="h-auto"
+                        sizes="100vw"
+                        priority={true}
+                      />
+                      <div className="flex-grow text-3xl font-semibold">
+                        {engagementData?.opportunities.reward.totalAmount.toLocaleString() ??
+                          0}
+                      </div>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-4">
-                    <div className="flex flex-col gap-4 md:flex-row">
-                      {/* REWARDS */}
-                      <div className="flex flex-col gap-1">
-                        <Header title="💸 Rewards" />
+                </div>
 
-                        <div className="h-[176px] rounded-lg bg-white p-4 shadow md:w-[275px]">
-                          <div className="flex flex-row items-center gap-3">
-                            <div className="rounded-lg bg-green-light p-1">
-                              <Image
-                                src={iconZlto}
-                                alt="Icon Zlto"
-                                width={20}
-                                height={20}
-                                className="h-auto"
-                                sizes="100vw"
-                                priority={true}
-                              />
-                            </div>
-                            <div className="whitespace-nowrap text-sm font-semibold">
-                              ZLTO amount awarded
-                            </div>
-                          </div>
-                          <div className="-ml-1 mt-4 flex flex-grow items-center gap-2">
-                            <Image
-                              src={iconZlto}
-                              alt="Icon Zlto"
-                              width={35}
-                              height={35}
-                              className="h-auto"
-                              sizes="100vw"
-                              priority={true}
-                            />
-                            <div className="flex-grow text-3xl font-semibold">
-                              {engagementData?.opportunities.reward.totalAmount.toLocaleString() ??
-                                0}
-                            </div>
-                          </div>
-                        </div>
+                {/* SKILLS */}
+                <div className="flex flex-col gap-1">
+                  <Header title="⚡ Skills" />
+
+                  <div className="h-[176px] rounded-lg bg-white shadow md:w-[275px]">
+                    <SkillsChart data={engagementData?.skills?.items} />
+                  </div>
+                </div>
+
+                {/* MOST COMPLETED SKILLS */}
+                {engagementData?.skills?.topCompleted && (
+                  <div className="flex h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow md:w-[565px]">
+                    <div className="flex flex-row items-center gap-3">
+                      <div className="rounded-lg bg-green-light p-1">
+                        <Image
+                          src={iconSkills}
+                          alt="Icon Skills"
+                          width={20}
+                          height={20}
+                          className="h-auto"
+                          sizes="100vw"
+                          priority={true}
+                        />
                       </div>
-
-                      {/* SKILLS */}
-                      <div className="flex flex-col gap-1">
-                        <Header title="⚡ Skills" />
-
-                        <div className="h-[176px] rounded-lg bg-white shadow md:w-[275px]">
-                          <SkillsChart data={engagementData?.skills?.items} />
-                        </div>
+                      <div className="text-sm font-semibold">
+                        {engagementData?.skills.topCompleted.legend}
                       </div>
                     </div>
-
-                    {/* MOST COMPLETED SKILLS */}
-                    {engagementData?.skills?.topCompleted && (
-                      <div className="flex h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow md:w-[565px]">
-                        <div className="flex flex-row items-center gap-3">
-                          <div className="rounded-lg bg-green-light p-1">
-                            <Image
-                              src={iconSkills}
-                              alt="Icon Skills"
-                              width={20}
-                              height={20}
-                              className="h-auto"
-                              sizes="100vw"
-                              priority={true}
-                            />
+                    <div className="mt-4 flex flex-grow flex-wrap gap-1 overflow-y-auto overflow-x-hidden md:h-[100px]">
+                      {engagementData?.skills.topCompleted.topCompleted.map(
+                        (x) => (
+                          <div
+                            key={x.id}
+                            className="md:truncate-none flex h-9 w-max items-center text-ellipsis rounded border-[1px] border-green bg-white px-2 text-xs text-gray-dark md:w-fit md:max-w-none"
+                          >
+                            {x.name}
                           </div>
-                          <div className="text-sm font-semibold">
-                            {engagementData?.skills.topCompleted.legend}
-                          </div>
-                        </div>
-                        <div className="mt-4 flex flex-grow flex-wrap gap-1 overflow-y-auto overflow-x-hidden md:h-[100px]">
-                          {engagementData?.skills.topCompleted.topCompleted.map(
-                            (x) => (
-                              <div
-                                key={x.id}
-                                className="md:truncate-none flex h-9 w-max items-center text-ellipsis rounded border-[1px] border-green bg-white px-2 text-xs text-gray-dark md:w-fit md:max-w-none"
-                              >
-                                {x.name}
-                              </div>
-                            ),
-                          )}
-                        </div>
-                        {engagementData?.skills?.topCompleted.topCompleted
-                          .length === 0 && (
-                          <div className="mb-8 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-10 text-center text-xs">
-                            Not enough data to display
-                          </div>
-                        )}
+                        ),
+                      )}
+                    </div>
+                    {engagementData?.skills?.topCompleted.topCompleted
+                      .length === 0 && (
+                      <div className="mb-8 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-10 text-center text-xs">
+                        Not enough data to display
                       </div>
                     )}
                   </div>
-                </div>
+                )}
+              </div>
+            )}
 
-                {/* DEMOGRAPHICS */}
-                <div className="flex w-full flex-col gap-1">
-                  <Header title="📊 Demographics" />
+            {activeTab === "demographics" && (
+              <div className="flex w-full flex-col gap-1 pt-4">
+                <Header title="📊 Demographics" />
 
-                  <div className="flex w-full flex-col gap-4 md:flex-row">
-                    {/* EDUCATION */}
-                    <PieChart
-                      id="education"
-                      title="Education"
-                      subTitle=""
-                      colors={CHART_COLORS}
-                      data={[
-                        ["Education", "Value"],
-                        ...Object.entries(
-                          engagementData?.demographics?.education?.items || {},
-                        ),
-                      ]}
-                    />
+                <div className="flex w-full flex-col gap-4 md:flex-row">
+                  {/* EDUCATION */}
+                  <PieChart
+                    id="education"
+                    title="Education"
+                    subTitle=""
+                    colors={CHART_COLORS}
+                    data={[
+                      ["Education", "Value"],
+                      ...Object.entries(
+                        engagementData?.demographics?.education?.items || {},
+                      ),
+                    ]}
+                  />
 
-                    {/* GENDERS */}
-                    <PieChart
-                      id="genders"
-                      title="Genders"
-                      subTitle=""
-                      colors={CHART_COLORS}
-                      data={[
-                        ["Gender", "Value"],
-                        ...Object.entries(
-                          engagementData?.demographics?.genders?.items || {},
-                        ),
-                      ]}
-                    />
+                  {/* GENDERS */}
+                  <PieChart
+                    id="genders"
+                    title="Genders"
+                    subTitle=""
+                    colors={CHART_COLORS}
+                    data={[
+                      ["Gender", "Value"],
+                      ...Object.entries(
+                        engagementData?.demographics?.genders?.items || {},
+                      ),
+                    ]}
+                  />
 
-                    {/* AGE */}
-                    <PieChart
-                      id="ages"
-                      title="Age"
-                      subTitle=""
-                      colors={CHART_COLORS}
-                      data={[
-                        ["Age", "Value"],
-                        ...Object.entries(
-                          engagementData?.demographics?.ages?.items || {},
-                        ),
-                      ]}
-                    />
-                  </div>
+                  {/* AGE */}
+                  <PieChart
+                    id="ages"
+                    title="Age"
+                    subTitle=""
+                    colors={CHART_COLORS}
+                    data={[
+                      ["Age", "Value"],
+                      ...Object.entries(
+                        engagementData?.demographics?.ages?.items || {},
+                      ),
+                    ]}
+                  />
                 </div>
               </div>
+            )}
 
-              {/* COMPLETED YOUTH */}
-              <div className="flex flex-col gap-1">
+            {activeTab === "completedYouth" && (
+              <div className="flex flex-col gap-1 pt-4">
                 <Header title="✅ Completed by Youth" />
 
                 {/* COMPLETED YOUTH */}
@@ -1478,12 +1501,10 @@ const OrganisationDashboard: NextPageWithLayout<{
                     )}
                 </div>
               </div>
+            )}
 
-              {/* DIVIDER */}
-              <div className="mb-2 mt-4 border-t border-gray" />
-
-              {/* SELECTED OPPORTUNITIES */}
-              <div className="flex flex-col">
+            {activeTab === "selectedOpportunities" && (
+              <div className="flex flex-col pt-4">
                 <Header title="🏆 Selected Opportunities" />
 
                 {/* NB: DECPRECATED */}
@@ -1657,10 +1678,10 @@ const OrganisationDashboard: NextPageWithLayout<{
                     )}
                 </div>
               </div>
+            )}
 
-              {/* SSO */}
-
-              <div className="my-8 flex flex-col gap-4">
+            {activeTab === "sso" && (
+              <div className="my-8x flex flex-col gap-4 pt-4">
                 <Header title="🔑 Single Sign-On" />
 
                 <div className="grid grid-rows-2 gap-4 md:grid-cols-2">
@@ -1698,7 +1719,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   </div>
                 </div>
               </div>
-            </>
+            )}
           </Suspense>
         </div>
       </div>
