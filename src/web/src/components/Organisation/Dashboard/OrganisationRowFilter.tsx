@@ -1,24 +1,24 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
-import { type FieldValues, Controller, useForm } from "react-hook-form";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { Controller, useForm, type FieldValues } from "react-hook-form";
+import Select, { components, type ValueContainerProps } from "react-select";
+import Async from "react-select/async";
 import zod from "zod";
+import type { SelectOption } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
   OpportunitySearchResultsInfo,
 } from "~/api/models/opportunity";
-import type { SelectOption } from "~/api/models/lookups";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { toISOStringForTimezone } from "~/lib/utils";
-import { searchCriteriaOpportunities } from "~/api/services/opportunities";
-import Select, { components, type ValueContainerProps } from "react-select";
-import Async from "react-select/async";
-import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
-import { debounce } from "~/lib/utils";
-import FilterBadges from "~/components/FilterBadges";
-import { getOrganisations } from "~/api/services/organisations";
 import type { OrganizationSearchResults } from "~/api/models/organisation";
+import { searchCriteriaOpportunities } from "~/api/services/opportunities";
+import { getOrganisations } from "~/api/services/organisations";
+import FilterBadges from "~/components/FilterBadges";
+import { PAGE_SIZE_MEDIUM, ROLE_ADMIN } from "~/lib/constants";
+import { debounce, toISOStringForTimezone } from "~/lib/utils";
 import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/dashboard";
+import type { User } from "~/server/auth";
 
 const ValueContainer = ({
   children,
@@ -62,6 +62,7 @@ export const OrganisationRowFilter: React.FC<{
   lookups_categories?: OpportunityCategory[];
   lookups_selectedOpportunities?: OpportunitySearchResultsInfo;
   lookups_selectedOrganisations?: OrganizationSearchResults;
+  user: User;
   onSubmit?: (fieldValues: OrganizationSearchFilterSummaryViewModel) => void;
 }> = ({
   htmlRef,
@@ -69,8 +70,11 @@ export const OrganisationRowFilter: React.FC<{
   lookups_categories,
   lookups_selectedOpportunities,
   lookups_selectedOrganisations,
+  user,
   onSubmit,
 }) => {
+  const isAdmin = user?.roles.includes(ROLE_ADMIN);
+
   const schema = zod.object({
     organizations: zod.array(zod.string()).optional().nullable(),
     opportunities: zod.array(zod.string()).optional().nullable(),
@@ -216,45 +220,47 @@ export const OrganisationRowFilter: React.FC<{
             </div> */}
 
             {/* ORGANISATIONS */}
-            <span className="w-full md:w-72">
-              <Controller
-                name="organizations"
-                control={form.control}
-                render={({ field: { onChange } }) => (
-                  <Async
-                    instanceId="organizations"
-                    classNames={{
-                      control: () =>
-                        "input input-xs h-fit !border-none w-full md:w-72",
-                    }}
-                    isMulti={true}
-                    defaultOptions={true} // calls loadOrganisations for initial results when clicking on the dropdown
-                    cacheOptions
-                    loadOptions={loadOrganisations}
-                    menuPortalTarget={htmlRef} // fix menu z-index issue
-                    styles={{
-                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                    }}
-                    onChange={(val) => {
-                      onChange(val.map((c: any) => c.value));
-                      void handleSubmit(onSubmitHandler)();
-                    }}
-                    value={defaultOrganisationOptions}
-                    placeholder="Organisation"
-                    components={{
-                      ValueContainer,
-                    }}
-                  />
+            {isAdmin && (
+              <span className="w-full md:w-72">
+                <Controller
+                  name="organizations"
+                  control={form.control}
+                  render={({ field: { onChange } }) => (
+                    <Async
+                      instanceId="organizations"
+                      classNames={{
+                        control: () =>
+                          "input input-xs h-fit !border-none w-full md:w-72",
+                      }}
+                      isMulti={true}
+                      defaultOptions={true} // calls loadOrganisations for initial results when clicking on the dropdown
+                      cacheOptions
+                      loadOptions={loadOrganisations}
+                      menuPortalTarget={htmlRef} // fix menu z-index issue
+                      styles={{
+                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                      }}
+                      onChange={(val) => {
+                        onChange(val.map((c: any) => c.value));
+                        void handleSubmit(onSubmitHandler)();
+                      }}
+                      value={defaultOrganisationOptions}
+                      placeholder="Organisation"
+                      components={{
+                        ValueContainer,
+                      }}
+                    />
+                  )}
+                />
+                {formState.errors.organizations && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${formState.errors.organizations.message}`}
+                    </span>
+                  </label>
                 )}
-              />
-              {formState.errors.organizations && (
-                <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
-                    {`${formState.errors.organizations.message}`}
-                  </span>
-                </label>
-              )}
-            </span>
+              </span>
+            )}
 
             <div className="justify-startx md:justify-endx flex w-full items-start gap-2 md:w-fit">
               {/* DATE START */}

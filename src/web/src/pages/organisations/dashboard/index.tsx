@@ -427,46 +427,6 @@ const OrganisationDashboard: NextPageWithLayout<{
     enabled: !error && !!searchFilter.organizations,
   });
 
-  // HACK: lookup each of the opportunities (to resolve ids to titles for filter badges)
-  // const {
-  //   data: lookups_selectedOpportunities,
-  //   isLoading: opportunitiesIsLoading,
-  //   error: opportunitiesError,
-  // } = useQuery<OpportunitySearchResultsInfo>({
-  //   queryKey: ["selectedOpportunities", searchFilter],
-  //   queryFn: () =>
-  //     searchCriteriaOpportunities({
-  //       opportunities: searchFilter.opportunities ?? [],
-  //       organizations: searchFilter.organizations ?? null,
-  //       countries: null,
-  //       titleContains: null,
-  //       published: null,
-  //       verificationMethod: null,
-  //       verificationEnabled: null,
-  //       pageNumber: 1,
-  //       pageSize: searchFilter.opportunities?.length ?? 0,
-  //     }),
-  //   enabled: !!searchFilter.opportunities && !!searchFilter.organizations,
-  // });
-
-  // HACK: lookup each of the organisations (to resolve ids to titles for filter badges)
-  // const {
-  //   data: lookups_selectedOrganisations,
-  //   isLoading: organisationsIsLoading,
-  //   error: organisationsError,
-  // } = useQuery<OrganizationSearchResults>({
-  //   queryKey: ["selectedOrganisations", searchFilter],
-  //   queryFn: () =>
-  //     getOrganisations({
-  //       organizations: searchFilter.organizations ?? [],
-  //       valueContains: null,
-  //       statuses: null,
-  //       pageNumber: 1,
-  //       pageSize: PAGE_SIZE_MEDIUM,
-  //     }),
-  //   enabled: !!searchFilter.organizations,
-  // });
-
   // carousel data
   const fetchDataAndUpdateCache_Opportunities = useCallback(
     async (
@@ -981,6 +941,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 lookups_categories={categoriesData}
                 lookups_selectedOpportunities={lookups_selectedOpportunities}
                 lookups_selectedOrganisations={lookups_selectedOrganisations}
+                user={user}
                 onSubmit={(e) => onSubmitFilter(e)}
               />
             </div>
