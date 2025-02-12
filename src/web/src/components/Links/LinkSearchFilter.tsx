@@ -95,6 +95,7 @@ export const LinkSearchFilters: React.FC<{
   const loadOrganisations = debounce(
     (inputValue: string, callback: (options: any) => void) => {
       getOrganisations({
+        organizations: null,
         valueContains: (inputValue ?? []).length > 2 ? inputValue : null,
         statuses: null,
         pageNumber: 1,
@@ -133,7 +134,7 @@ export const LinkSearchFilters: React.FC<{
     (inputValue: string, callback: (options: any) => void) => {
       searchCriteriaOpportunities({
         opportunities: [],
-        organization: searchFilter?.organizations?.[0] ?? null,
+        organizations: searchFilter?.organizations ?? null,
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
         published: null,
         verificationMethod: null,

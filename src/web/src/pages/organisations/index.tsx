@@ -199,6 +199,7 @@ const Organisations: NextPageWithLayout<{
               .filter((y) => y.label.toLowerCase() === status.toLowerCase())
               .map((item) => item.value)
           : null,
+      organizations: null,
     }),
     [page, query, status, lookups_statuses],
   );
@@ -212,6 +213,7 @@ const Organisations: NextPageWithLayout<{
         pageSize: 1,
         valueContains: null,
         statuses: null,
+        organizations: null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -223,6 +225,7 @@ const Organisations: NextPageWithLayout<{
         pageSize: 1,
         valueContains: null,
         statuses: [OrganizationStatus.Active],
+        organizations: null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -234,6 +237,7 @@ const Organisations: NextPageWithLayout<{
         pageSize: 1,
         valueContains: null,
         statuses: [OrganizationStatus.Inactive],
+        organizations: null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -245,6 +249,7 @@ const Organisations: NextPageWithLayout<{
         pageSize: 1,
         valueContains: null,
         statuses: [OrganizationStatus.Declined],
+        organizations: null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -256,6 +261,7 @@ const Organisations: NextPageWithLayout<{
         pageSize: 1,
         valueContains: null,
         statuses: [OrganizationStatus.Deleted],
+        organizations: null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -407,6 +413,7 @@ const Organisations: NextPageWithLayout<{
                   </svg>
                 </button>
               </div>
+
               {/* TABS */}
               <div
                 className="tabs tabs-bordered w-full gap-2 overflow-x-scroll md:overflow-hidden"
@@ -507,6 +514,7 @@ const Organisations: NextPageWithLayout<{
                   </ul>
                 </div>
               </div>
+
               {/* RIGHT BUTTON MOBILE */}
               <div className="-mr-1 mb-1 flex items-center md:hidden">
                 <button

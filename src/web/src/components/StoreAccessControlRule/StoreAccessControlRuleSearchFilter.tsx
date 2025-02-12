@@ -98,10 +98,11 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
   const loadOrganisations = debounce(
     (inputValue: string, callback: (options: any) => void) => {
       getOrganisations({
-        valueContains: (inputValue ?? []).length > 2 ? inputValue : null,
-        statuses: null,
         pageNumber: 1,
         pageSize: PAGE_SIZE_MEDIUM,
+        valueContains: (inputValue ?? []).length > 2 ? inputValue : null,
+        statuses: null,
+        organizations: null,
       }).then((data) => {
         const options = data.items.map((item) => ({
           value: item.id,

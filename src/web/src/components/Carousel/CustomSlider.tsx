@@ -4,9 +4,10 @@ import styles from "./CustomSlider.module.css";
 
 interface CustomSliderProps {
   children: React.ReactNode;
+  className?: string;
 }
 
-const CustomSlider = ({ children }: CustomSliderProps) => {
+const CustomSlider = ({ children, className }: CustomSliderProps) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [showPrevButton, setShowPrevButton] = useState(false);
   const [showNextButton, setShowNextButton] = useState(false);
@@ -140,7 +141,7 @@ const CustomSlider = ({ children }: CustomSliderProps) => {
       )}
       <div
         ref={sliderRef}
-        className={`flex gap-[2px] overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap ${styles.noscrollbar}`}
+        className={`flex gap-[2px] overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap ${styles.noscrollbar} ${className}`}
         onMouseDown={handleMouseDown}
         onMouseLeave={handleMouseLeave}
         onMouseUp={handleMouseUp}

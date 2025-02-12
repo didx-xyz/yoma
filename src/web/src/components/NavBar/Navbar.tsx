@@ -9,7 +9,6 @@ import { useMemo, useState } from "react";
 import { IoMdClose, IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import type { OrganizationInfo } from "~/api/models/user";
-import { ROLE_ADMIN } from "~/lib/constants";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
@@ -23,6 +22,7 @@ import { SignInButton } from "../SignInButton";
 import { SignOutButton } from "../SignOutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
+import { ROLE_ADMIN } from "~/lib/constants";
 
 const navBarLinksUser: TabItem[] = [
   {
@@ -116,13 +116,9 @@ export const Navbar: React.FC = () => {
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
   const { data: session } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
-  const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
-
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  //useDisableBodyScroll(isDrawerOpen);
+  const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
 
   // open/close drawer
   const onToggle = () => {
@@ -219,7 +215,7 @@ export const Navbar: React.FC = () => {
         <Link
           href={
             organisation.status == "Active"
-              ? `/organisations/${organisation.id}`
+              ? `/organisations/dashboard?organisations=${organisation.id}`
               : `/organisations/${organisation.id}/edit`
           }
           onClick={() => setDrawerOpen(false)}
