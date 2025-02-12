@@ -9,7 +9,6 @@ import { useMemo, useState } from "react";
 import { IoMdClose, IoMdMenu, IoMdSettings } from "react-icons/io";
 import type { TabItem } from "~/api/models/common";
 import type { OrganizationInfo } from "~/api/models/user";
-import { ROLE_ADMIN } from "~/lib/constants";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
@@ -116,13 +115,8 @@ export const Navbar: React.FC = () => {
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
   const { data: session } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
-  const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
-
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
-
-  // 👇 prevent scrolling on the page when the dialogs are open
-  //useDisableBodyScroll(isDrawerOpen);
 
   // open/close drawer
   const onToggle = () => {
@@ -430,7 +424,7 @@ export const Navbar: React.FC = () => {
                       </>
                     )}
 
-                    {(activeRoleView == RoleView.Admin || isAdmin) && (
+                    {/* {(activeRoleView == RoleView.Admin || isAdmin) && (
                       <>
                         <ul className="menu grow p-0">
                           <li
@@ -453,7 +447,7 @@ export const Navbar: React.FC = () => {
 
                         <div className="divider my-2 grow-0 !bg-gray" />
                       </>
-                    )}
+                    )} */}
 
                     {!session && (
                       <SignInButton

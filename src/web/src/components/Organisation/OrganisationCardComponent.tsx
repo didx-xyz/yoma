@@ -34,15 +34,15 @@ export const OrganisationCardComponent: React.FC<{
   const modalContext = useConfirmationModalContext();
 
   const _returnUrl = returnUrl
-    ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
+    ? `returnUrl=${encodeURIComponent(returnUrl.toString())}`
     : router.asPath;
   const isAdmin = user.roles.includes(ROLE_ADMIN);
   const link =
     item.status === "Active"
-      ? `/organisations/${item.id}${_returnUrl}`
+      ? `/organisations/dashboard?organisations=${item.id}&${_returnUrl}`
       : item.status === "Inactive" && isAdmin
-        ? `/organisations/${item.id}/verify${_returnUrl}`
-        : `/organisations/${item.id}/info${_returnUrl}`;
+        ? `/organisations/${item.id}/verify?${_returnUrl}`
+        : `/organisations/${item.id}/info?${_returnUrl}`;
 
   const updateStatus = useCallback(
     async (status: OrganizationStatus) => {
@@ -185,7 +185,7 @@ export const OrganisationCardComponent: React.FC<{
                 {item?.status != "Deleted" && (
                   <li>
                     <Link
-                      href={`/organisations/${item?.id}/edit${_returnUrl}`}
+                      href={`/organisations/${item?.id}/edit?${_returnUrl}`}
                       className="flex flex-row items-center text-gray-dark hover:brightness-50"
                     >
                       <FaPencilAlt className="mr-2 h-3 w-3" />

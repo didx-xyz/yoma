@@ -15,10 +15,10 @@ import Select, { components, type ValueContainerProps } from "react-select";
 import Async from "react-select/async";
 import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 import { debounce } from "~/lib/utils";
-import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/[id]";
 import FilterBadges from "~/components/FilterBadges";
 import { getOrganisations } from "~/api/services/organisations";
 import type { OrganizationSearchResults } from "~/api/models/organisation";
+import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/dashboard";
 
 const ValueContainer = ({
   children,
@@ -157,9 +157,19 @@ export const OrganisationRowFilter: React.FC<{
   // debounce is used to prevent the API from being called too frequently
   const loadOpportunities = debounce(
     (inputValue: string, callback: (options: any) => void) => {
+      // Check if organizations are specified
+      if (
+        !searchFilter?.organizations ||
+        searchFilter.organizations.length === 0
+      ) {
+        // If no organizations, return an empty array
+        callback([]);
+        return;
+      }
+
       searchCriteriaOpportunities({
         opportunities: [],
-        organizations: searchFilter?.organizations ?? [],
+        organizations: searchFilter?.organizations,
         countries: null,
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
         published: null,
@@ -355,56 +365,58 @@ export const OrganisationRowFilter: React.FC<{
             </div>
 
             {/* CATEGORIES */}
-            {lookups_categories && (
-              <span className="w-full md:w-72">
-                <Controller
-                  name="categories"
-                  control={form.control}
-                  defaultValue={searchFilter?.categories}
-                  render={({ field: { onChange, value } }) => (
-                    <Select
-                      instanceId="categories"
-                      classNames={{
-                        control: () =>
-                          "input input-xs h-fit !border-none w-full md:w-72",
-                      }}
-                      isMulti={true}
-                      options={lookups_categories.map((c) => ({
-                        value: c.name,
-                        label: c.name,
-                      }))}
-                      // fix menu z-index issue
-                      menuPortalTarget={htmlRef}
-                      styles={{
-                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                      }}
-                      onChange={(val) => {
-                        // clear opportunities
-                        setValue("opportunities", []);
+            <span className="w-full md:w-72">
+              <Controller
+                name="categories"
+                control={form.control}
+                defaultValue={searchFilter?.categories}
+                render={({ field: { onChange, value } }) => (
+                  <Select
+                    instanceId="categories"
+                    classNames={{
+                      control: () =>
+                        "input input-xs h-fit !border-none w-full md:w-72",
+                    }}
+                    isMulti={true}
+                    options={lookups_categories?.map((c) => ({
+                      value: c.name,
+                      label: c.name,
+                    }))}
+                    // fix menu z-index issue
+                    menuPortalTarget={htmlRef}
+                    styles={{
+                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    }}
+                    onChange={(val) => {
+                      // clear opportunities
+                      setValue("opportunities", []);
 
-                        onChange(val.map((c) => c.value));
-                        void handleSubmit(onSubmitHandler)();
-                      }}
-                      value={lookups_categories
-                        .filter((c) => value?.includes(c.name))
-                        .map((c) => ({ value: c.name, label: c.name }))}
-                      placeholder="Category"
-                      components={{
-                        ValueContainer,
-                      }}
-                    />
-                  )}
-                />
-
-                {formState.errors.categories && (
-                  <label className="label font-bold">
-                    <span className="label-text-alt italic text-red-500">
-                      {`${formState.errors.categories.message}`}
-                    </span>
-                  </label>
+                      onChange(val.map((c) => c.value));
+                      void handleSubmit(onSubmitHandler)();
+                    }}
+                    value={
+                      lookups_categories
+                        ? lookups_categories
+                            .filter((c) => value?.includes(c.name))
+                            .map((c) => ({ value: c.name, label: c.name }))
+                        : null
+                    }
+                    placeholder="Category"
+                    components={{
+                      ValueContainer,
+                    }}
+                  />
                 )}
-              </span>
-            )}
+              />
+
+              {formState.errors.categories && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {`${formState.errors.categories.message}`}
+                  </span>
+                </label>
+              )}
+            </span>
           </div>
         </div>
       </form>
