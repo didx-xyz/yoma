@@ -139,121 +139,137 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       }
 
       // Certificate validation
-      if (!values.certificate) {
-        ctx.addIssue({
-          message: "Please upload a certificate.",
-          code: z.ZodIssueCode.custom,
-          path: ["certificate"],
-          fatal: true,
-        });
-      } else {
-        const fileType = values.certificate.type;
-        if (
-          fileType &&
-          ![...ACCEPTED_DOC_TYPES, ...ACCEPTED_IMAGE_TYPES].includes(fileType)
-        ) {
+      if (
+        opportunityInfo?.verificationTypes?.find((x) => x.type == "FileUpload")
+      ) {
+        if (!values.certificate) {
           ctx.addIssue({
-            message: `Certificate file type not supported. Please upload a file of type ${[
-              ...ACCEPTED_DOC_TYPES,
-              ...ACCEPTED_IMAGE_TYPES,
-            ].join(", ")}.`,
+            message: "Please upload a certificate.",
             code: z.ZodIssueCode.custom,
             path: ["certificate"],
             fatal: true,
           });
-        }
-        if (
-          values.certificate.size &&
-          values.certificate.size > MAX_FILE_SIZE
-        ) {
-          ctx.addIssue({
-            message: `Certificate file size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
-            code: z.ZodIssueCode.custom,
-            path: ["certificate"],
-            fatal: true,
-          });
+        } else {
+          const fileType = values.certificate.type;
+          if (
+            fileType &&
+            ![...ACCEPTED_DOC_TYPES, ...ACCEPTED_IMAGE_TYPES].includes(fileType)
+          ) {
+            ctx.addIssue({
+              message: `Certificate file type not supported. Please upload a file of type ${[
+                ...ACCEPTED_DOC_TYPES,
+                ...ACCEPTED_IMAGE_TYPES,
+              ].join(", ")}.`,
+              code: z.ZodIssueCode.custom,
+              path: ["certificate"],
+              fatal: true,
+            });
+          }
+          if (
+            values.certificate.size &&
+            values.certificate.size > MAX_FILE_SIZE
+          ) {
+            ctx.addIssue({
+              message: `Certificate file size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
+              code: z.ZodIssueCode.custom,
+              path: ["certificate"],
+              fatal: true,
+            });
+          }
         }
       }
 
       // Picture validation
-      if (!values.picture) {
-        ctx.addIssue({
-          message: "Please upload a picture.",
-          code: z.ZodIssueCode.custom,
-          path: ["picture"],
-          fatal: true,
-        });
-      } else {
-        const fileType = values.picture.type;
-        if (fileType && !ACCEPTED_IMAGE_TYPES.includes(fileType)) {
+      if (
+        opportunityInfo?.verificationTypes?.find((x) => x.type == "Picture")
+      ) {
+        if (!values.picture) {
           ctx.addIssue({
-            message: `Picture file type not supported. Please upload a file of type ${ACCEPTED_IMAGE_TYPES_LABEL.join(
-              ", ",
-            )}.`,
+            message: "Please upload a picture.",
             code: z.ZodIssueCode.custom,
             path: ["picture"],
             fatal: true,
           });
-        }
-        if (values.picture.size && values.picture.size > MAX_FILE_SIZE) {
-          ctx.addIssue({
-            message: `Picture file size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
-            code: z.ZodIssueCode.custom,
-            path: ["picture"],
-            fatal: true,
-          });
+        } else {
+          const fileType = values.picture.type;
+          if (fileType && !ACCEPTED_IMAGE_TYPES.includes(fileType)) {
+            ctx.addIssue({
+              message: `Picture file type not supported. Please upload a file of type ${ACCEPTED_IMAGE_TYPES_LABEL.join(
+                ", ",
+              )}.`,
+              code: z.ZodIssueCode.custom,
+              path: ["picture"],
+              fatal: true,
+            });
+          }
+          if (values.picture.size && values.picture.size > MAX_FILE_SIZE) {
+            ctx.addIssue({
+              message: `Picture file size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
+              code: z.ZodIssueCode.custom,
+              path: ["picture"],
+              fatal: true,
+            });
+          }
         }
       }
 
       // VoiceNote validation
-      if (!values.voiceNote) {
-        ctx.addIssue({
-          message: "Please upload a voice note.",
-          code: z.ZodIssueCode.custom,
-          path: ["voiceNote"],
-          fatal: true,
-        });
-      } else {
-        const fileType = values.voiceNote.type;
-        if (fileType && !ACCEPTED_AUDIO_TYPES.includes(fileType)) {
+      if (
+        opportunityInfo?.verificationTypes?.find((x) => x.type == "VoiceNote")
+      ) {
+        if (!values.voiceNote) {
           ctx.addIssue({
-            message: `Voice note file type not supported. Please upload a file of type ${ACCEPTED_AUDIO_TYPES_LABEL.join(
-              ", ",
-            )}.`,
+            message: "Please upload a voice note.",
             code: z.ZodIssueCode.custom,
             path: ["voiceNote"],
             fatal: true,
           });
-        }
-        if (values.voiceNote.size && values.voiceNote.size > MAX_FILE_SIZE) {
-          ctx.addIssue({
-            message: `Voice note file size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
-            code: z.ZodIssueCode.custom,
-            path: ["voiceNote"],
-            fatal: true,
-          });
+        } else {
+          const fileType = values.voiceNote.type;
+          if (fileType && !ACCEPTED_AUDIO_TYPES.includes(fileType)) {
+            ctx.addIssue({
+              message: `Voice note file type not supported. Please upload a file of type ${ACCEPTED_AUDIO_TYPES_LABEL.join(
+                ", ",
+              )}.`,
+              code: z.ZodIssueCode.custom,
+              path: ["voiceNote"],
+              fatal: true,
+            });
+          }
+          if (values.voiceNote.size && values.voiceNote.size > MAX_FILE_SIZE) {
+            ctx.addIssue({
+              message: `Voice note file size should not exceed ${MAX_FILE_SIZE_LABEL}.`,
+              code: z.ZodIssueCode.custom,
+              path: ["voiceNote"],
+              fatal: true,
+            });
+          }
         }
       }
 
       // Geometry validation
-      if (!values.geometry) {
-        ctx.addIssue({
-          message: "Please select a location from the map.",
-          code: z.ZodIssueCode.custom,
-          path: ["geometry"],
-          fatal: true,
-        });
-      } else if (
-        !values.geometry.coordinates ||
-        !Array.isArray(values.geometry.coordinates) ||
-        values.geometry.coordinates.length === 0
+      if (
+        opportunityInfo?.verificationTypes?.find((x) => x.type == "Location")
       ) {
-        ctx.addIssue({
-          message: "The selected location is invalid.",
-          code: z.ZodIssueCode.custom,
-          path: ["geometry"],
-          fatal: true,
-        });
+        if (!values.geometry) {
+          ctx.addIssue({
+            message: "Please select a location from the map.",
+            code: z.ZodIssueCode.custom,
+            path: ["geometry"],
+            fatal: true,
+          });
+        } else if (
+          !values.geometry.coordinates ||
+          !Array.isArray(values.geometry.coordinates) ||
+          values.geometry.coordinates.length === 0
+        ) {
+          ctx.addIssue({
+            message: "The selected location is invalid.",
+            code: z.ZodIssueCode.custom,
+            path: ["geometry"],
+            fatal: true,
+          });
+        }
       }
 
       // Feedback validation

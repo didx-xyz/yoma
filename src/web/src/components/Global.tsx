@@ -269,12 +269,22 @@ export const Global: React.FC = () => {
       }
 
       // check for "current" organisation page (contains organisation id in route)
-      const matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
+      let matches = router.asPath.match(/\/organisations\/([a-z0-9-]{36})/);
+
+      let orgId = null;
 
       if (matches && matches.length > 1) {
-        const orgId = matches[1];
-        if (!orgId) return;
-
+        orgId = matches[1];
+      } else {
+        // check for "current" organisation dashboard page (contains organisation ids in querystring)
+        matches = router.asPath.match(
+          /\/organisations\/dashboard\?organisations=([a-z0-9-]{36})/,
+        );
+        if (matches && matches.length > 1) {
+          orgId = matches[1];
+        }
+      }
+      if (orgId) {
         // override the active navigation role view if admin of the organisation
         if (session.user.adminsOf.includes(orgId)) {
           setActiveNavigationRoleViewAtom(RoleView.OrgAdmin);
