@@ -22,6 +22,7 @@ import { SignInButton } from "../SignInButton";
 import { SignOutButton } from "../SignOutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
+import { ROLE_ADMIN } from "~/lib/constants";
 
 const navBarLinksUser: TabItem[] = [
   {
@@ -117,6 +118,7 @@ export const Navbar: React.FC = () => {
   const userProfile = useAtomValue(userProfileAtom);
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
 
   // open/close drawer
   const onToggle = () => {
@@ -424,7 +426,7 @@ export const Navbar: React.FC = () => {
                       </>
                     )}
 
-                    {/* {(activeRoleView == RoleView.Admin || isAdmin) && (
+                    {(activeRoleView == RoleView.Admin || isAdmin) && (
                       <>
                         <ul className="menu grow p-0">
                           <li
@@ -447,7 +449,7 @@ export const Navbar: React.FC = () => {
 
                         <div className="divider my-2 grow-0 !bg-gray" />
                       </>
-                    )} */}
+                    )}
 
                     {!session && (
                       <SignInButton

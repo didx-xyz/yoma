@@ -177,6 +177,7 @@ const StoreRuleDetails: NextPageWithLayout<{
         pageSize: MAX_INT32,
         statuses: ["Active"],
         valueContains: "",
+        organizations: null,
       }),
     enabled: !error,
   });
@@ -642,7 +643,7 @@ const StoreRuleDetails: NextPageWithLayout<{
       debounce(() => {
         searchCriteriaOpportunities({
           opportunities: [],
-          organization: watchOrganizationId ?? null,
+          organizations: watchOrganizationId ? [watchOrganizationId] : null,
           countries: watchCountry
             ? [
                 dataCountries?.find((x) => x.codeAlpha2 === watchCountry)?.id ??

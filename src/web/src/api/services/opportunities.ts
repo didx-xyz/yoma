@@ -49,14 +49,14 @@ export const getCategories = async (
 
 // this is used for orgAdmin dashboards, admin pages etc
 export const getCategoriesAdmin = async (
-  organizations: string[],
+  organizations: string[] | null,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<OpportunityCategory[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   let query = "";
   if (organizations && organizations.length > 0) {
     const params = new URLSearchParams();
-    organizations.forEach((org) => params.append("organizations", org));
+    organizations.forEach((org: string) => params.append("organizations", org));
     query = `?${params.toString()}`;
   }
   const { data } = await instance.get<OpportunityCategory[]>(
@@ -67,25 +67,36 @@ export const getCategoriesAdmin = async (
 
 // this is used for orgAdmin dashboards, admin pages etc
 export const getCountriesAdmin = async (
-  organisationId: string | null,
+  organizations: string[] | null,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Country[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  let query = "";
+  if (organizations && organizations.length > 0) {
+    const params = new URLSearchParams();
+    organizations.forEach((org: string) => params.append("organizations", org));
+    query = `?${params.toString()}`;
+  }
   const { data } = await instance.get<Country[]>(
-    `/opportunity/search/filter/country/admin${
-      organisationId ? `?organizationId=${organisationId}` : ""
-    }`,
+    `/opportunity/search/filter/country/admin${query}`,
   );
   return data;
 };
 
 // this is used for orgAdmin dashboards, admin pages etc
 export const getLanguagesAdmin = async (
+  organizations: string[] | null,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Language[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
+  let query = "";
+  if (organizations && organizations.length > 0) {
+    const params = new URLSearchParams();
+    organizations.forEach((org: string) => params.append("organizations", org));
+    query = `?${params.toString()}`;
+  }
   const { data } = await instance.get<Language[]>(
-    `/opportunity/search/filter/language/admin`,
+    `/opportunity/search/filter/language/admin${query}`,
   );
   return data;
 };
