@@ -18,7 +18,7 @@ import FilterBadges from "~/components/FilterBadges";
 import { PAGE_SIZE_MEDIUM, ROLE_ADMIN } from "~/lib/constants";
 import { debounce, toISOStringForTimezone } from "~/lib/utils";
 import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/dashboard";
-import { User } from "~/server/auth";
+import type { User } from "~/server/auth";
 
 const ValueContainer = ({
   children,
