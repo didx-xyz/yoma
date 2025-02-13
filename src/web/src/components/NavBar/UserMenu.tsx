@@ -349,7 +349,7 @@ export const UserMenu: React.FC = () => {
                 </div>
 
                 {/* PASSPORT */}
-                <div className="flex w-full flex-col gap-2 pb-12">
+                <div className="flex w-full flex-col gap-2">
                   <div className="flex items-center justify-between">
                     <button
                       onClick={toggleCollapsePassport}
@@ -389,7 +389,9 @@ export const UserMenu: React.FC = () => {
                     Open Passport
                     <FaArrowRight className="h-4 w-4" />
                   </Link>
-                  <span></span>
+                </div>
+                <div className="flex w-full flex-col gap-2">
+                  <div className="divider my-4 !bg-gray" />
                   <SignOutButton />
                 </div>
               </div>
