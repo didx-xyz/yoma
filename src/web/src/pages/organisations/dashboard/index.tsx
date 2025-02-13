@@ -9,7 +9,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import iconBookmark from "public/images/icon-completions-green.svg";
 import iconSkills from "public/images/icon-skills-green.svg";
-import iconZlto from "public/images/icon-zlto-green.svg";
+import iconZltoGreen from "public/images/icon-zlto-green.svg";
+import iconZlto from "public/images/icon-zlto.svg";
 import {
   useCallback,
   useEffect,
@@ -66,7 +67,6 @@ import { Header } from "~/components/Common/Header";
 import Suspense from "~/components/Common/Suspense";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { EngagementRowFilter } from "~/components/Organisation/Dashboard/EngagementRowFilter";
 import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
@@ -754,7 +754,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground className="h-[484px] md:h-[442px] lg:h-[442px]" />
+      <PageBackground className="h-[440px] md:h-[446px] lg:h-[446px]" />
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
@@ -883,9 +883,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             {/* WELCOME MSG */}
             <div className="overflow-hidden text-ellipsis whitespace-nowrap pt-1 text-xl font-semibold text-white md:text-2xl">
               {timeOfDayEmoji} Good {timeOfDay}&nbsp;
-              <span className="overflow-hiddenx text-ellipsisx">
-                {user?.name}!
-              </span>
+              {user?.name}!
             </div>
 
             {/* DESCRIPTION */}
@@ -948,10 +946,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           </Suspense>
 
           {!searchFilter.organizations && (
-            <FormMessage
-              messageType={FormMessageType.Warning}
-              className="-mt-10"
-            >
+            <FormMessage messageType={FormMessageType.Warning}>
               Please select at least one organisation.
             </FormMessage>
           )}
@@ -1057,7 +1052,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         onSubmit={(e) => onSubmitFilter(e)}
                       />
 
-                      <div className="mt-2 flex flex-col gap-4 md:flex-row">
+                      <div className="mt-2 flex flex-col gap-4 xl:flex-row">
                         {/* VIEWED COMPLETED */}
                         {engagementData?.opportunities?.engagements && (
                           <LineChart
@@ -1068,87 +1063,85 @@ const OrganisationDashboard: NextPageWithLayout<{
                           />
                         )}
 
-                        <div className="flex flex-col gap-2">
-                          <div className="flex flex-col gap-4">
-                            {/* GOTO/COMPLETED CONVERSION RATE */}
-                            <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow md:w-[333px]">
-                              <div className="flex flex-row items-center gap-3">
-                                <div className="rounded-lg bg-green-light p-1">
-                                  <Image
-                                    src={iconBookmark}
-                                    alt="Icon Bookmark"
-                                    width={20}
-                                    height={20}
-                                    className="h-auto"
-                                    sizes="100vw"
-                                    priority={true}
-                                  />
-                                </div>
-                                <div className="text-sm font-semibold">
-                                  Go-To/Completed Conversion Ratio
-                                </div>
+                        <div className="flex h-full flex-col gap-4 sm:flex-row lg:flex-col">
+                          {/* GOTO/COMPLETED CONVERSION RATE */}
+                          <div className="flex h-full min-h-[185px] w-full min-w-[310px] flex-col gap-4 rounded-lg bg-white p-4 shadow">
+                            <div className="flex flex-row items-center gap-3">
+                              <div className="rounded-lg bg-green-light p-1">
+                                <Image
+                                  src={iconBookmark}
+                                  alt="Icon Bookmark"
+                                  width={20}
+                                  height={20}
+                                  className="h-auto"
+                                  sizes="100vw"
+                                  priority={true}
+                                />
                               </div>
-
-                              <div className="flex flex-grow flex-col">
-                                <div className="flex flex-grow flex-nowrap items-center gap-2 text-lg font-semibold tracking-tighter md:text-2xl">
-                                  <div>
-                                    {`${engagementData?.opportunities?.conversionRate?.viewedToNavigatedExternalLinkPercentage ?? 0} %`}
-                                  </div>
-                                  <div>
-                                    <FcAdvance className="size-10 text-green" />
-                                  </div>
-                                  <div>
-                                    {`${engagementData?.opportunities?.conversionRate?.navigatedExternalLinkToCompletedPercentage ?? 0} %`}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="flex flex-row gap-1 text-xs text-gray-dark">
-                                <IoMdInformationCircleOutline className="size-4 text-blue" />
-                                Tracking started on{" "}
-                                <div className="font-bold italic underline">
-                                  14 June 2024
-                                </div>
-                              </div>
-
-                              <div>
-                                <button
-                                  type="button"
-                                  className="tooltip tooltip-top tooltip-secondary text-xs text-blue"
-                                  data-tip="This displays the percentage of users who viewed the
-                            content and clicked on an external link, and the
-                            percentage of users who clicked the external link
-                            and completed the process."
-                                >
-                                  Learn more
-                                </button>
+                              <div className="text-sm font-semibold">
+                                Go-To/Completed Conversion Ratio
                               </div>
                             </div>
 
-                            {/* OVERALL CONVERSION RATE */}
-                            {engagementData?.opportunities?.conversionRate && (
-                              <PieChart
-                                id="conversionRate"
-                                title="Overall Conversion Ratio"
-                                subTitle=""
-                                colors={CHART_COLORS}
-                                data={[
-                                  ["Completed", "Viewed"],
-                                  [
-                                    "Completed",
-                                    engagementData.opportunities.conversionRate
-                                      .completedCount,
-                                  ],
-                                  [
-                                    "Viewed",
-                                    engagementData.opportunities.conversionRate
-                                      .viewedCount,
-                                  ],
-                                ]}
-                                className="h-[185px] w-full md:w-[332px]"
-                              />
-                            )}
+                            <div className="flex flex-grow flex-col">
+                              <div className="flex flex-grow flex-nowrap items-center gap-2 text-lg font-semibold tracking-tighter md:text-2xl">
+                                <div>
+                                  {`${engagementData?.opportunities?.conversionRate?.viewedToNavigatedExternalLinkPercentage ?? 0} %`}
+                                </div>
+                                <div>
+                                  <FcAdvance className="size-10 text-green" />
+                                </div>
+                                <div>
+                                  {`${engagementData?.opportunities?.conversionRate?.navigatedExternalLinkToCompletedPercentage ?? 0} %`}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-row gap-1 text-xs text-gray-dark">
+                              <IoMdInformationCircleOutline className="size-4 text-blue" />
+                              Tracking started on{" "}
+                              <div className="font-bold italic underline">
+                                14 June 2024
+                              </div>
+                            </div>
+
+                            <div>
+                              <button
+                                type="button"
+                                className="tooltip tooltip-top tooltip-secondary text-xs text-blue"
+                                data-tip="This displays the percentage of users who viewed the
+                            content and clicked on an external link, and the
+                            percentage of users who clicked the external link
+                            and completed the process."
+                              >
+                                Learn more
+                              </button>
+                            </div>
                           </div>
+
+                          {/* OVERALL CONVERSION RATE */}
+                          {engagementData?.opportunities?.conversionRate && (
+                            <PieChart
+                              id="conversionRate"
+                              title="Overall Conversion Ratio"
+                              subTitle=""
+                              colors={CHART_COLORS}
+                              data={[
+                                ["Completed", "Viewed"],
+                                [
+                                  "Completed",
+                                  engagementData.opportunities.conversionRate
+                                    .completedCount,
+                                ],
+                                [
+                                  "Viewed",
+                                  engagementData.opportunities.conversionRate
+                                    .viewedCount,
+                                ],
+                              ]}
+                              className="!h-full !min-h-[185px] !w-full min-w-[310px]"
+                            />
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1166,7 +1159,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           <div className="flex flex-row items-center gap-3">
                             <div className="rounded-lg bg-green-light p-1">
                               <Image
-                                src={iconZlto}
+                                src={iconZltoGreen}
                                 alt="Icon Zlto"
                                 width={20}
                                 height={20}
@@ -1181,7 +1174,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           </div>
                           <div className="-ml-1 mt-4 flex flex-grow items-center gap-2">
                             <Image
-                              src={iconZlto}
+                              src={iconZltoGreen}
                               alt="Icon Zlto"
                               width={35}
                               height={35}
@@ -1253,7 +1246,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                     <div className="flex flex-col gap-4 md:flex-row">
                       {/* COUNTRIES */}
-                      <div className="h-full rounded-lg bg-white p-4 shadow">
+                      <div className="h-full w-full rounded-lg bg-white p-4 shadow">
                         {engagementData?.demographics?.countries?.items && (
                           <WorldMapChart
                             data={[
@@ -1377,9 +1370,19 @@ const OrganisationDashboard: NextPageWithLayout<{
                                             : "N/A"}
                                         </td>
                                         <td className="text-center">
-                                          <ZltoRewardBadge
-                                            amount={youthInfo.zltoRewardTotal}
-                                          />
+                                          <div className="badge bg-orange-light text-orange">
+                                            <Image
+                                              src={iconZlto}
+                                              alt="Icon Zlto"
+                                              width={16}
+                                              className="h-auto"
+                                              sizes="100vw"
+                                              priority={true}
+                                            />
+                                            <span className="ml-1">
+                                              {youthInfo.zltoRewardTotal}
+                                            </span>
+                                          </div>
                                         </td>
                                         <td className="text-center">
                                           <button

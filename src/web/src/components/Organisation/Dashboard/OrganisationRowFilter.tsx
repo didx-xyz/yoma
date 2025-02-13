@@ -109,7 +109,8 @@ export const OrganisationRowFilter: React.FC<{
       if (onSubmit) {
         const mergedData = {
           ...searchFilter, // Keep existing filter values
-          organizations: data.organizations,
+          // don't clear organisations if orgAdmin
+          ...(isAdmin ? { organizations: data.organizations } : {}),
           opportunities: data.opportunities,
           categories: data.categories,
           startDate: data.startDate,
@@ -118,7 +119,7 @@ export const OrganisationRowFilter: React.FC<{
         onSubmit(mergedData as OrganizationSearchFilterSummaryViewModel);
       }
     },
-    [onSubmit, searchFilter],
+    [onSubmit, searchFilter, isAdmin],
   );
 
   // load data asynchronously for the organisations dropdown
@@ -437,6 +438,7 @@ export const OrganisationRowFilter: React.FC<{
             "pageSize",
             "organization",
             "countries",
+            ...(isAdmin ? [] : ["organizations"]), // Exclude organizations if not admin
           ]}
           resolveValue={(key, value) => {
             if (key === "startDate" || key === "endDate")
