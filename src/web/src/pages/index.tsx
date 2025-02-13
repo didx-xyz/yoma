@@ -144,7 +144,7 @@ const Home: NextPageWithLayout = () => {
           <h2 className="text-2xl font-semibold tracking-wide text-black">
             Our mission
           </h2>
-          <p className="w-60 text-center text-sm text-gray-dark lg:w-full">
+          <p className="w-60 text-center text-gray-dark lg:w-full">
             We&apos;re here to help you grow, make a positive difference, and
             thrive.
           </p>
@@ -209,7 +209,7 @@ const Home: NextPageWithLayout = () => {
               </div>
             </div>
 
-            <div className="z-10 mt-[26px] p-2">
+            <div className="z-10 mt-[34px] p-2">
               <h3 className="font-semibold">Impact</h3>
               <p className="mt-2 leading-7 text-gray-dark">
                 Make a difference in your community, and build your profile by
@@ -232,7 +232,7 @@ const Home: NextPageWithLayout = () => {
               </div>
             </div>
 
-            <div className="z-10 -mt-[6px] p-2">
+            <div className="z-10 -mt-[4px] p-2">
               <h3 className="font-semibold">Thrive</h3>
               <p className="mt-2 leading-7 text-gray-dark">
                 Track your progress on Yoma YoID and unlock new skills by
@@ -309,7 +309,7 @@ const Home: NextPageWithLayout = () => {
             <h1 className="text-center text-base font-semibold">
               Passionate about youth empowerment?
             </h1>
-            <p className="flex-grow text-center text-sm text-gray-dark">
+            <p className="flex-grow text-center text-gray-dark lg:text-sm">
               Collaborate with your community, find and complete opportunities,
               win prizes!
             </p>
@@ -354,7 +354,7 @@ const Home: NextPageWithLayout = () => {
             <h1 className="text-center text-base font-semibold">
               Looking for a more simple experience?
             </h1>
-            <p className="flex-grow text-center text-sm text-gray-dark">
+            <p className="flex-grow text-center text-gray-dark lg:text-sm">
               Less features, less data. Find and complete opportunities, and
               redeem for reward on the marketplace.
             </p>
@@ -388,7 +388,7 @@ const Home: NextPageWithLayout = () => {
             <div className="mt-6 flex rounded-full bg-orange px-6 py-2 text-xs font-semibold uppercase text-white">
               Coming soon
             </div>
-            <p className="flex-grow pt-6 text-center text-sm text-gray-dark">
+            <p className="flex-grow pt-6 text-center text-gray-dark lg:text-sm">
               Our AI chatbot will let you into the system with almost no data!
             </p>
           </div>
@@ -401,7 +401,7 @@ const Home: NextPageWithLayout = () => {
               <h2 className="text-2xl font-semibold text-black">
                 How do I earn rewards?
               </h2>
-              <p className="text-sm leading-6 text-gray-dark">
+              <p className="leading-6 text-gray-dark">
                 After you&apos;ve successfully completed opportunities with our
                 partners, return to Yoma, upload the necessary verification
                 documents for the opportunity, and get ready to enjoy some
@@ -421,7 +421,7 @@ const Home: NextPageWithLayout = () => {
                   zIndex: 1,
                 }}
               />
-              <p className="-mt-4 text-sm leading-6 text-gray-dark lg:-mt-0">
+              <p className="-mt-4 leading-6 text-gray-dark lg:-mt-0">
                 Zlto is Yoma&apos;s fantastic reward currency. Redeem your
                 hard-earned rewards in the Marketplace and experience the
                 incredible benefits that await you!
@@ -481,7 +481,7 @@ const Home: NextPageWithLayout = () => {
         {/* GRAY BACKGROUND */}
         <div className="mt-10 flex w-screen justify-center bg-gray bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat md:h-[560px] lg:mt-8 lg:h-[420px]">
           <div className="flex w-full flex-col md:max-w-lg lg:max-w-5xl lg:flex-row">
-            <div className="flex flex-col items-center justify-center md:items-start lg:w-1/2">
+            <div className="flex flex-col items-center justify-center md:items-start lg:w-full">
               <div className="relative -mt-14 mr-auto flex scale-[0.75] flex-col md:scale-100 lg:-mt-80">
                 <MarketplaceCard
                   title="R100 airtime"
@@ -500,12 +500,12 @@ const Home: NextPageWithLayout = () => {
                 </div>
               </div>
             </div>
-            <div className="mt-20 flex flex-col items-center justify-center px-6 py-8 md:mt-32 lg:-mt-10 lg:ml-[11.5rem] lg:py-0">
+            <div className="mt-20 flex flex-col items-center justify-center px-6 py-8 md:mt-32 lg:-mt-10 lg:ml-[11.5rem] lg:w-full lg:py-0">
               <div className="flex flex-col items-center gap-4 lg:items-start">
                 <h2 className="text-2xl font-semibold text-black">
                   Yoma Marketplace
                 </h2>
-                <p className="text-center text-sm text-gray-dark lg:text-left">
+                <p className="text-center text-gray-dark lg:text-left">
                   Unlock the power of your Zlto rewards in the Yoma marketplace!
                   Treat yourself to selected products like airtime and data.
                 </p>
