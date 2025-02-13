@@ -33,7 +33,7 @@ import { PassportCard } from "../YoID/PassportCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
 import { YoIdModal } from "../YoID/YoIdModal";
-
+import { SignOutButton } from "../SignOutButton";
 export const UserMenu: React.FC = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const onToggle = () => setDrawerOpen(!isDrawerOpen);
@@ -389,6 +389,8 @@ export const UserMenu: React.FC = () => {
                     Open Passport
                     <FaArrowRight className="h-4 w-4" />
                   </Link>
+                  <span></span>
+                  <SignOutButton />
                 </div>
               </div>
             </div>
