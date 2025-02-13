@@ -12,35 +12,26 @@ const FilterBadges: React.FC<{
     ([key, value]) => !excludeKeys.includes(key) && value,
   );
 
-  // function to handle removing an item from an array in the filter object
-  const removeFromArray = useCallback(
-    (key: string, item: string) => {
+  const removeFilter = useCallback(
+    (key: string, item?: string) => {
       if (!searchFilter || !onSubmit) return;
-      if (searchFilter) {
-        const updatedFilter: any = {
-          ...searchFilter,
-        };
+
+      const updatedFilter: any = { ...searchFilter };
+
+      if (Array.isArray(searchFilter[key])) {
+        // Handle array values (remove a specific item from the array)
         updatedFilter[key] = updatedFilter[key]?.filter(
           (val: any) => val !== item,
         );
-        onSubmit(updatedFilter);
+      } else {
+        // Handle single values (set the value to null)
+        updatedFilter[key] = null;
       }
+
+      onSubmit(updatedFilter);
     },
     [searchFilter, onSubmit],
   );
-
-  // function to handle removing a value from the filter object
-  // const removeValue = useCallback(
-  //   (key: string) => {
-  //     if (!searchFilter || !onSubmit) return;
-  //     if (searchFilter) {
-  //       const updatedFilter = { ...searchFilter };
-  //       updatedFilter[key] = null;
-  //       onSubmit(updatedFilter);
-  //     }
-  //   },
-  //   [searchFilter, onSubmit],
-  // );
 
   return (
     <div className="relative flex justify-start">
@@ -49,20 +40,18 @@ const FilterBadges: React.FC<{
           const renderBadge = (item: string) => {
             const lookup = resolveValue(key, item);
             return (
-              <div
+              <button
+                type="button"
                 key={`searchFilter_filter_badge_${key}_${item}`}
-                className="flex h-6 max-w-[200px] select-none items-center justify-between rounded-md border-none bg-green-light p-2 text-green"
+                className="justify-betweenx flex h-6 max-w-[200px] select-none items-center rounded-md border-none bg-green-light p-2 text-green"
+                onClick={() => removeFilter(key, item)}
               >
-                <p className="truncate text-center text-xs font-semibold">
+                <p className="mr-2 truncate text-center text-xs font-semibold">
                   {lookup ?? ""}
                 </p>
-                <button
-                  className="btn h-fit w-fit border-none p-0 shadow-none"
-                  onClick={() => removeFromArray(key, item)}
-                >
-                  <IoIosClose className="h-6 w-6" />
-                </button>
-              </div>
+
+                <IoIosClose className="h-6 w-6 shrink-0" />
+              </button>
             );
           };
 
@@ -76,17 +65,17 @@ const FilterBadges: React.FC<{
 
         {/* clear all button */}
         {filteredKeys.length > 0 && (
-          <div className="flex h-6 max-w-[200px] select-none items-center justify-between rounded-md border-none bg-gray p-2 text-gray-dark">
-            <p className="truncate text-center text-xs font-semibold">
+          <button
+            type="button"
+            className="flex h-6 max-w-[200px] select-none items-center justify-between rounded-md border-none bg-gray p-2 text-gray-dark"
+            onClick={() => onSubmit({})}
+          >
+            <p className="mr-2 truncate text-center text-xs font-semibold">
               Clear All
             </p>
-            <button
-              className="btn h-fit w-fit border-none p-0 shadow-none"
-              onClick={() => onSubmit({})}
-            >
-              <IoIosClose className="h-6 w-6" />
-            </button>
-          </div>
+
+            <IoIosClose className="h-6 w-6" />
+          </button>
         )}
       </CustomSlider>
     </div>

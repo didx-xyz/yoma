@@ -9,7 +9,8 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import iconBookmark from "public/images/icon-completions-green.svg";
 import iconSkills from "public/images/icon-skills-green.svg";
-import iconZlto from "public/images/icon-zlto-green.svg";
+import iconZltoGreen from "public/images/icon-zlto-green.svg";
+import iconZlto from "public/images/icon-zlto.svg";
 import {
   useCallback,
   useEffect,
@@ -66,7 +67,6 @@ import { Header } from "~/components/Common/Header";
 import Suspense from "~/components/Common/Suspense";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import ZltoRewardBadge from "~/components/Opportunity/Badges/ZltoRewardBadge";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { EngagementRowFilter } from "~/components/Organisation/Dashboard/EngagementRowFilter";
 import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
@@ -946,10 +946,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           </Suspense>
 
           {!searchFilter.organizations && (
-            <FormMessage
-              messageType={FormMessageType.Warning}
-              className="-mt-10"
-            >
+            <FormMessage messageType={FormMessageType.Warning}>
               Please select at least one organisation.
             </FormMessage>
           )}
@@ -1162,7 +1159,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           <div className="flex flex-row items-center gap-3">
                             <div className="rounded-lg bg-green-light p-1">
                               <Image
-                                src={iconZlto}
+                                src={iconZltoGreen}
                                 alt="Icon Zlto"
                                 width={20}
                                 height={20}
@@ -1177,7 +1174,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           </div>
                           <div className="-ml-1 mt-4 flex flex-grow items-center gap-2">
                             <Image
-                              src={iconZlto}
+                              src={iconZltoGreen}
                               alt="Icon Zlto"
                               width={35}
                               height={35}
@@ -1373,9 +1370,19 @@ const OrganisationDashboard: NextPageWithLayout<{
                                             : "N/A"}
                                         </td>
                                         <td className="text-center">
-                                          <ZltoRewardBadge
-                                            amount={youthInfo.zltoRewardTotal}
-                                          />
+                                          <div className="badge bg-orange-light text-orange">
+                                            <Image
+                                              src={iconZlto}
+                                              alt="Icon Zlto"
+                                              width={16}
+                                              className="h-auto"
+                                              sizes="100vw"
+                                              priority={true}
+                                            />
+                                            <span className="ml-1">
+                                              {youthInfo.zltoRewardTotal}
+                                            </span>
+                                          </div>
                                         </td>
                                         <td className="text-center">
                                           <button
