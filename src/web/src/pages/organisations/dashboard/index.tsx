@@ -754,7 +754,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground className="h-[484px] md:h-[442px] lg:h-[442px]" />
+      <PageBackground className="h-[440px] md:h-[446px] lg:h-[446px]" />
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
@@ -883,9 +883,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             {/* WELCOME MSG */}
             <div className="overflow-hidden text-ellipsis whitespace-nowrap pt-1 text-xl font-semibold text-white md:text-2xl">
               {timeOfDayEmoji} Good {timeOfDay}&nbsp;
-              <span className="overflow-hiddenx text-ellipsisx">
-                {user?.name}!
-              </span>
+              {user?.name}!
             </div>
 
             {/* DESCRIPTION */}
@@ -1057,7 +1055,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         onSubmit={(e) => onSubmitFilter(e)}
                       />
 
-                      <div className="mt-2 flex flex-col gap-4 md:flex-row">
+                      <div className="mt-2 flex flex-col gap-4 xl:flex-row">
                         {/* VIEWED COMPLETED */}
                         {engagementData?.opportunities?.engagements && (
                           <LineChart
@@ -1068,87 +1066,85 @@ const OrganisationDashboard: NextPageWithLayout<{
                           />
                         )}
 
-                        <div className="flex flex-col gap-2">
-                          <div className="flex flex-col gap-4">
-                            {/* GOTO/COMPLETED CONVERSION RATE */}
-                            <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow md:w-[333px]">
-                              <div className="flex flex-row items-center gap-3">
-                                <div className="rounded-lg bg-green-light p-1">
-                                  <Image
-                                    src={iconBookmark}
-                                    alt="Icon Bookmark"
-                                    width={20}
-                                    height={20}
-                                    className="h-auto"
-                                    sizes="100vw"
-                                    priority={true}
-                                  />
-                                </div>
-                                <div className="text-sm font-semibold">
-                                  Go-To/Completed Conversion Ratio
-                                </div>
+                        <div className="flex h-full flex-col gap-4 sm:flex-row lg:flex-col">
+                          {/* GOTO/COMPLETED CONVERSION RATE */}
+                          <div className="flex h-full min-h-[185px] w-full min-w-[310px] flex-col gap-4 rounded-lg bg-white p-4 shadow">
+                            <div className="flex flex-row items-center gap-3">
+                              <div className="rounded-lg bg-green-light p-1">
+                                <Image
+                                  src={iconBookmark}
+                                  alt="Icon Bookmark"
+                                  width={20}
+                                  height={20}
+                                  className="h-auto"
+                                  sizes="100vw"
+                                  priority={true}
+                                />
                               </div>
-
-                              <div className="flex flex-grow flex-col">
-                                <div className="flex flex-grow flex-nowrap items-center gap-2 text-lg font-semibold tracking-tighter md:text-2xl">
-                                  <div>
-                                    {`${engagementData?.opportunities?.conversionRate?.viewedToNavigatedExternalLinkPercentage ?? 0} %`}
-                                  </div>
-                                  <div>
-                                    <FcAdvance className="size-10 text-green" />
-                                  </div>
-                                  <div>
-                                    {`${engagementData?.opportunities?.conversionRate?.navigatedExternalLinkToCompletedPercentage ?? 0} %`}
-                                  </div>
-                                </div>
-                              </div>
-
-                              <div className="flex flex-row gap-1 text-xs text-gray-dark">
-                                <IoMdInformationCircleOutline className="size-4 text-blue" />
-                                Tracking started on{" "}
-                                <div className="font-bold italic underline">
-                                  14 June 2024
-                                </div>
-                              </div>
-
-                              <div>
-                                <button
-                                  type="button"
-                                  className="tooltip tooltip-top tooltip-secondary text-xs text-blue"
-                                  data-tip="This displays the percentage of users who viewed the
-                            content and clicked on an external link, and the
-                            percentage of users who clicked the external link
-                            and completed the process."
-                                >
-                                  Learn more
-                                </button>
+                              <div className="text-sm font-semibold">
+                                Go-To/Completed Conversion Ratio
                               </div>
                             </div>
 
-                            {/* OVERALL CONVERSION RATE */}
-                            {engagementData?.opportunities?.conversionRate && (
-                              <PieChart
-                                id="conversionRate"
-                                title="Overall Conversion Ratio"
-                                subTitle=""
-                                colors={CHART_COLORS}
-                                data={[
-                                  ["Completed", "Viewed"],
-                                  [
-                                    "Completed",
-                                    engagementData.opportunities.conversionRate
-                                      .completedCount,
-                                  ],
-                                  [
-                                    "Viewed",
-                                    engagementData.opportunities.conversionRate
-                                      .viewedCount,
-                                  ],
-                                ]}
-                                className="h-[185px] w-full md:w-[332px]"
-                              />
-                            )}
+                            <div className="flex flex-grow flex-col">
+                              <div className="flex flex-grow flex-nowrap items-center gap-2 text-lg font-semibold tracking-tighter md:text-2xl">
+                                <div>
+                                  {`${engagementData?.opportunities?.conversionRate?.viewedToNavigatedExternalLinkPercentage ?? 0} %`}
+                                </div>
+                                <div>
+                                  <FcAdvance className="size-10 text-green" />
+                                </div>
+                                <div>
+                                  {`${engagementData?.opportunities?.conversionRate?.navigatedExternalLinkToCompletedPercentage ?? 0} %`}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-row gap-1 text-xs text-gray-dark">
+                              <IoMdInformationCircleOutline className="size-4 text-blue" />
+                              Tracking started on{" "}
+                              <div className="font-bold italic underline">
+                                14 June 2024
+                              </div>
+                            </div>
+
+                            <div>
+                              <button
+                                type="button"
+                                className="tooltip tooltip-top tooltip-secondary text-xs text-blue"
+                                data-tip="This displays the percentage of users who viewed the
+                            content and clicked on an external link, and the
+                            percentage of users who clicked the external link
+                            and completed the process."
+                              >
+                                Learn more
+                              </button>
+                            </div>
                           </div>
+
+                          {/* OVERALL CONVERSION RATE */}
+                          {engagementData?.opportunities?.conversionRate && (
+                            <PieChart
+                              id="conversionRate"
+                              title="Overall Conversion Ratio"
+                              subTitle=""
+                              colors={CHART_COLORS}
+                              data={[
+                                ["Completed", "Viewed"],
+                                [
+                                  "Completed",
+                                  engagementData.opportunities.conversionRate
+                                    .completedCount,
+                                ],
+                                [
+                                  "Viewed",
+                                  engagementData.opportunities.conversionRate
+                                    .viewedCount,
+                                ],
+                              ]}
+                              className="!h-full !min-h-[185px] !w-full min-w-[310px]"
+                            />
+                          )}
                         </div>
                       </div>
                     </div>
@@ -1253,7 +1249,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                     <div className="flex flex-col gap-4 md:flex-row">
                       {/* COUNTRIES */}
-                      <div className="h-full rounded-lg bg-white p-4 shadow">
+                      <div className="h-full w-full rounded-lg bg-white p-4 shadow">
                         {engagementData?.demographics?.countries?.items && (
                           <WorldMapChart
                             data={[

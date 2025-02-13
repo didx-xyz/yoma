@@ -33,7 +33,7 @@ export const WorldMapChart: React.FC<{ data: GoogleChartData }> = ({
       data={data}
       options={options}
       loader={
-        <div className="flex w-full items-center justify-center">
+        <div className="flex h-full w-full items-center justify-center">
           <span className="loading loading-spinner loading-lg text-green"></span>
         </div>
       }

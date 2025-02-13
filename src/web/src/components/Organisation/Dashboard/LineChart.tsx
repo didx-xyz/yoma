@@ -117,7 +117,7 @@ export const LineChart: React.FC<{
   );
 
   return (
-    <div className="flex w-full flex-col justify-between gap-4 overflow-hidden rounded-lg bg-white pt-4 shadow md:w-[900px]">
+    <div className="flex w-full flex-col justify-between gap-4 overflow-hidden rounded-lg bg-white pt-4 shadow">
       <Legend />
       {showLabels ? (
         <div className="ml-4 mt-2 flex h-full w-[94%] flex-col items-stretch justify-center pb-4 md:ml-6 md:w-full md:pb-0">
