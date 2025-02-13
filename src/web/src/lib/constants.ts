@@ -10,6 +10,8 @@ export const DATE_FORMAT_SYSTEM = "YYYY-MM-DD";
 export const DATETIME_FORMAT_SYSTEM = "YYYY-MM-DD HH:mm:ss";
 export const MAX_FILE_SIZE = 10000000;
 export const MAX_FILE_SIZE_LABEL = "10MB";
+export const MAX_FILE_VIDEO_SIZE = 100000000;
+export const MAX_FILE_VIDEO_SIZE_LABEL = "100MB";
 export const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",
   "image/jpg",
@@ -39,6 +41,29 @@ export const ACCEPTED_AUDIO_TYPES_LABEL = [
   ".amr",
   ".ogg",
   ".3gp",
+];
+export const ACCEPTED_VIDEO_TYPES = [
+  "video/mp4",
+  "video/quicktime",
+  "video/x-msvideo",
+  "video/x-matroska",
+  "video/x-ms-wmv",
+  "video/webm",
+  "video/x-flv",
+  "video/3gpp",
+  "video/x-m4v",
+];
+
+export const ACCEPTED_VIDEO_TYPES_LABEL = [
+  ".mp4",
+  ".mov",
+  ".avi",
+  ".mkv",
+  ".wmv",
+  ".webm",
+  ".flv",
+  ".3gp",
+  ".m4v",
 ];
 export const ACCEPTED_CSV_TYPES = ["text/csv", "application/vnd.ms-excel"];
 export const ACCEPTED_CSV_TYPES_LABEL = [".csv"];

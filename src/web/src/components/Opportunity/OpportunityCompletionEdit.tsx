@@ -15,6 +15,7 @@ import {
   FcCompactCamera,
   FcGraduationCap,
   FcIdea,
+  FcVideoCall,
 } from "react-icons/fc";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
@@ -31,9 +32,13 @@ import {
   ACCEPTED_DOC_TYPES_LABEL,
   ACCEPTED_IMAGE_TYPES,
   ACCEPTED_IMAGE_TYPES_LABEL,
+  ACCEPTED_VIDEO_TYPES,
+  ACCEPTED_VIDEO_TYPES_LABEL,
   DATE_FORMAT_SYSTEM,
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_LABEL,
+  MAX_FILE_VIDEO_SIZE,
+  MAX_FILE_VIDEO_SIZE_LABEL,
 } from "~/lib/constants";
 import { toISOStringForTimezone } from "~/lib/utils";
 import FormMessage, { FormMessageType } from "../Common/FormMessage";
@@ -71,6 +76,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       picture: z.any(),
       voiceNote: z.any(),
       geometry: z.any(),
+      video: z.any(),
       dateStart: z.union([z.string(), z.null()]).optional(),
       dateEnd: z.union([z.string(), z.null()]).optional(),
       commitmentInterval: z
@@ -247,6 +253,38 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         }
       }
 
+      // Video validation
+      if (opportunityInfo?.verificationTypes?.find((x) => x.type == "Video")) {
+        if (!values.video) {
+          ctx.addIssue({
+            message: "Please upload a video.",
+            code: z.ZodIssueCode.custom,
+            path: ["video"],
+            fatal: true,
+          });
+        } else {
+          const fileType = values.video.type;
+          if (fileType && !ACCEPTED_VIDEO_TYPES.includes(fileType)) {
+            ctx.addIssue({
+              message: `Video file type not supported. Please upload a file of type ${ACCEPTED_VIDEO_TYPES_LABEL.join(
+                ", ",
+              )}.`,
+              code: z.ZodIssueCode.custom,
+              path: ["video"],
+              fatal: true,
+            });
+          }
+          if (values.video.size && values.video.size > MAX_FILE_VIDEO_SIZE) {
+            ctx.addIssue({
+              message: `Video file size should not exceed ${MAX_FILE_VIDEO_SIZE_LABEL}.`,
+              code: z.ZodIssueCode.custom,
+              path: ["video"],
+              fatal: true,
+            });
+          }
+        }
+      }
+
       // Geometry validation
       if (
         opportunityInfo?.verificationTypes?.find((x) => x.type == "Location")
@@ -302,6 +340,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         certificate: data.certificate,
         picture: data.picture,
         voiceNote: data.voiceNote,
+        video: data.video,
         geometry: data.geometry,
         dateStart: data.dateStart || null,
         dateEnd: data.dateEnd || null,
@@ -687,6 +726,37 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       {errors.voiceNote && (
                         <FormMessage messageType={FormMessageType.Warning}>
                           {`${errors.voiceNote.message}`}
+                        </FormMessage>
+                      )}
+                    </>
+                  </FileUpload>
+                )}
+
+                {opportunityInfo?.verificationTypes?.find(
+                  (x) => x.type == "Video",
+                ) && (
+                  <FileUpload
+                    id="fileUploadVideo"
+                    files={[]}
+                    fileTypes={ACCEPTED_VIDEO_TYPES.join(", ")}
+                    fileTypesLabels={ACCEPTED_VIDEO_TYPES_LABEL.join(", ")}
+                    allowMultiple={false}
+                    label={
+                      opportunityInfo?.verificationTypes?.find(
+                        (x) => x.type == "Video",
+                      )?.description
+                    }
+                    iconAlt={<FcVideoCall className="size-10" />}
+                    onUploadComplete={(files) => {
+                      setValue("video", files[0], {
+                        shouldValidate: true,
+                      });
+                    }}
+                  >
+                    <>
+                      {errors.video && (
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          {`${errors.video.message}`}
                         </FormMessage>
                       )}
                     </>

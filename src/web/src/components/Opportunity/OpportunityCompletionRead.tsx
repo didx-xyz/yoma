@@ -1,19 +1,20 @@
+import { Loader } from "@googlemaps/js-api-loader";
+import { GoogleMap, MarkerF } from "@react-google-maps/api";
 import Link from "next/link";
 import React, { useEffect, useMemo, useState } from "react";
+import {
+  FcComments,
+  FcCompactCamera,
+  FcGlobe,
+  FcGraduationCap,
+  FcVideoCall,
+} from "react-icons/fc";
 import { IoMdPin } from "react-icons/io";
-import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
-import { GoogleMap, MarkerF } from "@react-google-maps/api";
-import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import Moment from "react-moment";
-import { Loader } from "@googlemaps/js-api-loader";
+import type { MyOpportunityInfo } from "~/api/models/myOpportunity";
+import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { fetchClientEnv } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
-import {
-  FcGraduationCap,
-  FcCompactCamera,
-  FcComments,
-  FcGlobe,
-} from "react-icons/fc";
 
 interface InputProps {
   [id: string]: any;
@@ -148,6 +149,13 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           {item.verificationType == "VoiceNote" &&
             renderVerificationFile(
               <FcComments className="size-10" />,
+              "Voice Note",
+              item.fileURL,
+            )}
+
+          {item.verificationType == "Video" &&
+            renderVerificationFile(
+              <FcVideoCall className="size-10" />,
               "Voice Note",
               item.fileURL,
             )}

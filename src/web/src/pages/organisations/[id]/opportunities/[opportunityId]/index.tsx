@@ -94,11 +94,13 @@ import {
   ACCEPTED_AUDIO_TYPES_LABEL,
   ACCEPTED_DOC_TYPES_LABEL,
   ACCEPTED_IMAGE_TYPES_LABEL,
+  ACCEPTED_VIDEO_TYPES_LABEL,
   DATE_FORMAT_SYSTEM,
   GA_ACTION_OPPORTUNITY_CREATE,
   GA_ACTION_OPPORTUNITY_UPDATE,
   GA_CATEGORY_OPPORTUNITY,
   MAX_FILE_SIZE_LABEL,
+  MAX_FILE_VIDEO_SIZE_LABEL,
   PAGE_SIZE_MEDIUM,
   REGEX_URL_VALIDATION,
 } from "~/lib/constants";
@@ -2937,7 +2939,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                         {ACCEPTED_DOC_TYPES_LABEL.map(
                                           (item, index) => (
                                             <span
-                                              key={`verification_file_upload_doc_file_type_${index}`}
+                                              key={`verificationType_fileUpload_doc_${index}`}
                                               className="mr-2 font-bold"
                                             >
                                               {item}
@@ -2947,7 +2949,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                         {ACCEPTED_IMAGE_TYPES_LABEL.map(
                                           (item, index) => (
                                             <span
-                                              key={`verification_file_upload_image_file_type_${index}`}
+                                              key={`verificationType_fileUpload_image_${index}`}
                                               className="mr-2 font-bold"
                                             >
                                               {item}
@@ -2978,7 +2980,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                         {ACCEPTED_IMAGE_TYPES_LABEL.map(
                                           (item, index) => (
                                             <span
-                                              key={`verificationtype_picture_image_file_type_${index}`}
+                                              key={`verificationType_picture_${index}`}
                                               className="mr-2 font-bold"
                                             >
                                               {item}
@@ -3000,7 +3002,29 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                         {ACCEPTED_AUDIO_TYPES_LABEL.map(
                                           (item, index) => (
                                             <span
-                                              key={`verificationtype_voicenote_audio_file_type_${index}`}
+                                              key={`verificationType_voiceNote_${index}`}
+                                              className="mr-2 font-bold"
+                                            >
+                                              {item}
+                                            </span>
+                                          ),
+                                        )}
+                                      </FormMessage>
+                                    )}
+                                    {item.displayName === "Video" && (
+                                      <FormMessage
+                                        messageType={FormMessageType.Warning}
+                                        className="my-2"
+                                      >
+                                        Kindly note that candidates are required
+                                        to upload a file (max{" "}
+                                        {MAX_FILE_VIDEO_SIZE_LABEL}) in one of
+                                        the following formats:
+                                        <div className="my-1" />
+                                        {ACCEPTED_VIDEO_TYPES_LABEL.map(
+                                          (item, index) => (
+                                            <span
+                                              key={`verificationType_video_${index}`}
                                               className="mr-2 font-bold"
                                             >
                                               {item}
