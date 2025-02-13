@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
-using Yoma.Core.Domain.BlobProvider.Extensions;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -59,7 +58,7 @@ namespace Yoma.Core.Domain.Core.Services
       return result;
     }
 
-    public async Task<BlobObject> Create(IFormFile file, FileType type)
+    public async Task<BlobObject> Create(IFormFile file, FileType type, StorageType storageType)
     {
       ArgumentNullException.ThrowIfNull(file, nameof(file));
 
@@ -67,7 +66,6 @@ namespace Yoma.Core.Domain.Core.Services
 
       var id = Guid.NewGuid();
       var key = $"{_environmentProvider.Environment}/{type}/{id}{file.GetExtension()}";
-      var storageType = type.ToStorageType();
 
       var result = new BlobObject
       {

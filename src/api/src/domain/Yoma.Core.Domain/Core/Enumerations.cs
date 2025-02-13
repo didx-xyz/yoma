@@ -30,7 +30,8 @@ namespace Yoma.Core.Domain.Core
     Photos, //logo and profile photo
     Certificates,
     Documents,
-    VoiceNotes
+    VoiceNotes,
+    Videos
   }
 
   public enum Country

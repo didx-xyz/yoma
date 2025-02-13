@@ -1106,7 +1106,7 @@ namespace Yoma.Core.Domain.Entity.Services
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
           using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-          blobObject = await _blobService.Create(file, FileType.Photos);
+          blobObject = await _blobService.Create(file, FileType.Photos, StorageType.Public);
           organization.LogoId = blobObject.Id;
           organization.LogoStorageType = blobObject.StorageType;
           organization.LogoKey = blobObject.Key;
@@ -1269,7 +1269,7 @@ namespace Yoma.Core.Domain.Entity.Services
           foreach (var file in documents)
           {
             //upload new item to blob storage
-            var blobObject = await _blobService.Create(file, FileType.Documents);
+            var blobObject = await _blobService.Create(file, FileType.Documents, StorageType.Private);
             itemsNewBlobs.Add(blobObject);
 
             var item = new OrganizationDocument

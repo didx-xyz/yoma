@@ -12,6 +12,7 @@
     <None Remove="Entity\SampleBlobs\sample_photo.png" />
     <None Remove="MyOpportunity\SampleBlobs\sample_certificate.pdf" />
     <None Remove="MyOpportunity\SampleBlobs\sample_photo.png" />
+    <None Remove="MyOpportunity\SampleBlobs\sample_video.mp4" />
     <None Remove="MyOpportunity\SampleBlobs\sample_voice_note.wav" />
   </ItemGroup>
 
@@ -23,6 +24,7 @@
     <EmbeddedResource Include="Entity\SampleBlobs\sample_photo.png" />
     <EmbeddedResource Include="MyOpportunity\SampleBlobs\sample_certificate.pdf" />
     <EmbeddedResource Include="MyOpportunity\SampleBlobs\sample_photo.png" />
+    <EmbeddedResource Include="MyOpportunity\SampleBlobs\sample_video.mp4" />
     <EmbeddedResource Include="MyOpportunity\SampleBlobs\sample_voice_note.wav" />
   </ItemGroup>
 

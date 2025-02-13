@@ -324,7 +324,7 @@ namespace Yoma.Core.Domain.Entity.Services
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
           using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-          blobObject = await _blobService.Create(file, FileType.Photos);
+          blobObject = await _blobService.Create(file, FileType.Photos, StorageType.Public);
           result.PhotoId = blobObject.Id;
           result.PhotoStorageType = blobObject.StorageType;
           result.PhotoKey = blobObject.Key;

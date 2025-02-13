@@ -12,6 +12,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public IFormFile? Picture { get; set; }
 
+    public IFormFile? Video { get; set; }
+
     public Geometry? Geometry { get; set; }
 
     public DateTimeOffset? DateStart { get; set; }

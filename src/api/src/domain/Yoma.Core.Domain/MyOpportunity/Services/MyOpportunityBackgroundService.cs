@@ -317,6 +317,28 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                 }
                 break;
 
+              case VerificationType.Video:
+                var resourcePathVideo = "Yoma.Core.Domain.MyOpportunity.SampleBlobs.sample_video.mp4";
+
+                using (var resourceStream = assembly.GetManifestResourceStream(resourcePathVideo))
+                {
+                  if (resourceStream == null)
+                    throw new InvalidOperationException($"Embedded resource '{resourcePathVideo}' not found");
+
+                  byte[] resourceBytes;
+                  using (var memoryStream = new MemoryStream())
+                  {
+                    resourceStream.CopyTo(memoryStream);
+                    resourceBytes = memoryStream.ToArray();
+                  }
+
+                  var fileName = string.Join('.', resourcePathVideo.Split('.').Reverse().Take(2).Reverse());
+                  var fileExtension = Path.GetExtension(fileName)[1..];
+
+                  request.Video = FileHelper.FromByteArray(fileName, $"application/{fileExtension}", resourceBytes);
+                }
+                break;
+
               case VerificationType.Location:
                 request.Geometry = new Geometry
                 {

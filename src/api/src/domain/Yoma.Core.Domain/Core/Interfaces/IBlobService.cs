@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Core.Interfaces
   {
     BlobObject GetById(Guid id);
 
-    Task<BlobObject> Create(IFormFile file, FileType type);
+    Task<BlobObject> Create(IFormFile file, FileType type, StorageType storageType);
 
     /// <summary>
     /// Create the blob object only, preserving the tracking record; used for rollbacks

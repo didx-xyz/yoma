@@ -75,7 +75,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private const int List_Aggregated_Opportunity_By_Limit = 100;
     private const string PlaceholderValue_HiddenDetails = "hidden";
 
-    private static readonly VerificationType[] VerificationTypes_Downloadable = [VerificationType.FileUpload, VerificationType.Picture, VerificationType.VoiceNote];
+    private static readonly VerificationType[] VerificationTypes_Downloadable = [VerificationType.FileUpload, VerificationType.Picture, VerificationType.VoiceNote, VerificationType.Video];
     #endregion
 
     #region Constructor
@@ -270,6 +270,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           case VerificationType.FileUpload:
           case VerificationType.Picture:
           case VerificationType.VoiceNote:
+          case VerificationType.Video:
             if (!verificationTypes.Contains(item.VerificationType)) continue;
 
             if (!item.FileId.HasValue)
@@ -1547,21 +1548,28 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (request.Certificate == null)
               throw new ValidationException($"Verification type '{verificationType.Type}': Certificate required");
 
-            blobObject = await _blobService.Create(request.Certificate, FileType.Certificates);
+            blobObject = await _blobService.Create(request.Certificate, FileType.Certificates, StorageType.Private);
             break;
 
           case VerificationType.Picture:
             if (request.Picture == null)
               throw new ValidationException($"Verification type '{verificationType.Type}': Picture required");
 
-            blobObject = await _blobService.Create(request.Picture, FileType.Photos);
+            blobObject = await _blobService.Create(request.Picture, FileType.Photos, StorageType.Private);
             break;
 
           case VerificationType.VoiceNote:
             if (request.VoiceNote == null)
               throw new ValidationException($"Verification type '{verificationType.Type}': Voice note required");
 
-            blobObject = await _blobService.Create(request.VoiceNote, FileType.VoiceNotes);
+            blobObject = await _blobService.Create(request.VoiceNote, FileType.VoiceNotes, StorageType.Private);
+            break;
+
+          case VerificationType.Video:
+            if (request.Video == null)
+              throw new ValidationException($"Verification type '{verificationType.Type}': Voice note required");
+
+            blobObject = await _blobService.Create(request.Video, FileType.Videos, StorageType.Private);
             break;
 
           case VerificationType.Location:
