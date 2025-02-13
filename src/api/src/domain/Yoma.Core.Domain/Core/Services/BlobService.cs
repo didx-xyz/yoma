@@ -66,7 +66,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       var id = Guid.NewGuid();
       var key = $"{_environmentProvider.Environment}/{type}/{id}{file.GetExtension()}";
-  
+
       var result = new BlobObject
       {
         Id = id,
