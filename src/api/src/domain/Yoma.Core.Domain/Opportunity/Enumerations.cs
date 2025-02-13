@@ -25,7 +25,8 @@ namespace Yoma.Core.Domain.Opportunity
     FileUpload,
     Picture,
     Location,
-    VoiceNote
+    VoiceNote,
+    Video
   }
 
   public enum Type

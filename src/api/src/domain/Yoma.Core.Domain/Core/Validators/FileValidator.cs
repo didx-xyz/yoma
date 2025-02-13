@@ -36,6 +36,11 @@ namespace Yoma.Core.Domain.Core.Validators
           maxSizeBytes = 10000000;
           break;
 
+        case FileType.Videos:
+          extensions = [".mp4", ".mov", ".avi", ".mkv", ".wmv", ".webm", ".flv", ".3gp", ".m4v"];
+          maxSizeBytes = 100000000;
+          break;
+
         default:
           throw new ArgumentOutOfRangeException(nameof(type), $"Unsupported type of '{type}'");
       }
