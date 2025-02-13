@@ -553,7 +553,7 @@ const LinkDetails: NextPageWithLayout<{
         // if not in cache, fetch data
         searchCriteriaOpportunities({
           opportunities: [],
-          organization: id,
+          organizations: [id],
           countries: null,
           titleContains: inputValue,
           published: true,

@@ -133,7 +133,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
   const { data: lookups_languages } = useQuery<Language[]>({
     queryKey: ["AdminOpportunitiesLanguages"],
-    queryFn: () => getLanguagesAdmin(),
+    queryFn: () => getLanguagesAdmin(null),
   });
 
   const { data: lookups_organisations } = useQuery<OrganizationInfo[]>({

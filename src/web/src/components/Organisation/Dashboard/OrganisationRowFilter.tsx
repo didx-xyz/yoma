@@ -1,22 +1,24 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
-import { type FieldValues, Controller, useForm } from "react-hook-form";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+import { Controller, useForm, type FieldValues } from "react-hook-form";
+import Select, { components, type ValueContainerProps } from "react-select";
+import Async from "react-select/async";
 import zod from "zod";
+import type { SelectOption } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
   OpportunitySearchResultsInfo,
 } from "~/api/models/opportunity";
-import type { SelectOption } from "~/api/models/lookups";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import { toISOStringForTimezone } from "~/lib/utils";
+import type { OrganizationSearchResults } from "~/api/models/organisation";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
-import Select, { components, type ValueContainerProps } from "react-select";
-import Async from "react-select/async";
-import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
-import { debounce } from "~/lib/utils";
-import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/[id]";
+import { getOrganisations } from "~/api/services/organisations";
 import FilterBadges from "~/components/FilterBadges";
+import { PAGE_SIZE_MEDIUM, ROLE_ADMIN } from "~/lib/constants";
+import { debounce, toISOStringForTimezone } from "~/lib/utils";
+import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/dashboard";
+import type { User } from "~/server/auth";
 
 const ValueContainer = ({
   children,
@@ -34,6 +36,7 @@ const ValueContainer = ({
       const pluralMapping: Record<string, string> = {
         Category: "Categories",
         Opportunity: "Opportunities",
+        Organization: "Organisations",
       };
 
       const pluralize = (word: string, count: number): string => {
@@ -54,22 +57,26 @@ const ValueContainer = ({
 };
 
 export const OrganisationRowFilter: React.FC<{
-  organisationId: string;
   htmlRef: HTMLDivElement;
   searchFilter: OrganizationSearchFilterSummaryViewModel | null;
   lookups_categories?: OpportunityCategory[];
   lookups_selectedOpportunities?: OpportunitySearchResultsInfo;
+  lookups_selectedOrganisations?: OrganizationSearchResults;
+  user: User;
   onSubmit?: (fieldValues: OrganizationSearchFilterSummaryViewModel) => void;
 }> = ({
-  organisationId,
   htmlRef,
   searchFilter,
   lookups_categories,
   lookups_selectedOpportunities,
+  lookups_selectedOrganisations,
+  user,
   onSubmit,
 }) => {
+  const isAdmin = user?.roles.includes(ROLE_ADMIN);
+
   const schema = zod.object({
-    organization: zod.string().optional().nullable(),
+    organizations: zod.array(zod.string()).optional().nullable(),
     opportunities: zod.array(zod.string()).optional().nullable(),
     categories: zod.array(zod.string()).optional().nullable(),
     startDate: zod.string().optional().nullable(),
@@ -99,18 +106,75 @@ export const OrganisationRowFilter: React.FC<{
   // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      if (onSubmit) onSubmit(data as OrganizationSearchFilterSummaryViewModel);
+      if (onSubmit) {
+        const mergedData = {
+          ...searchFilter, // Keep existing filter values
+          // don't clear organisations if orgAdmin
+          ...(isAdmin ? { organizations: data.organizations } : {}),
+          opportunities: data.opportunities,
+          categories: data.categories,
+          startDate: data.startDate,
+          endDate: data.endDate,
+        };
+        onSubmit(mergedData as OrganizationSearchFilterSummaryViewModel);
+      }
     },
-    [onSubmit],
+    [onSubmit, searchFilter, isAdmin],
   );
+
+  // load data asynchronously for the organisations dropdown
+  // debounce is used to prevent the API from being called too frequently
+  const loadOrganisations = debounce(
+    (inputValue: string, callback: (options: any) => void) => {
+      getOrganisations({
+        organizations: [],
+        valueContains: (inputValue ?? []).length > 2 ? inputValue : null,
+        statuses: null,
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MEDIUM,
+      }).then((data) => {
+        const options = data.items.map((item) => ({
+          value: item.id,
+          label: item.name,
+        }));
+        callback(options);
+      });
+    },
+    1000,
+  );
+
+  // the AsyncSelect component requires the defaultOptions to be set in the state
+  const [defaultOrganisationOptions, setDefaultOrganisationOptions] =
+    useState<any>([]);
+
+  useEffect(() => {
+    if (searchFilter?.organizations) {
+      setDefaultOrganisationOptions(
+        searchFilter?.organizations?.map((c: any) => ({
+          value: c,
+          label: c,
+        })),
+      );
+    }
+  }, [setDefaultOrganisationOptions, searchFilter?.organizations]);
 
   // load data asynchronously for the opportunities dropdown
   // debounce is used to prevent the API from being called too frequently
   const loadOpportunities = debounce(
     (inputValue: string, callback: (options: any) => void) => {
+      // Check if organizations are specified
+      if (
+        !searchFilter?.organizations ||
+        searchFilter.organizations.length === 0
+      ) {
+        // If no organizations, return an empty array
+        callback([]);
+        return;
+      }
+
       searchCriteriaOpportunities({
         opportunities: [],
-        organization: organisationId,
+        organizations: searchFilter?.organizations,
         countries: null,
         titleContains: (inputValue ?? []).length > 2 ? inputValue : null,
         published: null,
@@ -130,32 +194,135 @@ export const OrganisationRowFilter: React.FC<{
   );
 
   // the AsyncSelect component requires the defaultOptions to be set in the state
-  const [defaultOpportunityOptions, setdefaultOpportunityOptions] =
+  const [defaultOpportunityOptions, setDefaultOpportunityOptions] =
     useState<any>([]);
 
   useEffect(() => {
     if (searchFilter?.opportunities) {
-      setdefaultOpportunityOptions(
+      setDefaultOpportunityOptions(
         searchFilter?.opportunities?.map((c: any) => ({
           value: c,
           label: c,
         })),
       );
     }
-  }, [setdefaultOpportunityOptions, searchFilter?.opportunities]);
+  }, [setDefaultOpportunityOptions, searchFilter?.opportunities]);
 
   return (
     <div className="flex flex-grow flex-col gap-3">
       <form
-        onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
+        onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-2"
       >
-        <div className="flex w-full flex-col items-center justify-center gap-2 lg:flex-row lg:justify-start">
-          <div className="flex w-full flex-grow flex-col flex-wrap items-center gap-2 lg:w-fit lg:flex-row">
-            <div className="mr-4 flex text-sm font-bold text-gray">
-              Search by:
-            </div>
+        <div className="md:flex-rowx items-centerx justify-centerx md:justify-startx flex w-full flex-col gap-2">
+          <div className="items-centerx flex w-full flex-grow flex-col flex-wrap gap-2 md:w-fit md:flex-row">
+            {/* <div className="mr-4 flex text-sm font-bold text-gray">
+              Filter by:
+            </div> */}
 
+            {/* ORGANISATIONS */}
+            {isAdmin && (
+              <span className="w-full md:w-72">
+                <Controller
+                  name="organizations"
+                  control={form.control}
+                  render={({ field: { onChange } }) => (
+                    <Async
+                      instanceId="organizations"
+                      classNames={{
+                        control: () =>
+                          "input input-xs h-fit !border-none w-full md:w-72",
+                      }}
+                      isMulti={true}
+                      defaultOptions={true} // calls loadOrganisations for initial results when clicking on the dropdown
+                      cacheOptions
+                      loadOptions={loadOrganisations}
+                      menuPortalTarget={htmlRef} // fix menu z-index issue
+                      styles={{
+                        menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                      }}
+                      onChange={(val) => {
+                        onChange(val.map((c: any) => c.value));
+                        void handleSubmit(onSubmitHandler)();
+                      }}
+                      value={defaultOrganisationOptions}
+                      placeholder="Organisation"
+                      components={{
+                        ValueContainer,
+                      }}
+                    />
+                  )}
+                />
+                {formState.errors.organizations && (
+                  <label className="label font-bold">
+                    <span className="label-text-alt italic text-red-500">
+                      {`${formState.errors.organizations.message}`}
+                    </span>
+                  </label>
+                )}
+              </span>
+            )}
+
+            <div className="justify-startx md:justify-endx flex w-full items-start gap-2 md:w-fit">
+              {/* DATE START */}
+              <span className="flex">
+                <Controller
+                  control={form.control}
+                  name="startDate"
+                  render={({ field: { onChange, value } }) => (
+                    <DatePicker
+                      className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
+                      onChange={(date) => {
+                        onChange(toISOStringForTimezone(date));
+                        void handleSubmit(onSubmitHandler)();
+                      }}
+                      selected={value ? new Date(value) : null}
+                      placeholderText="Start Date"
+                    />
+                  )}
+                />
+
+                {formState.errors.startDate && (
+                  <label className="label">
+                    <span className="label-text-alt px-4 text-base italic text-red-500">
+                      {`${formState.errors.startDate.message}`}
+                    </span>
+                  </label>
+                )}
+              </span>
+
+              {/* DATE END */}
+              <span className="flex">
+                <Controller
+                  control={form.control}
+                  name="endDate"
+                  render={({ field: { onChange, value } }) => (
+                    <DatePicker
+                      className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
+                      onChange={(date) => {
+                        // change time to 1 second to midnight
+                        if (date) date.setHours(23, 59, 59, 999);
+                        onChange(toISOStringForTimezone(date));
+                        void handleSubmit(onSubmitHandler)();
+                      }}
+                      selected={value ? new Date(value) : null}
+                      placeholderText="End Date"
+                    />
+                  )}
+                />
+
+                {formState.errors.endDate && (
+                  <label className="label">
+                    <span className="label-text-alt px-4 text-base italic text-red-500">
+                      {`${formState.errors.endDate.message}`}
+                    </span>
+                  </label>
+                )}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-row gap-2">
             {/* OPPORTUNITIES */}
             <span className="w-full md:w-72">
               <Controller
@@ -180,7 +347,6 @@ export const OrganisationRowFilter: React.FC<{
                       // clear categories
                       setValue("categories", []);
 
-                      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                       onChange(val.map((c: any) => c.value));
                       void handleSubmit(onSubmitHandler)();
                     }}
@@ -201,135 +367,63 @@ export const OrganisationRowFilter: React.FC<{
               )}
             </span>
 
-            <div className="flex w-full flex-grow flex-col items-center gap-2 lg:w-fit lg:flex-row">
-              <div className="mx-auto flex items-center text-center text-xs font-bold text-gray md:mx-1 md:text-left">
-                or
-              </div>
-
-              {/* CATEGORIES */}
-              {lookups_categories && (
-                <span className="w-full md:w-72">
-                  <Controller
-                    name="categories"
-                    control={form.control}
-                    defaultValue={searchFilter?.categories}
-                    render={({ field: { onChange, value } }) => (
-                      <Select
-                        instanceId="categories"
-                        classNames={{
-                          control: () =>
-                            "input input-xs h-fit !border-none w-full md:w-72",
-                        }}
-                        isMulti={true}
-                        options={lookups_categories.map((c) => ({
-                          value: c.name,
-                          label: c.name,
-                        }))}
-                        // fix menu z-index issue
-                        menuPortalTarget={htmlRef}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                        onChange={(val) => {
-                          // clear opportunities
-                          setValue("opportunities", []);
-
-                          onChange(val.map((c) => c.value));
-                          void handleSubmit(onSubmitHandler)();
-                        }}
-                        value={lookups_categories
-                          .filter((c) => value?.includes(c.name))
-                          .map((c) => ({ value: c.name, label: c.name }))}
-                        placeholder="Category"
-                        components={{
-                          ValueContainer,
-                        }}
-                      />
-                    )}
-                  />
-
-                  {formState.errors.categories && (
-                    <label className="label font-bold">
-                      <span className="label-text-alt italic text-red-500">
-                        {`${formState.errors.categories.message}`}
-                      </span>
-                    </label>
-                  )}
-                </span>
-              )}
+            <div className="mx-auto flex items-center text-center text-xs font-bold text-gray md:mx-1 md:text-left">
+              or
             </div>
-          </div>
 
-          <div className="flex w-full justify-center gap-4 lg:w-fit lg:justify-end">
-            {/* DATE START */}
-            <span className="flex">
+            {/* CATEGORIES */}
+            <span className="w-full md:w-72">
               <Controller
+                name="categories"
                 control={form.control}
-                name="startDate"
+                defaultValue={searchFilter?.categories}
                 render={({ field: { onChange, value } }) => (
-                  <DatePicker
-                    className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none lg:w-32"
-                    onChange={(date) => {
-                      onChange(toISOStringForTimezone(date));
+                  <Select
+                    instanceId="categories"
+                    classNames={{
+                      control: () =>
+                        "input input-xs h-fit !border-none w-full md:w-72",
+                    }}
+                    isMulti={true}
+                    options={lookups_categories?.map((c) => ({
+                      value: c.name,
+                      label: c.name,
+                    }))}
+                    // fix menu z-index issue
+                    menuPortalTarget={htmlRef}
+                    styles={{
+                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    }}
+                    onChange={(val) => {
+                      // clear opportunities
+                      setValue("opportunities", []);
+
+                      onChange(val.map((c) => c.value));
                       void handleSubmit(onSubmitHandler)();
                     }}
-                    selected={value ? new Date(value) : null}
-                    placeholderText="Start Date"
+                    value={
+                      lookups_categories
+                        ? lookups_categories
+                            .filter((c) => value?.includes(c.name))
+                            .map((c) => ({ value: c.name, label: c.name }))
+                        : null
+                    }
+                    placeholder="Category"
+                    components={{
+                      ValueContainer,
+                    }}
                   />
                 )}
               />
 
-              {formState.errors.startDate && (
-                <label className="label">
-                  <span className="label-text-alt px-4 text-base italic text-red-500">
-                    {`${formState.errors.startDate.message}`}
+              {formState.errors.categories && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {`${formState.errors.categories.message}`}
                   </span>
                 </label>
               )}
             </span>
-
-            {/* DATE END */}
-            <span className="flex">
-              <Controller
-                control={form.control}
-                name="endDate"
-                render={({ field: { onChange, value } }) => (
-                  <DatePicker
-                    className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none lg:w-32"
-                    onChange={(date) => {
-                      // change time to 1 second to midnight
-                      if (date) date.setHours(23, 59, 59, 999);
-                      onChange(toISOStringForTimezone(date));
-                      void handleSubmit(onSubmitHandler)();
-                    }}
-                    selected={value ? new Date(value) : null}
-                    placeholderText="End Date"
-                  />
-                )}
-              />
-
-              {formState.errors.endDate && (
-                <label className="label">
-                  <span className="label-text-alt px-4 text-base italic text-red-500">
-                    {`${formState.errors.endDate.message}`}
-                  </span>
-                </label>
-              )}
-            </span>
-
-            {/* EXPORT TO CSV */}
-            {/* {exportToCsv && (
-              <div className="flex flex-row items-center justify-end">
-                <IoMdDownload className="cursor-pointer text-white" />
-                <button
-                  type="button"
-                  className="btn btn-sm h-[2.4rem] rounded-md border-2 border-green text-xs font-semibold text-green"
-                  onClick={() => exportToCsv(true)}
-                >
-                  Export to CSV
-                </button>
-              </div>
-            )} */}
           </div>
         </div>
       </form>
@@ -344,6 +438,7 @@ export const OrganisationRowFilter: React.FC<{
             "pageSize",
             "organization",
             "countries",
+            ...(isAdmin ? [] : ["organizations"]), // Exclude organizations if not admin
           ]}
           resolveValue={(key, value) => {
             if (key === "startDate" || key === "endDate")
@@ -356,6 +451,12 @@ export const OrganisationRowFilter: React.FC<{
                 (x) => x.id === value,
               );
               return lookup?.title ?? value;
+            } else if (key === "organizations") {
+              // HACK: resolve organisation ids to titles
+              const lookup = lookups_selectedOrganisations?.items.find(
+                (x) => x.id === value,
+              );
+              return lookup?.name ?? value;
             } else {
               return value;
             }
