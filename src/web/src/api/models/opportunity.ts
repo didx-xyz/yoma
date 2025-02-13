@@ -156,6 +156,7 @@ export enum VerificationType {
   Picture,
   Location,
   VoiceNote,
+  Video,
 }
 
 export enum VerificationMethod {

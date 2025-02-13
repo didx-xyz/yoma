@@ -10,6 +10,7 @@ export interface MyOpportunityRequestVerify {
   certificate: FormFile | null;
   voiceNote: FormFile | null;
   picture: FormFile | null;
+  video: FormFile | null;
   geometry: Geometry | null;
   dateStart: string | null;
   dateEnd: string | null;
