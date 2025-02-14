@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import Chart, { type GoogleChartWrapper } from "react-google-charts";
+import Chart from "react-google-charts";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
 import { useAtomValue } from "jotai";
 import { screenWidthAtom } from "~/lib/store";
