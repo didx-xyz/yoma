@@ -45,6 +45,7 @@ export interface OrganizationSearchResultsSummary {
   opportunities: OrganizationOpportunity;
   skills: OrganizationOpportunitySkill;
   demographics: OrganizationDemographic;
+  cumulative: OrganizationCumulative;
   dateStamp: string;
 }
 
@@ -106,6 +107,9 @@ export interface OrganizationDemographic {
   education: Demographic;
 }
 
+export interface OrganizationCumulative {
+  completions: TimeIntervalSummary;
+}
 export interface Demographic {
   legend: string;
   items: Record<string, number>;
