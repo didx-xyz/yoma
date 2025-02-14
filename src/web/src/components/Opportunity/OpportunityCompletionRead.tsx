@@ -156,7 +156,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           {item.verificationType == "Video" &&
             renderVerificationFile(
               <FcVideoCall className="size-10" />,
-              "Voice Note",
+              "Video",
               item.fileURL,
             )}
           {item.verificationType == "Location" && (

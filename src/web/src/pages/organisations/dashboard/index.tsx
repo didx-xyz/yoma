@@ -70,6 +70,7 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { EngagementRowFilter } from "~/components/Organisation/Dashboard/EngagementRowFilter";
 import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
+import { LineChartCumulativeCompletions } from "~/components/Organisation/Dashboard/LineChartCumulativeCompletions";
 import { OpportunityCard } from "~/components/Organisation/Dashboard/OpportunityCard";
 import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
 import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
@@ -157,26 +158,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   let lookups_selectedOrganisations;
 
   try {
-    // const dataOrganisation = await getOrganisationById(id, context);
-    // const dataCategories = await getCategoriesAdmin(id, context);
-    // const dataCountries = await getCountries([id], context);
-
-    // // 👇 prefetch queries on server
-    // await Promise.all([
-    //   await queryClient.prefetchQuery({
-    //     queryKey: ["organisation", id],
-    //     queryFn: () => dataOrganisation,
-    //   }),
-    //   await queryClient.prefetchQuery({
-    //     queryKey: ["organisationCategories", id],
-    //     queryFn: () => dataCategories,
-    //   }),
-    //   await queryClient.prefetchQuery({
-    //     queryKey: ["organisationCountries", id],
-    //     queryFn: () => dataCountries,
-    //   }),
-    // ]);
-
     // HACK: lookup each of the opportunities (to resolve ids to titles for filter badges)
     if (!!searchFilter.opportunities && !!searchFilter.organizations) {
       lookups_selectedOpportunities = await searchCriteriaOpportunities(
@@ -232,7 +213,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   };
 }
 
-// OrgAdmin dashboard page
+// Partner/Admin Organisation dashboard page
 const OrganisationDashboard: NextPageWithLayout<{
   user?: any;
   searchFilter: OrganizationSearchFilterSummaryViewModel;
@@ -1143,6 +1124,15 @@ const OrganisationDashboard: NextPageWithLayout<{
                             />
                           )}
                         </div>
+                      </div>
+
+                      <div className="">
+                        {/* CUMULATIVE COMPLETIONS */}
+                        {engagementData?.cumulative?.completions && (
+                          <LineChartCumulativeCompletions
+                            data={engagementData.cumulative.completions}
+                          />
+                        )}
                       </div>
                     </div>
                   </div>
