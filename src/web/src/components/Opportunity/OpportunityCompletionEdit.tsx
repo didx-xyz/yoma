@@ -15,7 +15,6 @@ import {
   FcCompactCamera,
   FcGraduationCap,
   FcIdea,
-  FcVideoCall,
 } from "react-icons/fc";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
@@ -32,13 +31,9 @@ import {
   ACCEPTED_DOC_TYPES_LABEL,
   ACCEPTED_IMAGE_TYPES,
   ACCEPTED_IMAGE_TYPES_LABEL,
-  ACCEPTED_VIDEO_TYPES,
-  ACCEPTED_VIDEO_TYPES_LABEL,
   DATE_FORMAT_SYSTEM,
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_LABEL,
-  MAX_FILE_VIDEO_SIZE,
-  MAX_FILE_VIDEO_SIZE_LABEL,
 } from "~/lib/constants";
 import { toISOStringForTimezone } from "~/lib/utils";
 import FormMessage, { FormMessageType } from "../Common/FormMessage";
@@ -253,37 +248,38 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         }
       }
 
+      /* NB: Video has been disabled due to file upload size limitations */
       // Video validation
-      if (opportunityInfo?.verificationTypes?.find((x) => x.type == "Video")) {
-        if (!values.video) {
-          ctx.addIssue({
-            message: "Please upload a video.",
-            code: z.ZodIssueCode.custom,
-            path: ["video"],
-            fatal: true,
-          });
-        } else {
-          const fileType = values.video.type;
-          if (fileType && !ACCEPTED_VIDEO_TYPES.includes(fileType)) {
-            ctx.addIssue({
-              message: `Video file type not supported. Please upload a file of type ${ACCEPTED_VIDEO_TYPES_LABEL.join(
-                ", ",
-              )}.`,
-              code: z.ZodIssueCode.custom,
-              path: ["video"],
-              fatal: true,
-            });
-          }
-          if (values.video.size && values.video.size > MAX_FILE_VIDEO_SIZE) {
-            ctx.addIssue({
-              message: `Video file size should not exceed ${MAX_FILE_VIDEO_SIZE_LABEL}.`,
-              code: z.ZodIssueCode.custom,
-              path: ["video"],
-              fatal: true,
-            });
-          }
-        }
-      }
+      // if (opportunityInfo?.verificationTypes?.find((x) => x.type == "Video")) {
+      //   if (!values.video) {
+      //     ctx.addIssue({
+      //       message: "Please upload a video.",
+      //       code: z.ZodIssueCode.custom,
+      //       path: ["video"],
+      //       fatal: true,
+      //     });
+      //   } else {
+      //     const fileType = values.video.type;
+      //     if (fileType && !ACCEPTED_VIDEO_TYPES.includes(fileType)) {
+      //       ctx.addIssue({
+      //         message: `Video file type not supported. Please upload a file of type ${ACCEPTED_VIDEO_TYPES_LABEL.join(
+      //           ", ",
+      //         )}.`,
+      //         code: z.ZodIssueCode.custom,
+      //         path: ["video"],
+      //         fatal: true,
+      //       });
+      //     }
+      //     if (values.video.size && values.video.size > MAX_FILE_VIDEO_SIZE) {
+      //       ctx.addIssue({
+      //         message: `Video file size should not exceed ${MAX_FILE_VIDEO_SIZE_LABEL}.`,
+      //         code: z.ZodIssueCode.custom,
+      //         path: ["video"],
+      //         fatal: true,
+      //       });
+      //     }
+      //   }
+      // }
 
       // Geometry validation
       if (
@@ -732,7 +728,8 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   </FileUpload>
                 )}
 
-                {opportunityInfo?.verificationTypes?.find(
+                {/* NB: Video has been disabled due to file upload size limitations */}
+                {/* {opportunityInfo?.verificationTypes?.find(
                   (x) => x.type == "Video",
                 ) && (
                   <FileUpload
@@ -761,7 +758,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       )}
                     </>
                   </FileUpload>
-                )}
+                )} */}
 
                 {opportunityInfo?.verificationTypes?.find(
                   (x) => x.type == "Location",

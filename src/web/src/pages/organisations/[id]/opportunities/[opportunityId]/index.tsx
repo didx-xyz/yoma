@@ -94,13 +94,11 @@ import {
   ACCEPTED_AUDIO_TYPES_LABEL,
   ACCEPTED_DOC_TYPES_LABEL,
   ACCEPTED_IMAGE_TYPES_LABEL,
-  ACCEPTED_VIDEO_TYPES_LABEL,
   DATE_FORMAT_SYSTEM,
   GA_ACTION_OPPORTUNITY_CREATE,
   GA_ACTION_OPPORTUNITY_UPDATE,
   GA_CATEGORY_OPPORTUNITY,
   MAX_FILE_SIZE_LABEL,
-  MAX_FILE_VIDEO_SIZE_LABEL,
   PAGE_SIZE_MEDIUM,
   REGEX_URL_VALIDATION,
 } from "~/lib/constants";
@@ -2892,126 +2890,132 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           }
                         >
                           <div className="flex flex-col gap-2">
-                            {verificationTypesOptions?.map((item) => (
-                              <div
-                                className="flex flex-col"
-                                key={`verificationTypes_${item.id}`}
-                              >
-                                <FormCheckbox
-                                  id={`chk_verificationType_${item.displayName}`}
-                                  label={item.displayName}
-                                  inputProps={{
-                                    value: item.type,
-                                    checked: watchVerificationTypes?.some(
-                                      (x) => x.type === item.type,
-                                    ),
-                                    onChange: (e) => {
-                                      if (e.target.checked) append(item);
-                                      else {
-                                        const index =
-                                          watchVerificationTypes?.findIndex(
-                                            (x) => x.type === item.type,
-                                          );
-                                        remove(index);
-                                      }
-                                    },
-                                    disabled: !watchVerificationEnabled,
-                                  }}
-                                />
+                            {/* NB: Video has been disabled due to file upload size limitations */}
+                            {verificationTypesOptions
+                              ?.filter((x) => x.type != "Video")
+                              .map((item) => (
+                                <div
+                                  className="flex flex-col"
+                                  key={`verificationTypes_${item.id}`}
+                                >
+                                  <FormCheckbox
+                                    id={`chk_verificationType_${item.displayName}`}
+                                    label={item.displayName}
+                                    inputProps={{
+                                      value: item.type,
+                                      checked: watchVerificationTypes?.some(
+                                        (x) => x.type === item.type,
+                                      ),
+                                      onChange: (e) => {
+                                        if (e.target.checked) append(item);
+                                        else {
+                                          const index =
+                                            watchVerificationTypes?.findIndex(
+                                              (x) => x.type === item.type,
+                                            );
+                                          remove(index);
+                                        }
+                                      },
+                                      disabled: !watchVerificationEnabled,
+                                    }}
+                                  />
 
-                                {/* verification type: description input */}
-                                {watchVerificationTypes?.find(
-                                  (x: OpportunityVerificationType) =>
-                                    x.type === item.type,
-                                ) && (
-                                  <>
-                                    {/* file types and file size message */}
-                                    {item.displayName === "File Upload" && (
-                                      <FormMessage
-                                        messageType={FormMessageType.Warning}
-                                        className="my-2"
-                                      >
-                                        Kindly note that candidates are required
-                                        to upload a file (max{" "}
-                                        {MAX_FILE_SIZE_LABEL}) in one of the
-                                        following formats:
-                                        <div className="my-1" />
-                                        {ACCEPTED_DOC_TYPES_LABEL.map(
-                                          (item, index) => (
-                                            <span
-                                              key={`verificationType_fileUpload_doc_${index}`}
-                                              className="mr-2 font-bold"
-                                            >
-                                              {item}
-                                            </span>
-                                          ),
-                                        )}
-                                        {ACCEPTED_IMAGE_TYPES_LABEL.map(
-                                          (item, index) => (
-                                            <span
-                                              key={`verificationType_fileUpload_image_${index}`}
-                                              className="mr-2 font-bold"
-                                            >
-                                              {item}
-                                            </span>
-                                          ),
-                                        )}
-                                      </FormMessage>
-                                    )}
-                                    {item.displayName === "Location" && (
-                                      <FormMessage
-                                        messageType={FormMessageType.Warning}
-                                        className="my-2"
-                                      >
-                                        Kindly note that candidates are required
-                                        to choose their location from a map.
-                                      </FormMessage>
-                                    )}
-                                    {item.displayName === "Picture" && (
-                                      <FormMessage
-                                        messageType={FormMessageType.Warning}
-                                        className="my-2"
-                                      >
-                                        Kindly note that candidates are required
-                                        to upload a file (max{" "}
-                                        {MAX_FILE_SIZE_LABEL}) in one of the
-                                        following formats:
-                                        <div className="my-1" />
-                                        {ACCEPTED_IMAGE_TYPES_LABEL.map(
-                                          (item, index) => (
-                                            <span
-                                              key={`verificationType_picture_${index}`}
-                                              className="mr-2 font-bold"
-                                            >
-                                              {item}
-                                            </span>
-                                          ),
-                                        )}
-                                      </FormMessage>
-                                    )}
-                                    {item.displayName === "Voice Note" && (
-                                      <FormMessage
-                                        messageType={FormMessageType.Warning}
-                                        className="my-2"
-                                      >
-                                        Kindly note that candidates are required
-                                        to upload a file (max{" "}
-                                        {MAX_FILE_SIZE_LABEL}) in one of the
-                                        following formats:
-                                        <div className="my-1" />
-                                        {ACCEPTED_AUDIO_TYPES_LABEL.map(
-                                          (item, index) => (
-                                            <span
-                                              key={`verificationType_voiceNote_${index}`}
-                                              className="mr-2 font-bold"
-                                            >
-                                              {item}
-                                            </span>
-                                          ),
-                                        )}
-                                      </FormMessage>
-                                    )}
-                                    {item.displayName === "Video" && (
+                                  {/* verification type: description input */}
+                                  {watchVerificationTypes?.find(
+                                    (x: OpportunityVerificationType) =>
+                                      x.type === item.type,
+                                  ) && (
+                                    <>
+                                      {/* file types and file size message */}
+                                      {item.displayName === "File Upload" && (
+                                        <FormMessage
+                                          messageType={FormMessageType.Warning}
+                                          className="my-2"
+                                        >
+                                          Kindly note that candidates are
+                                          required to upload a file (max{" "}
+                                          {MAX_FILE_SIZE_LABEL}) in one of the
+                                          following formats:
+                                          <div className="my-1" />
+                                          {ACCEPTED_DOC_TYPES_LABEL.map(
+                                            (item, index) => (
+                                              <span
+                                                key={`verificationType_fileUpload_doc_${index}`}
+                                                className="mr-2 font-bold"
+                                              >
+                                                {item}
+                                              </span>
+                                            ),
+                                          )}
+                                          {ACCEPTED_IMAGE_TYPES_LABEL.map(
+                                            (item, index) => (
+                                              <span
+                                                key={`verificationType_fileUpload_image_${index}`}
+                                                className="mr-2 font-bold"
+                                              >
+                                                {item}
+                                              </span>
+                                            ),
+                                          )}
+                                        </FormMessage>
+                                      )}
+                                      {item.displayName === "Location" && (
+                                        <FormMessage
+                                          messageType={FormMessageType.Warning}
+                                          className="my-2"
+                                        >
+                                          Kindly note that candidates are
+                                          required to choose their location from
+                                          a map.
+                                        </FormMessage>
+                                      )}
+                                      {item.displayName === "Picture" && (
+                                        <FormMessage
+                                          messageType={FormMessageType.Warning}
+                                          className="my-2"
+                                        >
+                                          Kindly note that candidates are
+                                          required to upload a file (max{" "}
+                                          {MAX_FILE_SIZE_LABEL}) in one of the
+                                          following formats:
+                                          <div className="my-1" />
+                                          {ACCEPTED_IMAGE_TYPES_LABEL.map(
+                                            (item, index) => (
+                                              <span
+                                                key={`verificationType_picture_${index}`}
+                                                className="mr-2 font-bold"
+                                              >
+                                                {item}
+                                              </span>
+                                            ),
+                                          )}
+                                        </FormMessage>
+                                      )}
+                                      {item.displayName === "Voice Note" && (
+                                        <FormMessage
+                                          messageType={FormMessageType.Warning}
+                                          className="my-2"
+                                        >
+                                          Kindly note that candidates are
+                                          required to upload a file (max{" "}
+                                          {MAX_FILE_SIZE_LABEL}) in one of the
+                                          following formats:
+                                          <div className="my-1" />
+                                          {ACCEPTED_AUDIO_TYPES_LABEL.map(
+                                            (item, index) => (
+                                              <span
+                                                key={`verificationType_voiceNote_${index}`}
+                                                className="mr-2 font-bold"
+                                              >
+                                                {item}
+                                              </span>
+                                            ),
+                                          )}
+                                        </FormMessage>
+                                      )}
+
+                                      {/* NB: Video has been disabled due to file upload size limitations */}
+                                      {/* {item.displayName === "Video" && (
                                       <FormMessage
                                         messageType={FormMessageType.Warning}
                                         className="my-2"
@@ -3032,50 +3036,50 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                           ),
                                         )}
                                       </FormMessage>
-                                    )}
+                                    )} */}
 
-                                    <div className="form-control w-full">
-                                      <label className="label">
-                                        <span className="label-text">
-                                          Description
-                                        </span>
-                                      </label>
-                                      <input
-                                        type="text"
-                                        className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
-                                        placeholder="Enter description"
-                                        onChange={(e) => {
-                                          // update the description in the verificationTypes array
-                                          setValueStep6(
-                                            "verificationTypes",
-                                            watchVerificationTypes?.map(
-                                              (
-                                                x: OpportunityVerificationType,
-                                              ) => {
-                                                if (x.type === item.type) {
-                                                  x.description =
-                                                    e.target.value;
-                                                }
-                                                return x;
-                                              },
-                                            ),
-                                          );
-                                        }}
-                                        contentEditable
-                                        defaultValue={
-                                          // get default value from formData or item description
-                                          formData.verificationTypes?.find(
-                                            (x) => x.type === item.type,
-                                          )?.description ?? item.description
-                                        }
-                                        disabled={!watchVerificationEnabled}
-                                        id={`input_verificationType_${item.displayName}`} // e2e
-                                      />
-                                    </div>
-                                  </>
-                                )}
-                              </div>
-                            ))}
+                                      <div className="form-control w-full">
+                                        <label className="label">
+                                          <span className="label-text">
+                                            Description
+                                          </span>
+                                        </label>
+                                        <input
+                                          type="text"
+                                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                                          placeholder="Enter description"
+                                          onChange={(e) => {
+                                            // update the description in the verificationTypes array
+                                            setValueStep6(
+                                              "verificationTypes",
+                                              watchVerificationTypes?.map(
+                                                (
+                                                  x: OpportunityVerificationType,
+                                                ) => {
+                                                  if (x.type === item.type) {
+                                                    x.description =
+                                                      e.target.value;
+                                                  }
+                                                  return x;
+                                                },
+                                              ),
+                                            );
+                                          }}
+                                          contentEditable
+                                          defaultValue={
+                                            // get default value from formData or item description
+                                            formData.verificationTypes?.find(
+                                              (x) => x.type === item.type,
+                                            )?.description ?? item.description
+                                          }
+                                          disabled={!watchVerificationEnabled}
+                                          id={`input_verificationType_${item.displayName}`} // e2e
+                                        />
+                                      </div>
+                                    </>
+                                  )}
+                                </div>
+                              ))}
                           </div>
                         </FormField>
                       )}
