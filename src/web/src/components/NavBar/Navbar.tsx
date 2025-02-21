@@ -23,6 +23,7 @@ import { SignOutButton } from "../SignOutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
 import { ROLE_ADMIN } from "~/lib/constants";
+import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 
 const navBarLinksUser: TabItem[] = [
   {
@@ -153,7 +154,7 @@ export const Navbar: React.FC = () => {
         {
           title: "Overview",
           description: "Overview",
-          url: `/organisations/${currentOrganisationId}`,
+          url: `/organisations/dashboard?organisations=${currentOrganisationId}`,
           badgeCount: null,
           selected: false,
           iconImage: "📊",
@@ -279,6 +280,12 @@ export const Navbar: React.FC = () => {
     );
   };
 
+  const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
+
+  const toggleAdminMenu = () => {
+    setIsAdminMenuOpen(!isAdminMenuOpen);
+  };
+
   return (
     <div className="fixed left-0 right-0 top-0 z-40">
       <div className={`bg-theme navbar z-40`}>
@@ -385,7 +392,7 @@ export const Navbar: React.FC = () => {
 
                     <LanguageSwitcher
                       className="ml-1 bg-transparent !py-1 px-3 hover:bg-gray-light"
-                      classNameIcon="text-gray-dark ml-1x !h-5 !w-5"
+                      classNameIcon="text-gray-dark !h-5 !w-5"
                       classNameSelect="text-gray-dark text-sm"
                       tabIndex={isDrawerOpen ? 0 : -1}
                     />
@@ -433,19 +440,46 @@ export const Navbar: React.FC = () => {
                             key="userMenu_admin"
                             className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
                           >
-                            <Link
-                              href="/organisations"
-                              onClick={() => setDrawerOpen(false)}
+                            <button
+                              onClick={toggleAdminMenu}
                               id="userMenu_admin"
                               tabIndex={isDrawerOpen ? 0 : -1}
+                              className="flex w-full items-center py-0"
                             >
                               <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
                                 🛠️
                               </span>
                               <span>Administration</span>
-                            </Link>
+                              <span className="ml-auto">
+                                {isAdminMenuOpen ? (
+                                  <FaChevronUp />
+                                ) : (
+                                  <FaChevronDown />
+                                )}
+                              </span>
+                            </button>
                           </li>
                         </ul>
+                        {isAdminMenuOpen && (
+                          <ul className="menu grow p-0">
+                            <li
+                              key="userMenu_admin_overview"
+                              className="ml-4xx btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
+                            >
+                              <Link
+                                href="/organisations/dashboard"
+                                onClick={() => setDrawerOpen(false)}
+                                id="userMenu_admin_overview"
+                                tabIndex={isDrawerOpen ? 0 : -1}
+                              >
+                                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                                  📈
+                                </span>
+                                <span>Overview</span>
+                              </Link>
+                            </li>
+                          </ul>
+                        )}
 
                         <div className="divider my-2 grow-0 !bg-gray" />
                       </>

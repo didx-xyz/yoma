@@ -94,6 +94,7 @@ export default {
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         enter: "enter 0.3s ease-out forwards",
         exit: "exit 0.3s ease-in forwards",
+        "fade-in": "fadeIn 1s ease-in-out forwards",
       },
       inset: {
         "1/5": "20%", // Custom class for top: 20%

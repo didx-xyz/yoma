@@ -7,9 +7,9 @@ import type {
   OrganizationSearchFilterSSO,
   OrganizationSearchFilterYouth,
   OrganizationSearchResultsOpportunity,
+  OrganizationSearchResultsSSO,
   OrganizationSearchResultsSummary,
   OrganizationSearchResultsYouth,
-  OrganizationSearchSso,
 } from "../models/organizationDashboard";
 import type { Country } from "../models/lookups";
 
@@ -75,9 +75,9 @@ export const searchOrganizationYouth = async (
 export const searchOrganizationSso = async (
   filter: OrganizationSearchFilterSSO,
   context?: GetServerSidePropsContext,
-): Promise<OrganizationSearchSso> => {
+): Promise<OrganizationSearchResultsSSO> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.post<OrganizationSearchSso>(
+  const { data } = await instance.post<OrganizationSearchResultsSSO>(
     "/organization/search/analytics/sso",
     filter,
   );

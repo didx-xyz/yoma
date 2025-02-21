@@ -19,10 +19,14 @@ const Suspense: React.FC<SuspenseProps> = ({
   }
 
   if (error) {
-    return <ApiErrors error={error} />;
+    return (
+      <div className="animate-fade-in">
+        <ApiErrors error={error} />
+      </div>
+    );
   }
 
-  return children;
+  return <div className="animate-fade-in">{children}</div>;
 };
 
 export default Suspense;

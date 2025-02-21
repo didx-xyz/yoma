@@ -216,10 +216,6 @@ export const OrganisationRowFilter: React.FC<{
       >
         <div className="md:flex-rowx items-centerx justify-centerx md:justify-startx flex w-full flex-col gap-2">
           <div className="items-centerx flex w-full flex-grow flex-col flex-wrap gap-2 md:w-fit md:flex-row">
-            {/* <div className="mr-4 flex text-sm font-bold text-gray">
-              Filter by:
-            </div> */}
-
             {/* ORGANISATIONS */}
             {isAdmin && (
               <span className="w-full md:w-72">
@@ -263,7 +259,7 @@ export const OrganisationRowFilter: React.FC<{
               </span>
             )}
 
-            <div className="justify-startx md:justify-endx flex w-full items-start gap-2 md:w-fit">
+            <div className="flex w-full items-start gap-2 md:w-fit">
               {/* DATE START */}
               <span className="flex">
                 <Controller
@@ -278,6 +274,7 @@ export const OrganisationRowFilter: React.FC<{
                       }}
                       selected={value ? new Date(value) : null}
                       placeholderText="Start Date"
+                      portalId="startDate"
                     />
                   )}
                 />
@@ -307,6 +304,7 @@ export const OrganisationRowFilter: React.FC<{
                       }}
                       selected={value ? new Date(value) : null}
                       placeholderText="End Date"
+                      portalId="endDate"
                     />
                   )}
                 />
