@@ -154,7 +154,7 @@ export const Navbar: React.FC = () => {
         {
           title: "Overview",
           description: "Overview",
-          url: `/organisations/${currentOrganisationId}`,
+          url: `/organisations/dashboard?organisations=${currentOrganisationId}`,
           badgeCount: null,
           selected: false,
           iconImage: "📊",
