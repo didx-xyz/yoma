@@ -41,9 +41,9 @@ import type {
   OrganizationSearchFilterOpportunity,
   OrganizationSearchFilterYouth,
   OrganizationSearchResultsOpportunity,
+  OrganizationSearchResultsSSO,
   OrganizationSearchResultsSummary,
   OrganizationSearchResultsYouth,
-  OrganizationSearchSso,
   YouthInfo,
 } from "~/api/models/organizationDashboard";
 import {
@@ -228,7 +228,6 @@ const OrganisationDashboard: NextPageWithLayout<{
   error,
 }) => {
   const router = useRouter();
-
   const myRef = useRef<HTMLDivElement>(null);
   const [inactiveOpportunitiesCount, setInactiveOpportunitiesCount] =
     useState(0);
@@ -240,6 +239,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   ] = useState(false);
   const [completedYouthOpportunities, setCompletedYouthOpportunities] =
     useState<YouthInfo | null>();
+  const isAdmin = user?.roles.includes(ROLE_ADMIN);
 
   //#region Tab state
   const [activeTab, setActiveTab] = useState("engagement");
@@ -258,7 +258,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   } = useQuery<OpportunityCategory[]>({
     queryKey: ["organisationCategories", searchFilter],
     queryFn: () => getCategoriesAdmin(searchFilter.organizations ?? []),
-    enabled: !error && !!searchFilter.organizations,
+    enabled: !error,
   });
   const {
     data: countriesData,
@@ -267,7 +267,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   } = useQuery<Country[]>({
     queryKey: ["organisationCountries", searchFilter],
     queryFn: () => getCountries(searchFilter.organizations ?? []),
-    enabled: !error && !!searchFilter.organizations,
+    enabled: !error,
   });
 
   // QUERY: SEARCH RESULTS
@@ -305,7 +305,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             : null,
       });
     },
-    enabled: !error && !!searchFilter.organizations,
+    enabled: !error,
   });
 
   // QUERY: COMPLETED YOUTH
@@ -350,7 +350,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 .filter((x) => x != "")
             : null,
       }),
-    enabled: !error && !!searchFilter.organizations,
+    enabled: !error,
   });
 
   // QUERY: SELECTED OPPORTUNITIES
@@ -386,8 +386,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           : 1,
         pageSize: PAGE_SIZE,
       }),
-    enabled:
-      !error && !!searchFilter.opportunities && !!searchFilter.organizations,
+    enabled: !error && !!searchFilter.opportunities,
   });
 
   // QUERY: SSO
@@ -395,7 +394,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     data: ssoData,
     isLoading: ssoIsLoading,
     error: ssoError,
-  } = useQuery<OrganizationSearchSso>({
+  } = useQuery<OrganizationSearchResultsSSO>({
     queryKey: ["organisationSSO", searchFilter],
     queryFn: () =>
       searchOrganizationSso({
@@ -404,8 +403,10 @@ const OrganisationDashboard: NextPageWithLayout<{
           ? searchFilter.startDate.toString()
           : "",
         endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
+        pageNumber: 1,
+        pageSize: PAGE_SIZE,
       }),
-    enabled: !error && !!searchFilter.organizations,
+    enabled: !error,
   });
 
   // carousel data
@@ -868,18 +869,27 @@ const OrganisationDashboard: NextPageWithLayout<{
             </div>
 
             {/* DESCRIPTION */}
-            {searchFilter.organizations && (
-              <div className="gap-2 overflow-hidden text-ellipsis whitespace-nowrap text-white">
-                Here&apos;s your reports for{" "}
-                <span className="font-semibold">
-                  {lookups_selectedOrganisations?.items?.find(
-                    (x) => x.id === searchFilter.organizations![0],
-                  )?.name ?? searchFilter.organizations![0]}
-                  {searchFilter.organizations.length > 1 &&
-                    ` & ${searchFilter.organizations.length - 1} more organisation${searchFilter.organizations.length > 2 ? "s" : ""}`}
-                </span>
-              </div>
-            )}
+            <div className="gap-2 overflow-hidden text-ellipsis whitespace-nowrap text-white">
+              {!searchFilter.organizations && (
+                <>
+                  <span className="font-semibold">
+                    Please select an organisation to view their dashboard.
+                  </span>
+                </>
+              )}
+              {searchFilter.organizations && (
+                <>
+                  Here&apos;s the dashboard for{" "}
+                  <span className="font-semibold underline">
+                    {lookups_selectedOrganisations?.items?.find(
+                      (x) => x.id === searchFilter.organizations![0],
+                    )?.name ?? searchFilter.organizations![0]}
+                    {searchFilter.organizations.length > 1 &&
+                      ` & ${searchFilter.organizations.length - 1} more organisation${searchFilter.organizations.length > 2 ? "s" : ""}`}
+                  </span>
+                </>
+              )}
+            </div>
 
             <div className="h-6 text-sm italic">
               {engagementData?.dateStamp && (
@@ -899,17 +909,17 @@ const OrganisationDashboard: NextPageWithLayout<{
 
           {/* FILTERS */}
           <Suspense
-            isLoading={categoriesIsLoading || !searchFilter}
+            isLoading={categoriesIsLoading}
             error={categoriesError}
             loader={
               <LoadingInline
-                className="h-[170px] flex-col md:flex-row"
-                classNameSpinner="border-white h-6 w-6"
+                className="h-[170px]"
+                classNameSpinner="border-white h-8 w-8"
                 classNameLabel="text-white"
               />
             }
           >
-            <div className="flex flex-col gap-2">
+            <div className="z-50 flex flex-col gap-2">
               <Header
                 title="Filter by:"
                 className="text-sm font-semibold text-white"
@@ -926,13 +936,15 @@ const OrganisationDashboard: NextPageWithLayout<{
             </div>
           </Suspense>
 
-          {!searchFilter.organizations && (
+          {/* ORGADMINS NEEDS TO SELECT ONE ORG */}
+          {!isAdmin && !searchFilter.organizations && (
             <FormMessage messageType={FormMessageType.Warning}>
-              Please select at least one organisation.
+              Filter by an organisation to see their dashboard.
             </FormMessage>
           )}
 
-          {searchFilter.organizations && (
+          {/* TABS & DASHBOARDS */}
+          {(isAdmin || searchFilter.organizations) && (
             <>
               {/* TABS */}
               <div className="relative flex items-center">
@@ -1020,7 +1032,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 }
               >
                 {activeTab === "engagement" && (
-                  <div className="flex flex-col gap-4 pt-4">
+                  <div className="flex animate-fade-in flex-col gap-4 pt-4">
                     {/* ENGAGEMENT */}
                     <div className="flex flex-col gap-2">
                       <Header title="🤝 Engagement" />
@@ -1139,7 +1151,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "rewards" && (
-                  <div className="flex flex-col gap-1 pt-4">
+                  <div className="flex animate-fade-in flex-col gap-1 pt-4">
                     <Header title="⚡ Rewards & Skills" />
 
                     <div className="flex flex-col gap-4 md:flex-row">
@@ -1231,7 +1243,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "demographics" && (
-                  <div className="flex w-full flex-col gap-1 pt-4">
+                  <div className="flex w-full animate-fade-in flex-col gap-1 pt-4">
                     <Header title="📊 Demographics" />
 
                     <div className="flex flex-col gap-4 md:flex-row">
@@ -1299,7 +1311,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "completedYouth" && (
-                  <div className="flex flex-col gap-1 pt-4">
+                  <div className="flex animate-fade-in flex-col gap-1 pt-4">
                     <Header title="✅ Completed by Youth" />
 
                     {/* COMPLETED YOUTH */}
@@ -1443,7 +1455,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "selectedOpportunities" && (
-                  <div className="flex flex-col pt-4">
+                  <div className="flex animate-fade-in flex-col pt-4">
                     <Header title="🏆 Selected Opportunities" />
 
                     {/* NB: DECPRECATED */}
@@ -1633,43 +1645,70 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "sso" && (
-                  <div className="flex flex-col gap-1 pt-4">
+                  <div className="flex animate-fade-in flex-col gap-4 pt-4">
                     <Header title="🔑 Single Sign-On" />
 
-                    <div className="grid grid-rows-2 gap-4 md:grid-cols-2">
-                      <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
-                        <div className="flex items-center gap-2 text-lg font-semibold">
-                          <div>Outbound</div>{" "}
-                          <IoIosArrowForward className="rounded-lg bg-green-light p-px pl-[2px] text-2xl text-green" />
-                        </div>
-                        {ssoData?.outbound?.enabled ? (
-                          <>
-                            <div className="-mb-4 font-semibold">
-                              {ssoData?.outbound?.clientId}
+                    {ssoData?.items && (
+                      <div className="flex flex-col gap-8">
+                        {ssoData?.items?.map((ssoItem) => (
+                          <div
+                            key={ssoItem.name}
+                            className="flex flex-col gap-2"
+                          >
+                            <h3 className="text-sm font-semibold">
+                              {ssoItem.name}
+                            </h3>
+                            <div className="grid-rows-2x grid gap-4 md:grid-cols-2">
+                              <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
+                                <div className="flex items-center gap-2 text-lg font-semibold">
+                                  <div>Outbound</div>
+                                  <IoIosArrowForward className="rounded-lg bg-green-light p-px pl-[2px] text-2xl text-green" />
+                                </div>
+                                {ssoItem.outbound?.enabled ? (
+                                  <>
+                                    <div className="-mb-4 font-semibold">
+                                      {ssoItem.outbound?.clientId}
+                                    </div>
+                                    <SsoChart data={ssoItem.outbound?.logins} />
+                                  </>
+                                ) : (
+                                  <div>Disabled</div>
+                                )}
+                              </div>
+                              <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
+                                <div className="flex items-center gap-2 text-lg font-semibold">
+                                  <div>Inbound</div>
+                                  <IoIosArrowBack className="rounded-lg bg-green-light p-px pr-[2px] text-2xl text-green" />
+                                </div>
+                                {ssoItem.inbound?.enabled ? (
+                                  <>
+                                    <div className="-mb-4 font-semibold">
+                                      {ssoItem.inbound?.clientId}
+                                    </div>
+                                    <SsoChart data={ssoItem.inbound?.logins} />
+                                  </>
+                                ) : (
+                                  <div>Disabled</div>
+                                )}
+                              </div>
                             </div>
-                            <SsoChart data={ssoData?.outbound?.logins} />
-                          </>
-                        ) : (
-                          <div>Disabled</div>
-                        )}
+                          </div>
+                        ))}
                       </div>
-                      <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
-                        <div className="flex items-center gap-2 text-lg font-semibold">
-                          <div>Inbound</div>{" "}
-                          <IoIosArrowBack className="rounded-lg bg-green-light p-px pr-[2px] text-2xl text-green" />
-                        </div>
-                        {ssoData?.inbound?.enabled ? (
-                          <>
-                            <div className="-mb-4 font-semibold">
-                              {ssoData?.inbound?.clientId}
-                            </div>
-                            <SsoChart data={ssoData?.inbound?.logins} />
-                          </>
-                        ) : (
-                          <div>Disabled</div>
-                        )}
+                    )}
+
+                    {(!ssoData || ssoData.items?.length === 0) && (
+                      <div>
+                        No SSO data available for the selected organization(s).
                       </div>
-                    </div>
+                    )}
+
+                    {ssoData && ssoData.items?.length >= PAGE_SIZE && (
+                      <FormMessage messageType={FormMessageType.Info}>
+                        Only the top {PAGE_SIZE} rows are shown. Please filter
+                        by organizations to see their SSO dashboard.
+                      </FormMessage>
+                    )}
                   </div>
                 )}
               </Suspense>

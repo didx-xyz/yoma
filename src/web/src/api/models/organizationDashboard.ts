@@ -27,7 +27,7 @@ export interface OrganizationSearchFilterEngagement {
   endDate: string | null;
 }
 
-export interface OrganizationSearchFilterSSO {
+export interface OrganizationSearchFilterSSO extends PaginationFilter {
   organizations: string[] | null;
   startDate: string | null;
   endDate: string | null;
@@ -183,15 +183,26 @@ export interface YouthInfoOpportunity {
   verified: boolean;
 }
 
-export interface OrganizationSearchSso {
-  outbound: SsoInfo;
-  inbound: SsoInfo;
+export interface OrganizationSearchResultsSSO {
+  items: OrganizationSSOInfo[];
+  outboundLoginCount: number | null;
+  inboundLoginCount: number | null;
+  totalCount: number | null;
   dateStamp: string;
 }
 
-export interface SsoInfo {
-  enabled: boolean;
-  clientId: string;
+export interface OrganizationSSOInfo {
+  id: string;
+  name: string;
+  logoId: string | null;
+  logoURL: string | null;
+  outbound: OrganizationSSO;
+  inbound: OrganizationSSO;
+}
+
+export interface OrganizationSSO {
   legend: string;
-  logins: TimeIntervalSummary;
+  enabled: boolean;
+  clientId: string | null;
+  logins: TimeIntervalSummary | null;
 }

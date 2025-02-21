@@ -5,7 +5,7 @@ import { CHART_COLORS } from "~/lib/constants";
 import Image from "next/image";
 
 export const SsoChart: React.FC<{
-  data: TimeIntervalSummary | undefined;
+  data: TimeIntervalSummary | null | undefined;
 }> = ({ data }) => {
   const [showChart, setShowChart] = useState<boolean>(true);
 
@@ -67,7 +67,7 @@ export const SsoChart: React.FC<{
         {showChart ? (
           <Chart
             chartType="AreaChart"
-            chartVersion="50" // NB: fixes animation bug in latest verson of google charts. TODO: remove when fixed
+            //chartVersion="50" // NB: fixes animation bug in latest verson of google charts. TODO: remove when fixed
             loader={
               <div className="flex w-full items-center justify-center">
                 <span className="loading loading-spinner loading-lg text-green"></span>
@@ -76,11 +76,11 @@ export const SsoChart: React.FC<{
             data={localData}
             options={{
               legend: "none",
-              animation: {
-                duration: 300,
-                easing: "linear",
-                startup: true,
-              },
+              // animation: {
+              //   duration: 300,
+              //   easing: "linear",
+              //   startup: true,
+              // },
               lineWidth: 1,
               areaOpacity: 0.1,
               colors: CHART_COLORS,
