@@ -259,7 +259,7 @@ export const OrganisationRowFilter: React.FC<{
               </span>
             )}
 
-            <div className="justify-startx md:justify-endx flex w-full items-start gap-2 md:w-fit">
+            <div className="flex w-full items-start gap-2 md:w-fit">
               {/* DATE START */}
               <span className="flex">
                 <Controller
@@ -274,6 +274,7 @@ export const OrganisationRowFilter: React.FC<{
                       }}
                       selected={value ? new Date(value) : null}
                       placeholderText="Start Date"
+                      portalId="startDate"
                     />
                   )}
                 />
@@ -303,6 +304,7 @@ export const OrganisationRowFilter: React.FC<{
                       }}
                       selected={value ? new Date(value) : null}
                       placeholderText="End Date"
+                      portalId="endDate"
                     />
                   )}
                 />

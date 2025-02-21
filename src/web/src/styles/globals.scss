@@ -155,6 +155,11 @@ html:has(body.content-overflow-y) {
   @apply scale-110;
 }
 
+/* React-datepicker Styles */
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
 /* MDXEditor Overrides */
 .mdxeditor-popup-container {
   z-index: 2000 !important;
