@@ -240,6 +240,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   const [completedYouthOpportunities, setCompletedYouthOpportunities] =
     useState<YouthInfo | null>();
   const isAdmin = user?.roles.includes(ROLE_ADMIN);
+  const [timeOfDay, timeOfDayEmoji] = getTimeOfDayAndEmoji();
 
   //#region Tab state
   const [activeTab, setActiveTab] = useState("engagement");
@@ -251,6 +252,8 @@ const OrganisationDashboard: NextPageWithLayout<{
   }, [router.query.tab]);
   //#endregion Tab state
 
+  //#region Queries
+  // QUERY: CATEGORIES
   const {
     data: categoriesData,
     isLoading: categoriesIsLoading,
@@ -260,6 +263,8 @@ const OrganisationDashboard: NextPageWithLayout<{
     queryFn: () => getCategoriesAdmin(searchFilter.organizations ?? []),
     enabled: !error,
   });
+
+  // QUERY: COUNTRIES
   const {
     data: countriesData,
     isLoading: countriesIsLoading,
@@ -409,6 +414,9 @@ const OrganisationDashboard: NextPageWithLayout<{
     enabled: !error,
   });
 
+  //#endregion Queries
+
+  //#region Carousels
   // carousel data
   const fetchDataAndUpdateCache_Opportunities = useCallback(
     async (
@@ -578,22 +586,9 @@ const OrganisationDashboard: NextPageWithLayout<{
       countriesData,
     ],
   );
+  //#endregion Carousels
 
-  // calculate counts
-  useEffect(() => {
-    if (!selectedOpportunitiesData?.items) return;
-
-    const inactiveCount = selectedOpportunitiesData.items.filter(
-      (opportunity) => opportunity.status === ("Inactive" as any),
-    ).length;
-    const expiredCount = selectedOpportunitiesData.items.filter(
-      (opportunity) => opportunity.status === ("Expired" as any),
-    ).length;
-
-    setInactiveOpportunitiesCount(inactiveCount);
-    setExpiredOpportunitiesCount(expiredCount);
-  }, [selectedOpportunitiesData]);
-
+  //#region Methods
   // 🎈 FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
     (opportunitySearchFilter: OrganizationSearchFilterSummaryViewModel) => {
@@ -681,8 +676,9 @@ const OrganisationDashboard: NextPageWithLayout<{
     },
     [router, getSearchFilterAsQueryString],
   );
+  //#endregion Methods
 
-  // 🔔 EVENTS
+  //#region Events
   const onSubmitFilter = useCallback(
     (val: OrganizationSearchFilterSummaryViewModel) => {
       console.table(val);
@@ -721,8 +717,22 @@ const OrganisationDashboard: NextPageWithLayout<{
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
+  //#endregion Events
 
-  const [timeOfDay, timeOfDayEmoji] = getTimeOfDayAndEmoji();
+  // calculate counts
+  useEffect(() => {
+    if (!selectedOpportunitiesData?.items) return;
+
+    const inactiveCount = selectedOpportunitiesData.items.filter(
+      (opportunity) => opportunity.status === ("Inactive" as any),
+    ).length;
+    const expiredCount = selectedOpportunitiesData.items.filter(
+      (opportunity) => opportunity.status === ("Expired" as any),
+    ).length;
+
+    setInactiveOpportunitiesCount(inactiveCount);
+    setExpiredOpportunitiesCount(expiredCount);
+  }, [selectedOpportunitiesData]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
