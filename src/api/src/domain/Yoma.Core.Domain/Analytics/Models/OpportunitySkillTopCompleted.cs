@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.Analytics.Models
   {
     public string Legend { get; set; }
 
-    public List<Lookups.Models.Skill> TopCompleted { get; set; }
+    public List<OpportunitySkillCompleted> TopCompleted { get; set; }
   }
 }
