@@ -1567,7 +1567,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           case VerificationType.Video:
             if (request.Video == null)
-              throw new ValidationException($"Verification type '{verificationType.Type}': Voice note required");
+              throw new ValidationException($"Verification type '{verificationType.Type}': Video required");
 
             blobObject = await _blobService.Create(request.Video, FileType.Videos, StorageType.Private);
             break;
