@@ -406,7 +406,17 @@ namespace Yoma.Core.Domain.Analytics.Services
       itemSkills.ForEach(o => { resultsSkills.Add(new TimeValueEntry(o.WeekEnding, o.Count)); });
       result.Skills = new OrganizationOpportunitySkill
       {
-        TopCompleted = new OpportunitySkillTopCompleted { Legend = "Most completed skills", TopCompleted = [.. flattenedSkills.Take(Skill_Count).Select(g => g.Skill).OrderBy(s => s.Name)] },
+        TopCompleted = new OpportunitySkillTopCompleted
+        {
+          Legend = "Most completed skills",
+          TopCompleted = [.. flattenedSkills.Take(Skill_Count).Select(g => new OpportunitySkillCompleted
+        {
+          Id = g.Skill.Id,
+          Name = g.Skill.Name,
+          InfoURL = g.Skill.InfoURL,
+          CountCompleted = g.Count
+        }).OrderBy(s => s.Name)]
+        },
         Items = new TimeIntervalSummary()
         { Legend = ["Total unique skills"], Data = resultsSkills, Count = [flattenedSkills.Count] }
       };
