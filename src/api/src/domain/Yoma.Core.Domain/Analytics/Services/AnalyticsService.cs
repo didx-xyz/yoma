@@ -662,6 +662,9 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       var result = new OrganizationSearchResultsSSO();
 
+      if (filter.SSOEnabledOnly)
+        queryOrganization = queryOrganization.Where(o => !string.IsNullOrEmpty(o.SSOClientIdOutbound) || !string.IsNullOrEmpty(o.SSOClientIdInbound));
+
       //pagination
       if (filter.PaginationEnabled)
       {

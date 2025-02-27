@@ -10,6 +10,8 @@ namespace Yoma.Core.Domain.Analytics.Models
 
     public DateTimeOffset? EndDate { get; set; }
 
+    public bool SSOEnabledOnly { get; set; } = true;
+
     public void SanitizeCollections()
     {
       Organizations = Organizations?.Distinct().ToList();
