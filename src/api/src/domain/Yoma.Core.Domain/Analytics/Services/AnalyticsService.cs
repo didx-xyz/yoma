@@ -328,10 +328,10 @@ namespace Yoma.Core.Domain.Analytics.Services
       var navigatedExternalLinkIntroductionWeekEnding = Navigated_ExternalLink_Introduction_Date.AddDays(-(int)Navigated_ExternalLink_Introduction_Date.DayOfWeek).AddDays(7).Date;
 
       var viewedCount = itemsViewed.Sum(o => o.Count);
-      var viewedCountSinceNavigatedExternalLink = itemsViewed.Where(o => o.WeekEnding >= navigatedExternalLinkIntroductionWeekEnding).Sum(o => o.Count);
+      var viewedCountFromNavigatedExternalLinkTracking = itemsViewed.Where(o => o.WeekEnding >= navigatedExternalLinkIntroductionWeekEnding).Sum(o => o.Count);
       var navigatedExternalLinkCount = itemsNavigatedExternalLink.Sum(o => o.Count);
       var completedCount = itemsCompleted.Sum(o => o.Count);
-      var completedCountSinceNavigatedExternalLink = itemsCompleted.Where(o => o.WeekEnding >= navigatedExternalLinkIntroductionWeekEnding).Sum(o => o.Count);
+      var completedCountFromNavigatedExternalLinkTracking = itemsCompleted.Where(o => o.WeekEnding >= navigatedExternalLinkIntroductionWeekEnding).Sum(o => o.Count);
 
       //'my' opportunity engagements: viewed, navigatedExternalLink & completed verifications
       result.Opportunities.Engagements = new TimeIntervalSummary()
@@ -372,14 +372,16 @@ namespace Yoma.Core.Domain.Analytics.Services
       result.Opportunities.ConversionRate = new OpportunityConversionRatio
       {
         ViewedCount = viewedCount,
+        ViewedCountFromNavigatedExternalLinkTracking = viewedCountFromNavigatedExternalLinkTracking,
         CompletedCount = completedCount,
+        CompletedCountFromNavigatedExternalLinkTracking = completedCountFromNavigatedExternalLinkTracking,
         NavigatedExternalLinkCount = navigatedExternalLinkCount,
 
         //percentage of users who viewed and then navigated to an external link
-        ViewedToNavigatedExternalLinkPercentage = viewedCountSinceNavigatedExternalLink > 0 ? Math.Min(100M, Math.Round((decimal)navigatedExternalLinkCount / viewedCountSinceNavigatedExternalLink * 100, 2)) : (navigatedExternalLinkCount > 0 ? 100M : 0M),
+        ViewedToNavigatedExternalLinkPercentage = viewedCountFromNavigatedExternalLinkTracking > 0 ? Math.Min(100M, Math.Round((decimal)navigatedExternalLinkCount / viewedCountFromNavigatedExternalLinkTracking * 100, 2)) : (navigatedExternalLinkCount > 0 ? 100M : 0M),
 
         //percentage of users who navigated to an external link and then completed
-        NavigatedExternalLinkToCompletedPercentage = navigatedExternalLinkCount > 0 ? Math.Min(100M, Math.Round((decimal)completedCountSinceNavigatedExternalLink / navigatedExternalLinkCount * 100, 2)) : (completedCountSinceNavigatedExternalLink > 0 ? 100M : 0M)
+        NavigatedExternalLinkToCompletedPercentage = navigatedExternalLinkCount > 0 ? Math.Min(100M, Math.Round((decimal)completedCountFromNavigatedExternalLinkTracking / navigatedExternalLinkCount * 100, 2)) : (completedCountFromNavigatedExternalLinkTracking > 0 ? 100M : 0M)
       };
 
       //zlto rewards
