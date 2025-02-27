@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.Analytics.Models
   {
     public string Legend { get; set; }
 
-    public bool Enabled => !string.IsNullOrWhiteSpace(ClientId);
+    public bool Enabled => !string.IsNullOrEmpty(ClientId);
 
     public string? ClientId { get; set; }
 
