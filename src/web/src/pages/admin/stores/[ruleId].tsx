@@ -1205,8 +1205,8 @@ const StoreRuleDetails: NextPageWithLayout<{
                               onChange={(val) => {
                                 onChange(val.map((c) => c.value));
                               }}
-                              value={dataStoreItemCategories?.filter(
-                                (c) => value?.includes(c.value),
+                              value={dataStoreItemCategories?.filter((c) =>
+                                value?.includes(c.value),
                               )}
                               placeholder="Store Item Categories"
                               styles={{

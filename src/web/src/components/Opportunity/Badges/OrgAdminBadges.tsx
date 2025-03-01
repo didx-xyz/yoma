@@ -23,7 +23,7 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
         />
 
         <span className="ml-1 text-xs">{`${opportunity?.commitmentIntervalCount} ${opportunity?.commitmentInterval}${
-          opportunity?.commitmentIntervalCount ?? 0 > 1 ? "s" : ""
+          (opportunity?.commitmentIntervalCount ?? 0 > 1) ? "s" : ""
         }`}</span>
       </div>
 
