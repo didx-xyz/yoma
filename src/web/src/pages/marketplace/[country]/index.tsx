@@ -674,7 +674,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
               <div className="flex flex-grow gap-4">
                 <Link
-                  href="/marketplace/transactions"
+                  href="/yoid/wallet"
                   className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
                 >
                   My Products
