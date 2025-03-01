@@ -64,7 +64,11 @@ export const OrgContactEdit: React.FC<InputProps> = ({
     primaryContactPhone: zod
       .string()
       .min(1, "Primary contact phone is required.")
-      .max(50, "Maximum of 50 characters allowed."),
+      .max(50, "Maximum of 50 characters allowed.")
+      .regex(
+        /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/,
+        "Invalid phone number format."
+      ),
   });
 
   const form = useForm({
