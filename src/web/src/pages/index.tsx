@@ -77,7 +77,7 @@ const Home: NextPageWithLayout = () => {
       <div className="z-10 mt-8 flex flex-col items-center justify-center overflow-hidden px-4 pt-8 lg:mt-20">
         <div className="grid grid-cols-1 gap-6 md:max-w-5xl lg:grid-cols-2">
           {/* LEFT: HEADERS AND TEXT */}
-          <div className="flex min-h-80 max-w-md flex-col gap-2 overflow-hidden pt-8 text-white md:py-8">
+          <div className="min-h-80 flex max-w-md flex-col gap-2 overflow-hidden pt-8 text-white md:py-8">
             <h6 className="text-sm uppercase tracking-widest">
               Welcome to Yoma
             </h6>

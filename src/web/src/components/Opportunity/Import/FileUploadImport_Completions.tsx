@@ -60,7 +60,9 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
         // Validate file type
         if (fileType && !ACCEPTED_CSV_TYPES.includes(fileType)) {
           ctx.addIssue({
-            message: `File type not supported. Please upload a file of type ${ACCEPTED_CSV_TYPES_LABEL.join(", ")}.`,
+            message: `File type not supported. Please upload a file of type ${ACCEPTED_CSV_TYPES_LABEL.join(
+              ", ",
+            )}.`,
             code: z.ZodIssueCode.custom,
             path: ["importFile"],
             fatal: true,

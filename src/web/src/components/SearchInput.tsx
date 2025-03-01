@@ -35,7 +35,7 @@ export const SearchInput: React.FC<InputProps> = ({
       <div className="join w-full md:w-auto">
         <input
           type="search"
-          className={`input input-xs join-item !h-[38px] w-full border-0 !pl-4 placeholder-[#858585] focus:outline-0 ${heightOverride}`}
+          className={`input join-item input-xs !h-[38px] w-full border-0 !pl-4 placeholder-[#858585] focus:outline-0 ${heightOverride}`}
           placeholder={placeholder ?? "Search..."}
           autoComplete="off"
           value={searchInputValue ?? ""}

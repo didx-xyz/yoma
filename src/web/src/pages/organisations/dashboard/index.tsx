@@ -806,9 +806,13 @@ const OrganisationDashboard: NextPageWithLayout<{
                       >
                         <td>
                           <Link
-                            href={`/organisations/${opportunity.organizationId}/opportunities/${
+                            href={`/organisations/${
+                              opportunity.organizationId
+                            }/opportunities/${
                               opportunity.id
-                            }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
+                            }/info?returnUrl=${encodeURIComponent(
+                              router.asPath,
+                            )}`}
                             className="line-clamp-1 w-40 underline md:w-64"
                             target="_blank"
                             title={opportunity.title}
@@ -895,7 +899,11 @@ const OrganisationDashboard: NextPageWithLayout<{
                       (x) => x.id === searchFilter.organizations![0],
                     )?.name ?? searchFilter.organizations![0]}
                     {searchFilter.organizations.length > 1 &&
-                      ` & ${searchFilter.organizations.length - 1} more organisation${searchFilter.organizations.length > 2 ? "s" : ""}`}
+                      ` & ${
+                        searchFilter.organizations.length - 1
+                      } more organisation${
+                        searchFilter.organizations.length > 2 ? "s" : ""
+                      }`}
                   </span>
                 </>
               )}
@@ -1012,7 +1020,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                   </a>
                   <a
                     role="tab"
-                    className={`group tab relative !border-none ${activeTab === "sso" ? "tab-active text-black" : ""}`}
+                    className={`group tab relative !border-none ${
+                      activeTab === "sso" ? "tab-active text-black" : ""
+                    }`}
                     onClick={() => setActiveTab("sso")}
                   >
                     🔑 SSO
@@ -1089,13 +1099,23 @@ const OrganisationDashboard: NextPageWithLayout<{
                             <div className="flex flex-grow flex-col">
                               <div className="flex flex-grow flex-nowrap items-center gap-2 text-lg font-semibold tracking-tighter md:text-2xl">
                                 <div>
-                                  {`${engagementData?.opportunities?.conversionRate?.viewedToNavigatedExternalLinkPercentage ?? 0} %`}
+                                  {`${
+                                    engagementData?.opportunities
+                                      ?.conversionRate
+                                      ?.viewedToNavigatedExternalLinkPercentage ??
+                                    0
+                                  } %`}
                                 </div>
                                 <div>
                                   <FcAdvance className="size-10 text-green" />
                                 </div>
                                 <div>
-                                  {`${engagementData?.opportunities?.conversionRate?.navigatedExternalLinkToCompletedPercentage ?? 0} %`}
+                                  {`${
+                                    engagementData?.opportunities
+                                      ?.conversionRate
+                                      ?.navigatedExternalLinkToCompletedPercentage ??
+                                    0
+                                  } %`}
                                 </div>
                               </div>
                             </div>
@@ -1562,7 +1582,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                                       >
                                         <td>
                                           <Link
-                                            href={`/organisations/${opportunity.organizationId}/opportunities/${
+                                            href={`/organisations/${
+                                              opportunity.organizationId
+                                            }/opportunities/${
                                               opportunity.id
                                             }/info?returnUrl=${encodeURIComponent(
                                               router.asPath,

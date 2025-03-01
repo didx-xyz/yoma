@@ -515,7 +515,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         name="dateEnd"
                         render={({ field: { onChange, value } }) => (
                           <DatePicker
-                            className="input input-sm input-bordered block rounded-md border-gray focus:border-gray focus:outline-none"
+                            className="input input-bordered input-sm block rounded-md border-gray focus:border-gray focus:outline-none"
                             onChange={(date) =>
                               onChange(toISOStringForTimezone(date))
                             }

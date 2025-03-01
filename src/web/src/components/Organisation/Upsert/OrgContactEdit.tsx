@@ -67,7 +67,7 @@ export const OrgContactEdit: React.FC<InputProps> = ({
       .max(50, "Maximum of 50 characters allowed.")
       .regex(
         /^[+]?[(]?[0-9]{3}[)]?[-\s.]?[0-9]{3}[-\s.]?[0-9]{4,6}$/,
-        "Invalid phone number format."
+        "Invalid phone number format.",
       ),
   });
 
