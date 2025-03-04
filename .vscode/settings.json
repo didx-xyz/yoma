@@ -8,5 +8,9 @@
     "connectionId": "didx-xyz",
     "projectKey": "didx-xyz_yoma"
   },
-  "java.compile.nullAnalysis.mode": "automatic"
+  "java.compile.nullAnalysis.mode": "automatic",
+  "files.associations": {
+    "*.gotmpl": "helm",
+    "*.yaml": "helm"
+  }
 }
