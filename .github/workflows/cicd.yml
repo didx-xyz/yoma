@@ -336,9 +336,9 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      TAILSCALE_VERSION: 1.72.1
-      HELMFILE_VERSION: v0.167.1
-      HELM_VERSION: v3.15.4
+      TAILSCALE_VERSION: latest
+      HELMFILE_VERSION: v0.171.0
+      HELM_VERSION: v3.17.1
       TAG: ${{ needs.build.outputs.image_version }}
 
     concurrency:
