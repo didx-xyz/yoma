@@ -792,61 +792,55 @@ const OrganisationDashboard: NextPageWithLayout<{
               </div>
             </div>
 
-            <ul className="list-disc space-y-3 pl-5 text-sm">
-              <li>
-                <span className="flex items-start">
-                  <span className="mr-2">👀</span>
-                  <span>
-                    <span className="font-bold">Total Views:</span> The number
-                    of times your opportunities have been viewed by users.
-                  </span>
-                </span>
-              </li>
-              <li>
-                <span className="flex items-start">
-                  <span className="mr-2">➡️</span>
-                  <span>
-                    <span className="font-bold">View-to-Click Conversion:</span>{" "}
-                    The percentage of viewers who clicked on your external
-                    links. This shows how effective your opportunity
-                    descriptions are at generating interest.
-                  </span>
-                </span>
-              </li>
-              <li>
-                <span className="flex items-start">
-                  <span className="mr-2">👆</span>
-                  <span>
-                    <span className="font-bold">Links Clicked:</span> The total
-                    number of times users clicked external links in your
-                    opportunities.
-                  </span>
-                </span>
-              </li>
-              <li>
-                <span className="flex items-start">
-                  <span className="mr-2">➡️</span>
-                  <span>
-                    <span className="font-bold">
-                      Click-to-Completion Conversion:
-                    </span>{" "}
-                    The percentage of users who completed the opportunity after
-                    clicking the link. This measures how well the external
-                    process converts interested users.
-                  </span>
-                </span>
-              </li>
-              <li>
-                <span className="flex items-start">
-                  <span className="mr-2">✅</span>
-                  <span>
-                    <span className="font-bold">Total Completions:</span> The
-                    number of users who have fully completed your opportunities
-                    after clicking through.
-                  </span>
-                </span>
-              </li>
-            </ul>
+            <div className="divider my-1 grow-0 !bg-gray" />
+
+            <div className="flex flex-col gap-4 text-sm">
+              <div className="flex items-start gap-2">
+                <span className="mr-2 text-lg">👀</span>
+                <div className="text-left">
+                  <span className="font-bold">Total Views:</span> The number of
+                  times your opportunities have been viewed by users.
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="mr-2 text-lg">➡️</span>
+                <div className="text-left">
+                  <span className="font-bold">View-to-Click Conversion:</span>{" "}
+                  The percentage of viewers who clicked on your external links.
+                  This shows how effective your opportunity descriptions are at
+                  generating interest.
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="mr-2 text-lg">👆</span>
+                <div className="text-left">
+                  <span className="font-bold">Links Clicked:</span> The total
+                  number of times users clicked external links in your
+                  opportunities.
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="mr-2 text-lg">➡️</span>
+                <div className="text-left">
+                  <span className="font-bold">
+                    Click-to-Completion Conversion:
+                  </span>{" "}
+                  The percentage of users who completed the opportunity after
+                  clicking the link. This measures how well the external process
+                  converts interested users.
+                </div>
+              </div>
+              <div className="flex items-start gap-2">
+                <span className="mr-2 text-lg">✅</span>
+                <div className="text-left">
+                  <span className="font-bold">Total Completions:</span> The
+                  number of users who have fully completed your opportunities
+                  after clicking through.
+                </div>
+              </div>
+            </div>
+
+            <div className="divider my-1 grow-0 !bg-gray" />
 
             {/* BUTTONS */}
             <div

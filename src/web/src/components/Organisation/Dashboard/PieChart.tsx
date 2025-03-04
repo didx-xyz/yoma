@@ -34,7 +34,11 @@ export const PieChart: React.FC<{
             pieHole: 0.7,
             height: 125,
             backgroundColor: "transparent",
-            pieSliceText: "none",
+            pieSliceText: "value",
+            pieSliceTextStyle: {
+              color: "black",
+              fontSize: 13,
+            },
             chartArea: {
               top: 10,
               bottom: 10,
