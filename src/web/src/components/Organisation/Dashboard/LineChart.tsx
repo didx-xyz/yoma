@@ -7,9 +7,10 @@ import { screenWidthAtom } from "~/lib/store";
 import NoRowsMessage from "~/components/NoRowsMessage";
 
 export const LineChart: React.FC<{
+  key: string;
   data: TimeIntervalSummary | undefined;
   opportunityCount?: number;
-}> = ({ data, opportunityCount }) => {
+}> = ({ key, data, opportunityCount }) => {
   const [selectedLegendIndex, setSelectedLegendIndex] = useState<number | null>(
     null,
   );
@@ -54,10 +55,10 @@ export const LineChart: React.FC<{
 
   // chart responsiveness
   // changing the key forces a redraw of the chart when the screen width changes
-  const [key, setkey] = useState("");
+  const [keyState, setkey] = useState(key);
   const screenWidth = useAtomValue(screenWidthAtom);
   useEffect(() => {
-    setkey(`org-engagement-chart-${screenWidth}`);
+    setkey(`${key}-${screenWidth}`);
   }, [screenWidth]);
 
   const Legend = () => (
@@ -65,13 +66,7 @@ export const LineChart: React.FC<{
       <div className="ml-4 mt-2 flex flex-col gap-1">
         <div className="flex flex-row items-center gap-2">
           <span className="hidden rounded-lg bg-green-light p-1 min-[400px]:inline">
-            <Image
-              className="h-3 w-3 md:h-5 md:w-5"
-              src="/images/icon-skills-green.svg"
-              alt="Icon"
-              width={20}
-              height={20}
-            />
+            🏆
           </span>
           <span className="text-xs font-semibold md:text-sm">
             Opportunities
@@ -92,13 +87,9 @@ export const LineChart: React.FC<{
             <span
               className={`hidden rounded-lg bg-green-light p-1 min-[400px]:inline`}
             >
-              <Image
-                className={`h-3 w-3 md:h-5 md:w-5`}
-                src={`/images/icon-${name.toLowerCase()}-green.svg`}
-                alt="Icon"
-                width={20}
-                height={20}
-              />
+              {name === "Viewed" && "👀"}
+              {name === "Go-To Clicks" && "👆"}
+              {name === "Completions" && "🎓"}
             </span>
             <span className="text-xs font-semibold md:text-sm">{name}</span>
           </div>
@@ -122,7 +113,7 @@ export const LineChart: React.FC<{
       {showLabels ? (
         <div className="ml-4 mt-2 flex h-full w-[94%] flex-col items-stretch justify-center pb-4 md:ml-6 md:w-full md:pb-0">
           <Chart
-            key={key}
+            key={keyState}
             chartType="AreaChart"
             //chartVersion="50" // NB: fixes animation bug in latest verson of google charts. TODO: remove when fixed
             loader={

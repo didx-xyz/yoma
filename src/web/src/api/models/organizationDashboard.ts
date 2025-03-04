@@ -69,8 +69,10 @@ export interface OpportunityCompletion {
 
 export interface OpportunityConversionRatio {
   viewedCount: number;
+  viewedCountFromNavigatedExternalLinkTracking: number;
   navigatedExternalLinkCount: number;
   completedCount: number;
+  completedCountFromNavigatedExternalLinkTracking: number;
   viewedToNavigatedExternalLinkPercentage: number;
   navigatedExternalLinkToCompletedPercentage: number;
 }

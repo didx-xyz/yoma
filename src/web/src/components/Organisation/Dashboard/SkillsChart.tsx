@@ -41,14 +41,7 @@ export const SkillsChart: React.FC<{
         {data?.legend.map((name, index) => (
           <div key={index} className="flex flex-col gap-4">
             <div className="flex flex-row items-center gap-3">
-              <span className="rounded-lg bg-green-light p-1">
-                <Image
-                  alt="Skills Icon"
-                  src="/images/icon-viewed-green.svg"
-                  width={20}
-                  height={20}
-                />
-              </span>
+              <span className="rounded-lg bg-green-light p-1">📊</span>
               <span className="text-sm font-semibold">{name}</span>
             </div>
             {data?.count[index] != null && (

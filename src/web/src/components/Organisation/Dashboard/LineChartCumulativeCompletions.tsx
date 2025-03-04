@@ -7,8 +7,9 @@ import NoRowsMessage from "~/components/NoRowsMessage";
 import { FcAreaChart } from "react-icons/fc";
 
 export const LineChartCumulativeCompletions: React.FC<{
+  key: string;
   data: TimeIntervalSummary | undefined;
-}> = ({ data }) => {
+}> = ({ key, data }) => {
   const [showLabels, setShowLabels] = useState<boolean>(true);
 
   const localData = useMemo<(string | number)[][]>(() => {
@@ -33,32 +34,32 @@ export const LineChartCumulativeCompletions: React.FC<{
     const allSameDate = mappedData.every(
       (item, _, arr) => item[0] === (arr[0]?.[0] ?? undefined),
     );
-    setShowLabels(!allSameDate);
+    //setShowLabels(!allSameDate);
 
     return [["Date", ...labels], ...mappedData] as (string | number)[][];
   }, [data]);
 
   // chart responsiveness
   // changing the key forces a redraw of the chart when the screen width changes
-  const [key, setkey] = useState("");
+  const [keyState, setkey] = useState(key);
   const screenWidth = useAtomValue(screenWidthAtom);
   useEffect(() => {
-    setkey(`org-engagement-chart-cumulative-completions-${screenWidth}`);
+    setkey(`${key}-${screenWidth}`);
   }, [screenWidth]);
 
   return (
-    <div className="flex w-full flex-col justify-between gap-4 overflow-hidden rounded-lg bg-white pt-4 shadow">
-      <div className="ml-3 flex flex-row items-center gap-2">
+    <div className="flex w-full flex-col justify-between overflow-hidden rounded-lg bg-white px-1 shadow">
+      {/* <div className="ml-3 flex flex-row items-center gap-2">
         <div className="rounded-lg bg-green-light p-1">
           <FcAreaChart className="h-5 w-5" />
         </div>
         <div className="text-sm font-semibold">Cumulative Completions</div>
-      </div>
+      </div> */}
 
       {showLabels ? (
         <div>
           <Chart
-            key={key}
+            key={keyState}
             chartType="AreaChart"
             loader={
               <div className="mt-20 flex w-full items-center justify-center">
@@ -75,6 +76,7 @@ export const LineChartCumulativeCompletions: React.FC<{
               pointSize: 2,
               pointShape: "circle",
               enableInteractivity: true,
+              height: 380,
               hAxis: {
                 gridlines: {
                   color: "transparent",
@@ -92,6 +94,9 @@ export const LineChartCumulativeCompletions: React.FC<{
                 },
                 textPosition: "none",
                 baselineColor: "transparent",
+              },
+              chartArea: {
+                width: "95%",
               },
             }}
           />
