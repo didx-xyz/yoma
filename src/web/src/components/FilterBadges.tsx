@@ -34,7 +34,7 @@ const FilterBadges: React.FC<{
   );
 
   return (
-    <div className="relative flex justify-start">
+    <div className="relative flex h-6 justify-start">
       <CustomSlider>
         {filteredKeys.map(([key, value]) => {
           const renderBadge = (item: string) => {

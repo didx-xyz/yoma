@@ -24,7 +24,6 @@ const ValueContainer = ({
   children,
   ...props
 }: ValueContainerProps<SelectOption>) => {
-  // eslint-disable-next-line prefer-const
   let [values, input] = children as any[];
   if (Array.isArray(values)) {
     if (
@@ -56,7 +55,7 @@ const ValueContainer = ({
   );
 };
 
-export const OrganisationRowFilter: React.FC<{
+export const DashboardFilterHorizontal: React.FC<{
   htmlRef: HTMLDivElement;
   searchFilter: OrganizationSearchFilterSummaryViewModel | null;
   lookups_categories?: OpportunityCategory[];

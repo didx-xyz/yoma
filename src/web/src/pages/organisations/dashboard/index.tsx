@@ -25,6 +25,7 @@ import {
   IoMdClose,
   IoMdCloseCircleOutline,
   IoMdInformationCircleOutline,
+  IoMdOptions,
   IoMdPerson,
   IoMdTrophy,
 } from "react-icons/io";
@@ -70,7 +71,7 @@ import { EngagementRowFilter } from "~/components/Organisation/Dashboard/Engagem
 import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
 import { LineChartCumulativeCompletions } from "~/components/Organisation/Dashboard/LineChartCumulativeCompletions";
 import { OpportunityCard } from "~/components/Organisation/Dashboard/OpportunityCard";
-import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/OrganisationRowFilter";
+import { DashboardFilterHorizontal } from "~/components/Organisation/Dashboard/DashboardFilterHorizontal";
 import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
 import { SkillsChart } from "~/components/Organisation/Dashboard/SkillsChart";
 import { SsoChart } from "~/components/Organisation/Dashboard/SsoChart";
@@ -97,6 +98,9 @@ import {
 import { getTimeOfDayAndEmoji } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
+import { DashboardFilterVertical } from "~/components/Organisation/Dashboard/DashboardFilterVertical";
+import FilterTab from "~/components/Opportunity/FilterTab";
+import FilterBadges from "~/components/FilterBadges";
 
 export interface OrganizationSearchFilterSummaryViewModel {
   organizations: string[] | null;
@@ -231,6 +235,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 }) => {
   const router = useRouter();
   const myRef = useRef<HTMLDivElement>(null);
+  const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
   const [inactiveOpportunitiesCount, setInactiveOpportunitiesCount] =
     useState(0);
   const [expiredOpportunitiesCount, setExpiredOpportunitiesCount] = useState(0);
@@ -265,7 +270,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     isLoading: categoriesIsLoading,
     error: categoriesError,
   } = useQuery<OpportunityCategory[]>({
-    queryKey: ["organisationCategories", searchFilter],
+    queryKey: ["organisationCategories", searchFilter.organizations],
     queryFn: () => getCategoriesAdmin(searchFilter.organizations ?? []),
     enabled: !error,
   });
@@ -276,7 +281,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     isLoading: countriesIsLoading,
     error: countriesError,
   } = useQuery<Country[]>({
-    queryKey: ["organisationCountries", searchFilter],
+    queryKey: ["organisationCountries", searchFilter.organizations],
     queryFn: () => getCountries(searchFilter.organizations ?? []),
     enabled: !error,
   });
@@ -691,32 +696,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   //#endregion Methods
 
   //#region Events
-  const onSubmitFilter = useCallback(
-    (val: OrganizationSearchFilterSummaryViewModel) => {
-      console.table(val);
-      redirectWithSearchFilterParams({
-        categories: val.categories,
-        opportunities: val.opportunities,
-        startDate: val.startDate,
-        endDate: val.endDate,
-        pageSelectedOpportunities: searchFilter.pageSelectedOpportunities
-          ? searchFilter.pageSelectedOpportunities
-          : 1,
-        pageCompletedYouth: searchFilter.pageCompletedYouth
-          ? searchFilter.pageCompletedYouth
-          : 1,
-        pageSSO: searchFilter.pageSSO ? searchFilter.pageSSO : 1,
-        organizations: val.organizations,
-        countries: val.countries,
-      });
-    },
-    [
-      redirectWithSearchFilterParams,
-      searchFilter.pageSelectedOpportunities,
-      searchFilter.pageCompletedYouth,
-      searchFilter.pageSSO,
-    ],
-  );
+
   const handlePagerChangeSelectedOpportunities = useCallback(
     (value: number) => {
       searchFilter.pageSelectedOpportunities = value;
@@ -755,6 +735,43 @@ const OrganisationDashboard: NextPageWithLayout<{
     setExpiredOpportunitiesCount(expiredCount);
   }, [selectedOpportunitiesData]);
 
+  // //#region Filter Popup Handlers
+  const onCloseFilter = useCallback(() => {
+    setFilterFullWindowVisible(false);
+  }, [setFilterFullWindowVisible]);
+
+  const onClearFilter = useCallback(() => {
+    void router.push("/organisations/dashboard", undefined, { scroll: true });
+  }, [router]);
+
+  const onSubmitFilter = useCallback(
+    (val: OrganizationSearchFilterSummaryViewModel) => {
+      console.table(val);
+      redirectWithSearchFilterParams({
+        categories: val.categories,
+        opportunities: val.opportunities,
+        startDate: val.startDate,
+        endDate: val.endDate,
+        pageSelectedOpportunities: searchFilter.pageSelectedOpportunities
+          ? searchFilter.pageSelectedOpportunities
+          : 1,
+        pageCompletedYouth: searchFilter.pageCompletedYouth
+          ? searchFilter.pageCompletedYouth
+          : 1,
+        pageSSO: searchFilter.pageSSO ? searchFilter.pageSSO : 1,
+        organizations: val.organizations,
+        countries: val.countries,
+      });
+    },
+    [
+      redirectWithSearchFilterParams,
+      searchFilter.pageSelectedOpportunities,
+      searchFilter.pageCompletedYouth,
+      searchFilter.pageSSO,
+    ],
+  );
+  //#endregion Filter Popup Handlers
+
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -767,10 +784,41 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground className="h-[440px] md:h-[446px] lg:h-[446px]" />
+      <PageBackground className="h-[328px] md:h-[332px]" />
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
+
+      {/* POPUP FILTER */}
+      <FilterTab openFilter={setFilterFullWindowVisible} />
+      <CustomModal
+        isOpen={filterFullWindowVisible}
+        shouldCloseOnOverlayClick={true}
+        onRequestClose={() => {
+          setFilterFullWindowVisible(false);
+        }}
+        className="md:max-h-[600px] md:w-[700px]"
+        animationStyle="slide-top"
+      >
+        {/* {categoriesData != undefined &&
+          lookups_selectedOpportunities != undefined &&
+          lookups_selectedOrganisations != undefined && ( */}
+        <DashboardFilterVertical
+          htmlRef={myRef.current!}
+          searchFilter={searchFilter}
+          lookups_countries={countriesData}
+          lookups_categories={categoriesData}
+          lookups_selectedOpportunities={lookups_selectedOpportunities}
+          lookups_selectedOrganisations={lookups_selectedOrganisations}
+          submitButtonText="Apply Filters"
+          onCancel={onCloseFilter}
+          onSubmit={(e) => onSubmitFilter(e)}
+          onClear={onClearFilter}
+          clearButtonText="Clear All Filters"
+          //session={session}
+        />
+        {/* )} */}
+      </CustomModal>
 
       {/* GOTO/COMPLETION CONVERSION RATIO DIALOG */}
       <CustomModal
@@ -779,9 +827,9 @@ const OrganisationDashboard: NextPageWithLayout<{
         onRequestClose={() => {
           setGotoCompletedConversionRatioDialogVisible(false);
         }}
-        className="md:max-h-[500px] md:w-[550px]"
+        className="md:max-h-[600px] md:w-[700px]"
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+        <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex h-16 flex-row justify-end p-8 shadow-lg">
             <button
               type="button"
@@ -860,7 +908,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
             {/* BUTTONS */}
             <div
-              className={`mt-8 flex flex-row items-center justify-center gap-4`}
+              className={`mt-8x flex flex-row items-center justify-center gap-4`}
             >
               <button
                 type="button"
@@ -883,7 +931,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         onRequestClose={() => {
           setCompletedYouthOpportunitiesDialogVisible(false);
         }}
-        className="md:max-h-[500px] md:w-[550px]"
+        className="md:max-h-[600px] md:w-[700px]"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="bg-theme flex h-16 flex-row justify-end p-8 shadow-lg">
@@ -997,7 +1045,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         </div>
       </CustomModal>
 
-      <div className="container z-10 mt-[6rem] max-w-7xl overflow-hidden p-4">
+      <div className="container z-10 mt-[4rem] max-w-7xl overflow-hidden p-4">
         <div className="flex flex-col gap-4">
           {/* HEADER */}
           <div className="flex flex-col gap-2">
@@ -1018,18 +1066,24 @@ const OrganisationDashboard: NextPageWithLayout<{
               )}
               {searchFilter.organizations && (
                 <>
-                  Here&apos;s the dashboard for{" "}
-                  <span className="font-semibold underline">
-                    {lookups_selectedOrganisations?.items?.find(
-                      (x) => x.id === searchFilter.organizations![0],
-                    )?.name ?? searchFilter.organizations![0]}
-                    {searchFilter.organizations.length > 1 &&
-                      ` & ${
-                        searchFilter.organizations.length - 1
-                      } more organisation${
-                        searchFilter.organizations.length > 2 ? "s" : ""
-                      }`}
-                  </span>
+                  <div className="flex flex-row gap-1 font-semibold">
+                    <div>Here&apos;s the dashboard for</div>
+                    <div className="flex flex-row font-semibold">
+                      <div className="w-36 truncate underline">
+                        {lookups_selectedOrganisations?.items?.find(
+                          (x) => x.id === searchFilter.organizations![0],
+                        )?.name ?? searchFilter.organizations![0]}
+                      </div>
+                      <div>
+                        {searchFilter.organizations.length > 1 &&
+                          ` & ${
+                            searchFilter.organizations.length - 1
+                          } more organisation${
+                            searchFilter.organizations.length > 2 ? "s" : ""
+                          }`}
+                      </div>
+                    </div>
+                  </div>
                 </>
               )}
             </div>
@@ -1062,18 +1116,34 @@ const OrganisationDashboard: NextPageWithLayout<{
               />
             }
           >
-            <div className="flex flex-col gap-2">
-              <Header
-                title="Filter by:"
-                className="text-sm font-semibold text-white"
-              />
-              <OrganisationRowFilter
-                htmlRef={myRef.current!}
+            <div className="flex flex-col gap-4">
+              {/* FILTER BUTTON */}
+              <button
+                type="button"
+                className="bg-theme p-3x justify-centerx items-centerx btn btn-sm w-full rounded-l-full border-none text-white brightness-[1.12] hover:brightness-95 md:w-40"
+                onClick={() => setFilterFullWindowVisible(true)}
+              >
+                <IoMdOptions className="h-5 w-5" />
+                Filter
+              </button>
+
+              {/* FILTER BADGES */}
+              <FilterBadges
                 searchFilter={searchFilter}
-                lookups_categories={categoriesData}
-                lookups_selectedOpportunities={lookups_selectedOpportunities}
-                lookups_selectedOrganisations={lookups_selectedOrganisations}
-                user={user}
+                excludeKeys={[
+                  "pageSelectedOpportunities",
+                  "pageCompletedYouth",
+                  "pageSSO",
+                  "pageSize",
+                  "organizations",
+                  "opportunities",
+                  "categories",
+                  "startDate",
+                  "endDate",
+                ]}
+                resolveValue={(key, value) => {
+                  return value;
+                }}
                 onSubmit={(e) => onSubmitFilter(e)}
               />
             </div>
@@ -1090,12 +1160,14 @@ const OrganisationDashboard: NextPageWithLayout<{
           {(isAdmin || searchFilter.organizations) && (
             <>
               {/* TABS */}
-              <div className="relative flex items-center">
+              <div className="relative mt-4 flex items-center">
                 <CustomSlider className="tabs tabs-lifted !gap-0 border-gray text-white">
                   <a
                     role="tab"
                     className={`group tab relative !border-none ${
-                      activeTab === "engagement" ? "tab-active text-black" : ""
+                      activeTab === "engagement"
+                        ? "bg-gray-light text-black"
+                        : ""
                     }`}
                     onClick={() => setActiveTab("engagement")}
                   >
@@ -1106,7 +1178,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                       role="tab"
                       className={`group tab relative !border-none ${
                         activeTab === "cumulativeCompletions"
-                          ? "tab-active text-black"
+                          ? "bg-gray-light text-black"
                           : ""
                       }`}
                       onClick={() => setActiveTab("cumulativeCompletions")}
@@ -1117,7 +1189,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <a
                     role="tab"
                     className={`group tab relative !border-none ${
-                      activeTab === "rewards" ? "tab-active text-black" : ""
+                      activeTab === "rewards" ? "bg-gray-light text-black" : ""
                     }`}
                     onClick={() => setActiveTab("rewards")}
                   >
@@ -1127,7 +1199,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     role="tab"
                     className={`group tab relative !border-none ${
                       activeTab === "demographics"
-                        ? "tab-active text-black"
+                        ? "bg-gray-light text-black"
                         : ""
                     }`}
                     onClick={() => setActiveTab("demographics")}
@@ -1138,7 +1210,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     role="tab"
                     className={`group tab relative !border-none ${
                       activeTab === "completedYouth"
-                        ? "tab-active text-black"
+                        ? "bg-gray-light text-black"
                         : ""
                     }`}
                     onClick={() => setActiveTab("completedYouth")}
@@ -1149,7 +1221,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     role="tab"
                     className={`group tab relative !border-none ${
                       activeTab === "selectedOpportunities"
-                        ? "tab-active text-black"
+                        ? "bg-gray-light text-black"
                         : ""
                     }`}
                     onClick={() => setActiveTab("selectedOpportunities")}
@@ -1159,7 +1231,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <a
                     role="tab"
                     className={`group tab relative !border-none ${
-                      activeTab === "sso" ? "tab-active text-black" : ""
+                      activeTab === "sso" ? "bg-gray-light text-black" : ""
                     }`}
                     onClick={() => setActiveTab("sso")}
                   >
@@ -1196,15 +1268,14 @@ const OrganisationDashboard: NextPageWithLayout<{
                       {/* <Header title="🤝 Engagement" /> */}
 
                       {/* FILTERS */}
-                      <EngagementRowFilter
+                      {/* <EngagementRowFilter
                         htmlRef={myRef.current!}
                         searchFilter={searchFilter}
                         lookups_countries={countriesData}
                         onSubmit={(e) => onSubmitFilter(e)}
-                      />
+                      /> */}
 
                       <div className="flex flex-col gap-4 md:flex-row">
-                        {/* {JSON.stringify(engagementData)} */}
                         {/* LINE CHART: OVERVIEW */}
                         {engagementData?.opportunities?.engagements && (
                           <LineChart
