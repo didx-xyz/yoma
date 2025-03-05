@@ -89,8 +89,16 @@ export interface OrganizationOpportunitySkill {
 
 export interface OpportunitySkillTopCompleted {
   legend: string;
-  topCompleted: Skill[];
+  topCompleted: OpportunitySkillCompleted[];
 }
+
+export interface OpportunitySkillCompleted {
+  id: string;
+  name: string;
+  infoURL: string | null;
+  countCompleted: number;
+}
+
 export interface TimeIntervalSummary {
   legend: string[];
   data: TimeValueEntry[];

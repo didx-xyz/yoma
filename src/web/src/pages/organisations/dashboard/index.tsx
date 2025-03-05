@@ -8,7 +8,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import iconBookmark from "public/images/icon-completions-green.svg";
-import iconSkills from "public/images/icon-skills-green.svg";
 import iconZltoGreen from "public/images/icon-zlto-green.svg";
 import iconZlto from "public/images/icon-zlto.svg";
 import {
@@ -19,15 +18,12 @@ import {
   type ReactElement,
 } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import { FcAdvance, FcInfo } from "react-icons/fc";
 import {
   IoIosArrowBack,
   IoIosArrowForward,
   IoMdCheckmarkCircleOutline,
   IoMdClose,
   IoMdCloseCircleOutline,
-  IoMdHelp,
-  IoMdInformation,
   IoMdInformationCircleOutline,
   IoMdPerson,
   IoMdTrophy,
@@ -78,6 +74,7 @@ import { OrganisationRowFilter } from "~/components/Organisation/Dashboard/Organ
 import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
 import { SkillsChart } from "~/components/Organisation/Dashboard/SkillsChart";
 import { SsoChart } from "~/components/Organisation/Dashboard/SsoChart";
+import { SsoChartCombined } from "~/components/Organisation/Dashboard/SsoChartCombined";
 import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
 import { YouthCompletedCard } from "~/components/Organisation/Dashboard/YouthCompletedCard";
 import { PageBackground } from "~/components/PageBackground";
@@ -109,6 +106,7 @@ export interface OrganizationSearchFilterSummaryViewModel {
   endDate: string | null;
   pageSelectedOpportunities: number;
   pageCompletedYouth: number;
+  pageSSO: number;
   countries: string[] | null;
 }
 
@@ -118,6 +116,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   const {
     pageSelectedOpportunities,
     pageCompletedYouth,
+    pageSSO,
     categories,
     opportunities,
     startDate,
@@ -133,6 +132,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     pageCompletedYouth: pageCompletedYouth
       ? parseInt(pageCompletedYouth.toString())
       : 1,
+    pageSSO: pageSSO ? parseInt(pageSSO.toString()) : 1,
     organizations: organisations ? organisations?.toString().split("|") : null,
     categories: categories ? categories?.toString().split("|") : null,
     opportunities: opportunities ? opportunities?.toString().split("|") : null,
@@ -397,7 +397,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           : 1,
         pageSize: PAGE_SIZE,
       }),
-    enabled: !error && !!searchFilter.opportunities,
+    enabled: !error,
   });
 
   // QUERY: SSO
@@ -406,7 +406,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     isLoading: ssoIsLoading,
     error: ssoError,
   } = useQuery<OrganizationSearchResultsSSO>({
-    queryKey: ["organisationSSO", searchFilter],
+    queryKey: ["organisationSSO", searchFilter, searchFilter.pageSSO],
     queryFn: () =>
       searchOrganizationSso({
         organizations: searchFilter.organizations ?? [],
@@ -414,7 +414,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           ? searchFilter.startDate.toString()
           : "",
         endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
-        pageNumber: 1,
+        pageNumber: searchFilter.pageSSO ? searchFilter.pageSSO : 1,
         pageSize: PAGE_SIZE,
       }),
     enabled: !error,
@@ -661,6 +661,13 @@ const OrganisationDashboard: NextPageWithLayout<{
           opportunitySearchFilter.pageCompletedYouth.toString(),
         );
 
+      if (
+        opportunitySearchFilter.pageSSO !== null &&
+        opportunitySearchFilter.pageSSO !== undefined &&
+        opportunitySearchFilter.pageSSO !== 1
+      )
+        params.append("pageSSO", opportunitySearchFilter.pageSSO.toString());
+
       // current tab
       params.append("tab", activeTab);
 
@@ -698,6 +705,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         pageCompletedYouth: searchFilter.pageCompletedYouth
           ? searchFilter.pageCompletedYouth
           : 1,
+        pageSSO: searchFilter.pageSSO ? searchFilter.pageSSO : 1,
         organizations: val.organizations,
         countries: val.countries,
       });
@@ -706,6 +714,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       redirectWithSearchFilterParams,
       searchFilter.pageSelectedOpportunities,
       searchFilter.pageCompletedYouth,
+      searchFilter.pageSSO,
     ],
   );
   const handlePagerChangeSelectedOpportunities = useCallback(
@@ -718,6 +727,13 @@ const OrganisationDashboard: NextPageWithLayout<{
   const handlePagerChangeCompletedYouth = useCallback(
     (value: number) => {
       searchFilter.pageCompletedYouth = value;
+      redirectWithSearchFilterParams(searchFilter);
+    },
+    [searchFilter, redirectWithSearchFilterParams],
+  );
+  const handlePagerChangeSSO = useCallback(
+    (value: number) => {
+      searchFilter.pageSSO = value;
       redirectWithSearchFilterParams(searchFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],
@@ -1176,8 +1192,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                 {activeTab === "engagement" && (
                   <div className="flex animate-fade-in flex-col gap-4 pt-4">
                     {/* ENGAGEMENT */}
-                    <div className="flex flex-col gap-2">
-                      <Header title="🤝 Engagement" />
+                    <div className="flex flex-col">
+                      {/* <Header title="🤝 Engagement" /> */}
 
                       {/* FILTERS */}
                       <EngagementRowFilter
@@ -1187,11 +1203,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                         onSubmit={(e) => onSubmitFilter(e)}
                       />
 
-                      <div className="mt-2 flex flex-col gap-4 md:flex-row">
-                        {/* VIEWED COMPLETED */}
+                      <div className="flex flex-col gap-4 md:flex-row">
+                        {/* {JSON.stringify(engagementData)} */}
+                        {/* LINE CHART: OVERVIEW */}
                         {engagementData?.opportunities?.engagements && (
                           <LineChart
-                            key="lineChartViewCompleted"
+                            key="lineChartOverview"
                             data={engagementData.opportunities.engagements}
                             opportunityCount={
                               engagementData?.opportunities?.engaged?.count ?? 0
@@ -1219,9 +1236,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                                   </div>
                                   <div className="text-md ml-auto">
                                     {engagementData?.opportunities
-                                      ?.conversionRate
-                                      ?.viewedCountFromNavigatedExternalLinkTracking ??
-                                      0}
+                                      ?.conversionRate?.viewedCount ?? 0}
                                   </div>
                                 </div>
 
@@ -1274,9 +1289,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                                   </div>
                                   <div className="ml-auto font-semibold">
                                     {engagementData?.opportunities
-                                      ?.conversionRate
-                                      ?.completedCountFromNavigatedExternalLinkTracking ??
-                                      0}
+                                      ?.conversionRate?.completedCount ?? 0}
                                   </div>
                                 </div>
                               </div>
@@ -1309,7 +1322,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           </div>
 
                           {/* OVERALL CONVERSION RATE */}
-                          <div className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem] md:px-6">
+                          <div className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem]">
                             <div className="flex flex-row items-center gap-3">
                               <div className="rounded-lg bg-green-light p-1">
                                 📈
@@ -1346,10 +1359,14 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {/* CUMULATIVE COMPLETIONS (ADMIN ONLY) */}
                 {isAdmin && activeTab === "cumulativeCompletions" && (
-                  <div className="flex animate-fade-in flex-col gap-4 pt-4">
-                    <div className="flex flex-col gap-2">
-                      <Header title="📈 Cumulative Completions" />
-
+                  <div className="mt-4 flex w-full flex-col justify-between overflow-hidden rounded-lg bg-white p-4 shadow">
+                    <div className="flex flex-row items-center gap-3">
+                      <div className="rounded-lg bg-green-light p-1">📈</div>
+                      <div className="text-sm font-semibold">
+                        Cumulative Completions
+                      </div>
+                    </div>
+                    <div className="pt-4">
                       {engagementData?.cumulative?.completions && (
                         <LineChartCumulativeCompletions
                           key="lineChartCumulativeCompletions"
@@ -1362,7 +1379,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {activeTab === "rewards" && (
                   <div className="flex animate-fade-in flex-col gap-1 pt-4">
-                    <Header title="⚡ Rewards & Skills" />
+                    {/* <Header title="⚡ Rewards & Skills" /> */}
 
                     <div className="flex flex-col gap-4 md:flex-row">
                       {/* REWARDS */}
@@ -1436,7 +1453,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {activeTab === "demographics" && (
                   <div className="flex w-full animate-fade-in flex-col gap-1 pt-4">
-                    <Header title="📊 Demographics" />
+                    {/* <Header title="📊 Demographics" /> */}
 
                     <div className="flex flex-col gap-4 lg:flex-row">
                       {/* COUNTRIES */}
@@ -1547,10 +1564,17 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {activeTab === "completedYouth" && (
                   <div className="flex animate-fade-in flex-col gap-1 pt-4">
-                    <Header title="✅ Completed by Youth" />
+                    {/* <Header title="✅ Completed by Youth" /> */}
 
                     {/* COMPLETED YOUTH */}
-                    <div className="rounded-lg bg-transparent p-0 shadow-none md:bg-white md:p-4 md:shadow">
+                    <div className="h-full w-full rounded-lg bg-white p-4 shadow">
+                      <div className="flex flex-row items-center gap-3">
+                        <div className="rounded-lg bg-green-light p-1">✅</div>
+                        <div className="text-sm font-semibold">
+                          Completed by Youth
+                        </div>
+                      </div>
+
                       {/* NO ROWS */}
                       {(!completedOpportunitiesData ||
                         completedOpportunitiesData.items?.length === 0) && (
@@ -1691,7 +1715,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {activeTab === "selectedOpportunities" && (
                   <div className="flex animate-fade-in flex-col pt-4">
-                    <Header title="🏆 Selected Opportunities" />
+                    {/* <Header title="🏆 Selected Opportunities" /> */}
 
                     {/* NB: DECPRECATED */}
                     <div className="mb-4 hidden flex-col gap-4 md:flex-row">
@@ -1743,7 +1767,14 @@ const OrganisationDashboard: NextPageWithLayout<{
                     </div>
 
                     {/* SELECTED OPPORTUNITIES */}
-                    <div className="mt-1 rounded-lg bg-transparent p-0 shadow-none md:bg-white md:p-4 md:shadow">
+                    <div className="h-full w-full rounded-lg bg-white p-4 shadow">
+                      <div className="flex flex-row items-center gap-3">
+                        <div className="rounded-lg bg-green-light p-1">🏆</div>
+                        <div className="text-sm font-semibold">
+                          Selected Opportunities
+                        </div>
+                      </div>
+
                       {/* NO ROWS */}
                       {(!selectedOpportunitiesData ||
                         selectedOpportunitiesData.items?.length === 0) && (
@@ -1881,61 +1912,82 @@ const OrganisationDashboard: NextPageWithLayout<{
                   </div>
                 )}
 
-                {activeTab === "sso" && (
+                {activeTab === "sso" && ssoData && (
                   <div className="flex animate-fade-in flex-col gap-4 pt-4">
-                    <Header title="🔑 Single Sign-On" />
+                    {/* <Header title="🔑 Single Sign-On" /> */}
 
-                    {ssoData?.items && (
-                      <div className="flex flex-col gap-8">
-                        {ssoData?.items?.map((ssoItem) => (
-                          <div
-                            key={ssoItem.name}
-                            className="flex flex-col gap-2"
-                          >
-                            <h3 className="text-sm font-semibold">
-                              {ssoItem.name}
-                            </h3>
-                            <div className="grid-rows-2x grid gap-4 md:grid-cols-2">
-                              <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
-                                <div className="flex items-center gap-2 text-lg font-semibold">
-                                  <div>Outbound</div>
-                                  <IoIosArrowForward className="rounded-lg bg-green-light p-px pl-[2px] text-2xl text-green" />
-                                </div>
-                                {ssoItem.outbound?.enabled ? (
-                                  <>
-                                    <div className="-mb-4 font-semibold">
-                                      {ssoItem.outbound?.clientId}
-                                    </div>
-                                    <SsoChart data={ssoItem.outbound?.logins} />
-                                  </>
-                                ) : (
-                                  <div>Disabled</div>
-                                )}
+                    {/* SSO Summary */}
+                    {ssoData?.outboundLoginCount !== null &&
+                      ssoData?.inboundLoginCount !== null && (
+                        <div className="mb-4 flex flex-col rounded-lg bg-white p-6 shadow">
+                          <div className="mb-4 flex items-center gap-2">
+                            <div className="rounded-lg bg-green-light p-1">
+                              <span>🔑</span>
+                            </div>
+                            <span className="font-semibold">
+                              Total SSO Activity
+                            </span>
+                          </div>
+
+                          <div className="flex flex-wrap gap-4">
+                            <div className="flex items-center gap-2">
+                              <div className="badge bg-gray p-3 !text-sm font-extrabold">
+                                {ssoData.outboundLoginCount.toLocaleString()}
                               </div>
-                              <div className="flex flex-col gap-2 rounded-lg bg-white p-6 shadow">
-                                <div className="flex items-center gap-2 text-lg font-semibold">
-                                  <div>Inbound</div>
-                                  <IoIosArrowBack className="rounded-lg bg-green-light p-px pr-[2px] text-2xl text-green" />
-                                </div>
-                                {ssoItem.inbound?.enabled ? (
-                                  <>
-                                    <div className="-mb-4 font-semibold">
-                                      {ssoItem.inbound?.clientId}
-                                    </div>
-                                    <SsoChart data={ssoItem.inbound?.logins} />
-                                  </>
-                                ) : (
-                                  <div>Disabled</div>
-                                )}
+                              <span className="font-semibold">
+                                Outbound logins
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <div className="badge bg-gray p-3 !text-sm font-extrabold">
+                                {ssoData.inboundLoginCount.toLocaleString()}
                               </div>
+                              <span className="font-semibold">
+                                Inbound logins
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                              <div className="badge bg-gray p-3 !text-sm font-extrabold">
+                                {(
+                                  ssoData.outboundLoginCount +
+                                  ssoData.inboundLoginCount
+                                ).toLocaleString()}
+                              </div>
+                              <span className="font-semibold">
+                                Total logins
+                              </span>
                             </div>
                           </div>
+                        </div>
+                      )}
+
+                    {/* Individual Organization Charts */}
+                    {ssoData?.items && ssoData.items.length > 0 && (
+                      <div className="flex animate-fade-in flex-col gap-4">
+                        {ssoData.items.map((item) => (
+                          <SsoChartCombined key={item.id} data={item} />
                         ))}
+
+                        {/* PAGINATION */}
+                        <div className="mt-2">
+                          <PaginationButtons
+                            currentPage={
+                              searchFilter.pageSSO ? searchFilter.pageSSO : 1
+                            }
+                            totalItems={ssoData.totalCount}
+                            pageSize={PAGE_SIZE}
+                            showPages={false}
+                            showInfo={true}
+                            onClick={handlePagerChangeSSO}
+                          />
+                        </div>
                       </div>
                     )}
 
                     {(!ssoData || ssoData.items?.length === 0) && (
-                      <div>
+                      <div className="rounded-lg bg-white p-8 text-center shadow">
                         No SSO data available for the selected organization(s).
                       </div>
                     )}

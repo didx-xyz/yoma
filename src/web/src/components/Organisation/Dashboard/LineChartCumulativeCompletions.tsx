@@ -4,7 +4,6 @@ import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
 import { useAtomValue } from "jotai";
 import { screenWidthAtom } from "~/lib/store";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { FcAreaChart } from "react-icons/fc";
 
 export const LineChartCumulativeCompletions: React.FC<{
   key: string;
@@ -48,59 +47,51 @@ export const LineChartCumulativeCompletions: React.FC<{
   }, [screenWidth]);
 
   return (
-    <div className="flex w-full flex-col justify-between overflow-hidden rounded-lg bg-white px-1 shadow">
-      {/* <div className="ml-3 flex flex-row items-center gap-2">
-        <div className="rounded-lg bg-green-light p-1">
-          <FcAreaChart className="h-5 w-5" />
-        </div>
-        <div className="text-sm font-semibold">Cumulative Completions</div>
-      </div> */}
-
+    <>
       {showLabels ? (
-        <div>
-          <Chart
-            key={keyState}
-            chartType="AreaChart"
-            loader={
-              <div className="mt-20 flex w-full items-center justify-center">
-                <span className="loading loading-spinner loading-lg text-green"></span>
-              </div>
-            }
-            data={localData}
-            options={{
-              legend: { position: "top" },
-              lineWidth: 1,
-              areaOpacity: 0.1,
-              curveType: "function",
-              title: "",
-              pointSize: 2,
-              pointShape: "circle",
-              enableInteractivity: true,
-              height: 380,
-              hAxis: {
-                gridlines: {
-                  color: "transparent",
-                },
-                textPosition: showLabels ? "out" : "none",
-                format: "MMM dd",
-                showTextEvery: 2,
-                textStyle: {
-                  fontSize: 10,
-                },
+        <Chart
+          key={keyState}
+          chartType="AreaChart"
+          loader={
+            <div className="mt-20 flex w-full items-center justify-center">
+              <span className="loading loading-spinner loading-lg text-green"></span>
+            </div>
+          }
+          data={localData}
+          options={{
+            legend: { position: "top" },
+            lineWidth: 1,
+            areaOpacity: 0.1,
+            curveType: "function",
+            title: "",
+            pointSize: 2,
+            pointShape: "circle",
+            enableInteractivity: true,
+            height: 380,
+            hAxis: {
+              gridlines: {
+                color: "transparent",
               },
-              vAxis: {
-                gridlines: {
-                  color: "transparent",
-                },
-                textPosition: "none",
-                baselineColor: "transparent",
+              textPosition: showLabels ? "out" : "none",
+              format: "MMM dd",
+              showTextEvery: 2,
+              textStyle: {
+                fontSize: 10,
               },
-              chartArea: {
-                width: "95%",
+            },
+            vAxis: {
+              gridlines: {
+                color: "transparent",
               },
-            }}
-          />
-        </div>
+              textPosition: "none",
+              baselineColor: "transparent",
+            },
+            chartArea: {
+              width: "99%",
+              height: "90%",
+            },
+          }}
+        />
       ) : (
         <div className="flex h-full items-center justify-center rounded-lg bg-gray-light">
           <NoRowsMessage
@@ -111,6 +102,6 @@ export const LineChartCumulativeCompletions: React.FC<{
           />
         </div>
       )}
-    </div>
+    </>
   );
 };

@@ -62,13 +62,13 @@ export const LineChart: React.FC<{
   }, [screenWidth]);
 
   const Legend = () => (
-    <div className="ml-0 flex flex-row gap-2 md:ml-3">
-      <div className="ml-4 mt-2 flex flex-col gap-1">
+    <div className="flex flex-row gap-4">
+      <div className="flex flex-col gap-1">
         <div className="flex flex-row items-center gap-2">
           <span className="hidden rounded-lg bg-green-light p-1 min-[400px]:inline">
             🏆
           </span>
-          <span className="text-xs font-semibold md:text-sm">
+          <span className="w-14 truncate text-xs font-semibold md:w-full md:text-sm">
             Opportunities
           </span>
         </div>
@@ -79,7 +79,7 @@ export const LineChart: React.FC<{
       {data?.legend.map((name, index) => (
         <div
           key={index}
-          className={`ml-0 mt-2 flex flex-col gap-1 md:ml-4 ${
+          className={`flex flex-col gap-1 ${
             selectedLegendIndex === index ? "selected" : ""
           }`}
         >
@@ -91,7 +91,9 @@ export const LineChart: React.FC<{
               {name === "Go-To Clicks" && "👆"}
               {name === "Completions" && "🎓"}
             </span>
-            <span className="text-xs font-semibold md:text-sm">{name}</span>
+            <span className="w-14 truncate text-xs font-semibold md:w-full md:text-sm">
+              {name}
+            </span>
           </div>
           {data.count[index] != null && (
             <div
@@ -108,72 +110,72 @@ export const LineChart: React.FC<{
   );
 
   return (
-    <div className="flex w-full flex-col justify-between gap-4 overflow-hidden rounded-lg bg-white pt-4 shadow">
+    <div className="flex h-full w-full flex-col rounded-lg bg-white p-4 shadow">
       <Legend />
+
       {showLabels ? (
-        <div className="ml-4 mt-2 flex h-full w-[94%] flex-col items-stretch justify-center pb-4 md:ml-6 md:w-full md:pb-0">
-          <Chart
-            key={keyState}
-            chartType="AreaChart"
-            //chartVersion="50" // NB: fixes animation bug in latest verson of google charts. TODO: remove when fixed
-            loader={
-              <div className="mt-20 flex w-full items-center justify-center">
-                <span className="loading loading-spinner loading-lg text-green"></span>
-              </div>
-            }
-            data={localData}
-            options={{
-              // animation: {
-              //   duration: 300,
-              //   easing: "linear",
-              //   startup: true,
-              // },
-              legend: "none",
-              lineWidth: 1,
-              areaOpacity: 0.1,
-              colors: ["#387F6A"],
-              curveType: "function",
-              title: "",
-              pointSize: 0,
-              pointShape: "circle",
-              enableInteractivity: true,
-              hAxis: {
-                gridlines: {
-                  color: "transparent",
-                },
-                textPosition: showLabels ? "out" : "none",
-                format: "MMM dd",
-                showTextEvery: 2,
-                textStyle: {
-                  fontSize: 10,
-                },
+        <Chart
+          key={keyState}
+          chartType="AreaChart"
+          //chartVersion="50" // NB: fixes animation bug in latest verson of google charts. TODO: remove when fixed
+          loader={
+            <div className="mt-20 flex w-full items-center justify-center">
+              <span className="loading loading-spinner loading-lg text-green"></span>
+            </div>
+          }
+          data={localData}
+          width="100%"
+          height="100%"
+          options={{
+            //   animation: {
+            //     duration: 300,
+            //     easing: "linear",
+            //     startup: true,
+            //   },
+            legend: "none",
+            lineWidth: 1,
+            areaOpacity: 0.1,
+            colors: ["#387F6A"],
+            curveType: "function",
+            title: "",
+            pointSize: 2,
+            pointShape: "circle",
+            enableInteractivity: true,
+            hAxis: {
+              gridlines: {
+                color: "transparent",
               },
-              vAxis: {
-                gridlines: {
-                  color: "transparent",
-                },
-                textPosition: "none",
-                baselineColor: "transparent",
+              textPosition: showLabels ? "out" : "none",
+              format: "MMM dd",
+              showTextEvery: 2,
+              textStyle: {
+                fontSize: 10,
               },
-              series: {
-                0: { lineDashStyle: [4, 4], areaOpacity: 0 },
-                1: {},
+            },
+            vAxis: {
+              gridlines: {
+                color: "transparent",
               },
-              chartArea: {
-                left: 0,
-                top: "3%",
-                width: "95%",
-                height: "90%",
-              },
-            }}
-            chartEvents={[
-              {
-                eventName: "select",
-                callback: ({ chartWrapper }) => handleSelect(chartWrapper!),
-              },
-            ]}
-          />
-        </div>
+              textPosition: "none",
+              baselineColor: "transparent",
+            },
+            chartArea: {
+              width: "99%",
+              height: "90%",
+              top: 0,
+            },
+            series: {
+              0: { lineDashStyle: [4, 4], areaOpacity: 0 },
+              1: {},
+            },
+          }}
+          chartEvents={[
+            {
+              eventName: "select",
+              callback: ({ chartWrapper }) => handleSelect(chartWrapper!),
+            },
+          ]}
+        />
       ) : (
         <div className="flex h-full items-center justify-center rounded-lg bg-gray-light">
           <NoRowsMessage
