@@ -103,5 +103,17 @@ namespace Yoma.Core.Domain.Core.Models
     public int StoreAccessControlRuleDeletionScheduleBatchSize { get; set; }
 
     public int StoreAccessControlRuleDeletionScheduleIntervalInDays { get; set; }
+
+    public string DownloadScheduleProcessingSchedule { get; set; }
+
+    public int DownloadScheduleProcessingBatchSize { get; set; }
+
+    public int DownloadScheduleProcessingMaxIntervalInHours { get; set; }
+
+    public string DownloadScheduleDeletionSchedule { get; set; }
+
+    public int DownloadScheduleDeletionBatchSize { get; set; }
+
+    //download schedule deletion interval based on app setting 'DownloadScheduleLinkExpirationHours'
   }
 }

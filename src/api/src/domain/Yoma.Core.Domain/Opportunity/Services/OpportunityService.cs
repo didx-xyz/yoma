@@ -1013,7 +1013,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       if (filter.OrderInstructions == null || filter.OrderInstructions.Count == 0)
         throw new ArgumentOutOfRangeException(nameof(filter), $"{filter.OrderInstructions} are required");
-      query = query.ApplyFiltersAndOrdering(filter.OrderInstructions);
+
+      if (!filter.UnrestrictedQuery || filter.PaginationEnabled)
+        query = query.ApplyFiltersAndOrdering(filter.OrderInstructions);
 
       //pagination
       if (filter.PaginationEnabled)
@@ -1026,7 +1028,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.Items.ForEach(o =>
       {
         o.SetPublished();
-        o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
+        if (!filter.UnrestrictedQuery) o.OrganizationLogoURL = GetBlobObjectURL(o.OrganizationLogoStorageType, o.OrganizationLogoKey);
         o.OrganizationZltoRewardBalance = o.OrganizationZltoRewardPool.HasValue ? o.OrganizationZltoRewardPool - (o.OrganizationZltoRewardCumulative ?? default) : null;
         o.OrganizationYomaRewardBalance = o.OrganizationYomaRewardPool.HasValue ? o.OrganizationYomaRewardPool - (o.OrganizationYomaRewardCumulative ?? default) : null;
         o.ZltoRewardBalance = o.ZltoRewardPool.HasValue ? o.ZltoRewardPool - (o.ZltoRewardCumulative ?? default) : null;

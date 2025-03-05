@@ -219,7 +219,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
         query = query.Where(o => statusIds.Contains(o.StatusId));
       }
 
-      if (!filter.NonPaginatedQuery)
+      if (!filter.UnrestrictedQuery)
         query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
 
       var result = new StoreAccessControlRuleSearchResults();
@@ -581,7 +581,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       {
         Stores = [storeId],
         Statuses = [StoreAccessControlRuleStatus.Active],
-        NonPaginatedQuery = true
+        UnrestrictedQuery = true
       };
 
       var searchResults = Search(searchFilter, false);
@@ -794,13 +794,13 @@ namespace Yoma.Core.Domain.Marketplace.Services
     private List<StoreAccessControlRule> RulesUpdatableCached()
     {
       if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
-        return Search(new StoreAccessControlRuleSearchFilter { NonPaginatedQuery = true, Statuses = [.. Statuses_Updatable] }, false).Items;
+        return Search(new StoreAccessControlRuleSearchFilter { UnrestrictedQuery = true, Statuses = [.. Statuses_Updatable] }, false).Items;
 
       var result = _distributedCacheService.GetOrCreate(
           CacheHelper.GenerateKey<StoreAccessControlRule>(),
           () => Search(new StoreAccessControlRuleSearchFilter
           {
-            NonPaginatedQuery = true,
+            UnrestrictedQuery = true,
             Statuses = [.. Statuses_Updatable]
           }, false).Items,
           TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours),

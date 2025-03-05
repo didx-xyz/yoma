@@ -1,5 +1,9 @@
+using CsvHelper.Configuration;
+using CsvHelper;
 using Microsoft.AspNetCore.Http;
+using System.Globalization;
 using System.IO.Compression;
+using System.Text;
 
 namespace Yoma.Core.Domain.Core.Helpers
 {
@@ -48,6 +52,28 @@ namespace Yoma.Core.Domain.Core.Helpers
       }
 
       return FromByteArray(fileName, "application/zip", memoryStream.ToArray());
+    }
+
+    public static (string fileName, byte[] bytes) CreateCsvFile<T>(IEnumerable<T> records, string fileNamePrefix, bool appendDateStamp)
+    {
+      ArgumentNullException.ThrowIfNull(records, nameof(records));
+      ArgumentException.ThrowIfNullOrWhiteSpace(fileNamePrefix, nameof(fileNamePrefix));
+      fileNamePrefix = fileNamePrefix.Trim();
+
+      var config = new CsvConfiguration(CultureInfo.CurrentCulture);
+
+      using var stream = new MemoryStream();
+      using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+      {
+        using var writer = new CsvWriter(streamWriter, config);
+        writer.WriteRecords(records);
+      }
+
+      var fileName = appendDateStamp
+        ? $"{fileNamePrefix}_{DateTimeOffset.UtcNow:yyyy-MM-dd}.csv"
+        : $"{fileNamePrefix}.csv";
+
+      return (fileName, stream.ToArray());
     }
   }
 }

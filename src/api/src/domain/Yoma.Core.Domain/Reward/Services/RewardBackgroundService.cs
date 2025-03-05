@@ -16,7 +16,7 @@ using Yoma.Core.Domain.SSI.Services;
 
 namespace Yoma.Core.Domain.Reward.Services
 {
-  public class RewardBackgroundService : IRewardBackgrounService
+  public class RewardBackgroundService : IRewardBackgroundService
   {
     #region Class Variables
     private readonly ILogger<SSIBackgroundService> _logger;

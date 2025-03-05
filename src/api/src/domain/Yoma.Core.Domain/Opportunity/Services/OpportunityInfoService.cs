@@ -1,9 +1,11 @@
-using CsvHelper;
-using CsvHelper.Configuration;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
@@ -17,21 +19,30 @@ namespace Yoma.Core.Domain.Opportunity.Services
   {
     #region Class Variables
     private readonly AppSettings _appSettings;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IOpportunityService _opportunityService;
     private readonly IMyOpportunityService _myOpportunityService;
     private readonly ILinkService _linkService;
+    private readonly IUserService _userService;
+    private readonly IDownloadService _downloadService;
     #endregion
 
     #region Constructor
     public OpportunityInfoService(IOptions<AppSettings> appSettings,
+      IHttpContextAccessor httpContextAccessor,
       IOpportunityService opportunityService,
       IMyOpportunityService myOpportunityService,
-      ILinkService linkService)
+      ILinkService linkService,
+      IUserService userService,
+      IDownloadService downloadService)
     {
       _appSettings = appSettings.Value;
+      _httpContextAccessor = httpContextAccessor;
       _opportunityService = opportunityService;
       _myOpportunityService = myOpportunityService;
       _linkService = linkService;
+      _userService = userService;
+      _downloadService = downloadService;
     }
     #endregion
 
@@ -176,23 +187,25 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return results;
     }
 
-    public (string fileName, byte[] bytes) SearchAndExportToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
+    public async Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> SearchAndExportToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      var result = Search(filter, ensureOrganizationAuthorization);
+      filter.UnrestrictedQuery = true;
 
-      var config = new CsvConfiguration(System.Globalization.CultureInfo.CurrentCulture);
-
-      using var stream = new MemoryStream();
-      using (var streamWriter = new StreamWriter(stream: stream, encoding: System.Text.Encoding.UTF8))
+      if (!filter.PaginationEnabled)
       {
-        using var writer = new CsvWriter(streamWriter, config);
-        writer.WriteRecords(result.Items);
+        //schedule the request for processing and return
+        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+        await _downloadService.Schedule(user.Id, Core.DownloadScheduleType.Opporunities, filter);
+        return (true, null, null);
       }
 
-      var fileName = $"Opportunities_{DateTimeOffset.UtcNow:yyyy-dd-M--HH-mm-ss}.csv";
-      return (fileName, stream.ToArray());
+      var result = Search(filter, ensureOrganizationAuthorization);
+
+      var (fileName, bytes) = FileHelper.CreateCsvFile(result.Items, "Opportunities", true);
+
+      return (false, fileName, bytes);
     }
     #endregion
 

@@ -6,6 +6,6 @@ namespace Yoma.Core.Domain.SSI.Interfaces
   {
     Task<SSICredential> GetUserCredentialById(string id);
 
-    Task<SSIWalletSearchResults> SearchUserCredentials(SSIWalletFilter filter);
+    Task<SSIWalletSearchResults> SearchUserCredentials(SSIWalletSearchFilter filter);
   }
 }

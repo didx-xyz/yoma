@@ -97,15 +97,6 @@ namespace Yoma.Core.Domain.Reward.Services
       return results;
     }
 
-    public async Task UpdateTransactions(List<RewardTransaction> items)
-    {
-      if (items == null || items.Count == 0) return;
-
-      items.ForEach(o => UpdateTransactionProcess(o));
-
-      await _rewardTransactionRepository.Update(items);
-    }
-
     public async Task UpdateTransaction(RewardTransaction item)
     {
       ArgumentNullException.ThrowIfNull(item, nameof(item));
@@ -115,6 +106,17 @@ namespace Yoma.Core.Domain.Reward.Services
       await _rewardTransactionRepository.Update(item);
     }
 
+    public async Task UpdateTransactions(List<RewardTransaction> items)
+    {
+      if (items == null || items.Count == 0) return;
+
+      items.ForEach(o => UpdateTransactionProcess(o));
+
+      await _rewardTransactionRepository.Update(items);
+    }
+    #endregion
+
+    #region Private Members
     private void UpdateTransactionProcess(RewardTransaction item)
     {
       item.TransactionId = item.TransactionId?.Trim();

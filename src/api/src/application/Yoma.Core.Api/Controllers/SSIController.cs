@@ -141,7 +141,7 @@ namespace Yoma.Core.Api.Controllers
     [HttpPost("wallet/user/search")]
     [ProducesResponseType(typeof(SSIWalletSearchResults), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public async Task<IActionResult> SearchUserWalletCredentials([FromBody] SSIWalletFilter filter)
+    public async Task<IActionResult> SearchUserWalletCredentials([FromBody] SSIWalletSearchFilter filter)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(SearchUserWalletCredentials));
 

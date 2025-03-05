@@ -22,5 +22,4 @@ namespace Yoma.Core.Domain.Notification.Models
     [JsonProperty("url")]
     public string URL { get; set; }
   }
-
 }

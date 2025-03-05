@@ -31,6 +31,7 @@ namespace Yoma.Core.Domain.Notification.Services
       switch (type)
       {
         case NotificationType.ActionLink_Verify_Distribution:
+        case NotificationType.Download:
           return recipients;
       }
 

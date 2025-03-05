@@ -4,7 +4,7 @@ using Yoma.Core.Domain.Entity;
 
 namespace Yoma.Core.Domain.SSI.Models
 {
-  public class SSIWalletFilter : PaginationFilter
+  public class SSIWalletSearchFilter : PaginationFilter
   {
     [JsonIgnore]
     public EntityType EntityType { get; set; }

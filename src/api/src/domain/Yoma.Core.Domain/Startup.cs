@@ -51,6 +51,9 @@ using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Services;
 using Yoma.Core.Domain.SSI.Services.Lookups;
+using Yoma.Core.Domain.Core.Interfaces.Lookups;
+using Yoma.Core.Domain.Core.Services.Lookups;
+using Yoma.Core.Domain.Core;
 
 namespace Yoma.Core.Domain
 {
@@ -79,9 +82,14 @@ namespace Yoma.Core.Domain
       #endregion Analytics
 
       #region Core
+      #region Lookups
+      services.AddScoped<IDownloadScheduleStatusService, DownloadScheduleStatusService>();
+      #endregion
       services.AddScoped<IBlobService, BlobService>();
       services.AddScoped<IDistributedCacheService, DistributedCacheService>();
       services.AddScoped<IDistributedLockService, DistributedLockService>();
+      services.AddScoped<IDownloadService, DownloadService>();
+      services.AddScoped<IDownloadBackgroundService, DownloadBackgroundService>();
       #endregion Core
 
       #region Entity
@@ -170,7 +178,7 @@ namespace Yoma.Core.Domain
 
       services.AddScoped<IRewardService, RewardService>();
       services.AddScoped<IWalletService, WalletService>();
-      services.AddScoped<IRewardBackgrounService, RewardBackgroundService>();
+      services.AddScoped<IRewardBackgroundService, RewardBackgroundService>();
       #endregion Reward
 
       #region SSI
@@ -230,9 +238,9 @@ namespace Yoma.Core.Domain
         s => s.ProcessDeletion(), options.OrganizationDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //reward
-      RecurringJob.AddOrUpdate<IRewardBackgrounService>($"Rewards Wallet Creation",
+      RecurringJob.AddOrUpdate<IRewardBackgroundService>($"Rewards Wallet Creation",
         s => s.ProcessWalletCreation(), options.RewardWalletCreationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-      RecurringJob.AddOrUpdate<IRewardBackgrounService>($"Rewards Transaction Processing (awarding rewards)",
+      RecurringJob.AddOrUpdate<IRewardBackgroundService>($"Rewards Transaction Processing (awarding rewards)",
         s => s.ProcessRewardTransactions(), options.RewardTransactionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //ssi
@@ -253,6 +261,12 @@ namespace Yoma.Core.Domain
       //store access control rule
       RecurringJob.AddOrUpdate<IStoreAccessControlRuleBackgroundService>($"Store Access Control Rule Deletion ({StoreAccessControlRuleStatus.Inactive} for more than {options.StoreAccessControlRuleDeletionScheduleIntervalInDays} days)",
         s => s.ProcessDeletion(), options.StoreAccessControlRuleDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+      //core (download schedule)
+      RecurringJob.AddOrUpdate<IDownloadBackgroundService>("Download Schedule Processing",
+        s => s.ProcessSchedule(), options.DownloadScheduleProcessingSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+      RecurringJob.AddOrUpdate<IDownloadBackgroundService>($"Download Schedule Deletion ({DownloadScheduleStatus.Processed} for more than {appSettings.DownloadScheduleLinkExpirationHours} hours)",
+        s => s.ProcessSchedule(), options.DownloadScheduleDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //seeding of test data
       if (!appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(environment)) return;

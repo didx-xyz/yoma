@@ -63,6 +63,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly ICountryService _countryService;
     private readonly IGenderService _genderService;
     private readonly ITimeIntervalService _timeIntervalService;
+    private readonly IDownloadService _downloadService;
     private readonly MyOpportunitySearchFilterValidator _myOpportunitySearchFilterValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
     private readonly MyOpportunityRequestValidatorVerifyFinalize _myOpportunityRequestValidatorVerifyFinalize;
@@ -98,6 +99,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         ICountryService countryService,
         IGenderService genderService,
         ITimeIntervalService timeIntervalService,
+        IDownloadService downloadService,
         MyOpportunitySearchFilterValidator myOpportunitySearchFilterValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
         MyOpportunityRequestValidatorVerifyFinalize myOpportunityRequestValidatorVerifyFinalize,
@@ -126,6 +128,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _countryService = countryService;
       _genderService = genderService;
       _timeIntervalService = timeIntervalService;
+      _downloadService = downloadService;
       _myOpportunitySearchFilterValidator = myOpportunitySearchFilterValidator;
       _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
       _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize;
@@ -233,33 +236,37 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return results;
     }
 
-    public async Task<IFormFile> DownloadVerificationFiles(Guid opportunityId, List<VerificationType>? verificationTypes)
+    public async Task<IFormFile> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter)
     {
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
+      //TODO: validate filter
+
+      var opportunity = _opportunityService.GetById(filter.Opportunity, false, false, false);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
 
       var myOpportunity = _myOpportunityRepository.Query(true).SingleOrDefault(
         o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
-        ?? throw new EntityNotFoundException($"Verification not actioned for opportunity with id '{opportunityId}'");
+        ?? throw new EntityNotFoundException($"Verification not actioned for opportunity with id '{filter.Opportunity}'");
 
       if (myOpportunity.Verifications == null || myOpportunity.Verifications.Count == 0)
-        throw new EntityNotFoundException($"Verification of opportunity with id '{opportunityId}' has no downloadable files");
+        throw new EntityNotFoundException($"Verification of opportunity with id '{filter.Opportunity}' has no downloadable files");
 
       var verificationTypesConfiguredAndDownloadable = myOpportunity.Verifications.Select(o => o.VerificationType).Where(o => VerificationTypes_Downloadable.Contains(o)).Distinct().ToList();
 
-      if (verificationTypes == null || verificationTypes.Count == 0)
-        verificationTypes = verificationTypesConfiguredAndDownloadable;
+      //default; if not explcitly specified
+      if (filter.VerificationTypes == null || filter.VerificationTypes.Count == 0)
+        filter.VerificationTypes = verificationTypesConfiguredAndDownloadable;
 
-      var nonDownloadable = verificationTypes.Except(VerificationTypes_Downloadable).ToList();
+      var nonDownloadable = filter.VerificationTypes.Except(VerificationTypes_Downloadable).ToList();
       if (nonDownloadable.Count > 0)
         throw new ValidationException($"Verification type(s) '{string.Join(", ", nonDownloadable)}' is not supported / downloadable");
 
-      var notFound = verificationTypes.Except(verificationTypesConfiguredAndDownloadable).ToList();
+      var notFound = filter.VerificationTypes.Except(verificationTypesConfiguredAndDownloadable).ToList();
       if (notFound.Count > 0)
-        throw new EntityNotFoundException($"Requested verification type(s) '{string.Join(", ", notFound)}' not found for opportunity with id '{opportunityId}'");
+        throw new EntityNotFoundException($"Requested verification type(s) '{string.Join(", ", notFound)}' not found for opportunity with id '{filter.Opportunity}'");
 
       var files = new List<IFormFile>();
 
@@ -271,7 +278,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           case VerificationType.Picture:
           case VerificationType.VoiceNote:
           case VerificationType.Video:
-            if (!verificationTypes.Contains(item.VerificationType)) continue;
+            if (!filter.VerificationTypes.Contains(item.VerificationType)) continue;
 
             if (!item.FileId.HasValue)
               throw new InvalidOperationException("File id expected");
@@ -290,6 +297,21 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (files.Count == 1) return files.First();
 
       return FileHelper.Zip(files, $"Files.zip");
+    }
+
+    public async Task DownloadVerificationFilesAdmin(MyOpportunitySearchFilterVerificationFiles filter, bool ensureOrganizationAuthorization)
+    {
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+
+      //TODO: validate filter
+
+      var opportunity = _opportunityService.GetById(filter.Opportunity, false, false, false);
+
+      if (ensureOrganizationAuthorization)
+        _organizationService.IsAdmin(opportunity.OrganizationId, true);
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      await _downloadService.Schedule(user.Id, DownloadScheduleType.MyOpportunityVerificationFiles, filter);
     }
 
     public MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId)
@@ -355,7 +377,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize,
         SortOrder = filter.SortOrder,
-        NonPaginatedQuery = filter.NonPaginatedQuery
+        UnrestrictedQuery = filter.UnrestrictedQuery
       };
 
       return Search(filterInternal, false);
@@ -370,7 +392,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         UserId = user.Id,
         Action = Action.Verification,
         VerificationStatuses = [VerificationStatus.Pending, VerificationStatus.Completed, VerificationStatus.Rejected],
-        NonPaginatedQuery = true
+        UnrestrictedQuery = true
       };
 
       var searchResultVerification = Search(filterInternal, false);
@@ -544,7 +566,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         return result;
       }
 
-      if (!filter.NonPaginatedQuery)
+      if (!filter.UnrestrictedQuery || filter.PaginationEnabled)
       {
         orderInstructions.Add(new() { OrderBy = o => o.Id, SortOrder = FilterSortOrder.Ascending }); //ensure deterministic sorting / consistent pagination results 
         query = query.ApplyFiltersAndOrdering(orderInstructions);
@@ -559,7 +581,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var items = query.ToList();
 
-      if (!filter.NonPaginatedQuery)
+      if (!filter.UnrestrictedQuery)
       {
         items.ForEach(o =>
         {
@@ -569,15 +591,25 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         });
       }
       result.Items = items.Select(o => o.ToInfo()).ToList();
-      if (filter.NonPaginatedQuery) return result;
+      if (filter.UnrestrictedQuery) return result;
 
       result.Items.ForEach(o => SetEngagementCounts(o));
       return result;
     }
 
-    public (string fileName, byte[] bytes) SearchAndExportToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
+    public async Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> SearchAndExportToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+
+      filter.UnrestrictedQuery = true;
+
+      if (!filter.PaginationEnabled)
+      {
+        //schedule the request for processing and return
+        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+        await _downloadService.Schedule(user.Id, Core.DownloadScheduleType.MyOpportunityVerifications, filter);
+        return (true, null, null);
+      }
 
       var result = Search(filter, ensureOrganizationAuthorization);
 
@@ -588,17 +620,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         item.UserPhoneNumer = PlaceholderValue_HiddenDetails;
       }
 
-      var config = new CsvConfiguration(System.Globalization.CultureInfo.CurrentCulture);
+      var (fileName, bytes) = FileHelper.CreateCsvFile(result.Items, "Verifications", true);
 
-      using var stream = new MemoryStream();
-      using (var streamWriter = new StreamWriter(stream: stream, encoding: System.Text.Encoding.UTF8))
-      {
-        using var writer = new CsvHelper.CsvWriter(streamWriter, config);
-        writer.WriteRecords(result.Items);
-      }
-
-      var fileName = $"Verifications_{DateTimeOffset.UtcNow:yyyy-dd-M--HH-mm-ss}.csv";
-      return (fileName, stream.ToArray());
+      return (false, fileName, bytes);
     }
 
     public async Task PerformActionViewed(Guid opportunityId)
