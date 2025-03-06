@@ -233,6 +233,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   const [inactiveOpportunitiesCount, setInactiveOpportunitiesCount] =
     useState(0);
   const [expiredOpportunitiesCount, setExpiredOpportunitiesCount] = useState(0);
+  const [activeOpportunitiesCount, setActiveOpportunitiesCount] = useState(0);
   const queryClient = useQueryClient();
   const [
     completedYouthOpportunitiesDialogVisible,
@@ -714,10 +715,13 @@ const OrganisationDashboard: NextPageWithLayout<{
   );
   //#endregion Events
 
-  // calculate counts
+  // calculated counts
   useEffect(() => {
     if (!selectedOpportunitiesData?.items) return;
 
+    const activeCount = selectedOpportunitiesData.items.filter(
+      (opportunity) => opportunity.status === ("Active" as any),
+    ).length;
     const inactiveCount = selectedOpportunitiesData.items.filter(
       (opportunity) => opportunity.status === ("Inactive" as any),
     ).length;
@@ -725,6 +729,7 @@ const OrganisationDashboard: NextPageWithLayout<{
       (opportunity) => opportunity.status === ("Expired" as any),
     ).length;
 
+    setActiveOpportunitiesCount(activeCount);
     setInactiveOpportunitiesCount(inactiveCount);
     setExpiredOpportunitiesCount(expiredCount);
   }, [selectedOpportunitiesData]);
@@ -1262,6 +1267,57 @@ const OrganisationDashboard: NextPageWithLayout<{
                       {/* FILTERS */}
                       <div className="flex flex-col gap-4 md:flex-row">
                         <div className="flex h-full flex-col gap-4 sm:flex-row md:flex-col">
+                          {/* OPPORTUNITY COUNTS */}
+                          <div className="flex h-36 w-full min-w-[310px] flex-col gap-2 rounded-lg bg-white p-4 shadow">
+                            <div className="flex h-min items-center gap-2">
+                              <div className="items-center rounded-lg bg-green-light p-1">
+                                🏆
+                              </div>
+                              <div className="text-sm font-semibold">
+                                Opportunities
+                              </div>
+                            </div>
+
+                            {/* OPPORTUNITIES */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-3xl font-semibold">
+                                {engagementData?.opportunities?.engaged?.count?.toLocaleString()}
+                              </span>
+                              <span>total</span>
+                            </div>
+
+                            <div className="r flex gap-4">
+                              {/* ACTIVE */}
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={`text-lg font-semibold ${activeOpportunitiesCount > 0 ? "text-blue" : ""}`}
+                                >
+                                  {activeOpportunitiesCount?.toLocaleString()}
+                                </div>
+                                <div>active</div>
+                              </div>
+
+                              {/* INACTIVE */}
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={`text-lg font-semibold ${inactiveOpportunitiesCount > 0 ? "text-yellow" : ""}`}
+                                >
+                                  {inactiveOpportunitiesCount?.toLocaleString()}
+                                </div>
+                                <div>inactive</div>
+                              </div>
+                              {/* EXPIRED */}
+                              <div className="flex items-center gap-2">
+                                <div
+                                  className={`text-lg font-semibold ${expiredOpportunitiesCount > 0 ? "text-red-500" : ""}`}
+                                >
+                                  {expiredOpportunitiesCount?.toLocaleString()}
+                                </div>
+                                <div>expired</div>
+                              </div>
+                            </div>
+                          </div>
+
                           {/* GOTO/COMPLETED CONVERSION RATE */}
                           <div className="flex h-full min-h-[185px] w-full min-w-[310px] flex-col gap-4 rounded-lg bg-white p-4 shadow">
                             <div className="flex flex-row items-center gap-3">
@@ -1367,7 +1423,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           </div>
 
                           {/* OVERALL CONVERSION RATE */}
-                          <div className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem]">
+                          <div className="flex !h-full !min-h-[188px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem]">
                             <div className="flex flex-row items-center gap-3">
                               <div className="rounded-lg bg-green-light p-1">
                                 📈
@@ -1403,9 +1459,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                           <LineChartOverview
                             key="lineChartOverview"
                             data={engagementData.opportunities.engagements}
-                            opportunityCount={
-                              engagementData?.opportunities?.engaged?.count ?? 0
-                            }
                           />
                         )}
                       </div>
@@ -1435,8 +1488,6 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {activeTab === "rewards" && (
                   <div className="flex animate-fade-in flex-col gap-1 pt-4">
-                    {/* <Header title="⚡ Rewards & Skills" /> */}
-
                     <div className="flex flex-col gap-4 md:flex-row">
                       {/* REWARDS */}
                       <div className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem] md:px-6">
@@ -1509,8 +1560,6 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {activeTab === "demographics" && (
                   <div className="flex w-full animate-fade-in flex-col gap-1 pt-4">
-                    {/* <Header title="📊 Demographics" /> */}
-
                     <div className="flex flex-col gap-4 lg:flex-row">
                       {/* COUNTRIES */}
                       <div className="h-full w-full rounded-lg bg-white p-4 shadow">
@@ -1620,8 +1669,6 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {activeTab === "completedYouth" && (
                   <div className="flex animate-fade-in flex-col gap-1 pt-4">
-                    {/* <Header title="✅ Completed by Youth" /> */}
-
                     {/* COMPLETED YOUTH */}
                     <div className="h-full w-full rounded-lg bg-white p-4 shadow">
                       <div className="flex flex-row items-center gap-3">
@@ -1771,8 +1818,6 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {activeTab === "selectedOpportunities" && (
                   <div className="flex animate-fade-in flex-col pt-4">
-                    {/* <Header title="🏆 Selected Opportunities" /> */}
-
                     {/* NB: DECPRECATED */}
                     <div className="mb-4 hidden flex-col gap-4 md:flex-row">
                       {/* UNPUBLISHED */}

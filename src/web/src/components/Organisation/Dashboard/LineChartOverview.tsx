@@ -49,7 +49,7 @@ export const LineChartOverview: React.FC<{
     if (screenWidth < 768) {
       return 300; // Smaller height for mobile
     } else {
-      return 438; // Default height for larger screens
+      return 600; // Default height for larger screens
     }
   }, [screenWidth]);
 
