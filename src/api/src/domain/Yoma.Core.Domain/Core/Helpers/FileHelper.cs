@@ -9,6 +9,8 @@ namespace Yoma.Core.Domain.Core.Helpers
 {
   public static class FileHelper
   {
+    public const string Zip_FileName_Path_Separator = "_ZipFolder_";
+
     public static IFormFile FromByteArray(string fileName, string contentType, byte[] data)
     {
       if (string.IsNullOrWhiteSpace(fileName))
@@ -44,7 +46,9 @@ namespace Yoma.Core.Domain.Core.Helpers
       {
         foreach (var file in files)
         {
-          var entry = archive.CreateEntry(file.FileName, CompressionLevel.Fastest);
+          var entryName = file.FileName.Replace(Zip_FileName_Path_Separator, "/");
+
+          var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
           using var entryStream = entry.Open();
           using var fileStream = file.OpenReadStream();
           fileStream.CopyTo(entryStream);

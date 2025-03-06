@@ -3,16 +3,19 @@ using Hangfire.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Newtonsoft.Json;
 using System.Transactions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Notification;
 using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Opportunity.Interfaces;
+using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.SSI.Services;
 
 namespace Yoma.Core.Domain.Core.Services
@@ -96,15 +99,35 @@ namespace Yoma.Core.Domain.Core.Services
 
                 //generate download files
                 var files = new List<IFormFile>();
+
+                object filter;
+                string fileName;
+                byte[] bytes;
                 switch (type)
                 {
                   case DownloadScheduleType.Opporunities:
+                    filter = JsonConvert.DeserializeObject<OpportunitySearchFilterAdmin>(item.Filter)
+                      ?? throw new InvalidOperationException("Failed to deserialize the filter");
+
+                    (fileName, bytes) = _opportunityInfoService.ExportToCSV((OpportunitySearchFilterAdmin)filter, false, true);
+
+                    files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes)); 
                     break;
 
                   case DownloadScheduleType.MyOpportunityVerifications:
+                    filter = JsonConvert.DeserializeObject<MyOpportunitySearchFilterAdmin>(item.Filter)
+                      ?? throw new InvalidOperationException("Failed to deserialize the filter");
+
+                    (fileName, bytes) = _myOpportunityService.ExportToCSV((MyOpportunitySearchFilterAdmin)filter, false, true);
+
+                    files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes));
                     break;
 
                   case DownloadScheduleType.MyOpportunityVerificationFiles:
+                    filter = JsonConvert.DeserializeObject<MyOpportunitySearchFilterVerificationFiles>(item.Filter)
+                      ?? throw new InvalidOperationException("Failed to deserialize the filter");
+
+                    files.AddRange(await _myOpportunityService.DownloadVerificationFiles((MyOpportunitySearchFilterVerificationFiles)filter, null));
                     break;
 
                   default:
@@ -206,6 +229,7 @@ namespace Yoma.Core.Domain.Core.Services
     }
     public async Task ProcessDeletion()
     {
+      //TODO:
       await Task.Yield();
       throw new NotImplementedException();
     }

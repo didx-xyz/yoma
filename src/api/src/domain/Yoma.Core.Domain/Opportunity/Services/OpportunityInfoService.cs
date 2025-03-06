@@ -187,11 +187,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return results;
     }
 
-    public async Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> SearchAndExportToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
+    public async Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> ScheduleOrExportToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
-
-      filter.UnrestrictedQuery = true;
 
       if (!filter.PaginationEnabled)
       {
@@ -201,11 +199,22 @@ namespace Yoma.Core.Domain.Opportunity.Services
         return (true, null, null);
       }
 
-      var result = Search(filter, ensureOrganizationAuthorization);
-
-      var (fileName, bytes) = FileHelper.CreateCsvFile(result.Items, "Opportunities", true);
+      var (fileName, bytes) = ExportToCSV(filter, ensureOrganizationAuthorization, true);
 
       return (false, fileName, bytes);
+    }
+    #endregion
+
+    #region Internal Members
+    public (string fileName, byte[] bytes) ExportToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization, bool appendDateStamp)
+    {
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+
+      filter.UnrestrictedQuery = true;
+
+      var result = Search(filter, ensureOrganizationAuthorization);
+
+      return FileHelper.CreateCsvFile(result.Items, "Opportunities", appendDateStamp);
     }
     #endregion
 

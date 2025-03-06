@@ -94,21 +94,23 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
       }
     }
 
-    public string GetUrl(string filename)
+    public string GetUrl(string filename, int? urlExpirationInMinutes = null)
     {
       if (string.IsNullOrWhiteSpace(filename))
         throw new ArgumentNullException(nameof(filename));
       filename = filename.Trim().ToLower();
 
-      if (_storageType == StorageType.Private && !_optionsBucket.URLExpirationInMinutes.HasValue)
-        throw new InvalidOperationException($"'{AWSS3Options.Section}.{nameof(_optionsBucket.URLExpirationInMinutes)}' required for storage type '{_storageType}'");
+      urlExpirationInMinutes ??= _optionsBucket.URLExpirationInMinutes;
+
+      if (_storageType == StorageType.Private && !urlExpirationInMinutes.HasValue)
+        throw new InvalidOperationException($"Explicit expiration or '{AWSS3Options.Section}.{nameof(_optionsBucket.URLExpirationInMinutes)}' required for storage type '{_storageType}'");
 
       var request = new GetPreSignedUrlRequest
       {
         BucketName = _optionsBucket.BucketName,
         Key = filename,
         Verb = HttpVerb.GET,
-        Expires = DateTime.UtcNow.AddMinutes(_optionsBucket.URLExpirationInMinutes ?? 1)
+        Expires = DateTime.UtcNow.AddMinutes(urlExpirationInMinutes ?? 1)
       };
 
       string url;
@@ -121,10 +123,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
         throw new HttpClientException(ex.StatusCode, $"Failed to retrieve URL for S3 object with filename '{filename}': {ex.Message}");
       }
 
-      if (_optionsBucket.URLExpirationInMinutes.HasValue) return url;
-
-      url = new Url(url).RemoveQuery();
-      return url;
+      return urlExpirationInMinutes.HasValue ? url : new Url(url).RemoveQuery();
     }
 
     public async Task Delete(string filename)

@@ -13,9 +13,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     MyOpportunityResponseVerifyCompletedExternal GetVerificationCompletedExternal(Guid opportunityId);
 
+    Task ScheduleDownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter, bool ensureOrganizationAuthorization);
+
     Task<IFormFile> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter);
 
-    Task DownloadVerificationFilesAdmin(MyOpportunitySearchFilterVerificationFiles filter, bool ensureOrganizationAuthorization);
+    Task<List<IFormFile>> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter, Guid? userId);
 
     List<MyOpportunitySearchCriteriaOpportunity> ListMyOpportunityVerificationSearchCriteriaOpportunity(List<Guid>? organizations, List<VerificationStatus>? verificationStatuses, bool ensureOrganizationAuthorization);
 
@@ -25,7 +27,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
-    Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> SearchAndExportToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
+    (string fileName, byte[] bytes) ExportToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization, bool appendDateStamp);
+
+    Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> ScheduleOrExportToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
     Task PerformActionViewed(Guid opportunityId);
 

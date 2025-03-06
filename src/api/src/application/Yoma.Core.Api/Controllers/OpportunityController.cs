@@ -376,7 +376,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(SearchAndExportToCSV));
 
-      var (scheduleForProcessing, fileName, bytes) = await _opportunityInfoService.SearchAndExportToCSV(filter, true);
+      var (scheduleForProcessing, fileName, bytes) = await _opportunityInfoService.ScheduleOrExportToCSV(filter, true);
       _logger.LogInformation("Request {requestName} handled", nameof(SearchAndExportToCSV));
 
       if (scheduleForProcessing) return StatusCode((int)HttpStatusCode.OK);

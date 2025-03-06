@@ -92,7 +92,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(SearchAndExportToCSV));
 
-      var (scheduleForProcessing, fileName, bytes) = await _myOpportunityService.SearchAndExportToCSV(filter, true);
+      var (scheduleForProcessing, fileName, bytes) = await _myOpportunityService.ScheduleOrExportToCSV(filter, true);
       _logger.LogInformation("Request {requestName} handled", nameof(SearchAndExportToCSV));
 
       if (scheduleForProcessing) return StatusCode((int)HttpStatusCode.OK);
@@ -154,7 +154,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(DownloadVerificationFiles));
 
-      await _myOpportunityService.DownloadVerificationFilesAdmin(filter, true);
+      await _myOpportunityService.ScheduleDownloadVerificationFiles(filter, true);
       _logger.LogInformation("Request {requestName} handled", nameof(DownloadVerificationFiles));
 
       return StatusCode((int)HttpStatusCode.OK);

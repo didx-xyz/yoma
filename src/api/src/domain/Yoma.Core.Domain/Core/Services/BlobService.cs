@@ -94,13 +94,20 @@ namespace Yoma.Core.Domain.Core.Services
 
     public async Task<IFormFile> Download(Guid id)
     {
+      var (originalFileName, contentType, data) = await DownloadRaw(id);
+
+      return FileHelper.FromByteArray(originalFileName, contentType, data);
+    }
+
+    public async Task<(string OriginalFileName, string ContentType, byte[] Data)> DownloadRaw(Guid id)
+    {
       var item = GetById(id);
 
       var client = _blobProviderClientFactory.CreateClient(item.StorageType);
 
-      var (ContentType, Data) = await client.Download(item.Key);
+      var (contentType, data) = await client.Download(item.Key);
 
-      return FileHelper.FromByteArray(item.OriginalFileName, ContentType, Data);
+      return (item.OriginalFileName, contentType, data);
     }
 
     public string GetURL(Guid id)
