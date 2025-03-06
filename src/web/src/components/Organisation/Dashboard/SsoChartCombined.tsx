@@ -174,13 +174,14 @@ export const SsoChartCombined: React.FC<{
           data={chartData}
           options={{
             //colors: [CHART_COLORS[0], CHART_COLORS[1]],
-            curveType: "function",
             legend: { position: "top" },
+            curveType: "function",
             lineWidth: 2,
-            pointSize: 4,
+            pointSize: 8,
             hAxis: {
               gridlines: { color: "#f5f5f5" },
               format: "MMM dd",
+              showTextEvery: 2,
               textStyle: { fontSize: 10 },
             },
             vAxis: {
@@ -203,7 +204,7 @@ export const SsoChartCombined: React.FC<{
       ) : (
         <div className="flex h-[150px] w-full flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center">
           <span className="text-sm text-gray-dark">
-            Not enough login data to display chart
+            Not enough data to display chart
           </span>
           {(outboundTotal > 0 || inboundTotal > 0) && (
             <span className="mt-2 text-sm">

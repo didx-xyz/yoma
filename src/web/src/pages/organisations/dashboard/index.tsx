@@ -19,8 +19,6 @@ import {
 } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import {
-  IoIosArrowBack,
-  IoIosArrowForward,
   IoMdCheckmarkCircleOutline,
   IoMdClose,
   IoMdCloseCircleOutline,
@@ -62,19 +60,18 @@ import CustomCarousel from "~/components/Carousel/CustomCarousel";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
-import { Header } from "~/components/Common/Header";
 import Suspense from "~/components/Common/Suspense";
+import FilterBadges from "~/components/FilterBadges";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import FilterTab from "~/components/Opportunity/FilterTab";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
-import { EngagementRowFilter } from "~/components/Organisation/Dashboard/EngagementRowFilter";
-import { LineChart } from "~/components/Organisation/Dashboard/LineChart";
+import { DashboardFilterVertical } from "~/components/Organisation/Dashboard/DashboardFilterVertical";
 import { LineChartCumulativeCompletions } from "~/components/Organisation/Dashboard/LineChartCumulativeCompletions";
+import { LineChartOverview } from "~/components/Organisation/Dashboard/LineChartOverview";
 import { OpportunityCard } from "~/components/Organisation/Dashboard/OpportunityCard";
-import { DashboardFilterHorizontal } from "~/components/Organisation/Dashboard/DashboardFilterHorizontal";
 import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
 import { SkillsChart } from "~/components/Organisation/Dashboard/SkillsChart";
-import { SsoChart } from "~/components/Organisation/Dashboard/SsoChart";
 import { SsoChartCombined } from "~/components/Organisation/Dashboard/SsoChartCombined";
 import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
 import { YouthCompletedCard } from "~/components/Organisation/Dashboard/YouthCompletedCard";
@@ -98,9 +95,6 @@ import {
 import { getTimeOfDayAndEmoji } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
-import { DashboardFilterVertical } from "~/components/Organisation/Dashboard/DashboardFilterVertical";
-import FilterTab from "~/components/Opportunity/FilterTab";
-import FilterBadges from "~/components/FilterBadges";
 
 export interface OrganizationSearchFilterSummaryViewModel {
   organizations: string[] | null;
@@ -1166,7 +1160,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     role="tab"
                     className={`group tab relative !border-none ${
                       activeTab === "engagement"
-                        ? "bg-gray-light text-black"
+                        ? "bg-gray-light font-semibold text-black"
                         : ""
                     }`}
                     onClick={() => setActiveTab("engagement")}
@@ -1178,7 +1172,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                       role="tab"
                       className={`group tab relative !border-none ${
                         activeTab === "cumulativeCompletions"
-                          ? "bg-gray-light text-black"
+                          ? "bg-gray-light font-semibold text-black"
                           : ""
                       }`}
                       onClick={() => setActiveTab("cumulativeCompletions")}
@@ -1188,7 +1182,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   )}
                   <a
                     role="tab"
-                    className={`group tab relative !border-none ${
+                    className={`group tab relative !border-none font-semibold ${
                       activeTab === "rewards" ? "bg-gray-light text-black" : ""
                     }`}
                     onClick={() => setActiveTab("rewards")}
@@ -1197,7 +1191,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   </a>
                   <a
                     role="tab"
-                    className={`group tab relative !border-none ${
+                    className={`group tab relative !border-none font-semibold ${
                       activeTab === "demographics"
                         ? "bg-gray-light text-black"
                         : ""
@@ -1208,7 +1202,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   </a>
                   <a
                     role="tab"
-                    className={`group tab relative !border-none ${
+                    className={`group tab relative !border-none font-semibold ${
                       activeTab === "completedYouth"
                         ? "bg-gray-light text-black"
                         : ""
@@ -1219,7 +1213,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   </a>
                   <a
                     role="tab"
-                    className={`group tab relative !border-none ${
+                    className={`group tab relative !border-none font-semibold ${
                       activeTab === "selectedOpportunities"
                         ? "bg-gray-light text-black"
                         : ""
@@ -1230,7 +1224,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   </a>
                   <a
                     role="tab"
-                    className={`group tab relative !border-none ${
+                    className={`group tab relative !border-none font-semibold ${
                       activeTab === "sso" ? "bg-gray-light text-black" : ""
                     }`}
                     onClick={() => setActiveTab("sso")}
@@ -1265,29 +1259,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <div className="flex animate-fade-in flex-col gap-4 pt-4">
                     {/* ENGAGEMENT */}
                     <div className="flex flex-col">
-                      {/* <Header title="🤝 Engagement" /> */}
-
                       {/* FILTERS */}
-                      {/* <EngagementRowFilter
-                        htmlRef={myRef.current!}
-                        searchFilter={searchFilter}
-                        lookups_countries={countriesData}
-                        onSubmit={(e) => onSubmitFilter(e)}
-                      /> */}
-
                       <div className="flex flex-col gap-4 md:flex-row">
-                        {/* LINE CHART: OVERVIEW */}
-                        {engagementData?.opportunities?.engagements && (
-                          <LineChart
-                            key="lineChartOverview"
-                            data={engagementData.opportunities.engagements}
-                            opportunityCount={
-                              engagementData?.opportunities?.engaged?.count ?? 0
-                            }
-                          />
-                        )}
-
-                        <div className="flex h-full flex-col gap-4 sm:flex-row md:w-[300px] md:flex-col">
+                        <div className="flex h-full flex-col gap-4 sm:flex-row md:flex-col">
                           {/* GOTO/COMPLETED CONVERSION RATE */}
                           <div className="flex h-full min-h-[185px] w-full min-w-[310px] flex-col gap-4 rounded-lg bg-white p-4 shadow">
                             <div className="flex flex-row items-center gap-3">
@@ -1295,7 +1269,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 🎯
                               </div>
                               <div className="text-sm font-semibold">
-                                Go-To/Completed Conversion Ratio
+                                Conversion Rate
                               </div>
                             </div>
 
@@ -1393,7 +1367,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           </div>
 
                           {/* OVERALL CONVERSION RATE */}
-                          <div className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem]">
+                          <div className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem]">
                             <div className="flex flex-row items-center gap-3">
                               <div className="rounded-lg bg-green-light p-1">
                                 📈
@@ -1423,6 +1397,17 @@ const OrganisationDashboard: NextPageWithLayout<{
                             )}
                           </div>
                         </div>
+
+                        {/* LINE CHART: OVERVIEW */}
+                        {engagementData?.opportunities?.engagements && (
+                          <LineChartOverview
+                            key="lineChartOverview"
+                            data={engagementData.opportunities.engagements}
+                            opportunityCount={
+                              engagementData?.opportunities?.engaged?.count ?? 0
+                            }
+                          />
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1457,10 +1442,10 @@ const OrganisationDashboard: NextPageWithLayout<{
                       <div className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem] md:px-6">
                         <div className="flex flex-row items-center gap-3">
                           <div className="rounded-lg bg-green-light p-1">
-                            🎁
+                            💸
                           </div>
                           <div className="text-sm font-semibold">
-                            ZLTO amount awarded
+                            Total amount awarded
                           </div>
                         </div>
                         <div className="-ml-1 mt-4 flex flex-grow items-center gap-2">

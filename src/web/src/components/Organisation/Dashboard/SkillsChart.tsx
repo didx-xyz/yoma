@@ -41,7 +41,7 @@ export const SkillsChart: React.FC<{
           <div key={index} className="flex flex-col gap-4">
             <div className="flex flex-row items-center gap-3">
               <span className="rounded-lg bg-green-light p-1">📊</span>
-              <span className="font-bold">{name}</span>
+              <span className="text-sm font-semibold">{name}</span>
             </div>
             {data?.count[index] != null && (
               <div className="mb-2 text-3xl font-semibold">

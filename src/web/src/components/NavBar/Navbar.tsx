@@ -464,13 +464,14 @@ export const Navbar: React.FC = () => {
                           <ul className="menu grow p-0">
                             <li
                               key="userMenu_admin_overview"
-                              className="ml-4xx btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
+                              className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
                             >
                               <Link
                                 href="/organisations/dashboard"
                                 onClick={() => setDrawerOpen(false)}
                                 id="userMenu_admin_overview"
                                 tabIndex={isDrawerOpen ? 0 : -1}
+                                className="flex w-full items-center" // Make the Link fill the li
                               >
                                 <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
                                   📈
