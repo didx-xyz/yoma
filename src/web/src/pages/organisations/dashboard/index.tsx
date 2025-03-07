@@ -28,7 +28,7 @@ import {
   IoMdTrophy,
 } from "react-icons/io";
 import Moment from "react-moment";
-import type { Country } from "~/api/models/lookups";
+import { Country } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
   OpportunitySearchResultsInfo,
@@ -43,13 +43,13 @@ import type {
   OrganizationSearchResultsYouth,
   YouthInfo,
 } from "~/api/models/organizationDashboard";
+import { getCountries } from "~/api/services/lookups";
 import {
-  getCategoriesAdmin,
+  getCategories,
   searchCriteriaOpportunities,
 } from "~/api/services/opportunities";
 import { getOrganisations } from "~/api/services/organisations";
 import {
-  getCountries,
   searchOrganizationEngagement,
   searchOrganizationOpportunities,
   searchOrganizationSso,
@@ -79,7 +79,7 @@ import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
-import { LoadingInline } from "~/components/Status/LoadingInline";
+import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
@@ -92,7 +92,7 @@ import {
   THEME_BLUE,
   THEME_GREEN,
 } from "~/lib/constants";
-import { getTimeOfDayAndEmoji } from "~/lib/utils";
+import { getTimeOfDayAndEmoji, toISOStringForTimezone } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -124,6 +124,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   } = context.query;
 
   const searchFilter = {
+    organizations: organisations ? organisations?.toString().split("|") : null,
+    opportunities: opportunities ? opportunities?.toString().split("|") : null,
+    countries: countries ? countries?.toString().split("|") : null,
+    categories: categories ? categories?.toString().split("|") : null,
+    startDate: startDate ? startDate.toString() : "",
+    endDate: endDate ? endDate.toString() : "",
     pageSelectedOpportunities: pageSelectedOpportunities
       ? parseInt(pageSelectedOpportunities.toString())
       : 1,
@@ -131,12 +137,6 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       ? parseInt(pageCompletedYouth.toString())
       : 1,
     pageSSO: pageSSO ? parseInt(pageSSO.toString()) : 1,
-    organizations: organisations ? organisations?.toString().split("|") : null,
-    categories: categories ? categories?.toString().split("|") : null,
-    opportunities: opportunities ? opportunities?.toString().split("|") : null,
-    startDate: startDate ? startDate.toString() : "",
-    endDate: endDate ? endDate.toString() : "",
-    countries: countries ? countries?.toString().split("|") : null,
   };
 
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -158,12 +158,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   let lookups_selectedOrganisations;
 
   try {
-    // HACK: lookup each of the opportunities (to resolve ids to titles for filter badges)
-    if (!!searchFilter.opportunities && !!searchFilter.organizations) {
+    // lookup each of the opportunities (to resolve ids to titles for filter badges)
+    if (!!searchFilter.opportunities) {
       lookups_selectedOpportunities = await searchCriteriaOpportunities(
         {
           opportunities: searchFilter.opportunities,
-          organizations: searchFilter.organizations,
+          organizations: null,
           countries: null,
           titleContains: null,
           published: null,
@@ -259,26 +259,24 @@ const OrganisationDashboard: NextPageWithLayout<{
   //#endregion Tab state
 
   //#region Queries
-  // QUERY: CATEGORIES
+  // QUERY: CATEGORIES (GET ALL LOOKUPS TO RESOLVE NAMES)
   const {
     data: categoriesData,
     isLoading: categoriesIsLoading,
     error: categoriesError,
   } = useQuery<OpportunityCategory[]>({
-    queryKey: ["organisationCategories", searchFilter.organizations],
-    queryFn: () => getCategoriesAdmin(searchFilter.organizations ?? []),
-    enabled: !error,
+    queryKey: ["organisationCategories", searchFilter],
+    queryFn: () => getCategories(),
   });
 
-  // QUERY: COUNTRIES
+  // QUERY: COUNTRIES (GET ALL LOOKUPS TO RESOLVE NAMES)
   const {
     data: countriesData,
     isLoading: countriesIsLoading,
     error: countriesError,
   } = useQuery<Country[]>({
-    queryKey: ["organisationCountries", searchFilter.organizations],
-    queryFn: () => getCountries(searchFilter.organizations ?? []),
-    enabled: !error,
+    queryKey: ["countries"],
+    queryFn: () => getCountries(),
   });
 
   // QUERY: SEARCH RESULTS
@@ -291,20 +289,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     queryFn: async () => {
       return await searchOrganizationEngagement({
         organizations: searchFilter.organizations ?? [],
-        categories:
-          searchFilter.categories != undefined
-            ? searchFilter.categories
-                ?.map((x) => {
-                  const item = categoriesData?.find((y) => y.name === x);
-                  return item ? item?.id : "";
-                })
-                .filter((x) => x != "")
-            : null,
         opportunities: searchFilter.opportunities ?? null,
-        startDate: searchFilter.startDate
-          ? searchFilter.startDate.toString()
-          : "",
-        endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
         countries:
           searchFilter.countries != undefined
             ? searchFilter.countries
@@ -314,9 +299,22 @@ const OrganisationDashboard: NextPageWithLayout<{
                 })
                 .filter((x) => x != "")
             : null,
+        categories:
+          searchFilter.categories != undefined
+            ? searchFilter.categories
+                ?.map((x) => {
+                  const item = categoriesData?.find((y) => y.name === x);
+                  return item ? item?.id : "";
+                })
+                .filter((x) => x != "")
+            : null,
+        startDate: searchFilter.startDate
+          ? searchFilter.startDate.toString()
+          : "",
+        endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
       });
     },
-    enabled: !error,
+    enabled: !error && !categoriesIsLoading && !countriesIsLoading,
   });
 
   // QUERY: COMPLETED YOUTH
@@ -333,24 +331,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     queryFn: () =>
       searchOrganizationYouth({
         organizations: searchFilter.organizations ?? [],
-        categories:
-          searchFilter.categories != undefined
-            ? searchFilter.categories
-                ?.map((x) => {
-                  const item = categoriesData?.find((y) => y.name === x);
-                  return item ? item?.id : "";
-                })
-                .filter((x) => x != "")
-            : null,
         opportunities: searchFilter.opportunities ?? null,
-        startDate: searchFilter.startDate
-          ? searchFilter.startDate.toString()
-          : "",
-        endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
-        pageNumber: searchFilter.pageCompletedYouth
-          ? searchFilter.pageCompletedYouth
-          : 1,
-        pageSize: PAGE_SIZE,
         countries:
           searchFilter.countries != undefined
             ? searchFilter.countries
@@ -360,8 +341,25 @@ const OrganisationDashboard: NextPageWithLayout<{
                 })
                 .filter((x) => x != "")
             : null,
+        categories:
+          searchFilter.categories != undefined
+            ? searchFilter.categories
+                ?.map((x) => {
+                  const item = categoriesData?.find((y) => y.name === x);
+                  return item ? item?.id : "";
+                })
+                .filter((x) => x != "")
+            : null,
+        startDate: searchFilter.startDate
+          ? searchFilter.startDate.toString()
+          : "",
+        endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
+        pageNumber: searchFilter.pageCompletedYouth
+          ? searchFilter.pageCompletedYouth
+          : 1,
+        pageSize: PAGE_SIZE,
       }),
-    enabled: !error,
+    enabled: !error && !categoriesIsLoading && !countriesIsLoading,
   });
 
   // QUERY: SELECTED OPPORTUNITIES
@@ -378,6 +376,7 @@ const OrganisationDashboard: NextPageWithLayout<{
     queryFn: () =>
       searchOrganizationOpportunities({
         organizations: searchFilter.organizations ?? [],
+        opportunities: searchFilter.opportunities ?? null,
         categories:
           searchFilter.categories != undefined
             ? searchFilter.categories
@@ -387,7 +386,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                 })
                 .filter((x) => x != "")
             : null,
-        opportunities: searchFilter.opportunities ?? null,
         startDate: searchFilter.startDate
           ? searchFilter.startDate.toString()
           : "",
@@ -397,7 +395,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           : 1,
         pageSize: PAGE_SIZE,
       }),
-    enabled: !error,
+    enabled: !error && !categoriesIsLoading,
   });
 
   // QUERY: SSO
@@ -419,11 +417,9 @@ const OrganisationDashboard: NextPageWithLayout<{
       }),
     enabled: !error,
   });
-
   //#endregion Queries
 
   //#region Carousels
-  // carousel data
   const fetchDataAndUpdateCache_Opportunities = useCallback(
     async (
       queryKey: unknown[],
@@ -490,17 +486,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           pageNumber: pageNumber,
           pageSize: PAGE_SIZE_MINIMUM,
           organizations: searchFilter.organizations ?? [],
-          categories:
-            searchFilter.categories != undefined
-              ? searchFilter.categories
-                  ?.toString()
-                  .split("|")
-                  .map((x) => {
-                    const item = categoriesData?.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
+          categories: searchFilter.categories ?? [],
           opportunities: searchFilter.opportunities
             ? searchFilter.opportunities?.toString().split("|")
             : null,
@@ -519,7 +505,6 @@ const OrganisationDashboard: NextPageWithLayout<{
       searchFilter.startDate,
       searchFilter.endDate,
       searchFilter.organizations,
-      categoriesData,
     ],
   );
   const loadData_Youth = useCallback(
@@ -547,17 +532,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           pageNumber: pageNumber,
           pageSize: PAGE_SIZE_MINIMUM,
           organizations: searchFilter.organizations ?? [],
-          categories:
-            searchFilter.categories != undefined
-              ? searchFilter.categories
-                  ?.toString()
-                  .split("|")
-                  .map((x) => {
-                    const item = categoriesData?.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
+          categories: searchFilter.categories ?? [],
           opportunities: searchFilter.opportunities
             ? searchFilter.opportunities?.toString().split("|")
             : null,
@@ -565,17 +540,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             ? searchFilter.startDate.toString()
             : "",
           endDate: searchFilter.endDate ? searchFilter.endDate.toString() : "",
-          countries:
-            searchFilter.countries != undefined
-              ? searchFilter.countries
-                  ?.toString()
-                  .split("|")
-                  .map((x) => {
-                    const item = countriesData?.find((y) => y.name === x);
-                    return item ? item?.id : "";
-                  })
-                  .filter((x) => x != "")
-              : null,
+          countries: searchFilter.countries ?? [],
         },
       );
     },
@@ -588,8 +553,6 @@ const OrganisationDashboard: NextPageWithLayout<{
       searchFilter.endDate,
       searchFilter.countries,
       searchFilter.organizations,
-      categoriesData,
-      countriesData,
     ],
   );
   //#endregion Carousels
@@ -747,6 +710,8 @@ const OrganisationDashboard: NextPageWithLayout<{
     (val: OrganizationSearchFilterSummaryViewModel) => {
       console.table(val);
       redirectWithSearchFilterParams({
+        organizations: val.organizations,
+        countries: val.countries,
         categories: val.categories,
         opportunities: val.opportunities,
         startDate: val.startDate,
@@ -758,8 +723,6 @@ const OrganisationDashboard: NextPageWithLayout<{
           ? searchFilter.pageCompletedYouth
           : 1,
         pageSSO: searchFilter.pageSSO ? searchFilter.pageSSO : 1,
-        organizations: val.organizations,
-        countries: val.countries,
       });
     },
     [
@@ -805,8 +768,8 @@ const OrganisationDashboard: NextPageWithLayout<{
         <DashboardFilterVertical
           htmlRef={myRef.current!}
           searchFilter={searchFilter}
-          lookups_countries={countriesData}
-          lookups_categories={categoriesData}
+          //lookups_countries={countriesData}
+          // lookups_categories={categoriesData}
           lookups_selectedOpportunities={lookups_selectedOpportunities}
           lookups_selectedOrganisations={lookups_selectedOrganisations}
           submitButtonText="Apply Filters"
@@ -1104,49 +1067,62 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
 
           {/* FILTERS */}
-          <Suspense
+          {/* <Suspense
             isLoading={categoriesIsLoading}
             error={categoriesError}
             loader={
               <LoadingInline
-                className="h-[170px]"
+                className="h-[72px]"
                 classNameSpinner="border-white h-8 w-8"
                 classNameLabel="text-white"
               />
             }
-          >
-            <div className="flex flex-col gap-4">
-              {/* FILTER BUTTON */}
-              <button
-                type="button"
-                className="bg-theme p-3x justify-centerx items-centerx btn btn-sm w-full rounded-l-full border-none text-white brightness-[1.12] hover:brightness-95 md:w-40"
-                onClick={() => setFilterFullWindowVisible(true)}
-              >
-                <IoMdOptions className="h-5 w-5" />
-                Filter
-              </button>
+          > */}
+          <div className="flex flex-col gap-4">
+            {/* FILTER BUTTON */}
+            <button
+              type="button"
+              className="bg-theme btn btn-sm w-full rounded-l-full border-none tracking-widest text-white brightness-[1.12] hover:brightness-95 md:w-40"
+              onClick={() => setFilterFullWindowVisible(true)}
+            >
+              <IoMdOptions className="h-5 w-5" />
+              Filter
+            </button>
 
-              {/* FILTER BADGES */}
-              <FilterBadges
-                searchFilter={searchFilter}
-                excludeKeys={[
-                  "pageSelectedOpportunities",
-                  "pageCompletedYouth",
-                  "pageSSO",
-                  "pageSize",
-                  "organizations",
-                  "opportunities",
-                  "categories",
-                  "startDate",
-                  "endDate",
-                ]}
-                resolveValue={(key, value) => {
+            {/* FILTER BADGES */}
+            <FilterBadges
+              searchFilter={searchFilter}
+              excludeKeys={[
+                "pageSelectedOpportunities",
+                "pageCompletedYouth",
+                "pageSSO",
+                "pageSize",
+              ]}
+              resolveValue={(key, value) => {
+                if (key === "startDate" || key === "endDate")
+                  return value
+                    ? toISOStringForTimezone(new Date(value)).split("T")[0]
+                    : "";
+                else if (key === "opportunities") {
+                  // HACK: resolve opportunity ids to titles
+                  const lookup = lookups_selectedOpportunities?.items.find(
+                    (x) => x.id === value,
+                  );
+                  return lookup?.title ?? value;
+                } else if (key === "organizations") {
+                  // HACK: resolve organisation ids to titles
+                  const lookup = lookups_selectedOrganisations?.items.find(
+                    (x) => x.id === value,
+                  );
+                  return lookup?.name ?? value;
+                } else {
                   return value;
-                }}
-                onSubmit={(e) => onSubmitFilter(e)}
-              />
-            </div>
-          </Suspense>
+                }
+              }}
+              onSubmit={(e) => onSubmitFilter(e)}
+            />
+          </div>
+          {/* </Suspense> */}
 
           {/* ORGADMINS NEEDS TO SELECT ONE ORG */}
           {!isAdmin && !searchFilter.organizations && (
@@ -1241,9 +1217,10 @@ const OrganisationDashboard: NextPageWithLayout<{
 
               {/* DASHBOARD */}
               <Suspense
+                className="pt-4"
                 isLoading={
                   engagementIsLoading ||
-                  countriesIsLoading ||
+                  //countriesIsLoading ||
                   engagementIsLoading ||
                   completedOpportunitiesIsLoading ||
                   selectedOpportunitiesIsLoading ||
@@ -1252,16 +1229,17 @@ const OrganisationDashboard: NextPageWithLayout<{
                 }
                 error={
                   engagementError ||
-                  categoriesError ||
-                  countriesError ||
+                  //categoriesError ||
+                  //countriesError ||
                   engagementError ||
                   completedOpportunitiesError ||
                   selectedOpportunitiesError ||
                   ssoError
                 }
+                loader={<LoadingSkeleton columns={2} rows={4} />}
               >
                 {activeTab === "engagement" && (
-                  <div className="flex animate-fade-in flex-col gap-4 pt-4">
+                  <div className="flex animate-fade-in flex-col gap-4">
                     {/* ENGAGEMENT */}
                     <div className="flex flex-col">
                       {/* FILTERS */}
@@ -1277,44 +1255,52 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 Opportunities
                               </div>
                             </div>
-
                             {/* OPPORTUNITIES */}
-                            <div className="flex items-center gap-2">
-                              <span className="text-3xl font-semibold">
-                                {engagementData?.opportunities?.engaged?.count?.toLocaleString()}
-                              </span>
-                              <span>total</span>
+                            <div className="flex flex-row gap-4">
+                              <div className="flex items-center gap-2">
+                                <span className="text-3xl font-semibold">
+                                  {selectedOpportunitiesData?.totalCount?.toLocaleString()}
+                                </span>
+                                <span>selected</span>
+                              </div>
+                              {/* <div className="flex items-center gap-2">
+                                <span className="text-3xl font-semibold">
+                                  {engagementData?.opportunities?.engaged?.count?.toLocaleString()}
+                                </span>
+                                <span>engagements</span>
+                              </div> */}
                             </div>
 
-                            <div className="r flex gap-4">
+                            <div className="flex gap-4">
                               {/* ACTIVE */}
-                              <div className="flex items-center gap-2">
+                              {/* <div className="flex items-center gap-2">
                                 <div
                                   className={`text-lg font-semibold ${activeOpportunitiesCount > 0 ? "text-blue" : ""}`}
                                 >
                                   {activeOpportunitiesCount?.toLocaleString()}
                                 </div>
                                 <div>active</div>
-                              </div>
+                              </div> */}
 
                               {/* INACTIVE */}
-                              <div className="flex items-center gap-2">
+                              {/* <div className="flex items-center gap-2">
                                 <div
                                   className={`text-lg font-semibold ${inactiveOpportunitiesCount > 0 ? "text-yellow" : ""}`}
                                 >
                                   {inactiveOpportunitiesCount?.toLocaleString()}
                                 </div>
                                 <div>inactive</div>
-                              </div>
+                              </div> */}
+
                               {/* EXPIRED */}
-                              <div className="flex items-center gap-2">
+                              {/* <div className="flex items-center gap-2">
                                 <div
                                   className={`text-lg font-semibold ${expiredOpportunitiesCount > 0 ? "text-red-500" : ""}`}
                                 >
                                   {expiredOpportunitiesCount?.toLocaleString()}
                                 </div>
                                 <div>expired</div>
-                              </div>
+                              </div> */}
                             </div>
                           </div>
 
@@ -2014,7 +2000,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "sso" && ssoData && (
-                  <div className="flex animate-fade-in flex-col gap-4 pt-4">
+                  <div className="flex animate-fade-in flex-col gap-4">
                     {/* <Header title="🔑 Single Sign-On" /> */}
 
                     {/* SSO Summary */}

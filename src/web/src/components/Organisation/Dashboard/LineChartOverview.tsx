@@ -80,38 +80,42 @@ export const LineChartOverview: React.FC<{
               {name === "Go-To Clicks" && "👆"}
               {name === "Completions" && "🎓"}
             </span>
-            <span className="w-14 truncate text-xs font-semibold md:w-full md:text-sm">
+            <span className="w-14 truncate text-sm font-semibold md:w-full md:text-sm">
               {name}
             </span>
           </div>
           {data.count[index] != null && (
             <div>
               <div
-                className={`text-sm ${
+                className={`text-xl font-semibold ${
                   selectedLegendIndex === index ? "text-white" : ""
                 } md:text-3xl`}
                 style={{
-                  color: CHART_COLORS[index % CHART_COLORS.length],
+                  color:
+                    showLabels && data.count[index] > 0
+                      ? CHART_COLORS[index % CHART_COLORS.length]
+                      : "#000",
                 }}
               >
                 {data.count[index]?.toLocaleString()}
               </div>
-
-              <svg height="4" width="40" className="my-1">
-                <line
-                  x1="0"
-                  y1="2"
-                  x2="40"
-                  y2="2"
-                  stroke={CHART_COLORS[index % CHART_COLORS.length]}
-                  strokeWidth={selectedLegendIndex === index ? "4" : "2"}
-                  strokeDasharray={
-                    LINE_DASH_STYLES[index % LINE_DASH_STYLES.length]?.join(
-                      ",",
-                    ) || "none"
-                  }
-                />
-              </svg>
+              {showLabels && data.count[index] > 0 && (
+                <svg height="4" width="40" className="my-1">
+                  <line
+                    x1="0"
+                    y1="2"
+                    x2="40"
+                    y2="2"
+                    stroke={CHART_COLORS[index % CHART_COLORS.length]}
+                    strokeWidth={selectedLegendIndex === index ? "4" : "2"}
+                    strokeDasharray={
+                      LINE_DASH_STYLES[index % LINE_DASH_STYLES.length]?.join(
+                        ",",
+                      ) || "none"
+                    }
+                  />
+                </svg>
+              )}
             </div>
           )}
         </div>
@@ -221,7 +225,10 @@ export const LineChartOverview: React.FC<{
           ]}
         />
       ) : (
-        <div className="flex h-full items-center justify-center rounded-lg bg-gray-light">
+        <div
+          className="flex h-full items-start justify-center rounded-lg bg-gray-light"
+          style={{ height: chartHeight }}
+        >
           <NoRowsMessage
             title={"Not enough data to display."}
             description={
