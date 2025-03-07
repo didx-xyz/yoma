@@ -100,6 +100,9 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
         throw new ArgumentNullException(nameof(filename));
       filename = filename.Trim().ToLower();
 
+      if (urlExpirationInMinutes.HasValue && urlExpirationInMinutes.Value < 1)
+        throw new ArgumentOutOfRangeException(nameof(urlExpirationInMinutes), "URL expiration time must be at least 1 minute");
+
       urlExpirationInMinutes ??= _optionsBucket.URLExpirationInMinutes;
 
       if (_storageType == StorageType.Private && !urlExpirationInMinutes.HasValue)

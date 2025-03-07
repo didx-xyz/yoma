@@ -24,6 +24,7 @@ namespace Yoma.Core.Domain.Core.Services
   {
     #region Class Variables
     private readonly ILogger<SSIBackgroundService> _logger;
+    private readonly AppSettings _appSettings;
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IDownloadService _downloadService;
     private readonly IOpportunityInfoService _opportunityInfoService;
@@ -33,21 +34,25 @@ namespace Yoma.Core.Domain.Core.Services
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly IDistributedLockService _distributedLockService;
+
+    private static readonly DownloadScheduleStatus[] Statuses_Deletion = [DownloadScheduleStatus.Processed];
     #endregion
 
     #region Constructor
     public DownloadBackgroundService(ILogger<SSIBackgroundService> logger,
-        IOptions<ScheduleJobOptions> scheduleJobOptions,
-        IDownloadService downloadService,
-        IOpportunityInfoService opportunityInfoService,
-        IMyOpportunityService myOpportunityService,
-        IBlobService blobService,
-        IUserService userService,
-        INotificationDeliveryService notificationDeliveryService,
-        IExecutionStrategyService executionStrategyService,
-        IDistributedLockService distributedLockService)
+      IOptions<AppSettings> appSettings,
+      IOptions<ScheduleJobOptions> scheduleJobOptions,
+      IDownloadService downloadService,
+      IOpportunityInfoService opportunityInfoService,
+      IMyOpportunityService myOpportunityService,
+      IBlobService blobService,
+      IUserService userService,
+      INotificationDeliveryService notificationDeliveryService,
+      IExecutionStrategyService executionStrategyService,
+      IDistributedLockService distributedLockService)
     {
       _logger = logger;
+      _appSettings = appSettings.Value;
       _scheduleJobOptions = scheduleJobOptions.Value;
       _downloadService = downloadService;
       _opportunityInfoService = opportunityInfoService;
@@ -169,8 +174,7 @@ namespace Yoma.Core.Domain.Core.Services
                   if (blobObject == null)
                     throw new InvalidOperationException("Blob object is null");
 
-                  //TODO: Timeout
-                  var fileURL = _blobService.GetURL(blobObject.StorageType, blobObject.Key);
+                  var fileURL = _blobService.GetURL(blobObject.StorageType, blobObject.Key, _appSettings.DownloadScheduleLinkExpirationHours * 60);
 
                   var user = _userService.GetById(item.UserId, false, false);
 
@@ -229,6 +233,23 @@ namespace Yoma.Core.Domain.Core.Services
     }
     public async Task ProcessDeletion()
     {
+      const string lockIdentifier = "download_process_deletion";
+      var dateTimeNow = DateTimeOffset.UtcNow;
+      var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
+      var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessDeletion), DateTimeOffset.UtcNow);
+        return;
+      }
+
+      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      {
+        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessDeletion), DateTimeOffset.UtcNow);
+        return;
+      }
+
       //TODO:
       await Task.Yield();
       throw new NotImplementedException();

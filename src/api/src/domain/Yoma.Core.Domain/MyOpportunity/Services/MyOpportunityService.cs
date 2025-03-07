@@ -327,7 +327,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               var (originalFileName, contentType, data) = await _blobService.DownloadRaw(item.FileId.Value);
 
               if (!userId.HasValue)
-                originalFileName = $"{myOpportunity.Username}{FileHelper.Zip_FileName_Path_Separator}{originalFileName}";
+              {
+                var displayNameCleaned = myOpportunity.UserDisplayName.RemoveSpecialCharacters();
+                displayNameCleaned = displayNameCleaned.Replace(' ', '_');
+                originalFileName = $"{displayNameCleaned}{FileHelper.Zip_FileName_Path_Separator}{originalFileName}";
+              }
 
               files.Add(FileHelper.FromByteArray(originalFileName, contentType, data));
               break;
