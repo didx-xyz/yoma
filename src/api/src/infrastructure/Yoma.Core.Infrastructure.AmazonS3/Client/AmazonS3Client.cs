@@ -144,7 +144,6 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
       try
       {
         await _client.DeleteObjectAsync(deleteRequest);
-
       }
       catch (AmazonS3Exception ex)
       {

@@ -34,8 +34,6 @@ namespace Yoma.Core.Domain.Core.Services
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly IDistributedLockService _distributedLockService;
-
-    private static readonly DownloadScheduleStatus[] Statuses_Deletion = [DownloadScheduleStatus.Processed];
     #endregion
 
     #region Constructor
@@ -59,7 +57,7 @@ namespace Yoma.Core.Domain.Core.Services
       _myOpportunityService = myOpportunityService;
       _blobService = blobService;
       _userService = userService;
-      _notificationDeliveryService = notificationDeliveryService; 
+      _notificationDeliveryService = notificationDeliveryService;
       _executionStrategyService = executionStrategyService;
       _distributedLockService = distributedLockService;
     }
@@ -116,7 +114,7 @@ namespace Yoma.Core.Domain.Core.Services
 
                     (fileName, bytes) = _opportunityInfoService.ExportToCSV((OpportunitySearchFilterAdmin)filter, false, true);
 
-                    files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes)); 
+                    files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes));
                     break;
 
                   case DownloadScheduleType.MyOpportunityVerifications:
@@ -244,15 +242,76 @@ namespace Yoma.Core.Domain.Core.Services
         return;
       }
 
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
+      try
       {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessDeletion), DateTimeOffset.UtcNow);
-        return;
-      }
+        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        {
+          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+            lockIdentifier, System.Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
-      //TODO:
-      await Task.Yield();
-      throw new NotImplementedException();
+          _logger.LogInformation("Processing download schedule deletion");
+
+          var itemIdsToSkip = new List<Guid>();
+          while (executeUntil > DateTimeOffset.UtcNow)
+          {
+            var items = _downloadService.ListPendingDeletion(_scheduleJobOptions.DownloadScheduleDeletionBatchSize, itemIdsToSkip);
+            if (items.Count == 0) break;
+
+            foreach (var item in items)
+            {
+              try
+              {
+                _logger.LogInformation("Processing donwload schedule deletion for item with id '{id}'", item.Id);
+
+                if(!item.FileId.HasValue)
+                  throw new InvalidOperationException("File id is null");
+
+                // since this is a background process, S3 deletion is safe to retry because AWS S3 deletion is idempotent  
+                // and does not fail if the object is missing. Any DB rollback will be corrected in the next scheduled run,  
+                // ensuring data consistency.
+                await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+                {
+                  using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+                  item.Status = DownloadScheduleStatus.Deleted;
+                  await _downloadService.UpdateSchedule(item);
+                  await _blobService.Delete(item.FileId.Value);
+
+                  scope.Complete();
+                });
+
+                _logger.LogInformation("Processed download schedule deletion for item with id '{id}'", item.Id);
+              }
+              catch (Exception ex)
+              {
+                _logger.LogError(ex, "Failed to process donwload schedule deletion for item with id '{id}'", item.Id);
+
+                item.Status = DownloadScheduleStatus.Error;
+                item.ErrorReason = ex.Message;
+                await _downloadService.UpdateSchedule(item);
+
+                itemIdsToSkip.Add(item.Id);
+              }
+
+              if (executeUntil <= DateTimeOffset.UtcNow) break;
+            }
+          }
+
+          _logger.LogInformation("Processed download schedule deletion");
+        }
+      }
+      catch (DistributedLockTimeoutException ex)
+      {
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessDeletion));
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessDeletion));
+      }
+      finally
+      {
+        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+      }
     }
     #endregion
   }

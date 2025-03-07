@@ -64,7 +64,23 @@ namespace Yoma.Core.Domain.Core.Services
 
       var query = _downloadScheduleRepository.Query().Where(o => o.StatusId == statusPendingId);
 
-      // skipped if wallets were not created (see DownloadBackgroundService)
+      if (idsToSkip != null && idsToSkip.Count != 0)
+        query = query.Where(o => !idsToSkip.Contains(o.Id));
+
+      var results = query.OrderBy(o => o.DateModified).Take(batchSize).ToList();
+
+      return results;
+    }
+
+    public List<DownloadSchedule> ListPendingDeletion(int batchSize, List<Guid> idsToSkip)
+    {
+      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, default, nameof(batchSize));
+
+      var statusProcessed = _downloadScheduleStatusService.GetByName(DownloadScheduleStatus.Processed.ToString()).Id;
+
+      var query = _downloadScheduleRepository.Query().Where(o => o.StatusId == statusProcessed &&
+        o.DateModified <= DateTimeOffset.UtcNow.AddHours(-_appSettings.DownloadScheduleLinkExpirationHours));
+
       if (idsToSkip != null && idsToSkip.Count != 0)
         query = query.Where(o => !idsToSkip.Contains(o.Id));
 

@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.Core.Interfaces
 
     List<DownloadSchedule> ListPendingSchedule(int batchSize, List<Guid> idsToSkip);
 
+    List<DownloadSchedule> ListPendingDeletion(int batchSize, List<Guid> idsToSkip);
+
     Task UpdateSchedule(DownloadSchedule item);
 
     Task UpdateSchedule(List<DownloadSchedule> items);
