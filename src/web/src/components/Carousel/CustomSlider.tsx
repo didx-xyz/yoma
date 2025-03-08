@@ -124,11 +124,11 @@ const CustomSlider = ({ children, className }: CustomSliderProps) => {
   }, [handleScroll]);
 
   return (
-    <div className="overflow-x-hidden">
+    <div className="relative flex min-h-[40px] items-center overflow-x-hidden">
       {showPrevButton && (
         <>
           <div className="absolute left-0 top-0 z-10 h-full w-10 backdrop-blur-[0.6px] md:w-12"></div>
-          <div className="absolute left-0 top-0 z-20 flex h-full w-10 items-center justify-center md:w-12">
+          <div className="absolute left-0 top-1/2 z-20 flex h-fit w-10 -translate-y-1/2 items-center justify-center md:w-12">
             <button
               type="button"
               onClick={onScrollLeft}
@@ -155,7 +155,7 @@ const CustomSlider = ({ children, className }: CustomSliderProps) => {
       {showNextButton && (
         <>
           <div className="absolute right-0 top-0 z-10 h-full w-10 backdrop-blur-[0.6px] md:w-12"></div>
-          <div className="absolute right-0 top-0 z-20 flex h-full w-10 items-center justify-center md:w-12">
+          <div className="absolute right-0 top-1/2 z-20 flex h-fit w-10 -translate-y-1/2 items-center justify-center md:w-12">
             <button
               type="button"
               onClick={onScrollRight}

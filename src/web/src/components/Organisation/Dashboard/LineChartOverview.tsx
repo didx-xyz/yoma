@@ -2,6 +2,7 @@ import { useAtomValue } from "jotai";
 import { useEffect, useMemo, useState } from "react";
 import Chart from "react-google-charts";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
+import CustomSlider from "~/components/Carousel/CustomSlider";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { CHART_COLORS, LINE_DASH_STYLES } from "~/lib/constants";
 import { screenWidthAtom } from "~/lib/store";
@@ -11,10 +12,10 @@ export const LineChartOverview: React.FC<{
   data: TimeIntervalSummary | undefined;
   opportunityCount?: number;
 }> = ({ key, data, opportunityCount }) => {
+  const [showChart, setShowLabels] = useState<boolean>(true);
   const [selectedLegendIndex, setSelectedLegendIndex] = useState<number | null>(
     null,
   );
-  const [showLabels, setShowLabels] = useState<boolean>(true);
 
   const localData = useMemo<(string | number)[][]>(() => {
     if (!data) return [];
@@ -58,7 +59,7 @@ export const LineChartOverview: React.FC<{
   }, [screenWidth, key]);
 
   const Legend = () => (
-    <div className="flex flex-row gap-4">
+    <CustomSlider className="!gap-4">
       {data?.legend.map((name, index) => (
         <div
           key={index}
@@ -71,18 +72,23 @@ export const LineChartOverview: React.FC<{
             );
           }}
         >
-          <div className="flex flex-row items-center gap-2">
-            <span
-              className="rounded-lg p-1"
-              style={{ color: CHART_COLORS[index % CHART_COLORS.length] }}
+          <div className="flex flex-row items-center gap-3">
+            <div
+              className="rounded-lg bg-gray-light p-1"
+              //   style={{
+              //     backgroundColor:
+              //       showChart &&
+              //       data.count[index] != null &&
+              //       data.count[index] > 0
+              //         ? CHART_COLORS[index % CHART_COLORS.length]
+              //         : "#e6f5f3",
+              //   }}
             >
               {name === "Viewed" && "👀"}
               {name === "Go-To Clicks" && "👆"}
               {name === "Completions" && "🎓"}
-            </span>
-            <span className="w-14 truncate text-sm font-semibold md:w-full md:text-sm">
-              {name}
-            </span>
+            </div>
+            <div className="text-sm font-semibold">{name}</div>
           </div>
           {data.count[index] != null && (
             <div>
@@ -92,14 +98,14 @@ export const LineChartOverview: React.FC<{
                 } md:text-3xl`}
                 style={{
                   color:
-                    showLabels && data.count[index] > 0
+                    showChart && data.count[index] > 0
                       ? CHART_COLORS[index % CHART_COLORS.length]
                       : "#000",
                 }}
               >
                 {data.count[index]?.toLocaleString()}
               </div>
-              {showLabels && data.count[index] > 0 && (
+              {showChart && data.count[index] > 0 && (
                 <svg height="4" width="40" className="my-1">
                   <line
                     x1="0"
@@ -120,7 +126,7 @@ export const LineChartOverview: React.FC<{
           )}
         </div>
       ))}
-    </div>
+    </CustomSlider>
   );
 
   const series = useMemo(() => {
@@ -132,8 +138,7 @@ export const LineChartOverview: React.FC<{
             ? CHART_COLORS[index % CHART_COLORS.length]
             : "#D3D3D3", // Light gray for deselected lines
         lineDashStyle: LINE_DASH_STYLES[index % LINE_DASH_STYLES.length],
-        lineWidth:
-          selectedLegendIndex === null || selectedLegendIndex === index ? 4 : 1,
+        lineWidth: selectedLegendIndex === index ? 4 : 1,
       };
     });
     return seriesOptions;
@@ -143,7 +148,7 @@ export const LineChartOverview: React.FC<{
     <div className="flex h-full w-full flex-col rounded-lg bg-white p-4 shadow">
       <Legend />
 
-      {showLabels ? (
+      {showChart ? (
         <Chart
           key={keyState}
           chartType="LineChart"
@@ -158,7 +163,6 @@ export const LineChartOverview: React.FC<{
           options={{
             legend: { position: "none" },
             curveType: "function",
-            lineWidth: 2,
             pointSize: 8,
             pointShape: "circle",
             enableInteractivity: true,
@@ -175,7 +179,7 @@ export const LineChartOverview: React.FC<{
               showTextEvery: 1,
               textStyle: { fontSize: 10 },
               // hide duplicate labels
-              ticks: showLabels
+              ticks: showChart
                 ? (localData
                     .slice(1)
                     .map((row) => row[0])

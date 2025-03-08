@@ -79,9 +79,9 @@ export const SsoChartCombined: React.FC<{
   }, [screenWidth, data.id]);
 
   return (
-    <div className="mb-4x flex flex-col rounded-lg bg-white p-6 shadow">
+    <div className="flex flex-col rounded-lg bg-white p-4 shadow">
       {/* Organization Header */}
-      <div className="mb-4x flex items-center gap-3">
+      <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           {!data.logoURL && (
             <div className="rounded-full bg-green-light p-2 text-lg">🏢</div>

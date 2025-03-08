@@ -704,7 +704,8 @@ const OrganisationDashboard: NextPageWithLayout<{
 
   const onClearFilter = useCallback(() => {
     void router.push("/organisations/dashboard", undefined, { scroll: true });
-  }, [router]);
+    setFilterFullWindowVisible(false);
+  }, [router, setFilterFullWindowVisible]);
 
   const onSubmitFilter = useCallback(
     (val: OrganizationSearchFilterSummaryViewModel) => {
@@ -1247,8 +1248,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                         <div className="flex h-full flex-col gap-4 sm:flex-row md:flex-col">
                           {/* OPPORTUNITY COUNTS */}
                           <div className="flex h-36 w-full min-w-[310px] flex-col gap-2 rounded-lg bg-white p-4 shadow">
-                            <div className="flex h-min items-center gap-2">
-                              <div className="items-center rounded-lg bg-green-light p-1">
+                            <div className="flex items-center gap-3">
+                              <div className="items-center rounded-lg bg-gray-light p-1">
                                 🏆
                               </div>
                               <div className="text-sm font-semibold">
@@ -1307,7 +1308,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           {/* GOTO/COMPLETED CONVERSION RATE */}
                           <div className="flex h-full min-h-[185px] w-full min-w-[310px] flex-col gap-4 rounded-lg bg-white p-4 shadow">
                             <div className="flex flex-row items-center gap-3">
-                              <div className="rounded-lg bg-green-light p-1">
+                              <div className="rounded-lg bg-gray-light p-1">
                                 🎯
                               </div>
                               <div className="text-sm font-semibold">
@@ -1411,7 +1412,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           {/* OVERALL CONVERSION RATE */}
                           <div className="flex !h-full !min-h-[188px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem]">
                             <div className="flex flex-row items-center gap-3">
-                              <div className="rounded-lg bg-green-light p-1">
+                              <div className="rounded-lg bg-gray-light p-1">
                                 📈
                               </div>
                               <div className="text-sm font-semibold">
@@ -1454,9 +1455,9 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {/* CUMULATIVE COMPLETIONS (ADMIN ONLY) */}
                 {isAdmin && activeTab === "cumulativeCompletions" && (
-                  <div className="mt-4 flex w-full flex-col justify-between overflow-hidden rounded-lg bg-white p-4 shadow">
+                  <div className="flex w-full flex-col justify-between overflow-hidden rounded-lg bg-white p-4 shadow">
                     <div className="flex flex-row items-center gap-3">
-                      <div className="rounded-lg bg-green-light p-1">📈</div>
+                      <div className="rounded-lg bg-gray-light p-1">📈</div>
                       <div className="text-sm font-semibold">
                         Cumulative Completions
                       </div>
@@ -1473,14 +1474,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "rewards" && (
-                  <div className="flex animate-fade-in flex-col gap-1 pt-4">
+                  <div className="flex animate-fade-in flex-col gap-1">
                     <div className="flex flex-col gap-4 md:flex-row">
                       {/* REWARDS */}
-                      <div className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem] md:px-6">
+                      <div className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem]">
                         <div className="flex flex-row items-center gap-3">
-                          <div className="rounded-lg bg-green-light p-1">
-                            💸
-                          </div>
+                          <div className="rounded-lg bg-gray-light p-1">💸</div>
                           <div className="text-sm font-semibold">
                             Total amount awarded
                           </div>
@@ -1513,7 +1512,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                       {engagementData?.skills?.topCompleted && (
                         <div className="flex h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow md:w-[565px]">
                           <div className="flex flex-row items-center gap-3">
-                            <div className="rounded-lg bg-green-light p-1">
+                            <div className="rounded-lg bg-gray-light p-1">
                               🛠️
                             </div>
                             <div className="text-sm font-semibold">
@@ -1545,14 +1544,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "demographics" && (
-                  <div className="flex w-full animate-fade-in flex-col gap-1 pt-4">
+                  <div className="flex w-full animate-fade-in flex-col gap-1">
                     <div className="flex flex-col gap-4 lg:flex-row">
                       {/* COUNTRIES */}
                       <div className="h-full w-full rounded-lg bg-white p-4 shadow">
                         <div className="flex flex-row items-center gap-3">
-                          <div className="rounded-lg bg-green-light p-1">
-                            🌍
-                          </div>
+                          <div className="rounded-lg bg-gray-light p-1">🌍</div>
                           <div className="text-sm font-semibold">Countries</div>
                         </div>
                         {engagementData?.demographics?.countries?.items && (
@@ -1575,7 +1572,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           className="h-full w-full min-w-[310px] rounded-lg bg-white p-4 shadow"
                         >
                           <div className="flex flex-row items-center gap-3">
-                            <div className="rounded-lg bg-green-light p-1">
+                            <div className="rounded-lg bg-gray-light p-1">
                               🎓
                             </div>
                             <div className="text-sm font-semibold">
@@ -1603,7 +1600,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           className="h-full w-full min-w-[310px] rounded-lg bg-white p-4 shadow"
                         >
                           <div className="flex flex-row items-center gap-3">
-                            <div className="rounded-lg bg-green-light p-1">
+                            <div className="rounded-lg bg-gray-light p-1">
                               🚻
                             </div>
                             <div className="text-sm font-semibold">Genders</div>
@@ -1629,7 +1626,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           className="h-full w-full min-w-[310px] rounded-lg bg-white p-4 shadow"
                         >
                           <div className="flex flex-row items-center gap-3">
-                            <div className="rounded-lg bg-green-light p-1">
+                            <div className="rounded-lg bg-gray-light p-1">
                               🎂
                             </div>
                             <div className="text-sm font-semibold">Age</div>
@@ -1654,11 +1651,11 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "completedYouth" && (
-                  <div className="flex animate-fade-in flex-col gap-1 pt-4">
+                  <div className="flex animate-fade-in flex-col gap-1">
                     {/* COMPLETED YOUTH */}
                     <div className="h-full w-full rounded-lg bg-white p-4 shadow">
                       <div className="flex flex-row items-center gap-3">
-                        <div className="rounded-lg bg-green-light p-1">✅</div>
+                        <div className="rounded-lg bg-gray-light p-1">✅</div>
                         <div className="text-sm font-semibold">
                           Completed by Youth
                         </div>
@@ -1803,13 +1800,13 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "selectedOpportunities" && (
-                  <div className="flex animate-fade-in flex-col pt-4">
+                  <div className="flex animate-fade-in flex-col">
                     {/* NB: DECPRECATED */}
                     <div className="mb-4 hidden flex-col gap-4 md:flex-row">
                       {/* UNPUBLISHED */}
                       <div className="mt-4x flex h-32 w-full flex-col gap-2 rounded-lg bg-white p-4 shadow md:w-72">
                         <div className="flex h-min items-center gap-2">
-                          <div className="items-center rounded-lg bg-green-light p-1">
+                          <div className="items-center rounded-lg bg-gray-light p-1">
                             <Image
                               src={iconBookmark}
                               alt="Icon Status"
@@ -1832,7 +1829,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                       {/* EXPIRED */}
                       <div className="mt-4x flex h-32 w-full flex-col gap-2 rounded-lg bg-white p-4 shadow md:w-72">
                         <div className="flex h-min items-center gap-2">
-                          <div className="items-center rounded-lg bg-green-light p-1">
+                          <div className="items-center rounded-lg bg-gray-light p-1">
                             <Image
                               src={iconBookmark}
                               alt="Icon Status"
@@ -1856,7 +1853,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     {/* SELECTED OPPORTUNITIES */}
                     <div className="h-full w-full rounded-lg bg-white p-4 shadow">
                       <div className="flex flex-row items-center gap-3">
-                        <div className="rounded-lg bg-green-light p-1">🏆</div>
+                        <div className="rounded-lg bg-gray-light p-1">🏆</div>
                         <div className="text-sm font-semibold">
                           Selected Opportunities
                         </div>
@@ -2006,9 +2003,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                     {/* SSO Summary */}
                     {ssoData?.outboundLoginCount !== null &&
                       ssoData?.inboundLoginCount !== null && (
-                        <div className="mb-4 flex flex-col rounded-lg bg-white p-6 shadow">
+                        <div className="mb-4 flex flex-col rounded-lg bg-white p-4 shadow">
                           <div className="mb-4 flex items-center gap-2">
-                            <div className="rounded-lg bg-green-light p-1">
+                            <div className="rounded-lg bg-gray-light p-1">
                               <span>🔑</span>
                             </div>
                             <span className="font-semibold">

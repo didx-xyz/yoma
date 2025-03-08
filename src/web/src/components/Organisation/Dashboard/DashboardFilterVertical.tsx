@@ -351,7 +351,7 @@ export const DashboardFilterVertical: React.FC<{
                   placeholder="Select a country"
                   noOptionsMessage={() =>
                     !watchOrganisations?.length
-                      ? "Please select an organisation first."
+                      ? "Select an organisation to load available countries"
                       : "No countries found."
                   }
                 />
@@ -475,6 +475,11 @@ export const DashboardFilterVertical: React.FC<{
                     }}
                     value={selectedOpportunityOptions}
                     placeholder="Select an opportunity"
+                    noOptionsMessage={() =>
+                      !watchOrganisations?.length
+                        ? "Select an organisation to load available opportunities"
+                        : "No opportunities found."
+                    }
                   />
                 )}
               />
@@ -487,7 +492,7 @@ export const DashboardFilterVertical: React.FC<{
               )}
             </div>
 
-            <div className="mx-auto flex h-full w-full items-center justify-center text-center text-xs font-bold text-gray-dark md:mt-12">
+            <div className="md: mx-auto mt-12 flex h-full w-full items-start justify-center text-center text-xs font-bold text-gray-dark">
               OR
             </div>
 
@@ -501,6 +506,7 @@ export const DashboardFilterVertical: React.FC<{
                   </span>
                 </span>
               </label>
+
               <Controller
                 name="categories"
                 control={form.control}
@@ -545,6 +551,11 @@ export const DashboardFilterVertical: React.FC<{
                       }) || []
                     }
                     placeholder="Select a category"
+                    noOptionsMessage={() =>
+                      !watchOrganisations?.length
+                        ? "Select an organisation to load available categories"
+                        : "No categories found."
+                    }
                   />
                 )}
               />
