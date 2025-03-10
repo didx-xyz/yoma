@@ -236,7 +236,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return results;
     }
 
-    public async Task ScheduleDownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter, bool ensureOrganizationAuthorization)
+    public async Task DownloadVerificationFilesSchedule(MyOpportunitySearchFilterVerificationFiles filter, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
@@ -631,7 +631,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return result;
     }
 
-    public async Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> ScheduleOrExportToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
+    public async Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> ExportOrScheduleToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
@@ -639,17 +639,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         //schedule the request for processing and return
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-        await _downloadService.Schedule(user.Id, Core.DownloadScheduleType.MyOpportunityVerifications, filter);
+        await _downloadService.Schedule(user.Id, DownloadScheduleType.MyOpportunityVerifications, filter);
         return (true, null, null);
-      }
-
-      var result = Search(filter, ensureOrganizationAuthorization);
-
-      foreach (var item in result.Items)
-      {
-        if (SettingsHelper.GetValue<bool>(_userService.GetSettingsInfo(item.UserSettings), Setting.User_Share_Contact_Info_With_Partners.ToString()) == true) continue;
-        item.UserEmail = PlaceholderValue_HiddenDetails;
-        item.UserPhoneNumer = PlaceholderValue_HiddenDetails;
       }
 
       var (fileName, bytes) = ExportToCSV(filter, ensureOrganizationAuthorization, true);

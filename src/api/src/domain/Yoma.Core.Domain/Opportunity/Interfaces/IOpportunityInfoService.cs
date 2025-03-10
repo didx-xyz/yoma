@@ -16,6 +16,6 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     (string fileName, byte[] bytes) ExportToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization, bool appendDateStamp);
 
-    Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> ScheduleOrExportToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
+    Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> ExportOrScheduleToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
   }
 }

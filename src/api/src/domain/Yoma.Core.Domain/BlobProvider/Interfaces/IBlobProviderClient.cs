@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.BlobProvider.Interfaces
 
     Task<(string ContentType, byte[] Data)> Download(string filename);
 
-    string GetUrl(string filename, int? urlExpirationInMinutes = null);
+    string GetUrl(string filename, string? filenameFriendly = null, int? urlExpirationInMinutes = null);
 
     Task Delete(string filename);
   }

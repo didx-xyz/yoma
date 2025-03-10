@@ -110,20 +110,20 @@ namespace Yoma.Core.Domain.Core.Services
       return (item.OriginalFileName, contentType, data);
     }
 
-    public string GetURL(Guid id, int? urlExpirationInMinutes = null)
+    public string GetURL(Guid id, string? fileName = null, int? urlExpirationInMinutes = null)
     {
       var item = GetById(id);
 
       var client = _blobProviderClientFactory.CreateClient(item.StorageType);
 
-      return client.GetUrl(item.Key, urlExpirationInMinutes);
+      return client.GetUrl(item.Key, fileName, urlExpirationInMinutes);
     }
 
-    public string GetURL(StorageType storageType, string key, int? urlExpirationInMinutes = null)
+    public string GetURL(StorageType storageType, string key, string? fileName = null, int? urlExpirationInMinutes = null)
     {
       var client = _blobProviderClientFactory.CreateClient(storageType);
 
-      return client.GetUrl(key, urlExpirationInMinutes);
+      return client.GetUrl(key, fileName, urlExpirationInMinutes);
     }
 
     public async Task Delete(Guid id)

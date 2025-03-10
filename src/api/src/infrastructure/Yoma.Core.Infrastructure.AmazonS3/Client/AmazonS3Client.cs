@@ -94,11 +94,13 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
       }
     }
 
-    public string GetUrl(string filename, int? urlExpirationInMinutes = null)
+    public string GetUrl(string filename, string? filenameFriendly = null, int? urlExpirationInMinutes = null)
     {
       if (string.IsNullOrWhiteSpace(filename))
         throw new ArgumentNullException(nameof(filename));
       filename = filename.Trim().ToLower();
+
+      filenameFriendly = filenameFriendly?.Trim();
 
       if (urlExpirationInMinutes.HasValue && urlExpirationInMinutes.Value < 1)
         throw new ArgumentOutOfRangeException(nameof(urlExpirationInMinutes), "URL expiration time must be at least 1 minute");
@@ -115,6 +117,9 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
         Verb = HttpVerb.GET,
         Expires = DateTime.UtcNow.AddMinutes(urlExpirationInMinutes ?? 1)
       };
+
+      if (!string.IsNullOrEmpty(filenameFriendly))
+        request.ResponseHeaderOverrides.ContentDisposition = $"attachment; filename=\"{filenameFriendly}\"";  
 
       string url;
       try

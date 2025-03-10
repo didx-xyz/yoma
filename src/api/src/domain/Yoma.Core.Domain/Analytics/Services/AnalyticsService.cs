@@ -533,17 +533,16 @@ namespace Yoma.Core.Domain.Analytics.Services
       //extract unique organization names in alphabetical order for the Legend
       var organizationNames = itemsCumulative.Select(x => x.OrganizationName).Distinct().OrderBy(name => name).ToArray();
 
+      //ensure chronological order of months
+      var months = itemsCumulative.Select(x => x.MonthEnding).Distinct().OrderBy(date => date).ToArray();
+
       //prepare cumulative results grouped by MonthEnding
-      var resultsCumulative = new List<TimeValueEntry>();
-      itemsCumulative
-        .GroupBy(o => o.MonthEnding)
-        .ToList()
-        .ForEach(group =>
-        {
-          //generate the values/counts for all organization names in the current month-ending group
-          var values = organizationNames.Select(name => group.SingleOrDefault(o => o.OrganizationName == name)?.Count ?? 0).ToArray();
-          resultsCumulative.Add(new TimeValueEntry(group.Key, values));
-        });
+      var resultsCumulative = months.Select(month =>
+      {
+        //generate the values/counts (cummulative / stacked) for all organization names in the current month-ending group
+        var values = organizationNames.Select(name => itemsCumulative.Where(o => o.OrganizationName == name && o.MonthEnding <= month).Sum(o => o.Count)).ToArray(); // sum all previous months including current
+        return new TimeValueEntry(month, values);
+      }).ToList();
 
       //finalize the cumulative summary
       result.Cumulative = new OrganizationCumulative

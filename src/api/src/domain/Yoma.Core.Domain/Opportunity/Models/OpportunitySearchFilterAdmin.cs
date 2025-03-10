@@ -10,7 +10,6 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     public List<Status>? Statuses { get; set; }
 
-    [JsonIgnore]
     /// <summary>
     /// Indicates whether the query should be processed with fewer restrictions, bypassing pagination validation, ordering, 
     /// and expensive data processing (such as URL resolution).
@@ -19,6 +18,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     /// However, if <c>PaginationEnabled</c> is <c>true</c>, pagination will still be applied, but unnecessary processing 
     /// will be minimized.
     /// </summary>
+    [JsonIgnore]
     internal bool UnrestrictedQuery { get; set; } = false;
   }
 }

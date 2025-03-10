@@ -112,6 +112,8 @@ namespace Yoma.Core.Domain.Core.Services
                     filter = JsonConvert.DeserializeObject<OpportunitySearchFilterAdmin>(item.Filter)
                       ?? throw new InvalidOperationException("Failed to deserialize the filter");
 
+                    ((OpportunitySearchFilterAdmin)filter).UnrestrictedQuery = true;
+
                     (fileName, bytes) = _opportunityInfoService.ExportToCSV((OpportunitySearchFilterAdmin)filter, false, true);
 
                     files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes));
@@ -120,6 +122,8 @@ namespace Yoma.Core.Domain.Core.Services
                   case DownloadScheduleType.MyOpportunityVerifications:
                     filter = JsonConvert.DeserializeObject<MyOpportunitySearchFilterAdmin>(item.Filter)
                       ?? throw new InvalidOperationException("Failed to deserialize the filter");
+
+                    ((MyOpportunitySearchFilterAdmin)filter).UnrestrictedQuery = true;
 
                     (fileName, bytes) = _myOpportunityService.ExportToCSV((MyOpportunitySearchFilterAdmin)filter, false, true);
 
@@ -172,7 +176,7 @@ namespace Yoma.Core.Domain.Core.Services
                   if (blobObject == null)
                     throw new InvalidOperationException("Blob object is null");
 
-                  var fileURL = _blobService.GetURL(blobObject.StorageType, blobObject.Key, _appSettings.DownloadScheduleLinkExpirationHours * 60);
+                  var fileURL = _blobService.GetURL(blobObject.StorageType, blobObject.Key, blobObject.OriginalFileName, _appSettings.DownloadScheduleLinkExpirationHours * 60);
 
                   var user = _userService.GetById(item.UserId, false, false);
 
@@ -183,8 +187,10 @@ namespace Yoma.Core.Domain.Core.Services
 
                   var data = new NotificationDownload
                   {
+                    DateStamp = DateTimeOffset.UtcNow,
                     FileName = blobObject.OriginalFileName,
-                    FileURL = fileURL
+                    FileURL = fileURL,
+                    ExpirationHours = _appSettings.DownloadScheduleLinkExpirationHours
                   };
 
                   await _notificationDeliveryService.Send(NotificationType.Download, recipients, data);
@@ -229,6 +235,7 @@ namespace Yoma.Core.Domain.Core.Services
         await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
+
     public async Task ProcessDeletion()
     {
       const string lockIdentifier = "download_process_deletion";
@@ -263,7 +270,7 @@ namespace Yoma.Core.Domain.Core.Services
               {
                 _logger.LogInformation("Processing donwload schedule deletion for item with id '{id}'", item.Id);
 
-                if(!item.FileId.HasValue)
+                if (!item.FileId.HasValue)
                   throw new InvalidOperationException("File id is null");
 
                 // since this is a background process, S3 deletion is safe to retry because AWS S3 deletion is idempotent  
@@ -273,9 +280,11 @@ namespace Yoma.Core.Domain.Core.Services
                 {
                   using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
+                  var fileId = item.FileId.Value;
+
                   item.Status = DownloadScheduleStatus.Deleted;
                   await _downloadService.UpdateSchedule(item);
-                  await _blobService.Delete(item.FileId.Value);
+                  await _blobService.Delete(fileId);
 
                   scope.Complete();
                 });

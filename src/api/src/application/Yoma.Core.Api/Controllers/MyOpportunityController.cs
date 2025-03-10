@@ -84,16 +84,17 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Search for 'my' opportunities based on the supplied filter, and export the results to a CSV file (Admin or Organization Admin roles required)",
       Description = "If pagination is not specified, the request is scheduled for processing, and a notification is sent when the download is ready")]
     [HttpPost("search/admin/csv")]
-    [Produces("text/csv", "application/zip")]
+    [Produces("text/csv")]
     [ProducesResponseType(typeof(FileStreamResult), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.OK)] // delayed download delivered via email
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> SearchAndExportToCSV([FromBody] MyOpportunitySearchFilterAdmin filter)
+    public async Task<IActionResult> ExportOrScheduleToCSV([FromBody] MyOpportunitySearchFilterAdmin filter)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchAndExportToCSV));
+      _logger.LogInformation("Handling request {requestName}", nameof(ExportOrScheduleToCSV));
 
-      var (scheduleForProcessing, fileName, bytes) = await _myOpportunityService.ScheduleOrExportToCSV(filter, true);
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchAndExportToCSV));
+      var (scheduleForProcessing, fileName, bytes) = await _myOpportunityService.ExportOrScheduleToCSV(filter, true);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(ExportOrScheduleToCSV));
 
       if (scheduleForProcessing) return StatusCode((int)HttpStatusCode.OK);
       return File(bytes!, "text/csv", fileName);
@@ -146,7 +147,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Download all verification files associated with the opportunity for all completed submissions (Admin or Organization Admin roles required)",
       Description = "The request is scheduled for processing, and a notification is sent when the download is ready")]
-    [HttpGet("action/verify/files/admin")]
+    [HttpPost("action/verify/admin/files")]
     [Produces("application/zip")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
@@ -154,7 +155,8 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(DownloadVerificationFiles));
 
-      await _myOpportunityService.ScheduleDownloadVerificationFiles(filter, true);
+      await _myOpportunityService.DownloadVerificationFilesSchedule(filter, true);
+
       _logger.LogInformation("Request {requestName} handled", nameof(DownloadVerificationFiles));
 
       return StatusCode((int)HttpStatusCode.OK);
@@ -178,7 +180,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Download the uploaded 'my' opportunity verification files for specified opportunity (Authenticated User)")]
-    [HttpGet("action/verify/files")]
+    [HttpPost("action/verify/files")]
     [ProducesResponseType(typeof(FileStreamResult), (int)HttpStatusCode.OK)]
     [Produces("application/octet-stream")] //various file types
     [Authorize(Roles = $"{Constants.Role_User}")]
@@ -187,6 +189,7 @@ namespace Yoma.Core.Api.Controllers
       _logger.LogInformation("Handling request {requestName}", nameof(DownloadVerificationFiles));
 
       var file = await _myOpportunityService.DownloadVerificationFiles(filter);
+
       _logger.LogInformation("Request {requestName} handled", nameof(DownloadVerificationFiles));
 
       return File(file.ToBinary(), file.ContentType, file.FileName);

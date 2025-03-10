@@ -13,7 +13,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     MyOpportunityResponseVerifyCompletedExternal GetVerificationCompletedExternal(Guid opportunityId);
 
-    Task ScheduleDownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter, bool ensureOrganizationAuthorization);
+    Task DownloadVerificationFilesSchedule(MyOpportunitySearchFilterVerificationFiles filter, bool ensureOrganizationAuthorization);
 
     Task<IFormFile> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter);
 
@@ -29,7 +29,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     (string fileName, byte[] bytes) ExportToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization, bool appendDateStamp);
 
-    Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> ScheduleOrExportToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
+    Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> ExportOrScheduleToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
     Task PerformActionViewed(Guid opportunityId);
 

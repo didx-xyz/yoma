@@ -13,7 +13,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     [JsonIgnore]
     internal bool TotalCountOnly { get; set; }
 
-    [JsonIgnore]
     /// <summary>
     /// Indicates whether the query should be processed with fewer restrictions, bypassing pagination validation, ordering, 
     /// and expensive data processing (such as URL resolution).
@@ -22,6 +21,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     /// However, if <c>PaginationEnabled</c> is <c>true</c>, pagination will still be applied, but unnecessary processing 
     /// will be minimized.
     /// </summary>
+    [JsonIgnore]
     internal bool UnrestrictedQuery { get; set; } = false;
 
     /// <summary>
@@ -31,6 +31,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     /// When set to true (default), only published records are included.
     /// When set to false, all records are included, irrespective of their published status.
     /// </summary>
+    [JsonIgnore]
     internal bool NonActionVerificationPublishedOnly { get; set; } = true;
 
     [JsonIgnore]

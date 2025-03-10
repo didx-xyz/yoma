@@ -266,7 +266,7 @@ namespace Yoma.Core.Domain
       RecurringJob.AddOrUpdate<IDownloadBackgroundService>("Download Schedule Processing",
         s => s.ProcessSchedule(), options.DownloadScheduleProcessingSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<IDownloadBackgroundService>($"Download Schedule Deletion ({DownloadScheduleStatus.Processed} for more than {appSettings.DownloadScheduleLinkExpirationHours} hours)",
-        s => s.ProcessSchedule(), options.DownloadScheduleDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+        s => s.ProcessDeletion(), options.DownloadScheduleDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //seeding of test data
       if (!appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(environment)) return;

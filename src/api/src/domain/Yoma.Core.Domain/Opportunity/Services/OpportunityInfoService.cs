@@ -187,7 +187,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return results;
     }
 
-    public async Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> ScheduleOrExportToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
+    public async Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> ExportOrScheduleToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
@@ -209,8 +209,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
     public (string fileName, byte[] bytes) ExportToCSV(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization, bool appendDateStamp)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
-
-      filter.UnrestrictedQuery = true;
 
       var result = Search(filter, ensureOrganizationAuthorization);
 

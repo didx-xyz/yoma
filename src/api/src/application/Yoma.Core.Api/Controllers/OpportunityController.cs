@@ -368,7 +368,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Search for opportunities based on the supplied filter, and export the results to a CSV file",
       Description = "If pagination is not specified, the request is scheduled for processing, and a notification is sent when the download is ready")]
     [HttpPost("search/admin/csv")]
-    [Produces("text/csv", "application/zip")]
+    [Produces("text/csv")]
     [ProducesResponseType(typeof(FileStreamResult), (int)HttpStatusCode.OK)]
     [ProducesResponseType((int)HttpStatusCode.OK)] // delayed download delivered via email
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
@@ -376,7 +376,8 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(SearchAndExportToCSV));
 
-      var (scheduleForProcessing, fileName, bytes) = await _opportunityInfoService.ScheduleOrExportToCSV(filter, true);
+      var (scheduleForProcessing, fileName, bytes) = await _opportunityInfoService.ExportOrScheduleToCSV(filter, true);
+
       _logger.LogInformation("Request {requestName} handled", nameof(SearchAndExportToCSV));
 
       if (scheduleForProcessing) return StatusCode((int)HttpStatusCode.OK);
