@@ -2,6 +2,7 @@ import { useAtomValue } from "jotai";
 import { useEffect, useMemo, useState } from "react";
 import Chart from "react-google-charts";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
+import CustomSlider from "~/components/Carousel/CustomSlider";
 import { CHART_COLORS } from "~/lib/constants";
 import { screenWidthAtom } from "~/lib/store";
 
@@ -36,12 +37,12 @@ export const SkillsChart: React.FC<{
 
   const Legend = () => {
     return (
-      <div className="flex flex-row gap-2 p-4">
+      <>
         {data?.legend.map((name, index) => (
-          <div key={index} className="flex flex-col gap-4">
+          <div key={index} className="flex select-none flex-col gap-1">
             <div className="flex flex-row items-center gap-3">
-              <span className="rounded-lg bg-green-light p-1">📊</span>
-              <span className="text-sm font-semibold">{name}</span>
+              <span className="rounded-lg bg-gray-light p-1">🎖️</span>
+              <span className="text-md font-semibold">{name}</span>
             </div>
             {data?.count[index] != null && (
               <div className="mb-2 text-3xl font-semibold">
@@ -50,7 +51,7 @@ export const SkillsChart: React.FC<{
             )}
           </div>
         ))}
-      </div>
+      </>
     );
   };
 
@@ -62,15 +63,24 @@ export const SkillsChart: React.FC<{
     setkey(`org-skills-chart-${screenWidth}`);
   }, [screenWidth]);
 
+  const chartHeight = useMemo(() => {
+    if (screenWidth < 768) {
+      return 300;
+    } else {
+      return 300;
+    }
+  }, [screenWidth]);
+
   return (
     <>
-      <Legend />
+      <CustomSlider sliderClassName="!md:gap-8 !gap-4">
+        <Legend />
+      </CustomSlider>
 
       {showChart ? (
         <Chart
           key={key}
           chartType="AreaChart"
-          //chartVersion="50" // NB: fixes animation bug in latest verson of google charts. TODO: remove when fixed
           loader={
             <div className="flex w-full items-center justify-center">
               <span className="loading loading-spinner loading-lg text-green"></span>
@@ -79,11 +89,7 @@ export const SkillsChart: React.FC<{
           data={localData}
           options={{
             legend: "none",
-            // animation: {
-            //   duration: 300,
-            //   easing: "linear",
-            //   startup: true,
-            // },
+            height: chartHeight,
             lineWidth: 1,
             areaOpacity: 0.1,
             colors: CHART_COLORS,
@@ -103,21 +109,16 @@ export const SkillsChart: React.FC<{
               },
             },
             vAxis: {
-              gridlines: {
-                color: "transparent",
-              },
-              textPosition: "none",
-              baselineColor: "transparent",
+              minValue: 0,
+              format: "#",
+              gridlines: { color: "#f5f5f5" },
+              textStyle: { fontSize: 10 },
             },
-            width: "100%" as any,
-            height: "58px" as any,
             chartArea: {
-              left: 0,
-              top: 0,
-              right: 0,
-              bottom: 0,
-              width: "100%",
-              height: "100%",
+              left: "10%",
+              right: "5%",
+              top: "10%",
+              bottom: "10%",
             },
           }}
         />

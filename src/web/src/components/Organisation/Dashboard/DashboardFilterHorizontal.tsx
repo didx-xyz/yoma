@@ -24,7 +24,9 @@ const ValueContainer = ({
   children,
   ...props
 }: ValueContainerProps<SelectOption>) => {
-  let [values, input] = children as any[];
+  const [values, input] = children as any[];
+  let displayValues = values;
+
   if (Array.isArray(values)) {
     if (
       values.length > 0 &&
@@ -44,12 +46,12 @@ const ValueContainer = ({
       };
 
       const placeholder: string = values[0].props.selectProps.placeholder;
-      values = `${values.length} ${pluralize(placeholder, values.length)}`;
+      displayValues = `${values.length} ${pluralize(placeholder, values.length)}`;
     }
   }
   return (
     <components.ValueContainer {...props}>
-      {values}
+      {displayValues}
       {input}
     </components.ValueContainer>
   );

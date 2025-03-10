@@ -1,5 +1,4 @@
 import type { PaginationFilter } from "./common";
-import type { Skill } from "./lookups";
 import type { Status } from "./opportunity";
 
 export interface OrganizationSearchFilterBase extends PaginationFilter {

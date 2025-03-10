@@ -11,7 +11,7 @@ export const LineChartCumulativeCompletions: React.FC<{
   key: string;
   data: TimeIntervalSummary | undefined;
 }> = ({ key, data }) => {
-  const [showChart, setShowLabels] = useState<boolean>(true);
+  const [showChart, setShowChart] = useState<boolean>(true);
   const [selectedLegendIndex, setSelectedLegendIndex] = useState<number | null>(
     null,
   );
@@ -38,10 +38,10 @@ export const LineChartCumulativeCompletions: React.FC<{
     const allSameDate = mappedData.every(
       (item, _, arr) => item[0] === (arr[0]?.[0] ?? undefined),
     );
-    setShowLabels(!allSameDate);
+    setShowChart(!allSameDate);
 
     return [["Date", ...labels], ...mappedData] as (string | number)[][];
-  }, [data]);
+  }, [data, setShowChart]);
 
   // chart responsiveness
   // changing the key forces a redraw of the chart when the screen width changes
@@ -49,10 +49,10 @@ export const LineChartCumulativeCompletions: React.FC<{
   const screenWidth = useAtomValue(screenWidthAtom);
   useEffect(() => {
     setkey(`${key}-${screenWidth}`);
-  }, [screenWidth]);
+  }, [key, screenWidth]);
 
   const Legend = () => (
-    <CustomSlider className="!gap-4">
+    <>
       {data?.legend.map((name, index) => (
         <div
           key={index}
@@ -80,7 +80,7 @@ export const LineChartCumulativeCompletions: React.FC<{
               🏢
             </div>
             <div
-              className="tooltip tooltip-secondary max-w-20 truncate text-sm font-semibold"
+              className="text-md tooltip tooltip-secondary max-w-20 truncate font-semibold"
               data-tip={name}
             >
               {name}
@@ -122,7 +122,7 @@ export const LineChartCumulativeCompletions: React.FC<{
           )}
         </div>
       ))}
-    </CustomSlider>
+    </>
   );
 
   const series = useMemo(() => {
@@ -142,12 +142,14 @@ export const LineChartCumulativeCompletions: React.FC<{
 
   return (
     <>
-      <Legend />
+      <CustomSlider sliderClassName="!md:gap-8 !gap-4">
+        <Legend />
+      </CustomSlider>
 
       {showChart ? (
         <Chart
           key={keyState}
-          chartType="LineChart"
+          chartType="AreaChart"
           loader={
             <div className="mt-20 flex w-full items-center justify-center">
               <span className="loading loading-spinner loading-lg text-green"></span>
@@ -157,10 +159,8 @@ export const LineChartCumulativeCompletions: React.FC<{
           options={{
             legend: { position: "none" },
             curveType: "function",
-            //lineWidth: 1,
             pointSize: 8,
             pointShape: "circle",
-            //areaOpacity: 0.1,
             enableInteractivity: true,
             height: 380,
             hAxis: {
@@ -173,7 +173,8 @@ export const LineChartCumulativeCompletions: React.FC<{
               showTextEvery: 1,
               textStyle: {
                 fontSize: 10,
-              }, // hide duplicate labels
+              },
+              // hide duplicate labels
               ticks: showChart
                 ? (localData
                     .slice(1)
@@ -187,10 +188,6 @@ export const LineChartCumulativeCompletions: React.FC<{
               format: "#",
               textStyle: { fontSize: 10 },
             },
-            // chartArea: {
-            //   width: "99%",
-            //   height: "90%",
-            // },
             chartArea: {
               left: "40",
               right: "30",

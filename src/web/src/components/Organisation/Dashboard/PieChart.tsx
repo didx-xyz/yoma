@@ -8,9 +8,15 @@ export const PieChart: React.FC<{
   colors?: string[];
   className?: string;
 }> = ({ id, data, colors }) => {
+  const hasValidData =
+    data.length > 1 &&
+    data.slice(1).every((row) => {
+      return row.length === 2 && typeof row[1] === "number" && row[1] > 0;
+    });
+
   return (
     <div key={id}>
-      {data.length > 1 ? (
+      {hasValidData ? (
         <Chart
           height={100}
           chartType="PieChart"

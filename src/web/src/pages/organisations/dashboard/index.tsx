@@ -7,7 +7,6 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import iconBookmark from "public/images/icon-completions-green.svg";
 import iconZltoGreen from "public/images/icon-zlto-green.svg";
 import iconZlto from "public/images/icon-zlto.svg";
 import {
@@ -28,7 +27,7 @@ import {
   IoMdTrophy,
 } from "react-icons/io";
 import Moment from "react-moment";
-import { Country } from "~/api/models/lookups";
+import type { Country } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
   OpportunitySearchResultsInfo,
@@ -71,6 +70,7 @@ import { LineChartCumulativeCompletions } from "~/components/Organisation/Dashbo
 import { LineChartOverview } from "~/components/Organisation/Dashboard/LineChartOverview";
 import { OpportunityCard } from "~/components/Organisation/Dashboard/OpportunityCard";
 import { PieChart } from "~/components/Organisation/Dashboard/PieChart";
+import { SkillsList } from "~/components/Organisation/Dashboard/SkillsList";
 import { SkillsChart } from "~/components/Organisation/Dashboard/SkillsChart";
 import { SsoChartCombined } from "~/components/Organisation/Dashboard/SsoChartCombined";
 import { WorldMapChart } from "~/components/Organisation/Dashboard/WorldMapChart";
@@ -163,7 +163,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       lookups_selectedOpportunities = await searchCriteriaOpportunities(
         {
           opportunities: searchFilter.opportunities,
-          organizations: null,
+          organizations: searchFilter.organizations,
           countries: null,
           titleContains: null,
           published: null,
@@ -230,10 +230,6 @@ const OrganisationDashboard: NextPageWithLayout<{
   const router = useRouter();
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
-  const [inactiveOpportunitiesCount, setInactiveOpportunitiesCount] =
-    useState(0);
-  const [expiredOpportunitiesCount, setExpiredOpportunitiesCount] = useState(0);
-  const [activeOpportunitiesCount, setActiveOpportunitiesCount] = useState(0);
   const queryClient = useQueryClient();
   const [
     completedYouthOpportunitiesDialogVisible,
@@ -260,21 +256,17 @@ const OrganisationDashboard: NextPageWithLayout<{
 
   //#region Queries
   // QUERY: CATEGORIES (GET ALL LOOKUPS TO RESOLVE NAMES)
-  const {
-    data: categoriesData,
-    isLoading: categoriesIsLoading,
-    error: categoriesError,
-  } = useQuery<OpportunityCategory[]>({
+  const { data: categoriesData, isLoading: categoriesIsLoading } = useQuery<
+    OpportunityCategory[]
+  >({
     queryKey: ["organisationCategories", searchFilter],
     queryFn: () => getCategories(),
   });
 
   // QUERY: COUNTRIES (GET ALL LOOKUPS TO RESOLVE NAMES)
-  const {
-    data: countriesData,
-    isLoading: countriesIsLoading,
-    error: countriesError,
-  } = useQuery<Country[]>({
+  const { data: countriesData, isLoading: countriesIsLoading } = useQuery<
+    Country[]
+  >({
     queryKey: ["countries"],
     queryFn: () => getCountries(),
   });
@@ -678,25 +670,6 @@ const OrganisationDashboard: NextPageWithLayout<{
   );
   //#endregion Events
 
-  // calculated counts
-  useEffect(() => {
-    if (!selectedOpportunitiesData?.items) return;
-
-    const activeCount = selectedOpportunitiesData.items.filter(
-      (opportunity) => opportunity.status === ("Active" as any),
-    ).length;
-    const inactiveCount = selectedOpportunitiesData.items.filter(
-      (opportunity) => opportunity.status === ("Inactive" as any),
-    ).length;
-    const expiredCount = selectedOpportunitiesData.items.filter(
-      (opportunity) => opportunity.status === ("Expired" as any),
-    ).length;
-
-    setActiveOpportunitiesCount(activeCount);
-    setInactiveOpportunitiesCount(inactiveCount);
-    setExpiredOpportunitiesCount(expiredCount);
-  }, [selectedOpportunitiesData]);
-
   // //#region Filter Popup Handlers
   const onCloseFilter = useCallback(() => {
     setFilterFullWindowVisible(false);
@@ -763,14 +736,9 @@ const OrganisationDashboard: NextPageWithLayout<{
         className="md:max-h-[600px] md:w-[700px]"
         animationStyle="slide-top"
       >
-        {/* {categoriesData != undefined &&
-          lookups_selectedOpportunities != undefined &&
-          lookups_selectedOrganisations != undefined && ( */}
         <DashboardFilterVertical
           htmlRef={myRef.current!}
           searchFilter={searchFilter}
-          //lookups_countries={countriesData}
-          // lookups_categories={categoriesData}
           lookups_selectedOpportunities={lookups_selectedOpportunities}
           lookups_selectedOrganisations={lookups_selectedOrganisations}
           submitButtonText="Apply Filters"
@@ -778,9 +746,8 @@ const OrganisationDashboard: NextPageWithLayout<{
           onSubmit={(e) => onSubmitFilter(e)}
           onClear={onClearFilter}
           clearButtonText="Clear All Filters"
-          //session={session}
+          isAdmin={isAdmin}
         />
-        {/* )} */}
       </CustomModal>
 
       {/* GOTO/COMPLETION CONVERSION RATIO DIALOG */}
@@ -858,7 +825,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 </div>
               </div>
               <div className="flex items-start gap-2">
-                <span className="mr-2 text-lg">✅</span>
+                <span className="mr-2 text-lg">🏆</span>
                 <div className="text-left">
                   <span className="font-bold">Total Completions:</span> The
                   number of users who have fully completed your opportunities
@@ -1068,19 +1035,8 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
 
           {/* FILTERS */}
-          {/* <Suspense
-            isLoading={categoriesIsLoading}
-            error={categoriesError}
-            loader={
-              <LoadingInline
-                className="h-[72px]"
-                classNameSpinner="border-white h-8 w-8"
-                classNameLabel="text-white"
-              />
-            }
-          > */}
           <div className="flex flex-col gap-4">
-            {/* FILTER BUTTON */}
+            {/* BUTTON */}
             <button
               type="button"
               className="bg-theme btn btn-sm w-full rounded-l-full border-none tracking-widest text-white brightness-[1.12] hover:brightness-95 md:w-40"
@@ -1090,7 +1046,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               Filter
             </button>
 
-            {/* FILTER BADGES */}
+            {/* BADGES */}
             <FilterBadges
               searchFilter={searchFilter}
               excludeKeys={[
@@ -1098,6 +1054,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 "pageCompletedYouth",
                 "pageSSO",
                 "pageSize",
+                ...(isAdmin ? [] : ["organizations"]), // Exclude organizations for non-admins
               ]}
               resolveValue={(key, value) => {
                 if (key === "startDate" || key === "endDate")
@@ -1120,10 +1077,31 @@ const OrganisationDashboard: NextPageWithLayout<{
                   return value;
                 }
               }}
-              onSubmit={(e) => onSubmitFilter(e)}
+              onSubmit={(e) => {
+                let updatedFilter = { ...e };
+
+                // Check if organizations have changed
+                const organizationsChanged =
+                  JSON.stringify(searchFilter.organizations) !==
+                  JSON.stringify(e.organizations);
+
+                // If organizations changed, clear dependent filters
+                if (organizationsChanged) {
+                  updatedFilter = {
+                    ...e,
+                    organizations: isAdmin
+                      ? e.organizations
+                      : searchFilter.organizations,
+                    countries: null,
+                    opportunities: null,
+                    categories: null,
+                  };
+                }
+
+                onSubmitFilter(updatedFilter);
+              }}
             />
           </div>
-          {/* </Suspense> */}
 
           {/* ORGADMINS NEEDS TO SELECT ONE ORG */}
           {!isAdmin && !searchFilter.organizations && (
@@ -1137,7 +1115,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             <>
               {/* TABS */}
               <div className="relative mt-4 flex items-center">
-                <CustomSlider className="tabs tabs-lifted !gap-0 border-gray text-white">
+                <CustomSlider sliderClassName="tabs tabs-lifted !gap-0 border-gray text-white">
                   <a
                     role="tab"
                     className={`group tab relative !border-none ${
@@ -1169,7 +1147,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     }`}
                     onClick={() => setActiveTab("rewards")}
                   >
-                    ⚡ Rewards & Skills
+                    🏆 Rewards & Skills
                   </a>
                   <a
                     role="tab"
@@ -1202,7 +1180,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     }`}
                     onClick={() => setActiveTab("selectedOpportunities")}
                   >
-                    🏆 Selected Opportunities
+                    🚀 Selected Opportunities
                   </a>
                   <a
                     role="tab"
@@ -1221,7 +1199,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                 className="pt-4"
                 isLoading={
                   engagementIsLoading ||
-                  //countriesIsLoading ||
                   engagementIsLoading ||
                   completedOpportunitiesIsLoading ||
                   selectedOpportunitiesIsLoading ||
@@ -1230,8 +1207,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                 }
                 error={
                   engagementError ||
-                  //categoriesError ||
-                  //countriesError ||
                   engagementError ||
                   completedOpportunitiesError ||
                   selectedOpportunitiesError ||
@@ -1243,16 +1218,15 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <div className="flex animate-fade-in flex-col gap-4">
                     {/* ENGAGEMENT */}
                     <div className="flex flex-col">
-                      {/* FILTERS */}
                       <div className="flex flex-col gap-4 md:flex-row">
                         <div className="flex h-full flex-col gap-4 sm:flex-row md:flex-col">
                           {/* OPPORTUNITY COUNTS */}
-                          <div className="flex h-36 w-full min-w-[310px] flex-col gap-2 rounded-lg bg-white p-4 shadow">
+                          <div className="h-30 flex w-full min-w-[310px] flex-col gap-2 rounded-lg bg-white p-4 shadow">
                             <div className="flex items-center gap-3">
                               <div className="items-center rounded-lg bg-gray-light p-1">
-                                🏆
+                                🚀
                               </div>
-                              <div className="text-sm font-semibold">
+                              <div className="text-md font-semibold">
                                 Opportunities
                               </div>
                             </div>
@@ -1264,44 +1238,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 </span>
                                 <span>selected</span>
                               </div>
-                              {/* <div className="flex items-center gap-2">
-                                <span className="text-3xl font-semibold">
-                                  {engagementData?.opportunities?.engaged?.count?.toLocaleString()}
-                                </span>
-                                <span>engagements</span>
-                              </div> */}
-                            </div>
-
-                            <div className="flex gap-4">
-                              {/* ACTIVE */}
-                              {/* <div className="flex items-center gap-2">
-                                <div
-                                  className={`text-lg font-semibold ${activeOpportunitiesCount > 0 ? "text-blue" : ""}`}
-                                >
-                                  {activeOpportunitiesCount?.toLocaleString()}
-                                </div>
-                                <div>active</div>
-                              </div> */}
-
-                              {/* INACTIVE */}
-                              {/* <div className="flex items-center gap-2">
-                                <div
-                                  className={`text-lg font-semibold ${inactiveOpportunitiesCount > 0 ? "text-yellow" : ""}`}
-                                >
-                                  {inactiveOpportunitiesCount?.toLocaleString()}
-                                </div>
-                                <div>inactive</div>
-                              </div> */}
-
-                              {/* EXPIRED */}
-                              {/* <div className="flex items-center gap-2">
-                                <div
-                                  className={`text-lg font-semibold ${expiredOpportunitiesCount > 0 ? "text-red-500" : ""}`}
-                                >
-                                  {expiredOpportunitiesCount?.toLocaleString()}
-                                </div>
-                                <div>expired</div>
-                              </div> */}
                             </div>
                           </div>
 
@@ -1311,7 +1247,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                               <div className="rounded-lg bg-gray-light p-1">
                                 🎯
                               </div>
-                              <div className="text-sm font-semibold">
+                              <div className="text-md font-semibold">
                                 Conversion Rate
                               </div>
                             </div>
@@ -1410,15 +1346,16 @@ const OrganisationDashboard: NextPageWithLayout<{
                           </div>
 
                           {/* OVERALL CONVERSION RATE */}
-                          <div className="flex !h-full !min-h-[188px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem]">
+                          <div className="flex !h-full !min-h-[220px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem]">
                             <div className="flex flex-row items-center gap-3">
                               <div className="rounded-lg bg-gray-light p-1">
-                                📈
+                                🎯
                               </div>
-                              <div className="text-sm font-semibold">
+                              <div className="text-md font-semibold">
                                 Overall Conversion Rate
                               </div>
                             </div>
+
                             {engagementData?.opportunities?.conversionRate && (
                               <PieChart
                                 id="conversionRate"
@@ -1428,16 +1365,31 @@ const OrganisationDashboard: NextPageWithLayout<{
                                   [
                                     "Completed",
                                     engagementData.opportunities.conversionRate
-                                      .completedCount,
+                                      .completedCountFromNavigatedExternalLinkTracking,
                                   ],
                                   [
                                     "Viewed",
                                     engagementData.opportunities.conversionRate
-                                      .viewedCount,
+                                      .viewedCountFromNavigatedExternalLinkTracking,
                                   ],
                                 ]}
                               />
                             )}
+
+                            {!!engagementData?.opportunities?.conversionRate
+                              ?.completedCountFromNavigatedExternalLinkTracking &&
+                              !!engagementData?.opportunities?.conversionRate
+                                ?.viewedCountFromNavigatedExternalLinkTracking && (
+                                <div className="flex flex-grow flex-row items-end gap-1 text-xs text-gray-dark">
+                                  <div>
+                                    Data before
+                                    <span className="mx-1 font-bold underline">
+                                      14 June 2024
+                                    </span>
+                                    is not included in these metrics.
+                                  </div>
+                                </div>
+                              )}
                           </div>
                         </div>
 
@@ -1458,10 +1410,11 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <div className="flex w-full flex-col justify-between overflow-hidden rounded-lg bg-white p-4 shadow">
                     <div className="flex flex-row items-center gap-3">
                       <div className="rounded-lg bg-gray-light p-1">📈</div>
-                      <div className="text-sm font-semibold">
+                      <div className="text-md font-semibold">
                         Cumulative Completions
                       </div>
                     </div>
+
                     <div className="pt-4">
                       {engagementData?.cumulative?.completions && (
                         <LineChartCumulativeCompletions
@@ -1476,69 +1429,61 @@ const OrganisationDashboard: NextPageWithLayout<{
                 {activeTab === "rewards" && (
                   <div className="flex animate-fade-in flex-col gap-1">
                     <div className="flex flex-col gap-4 md:flex-row">
-                      {/* REWARDS */}
-                      <div className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem]">
-                        <div className="flex flex-row items-center gap-3">
-                          <div className="rounded-lg bg-gray-light p-1">💸</div>
-                          <div className="text-sm font-semibold">
-                            Total amount awarded
+                      <div className="flex flex-col gap-4 md:w-[20.75rem]">
+                        {/* TOTAL AMOUNT AWARDED */}
+                        <div className="flex min-h-[185px] w-full min-w-[310px] flex-grow flex-col overflow-hidden rounded-lg bg-white p-4 shadow">
+                          <div className="flex flex-row items-center gap-3">
+                            <div className="rounded-lg bg-gray-light p-1">
+                              🏆
+                            </div>
+                            <div className="text-md font-semibold">
+                              Total Amount Awarded
+                            </div>
                           </div>
-                        </div>
-                        <div className="-ml-1 mt-4 flex flex-grow items-center gap-2">
-                          <Image
-                            src={iconZltoGreen}
-                            alt="Icon Zlto"
-                            width={35}
-                            height={35}
-                            className="h-auto"
-                            sizes="100vw"
-                            priority={true}
-                          />
-                          <div className="flex-grow text-3xl font-semibold">
-                            {engagementData?.opportunities.reward.totalAmount.toLocaleString() ??
-                              0}
-                          </div>
-                        </div>
-                      </div>
 
-                      {/* SKILLS */}
-                      <div className="flex flex-col gap-1">
-                        <div className="h-[176px] rounded-lg bg-white shadow md:w-[275px]">
+                          <div className="-mt-16 flex flex-grow items-center gap-3">
+                            <div className="flex-growx text-3xl font-semibold">
+                              {engagementData?.opportunities.reward.totalAmount.toLocaleString() ??
+                                0}
+                            </div>
+                            <Image
+                              src={iconZltoGreen}
+                              alt="Icon Zlto"
+                              width={30}
+                              height={30}
+                              className="h-auto"
+                              sizes="100vw"
+                              priority={true}
+                            />
+                          </div>
+                        </div>
+
+                        {/* TOTAL UNIQUE SKILLS */}
+                        <div className="flex h-full flex-col rounded-lg bg-white p-4 shadow">
                           <SkillsChart data={engagementData?.skills?.items} />
                         </div>
                       </div>
 
-                      {/* MOST COMPLETED SKILLS */}
-                      {engagementData?.skills?.topCompleted && (
-                        <div className="flex h-[176px] w-full flex-col rounded-lg bg-white p-4 shadow md:w-[565px]">
-                          <div className="flex flex-row items-center gap-3">
-                            <div className="rounded-lg bg-gray-light p-1">
-                              🛠️
-                            </div>
-                            <div className="text-sm font-semibold">
-                              {engagementData?.skills.topCompleted.legend}
-                            </div>
+                      <div className="flex w-full flex-col overflow-hidden rounded-lg bg-white p-4 shadow">
+                        <div className="flex flex-row items-center gap-3">
+                          <div className="rounded-lg bg-gray-light p-1">🎖️</div>
+                          <div className="text-md font-semibold">
+                            Top Skills Awarded
                           </div>
-                          <div className="mt-4 flex flex-grow flex-wrap gap-1 overflow-y-auto overflow-x-hidden md:h-[100px]">
-                            {engagementData?.skills.topCompleted.topCompleted.map(
-                              (x) => (
-                                <div
-                                  key={x.id}
-                                  className="md:truncate-none flex h-9 w-max items-center text-ellipsis rounded border-[1px] border-green bg-white px-2 text-xs text-gray-dark md:w-fit md:max-w-none"
-                                >
-                                  {x.name}
-                                </div>
-                              ),
-                            )}
-                          </div>
-                          {engagementData?.skills?.topCompleted.topCompleted
-                            .length === 0 && (
-                            <div className="mb-8 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-10 text-center text-xs">
-                              Not enough data to display
-                            </div>
-                          )}
                         </div>
-                      )}
+
+                        <div className="pt-4">
+                          {/* TOP SKILLS */}
+                          {/* <SkillsBubbleChart
+                            key="bubbleChartTopSkills"
+                            data={engagementData?.skills?.topCompleted}
+                          /> */}
+                          <SkillsList
+                            key="listTopSkills"
+                            data={engagementData?.skills?.topCompleted}
+                          />
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1550,7 +1495,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                       <div className="h-full w-full rounded-lg bg-white p-4 shadow">
                         <div className="flex flex-row items-center gap-3">
                           <div className="rounded-lg bg-gray-light p-1">🌍</div>
-                          <div className="text-sm font-semibold">Countries</div>
+                          <div className="text-md font-semibold">Countries</div>
                         </div>
                         {engagementData?.demographics?.countries?.items && (
                           <WorldMapChart
@@ -1567,15 +1512,12 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                       <div className="flex flex-col gap-4 sm:flex-col">
                         {/* EDUCATION */}
-                        <div
-                          //className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem] md:px-6"
-                          className="h-full w-full min-w-[310px] rounded-lg bg-white p-4 shadow"
-                        >
+                        <div className="h-full w-full min-w-[310px] rounded-lg bg-white p-4 shadow">
                           <div className="flex flex-row items-center gap-3">
                             <div className="rounded-lg bg-gray-light p-1">
                               🎓
                             </div>
-                            <div className="text-sm font-semibold">
+                            <div className="text-md font-semibold">
                               Education
                             </div>
                           </div>
@@ -1595,15 +1537,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                         </div>
 
                         {/* GENDERS */}
-                        <div
-                          //className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem] md:px-6"
-                          className="h-full w-full min-w-[310px] rounded-lg bg-white p-4 shadow"
-                        >
+                        <div className="h-full w-full min-w-[310px] rounded-lg bg-white p-4 shadow">
                           <div className="flex flex-row items-center gap-3">
                             <div className="rounded-lg bg-gray-light p-1">
                               🚻
                             </div>
-                            <div className="text-sm font-semibold">Genders</div>
+                            <div className="text-md font-semibold">Genders</div>
                           </div>
                           {engagementData?.demographics?.genders?.items && (
                             <PieChart
@@ -1621,15 +1560,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                         </div>
 
                         {/* AGE */}
-                        <div
-                          //className="flex !h-full !min-h-[185px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem] md:px-6"
-                          className="h-full w-full min-w-[310px] rounded-lg bg-white p-4 shadow"
-                        >
+                        <div className="h-full w-full min-w-[310px] rounded-lg bg-white p-4 shadow">
                           <div className="flex flex-row items-center gap-3">
                             <div className="rounded-lg bg-gray-light p-1">
                               🎂
                             </div>
-                            <div className="text-sm font-semibold">Age</div>
+                            <div className="text-md font-semibold">Age</div>
                           </div>
                           {engagementData?.demographics?.ages?.items && (
                             <PieChart
@@ -1656,7 +1592,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     <div className="h-full w-full rounded-lg bg-white p-4 shadow">
                       <div className="flex flex-row items-center gap-3">
                         <div className="rounded-lg bg-gray-light p-1">✅</div>
-                        <div className="text-sm font-semibold">
+                        <div className="text-md font-semibold">
                           Completed by Youth
                         </div>
                       </div>
@@ -1801,60 +1737,11 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                 {activeTab === "selectedOpportunities" && (
                   <div className="flex animate-fade-in flex-col">
-                    {/* NB: DECPRECATED */}
-                    <div className="mb-4 hidden flex-col gap-4 md:flex-row">
-                      {/* UNPUBLISHED */}
-                      <div className="mt-4x flex h-32 w-full flex-col gap-2 rounded-lg bg-white p-4 shadow md:w-72">
-                        <div className="flex h-min items-center gap-2">
-                          <div className="items-center rounded-lg bg-gray-light p-1">
-                            <Image
-                              src={iconBookmark}
-                              alt="Icon Status"
-                              width={20}
-                              height={20}
-                              className="h-auto"
-                              sizes="100vw"
-                              priority={true}
-                            />
-                          </div>
-                          <div className="text-sm font-semibold">
-                            Unpublished opportunities
-                          </div>
-                        </div>
-                        <div className="mt-4 text-3xl font-semibold">
-                          {inactiveOpportunitiesCount}
-                        </div>
-                      </div>
-
-                      {/* EXPIRED */}
-                      <div className="mt-4x flex h-32 w-full flex-col gap-2 rounded-lg bg-white p-4 shadow md:w-72">
-                        <div className="flex h-min items-center gap-2">
-                          <div className="items-center rounded-lg bg-gray-light p-1">
-                            <Image
-                              src={iconBookmark}
-                              alt="Icon Status"
-                              width={20}
-                              height={20}
-                              className="h-auto"
-                              sizes="100vw"
-                              priority={true}
-                            />
-                          </div>
-                          <div className="text-sm font-semibold">
-                            Expired opportunities
-                          </div>
-                        </div>
-                        <div className="mt-4 text-3xl font-semibold">
-                          {expiredOpportunitiesCount}
-                        </div>
-                      </div>
-                    </div>
-
                     {/* SELECTED OPPORTUNITIES */}
                     <div className="h-full w-full rounded-lg bg-white p-4 shadow">
                       <div className="flex flex-row items-center gap-3">
-                        <div className="rounded-lg bg-gray-light p-1">🏆</div>
-                        <div className="text-sm font-semibold">
+                        <div className="rounded-lg bg-gray-light p-1">🚀</div>
+                        <div className="text-md font-semibold">
                           Selected Opportunities
                         </div>
                       </div>
@@ -1997,10 +1884,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "sso" && ssoData && (
-                  <div className="flex animate-fade-in flex-col gap-4">
-                    {/* <Header title="🔑 Single Sign-On" /> */}
-
-                    {/* SSO Summary */}
+                  <div className="gap-x4 flex animate-fade-in flex-col">
+                    {/* SSO SUMMARY */}
                     {ssoData?.outboundLoginCount !== null &&
                       ssoData?.inboundLoginCount !== null && (
                         <div className="mb-4 flex flex-col rounded-lg bg-white p-4 shadow">
@@ -2047,7 +1932,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         </div>
                       )}
 
-                    {/* Individual Organization Charts */}
+                    {/* INDIVIDUAL ORGANIZATION CHARTS */}
                     {ssoData?.items && ssoData.items.length > 0 && (
                       <div className="flex animate-fade-in flex-col gap-4">
                         {ssoData.items.map((item) => (
@@ -2071,8 +1956,13 @@ const OrganisationDashboard: NextPageWithLayout<{
                     )}
 
                     {(!ssoData || ssoData.items?.length === 0) && (
-                      <div className="rounded-lg bg-white p-8 text-center shadow">
-                        No SSO data available for the selected organization(s).
+                      <div className="flex h-full items-center justify-center rounded-lg bg-gray-light">
+                        <NoRowsMessage
+                          title={"No configuration found"}
+                          description={
+                            "No SSO data available for the selected organization(s)."
+                          }
+                        />
                       </div>
                     )}
 

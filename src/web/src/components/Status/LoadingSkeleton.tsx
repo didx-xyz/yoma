@@ -5,8 +5,6 @@ export const LoadingSkeleton: React.FC<{
   columns?: number;
   rows?: number;
 }> = ({ className = "w-full h-full", columns = 1, rows = 1 }) => {
-  const skeletonCount = columns * rows;
-
   const rowsArray = Array.from({ length: rows });
   const columnsArray = Array.from({ length: columns });
 

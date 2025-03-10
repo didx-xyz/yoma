@@ -11,7 +11,7 @@ export const LineChartOverview: React.FC<{
   key: string;
   data: TimeIntervalSummary | undefined;
   opportunityCount?: number;
-}> = ({ key, data, opportunityCount }) => {
+}> = ({ key, data }) => {
   const [showChart, setShowLabels] = useState<boolean>(true);
   const [selectedLegendIndex, setSelectedLegendIndex] = useState<number | null>(
     null,
@@ -43,7 +43,7 @@ export const LineChartOverview: React.FC<{
 
   // chart responsiveness
   // changing the key forces a redraw of the chart when the screen width changes
-  const [keyState, setkey] = useState(key);
+  const [keyState, setKeyState] = useState(key);
   const screenWidth = useAtomValue(screenWidthAtom);
 
   const chartHeight = useMemo(() => {
@@ -55,14 +55,14 @@ export const LineChartOverview: React.FC<{
   }, [screenWidth]);
 
   useEffect(() => {
-    setkey(`${key}-${screenWidth}`);
+    setKeyState(`${key}-${screenWidth}`);
   }, [screenWidth, key]);
 
   const Legend = () => (
-    <CustomSlider className="!gap-4">
+    <>
       {data?.legend.map((name, index) => (
         <div
-          key={index}
+          key={`${key}-${index}`}
           className={`flex cursor-pointer flex-col gap-1 ${
             selectedLegendIndex === index ? "selected" : ""
           }`}
@@ -126,7 +126,7 @@ export const LineChartOverview: React.FC<{
           )}
         </div>
       ))}
-    </CustomSlider>
+    </>
   );
 
   const series = useMemo(() => {
@@ -146,7 +146,9 @@ export const LineChartOverview: React.FC<{
 
   return (
     <div className="flex h-full w-full flex-col rounded-lg bg-white p-4 shadow">
-      <Legend />
+      <CustomSlider sliderClassName="!md:gap-8 !gap-4">
+        <Legend />
+      </CustomSlider>
 
       {showChart ? (
         <Chart
@@ -158,10 +160,9 @@ export const LineChartOverview: React.FC<{
             </div>
           }
           data={localData}
-          width="100%"
-          height={chartHeight}
           options={{
             legend: { position: "none" },
+            height: chartHeight,
             curveType: "function",
             pointSize: 8,
             pointShape: "circle",

@@ -4,10 +4,9 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import { IoMdClose, IoMdOptions } from "react-icons/io";
-import Select from "react-select";
 import Async from "react-select/async";
 import zod from "zod";
-import { OpportunitySearchResultsInfo } from "~/api/models/opportunity";
+import type { OpportunitySearchResultsInfo } from "~/api/models/opportunity";
 import type { OrganizationSearchResults } from "~/api/models/organisation";
 import {
   getCategoriesAdmin,
@@ -17,7 +16,7 @@ import {
 import { getOrganisations } from "~/api/services/organisations";
 import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 import { debounce, toISOStringForTimezone } from "~/lib/utils";
-import { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/dashboard";
+import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/dashboard";
 
 // Update the schema so that countries and categories are arrays of option objects
 const schema = zod.object({
@@ -39,6 +38,7 @@ export const DashboardFilterVertical: React.FC<{
   clearButtonText?: string;
   submitButtonText?: string;
   onClear?: () => void;
+  isAdmin?: boolean;
 }> = ({
   htmlRef,
   searchFilter,
@@ -49,6 +49,7 @@ export const DashboardFilterVertical: React.FC<{
   submitButtonText = "Submit",
   onClear,
   clearButtonText,
+  isAdmin,
 }) => {
   const form = useForm({
     mode: "all",
@@ -72,7 +73,9 @@ export const DashboardFilterVertical: React.FC<{
   // Handle form submission
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
-      onSubmit && onSubmit(data as OrganizationSearchFilterSummaryViewModel);
+      if (onSubmit) {
+        onSubmit(data as OrganizationSearchFilterSummaryViewModel);
+      }
     },
     [onSubmit],
   );
@@ -97,6 +100,7 @@ export const DashboardFilterVertical: React.FC<{
     1000,
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadOpportunities = useCallback(
     debounce((inputValue: string, callback: (options: any) => void) => {
       if (!watchOrganisations || watchOrganisations.length === 0) {
@@ -124,6 +128,7 @@ export const DashboardFilterVertical: React.FC<{
     [watchOrganisations],
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadCategories = useCallback(
     debounce((inputValue: string, callback: (options: any) => void) => {
       if (!watchOrganisations || watchOrganisations.length === 0) {
@@ -141,6 +146,7 @@ export const DashboardFilterVertical: React.FC<{
     [watchOrganisations],
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadCountries = useCallback(
     debounce((inputValue: string, callback: (options: any) => void) => {
       if (!watchOrganisations || watchOrganisations.length === 0) {
@@ -251,55 +257,59 @@ export const DashboardFilterVertical: React.FC<{
         {/* Filter Fields */}
         <div className="flex flex-col gap-4 bg-gray-light p-2 md:px-8">
           {/* Organisations Async Dropdown */}
-          <div className="form-control gap-1">
-            <label className="label">
-              <span className="label-text flex font-semibold">
-                <span className="flex gap-2">
-                  <span>🏢</span>
-                  <span>Organisation</span>
-                </span>
-              </span>
-            </label>
-            <Controller
-              name="organizations"
-              control={form.control}
-              render={({ field: { onChange } }) => (
-                <Async
-                  instanceId="organizations"
-                  classNames={{
-                    control: () =>
-                      "input input-xs h-fit !border-none w-full md:w-72z",
-                  }}
-                  isMulti
-                  defaultOptions={true}
-                  cacheOptions
-                  loadOptions={loadOrganisations}
-                  menuPortalTarget={htmlRef}
-                  styles={{ menuPortal: (base) => ({ ...base, zIndex: 9999 }) }}
-                  onChange={(val) => {
-                    // clear dependents when organisation changes
-                    setValue("countries", []);
-                    setValue("opportunities", []);
-                    setValue("categories", []);
-                    setSelectedOpportunityOptions([]);
-
-                    // Save IDs in the form and update local selected options
-                    onChange(val.map((c: any) => c.value));
-                    setSelectedOrganisationOptions(val as any);
-                  }}
-                  value={selectedOrganisationOptions}
-                  placeholder="Select an organisation"
-                />
-              )}
-            />
-            {formState.errors.organizations && (
-              <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
-                  {formState.errors.organizations.message as string}
+          {isAdmin && (
+            <div className="form-control gap-1">
+              <label className="label">
+                <span className="label-text flex font-semibold">
+                  <span className="flex gap-2">
+                    <span>🏢</span>
+                    <span>Organisation</span>
+                  </span>
                 </span>
               </label>
-            )}
-          </div>
+              <Controller
+                name="organizations"
+                control={form.control}
+                render={({ field: { onChange } }) => (
+                  <Async
+                    instanceId="organizations"
+                    classNames={{
+                      control: () =>
+                        "input input-xs h-fit !border-none w-full md:w-72z",
+                    }}
+                    isMulti
+                    defaultOptions={true}
+                    cacheOptions
+                    loadOptions={loadOrganisations}
+                    menuPortalTarget={htmlRef}
+                    styles={{
+                      menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                    }}
+                    onChange={(val) => {
+                      // clear dependents when organisation changes
+                      setValue("countries", []);
+                      setValue("opportunities", []);
+                      setValue("categories", []);
+                      setSelectedOpportunityOptions([]);
+
+                      // Save IDs in the form and update local selected options
+                      onChange(val.map((c: any) => c.value));
+                      setSelectedOrganisationOptions(val as any);
+                    }}
+                    value={selectedOrganisationOptions}
+                    placeholder="Select an organisation"
+                  />
+                )}
+              />
+              {formState.errors.organizations && (
+                <label className="label font-bold">
+                  <span className="label-text-alt italic text-red-500">
+                    {formState.errors.organizations.message as string}
+                  </span>
+                </label>
+              )}
+            </div>
+          )}
 
           {/* Countries Async Dropdown */}
           <div className="form-control gap-1">
@@ -365,7 +375,6 @@ export const DashboardFilterVertical: React.FC<{
               </label>
             )}
           </div>
-
           {/* Date Pickers */}
           <div className="flex flex-col items-start gap-4 md:flex-row md:gap-14">
             {/* Start Date */}
@@ -435,7 +444,6 @@ export const DashboardFilterVertical: React.FC<{
               )}
             </div>
           </div>
-
           {/* Opportunities & Categories */}
           <div className="flex flex-col items-start gap-4 md:flex-row">
             {/* Opportunities Async Dropdown */}

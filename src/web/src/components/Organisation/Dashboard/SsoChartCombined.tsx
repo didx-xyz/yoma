@@ -4,6 +4,7 @@ import Chart from "react-google-charts";
 import Image from "next/image";
 import type { OrganizationSSOInfo } from "~/api/models/organizationDashboard";
 import { screenWidthAtom } from "~/lib/store";
+import { CHART_COLORS } from "~/lib/constants";
 
 export const SsoChartCombined: React.FC<{
   data: OrganizationSSOInfo;
@@ -173,7 +174,7 @@ export const SsoChartCombined: React.FC<{
           }
           data={chartData}
           options={{
-            //colors: [CHART_COLORS[0], CHART_COLORS[1]],
+            colors: CHART_COLORS,
             legend: { position: "top" },
             curveType: "function",
             lineWidth: 2,
@@ -190,7 +191,6 @@ export const SsoChartCombined: React.FC<{
               format: "#",
               textStyle: { fontSize: 10 },
             },
-            //height: "250px",
             chartArea: {
               left: "10%",
               top: "15%",
