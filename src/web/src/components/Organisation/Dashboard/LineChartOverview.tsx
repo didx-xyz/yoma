@@ -1,17 +1,18 @@
+import { useAtomValue } from "jotai";
 import { useEffect, useMemo, useState } from "react";
 import Chart from "react-google-charts";
 import type { TimeIntervalSummary } from "~/api/models/organizationDashboard";
-import { useAtomValue } from "jotai";
-import { screenWidthAtom } from "~/lib/store";
+import CustomSlider from "~/components/Carousel/CustomSlider";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { CHART_COLORS, LINE_DASH_STYLES } from "~/lib/constants";
-import CustomSlider from "~/components/Carousel/CustomSlider";
+import { screenWidthAtom } from "~/lib/store";
 
-export const LineChartCumulativeCompletions: React.FC<{
+export const LineChartOverview: React.FC<{
   key: string;
   data: TimeIntervalSummary | undefined;
+  opportunityCount?: number;
 }> = ({ key, data }) => {
-  const [showChart, setShowChart] = useState<boolean>(true);
+  const [showChart, setShowLabels] = useState<boolean>(true);
   const [selectedLegendIndex, setSelectedLegendIndex] = useState<number | null>(
     null,
   );
@@ -30,32 +31,38 @@ export const LineChartCumulativeCompletions: React.FC<{
       return [x.date, ...x.values] as (string | number)[];
     });
 
-    const labels = data.legend.map((x, i) => {
-      const truncatedLegend = x.length > 10 ? x.substring(0, 10) + "..." : x;
-      return `${truncatedLegend} (Total: ${data.count[i]})`;
-    });
+    const labels = data.legend.map((x, i) => `${x} (Total: ${data.count[i]})`);
 
     const allSameDate = mappedData.every(
       (item, _, arr) => item[0] === (arr[0]?.[0] ?? undefined),
     );
-    setShowChart(!allSameDate);
+    setShowLabels(!allSameDate);
 
     return [["Date", ...labels], ...mappedData] as (string | number)[][];
-  }, [data, setShowChart]);
+  }, [data]);
 
   // chart responsiveness
   // changing the key forces a redraw of the chart when the screen width changes
-  const [keyState, setkey] = useState(key);
+  const [keyState, setKeyState] = useState(key);
   const screenWidth = useAtomValue(screenWidthAtom);
+
+  const chartHeight = useMemo(() => {
+    if (screenWidth < 768) {
+      return 300; // Smaller height for mobile
+    } else {
+      return 600; // Default height for larger screens
+    }
+  }, [screenWidth]);
+
   useEffect(() => {
-    setkey(`${key}-${screenWidth}`);
-  }, [key, screenWidth]);
+    setKeyState(`${key}-${screenWidth}`);
+  }, [screenWidth, key]);
 
   const Legend = () => (
     <>
       {data?.legend.map((name, index) => (
         <div
-          key={index}
+          key={`${key}-${index}`}
           className={`flex cursor-pointer flex-col gap-1 ${
             selectedLegendIndex === index ? "selected" : ""
           }`}
@@ -77,14 +84,11 @@ export const LineChartCumulativeCompletions: React.FC<{
               //         : "#e6f5f3",
               //   }}
             >
-              🏢
+              {name === "Viewed" && "👀"}
+              {name === "Go-To Clicks" && "👆"}
+              {name === "Completions" && "🎓"}
             </div>
-            <div
-              className="text-md tooltip tooltip-secondary max-w-20 truncate font-semibold"
-              data-tip={name}
-            >
-              {name}
-            </div>
+            <div className="text-sm font-semibold">{name}</div>
           </div>
           {data.count[index] != null && (
             <div>
@@ -141,7 +145,7 @@ export const LineChartCumulativeCompletions: React.FC<{
   }, [data?.legend, selectedLegendIndex]);
 
   return (
-    <>
+    <div className="flex h-full w-full flex-col rounded-lg bg-white p-4 shadow">
       <CustomSlider sliderClassName="!md:gap-8 !gap-4">
         <Legend />
       </CustomSlider>
@@ -149,7 +153,7 @@ export const LineChartCumulativeCompletions: React.FC<{
       {showChart ? (
         <Chart
           key={keyState}
-          chartType="AreaChart"
+          chartType="LineChart"
           loader={
             <div className="mt-20 flex w-full items-center justify-center">
               <span className="loading loading-spinner loading-lg text-green"></span>
@@ -158,22 +162,23 @@ export const LineChartCumulativeCompletions: React.FC<{
           data={localData}
           options={{
             legend: { position: "none" },
+            height: chartHeight,
             curveType: "function",
             pointSize: 8,
             pointShape: "circle",
             enableInteractivity: true,
-            height: 380,
+            colors: CHART_COLORS,
+            chartArea: {
+              left: "40",
+              right: "30",
+              top: "40",
+              bottom: "20",
+            },
             hAxis: {
-              gridlines: {
-                color: "transparent",
-              },
-              //gridlines: { color: "#f5f5f5" },
-              textPosition: showChart ? "out" : "none",
+              gridlines: { color: "#f5f5f5" },
               format: "MMM dd",
               showTextEvery: 1,
-              textStyle: {
-                fontSize: 10,
-              },
+              textStyle: { fontSize: 10 },
               // hide duplicate labels
               ticks: showChart
                 ? (localData
@@ -187,12 +192,6 @@ export const LineChartCumulativeCompletions: React.FC<{
               minValue: 0,
               format: "#",
               textStyle: { fontSize: 10 },
-            },
-            chartArea: {
-              left: "40",
-              right: "30",
-              top: "40",
-              bottom: "20",
             },
             series: series,
           }}
@@ -231,7 +230,10 @@ export const LineChartCumulativeCompletions: React.FC<{
           ]}
         />
       ) : (
-        <div className="flex h-full items-center justify-center rounded-lg bg-gray-light">
+        <div
+          className="flex h-full items-start justify-center rounded-lg bg-gray-light"
+          style={{ height: chartHeight }}
+        >
           <NoRowsMessage
             title={"Not enough data to display."}
             description={
@@ -240,6 +242,6 @@ export const LineChartCumulativeCompletions: React.FC<{
           />
         </div>
       )}
-    </>
+    </div>
   );
 };

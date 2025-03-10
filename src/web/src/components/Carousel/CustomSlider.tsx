@@ -5,9 +5,14 @@ import styles from "./CustomSlider.module.css";
 interface CustomSliderProps {
   children: React.ReactNode;
   className?: string;
+  sliderClassName?: string;
 }
 
-const CustomSlider = ({ children, className }: CustomSliderProps) => {
+const CustomSlider = ({
+  children,
+  className,
+  sliderClassName,
+}: CustomSliderProps) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [showPrevButton, setShowPrevButton] = useState(false);
   const [showNextButton, setShowNextButton] = useState(false);
@@ -124,11 +129,13 @@ const CustomSlider = ({ children, className }: CustomSliderProps) => {
   }, [handleScroll]);
 
   return (
-    <div className="overflow-x-hidden">
+    <div
+      className={`relative flex min-h-[40px] items-center overflow-x-hidden ${className}`}
+    >
       {showPrevButton && (
         <>
           <div className="absolute left-0 top-0 z-10 h-full w-10 backdrop-blur-[0.6px] md:w-12"></div>
-          <div className="absolute left-0 top-0 z-20 flex h-full w-10 items-center justify-center md:w-12">
+          <div className="absolute left-0 top-1/2 z-20 flex h-fit w-10 -translate-y-1/2 items-center justify-center md:w-12">
             <button
               type="button"
               onClick={onScrollLeft}
@@ -141,7 +148,7 @@ const CustomSlider = ({ children, className }: CustomSliderProps) => {
       )}
       <div
         ref={sliderRef}
-        className={`flex gap-[2px] overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap ${styles.noscrollbar} ${className}`}
+        className={`flex gap-[2px] overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap ${styles.noscrollbar} ${sliderClassName}`}
         onMouseDown={handleMouseDown}
         onMouseLeave={handleMouseLeave}
         onMouseUp={handleMouseUp}
@@ -155,7 +162,7 @@ const CustomSlider = ({ children, className }: CustomSliderProps) => {
       {showNextButton && (
         <>
           <div className="absolute right-0 top-0 z-10 h-full w-10 backdrop-blur-[0.6px] md:w-12"></div>
-          <div className="absolute right-0 top-0 z-20 flex h-full w-10 items-center justify-center md:w-12">
+          <div className="absolute right-0 top-1/2 z-20 flex h-fit w-10 -translate-y-1/2 items-center justify-center md:w-12">
             <button
               type="button"
               onClick={onScrollRight}

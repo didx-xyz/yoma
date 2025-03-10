@@ -1,5 +1,4 @@
 import type { PaginationFilter } from "./common";
-import type { Skill } from "./lookups";
 import type { Status } from "./opportunity";
 
 export interface OrganizationSearchFilterBase extends PaginationFilter {
@@ -69,8 +68,10 @@ export interface OpportunityCompletion {
 
 export interface OpportunityConversionRatio {
   viewedCount: number;
+  viewedCountFromNavigatedExternalLinkTracking: number;
   navigatedExternalLinkCount: number;
   completedCount: number;
+  completedCountFromNavigatedExternalLinkTracking: number;
   viewedToNavigatedExternalLinkPercentage: number;
   navigatedExternalLinkToCompletedPercentage: number;
 }
@@ -87,8 +88,16 @@ export interface OrganizationOpportunitySkill {
 
 export interface OpportunitySkillTopCompleted {
   legend: string;
-  topCompleted: Skill[];
+  topCompleted: OpportunitySkillCompleted[];
 }
+
+export interface OpportunitySkillCompleted {
+  id: string;
+  name: string;
+  infoURL: string | null;
+  countCompleted: number;
+}
+
 export interface TimeIntervalSummary {
   legend: string[];
   data: TimeValueEntry[];
