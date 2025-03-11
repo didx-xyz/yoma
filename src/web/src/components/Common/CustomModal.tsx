@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, type FC } from "react";
+import React, { useEffect, useRef, type FC, useState } from "react";
 import { createPortal } from "react-dom";
 import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
@@ -29,6 +29,9 @@ const CustomModal: FC<CustomModalProps> = ({
   animationStyle = "scale", // Default animation style
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
+  const [modalContainer, setModalContainer] = useState<HTMLElement | null>(
+    null,
+  );
 
   // 👇 prevent scrolling on the page when the dialogs are open
   useDisableBodyScroll(isOpen);
@@ -48,7 +51,20 @@ const CustomModal: FC<CustomModalProps> = ({
     return () => document.removeEventListener("keydown", handleEsc);
   }, [isOpen, onRequestClose, shouldCloseOnOverlayClick]);
 
-  if (!isOpen) return null;
+  useEffect(() => {
+    // Create modal container on client side
+    const div = document.createElement("div");
+    div.setAttribute("id", "modal-root"); // Ensure you have a modal-root in your public/index.html
+    document.body.appendChild(div);
+    setModalContainer(div);
+
+    return () => {
+      // Clean up the modal container on unmount
+      document.body.removeChild(div);
+    };
+  }, []);
+
+  if (!isOpen || !modalContainer) return null;
 
   const handleOverlayClick = () => {
     if (shouldCloseOnOverlayClick && onRequestClose) {
@@ -125,8 +141,7 @@ const CustomModal: FC<CustomModalProps> = ({
             {children}
           </div>
         </div>,
-        document.body,
-        "modal",
+        modalContainer,
       )}
     </>
   );

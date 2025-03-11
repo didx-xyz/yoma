@@ -19,20 +19,35 @@ export const LineChartCumulativeCompletions: React.FC<{
   const localData = useMemo<(string | number)[][]>(() => {
     if (!data) return [];
 
-    if (!(data?.data && data.data.length > 0))
-      data.data = [{ date: "", values: [0] }];
+    if (!data.data || data.data.length === 0) {
+      // Handle the case where there's no data
+      return [
+        [
+          "Date",
+          ...(data?.legend.map((x, i) => {
+            const truncatedLegend =
+              x.length > 10 ? x.substring(0, 10) + "..." : x;
+            return `${truncatedLegend} (Total: ${data.count[i]})`;
+          }) ?? []),
+        ],
+      ]; // Return only the header row if no data
+    }
+
+    const labels = data.legend.map((x, i) => {
+      const truncatedLegend = x.length > 10 ? x.substring(0, 10) + "..." : x;
+      return `${truncatedLegend} (Total: ${data.count[i]})`;
+    });
 
     const mappedData = data.data.map((x) => {
       if (x.date) {
         const date = new Date(x.date);
         x.date = date;
       }
-      return [x.date, ...x.values] as (string | number)[];
-    });
 
-    const labels = data.legend.map((x, i) => {
-      const truncatedLegend = x.length > 10 ? x.substring(0, 10) + "..." : x;
-      return `${truncatedLegend} (Total: ${data.count[i]})`;
+      // Ensure x.values is an array before spreading
+      const values = Array.isArray(x.values) ? x.values.flat() : []; // Flatten in case of nested arrays
+
+      return [x.date, ...values] as (string | number)[];
     });
 
     const allSameDate = mappedData.every(
@@ -80,7 +95,7 @@ export const LineChartCumulativeCompletions: React.FC<{
               🏢
             </div>
             <div
-              className="text-md tooltip tooltip-secondary max-w-20 truncate font-semibold"
+              className="text-md tooltip tooltip-secondary max-w-20 truncate font-semibold md:max-w-36"
               data-tip={name}
             >
               {name}
@@ -167,7 +182,6 @@ export const LineChartCumulativeCompletions: React.FC<{
               gridlines: {
                 color: "transparent",
               },
-              //gridlines: { color: "#f5f5f5" },
               textPosition: showChart ? "out" : "none",
               format: "MMM dd",
               showTextEvery: 1,
