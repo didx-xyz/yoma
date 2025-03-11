@@ -10,6 +10,7 @@ import stamp1 from "public/images/stamp-1.png";
 import stamp2 from "public/images/stamp-2.png";
 import YoIDCard from "public/images/YoID-modal-card.webp";
 import { useCallback, useEffect, useState } from "react";
+import { FcCamera, FcSettings, FcViewDetails } from "react-icons/fc";
 import { toast } from "react-toastify";
 import type { SettingsRequest } from "~/api/models/common";
 import type { UserProfile } from "~/api/models/user";
@@ -411,19 +412,14 @@ export const Global: React.FC = () => {
         onRequestClose={() => {
           setUpdateProfileDialogVisible(false);
         }}
+        className="md:max-h-[985px] md:w-[700px]"
+        animationStyle="slide-top"
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+        <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-purple-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
+            <div className="-mt-8 flex animate-spin-once items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
+              <FcViewDetails className="size-8 md:size-10" />
             </div>
 
             <div className="flex flex-col gap-2">
@@ -473,6 +469,8 @@ export const Global: React.FC = () => {
         onRequestClose={() => {
           setOnboardingDialogVisible(false);
         }}
+        className="md:max-h-[640px] md:w-[700px]"
+        animationStyle="spin"
       >
         <div className="flex flex-col gap-2">
           <div className="relative flex h-32 flex-row bg-green p-4">
@@ -506,15 +504,15 @@ export const Global: React.FC = () => {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <h4 className="text-2xl font-semibold tracking-wide">
-                Activate your Yo-ID
+              <h4 className="text-lg font-semibold tracking-wide md:text-2xl">
+                Activate your Yo-ID!
               </h4>
               <h5 className="text-sm font-semibold tracking-widest">
                 Your identity for the Yoma ecosystem.
               </h5>
             </div>
 
-            <div className="flex max-w-xs flex-col gap-4 text-start text-sm text-gray-dark">
+            <div className="flex max-w-md flex-col gap-4 text-start text-sm text-gray-dark">
               <div>
                 This will issue you a Yo-ID credential, viewable in your
                 passport.
@@ -564,19 +562,14 @@ export const Global: React.FC = () => {
         onRequestClose={() => {
           setSettingsDialogVisible(false);
         }}
+        className="md:max-h-[890px] md:w-[700px]"
+        animationStyle="slide-bottom"
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+        <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 md:px-12">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-purple-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
+            <div className="-mt-8 flex animate-spin-once items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
+              <FcSettings className="size-8 md:size-10" />
             </div>
 
             <div className="flex flex-col gap-2 text-center">
@@ -625,19 +618,14 @@ export const Global: React.FC = () => {
         onRequestClose={() => {
           setPhotoUploadDialogVisible(false);
         }}
+        className="md:max-h-[680px] md:w-[700px]"
+        animationStyle="slide-top"
       >
-        <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
+        <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-purple-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
+            <div className="-mt-8 flex animate-spin-once items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
+              <FcCamera className="size-8 md:size-10" />
             </div>
 
             <div className="flex flex-col gap-2">
