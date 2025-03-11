@@ -1,0 +1,10 @@
+---
+creation_rules:
+  - path_regex: .*base/secrets.yaml
+    kms: "arn:aws:kms:eu-west-1:210913241065:alias/helm/yoma-dev"
+  - path_regex: .*dev/secrets.yaml
+    kms: "arn:aws:kms:eu-west-1:210913241065:alias/helm/yoma-dev"
+  - path_regex: .*stage/secrets.yaml
+    kms: "arn:aws:kms:eu-west-1:645438834644:alias/helm/yoma-stage"
+  - path_regex: .*prod/secrets.yaml
+    kms: "arn:aws:kms:eu-west-1:645438834644:alias/helm/yoma-prod"
