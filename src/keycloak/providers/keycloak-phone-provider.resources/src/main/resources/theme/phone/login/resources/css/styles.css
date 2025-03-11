@@ -390,19 +390,24 @@ input[type="checkbox"] {
 
 /* LINKS */
 .links {
+  display: flex;
+  flex-direction: column;
   margin-top: 0.8rem;
+  gap: 8px;
 }
 
 a,
 button.link {
   color: #387f6a;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   font-size: 14px;
   background: none;
   border: none;
   padding: 0;
   cursor: pointer;
+  gap: 8px;
+  text-align: center;
 }
 
 a:has(.link-icon),
@@ -417,8 +422,9 @@ button.link:focus {
 
 a .link-icon,
 button.link .link-icon {
-  margin-right: 8px;
+  /* margin-right: 8px; */
   text-decoration: none;
+  width: 20px;
 }
 
 a:hover .link-icon,
