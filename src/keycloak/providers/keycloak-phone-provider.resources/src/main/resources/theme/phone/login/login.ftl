@@ -77,11 +77,21 @@
                     </#if>
                   </div>
 
-                  <#-- BUTTON: use phone -->
-                  <button type="button" class="link" v-on:click="phoneActivated = true" tabindex="0" >
-                    <i aria-hidden="true" class="link-icon fa fa-phone"></i>
-                    <span class="link-text">${msg("signInWithPhone")}</span>
-                  </button>
+		  		  <div class="links">
+					<#-- BUTTON: use phone -->
+					<button type="button" class="link" v-on:click="phoneActivated = true" tabindex="0" >
+						<i aria-hidden="true" class="link-icon fa fa-check"></i>
+						<span class="link-text">${msg("signInWithPhone")}</span>
+					</button>
+
+					<#-- BUTTON: forgot password -->
+					<#if realm.resetPasswordAllowed>
+						<a tabindex="0" href="${url.loginResetCredentialsUrl}" class="link">
+							<i aria-hidden="true" class="link-icon fa fa-lock"></i>
+							<span class="link-text">${msg("doForgotPassword")}</span>
+						</a>
+					</#if>
+				  </div>
                 </div>
 
                 <#if !usernameHidden?? && supportPhone??>
@@ -195,7 +205,7 @@
                   </div>
                 </div>
 
-                <div id="kc-form-options">
+                <#--  <div id="kc-form-options">
                   <div class="${properties.kcFormOptionsWrapperClass!}">
                     <#if realm.resetPasswordAllowed>
                       <div class="${properties.kcFormOptionsWrapperClass!}">
@@ -203,7 +213,7 @@
                       </div>
                     </#if>
                   </div>
-                </div>
+                </div>  -->
               </form>
             </#if>
           </div>
@@ -416,7 +426,7 @@
         </#if>
         <#elseif section = "info" >
         <#if realm.password && realm.registrationAllowed && !registrationDisabled??>
-          <div id="kc-registration-container" style="margin">
+          <div id="kc-registration-container" style="margin-top: 20px;">
             <a id="kc-registration" href="${url.registrationUrl}">
               ${msg("noAccount")} ${msg("doRegister")}
             </a>
