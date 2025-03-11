@@ -4,25 +4,19 @@ type GoogleChartData = (string | number)[][];
 
 export const PieChart: React.FC<{
   id: string;
-  title: string;
-  subTitle: string;
   data: GoogleChartData;
   colors?: string[];
   className?: string;
-}> = ({ id, title, subTitle, data, colors, className }) => {
-  return (
-    <div
-      key={id}
-      className={`flex h-44 w-full flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem] md:w-[20.75rem] md:px-6 ${className}`}
-    >
-      <div className="flex flex-row items-center gap-2 tracking-wide">
-        <div className="text-sm font-semibold">{title}</div>
-      </div>
-      <div className="flex flex-col">
-        <div className="flex-grow text-3xl font-semibold">{subTitle}</div>
-      </div>
+}> = ({ id, data, colors }) => {
+  const hasValidData =
+    data.length > 1 &&
+    data.slice(1).every((row) => {
+      return row.length === 2 && typeof row[1] === "number" && row[1] > 0;
+    });
 
-      {data.length > 1 ? (
+  return (
+    <div key={id}>
+      {hasValidData ? (
         <Chart
           height={100}
           chartType="PieChart"
@@ -46,7 +40,11 @@ export const PieChart: React.FC<{
             pieHole: 0.7,
             height: 125,
             backgroundColor: "transparent",
-            pieSliceText: "none",
+            pieSliceText: "value",
+            pieSliceTextStyle: {
+              color: "black",
+              fontSize: 13,
+            },
             chartArea: {
               top: 10,
               bottom: 10,

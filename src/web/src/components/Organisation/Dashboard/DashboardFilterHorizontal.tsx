@@ -24,8 +24,9 @@ const ValueContainer = ({
   children,
   ...props
 }: ValueContainerProps<SelectOption>) => {
-  // eslint-disable-next-line prefer-const
-  let [values, input] = children as any[];
+  const [values, input] = children as any[];
+  let displayValues = values;
+
   if (Array.isArray(values)) {
     if (
       values.length > 0 &&
@@ -45,18 +46,18 @@ const ValueContainer = ({
       };
 
       const placeholder: string = values[0].props.selectProps.placeholder;
-      values = `${values.length} ${pluralize(placeholder, values.length)}`;
+      displayValues = `${values.length} ${pluralize(placeholder, values.length)}`;
     }
   }
   return (
     <components.ValueContainer {...props}>
-      {values}
+      {displayValues}
       {input}
     </components.ValueContainer>
   );
 };
 
-export const OrganisationRowFilter: React.FC<{
+export const DashboardFilterHorizontal: React.FC<{
   htmlRef: HTMLDivElement;
   searchFilter: OrganizationSearchFilterSummaryViewModel | null;
   lookups_categories?: OpportunityCategory[];

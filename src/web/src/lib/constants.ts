@@ -139,17 +139,25 @@ export const GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE =
 export const GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE_STATUS =
   "Updated Status for Store Access Control Rule";
 
-// colors for green, organge, purple, blue, red, pink, teal, indigo, cyan
+// colors for green, organge, blue, purple, red, pink, teal, indigo, cyan
 export const CHART_COLORS = [
   "#387F6A",
   "#F9AB3E",
-  "#240b36",
   "#4CADE9",
+  "#240b36",
   "#F87171",
   "#F472B6",
   "#60A5FA",
   "#818CF8",
   "#6EE7B7",
+];
+
+export const LINE_DASH_STYLES = [
+  [], // Solid
+  [4, 4], // Dotted
+  [8, 4, 2, 4], // Dashed
+  [4, 8], // Dot-dashed
+  [12, 4], // Long dashed
 ];
 
 export const VIEWPORT_SIZE = {
@@ -175,3 +183,10 @@ export const LG_BREAKPOINT = 1280;
 
 export const SETTING_USER_SETTINGS_CONFIGURED = "User_Settings_Configured";
 export const SETTING_USER_POPUP_LEAVINGYOMA = "User_PopUp_LeavingYoma";
+
+export const PLURAL_MAPPING: Record<string, string> = {
+  organizations: "Organisations",
+  opportunities: "Opportunities",
+  categories: "Categories",
+  countries: "Countries",
+};

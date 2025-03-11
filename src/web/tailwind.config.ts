@@ -60,6 +60,51 @@ export default {
         bounce: "cubic-bezier(0.175, 1.485, 0.320, 1.275)",
       },
       keyframes: {
+        // Fade In/Out
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "fade-out": {
+          "0%": { opacity: "1" },
+          "100%": { opacity: "0" },
+        },
+        // Slide In/Out from Bottom
+        "slide-in-bottom": {
+          "0%": { transform: "translateY(100%)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "slide-out-bottom": {
+          "0%": { transform: "translateY(0)", opacity: "1" },
+          "100%": { transform: "translateY(100%)", opacity: "0" },
+        },
+        // Slide In/Out from Top
+        "slide-in-top": {
+          "0%": { transform: "translateY(-100%)", opacity: "0" },
+          "100%": { transform: "translateY(0)", opacity: "1" },
+        },
+        "slide-out-top": {
+          "0%": { transform: "translateY(0)", opacity: "1" },
+          "100%": { transform: "translateY(-100%)", opacity: "0" },
+        },
+        // Slide In/Out from Left
+        "slide-in-left": {
+          "0%": { transform: "translateX(-100%)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        "slide-out-left": {
+          "0%": { transform: "translateX(0)", opacity: "1" },
+          "100%": { transform: "translateX(-100%)", opacity: "0" },
+        },
+        // Slide In/Out from Right
+        "slide-in-right": {
+          "0%": { transform: "translateX(100%)", opacity: "0" },
+          "100%": { transform: "translateX(0)", opacity: "1" },
+        },
+        "slide-out-right": {
+          "0%": { transform: "translateX(0)", opacity: "1" },
+          "100%": { transform: "translateX(100%)", opacity: "0" },
+        },
         wiggle: {
           "0%, 50%, 100%": { transform: "rotate(-3deg)" },
           "25%, 75%": { transform: "rotate(3deg)" },
@@ -88,13 +133,31 @@ export default {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
+        "spin-once": {
+          // Add spin-once keyframes
+          "0%": { transform: "rotate(0deg)" },
+          "100%": { transform: "rotate(360deg)" },
+        },
       },
       animation: {
+        // Fade
+        "fade-in": "fade-in 0.3s ease-in-out forwards",
+        "fade-out": "fade-out 0.3s ease-in-out forwards",
+        // Slide
+        "slide-in-bottom": "slide-in-bottom 0.3s ease-in-out forwards",
+        "slide-out-bottom": "slide-out-bottom 0.3s ease-in-out forwards",
+        "slide-in-top": "slide-in-top 0.3s ease-in-out forwards",
+        "slide-out-top": "slide-out-top 0.3s ease-in-out forwards",
+        "slide-in-left": "slide-in-left 0.3s ease-in-out forwards",
+        "slide-out-left": "slide-out-left 0.3s ease-in-out forwards",
+        "slide-in-right": "slide-in-right 0.3s ease-in-out forwards",
+        "slide-out-right": "slide-out-right 0.3s ease-in-out forwards",
         wiggle: "wiggle 2s ease-in-out",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
         enter: "enter 0.3s ease-out forwards",
         exit: "exit 0.3s ease-in forwards",
-        "fade-in": "fadeIn 1s ease-in-out forwards",
+        // "fade-in": "fadeIn 1s ease-in-out forwards",
+        "spin-once": "spin-once 0.5s ease-in-out forwards", // Add spin-once animation
       },
       inset: {
         "1/5": "20%", // Custom class for top: 20%
