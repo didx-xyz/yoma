@@ -17,9 +17,11 @@ namespace Yoma.Core.Domain.Core.Interfaces
 
     Task<IFormFile> Download(Guid id);
 
-    string GetURL(Guid id);
+    Task<(string OriginalFileName, string ContentType, byte[] Data)> DownloadRaw(Guid id);
 
-    string GetURL(StorageType storageType, string key);
+    string GetURL(Guid id, string? filename = null, int? urlExpirationInMinutes = null);
+
+    string GetURL(StorageType storageType, string key, string? filename = null, int? urlExpirationInMinutes = null);
 
     Task Delete(Guid id);
 

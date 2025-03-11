@@ -4,10 +4,10 @@ using Yoma.Core.Domain.SSI.Models;
 
 namespace Yoma.Core.Domain.SSI.Validators
 {
-  public class SSIWalletFilterValidator : PaginationFilterValidator<SSIWalletFilter>
+  public class SSIWalletSearchFilterValidator : PaginationFilterValidator<SSIWalletSearchFilter>
   {
     #region Constructor
-    public SSIWalletFilterValidator()
+    public SSIWalletSearchFilterValidator()
     {
       RuleFor(x => x.PaginationEnabled).Equal(true).When(x => !x.TotalCountOnly).WithMessage("Pagination required");
     }

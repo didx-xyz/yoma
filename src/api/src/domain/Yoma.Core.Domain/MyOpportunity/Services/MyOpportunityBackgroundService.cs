@@ -119,9 +119,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               try
               {
                 var recipients = new List<NotificationRecipient>
-                        {
-                            new() { Username = group.Key.Username, PhoneNumber = group.Key.UserPhoneNumber, Email = group.Key.UserEmail, DisplayName = group.Key.UserDisplayName }
-                        };
+                {
+                  new() { Username = group.Key.Username, PhoneNumber = group.Key.UserPhoneNumber, Email = group.Key.UserEmail, DisplayName = group.Key.UserDisplayName }
+                };
 
                 var data = new NotificationOpportunityVerification
                 {

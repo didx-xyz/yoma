@@ -94,22 +94,32 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
       }
     }
 
-    public string GetUrl(string filename)
+    public string GetUrl(string filename, string? filenameFriendly = null, int? urlExpirationInMinutes = null)
     {
       if (string.IsNullOrWhiteSpace(filename))
         throw new ArgumentNullException(nameof(filename));
       filename = filename.Trim().ToLower();
 
-      if (_storageType == StorageType.Private && !_optionsBucket.URLExpirationInMinutes.HasValue)
-        throw new InvalidOperationException($"'{AWSS3Options.Section}.{nameof(_optionsBucket.URLExpirationInMinutes)}' required for storage type '{_storageType}'");
+      filenameFriendly = filenameFriendly?.Trim();
+
+      if (urlExpirationInMinutes.HasValue && urlExpirationInMinutes.Value < 1)
+        throw new ArgumentOutOfRangeException(nameof(urlExpirationInMinutes), "URL expiration time must be at least 1 minute");
+
+      urlExpirationInMinutes ??= _optionsBucket.URLExpirationInMinutes;
+
+      if (_storageType == StorageType.Private && !urlExpirationInMinutes.HasValue)
+        throw new InvalidOperationException($"Explicit expiration or '{AWSS3Options.Section}.{nameof(_optionsBucket.URLExpirationInMinutes)}' required for storage type '{_storageType}'");
 
       var request = new GetPreSignedUrlRequest
       {
         BucketName = _optionsBucket.BucketName,
         Key = filename,
         Verb = HttpVerb.GET,
-        Expires = DateTime.UtcNow.AddMinutes(_optionsBucket.URLExpirationInMinutes ?? 1)
+        Expires = DateTime.UtcNow.AddMinutes(urlExpirationInMinutes ?? 1)
       };
+
+      if (!string.IsNullOrEmpty(filenameFriendly))
+        request.ResponseHeaderOverrides.ContentDisposition = $"attachment; filename=\"{filenameFriendly}\"";
 
       string url;
       try
@@ -121,10 +131,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
         throw new HttpClientException(ex.StatusCode, $"Failed to retrieve URL for S3 object with filename '{filename}': {ex.Message}");
       }
 
-      if (_optionsBucket.URLExpirationInMinutes.HasValue) return url;
-
-      url = new Url(url).RemoveQuery();
-      return url;
+      return urlExpirationInMinutes.HasValue ? url : new Url(url).RemoveQuery();
     }
 
     public async Task Delete(string filename)
@@ -142,7 +149,6 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
       try
       {
         await _client.DeleteObjectAsync(deleteRequest);
-
       }
       catch (AmazonS3Exception ex)
       {

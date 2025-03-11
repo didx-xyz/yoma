@@ -17,7 +17,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.0")
+                .HasAnnotation("ProductVersion", "9.0.2")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -198,6 +198,77 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("StorageType", "FileType", "ParentId");
 
                     b.ToTable("Blob", "Object");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.DownloadSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("DateModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ErrorReason")
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("FileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Filter")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("FilterHash")
+                        .IsRequired()
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<byte?>("RetryCount")
+                        .HasColumnType("smallint");
+
+                    b.Property<Guid>("StatusId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FileId");
+
+                    b.HasIndex("StatusId");
+
+                    b.HasIndex("UserId", "Type", "FilterHash", "StatusId", "DateCreated", "DateModified");
+
+                    b.ToTable("Schedule", "Download");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.Lookups.DownloadScheduleStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(30)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("ScheduleStatus", "Download");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups.OrganizationProviderType", b =>
@@ -2135,6 +2206,31 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasForeignKey("ParentId");
 
                     b.Navigation("Parent");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Core.Entities.DownloadSchedule", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", "File")
+                        .WithMany()
+                        .HasForeignKey("FileId");
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.Lookups.DownloadScheduleStatus", "Status")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("File");
+
+                    b.Navigation("Status");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Entity.Entities.Organization", b =>

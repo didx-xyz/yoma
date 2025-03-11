@@ -7,6 +7,7 @@ using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.ActionLink.Models.Lookups;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Core.Models.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.Opportunity.Models;
@@ -16,6 +17,7 @@ using Yoma.Core.Infrastructure.Database.ActionLink.Repositories;
 using Yoma.Core.Infrastructure.Database.ActionLink.Repositories.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Database.Core.Repositories.Lookups;
 using Yoma.Core.Infrastructure.Database.Core.Services;
 using Yoma.Core.Infrastructure.Database.Entity.Repositories;
 using Yoma.Core.Infrastructure.Database.Lookups.Repositories;
@@ -81,8 +83,13 @@ namespace Yoma.Core.Infrastructure.Database
       #endregion ActionLink
 
       #region Core
-      services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
+      #region Lookups
+      services.AddScoped<IRepository<DownloadScheduleStatus>, DownloadScheduleStatusRepository>();
+      #endregion
+
+      services.AddScoped<IRepositoryBatched<DownloadSchedule>, DownloadScheduleRepository>();
       services.AddScoped<IRepository<BlobObject>, BlobObjectRepository>();
+      services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
       #endregion Core
 
       #region Entity

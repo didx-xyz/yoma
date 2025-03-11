@@ -2,7 +2,6 @@ using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.MyOpportunity.Models;
-using Yoma.Core.Domain.Opportunity;
 
 namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 {
@@ -14,7 +13,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     MyOpportunityResponseVerifyCompletedExternal GetVerificationCompletedExternal(Guid opportunityId);
 
-    Task<IFormFile> DownloadVerificationFiles(Guid opportunityId, List<VerificationType>? verificationTypes);
+    Task DownloadVerificationFilesSchedule(MyOpportunitySearchFilterVerificationFiles filter, bool ensureOrganizationAuthorization);
+
+    Task<IFormFile> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter);
+
+    Task<List<IFormFile>> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter, Guid? userId);
 
     List<MyOpportunitySearchCriteriaOpportunity> ListMyOpportunityVerificationSearchCriteriaOpportunity(List<Guid>? organizations, List<VerificationStatus>? verificationStatuses, bool ensureOrganizationAuthorization);
 
@@ -24,7 +27,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     MyOpportunitySearchResults Search(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
-    (string fileName, byte[] bytes) SearchAndExportToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
+    (string fileName, byte[] bytes) ExportToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization, bool appendDateStamp);
+
+    Task<(bool scheduleForProcessing, string? fileName, byte[]? bytes)> ExportOrScheduleToCSV(MyOpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
     Task PerformActionViewed(Guid opportunityId);
 

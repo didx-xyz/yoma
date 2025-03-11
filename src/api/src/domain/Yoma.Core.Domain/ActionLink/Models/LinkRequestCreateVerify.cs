@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.ActionLink.Models
 {
   public class LinkRequestCreateVerify : LinkRequestCreateBase
@@ -10,6 +12,7 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public bool? LockToDistributionList { get; set; }
 
+    [JsonIgnore]
     internal override LinkAction Action => LinkAction.Verify;
   }
 }

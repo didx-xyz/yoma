@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.SSI.Services
     private readonly ISSIProviderClient _ssiProviderClient;
     private readonly ISSITenantService _ssiTenantService;
     private readonly ISSISchemaService _ssiSchemaService;
-    private readonly SSIWalletFilterValidator _ssiWalletFilterValidator;
+    private readonly SSIWalletSearchFilterValidator _ssiWalletSearchFilterValidator;
     #endregion
 
     #region Constructors
@@ -27,14 +27,14 @@ namespace Yoma.Core.Domain.SSI.Services
         ISSIProviderClientFactory ssiProviderClientFactory,
         ISSITenantService ssiTenantService,
         ISSISchemaService ssiSchemaService,
-        SSIWalletFilterValidator ssiWalletFilterValidator)
+        SSIWalletSearchFilterValidator ssiWalletFilterValidator)
     {
       _httpContextAccessor = httpContextAccessor;
       _userService = userService;
       _ssiProviderClient = ssiProviderClientFactory.CreateClient();
       _ssiTenantService = ssiTenantService;
       _ssiSchemaService = ssiSchemaService;
-      _ssiWalletFilterValidator = ssiWalletFilterValidator;
+      _ssiWalletSearchFilterValidator = ssiWalletFilterValidator;
     }
     #endregion
 
@@ -50,7 +50,7 @@ namespace Yoma.Core.Domain.SSI.Services
       return await ParseCredential<SSICredential>(item);
     }
 
-    public async Task<SSIWalletSearchResults> SearchUserCredentials(SSIWalletFilter filter)
+    public async Task<SSIWalletSearchResults> SearchUserCredentials(SSIWalletSearchFilter filter)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
@@ -71,11 +71,11 @@ namespace Yoma.Core.Domain.SSI.Services
       return tenantId;
     }
 
-    private async Task<SSIWalletSearchResults> Search(SSIWalletFilter filter)
+    private async Task<SSIWalletSearchResults> Search(SSIWalletSearchFilter filter)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      await _ssiWalletFilterValidator.ValidateAndThrowAsync(filter);
+      await _ssiWalletSearchFilterValidator.ValidateAndThrowAsync(filter);
 
       var result = new SSIWalletSearchResults { Items = [] };
 

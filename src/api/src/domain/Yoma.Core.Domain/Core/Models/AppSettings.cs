@@ -122,6 +122,17 @@ namespace Yoma.Core.Domain.Core.Models
     public AppSettingsDatabaseRetryPolicy DatabaseRetryPolicy { get; set; }
 
     public bool? RedisSSLCertificateValidationBypass { get; set; }
+
+    /// <summary>
+    /// -1: Represents infinite retries. Never transitions to an error state.
+    /// 0: Represents no retries. Immediately transitions to an error state.
+    /// >0: Represents the maximum number of retries. Transitions to an error state when retries exceed the specified value.
+    public int DownloadScheduleMaximumRetryAttempts { get; set; }
+
+    /// <summary>
+    /// Defines the time, in hours, before a scheduled download link expires and becomes inaccessible.
+    /// </summary>
+    public int DownloadScheduleLinkExpirationHours { get; set; }
     #endregion
 
     #region Private Members

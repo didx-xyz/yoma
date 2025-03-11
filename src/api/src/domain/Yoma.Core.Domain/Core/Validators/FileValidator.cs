@@ -18,27 +18,32 @@ namespace Yoma.Core.Domain.Core.Validators
       {
         case FileType.Photos:
           extensions = [".png", ".jpg", ".jpeg", ".webp"];
-          maxSizeBytes = 10000000;
+          maxSizeBytes = 10_000_000;
           break;
 
         case FileType.Certificates:
           extensions = [".pdf", ".doc", ".docx", ".pptx", ".png", ".jpg", ".jpeg", ".webp"];
-          maxSizeBytes = 10000000;
+          maxSizeBytes = 10_000_000;
           break;
 
         case FileType.Documents:
           extensions = [".pdf", ".doc", ".docx", ".pptx"];
-          maxSizeBytes = 10000000;
+          maxSizeBytes = 10_000_000;
           break;
 
         case FileType.VoiceNotes:
           extensions = [".wav", ".mp3", ".m4a", ".amr", ".ogg", ".3gp"];
-          maxSizeBytes = 10000000;
+          maxSizeBytes = 10_000_000;
           break;
 
         case FileType.Videos:
           extensions = [".mp4", ".mov", ".avi", ".mkv", ".wmv", ".webm", ".flv", ".3gp", ".m4v"];
-          maxSizeBytes = 100000000;
+          maxSizeBytes = 100_000_000;
+          break;
+
+        case FileType.ZipArchive:
+          extensions = [".zip"];
+          maxSizeBytes = 500_000_000;
           break;
 
         default:

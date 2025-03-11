@@ -1,10 +1,16 @@
+using CsvHelper.Configuration;
+using CsvHelper;
 using Microsoft.AspNetCore.Http;
+using System.Globalization;
 using System.IO.Compression;
+using System.Text;
 
 namespace Yoma.Core.Domain.Core.Helpers
 {
   public static class FileHelper
   {
+    public const string Zip_FileName_Path_Separator = "_ZipFolder_";
+
     public static IFormFile FromByteArray(string fileName, string contentType, byte[] data)
     {
       if (string.IsNullOrWhiteSpace(fileName))
@@ -40,7 +46,9 @@ namespace Yoma.Core.Domain.Core.Helpers
       {
         foreach (var file in files)
         {
-          var entry = archive.CreateEntry(file.FileName, CompressionLevel.Fastest);
+          var entryName = file.FileName.Replace(Zip_FileName_Path_Separator, "/");
+
+          var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
           using var entryStream = entry.Open();
           using var fileStream = file.OpenReadStream();
           fileStream.CopyTo(entryStream);
@@ -48,6 +56,28 @@ namespace Yoma.Core.Domain.Core.Helpers
       }
 
       return FromByteArray(fileName, "application/zip", memoryStream.ToArray());
+    }
+
+    public static (string fileName, byte[] bytes) CreateCsvFile<T>(IEnumerable<T> records, string fileNamePrefix, bool appendDateStamp)
+    {
+      ArgumentNullException.ThrowIfNull(records, nameof(records));
+      ArgumentException.ThrowIfNullOrWhiteSpace(fileNamePrefix, nameof(fileNamePrefix));
+      fileNamePrefix = fileNamePrefix.Trim();
+
+      var config = new CsvConfiguration(CultureInfo.CurrentCulture);
+
+      using var stream = new MemoryStream();
+      using (var streamWriter = new StreamWriter(stream, Encoding.UTF8))
+      {
+        using var writer = new CsvWriter(streamWriter, config);
+        writer.WriteRecords(records);
+      }
+
+      var fileName = appendDateStamp
+        ? $"{fileNamePrefix}_{DateTimeOffset.UtcNow:yyyy-MM-dd}.csv"
+        : $"{fileNamePrefix}.csv";
+
+      return (fileName, stream.ToArray());
     }
   }
 }

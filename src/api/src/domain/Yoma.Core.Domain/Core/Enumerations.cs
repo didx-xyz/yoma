@@ -31,7 +31,8 @@ namespace Yoma.Core.Domain.Core
     Certificates,
     Documents,
     VoiceNotes,
-    Videos
+    Videos,
+    ZipArchive
   }
 
   public enum Country
@@ -79,5 +80,20 @@ namespace Yoma.Core.Domain.Core
     Online,
     Offline,
     Hybrid
+  }
+
+  public enum DownloadScheduleStatus
+  {
+    Pending,
+    Processed,
+    Error,
+    Deleted
+  }
+
+  public enum DownloadScheduleType
+  {
+    Opporunities,
+    MyOpportunityVerifications,
+    MyOpportunityVerificationFiles
   }
 }

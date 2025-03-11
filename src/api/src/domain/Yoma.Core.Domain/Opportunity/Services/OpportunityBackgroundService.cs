@@ -265,29 +265,27 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           while (executeUntil > DateTimeOffset.UtcNow)
           {
+            var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
+                o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
+                .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
+            if (items.Count == 0) break;
+
+            var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+
+            foreach (var item in items)
             {
-              var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-                  o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
-                  .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
-              if (items.Count == 0) break;
-
-              var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
-
-              foreach (var item in items)
-              {
-                item.StatusId = statusDeletedId;
-                item.Status = Status.Deleted;
-                item.ModifiedByUserId = user.Id;
-                _logger.LogInformation("Opportunity with id '{id}' flagged for deletion", item.Id);
-              }
-
-              await _opportunityRepository.Update(items);
-
-              foreach (var item in items)
-                await _mediator.Publish(new OpportunityEvent(Core.EventType.Delete, item));
-
-              if (executeUntil <= DateTimeOffset.UtcNow) break;
+              item.StatusId = statusDeletedId;
+              item.Status = Status.Deleted;
+              item.ModifiedByUserId = user.Id;
+              _logger.LogInformation("Opportunity with id '{id}' flagged for deletion", item.Id);
             }
+
+            await _opportunityRepository.Update(items);
+
+            foreach (var item in items)
+              await _mediator.Publish(new OpportunityEvent(Core.EventType.Delete, item));
+
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
           }
 
           _logger.LogInformation("Processed opportunity deletion");

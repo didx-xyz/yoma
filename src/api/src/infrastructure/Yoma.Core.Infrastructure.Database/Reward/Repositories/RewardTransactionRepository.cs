@@ -122,7 +122,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
 
       foreach (var item in items)
       {
-        var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(RewardTransaction)} with id '{item.Id}' does not exist");
+        var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Entities.RewardTransaction)} with id '{item.Id}' does not exist");
 
         item.DateModified = DateTimeOffset.UtcNow;
 

@@ -122,7 +122,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
           {
             Action = MyOpportunity.Action.Verification,
             VerificationStatuses = [VerificationStatus.Completed],
-            NonPaginatedQuery = true
+            UnrestrictedQuery = true
           };
 
           myOpportunitiesCompleted = _myOpportunityService.Search(myOpportunitySearchFilter, user).Items;

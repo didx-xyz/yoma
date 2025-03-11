@@ -94,32 +94,36 @@ namespace Yoma.Core.Domain.Core.Services
 
     public async Task<IFormFile> Download(Guid id)
     {
-      var item = GetById(id);
+      var (originalFileName, contentType, data) = await DownloadRaw(id);
 
-      var client = _blobProviderClientFactory.CreateClient(item.StorageType);
-
-      var (ContentType, Data) = await client.Download(item.Key);
-
-      return FileHelper.FromByteArray(item.OriginalFileName, ContentType, Data);
+      return FileHelper.FromByteArray(originalFileName, contentType, data);
     }
 
-    public string GetURL(Guid id)
+    public async Task<(string OriginalFileName, string ContentType, byte[] Data)> DownloadRaw(Guid id)
     {
       var item = GetById(id);
 
       var client = _blobProviderClientFactory.CreateClient(item.StorageType);
 
-      return client.GetUrl(item.Key);
+      var (contentType, data) = await client.Download(item.Key);
+
+      return (item.OriginalFileName, contentType, data);
     }
 
-    public string GetURL(StorageType storageType, string key)
+    public string GetURL(Guid id, string? fileName = null, int? urlExpirationInMinutes = null)
     {
-      ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
-      key = key.Trim();
+      var item = GetById(id);
 
+      var client = _blobProviderClientFactory.CreateClient(item.StorageType);
+
+      return client.GetUrl(item.Key, fileName, urlExpirationInMinutes);
+    }
+
+    public string GetURL(StorageType storageType, string key, string? fileName = null, int? urlExpirationInMinutes = null)
+    {
       var client = _blobProviderClientFactory.CreateClient(storageType);
 
-      return client.GetUrl(key);
+      return client.GetUrl(key, fileName, urlExpirationInMinutes);
     }
 
     public async Task Delete(Guid id)

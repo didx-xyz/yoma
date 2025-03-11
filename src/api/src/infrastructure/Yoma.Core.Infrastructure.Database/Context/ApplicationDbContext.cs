@@ -30,7 +30,13 @@ namespace Yoma.Core.Infrastructure.Database.Context
     #endregion ActionLink
 
     #region Core
+    #region Lookups
+    public DbSet<Core.Entities.Lookups.DownloadScheduleStatus> DownloadScheduleStatus { get; set; }
+    #endregion Lookups
+
     public DbSet<BlobObject> BlobObject { get; set; }
+
+    public DbSet<DownloadSchedule> DownloadSchedule { get; set; }
     #endregion Core
 
     #region Entity
