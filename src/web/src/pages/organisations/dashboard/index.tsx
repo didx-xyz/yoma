@@ -793,7 +793,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                 <span className="mr-2 text-lg">👀</span>
                 <div className="text-left">
                   <span className="font-bold">Total Views:</span> The number of
-                  times your opportunities have been viewed by users.
+                  times your opportunities have been viewed by users after
+                  clicking through.
                 </div>
               </div>
               <div className="flex items-start gap-2">
@@ -1260,7 +1261,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                                   </div>
                                   <div className="text-md ml-auto">
                                     {engagementData?.opportunities
-                                      ?.conversionRate?.viewedCount ?? 0}
+                                      ?.conversionRate
+                                      ?.viewedCountFromNavigatedExternalLinkTracking ??
+                                      0}
                                   </div>
                                 </div>
 
@@ -1293,7 +1296,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                                 <div className="flex flex-row items-center gap-5">
                                   <div>
-                                    <span className="mr-2">➡️</span>Conversion:{" "}
+                                    <span className="mr-2">➡️</span>Conversion:
                                   </div>
                                   <div className="badge badge-primary ml-auto font-semibold">
                                     {engagementData?.opportunities
@@ -1313,7 +1316,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                                   </div>
                                   <div className="ml-auto font-semibold">
                                     {engagementData?.opportunities
-                                      ?.conversionRate?.completedCount ?? 0}
+                                      ?.conversionRate
+                                      ?.completedCountFromNavigatedExternalLinkTracking ??
+                                      0}
                                   </div>
                                 </div>
                               </div>
