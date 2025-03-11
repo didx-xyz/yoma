@@ -1000,7 +1000,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                   <div className="flex flex-row gap-1 font-semibold">
                     <div>Here&apos;s the dashboard for</div>
                     <div className="flex flex-row font-semibold">
-                      <div className="w-36 truncate underline">
+                      <div className="mr-1 max-w-36 truncate underline">
                         {lookups_selectedOrganisations?.items?.find(
                           (x) => x.id === searchFilter.organizations![0],
                         )?.name ?? searchFilter.organizations![0]}
