@@ -119,7 +119,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
       };
 
       if (!string.IsNullOrEmpty(filenameFriendly))
-        request.ResponseHeaderOverrides.ContentDisposition = $"attachment; filename=\"{filenameFriendly}\"";  
+        request.ResponseHeaderOverrides.ContentDisposition = $"attachment; filename=\"{filenameFriendly}\"";
 
       string url;
       try
