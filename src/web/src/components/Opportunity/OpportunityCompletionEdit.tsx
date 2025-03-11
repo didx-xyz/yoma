@@ -453,6 +453,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   return (
     <>
       {isLoading && <Loading />}
+
       <form
         key={`OpportunityComplete_${id}`}
         className="flex h-full flex-col gap-2 overflow-y-auto"
@@ -471,7 +472,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           </div>
           <div className="flex flex-col">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
+              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] animate-spin-once items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
                 <Image
                   src={iconSuccess}
                   alt="Icon Success"

@@ -676,13 +676,23 @@ const OrganisationDashboard: NextPageWithLayout<{
   }, [setFilterFullWindowVisible]);
 
   const onClearFilter = useCallback(() => {
-    void router.push("/organisations/dashboard", undefined, { scroll: true });
+    redirectWithSearchFilterParams({
+      organizations: !isAdmin ? searchFilter.organizations : null, // org admins can't clear org
+      countries: null,
+      categories: null,
+      opportunities: null,
+      startDate: null,
+      endDate: null,
+      pageSelectedOpportunities: 1,
+      pageCompletedYouth: 1,
+      pageSSO: 1,
+    });
+
     setFilterFullWindowVisible(false);
   }, [router, setFilterFullWindowVisible]);
 
   const onSubmitFilter = useCallback(
     (val: OrganizationSearchFilterSummaryViewModel) => {
-      console.table(val);
       redirectWithSearchFilterParams({
         organizations: val.organizations,
         countries: val.countries,

@@ -755,7 +755,7 @@ const Opportunities: NextPageWithLayout<{
 
   const onSearchInputSubmit = useCallback(
     (query: string) => {
-      if (query && query.length > 2) {
+      if (query && query.length >= 3) {
         // uri encode the search value
         const searchValueEncoded = encodeURIComponent(query);
         query = searchValueEncoded;
@@ -1111,7 +1111,8 @@ const Opportunities: NextPageWithLayout<{
         onRequestClose={() => {
           setFilterFullWindowVisible(false);
         }}
-        className="md:max-h-[600px] md:w-[700px]"
+        className="md:max-h-[800px] md:w-[700px]"
+        animationStyle="slide-top"
       >
         {lookups_countries != undefined && lookups_languages != undefined && (
           <OpportunityFilterVertical

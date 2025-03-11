@@ -38,7 +38,12 @@ export const OppSearchInputLarge: React.FC<{
   const maxWidthStyle = maxWidth == 0 ? "auto" : `${maxWidth}px`;
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full flex-grow">
+    <form
+      onSubmit={handleSubmit}
+      className="flex w-full flex-grow"
+      autoComplete="off"
+      spellCheck="false"
+    >
       <div className="join w-full overflow-hidden rounded-3xl shadow-lg lg:my-0">
         {openFilter && (
           <button
@@ -49,6 +54,7 @@ export const OppSearchInputLarge: React.FC<{
             <IoMdOptions className="h-4 w-4 md:h-6 md:w-6" />
           </button>
         )}
+
         <input
           type="search"
           placeholder={placeholder ?? "Search..."}
@@ -63,13 +69,17 @@ export const OppSearchInputLarge: React.FC<{
           onFocus={(e) => (e.target.placeholder = "")}
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
           maxLength={50}
+          autoComplete="off"
+          spellCheck="false"
         />
+
         <button
           className={`${buttonClassName} hover:border-1 btn btn-primary join-item inline-flex items-center justify-center rounded-r-full border-l-0 border-orange bg-orange text-black hover:border-l-0 hover:border-orange hover:text-orange disabled:brightness-75`}
           type="submit"
           disabled={
-            !!searchInputValue &&
-            !(searchInputValue.length >= 3 && searchInputValue.length <= 50)
+            searchInputValue === null ||
+            searchInputValue === undefined ||
+            searchInputValue.length < 3
           }
         >
           <svg

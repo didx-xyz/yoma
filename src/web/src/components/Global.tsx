@@ -10,7 +10,7 @@ import stamp1 from "public/images/stamp-1.png";
 import stamp2 from "public/images/stamp-2.png";
 import YoIDCard from "public/images/YoID-modal-card.webp";
 import { useCallback, useEffect, useState } from "react";
-import { FcCamera, FcSettings, FcViewDetails } from "react-icons/fc";
+import { FcCamera, FcKey, FcSettings, FcViewDetails } from "react-icons/fc";
 import { toast } from "react-toastify";
 import type { SettingsRequest } from "~/api/models/common";
 import type { UserProfile } from "~/api/models/user";
@@ -675,22 +675,21 @@ export const Global: React.FC = () => {
         onRequestClose={() => {
           setLoginDialogVisible(false);
         }}
+        className="md:max-h-[350px] md:w-[600px]"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="bg-theme flex h-16 flex-row p-4 shadow-lg"></div>
-          <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-purple-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
+          <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
+            <div className="-mt-8 flex animate-spin-once items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
+              <FcKey className="size-8 md:size-10" />
             </div>
 
-            <h5>{loginMessage}</h5>
+            <div className="flex flex-col gap-2 text-center">
+              <div className="text-2xl font-semibold tracking-wide">
+                Session Expired
+              </div>
+              <div className="text-md">{loginMessage}</div>
+            </div>
 
             <div className="mt-8 flex flex-grow gap-4">
               <SignInButton />

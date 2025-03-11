@@ -416,7 +416,7 @@ const OpportunityPublicDetails: React.FC<{
             onRequestClose={() => {
               setCompleteOpportunityDialogVisible(false);
             }}
-            className={`md:max-h-[650px] md:w-[600px]`}
+            className={`md:max-h-[700px] md:w-[700px]`}
           >
             <OpportunityCompletionEdit
               id="op-complete"
