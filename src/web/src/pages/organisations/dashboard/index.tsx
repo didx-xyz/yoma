@@ -689,7 +689,12 @@ const OrganisationDashboard: NextPageWithLayout<{
     });
 
     setFilterFullWindowVisible(false);
-  }, [router, setFilterFullWindowVisible]);
+  }, [
+    setFilterFullWindowVisible,
+    isAdmin,
+    redirectWithSearchFilterParams,
+    searchFilter.organizations,
+  ]);
 
   const onSubmitFilter = useCallback(
     (val: OrganizationSearchFilterSummaryViewModel) => {

@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import iconSuccess from "public/images/icon-success.png";
 import { useCallback, useEffect, useState } from "react";
-import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm } from "react-hook-form";
 import {
@@ -456,7 +455,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
       <form
         key={`OpportunityComplete_${id}`}
-        className="flex h-full flex-col gap-2 overflow-y-auto"
+        className="flex h-full flex-col gap-2 overflow-y-auto overflow-x-hidden"
         onSubmit={handleSubmit(onSubmit)}
       >
         <div className="flex flex-col gap-2">
@@ -464,7 +463,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
             <h1 className="flex-grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
               onClick={onClose}
             >
               <IoMdClose className="h-6 w-6"></IoMdClose>
@@ -472,7 +471,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           </div>
           <div className="flex flex-col">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] animate-spin-once items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
+              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] animate-slide-in-bottom items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
                 <Image
                   src={iconSuccess}
                   alt="Icon Success"
@@ -485,7 +484,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
             </div>
 
             <div className="flex flex-col gap-4 px-4">
-              <div className="flex flex-col items-center gap-1 text-center">
+              <div className="flex animate-bounce-once flex-col items-center gap-1 text-center opacity-0">
                 <h4 className="font-semibold tracking-wide">
                   Well done for completing this opportunity!
                 </h4>
@@ -495,8 +494,11 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 </div>
               </div>
 
-              {/* When did you finish? */}
-              <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
+              {/* WHEN DID YOU FINISH? */}
+              <div
+                className="flex animate-slide-in-bottom flex-col rounded-lg border-dotted bg-gray-light opacity-0"
+                style={{ animationDelay: "0.5s" }}
+              >
                 <div className="flex w-full flex-row">
                   <div className="ml-2 p-4 md:p-6">
                     <FcCalendar className="size-10" />
@@ -515,13 +517,26 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         control={control}
                         name="dateEnd"
                         render={({ field: { onChange, value } }) => (
-                          <DatePicker
-                            className="input input-sm input-bordered block rounded-md border-gray focus:border-gray focus:outline-none"
-                            onChange={(date) =>
-                              onChange(toISOStringForTimezone(date))
+                          <input
+                            type="date"
+                            className="input input-sm input-bordered block w-36 rounded-md border-gray focus:border-gray focus:outline-none"
+                            placeholder="End Date"
+                            onChange={(e) => {
+                              // Convert the YYYY-MM-DD string to an ISO string for the form state
+                              if (e.target.value) {
+                                const date = new Date(e.target.value);
+                                onChange(toISOStringForTimezone(date));
+                              } else {
+                                onChange(null);
+                              }
+                            }}
+                            // Format the ISO date string to YYYY-MM-DD for the input
+                            value={
+                              value
+                                ? moment(new Date(value)).format("YYYY-MM-DD")
+                                : ""
                             }
-                            selected={value ? new Date(value) : null}
-                            placeholderText="End Date"
+                            max={moment().format("YYYY-MM-DD")} // Restrict to today or earlier
                           />
                         )}
                       />
@@ -539,8 +554,11 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 </div>
               </div>
 
-              {/* how long did it take? */}
-              <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
+              {/* HOW LONG DID IT TAKE? */}
+              <div
+                className="flex animate-slide-in-bottom flex-col rounded-lg border-dotted bg-gray-light opacity-0"
+                style={{ animationDelay: "0.7s" }}
+              >
                 <div className="flex w-full flex-row">
                   <div className="ml-2 p-4 md:p-6">
                     <FcAlarmClock className="size-10" />
@@ -631,7 +649,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               </div>
 
               {/* FILE UPLOADS */}
-              <div className="flex w-full flex-col items-center justify-center gap-4">
+              <div
+                className="flex w-full animate-slide-in-bottom flex-col items-center justify-center gap-4 opacity-0"
+                style={{ animationDelay: "1s" }}
+              >
                 {opportunityInfo?.verificationTypes?.find(
                   (x) => x.type == "FileUpload",
                 ) && (
@@ -795,7 +816,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               </div>
 
               {/* FEEDBACK */}
-              <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
+              <div
+                className="flex animate-slide-in-bottom flex-col rounded-lg border-dotted bg-gray-light opacity-0"
+                style={{ animationDelay: "1.2s" }}
+              >
                 <div className="flex w-full flex-row">
                   <div className="ml-2 p-4 md:p-6">
                     <FcIdea className="size-10" />
@@ -849,7 +873,8 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                           name="feedback"
                           render={({ field: { onChange, value } }) => (
                             <textarea
-                              className="textarea textarea-bordered w-full"
+                              //className="textarea textarea-bordered w-full"
+                              className="blockx textarea textarea-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
                               placeholder="Enter your feedback"
                               value={value || ""}
                               onChange={onChange}
@@ -897,14 +922,6 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 </FormMessage>
               )}
 
-              {/* {errors && (
-                <label className="label">
-                  <span className="label-text-alt text-base italic text-red-500">
-                    {`${JSON.stringify(errors)}`}
-                  </span>
-                </label>
-              )} */}
-
               <div className="mb-10 mt-4 flex flex-grow gap-4">
                 <button
                   type="button"
@@ -915,7 +932,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary w-1/2 flex-shrink rounded-full bg-purple normal-case text-white md:w-[250px]"
+                  className="btn btn-primary w-1/2 flex-shrink rounded-full bg-purple normal-case text-white"
                 >
                   Submit
                 </button>

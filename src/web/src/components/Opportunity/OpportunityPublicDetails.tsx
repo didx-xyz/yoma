@@ -2,17 +2,18 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type { AxiosError } from "axios";
 import { useAtomValue, useSetAtom } from "jotai";
 import Image from "next/image";
-import iconBell from "public/images/icon-bell.webp";
 import iconClock from "public/images/icon-clock.svg";
 import iconDifficulty from "public/images/icon-difficulty.svg";
 import iconLanguage from "public/images/icon-language.svg";
 import iconLocation from "public/images/icon-location.svg";
 import iconOpen from "public/images/icon-open.svg";
 import iconSkills from "public/images/icon-skills.svg";
-import iconSmiley from "public/images/icon-smiley.webp";
+import iconSuccess from "public/images/icon-success.png";
 import iconTopics from "public/images/icon-topics.svg";
 import iconUpload from "public/images/icon-upload.svg";
 import { useCallback, useEffect, useState } from "react";
+import { FaExclamationTriangle } from "react-icons/fa";
+import { FcKey } from "react-icons/fc";
 import {
   IoMdBookmark,
   IoMdCheckmark,
@@ -260,14 +261,14 @@ const OpportunityPublicDetails: React.FC<{
             onRequestClose={() => {
               setLoginDialogVisible(false);
             }}
-            className={`md:max-h-[300px] md:w-[450px]`}
+            className={`md:max-h-[350px] md:w-[500px]`}
           >
             <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
               <div className="flex flex-row bg-green p-4 shadow-lg">
                 <h1 className="flex-grow"></h1>
                 <button
                   type="button"
-                  className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                  className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
                   onClick={() => {
                     setLoginDialogVisible(false);
                   }}
@@ -276,20 +277,15 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4">
-                <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-                  <Image
-                    src={iconBell}
-                    alt="Icon Bell"
-                    width={28}
-                    className="h-auto"
-                    sizes="100vw"
-                    priority={true}
-                  />
+                <div className="-mt-8 flex h-12 w-12 animate-bounce-once items-center justify-center rounded-full bg-white shadow-lg">
+                  <FcKey className="mr-px h-7 w-7 text-white" />
                 </div>
 
-                <h5>Please sign-in to continue</h5>
+                <h5 className="animate-bounce-once">
+                  Please sign-in to continue
+                </h5>
 
-                <div className="mt-4 flex flex-grow gap-4">
+                <div className="mt-8 flex flex-grow gap-4">
                   <button
                     type="button"
                     className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
@@ -311,14 +307,14 @@ const OpportunityPublicDetails: React.FC<{
             onRequestClose={() => {
               setGotoOpportunityDialogVisible(false);
             }}
-            className={`md:max-h-[440px] md:w-[600px]`}
+            className={`md:max-h-[500px] md:w-[600px]`}
           >
             <div className="pb-10x flex h-full flex-col gap-2 overflow-y-auto">
               <div className="flex flex-row bg-green p-4 shadow-lg">
                 <h1 className="flex-grow"></h1>
                 <button
                   type="button"
-                  className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                  className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
                   onClick={() => {
                     setGotoOpportunityDialogVisible(false);
                   }}
@@ -327,18 +323,15 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
-                <div className="-mt-12 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg md:-mt-8">
-                  <Image
-                    src={iconBell}
-                    alt="Icon Bell"
-                    width={28}
-                    className="h-auto"
-                    sizes="100vw"
-                    priority={true}
-                  />
+                <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                  <FaExclamationTriangle className="h-7 w-7 text-yellow" />
                 </div>
-                <h3>You are now leaving Yoma</h3>
-                <div className="rounded-lg bg-gray p-4 text-center md:w-[450px]">
+
+                <h3 className="animate-bounce-once">
+                  You are now leaving Yoma!
+                </h3>
+
+                <div className="mt-4 rounded-lg bg-gray p-4 text-center md:w-[450px]">
                   Remember to{" "}
                   <strong>upload your completion certificate</strong> on this
                   page upon finishing to <strong>earn your ZLTO</strong>.
@@ -365,7 +358,7 @@ const OpportunityPublicDetails: React.FC<{
                   </div>
                 )}
 
-                <div className="mt-2 flex w-full flex-grow flex-col justify-center gap-4 md:flex-row">
+                <div className="mt-6 flex w-full flex-grow flex-col justify-center gap-4 md:flex-row">
                   {user && (
                     <button
                       type="button"
@@ -416,7 +409,7 @@ const OpportunityPublicDetails: React.FC<{
             onRequestClose={() => {
               setCompleteOpportunityDialogVisible(false);
             }}
-            className={`md:max-h-[700px] md:w-[700px]`}
+            className={`md:max-h-[900px] md:w-[700px]`}
           >
             <OpportunityCompletionEdit
               id="op-complete"
@@ -435,14 +428,15 @@ const OpportunityPublicDetails: React.FC<{
             onRequestClose={() => {
               setCompleteOpportunitySuccessDialogVisible(false);
             }}
-            className={`md:max-h-[400px] md:w-[600px]`}
+            className={`md:max-h-[410px] md:w-[600px]`}
+            animationStyle="spin"
           >
             <div className="flex w-full flex-col gap-2">
               <div className="flex flex-row bg-green p-4 shadow-lg">
                 <h1 className="flex-grow"></h1>
                 <button
                   type="button"
-                  className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                  className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
                   onClick={() => {
                     setCompleteOpportunitySuccessDialogVisible(false);
                   }}
@@ -451,22 +445,27 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4">
-                <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
                   <Image
-                    src={iconSmiley}
-                    alt="Icon Smiley"
-                    width={28}
+                    src={iconSuccess}
+                    alt="Icon Success"
+                    width={35}
                     className="h-auto"
                     sizes="100vw"
                     priority={true}
                   />
                 </div>
-                <h3>Submitted!</h3>
+
+                <h3>Your application has been submitted!</h3>
+
                 <div className="rounded-lg p-4 text-center md:w-[450px]">
                   <strong>{opportunityInfo.organizationName}</strong> is busy
                   reviewing your submission. Once approved, the opportunity will
-                  be automatically added to your CV. This may take between 3-4
-                  business days.
+                  be automatically added to your CV. This may take between{" "}
+                  <span className="font-bold text-blue underline decoration-blue decoration-2">
+                    3-4 business days
+                  </span>
+                  .
                 </div>
                 <div className="mt-4 flex flex-grow gap-4">
                   <button
@@ -497,7 +496,7 @@ const OpportunityPublicDetails: React.FC<{
                 <h1 className="flex-grow"></h1>
                 <button
                   type="button"
-                  className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+                  className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
                   onClick={() => {
                     setCancelOpportunityDialogVisible(false);
                   }}
@@ -507,16 +506,13 @@ const OpportunityPublicDetails: React.FC<{
               </div>
               <div className="flex flex-col items-center justify-center gap-4">
                 <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-                  <Image
-                    src={iconBell}
-                    alt="Icon Bell"
-                    width={28}
-                    className="h-auto"
-                    sizes="100vw"
-                    priority={true}
-                  />
+                  <FaExclamationTriangle className="h-7 w-7 text-yellow" />
                 </div>
-                <h3>Your application is pending verification.</h3>
+
+                <h3 className="animate-bounce-once">
+                  Your application is pending verification.
+                </h3>
+
                 <div className="rounded-lg p-4 text-center md:w-[450px]">
                   <strong>{opportunityInfo.organizationName}</strong> is busy
                   reviewing your submission. Once approved, the opportunity will
@@ -545,7 +541,7 @@ const OpportunityPublicDetails: React.FC<{
               onRequestClose={() => {
                 setShareOpportunityDialogVisible(false);
               }}
-              className={`md:max-h-[500px] md:w-[600px]`}
+              className={`md:max-h-[520px] md:w-[700px]`}
             >
               <Share
                 opportunity={opportunityInfo}

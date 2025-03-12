@@ -1,71 +1,68 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { QueryClient, dehydrate, useQueryClient } from "@tanstack/react-query";
-import { type AxiosError } from "axios";
+import axios, { type AxiosError } from "axios";
+import moment from "moment";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import Link from "next/link";
+import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import {
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactElement,
-  useEffect,
-  useRef,
 } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
+import { FaExclamationTriangle } from "react-icons/fa";
+import { IoMdArrowRoundBack, IoMdClose, IoMdWarning } from "react-icons/io";
+import Moment from "react-moment";
 import Select from "react-select";
+import Async from "react-select/async";
+import CreatableSelect from "react-select/creatable";
 import { toast } from "react-toastify";
 import z from "zod";
+import type { LinkRequestCreateVerify } from "~/api/models/actionLinks";
 import type { SelectOption } from "~/api/models/lookups";
-import {
-  searchCriteriaOpportunities,
-  getOpportunityInfoByIdAdminOrgAdminOrUser,
-} from "~/api/services/opportunities";
-import MainLayout from "~/components/Layout/Main";
-import { ApiErrors } from "~/components/Status/ApiErrors";
-import { Loading } from "~/components/Status/Loading";
-import { authOptions, type User } from "~/server/auth";
-import { PageBackground } from "~/components/PageBackground";
-import Link from "next/link";
-import { IoMdArrowRoundBack, IoMdWarning } from "react-icons/io";
-import CreatableSelect from "react-select/creatable";
-import type { NextPageWithLayout } from "~/pages/_app";
-import {
-  DATE_FORMAT_HUMAN,
-  DATE_FORMAT_SYSTEM,
-  PAGE_SIZE_MEDIUM,
-  GA_ACTION_OPPORTUNITY_LINK_CREATE,
-  GA_CATEGORY_OPPORTUNITY_LINK,
-  MAX_INT32,
-  DELIMETER_PASTE_MULTI,
-} from "~/lib/constants";
-import { Unauthorized } from "~/components/Status/Unauthorized";
-import { config } from "~/lib/react-query-config";
-import { trackGAEvent } from "~/lib/google-analytics";
-import Moment from "react-moment";
-import moment from "moment";
-import { getThemeFromRole, debounce, getSafeUrl } from "~/lib/utils";
-import Async from "react-select/async";
-import { useRouter } from "next/router";
-import Image from "next/image";
-import iconBell from "public/images/icon-bell.webp";
-import { IoMdClose } from "react-icons/io";
 import {
   VerificationMethod,
   type OpportunityInfo,
   type OpportunitySearchResultsInfo,
 } from "~/api/models/opportunity";
-import axios from "axios";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { validateEmail, validatePhoneNumber } from "~/lib/validate";
-import type { LinkRequestCreateVerify } from "~/api/models/actionLinks";
 import { createLinkInstantVerify } from "~/api/services/actionLinks";
-import SocialPreview from "~/components/Opportunity/SocialPreview";
-import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
+import {
+  getOpportunityInfoByIdAdminOrgAdminOrUser,
+  searchCriteriaOpportunities,
+} from "~/api/services/opportunities";
 import CustomModal from "~/components/Common/CustomModal";
+import MainLayout from "~/components/Layout/Main";
+import SocialPreview from "~/components/Opportunity/SocialPreview";
+import { PageBackground } from "~/components/PageBackground";
+import { ApiErrors } from "~/components/Status/ApiErrors";
+import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Loading } from "~/components/Status/Loading";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
+import {
+  DATE_FORMAT_HUMAN,
+  DATE_FORMAT_SYSTEM,
+  DELIMETER_PASTE_MULTI,
+  GA_ACTION_OPPORTUNITY_LINK_CREATE,
+  GA_CATEGORY_OPPORTUNITY_LINK,
+  MAX_INT32,
+  PAGE_SIZE_MEDIUM,
+} from "~/lib/constants";
+import { trackGAEvent } from "~/lib/google-analytics";
+import { config } from "~/lib/react-query-config";
+import { debounce, getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import { validateEmail, validatePhoneNumber } from "~/lib/validate";
+import type { NextPageWithLayout } from "~/pages/_app";
+import { authOptions, type User } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -595,14 +592,14 @@ const LinkDetails: NextPageWithLayout<{
         onRequestClose={() => {
           setSaveChangesDialogVisible(false);
         }}
-        className={`md:max-h-[310px] md:w-[450px]`}
+        className={`md:max-h-[400px] md:w-[500px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="flex flex-row bg-green p-4 shadow-lg">
             <h1 className="flex-grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
               onClick={() => {
                 setSaveChangesDialogVisible(false);
               }}
@@ -612,20 +609,16 @@ const LinkDetails: NextPageWithLayout<{
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
             <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
+              <FaExclamationTriangle className="h-7 w-7 text-yellow" />
             </div>
 
-            <p className="w-80 text-center text-base">
-              Your recent changes have not been saved. Please make sure to save
-              your changes to prevent any loss of data.
-            </p>
+            <div className="animate-bounce-once text-base font-semibold">
+              Your recent changes have not been saved!
+            </div>
+
+            <div className="mt-4 rounded-lg bg-gray p-4 text-center md:w-[450px]">
+              Please make sure to save your changes to prevent any loss of data.
+            </div>
 
             <div className="mt-4 flex flex-grow gap-4">
               <button

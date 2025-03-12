@@ -8,10 +8,8 @@ import {
 import axios, { type AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import iconBell from "public/images/icon-bell.webp";
 import { type ParsedUrlQuery } from "querystring";
 import {
   useCallback,
@@ -23,6 +21,7 @@ import {
 } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
+import { FaExclamationTriangle } from "react-icons/fa";
 import { IoMdArrowRoundBack, IoMdClose, IoMdWarning } from "react-icons/io";
 import Select from "react-select";
 import Async from "react-select/async";
@@ -738,14 +737,14 @@ const StoreRuleDetails: NextPageWithLayout<{
         onRequestClose={() => {
           setSaveChangesDialogVisible(false);
         }}
-        className={`md:max-h-[310px] md:w-[450px]`}
+        className={`md:max-h-[400px] md:w-[500px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="flex flex-row bg-green p-4 shadow-lg">
             <h1 className="flex-grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
               onClick={() => {
                 setSaveChangesDialogVisible(false);
               }}
@@ -755,20 +754,16 @@ const StoreRuleDetails: NextPageWithLayout<{
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
             <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
+              <FaExclamationTriangle className="h-7 w-7 text-yellow" />
             </div>
 
-            <p className="w-80 text-center text-base">
-              Your recent changes have not been saved. Please make sure to save
-              your changes to prevent any loss of data.
-            </p>
+            <div className="animate-bounce-once text-base font-semibold">
+              Your recent changes have not been saved!
+            </div>
+
+            <div className="mt-4 rounded-lg bg-gray p-4 text-center md:w-[450px]">
+              Please make sure to save your changes to prevent any loss of data.
+            </div>
 
             <div className="mt-4 flex flex-grow gap-4">
               <button

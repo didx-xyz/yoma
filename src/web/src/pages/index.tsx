@@ -140,7 +140,7 @@ const Home: NextPageWithLayout = () => {
         </div>
 
         {/* CENTER: OUR MISSION HEADER AND PARAGRAPH */}
-        <div className="mt-8x flex flex-col items-center gap-2 md:mt-0">
+        <div className="flex flex-col items-center gap-2 md:mt-0">
           <h2 className="text-2xl font-semibold tracking-wide text-black">
             Our mission
           </h2>

@@ -493,7 +493,7 @@ const Links: NextPageWithLayout<{
             <h1 className="flex-grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
               onClick={() => {
                 setShowQRCode(false);
                 setQRCodeImageData(null);

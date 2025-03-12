@@ -108,7 +108,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
   return (
     <div
       key={`OpportunityCompletionRead_${id}`}
-      className="my-4 flex flex-col gap-4 rounded-lg bg-white p-4"
+      className="flex flex-col gap-3 rounded-lg bg-white p-4"
     >
       <div className="flex flex-row">
         <div className="flex flex-grow flex-col">
@@ -131,31 +131,33 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           />
         </div>
       </div>
-      <div className="divider m-0 h-[1px] bg-gray-light" />
+
+      <div className="divider m-0 h-[1px] gap-1 bg-gray-light" />
+
       {data?.verifications?.map((item) => (
         <div key={item.fileId}>
           {item.verificationType == "FileUpload" &&
             renderVerificationFile(
-              <FcGraduationCap className="size-10" />,
+              <FcGraduationCap className="size-7" />,
               "Certificate",
               item.fileURL,
             )}
           {item.verificationType == "Picture" &&
             renderVerificationFile(
-              <FcCompactCamera className="size-10" />,
+              <FcCompactCamera className="size-7" />,
               "Picture",
               item.fileURL,
             )}
           {item.verificationType == "VoiceNote" &&
             renderVerificationFile(
-              <FcComments className="size-10" />,
+              <FcComments className="size-7" />,
               "Voice Note",
               item.fileURL,
             )}
 
           {item.verificationType == "Video" &&
             renderVerificationFile(
-              <FcVideoCall className="size-10" />,
+              <FcVideoCall className="size-7" />,
               "Video",
               item.fileURL,
             )}
@@ -169,7 +171,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
               >
                 <div className="flex w-full flex-row">
                   <div className="flex items-center px-4 py-2">
-                    <FcGlobe className="size-10" />
+                    <FcGlobe className="size-7" />
                   </div>
                   <div className="flex items-center">
                     {showLocation ? "Hide" : "View"} Location
@@ -245,7 +247,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
         <div className="flex flex-row gap-2 text-sm text-gray-dark">
           <div>Time to complete: </div>
           <div className="font-bold">
-            {data.commitmentIntervalCount} {data.commitmentInterval}
+            {data.commitmentIntervalCount} {data.commitmentInterval}(s)
           </div>
         </div>
       )}

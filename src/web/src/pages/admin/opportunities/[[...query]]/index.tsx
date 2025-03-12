@@ -6,7 +6,6 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import iconBell from "public/images/icon-bell.webp";
 import iconZlto from "public/images/icon-zlto.svg";
 import {
   useCallback,
@@ -16,8 +15,10 @@ import {
   useState,
   type ReactElement,
 } from "react";
+import { FaExclamationTriangle } from "react-icons/fa";
 import {
   IoIosLink,
+  IoMdClose,
   IoMdDownload,
   IoMdEye,
   IoMdEyeOff,
@@ -544,17 +545,21 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         className={`md:max-h-[480px] md:w-[600px]`}
       >
         <div className="flex flex-col gap-2">
-          <div className="flex h-20 flex-row bg-blue p-4 shadow-lg"></div>
+          <div className="flex flex-row bg-blue p-4 shadow-lg">
+            <h1 className="flex-grow"></h1>
+            <button
+              type="button"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              onClick={() => {
+                setExportDialogOpen(false);
+              }}
+            >
+              <IoMdClose className="h-6 w-6"></IoMdClose>
+            </button>
+          </div>
           <div className="flex flex-col items-center justify-center gap-4">
             <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
+              <FaExclamationTriangle className="h-7 w-7 text-yellow" />
             </div>
 
             <div className="flex w-96 flex-col gap-4">

@@ -147,7 +147,7 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
             <h1 className="flex-grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
               onClick={onClose}
             >
               <IoMdClose className="h-6 w-6"></IoMdClose>
@@ -155,7 +155,7 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
           </div>
           <div className="flex flex-col">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
+              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] animate-bounce-once items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
                 <FaCloudUploadAlt className="h-8 w-8 text-green" />
               </div>
             </div>
