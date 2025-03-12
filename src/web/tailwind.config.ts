@@ -60,7 +60,6 @@ export default {
         bounce: "cubic-bezier(0.175, 1.485, 0.320, 1.275)",
       },
       keyframes: {
-        // Fade In/Out
         "fade-in": {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
@@ -69,7 +68,6 @@ export default {
           "0%": { opacity: "1" },
           "100%": { opacity: "0" },
         },
-        // Slide In/Out from Bottom
         "slide-in-bottom": {
           "0%": { transform: "translateY(100%)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
@@ -78,7 +76,6 @@ export default {
           "0%": { transform: "translateY(0)", opacity: "1" },
           "100%": { transform: "translateY(100%)", opacity: "0" },
         },
-        // Slide In/Out from Top
         "slide-in-top": {
           "0%": { transform: "translateY(-100%)", opacity: "0" },
           "100%": { transform: "translateY(0)", opacity: "1" },
@@ -87,7 +84,6 @@ export default {
           "0%": { transform: "translateY(0)", opacity: "1" },
           "100%": { transform: "translateY(-100%)", opacity: "0" },
         },
-        // Slide In/Out from Left
         "slide-in-left": {
           "0%": { transform: "translateX(-100%)", opacity: "0" },
           "100%": { transform: "translateX(0)", opacity: "1" },
@@ -96,7 +92,6 @@ export default {
           "0%": { transform: "translateX(0)", opacity: "1" },
           "100%": { transform: "translateX(-100%)", opacity: "0" },
         },
-        // Slide In/Out from Right
         "slide-in-right": {
           "0%": { transform: "translateX(100%)", opacity: "0" },
           "100%": { transform: "translateX(0)", opacity: "1" },
@@ -106,8 +101,11 @@ export default {
           "100%": { transform: "translateX(100%)", opacity: "0" },
         },
         wiggle: {
-          "0%, 50%, 100%": { transform: "rotate(-3deg)" },
-          "25%, 75%": { transform: "rotate(3deg)" },
+          "0%": { transform: "rotate(-3deg)" },
+          "25%": { transform: "rotate(3deg)" },
+          "50%": { transform: "rotate(-3deg)" },
+          "75%": { transform: "rotate(3deg)" },
+          "100%": { transform: "rotate(-3deg)" },
         },
         enter: {
           "0%": { opacity: "0", transform: "scale(0.95)" },
@@ -126,38 +124,44 @@ export default {
           },
         },
         pulse: {
-          "0%, 100%": { opacity: "1" },
+          "0%": { opacity: "0" },
           "50%": { opacity: ".5" },
+          "100%": { opacity: "1" },
         },
         fadeIn: {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },
         },
         "spin-once": {
-          // Add spin-once keyframes
-          "0%": { transform: "rotate(0deg)" },
-          "100%": { transform: "rotate(360deg)" },
+          "0%": { transform: "rotate(0deg)", opacity: "0" },
+          "50%": { transform: "rotate(180deg)", opacity: "0.5" },
+          "100%": { transform: "rotate(360deg)", opacity: "1" },
+        },
+        "bounce-once": {
+          "0%": { transform: "scale(1)", opacity: "0" },
+          "50%": { transform: "scale(1.2)", opacity: "0.7" },
+          "100%": { transform: "scale(1)", opacity: "1" },
         },
       },
       animation: {
-        // Fade
         "fade-in": "fade-in 0.3s ease-in-out forwards",
         "fade-out": "fade-out 0.3s ease-in-out forwards",
-        // Slide
-        "slide-in-bottom": "slide-in-bottom 0.3s ease-in-out forwards",
+        "slide-in-bottom": "slide-in-bottom 0.5s ease-in-out forwards",
         "slide-out-bottom": "slide-out-bottom 0.3s ease-in-out forwards",
-        "slide-in-top": "slide-in-top 0.3s ease-in-out forwards",
-        "slide-out-top": "slide-out-top 0.3s ease-in-out forwards",
-        "slide-in-left": "slide-in-left 0.3s ease-in-out forwards",
-        "slide-out-left": "slide-out-left 0.3s ease-in-out forwards",
-        "slide-in-right": "slide-in-right 0.3s ease-in-out forwards",
-        "slide-out-right": "slide-out-right 0.3s ease-in-out forwards",
-        wiggle: "wiggle 2s ease-in-out",
+        "slide-in-top": "slide-in-top 0.5s ease-in-out forwards",
+        "slide-out-top": "slide-out-top 0.5s ease-in-out forwards",
+        "slide-in-left": "slide-in-left 0.5s ease-in-out forwards",
+        "slide-out-left": "slide-out-left 0.5s ease-in-out forwards",
+        "slide-in-right": "slide-in-right 0.5s ease-in-out forwards",
+        "slide-out-right": "slide-out-right 0.5s ease-in-out forwards",
+        wiggle: "wiggle 2s ease-in-out infinite",
+        "wiggle-once": "wiggle 0.5s ease-in-out forwards",
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+        "pulse-once": "pulse 1s cubic-bezier(0.4, 0, 0.6, 1) forwards",
         enter: "enter 0.3s ease-out forwards",
         exit: "exit 0.3s ease-in forwards",
-        // "fade-in": "fadeIn 1s ease-in-out forwards",
-        "spin-once": "spin-once 0.5s ease-in-out forwards", // Add spin-once animation
+        "spin-once": "spin-once 0.5s ease-in-out forwards",
+        "bounce-once": "bounce-once 0.5s ease-in-out forwards",
       },
       inset: {
         "1/5": "20%", // Custom class for top: 20%

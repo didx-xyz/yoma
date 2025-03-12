@@ -9,10 +9,8 @@ import axios, { type AxiosError } from "axios";
 import moment from "moment";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import iconBell from "public/images/icon-bell.webp";
 import { type ParsedUrlQuery } from "querystring";
 import {
   useCallback,
@@ -30,6 +28,7 @@ import {
   useForm,
   type FieldValues,
 } from "react-hook-form";
+import { FaExclamationTriangle } from "react-icons/fa";
 import {
   IoIosCheckmarkCircle,
   IoMdAlert,
@@ -1464,14 +1463,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         onRequestClose={() => {
           setOppExpiredModalVisible(false);
         }}
-        className={`md:max-h-[450px] md:w-[450px]`}
+        className={`md:max-h-[450px] md:w-[500px]`}
       >
         <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
           <div className="flex flex-row bg-green p-4 shadow-lg">
             <h1 className="flex-grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
               onClick={() => {
                 setOppExpiredModalVisible(false);
               }}
@@ -1480,32 +1479,28 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
+            <div className="-mt-10 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
+              <FaExclamationTriangle className="mr-px h-7 w-7 text-yellow" />
             </div>
 
-            <p className="w-80 text-center text-base">
-              Opportunity expired, please inactivate your opportunity before
-              editing.
-            </p>
+            <div className="animate-bounce-once text-base font-semibold">
+              Opportunity expired!
+            </div>
 
-            <p className="w-80 text-center text-base">
-              Once you&apos;re happy with the opportunity changes, you can set
-              it to active.
-            </p>
-            <p className="w-80 text-center text-base">
-              Please make sure to set the end date in the future, else it will
-              set your opportunity to expired again.
-            </p>
+            <div className="flex max-w-md flex-col gap-4 text-center text-base">
+              <p>Please inactivate your opportunity before editing.</p>
 
-            <div className="mt-4 flex flex-grow gap-4">
+              <p>
+                Once you&apos;re happy with the opportunity changes, you can set
+                it to active.
+              </p>
+              <p>
+                Please make sure to set the end date in the future, else it will
+                set your opportunity to expired again.
+              </p>
+            </div>
+
+            <div className="mt-8 flex flex-grow gap-4">
               <button
                 type="button"
                 className="btn btn-primary btn-wide rounded-full normal-case"
@@ -1532,14 +1527,14 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         onRequestClose={() => {
           setSaveChangesDialogVisible(false);
         }}
-        className={`md:max-h-[310px] md:w-[450px]`}
+        className={`md:max-h-[400px] md:w-[500px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="flex flex-row bg-green p-4 shadow-lg">
             <h1 className="flex-grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-green-dark bg-green-dark p-3 text-white"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
               onClick={() => {
                 setSaveChangesDialogVisible(false);
               }}
@@ -1549,20 +1544,16 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
             <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
+              <FaExclamationTriangle className="h-7 w-7 text-yellow" />
             </div>
 
-            <p className="w-80 text-center text-base">
-              Your recent changes have not been saved. Please make sure to save
-              your changes to prevent any loss of data.
-            </p>
+            <div className="animate-bounce-once text-base font-semibold">
+              Your recent changes have not been saved!
+            </div>
+
+            <div className="mt-4 rounded-lg bg-gray p-4 text-center md:w-[450px]">
+              Please make sure to save your changes to prevent any loss of data.
+            </div>
 
             <div className="mt-4 flex flex-grow gap-4">
               <button

@@ -10,10 +10,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { env } from "process";
-import iconBell from "public/images/icon-bell.webp";
 import type { ParsedUrlQuery } from "querystring";
 import React, { useCallback, useRef, useState, type ReactElement } from "react";
 import { FaLock } from "react-icons/fa";
+import { FcKey } from "react-icons/fc";
 import { IoMdClose, IoMdCloseCircleOutline, IoMdWarning } from "react-icons/io";
 import Select from "react-select";
 import { useConfirmationModalContext } from "src/context/modalConfirmationContext";
@@ -34,15 +34,16 @@ import {
 } from "~/api/services/marketplace";
 import { getUserProfile } from "~/api/services/user";
 import { AvatarImage } from "~/components/AvatarImage";
+import CustomCarousel from "~/components/Carousel/CustomCarousel";
 import CustomModal from "~/components/Common/CustomModal";
 import Suspense from "~/components/Common/Suspense";
 import MarketplaceLayout from "~/components/Layout/Marketplace";
 import { ItemCardComponent } from "~/components/Marketplace/ItemCard";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import CustomCarousel from "~/components/Carousel/CustomCarousel";
 import { SignInButton } from "~/components/SignInButton";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
+import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -513,7 +514,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             <h1 className="flex-grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
               onClick={() => {
                 setLoginDialogVisible(false);
               }}
@@ -522,18 +523,11 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
+            <div className="-mt-8 flex h-12 w-12 animate-bounce-once items-center justify-center rounded-full bg-white shadow-lg">
+              <FcKey className="mr-px h-7 w-7 text-white" />
             </div>
 
-            <h5>Please sign-in to continue</h5>
+            <h5 className="animate-bounce-once">Please sign-in to continue</h5>
 
             <div className="mt-4 flex flex-grow gap-4">
               <button
@@ -565,7 +559,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               <h1 className="flex-grow"></h1>
               <button
                 type="button"
-                className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
+                className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
                 onClick={() => {
                   setBuyDialogVisible(false);
                 }}
@@ -636,7 +630,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               <h1 className="flex-grow"></h1>
               <button
                 type="button"
-                className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
+                className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
                 onClick={() => {
                   // reload the page to refresh the data
                   router.reload();
@@ -710,7 +704,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             <h1 className="flex-grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
               onClick={() => {
                 setBuyDialogErrorVisible(false);
               }}
@@ -760,7 +754,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             <h1 className="flex-grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
               onClick={() => {
                 setItemLockedDialogVisible(false);
               }}
@@ -888,6 +882,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                 !data_storeItems_authenticated?.data_storeItems
               }
               error={error_storeItems_authenticated}
+              loader={<LoadingSkeleton rows={3} columns={3} />}
             >
               {renderStoreItems(
                 data_storeItems_authenticated?.data_storeItems ?? [],

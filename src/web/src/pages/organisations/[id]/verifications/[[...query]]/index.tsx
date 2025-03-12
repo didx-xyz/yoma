@@ -9,10 +9,8 @@ import FileSaver from "file-saver";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import iconBell from "public/images/icon-bell.webp";
 import { type ParsedUrlQuery } from "querystring";
 import React, {
   useCallback,
@@ -20,6 +18,7 @@ import React, {
   useState,
   type ReactElement,
 } from "react";
+import { FaExclamationTriangle } from "react-icons/fa";
 import {
   IoIosCheckmark,
   IoIosClose,
@@ -638,31 +637,31 @@ const OpportunityVerifications: NextPageWithLayout<{
         isOpen={modalVerifyVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseVerificationModal}
-        className={`md:max-h-[400px] md:w-[600px]`}
+        className={`md:max-h-[620px] md:w-[800px]`}
       >
         <div className="flex h-full flex-col space-y-2">
-          <div className="flex flex-row items-center bg-white px-4 pt-2">
-            <h4 className="flex-grow pl-2 font-semibold">
+          <div className="flex flex-row items-center bg-green p-4 shadow-lg">
+            <h4 className="flex-grow pl-2 font-semibold text-white">
               {tempSelectedRows?.length} Participant
               {(selectedRows?.length ?? 0) > 1 ? "s" : ""}
             </h4>
             <button
               type="button"
-              className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
               onClick={onCloseVerificationModal}
             >
-              <IoMdClose className="h-8 w-8"></IoMdClose>
+              <IoMdClose className="h-6 w-6"></IoMdClose>
             </button>
           </div>
 
-          <div className="flex flex-grow flex-col overflow-x-hidden overflow-y-scroll bg-gray">
-            <div className="flex flex-grow flex-col gap-4 bg-gray-light p-6 pt-8">
+          <div className="flex flex-grow flex-col gap-3 bg-gray-light p-4 pt-4">
+            <div className="bg-gray-lightx flex flex-grow flex-col gap-3">
               {tempSelectedRows?.map((row) => (
                 <OpportunityCompletionRead data={row} key={row?.id} />
               ))}
             </div>
 
-            <div className="flex flex-col gap-4 bg-gray-light px-6 pb-10">
+            <div className="flex flex-col gap-4 pb-10">
               <div className="form-control rounded-lg bg-white px-4 py-2">
                 <label className="label">
                   <span className="font-semibold text-gray-dark">
@@ -681,7 +680,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           <div className="flex flex-row place-items-center justify-center px-6 py-4 pt-2">
             <div className="flex flex-grow">
               <button
-                className="btn btn-sm flex-nowrap border-black bg-white py-5 text-black md:btn-sm hover:bg-black hover:text-white"
+                className="btn btn-sm w-36 flex-nowrap border-black bg-white py-5 text-black md:btn-sm hover:bg-black hover:text-white"
                 onClick={onCloseVerificationModal}
               >
                 <IoMdClose className="h-6 w-6" />
@@ -691,7 +690,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             <div className="flex gap-4">
               {(bulkActionApprove == null || !bulkActionApprove) && (
                 <button
-                  className="btn btn-sm flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
+                  className="btn btn-sm w-36 flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
                   onClick={() => onVerify(false)}
                 >
                   <IoMdThumbsDown className="h-6 w-6" />
@@ -701,7 +700,7 @@ const OpportunityVerifications: NextPageWithLayout<{
 
               {(bulkActionApprove == null || bulkActionApprove) && (
                 <button
-                  className="btn btn-sm flex-nowrap border-green bg-white py-5 text-green hover:bg-green hover:text-white"
+                  className="btn btn-sm w-36 flex-nowrap border-green bg-white py-5 text-green hover:bg-green hover:text-white"
                   onClick={() => onVerify(true)}
                 >
                   <IoMdThumbsUp className="h-6 w-6" />
@@ -718,31 +717,31 @@ const OpportunityVerifications: NextPageWithLayout<{
         isOpen={modalVerificationResultVisible}
         shouldCloseOnOverlayClick={true}
         onRequestClose={onCloseVerificationResultModal}
-        className={`md:max-h-[450px] md:w-[600px]`}
+        className={`md:max-h-[620px] md:w-[800px]`}
       >
         <div className="flex h-full flex-col space-y-2 overflow-y-auto">
-          <div className="flex flex-row items-center bg-white px-4 pt-2">
-            <h4 className="flex-grow pl-2 font-semibold">
+          <div className="flex flex-row items-center bg-green p-4 shadow-lg">
+            <h4 className="flex-grow pl-2 font-semibold text-white">
               {verificationResponse?.items?.length} Participant
               {(verificationResponse?.items?.length ?? 0) > 1 ? "s" : ""}
             </h4>
             <button
               type="button"
-              className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
-              onClick={onCloseVerificationResultModal}
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              onClick={onCloseVerificationModal}
             >
-              <IoMdClose className="h-8 w-8"></IoMdClose>
+              <IoMdClose className="h-6 w-6"></IoMdClose>
             </button>
           </div>
-          <div className="flex flex-grow flex-col overflow-x-hidden overflow-y-scroll bg-gray">
-            <div className="flex flex-grow flex-col place-items-center justify-center bg-gray-light px-6 py-8">
-              <div className="flex h-full w-full flex-col place-items-center justify-center gap-4 rounded-lg bg-white p-4 text-center">
+          <div className="flex flex-grow flex-col bg-gray">
+            <div className="flex flex-grow flex-col bg-gray-light px-6 py-8">
+              <div className="flex h-full w-full flex-col gap-4 rounded-lg bg-white p-4 text-center">
                 {verificationResponse?.items.map((item) => (
                   <div
                     key={`verificationResult_${item.userId}-${item.opportunityId}`}
-                    className="space-y-2 rounded-lg border-2 border-gray-light p-4 md:space-y-0"
+                    className="gap-4 space-y-2 rounded-lg border-2 border-gray-light p-4"
                   >
-                    <div className="flex h-fit flex-col items-center gap-4 border-0 text-gray-dark md:!h-[75px] md:flex-row">
+                    <div className="flex h-fit flex-col items-center gap-4 text-gray-dark md:flex-row">
                       <div className="h-fit rounded-full bg-green-light">
                         {item.success && (
                           <IoIosCheckmark className="h-8 w-8 text-green md:h-10 md:w-10" />
@@ -751,7 +750,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                           <IoIosClose className="h-8 w-8 text-red-400 md:h-10 md:w-10" />
                         )}
                       </div>
-                      <p className="line-clamp-2 w-full text-ellipsis text-center text-sm font-normal leading-5 tracking-wide md:w-[420px] md:text-left md:font-semibold">
+                      <p className="text-md w-full truncate text-center font-bold leading-5 tracking-wide text-gray-dark">
                         {item.opportunityTitle}
                       </p>
                     </div>
@@ -761,23 +760,37 @@ const OpportunityVerifications: NextPageWithLayout<{
                           {item.success && (
                             <>
                               {verificationResponse.status == "Completed" && (
-                                <div>
-                                  <strong>{item.userDisplayName}</strong> was
-                                  successfully
-                                  <strong className="mx-1">approved.</strong>
-                                  <br className="hidden md:block" />
-                                  We&apos;ve sent them an email to share the
-                                  good news!
+                                <div className="flex flex-col gap-2">
+                                  <p>
+                                    <strong className="text-black">
+                                      {item.userDisplayName}
+                                    </strong>{" "}
+                                    was successfully
+                                    <strong className="mx-1 text-green">
+                                      approved.
+                                    </strong>
+                                  </p>
+                                  <p className="text-sm">
+                                    We&apos;ve sent them an email to share the
+                                    good news!
+                                  </p>
                                 </div>
                               )}
                               {verificationResponse.status == "Rejected" && (
-                                <div>
-                                  <strong>{item.userDisplayName}</strong> was
-                                  successfully
-                                  <strong className="mx-1">rejected.</strong>
-                                  <br className="hidden md:block" />
-                                  We&apos;ve sent them an email with your
-                                  comments.
+                                <div className="flex flex-col gap-2">
+                                  <p>
+                                    <strong className="text-gray-dark">
+                                      {item.userDisplayName}
+                                    </strong>{" "}
+                                    was successfully
+                                    <strong className="mx-1 text-error">
+                                      rejected.
+                                    </strong>
+                                  </p>
+                                  <p className="text-sm">
+                                    We&apos;ve sent them an email with your
+                                    comments.
+                                  </p>
                                 </div>
                               )}
                             </>
@@ -820,31 +833,38 @@ const OpportunityVerifications: NextPageWithLayout<{
         className={`md:max-h-[480px] md:w-[600px]`}
       >
         <div className="flex flex-col gap-2">
-          <div className="flex h-20 flex-row bg-blue p-4 shadow-lg"></div>
+          <div className="flex flex-row bg-green p-4 shadow-lg">
+            <h1 className="flex-grow"></h1>
+            <button
+              type="button"
+              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              onClick={() => {
+                setExportDialogOpen(false);
+              }}
+            >
+              <IoMdClose className="h-6 w-6"></IoMdClose>
+            </button>
+          </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <Image
-                src={iconBell}
-                alt="Icon Bell"
-                width={28}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
+            <div className="-mt-10 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
+              <FaExclamationTriangle className="mr-px h-7 w-7 text-yellow" />
             </div>
 
-            <div className="flex w-96 flex-col gap-4">
-              <h4>
-                Just a heads up, the result set is quite large and we can only
-                return a maximum of {PAGE_SIZE_MAXIMUM.toLocaleString()} rows
-                for each export.
-              </h4>
-              <h5>
+            <div className="animate-bounce-once text-base font-semibold">
+              Heads up!
+            </div>
+
+            <div className="flex max-w-md flex-col gap-4 text-center text-base">
+              <p>
+                The result set is quite large and we can only return a maximum
+                of {PAGE_SIZE_MAXIMUM.toLocaleString()} rows for each export.
+              </p>
+              <p>
                 To help manage this, consider applying search filters. This will
                 narrow down the size of your results and make your data more
                 manageable.
-              </h5>
-              <h5>When you&apos;re ready, click the button to continue.</h5>
+              </p>{" "}
+              <p>When you&apos;re ready, click the button to continue.</p>
             </div>
 
             <div className="mt-4 flex flex-grow gap-4">
@@ -1298,7 +1318,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           onRequestClose={() => {
             setImportDialogOpen(false);
           }}
-          className={`md:max-h-[650px] md:w-[600px]`}
+          className={`md:max-h-[650px] md:w-[700px]`}
         >
           <FileUploadImport_Completions
             id={id}
