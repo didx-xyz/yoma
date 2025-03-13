@@ -123,11 +123,6 @@ export default {
             visibility: "hidden",
           },
         },
-        pulse: {
-          "0%": { opacity: "0" },
-          "50%": { opacity: ".5" },
-          "100%": { opacity: "1" },
-        },
         fadeIn: {
           "0%": { opacity: "0" },
           "100%": { opacity: "1" },

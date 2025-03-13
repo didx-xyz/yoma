@@ -1439,6 +1439,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     },
     1000,
   );
+
   //#endregion Event Handlers
 
   if (error) {
@@ -1479,11 +1480,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-10 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
-              <FaExclamationTriangle className="mr-px h-7 w-7 text-yellow" />
+            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] animate-slide-in-top items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+              <FaExclamationTriangle className="h-8 w-8 text-yellow" />
             </div>
 
-            <div className="animate-bounce-once text-base font-semibold">
+            <div className="animate-bounce-once font-semibold">
               Opportunity expired!
             </div>
 
@@ -1543,11 +1544,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <FaExclamationTriangle className="h-7 w-7 text-yellow" />
+            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] animate-slide-in-top items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+              <FaExclamationTriangle className="h-8 w-8 text-yellow" />
             </div>
 
-            <div className="animate-bounce-once text-base font-semibold">
+            <div className="animate-bounce-once font-semibold">
               Your recent changes have not been saved!
             </div>
 

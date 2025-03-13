@@ -68,7 +68,7 @@ export const FileUpload: React.FC<InputProps> = ({
           {iconAlt && <div>{iconAlt}</div>}
         </div>
         <div className="flex flex-grow flex-col p-4">
-          <div className="font-bold">{label}</div>
+          <div className="font-semibold">{label}</div>
           <div className="text-sm italic text-gray-dark">{fileTypesLabels}</div>
 
           <div className="mt-4 flex flex-col gap-4">

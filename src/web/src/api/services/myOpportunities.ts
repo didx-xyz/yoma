@@ -9,6 +9,7 @@ import type {
   MyOpportunitySearchCriteriaOpportunity,
   MyOpportunitySearchFilter,
   MyOpportunitySearchFilterAdmin,
+  MyOpportunitySearchFilterVerificationFiles,
   MyOpportunitySearchResults,
   VerificationStatus,
 } from "../models/myOpportunity";
@@ -231,14 +232,15 @@ export const performActionNavigateExternalLink = async (
 };
 
 export const downloadVerificationFiles = async (
-  opportunityId: string,
+  filter: MyOpportunitySearchFilterVerificationFiles,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<File> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
   try {
-    const response = await instance.get(
-      `/myopportunity/action/${opportunityId}/verify/files`,
+    const response = await instance.post(
+      `/myopportunity/action/verify/files`,
+      filter,
       {
         responseType: "blob", // set responseType to 'blob' or 'arraybuffer',
         withCredentials: true,
@@ -272,6 +274,25 @@ export const downloadVerificationFiles = async (
     const file = new File([blob], fileName);
 
     return file;
+  } catch (error) {
+    console.error("Error downloading verification files:", error);
+    throw error;
+  }
+};
+
+export const downloadVerificationFilesAdmin = async (
+  filter: MyOpportunitySearchFilterVerificationFiles,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<File | null> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  try {
+    await instance.post(`/myopportunity/action/verify/admin/files`, filter, {
+      responseType: "blob", // set responseType to 'blob' or 'arraybuffer',
+      withCredentials: true,
+    });
+
+    return null;
   } catch (error) {
     console.error("Error downloading verification files:", error);
     throw error;

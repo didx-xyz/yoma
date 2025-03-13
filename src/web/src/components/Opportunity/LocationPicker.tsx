@@ -125,7 +125,7 @@ const LocationPicker: React.FC<InputProps> = ({
           <FcGlobe className="size-10" />
         </div>
         <div className="flex flex-grow flex-col p-4">
-          <div className="font-bold">{label}</div>
+          <div className="font-semibold">{label}</div>
           <div className="text-sm italic text-gray-dark">
             Select a pin location below or
             <button

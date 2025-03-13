@@ -323,13 +323,11 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
-                <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-                  <FaExclamationTriangle className="h-7 w-7 text-yellow" />
+                <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] animate-bounce-once items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                  <FaExclamationTriangle className="h-8 w-8 text-yellow" />
                 </div>
 
-                <h3 className="animate-bounce-once">
-                  You are now leaving Yoma!
-                </h3>
+                <div className="font-semibold">You are now leaving Yoma!</div>
 
                 <div className="mt-4 rounded-lg bg-gray p-4 text-center md:w-[450px]">
                   Remember to{" "}
@@ -505,13 +503,13 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4">
-                <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-                  <FaExclamationTriangle className="h-7 w-7 text-yellow" />
+                <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] animate-bounce-once items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                  <FaExclamationTriangle className="h-8 w-8 text-yellow" />
                 </div>
 
-                <h3 className="animate-bounce-once">
+                <div className="font-semibold">
                   Your application is pending verification.
-                </h3>
+                </div>
 
                 <div className="rounded-lg p-4 text-center md:w-[450px]">
                   <strong>{opportunityInfo.organizationName}</strong> is busy

@@ -15,12 +15,11 @@ import { useRouter } from "next/router";
 import iconZlto from "public/images/icon-zlto.svg";
 import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useMemo, useState, type ReactElement } from "react";
+import { FaDownload, FaEdit, FaPlusCircle, FaUpload } from "react-icons/fa";
 import {
   IoIosAdd,
   IoIosLink,
   IoIosWarning,
-  IoMdAddCircle,
-  IoMdCloudUpload,
   IoMdEye,
   IoMdEyeOff,
 } from "react-icons/io";
@@ -30,11 +29,13 @@ import {
   type OpportunitySearchFilterAdmin,
   type OpportunitySearchResults,
 } from "~/api/models/opportunity";
+import { downloadVerificationFilesAdmin } from "~/api/services/myOpportunities";
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { FileUploadImport_Opportunities } from "~/components/Opportunity/Import/FileUploadImport_Opportunities";
+import OpportunityExport from "~/components/Opportunity/Admin/OpportunityExport";
+import { OpportunityImport } from "~/components/Opportunity/Admin/OpportunityImport";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -161,6 +162,7 @@ const Opportunities: NextPageWithLayout<{
     currentOrganisationInactiveAtom,
   );
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   // search filter state
   const searchFilter = useMemo<OpportunitySearchFilterAdmin>(
@@ -186,7 +188,7 @@ const Opportunities: NextPageWithLayout<{
 
   // 👇 use prefetched queries from server
   // NB: these queries (with ['opportunities', id]) will be invalidated by create/edit operations on other pages
-  const { data: opportunities, isLoading: isLoadingData } =
+  const { data: searchResults, isLoading: isLoadingSearchResults } =
     useQuery<OpportunitySearchResults>({
       queryKey: [
         "opportunities",
@@ -388,6 +390,29 @@ const Opportunities: NextPageWithLayout<{
     navigator.clipboard.writeText(url);
     toast.success("URL copied to clipboard!", { autoClose: 2000 });
   }, []);
+
+  const downloadVerificationFiles = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+    opportunityId: string,
+  ) => {
+    e.preventDefault();
+
+    try {
+      await downloadVerificationFilesAdmin({
+        opportunity: opportunityId,
+        verificationTypes: null,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("Download failed. Please try again later.", {
+        autoClose: false,
+      });
+    }
+
+    toast.success(
+      "Your request is scheduled for processing. You will receive an email when the download is ready.",
+    );
+  };
   //#endregion Event Handlers
 
   if (error) {
@@ -403,6 +428,47 @@ const Opportunities: NextPageWithLayout<{
       </Head>
 
       <PageBackground className="h-[21rem] md:h-[17rem]" />
+
+      {/* IMPORT DIALOG */}
+      <CustomModal
+        isOpen={importDialogOpen}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setImportDialogOpen(false);
+        }}
+        className={`md:max-h-[650px] md:w-[600px]`}
+      >
+        <OpportunityImport
+          id={id}
+          onClose={() => {
+            setImportDialogOpen(false);
+          }}
+          onSave={async () => {
+            // invalidate queries
+            //NB: this is the query on the opportunities page
+            await queryClient.invalidateQueries({
+              queryKey: ["opportunities", id],
+            });
+          }}
+        />
+      </CustomModal>
+
+      {/* EXPORT DIALOG */}
+      <CustomModal
+        isOpen={exportDialogOpen}
+        shouldCloseOnOverlayClick={true}
+        onRequestClose={() => {
+          setExportDialogOpen(false);
+        }}
+        className={`md:max-h-[740px] md:w-[600px]`}
+      >
+        <OpportunityExport
+          totalCount={searchResults?.totalCount ?? 0}
+          searchFilter={searchFilter}
+          onClose={() => setExportDialogOpen(false)}
+          onSave={() => setExportDialogOpen(false)}
+        />
+      </CustomModal>
 
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[4.9rem]">
         <div className="flex flex-col gap-4 py-4">
@@ -549,40 +615,52 @@ const Opportunities: NextPageWithLayout<{
           </div>
 
           {/* BUTTONS */}
-          <ul className="menu menu-horizontal flex w-full flex-grow items-center justify-between gap-1 sm:justify-end">
-            <li className="bg-theme btn-secondaryx btn btn-circle btn-sm h-fit w-fit whitespace-nowrap !border-none text-xs text-white shadow-custom hover:brightness-105">
-              <Link
-                href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
-                  getSafeUrl(returnUrl?.toString(), router.asPath),
-                )}`}`}
-                className={`${currentOrganisationInactive ? "disabled" : ""}`}
-                id="btnCreateOpportunity" // e2e
-              >
-                <IoMdAddCircle className="h-5 w-5" /> Add
-              </Link>
-            </li>
-            <li className="bg-theme btn-secondaryx btn btn-circle btn-sm h-fit w-fit whitespace-nowrap !border-none text-xs text-white shadow-custom hover:brightness-105">
-              <a
-                className={`${currentOrganisationInactive ? "disabled" : ""} `}
-                onClick={() => setImportDialogOpen(true)}
-              >
-                <IoMdCloudUpload className="h-5 w-5" /> Import
-              </a>
-            </li>
-          </ul>
+          <div className="flex w-full flex-grow items-center justify-between gap-1 sm:justify-end">
+            <Link
+              href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
+                getSafeUrl(returnUrl?.toString(), router.asPath),
+              )}`}`}
+              className={`btn btn-sm w-36 flex-nowrap border-green bg-white text-green hover:bg-green hover:text-white ${
+                currentOrganisationInactive ? "disabled" : ""
+              }`}
+              id="btnCreateOpportunity" // e2e
+            >
+              <FaPlusCircle className="h-4 w-4" /> Add
+            </Link>
+
+            <button
+              type="button"
+              onClick={() => {
+                setImportDialogOpen(true);
+              }}
+              className={`btn btn-sm w-36 flex-nowrap border-green bg-green text-white hover:bg-white hover:text-green ${
+                currentOrganisationInactive ? "disabled" : ""
+              }`}
+            >
+              <FaUpload className="h-4 w-4" /> Import
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setExportDialogOpen(true)}
+              className="btn btn-sm w-36 flex-nowrap border-green bg-green text-white hover:bg-white hover:text-green"
+            >
+              <FaDownload className="h-4 w-4" /> Export
+            </button>
+          </div>
         </div>
 
         {/* MAIN CONTENT */}
-        {isLoadingData && (
+        {isLoadingSearchResults && (
           <div className="flex h-fit flex-col items-center rounded-lg bg-white p-8 md:pb-16">
             <LoadingSkeleton />
           </div>
         )}
 
-        {!isLoadingData && (
+        {!isLoadingSearchResults && (
           <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
             {/* NO ROWS */}
-            {opportunities && opportunities.items?.length === 0 && !query && (
+            {searchResults && searchResults.items?.length === 0 && !query && (
               <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
                 <NoRowsMessage
                   title={"You will find your active opportunities here"}
@@ -608,7 +686,7 @@ const Opportunities: NextPageWithLayout<{
                 )}
               </div>
             )}
-            {opportunities && opportunities.items?.length === 0 && query && (
+            {searchResults && searchResults.items?.length === 0 && query && (
               <div className="flex flex-col place-items-center py-32">
                 <NoRowsMessage
                   title={"No opportunities found"}
@@ -618,72 +696,83 @@ const Opportunities: NextPageWithLayout<{
             )}
 
             {/* RESULTS */}
-            {opportunities && opportunities.items?.length > 0 && (
+            {searchResults && searchResults.items?.length > 0 && (
               <div className="md:overflow-x-auto">
-                {/* MOBIlE */}
+                {/* MOBILE */}
                 <div className="flex flex-col gap-4 md:hidden">
-                  {opportunities.items.map((opportunity) => (
+                  {searchResults.items.map((opportunity) => (
                     <div
                       key={`sm_${opportunity.id}`}
-                      className="rounded-lg bg-white p-4 shadow-custom"
+                      className="flex flex-col justify-between gap-4 rounded-lg bg-white p-4 shadow-custom"
                     >
-                      <div className="flex flex-col gap-1">
-                        <Link
-                          className="mb-4 line-clamp-2 font-semibold text-gray-dark"
-                          href={`/organisations/${id}/opportunities/${
-                            opportunity.id
-                          }/info${`?returnUrl=${encodeURIComponent(
-                            getSafeUrl(returnUrl?.toString(), router.asPath),
-                          )}`}`}
-                        >
-                          {opportunity.title}
-                        </Link>
+                      <div className="flex flex-row gap-2 border-b-2 border-gray-light">
+                        <span title={opportunity.title} className="w-full">
+                          <Link
+                            href={`/organisations/${id}/opportunities/${opportunity.id}/info${`?returnUrl=${encodeURIComponent(
+                              getSafeUrl(returnUrl?.toString(), router.asPath),
+                            )}`}`}
+                            className="line-clamp-1 text-start font-semibold"
+                          >
+                            {opportunity.title}
+                          </Link>
+                        </span>
+
+                        <span className="ml-auto" title="Edit">
+                          <Link
+                            href={`/organisations/${id}/opportunities/${opportunity.id}${`?returnUrl=${encodeURIComponent(
+                              getSafeUrl(returnUrl?.toString(), router.asPath),
+                            )}`}`}
+                          >
+                            <FaEdit className="size-4 text-gray-dark hover:animate-pulse hover:text-blue" />
+                          </Link>
+                        </span>
+
+                        <span title="Download files">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              downloadVerificationFiles(e, opportunity.id);
+                            }}
+                          >
+                            <FaDownload className="size-4 text-gray-dark hover:text-blue" />
+                          </button>
+                        </span>
                       </div>
 
                       <div className="flex flex-col gap-2 text-gray-dark">
                         <div className="flex justify-between">
                           <p className="text-sm tracking-wider">URL</p>
                           {opportunity.url && (
-                            <button
-                              onClick={() =>
-                                onClick_CopyToClipboard(opportunity.url!)
-                              }
-                              className="badge bg-green-light text-green"
-                            >
-                              <IoIosLink className="h-4 w-4" />
-                            </button>
-                          )}
-                          {opportunity.yomaReward && (
-                            <span className="badge bg-orange-light text-orange">
-                              <span className="ml-1 text-xs">
-                                {opportunity.yomaReward} Yoma
-                              </span>
+                            <span title="Copy URL to clipboard">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  onClick_CopyToClipboard(opportunity.url!);
+                                }}
+                                className="badge bg-green-light text-green"
+                              >
+                                <IoIosLink className="h-4 w-4" />
+                              </button>
                             </span>
                           )}
                         </div>
 
                         <div className="flex justify-between">
                           <p className="text-sm tracking-wider">ZLTO</p>
-                          {opportunity.zltoReward && (
-                            <span className="badge bg-orange-light text-orange">
-                              <Image
-                                src={iconZlto}
-                                alt="Zlto icon"
-                                width={16}
-                                className="h-auto"
-                              />
-                              <span className="ml-1 text-xs">
-                                {opportunity?.zltoReward}
-                              </span>
+
+                          <span className="badge bg-orange-light text-orange">
+                            <Image
+                              src={iconZlto}
+                              alt="Zlto icon"
+                              width={16}
+                              className="h-auto"
+                            />
+                            <span className="ml-1 text-xs">
+                              {opportunity?.zltoReward ?? 0}
                             </span>
-                          )}
-                          {opportunity.yomaReward && (
-                            <span className="badge bg-orange-light text-orange">
-                              <span className="ml-1 text-xs">
-                                {opportunity.yomaReward} Yoma
-                              </span>
-                            </span>
-                          )}
+                          </span>
                         </div>
 
                         <div className="flex justify-between">
@@ -715,11 +804,11 @@ const Opportunities: NextPageWithLayout<{
 
                         <div className="flex justify-between">
                           <p className="text-sm tracking-wider">Pending</p>
-
                           {opportunity.participantCountPending > 0 && (
                             <Link
                               href={`/organisations/${id}/verifications?opportunity=${opportunity.id}&verificationStatus=Pending`}
                               className="badge bg-orange-light text-orange"
+                              onClick={(e) => e.stopPropagation()}
                             >
                               <IoIosWarning className="h-4 w-4" />
                               <span className="ml-1 text-xs">
@@ -727,7 +816,6 @@ const Opportunities: NextPageWithLayout<{
                               </span>
                             </Link>
                           )}
-
                           {opportunity.participantCountPending == 0 && (
                             <span className="badge bg-green-light text-green">
                               <span className="text-xs">
@@ -768,7 +856,7 @@ const Opportunities: NextPageWithLayout<{
                   ))}
                 </div>
 
-                {/* DEKSTOP */}
+                {/* DESKTOP */}
                 <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table md:table-auto">
                   <thead>
                     <tr className="border-gray text-gray-dark">
@@ -802,32 +890,76 @@ const Opportunities: NextPageWithLayout<{
                     </tr>
                   </thead>
                   <tbody>
-                    {opportunities.items.map((opportunity) => (
+                    {searchResults.items.map((opportunity) => (
                       <tr key={`md_${opportunity.id}`}>
-                        <td className="truncate border-b-2 border-gray-light md:max-w-[200px] lg:max-w-[500px]">
-                          <Link
-                            href={`/organisations/${id}/opportunities/${
-                              opportunity.id
-                            }/info${`?returnUrl=${encodeURIComponent(
-                              getSafeUrl(returnUrl?.toString(), router.asPath),
-                            )}`}`}
+                        <td className="flex h-14 flex-row items-center gap-2 border-b-2 border-gray-light">
+                          <span
+                            className="tooltip tooltip-top tooltip-secondary"
+                            data-tip={opportunity.title}
                           >
-                            {opportunity.title}
-                          </Link>
+                            <Link
+                              href={`/organisations/${id}/opportunities/${opportunity.id}/info${`?returnUrl=${encodeURIComponent(
+                                getSafeUrl(
+                                  returnUrl?.toString(),
+                                  router.asPath,
+                                ),
+                              )}`}`}
+                              className="line-clamp-1 text-start"
+                            >
+                              {opportunity.title}
+                            </Link>
+                          </span>
+
+                          <span
+                            className="tooltip tooltip-top tooltip-secondary"
+                            data-tip="Edit"
+                          >
+                            <Link
+                              href={`/organisations/${id}/opportunities/${opportunity.id}${`?returnUrl=${encodeURIComponent(
+                                getSafeUrl(
+                                  returnUrl?.toString(),
+                                  router.asPath,
+                                ),
+                              )}`}`}
+                            >
+                              <FaEdit className="size-4 text-gray-dark hover:animate-pulse hover:text-blue" />
+                            </Link>
+                          </span>
+
+                          <span
+                            className="tooltip tooltip-top tooltip-secondary"
+                            data-tip="Download completion files"
+                          >
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                downloadVerificationFiles(e, opportunity.id);
+                              }}
+                            >
+                              <FaDownload className="size-4 text-gray-dark hover:text-blue" />
+                            </button>
+                          </span>
                         </td>
                         <td className="border-b-2 border-gray-light text-center">
                           {opportunity?.url && (
-                            <button
-                              onClick={() =>
-                                onClick_CopyToClipboard(opportunity.url!)
-                              }
-                              className="badge bg-green-light text-green"
+                            <span
+                              className="tooltip tooltip-top tooltip-secondary"
+                              data-tip="Copy URL to clipboard"
                             >
-                              <IoIosLink className="h-4 w-4" />
-                            </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation(); // Prevent link navigation
+                                  onClick_CopyToClipboard(opportunity.url!);
+                                }}
+                                className="badge bg-green-light text-green"
+                              >
+                                <IoIosLink className="h-4 w-4" />
+                              </button>
+                            </span>
                           )}
                         </td>
-                        <td className="w-24 border-b-2 border-gray-light text-center">
+                        <td className="w-28 border-b-2 border-gray-light text-center">
                           <div className="flex flex-col">
                             {opportunity.zltoReward && (
                               <span className="badge bg-orange-light px-4 text-orange">
@@ -893,7 +1025,7 @@ const Opportunities: NextPageWithLayout<{
                         <td className="border-b-2 border-gray-light text-center">
                           {opportunity?.hidden && (
                             <span
-                              className="tooltip tooltip-left tooltip-secondary"
+                              className="tooltip tooltip-top tooltip-secondary"
                               data-tip="Hidden"
                             >
                               <IoMdEyeOff className="size-5 text-gray-dark" />
@@ -901,7 +1033,7 @@ const Opportunities: NextPageWithLayout<{
                           )}
                           {!opportunity?.hidden && (
                             <span
-                              className="tooltip tooltip-left tooltip-secondary"
+                              className="tooltip tooltip-top tooltip-secondary"
                               data-tip="Visible"
                             >
                               <IoMdEye className="size-5 text-black" />
@@ -919,7 +1051,7 @@ const Opportunities: NextPageWithLayout<{
               {/* PAGINATION */}
               <PaginationButtons
                 currentPage={page ? parseInt(page) : 1}
-                totalItems={opportunities?.totalCount ?? 0}
+                totalItems={searchResults?.totalCount ?? 0}
                 pageSize={PAGE_SIZE}
                 onClick={handlePagerChange}
                 showPages={false}
@@ -928,30 +1060,6 @@ const Opportunities: NextPageWithLayout<{
             </div>
           </div>
         )}
-
-        {/* IMPORT OPPORTUNITIES DIALOG */}
-        <CustomModal
-          isOpen={importDialogOpen}
-          shouldCloseOnOverlayClick={false}
-          onRequestClose={() => {
-            setImportDialogOpen(false);
-          }}
-          className={`md:max-h-[650px] md:w-[600px]`}
-        >
-          <FileUploadImport_Opportunities
-            id={id}
-            onClose={() => {
-              setImportDialogOpen(false);
-            }}
-            onSave={async () => {
-              // invalidate queries
-              //NB: this is the query on the opportunities page
-              await queryClient.invalidateQueries({
-                queryKey: ["opportunities", id],
-              });
-            }}
-          />
-        </CustomModal>
       </div>
     </>
   );
