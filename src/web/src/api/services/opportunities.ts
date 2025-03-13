@@ -360,14 +360,17 @@ export const updateOpportunityHidden = async (
 
 export const getOpportunitiesAdminExportToCSV = async (
   filter: OpportunitySearchFilterAdmin,
-
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<File> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
-  const { data } = await instance.post(`/opportunity/search/csv`, filter, {
-    responseType: "blob", // set responseType to 'blob' or 'arraybuffer'
-  });
+  const { data } = await instance.post(
+    `/opportunity/search/admin/csv`,
+    filter,
+    {
+      responseType: "blob", // set responseType to 'blob' or 'arraybuffer'
+    },
+  );
 
   // create the file name
   const date = new Date();

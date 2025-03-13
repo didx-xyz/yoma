@@ -6,6 +6,7 @@ import { useRouter } from "next/router";
 import Link from "next/link";
 import FileSaver from "file-saver";
 import { downloadVerificationFiles } from "~/api/services/myOpportunities";
+import { FaDownload } from "react-icons/fa";
 
 const OpportunityListItem: React.FC<{
   data: MyOpportunityInfo;
@@ -17,7 +18,10 @@ const OpportunityListItem: React.FC<{
 
   const downloadFiles = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
-    const file = await downloadVerificationFiles(data.opportunityId);
+    const file = await downloadVerificationFiles({
+      opportunity: data.opportunityId,
+      verificationTypes: null,
+    });
     if (!file) return;
 
     FileSaver.saveAs(file);
@@ -72,6 +76,7 @@ const OpportunityListItem: React.FC<{
             </div>
           </>
         )}
+
         {/* DATE */}
         {displayDate && (
           <div className="flex flex-row">
@@ -91,7 +96,11 @@ const OpportunityListItem: React.FC<{
                 className="btn btn-secondary btn-sm"
                 onClick={downloadFiles}
               >
-                Download your completion files
+                <FaDownload className="size-4" />
+                Download your completion files ({
+                  data?.verifications?.length
+                }{" "}
+                total)
               </button>
             </h4>
           </div>

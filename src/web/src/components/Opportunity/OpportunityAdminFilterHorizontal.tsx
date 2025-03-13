@@ -15,6 +15,7 @@ import { OpportunityFilterOptions } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
 import { toISOStringForTimezone } from "~/lib/utils";
 import OpportunityCategoriesHorizontalFilter from "./OpportunityCategoriesHorizontalFilter";
+import { FaDownload } from "react-icons/fa";
 
 const ValueContainer = ({
   children,
@@ -584,10 +585,10 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
               <div className="flex flex-row items-center justify-end">
                 <button
                   type="button"
-                  className="btn btn-secondary btn-sm px-4 text-xs text-white"
                   onClick={() => exportToCsv(true)}
+                  className="btn btn-sm w-36 flex-nowrap border-blue bg-white text-blue hover:bg-blue hover:text-white"
                 >
-                  Export to CSV
+                  <FaDownload className="h-4 w-4" /> Export
                 </button>
               </div>
             )}

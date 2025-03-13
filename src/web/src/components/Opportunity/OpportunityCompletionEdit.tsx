@@ -484,8 +484,11 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
             </div>
 
             <div className="flex flex-col gap-4 px-4">
-              <div className="flex animate-bounce-once flex-col items-center gap-1 text-center opacity-0">
-                <h4 className="font-semibold tracking-wide">
+              <div
+                className="flex animate-bounce-once flex-col items-center gap-1 text-center opacity-0"
+                style={{ animationDelay: "0.4s" }}
+              >
+                <h4 className="font-semibold">
                   Well done for completing this opportunity!
                 </h4>
                 <div className="tracking-wide text-gray-dark">
@@ -497,14 +500,14 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               {/* WHEN DID YOU FINISH? */}
               <div
                 className="flex animate-slide-in-bottom flex-col rounded-lg border-dotted bg-gray-light opacity-0"
-                style={{ animationDelay: "0.5s" }}
+                style={{ animationDelay: "0.8s" }}
               >
                 <div className="flex w-full flex-row">
                   <div className="ml-2 p-4 md:p-6">
                     <FcCalendar className="size-10" />
                   </div>
                   <div className="flex flex-grow flex-col p-4">
-                    <div className="font-bold md:text-start">
+                    <div className="font-semibold md:text-start">
                       When did you finish?
                     </div>
 
@@ -564,7 +567,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                     <FcAlarmClock className="size-10" />
                   </div>
                   <div className="flex flex-grow flex-col p-4">
-                    <div className="font-bold">How long did it take?</div>
+                    <div className="font-semibold">How long did it take?</div>
 
                     <div className="text-sm italic text-gray-dark">
                       Choose the time it took to complete this opportunity.
@@ -825,7 +828,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                     <FcIdea className="size-10" />
                   </div>
                   <div className="flex flex-grow flex-col p-4">
-                    <div className="font-bold">Before you go!</div>
+                    <div className="font-semibold">Before you go!</div>
                     <div className="text-sm italic text-gray-dark">
                       Please rate your experience & provide feedback.
                     </div>

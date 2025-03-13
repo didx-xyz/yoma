@@ -169,3 +169,8 @@ export interface MyOpportunityRequestVerifyImportCsv {
   organizationId: string;
   comment: string | null;
 }
+
+export interface MyOpportunitySearchFilterVerificationFiles {
+  opportunity: string;
+  verificationTypes: VerificationType[] | null;
+}

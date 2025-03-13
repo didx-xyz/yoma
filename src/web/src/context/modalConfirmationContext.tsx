@@ -100,7 +100,7 @@ const ConfirmationModalContextProvider: React.FC<
           isOpen={show}
           shouldCloseOnOverlayClick={true}
           onRequestClose={onHide}
-          className="md:h-fit md:w-[380px]"
+          className="md:h-fit md:w-[400px]"
         >
           <div className="flex flex-col p-4">
             {/* TITLE */}
@@ -114,7 +114,7 @@ const ConfirmationModalContextProvider: React.FC<
               {(content.showCancelButton == null ||
                 content.showCancelButton == true) && (
                 <button
-                  className="btn-default btn btn-sm"
+                  className="btn btn-outline btn-primary btn-sm w-1/2 flex-shrink rounded-full border-purple bg-white normal-case text-purple"
                   onClick={handleCancel}
                 >
                   Cancel
@@ -122,7 +122,10 @@ const ConfirmationModalContextProvider: React.FC<
               )}
               {(content.showOkButton == null ||
                 content.showOkButton == true) && (
-                <button className="btn btn-primary btn-sm" onClick={handleOk}>
+                <button
+                  className="btn btn-primary btn-sm w-1/2 flex-shrink rounded-full bg-purple normal-case text-white"
+                  onClick={handleOk}
+                >
                   OK
                 </button>
               )}

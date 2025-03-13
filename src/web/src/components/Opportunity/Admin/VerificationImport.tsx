@@ -3,7 +3,7 @@ import { useSession } from "next-auth/react";
 import { useCallback, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { useForm } from "react-hook-form";
-import { FaCloudUploadAlt } from "react-icons/fa";
+import { FaUpload } from "react-icons/fa";
 import { FcDocument } from "react-icons/fc";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
@@ -27,7 +27,7 @@ interface InputProps {
   onSave?: () => void;
 }
 
-export const FileUploadImport_Completions: React.FC<InputProps> = ({
+export const VerificationImport: React.FC<InputProps> = ({
   id,
   onClose,
   onSave,
@@ -137,6 +137,7 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
   return (
     <>
       {isLoading && <Loading />}
+
       <form
         key={`OpportunitiesImport_${id}`}
         className="flex h-full flex-col gap-2 overflow-y-auto"
@@ -155,14 +156,18 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
           </div>
           <div className="flex flex-col">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] animate-bounce-once items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
-                <FaCloudUploadAlt className="h-8 w-8 text-green" />
+              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] animate-slide-in-bottom items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
+                <FaUpload className="h-8 w-8 text-yellow" />
               </div>
             </div>
-            <div className="flex flex-col gap-4 px-4">
+
+            <div
+              className="flex w-full animate-fade-in flex-col items-center justify-center gap-2 px-4 opacity-0"
+              style={{ animationDelay: "0.4s" }}
+            >
               <div className="mb-4 flex flex-col items-center gap-1 text-center">
                 <h4 className="font-semibold tracking-wide">
-                  Import verifications from a file
+                  Import Verifications
                 </h4>
                 <div className="tracking-wide text-gray-dark">
                   <p>
@@ -173,7 +178,7 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
               </div>
 
               {/* HELP QUESTIONS */}
-              <div className="collapse collapse-arrow border border-gray-dark text-left leading-relaxed">
+              <div className="collapse collapse-arrow rounded-lg border border-gray text-left leading-relaxed">
                 <input type="radio" name="opp-accordion" />
                 <div className="collapse-title font-semibold">
                   What must the file contain?
@@ -243,7 +248,7 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
                 </div>
               </div>
 
-              <div className="px-6x py-4x bg-base-100x collapse collapse-arrow border border-gray-dark text-left leading-relaxed">
+              <div className="bg-base-100x collapse collapse-arrow rounded-lg border border-gray text-left leading-relaxed">
                 <input type="radio" name="opp-accordion" />
                 <div className="collapse-title font-semibold">Sample File</div>
                 <div className="collapse-content text-sm">
@@ -262,7 +267,7 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
               </div>
 
               {/* FILE UPLOAD */}
-              <div className="flex flex-col rounded-lg border-dotted bg-gray-light">
+              <div className="flex w-full flex-col rounded-lg border-dotted bg-gray-light">
                 <div className="form-control">
                   <FileUpload
                     id="importFileUpload"
@@ -316,10 +321,10 @@ export const FileUploadImport_Completions: React.FC<InputProps> = ({
                   </>
                 )}
 
-              <div className="mb-10 mt-4 flex flex-grow gap-4">
+              <div className="mb-10 mt-4 flex w-full flex-grow gap-4">
                 <button
                   type="button"
-                  className="btn btn-outline w-1/2 flex-shrink rounded-full bg-white normal-case hover:border-0 hover:bg-green hover:text-white"
+                  className="btn btn-outline w-1/2 flex-shrink rounded-full border-green bg-white normal-case text-green hover:border-0 hover:bg-green hover:text-white"
                   onClick={onClose}
                 >
                   Cancel

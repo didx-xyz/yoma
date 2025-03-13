@@ -382,12 +382,14 @@ const LinkDetails: NextPageWithLayout<{
             <p className="text-lg">Submit</p>
           </div>
 
-          <div className="text-xs leading-6 text-gray-dark md:text-sm">
-            Are you sure you want to submit your link for approval?
-            <br />
-            An administrator must approve this link before it becomes active.
-            <br />
-            Please note that these details cannot be changed later.
+          <div className="text-md flex flex-col gap-3 leading-6 text-gray-dark md:text-sm">
+            <p>Are you sure you want to submit your link for approval?</p>
+
+            <p>
+              An administrator must approve this link before it becomes active.
+            </p>
+
+            <p>Please note that these details cannot be changed later.</p>
           </div>
         </div>,
       );
@@ -608,11 +610,11 @@ const LinkDetails: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <FaExclamationTriangle className="h-7 w-7 text-yellow" />
+            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] animate-slide-in-top items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+              <FaExclamationTriangle className="h-8 w-8 text-yellow" />
             </div>
 
-            <div className="animate-bounce-once text-base font-semibold">
+            <div className="font-semibold">
               Your recent changes have not been saved!
             </div>
 
@@ -1145,36 +1147,39 @@ const LinkDetails: NextPageWithLayout<{
                   >
                     {/* TYPE */}
                     <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">Type</span>
-                      </label>
+                      <div className="flex flex-col">
+                        <div className="label-text text-base font-semibold">
+                          Type
+                        </div>
 
-                      <label className="label label-text pt-0 text-sm">
-                        {
-                          linkEntityTypes?.find(
-                            (x) => x.value == formData.entityType,
-                          )?.label
-                        }
-                      </label>
-                      {formStateStep1.errors.entityType && (
-                        <label className="label">
-                          <span className="label-text-alt italic text-red-500">
-                            {`${formStateStep1.errors.entityType.message}`}
-                          </span>
-                        </label>
-                      )}
+                        <div className="label label-text pl-0 text-sm">
+                          {
+                            linkEntityTypes?.find(
+                              (x) => x.value == formData.entityType,
+                            )?.label
+                          }
+                        </div>
+
+                        {formStateStep1.errors.entityType && (
+                          <label className="label">
+                            <span className="label-text-alt italic text-red-500">
+                              {`${formStateStep1.errors.entityType.message}`}
+                            </span>
+                          </label>
+                        )}
+                      </div>
                     </div>
 
                     {/* LINK PREVIEW */}
                     <div className="form-control">
-                      <label className="flex flex-col">
-                        <div className="label-text font-semibold">
+                      <div className="flex flex-col">
+                        <div className="label-text text-base font-semibold">
                           Social Preview
                         </div>
-                        <div className="label-text-alt my-2">
+                        <div className="label label-text pl-0 text-sm">
                           This is how your link will look on social media:
                         </div>
-                      </label>
+                      </div>
                       {formData.entityType == "0" && (
                         <SocialPreview
                           name={formData?.name}
@@ -1196,75 +1201,84 @@ const LinkDetails: NextPageWithLayout<{
 
                     {/* USAGE */}
                     <div className="form-control">
-                      <label className="label">
-                        <span className="label-text font-semibold">Limits</span>
-                      </label>
+                      <div className="flex flex-col">
+                        <div className="label-text text-base font-semibold">
+                          Limits
+                        </div>
 
-                      {!formData.lockToDistributionList && (
-                        <>
-                          {/* USAGES LIMIT */}
-                          <label className="label label-text text-sm">
-                            {formData.usagesLimit ? (
+                        {!formData.lockToDistributionList && (
+                          <>
+                            {/* USAGES LIMIT */}
+                            <label className="label label-text pl-0 text-sm">
+                              {formData.usagesLimit ? (
+                                <div className="flex flex-row gap-1">
+                                  Limited to
+                                  <div className="font-semibold text-black">
+                                    {formData.usagesLimit}
+                                  </div>
+                                  participant
+                                  {formData.usagesLimit !== 1 ? "s" : ""}
+                                </div>
+                              ) : (
+                                "No limit"
+                              )}
+                            </label>
+
+                            {/* EXPIRY DATE */}
+                            <label className="label label-text pl-0 text-sm">
+                              {formData.dateEnd && (
+                                <div className="flex flex-row gap-1">
+                                  Expires on
+                                  <Moment
+                                    format={DATE_FORMAT_HUMAN}
+                                    className="font-semibold text-black"
+                                  >
+                                    {formData.dateEnd}
+                                  </Moment>
+                                </div>
+                              )}
+                              {!formData.dateEnd && "No expiry date"}
+                            </label>
+                          </>
+                        )}
+
+                        {formData.lockToDistributionList && (
+                          <>
+                            {/* LIMITED TO PARTICIPANTS */}
+                            <label className="label label-text pl-0 text-sm">
                               <div className="flex flex-row gap-1">
-                                Limited to
+                                Limited to the following
                                 <div className="font-semibold text-black">
-                                  {formData.usagesLimit}
+                                  {formData.distributionList?.length}
                                 </div>
                                 participant
-                                {formData.usagesLimit !== 1 ? "s" : ""}
+                                {formData.distributionList?.length !== 1
+                                  ? "s"
+                                  : ""}
+                                {": "}
                               </div>
-                            ) : (
-                              "No limit"
-                            )}
-                          </label>
-
-                          {/* EXPIRY DATE */}
-                          <label className="label label-text text-sm">
-                            {formData.dateEnd && (
-                              <div className="flex flex-row gap-1">
-                                Expires on
-                                <Moment
-                                  format={DATE_FORMAT_HUMAN}
-                                  className="font-semibold text-black"
-                                >
-                                  {formData.dateEnd}
-                                </Moment>
-                              </div>
-                            )}
-                            {!formData.dateEnd && "No expiry date"}
-                          </label>
-                        </>
-                      )}
-
-                      {formData.lockToDistributionList && (
-                        <>
-                          {/* LIMITED TO PARTICIPANTS */}
-                          <label className="label label-text text-sm">
-                            <div className="flex flex-row gap-1">
-                              Limited to the following
-                              <div className="font-semibold text-black">
-                                {formData.distributionList?.length}
-                              </div>
-                              participant
-                              {formData.distributionList?.length !== 1
-                                ? "s"
-                                : ""}
-                              {": "}
-                            </div>
-                          </label>
-
-                          {/* PARTICIPANTS */}
-                          {(formData.distributionList?.length ?? 0) > 0 && (
-                            <label className="label label-text pt-0 text-xs">
-                              <ul className="list-none">
-                                {formData.distributionList?.map(
-                                  (item, index) => <li key={index}>{item}</li>,
-                                )}
-                              </ul>
                             </label>
-                          )}
-                        </>
-                      )}
+
+                            {/* PARTICIPANTS */}
+                            {(formData.distributionList?.length ?? 0) > 0 && (
+                              <label className="label label-text pl-0 pt-0 text-xs">
+                                <div className="flex flex-row flex-wrap gap-1">
+                                  {formData.distributionList?.map(
+                                    (item, index) => (
+                                      <div
+                                        key={index}
+                                        className="badge bg-gray !font-normal"
+                                      >
+                                        {item}
+                                      </div>
+                                    ),
+                                  )}
+                                </div>
+                              </label>
+                            )}
+                          </>
+                        )}
+                      </div>
                     </div>
 
                     {/* BUTTONS */}

@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import FileSaver from "file-saver";
 import { useAtomValue } from "jotai";
 import type { GetStaticPaths, GetStaticProps } from "next";
 import Head from "next/head";
@@ -15,15 +14,8 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import { FaExclamationTriangle } from "react-icons/fa";
-import {
-  IoIosLink,
-  IoMdClose,
-  IoMdDownload,
-  IoMdEye,
-  IoMdEyeOff,
-  IoMdPerson,
-} from "react-icons/io";
+import { FaDownload, FaEdit } from "react-icons/fa";
+import { IoIosLink, IoMdEye, IoMdEyeOff, IoMdPerson } from "react-icons/io";
 import { toast } from "react-toastify";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
@@ -34,18 +26,19 @@ import type {
 } from "~/api/models/opportunity";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
+import { downloadVerificationFilesAdmin } from "~/api/services/myOpportunities";
 import {
   getCategoriesAdmin,
   getCountriesAdmin,
   getLanguagesAdmin,
   getOpportunitiesAdmin,
-  getOpportunitiesAdminExportToCSV,
   getOpportunityTypes,
   getOrganisationsAdmin,
 } from "~/api/services/opportunities";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import OpportunityExport from "~/components/Opportunity/Admin/OpportunityExport";
 import { OpportunityAdminFilterHorizontal } from "~/components/Opportunity/OpportunityAdminFilterHorizontal";
 import { OpportunityAdminFilterVertical } from "~/components/Opportunity/OpportunityAdminFilterVertical";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
@@ -53,7 +46,7 @@ import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { SearchInputLarge } from "~/components/SearchInputLarge";
 import { Loading } from "~/components/Status/Loading";
-import { PAGE_SIZE, PAGE_SIZE_MAXIMUM, THEME_BLUE } from "~/lib/constants";
+import { PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
 import { screenWidthAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
 
@@ -87,11 +80,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   lookups_types: OpportunityType[];
 }> = ({ lookups_types }) => {
   const router = useRouter();
-  const [isExportButtonLoading, setIsExportButtonLoading] = useState(false);
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const smallDisplay = useAtomValue(screenWidthAtom);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   const lookups_publishedStates: SelectOption[] = [
     { value: "0", label: "Not started" },
@@ -173,7 +165,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
   // QUERY: SEARCH RESULTS
   // the filter values from the querystring are mapped to it's corresponding id
-  const { data: searchResults, isLoading } =
+  const { data: searchResults, isLoading: isLoadingSearchResults } =
     useQuery<OpportunitySearchResultsInfo>({
       queryKey: [
         "OpportunitiesSearch",
@@ -463,26 +455,33 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     void router.push("/admin/opportunities", undefined, { scroll: true });
   }, [router]);
 
-  const handleExportToCSV = useCallback(async () => {
-    setIsExportButtonLoading(true);
-
-    try {
-      searchFilter.pageSize = PAGE_SIZE_MAXIMUM;
-      const data = await getOpportunitiesAdminExportToCSV(searchFilter);
-      if (!data) return;
-
-      FileSaver.saveAs(data);
-
-      setExportDialogOpen(false);
-    } finally {
-      setIsExportButtonLoading(false);
-    }
-  }, [searchFilter, setIsExportButtonLoading, setExportDialogOpen]);
-
   const onClick_CopyToClipboard = useCallback((url: string) => {
     navigator.clipboard.writeText(url);
     toast.success("URL copied to clipboard!", { autoClose: 2000 });
   }, []);
+
+  const downloadVerificationFiles = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+    opportunityId: string,
+  ) => {
+    e.preventDefault();
+
+    try {
+      await downloadVerificationFilesAdmin({
+        opportunity: opportunityId,
+        verificationTypes: null,
+      });
+    } catch (error) {
+      console.error(error);
+      toast.error("Download failed. Please try again later.", {
+        autoClose: false,
+      });
+    }
+
+    toast.success(
+      "Your request is scheduled for processing. You will receive an email when the download is ready.",
+    );
+  };
 
   return (
     <>
@@ -492,7 +491,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
       <PageBackground className="h-[14.5rem] md:h-[18rem]" />
 
-      {isLoading && <Loading />}
+      {isLoadingSearchResults && <Loading />}
 
       {/* POPUP FILTER */}
       <CustomModal
@@ -542,60 +541,14 @@ const OpportunitiesAdmin: NextPageWithLayout<{
         onRequestClose={() => {
           setExportDialogOpen(false);
         }}
-        className={`md:max-h-[480px] md:w-[600px]`}
+        className={`md:max-h-[740px] md:w-[600px]`}
       >
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-row bg-blue p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
-            <button
-              type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
-              onClick={() => {
-                setExportDialogOpen(false);
-              }}
-            >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
-            </button>
-          </div>
-          <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <FaExclamationTriangle className="h-7 w-7 text-yellow" />
-            </div>
-
-            <div className="flex w-96 flex-col gap-4">
-              <h4>
-                Just a heads up, the result set is quite large and we can only
-                return a maximum of {PAGE_SIZE_MAXIMUM.toLocaleString()} rows
-                for each export.
-              </h4>
-              <h5>
-                To help manage this, consider applying search filters like start
-                date or end date. This will narrow down the size of your results
-                and make your data more manageable.
-              </h5>
-              <h5>When you&apos;re ready, click the button to continue.</h5>
-            </div>
-
-            <div className="mt-4 flex flex-grow gap-4">
-              <button
-                type="button"
-                className="btn bg-green normal-case text-white hover:bg-green hover:brightness-110 disabled:border-0 disabled:bg-green disabled:brightness-90 md:w-[250px]"
-                onClick={handleExportToCSV}
-                disabled={isExportButtonLoading}
-              >
-                {isExportButtonLoading && (
-                  <p className="text-white">Exporting...</p>
-                )}
-                {!isExportButtonLoading && (
-                  <>
-                    <IoMdDownload className="h-5 w-5 text-white" />
-                    <p className="text-white">Export to CSV</p>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+        <OpportunityExport
+          totalCount={searchResults?.totalCount ?? 0}
+          searchFilter={searchFilter} // Pass the current search filter
+          onClose={() => setExportDialogOpen(false)}
+          onSave={() => setExportDialogOpen(false)}
+        />
       </CustomModal>
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
@@ -655,7 +608,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
           )}
 
         {/* SEARCH RESULTS */}
-        {!isLoading && (
+        {!isLoadingSearchResults && (
           <div id="results">
             <div className="rounded-lg bg-transparent md:bg-white md:p-4">
               {/* NO ROWS */}
@@ -683,21 +636,40 @@ const OpportunitiesAdmin: NextPageWithLayout<{
               {/* RESULTS */}
               {searchResults && searchResults.items?.length > 0 && (
                 <div className="overflow-x-auto">
-                  {/* MOBIlE */}
+                  {/* MOBILE */}
                   <div className="flex flex-col gap-4 md:hidden">
                     {searchResults.items.map((opportunity) => (
-                      <Link
+                      <div
                         key={`sm_${opportunity.id}`}
-                        href={`/organisations/${
-                          opportunity.organizationId
-                        }/opportunities/${
-                          opportunity.id
-                        }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
                         className="flex flex-col justify-between gap-4 rounded-lg bg-white p-4 shadow-custom"
                       >
-                        <div className="flex flex-col gap-1">
-                          <span className="line-clamp-2 font-semibold text-gray-dark">
-                            {opportunity.title}
+                        <div className="flex flex-row gap-2 border-b-2 border-gray-light">
+                          <span title={opportunity.title} className="w-full">
+                            <Link
+                              href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}/info?returnUrl=${encodeURIComponent(router.asPath)}`}
+                              className="line-clamp-1 text-start font-semibold"
+                            >
+                              {opportunity.title}
+                            </Link>
+                          </span>
+
+                          <span title="Edit">
+                            <Link
+                              href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
+                            >
+                              <FaEdit className="size-4 text-gray-dark hover:animate-pulse hover:text-blue" />
+                            </Link>
+                          </span>
+
+                          <span title="Download completion files">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                downloadVerificationFiles(e, opportunity.id);
+                              }}
+                            >
+                              <FaDownload className="size-4 text-gray-dark hover:text-blue" />
+                            </button>
                           </span>
                         </div>
 
@@ -705,14 +677,17 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                           <div className="flex justify-between">
                             <p className="text-sm tracking-wider">URL</p>
                             {opportunity.url && (
-                              <button
-                                onClick={() =>
-                                  onClick_CopyToClipboard(opportunity.url!)
-                                }
-                                className="badge bg-green-light text-green"
-                              >
-                                <IoIosLink className="h-4 w-4" />
-                              </button>
+                              <span title="Copy URL to clipboard">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    onClick_CopyToClipboard(opportunity.url!);
+                                  }}
+                                  className="badge bg-green-light text-green"
+                                >
+                                  <IoIosLink className="h-4 w-4" />
+                                </button>
+                              </span>
                             )}
                             {opportunity.yomaReward && (
                               <span className="badge bg-orange-light text-orange">
@@ -725,19 +700,19 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
                           <div className="flex justify-between">
                             <p className="text-sm tracking-wider">ZLTO</p>
-                            {opportunity.zltoReward && (
-                              <span className="badge bg-orange-light text-orange">
-                                <Image
-                                  src={iconZlto}
-                                  alt="Zlto icon"
-                                  width={16}
-                                  className="h-auto"
-                                />
-                                <span className="ml-1 text-xs">
-                                  {opportunity?.zltoReward}
-                                </span>
+
+                            <span className="badge bg-orange-light text-orange">
+                              <Image
+                                src={iconZlto}
+                                alt="Zlto icon"
+                                width={16}
+                                className="h-auto"
+                              />
+                              <span className="ml-1 text-xs">
+                                {opportunity?.zltoReward ?? 0}
                               </span>
-                            )}
+                            </span>
+
                             {opportunity.yomaReward && (
                               <span className="badge bg-orange-light text-orange">
                                 <span className="ml-1 text-xs">
@@ -786,7 +761,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             </div>
                           </div>
                         </div>
-                      </Link>
+                      </div>
                     ))}
                   </div>
 
@@ -817,29 +792,61 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                     <tbody>
                       {searchResults.items.map((opportunity) => (
                         <tr key={`md_${opportunity.id}`}>
-                          <td className="truncate border-b-2 border-gray-light md:max-w-[220px] lg:max-w-[525px]">
-                            <Link
-                              href={`/organisations/${
-                                opportunity.organizationId
-                              }/opportunities/${
-                                opportunity.id
-                              }/info?returnUrl=${encodeURIComponent(
-                                router.asPath,
-                              )}`}
+                          <td className="flex flex-row gap-2 border-b-2 border-gray-light">
+                            <span
+                              className="tooltip tooltip-top tooltip-secondary"
+                              data-tip={opportunity.title}
                             >
-                              {opportunity.title}
-                            </Link>
+                              <Link
+                                href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}/info?returnUrl=${encodeURIComponent(router.asPath)}`}
+                                className="line-clamp-1 text-start"
+                              >
+                                {opportunity.title}
+                              </Link>
+                            </span>
+
+                            <span
+                              className="tooltip tooltip-top tooltip-secondary"
+                              data-tip="Edit"
+                            >
+                              <Link
+                                href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
+                              >
+                                <FaEdit className="size-4 text-gray-dark hover:animate-pulse hover:text-blue" />
+                              </Link>
+                            </span>
+
+                            <span
+                              className="tooltip tooltip-top tooltip-secondary"
+                              data-tip="Download completion files"
+                            >
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  downloadVerificationFiles(e, opportunity.id);
+                                }}
+                              >
+                                <FaDownload className="size-4 text-gray-dark hover:text-blue" />
+                              </button>
+                            </span>
                           </td>
                           <td className="border-b-2 border-gray-light text-center">
                             {opportunity?.url && (
-                              <button
-                                onClick={() =>
-                                  onClick_CopyToClipboard(opportunity.url!)
-                                }
-                                className="badge bg-green-light text-green"
+                              <span
+                                className="tooltip tooltip-top tooltip-secondary"
+                                data-tip="Copy URL to clipboard"
                               >
-                                <IoIosLink className="h-4 w-4" />
-                              </button>
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation(); // Prevent link navigation
+                                    onClick_CopyToClipboard(opportunity.url!);
+                                  }}
+                                  className="badge bg-green-light text-green"
+                                >
+                                  <IoIosLink className="h-4 w-4" />
+                                </button>
+                              </span>
                             )}
                           </td>
                           <td className="w-28 border-b-2 border-gray-light text-center">
@@ -881,7 +888,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                           <td className="border-b-2 border-gray-light text-center">
                             {opportunity?.hidden && (
                               <span
-                                className="tooltip tooltip-left tooltip-secondary"
+                                className="tooltip tooltip-top tooltip-secondary"
                                 data-tip="Hidden"
                               >
                                 <IoMdEyeOff className="size-5 text-gray-dark" />
@@ -889,7 +896,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             )}
                             {!opportunity?.hidden && (
                               <span
-                                className="tooltip tooltip-left tooltip-secondary"
+                                className="tooltip tooltip-top tooltip-secondary"
                                 data-tip="Visible"
                               >
                                 <IoMdEye className="size-5 text-black" />

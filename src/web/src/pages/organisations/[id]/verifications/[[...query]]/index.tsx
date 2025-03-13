@@ -5,7 +5,6 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import axios from "axios";
-import FileSaver from "file-saver";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -18,19 +17,16 @@ import React, {
   useState,
   type ReactElement,
 } from "react";
-import { FaExclamationTriangle } from "react-icons/fa";
+import { FaDownload, FaThumbsDown, FaThumbsUp, FaUpload } from "react-icons/fa";
 import {
   IoIosCheckmark,
   IoIosClose,
   IoMdAlert,
   IoMdCheckmark,
   IoMdClose,
-  IoMdCloudUpload,
-  IoMdDownload,
   IoMdFlame,
-  IoMdThumbsDown,
-  IoMdThumbsUp,
 } from "react-icons/io";
+import { IoInformationCircleOutline } from "react-icons/io5";
 import Moment from "react-moment";
 import Select from "react-select";
 import { toast } from "react-toastify";
@@ -45,15 +41,16 @@ import {
   type MyOpportunitySearchResults,
 } from "~/api/models/myOpportunity";
 import {
-  getMyOpportunitiesExportToCSV,
   getOpportunitiesForVerification,
   performActionVerifyBulk,
   searchMyOpportunitiesAdmin,
 } from "~/api/services/myOpportunities";
 import CustomModal from "~/components/Common/CustomModal";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
-import { FileUploadImport_Completions } from "~/components/Opportunity/Import/FileUploadImport_Completions";
+import VerificationExport from "~/components/Opportunity/Admin/VerificationExport";
+import { VerificationImport } from "~/components/Opportunity/Admin/VerificationImport";
 import { OpportunityCompletionRead } from "~/components/Opportunity/OpportunityCompletionRead";
 import MobileCard from "~/components/Organisation/Verifications/MobileCard";
 import { PageBackground } from "~/components/PageBackground";
@@ -71,7 +68,6 @@ import {
   GA_ACTION_OPPORTUNITY_COMPLETION_VERIFY,
   GA_CATEGORY_OPPORTUNITY,
   PAGE_SIZE,
-  PAGE_SIZE_MAXIMUM,
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { config } from "~/lib/react-query-config";
@@ -210,10 +206,8 @@ const OpportunityVerifications: NextPageWithLayout<{
   const [verificationResponse, setVerificationResponse] =
     useState<MyOpportunityResponseVerifyFinalizeBatch | null>(null);
 
-  const [isExportButtonLoading, setIsExportButtonLoading] = useState(false);
-  const [exportDialogOpen, setExportDialogOpen] = useState(false);
-
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [exportDialogOpen, setExportDialogOpen] = useState(false);
 
   // search filter state
   const searchFilter = useMemo<MyOpportunitySearchFilterAdmin>(
@@ -237,7 +231,7 @@ const OpportunityVerifications: NextPageWithLayout<{
   );
 
   // 👇 use prefetched queries from server
-  const { data: data, isLoading: isLoadingData } =
+  const { data: searchResults, isLoading: isLoadingSearchResults } =
     useQuery<MyOpportunitySearchResults>({
       queryKey: [
         "Verifications",
@@ -550,33 +544,13 @@ const OpportunityVerifications: NextPageWithLayout<{
   const handleAllSelect = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       if (e.target.checked) {
-        setSelectedRows(data?.items ?? []);
+        setSelectedRows(searchResults?.items ?? []);
       } else {
         setSelectedRows([]);
       }
     },
-    [data, setSelectedRows],
+    [searchResults, setSelectedRows],
   );
-
-  const handleExportToCSV = useCallback(async () => {
-    setIsExportButtonLoading(true);
-
-    try {
-      const searchFilterCopy = JSON.parse(JSON.stringify(searchFilter)); // deep copy
-
-      searchFilterCopy.pageNumber = 1;
-      searchFilterCopy.pageSize = PAGE_SIZE_MAXIMUM;
-
-      const data = await getMyOpportunitiesExportToCSV(searchFilterCopy);
-      if (!data) return;
-
-      FileSaver.saveAs(data);
-
-      setExportDialogOpen(false);
-    } finally {
-      setIsExportButtonLoading(false);
-    }
-  }, [searchFilter, setIsExportButtonLoading, setExportDialogOpen]);
 
   const onSearch = useCallback(
     (query: string) => {
@@ -680,30 +654,30 @@ const OpportunityVerifications: NextPageWithLayout<{
           <div className="flex flex-row place-items-center justify-center px-6 py-4 pt-2">
             <div className="flex flex-grow">
               <button
-                className="btn btn-sm w-36 flex-nowrap border-black bg-white py-5 text-black md:btn-sm hover:bg-black hover:text-white"
+                className="btn btn-outline w-64 flex-shrink rounded-full border-green bg-white normal-case text-green hover:border-0 hover:bg-green hover:text-white"
                 onClick={onCloseVerificationModal}
               >
                 <IoMdClose className="h-6 w-6" />
-                Close
+                Cancel
               </button>
             </div>
             <div className="flex gap-4">
               {(bulkActionApprove == null || !bulkActionApprove) && (
                 <button
-                  className="btn btn-sm w-36 flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
+                  className="btn w-64 flex-shrink rounded-full border-red-500 bg-white normal-case text-red-500 hover:border-0 hover:bg-red-500 hover:text-white"
                   onClick={() => onVerify(false)}
                 >
-                  <IoMdThumbsDown className="h-6 w-6" />
+                  <FaThumbsDown className="h-4 w-4" />
                   Reject
                 </button>
               )}
 
               {(bulkActionApprove == null || bulkActionApprove) && (
                 <button
-                  className="btn btn-sm w-36 flex-nowrap border-green bg-white py-5 text-green hover:bg-green hover:text-white"
+                  className="btn w-64 flex-shrink rounded-full border-green bg-white normal-case text-green hover:border-0 hover:bg-green hover:text-white"
                   onClick={() => onVerify(true)}
                 >
-                  <IoMdThumbsUp className="h-6 w-6" />
+                  <FaThumbsUp className="h-4 w-4" />
                   Approve
                 </button>
               )}
@@ -750,7 +724,10 @@ const OpportunityVerifications: NextPageWithLayout<{
                           <IoIosClose className="h-8 w-8 text-red-400 md:h-10 md:w-10" />
                         )}
                       </div>
-                      <p className="text-md w-full truncate text-center font-bold leading-5 tracking-wide text-gray-dark">
+                      <p
+                        className="text-md w-full truncate text-start font-bold leading-5 tracking-wide text-gray-dark"
+                        title={item.opportunityTitle!}
+                      >
                         {item.opportunityTitle}
                       </p>
                     </div>
@@ -762,15 +739,19 @@ const OpportunityVerifications: NextPageWithLayout<{
                               {verificationResponse.status == "Completed" && (
                                 <div className="flex flex-col gap-2">
                                   <p>
-                                    <strong className="text-black">
+                                    <div
+                                      className="w-32 truncate font-bold text-black md:w-96"
+                                      title={item.userDisplayName!}
+                                    >
                                       {item.userDisplayName}
-                                    </strong>{" "}
+                                    </div>{" "}
                                     was successfully
                                     <strong className="mx-1 text-green">
                                       approved.
                                     </strong>
                                   </p>
-                                  <p className="text-sm">
+                                  <p className="flex flex-row gap-2 text-sm">
+                                    <IoInformationCircleOutline className="size-5 text-blue" />
                                     We&apos;ve sent them an email to share the
                                     good news!
                                   </p>
@@ -787,7 +768,8 @@ const OpportunityVerifications: NextPageWithLayout<{
                                       rejected.
                                     </strong>
                                   </p>
-                                  <p className="text-sm">
+                                  <p className="flex flex-row gap-2 text-sm">
+                                    <IoInformationCircleOutline className="size-5 text-blue" />
                                     We&apos;ve sent them an email with your
                                     comments.
                                   </p>
@@ -795,12 +777,12 @@ const OpportunityVerifications: NextPageWithLayout<{
                               )}
                             </>
                           )}
+
                           {!item.success && (
-                            <div className="text-red-400">
-                              {item.failure?.message
-                                ? item.failure?.message
-                                : "An error occurred while processing the request."}
-                            </div>
+                            <FormMessage messageType={FormMessageType.Error}>
+                              {item.failure?.message ||
+                                "An error occurred while processing the request."}
+                            </FormMessage>
                           )}
                         </div>
                       </div>
@@ -823,6 +805,33 @@ const OpportunityVerifications: NextPageWithLayout<{
         </div>
       </CustomModal>
 
+      {/* IMPORT DIALOG */}
+      <CustomModal
+        isOpen={importDialogOpen}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setImportDialogOpen(false);
+        }}
+        className={`md:max-h-[650px] md:w-[700px]`}
+      >
+        <VerificationImport
+          id={id}
+          onClose={() => {
+            setImportDialogOpen(false);
+          }}
+          onSave={async () => {
+            // invalidate queries
+            //NB: this is the query on the opportunities page
+            await queryClient.invalidateQueries({
+              queryKey: ["Verifications", id],
+            });
+            await queryClient.invalidateQueries({
+              queryKey: ["OpportunitiesForVerification", id],
+            });
+          }}
+        />
+      </CustomModal>
+
       {/* EXPORT DIALOG */}
       <CustomModal
         isOpen={exportDialogOpen}
@@ -830,63 +839,14 @@ const OpportunityVerifications: NextPageWithLayout<{
         onRequestClose={() => {
           setExportDialogOpen(false);
         }}
-        className={`md:max-h-[480px] md:w-[600px]`}
+        className={`md:max-h-[740px] md:w-[600px]`}
       >
-        <div className="flex flex-col gap-2">
-          <div className="flex flex-row bg-green p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
-            <button
-              type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
-              onClick={() => {
-                setExportDialogOpen(false);
-              }}
-            >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
-            </button>
-          </div>
-          <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-10 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
-              <FaExclamationTriangle className="mr-px h-7 w-7 text-yellow" />
-            </div>
-
-            <div className="animate-bounce-once text-base font-semibold">
-              Heads up!
-            </div>
-
-            <div className="flex max-w-md flex-col gap-4 text-center text-base">
-              <p>
-                The result set is quite large and we can only return a maximum
-                of {PAGE_SIZE_MAXIMUM.toLocaleString()} rows for each export.
-              </p>
-              <p>
-                To help manage this, consider applying search filters. This will
-                narrow down the size of your results and make your data more
-                manageable.
-              </p>{" "}
-              <p>When you&apos;re ready, click the button to continue.</p>
-            </div>
-
-            <div className="mt-4 flex flex-grow gap-4">
-              <button
-                type="button"
-                className="btn bg-green normal-case text-white hover:bg-green hover:brightness-110 disabled:border-0 disabled:bg-green disabled:brightness-90 md:w-[250px]"
-                onClick={handleExportToCSV}
-                disabled={isExportButtonLoading}
-              >
-                {isExportButtonLoading && (
-                  <p className="text-white">Exporting...</p>
-                )}
-                {!isExportButtonLoading && (
-                  <>
-                    <IoMdDownload className="h-5 w-5 text-white" />
-                    <p className="text-white">Export to CSV</p>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+        <VerificationExport
+          totalCount={searchResults?.totalCount ?? 0}
+          searchFilter={searchFilter}
+          onClose={() => setExportDialogOpen(false)}
+          onSave={() => setExportDialogOpen(false)}
+        />
       </CustomModal>
 
       {/* PAGE */}
@@ -1091,86 +1051,68 @@ const OpportunityVerifications: NextPageWithLayout<{
             </div>
           </div>
 
-          <div className="my-4 flex flex-col items-center justify-between gap-6 md:flex-row">
-            {/* WARNING MSG */}
-            <div className="w-full max-w-5xl rounded-lg bg-orange p-2 text-xs font-semibold text-white md:w-fit">
-              Bulk verifications are processed in the order in which you select
-              them, we encourage selecting from top to bottom, as that is the
-              order in which Youth applied.
-            </div>
+          {/* BUTTONS */}
+          <div className="flex w-full flex-row justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setImportDialogOpen(true);
+              }}
+              className="btn btn-sm w-36 flex-nowrap border-green bg-green text-white hover:bg-white hover:text-green"
+            >
+              <FaUpload className="h-4 w-4" /> Import
+            </button>
 
-            {/* BUTTONS */}
-            <div className="flex w-full flex-row justify-around gap-2 md:w-fit md:justify-end">
-              <button
-                type="button"
-                className="btn btn-sm w-[120px] flex-nowrap border-green bg-green text-white hover:bg-green hover:text-white disabled:bg-green disabled:brightness-90"
-                onClick={() => {
-                  // show dialog if the result set is too large
-                  if ((data?.totalCount ?? 0) > PAGE_SIZE_MAXIMUM) {
-                    setExportDialogOpen(true);
-                    return;
-                  }
+            <button
+              type="button"
+              onClick={() => setExportDialogOpen(true)}
+              className="btn btn-sm w-36 flex-nowrap border-green bg-green text-white hover:bg-white hover:text-green"
+            >
+              <FaDownload className="h-4 w-4" /> Export
+            </button>
 
-                  handleExportToCSV();
-                }}
-                disabled={isExportButtonLoading}
-              >
-                {isExportButtonLoading && (
-                  <p className="text-white">Exporting...</p>
-                )}
-                {!isExportButtonLoading && (
-                  <>
-                    <IoMdDownload className="h-5 w-5 text-white" />
-                    <p className="text-white">Export</p>
-                  </>
-                )}
-              </button>
-
-              <button
-                //className={`${currentOrganisationInactive ? "disabled" : ""} `}
-                className="btn btn-sm w-[120px] flex-nowrap border-green bg-green text-white hover:bg-green hover:text-white disabled:bg-green disabled:brightness-90"
-                onClick={() => setImportDialogOpen(true)}
-              >
-                <IoMdCloudUpload className="h-5 w-5" /> Import
-              </button>
-
-              {/* show approve/reject buttons for 'all' & 'pending' tabs */}
-              {(!verificationStatus || verificationStatus === "Pending") &&
-                !isLoadingData &&
-                data &&
-                data.items?.length > 0 && (
-                  <>
-                    <button
-                      className="btn btn-sm flex-nowrap border-green bg-white text-green hover:bg-green hover:text-white"
-                      onClick={() => onChangeBulkAction(true)}
-                    >
-                      <IoMdThumbsUp className="h-6 w-6" />
-                      Approve
-                    </button>
-                    <button
-                      className="btn btn-sm flex-nowrap border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white"
-                      onClick={() => onChangeBulkAction(false)}
-                    >
-                      <IoMdThumbsDown className="h-6 w-6" />
-                      Reject
-                    </button>
-                  </>
-                )}
-            </div>
+            {/* show approve/reject buttons for 'all' & 'pending' tabs */}
+            {(!verificationStatus || verificationStatus === "Pending") &&
+              !isLoadingSearchResults &&
+              searchResults &&
+              searchResults.items?.length > 0 && (
+                <>
+                  <button
+                    className="btn btn-sm w-36 flex-nowrap border-green bg-white text-green hover:bg-green hover:text-white"
+                    onClick={() => onChangeBulkAction(true)}
+                  >
+                    <FaThumbsUp className="h-4 w-4" />
+                    Approve
+                  </button>
+                  <button
+                    className="btn btn-sm w-36 flex-nowrap border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white"
+                    onClick={() => onChangeBulkAction(false)}
+                  >
+                    <FaThumbsDown className="h-4 w-4" />
+                    Reject
+                  </button>
+                </>
+              )}
           </div>
+
+          <FormMessage messageType={FormMessageType.Warning}>
+            Bulk verifications are processed in the order in which you select
+            them, we encourage selecting from top to bottom, as that is the
+            order in which Youth applied.
+          </FormMessage>
         </div>
 
         {/* MAIN CONTENT */}
-        {isLoadingData && (
+        {isLoadingSearchResults && (
           <div className="flex h-fit flex-col items-center rounded-lg bg-white p-8 md:pb-16">
             <LoadingSkeleton />
           </div>
         )}
 
-        {!isLoadingData && (
+        {!isLoadingSearchResults && (
           <>
             {/* NO RESULTS */}
-            {data && data.totalCount === 0 && (
+            {searchResults && searchResults.totalCount === 0 && (
               <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
                 <NoRowsMessage
                   title={"No results found"}
@@ -1180,7 +1122,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             )}
 
             {/* RESULTS */}
-            {data && data.items?.length > 0 && (
+            {searchResults && searchResults.items?.length > 0 && (
               <div className="overflow-x-auto md:rounded-lg md:shadow-custom">
                 {/* DESKTOP */}
                 <table className="hidden bg-white md:table md:rounded-lg">
@@ -1190,7 +1132,9 @@ const OpportunityVerifications: NextPageWithLayout<{
                         <input
                           type="checkbox"
                           className="checkbox-primary checkbox checkbox-sm rounded border-gray-dark bg-white"
-                          checked={selectedRows?.length === data.items?.length}
+                          checked={
+                            selectedRows?.length === searchResults.items?.length
+                          }
                           onChange={handleAllSelect}
                         />
                       </th>
@@ -1201,7 +1145,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                     </tr>
                   </thead>
                   <tbody>
-                    {data.items.map((item) => (
+                    {searchResults.items.map((item) => (
                       <tr
                         key={item.id}
                         className="!h-[70px] !border-gray bg-white text-gray-dark"
@@ -1278,7 +1222,7 @@ const OpportunityVerifications: NextPageWithLayout<{
 
                 {/* MOBILE */}
                 <div className="my-4 space-y-4 md:hidden">
-                  {data.items.map((item) => (
+                  {searchResults.items.map((item) => (
                     <MobileCard
                       key={`MobileCard_${item.id}`}
                       item={item}
@@ -1301,7 +1245,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             <div className="mt-2 grid place-items-center justify-center">
               <PaginationButtons
                 currentPage={page ? parseInt(page) : 1}
-                totalItems={data?.totalCount ?? 0}
+                totalItems={searchResults?.totalCount ?? 0}
                 pageSize={PAGE_SIZE}
                 onClick={handlePagerChange}
                 showPages={false}
@@ -1310,33 +1254,6 @@ const OpportunityVerifications: NextPageWithLayout<{
             </div>
           </>
         )}
-
-        {/* IMPORT OPPORTUNITIES DIALOG */}
-        <CustomModal
-          isOpen={importDialogOpen}
-          shouldCloseOnOverlayClick={false}
-          onRequestClose={() => {
-            setImportDialogOpen(false);
-          }}
-          className={`md:max-h-[650px] md:w-[700px]`}
-        >
-          <FileUploadImport_Completions
-            id={id}
-            onClose={() => {
-              setImportDialogOpen(false);
-            }}
-            onSave={async () => {
-              // invalidate queries
-              //NB: this is the query on the opportunities page
-              await queryClient.invalidateQueries({
-                queryKey: ["Verifications", id],
-              });
-              await queryClient.invalidateQueries({
-                queryKey: ["OpportunitiesForVerification", id],
-              });
-            }}
-          />
-        </CustomModal>
       </div>
     </>
   );
