@@ -14,8 +14,8 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import { FaDownload, FaEdit } from "react-icons/fa";
-import { IoIosLink, IoMdEye, IoMdEyeOff, IoMdPerson } from "react-icons/io";
+import { FaDownload, FaEdit, FaEye, FaEyeSlash, FaLink } from "react-icons/fa";
+import { IoMdPerson } from "react-icons/io";
 import { toast } from "react-toastify";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
@@ -652,15 +652,13 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               {opportunity.title}
                             </Link>
                           </span>
-
                           <span title="Edit">
                             <Link
                               href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
                             >
-                              <FaEdit className="size-4 text-gray-dark hover:animate-pulse hover:text-blue" />
+                              <FaEdit className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
                             </Link>
                           </span>
-
                           <span title="Download completion files">
                             <button
                               type="button"
@@ -668,65 +666,52 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                 downloadVerificationFiles(e, opportunity.id);
                               }}
                             >
-                              <FaDownload className="size-4 text-gray-dark hover:text-blue" />
+                              <FaDownload className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
                             </button>
                           </span>
+                          {opportunity?.url && (
+                            <span title="Copy URL to clipboard">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  onClick_CopyToClipboard(opportunity.url!);
+                                }}
+                              >
+                                <FaLink className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                              </button>
+                            </span>
+                          )}
                         </div>
 
                         <div className="flex flex-col gap-2 text-gray-dark">
-                          <div className="flex justify-between">
-                            <p className="text-sm tracking-wider">URL</p>
-                            {opportunity.url && (
-                              <span title="Copy URL to clipboard">
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    onClick_CopyToClipboard(opportunity.url!);
-                                  }}
-                                  className="badge bg-green-light text-green"
-                                >
-                                  <IoIosLink className="h-4 w-4" />
-                                </button>
-                              </span>
-                            )}
-                            {opportunity.yomaReward && (
-                              <span className="badge bg-orange-light text-orange">
-                                <span className="ml-1 text-xs">
-                                  {opportunity.yomaReward} Yoma
-                                </span>
-                              </span>
-                            )}
-                          </div>
-
+                          {/* ZLTO Reward */}
                           <div className="flex justify-between">
                             <p className="text-sm tracking-wider">ZLTO</p>
-
-                            <span className="badge bg-orange-light text-orange">
-                              <Image
-                                src={iconZlto}
-                                alt="Zlto icon"
-                                width={16}
-                                className="h-auto"
-                              />
-                              <span className="ml-1 text-xs">
-                                {opportunity?.zltoReward ?? 0}
-                              </span>
-                            </span>
-
-                            {opportunity.yomaReward && (
-                              <span className="badge bg-orange-light text-orange">
+                            <div className="flex flex-col gap-2">
+                              <span
+                                className={`badge min-w-20 ${(opportunity?.zltoReward ?? 0) > 0 ? "bg-orange-light text-orange" : "bg-gray-light text-gray-dark"} px-4`}
+                              >
+                                <Image
+                                  src={iconZlto}
+                                  alt="Zlto icon"
+                                  width={16}
+                                  className="h-auto"
+                                />
                                 <span className="ml-1 text-xs">
-                                  {opportunity.yomaReward} Yoma
+                                  {opportunity?.zltoReward ?? 0}
                                 </span>
                               </span>
-                            )}
+                            </div>
                           </div>
 
+                          {/* Participants */}
                           <div className="flex justify-between">
                             <p className="text-sm tracking-wider">
                               Participants
                             </p>
-                            <span className="badge bg-green-light text-green">
+                            <span
+                              className={`badge min-w-20 ${opportunity.participantCountTotal > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
+                            >
                               <IoMdPerson className="h-4 w-4" />
                               <span className="ml-1 text-xs">
                                 {opportunity.participantCountTotal}
@@ -734,6 +719,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             </span>
                           </div>
 
+                          {/* Status */}
                           <div className="flex justify-between">
                             <p className="text-sm tracking-wider">Status</p>
                             <div className="flex justify-start gap-2">
@@ -743,18 +729,18 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             </div>
                           </div>
 
+                          {/* Visible */}
                           <div className="flex justify-between">
                             <p className="text-sm tracking-wider">Visible</p>
-                            <div className="flex justify-start gap-2">
-                              {opportunity?.hidden && (
-                                <span className="badge bg-blue-light text-gray-dark">
-                                  <IoMdEyeOff className="mr-1 text-sm" />
+                            <div className="flex w-20 justify-start gap-2">
+                              {opportunity?.hidden ? (
+                                <span className="badge bg-yellow-tint text-yellow">
+                                  <FaEyeSlash className="mr-1 text-sm" />
                                   Hidden
                                 </span>
-                              )}
-                              {!opportunity?.hidden && (
-                                <span className="badge bg-blue-light text-black">
-                                  <IoMdEye className="mr-1 text-sm" />
+                              ) : (
+                                <span className="badge bg-green-light text-green">
+                                  <FaEye className="mr-1 text-sm" />
                                   Visible
                                 </span>
                               )}
@@ -773,7 +759,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                           Title
                         </th>
                         <th className="border-b-2 border-gray-light text-center">
-                          Url
+                          Actions
                         </th>
                         <th className="border-b-2 border-gray-light text-center">
                           ZLTO
@@ -781,7 +767,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                         <th className="border-b-2 border-gray-light text-center">
                           Participants
                         </th>
-                        <th className="border-b-2 border-gray-light text-start">
+                        <th className="border-b-2 border-gray-light text-center">
                           Status
                         </th>
                         <th className="border-b-2 border-gray-light text-center">
@@ -792,7 +778,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                     <tbody>
                       {searchResults.items.map((opportunity) => (
                         <tr key={`md_${opportunity.id}`}>
-                          <td className="flex flex-row gap-2 border-b-2 border-gray-light">
+                          <td className="border-b-2 border-gray-light">
                             <span
                               className="tooltip tooltip-top tooltip-secondary"
                               data-tip={opportunity.title}
@@ -804,7 +790,8 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                 {opportunity.title}
                               </Link>
                             </span>
-
+                          </td>
+                          <td className="w-28 border-b-2 border-gray-light text-center">
                             <span
                               className="tooltip tooltip-top tooltip-secondary"
                               data-tip="Edit"
@@ -812,47 +799,44 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               <Link
                                 href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
                               >
-                                <FaEdit className="size-4 text-gray-dark hover:animate-pulse hover:text-blue" />
+                                <FaEdit className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
                               </Link>
                             </span>
-
                             <span
-                              className="tooltip tooltip-top tooltip-secondary"
+                              className="tooltip tooltip-top tooltip-secondary ml-2"
                               data-tip="Download completion files"
                             >
                               <button
                                 type="button"
-                                onClick={(e) => {
-                                  downloadVerificationFiles(e, opportunity.id);
-                                }}
+                                onClick={(e) =>
+                                  downloadVerificationFiles(e, opportunity.id)
+                                }
                               >
-                                <FaDownload className="size-4 text-gray-dark hover:text-blue" />
+                                <FaDownload className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
                               </button>
                             </span>
-                          </td>
-                          <td className="border-b-2 border-gray-light text-center">
                             {opportunity?.url && (
                               <span
-                                className="tooltip tooltip-top tooltip-secondary"
+                                className="tooltip tooltip-top tooltip-secondary ml-2"
                                 data-tip="Copy URL to clipboard"
                               >
                                 <button
                                   type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation(); // Prevent link navigation
-                                    onClick_CopyToClipboard(opportunity.url!);
-                                  }}
-                                  className="badge bg-green-light text-green"
+                                  onClick={() =>
+                                    onClick_CopyToClipboard(opportunity.url!)
+                                  }
                                 >
-                                  <IoIosLink className="h-4 w-4" />
+                                  <FaLink className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
                                 </button>
                               </span>
                             )}
                           </td>
                           <td className="w-28 border-b-2 border-gray-light text-center">
                             <div className="flex flex-col">
-                              {opportunity.zltoReward && (
-                                <span className="badge bg-orange-light px-4 text-orange">
+                              {opportunity.zltoReward !== undefined && (
+                                <span
+                                  className={`badge ${(opportunity?.zltoReward ?? 0) > 0 ? "bg-orange-light text-orange" : "bg-gray-light text-gray-dark"} px-4`}
+                                >
                                   <Image
                                     src={iconZlto}
                                     alt="Zlto icon"
@@ -860,24 +844,17 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                     className="h-auto"
                                   />
                                   <span className="ml-1 text-xs">
-                                    {opportunity?.zltoReward}
-                                  </span>
-                                </span>
-                              )}
-                              {opportunity.yomaReward && (
-                                <span className="badge bg-orange-light px-4 text-orange">
-                                  <span className="ml-1 text-xs">
-                                    {opportunity.yomaReward} Yoma
+                                    {opportunity.zltoReward}
                                   </span>
                                 </span>
                               )}
                             </div>
                           </td>
                           <td className="border-b-2 border-gray-light text-center">
-                            <span className="badge bg-green-light text-green">
-                              <span className="text-xs">
-                                {opportunity.participantCountTotal}
-                              </span>
+                            <span
+                              className={`badge ${opportunity.participantCountTotal > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
+                            >
+                              {opportunity.participantCountTotal}
                             </span>
                           </td>
                           <td className="flex gap-2 border-b-2 border-gray-light text-center">
@@ -886,22 +863,21 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             />
                           </td>
                           <td className="border-b-2 border-gray-light text-center">
-                            {opportunity?.hidden && (
-                              <span
-                                className="tooltip tooltip-top tooltip-secondary"
-                                data-tip="Hidden"
-                              >
-                                <IoMdEyeOff className="size-5 text-gray-dark" />
-                              </span>
-                            )}
-                            {!opportunity?.hidden && (
-                              <span
-                                className="tooltip tooltip-top tooltip-secondary"
-                                data-tip="Visible"
-                              >
-                                <IoMdEye className="size-5 text-black" />
-                              </span>
-                            )}
+                            <div className="flex justify-between">
+                              <div className="flex w-20 justify-start gap-2">
+                                {opportunity?.hidden ? (
+                                  <span className="badge bg-blue-light text-gray-dark">
+                                    <FaEyeSlash className="mr-1 text-sm" />
+                                    Hidden
+                                  </span>
+                                ) : (
+                                  <span className="badge bg-green-light text-green">
+                                    <FaEye className="mr-1 text-sm" />
+                                    Visible
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           </td>
                         </tr>
                       ))}

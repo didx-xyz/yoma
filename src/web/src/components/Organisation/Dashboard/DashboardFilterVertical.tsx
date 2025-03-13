@@ -65,10 +65,7 @@ export const DashboardFilterVertical: React.FC<{
     },
   });
   const { handleSubmit, formState, watch, setValue } = form;
-  const watchOrganisations = watch(
-    "organizations" /*,
-    searchFilter?.organizations,*/,
-  );
+  const watchOrganisations = watch("organizations");
 
   // Handle form submission
   const onSubmitHandler = useCallback(

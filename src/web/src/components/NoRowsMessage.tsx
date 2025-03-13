@@ -7,29 +7,31 @@ const NoRowsMessage: React.FC<{
   className?: string | null;
   classNameIcon?: string | null;
 }> = ({
-  icon = "🚀",
+  icon = "⚠️",
   title,
   description,
   className,
-  classNameIcon = "h-[48px] w-[48px]",
+  classNameIcon = "text-xl",
 }) => {
   return (
     <div
-      className={`flex h-full w-full flex-col items-center justify-center rounded-xl bg-white p-4 text-center ${className}`}
+      className={`flex h-full min-h-60 w-full flex-col items-center justify-center rounded-xl bg-white p-4 text-center ${className}`}
     >
       <div
-        className={`flex items-center justify-center rounded-full bg-white p-4 shadow-lg ${classNameIcon}`}
+        className={`mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg ${classNameIcon}`}
       >
         {icon}
       </div>
 
-      <div className="max-w-sm text-xs md:text-sm">
-        <div className="my-2 font-semibold text-black">
-          {title ?? "No rows found..."}
+      <div className="max-w-lg animate-fade-in">
+        <div className="my-2 font-semibold text-black md:text-sm">
+          <div className="text-sm md:text-lg">
+            {title ?? "No rows found..."}
+          </div>
         </div>
 
         <div
-          className="text-gray-dark"
+          className="text-xs text-gray-dark md:text-sm"
           dangerouslySetInnerHTML={{
             __html:
               description ??

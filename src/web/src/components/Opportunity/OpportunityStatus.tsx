@@ -1,41 +1,25 @@
 import React from "react";
-import {
-  IoMdBed,
-  IoIosBicycle,
-  IoIosBatteryDead,
-  IoIosTrash,
-} from "react-icons/io";
 
-const OpportunityStatus: React.FC<{
-  status: string;
-}> = ({ status }) => {
+const OpportunityStatus: React.FC<{ status: string }> = ({ status }) => {
   function renderStatusBadge(status: string): JSX.Element | null {
     switch (status) {
-      case "Inactive":
-        return (
-          <span className="badge bg-blue-light text-yellow">
-            <IoMdBed className="mr-1 text-sm" />
-            Inactive
-          </span>
-        );
       case "Active":
         return (
-          <span className="badge bg-blue-light text-blue">
-            <IoIosBicycle className="mr-1 text-sm" />
-            Active
+          <span className="badge w-20 bg-green-light text-green">Active</span>
+        );
+      case "Inactive":
+        return (
+          <span className="badge w-20 bg-yellow-tint text-yellow">
+            Inactive
           </span>
         );
       case "Expired":
         return (
-          <span className="badge bg-yellow-tint text-yellow">
-            <IoIosBatteryDead className="mr-1 text-sm" />
-            Expired
-          </span>
+          <span className="badge w-20 bg-green-light text-yellow">Expired</span>
         );
       case "Deleted":
         return (
-          <span className="badge bg-green-light text-red-400">
-            <IoIosTrash className="mr-1 text-sm" />
+          <span className="badge w-20 bg-green-light text-red-400">
             Deleted
           </span>
         );

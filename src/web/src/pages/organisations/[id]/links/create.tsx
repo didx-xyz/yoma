@@ -610,11 +610,11 @@ const LinkDetails: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] animate-slide-in-top items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
               <FaExclamationTriangle className="h-8 w-8 text-yellow" />
             </div>
 
-            <div className="font-semibold">
+            <div className="animate-bounce-once font-semibold">
               Your recent changes have not been saved!
             </div>
 
@@ -622,10 +622,10 @@ const LinkDetails: NextPageWithLayout<{
               Please make sure to save your changes to prevent any loss of data.
             </div>
 
-            <div className="mt-4 flex flex-grow gap-4">
+            <div className="mt-4 flex gap-4 px-4">
               <button
                 type="button"
-                className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
+                className="btn w-52 rounded-full border-purple bg-white normal-case text-purple"
                 onClick={onClickContinueWithoutSaving}
               >
                 <span className="ml-1">Continue without saving</span>
@@ -633,7 +633,7 @@ const LinkDetails: NextPageWithLayout<{
 
               <button
                 type="button"
-                className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[150px]"
+                className="btn w-52 rounded-full bg-purple normal-case text-white hover:bg-purple-light"
                 onClick={onClickSaveAndContinue}
               >
                 <p className="text-white">Save and continue</p>
@@ -1070,13 +1070,19 @@ const LinkDetails: NextPageWithLayout<{
                                 isMulti
                                 className="form-control mb-2 w-full"
                                 onChange={(val) => {
-                                  // when pasting multiple values, split them by DELIMETER_PASTE_MULTI
-                                  const emails = val
-                                    .flatMap((item) =>
-                                      item.value.split(DELIMETER_PASTE_MULTI),
-                                    )
-                                    .map((email) => email.trim()) // Trim each email
-                                    .filter((email) => email !== ""); // Filter out empty strings
+                                  // when pasting multiple values, split them by DELIMETER_PASTE_MULTI and remove duplicates
+                                  const emails = Array.from(
+                                    new Set(
+                                      val
+                                        .flatMap((item) =>
+                                          item.value.split(
+                                            DELIMETER_PASTE_MULTI,
+                                          ),
+                                        )
+                                        .map((email) => email.trim())
+                                        .filter((email) => email !== ""),
+                                    ),
+                                  );
                                   onChange(emails);
                                 }}
                                 value={value?.map((val: any) => ({
