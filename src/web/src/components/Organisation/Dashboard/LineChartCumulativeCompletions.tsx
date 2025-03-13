@@ -178,6 +178,7 @@ export const LineChartCumulativeCompletions: React.FC<{
             pointShape: "circle",
             enableInteractivity: true,
             height: 380,
+            isStacked: true,
             hAxis: {
               gridlines: {
                 color: "transparent",
