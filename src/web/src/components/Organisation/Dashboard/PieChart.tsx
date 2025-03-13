@@ -14,6 +14,13 @@ export const PieChart: React.FC<{
       return row.length === 2 && typeof row[1] === "number" && row[1] > 0;
     });
 
+  // Create a derived data array with formatted labels: "label (value)"
+  const chartData = hasValidData
+    ? data.map((row, index) =>
+        index === 0 ? row : [`${row[0]}\n(${row[1]} total)`, row[1]],
+      )
+    : data;
+
   return (
     <div key={id}>
       {hasValidData ? (
@@ -25,7 +32,7 @@ export const PieChart: React.FC<{
               <span className="loading loading-spinner loading-lg text-green"></span>
             </div>
           }
-          data={data}
+          data={chartData}
           options={{
             legend: {
               position: "left",
@@ -40,10 +47,8 @@ export const PieChart: React.FC<{
             pieHole: 0.7,
             height: 125,
             backgroundColor: "transparent",
-            pieSliceText: "value",
             pieSliceTextStyle: {
-              color: "black",
-              fontSize: 13,
+              color: "transparent",
             },
             chartArea: {
               top: 10,

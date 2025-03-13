@@ -670,7 +670,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   );
   //#endregion Events
 
-  // //#region Filter Popup Handlers
+  //#region Filter Popup Handlers
   const onCloseFilter = useCallback(() => {
     setFilterFullWindowVisible(false);
   }, [setFilterFullWindowVisible]);
