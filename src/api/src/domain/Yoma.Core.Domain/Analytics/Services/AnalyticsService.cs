@@ -335,7 +335,7 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       //'my' opportunity engagements: viewed, navigatedExternalLink & completed verifications
       result.Opportunities.Engagements = new TimeIntervalSummary()
-      { Legend = ["Viewed", "Go-To Clicks", "Completions"], Data = resultsEngagements, Count = [viewedCount, navigatedExternalLinkCount, completedCount] };
+      { Legend = ["Views", "Go-To Clicks", "Completions"], Data = resultsEngagements, Count = [viewedCount, navigatedExternalLinkCount, completedCount] };
 
       //opportunities engaged
       var opportunityCountEngaged =
@@ -424,7 +424,7 @@ namespace Yoma.Core.Domain.Analytics.Services
           Name = g.Skill.Name,
           InfoURL = g.Skill.InfoURL,
           CountCompleted = g.Count
-        }).OrderBy(s => s.Name)]
+        }).OrderByDescending(s => s.CountCompleted)]
         },
         Items = new TimeIntervalSummary()
         { Legend = ["Total unique skills"], Data = resultsSkills, Count = [flattenedSkills.Count] }
@@ -530,28 +530,46 @@ namespace Yoma.Core.Domain.Analytics.Services
         .ThenBy(result => result.OrganizationName)
         .ToList();
 
-      //extract unique organization names in alphabetical order for the Legend
-      var organizationNames = itemsCumulative.Select(x => x.OrganizationName).Distinct().OrderBy(name => name).ToArray();
+      //compute total counts per organization (efficiently)
+      var countsTotalPerOrganization = itemsCumulative.GroupBy(o => o.OrganizationName).ToDictionary(g => g.Key, g => g.Sum(o => o.Count));
+
+      //get top 10 organizations
+      var organizationTotalCounts = countsTotalPerOrganization.OrderByDescending(kvp => kvp.Value).ToList();
+
+      var topOrganizations = organizationTotalCounts.Take(10).Select(kvp => kvp.Key).ToList();
+      var includeRestOfEcosystem = organizationTotalCounts.Count > 10;
 
       //ensure chronological order of months
-      var months = itemsCumulative.Select(x => x.MonthEnding).Distinct().OrderBy(date => date).ToArray();
+      var months = itemsCumulative.Select(x => x.MonthEnding).Distinct().OrderBy(date => date).ToList();
 
       //prepare cumulative results grouped by MonthEnding
       var resultsCumulative = months.Select(month =>
       {
-        //generate the values/counts (cummulative / stacked) for all organization names in the current month-ending group
-        var values = organizationNames.Select(name => itemsCumulative.Where(o => o.OrganizationName == name && o.MonthEnding <= month).Sum(o => o.Count)).ToArray(); // sum all previous months including current
+        //generate cumulative values/counts (stacked) for all organization names in the current month-ending group
+        var values = topOrganizations.Select(name =>
+            itemsCumulative.Where(o => o.OrganizationName == name && o.MonthEnding <= month).Sum(o => o.Count)).ToList(); //sum all previous months including current
+
+        if (includeRestOfEcosystem)
+          values.Add(itemsCumulative.Where(o => !topOrganizations.Contains(o.OrganizationName) && o.MonthEnding <= month).Sum(o => o.Count)); //sum all previous months including current
+
         return new TimeValueEntry(month, values);
       }).ToList();
 
       //finalize the cumulative summary
+      var legend = topOrganizations.ToList();
+      if (includeRestOfEcosystem) legend.Add("Rest of Ecosystem");
+
+      var counts = topOrganizations.Select(name => countsTotalPerOrganization.GetValueOrDefault(name, 0)).ToList();
+      if (includeRestOfEcosystem)
+        counts.Add(countsTotalPerOrganization.Where(kvp => !topOrganizations.Contains(kvp.Key)).Sum(kvp => kvp.Value));
+
       result.Cumulative = new OrganizationCumulative
       {
         Completions = new TimeIntervalSummary
         {
-          Legend = organizationNames,
+          Legend = [.. legend],
           Data = resultsCumulative,
-          Count = organizationNames.Select(name => itemsCumulative.Where(o => o.OrganizationName == name).Sum(o => o.Count)).ToArray()
+          Count = [.. counts]
         }
       };
 
