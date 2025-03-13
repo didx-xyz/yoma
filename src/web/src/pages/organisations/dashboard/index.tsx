@@ -1006,7 +1006,8 @@ const OrganisationDashboard: NextPageWithLayout<{
               {!searchFilter.organizations && (
                 <>
                   <span className="font-semibold">
-                    Please select an organisation to view their dashboard.
+                    Here&apos;s the dashboard for{" "}
+                    <span className="italic">all</span> organisations.
                   </span>
                 </>
               )}
@@ -1014,8 +1015,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                 <>
                   <div className="flex flex-row gap-1 font-semibold">
                     <div>Here&apos;s the dashboard for</div>
-                    <div className="flex flex-row font-semibold">
-                      <div className="mr-1 max-w-36 truncate underline">
+                    <div className="flex flex-row font-semibold italic">
+                      <div className="mr-1 max-w-36 truncate underline lg:max-w-64">
                         {lookups_selectedOrganisations?.items?.find(
                           (x) => x.id === searchFilter.organizations![0],
                         )?.name ?? searchFilter.organizations![0]}
