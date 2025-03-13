@@ -73,20 +73,14 @@ export const LineChartOverview: React.FC<{
           }}
         >
           <div className="flex flex-row items-center gap-3">
-            <div
-              className="rounded-lg bg-gray-light p-1"
-              //   style={{
-              //     backgroundColor:
-              //       showChart &&
-              //       data.count[index] != null &&
-              //       data.count[index] > 0
-              //         ? CHART_COLORS[index % CHART_COLORS.length]
-              //         : "#e6f5f3",
-              //   }}
-            >
-              {name === "Viewed" && "👀"}
-              {name === "Go-To Clicks" && "👆"}
-              {name === "Completions" && "🎓"}
+            <div className="rounded-lg bg-gray-light p-1">
+              {name === "Views"
+                ? "👀"
+                : name === "Go-To Clicks"
+                  ? "👆"
+                  : name === "Completions"
+                    ? "🎓"
+                    : "🔢"}
             </div>
             <div className="text-sm font-semibold">{name}</div>
           </div>
@@ -153,7 +147,7 @@ export const LineChartOverview: React.FC<{
       {showChart ? (
         <Chart
           key={keyState}
-          chartType="LineChart"
+          chartType="AreaChart"
           loader={
             <div className="mt-20 flex w-full items-center justify-center">
               <span className="loading loading-spinner loading-lg text-green"></span>
@@ -163,7 +157,6 @@ export const LineChartOverview: React.FC<{
           options={{
             legend: { position: "none" },
             height: chartHeight,
-            curveType: "function",
             pointSize: 8,
             pointShape: "circle",
             enableInteractivity: true,

@@ -1381,14 +1381,14 @@ const OrganisationDashboard: NextPageWithLayout<{
                                 id="conversionRate"
                                 colors={CHART_COLORS}
                                 data={[
-                                  ["Completed", "Viewed"],
+                                  ["Completed", "Views"],
                                   [
                                     "Completed",
                                     engagementData.opportunities.conversionRate
                                       .completedCountFromNavigatedExternalLinkTracking,
                                   ],
                                   [
-                                    "Viewed",
+                                    "Views",
                                     engagementData.opportunities.conversionRate
                                       .viewedCountFromNavigatedExternalLinkTracking,
                                   ],
