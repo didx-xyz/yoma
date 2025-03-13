@@ -753,7 +753,7 @@ const StoreRuleDetails: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] animate-slide-in-top items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
               <FaExclamationTriangle className="h-8 w-8 text-yellow" />
             </div>
 
@@ -765,10 +765,10 @@ const StoreRuleDetails: NextPageWithLayout<{
               Please make sure to save your changes to prevent any loss of data.
             </div>
 
-            <div className="mt-4 flex flex-grow gap-4">
+            <div className="mt-4 flex w-full flex-grow gap-4">
               <button
                 type="button"
-                className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
+                className="btn w-1/2 rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
                 onClick={onClickContinueWithoutSaving}
               >
                 <span className="ml-1">Continue without saving</span>
@@ -776,7 +776,7 @@ const StoreRuleDetails: NextPageWithLayout<{
 
               <button
                 type="button"
-                className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[150px]"
+                className="btn w-1/2 rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[150px]"
                 onClick={onClickSaveAndContinue}
               >
                 <p className="text-white">Save and continue</p>

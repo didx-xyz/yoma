@@ -673,7 +673,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             <span title="Copy URL to clipboard">
                               <button
                                 type="button"
-                                onClick={(e) => {
+                                onClick={() => {
                                   onClick_CopyToClipboard(opportunity.url!);
                                 }}
                               >
@@ -822,7 +822,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               >
                                 <button
                                   type="button"
-                                  onClick={(e) =>
+                                  onClick={() =>
                                     onClick_CopyToClipboard(opportunity.url!)
                                   }
                                 >

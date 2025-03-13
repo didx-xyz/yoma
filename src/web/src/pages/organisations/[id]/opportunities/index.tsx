@@ -742,7 +742,7 @@ const Opportunities: NextPageWithLayout<{
                           <span title="Copy URL to clipboard">
                             <button
                               type="button"
-                              onClick={(e) => {
+                              onClick={() => {
                                 onClick_CopyToClipboard(opportunity.url!);
                               }}
                             >
@@ -826,7 +826,6 @@ const Opportunities: NextPageWithLayout<{
                             <Link
                               href={`/organisations/${id}/verifications?opportunity=${opportunity.id}&verificationStatus=Pending`}
                               className="badge min-w-20 bg-orange-light text-orange"
-                              onClick={(e) => e.stopPropagation()}
                             >
                               <IoIosWarning className="h-4 w-4" />
                               <span className="ml-1 text-xs">
@@ -961,7 +960,7 @@ const Opportunities: NextPageWithLayout<{
                             >
                               <button
                                 type="button"
-                                onClick={(e) => {
+                                onClick={() => {
                                   onClick_CopyToClipboard(opportunity.url!);
                                 }}
                               >
