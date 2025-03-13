@@ -1,8 +1,9 @@
 import Image from "next/image";
 import iconClock from "public/images/icon-clock.svg";
-import { IoMdEyeOff, IoMdPause, IoMdPerson, IoMdPlay } from "react-icons/io";
+import { IoMdPause, IoMdPerson, IoMdPlay } from "react-icons/io";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import iconZlto from "public/images/icon-zlto.svg";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 interface BadgesProps {
   opportunity: OpportunityInfo | undefined;
@@ -77,7 +78,7 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
       {/* STATUS BADGES */}
       {opportunity?.status == "Active" && (
         <>
-          <div className="badge bg-blue-light text-blue">Active</div>
+          <div className="badge bg-green-light text-green">Active</div>
 
           {new Date(opportunity.dateStart) > new Date() && (
             <div className="badge bg-yellow-tint text-yellow">
@@ -103,12 +104,21 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
         <div className="badge bg-green-light text-red-400">Deleted</div>
       )}
 
-      {opportunity?.hidden && (
-        <div className="badge bg-red-400 text-red-800">
-          <IoMdEyeOff />
-          <span className="ml-1 text-xs">Hidden</span>
+      <div className="flex justify-between">
+        <div className="flex w-20 justify-start gap-2">
+          {opportunity?.hidden ? (
+            <span className="badge bg-yellow-tint text-yellow">
+              <FaEyeSlash className="mr-1 text-sm" />
+              Hidden
+            </span>
+          ) : (
+            <span className="badge bg-green-light text-green">
+              <FaEye className="mr-1 text-sm" />
+              Visible
+            </span>
+          )}
         </div>
-      )}
+      </div>
 
       {/* ADMINS CAN SEE THE FEATURED FLAG */}
       {isAdmin && opportunity?.featured && (

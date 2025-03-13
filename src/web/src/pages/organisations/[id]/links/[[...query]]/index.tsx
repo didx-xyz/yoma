@@ -708,10 +708,10 @@ const Links: NextPageWithLayout<{
                   <NoRowsMessage
                     title={"Welcome to Links!"}
                     description={
-                      "Create a link to auto-verify participants for your opportunities!<br>When the link is clicked, Youth will enter Yoma to claim their opportunity.<br/>The link needs limits on usage and an expiry date.<br/>Create a QR code from your link, and let youth scan to complete."
+                      "Create a link to auto-verify participants for your opportunities!<br/><br/>When the link is clicked, Youth will enter Yoma to claim their opportunity.<br/><br/>The link needs limits on usage and an expiry date.<br/><br/>Create a QR code from your link, and let youth scan to complete."
                     }
+                    icon="🚀"
                   />
-                  {renderAddLinkButton()}
                 </div>
               )}
 

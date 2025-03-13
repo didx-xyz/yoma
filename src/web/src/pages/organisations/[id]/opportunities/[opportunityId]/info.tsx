@@ -494,23 +494,9 @@ const OpportunityDetails: NextPageWithLayout<{
                   )}
                 </>
               )}
-              {/* TODO */}
-              {/* <Link
-                href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
-              >
-                <FaArrowCircleUp className="mr-2 h-3 w-3" />
-                Short link
-              </Link> */}
-              {/* TODO */}
-              {/* <Link
-                href={`/organisations/${id}/opportunities/${opportunityId}/edit`}
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
-              >
-                <FaLink className="mr-2 h-3 w-3" />
-                Generate magic link
-              </Link> */}
+
               <div className="divider -m-2" />
+
               {opportunity?.status != "Deleted" && (
                 <button
                   className="flex flex-row items-center text-red-500 hover:brightness-50"

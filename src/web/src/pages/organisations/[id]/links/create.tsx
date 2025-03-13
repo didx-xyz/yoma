@@ -1070,13 +1070,19 @@ const LinkDetails: NextPageWithLayout<{
                                 isMulti
                                 className="form-control mb-2 w-full"
                                 onChange={(val) => {
-                                  // when pasting multiple values, split them by DELIMETER_PASTE_MULTI
-                                  const emails = val
-                                    .flatMap((item) =>
-                                      item.value.split(DELIMETER_PASTE_MULTI),
-                                    )
-                                    .map((email) => email.trim()) // Trim each email
-                                    .filter((email) => email !== ""); // Filter out empty strings
+                                  // when pasting multiple values, split them by DELIMETER_PASTE_MULTI and remove duplicates
+                                  const emails = Array.from(
+                                    new Set(
+                                      val
+                                        .flatMap((item) =>
+                                          item.value.split(
+                                            DELIMETER_PASTE_MULTI,
+                                          ),
+                                        )
+                                        .map((email) => email.trim())
+                                        .filter((email) => email !== ""),
+                                    ),
+                                  );
                                   onChange(emails);
                                 }}
                                 value={value?.map((val: any) => ({
