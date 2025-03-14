@@ -17,20 +17,9 @@ export const LineChartCumulativeCompletions: React.FC<{
   );
 
   const localData = useMemo<(string | number)[][]>(() => {
-    if (!data) return [];
-
-    if (!data.data || data.data.length === 0) {
-      // Handle the case where there's no data
-      return [
-        [
-          "Date",
-          ...(data?.legend.map((x, i) => {
-            const truncatedLegend =
-              x.length > 10 ? x.substring(0, 10) + "..." : x;
-            return `${truncatedLegend} (Total: ${data.count[i]})`;
-          }) ?? []),
-        ],
-      ]; // Return only the header row if no data
+    if (!data?.data || data.data.length === 0) {
+      setShowChart(false);
+      return [];
     }
 
     const labels = data.legend.map((x, i) => {
