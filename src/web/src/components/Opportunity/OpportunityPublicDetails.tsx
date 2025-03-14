@@ -277,13 +277,11 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4">
-                <div className="-mt-8 flex h-12 w-12 animate-bounce-once items-center justify-center rounded-full bg-white shadow-lg">
+                <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
                   <FcKey className="mr-px h-7 w-7 text-white" />
                 </div>
 
-                <h5 className="animate-bounce-once">
-                  Please sign-in to continue
-                </h5>
+                <h5>Please sign-in to continue</h5>
 
                 <div className="mt-8 flex flex-grow gap-4">
                   <button
@@ -294,7 +292,7 @@ const OpportunityPublicDetails: React.FC<{
                     <IoMdClose className="h-5 w-5 text-purple" /> Cancel
                   </button>
 
-                  <SignInButton className="btn transform gap-2 border-0 border-none bg-purple px-4 shadow-lg transition-all duration-300 ease-in-out hover:bg-purple-light hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:bg-purple-light md:w-[150px]" />
+                  <SignInButton className="btn transform gap-2 border-0 border-none bg-purple px-4 shadow-lg transition-all duration-300 ease-in-out hover:bg-purple-light hover:brightness-95 disabled:!cursor-wait disabled:bg-purple-light md:w-[150px]" />
                 </div>
               </div>
             </div>
@@ -323,7 +321,7 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
-                <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] animate-bounce-once items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
                   <FaExclamationTriangle className="h-8 w-8 text-yellow" />
                 </div>
 
@@ -427,7 +425,6 @@ const OpportunityPublicDetails: React.FC<{
               setCompleteOpportunitySuccessDialogVisible(false);
             }}
             className={`md:max-h-[410px] md:w-[600px]`}
-            animationStyle="spin"
           >
             <div className="flex w-full flex-col gap-2">
               <div className="flex flex-row bg-green p-4 shadow-lg">
@@ -503,7 +500,7 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4">
-                <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] animate-bounce-once items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
                   <FaExclamationTriangle className="h-8 w-8 text-yellow" />
                 </div>
 

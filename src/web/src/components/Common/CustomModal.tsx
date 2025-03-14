@@ -17,7 +17,7 @@ interface CustomModalProps {
   children: React.ReactNode;
   shouldCloseOnOverlayClick?: boolean;
   className?: string;
-  animationStyle?: AnimationStyle; // New prop for animation style
+  animationStyle?: AnimationStyle;
 }
 
 const CustomModal: FC<CustomModalProps> = ({
@@ -26,7 +26,7 @@ const CustomModal: FC<CustomModalProps> = ({
   children,
   shouldCloseOnOverlayClick = false,
   className = "md:max-h-[700px] md:w-[500px]",
-  animationStyle = "scale", // Default animation style
+  animationStyle = "scale",
 }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const [modalContainer, setModalContainer] = useState<HTMLElement | null>(

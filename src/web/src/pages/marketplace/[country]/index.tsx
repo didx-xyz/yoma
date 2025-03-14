@@ -523,11 +523,11 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-8 flex h-12 w-12 animate-bounce-once items-center justify-center rounded-full bg-white shadow-lg">
+            <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
               <FcKey className="mr-px h-7 w-7 text-white" />
             </div>
 
-            <h5 className="animate-bounce-once">Please sign-in to continue</h5>
+            <h5>Please sign-in to continue</h5>
 
             <div className="mt-4 flex flex-grow gap-4">
               <button

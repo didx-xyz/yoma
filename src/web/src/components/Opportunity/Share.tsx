@@ -130,11 +130,11 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
       {/* MAIN CONTENT */}
       {!linkInfoIsLoading && (
         <div className="flex flex-col items-center justify-center gap-4 p-8">
-          <div className="-mt-16 flex h-12 w-12 animate-spin-once items-center justify-center rounded-full border-green-dark bg-orange shadow-lg">
+          <div className="-mt-16 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-orange shadow-lg">
             <IoShareSocialOutline className="h-7 w-7 text-white" />
           </div>
 
-          <h3 className="animate-bounce-once">Share this opportunity!</h3>
+          <h3>Share this opportunity!</h3>
 
           {/* OPPORTUNITY DETAILS (smaller) */}
           <div className="mt-4 flex w-full flex-col rounded-lg p-4 shadow-custom">

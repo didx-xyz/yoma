@@ -751,7 +751,6 @@ const OrganisationDashboard: NextPageWithLayout<{
           setFilterFullWindowVisible(false);
         }}
         className="md:max-h-[600px] md:w-[700px]"
-        animationStyle="slide-top"
       >
         <DashboardFilterVertical
           htmlRef={myRef.current!}

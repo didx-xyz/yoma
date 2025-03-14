@@ -23,7 +23,7 @@ const NoRowsMessage: React.FC<{
         {icon}
       </div>
 
-      <div className="max-w-lg animate-fade-in">
+      <div className="max-w-lg">
         <div className="my-2 font-semibold text-black md:text-sm">
           <div className="text-sm md:text-lg">
             {title ?? "No rows found..."}
