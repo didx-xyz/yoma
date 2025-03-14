@@ -10,11 +10,11 @@
             <br/>
             <br/>
             ${msg("emailVerifyInstruction3")}
-            <a href="${url.loginAction}">${msg("doClickHere")}</a> ${msg("emailVerifyInstruction4")}
+            <a href="${url.loginAction}" style="font-style: italic; font-weight: bold">${msg("doClickHere")}</a> ${msg("emailVerifyInstruction4")}
             <br/>
             <br/>
              ${msg("emailVerifyInstruction5")}
-            <a href="mailto:help@yoma.world">${msg("doClickHere")}</a> ${msg("emailVerifyInstruction6")}
+            <a href="mailto:help@yoma.world" style="font-style: italic; font-weight: bold">${msg("doClickHere")}</a> ${msg("emailVerifyInstruction6")}
         </p>
     </#if>
 </@layout.registrationLayout>
