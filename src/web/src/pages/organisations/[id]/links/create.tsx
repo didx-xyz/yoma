@@ -622,7 +622,7 @@ const LinkDetails: NextPageWithLayout<{
               Please make sure to save your changes to prevent any loss of data.
             </div>
 
-            <div className="mt-4 flex gap-4 px-4">
+            <div className="mt-4 flex justify-center gap-4 px-4">
               <button
                 type="button"
                 className="btn w-52 rounded-full border-purple bg-white normal-case text-purple"
