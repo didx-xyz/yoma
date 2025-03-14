@@ -103,12 +103,12 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
 
       <div className="flex flex-col items-center justify-center gap-4">
         {/* Icon */}
-        <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] animate-slide-in-top items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+        <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
           <FaDownload className="h-8 w-8 text-yellow" />
         </div>
 
         <div
-          className="w-full animate-fade-in items-center justify-center opacity-0"
+          className="w-full items-center justify-center opacity-0"
           style={{ animationDelay: "0.4s" }}
         >
           {/* Title & Description */}

@@ -757,7 +757,7 @@ const StoreRuleDetails: NextPageWithLayout<{
               <FaExclamationTriangle className="h-8 w-8 text-yellow" />
             </div>
 
-            <div className="animate-bounce-once font-semibold">
+            <div className="font-semibold">
               Your recent changes have not been saved!
             </div>
 

@@ -412,12 +412,11 @@ export const Global: React.FC = () => {
           setUpdateProfileDialogVisible(false);
         }}
         className="md:max-h-[985px] md:w-[700px]"
-        animationStyle="slide-top"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
-            <div className="-mt-8 flex animate-spin-once items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
+            <div className="-mt-8 flex items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
               <FcViewDetails className="size-8 md:size-10" />
             </div>
 
@@ -469,7 +468,6 @@ export const Global: React.FC = () => {
           setOnboardingDialogVisible(false);
         }}
         className="md:max-h-[640px] md:w-[700px]"
-        animationStyle="spin"
       >
         <div className="flex flex-col gap-2">
           <div className="relative flex h-32 flex-row bg-green p-4">
@@ -562,12 +560,11 @@ export const Global: React.FC = () => {
           setSettingsDialogVisible(false);
         }}
         className="md:max-h-[890px] md:w-[700px]"
-        animationStyle="slide-bottom"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 md:px-12">
-            <div className="-mt-8 flex animate-spin-once items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
+            <div className="-mt-8 flex items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
               <FcSettings className="size-8 md:size-10" />
             </div>
 
@@ -618,12 +615,11 @@ export const Global: React.FC = () => {
           setPhotoUploadDialogVisible(false);
         }}
         className="md:max-h-[680px] md:w-[700px]"
-        animationStyle="slide-top"
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
-            <div className="-mt-8 flex animate-spin-once items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
+            <div className="-mt-8 flex items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
               <FcCamera className="size-8 md:size-10" />
             </div>
 
@@ -679,7 +675,7 @@ export const Global: React.FC = () => {
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="bg-theme flex h-16 flex-row p-4 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
-            <div className="-mt-8 flex animate-spin-once items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
+            <div className="-mt-8 flex items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
               <FcKey className="size-8 md:size-10" />
             </div>
 

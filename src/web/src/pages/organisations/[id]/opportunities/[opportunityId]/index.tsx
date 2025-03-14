@@ -1480,13 +1480,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] animate-slide-in-top items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
               <FaExclamationTriangle className="h-8 w-8 text-yellow" />
             </div>
 
-            <div className="animate-bounce-once font-semibold">
-              Opportunity expired!
-            </div>
+            <div className="font-semibold">Opportunity expired!</div>
 
             <div className="flex max-w-md flex-col gap-4 text-center text-base">
               <p>Please inactivate your opportunity before editing.</p>
@@ -1548,7 +1546,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               <FaExclamationTriangle className="h-8 w-8 text-yellow" />
             </div>
 
-            <div className="animate-bounce-once font-semibold">
+            <div className="font-semibold">
               Your recent changes have not been saved!
             </div>
 

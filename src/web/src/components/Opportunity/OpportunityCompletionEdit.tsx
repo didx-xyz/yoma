@@ -471,7 +471,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           </div>
           <div className="flex flex-col">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] animate-slide-in-bottom items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
+              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
                 <Image
                   src={iconSuccess}
                   alt="Icon Success"
@@ -485,7 +485,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
             <div className="flex flex-col gap-4 px-4">
               <div
-                className="flex animate-bounce-once flex-col items-center gap-1 text-center opacity-0"
+                className="flex flex-col items-center gap-1 text-center opacity-0"
                 style={{ animationDelay: "0.4s" }}
               >
                 <h4 className="font-semibold">
@@ -499,7 +499,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
               {/* WHEN DID YOU FINISH? */}
               <div
-                className="flex animate-slide-in-bottom flex-col rounded-lg border-dotted bg-gray-light opacity-0"
+                className="flex flex-col rounded-lg border-dotted bg-gray-light opacity-0"
                 style={{ animationDelay: "0.8s" }}
               >
                 <div className="flex w-full flex-row">
@@ -559,7 +559,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
               {/* HOW LONG DID IT TAKE? */}
               <div
-                className="flex animate-slide-in-bottom flex-col rounded-lg border-dotted bg-gray-light opacity-0"
+                className="flex flex-col rounded-lg border-dotted bg-gray-light opacity-0"
                 style={{ animationDelay: "0.7s" }}
               >
                 <div className="flex w-full flex-row">
@@ -653,7 +653,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
               {/* FILE UPLOADS */}
               <div
-                className="flex w-full animate-slide-in-bottom flex-col items-center justify-center gap-4 opacity-0"
+                className="flex w-full flex-col items-center justify-center gap-4 opacity-0"
                 style={{ animationDelay: "1s" }}
               >
                 {opportunityInfo?.verificationTypes?.find(
@@ -820,7 +820,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
               {/* FEEDBACK */}
               <div
-                className="flex animate-slide-in-bottom flex-col rounded-lg border-dotted bg-gray-light opacity-0"
+                className="flex flex-col rounded-lg border-dotted bg-gray-light opacity-0"
                 style={{ animationDelay: "1.2s" }}
               >
                 <div className="flex w-full flex-row">

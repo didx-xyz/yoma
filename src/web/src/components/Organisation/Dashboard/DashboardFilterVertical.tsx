@@ -244,7 +244,7 @@ export const DashboardFilterVertical: React.FC<{
           </div>
           <button
             type="button"
-            className="bg-theme btn animate-spin-once rounded-full border-0 p-3 text-gray-light hover:brightness-90"
+            className="bg-theme btn rounded-full border-0 p-3 text-gray-light hover:brightness-90"
             onClick={onCancel}
           >
             <IoMdClose className="h-6 w-6" />

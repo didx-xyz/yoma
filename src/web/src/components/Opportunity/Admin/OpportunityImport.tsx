@@ -147,13 +147,13 @@ export const OpportunityImport: React.FC<InputProps> = ({
           </div>
           <div className="flex flex-col">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] animate-slide-in-bottom items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
+              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
                 <FaUpload className="h-8 w-8 text-yellow" />
               </div>
             </div>
 
             <div
-              className="flex w-full animate-fade-in flex-col items-center justify-center gap-2 px-4 opacity-0"
+              className="flex w-full flex-col items-center justify-center gap-2 px-4 opacity-0"
               style={{ animationDelay: "0.4s" }}
             >
               <div className="mb-4 flex flex-col items-center gap-1 text-center">

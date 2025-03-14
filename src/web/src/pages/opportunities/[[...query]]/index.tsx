@@ -1112,7 +1112,6 @@ const Opportunities: NextPageWithLayout<{
           setFilterFullWindowVisible(false);
         }}
         className="md:max-h-[800px] md:w-[700px]"
-        animationStyle="slide-top"
       >
         {lookups_countries != undefined && lookups_languages != undefined && (
           <OpportunityFilterVertical
