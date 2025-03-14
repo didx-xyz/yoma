@@ -112,11 +112,11 @@ namespace Yoma.Core.Domain.SSI.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(SeedSchemas));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(SeedSchemas), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(SeedSchemas));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedSchemas), ex.Message);
       }
       finally
       {
@@ -212,7 +212,7 @@ namespace Yoma.Core.Domain.SSI.Services
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to created SSI tenant for '{entityType}'and item with id '{id}''", item.EntityType, item.Id);
+                _logger.LogError(ex, "Failed to created SSI tenant for '{entityType}'and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
 
                 item.Status = TenantCreationStatus.Error;
                 item.ErrorReason = ex.Message;
@@ -230,11 +230,11 @@ namespace Yoma.Core.Domain.SSI.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessTenantCreation));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessTenantCreation), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessTenantCreation));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessTenantCreation), ex.Message);
       }
       finally
       {
@@ -412,7 +412,7 @@ namespace Yoma.Core.Domain.SSI.Services
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to issue SSI credential for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
+                _logger.LogError(ex, "Failed to issue SSI credential for schema type '{schemaType}' and item with id '{id}': {errorMessage}", item.SchemaType, item.Id, ex.Message);
 
                 item.Status = CredentialIssuanceStatus.Error;
                 item.ErrorReason = ex.Message;
@@ -430,11 +430,11 @@ namespace Yoma.Core.Domain.SSI.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessCredentialIssuance));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessCredentialIssuance), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessCredentialIssuance));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessCredentialIssuance), ex.Message);
       }
       finally
       {

@@ -91,7 +91,7 @@ namespace Yoma.Core.Domain.Entity.Services
     public User? GetByUsernameOrNull(string? username, bool includeChildItems, bool includeComputed)
     {
       username = username?.Trim();
-      if (string.IsNullOrEmpty(username)) return null;
+      ArgumentException.ThrowIfNullOrEmpty(username, nameof(username));
 
       if (username.Contains('@'))
         return GetByEmailOrNull(username, includeChildItems, includeComputed);

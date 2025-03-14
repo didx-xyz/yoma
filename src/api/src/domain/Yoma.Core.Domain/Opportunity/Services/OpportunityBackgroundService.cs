@@ -110,11 +110,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessPublishedNotifications));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessPublishedNotifications), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessPublishedNotifications));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessPublishedNotifications), ex.Message);
       }
       finally
       {
@@ -178,11 +178,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessExpiration));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessExpiration));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
       }
       finally
       {
@@ -226,11 +226,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessExpirationNotifications));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessExpirationNotifications), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessExpirationNotifications));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpirationNotifications), ex.Message);
       }
       finally
       {
@@ -293,11 +293,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessDeletion));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessDeletion));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
       }
       finally
       {
@@ -408,7 +408,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send notification: {ErrorMessage}", ex.Message);
+        _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
       }
     }
 
@@ -450,7 +450,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         }
         catch (Exception ex)
         {
-          _logger.LogError(ex, "Failed to send notification: {ErrorMessage}", ex.Message);
+          _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
         }
       }
     }
