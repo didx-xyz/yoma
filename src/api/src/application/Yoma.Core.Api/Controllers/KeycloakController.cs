@@ -65,7 +65,7 @@ namespace Yoma.Core.Api.Controllers
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "An error occurred during authentication");
+        _logger.LogError(ex, "An error occurred during authentication: {ErrorMessage}", ex.Message);
         return StatusCode(StatusCodes.Status500InternalServerError);
       }
       finally
@@ -118,7 +118,7 @@ namespace Yoma.Core.Api.Controllers
           }
           catch (Exception ex)
           {
-            _logger.LogError(ex, "An error occurred during event processing");
+            _logger.LogError(ex, "An error occurred during event processing: {ErrorMessage}", ex.Message);
             return;
           }
         });
@@ -232,7 +232,7 @@ namespace Yoma.Core.Api.Controllers
           }
           catch (Exception ex)
           {
-            _logger.LogError(ex, "{type}: Failed to assign the default 'User' role to the newly register user with username '{username}'", type, userRequest.Username);
+            _logger.LogError(ex, "{type}: Failed to assign the default 'User' role to the newly register user with username '{username}': {ErrorMessage};", type, userRequest.Username, ex.Message);
           }
           break;
 

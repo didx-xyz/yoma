@@ -199,7 +199,7 @@ namespace Yoma.Core.Domain.Core.Services
                 }
                 catch (Exception ex)
                 {
-                  _logger.LogError(ex, "Failed to send notification");
+                  _logger.LogError(ex, "Failed to send notification: {ErrorMessage}", ex.Message);
                 }
 
                 _logger.LogInformation("Processed download schedule for item with id '{id}'", item.Id);
