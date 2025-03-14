@@ -19,7 +19,7 @@ namespace Yoma.Core.Api.Middleware
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "An internal server error occurred: {ErrorMessage}", ex.Message);
+        _logger.LogError(ex, "An internal server error occurred: {errorMessage}", ex.Message);
         throw;
       }
     }

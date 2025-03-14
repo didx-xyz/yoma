@@ -65,7 +65,7 @@ namespace Yoma.Core.Api.Controllers
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "An error occurred during authentication: {ErrorMessage}", ex.Message);
+        _logger.LogError(ex, "An error occurred during authentication: {errorMessage}", ex.Message);
         return StatusCode(StatusCodes.Status500InternalServerError);
       }
       finally
@@ -118,7 +118,7 @@ namespace Yoma.Core.Api.Controllers
           }
           catch (Exception ex)
           {
-            _logger.LogError(ex, "An error occurred during event processing: {ErrorMessage}", ex.Message);
+            _logger.LogError(ex, "An error occurred during event processing: {errorMessage}", ex.Message);
             return;
           }
         });
@@ -232,7 +232,7 @@ namespace Yoma.Core.Api.Controllers
           }
           catch (Exception ex)
           {
-            _logger.LogError(ex, "{type}: Failed to assign the default 'User' role to the newly register user with username '{username}': {ErrorMessage};", type, userRequest.Username, ex.Message);
+            _logger.LogError(ex, "{type} - Failed to assign the default 'User' role to the newly register user with username '{username}': {errorMessage};", type, userRequest.Username, ex.Message);
           }
           break;
 
@@ -260,7 +260,7 @@ namespace Yoma.Core.Api.Controllers
           }
           catch (Exception ex)
           {
-            _logger.LogError(ex, "Failed to remove the 'VERIFY_EMAIL' action for the newly registered user with username '{username}' when no email is provided.", userRequest.Username);
+            _logger.LogError(ex, "Failed to remove the 'VERIFY_EMAIL' action for the newly registered user with username '{username}' when no email is provided: {errorMessage}", userRequest.Username, ex.Message);
           }
 
           await CreateWalletOrScheduleCreation(userRequest);
@@ -296,7 +296,7 @@ namespace Yoma.Core.Api.Controllers
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to track login for user with username '{username}'", userRequest.Username);
+        _logger.LogError(ex, "Failed to track login for user with username '{username}': {errorMessage}", userRequest.Username, ex.Message);
       }
     }
 
@@ -310,7 +310,7 @@ namespace Yoma.Core.Api.Controllers
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to create or schedule creation (create or update username) of rewards wallet for user with username '{username}'", userRequest.Username);
+        _logger.LogError(ex, "Failed to create or schedule creation (create or update username) of rewards wallet for user with username '{username}': {errorMessage}", userRequest.Username, ex.Message);
       }
     }
   }
