@@ -206,7 +206,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to send notification");
+                _logger.LogError(ex, "Failed to send notification: {ErrorMessage}", ex.Message);
               }
             }
 
