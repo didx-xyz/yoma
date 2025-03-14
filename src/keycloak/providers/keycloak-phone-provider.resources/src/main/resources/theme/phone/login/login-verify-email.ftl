@@ -15,6 +15,9 @@
             <br/>
              ${msg("emailVerifyInstruction5")}
             <a href="mailto:help@yoma.world" style="font-style: italic; font-weight: bold">${msg("doClickHere")}</a> ${msg("emailVerifyInstruction6")}
-        </p>
+			<br/>
+            <br/>
+			<p><a href="/" style="display: block;">${kcSanitize(msg("backToApplication"))?no_esc}</a></p>
+		</p>
     </#if>
 </@layout.registrationLayout>
