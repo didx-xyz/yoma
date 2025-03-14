@@ -1554,7 +1554,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               Please make sure to save your changes to prevent any loss of data.
             </div>
 
-            <div className="mt-4 flex w-full flex-grow gap-4">
+            <div className="mt-4 flex justify-center gap-4 px-4">
               <button
                 type="button"
                 className="btn w-1/2 rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
