@@ -171,7 +171,7 @@ namespace Yoma.Core.Domain.Lookups.Services
           }
           catch (Exception ex)
           {
-            _logger.LogError(ex, "Failed to seed labor market skills");
+            _logger.LogError(ex, "Failed to seed labor market skills: {errorMessage}", ex.Message);
           }
           finally
           {
@@ -181,11 +181,11 @@ namespace Yoma.Core.Domain.Lookups.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(SeedSkills));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(SeedSkills), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(SeedSkills));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedSkills), ex.Message);
       }
     }
     #endregion

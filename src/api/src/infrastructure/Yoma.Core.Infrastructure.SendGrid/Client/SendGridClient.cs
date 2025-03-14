@@ -89,10 +89,15 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
       if (response.IsSuccessStatusCode) return;
 
       var responseBody = await response.Body.ReadAsStringAsync();
-      var errorResponse = JsonConvert.DeserializeObject<SendGridErrorResponse>(responseBody)
+      var errorResponse = JsonConvert.DeserializeObject<Models.SendGridErrorResponse>(responseBody)
           ?? throw new HttpClientException(response.StatusCode, "Failed to send email: Reason unknown");
 
-      throw new HttpClientException(response.StatusCode, $"{errorResponse.ErrorReasonPhrase}: {errorResponse.SendGridErrorMessage}");
+      var errorMessages = errorResponse.Errors != null && errorResponse.Errors.Count != 0
+        ? string.Join(" | ", errorResponse.Errors.Select(e => e.Message?.Trim()).Where(e => !string.IsNullOrEmpty(e)))
+        : "No error details provided";
+
+      throw new HttpClientException(response.StatusCode, errorMessages);
+
     }
     #endregion
 

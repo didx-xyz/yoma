@@ -109,11 +109,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessExpiration));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessExpiration));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
       }
       finally
       {
@@ -206,7 +206,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to send notification: {ErrorMessage}", ex.Message);
+                _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
               }
             }
 
@@ -218,11 +218,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessDeclination));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessDeclination), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessDeclination));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeclination), ex.Message);
       }
       finally
       {
@@ -282,11 +282,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessDeletion));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessDeletion));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
       }
       finally
       {

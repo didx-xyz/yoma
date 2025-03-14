@@ -328,10 +328,10 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
     private void BuyItemLogException(Exception ex, TransactionLog transaction, string messageSuffix)
     {
-      _logger.LogError(ex, "Failed to execute '{status}' action for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' (transaction id '{transactionId}'): {messageSuffix}",
+      _logger.LogError(ex, "Failed to execute '{status}' action for user id '{userId}', item category id '{itemCategoryId}', item id '{itemId}' (transaction id '{transactionId}') - {messageSuffix}: {errorMessage}",
         TransactionStatus.Released, transaction.Id, transaction.ItemCategoryId.SanitizeLogValue(), transaction.ItemId.SanitizeLogValue(),
         string.IsNullOrEmpty(transaction.TransactionId) ? "n/a" : transaction.TransactionId.SanitizeLogValue(),
-        messageSuffix.SanitizeLogValue());
+        messageSuffix.SanitizeLogValue(), ex.Message);
     }
     #endregion
   }

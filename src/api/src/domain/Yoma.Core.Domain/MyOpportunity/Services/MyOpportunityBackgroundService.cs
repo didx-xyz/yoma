@@ -149,7 +149,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to send notification: {ErrorMessage}", ex.Message);
+                _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
               }
             }
 
@@ -161,11 +161,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessVerificationRejection));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessVerificationRejection), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessVerificationRejection));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessVerificationRejection), ex.Message);
       }
       finally
       {
@@ -213,11 +213,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(SeedPendingVerifications));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(SeedPendingVerifications), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(SeedPendingVerifications));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedPendingVerifications), ex.Message);
       }
       finally
       {
@@ -357,11 +357,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         }
         catch (FluentValidation.ValidationException ex)
         {
-          _logger.LogError(ex, "Pending verification seeding validation failed. Seeding skipped / no longer seed-able for item with id '{id}'", item.Id);
+          _logger.LogError(ex, "Pending verification seeding validation failed. Seeding skipped / no longer seed-able for item with id '{id}': {errorMessage}", item.Id, ex.Message);
         }
         catch (ValidationException ex)
         {
-          _logger.LogError(ex, "Pending verification seeding validation failed. Seeding skipped / no longer seed-able for item with id '{id}'", item.Id);
+          _logger.LogError(ex, "Pending verification seeding validation failed. Seeding skipped / no longer seed-able for item with id '{id}': {errorMessage}", item.Id, ex.Message);
         }
       }
       #endregion

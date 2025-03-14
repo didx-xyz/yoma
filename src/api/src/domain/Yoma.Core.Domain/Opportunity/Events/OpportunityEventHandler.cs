@@ -93,7 +93,7 @@ namespace Yoma.Core.Domain.Opportunity.Events
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Error handling {eventType} event for opportunity with id {entityId}", notification.EventType, notification.Entity.Id);
+        _logger.LogError(ex, "Error handling {eventType} event for opportunity with id {entityId}: {errorMessage}", notification.EventType, notification.Entity.Id, ex.Message);
       }
     }
   }

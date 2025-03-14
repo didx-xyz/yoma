@@ -2019,7 +2019,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send notification: {ErrorMessage}", ex.Message);
+        _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
       }
     }
 

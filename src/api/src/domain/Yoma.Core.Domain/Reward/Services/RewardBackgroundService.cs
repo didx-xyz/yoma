@@ -132,7 +132,7 @@ namespace Yoma.Core.Domain.Reward.Services
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to proceess reward wallet creation for item with id '{id}'", item.Id);
+                _logger.LogError(ex, "Failed to proceess reward wallet creation for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
                 item.Status = WalletCreationStatus.Error;
                 item.ErrorReason = ex.Message;
@@ -150,11 +150,11 @@ namespace Yoma.Core.Domain.Reward.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessWalletCreation));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessWalletCreation), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessWalletCreation));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessWalletCreation), ex.Message);
       }
       finally
       {
@@ -248,7 +248,7 @@ namespace Yoma.Core.Domain.Reward.Services
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to process reward transaction for item with id '{id}'", item.Id);
+                _logger.LogError(ex, "Failed to process reward transaction for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
                 item.Status = RewardTransactionStatus.Error;
                 item.ErrorReason = ex.Message;
@@ -266,11 +266,11 @@ namespace Yoma.Core.Domain.Reward.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessRewardTransactions));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessRewardTransactions), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessRewardTransactions));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessRewardTransactions), ex.Message);
       }
       finally
       {

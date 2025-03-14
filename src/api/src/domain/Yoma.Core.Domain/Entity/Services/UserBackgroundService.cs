@@ -77,11 +77,11 @@ namespace Yoma.Core.Domain.Entity.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(SeedPhotos));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(SeedPhotos), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(SeedPhotos));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(SeedPhotos), ex.Message);
       }
       finally
       {

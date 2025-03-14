@@ -83,8 +83,8 @@ namespace Yoma.Core.Domain.Entity.Events
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Error handling organization status change event for organization with id {organizationId} and status {organizationStatus}",
-          notification.Organization.Id, notification.Organization.Status);
+        _logger.LogError(ex, "Error handling organization status change event for organization with id {organizationId} and status {organizationStatus}: {errorMessage}",
+          notification.Organization.Id, notification.Organization.Status, ex.Message);
       }
     }
     #endregion

@@ -930,7 +930,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           };
           resultItems.Add(failedItem);
 
-          _logger.LogError(ex, "Failed to finalizing verification for opportunity '{OpportunityTitle}' and user '{UserDisplayName}'", failedItem.OpportunityTitle, failedItem.UserDisplayName);
+          _logger.LogError(ex, "Failed to finalizing verification for opportunity '{OpportunityTitle}' and user '{UserDisplayName}': {errorMessage}", failedItem.OpportunityTitle, failedItem.UserDisplayName, ex.Message);
         }
       }
 
@@ -1462,6 +1462,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       await PerformActionSendForVerificationProcessVerificationTypes(request, opportunity, myOpportunity, isNew);
 
       //used by notifications
+      myOpportunity.Username = user.Username;
       myOpportunity.UserPhoneNumber = user.PhoneNumber;
       myOpportunity.UserEmail = user.Email;
       myOpportunity.UserDisplayName = user.DisplayName ?? user.Username;
@@ -1524,7 +1525,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to send notification: {ErrorMessage}", ex.Message);
+        _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
       }
     }
 

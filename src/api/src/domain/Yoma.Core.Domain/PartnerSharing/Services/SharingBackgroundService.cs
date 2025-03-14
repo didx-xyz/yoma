@@ -209,7 +209,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to process sharing for '{entityType}'and item with id '{id}''", item.EntityType, item.Id);
+                _logger.LogError(ex, "Failed to process sharing for '{entityType}'and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
 
                 item.Status = ProcessingStatus.Error;
                 item.ErrorReason = ex.Message;
@@ -227,11 +227,11 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
       }
       catch (DistributedLockTimeoutException ex)
       {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}", nameof(ProcessSharing));
+        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessSharing), ex.Message);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}", nameof(ProcessSharing));
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessSharing), ex.Message);
       }
       finally
       {
