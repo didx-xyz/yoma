@@ -80,20 +80,8 @@ export const LineChartCumulativeCompletions: React.FC<{
             );
           }}
         >
-          <div className="flex flex-row items-center gap-3">
-            <div
-              className="rounded-lg bg-gray-light p-1"
-              //   style={{
-              //     backgroundColor:
-              //       showChart &&
-              //       data.count[index] != null &&
-              //       data.count[index] > 0
-              //         ? CHART_COLORS[index % CHART_COLORS.length]
-              //         : "#e6f5f3",
-              //   }}
-            >
-              🏢
-            </div>
+          <div className="flex select-none flex-row items-center gap-3">
+            <div className="rounded-lg bg-gray-light p-1">🏢</div>
             <div
               className="text-md tooltip tooltip-secondary max-w-20 truncate font-semibold md:max-w-36"
               data-tip={name}
@@ -102,7 +90,7 @@ export const LineChartCumulativeCompletions: React.FC<{
             </div>
           </div>
           {data.count[index] != null && (
-            <div>
+            <div className="select-none">
               <div
                 className={`text-xl font-semibold ${
                   selectedLegendIndex === index ? "text-white" : ""

@@ -245,7 +245,9 @@ const OrganisationDashboard: NextPageWithLayout<{
   const [timeOfDay, timeOfDayEmoji] = getTimeOfDayAndEmoji();
 
   //#region Tab state
-  const [activeTab, setActiveTab] = useState("engagement");
+  const [activeTab, setActiveTab] = useState(
+    isAdmin ? "ecosystem" : "engagement",
+  );
 
   useEffect(() => {
     if (router.query.tab) {
@@ -1056,11 +1058,11 @@ const OrganisationDashboard: NextPageWithLayout<{
             {/* BUTTON */}
             <button
               type="button"
-              className="bg-theme btn btn-sm w-full rounded-l-full border-none tracking-widest text-white brightness-[1.12] hover:brightness-95 md:w-40"
+              className="bg-theme btn btn-sm flex w-full items-center justify-center rounded-l-full border-none tracking-widest text-white brightness-[1.12] hover:brightness-95 md:w-40"
               onClick={() => setFilterFullWindowVisible(true)}
             >
               <IoMdOptions className="h-5 w-5" />
-              Filter
+              <span className="ml-1">Filter</span>
             </button>
 
             {/* BADGES */}
@@ -1133,6 +1135,19 @@ const OrganisationDashboard: NextPageWithLayout<{
               {/* TABS */}
               <div className="relative mt-4 flex items-center">
                 <CustomSlider sliderClassName="tabs tabs-lifted !gap-0 border-gray text-white">
+                  {isAdmin && (
+                    <a
+                      role="tab"
+                      className={`group tab relative !border-none ${
+                        activeTab === "ecosystem"
+                          ? "bg-gray-light font-semibold text-black"
+                          : ""
+                      }`}
+                      onClick={() => setActiveTab("ecosystem")}
+                    >
+                      🌐 Ecosystem
+                    </a>
+                  )}
                   <a
                     role="tab"
                     className={`group tab relative !border-none ${
@@ -1144,19 +1159,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                   >
                     🤝 Engagement
                   </a>
-                  {isAdmin && (
-                    <a
-                      role="tab"
-                      className={`group tab relative !border-none ${
-                        activeTab === "cumulativeCompletions"
-                          ? "bg-gray-light font-semibold text-black"
-                          : ""
-                      }`}
-                      onClick={() => setActiveTab("cumulativeCompletions")}
-                    >
-                      📈 Cumulative completions
-                    </a>
-                  )}
                   <a
                     role="tab"
                     className={`group tab relative !border-none font-semibold ${
@@ -1231,6 +1233,27 @@ const OrganisationDashboard: NextPageWithLayout<{
                 }
                 loader={<LoadingSkeleton columns={2} rows={4} />}
               >
+                {/* ECOSYSTEM (ADMIN ONLY) */}
+                {isAdmin && activeTab === "ecosystem" && (
+                  <div className="flex w-full flex-col justify-between overflow-hidden rounded-lg bg-white p-4 shadow">
+                    <div className="flex flex-row items-center gap-3">
+                      <div className="rounded-lg bg-gray-light p-1">📈</div>
+                      <div className="text-md font-semibold">
+                        Cumulative Completions
+                      </div>
+                    </div>
+
+                    <div className="pt-4">
+                      {engagementData?.cumulative?.completions && (
+                        <LineChartCumulativeCompletions
+                          key="lineChartCumulativeCompletions"
+                          data={engagementData.cumulative.completions}
+                        />
+                      )}
+                    </div>
+                  </div>
+                )}
+
                 {activeTab === "engagement" && (
                   <div className="flex animate-fade-in flex-col gap-4">
                     {/* ENGAGEMENT */}
@@ -1422,27 +1445,6 @@ const OrganisationDashboard: NextPageWithLayout<{
                           />
                         )}
                       </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* CUMULATIVE COMPLETIONS (ADMIN ONLY) */}
-                {isAdmin && activeTab === "cumulativeCompletions" && (
-                  <div className="flex w-full flex-col justify-between overflow-hidden rounded-lg bg-white p-4 shadow">
-                    <div className="flex flex-row items-center gap-3">
-                      <div className="rounded-lg bg-gray-light p-1">📈</div>
-                      <div className="text-md font-semibold">
-                        Cumulative Completions
-                      </div>
-                    </div>
-
-                    <div className="pt-4">
-                      {engagementData?.cumulative?.completions && (
-                        <LineChartCumulativeCompletions
-                          key="lineChartCumulativeCompletions"
-                          data={engagementData.cumulative.completions}
-                        />
-                      )}
                     </div>
                   </div>
                 )}
