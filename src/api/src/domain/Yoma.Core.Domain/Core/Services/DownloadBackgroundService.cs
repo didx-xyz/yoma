@@ -182,7 +182,7 @@ namespace Yoma.Core.Domain.Core.Services
 
                   var recipients = new List<NotificationRecipient>
                   {
-                    new() { Username = user.Username, PhoneNumber = user.PhoneNumber, Email = user.PhoneNumber, DisplayName = user.DisplayName }
+                    new() { Username = user.Username, PhoneNumber = user.PhoneNumber, Email = user.Email, DisplayName = user.DisplayName }
                   };
 
                   var data = new NotificationDownload
