@@ -38,7 +38,7 @@ export const WalletCard: React.FC<{
         icon={
           <Image src={iconZltoColor} alt="ZLTO" width={48} className="h-auto" />
         }
-        classNameIcon={"h-[60px] w-[60px]"}
+        classNameIcon={"size-20"}
       />
     );
   }
