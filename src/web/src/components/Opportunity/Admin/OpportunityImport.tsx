@@ -153,7 +153,7 @@ export const OpportunityImport: React.FC<InputProps> = ({
             </div>
 
             <div
-              className="flex w-full flex-col items-center justify-center gap-2 px-4 opacity-0"
+              className="flex w-full flex-col items-center justify-center gap-2 px-4"
               style={{ animationDelay: "0.4s" }}
             >
               <div className="mb-4 flex flex-col items-center gap-1 text-center">

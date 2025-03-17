@@ -108,7 +108,7 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
         </div>
 
         <div
-          className="w-full items-center justify-center opacity-0"
+          className="w-full items-center justify-center"
           style={{ animationDelay: "0.4s" }}
         >
           {/* Title & Description */}
