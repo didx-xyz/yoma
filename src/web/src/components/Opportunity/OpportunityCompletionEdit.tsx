@@ -485,7 +485,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
             <div className="flex flex-col gap-4 px-4">
               <div
-                className="flex flex-col items-center gap-1 text-center opacity-0"
+                className="flex flex-col items-center gap-1 text-center"
                 style={{ animationDelay: "0.4s" }}
               >
                 <h4 className="font-semibold">
@@ -499,7 +499,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
               {/* WHEN DID YOU FINISH? */}
               <div
-                className="flex flex-col rounded-lg border-dotted bg-gray-light opacity-0"
+                className="flex flex-col rounded-lg border-dotted bg-gray-light"
                 style={{ animationDelay: "0.8s" }}
               >
                 <div className="flex w-full flex-row">
@@ -559,7 +559,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
               {/* HOW LONG DID IT TAKE? */}
               <div
-                className="flex flex-col rounded-lg border-dotted bg-gray-light opacity-0"
+                className="flex flex-col rounded-lg border-dotted bg-gray-light"
                 style={{ animationDelay: "0.7s" }}
               >
                 <div className="flex w-full flex-row">
@@ -653,7 +653,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
               {/* FILE UPLOADS */}
               <div
-                className="flex w-full flex-col items-center justify-center gap-4 opacity-0"
+                className="flex w-full flex-col items-center justify-center gap-4"
                 style={{ animationDelay: "1s" }}
               >
                 {opportunityInfo?.verificationTypes?.find(
@@ -820,7 +820,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
               {/* FEEDBACK */}
               <div
-                className="flex flex-col rounded-lg border-dotted bg-gray-light opacity-0"
+                className="flex flex-col rounded-lg border-dotted bg-gray-light"
                 style={{ animationDelay: "1.2s" }}
               >
                 <div className="flex w-full flex-row">
