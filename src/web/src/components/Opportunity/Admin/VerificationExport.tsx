@@ -113,7 +113,7 @@ const VerificationExport: React.FC<VerificationExportDialogProps> = ({
         >
           {/* Title & Description */}
           <div className="mb-4 flex flex-col items-center gap-1 text-center">
-            <h3>Export Verifications</h3>
+            <h3>Export Submissions</h3>
 
             <div className="max-w-md tracking-wide text-gray-dark">
               {(totalCount ?? 0) === 0 && (

@@ -210,7 +210,7 @@ export const getMyOpportunitiesExportToCSV = async (
   const dateString = `${date.getFullYear()}-${
     date.getMonth() + 1
   }-${date.getDate()} ${date.getHours()}:${date.getMinutes()}:${date.getSeconds()}`;
-  const fileName = `Verifications_${dateString}.csv`;
+  const fileName = `Submissions_${dateString}.csv`;
 
   // create a new Blob object using the data
   const blob = new Blob([data], { type: "text/csv" });

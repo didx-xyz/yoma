@@ -167,11 +167,11 @@ export const VerificationImport: React.FC<InputProps> = ({
             >
               <div className="mb-4 flex flex-col items-center gap-1 text-center">
                 <h4 className="font-semibold tracking-wide">
-                  Import Verifications
+                  Import Submissions
                 </h4>
                 <div className="tracking-wide text-gray-dark">
                   <p>
-                    Upload a CSV file to import verifications for your
+                    Upload a CSV file to import submissions for your
                     organisation.
                   </p>
                 </div>
@@ -333,7 +333,7 @@ export const VerificationImport: React.FC<InputProps> = ({
                   type="submit"
                   className="hover:border-1 btn w-1/2 flex-shrink rounded-full border-0 bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110"
                 >
-                  Submit
+                  Import
                 </button>
               </div>
             </div>
