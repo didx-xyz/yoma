@@ -1094,12 +1094,6 @@ const OpportunityVerifications: NextPageWithLayout<{
                 </>
               )}
           </div>
-
-          <FormMessage messageType={FormMessageType.Warning}>
-            Bulk verifications are processed in the order in which you select
-            them, we encourage selecting from top to bottom, as that is the
-            order in which Youth applied.
-          </FormMessage>
         </div>
 
         {/* MAIN CONTENT */}
