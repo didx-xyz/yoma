@@ -144,13 +144,13 @@ namespace Yoma.Core.Domain.Core.Services
                 BlobObject? blobObject = null;
                 try
                 {
+                  //zip files and upload to blob storage
+                  var downloadZipped = FileHelper.Zip(files, $"Download.zip");
+                  blobObject = await _blobService.Create(downloadZipped, FileType.ZipArchive, BlobProvider.StorageType.Private);
+
                   await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
                   {
                     using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
-                    //zip files and upload to blob storage
-                    var downloadZipped = FileHelper.Zip(files, $"Download.zip");
-                    blobObject = await _blobService.Create(downloadZipped, FileType.ZipArchive, BlobProvider.StorageType.Private);
 
                     //update schedule
                     item.FileId = blobObject.Id;
@@ -206,7 +206,7 @@ namespace Yoma.Core.Domain.Core.Services
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to proceess reward wallet creation for item with id '{id}': {errorMessage}", item.Id, ex.Message);
+                _logger.LogError(ex, "Failed to proceess download schedule for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
                 item.Status = DownloadScheduleStatus.Error;
                 item.ErrorReason = ex.Message;
