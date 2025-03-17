@@ -168,8 +168,8 @@ export const Navbar: React.FC = () => {
           iconImage: "🏆",
         },
         {
-          title: "Verifications",
-          description: "Verifications",
+          title: "Submissions",
+          description: "Submissions",
           url: `/organisations/${currentOrganisationId}/verifications?verificationStatus=Pending`,
           badgeCount: null,
           selected: false,

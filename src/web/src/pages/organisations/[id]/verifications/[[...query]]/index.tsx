@@ -599,7 +599,7 @@ const OpportunityVerifications: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Verifications</title>
+        <title>Yoma | Submissions</title>
       </Head>
 
       {isLoading && <Loading />}
@@ -853,7 +853,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[4.9rem]">
         <div className="flex flex-col gap-4 py-4">
           <h3 className="flex items-center text-3xl font-semibold tracking-normal text-white">
-            Verifications <LimitedFunctionalityBadge />
+            Submissions <LimitedFunctionalityBadge />
           </h3>
 
           {/* FILTERS */}
@@ -1094,12 +1094,6 @@ const OpportunityVerifications: NextPageWithLayout<{
                 </>
               )}
           </div>
-
-          <FormMessage messageType={FormMessageType.Warning}>
-            Bulk verifications are processed in the order in which you select
-            them, we encourage selecting from top to bottom, as that is the
-            order in which Youth applied.
-          </FormMessage>
         </div>
 
         {/* MAIN CONTENT */}
