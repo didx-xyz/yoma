@@ -15,7 +15,7 @@ const NoRowsMessage: React.FC<{
 }) => {
   return (
     <div
-      className={`flex h-full min-h-60 w-full flex-col items-center justify-center rounded-xl bg-white p-4 text-center ${className}`}
+      className={`flex h-full w-full flex-col items-center justify-center rounded-xl bg-white p-4 text-center ${className}`}
     >
       <div
         className={`mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg ${classNameIcon}`}

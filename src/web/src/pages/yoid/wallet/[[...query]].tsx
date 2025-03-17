@@ -28,6 +28,7 @@ import { config } from "~/lib/react-query-config";
 import { userProfileAtom } from "~/lib/store";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+import { LoadingInline } from "~/components/Status/LoadingInline";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -243,7 +244,15 @@ const MyWallet: NextPageWithLayout<{
           <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
             <Header title="💸 My Wallet" />
             <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-              <Suspense isLoading={!userProfile}>
+              <Suspense
+                isLoading={!userProfile}
+                loader={
+                  <LoadingInline
+                    className="h-[185px] flex-col p-0"
+                    classNameSpinner="h-12 w-12"
+                  />
+                }
+              >
                 <WalletCard userProfile={userProfile!} />
               </Suspense>
             </div>

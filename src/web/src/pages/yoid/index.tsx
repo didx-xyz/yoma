@@ -24,6 +24,7 @@ import { MAXINT32 } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
+import { LoadingInline } from "~/components/Status/LoadingInline";
 
 export interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -136,7 +137,15 @@ const YoIDDashboard: NextPageWithLayout<{
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
           <Header title="💸 Wallet" url="/yoid/wallet" />
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-            <Suspense isLoading={!userProfile}>
+            <Suspense
+              isLoading={!userProfile}
+              loader={
+                <LoadingInline
+                  className="h-[185px] flex-col p-0"
+                  classNameSpinner="h-12 w-12"
+                />
+              }
+            >
               <WalletCard userProfile={userProfile!} />
             </Suspense>
           </div>
@@ -146,7 +155,16 @@ const YoIDDashboard: NextPageWithLayout<{
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
           <Header title="🌐 Passport" url="/yoid/passport" />
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-            <Suspense isLoading={credentialsIsLoading} error={credentialsError}>
+            <Suspense
+              isLoading={credentialsIsLoading}
+              error={credentialsError}
+              loader={
+                <LoadingInline
+                  className="h-[185px] flex-col p-0"
+                  classNameSpinner="h-12 w-12"
+                />
+              }
+            >
               <PassportCard data={credentials!} />
             </Suspense>
           </div>

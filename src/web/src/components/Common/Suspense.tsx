@@ -10,7 +10,7 @@ interface SuspenseProps {
 }
 
 const Suspense: React.FC<SuspenseProps> = ({
-  className,
+  className = "",
   isLoading,
   error,
   children,

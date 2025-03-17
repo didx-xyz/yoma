@@ -34,6 +34,7 @@ import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
 import { YoIdModal } from "../YoID/YoIdModal";
 import { SignOutButton } from "../SignOutButton";
+import { LoadingInline } from "../Status/LoadingInline";
 export const UserMenu: React.FC = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const onToggle = () => setDrawerOpen(!isDrawerOpen);
@@ -282,7 +283,15 @@ export const UserMenu: React.FC = () => {
                     onClick={() => setDrawerOpen(false)}
                   />
                   <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-                    <Suspense isLoading={!userProfile}>
+                    <Suspense
+                      isLoading={!userProfile}
+                      loader={
+                        <LoadingInline
+                          className="h-[185px] flex-col p-0"
+                          classNameSpinner="h-12 w-12"
+                        />
+                      }
+                    >
                       <WalletCard userProfile={userProfile!} />
                     </Suspense>
                   </div>
@@ -297,6 +306,7 @@ export const UserMenu: React.FC = () => {
                     tabIndex={isDrawerOpen ? 0 : -1}
                     onClick={() => setDrawerOpen(false)}
                   />
+
                   <button
                     onClick={() => setGraphView(!graphView)}
                     className="absolute left-[7.5rem] flex sm:left-[8.5rem] lg:left-[9rem]"
@@ -308,10 +318,16 @@ export const UserMenu: React.FC = () => {
                     </span>
                   </button>
 
-                  <div className="flex h-full w-full flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
+                  <div className="flex h-full w-full flex-col items-center gap-4 rounded-lg bg-white py-4 shadow">
                     <Suspense
                       isLoading={myOpportunitiesSummaryIsLoading}
                       error={myOpportunitiesSummaryError}
+                      loader={
+                        <LoadingInline
+                          className="h-[185px] flex-col p-0"
+                          classNameSpinner="h-12 w-12"
+                        />
+                      }
                     >
                       {graphView ? (
                         <div className="max-w-xs">
@@ -339,12 +355,20 @@ export const UserMenu: React.FC = () => {
                     tabIndex={isDrawerOpen ? 0 : -1}
                     onClick={() => setDrawerOpen(false)}
                   />
-                  <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-                    <div className="flex flex-wrap gap-1 overflow-y-auto">
-                      <Suspense isLoading={skillsIsLoading} error={skillsError}>
-                        <SkillsCard data={skills!} />
-                      </Suspense>
-                    </div>
+
+                  <div className="flex h-full max-h-[180px] w-full flex-col items-center gap-4 overflow-auto rounded-lg bg-white px-4 shadow">
+                    <Suspense
+                      isLoading={skillsIsLoading}
+                      error={skillsError}
+                      loader={
+                        <LoadingInline
+                          className="h-[180px] flex-col p-0"
+                          classNameSpinner="h-12 w-12"
+                        />
+                      }
+                    >
+                      <SkillsCard data={skills!} />
+                    </Suspense>
                   </div>
                 </div>
 
@@ -369,10 +393,16 @@ export const UserMenu: React.FC = () => {
                   </div>
 
                   {!isCollapsedPassport && (
-                    <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+                    <div className="flex h-[185px] w-full flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
                       <Suspense
                         isLoading={credentialsIsLoading}
                         error={credentialsError}
+                        loader={
+                          <LoadingInline
+                            className="h-[185px] flex-col p-0"
+                            classNameSpinner="h-12 w-12"
+                          />
+                        }
                       >
                         <PassportCard data={credentials!} />
                       </Suspense>
