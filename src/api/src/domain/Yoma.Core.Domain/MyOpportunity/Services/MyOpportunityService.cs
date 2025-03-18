@@ -38,6 +38,7 @@ using System.Reflection;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Helpers;
 using Yoma.Core.Domain.Lookups.Models;
+using System.Text;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -344,6 +345,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           }
         }
       }
+
+      if (files.Count == 0)
+        files.Add(FileHelper.FromByteArray("No files to download.txt", "text/plain", Encoding.UTF8.GetBytes("No files to download")));
 
       return files;
     }
