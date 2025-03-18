@@ -17,7 +17,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     Task<IFormFile> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter);
 
-    Task<List<IFormFile>> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter, Guid? userId);
+    Task<List<IFormFile>?> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter, Guid? userId);
 
     List<MyOpportunitySearchCriteriaOpportunity> ListMyOpportunityVerificationSearchCriteriaOpportunity(List<Guid>? organizations, List<VerificationStatus>? verificationStatuses, bool ensureOrganizationAuthorization);
 

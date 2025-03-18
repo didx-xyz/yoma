@@ -197,7 +197,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      if (request.Attributes != null) request.Attributes = request.Attributes.Distinct().ToList();
+      if (request.Attributes != null) request.Attributes = [.. request.Attributes.Distinct()];
       if (request.Attributes == null || request.Attributes.Count == 0)
         throw new ArgumentException($"'{nameof(request.Attributes)}' is required", nameof(request));
 
@@ -260,7 +260,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         throw new ArgumentException($"'{nameof(request.Name)}' is required", nameof(request));
       request.Name = request.Name.Trim();
 
-      if (request.Roles != null) request.Roles = request.Roles.Distinct().ToList();
+      if (request.Roles != null) request.Roles = [.. request.Roles.Distinct()];
       if (request.Roles == null || request.Roles.Count == 0)
         throw new ArgumentException($"'{nameof(request.Roles)}' is required", nameof(request));
 

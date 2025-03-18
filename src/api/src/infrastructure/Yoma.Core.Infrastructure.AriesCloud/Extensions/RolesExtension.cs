@@ -11,7 +11,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
         throw new ArgumentNullException(nameof(roles));
 
       //holder implicitly assigned to a tenant; all tenants are holders
-      return roles
+      return [.. roles
        .Where(role => role != Role.Holder)
        .Select(role =>
        {
@@ -21,8 +21,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
            Role.Verifier => Roles.Verifier,
            _ => throw new ArgumentException($"Unsupported role '{role}'", nameof(roles)),
          };
-       })
-       .ToList();
+       })];
     }
 
     public static List<Role> ToSSIRoles(this ICollection<Roles> roles)
@@ -30,7 +29,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
       if (roles == null || roles.Count == 0)
         throw new ArgumentNullException(nameof(roles));
 
-      return roles
+      return [.. roles
        .Select(role =>
        {
          return role switch
@@ -39,8 +38,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
            Roles.Verifier => Role.Verifier,
            _ => throw new ArgumentException($"Unsupported role '{role}'", nameof(roles)),
          };
-       })
-       .ToList();
+       })];
     }
   }
 }

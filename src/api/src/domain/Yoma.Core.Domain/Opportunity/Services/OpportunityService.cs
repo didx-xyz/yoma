@@ -297,14 +297,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //opporunities
       if (filter.Opportunities != null && filter.Opportunities.Count != 0)
       {
-        filter.Opportunities = filter.Opportunities.Distinct().ToList();
+        filter.Opportunities = [.. filter.Opportunities.Distinct()];
         query = query.Where(o => filter.Opportunities.Contains(o.Id));
       }
 
       //countries
       if (filter.Countries != null && filter.Countries.Count != 0)
       {
-        filter.Countries = filter.Countries.Distinct().ToList();
+        filter.Countries = [.. filter.Countries.Distinct()];
         query = query.Where(opportunity => _opportunityCountryRepository.Query().Any(
           opportunityCountry => filter.Countries.Contains(opportunityCountry.CountryId) && opportunityCountry.OpportunityId == opportunity.Id));
       }
@@ -333,7 +333,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         results.TotalCount = query.Count();
         query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
       }
-      results.Items = query.ToList().Select(o => o.ToOpportunityItem()).ToList();
+      results.Items = [.. query.ToList().Select(o => o.ToOpportunityItem())];
 
       return results;
     }
@@ -810,11 +810,11 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         if (filter.Organizations != null && filter.Organizations.Count != 0)
         {
-          filter.Organizations = filter.Organizations.Distinct().ToList();
+          filter.Organizations = [.. filter.Organizations.Distinct()];
           _organizationService.IsAdminsOf(filter.Organizations, true);
         }
         else
-          filter.Organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
+          filter.Organizations = [.. _organizationService.ListAdminsOf(false).Select(o => o.Id)];
       }
 
       if (filter.Organizations != null && filter.Organizations.Count != 0)
@@ -823,14 +823,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //types
       if (filter.Types != null && filter.Types.Count != 0)
       {
-        filter.Types = filter.Types.Distinct().ToList();
+        filter.Types = [.. filter.Types.Distinct()];
         query = query.Where(o => filter.Types.Contains(o.TypeId));
       }
 
       //categories
       if (filter.Categories != null && filter.Categories.Count != 0)
       {
-        filter.Categories = filter.Categories.Distinct().ToList();
+        filter.Categories = [.. filter.Categories.Distinct()];
         query = query.Where(opportunity => _opportunityCategoryRepository.Query().Any(
             opportunityCategory => filter.Categories.Contains(opportunityCategory.CategoryId) && opportunityCategory.OpportunityId == opportunity.Id));
       }
@@ -838,7 +838,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //languages
       if (filter.Languages != null && filter.Languages.Count != 0)
       {
-        filter.Languages = filter.Languages.Distinct().ToList();
+        filter.Languages = [.. filter.Languages.Distinct()];
         query = query.Where(opportunity => _opportunityLanguageRepository.Query().Any(
            opportunityLanguage => filter.Languages.Contains(opportunityLanguage.LanguageId) && opportunityLanguage.OpportunityId == opportunity.Id));
       }
@@ -846,7 +846,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //countries
       if (filter.Countries != null && filter.Countries.Count != 0)
       {
-        filter.Countries = filter.Countries.Distinct().ToList();
+        filter.Countries = [.. filter.Countries.Distinct()];
         query = query.Where(opportunity => _opportunityCountryRepository.Query().Any(
           opportunityCountry => filter.Countries.Contains(opportunityCountry.CountryId) && opportunityCountry.OpportunityId == opportunity.Id));
       }
@@ -885,14 +885,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //engagementTypes
       if (filter.EngagementTypes != null && filter.EngagementTypes.Count != 0)
       {
-        filter.EngagementTypes = filter.EngagementTypes.Distinct().ToList();
+        filter.EngagementTypes = [.. filter.EngagementTypes.Distinct()];
         query = query.Where(o => !o.EngagementTypeId.HasValue || filter.EngagementTypes.Contains(o.EngagementTypeId.Value)); ///always included of not explicitly defined
       }
 
       //statuses
       if (filter.Statuses != null && filter.Statuses.Count != 0)
       {
-        filter.Statuses = filter.Statuses.Distinct().ToList();
+        filter.Statuses = [.. filter.Statuses.Distinct()];
         var statusIds = filter.Statuses.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
         query = query.Where(o => statusIds.Contains(o.StatusId));
       }
@@ -900,7 +900,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       //opportunities (explicit internal filter; if specified and empty, no results will be returned)
       if (filter.Opportunities != null)
       {
-        filter.Opportunities = filter.Opportunities.Distinct().ToList();
+        filter.Opportunities = [.. filter.Opportunities.Distinct()];
         query = query.Where(o => filter.Opportunities.Contains(o.Id));
       }
 
@@ -1901,12 +1901,12 @@ namespace Yoma.Core.Domain.Opportunity.Services
       request.Title = item.Title;
       request.TypeId = type.Id;
       request.EngagementTypeId = engagementType?.Id;
-      request.Categories = categories.Select(o => o.Id).ToList();
+      request.Categories = [.. categories.Select(o => o.Id)];
       request.URL = item.URL;
       request.Summary = item.Summary;
       request.Description = item.Description;
-      request.Languages = languages.Select(o => o.Id).ToList();
-      request.Countries = countries.Select(o => o.Id).ToList();
+      request.Languages = [.. languages.Select(o => o.Id)];
+      request.Countries = [.. countries.Select(o => o.Id)];
       request.DifficultyId = dofficulty.Id;
       request.CommitmentIntervalCount = item.CommitmentIntervalCount;
       request.CommitmentIntervalId = commitmentInterval.Id;
@@ -1915,7 +1915,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       request.ParticipantLimit = item.ParticipantLimit;
       request.ZltoReward = item.ZltoReward;
       request.ZltoRewardPool = item.ZltoRewardPool;
-      request.Skills = skills.Select(o => o.Id).ToList();
+      request.Skills = [.. skills.Select(o => o.Id)];
       request.Keywords = keywords;
       request.Hidden = item.Hidden;
       request.ExternalId = item.ExternalId;
@@ -2015,7 +2015,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         await _notificationDeliveryService.Send(type, recipients, data);
 
-        _logger.LogInformation("Successfully send notification");
+        _logger.LogInformation("Successfully sent notification");
       }
       catch (Exception ex)
       {
@@ -2042,7 +2042,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       if (filter.CommitmentInterval == null || filter.CommitmentInterval.Options == null || filter.CommitmentInterval.Options.Count == 0)
         return;
-      filter.CommitmentInterval.Options = filter.CommitmentInterval.Options.Distinct().ToList();
+      filter.CommitmentInterval.Options = [.. filter.CommitmentInterval.Options.Distinct()];
 
       filter.CommitmentInterval.OptionsParsed = [];
 
@@ -2060,7 +2060,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       if (filter.ZltoReward == null || filter.ZltoReward.Ranges == null || filter.ZltoReward.Ranges.Count == 0)
         return;
-      filter.ZltoReward.Ranges = filter.ZltoReward.Ranges.Distinct().ToList();
+      filter.ZltoReward.Ranges = [.. filter.ZltoReward.Ranges.Distinct()];
 
       filter.ZltoReward.RangesParsed = [];
 
@@ -2085,7 +2085,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (countryIds == null || countryIds.Count == 0)
         throw new ArgumentNullException(nameof(countryIds));
 
-      countryIds = countryIds.Distinct().ToList();
+      countryIds = [.. countryIds.Distinct()];
 
       var results = new List<Domain.Lookups.Models.Country>();
 
@@ -2122,7 +2122,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       if (countryIds == null || countryIds.Count == 0) return opportunity;
 
-      countryIds = countryIds.Distinct().ToList();
+      countryIds = [.. countryIds.Distinct()];
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -2150,7 +2150,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (categoryIds == null || categoryIds.Count == 0)
         throw new ArgumentNullException(nameof(categoryIds));
 
-      categoryIds = categoryIds.Distinct().ToList();
+      categoryIds = [.. categoryIds.Distinct()];
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -2184,7 +2184,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       if (categoryIds == null || categoryIds.Count == 0) return opportunity;
 
-      categoryIds = categoryIds.Distinct().ToList();
+      categoryIds = [.. categoryIds.Distinct()];
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -2212,7 +2212,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (languageIds == null || languageIds.Count == 0)
         throw new ArgumentNullException(nameof(languageIds));
 
-      languageIds = languageIds.Distinct().ToList();
+      languageIds = [.. languageIds.Distinct()];
 
       var results = new List<Domain.Lookups.Models.Language>();
 
@@ -2249,7 +2249,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       if (languageIds == null || languageIds.Count == 0) return opportunity;
 
-      languageIds = languageIds.Distinct().ToList();
+      languageIds = [.. languageIds.Distinct()];
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -2276,7 +2276,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       if (skillIds == null || skillIds.Count == 0) return opportunity; //skills are optional
 
-      skillIds = skillIds.Distinct().ToList();
+      skillIds = [.. skillIds.Distinct()];
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -2310,7 +2310,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       if (skillIds == null || skillIds.Count == 0) return opportunity;
 
-      skillIds = skillIds.Distinct().ToList();
+      skillIds = [.. skillIds.Distinct()];
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {

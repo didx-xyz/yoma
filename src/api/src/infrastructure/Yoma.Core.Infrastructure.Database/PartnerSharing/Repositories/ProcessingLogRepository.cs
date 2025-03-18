@@ -84,13 +84,13 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Repositories
       _context.PartnerSharingProcessingLog.AddRange(entities);
       await _context.SaveChangesAsync();
 
-      items = items.Zip(entities, (item, entity) =>
+      items = [.. items.Zip(entities, (item, entity) =>
       {
         item.Id = entity.Id;
         item.DateCreated = entity.DateCreated;
         item.DateModified = entity.DateModified;
         return item;
-      }).ToList();
+      })];
 
       return items;
     }

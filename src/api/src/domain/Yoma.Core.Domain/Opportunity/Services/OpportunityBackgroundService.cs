@@ -355,7 +355,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             var data = new NotificationOpportunityAnnounced
             {
-              Opportunities = countryOpportunities.Select(item => new NotificationOpportunityAnnouncedItem
+              Opportunities = [.. countryOpportunities.Select(item => new NotificationOpportunityAnnouncedItem
               {
                 Id = item.Id,
                 Title = item.Title,
@@ -364,7 +364,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 URL = _notificationURLFactory.OpportunityAnnouncedItemURL(notificationType, item.Id, item.OrganizationId),
                 ZltoReward = item.ZltoReward,
                 YomaReward = item.YomaReward
-              }).ToList()
+              })]
             };
 
             // check if an existing group with the same opportunity already exists
@@ -387,13 +387,13 @@ namespace Yoma.Core.Domain.Opportunity.Services
             else
             {
               // add recipients to the existing group
-              existingGroup.Recipients.AddRange(userGroup.Value.Select(u => new NotificationRecipient
+              existingGroup.Recipients.AddRange([.. userGroup.Value.Select(u => new NotificationRecipient
               {
                 Username = u.Username,
                 PhoneNumber = u.PhoneNumber,
                 Email = u.Email,
                 DisplayName = u.DisplayName
-              }).ToList());
+              })]);
             }
           }
 
@@ -446,7 +446,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           await _notificationDeliveryService.Send(type, recipients, data);
 
-          _logger.LogInformation("Successfully send notification");
+          _logger.LogInformation("Successfully sent notification");
         }
         catch (Exception ex)
         {

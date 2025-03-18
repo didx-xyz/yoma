@@ -638,7 +638,7 @@ namespace Yoma.Core.Domain.Analytics.Services
         query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
       }
 
-      result.Items = query.ToList().Select(youth => new YouthInfo
+      result.Items = [.. query.ToList().Select(youth => new YouthInfo
       {
         Id = youth.UserId,
         DisplayName = youth.UserDisplayName,
@@ -647,7 +647,7 @@ namespace Yoma.Core.Domain.Analytics.Services
         ZltoRewardTotal = youth.ZltoRewardTotal,
         YomaRewardTotal = youth.YomaRewardTotal,
         OpporunityCount = youth.OpportunityCount,
-        Opportunities = youth.Opportunities.Select(op => new YouthInfoOpportunity
+        Opportunities = [.. youth.Opportunities.Select(op => new YouthInfoOpportunity
         {
           Id = op.Id,
           Title = op.Title,
@@ -658,8 +658,8 @@ namespace Yoma.Core.Domain.Analytics.Services
           OrganizationLogoKey = op.OrganizationLogoKey,
           DateCompleted = op.DateCompleted,
           Verified = op.OpportunityCredentialIssuanceEnabled
-        }).ToList()
-      }).ToList();
+        })]
+      })];
 
       result.Items.ForEach(youthInfo => youthInfo.Opportunities.ForEach(
         opportunity => opportunity.OrganizationLogoURL = GetBlobObjectURL(opportunity.OrganizationLogoStorageType, opportunity.OrganizationLogoKey)));
@@ -826,14 +826,14 @@ namespace Yoma.Core.Domain.Analytics.Services
       //opportunities
       if (filter.Opportunities != null && filter.Opportunities.Count != 0)
       {
-        filter.Opportunities = filter.Opportunities.Distinct().ToList();
+        filter.Opportunities = [.. filter.Opportunities.Distinct()];
         query = query.Where(o => filter.Opportunities.Contains(o.OpportunityId));
       }
 
       //categories
       if (filter.Categories != null && filter.Categories.Count != 0)
       {
-        filter.Categories = filter.Categories.Distinct().ToList();
+        filter.Categories = [.. filter.Categories.Distinct()];
         query = query.Where(opportunity => _opportunityCategoryRepository.Query().Any(
             opportunityCategory => filter.Categories.Contains(opportunityCategory.CategoryId) && opportunityCategory.OpportunityId == opportunity.OpportunityId));
       }
@@ -841,7 +841,7 @@ namespace Yoma.Core.Domain.Analytics.Services
       //countries
       if (filter.Countries != null && filter.Countries.Count != 0)
       {
-        filter.Countries = filter.Countries.Distinct().ToList();
+        filter.Countries = [.. filter.Countries.Distinct()];
         query = query.Where(o => o.UserCountryId.HasValue && filter.Countries.Contains(o.UserCountryId.Value));
       }
 
@@ -931,14 +931,14 @@ namespace Yoma.Core.Domain.Analytics.Services
       //opportunities
       if (filter.Opportunities != null && filter.Opportunities.Count != 0)
       {
-        filter.Opportunities = filter.Opportunities.Distinct().ToList();
+        filter.Opportunities = [.. filter.Opportunities.Distinct()];
         query = query.Where(o => filter.Opportunities.Contains(o.Id));
       }
 
       //categories
       if (filter.Categories != null && filter.Categories.Count != 0)
       {
-        filter.Categories = filter.Categories.Distinct().ToList();
+        filter.Categories = [.. filter.Categories.Distinct()];
         query = query.Where(opportunity => _opportunityCategoryRepository.Query().Any(
             opportunityCategory => filter.Categories.Contains(opportunityCategory.CategoryId) && opportunityCategory.OpportunityId == opportunity.Id));
       }

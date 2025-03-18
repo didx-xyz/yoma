@@ -102,10 +102,10 @@ namespace Yoma.Core.Domain.SSI.Services
       // No matches found for schema attributes that match entities
       if (matchedEntitiesGrouped == null || matchedEntitiesGrouped.Count == 0) return results;
 
-      schemas = schemas.Where(o => o.Name.Split(SchemaName_TypeDelimiter).Length == 2).ToList();
+      schemas = [.. schemas.Where(o => o.Name.Split(SchemaName_TypeDelimiter).Length == 2)];
 
-      results = schemas.Where(o => matchedEntitiesGrouped.ContainsKey(o.Id)).Select(o =>
-          ConvertToSSISchema(o, matchedEntitiesGrouped.TryGetValue(o.Id, out var entities) ? entities : null)).ToList();
+      results = [.. schemas.Where(o => matchedEntitiesGrouped.ContainsKey(o.Id)).Select(o =>
+          ConvertToSSISchema(o, matchedEntitiesGrouped.TryGetValue(o.Id, out var entities) ? entities : null))];
 
       var mismatchedSchemas = results.Where(o => o.Entities?.Any(e => !e.Types?.Any(t => t?.Type == o.Type) == true) == true).ToList();
       if (mismatchedSchemas != null && mismatchedSchemas.Count != 0)
@@ -113,7 +113,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
       if (type == null) return results;
 
-      results = results.Where(o => o.Type == type).ToList();
+      results = [.. results.Where(o => o.Type == type)];
       return results;
     }
 

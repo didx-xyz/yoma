@@ -150,7 +150,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
     {
       jsonValue = jsonValue?.Trim();
 
-      var resultsDefault = Enum.GetValues(typeof(ProcessingAction))
+      var resultsDefault = Enum.GetValues<ProcessingAction>()
                               .Cast<ProcessingAction>()
                               .ToDictionary(action => action, action => true);
 

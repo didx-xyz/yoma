@@ -132,17 +132,17 @@ namespace Yoma.Core.Domain.Entity.Services
 
                 var data = new NotificationOrganizationApproval
                 {
-                  Organizations = group.Select(org => new NotificationOrganizationApprovalItem
+                  Organizations = [.. group.Select(org => new NotificationOrganizationApprovalItem
                   {
                     Name = org.Name,
                     Comment = org.CommentApproval,
                     URL = _notificationURLFactory.OrganizationApprovalItemURL(notificationType, org.Id)
-                  }).ToList()
+                  })]
                 };
 
                 await _notificationDeliveryService.Send(notificationType, recipients, data);
 
-                _logger.LogInformation("Successfully send notification");
+                _logger.LogInformation("Successfully sent notification");
               }
               catch (Exception ex)
               {

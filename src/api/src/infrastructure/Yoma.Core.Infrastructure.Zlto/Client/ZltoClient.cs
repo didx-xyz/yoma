@@ -636,9 +636,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       }
       while (responseSearch.Items.Count == Limit_Default);
 
-      resultSearch.Items = resultSearch.Items.Where(o => string.Equals(o.Category.Id, categoryId, StringComparison.InvariantCultureIgnoreCase))
-          .Skip(offset ?? default).Take(effectiveLimit)
-          .ToList();
+      resultSearch.Items = [.. resultSearch.Items.Where(o => string.Equals(o.Category.Id, categoryId, StringComparison.InvariantCultureIgnoreCase))
+          .Skip(offset ?? default).Take(effectiveLimit)];
 
       return resultSearch;
     }

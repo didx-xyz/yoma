@@ -48,18 +48,15 @@ namespace Yoma.Core.Domain.Entity.Helpers
           .Select(g => new SettingGroup
           {
             Group = g.Key,
-            Items = g.Where(d => string.IsNullOrEmpty(d.SubGroup))
+            Items = [.. g.Where(d => string.IsNullOrEmpty(d.SubGroup))
                        .OrderBy(d => d.Order)
-                       .Select(d => settingsDictionary[d.Key])
-                       .ToList(),
+                       .Select(d => settingsDictionary[d.Key])],
             Groups = [.. g.Where(d => !string.IsNullOrEmpty(d.SubGroup))
                         .GroupBy(d => d.SubGroup)
                         .Select(subGroup => new SettingGroup
                         {
                           Group = subGroup.Key ?? string.Empty,
-                          Items = subGroup.OrderBy(d => d.Order)
-                                            .Select(d => settingsDictionary[d.Key])
-                                            .ToList()
+                          Items = [.. subGroup.OrderBy(d => d.Order).Select(d => settingsDictionary[d.Key])]
                         })
                         .OrderBy(subGroup => subGroup.Items != null && subGroup.Items.Count != 0 ? subGroup.Items.Min(i => definitions.First(d => d.Key == i.Key).Order) : int.MaxValue)]
           })
@@ -187,7 +184,7 @@ namespace Yoma.Core.Domain.Entity.Helpers
 
       return new Settings
       {
-        Groups = settings.Groups
+        Groups = [.. settings.Groups
               .Select(group => new SettingGroup
               {
                 Group = group.Group,
@@ -207,8 +204,7 @@ namespace Yoma.Core.Domain.Entity.Helpers
                       .ToList()
               })
               .Where(group => (group.Items != null && group.Items.Count > 0) ||
-                              (group.Groups != null && group.Groups.Count > 0))
-        .ToList()
+                              (group.Groups != null && group.Groups.Count > 0))]
       };
     }
 
@@ -220,9 +216,7 @@ namespace Yoma.Core.Domain.Entity.Helpers
 
       return new SettingsInfo
       {
-        Items = settingsInfo.Items
-              .Where(item => item.Roles == null || item.Roles.Intersect(roles).Any())
-              .ToList()
+        Items = [.. settingsInfo.Items.Where(item => item.Roles == null || item.Roles.Intersect(roles).Any())]
       };
     }
 

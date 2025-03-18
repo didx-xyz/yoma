@@ -134,7 +134,8 @@ namespace Yoma.Core.Domain.Core.Services
                     filter = JsonConvert.DeserializeObject<MyOpportunitySearchFilterVerificationFiles>(item.Filter)
                       ?? throw new InvalidOperationException("Failed to deserialize the filter");
 
-                    files.AddRange(await _myOpportunityService.DownloadVerificationFiles((MyOpportunitySearchFilterVerificationFiles)filter, null));
+                    var myFiles = await _myOpportunityService.DownloadVerificationFiles((MyOpportunitySearchFilterVerificationFiles)filter, null);
+                    if (myFiles != null) files.AddRange(myFiles);
                     break;
 
                   default:
@@ -144,28 +145,26 @@ namespace Yoma.Core.Domain.Core.Services
                 BlobObject? blobObject = null;
                 try
                 {
-                  //zip files and upload to blob storage
-                  var downloadZipped = FileHelper.Zip(files, $"Download.zip");
-                  blobObject = await _blobService.Create(downloadZipped, FileType.ZipArchive, BlobProvider.StorageType.Private);
-
-                  await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+                  if (files.Count > 0)
                   {
-                    using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                    //zip files and upload to blob storage; TransactionScope not used as the upload can take long, causing an aborted scope or connection
+                    //if schedule update fails, the blob object and db entries are deleted
+                    var downloadZipped = FileHelper.Zip(files, $"Download.zip");
+                    blobObject = await _blobService.Create(downloadZipped, FileType.ZipArchive, BlobProvider.StorageType.Private);
 
                     //update schedule
                     item.FileId = blobObject.Id;
                     item.FileStorageType = blobObject.StorageType;
                     item.FileKey = blobObject.Key;
-                    item.Status = DownloadScheduleStatus.Processed;
-                    await _downloadService.UpdateSchedule(item);
+                  }
 
-                    scope.Complete();
-                  });
+                  item.Status = DownloadScheduleStatus.Processed;
+                  await _downloadService.UpdateSchedule(item);
                 }
                 catch //roll-back
                 {
                   if (blobObject != null)
-                    await _blobService.Delete(blobObject);
+                    await _blobService.Delete(blobObject.Id);
 
                   throw;
                 }
@@ -173,11 +172,6 @@ namespace Yoma.Core.Domain.Core.Services
                 //send notification
                 try
                 {
-                  if (blobObject == null)
-                    throw new InvalidOperationException("Blob object is null");
-
-                  var fileURL = _blobService.GetURL(blobObject.StorageType, blobObject.Key, blobObject.OriginalFileName, _appSettings.DownloadScheduleLinkExpirationHours * 60);
-
                   var user = _userService.GetById(item.UserId, false, false);
 
                   var recipients = new List<NotificationRecipient>
@@ -188,14 +182,14 @@ namespace Yoma.Core.Domain.Core.Services
                   var data = new NotificationDownload
                   {
                     DateStamp = DateTimeOffset.UtcNow,
-                    FileName = blobObject.OriginalFileName,
-                    FileURL = fileURL,
+                    FileName = blobObject?.OriginalFileName,
+                    FileURL = blobObject == null ? null : _blobService.GetURL(blobObject.StorageType, blobObject.Key, blobObject.OriginalFileName, _appSettings.DownloadScheduleLinkExpirationHours * 60),
                     ExpirationHours = _appSettings.DownloadScheduleLinkExpirationHours
                   };
 
                   await _notificationDeliveryService.Send(NotificationType.Download, recipients, data);
 
-                  _logger.LogInformation("Successfully send notification");
+                  _logger.LogInformation("Successfully sent notification");
                 }
                 catch (Exception ex)
                 {
@@ -206,7 +200,7 @@ namespace Yoma.Core.Domain.Core.Services
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to proceess download schedule for item with id '{id}': {errorMessage}", item.Id, ex.Message);
+                _logger.LogError(ex, "Failed to process download schedule for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
                 item.Status = DownloadScheduleStatus.Error;
                 item.ErrorReason = ex.Message;

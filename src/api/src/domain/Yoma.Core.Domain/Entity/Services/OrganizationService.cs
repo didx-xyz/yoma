@@ -237,7 +237,7 @@ namespace Yoma.Core.Domain.Entity.Services
         if (filter.Organizations != null && filter.Organizations.Count != 0)
           IsAdminsOf(filter.Organizations, true);
         else
-          filter.Organizations = ListAdminsOf(false).Select(o => o.Id).ToList();
+          filter.Organizations = [.. ListAdminsOf(false).Select(o => o.Id)];
       }
 
       if (filter.Organizations != null && filter.Organizations.Count != 0)
@@ -245,7 +245,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       if (filter.Statuses != null && filter.Statuses.Count != 0)
       {
-        filter.Statuses = filter.Statuses.Distinct().ToList();
+        filter.Statuses = [.. filter.Statuses.Distinct()];
         var statusIds = filter.Statuses.Select(o => _organizationStatusService.GetByName(o.ToString())).Select(o => o.Id).ToList();
         query = query.Where(o => statusIds.Contains(o.StatusId));
       }
@@ -265,7 +265,7 @@ namespace Yoma.Core.Domain.Entity.Services
       var resultsInternal = query.ToList();
       resultsInternal.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey));
 
-      results.Items = resultsInternal.Select(o => o.ToInfo()).ToList();
+      results.Items = [.. resultsInternal.Select(o => o.ToInfo())];
       return results;
     }
 
@@ -988,7 +988,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       var organizations = _organizationRepository.Query().Where(o => orgIds.Contains(o.Id)).ToList();
       if (includeComputed) organizations.ForEach(o => o.LogoURL = GetBlobObjectURL(o.LogoStorageType, o.LogoKey));
-      return organizations.Select(o => o.ToInfo()).ToList();
+      return [.. organizations.Select(o => o.ToInfo())];
     }
     #endregion
 
@@ -1065,7 +1065,7 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       if (providerTypeIds == null || providerTypeIds.Count == 0) return organization;
 
-      providerTypeIds = providerTypeIds.Distinct().ToList();
+      providerTypeIds = [.. providerTypeIds.Distinct()];
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1184,7 +1184,7 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       if (usernames == null || usernames.Count == 0) return organization;
 
-      usernames = usernames.Distinct().ToList();
+      usernames = [.. usernames.Distinct()];
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -1315,7 +1315,7 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       if (documentFileIds == null || documentFileIds.Count == 0) return (organization, null);
 
-      documentFileIds = documentFileIds.Distinct().ToList();
+      documentFileIds = [.. documentFileIds.Distinct()];
 
       var itemsExistingDeleted = new List<OrganizationDocument>();
       var itemsExisting = organization.Documents?.Where(o => o.Type == type && documentFileIds.Contains(o.FileId)).ToList();
@@ -1411,7 +1411,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
         await _notificationDeliveryService.Send(type, recipients, data);
 
-        _logger.LogInformation("Successfully send notification");
+        _logger.LogInformation("Successfully sent notification");
       }
       catch (Exception ex)
       {

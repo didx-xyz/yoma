@@ -48,14 +48,13 @@ namespace Yoma.Core.Domain.Notification.Services
       if (recipientDataGroups == null || recipientDataGroups.Count == 0) return;
 
       // apply preference filtering
-      recipientDataGroups = recipientDataGroups
+      recipientDataGroups = [.. recipientDataGroups
           .Select(group =>
           (
               Recipients: _notificationPreferenceFilterService.FilterRecipients(type, group.Recipients ?? []) ?? [],
               group.Data
           ))
-          .Where(group => group.Recipients.Count > 0)
-          .ToList();
+          .Where(group => group.Recipients.Count > 0)];
       if (recipientDataGroups.Count == 0) return;
 
       var emailRecipientGroups = recipientDataGroups

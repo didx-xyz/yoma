@@ -85,7 +85,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Schedule_UserId_Type_FilterHash_StatusId_DateCreated_DateMo~",
           schema: "Download",
           table: "Schedule",
-          columns: new[] { "UserId", "Type", "FilterHash", "StatusId", "DateCreated", "DateModified" });
+          columns: ["UserId", "Type", "FilterHash", "StatusId", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_ScheduleStatus_Name",
