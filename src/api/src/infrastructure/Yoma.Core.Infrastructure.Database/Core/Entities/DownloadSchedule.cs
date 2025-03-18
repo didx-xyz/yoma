@@ -7,7 +7,7 @@ using Yoma.Core.Infrastructure.Database.Entity.Entities;
 namespace Yoma.Core.Infrastructure.Database.Core.Entities
 {
   [Table("Schedule", Schema = "Download")]
-  [Index(nameof(UserId), nameof(Type), nameof(FilterHash), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
+  [Index(nameof(UserId), nameof(Type), nameof(FilterHash), nameof(StatusId), nameof(FileId), nameof(DateCreated), nameof(DateModified))]
   public class DownloadSchedule : BaseEntity<Guid>
   {
     [ForeignKey("UserId")]

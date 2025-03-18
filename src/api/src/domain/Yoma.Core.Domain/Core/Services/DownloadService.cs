@@ -78,7 +78,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       var statusProcessed = _downloadScheduleStatusService.GetByName(DownloadScheduleStatus.Processed.ToString()).Id;
 
-      var query = _downloadScheduleRepository.Query().Where(o => o.StatusId == statusProcessed &&
+      var query = _downloadScheduleRepository.Query().Where(o => o.StatusId == statusProcessed && o.FileId.HasValue &&
         o.DateModified <= DateTimeOffset.UtcNow.AddHours(-_appSettings.DownloadScheduleLinkExpirationHours));
 
       if (idsToSkip != null && idsToSkip.Count != 0)
