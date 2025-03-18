@@ -109,7 +109,7 @@ namespace Yoma.Core.Domain.SSI.Services
       if (filter.PaginationEnabled)
       {
         result.TotalCount = result.Items.Count;
-        result.Items = result.Items.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value).ToList();
+        result.Items = [.. result.Items.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value)];
       }
 
       return result;

@@ -166,15 +166,14 @@ namespace Yoma.Core.Domain.Marketplace.Services
         }).ToList();
 
       //store parsed and name populated by info service
-      return storeRules
+      return [.. storeRules
         .Select(s => new StoreInfo
         {
           Id = s.Id,
           CountryId = s.CountryId,
           CountryName = s.CountryName,
           CountryCodeAlpha2 = s.CountryCodeAlpha2
-        })
-        .ToList();
+        })];
     }
 
     public StoreAccessControlRuleSearchResults Search(StoreAccessControlRuleSearchFilter filter, bool ensureOrganizationAuthorization)
@@ -192,7 +191,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       //stores
       if (filter.Stores != null && filter.Stores.Count != 0)
       {
-        filter.Stores = filter.Stores.Distinct().ToList();
+        filter.Stores = [.. filter.Stores.Distinct()];
         query = query.Where(rule => filter.Stores.Contains(rule.StoreId));
       }
 
@@ -201,11 +200,11 @@ namespace Yoma.Core.Domain.Marketplace.Services
       {
         if (filter.Organizations != null && filter.Organizations.Count != 0)
         {
-          filter.Organizations = filter.Organizations.Distinct().ToList();
+          filter.Organizations = [.. filter.Organizations.Distinct()];
           _organizationService.IsAdminsOf(filter.Organizations, true);
         }
         else
-          filter.Organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
+          filter.Organizations = [.. _organizationService.ListAdminsOf(false).Select(o => o.Id)];
       }
 
       if (filter.Organizations != null && filter.Organizations.Count != 0)
@@ -214,7 +213,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       //statuses
       if (filter.Statuses != null && filter.Statuses.Count != 0)
       {
-        filter.Statuses = filter.Statuses.Distinct().ToList();
+        filter.Statuses = [.. filter.Statuses.Distinct()];
         var statusIds = filter.Statuses.Select(o => _storeAccessControlRuleStatusService.GetByName(o.ToString()).Id).ToList();
         query = query.Where(o => statusIds.Contains(o.StatusId));
       }

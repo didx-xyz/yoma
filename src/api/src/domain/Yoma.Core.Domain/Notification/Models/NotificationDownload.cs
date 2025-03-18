@@ -11,10 +11,10 @@ namespace Yoma.Core.Domain.Notification.Models
     public string DateEndFormatted => DateStamp.ToString("ddd, MMM dd, yyyy HH:mm");
 
     [JsonProperty("fileName")]
-    public string FileName { get; set; }
+    public string? FileName { get; set; }
 
     [JsonProperty("fileURL")]
-    public string FileURL { get; set; }
+    public string? FileURL { get; set; }
 
     [JsonProperty("expirationHours")]
     public int ExpirationHours { get; set; }

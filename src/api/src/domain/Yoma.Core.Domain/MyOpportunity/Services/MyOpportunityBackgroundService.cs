@@ -145,7 +145,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
                 await _notificationDeliveryService.Send(notificationType, recipients, data);
 
-                _logger.LogInformation("Successfully send notification");
+                _logger.LogInformation("Successfully sent notification");
               }
               catch (Exception ex)
               {

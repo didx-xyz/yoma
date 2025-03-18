@@ -63,7 +63,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
       tags.Add("Yoma");
       tags.Add(request.Type.ToString());
       tags.Add(request.Action.ToString());
-      tags = tags.Distinct(StringComparer.InvariantCultureIgnoreCase).ToList();
+      tags = [.. tags.Distinct(StringComparer.InvariantCultureIgnoreCase)];
 
       var requestCreate = new BitLinkRequestCreate
       {
@@ -117,7 +117,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Client
             .Concat(Enumerable.Range('a', 'z' - 'a' + 1).Select(i => (char)i))
             .ToArray();
 
-      return new string(Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)]).ToArray());
+      return new string([.. Enumerable.Repeat(chars, length).Select(s => s[random.Next(s.Length)])]);
     }
     #endregion
   }

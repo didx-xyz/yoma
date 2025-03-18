@@ -130,11 +130,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
       {
         if (filter.Organizations != null && filter.Organizations.Count != 0)
         {
-          filter.Organizations = filter.Organizations.Distinct().ToList();
+          filter.Organizations = [.. filter.Organizations.Distinct()];
           _organizationService.IsAdminsOf(filter.Organizations, true);
         }
         else
-          filter.Organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
+          filter.Organizations = [.. _organizationService.ListAdminsOf(false).Select(o => o.Id)];
       }
 
       //entity type
@@ -147,7 +147,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       //statuses
       if (filter.Statuses != null && filter.Statuses.Count != 0)
       {
-        filter.Statuses = filter.Statuses.Distinct().ToList();
+        filter.Statuses = [.. filter.Statuses.Distinct()];
         var statusIds = filter.Statuses.Select(o => _linkStatusService.GetByName(o.ToString())).Select(o => o.Id).ToList();
         query = query.Where(o => statusIds.Contains(o.StatusId));
       }
@@ -158,14 +158,14 @@ namespace Yoma.Core.Domain.ActionLink.Services
           // opportunities
           if (filter.Entities != null && filter.Entities.Count != 0)
           {
-            filter.Entities = filter.Entities.Distinct().ToList();
+            filter.Entities = [.. filter.Entities.Distinct()];
             query = query.Where(o => filter.Entities.Contains(o.OpportunityId!.Value));
           }
 
           // organizations
           if (filter.Organizations != null && filter.Organizations.Count != 0)
           {
-            filter.Organizations = filter.Organizations.Distinct().ToList();
+            filter.Organizations = [.. filter.Organizations.Distinct()];
             query = query.Where(o => filter.Organizations.Contains(o.OpportunityOrganizationId!.Value));
           }
           break;
@@ -185,7 +185,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
       }
 
-      result.Items = query.ToList().Select(o => o.ToLinkInfo(false)).ToList();
+      result.Items = [.. query.ToList().Select(o => o.ToLinkInfo(false))];
       return result;
     }
 
@@ -242,7 +242,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       if (request.DistributionList != null)
       {
-        request.DistributionList = request.DistributionList.Distinct().ToList();
+        request.DistributionList = [.. request.DistributionList.Distinct()];
         //with LockToDistributionList, DistributionList is required and usage limit is set to the count of the distribution list
         if (request.LockToDistributionList == true) request.UsagesLimit = request.DistributionList.Count;
       }
@@ -630,7 +630,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         }).ToList();
 
         await _notificationDeliveryService.Send(NotificationType.ActionLink_Verify_Distribution, recipients, data);
-        _logger.LogInformation("Successfully send notification");
+        _logger.LogInformation("Successfully sent notification");
       }
       catch (Exception ex)
       {
@@ -693,7 +693,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
         await _notificationDeliveryService.Send(type, recipients, data);
 
-        _logger.LogInformation("Successfully send notification");
+        _logger.LogInformation("Successfully sent notification");
 
       }
       catch (Exception ex)

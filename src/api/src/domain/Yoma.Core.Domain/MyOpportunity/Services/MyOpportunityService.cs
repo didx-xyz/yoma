@@ -178,12 +178,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         //ensure the organization admin is the admin of the specified organizations
         if (organizations != null && organizations.Count != 0)
         {
-          organizations = organizations.Distinct().ToList();
+          organizations = [.. organizations.Distinct()];
           _organizationService.IsAdminsOf(organizations, true);
         }
         else
           //ensure search only spans authorized organizations
-          organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
+          organizations = [.. _organizationService.ListAdminsOf(false).Select(o => o.Id)];
       }
 
       if (organizations != null && organizations.Count != 0)
@@ -191,7 +191,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       if (verificationStatuses == null || verificationStatuses.Count == 0) //default to all if not explicitly specified
         verificationStatuses = [VerificationStatus.Pending, VerificationStatus.Completed, VerificationStatus.Rejected]; //all
-      verificationStatuses = verificationStatuses.Distinct().ToList();
+      verificationStatuses = [.. verificationStatuses.Distinct()];
 
       var opportunityStatusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
       var opportunityStatusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
@@ -266,12 +266,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var files = await DownloadVerificationFiles(filter, user.Id);
 
+      if (files == null || files.Count == 0)
+        throw new InvalidOperationException("One or more files expected for download of 'my' opportunity verification files");
+
       if (files.Count == 1) return files.First();
 
       return FileHelper.Zip(files, $"Files.zip");
     }
 
-    public async Task<List<IFormFile>> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter, Guid? userId)
+    public async Task<List<IFormFile>?> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter, Guid? userId)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
@@ -346,8 +349,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         }
       }
 
+      //safety check: If throwEntityNotFoundException == true, this should never happen.
+      //if throwEntityNotFoundException == false, return null to indicate no files were found.
       if (files.Count == 0)
-        files.Add(FileHelper.FromByteArray("No files to download.txt", "text/plain", Encoding.UTF8.GetBytes("No files to download")));
+      {
+        if (throwEntityNotFoundException)
+          throw new InvalidOperationException("No files found, but expected at least one due to throwEntityNotFoundException being true.");
+
+        return null;
+      }
 
       return files;
     }
@@ -435,15 +445,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var searchResultVerification = Search(filterInternal, false);
 
-      var itemsCompleted = SummaryGroupByWeekItems(searchResultVerification.Items.Where(o => o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Completed).ToList());
+      var itemsCompleted = SummaryGroupByWeekItems([.. searchResultVerification.Items.Where(o => o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Completed)]);
       var resultsCompleted = new List<TimeValueEntry>();
       itemsCompleted.ForEach(o => { resultsCompleted.Add(new TimeValueEntry(o.WeekEnding, o.Count, default(int), default(int), default(int))); });
 
-      var itemsPending = SummaryGroupByWeekItems(searchResultVerification.Items.Where(o => o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Pending).ToList());
+      var itemsPending = SummaryGroupByWeekItems([.. searchResultVerification.Items.Where(o => o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Pending)]);
       var resultsPending = new List<TimeValueEntry>();
       itemsPending.ForEach(o => { resultsPending.Add(new TimeValueEntry(o.WeekEnding, default(int), o.Count, default(int), default(int))); });
 
-      var itemsRejected = SummaryGroupByWeekItems(searchResultVerification.Items.Where(o => o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Rejected).ToList());
+      var itemsRejected = SummaryGroupByWeekItems([.. searchResultVerification.Items.Where(o => o.Action == Action.Verification && o.VerificationStatus == VerificationStatus.Rejected)]);
       var resultsRejected = new List<TimeValueEntry>();
       itemsRejected.ForEach(o => { resultsRejected.Add(new TimeValueEntry(o.WeekEnding, default(int), default(int), o.Count, default(int))); });
 
@@ -498,12 +508,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         //ensure the organization admin is the admin of the specified organizations
         if (filter.Organizations != null && filter.Organizations.Count != 0)
         {
-          filter.Organizations = filter.Organizations.Distinct().ToList();
+          filter.Organizations = [.. filter.Organizations.Distinct()];
           _organizationService.IsAdminsOf(filter.Organizations, true);
         }
         else
           //ensure search only spans authorized organizations
-          filter.Organizations = _organizationService.ListAdminsOf(false).Select(o => o.Id).ToList();
+          filter.Organizations = [.. _organizationService.ListAdminsOf(false).Select(o => o.Id)];
       }
 
       if (filter.Organizations != null && filter.Organizations.Count != 0)
@@ -554,7 +564,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         case Action.Verification:
           if (filter.VerificationStatuses == null || filter.VerificationStatuses.Count == 0)
             throw new ArgumentNullException(nameof(filter), "One or more verification status(es) required");
-          filter.VerificationStatuses = filter.VerificationStatuses.Distinct().ToList();
+          filter.VerificationStatuses = [.. filter.VerificationStatuses.Distinct()];
 
           orderInstructions.Add(new() { OrderBy = o => o.DateModified, SortOrder = filter.SortOrder });
 
@@ -628,7 +638,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           o.Verifications?.ForEach(v => v.FileURL = GetBlobObjectURL(v.FileStorageType, v.FileKey));
         });
       }
-      result.Items = items.Select(o => o.ToInfo()).ToList();
+      result.Items = [.. items.Select(o => o.ToInfo())];
       if (filter.UnrestrictedQuery) return result;
 
       result.Items.ForEach(o => SetEngagementCounts(o));
@@ -894,7 +904,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       await _myOpportunityRequestValidatorVerifyFinalizeBatch.ValidateAndThrowAsync(request);
 
-      request.Items = request.Items.GroupBy(i => new { i.OpportunityId, i.UserId }).Select(g => g.First()).ToList();
+      request.Items = [.. request.Items.GroupBy(i => new { i.OpportunityId, i.UserId }).Select(g => g.First())];
 
       User? user = null;
       Opportunity.Models.Opportunity? opportunity = null;
@@ -1498,9 +1508,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               [new() { Username = myOpportunity.Username, PhoneNumber = myOpportunity.UserPhoneNumber, Email = myOpportunity.UserEmail, DisplayName = myOpportunity.UserDisplayName }],
 
           NotificationType.Opportunity_Verification_Pending_Admin =>
-              _organizationService.ListAdmins(myOpportunity.OrganizationId, false, false)
-                  .Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.DisplayName })
-                  .ToList(),
+              [.. _organizationService.ListAdmins(myOpportunity.OrganizationId, false, false).Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.DisplayName })],
 
           _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported"),
         };
@@ -1525,7 +1533,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         await _notificationDeliveryService.Send(type, recipients, data);
 
-        _logger.LogInformation("Successfully send notification");
+        _logger.LogInformation("Successfully sent notification");
       }
       catch (Exception ex)
       {

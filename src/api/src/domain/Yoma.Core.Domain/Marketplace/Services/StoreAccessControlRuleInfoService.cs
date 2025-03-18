@@ -218,7 +218,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       var storeItemCategories = store == null ? null : await StoreItemCategoriesCached(store.Id);
 
-      result.StoreItemCategories = item.StoreItemCategories.Select(item =>
+      result.StoreItemCategories = [.. item.StoreItemCategories.Select(item =>
       {
         var storeItemCategory = storeItemCategories?.SingleOrDefault(x => x.Id == item);
 
@@ -227,7 +227,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
           Id = item,
           Name = storeItemCategory?.Name ?? "Unknown"
         };
-      }).ToList();
+      })];
 
       return result;
     }

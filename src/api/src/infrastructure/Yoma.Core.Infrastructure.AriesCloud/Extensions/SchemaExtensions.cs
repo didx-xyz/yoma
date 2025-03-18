@@ -80,10 +80,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
     private static List<Domain.SSI.Models.Provider.Schema> FilterByLatestVersion(bool latestVersion, List<Domain.SSI.Models.Provider.Schema> results)
     {
       if (latestVersion)
-        results = results
+        results = [.. results
           .GroupBy(s => s.Name)
-          .Select(group => group.OrderByDescending(s => s.Version).First())
-          .ToList();
+          .Select(group => group.OrderByDescending(s => s.Version).First())];
       return results;
     }
     #endregion

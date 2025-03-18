@@ -108,7 +108,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var results = new OpportunitySearchResultsInfo
       {
         TotalCount = searchResult.TotalCount,
-        Items = searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL)).ToList(),
+        Items = [.. searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL))],
       };
 
       results.Items.ForEach(SetEngagementCounts);
@@ -180,7 +180,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var results = new OpportunitySearchResultsInfo
       {
         TotalCount = searchResult.TotalCount,
-        Items = searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL)).ToList(),
+        Items = [.. searchResult.Items.Select(o => o.ToOpportunityInfo(_appSettings.AppBaseURL))],
       };
 
       results.Items.ForEach(SetEngagementCounts);

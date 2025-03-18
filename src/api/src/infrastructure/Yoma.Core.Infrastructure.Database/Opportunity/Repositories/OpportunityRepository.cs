@@ -240,13 +240,13 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
       _context.Opportunity.AddRange(entities);
       await _context.SaveChangesAsync();
 
-      items = items.Zip(entities, (item, entity) =>
+      items = [.. items.Zip(entities, (item, entity) =>
       {
         item.Id = entity.Id;
         item.DateCreated = entity.DateCreated;
         item.DateModified = entity.DateModified;
         return item;
-      }).ToList();
+      })];
 
       return items;
     }

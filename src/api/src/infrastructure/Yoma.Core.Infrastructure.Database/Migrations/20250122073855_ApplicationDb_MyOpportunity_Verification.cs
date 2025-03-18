@@ -119,7 +119,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_MyOpportunity_VerificationStatusId_DateCompleted_ZltoReward~",
           schema: "Opportunity",
           table: "MyOpportunity",
-          columns: new[] { "VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified" });
+          columns: ["VerificationStatusId", "DateCompleted", "ZltoReward", "YomaReward", "DateCreated", "DateModified"]);
     }
   }
 }

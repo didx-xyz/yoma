@@ -51,9 +51,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
 
-      return new string(input.ToCharArray()
-                .Where(c => !char.IsWhiteSpace(c))
-                .ToArray());
+      return new string([.. input.ToCharArray().Where(c => !char.IsWhiteSpace(c))]);
     }
 
     /// <summary>

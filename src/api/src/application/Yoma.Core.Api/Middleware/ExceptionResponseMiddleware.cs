@@ -39,7 +39,7 @@ namespace Yoma.Core.Api.Middleware
 
           if (!validationException.Errors.Any()) break;
 
-          errorResponse = validationException.Errors.Select(o => new ErrorResponseItem() { Type = ex.GetType().Name, Message = o.ErrorMessage }).ToList();
+          errorResponse = [.. validationException.Errors.Select(o => new ErrorResponseItem() { Type = ex.GetType().Name, Message = o.ErrorMessage })];
           return context.Response.WriteAsJsonAsync(errorResponse);
 
         case EntityNotFoundException:

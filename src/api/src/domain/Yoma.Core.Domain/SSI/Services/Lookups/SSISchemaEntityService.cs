@@ -95,7 +95,7 @@ namespace Yoma.Core.Domain.SSI.Services.Lookups
       if (type == null) return results;
 
       var typeId = _ssiSchemaTypeService.GetByName(type.Value.ToString()).Id;
-      results = results.Where(o => o.Types?.Any(t => t.Id == typeId) == true).ToList();
+      results = [.. results.Where(o => o.Types?.Any(t => t.Id == typeId) == true)];
       return results;
     }
     #endregion

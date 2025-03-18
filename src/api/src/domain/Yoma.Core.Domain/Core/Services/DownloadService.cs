@@ -117,8 +117,7 @@ namespace Yoma.Core.Domain.Core.Services
       switch (item.Status)
       {
         case DownloadScheduleStatus.Processed:
-          if (item.FileId == null)
-            throw new ArgumentNullException(nameof(item), $"{nameof(item.FileId)} required");
+          //fileId can be null if the download does not contain any files (see DownloadBackgroundService.ProcessSchedule)
           item.ErrorReason = null;
           item.RetryCount = null;
           break;
