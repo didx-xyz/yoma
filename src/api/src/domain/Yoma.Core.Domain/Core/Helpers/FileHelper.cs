@@ -33,7 +33,7 @@ namespace Yoma.Core.Domain.Core.Helpers
     public static IFormFile Zip(List<IFormFile> files, string fileName)
     {
       if (files == null || files.Count == 0)
-        ArgumentNullException.ThrowIfNull(files, nameof(files));
+        throw new ArgumentNullException(nameof(files));
 
       ArgumentException.ThrowIfNullOrWhiteSpace(fileName, nameof(fileName));
       fileName = fileName.Trim();
