@@ -39,7 +39,7 @@ export const FileUploader: React.FC<InputProps> = ({
       files={data}
       onupdatefiles={(updatedFiles) => {
         setFiles(updatedFiles);
-        onUploadComplete && onUploadComplete(updatedFiles);
+        if (onUploadComplete) onUploadComplete(updatedFiles);
       }}
       allowMultiple={allowMultiple}
       dropOnPage

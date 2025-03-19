@@ -477,7 +477,7 @@ const Organisations: NextPageWithLayout<{
                     </li>
                     <li className="md:w-24">
                       <Link
-                        href={`/organisations?status=Rejected`}
+                        href={`/organisations?status=Declined`}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Declined"
                             ? "active border-orange"
