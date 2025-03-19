@@ -18,15 +18,17 @@ export interface InputProps {
   onCancel?: () => void;
   cancelButtonText?: string;
   submitButtonText?: string;
+  onImageChange?: (image: { logo: File | null; logoExisting?: any }) => void;
 }
 
 export const OrgInfoEdit: React.FC<InputProps> = ({
   formData,
-  organisation,
+  //organisation,
   onSubmit,
   onCancel,
   cancelButtonText = "Cancel",
   submitButtonText = "Submit",
+  onImageChange,
 }) => {
   const schema = zod
     .object({
@@ -34,7 +36,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
         .string()
         .min(1, "Organisation name is required.")
         .max(80, "Maximum of 80 characters allowed."),
-
       websiteURL: zod
         .string()
         .regex(
@@ -60,7 +61,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
       if (values.logoExisting) logoCount++;
       if (values.logo) logoCount++;
 
-      // logo is required
       if (logoCount < 1) {
         ctx.addIssue({
           message: "Logo is required.",
@@ -68,7 +68,6 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           path: ["logo"],
         });
       }
-      // only one logo required
       if (logoCount > 1) {
         ctx.addIssue({
           message: "Only one Logo is required.",
@@ -78,8 +77,10 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
       }
     });
 
+  // Initialize useForm with parent's formData as defaultValues.
   const form = useForm({
     mode: "all",
+    defaultValues: formData ?? {},
     resolver: zodResolver(schema),
   });
   const {
@@ -92,23 +93,19 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
     trigger,
   } = form;
 
-  // set default values
+  // Reset the form if formData changes (e.g. when navigating back)
   useEffect(() => {
-    // reset form
-    // setTimeout is needed to prevent the form from being reset before the default values are set
-    setTimeout(() => {
-      reset({
-        ...formData,
-        logoExisting: organisation?.logoURL,
-      });
+    reset(formData ?? {});
+  }, [formData, reset]);
 
-      // validate the forms on initial load
-      // this is needed to show the required field indicators (exclamation icon next to labels) on the first render
-      trigger();
-    }, 100);
-  }, [reset, formData, organisation?.logoURL, trigger]);
+  // Only update the logo fields when they change externally.
+  useEffect(() => {
+    if (formData?.logo) {
+      setValue("logo", formData?.logo as any);
+      trigger("logo");
+    }
+  }, [formData?.logo, setValue, trigger]);
 
-  // form submission handler
   const onSubmitHandler = useCallback(
     (data: FieldValues) => {
       if (onSubmit) onSubmit(data);
@@ -123,7 +120,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
       )}
 
       <form
-        onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
+        onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-4"
       >
         <FormField
@@ -202,31 +199,29 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           error={formState.errors.logo?.message?.toString()}
         >
           <div className="flex items-center justify-center pb-4">
-            {/* eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing */}
-
-            {/* UPLOAD IMAGE */}
             <div className="container mx-auto">
               <AvatarUpload
                 onRemoveImageExisting={() => {
-                  setValue("logoExisting", null);
+                  //setValue("logoExisting", null);
                   setValue("logo", null);
                   trigger("logo");
+                  if (onImageChange)
+                    onImageChange({ logo: null, logoExisting: null });
                 }}
                 onUploadComplete={(files) => {
-                  setValue("logoExisting", null);
-                  setValue("logo", files && files.length > 0 ? files[0] : null);
+                  const file = files && files.length > 0 ? files[0] : null;
+                  //setValue("logoExisting", null);
+                  setValue("logo", file);
                   trigger("logo");
+                  if (onImageChange) onImageChange({ logo: file });
                 }}
-                existingImage={getValues("logoExisting") ?? ""}
-                showExisting={
-                  !getValues("logo") && getValues("logoExisting") ? true : false
-                }
+                existingImage={(getValues("logo") as any) ?? ""}
+                showExisting={!getValues("logo") ? true : false}
               />
             </div>
           </div>
         </FormField>
 
-        {/* BUTTONS */}
         <div className="mt-4 flex flex-row items-center justify-end gap-4">
           {onCancel && (
             <button

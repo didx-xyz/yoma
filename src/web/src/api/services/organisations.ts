@@ -75,7 +75,7 @@ export const getOrganisationById = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Organization> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-
+  console.warn("getOrganisationById", id);
   const { data } = await instance.get<Organization>(`/organization/${id}`);
   return data;
 };

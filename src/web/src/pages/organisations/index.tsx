@@ -351,7 +351,7 @@ const Organisations: NextPageWithLayout<{
   );
 
   const updateStatus = useCallback(async () => {
-    // invalidate cache
+    // invalidate queries
     // this will match all queries with the following prefixes 'Organisations' (list data) & 'Organisations_TotalCount' (tab counts)
     await queryClient.invalidateQueries({
       queryKey: ["Organisations"],

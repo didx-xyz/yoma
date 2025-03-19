@@ -1,15 +1,7 @@
-/* eslint-disable */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FilePond, registerPlugin } from "react-filepond";
-//import FilePondPluginFileValidateSize from "filepond-plugin-file-validate-size";
 import FilePondPluginFileValidateType from "filepond-plugin-file-validate-type";
-// Import FilePond styles
 import "filepond/dist/filepond.min.css";
-//import "./FileUpload.module.css";
-
-// Import the Image EXIF Orientation and Image Preview plugins
-// Note: These need to be installed separately
-// `npm i filepond-plugin-image-preview filepond-plugin-image-exif-orientation --save`
 import FilePondPluginImageExifOrientation from "filepond-plugin-image-exif-orientation";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import "filepond-plugin-image-preview/dist/filepond-plugin-image-preview.css";
@@ -37,25 +29,26 @@ export const FileUploader: React.FC<InputProps> = ({
 }) => {
   const [data, setFiles] = useState<any[]>(files);
 
+  // Update local state when the files prop changes
+  useEffect(() => {
+    setFiles(files);
+  }, [files]);
+
   return (
     <FilePond
       files={data}
-      onupdatefiles={(data) => {
-        setFiles(data);
-        onUploadComplete && onUploadComplete(data);
+      onupdatefiles={(updatedFiles) => {
+        setFiles(updatedFiles);
+        if (onUploadComplete) onUploadComplete(updatedFiles);
       }}
       allowMultiple={allowMultiple}
       dropOnPage
       name={name}
       dropValidation
       acceptedFileTypes={fileTypes}
-      //labelIdle='Drag & Drop your files or <span class="filepond--label-action">Browse</span>'
-      // labelIdle='<span class="btn btn-sm btn-primary normal-case">Choose File</span>'
       labelIdle='<span class="btn btn-sm rounded-full normal-case font-normal bg-white text-black">Choose File</span>'
-      //={"-p-4 -m-4"}
       allowImageExifOrientation={true}
       credits={false}
     />
   );
 };
-/* eslint-enable */

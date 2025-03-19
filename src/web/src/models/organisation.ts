@@ -17,7 +17,7 @@ export interface OrganizationRequestViewModel {
   postalCode: string | null;
   tagline: string | null;
   biography: string | null;
-  logo: FormFile | null;
+  logo: FormFile | string | null;
   providerTypes: string[];
   registrationDocuments: FormFile[] | null;
   educationProviderDocuments: FormFile[] | null;
@@ -31,4 +31,6 @@ export interface OrganizationRequestViewModel {
   ssoClientIdOutbound: string | null;
   zltoRewardPool: number | null;
   yomaRewardPool: number | null;
+
+  fileVersion: number; // for tracking changes
 }

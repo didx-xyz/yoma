@@ -164,8 +164,15 @@ const OrganisationDetails: NextPageWithLayout<{
       );
 
       // invalidate queries
-      await queryClient.invalidateQueries({ queryKey: ["organisations"] });
-      await queryClient.invalidateQueries({ queryKey: [id, "organisation"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["Organisations"],
+        exact: false,
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["Organisations_TotalCount"],
+        exact: false,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["organisation", id] });
     } catch (error) {
       toast(<ApiErrors error={error as AxiosError} />, {
         type: "error",
@@ -194,6 +201,7 @@ const OrganisationDetails: NextPageWithLayout<{
     content = (
       <div>
         <VerifyOverview organisation={organisation}></VerifyOverview>
+
         {/* BUTTONS */}
         <div className="my-4 flex justify-center gap-4 md:justify-end">
           <button
@@ -307,7 +315,7 @@ const OrganisationDetails: NextPageWithLayout<{
             </label>
             <textarea
               className="input input-bordered w-full"
-              onChange={(e) => setVerifyComments(e.target.value)}
+              onBlur={(e) => setVerifyComments(e.target.value)}
               id="txtVerifyComments"
             />
           </div>

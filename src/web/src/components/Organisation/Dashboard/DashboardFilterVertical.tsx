@@ -100,10 +100,6 @@ export const DashboardFilterVertical: React.FC<{
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadOpportunities = useCallback(
     debounce((inputValue: string, callback: (options: any) => void) => {
-      if (!watchOrganisations || watchOrganisations.length === 0) {
-        callback([]);
-        return;
-      }
       searchCriteriaOpportunities({
         opportunities: [],
         organizations: watchOrganisations,
@@ -128,10 +124,6 @@ export const DashboardFilterVertical: React.FC<{
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadCategories = useCallback(
     debounce((inputValue: string, callback: (options: any) => void) => {
-      if (!watchOrganisations || watchOrganisations.length === 0) {
-        callback([]);
-        return;
-      }
       getCategoriesAdmin(watchOrganisations).then((data) => {
         const options = data.map((item) => ({
           value: item.name,
@@ -146,10 +138,6 @@ export const DashboardFilterVertical: React.FC<{
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const loadCountries = useCallback(
     debounce((inputValue: string, callback: (options: any) => void) => {
-      if (!watchOrganisations || watchOrganisations.length === 0) {
-        callback([]);
-        return;
-      }
       getCountriesAdmin(watchOrganisations).then((data) => {
         const options = data.map((item) => ({
           value: item.name,
@@ -205,9 +193,7 @@ export const DashboardFilterVertical: React.FC<{
 
   // When organisations change update dependent lookup options
   useEffect(() => {
-    console.warn("watchOrganisations", watchOrganisations);
     if (!watchOrganisations) {
-      console.warn("watchOrganisations is null");
       setValue("countries", []);
       setValue("opportunities", []);
       setValue("categories", []);

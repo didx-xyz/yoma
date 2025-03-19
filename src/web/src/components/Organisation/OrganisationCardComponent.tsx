@@ -168,6 +168,12 @@ export const OrganisationCardComponent: React.FC<{
                 <div className="text-xs">{item.status}</div>
               </>
             )}
+            {item.status == "Declined" && (
+              <>
+                <span className="mr-2 h-2 w-2 rounded-full bg-error"></span>
+                <div className="text-xs">{item.status}</div>
+              </>
+            )}
           </div>
 
           {item?.status != "Deleted" && (
