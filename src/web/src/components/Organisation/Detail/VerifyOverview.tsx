@@ -1,8 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
-import Image from "next/image";
 import Link from "next/link";
 import { IoMdImage } from "react-icons/io";
 import { type Organization, type UserInfo } from "~/api/models/organisation";
+import { AvatarImage } from "~/components/AvatarImage";
 
 export interface InputProps {
   organisation: Organization | undefined;
@@ -53,7 +53,7 @@ export const VerifyOverview: React.FC<InputProps> = ({ organisation }) => {
               <span className="label-text font-semibold">Website URL</span>
             </label>
             <Link
-              className="label-text -mt-2 pl-1 text-gray-dark transition duration-150 ease-in-out"
+              className="label-text -mt-2 pl-1 text-green underline transition duration-150 ease-in-out"
               href={organisation?.websiteURL}
             >
               {organisation?.websiteURL}
@@ -72,15 +72,11 @@ export const VerifyOverview: React.FC<InputProps> = ({ organisation }) => {
 
           {/* EXISTING IMAGE */}
           {organisation?.logoURL && (
-            <>
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <Image
-                className="ml-1 h-auto rounded-lg"
-                alt="company logo"
-                width={50}
-                src={organisation.logoURL}
-              />
-            </>
+            <AvatarImage
+              alt="company logo"
+              size={80}
+              icon={organisation.logoURL}
+            />
           )}
         </div>
 

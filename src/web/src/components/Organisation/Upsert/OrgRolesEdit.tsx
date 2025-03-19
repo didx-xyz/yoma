@@ -1,7 +1,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
-import { type FieldValues, useForm } from "react-hook-form";
+import { useCallback, useEffect } from "react";
+import { Controller, type FieldValues, useForm } from "react-hook-form";
 import zod from "zod";
 import type {
   OrganizationDocument,
@@ -39,16 +39,6 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
   cancelButtonText = "Cancel",
   submitButtonText = "Submit",
 }) => {
-  const [registrationDocuments, setRegistrationDocuments] = useState<File[]>(
-    (formData?.registrationDocuments as any) ?? [],
-  );
-  const [educationProviderDocuments, setEducationProviderDocuments] = useState<
-    File[]
-  >((formData?.educationProviderDocuments as any) ?? []);
-  const [businessDocuments, setBusinessDocuments] = useState<File[]>(
-    (formData?.businessDocuments as any) ?? [],
-  );
-
   // 👇 use prefetched queries from server
   const { data: organisationProviderTypes } = useQuery<
     OrganizationProviderType[]
@@ -62,10 +52,9 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     removed: any[] | undefined,
     added: any[] | undefined,
   ) {
-    let count = (existing?.length ?? 0) - (removed?.length ?? 0);
-    if (count < 0) count = 0;
-    const docCount = count + (added?.length ?? 0);
-    return docCount;
+    const count =
+      (existing?.length ?? 0) + (added?.length ?? 0) - (removed?.length ?? 0);
+    return count < 0 ? 0 : count;
   }
 
   const schema = zod
@@ -87,9 +76,19 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       businessDocumentsExisting: zod.array(zod.any()).optional(),
     })
     .superRefine((values, ctx) => {
+      console.warn(
+        "registrationDocumentsExisting:",
+        values.registrationDocumentsExisting,
+      );
+      console.warn(
+        "registrationDocumentsDelete:",
+        values.registrationDocumentsDelete,
+      );
+      console.warn("registrationDocuments:", values.registrationDocuments);
+
       // registration documents are required
       const docCount = getActualDocumentCount(
-        values.registrationDocumentsExisting,
+        organisation?.documents?.filter((x) => x.type == "Registration") ?? [],
         values.registrationDocumentsDelete,
         values.registrationDocuments,
       );
@@ -108,7 +107,9 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
 
       if (values?.providerTypes?.find((x: string) => x == educationPT?.id)) {
         const docCount = getActualDocumentCount(
-          values.educationProviderDocumentsExisting,
+          organisation?.documents?.filter(
+            (x) => x.type == "EducationProvider",
+          ) ?? [],
           values.educationProviderDocumentsDelete,
           values.educationProviderDocuments,
         );
@@ -128,7 +129,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
 
       if (values?.providerTypes?.find((x: string) => x == marketplacePT?.id)) {
         const docCount = getActualDocumentCount(
-          values.businessDocumentsExisting,
+          organisation?.documents?.filter((x) => x.type == "Business") ?? [],
           values.businessDocumentsDelete,
           values.businessDocuments,
         );
@@ -216,6 +217,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
     register,
     handleSubmit,
     formState,
+    control,
     setValue,
     getValues,
     reset,
@@ -239,6 +241,14 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
         businessDocumentsExisting: organisation?.documents?.filter(
           (x) => x.type == "Business",
         ),
+        registrationDocuments: formData?.registrationDocuments ?? [],
+        registrationDocumentsDelete:
+          formData?.registrationDocumentsDelete ?? [],
+        educationProviderDocuments: formData?.educationProviderDocuments ?? [],
+        educationProviderDocumentsDelete:
+          formData?.educationProviderDocumentsDelete ?? [],
+        businessDocuments: formData?.businessDocuments ?? [],
+        businessDocumentsDelete: formData?.businessDocumentsDelete ?? [],
       });
 
       // validate the forms on initial load
@@ -357,30 +367,35 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
           <>
             {/* show existing documents */}
             <div className="flex flex-col gap-2">
-              {organisation?.documents
-                ?.filter((x) => x.type == "Registration")
-                .map((item) => (
-                  <Document
-                    key={item.fileId}
-                    doc={item}
-                    onRemove={onRemoveRegistrationDocument}
-                  />
-                ))}
+              {getValues("registrationDocumentsExisting")?.map((item: any) => (
+                <Document
+                  key={item.fileId}
+                  doc={item}
+                  onRemove={onRemoveRegistrationDocument}
+                />
+              ))}
 
               {/* upload documents */}
-              <FileUploader
-                name="registration"
-                files={registrationDocuments}
-                allowMultiple={true}
-                fileTypes={ACCEPTED_DOC_TYPES}
-                onUploadComplete={(files) => {
-                  setRegistrationDocuments(files);
-                  setValue(
-                    "registrationDocuments",
-                    files && files.length > 0 ? files.map((x) => x.file) : [],
-                  );
-                  trigger("registrationDocuments");
-                }}
+              <Controller
+                name="registrationDocuments"
+                control={control}
+                defaultValue={[]}
+                render={({ field: { onChange, value } }) => (
+                  <FileUploader
+                    name="registrationDocuments"
+                    files={value}
+                    allowMultiple={true}
+                    fileTypes={ACCEPTED_DOC_TYPES}
+                    onUploadComplete={(files) => {
+                      onChange(
+                        files && files.length > 0
+                          ? files.map((x) => x.file)
+                          : [],
+                      );
+                      trigger("registrationDocuments");
+                    }}
+                  />
+                )}
               />
             </div>
           </>
@@ -405,32 +420,37 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
               >
                 <div className="flex flex-col gap-2">
                   {/* show existing documents */}
-                  {organisation?.documents
-                    ?.filter((x) => x.type == "EducationProvider")
-                    .map((item) => (
+                  {getValues("educationProviderDocumentsExisting")?.map(
+                    (item: any) => (
                       <Document
                         key={item.fileId}
                         doc={item}
                         onRemove={onRemoveEducationProviderDocument}
                       />
-                    ))}
+                    ),
+                  )}
 
                   {/* upload documents */}
-                  <FileUploader
-                    name="education"
-                    files={educationProviderDocuments}
-                    allowMultiple={true}
-                    fileTypes={ACCEPTED_DOC_TYPES}
-                    onUploadComplete={(files) => {
-                      setEducationProviderDocuments(files.map((x) => x.file));
-                      setValue(
-                        "educationProviderDocuments",
-                        files && files.length > 0
-                          ? files.map((x) => x.file)
-                          : [],
-                      );
-                      trigger("educationProviderDocuments");
-                    }}
+                  <Controller
+                    name="educationProviderDocuments"
+                    control={control}
+                    defaultValue={[]}
+                    render={({ field: { onChange, value } }) => (
+                      <FileUploader
+                        name="educationProviderDocuments"
+                        files={value}
+                        allowMultiple={true}
+                        fileTypes={ACCEPTED_DOC_TYPES}
+                        onUploadComplete={(files) => {
+                          onChange(
+                            files && files.length > 0
+                              ? files.map((x) => x.file)
+                              : [],
+                          );
+                          trigger("educationProviderDocuments");
+                        }}
+                      />
+                    )}
                   />
                 </div>
               </FormField>
@@ -452,32 +472,35 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
               >
                 <div className="flex flex-col gap-2">
                   {/* show existing documents */}
-                  {organisation?.documents
-                    ?.filter((x) => x.type == "Business")
-                    .map((item) => (
-                      <Document
-                        key={item.fileId}
-                        doc={item}
-                        onRemove={onRemoveBusinessDocument}
-                      />
-                    ))}
+                  {getValues("businessDocumentsExisting")?.map((item: any) => (
+                    <Document
+                      key={item.fileId}
+                      doc={item}
+                      onRemove={onRemoveBusinessDocument}
+                    />
+                  ))}
 
                   {/* upload documents */}
-                  <FileUploader
-                    name="business"
-                    files={businessDocuments}
-                    allowMultiple={true}
-                    fileTypes={ACCEPTED_DOC_TYPES}
-                    onUploadComplete={(files) => {
-                      setBusinessDocuments(files.map((x) => x.file));
-                      setValue(
-                        "businessDocuments",
-                        files && files.length > 0
-                          ? files.map((x) => x.file)
-                          : [],
-                      );
-                      trigger("businessDocuments");
-                    }}
+                  <Controller
+                    name="businessDocuments"
+                    control={control}
+                    defaultValue={[]}
+                    render={({ field: { onChange, value } }) => (
+                      <FileUploader
+                        name="businessDocuments"
+                        files={value}
+                        allowMultiple={true}
+                        fileTypes={ACCEPTED_DOC_TYPES}
+                        onUploadComplete={(files) => {
+                          onChange(
+                            files && files.length > 0
+                              ? files.map((x) => x.file)
+                              : [],
+                          );
+                          trigger("businessDocuments");
+                        }}
+                      />
+                    )}
                   />
                 </div>
               </FormField>

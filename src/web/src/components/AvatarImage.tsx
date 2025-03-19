@@ -8,7 +8,7 @@ interface InputProps {
   size: number;
 }
 
-export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size }) => {
+export const AvatarImage: React.FC<InputProps> = ({ icon, alt, size = 40 }) => {
   const sizePixels: string = size + "px";
 
   return (

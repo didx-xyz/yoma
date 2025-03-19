@@ -351,7 +351,7 @@ const Organisations: NextPageWithLayout<{
   );
 
   const updateStatus = useCallback(async () => {
-    // invalidate cache
+    // invalidate queries
     // this will match all queries with the following prefixes 'Organisations' (list data) & 'Organisations_TotalCount' (tab counts)
     await queryClient.invalidateQueries({
       queryKey: ["Organisations"],
@@ -477,7 +477,7 @@ const Organisations: NextPageWithLayout<{
                     </li>
                     <li className="md:w-24">
                       <Link
-                        href={`/organisations?status=Declined`}
+                        href={`/organisations?status=Rejected`}
                         className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Declined"
                             ? "active border-orange"

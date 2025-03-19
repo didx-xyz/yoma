@@ -1,19 +1,17 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import AvatarEditor from "react-avatar-editor";
 import { IoMdClose, IoMdCrop } from "react-icons/io";
 import { AvatarImage } from "~/components/AvatarImage";
 import CustomModal from "~/components/Common/CustomModal";
 import styles from "./AvatarUpload.module.css";
 
-// Type assertion to bypass React component type mismatch with AvatarEditor library
-// "@types/react-avatar-editor" is not compatible with react 19
 const Editor = AvatarEditor as any;
 
 interface AvatarUploadProps {
   onUploadComplete?: (data: any[]) => void;
   onRemoveImageExisting?: () => void;
   showExisting: boolean;
-  existingImage?: string;
+  existingImage?: string | File | null;
 }
 
 const AvatarUpload: React.FC<AvatarUploadProps> = ({
@@ -25,9 +23,28 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [zoom, setZoom] = useState(1);
   const [croppedImage, setCroppedImage] = useState<string | null>(null);
+  const [computedImageUrl, setComputedImageUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const editorRef = useRef<AvatarEditor>(null);
   const [cropModalVisible, setCropModalVisible] = useState(false);
+
+  // Compute display image URL based on croppedImage or existingImage:
+  useEffect(() => {
+    if (croppedImage) {
+      setComputedImageUrl(croppedImage);
+    } else if (existingImage) {
+      if (typeof existingImage === "string") {
+        setComputedImageUrl(existingImage);
+      } else {
+        // it's a File, create an object URL
+        const objectUrl = URL.createObjectURL(existingImage);
+        setComputedImageUrl(objectUrl);
+        return () => URL.revokeObjectURL(objectUrl);
+      }
+    } else {
+      setComputedImageUrl(null);
+    }
+  }, [croppedImage, existingImage]);
 
   const handleImageUpload = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -41,7 +58,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         setCropModalVisible(true);
       }
     },
-    [setSelectedImage, setCropModalVisible],
+    [],
   );
 
   const handleCropComplete = useCallback(() => {
@@ -61,24 +78,17 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
 
       setCropModalVisible(false);
     }
-  }, [editorRef, setCroppedImage, onUploadComplete, setCropModalVisible]);
+  }, [onUploadComplete]);
 
   const clearFile = useCallback(() => {
     if (inputRef.current) {
       inputRef.current.value = "";
     }
-
     setSelectedImage(null);
     setCroppedImage(null);
     onUploadComplete?.([null]);
     onRemoveImageExisting?.();
-  }, [
-    inputRef,
-    setSelectedImage,
-    setCroppedImage,
-    onUploadComplete,
-    onRemoveImageExisting,
-  ]);
+  }, [onUploadComplete, onRemoveImageExisting]);
 
   return (
     <div className="form-control flex flex-col items-center justify-center rounded-lg bg-gray-light p-4">
@@ -97,11 +107,9 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
             <button
               type="button"
               className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
-              onClick={() => {
-                setCropModalVisible(false);
-              }}
+              onClick={() => setCropModalVisible(false)}
             >
-              <IoMdClose className="h-6 w-6"></IoMdClose>
+              <IoMdClose className="h-6 w-6" />
             </button>
           </div>
           {selectedImage && (
@@ -135,9 +143,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
               </div>
               <div className="flex gap-4">
                 <button
-                  onClick={() => {
-                    setCropModalVisible(false);
-                  }}
+                  onClick={() => setCropModalVisible(false)}
                   className="btn btn-warning rounded-full px-12 py-2 text-white"
                 >
                   Cancel
@@ -155,7 +161,6 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
       </CustomModal>
 
       {/* IMAGE UPLOAD */}
-
       <div className="flex w-full overflow-x-hidden">
         <input
           name="logo"
@@ -170,9 +175,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
           <div className="flex flex-grow justify-end gap-4">
             <button
               className="btn btn-secondary rounded-full text-white"
-              onClick={() => {
-                setCropModalVisible(true);
-              }}
+              onClick={() => setCropModalVisible(true)}
             >
               <IoMdCrop className="h-4 w-4" />
             </button>
@@ -181,10 +184,13 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
       </div>
 
       {/* LOGO PREVIEW */}
-
       {showExisting ? (
         <div className="mt-4 flex w-full justify-center rounded-lg bg-white py-8">
-          <AvatarImage icon={existingImage} alt="Existing Avatar" size={150} />
+          <AvatarImage
+            icon={computedImageUrl}
+            alt="Existing Avatar"
+            size={150}
+          />
         </div>
       ) : (
         <div className="mt-4 flex w-full justify-center rounded-lg bg-white py-8">
@@ -208,7 +214,11 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
                 ></path>
               </svg>
             </button>
-            <AvatarImage icon={croppedImage} alt="Cropped Avatar" size={150} />
+            <AvatarImage
+              icon={computedImageUrl}
+              alt="Cropped Avatar"
+              size={150}
+            />
           </div>
         </div>
       )}

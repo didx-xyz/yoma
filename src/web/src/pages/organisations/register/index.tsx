@@ -131,6 +131,7 @@ const OrganisationCreate: NextPageWithLayout<{
       ssoClientIdOutbound: "",
       zltoRewardPool: null,
       yomaRewardPool: null,
+      fileVersion: 0,
     });
 
   const onSubmit = useCallback(
@@ -143,10 +144,75 @@ const OrganisationCreate: NextPageWithLayout<{
 
         // update api
         const logo = model.logo;
-        model.logo = null;
-        const updatedModel = await postOrganisation(model);
 
-        // uplodad logo
+        const {
+          id,
+          name,
+          websiteURL,
+          primaryContactName,
+          primaryContactEmail,
+          primaryContactPhone,
+          vATIN,
+          taxNumber,
+          registrationNumber,
+          city,
+          countryId,
+          streetAddress,
+          province,
+          postalCode,
+          tagline,
+          biography,
+          providerTypes,
+          addCurrentUserAsAdmin,
+          admins,
+          registrationDocuments,
+          educationProviderDocuments,
+          businessDocuments,
+          businessDocumentsDelete,
+          educationProviderDocumentsDelete,
+          registrationDocumentsDelete,
+          ssoClientIdInbound,
+          ssoClientIdOutbound,
+          zltoRewardPool,
+          yomaRewardPool,
+        } = model;
+
+        const modelWithoutLogo = {
+          id,
+          name,
+          websiteURL,
+          primaryContactName,
+          primaryContactEmail,
+          primaryContactPhone,
+          vATIN,
+          taxNumber,
+          registrationNumber,
+          city,
+          countryId,
+          streetAddress,
+          province,
+          postalCode,
+          tagline,
+          biography,
+          providerTypes,
+          addCurrentUserAsAdmin,
+          admins,
+          registrationDocuments,
+          educationProviderDocuments,
+          businessDocuments,
+          businessDocumentsDelete,
+          educationProviderDocumentsDelete,
+          registrationDocumentsDelete,
+          ssoClientIdInbound,
+          ssoClientIdOutbound,
+          zltoRewardPool,
+          yomaRewardPool,
+          logo: null, // clear logo without changing model reference
+        };
+
+        const updatedModel = await postOrganisation(modelWithoutLogo);
+
+        // upload logo
         await updateOrganisationLogo(updatedModel.id, logo);
 
         console.log("Organisation registered");
@@ -250,6 +316,12 @@ const OrganisationCreate: NextPageWithLayout<{
 
               <OrgInfoEdit
                 formData={OrganizationRequestBase}
+                // onImageChange={(image) =>
+                //   setOrganizationRequestBase((prev) => ({
+                //     ...prev,
+                //     logo: image.logo as FormFile | null,
+                //   }))
+                // }
                 onCancel={handleCancel}
                 onSubmit={(data) => onSubmitStep(2, data)}
                 cancelButtonText="Cancel"
