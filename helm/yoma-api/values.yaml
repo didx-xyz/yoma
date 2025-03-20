@@ -26,7 +26,7 @@ serviceAccount:
 podAnnotations:
   ad.datadoghq.com/yoma-api.logs: '[{ "service" : "yoma-api", "source" : "csharp"}]'
   # gcr.io/datadoghq/dd-lib-dotnet-init
-  admission.datadoghq.com/dotnet-lib.version: v3.9.1
+  admission.datadoghq.com/dotnet-lib.version: v3.12.0
 deploymentLabels:
   tags.datadoghq.com/service: yoma-api
   tags.datadoghq.com/version: "{{ .Values.image.tag | default .Chart.AppVersion }}"
