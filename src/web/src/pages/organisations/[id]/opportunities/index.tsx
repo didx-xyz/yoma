@@ -753,25 +753,55 @@ const Opportunities: NextPageWithLayout<{
                       </div>
 
                       <div className="flex flex-col gap-2 text-gray-dark">
+                        {/* ZLTO Reward */}
                         <div className="flex justify-between">
                           <p className="text-sm tracking-wider">ZLTO</p>
-                          <span
-                            className={`badge min-w-20 ${
-                              (opportunity?.zltoReward ?? 0) > 0
-                                ? "bg-orange-light text-orange"
-                                : "bg-gray-light text-gray-dark"
-                            }`}
-                          >
-                            <Image
-                              src={iconZlto}
-                              alt="Zlto icon"
-                              width={16}
-                              className="h-auto"
-                            />
-                            <span className="ml-1 text-xs">
-                              {opportunity?.zltoReward ?? 0}
+                          <div className="flex flex-col gap-2">
+                            {opportunity.zltoReward == null && (
+                              <span
+                                className={`badge bg-orange-light px-4 text-orange`}
+                              >
+                                <span className="ml-1 text-xs">Disabled</span>
+                              </span>
+                            )}
+                            {opportunity.zltoReward != null && (
+                              <span
+                                className={`badge min-w-20 bg-gray-light px-4 text-gray-dark`}
+                              >
+                                <Image
+                                  src={iconZlto}
+                                  alt="Zlto icon"
+                                  width={16}
+                                  className="h-auto"
+                                />
+                                <span className="ml-1 text-xs">
+                                  {opportunity.zltoReward}
+                                </span>
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* ZLTO Reward Cumulative */}
+                        <div className="flex justify-between">
+                          <p className="text-sm tracking-wider">
+                            ZLTO Cumulative
+                          </p>
+                          <div className="flex flex-col gap-2">
+                            <span
+                              className={`badge min-w-20 bg-gray-light px-4 text-gray-dark`}
+                            >
+                              <Image
+                                src={iconZlto}
+                                alt="Zlto icon"
+                                width={16}
+                                className="h-auto"
+                              />
+                              <span className="ml-1 text-xs">
+                                {opportunity.zltoRewardCumulative ?? 0}
+                              </span>
                             </span>
-                          </span>
+                          </div>
                         </div>
 
                         <div className="flex justify-between">
@@ -886,6 +916,9 @@ const Opportunities: NextPageWithLayout<{
                       <th className="border-b-2 border-gray-light text-center">
                         ZLTO
                       </th>
+                      {/* <th className="border-b-2 border-gray-light text-center">
+                        ZLTO Cumulative
+                      </th> */}
                       <th className="border-b-2 border-gray-light text-center">
                         Views
                       </th>
@@ -970,33 +1003,44 @@ const Opportunities: NextPageWithLayout<{
                           )}
                         </td>
                         <td className="w-28 border-b-2 border-gray-light text-center">
-                          <div className="flex flex-col">
-                            {opportunity.zltoReward && (
-                              <span
-                                className={`badge ${opportunity.zltoReward > 0 ? "bg-orange-light text-orange" : "bg-gray-light text-gray-dark"} px-4`}
-                              >
-                                <Image
-                                  src={iconZlto}
-                                  alt="Zlto icon"
-                                  width={16}
-                                  className="h-auto"
-                                />
-                                <span className="ml-1 text-xs">
-                                  {opportunity.zltoReward}
-                                </span>
+                          {opportunity.zltoReward == null && (
+                            <span
+                              className={`badge bg-orange-light px-4 text-orange`}
+                            >
+                              <span className="ml-1 text-xs">Disabled</span>
+                            </span>
+                          )}
+                          {opportunity.zltoReward != null && (
+                            <span
+                              className={`badge bg-gray-light px-4 text-gray-dark`}
+                            >
+                              <Image
+                                src={iconZlto}
+                                alt="Zlto icon"
+                                width={16}
+                                className="h-auto"
+                              />
+                              <span className="ml-1 text-xs">
+                                {opportunity.zltoReward}
                               </span>
-                            )}
-                            {opportunity.yomaReward && (
-                              <span
-                                className={`badge ${opportunity.yomaReward > 0 ? "bg-orange-light text-orange" : "bg-gray-light text-gray-dark"} px-4`}
-                              >
-                                <span className="ml-1 text-xs">
-                                  {opportunity.yomaReward} Yoma
-                                </span>
-                              </span>
-                            )}
-                          </div>
+                            </span>
+                          )}
                         </td>
+                        {/* <td className="w-28 border-b-2 border-gray-light text-center">
+                          <span
+                            className={`badge bg-gray-light px-4 text-gray-dark`}
+                          >
+                            <Image
+                              src={iconZlto}
+                              alt="Zlto icon"
+                              width={16}
+                              className="h-auto"
+                            />
+                            <span className="ml-1 text-xs">
+                              {opportunity.zltoRewardCumulative ?? 0}
+                            </span>
+                          </span>
+                        </td> */}
                         <td className="border-b-2 border-gray-light text-center">
                           <span
                             className={`badge ${opportunity.countViewed > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}

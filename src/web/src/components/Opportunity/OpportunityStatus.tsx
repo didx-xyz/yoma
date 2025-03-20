@@ -15,11 +15,11 @@ const OpportunityStatus: React.FC<{ status: string }> = ({ status }) => {
         );
       case "Expired":
         return (
-          <span className="badge w-20 bg-green-light text-yellow">Expired</span>
+          <span className="badge w-20 bg-yellow-tint text-yellow">Expired</span>
         );
       case "Deleted":
         return (
-          <span className="badge w-20 bg-green-light text-red-400">
+          <span className="badge w-20 bg-yellow-tint text-red-400">
             Deleted
           </span>
         );

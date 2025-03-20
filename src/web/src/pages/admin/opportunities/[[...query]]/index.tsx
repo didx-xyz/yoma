@@ -688,8 +688,39 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                           <div className="flex justify-between">
                             <p className="text-sm tracking-wider">ZLTO</p>
                             <div className="flex flex-col gap-2">
+                              {opportunity.zltoReward == null && (
+                                <span
+                                  className={`badge bg-orange-light px-4 text-orange`}
+                                >
+                                  <span className="ml-1 text-xs">Disabled</span>
+                                </span>
+                              )}
+                              {opportunity.zltoReward != null && (
+                                <span
+                                  className={`badge min-w-20 bg-gray-light px-4 text-gray-dark`}
+                                >
+                                  <Image
+                                    src={iconZlto}
+                                    alt="Zlto icon"
+                                    width={16}
+                                    className="h-auto"
+                                  />
+                                  <span className="ml-1 text-xs">
+                                    {opportunity.zltoReward}
+                                  </span>
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* ZLTO Reward Cumulative */}
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">
+                              ZLTO Cumulative
+                            </p>
+                            <div className="flex flex-col gap-2">
                               <span
-                                className={`badge min-w-20 ${(opportunity?.zltoReward ?? 0) > 0 ? "bg-orange-light text-orange" : "bg-gray-light text-gray-dark"} px-4`}
+                                className={`badge min-w-20 bg-gray-light px-4 text-gray-dark`}
                               >
                                 <Image
                                   src={iconZlto}
@@ -698,7 +729,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                   className="h-auto"
                                 />
                                 <span className="ml-1 text-xs">
-                                  {opportunity?.zltoReward ?? 0}
+                                  {opportunity.zltoRewardCumulative ?? 0}
                                 </span>
                               </span>
                             </div>
@@ -763,6 +794,9 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                         </th>
                         <th className="border-b-2 border-gray-light text-center">
                           ZLTO
+                        </th>
+                        <th className="border-b-2 border-gray-light text-center">
+                          ZLTO Cumulative
                         </th>
                         <th className="border-b-2 border-gray-light text-center">
                           Participants
@@ -832,23 +866,43 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             )}
                           </td>
                           <td className="w-28 border-b-2 border-gray-light text-center">
-                            <div className="flex flex-col">
-                              {opportunity.zltoReward !== undefined && (
-                                <span
-                                  className={`badge ${(opportunity?.zltoReward ?? 0) > 0 ? "bg-orange-light text-orange" : "bg-gray-light text-gray-dark"} px-4`}
-                                >
-                                  <Image
-                                    src={iconZlto}
-                                    alt="Zlto icon"
-                                    width={16}
-                                    className="h-auto"
-                                  />
-                                  <span className="ml-1 text-xs">
-                                    {opportunity.zltoReward}
-                                  </span>
+                            {opportunity.zltoReward == null && (
+                              <span
+                                className={`badge bg-orange-light px-4 text-orange`}
+                              >
+                                <span className="ml-1 text-xs">Disabled</span>
+                              </span>
+                            )}
+                            {opportunity.zltoReward != null && (
+                              <span
+                                className={`badge bg-gray-light px-4 text-gray-dark`}
+                              >
+                                <Image
+                                  src={iconZlto}
+                                  alt="Zlto icon"
+                                  width={16}
+                                  className="h-auto"
+                                />
+                                <span className="ml-1 text-xs">
+                                  {opportunity.zltoReward}
                                 </span>
-                              )}
-                            </div>
+                              </span>
+                            )}
+                          </td>
+                          <td className="w-28 border-b-2 border-gray-light text-center">
+                            <span
+                              className={`badge bg-gray-light px-4 text-gray-dark`}
+                            >
+                              <Image
+                                src={iconZlto}
+                                alt="Zlto icon"
+                                width={16}
+                                className="h-auto"
+                              />
+                              <span className="ml-1 text-xs">
+                                {opportunity.zltoRewardCumulative ?? 0}
+                              </span>
+                            </span>
                           </td>
                           <td className="border-b-2 border-gray-light text-center">
                             <span
