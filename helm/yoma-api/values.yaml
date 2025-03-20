@@ -147,8 +147,13 @@ nodeAffinityPreset:
   values:
     - spot
 
-volumeMounts: {}
-volumes: {}
+volumeMounts:
+  - name: data
+    mountPath: /data
+volumes:
+  - name: data
+    emptyDir:
+      sizeLimit: 10Gi
 persistence: {}
 
 initContainers: []

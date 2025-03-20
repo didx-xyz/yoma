@@ -24,11 +24,16 @@ service:
   port: 5000
 
 volumes:
+  - name: data
+    emptyDir:
+      sizeLimit: 10Gi
   - name: app-settings
     secret:
       secretName: yoma-api
 
 volumeMounts:
+  - name: data
+    mountPath: /data
   - name: app-settings
     mountPath: /api/appsettings.Local.json
     subPath: appsettings.Local.json
