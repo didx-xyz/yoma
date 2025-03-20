@@ -46,17 +46,12 @@ env:
   DD_PROFILING_ALLOCATION_ENABLED: true
 
 podSecurityContext:
-  {}
-  # fsGroup: 2000
+  fsGroup: 1000
 
 securityContext:
-  {}
-  # capabilities:
-  #   drop:
-  #   - ALL
-  # readOnlyRootFilesystem: true
-  # runAsNonRoot: true
-  # runAsUser: 1000
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
 
 service:
   type: ClusterIP
