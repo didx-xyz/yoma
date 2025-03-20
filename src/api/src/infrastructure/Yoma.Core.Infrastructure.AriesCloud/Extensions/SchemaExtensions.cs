@@ -55,7 +55,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
     }
 
 
-    public static Domain.SSI.Models.Provider.Credential ToCredential(this IndyCredInfo o)
+    public static Domain.SSI.Models.Provider.Credential ToCredential(this CredInfo o)
     {
       return new Domain.SSI.Models.Provider.Credential
       {

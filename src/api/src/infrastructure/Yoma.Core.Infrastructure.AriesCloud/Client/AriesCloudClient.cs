@@ -140,7 +140,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       if (resultLocal != null) return resultLocal.ToCredential();
 
       var client = _clientFactory.CreateTenantClient(tenantId);
-      IndyCredInfo? resultAries = null;
+      CredInfo? resultAries = null;
       try
       {
         resultAries = await client.GetIndyCredentialByIdAsync(id);

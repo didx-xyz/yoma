@@ -35,13 +35,13 @@
     <PackageReference Include="Flurl.Http.Newtonsoft" Version="0.9.1" />
     <PackageReference Include="Hangfire.Core" Version="1.8.18" />
     <PackageReference Include="MediatR" Version="12.4.1" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.2" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.3" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.3" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NSwag.Annotations" Version="14.2.0" />
     <PackageReference Include="QRCoder" Version="1.6.0" />
-    <PackageReference Include="Sentry.AspNetCore" Version="5.2.0" />
-    <PackageReference Include="StackExchange.Redis" Version="2.8.24" />
+    <PackageReference Include="Sentry.AspNetCore" Version="5.4.0" />
+    <PackageReference Include="StackExchange.Redis" Version="2.8.31" />
   </ItemGroup>
 
 </Project>
