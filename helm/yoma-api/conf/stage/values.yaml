@@ -40,11 +40,16 @@ appSettings:
   fileName: appsettings.Staging.json
 
 volumes:
+  - name: data
+    emptyDir:
+      sizeLimit: 10Gi
   - name: app-settings
     secret:
       secretName: yoma-api
 
 volumeMounts:
+  - name: data
+    mountPath: /data
   - name: app-settings
     mountPath: /api/appsettings.Staging.json
     subPath: appsettings.Staging.json

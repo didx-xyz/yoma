@@ -40,11 +40,16 @@ appSettings:
   fileName: appsettings.Production.json
 
 volumes:
+  - name: data
+    emptyDir:
+      sizeLimit: 10Gi
   - name: app-settings
     secret:
       secretName: yoma-api
 
 volumeMounts:
+  - name: data
+    mountPath: /data
   - name: app-settings
     mountPath: /api/appsettings.Production.json
     subPath: appsettings.Production.json
@@ -54,11 +59,11 @@ postInstallHook:
 
 resources:
   requests:
-    cpu: 100m
-    memory: 1024Mi
+    cpu: 250m
+    memory: 1Gi
   limits:
-    cpu: 2000m
-    memory: 1024Mi
+    cpu: 2500m
+    memory: 1.5Gi
 
 autoscaling:
   enabled: true
