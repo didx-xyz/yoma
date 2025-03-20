@@ -361,20 +361,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return files;
     }
 
-    private async Task<IFormFile> DownloadFileAsync(Guid fileId, string userDisplayName, bool userExplictlySpecified)
-    {
-      var (originalFileName, contentType, data) = await _blobService.DownloadRaw(fileId);
-
-      if (!userExplictlySpecified)
-      {
-        var displayNameCleaned = userDisplayName.RemoveSpecialCharacters();
-        displayNameCleaned = displayNameCleaned.Replace(' ', '_');
-        originalFileName = $"{displayNameCleaned}{FileHelper.Zip_FileName_Path_Separator}{originalFileName}";
-      }
-
-      return FileHelper.FromByteArray(originalFileName, contentType, data);
-    }
-
     public MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId)
     {
       var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
@@ -1126,6 +1112,20 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #endregion
 
     #region Private Members
+    private async Task<IFormFile> DownloadFileAsync(Guid fileId, string userDisplayName, bool userExplictlySpecified)
+    {
+      var (originalFileName, contentType, data) = await _blobService.DownloadRaw(fileId);
+
+      if (!userExplictlySpecified)
+      {
+        var displayNameCleaned = userDisplayName.RemoveSpecialCharacters();
+        displayNameCleaned = displayNameCleaned.Replace(' ', '_');
+        originalFileName = $"{displayNameCleaned}{FileHelper.Zip_FileName_Path_Separator}{originalFileName}";
+      }
+
+      return FileHelper.FromByteArray(originalFileName, contentType, data);
+    }
+
     private static void ValidateDownloadVerificationTypes(MyOpportunitySearchFilterVerificationFiles filter)
     {
       if (filter.VerificationTypes == null || filter.VerificationTypes.Count == 0) return;
