@@ -39,6 +39,8 @@ appSettings:
   fileName: appsettings.Development.json
 
 volumes:
+  - name: tmp
+    emptyDir: {}
   - name: data
     emptyDir:
       sizeLimit: 10Gi
@@ -47,6 +49,8 @@ volumes:
       secretName: yoma-api
 
 volumeMounts:
+  - name: tmp
+    mountPath: /tmp
   - name: data
     mountPath: /data
   - name: app-settings
