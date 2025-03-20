@@ -472,7 +472,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       {
         AccessToken = response.AccessToken,
         PartnerId = response.AccountInfo.PartnerId,
-        PartnerName = response.AccountInfo.PartnerName.ToLower(),
+        PartnerName = "Admin Yoma", // Hardcoded to 'Admin Yoma' due to inconsistencies in response.AccountInfo.PartnerName.ToLower()
+                                    // !! This will break when partner account segregation is enforced !!
         DateExpire = DateTimeOffset.UtcNow.AddHours(_options.PartnerTokenExpirationIntervalInHours)
       };
 

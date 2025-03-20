@@ -23,6 +23,8 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly SendGridOptions _options;
     private readonly ISendGridClient _sendGridClient;
+
+    private const int Limit_Personalization = 1000;
     #endregion
 
     #region Constructor
@@ -76,28 +78,36 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
             : $" ({_environmentProvider.Environment.ToDescription()})";
       }
 
-      var msg = new SendGridMessage
+      //generate personalizations
+      var personalizations = ProcessRecipients(recipientDataGroups);
+
+      //process in chunks of 1000 personalizations each
+      var batches = personalizations.Chunk(Limit_Personalization).ToList();
+
+      foreach (var batch in batches)
       {
-        TemplateId = _options.Templates[type.ToString()],
-        From = new EmailAddress(_options.From.Email, _options.From.Name),
-        Personalizations = ProcessRecipients(recipientDataGroups)
-      };
+        var msg = new SendGridMessage
+        {
+          TemplateId = _options.Templates[type.ToString()],
+          From = new EmailAddress(_options.From.Email, _options.From.Name),
+          Personalizations = [.. batch]
+        };
 
-      if (_options.ReplyTo != null) msg.ReplyTo = new EmailAddress(_options.ReplyTo.Email, _options.ReplyTo.Name);
+        if (_options.ReplyTo != null) msg.ReplyTo = new EmailAddress(_options.ReplyTo.Email, _options.ReplyTo.Name);
 
-      var response = await _sendGridClient.SendEmailAsync(msg);
-      if (response.IsSuccessStatusCode) return;
+        var response = await _sendGridClient.SendEmailAsync(msg);
+        if (response.IsSuccessStatusCode) continue;
 
-      var responseBody = await response.Body.ReadAsStringAsync();
-      var errorResponse = JsonConvert.DeserializeObject<Models.SendGridErrorResponse>(responseBody)
-          ?? throw new HttpClientException(response.StatusCode, "Failed to send email: Reason unknown");
+        var responseBody = await response.Body.ReadAsStringAsync();
+        var errorResponse = JsonConvert.DeserializeObject<Models.SendGridErrorResponse>(responseBody)
+            ?? throw new HttpClientException(response.StatusCode, "Failed to send email: Reason unknown");
 
-      var errorMessages = errorResponse.Errors != null && errorResponse.Errors.Count != 0
-        ? string.Join(" | ", errorResponse.Errors.Select(e => e.Message?.Trim()).Where(e => !string.IsNullOrEmpty(e)))
-        : "No error details provided";
+        var errorMessages = errorResponse.Errors != null && errorResponse.Errors.Count != 0
+          ? string.Join(" | ", errorResponse.Errors.Select(e => e.Message?.Trim()).Where(e => !string.IsNullOrEmpty(e)))
+          : "No error details provided";
 
-      throw new HttpClientException(response.StatusCode, errorMessages);
-
+        throw new HttpClientException(response.StatusCode, errorMessages);
+      }
     }
     #endregion
 
