@@ -295,6 +295,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         throw new EntityNotFoundException($"Verification not actioned for opportunity with id '{filter.Opportunity}'");
 
       var files = new List<IFormFile>();
+      var downloadTasks = new List<Task<IFormFile>>();
       foreach (var myOpportunity in myOpporunities)
       {
         if (myOpportunity.Verifications == null || myOpportunity.Verifications.Count == 0)
@@ -328,16 +329,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
               if (!item.FileId.HasValue)
                 throw new InvalidOperationException("File id expected");
 
-              var (originalFileName, contentType, data) = await _blobService.DownloadRaw(item.FileId.Value);
-
-              if (!userId.HasValue)
-              {
-                var displayNameCleaned = myOpportunity.UserDisplayName.RemoveSpecialCharacters();
-                displayNameCleaned = displayNameCleaned.Replace(' ', '_');
-                originalFileName = $"{displayNameCleaned}{FileHelper.Zip_FileName_Path_Separator}{originalFileName}";
-              }
-
-              files.Add(FileHelper.FromByteArray(originalFileName, contentType, data));
+              //add task to download in parallel
+              downloadTasks.Add(DownloadFileAsync(item.FileId.Value, myOpportunity.UserDisplayName, userId.HasValue));
               break;
 
             case VerificationType.Location:
@@ -348,6 +341,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           }
         }
       }
+
+      //execute all downloads in parallel
+      var downloadedFiles = await Task.WhenAll(downloadTasks);
+
+      //add downloaded files to the result list
+      files.AddRange(downloadedFiles);
 
       //safety check: If throwEntityNotFoundException == true, this should never happen.
       //if throwEntityNotFoundException == false, return null to indicate no files were found.
@@ -360,6 +359,20 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
 
       return files;
+    }
+
+    private async Task<IFormFile> DownloadFileAsync(Guid fileId, string userDisplayName, bool userExplictlySpecified)
+    {
+      var (originalFileName, contentType, data) = await _blobService.DownloadRaw(fileId);
+
+      if (!userExplictlySpecified)
+      {
+        var displayNameCleaned = userDisplayName.RemoveSpecialCharacters();
+        displayNameCleaned = displayNameCleaned.Replace(' ', '_');
+        originalFileName = $"{displayNameCleaned}{FileHelper.Zip_FileName_Path_Separator}{originalFileName}";
+      }
+
+      return FileHelper.FromByteArray(originalFileName, contentType, data);
     }
 
     public MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId)
