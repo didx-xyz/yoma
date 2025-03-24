@@ -151,7 +151,7 @@ namespace Yoma.Core.Api.Controllers
     [Produces("application/zip")]
     [ProducesResponseType((int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> DownloadVerificationFilesAdmin([FromBody] MyOpportunitySearchFilterVerificationFiles filter)
+    public async Task<IActionResult> DownloadVerificationFilesAdmin([FromBody] MyOpportunitySearchFilterVerificationFilesAdmin filter)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(DownloadVerificationFiles));
 

@@ -7,5 +7,5 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public Guid Opportunity { get; set; }
 
     public List<VerificationType>? VerificationTypes { get; set; }
-  }
+   }
 }

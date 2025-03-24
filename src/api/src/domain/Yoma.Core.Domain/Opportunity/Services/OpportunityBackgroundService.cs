@@ -1,5 +1,3 @@
-using Hangfire;
-using Hangfire.Storage;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -76,41 +74,29 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessPublishedNotifications), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
-        {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
 
-          _logger.LogInformation("Processing opportunity published notifications");
+        _logger.LogInformation("Processing opportunity published notifications");
 
-          var datetimeFrom = new DateTimeOffset(DateTime.Today).AddDays(-_scheduleJobOptions.OpportunityPublishedNotificationIntervalInDays).RemoveTime();
-          var datetimeTo = datetimeFrom.ToEndOfDay();
+        var datetimeFrom = new DateTimeOffset(DateTime.Today).AddDays(-_scheduleJobOptions.OpportunityPublishedNotificationIntervalInDays).RemoveTime();
+        var datetimeTo = datetimeFrom.ToEndOfDay();
 
-          var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
-          var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
+        var statusActiveId = _opportunityStatusService.GetByName(Status.Active.ToString()).Id;
+        var organizationStatusActiveId = _organizationStatusService.GetByName(OrganizationStatus.Active.ToString()).Id;
 
-          var items = _opportunityRepository.Query(true).Where(o => o.OrganizationStatusId == organizationStatusActiveId //include children / countries
-             && o.StatusId == statusActiveId && (!o.Hidden.HasValue || o.Hidden == false) && o.DateStart >= datetimeFrom && o.DateStart <= datetimeTo)
-            .OrderBy(o => o.DateStart).ThenBy(o => o.Title).ThenBy(o => o.Id).ToList();
-          if (items.Count == 0) return;
+        var items = _opportunityRepository.Query(true).Where(o => o.OrganizationStatusId == organizationStatusActiveId //include children / countries
+           && o.StatusId == statusActiveId && (!o.Hidden.HasValue || o.Hidden == false) && o.DateStart >= datetimeFrom && o.DateStart <= datetimeTo)
+          .OrderBy(o => o.DateStart).ThenBy(o => o.Title).ThenBy(o => o.Id).ToList();
+        if (items.Count == 0) return;
 
-          await SendNotificationPublished(items, executeUntil);
+        await SendNotificationPublished(items, executeUntil);
 
-          _logger.LogInformation("Processed opportunity published notifications");
-        }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessPublishedNotifications), ex.Message);
+        _logger.LogInformation("Processed opportunity published notifications");
       }
       catch (Exception ex)
       {
@@ -118,7 +104,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -128,57 +114,45 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessExpiration), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        _logger.LogInformation("Processing opportunity expiration");
+
+        var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
+        var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+
+        while (executeUntil > DateTimeOffset.UtcNow)
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+          var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
+              o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
+          if (items.Count == 0) break;
 
-          _logger.LogInformation("Processing opportunity expiration");
+          var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
-          var statusExpiredId = _opportunityStatusService.GetByName(Status.Expired.ToString()).Id;
-          var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
-
-          while (executeUntil > DateTimeOffset.UtcNow)
+          foreach (var item in items)
           {
-            var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-                o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
-            if (items.Count == 0) break;
-
-            var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
-
-            foreach (var item in items)
-            {
-              item.StatusId = statusExpiredId;
-              item.Status = Status.Expired;
-              item.ModifiedByUserId = user.Id;
-              _logger.LogInformation("Opportunity with id '{id}' flagged for expiration", item.Id);
-            }
-
-            items = await _opportunityRepository.Update(items);
-
-            await SendNotificationExpiration(items, NotificationType.Opportunity_Expiration_Expired);
-
-            foreach (var item in items)
-              await _mediator.Publish(new OpportunityEvent(Core.EventType.Update, item));
-
-            if (executeUntil <= DateTimeOffset.UtcNow) break;
+            item.StatusId = statusExpiredId;
+            item.Status = Status.Expired;
+            item.ModifiedByUserId = user.Id;
+            _logger.LogInformation("Opportunity with id '{id}' flagged for expiration", item.Id);
           }
 
-          _logger.LogInformation("Processed opportunity expiration");
+          items = await _opportunityRepository.Update(items);
+
+          await SendNotificationExpiration(items, NotificationType.Opportunity_Expiration_Expired);
+
+          foreach (var item in items)
+            await _mediator.Publish(new OpportunityEvent(Core.EventType.Update, item));
+
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
+
+        _logger.LogInformation("Processed opportunity expiration");
       }
       catch (Exception ex)
       {
@@ -186,7 +160,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -194,39 +168,27 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       const string lockIdentifier = "opportunity_process_expiration_notifications";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessExpirationNotifications), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
-        {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
 
-          _logger.LogInformation("Processing opportunity expiration notifications");
+        _logger.LogInformation("Processing opportunity expiration notifications");
 
-          var datetimeFrom = new DateTimeOffset(DateTime.Today).ToUniversalTime();
-          var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
-          var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+        var datetimeFrom = new DateTimeOffset(DateTime.Today).ToUniversalTime();
+        var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.OpportunityExpirationNotificationIntervalInDays);
+        var statusExpirableIds = Statuses_Expirable.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
 
-          var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-              o.DateEnd.HasValue && o.DateEnd.Value >= datetimeFrom && o.DateEnd.Value <= datetimeTo)
-              .OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
-          if (items.Count == 0) return;
+        var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
+            o.DateEnd.HasValue && o.DateEnd.Value >= datetimeFrom && o.DateEnd.Value <= datetimeTo)
+            .OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
+        if (items.Count == 0) return;
 
-          await SendNotificationExpiration(items, NotificationType.Opportunity_Expiration_WithinNextDays);
+        await SendNotificationExpiration(items, NotificationType.Opportunity_Expiration_WithinNextDays);
 
-          _logger.LogInformation("Processed opportunity expiration notifications");
-        }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessExpirationNotifications), ex.Message);
+        _logger.LogInformation("Processed opportunity expiration notifications");
       }
       catch (Exception ex)
       {
@@ -234,7 +196,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -244,56 +206,44 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessDeletion), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        _logger.LogInformation("Processing opportunity deletion");
+
+        var statusDeletionIds = Statuses_Deletion.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
+        var statusDeletedId = _opportunityStatusService.GetByName(Status.Deleted.ToString()).Id;
+
+        while (executeUntil > DateTimeOffset.UtcNow)
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+          var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
+              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
+              .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
+          if (items.Count == 0) break;
 
-          _logger.LogInformation("Processing opportunity deletion");
+          var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
-          var statusDeletionIds = Statuses_Deletion.Select(o => _opportunityStatusService.GetByName(o.ToString()).Id).ToList();
-          var statusDeletedId = _opportunityStatusService.GetByName(Status.Deleted.ToString()).Id;
-
-          while (executeUntil > DateTimeOffset.UtcNow)
+          foreach (var item in items)
           {
-            var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-                o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
-                .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
-            if (items.Count == 0) break;
-
-            var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
-
-            foreach (var item in items)
-            {
-              item.StatusId = statusDeletedId;
-              item.Status = Status.Deleted;
-              item.ModifiedByUserId = user.Id;
-              _logger.LogInformation("Opportunity with id '{id}' flagged for deletion", item.Id);
-            }
-
-            await _opportunityRepository.Update(items);
-
-            foreach (var item in items)
-              await _mediator.Publish(new OpportunityEvent(Core.EventType.Delete, item));
-
-            if (executeUntil <= DateTimeOffset.UtcNow) break;
+            item.StatusId = statusDeletedId;
+            item.Status = Status.Deleted;
+            item.ModifiedByUserId = user.Id;
+            _logger.LogInformation("Opportunity with id '{id}' flagged for deletion", item.Id);
           }
 
-          _logger.LogInformation("Processed opportunity deletion");
+          await _opportunityRepository.Update(items);
+
+          foreach (var item in items)
+            await _mediator.Publish(new OpportunityEvent(Core.EventType.Delete, item));
+
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
+
+        _logger.LogInformation("Processed opportunity deletion");
       }
       catch (Exception ex)
       {
@@ -301,7 +251,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

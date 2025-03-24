@@ -4,13 +4,13 @@ using Yoma.Core.Domain.MyOpportunity.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Validators
 {
-  public class MyOpportunitySearchFilterValidator : PaginationFilterValidator<MyOpportunitySearchFilterAdmin>
+  public class MyOpportunitySearchFilterAdminValidator : PaginationFilterValidator<MyOpportunitySearchFilterAdmin>
   {
     #region Class Variables
     #endregion
 
     #region Constructor
-    public MyOpportunitySearchFilterValidator()
+    public MyOpportunitySearchFilterAdminValidator()
     {
       RuleFor(x => x.PaginationEnabled).Equal(true).When(x => !x.TotalCountOnly && !x.UnrestrictedQuery).WithMessage("Pagination required");
       RuleFor(x => x.UserId).Must(guid => guid == null || guid != Guid.Empty).WithMessage("{PropertyName} contains an empty value.");

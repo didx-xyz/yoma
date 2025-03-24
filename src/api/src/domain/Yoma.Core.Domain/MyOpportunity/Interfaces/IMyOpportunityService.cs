@@ -13,11 +13,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     MyOpportunityResponseVerifyCompletedExternal GetVerificationCompletedExternal(Guid opportunityId);
 
-    Task DownloadVerificationFilesSchedule(MyOpportunitySearchFilterVerificationFiles filter, bool ensureOrganizationAuthorization);
+    Task DownloadVerificationFilesSchedule(MyOpportunitySearchFilterVerificationFilesAdmin filter, bool ensureOrganizationAuthorization);
 
     Task<IFormFile> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter);
 
-    Task<List<IFormFile>?> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter, Guid? userId);
+    Task<MyOpportunitySearchResultsVerificationFilesAdmin> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFilesAdmin filter, bool ensureOrganizationAuthorization);
 
     List<MyOpportunitySearchCriteriaOpportunity> ListMyOpportunityVerificationSearchCriteriaOpportunity(List<Guid>? organizations, List<VerificationStatus>? verificationStatuses, bool ensureOrganizationAuthorization);
 

@@ -1,4 +1,3 @@
-using Hangfire;
 using Hangfire.Storage;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -70,151 +69,155 @@ namespace Yoma.Core.Domain.Core.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DownloadScheduleProcessingMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessSchedule), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        _logger.LogInformation("Processing download schedule");
+
+        var itemIdsToSkip = new List<Guid>();
+        while (executeUntil > DateTimeOffset.UtcNow)
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, System.Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+          var items = _downloadService.ListPendingSchedule(_scheduleJobOptions.DownloadScheduleProcessingBatchSize, itemIdsToSkip);
+          if (items.Count == 0) break;
 
-          _logger.LogInformation("Processing download schedule");
-
-          var itemIdsToSkip = new List<Guid>();
-          while (executeUntil > DateTimeOffset.UtcNow)
+          foreach (var item in items)
           {
-            var items = _downloadService.ListPendingSchedule(_scheduleJobOptions.DownloadScheduleProcessingBatchSize, itemIdsToSkip);
-            if (items.Count == 0) break;
-
-            foreach (var item in items)
+            try
             {
+              _logger.LogInformation("Processing download schedule for item with id '{id}'", item.Id);
+
+              var type = Enum.Parse<DownloadScheduleType>(item.Type, true);
+
+              //generate download files
+              var files = new List<IFormFile>();
+
+              var zipFileNameSuffix = string.Empty;
+              var notificationMessage = string.Empty;
+              string fileName;
+              byte[] bytes;
+              switch (type)
+              {
+                case DownloadScheduleType.Opporunities:
+                  var filterOpporunities = JsonConvert.DeserializeObject<OpportunitySearchFilterAdmin>(item.Filter)
+                    ?? throw new InvalidOperationException("Failed to deserialize the filter");
+
+                  filterOpporunities.UnrestrictedQuery = true;
+
+                  (fileName, bytes) = _opportunityInfoService.ExportToCSV(filterOpporunities, false, true);
+
+                  files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes));
+
+                  notificationMessage = "Opportunities CSV Export";
+                  break;
+
+                case DownloadScheduleType.MyOpportunityVerifications:
+                  var filterMyOpportunityVerifications = JsonConvert.DeserializeObject<MyOpportunitySearchFilterAdmin>(item.Filter)
+                    ?? throw new InvalidOperationException("Failed to deserialize the filter");
+
+                  filterMyOpportunityVerifications.UnrestrictedQuery = true;
+
+                  (fileName, bytes) = _myOpportunityService.ExportToCSV(filterMyOpportunityVerifications, false, true);
+
+                  files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes));
+
+                  notificationMessage = "Opportunity Verifications CSV Export";
+                  break;
+
+                case DownloadScheduleType.MyOpportunityVerificationFiles:
+                  var filterMyOpportunityVerificationFiles = JsonConvert.DeserializeObject<MyOpportunitySearchFilterVerificationFilesAdmin>(item.Filter)
+                    ?? throw new InvalidOperationException("Failed to deserialize the filter");
+
+                  //completed verifications only
+                  filterMyOpportunityVerificationFiles.CompletedVerificationsOnly = true;
+
+                  var result = await _myOpportunityService.DownloadVerificationFiles(filterMyOpportunityVerificationFiles, false);
+                  if (result.Files != null && result.Files.Count > 0) files.AddRange(result.Files);
+
+                  notificationMessage = $"Opportunity Verfication (Completion) Uploads Export: {result.OpportunityTitle}";
+
+                  if (filterMyOpportunityVerificationFiles.PageNumber.HasValue) zipFileNameSuffix = $"_Batch_{filterMyOpportunityVerificationFiles.PageNumber.Value}";
+                  break;
+
+                default:
+                  throw new NotImplementedException($"Download schedule type of '{item.Type}' not supported");
+              }
+
+              BlobObject? blobObject = null;
               try
               {
-                _logger.LogInformation("Processing download schedule for item with id '{id}'", item.Id);
-
-                var type = Enum.Parse<DownloadScheduleType>(item.Type, true);
-
-                //generate download files
-                var files = new List<IFormFile>();
-
-                object filter;
-                string fileName;
-                byte[] bytes;
-                switch (type)
+                if (files.Count > 0)
                 {
-                  case DownloadScheduleType.Opporunities:
-                    filter = JsonConvert.DeserializeObject<OpportunitySearchFilterAdmin>(item.Filter)
-                      ?? throw new InvalidOperationException("Failed to deserialize the filter");
+                  //zip files and upload to blob storage; TransactionScope not used as the upload can take long, causing an aborted scope or connection
+                  //if schedule update fails, the blob object and db entries are deleted
+                  var downloadZipped = FileHelper.Zip(files, $"Download{zipFileNameSuffix}.zip");
+                  blobObject = await _blobService.Create(downloadZipped, FileType.ZipArchive, BlobProvider.StorageType.Private);
 
-                    ((OpportunitySearchFilterAdmin)filter).UnrestrictedQuery = true;
-
-                    (fileName, bytes) = _opportunityInfoService.ExportToCSV((OpportunitySearchFilterAdmin)filter, false, true);
-
-                    files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes));
-                    break;
-
-                  case DownloadScheduleType.MyOpportunityVerifications:
-                    filter = JsonConvert.DeserializeObject<MyOpportunitySearchFilterAdmin>(item.Filter)
-                      ?? throw new InvalidOperationException("Failed to deserialize the filter");
-
-                    ((MyOpportunitySearchFilterAdmin)filter).UnrestrictedQuery = true;
-
-                    (fileName, bytes) = _myOpportunityService.ExportToCSV((MyOpportunitySearchFilterAdmin)filter, false, true);
-
-                    files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes));
-                    break;
-
-                  case DownloadScheduleType.MyOpportunityVerificationFiles:
-                    filter = JsonConvert.DeserializeObject<MyOpportunitySearchFilterVerificationFiles>(item.Filter)
-                      ?? throw new InvalidOperationException("Failed to deserialize the filter");
-
-                    var myFiles = await _myOpportunityService.DownloadVerificationFiles((MyOpportunitySearchFilterVerificationFiles)filter, null);
-                    if (myFiles != null) files.AddRange(myFiles);
-                    break;
-
-                  default:
-                    throw new NotImplementedException($"Download schedule type of '{item.Type}' not supported");
+                  //update schedule
+                  item.FileId = blobObject.Id;
+                  item.FileStorageType = blobObject.StorageType;
+                  item.FileKey = blobObject.Key;
                 }
 
-                BlobObject? blobObject = null;
-                try
-                {
-                  if (files.Count > 0)
-                  {
-                    //zip files and upload to blob storage; TransactionScope not used as the upload can take long, causing an aborted scope or connection
-                    //if schedule update fails, the blob object and db entries are deleted
-                    var downloadZipped = FileHelper.Zip(files, $"Download.zip");
-                    blobObject = await _blobService.Create(downloadZipped, FileType.ZipArchive, BlobProvider.StorageType.Private);
+                item.Status = DownloadScheduleStatus.Processed;
+                await _downloadService.UpdateSchedule(item);
+              }
+              catch //roll-back
+              {
+                if (blobObject != null)
+                  await _blobService.Delete(blobObject.Id);
 
-                    //update schedule
-                    item.FileId = blobObject.Id;
-                    item.FileStorageType = blobObject.StorageType;
-                    item.FileKey = blobObject.Key;
-                  }
+                throw;
+              }
 
-                  item.Status = DownloadScheduleStatus.Processed;
-                  await _downloadService.UpdateSchedule(item);
-                }
-                catch //roll-back
-                {
-                  if (blobObject != null)
-                    await _blobService.Delete(blobObject.Id);
+              //send notification
+              try
+              {
+                var user = _userService.GetById(item.UserId, false, false);
 
-                  throw;
-                }
-
-                //send notification
-                try
-                {
-                  var user = _userService.GetById(item.UserId, false, false);
-
-                  var recipients = new List<NotificationRecipient>
+                var recipients = new List<NotificationRecipient>
                   {
                     new() { Username = user.Username, PhoneNumber = user.PhoneNumber, Email = user.Email, DisplayName = user.DisplayName }
                   };
 
-                  var data = new NotificationDownload
-                  {
-                    DateStamp = DateTimeOffset.UtcNow,
-                    FileName = blobObject?.OriginalFileName,
-                    FileURL = blobObject == null ? null : _blobService.GetURL(blobObject.StorageType, blobObject.Key, blobObject.OriginalFileName, _appSettings.DownloadScheduleLinkExpirationHours * 60),
-                    ExpirationHours = _appSettings.DownloadScheduleLinkExpirationHours
-                  };
-
-                  await _notificationDeliveryService.Send(NotificationType.Download, recipients, data);
-
-                  _logger.LogInformation("Successfully sent notification");
-                }
-                catch (Exception ex)
+                var data = new NotificationDownload
                 {
-                  _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
-                }
+                  DateStamp = DateTimeOffset.UtcNow,
+                  FileName = blobObject?.OriginalFileName,
+                  FileURL = blobObject == null ? null : _blobService.GetURL(blobObject.StorageType, blobObject.Key, blobObject.OriginalFileName, _appSettings.DownloadScheduleLinkExpirationHours * 60),
+                  ExpirationHours = _appSettings.DownloadScheduleLinkExpirationHours
+                };
 
-                _logger.LogInformation("Processed download schedule for item with id '{id}'", item.Id);
+                await _notificationDeliveryService.Send(NotificationType.Download, recipients, data);
+
+                _logger.LogInformation("Successfully sent notification");
               }
               catch (Exception ex)
               {
-                _logger.LogError(ex, "Failed to process download schedule for item with id '{id}': {errorMessage}", item.Id, ex.Message);
-
-                item.Status = DownloadScheduleStatus.Error;
-                item.ErrorReason = ex.Message;
-                await _downloadService.UpdateSchedule(item);
-
-                itemIdsToSkip.Add(item.Id);
+                _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
               }
 
-              if (executeUntil <= DateTimeOffset.UtcNow) break;
+              _logger.LogInformation("Processed download schedule for item with id '{id}'", item.Id);
             }
-          }
+            catch (Exception ex)
+            {
+              _logger.LogError(ex, "Failed to process download schedule for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
-          _logger.LogInformation("Processed download schedule");
+              item.Status = DownloadScheduleStatus.Error;
+              item.ErrorReason = ex.Message;
+              await _downloadService.UpdateSchedule(item);
+
+              itemIdsToSkip.Add(item.Id);
+            }
+
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
+          }
         }
+
+        _logger.LogInformation("Processed download schedule");
       }
       catch (DistributedLockTimeoutException ex)
       {
@@ -226,7 +229,7 @@ namespace Yoma.Core.Domain.Core.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -236,76 +239,64 @@ namespace Yoma.Core.Domain.Core.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessDeletion), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        _logger.LogInformation("Processing download schedule deletion");
+
+        var itemIdsToSkip = new List<Guid>();
+        while (executeUntil > DateTimeOffset.UtcNow)
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, System.Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+          var items = _downloadService.ListPendingDeletion(_scheduleJobOptions.DownloadScheduleDeletionBatchSize, itemIdsToSkip);
+          if (items.Count == 0) break;
 
-          _logger.LogInformation("Processing download schedule deletion");
-
-          var itemIdsToSkip = new List<Guid>();
-          while (executeUntil > DateTimeOffset.UtcNow)
+          foreach (var item in items)
           {
-            var items = _downloadService.ListPendingDeletion(_scheduleJobOptions.DownloadScheduleDeletionBatchSize, itemIdsToSkip);
-            if (items.Count == 0) break;
-
-            foreach (var item in items)
+            try
             {
-              try
+              _logger.LogInformation("Processing download schedule deletion for item with id '{id}'", item.Id);
+
+              if (!item.FileId.HasValue)
+                throw new InvalidOperationException("File id is null");
+
+              // since this is a background process, S3 deletion is safe to retry because AWS S3 deletion is idempotent  
+              // and does not fail if the object is missing. Any DB rollback will be corrected in the next scheduled run,  
+              // ensuring data consistency.
+              await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
               {
-                _logger.LogInformation("Processing donwload schedule deletion for item with id '{id}'", item.Id);
+                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-                if (!item.FileId.HasValue)
-                  throw new InvalidOperationException("File id is null");
+                var fileId = item.FileId.Value;
 
-                // since this is a background process, S3 deletion is safe to retry because AWS S3 deletion is idempotent  
-                // and does not fail if the object is missing. Any DB rollback will be corrected in the next scheduled run,  
-                // ensuring data consistency.
-                await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
-                {
-                  using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-
-                  var fileId = item.FileId.Value;
-
-                  item.Status = DownloadScheduleStatus.Deleted;
-                  await _downloadService.UpdateSchedule(item);
-                  await _blobService.Delete(fileId);
-
-                  scope.Complete();
-                });
-
-                _logger.LogInformation("Processed download schedule deletion for item with id '{id}'", item.Id);
-              }
-              catch (Exception ex)
-              {
-                _logger.LogError(ex, "Failed to process donwload schedule deletion for item with id '{id}': {errorMessage}", item.Id, ex.Message);
-
-                item.Status = DownloadScheduleStatus.Error;
-                item.ErrorReason = ex.Message;
+                item.Status = DownloadScheduleStatus.Deleted;
                 await _downloadService.UpdateSchedule(item);
+                await _blobService.Delete(fileId);
 
-                itemIdsToSkip.Add(item.Id);
-              }
+                scope.Complete();
+              });
 
-              if (executeUntil <= DateTimeOffset.UtcNow) break;
+              _logger.LogInformation("Processed download schedule deletion for item with id '{id}'", item.Id);
             }
-          }
+            catch (Exception ex)
+            {
+              _logger.LogError(ex, "Failed to process download schedule deletion for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
-          _logger.LogInformation("Processed download schedule deletion");
+              item.Status = DownloadScheduleStatus.Error;
+              item.ErrorReason = ex.Message;
+              await _downloadService.UpdateSchedule(item);
+
+              itemIdsToSkip.Add(item.Id);
+            }
+
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
+          }
         }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
+
+        _logger.LogInformation("Processed download schedule deletion");
       }
       catch (Exception ex)
       {
@@ -313,7 +304,7 @@ namespace Yoma.Core.Domain.Core.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

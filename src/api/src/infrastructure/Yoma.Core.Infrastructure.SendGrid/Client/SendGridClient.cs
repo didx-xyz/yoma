@@ -1,7 +1,6 @@
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SendGrid;
-using SendGrid.Helpers.Errors.Model;
 using SendGrid.Helpers.Mail;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;

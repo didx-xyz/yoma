@@ -133,6 +133,12 @@ namespace Yoma.Core.Domain.Core.Models
     /// Defines the time, in hours, before a scheduled download link expires and becomes inaccessible.
     /// </summary>
     public int DownloadScheduleLinkExpirationHours { get; set; }
+
+    /// <summary>
+    /// The maximum number of verification files to include in a single scheduled download batch. 
+    /// Used when splitting large download requests into multiple scheduled pages.
+    /// </summary>
+    public int DownloadScheduleVerificationFilesBatchSize { get; set; }
     #endregion
 
     #region Private Members
