@@ -643,7 +643,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                           messageType={FormMessageType.Warning}
                           className="p-0"
                         >
-                          {`${errors.commitmentInterval.root?.message}`}
+                          {`${errors.commitmentInterval.message}`}
                         </FormMessage>
                       )}
                     </div>
