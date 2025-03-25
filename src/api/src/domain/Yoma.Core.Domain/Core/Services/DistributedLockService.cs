@@ -40,7 +40,7 @@ namespace Yoma.Core.Domain.Core.Services
       else
         _logger.LogInformation("Lock '{lockKey}' already held. Skipping execution attempt by {hostName} at {timestamp} for process '{process}'",
             key, System.Environment.MachineName, DateTimeOffset.UtcNow, processName);
- 
+
       return acquired;
     }
 

@@ -5,8 +5,8 @@ using Yoma.Core.Domain.MyOpportunity.Services;
 
 namespace Yoma.Core.Domain.MyOpportunity.Validators
 {
-    public class MyOpportunitySearchFilterVerificationFilesAdminValidator : PaginationFilterValidator<MyOpportunitySearchFilterVerificationFilesAdmin>
-    {
+  public class MyOpportunitySearchFilterVerificationFilesAdminValidator : PaginationFilterValidator<MyOpportunitySearchFilterVerificationFilesAdmin>
+  {
     #region Constructor
     public MyOpportunitySearchFilterVerificationFilesAdminValidator()
     {
