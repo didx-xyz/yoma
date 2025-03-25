@@ -86,5 +86,5 @@ const config = {
   },
 };
 
-// @ts-expect-error
+// @ts-expect-error - Type mismatch between bundleAnalyzer/pwa HOCs and Next.js config
 export default bundleAnalyzer(pwa(config));
