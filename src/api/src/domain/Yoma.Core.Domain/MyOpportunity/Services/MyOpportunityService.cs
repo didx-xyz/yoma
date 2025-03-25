@@ -1169,7 +1169,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       var (originalFileName, contentType, data) = await _blobService.DownloadRaw(fileId);
 
-      if (data == null || data.Length == 0) //ignore / skip empty files (legacy data
+      if (data == null || data.Length == 0)  //skip empty or missing files (legacy data)
         return null;
 
       if (!userExplictlySpecified)
