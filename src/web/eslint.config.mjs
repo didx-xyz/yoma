@@ -33,6 +33,22 @@ export default defineConfig([
       "next/typescript",
       "prettier",
     ),
-    // Rest of your config...
+
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+
+      parserOptions: {
+        project: true,
+      },
+    },
+
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+      "@typescript-eslint/no-empty-object-type": "off",
+      "@typescript-eslint/no-non-null-asserted-optional-chain": "off",
+      "prefer-spread": "off",
+      "prefer-const": "off",
+    },
   },
 ]);
