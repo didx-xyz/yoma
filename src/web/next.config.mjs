@@ -24,31 +24,16 @@ const config = {
   reactStrictMode: true,
   output: "standalone",
 
-  // use Turbopack instead of Webpack
-  // NB: slow and still using Webpack?
-  // experimental: {
-  //   turbo: {
-  //     loaders: {},
-  //   },
-  // },
-
   /**NB: for docker-compose, this section is needed in order to pass the server environment variables
    * to nextjs (without using a .env file in the container)
    */
   env: {
-    // @ts-ignore
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
-    // @ts-ignore
     NEXTAUTH_URL: process.env.NEXTAUTH_URL,
-    // @ts-ignore
     KEYCLOAK_ISSUER: process.env.KEYCLOAK_ISSUER,
-    // @ts-ignore
     KEYCLOAK_CLIENT_ID: process.env.KEYCLOAK_CLIENT_ID,
-    // @ts-ignore
     KEYCLOAK_CLIENT_SECRET: process.env.KEYCLOAK_CLIENT_SECRET,
-    // @ts-ignore
     API_BASE_URL: process.env.API_BASE_URL,
-    // @ts-ignore
     MARKETPLACE_ENABLED: process.env.MARKETPLACE_ENABLED,
   },
 
@@ -101,5 +86,5 @@ const config = {
   },
 };
 
-// @ts-ignore
+// @ts-expect-error
 export default bundleAnalyzer(pwa(config));
