@@ -408,8 +408,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //execute all downloads in parallel
       var downloadedFiles = await Task.WhenAll(downloadTasks);
 
-      //add downloaded files to the result
-      results.Files = downloadedFiles?.ToList();
+      //add downloaded files to the result; empty files returned as null — ignored (legacy data)
+      results.Files = downloadedFiles?.Where(f => f != null).ToList();
 
       return results;
     }
@@ -1165,9 +1165,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #endregion
 
     #region Private Members
-    private async Task<IFormFile> DownloadFileAsync(Guid fileId, string userDisplayName, bool userExplictlySpecified)
+    private async Task<IFormFile?> DownloadFileAsync(Guid fileId, string userDisplayName, bool userExplictlySpecified)
     {
       var (originalFileName, contentType, data) = await _blobService.DownloadRaw(fileId);
+
+      if (data == null || data.Length == 0) //ignore / skip empty files (legacy data
+        return null;
 
       if (!userExplictlySpecified)
       {
