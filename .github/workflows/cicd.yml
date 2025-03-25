@@ -61,7 +61,7 @@ jobs:
               eslint: true
               eslint_dir: ./src/web
               eslint_extensions: js,ts,tsx
-              eslint_args: --ignore-path ../../.gitignore --config eslint.config.mjs
+              eslint_args: --config eslint.config.mjs
               # Prettier
               prettier: true
               prettier_dir: ./src/web
