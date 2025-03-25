@@ -353,7 +353,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //verificationTypes
       var verificationTypeIds = verificationTypes.Select(t => _opportunityVerificationTypeService.GetByType(t).Id).ToList();
 
-      var myOpporunityIds = query.Select(o => o.Id).ToList();
+      var myOpporunityIds = query.Select(o => o.Id).Distinct().ToList();
 
       if (throwEntityNotFoundException && myOpporunityIds.Count == 0)
         throw new EntityNotFoundException($"Verification not actioned for opportunity with id '{filter.Opportunity}'");
