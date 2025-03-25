@@ -396,7 +396,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         }
       }
 
-      var downloadTasks = new List<Task<IFormFile>>();
+      var downloadTasks = new List<Task<IFormFile?>>();
       foreach (var item in items)
       {
         if (!item.FileId.HasValue) throw new InvalidOperationException("File id expected");
@@ -409,7 +409,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var downloadedFiles = await Task.WhenAll(downloadTasks);
 
       //add downloaded files to the result; empty files returned as null — ignored (legacy data)
-      results.Files = downloadedFiles?.Where(f => f != null).ToList();
+      results.Files = results.Files = downloadedFiles?.OfType<IFormFile>().ToList();
 
       return results;
     }

@@ -171,9 +171,20 @@ namespace Yoma.Core.Domain.Core.Services
 
                 throw;
               }
+              finally
+              {
+                //dispose file streams to release memory (especially important in constrained environments)
+                foreach (var file in files)
+                {
+                  try
+                  {
+                    file.OpenReadStream().Dispose(); //ensure stream is closed
+                  }
+                  catch { }
+                }
 
-              //send notification
-              try
+                //send notification
+                try
               {
                 var user = _userService.GetById(item.UserId, false, false);
 
