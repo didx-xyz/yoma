@@ -217,7 +217,7 @@ export interface OpportunityRequestBase {
   description: string;
   typeId: string;
   organizationId: string;
-  summary: string | null;
+  summary: string;
   instructions: string | null;
   uRL: string | null;
   zltoReward: number | null;

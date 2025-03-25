@@ -142,7 +142,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
     void router.push(`/admin/schemas`);
   };
 
-  /* eslint-disable */
   const [formData, setFormData] = useState<SSISchemaRequest>({
     name: schema?.name ?? "",
     typeId: schema?.typeId!,
@@ -156,7 +155,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
         .filter((x) => x?.system == false)
         .map((x) => x?.attributeName!) ?? [],
   });
-  /* eslint-enable */
 
   const onSubmit = useCallback(
     async (data: SSISchemaRequest) => {
@@ -471,7 +469,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                     className="flex flex-col gap-2"
                     onSubmit={handleSubmitStep1((data) =>
                       onSubmitStep(2, data),
-                    )} // eslint-disable-line @typescript-eslint/no-misused-promises
+                    )}
                   >
                     <div className="form-control">
                       <label className="label">
@@ -487,7 +485,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         />
                       )}
 
-                      {/* eslint-disable */}
                       {id !== "create" && (
                         <input
                           type="text"
@@ -497,7 +494,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                           disabled={true}
                         />
                       )}
-                      {/* eslint-enable */}
 
                       {errorsStep1.name && (
                         <label className="label">
@@ -559,7 +555,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         <span className="label-text">Artifact type</span>
                       </label>
 
-                      {/* eslint-disable */}
                       <Controller
                         control={controlStep1}
                         name="artifactType"
@@ -602,7 +597,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                           />
                         )}
                       />
-                      {/* eslint-enable */}
 
                       {errorsStep1.artifactType && (
                         <label className="label">
@@ -758,7 +752,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       )}
                     </div>
 
-                    {/* eslint-disable */}
                     <div className="form-control">
                       <label className="label">
                         <span className="label-text -ml-1 font-bold">
@@ -782,7 +775,6 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         </label>
                       )}
                     </div>
-                    {/* eslint-enable */}
 
                     <div className="form-control">
                       <label className="label">

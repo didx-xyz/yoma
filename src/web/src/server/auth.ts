@@ -87,7 +87,6 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, account, trigger, session }) {
       // called when the user profile is updated (update function from settings.tsx)
       // also used to force a refresh of token (/organisation/register/index.tsx)
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
       if (trigger === "update") {
         token.user = session.user;
         return refreshAccessToken(token);
@@ -96,7 +95,7 @@ export const authOptions: NextAuthOptions = {
       // Initial sign in
       if (account && user) {
         // get roles from access_token
-        const { realm_access } = decode(account.access_token); // eslint-disable-line
+        const { realm_access } = decode(account.access_token);
 
         // get user profile from yoma-api
         const userProfile = await getYomaUserProfile(account.access_token!);
@@ -108,7 +107,7 @@ export const authOptions: NextAuthOptions = {
           refreshToken: account.refresh_token,
           user: {
             ...user,
-            roles: realm_access.roles, // eslint-disable-line
+            roles: realm_access.roles,
             adminsOf: userProfile?.adminsOf.map((org) => org.id) ?? [],
           },
           provider: account.provider, //NB: used to determine which client id & secret to use when refreshing token
@@ -123,7 +122,6 @@ export const authOptions: NextAuthOptions = {
       // Access token has expired or trigger is update, try to update it
       return refreshAccessToken(token);
     },
-    // eslint-disable-next-line
     async session({ session, token }) {
       if (token) {
         session.user = token.user;
@@ -218,9 +216,7 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-// eslint-disable-next-line
 const decode = function (token: any) {
-  // eslint-disable-next-line
   return JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
 };
 
@@ -229,7 +225,6 @@ const decode = function (token: any) {
  * `accessToken` and `accessTokenExpires`. If an error occurs,
  * returns the old token and an error property
  */
-// eslint-disable-next-line
 async function refreshAccessToken(token: any) {
   try {
     const url = process.env.KEYCLOAK_ISSUER + "/protocol/openid-connect/token?";
@@ -243,23 +238,22 @@ async function refreshAccessToken(token: any) {
         client_id: process.env.KEYCLOAK_CLIENT_ID!,
         client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
         grant_type: "refresh_token",
-        refresh_token: token.refreshToken, // eslint-disable-line
+        refresh_token: token.refreshToken,
       }),
     });
 
-    const refreshedTokens = await response.json(); // eslint-disable-line
+    const refreshedTokens = await response.json();
 
     if (!response.ok) {
       throw refreshedTokens;
     }
 
     // get roles from access_token
-    const { realm_access } = decode(refreshedTokens.access_token); // eslint-disable-line
+    const { realm_access } = decode(refreshedTokens.access_token);
 
     // get user profile from yoma-api
     const userProfile = await getYomaUserProfile(refreshedTokens.access_token!);
 
-    /* eslint-disable */
     return {
       ...token,
       accessToken: refreshedTokens.access_token,
@@ -267,20 +261,17 @@ async function refreshAccessToken(token: any) {
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
       user: {
         ...token.user,
-        roles: realm_access.roles, // eslint-disable-line
+        roles: realm_access.roles,
         adminsOf: userProfile?.adminsOf.map((org) => org.id) ?? [],
       },
     };
-    /* eslint-enable */
   } catch (error) {
     console.log(error);
 
-    /* eslint-disable */
     return {
       ...token,
       error: "RefreshAccessTokenError",
     };
-    /* eslint-enable */
   }
 }
 
@@ -302,7 +293,7 @@ async function getYomaUserProfile(
     return null;
   }
 
-  return await response.json(); // eslint-disable-line
+  return await response.json();
 }
 
 /**

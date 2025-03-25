@@ -91,10 +91,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
   return (
     <>
-      <form
-        onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
-        className="flex flex-col"
-      >
+      <form onSubmit={handleSubmit(onSubmitHandler)} className="flex flex-col">
         <div className="flex flex-row p-4">
           <h1 className="my-auto flex-grow text-2xl font-bold">Filter</h1>
           <button

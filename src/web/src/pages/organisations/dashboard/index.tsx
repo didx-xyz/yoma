@@ -2014,7 +2014,6 @@ OrganisationDashboard.getLayout = function getLayout(page: ReactElement) {
 OrganisationDashboard.theme = function getTheme(
   page: ReactElement<{ theme: string }>,
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };
 

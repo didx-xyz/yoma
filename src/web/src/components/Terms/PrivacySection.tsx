@@ -370,7 +370,6 @@ const PrivacySection = () => {
                   return (
                     <tr key={index}>
                       <td className="border p-px text-left text-gray-dark md:p-2">
-                        {/* eslint-disable-next-line @typescript-eslint/dot-notation */}
                         {item["Section"]}
                       </td>
                       <td className="border p-px text-left text-gray-dark md:p-2">

@@ -11,11 +11,9 @@ export const BackButton: React.FC<InputProps> = ({ url }) => {
   const handleClick = () => {
     if (url)
       // go to specified url
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       router.push(url);
     else if (window.history.length <= 2)
       // go to home if no back history
-      // eslint-disable-next-line @typescript-eslint/no-floating-promises
       router.push("/");
     else router.back();
   };

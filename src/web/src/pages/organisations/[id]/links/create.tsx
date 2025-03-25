@@ -175,7 +175,6 @@ const LinkDetails: NextPageWithLayout<{
   const schemaStep2 = z
     .object({
       usagesLimit: z.union([z.nan(), z.null(), z.number()]).transform((val) => {
-        // eslint-disable-next-line
         return val === null || Number.isNaN(val as any) ? null : val;
       }),
       dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
@@ -770,7 +769,7 @@ const LinkDetails: NextPageWithLayout<{
                     className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep1((data) =>
                       onSubmitStep(2, data),
-                    )} // eslint-disable-line @typescript-eslint/no-misused-promises
+                    )}
                   >
                     <div className="form-control">
                       <label className="flex flex-col">
@@ -1103,7 +1102,6 @@ const LinkDetails: NextPageWithLayout<{
                           {formStateStep2.errors.distributionList && (
                             <label className="label font-bold">
                               <span className="label-text-alt italic text-red-500">
-                                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                                 {`${formStateStep2.errors.distributionList.message}`}
                               </span>
                             </label>
@@ -1329,7 +1327,6 @@ LinkDetails.getLayout = function getLayout(page: ReactElement) {
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
 LinkDetails.theme = function getTheme(page: ReactElement<{ theme: string }>) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };
 

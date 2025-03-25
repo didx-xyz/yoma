@@ -94,13 +94,11 @@ export const VerificationImport: React.FC<InputProps> = ({
 
       setIsLoading(true);
 
-      /* eslint-disable @typescript-eslint/no-unsafe-argument */
       const request: MyOpportunityRequestVerifyImportCsv = {
         file: data.importFile,
         organizationId: id,
         comment: data.comment,
       };
-      /* eslint-enable @typescript-eslint/no-unsafe-argument */
 
       performActionImportVerificationFromCSV(request)
         .then(() => {

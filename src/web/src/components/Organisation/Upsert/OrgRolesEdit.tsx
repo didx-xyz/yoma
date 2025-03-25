@@ -330,7 +330,7 @@ export const OrgRolesEdit: React.FC<InputProps> = ({
       )}
 
       <form
-        onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
+        onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-4"
       >
         <FormField
