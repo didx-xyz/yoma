@@ -321,7 +321,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       //default to all downloadable types if not explicitly specified; only validated when explicitly specified
       var validateVerificationTypes = true;
-      var verificationTypes = filter.VerificationTypes;
+      var verificationTypes = filter.VerificationTypes?.Distinct().ToList();
       if (verificationTypes == null || verificationTypes.Count == 0)
       {
         verificationTypes = [.. VerificationTypes_Downloadable];

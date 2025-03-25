@@ -23,7 +23,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
       if (filter.VerificationTypes == null || filter.VerificationTypes.Count == 0)
         return;
 
-      var nonDownloadable = filter.VerificationTypes.Except(MyOpportunityService.VerificationTypes_Downloadable).ToList();
+      var nonDownloadable = filter.VerificationTypes.Distinct().Except(MyOpportunityService.VerificationTypes_Downloadable).ToList();
 
       if (nonDownloadable.Count == 0) return;
       context.AddFailure(nameof(filter.VerificationTypes),
