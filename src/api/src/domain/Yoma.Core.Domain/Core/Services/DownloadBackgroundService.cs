@@ -150,15 +150,23 @@ namespace Yoma.Core.Domain.Core.Services
               {
                 if (files.Count > 0)
                 {
-                  //zip files and upload to blob storage; TransactionScope not used as the upload can take long, causing an aborted scope or connection
-                  //if schedule update fails, the blob object and db entries are deleted
-                  var downloadZipped = FileHelper.Zip(files, $"Download{zipFileNameSuffix}.zip");
-                  blobObject = await _blobService.Create(downloadZipped, FileType.ZipArchive, BlobProvider.StorageType.Private);
+                  IFormFile? downloadZipped = null;
+                  try
+                  {
+                    //zip files and upload to blob storage; TransactionScope not used as the upload can take long, causing an aborted scope or connection
+                    //if schedule update fails, the blob object and db entries are deleted
+                    downloadZipped = FileHelper.ZipToDisk(files, $"Download{zipFileNameSuffix}.zip");
+                    blobObject = await _blobService.Create(downloadZipped, FileType.ZipArchive, BlobProvider.StorageType.Private);
 
-                  //update schedule
-                  item.FileId = blobObject.Id;
-                  item.FileStorageType = blobObject.StorageType;
-                  item.FileKey = blobObject.Key;
+                    //update schedule
+                    item.FileId = blobObject.Id;
+                    item.FileStorageType = blobObject.StorageType;
+                    item.FileKey = blobObject.Key;
+                  }
+                  finally
+                  {
+                    FileHelper.DeleteTempFilesOnDisk([.. files, downloadZipped]);
+                  }
                 }
 
                 item.Status = DownloadScheduleStatus.Processed;
@@ -170,18 +178,6 @@ namespace Yoma.Core.Domain.Core.Services
                   await _blobService.Delete(blobObject.Id);
 
                 throw;
-              }
-              finally
-              {
-                //dispose file streams to release memory (especially important in constrained environments)
-                foreach (var file in files)
-                {
-                  try
-                  {
-                    file.OpenReadStream().Dispose(); //ensure stream is closed
-                  }
-                  catch { }
-                }
               }
 
               //send notification

@@ -58,7 +58,18 @@ namespace Yoma.Core.Domain.Core.Validators
       if (!extensions.Contains(file.GetExtension(), StringComparer.InvariantCultureIgnoreCase))
         throw new BusinessException($"Only supports file formats '{string.Join(",", extensions)}'");
 
-      if (file.Length > maxSizeBytes)
+      using var stream = file.OpenReadStream();
+
+      long fileLength;
+      if (stream is FileStream fs)
+      {
+        var path = fs.Name;
+        fileLength = new FileInfo(path).Length;
+      }
+      else
+        fileLength = file.Length;
+
+      if (fileLength > maxSizeBytes)
         throw new BusinessException($"Only supports file size smaller or equal to '{Math.Round((decimal)maxSizeBytes / 1000000, 2)}MB'");
     }
     #endregion

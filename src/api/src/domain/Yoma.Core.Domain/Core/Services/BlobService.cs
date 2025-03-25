@@ -84,7 +84,13 @@ namespace Yoma.Core.Domain.Core.Services
         using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
         result = await _blobObjectRepository.Create(result);
-        await client.Create(key, file.ContentType, file.ToBinary());
+
+        using var stream = file.OpenReadStream();
+
+        if (stream is FileStream fs)
+          await client.CreateFromFile(key, file.ContentType, fs.Name);
+        else
+          await client.Create(key, file.ContentType, file.ToBinary());
 
         scope.Complete();
       });
@@ -94,20 +100,24 @@ namespace Yoma.Core.Domain.Core.Services
 
     public async Task<IFormFile> Download(Guid id)
     {
-      var (originalFileName, contentType, data) = await DownloadRaw(id);
-
-      return FileHelper.FromByteArray(originalFileName, contentType, data);
-    }
-
-    public async Task<(string OriginalFileName, string ContentType, byte[] Data)> DownloadRaw(Guid id)
-    {
       var item = GetById(id);
 
       var client = _blobProviderClientFactory.CreateClient(item.StorageType);
 
       var (contentType, data) = await client.Download(item.Key);
 
-      return (item.OriginalFileName, contentType, data);
+      return FileHelper.FromByteArray(item.OriginalFileName, contentType, data);
+    }
+
+    public async Task<(string OriginalFileName, string ContentType, string TempSourceFile)> DownloadRawToDisk(Guid id)
+    {
+      var item = GetById(id);
+
+      var client = _blobProviderClientFactory.CreateClient(item.StorageType);
+
+      var (contentType, tempSourceFile) = await client.DownloadToDisk(item.Key);
+
+      return (item.OriginalFileName, contentType, tempSourceFile);
     }
 
     public string GetURL(Guid id, string? fileName = null, int? urlExpirationInMinutes = null)

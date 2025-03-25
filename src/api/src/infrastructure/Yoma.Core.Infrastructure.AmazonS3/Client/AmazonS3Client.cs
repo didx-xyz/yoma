@@ -69,6 +69,43 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
       }
     }
 
+    public async Task CreateFromFile(string filename, string contentType, string sourceFilePath)
+    {
+      if (string.IsNullOrWhiteSpace(filename))
+        throw new ArgumentNullException(nameof(filename));
+      filename = filename.Trim().ToLower();
+
+      if (string.IsNullOrWhiteSpace(contentType))
+        throw new ArgumentNullException(nameof(contentType));
+      contentType = contentType.Trim();
+
+      if (string.IsNullOrWhiteSpace(sourceFilePath))
+        throw new ArgumentNullException(nameof(sourceFilePath));
+
+      if (!File.Exists(sourceFilePath))
+        throw new FileNotFoundException("Source file does not exist", sourceFilePath);
+
+      await using var fileStream = new FileStream(sourceFilePath, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+      var request = new PutObjectRequest
+      {
+        BucketName = _optionsBucket.BucketName,
+        Key = filename,
+        InputStream = fileStream,
+        ContentType = contentType,
+      };
+
+      try
+      {
+        await _client.PutObjectAsync(request); // override if exists
+      }
+      catch (AmazonS3Exception ex)
+      {
+        throw new HttpClientException(ex.StatusCode, $"Failed to upload file '{filename}' from '{sourceFilePath}': {ex.Message}");
+      }
+    }
+
+
     public async Task<(string ContentType, byte[] Data)> Download(string filename)
     {
       if (string.IsNullOrWhiteSpace(filename))
@@ -87,6 +124,33 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
         using var memoryStream = new MemoryStream();
         await response.ResponseStream.CopyToAsync(memoryStream);
         return (response.Headers.ContentType, memoryStream.ToArray());
+      }
+      catch (AmazonS3Exception ex)
+      {
+        throw new HttpClientException(ex.StatusCode, $"Failed to download S3 object with filename '{filename}': {ex.Message}");
+      }
+    }
+
+    public async Task<(string ContentType, string TempSourceFile)> DownloadToDisk(string filename)
+    {
+      if (string.IsNullOrWhiteSpace(filename))
+        throw new ArgumentNullException(nameof(filename));
+      filename = filename.Trim().ToLower();
+
+      var request = new GetObjectRequest
+      {
+        BucketName = _optionsBucket.BucketName,
+        Key = filename
+      };
+
+      try
+      {
+        var tempSourceFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+        using var response = await _client.GetObjectAsync(request);
+        await using var fileStream = new FileStream(tempSourceFile, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        await response.ResponseStream.CopyToAsync(fileStream);
+        return (response.Headers.ContentType, tempSourceFile);
       }
       catch (AmazonS3Exception ex)
       {

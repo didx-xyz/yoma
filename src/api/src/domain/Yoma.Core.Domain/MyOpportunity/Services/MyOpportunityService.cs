@@ -298,14 +298,21 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         UserId = user.Id
       };
 
-      var result = await DownloadVerificationFiles(myFilter, false);
+      var files = await DownloadVerificationFiles(myFilter, false);
 
-      if (result.Files == null || result.Files.Count == 0)
+      if (files.Files == null || files.Files.Count == 0)
         throw new InvalidOperationException("One or more files expected for download of 'my' opportunity verification files");
 
-      if (result.Files.Count == 1) return result.Files.First();
+      try
+      {
+        if (files.Files.Count == 1) return files.Files.First();
 
-      return FileHelper.Zip(result.Files, $"Files.zip");
+        return FileHelper.Zip(files.Files, $"Files.zip");
+      }
+      finally
+      {
+        FileHelper.DeleteTempFilesOnDisk(files.Files);
+      }
     }
 
     public async Task<MyOpportunitySearchResultsVerificationFilesAdmin> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFilesAdmin filter, bool ensureOrganizationAuthorization)
@@ -402,14 +409,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         if (!item.FileId.HasValue) throw new InvalidOperationException("File id expected");
 
         //add task to download in parallel
-        downloadTasks.Add(DownloadFileAsync(item.FileId.Value, item.UserDisplayName, filter.UserId.HasValue));
+        downloadTasks.Add(DownloadFileToDisk(item.FileId.Value, item.UserDisplayName, filter.UserId.HasValue));
       }
 
       //execute all downloads in parallel
       var downloadedFiles = await Task.WhenAll(downloadTasks);
 
       //add downloaded files to the result; empty files returned as null — ignored (legacy data)
-      results.Files = results.Files = downloadedFiles?.OfType<IFormFile>().ToList();
+      results.Files = downloadedFiles?.OfType<IFormFile>().ToList();
 
       return results;
     }
@@ -1165,11 +1172,12 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #endregion
 
     #region Private Members
-    private async Task<IFormFile?> DownloadFileAsync(Guid fileId, string userDisplayName, bool userExplictlySpecified)
+    private async Task<IFormFile?> DownloadFileToDisk(Guid fileId, string userDisplayName, bool userExplictlySpecified)
     {
-      var (originalFileName, contentType, data) = await _blobService.DownloadRaw(fileId);
+      var (originalFileName, contentType, tempSourceFile) = await _blobService.DownloadRawToDisk(fileId);
 
-      if (data == null || data.Length == 0)  //skip empty or missing files (legacy data)
+      var fileInfo = new FileInfo(tempSourceFile);
+      if (!fileInfo.Exists || fileInfo.Length == 0) // skip empty or missing files (legacy data)
         return null;
 
       if (!userExplictlySpecified)
@@ -1179,7 +1187,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         originalFileName = $"{displayNameCleaned}{FileHelper.Zip_FileName_Path_Separator}{originalFileName}";
       }
 
-      return FileHelper.FromByteArray(originalFileName, contentType, data);
+      return FileHelper.FromFilePath(originalFileName, contentType, tempSourceFile);
     }
 
     private async Task ProcessImportVerification(MyOpportunityRequestVerifyImportCsv requestImport, MyOpportunityInfoCsvImport item)

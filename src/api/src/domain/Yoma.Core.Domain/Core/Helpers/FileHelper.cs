@@ -30,6 +30,37 @@ namespace Yoma.Core.Domain.Core.Helpers
       return result;
     }
 
+    public static IFormFile FromFilePath(string fileName, string contentType, string tempSourceFile)
+    {
+      if (string.IsNullOrWhiteSpace(fileName))
+        throw new ArgumentNullException(nameof(fileName));
+      fileName = fileName.Trim();
+
+      if (string.IsNullOrWhiteSpace(contentType))
+        throw new ArgumentNullException(nameof(contentType));
+
+      if (string.IsNullOrWhiteSpace(tempSourceFile))
+        throw new ArgumentNullException(nameof(tempSourceFile));
+
+      if (!File.Exists(tempSourceFile))
+        throw new FileNotFoundException("The source file was not found", tempSourceFile);
+
+      var fileInfo = new FileInfo(tempSourceFile);
+      var stream = new FileStream(tempSourceFile, FileMode.Open, FileAccess.Read, FileShare.Read);
+
+      var result = new FormFile(stream, 0, fileInfo.Length, Path.GetFileNameWithoutExtension(fileName), fileName)
+      {
+        Headers = new HeaderDictionary(),
+        ContentType = contentType,
+        ContentDisposition = new System.Net.Mime.ContentDisposition() { FileName = fileName }.ToString()
+      };
+
+      // Track temp file and stream for cleanup later
+      TempFileTracker.Register(result, tempSourceFile, stream);
+
+      return result;
+    }
+
     public static IFormFile Zip(List<IFormFile> files, string fileName)
     {
       if (files == null || files.Count == 0)
@@ -58,6 +89,36 @@ namespace Yoma.Core.Domain.Core.Helpers
       return FromByteArray(fileName, "application/zip", memoryStream.ToArray());
     }
 
+    public static IFormFile ZipToDisk(List<IFormFile> files, string fileName)
+    {
+      if (files == null || files.Count == 0)
+        throw new ArgumentNullException(nameof(files));
+
+      ArgumentException.ThrowIfNullOrWhiteSpace(fileName, nameof(fileName));
+      fileName = fileName.Trim();
+
+      if (!Path.GetExtension(fileName).Equals(".zip", StringComparison.OrdinalIgnoreCase))
+        throw new ArgumentException("File name must end with '.zip' extension", nameof(fileName));
+
+      var tempSourceFile = Path.Combine(Path.GetTempPath(), Guid.NewGuid().ToString());
+
+      using (var zipStream = new FileStream(tempSourceFile, FileMode.Create, FileAccess.Write, FileShare.None))
+      using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, leaveOpen: false))
+      {
+        foreach (var file in files)
+        {
+          var entryName = file.FileName.Replace(Zip_FileName_Path_Separator, "/");
+
+          var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
+          using var entryStream = entry.Open();
+          using var inputStream = file.OpenReadStream();
+          inputStream.CopyTo(entryStream);
+        }
+      }
+
+      return FromFilePath(fileName, "application/zip", tempSourceFile);
+    }
+
     public static (string fileName, byte[] bytes) CreateCsvFile<T>(IEnumerable<T> records, string fileNamePrefix, bool appendDateStamp)
     {
       ArgumentNullException.ThrowIfNull(records, nameof(records));
@@ -78,6 +139,41 @@ namespace Yoma.Core.Domain.Core.Helpers
         : $"{fileNamePrefix}.csv";
 
       return (fileName, stream.ToArray());
+    }
+
+    public static void DeleteTempFilesOnDisk(List<IFormFile> files)
+    {
+      if (files == null || files.Count == 0)
+        return;
+
+      foreach (var file in files)
+      {
+        try
+        {
+          var tracked = TempFileTracker.Get(file);
+          if (tracked == null) continue;
+
+          var (tempPath, stream) = tracked.Value;
+
+          try
+          {
+            stream.Dispose(); // Ensure stream is closed
+          }
+          catch { /* optional: log */ }
+
+          try
+          {
+            if (File.Exists(tempPath))
+              File.Delete(tempPath);
+          }
+          catch { /* optional: log */ }
+        }
+        catch { /* optional: log */ }
+        finally
+        {
+          TempFileTracker.Remove(file); // always clean up the tracking
+        }
+      }
     }
   }
 }
