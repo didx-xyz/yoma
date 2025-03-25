@@ -145,12 +145,8 @@ nodeAffinityPreset:
 volumeMounts:
   - name: tmp
     mountPath: /tmp
-  - name: data
-    mountPath: /data
 volumes:
   - name: tmp
-    emptyDir: {}
-  - name: data
     emptyDir:
       sizeLimit: 10Gi
 persistence: {}
