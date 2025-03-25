@@ -316,12 +316,6 @@ const OrganisationCreate: NextPageWithLayout<{
 
               <OrgInfoEdit
                 formData={OrganizationRequestBase}
-                // onImageChange={(image) =>
-                //   setOrganizationRequestBase((prev) => ({
-                //     ...prev,
-                //     logo: image.logo as FormFile | null,
-                //   }))
-                // }
                 onCancel={handleCancel}
                 onSubmit={(data) => onSubmitStep(2, data)}
                 cancelButtonText="Cancel"
@@ -431,7 +425,6 @@ OrganisationCreate.getLayout = function getLayout(page: ReactElement) {
 OrganisationCreate.theme = function getTheme(
   page: ReactElement<{ theme: string }>,
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };
 

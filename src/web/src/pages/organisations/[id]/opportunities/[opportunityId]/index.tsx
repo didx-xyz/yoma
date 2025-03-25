@@ -1703,7 +1703,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     className="flex flex-col gap-4"
                     onSubmit={handleSubmitStep1((data) =>
                       onSubmitStep(2, data),
-                    )} // eslint-disable-line @typescript-eslint/no-misused-promises
+                    )}
                   >
                     <FormField
                       label="Title"
@@ -2631,7 +2631,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               loadOptions={loadSkills}
                               onBlur={onBlur} // mark the field as touched
                               onChange={(val) => {
-                                // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                                 onChange(val.map((c: any) => c.value));
                               }}
                               // for each value, look up the value and label from the cache
@@ -2712,7 +2711,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         name="keywords"
                         render={({ field: { onChange, value, onBlur } }) => (
                           <>
-                            {/* eslint-disable */}
                             <CreatableSelect
                               instanceId="keywords"
                               classNames={{
@@ -2743,7 +2741,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               inputId="input_keywords" // e2e
                               placeholder="Enter keywords..."
                             />
-                            {/* eslint-enable  */}
                           </>
                         )}
                       />
@@ -3440,7 +3437,6 @@ OpportunityAdminDetails.getLayout = function getLayout(page: ReactElement) {
 OpportunityAdminDetails.theme = function getTheme(
   page: ReactElement<{ theme: string }>,
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };
 

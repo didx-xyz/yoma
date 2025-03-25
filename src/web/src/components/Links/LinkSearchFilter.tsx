@@ -21,7 +21,6 @@ const ValueContainer = ({
   children,
   ...props
 }: ValueContainerProps<SelectOption>) => {
-  // eslint-disable-next-line prefer-const
   let [values, input] = children as any[];
   if (Array.isArray(values)) {
     if (
@@ -172,7 +171,7 @@ export const LinkSearchFilters: React.FC<{
   return (
     <div className="flex flex-grow flex-col">
       <form
-        onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
+        onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-2"
       >
         <div className="flex w-full flex-grow flex-row flex-wrap gap-2 md:w-fit lg:flex-row">
@@ -198,7 +197,6 @@ export const LinkSearchFilters: React.FC<{
                       setValue("entities", []);
                       // to honor the respective API contracts, we need to set a single value
                       // setting isMulti={false} breaks the contracts...
-                      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                       onChange(
                         val && val.length > 0
                           ? [val[val.length - 1]?.value]
@@ -242,7 +240,6 @@ export const LinkSearchFilters: React.FC<{
                     cacheOptions
                     loadOptions={loadOpportunities}
                     onChange={(val) => {
-                      // eslint-disable-next-line @typescript-eslint/no-unsafe-return
                       onChange(val.map((c: any) => c.value));
                       void handleSubmit(onSubmitHandler)();
                     }}

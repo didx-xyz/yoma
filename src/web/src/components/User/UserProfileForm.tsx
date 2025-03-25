@@ -190,7 +190,6 @@ export const UserProfileForm: React.FC<{
         const userProfileResult = await patchUser(data as UserRequestProfile);
 
         // update session
-        // eslint-disable
         await update({
           ...session,
           user: {
@@ -269,7 +268,7 @@ export const UserProfileForm: React.FC<{
       {isLoading && <Loading />}
 
       <form
-        onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
+        onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-4"
       >
         {filterOptions?.includes(UserProfileFilterOptions.EMAIL) && (

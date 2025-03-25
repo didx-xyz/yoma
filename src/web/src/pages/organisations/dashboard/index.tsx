@@ -1307,7 +1307,8 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                                 <div className="flex flex-row items-center gap-5">
                                   <div>
-                                    <span className="mr-2">➡️</span>Conversion:{" "}
+                                    <span className="mr-2">➡️</span>
+                                    Conversion:{" "}
                                   </div>
                                   <div className="badge badge-primary ml-auto font-semibold">
                                     {engagementData?.opportunities
@@ -2013,7 +2014,6 @@ OrganisationDashboard.getLayout = function getLayout(page: ReactElement) {
 OrganisationDashboard.theme = function getTheme(
   page: ReactElement<{ theme: string }>,
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };
 

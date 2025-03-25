@@ -12,7 +12,6 @@ const ValueContainer = ({
   children,
   ...props
 }: ValueContainerProps<SelectOption>) => {
-  // eslint-disable-next-line prefer-const
   let [values, input] = children as any[];
   if (Array.isArray(values)) {
     if (
@@ -88,7 +87,7 @@ export const EngagementRowFilter: React.FC<{
   return (
     <div className="flex flex-grow flex-col gap-3">
       <form
-        onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
+        onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-2"
       >
         <div className="flex flex-row items-center gap-2">

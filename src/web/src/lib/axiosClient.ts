@@ -18,7 +18,6 @@ let slowNetworkAbortDismissed = false;
 // Axios instance for client-side requests
 const ApiClient = async () => {
   if (!apiBaseUrl) {
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-member-access
     apiBaseUrl = ((await fetchClientEnv()).NEXT_PUBLIC_API_BASE_URL ||
       "") as string;
   }

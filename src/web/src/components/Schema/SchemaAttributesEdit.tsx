@@ -71,9 +71,7 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
   // call onChange each time fields changes
   useEffect(() => {
     if (onChange)
-      // eslint-disable-next-line
       onChange(fields.map((x: any) => x.attribute).filter((x) => x != ""));
-    // eslint-enable-next-line
   }, [fields, onChange]);
 
   return (
@@ -110,7 +108,6 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
       </div>
 
       {/* ADDITIONAL ATTRIBUTES (WRITE) */}
-      {/* eslint-disable */}
       <div className="flex flex-col gap-2">
         <label className="label">
           <span className="label-text">Additional attributes</span>
@@ -180,7 +177,6 @@ export const SchemaAttributesEdit: React.FC<InputProps> = ({
             </div>
           </div>
         ))}
-        {/* eslint-enable */}
       </div>
 
       <div className="flex justify-center">

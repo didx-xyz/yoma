@@ -78,7 +78,6 @@ const MyApp = ({
       <SessionProvider session={pageProps.session}>
         <ThemeProvider enableSystem={false} forcedTheme={theme}>
           <QueryClientProvider client={queryClient}>
-            {/* eslint-disable-next-line */}
             <HydrationBoundary state={pageProps.dehydratedState}>
               <div
                 id="mainContent"

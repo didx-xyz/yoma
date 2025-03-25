@@ -626,7 +626,6 @@ Organisations.getLayout = function getLayout(page: ReactElement) {
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
 Organisations.theme = function getTheme(page: ReactElement<{ theme: string }>) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };
 

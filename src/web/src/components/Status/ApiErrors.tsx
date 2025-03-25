@@ -1,4 +1,3 @@
-/* eslint-disable */
 import { type AxiosError } from "axios";
 import { type ReactElement } from "react";
 import { IoMdFlame } from "react-icons/io";
@@ -116,4 +115,3 @@ export const ApiErrors: Props = ({ error }) => {
     </div>
   );
 };
-/* eslint-enable */
