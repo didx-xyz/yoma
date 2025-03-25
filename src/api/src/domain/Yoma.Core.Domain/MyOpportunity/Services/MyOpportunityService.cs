@@ -65,7 +65,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IDownloadService _downloadService;
     private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
-    private readonly MyOpportunitySearchFilterVerificationFilesValidator _myOpportunitySearchFilterVerificationFilesValidator;
     private readonly MyOpportunitySearchFilterVerificationFilesAdminValidator _myOpportunitySearchFilterVerificationFilesAdminValidator;
     private readonly MyOpportunitySearchFilterAdminValidator _myOpportunitySearchFilterAdminValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
@@ -103,7 +102,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         IGenderService genderService,
         ITimeIntervalService timeIntervalService,
         IDownloadService downloadService,
-        MyOpportunitySearchFilterVerificationFilesValidator myOpportunitySearchFilterVerificationFilesValidator,
+        IOpportunityVerificationTypeService opportunityVerificationTypeService,
         MyOpportunitySearchFilterVerificationFilesAdminValidator myOpportunitySearchFilterVerificationFilesAdminValidator,
         MyOpportunitySearchFilterAdminValidator myOpportunitySearchFilterAdminValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
@@ -134,7 +133,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       _genderService = genderService;
       _timeIntervalService = timeIntervalService;
       _downloadService = downloadService;
-      _myOpportunitySearchFilterVerificationFilesValidator = myOpportunitySearchFilterVerificationFilesValidator;
+      _opportunityVerificationTypeService = opportunityVerificationTypeService;
       _myOpportunitySearchFilterVerificationFilesAdminValidator = myOpportunitySearchFilterVerificationFilesAdminValidator;
       _myOpportunitySearchFilterAdminValidator = myOpportunitySearchFilterAdminValidator;
       _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
@@ -243,40 +242,53 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return results;
     }
 
-    public async Task DownloadVerificationFilesSchedule(MyOpportunitySearchFilterVerificationFilesAdmin filter, bool ensureOrganizationAuthorization)
+    public async Task DownloadVerificationFilesSchedule(MyOpportunitySearchFilterVerificationFiles filter, bool ensureOrganizationAuthorization)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      filter.TotalCountOnly = true;
-      var result = await DownloadVerificationFiles(filter, ensureOrganizationAuthorization);
+      var myFilter = new MyOpportunitySearchFilterVerificationFilesAdmin
+      {
+        Opportunity = filter.Opportunity,
+        VerificationTypes = filter.VerificationTypes,
+        CompletedVerificationsOnly = true,
+        TotalCountOnly = true
+      };
+
+      var result = await DownloadVerificationFiles(myFilter, ensureOrganizationAuthorization);
 
       if (!result.TotalCount.HasValue)
         throw new InvalidOperationException("Total count expected");
 
       if (result.TotalCount <= _appSettings.DownloadScheduleVerificationFilesBatchSize)
       {
-        await _downloadService.Schedule(user.Id, DownloadScheduleType.MyOpportunityVerificationFiles, filter);
+        await _downloadService.Schedule(user.Id, DownloadScheduleType.MyOpportunityVerificationFiles, myFilter);
         return;
       }
 
-      filter.PageSize = _appSettings.DownloadScheduleVerificationFilesBatchSize;
-      var totalPages = (int)Math.Ceiling((double)result.TotalCount.Value / filter.PageSize.Value);
+      myFilter.PageSize = _appSettings.DownloadScheduleVerificationFilesBatchSize;
+      var totalPages = (int)Math.Ceiling((double)result.TotalCount.Value / myFilter.PageSize.Value);
 
-      for (var page = 1; page <= totalPages; page++)
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        filter.PageNumber = page;
-        await _downloadService.Schedule(user.Id, DownloadScheduleType.MyOpportunityVerificationFiles, filter);
-      }
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+        for (var page = 1; page <= totalPages; page++)
+        {
+          myFilter.PageNumber = page;
+          await _downloadService.Schedule(user.Id, DownloadScheduleType.MyOpportunityVerificationFiles, myFilter);
+        }
+
+        scope.Complete();
+      });
     }
 
     public async Task<IFormFile> DownloadVerificationFiles(MyOpportunitySearchFilterVerificationFiles filter)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      await _myOpportunitySearchFilterVerificationFilesValidator.ValidateAndThrowAsync(filter);
-
+      //filter validated as admin filter
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var myFilter = new MyOpportunitySearchFilterVerificationFilesAdmin
@@ -307,21 +319,24 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (ensureOrganizationAuthorization)
         _organizationService.IsAdmin(opportunity.OrganizationId, true);
 
-      //default to all downloadable types if not explicitly specified
-      if (filter.VerificationTypes == null || filter.VerificationTypes.Count == 0) filter.VerificationTypes = [.. VerificationTypes_Downloadable];
+      //default to all downloadable types if not explicitly specified; only validated when explicitly specified
+      var validateVerificationTypes = true;
+      var verificationTypes = filter.VerificationTypes;
+      if (verificationTypes == null || verificationTypes.Count == 0)
+      {
+        verificationTypes = [.. VerificationTypes_Downloadable];
+        validateVerificationTypes = false;
+      }
 
       //only throw entity not found exception if UserId was explicitly specified
       var throwEntityNotFoundException = filter.UserId.HasValue;
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
 
-      var query = _myOpportunityRepository.Query(true);
+      var query = _myOpportunityRepository.Query(false);
 
       //opportunityId
       query = query.Where(o => o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
-
-      //by default, only inlcude provided verfication mappings
-      query = query.Where(o => o.Verifications != null && o.Verifications.Count > 0);
 
       //userId
       if (filter.UserId.HasValue)
@@ -334,17 +349,17 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         query = query.Where(o => o.VerificationStatusId == verificationStatusId);
       }
 
+      //verfication sub query
       //verificationTypes
-      var verificationTypeIds = filter.VerificationTypes.Select(t => _opportunityVerificationTypeService.GetByType(t).Id).ToList();
+      var verificationTypeIds = verificationTypes.Select(t => _opportunityVerificationTypeService.GetByType(t).Id).ToList();
 
-      var verificationQuery = query
-        .SelectMany(o => o.Verifications!
-        .Where(v => verificationTypeIds.Contains(v.VerificationTypeId))
-        .Select(v => new
-        {
-          Verification = v,
-          o.UserDisplayName
-        }));
+      var myOpporunityIds = query.Select(o => o.Id).ToList();
+
+      if (throwEntityNotFoundException && myOpporunityIds.Count == 0)
+        throw new EntityNotFoundException($"Verification not actioned for opportunity with id '{filter.Opportunity}'");
+
+      var verificationQuery = _myOpportunityVerificationRepository.Query()
+        .Where(o => myOpporunityIds.Contains(o.MyOpportunityId) && verificationTypeIds.Contains(o.VerificationTypeId));
 
       var results = new MyOpportunitySearchResultsVerificationFilesAdmin
       {
@@ -358,7 +373,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         return results;
       }
 
-      verificationQuery = verificationQuery.OrderBy(o => o.Verification.Id);  //ensure deterministic sorting / consistent pagination results
+      verificationQuery = verificationQuery.OrderBy(o => o.Id);  //ensure deterministic sorting / consistent pagination results
 
       //paginationEnabled
       if (filter.PaginationEnabled)
@@ -369,20 +384,25 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var items = verificationQuery.ToList();
 
-      if (throwEntityNotFoundException && items.Count == 0)
-        throw new EntityNotFoundException($"No downloadable verification files found for opportunity with id '{filter.Opportunity}'");
+      if (throwEntityNotFoundException)
+      {
+        if (items.Count == 0)
+          throw new EntityNotFoundException($"No downloadable verification files found for opportunity with id '{filter.Opportunity}'");
 
-      var notFound = filter.VerificationTypes.Except(items.Select(i => i.Verification.VerificationType).Distinct()).ToList();
-      if (notFound.Count > 0 && throwEntityNotFoundException)
-        throw new EntityNotFoundException($"Requested verification type(s) '{string.Join(", ", notFound)}' not found for opportunity with id '{filter.Opportunity}'");
+        if (validateVerificationTypes)
+        {
+          var notFound = verificationTypes.Except(items.Select(i => i.VerificationType).Distinct()).ToList();
+          if (notFound.Count > 0) throw new EntityNotFoundException($"Requested verification type(s) '{string.Join(", ", notFound)}' not found for opportunity with id '{filter.Opportunity}'");
+        }
+      }
 
       var downloadTasks = new List<Task<IFormFile>>();
       foreach (var item in items)
       {
-        if (!item.Verification.FileId.HasValue) throw new InvalidOperationException("File id expected");
+        if (!item.FileId.HasValue) throw new InvalidOperationException("File id expected");
 
         //add task to download in parallel
-        downloadTasks.Add(DownloadFileAsync(item.Verification.FileId.Value, item.UserDisplayName, filter.UserId.HasValue));
+        downloadTasks.Add(DownloadFileAsync(item.FileId.Value, item.UserDisplayName, filter.UserId.HasValue));
       }
 
       //execute all downloads in parallel

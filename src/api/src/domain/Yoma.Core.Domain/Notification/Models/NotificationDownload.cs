@@ -18,5 +18,11 @@ namespace Yoma.Core.Domain.Notification.Models
 
     [JsonProperty("expirationHours")]
     public int ExpirationHours { get; set; }
+
+    [JsonProperty("comment")]
+    public string? Comment { get; set; }
+
+    [JsonProperty("commentFormatted")]
+    public string? CommentFormatted => !string.IsNullOrEmpty(Comment) ? Comment : "No additional information";
   }
 }

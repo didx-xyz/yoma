@@ -12,12 +12,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public Guid? UserId { get; set; }
 
-    /// <summary>
-    /// Internal flag used by scheduled admin downloads to determine whether only completed verifications should be included.
-    /// Defaults to <c>false</c>.
-    /// </summary>
-    [JsonIgnore]
-    internal bool CompletedVerificationsOnly { get; set; } = false;
+    public bool CompletedVerificationsOnly { get; set; }
 
     [JsonIgnore]
     internal bool TotalCountOnly { get; set; } = false;

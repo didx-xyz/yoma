@@ -124,22 +124,21 @@ namespace Yoma.Core.Domain.Core.Services
 
                   files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes));
 
-                  notificationMessage = "Opportunity Verifications CSV Export";
+                  notificationMessage = "Opportunity Completions CSV Export";
                   break;
 
                 case DownloadScheduleType.MyOpportunityVerificationFiles:
                   var filterMyOpportunityVerificationFiles = JsonConvert.DeserializeObject<MyOpportunitySearchFilterVerificationFilesAdmin>(item.Filter)
                     ?? throw new InvalidOperationException("Failed to deserialize the filter");
 
-                  //completed verifications only
-                  filterMyOpportunityVerificationFiles.CompletedVerificationsOnly = true;
+                  //completedVerificationsOnly is serilaized
 
                   var result = await _myOpportunityService.DownloadVerificationFiles(filterMyOpportunityVerificationFiles, false);
                   if (result.Files != null && result.Files.Count > 0) files.AddRange(result.Files);
 
-                  notificationMessage = $"Opportunity Verfication (Completion) Uploads Export: {result.OpportunityTitle}";
+                  notificationMessage = $"Opportunity Completion Uploads Export for {result.OpportunityTitle}";
 
-                  if (filterMyOpportunityVerificationFiles.PageNumber.HasValue) zipFileNameSuffix = $"_Batch_{filterMyOpportunityVerificationFiles.PageNumber.Value}";
+                  if (filterMyOpportunityVerificationFiles.PageNumber.HasValue) zipFileNameSuffix = $"-Batch-{filterMyOpportunityVerificationFiles.PageNumber.Value}";
                   break;
 
                 default:
@@ -188,7 +187,8 @@ namespace Yoma.Core.Domain.Core.Services
                   DateStamp = DateTimeOffset.UtcNow,
                   FileName = blobObject?.OriginalFileName,
                   FileURL = blobObject == null ? null : _blobService.GetURL(blobObject.StorageType, blobObject.Key, blobObject.OriginalFileName, _appSettings.DownloadScheduleLinkExpirationHours * 60),
-                  ExpirationHours = _appSettings.DownloadScheduleLinkExpirationHours
+                  ExpirationHours = _appSettings.DownloadScheduleLinkExpirationHours,
+                  Comment = notificationMessage
                 };
 
                 await _notificationDeliveryService.Send(NotificationType.Download, recipients, data);
