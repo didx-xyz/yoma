@@ -51,7 +51,7 @@ export const OrgSSOEdit: React.FC<InputProps> = ({
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
+      onSubmit={handleSubmit(onSubmitHandler)}
       className="flex flex-col gap-2"
     >
       <div className="form-control">

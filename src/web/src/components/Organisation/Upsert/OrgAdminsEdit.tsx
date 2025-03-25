@@ -86,7 +86,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
   return (
     <>
       <form
-        onSubmit={handleSubmit(onSubmitHandler)} // eslint-disable-line @typescript-eslint/no-misused-promises
+        onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-2"
       >
         <div className="form-control">
@@ -101,7 +101,6 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
           {formState.errors.addCurrentUserAsAdmin && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.addCurrentUserAsAdmin.message}`}
               </span>
             </label>
@@ -117,7 +116,6 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
             name="admins"
             control={form.control}
             defaultValue={organisation?.admins}
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             render={({ field: { onChange, value } }) => (
               <CreatableSelect
                 options={organisation?.admins?.map((val) => ({
@@ -150,7 +148,6 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
           {formState.errors.admins && (
             <label className="label font-bold">
               <span className="label-text-alt italic text-red-500">
-                {/* eslint-disable-next-line @typescript-eslint/restrict-template-expressions */}
                 {`${formState.errors.admins.message}`}
               </span>
             </label>

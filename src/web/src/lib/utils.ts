@@ -15,9 +15,7 @@ export async function fetchClientEnv() {
         resp = await fetch("/api/config/client-env");
       }
       if (resp.ok) {
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
         const data = await resp.json();
-        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
         return data;
       } else {
         console.error("Failed to fetch client environment variables");
@@ -29,7 +27,6 @@ export async function fetchClientEnv() {
   }
 }
 
-/* eslint-disable */
 function appendToFormData(
   formData: FormData,
   key: string,
@@ -77,7 +74,6 @@ export function objectToFormData(
 
   return formData;
 }
-/* eslint-enable */
 
 // formats a date in the local timezone as string
 export function toISOStringForTimezone(date: Date | null) {

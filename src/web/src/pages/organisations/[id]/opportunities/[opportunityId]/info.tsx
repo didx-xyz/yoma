@@ -764,7 +764,6 @@ OpportunityDetails.getLayout = function getLayout(page: ReactElement) {
 OpportunityDetails.theme = function getTheme(
   page: ReactElement<{ theme: string }>,
 ) {
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return
   return page.props.theme;
 };
 

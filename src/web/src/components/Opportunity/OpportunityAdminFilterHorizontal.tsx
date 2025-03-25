@@ -21,7 +21,6 @@ const ValueContainer = ({
   children,
   ...props
 }: ValueContainerProps<SelectOption>) => {
-  // eslint-disable-next-line prefer-const
   let [values, input] = children as any[];
   if (Array.isArray(values)) {
     const plural = values.length === 1 ? "" : "s";
@@ -118,7 +117,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
     // setTimeout is needed to prevent the form from being reset before the default values are set
     setTimeout(() => {
       reset({
-        ...searchFilter,
+        ...(searchFilter as any),
       });
     }, 100);
   }, [reset, searchFilter]);
