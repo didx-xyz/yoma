@@ -171,37 +171,48 @@ namespace Yoma.Core.Domain.Core.Services
 
                 throw;
               }
-
-              //send notification
-              try
+              finally
               {
-                var user = _userService.GetById(item.UserId, false, false);
+                //dispose file streams to release memory (especially important in constrained environments)
+                foreach (var file in files)
+                {
+                  try
+                  {
+                    file.OpenReadStream().Dispose(); //ensure stream is closed
+                  }
+                  catch { }
+                }
 
-                var recipients = new List<NotificationRecipient>
+                //send notification
+                try
+                {
+                  var user = _userService.GetById(item.UserId, false, false);
+
+                  var recipients = new List<NotificationRecipient>
                   {
                     new() { Username = user.Username, PhoneNumber = user.PhoneNumber, Email = user.Email, DisplayName = user.DisplayName }
                   };
 
-                var data = new NotificationDownload
+                  var data = new NotificationDownload
+                  {
+                    DateStamp = DateTimeOffset.UtcNow,
+                    FileName = blobObject?.OriginalFileName,
+                    FileURL = blobObject == null ? null : _blobService.GetURL(blobObject.StorageType, blobObject.Key, blobObject.OriginalFileName, _appSettings.DownloadScheduleLinkExpirationHours * 60),
+                    ExpirationHours = _appSettings.DownloadScheduleLinkExpirationHours,
+                    Comment = notificationMessage
+                  };
+
+                  await _notificationDeliveryService.Send(NotificationType.Download, recipients, data);
+
+                  _logger.LogInformation("Successfully sent notification");
+                }
+                catch (Exception ex)
                 {
-                  DateStamp = DateTimeOffset.UtcNow,
-                  FileName = blobObject?.OriginalFileName,
-                  FileURL = blobObject == null ? null : _blobService.GetURL(blobObject.StorageType, blobObject.Key, blobObject.OriginalFileName, _appSettings.DownloadScheduleLinkExpirationHours * 60),
-                  ExpirationHours = _appSettings.DownloadScheduleLinkExpirationHours,
-                  Comment = notificationMessage
-                };
+                  _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+                }
 
-                await _notificationDeliveryService.Send(NotificationType.Download, recipients, data);
-
-                _logger.LogInformation("Successfully sent notification");
+                _logger.LogInformation("Processed download schedule for item with id '{id}'", item.Id);
               }
-              catch (Exception ex)
-              {
-                _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
-              }
-
-              _logger.LogInformation("Processed download schedule for item with id '{id}'", item.Id);
-            }
             catch (Exception ex)
             {
               _logger.LogError(ex, "Failed to process download schedule for item with id '{id}': {errorMessage}", item.Id, ex.Message);
