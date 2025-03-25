@@ -41,8 +41,6 @@ appSettings:
 
 volumes:
   - name: tmp
-    emptyDir: {}
-  - name: data
     emptyDir:
       sizeLimit: 10Gi
   - name: app-settings
@@ -52,8 +50,6 @@ volumes:
 volumeMounts:
   - name: tmp
     mountPath: /tmp
-  - name: data
-    mountPath: /data
   - name: app-settings
     mountPath: /api/appsettings.Production.json
     subPath: appsettings.Production.json
