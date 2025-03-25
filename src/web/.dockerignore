@@ -10,7 +10,7 @@ public/_.map
 
 !src/
 !.env.example
-!.eslintrc.cjs
+!eslint.config.mjs
 !.prettierignore
 !next.config.mjs
 !package.json
