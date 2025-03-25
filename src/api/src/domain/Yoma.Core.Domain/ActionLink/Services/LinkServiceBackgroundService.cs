@@ -1,5 +1,3 @@
-using Hangfire;
-using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.ActionLink.Interfaces;
@@ -64,52 +62,40 @@ namespace Yoma.Core.Domain.ActionLink.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessExpiration), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        _logger.LogInformation("Processing action link expiration");
+
+        var statusExpiredId = _linkStatusService.GetByName(LinkStatus.Expired.ToString()).Id;
+        var statusExpirableIds = Statuses_Expirable.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
+
+        while (executeUntil > DateTimeOffset.UtcNow)
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+          var items = _linkRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
+              o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.ActionLinkExpirationScheduleBatchSize).ToList();
+          if (items.Count == 0) break;
 
-          _logger.LogInformation("Processing action link expiration");
+          var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
-          var statusExpiredId = _linkStatusService.GetByName(LinkStatus.Expired.ToString()).Id;
-          var statusExpirableIds = Statuses_Expirable.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
-
-          while (executeUntil > DateTimeOffset.UtcNow)
+          foreach (var item in items)
           {
-            var items = _linkRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-                o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.ActionLinkExpirationScheduleBatchSize).ToList();
-            if (items.Count == 0) break;
-
-            var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
-
-            foreach (var item in items)
-            {
-              item.StatusId = statusExpiredId;
-              item.Status = LinkStatus.Expired;
-              item.ModifiedByUserId = user.Id;
-              _logger.LogInformation("Action link with id '{id}' flagged for expiration", item.Id);
-            }
-
-            items = await _linkRepository.Update(items);
-
-            if (executeUntil <= DateTimeOffset.UtcNow) break;
+            item.StatusId = statusExpiredId;
+            item.Status = LinkStatus.Expired;
+            item.ModifiedByUserId = user.Id;
+            _logger.LogInformation("Action link with id '{id}' flagged for expiration", item.Id);
           }
 
-          _logger.LogInformation("Processed action link expiration");
+          items = await _linkRepository.Update(items);
+
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
+
+        _logger.LogInformation("Processed action link expiration");
       }
       catch (Exception ex)
       {
@@ -117,7 +103,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -127,98 +113,89 @@ namespace Yoma.Core.Domain.ActionLink.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessDeclination), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
-        {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
             lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
 
-          _logger.LogInformation("Processing action link declination");
+        _logger.LogInformation("Processing action link declination");
 
-          var statusDeclinationIds = Statuses_Declination.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
-          var statusDeclinedId = _linkStatusService.GetByName(LinkStatus.Declined.ToString()).Id;
+        var statusDeclinationIds = Statuses_Declination.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
+        var statusDeclinedId = _linkStatusService.GetByName(LinkStatus.Declined.ToString()).Id;
 
-          while (executeUntil > DateTimeOffset.UtcNow)
+        while (executeUntil > DateTimeOffset.UtcNow)
+        {
+          var items = _linkRepository.Query().Where(o => statusDeclinationIds.Contains(o.StatusId) &&
+           o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.ActionLinkDeclinationScheduleIntervalInDays))
+           .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.ActionLinkDeclinationScheduleBatchSize).ToList();
+          if (items.Count == 0) break;
+
+          var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+
+          foreach (var item in items)
           {
-            var items = _linkRepository.Query().Where(o => statusDeclinationIds.Contains(o.StatusId) &&
-             o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.ActionLinkDeclinationScheduleIntervalInDays))
-             .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.ActionLinkDeclinationScheduleBatchSize).ToList();
-            if (items.Count == 0) break;
-
-            var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
-
-            foreach (var item in items)
-            {
-              item.CommentApproval = $"Auto-Declined due to being {string.Join("/", Statuses_Declination).ToLower()} for more than {_scheduleJobOptions.ActionLinkDeclinationScheduleIntervalInDays} days";
-              item.StatusId = statusDeclinedId;
-              item.Status = LinkStatus.Declined;
-              item.ModifiedByUserId = user.Id;
-              _logger.LogInformation("Verify link with id '{id}' flagged for declination", item.Id);
-            }
-
-            items = await _linkRepository.Update(items);
-
-            var notificationType = NotificationType.ActionLink_Verify_Approval_Declined;
-            List<NotificationRecipient>? recipients = null;
-            foreach (var item in items)
-            {
-              try
-              {
-                var dataLink = new NotificationActionLinkVerifyApprovalItem { Name = item.Name, EntityType = item.EntityType };
-
-                var entityType = Enum.Parse<LinkEntityType>(item.EntityType, true);
-                switch (entityType)
-                {
-                  case LinkEntityType.Opportunity:
-                    if (!item.OpportunityOrganizationId.HasValue)
-                      throw new InvalidOperationException("Opportunity organization details expected");
-
-                    //send notification to organization administrators
-                    var organization = _organizationService.GetById(item.OpportunityOrganizationId.Value, true, false, false);
-
-                    recipients = organization.Administrators?.Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.DisplayName }).ToList();
-
-                    dataLink.Comment = item.CommentApproval;
-                    dataLink.URL = _notificationURLFactory.ActionLinkVerifyApprovalItemUrl(notificationType, organization.Id);
-
-                    break;
-
-                  default:
-                    throw new InvalidOperationException($"Invalid / unsupported entity type of '{entityType}'");
-                }
-
-                var data = new NotificationActionLinkVerifyApproval
-                {
-                  Links = [dataLink]
-                };
-
-                await _notificationDeliveryService.Send(notificationType, recipients, data);
-
-                _logger.LogInformation("Successfully sent notification");
-              }
-              catch (Exception ex)
-              {
-                _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
-              }
-            }
-
-            if (executeUntil <= DateTimeOffset.UtcNow) break;
+            item.CommentApproval = $"Auto-Declined due to being {string.Join("/", Statuses_Declination).ToLower()} for more than {_scheduleJobOptions.ActionLinkDeclinationScheduleIntervalInDays} days";
+            item.StatusId = statusDeclinedId;
+            item.Status = LinkStatus.Declined;
+            item.ModifiedByUserId = user.Id;
+            _logger.LogInformation("Verify link with id '{id}' flagged for declination", item.Id);
           }
 
-          _logger.LogInformation("Processed action link declination");
+          items = await _linkRepository.Update(items);
+
+          var notificationType = NotificationType.ActionLink_Verify_Approval_Declined;
+          List<NotificationRecipient>? recipients = null;
+          foreach (var item in items)
+          {
+            try
+            {
+              var dataLink = new NotificationActionLinkVerifyApprovalItem { Name = item.Name, EntityType = item.EntityType };
+
+              var entityType = Enum.Parse<LinkEntityType>(item.EntityType, true);
+              switch (entityType)
+              {
+                case LinkEntityType.Opportunity:
+                  if (!item.OpportunityOrganizationId.HasValue)
+                    throw new InvalidOperationException("Opportunity organization details expected");
+
+                  //send notification to organization administrators
+                  var organization = _organizationService.GetById(item.OpportunityOrganizationId.Value, true, false, false);
+
+                  recipients = organization.Administrators?.Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.DisplayName }).ToList();
+
+                  dataLink.Comment = item.CommentApproval;
+                  dataLink.URL = _notificationURLFactory.ActionLinkVerifyApprovalItemUrl(notificationType, organization.Id);
+
+                  break;
+
+                default:
+                  throw new InvalidOperationException($"Invalid / unsupported entity type of '{entityType}'");
+              }
+
+              var data = new NotificationActionLinkVerifyApproval
+              {
+                Links = [dataLink]
+              };
+
+              await _notificationDeliveryService.Send(notificationType, recipients, data);
+
+              _logger.LogInformation("Successfully sent notification");
+            }
+            catch (Exception ex)
+            {
+              _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+            }
+          }
+
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessDeclination), ex.Message);
+
+        _logger.LogInformation("Processed action link declination");
       }
       catch (Exception ex)
       {
@@ -226,7 +203,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -236,53 +213,41 @@ namespace Yoma.Core.Domain.ActionLink.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessDeletion), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        var statusDeletionIds = Statuses_Deletion.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
+        var statusDeletedId = _linkStatusService.GetByName(LinkStatus.Deleted.ToString()).Id;
+
+        _logger.LogInformation("Processing action link deletion");
+
+        while (executeUntil > DateTimeOffset.UtcNow)
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+          var items = _linkRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
+              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.ActionLinkDeletionScheduleIntervalInDays))
+              .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.ActionLinkDeletionScheduleBatchSize).ToList();
+          if (items.Count == 0) break;
 
-          var statusDeletionIds = Statuses_Deletion.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
-          var statusDeletedId = _linkStatusService.GetByName(LinkStatus.Deleted.ToString()).Id;
+          var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
-          _logger.LogInformation("Processing action link deletion");
-
-          while (executeUntil > DateTimeOffset.UtcNow)
+          foreach (var item in items)
           {
-            var items = _linkRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-                o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.ActionLinkDeletionScheduleIntervalInDays))
-                .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.ActionLinkDeletionScheduleBatchSize).ToList();
-            if (items.Count == 0) break;
-
-            var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
-
-            foreach (var item in items)
-            {
-              item.StatusId = statusDeletedId;
-              item.Status = LinkStatus.Deleted;
-              item.ModifiedByUserId = user.Id;
-              _logger.LogInformation("Action link with id '{id}' flagged for deletion", item.Id);
-            }
-
-            await _linkRepository.Update(items);
-
-            if (executeUntil <= DateTimeOffset.UtcNow) break;
+            item.StatusId = statusDeletedId;
+            item.Status = LinkStatus.Deleted;
+            item.ModifiedByUserId = user.Id;
+            _logger.LogInformation("Action link with id '{id}' flagged for deletion", item.Id);
           }
 
-          _logger.LogInformation("Processed action link deletion");
+          await _linkRepository.Update(items);
+
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
+
+        _logger.LogInformation("Processed action link deletion");
       }
       catch (Exception ex)
       {
@@ -290,7 +255,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

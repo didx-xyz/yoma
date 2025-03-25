@@ -19,6 +19,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
       {
         Id = entity.Id,
         MyOpportunityId = entity.MyOpportunityId,
+        UserDisplayName = entity.MyOpportunity.User.DisplayName ?? entity.MyOpportunity.User.Email ?? entity.MyOpportunity.User.PhoneNumber ?? string.Empty,
         VerificationTypeId = entity.VerificationTypeId,
         VerificationType = Enum.Parse<VerificationType>(entity.VerificationType.Name, true),
         GeometryProperties = entity.GeometryProperties,

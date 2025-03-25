@@ -1,5 +1,3 @@
-using Hangfire;
-using Hangfire.Storage;
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -74,99 +72,88 @@ namespace Yoma.Core.Domain.Entity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessDeclination), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        _logger.LogInformation("Processing organization declination");
+
+        var statusDeclinationIds = Statuses_Declination.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
+        var statusDeclinedId = _organizationStatusService.GetByName(OrganizationStatus.Declined.ToString()).Id;
+
+        while (executeUntil > DateTimeOffset.UtcNow)
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+          var items = _organizationRepository.Query(true).Where(o => statusDeclinationIds.Contains(o.StatusId) &&
+           o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OrganizationDeclinationIntervalInDays))
+           .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeclinationBatchSize).ToList();
+          if (items.Count == 0) break;
 
-          _logger.LogInformation("Processing organization declination");
+          var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
-          var statusDeclinationIds = Statuses_Declination.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
-          var statusDeclinedId = _organizationStatusService.GetByName(OrganizationStatus.Declined.ToString()).Id;
-
-          while (executeUntil > DateTimeOffset.UtcNow)
+          foreach (var item in items)
           {
-            var items = _organizationRepository.Query(true).Where(o => statusDeclinationIds.Contains(o.StatusId) &&
-             o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OrganizationDeclinationIntervalInDays))
-             .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeclinationBatchSize).ToList();
-            if (items.Count == 0) break;
+            item.CommentApproval = $"Auto-Declined due to being {string.Join("/", Statuses_Declination).ToLower()} for more than {_scheduleJobOptions.OrganizationDeclinationIntervalInDays} days";
+            item.StatusId = statusDeclinedId;
+            item.Status = OrganizationStatus.Declined;
+            item.ModifiedByUserId = user.Id;
+            _logger.LogInformation("Organization with id '{id}' flagged for declination", item.Id);
+          }
 
-            var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
+          items = await _organizationRepository.Update(items);
 
-            foreach (var item in items)
+          foreach (var item in items)
+            await _mediator.Publish(new OrganizationStatusChangedEvent(item));
+
+          var groupedOrganizations = items
+              .SelectMany(org => org.Administrators ?? Enumerable.Empty<UserInfo>(), (org, admin) => new { Administrator = admin, Organization = org })
+              .GroupBy(item => item.Administrator, item => item.Organization);
+
+          var notificationType = Notification.NotificationType.Organization_Approval_Declined;
+          foreach (var group in groupedOrganizations)
+          {
+            try
             {
-              item.CommentApproval = $"Auto-Declined due to being {string.Join("/", Statuses_Declination).ToLower()} for more than {_scheduleJobOptions.OrganizationDeclinationIntervalInDays} days";
-              item.StatusId = statusDeclinedId;
-              item.Status = OrganizationStatus.Declined;
-              item.ModifiedByUserId = user.Id;
-              _logger.LogInformation("Organization with id '{id}' flagged for declination", item.Id);
-            }
-
-            items = await _organizationRepository.Update(items);
-
-            foreach (var item in items)
-              await _mediator.Publish(new OrganizationStatusChangedEvent(item));
-
-            var groupedOrganizations = items
-                .SelectMany(org => org.Administrators ?? Enumerable.Empty<UserInfo>(), (org, admin) => new { Administrator = admin, Organization = org })
-                .GroupBy(item => item.Administrator, item => item.Organization);
-
-            var notificationType = Notification.NotificationType.Organization_Approval_Declined;
-            foreach (var group in groupedOrganizations)
-            {
-              try
-              {
-                var recipients = new List<NotificationRecipient>
+              var recipients = new List<NotificationRecipient>
                         {
                             new() { Username = group.Key.Username, PhoneNumber = group.Key.PhoneNumber, Email = group.Key.Email, DisplayName = group.Key.DisplayName }
                         };
 
-                var data = new NotificationOrganizationApproval
-                {
-                  Organizations = [.. group.Select(org => new NotificationOrganizationApprovalItem
+              var data = new NotificationOrganizationApproval
+              {
+                Organizations = [.. group.Select(org => new NotificationOrganizationApprovalItem
                   {
                     Name = org.Name,
                     Comment = org.CommentApproval,
                     URL = _notificationURLFactory.OrganizationApprovalItemURL(notificationType, org.Id)
                   })]
-                };
+              };
 
-                await _notificationDeliveryService.Send(notificationType, recipients, data);
+              await _notificationDeliveryService.Send(notificationType, recipients, data);
 
-                _logger.LogInformation("Successfully sent notification");
-              }
-              catch (Exception ex)
-              {
-                _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
-              }
+              _logger.LogInformation("Successfully sent notification");
             }
-
-            if (executeUntil <= DateTimeOffset.UtcNow) break;
+            catch (Exception ex)
+            {
+              _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+            }
           }
 
-          _logger.LogInformation("Processed organization declination");
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
+
+        _logger.LogInformation("Processed organization declination");
       }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessDeclination), ex.Message);
-      }
+
       catch (Exception ex)
       {
         _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeclination), ex.Message);
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -176,56 +163,44 @@ namespace Yoma.Core.Domain.Entity.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessDeletion), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        _logger.LogInformation("Processing organization deletion");
+
+        var statusDeletionIds = Statuses_Deletion.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
+        var statusDeletedId = _organizationStatusService.GetByName(OrganizationStatus.Deleted.ToString()).Id;
+
+        while (executeUntil > DateTimeOffset.UtcNow)
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+          var items = _organizationRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
+              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OrganizationDeletionIntervalInDays))
+              .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeletionBatchSize).ToList();
+          if (items.Count == 0) break;
 
-          _logger.LogInformation("Processing organization deletion");
+          var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
-          var statusDeletionIds = Statuses_Deletion.Select(o => _organizationStatusService.GetByName(o.ToString()).Id).ToList();
-          var statusDeletedId = _organizationStatusService.GetByName(OrganizationStatus.Deleted.ToString()).Id;
-
-          while (executeUntil > DateTimeOffset.UtcNow)
+          foreach (var item in items)
           {
-            var items = _organizationRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-                o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OrganizationDeletionIntervalInDays))
-                .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OrganizationDeletionBatchSize).ToList();
-            if (items.Count == 0) break;
-
-            var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
-
-            foreach (var item in items)
-            {
-              item.StatusId = statusDeletedId;
-              item.Status = OrganizationStatus.Deleted;
-              item.ModifiedByUserId = user.Id;
-              _logger.LogInformation("Organization with id '{id}' flagged for deletion", item.Id);
-            }
-
-            await _organizationRepository.Update(items);
-
-            foreach (var item in items)
-              await _mediator.Publish(new OrganizationStatusChangedEvent(item));
-
-            if (executeUntil <= DateTimeOffset.UtcNow) break;
+            item.StatusId = statusDeletedId;
+            item.Status = OrganizationStatus.Deleted;
+            item.ModifiedByUserId = user.Id;
+            _logger.LogInformation("Organization with id '{id}' flagged for deletion", item.Id);
           }
 
-          _logger.LogInformation("Processed organization deletion");
+          await _organizationRepository.Update(items);
+
+          foreach (var item in items)
+            await _mediator.Publish(new OrganizationStatusChangedEvent(item));
+
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
+
+        _logger.LogInformation("Processed organization deletion");
       }
       catch (Exception ex)
       {
@@ -233,7 +208,7 @@ namespace Yoma.Core.Domain.Entity.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -241,37 +216,25 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       const string lockIdentifier = "organization_seed_logos_and_documents";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(SeedLogoAndDocuments), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
-
-          if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
-          {
-            _logger.LogInformation("Organization logo and document seeding skipped for environment '{environment}'", _environmentProvider.Environment);
-            return;
-          }
-
-          _logger.LogInformation("Processing organization logo and document seeding");
-
-          await SeedLogo();
-          await SeedDocuments();
-
-          _logger.LogInformation("Processed organization logo and document seeding");
+          _logger.LogInformation("Organization logo and document seeding skipped for environment '{environment}'", _environmentProvider.Environment);
+          return;
         }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(SeedLogoAndDocuments), ex.Message);
+
+        _logger.LogInformation("Processing organization logo and document seeding");
+
+        await SeedLogo();
+        await SeedDocuments();
+
+        _logger.LogInformation("Processed organization logo and document seeding");
       }
       catch (Exception ex)
       {
@@ -279,7 +242,7 @@ namespace Yoma.Core.Domain.Entity.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

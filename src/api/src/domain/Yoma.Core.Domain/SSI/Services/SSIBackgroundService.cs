@@ -1,5 +1,3 @@
-using Hangfire;
-using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Collections;
@@ -77,42 +75,30 @@ namespace Yoma.Core.Domain.SSI.Services
     {
       const string lockIdentifier = "ssi_seed_schemas";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
-      {
-        _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(SeedSchemas), _environmentProvider.Environment, DateTimeOffset.UtcNow);
-        return;
-      }
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(SeedSchemas), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
-
-          _logger.LogInformation("Processing SSI default schema seeding");
-
-          await SeedSchema(ArtifactType.JWS,
-               SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
-               ["Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Skills", "Opportunity_Summary", "Opportunity_Type", "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted"]);
-
-          await SeedSchema(ArtifactType.Indy,
-              _appSettings.SSISchemaFullNameYoID,
-              ["Organization_Name", "Organization_LogoURL", "User_DisplayName", "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Education", "User_Country"]);
-
-          _logger.LogInformation("Processed SSI default schema seeding");
+          _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(SeedSchemas), _environmentProvider.Environment, DateTimeOffset.UtcNow);
+          return;
         }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(SeedSchemas), ex.Message);
+
+        _logger.LogInformation("Processing SSI default schema seeding");
+
+        await SeedSchema(ArtifactType.JWS,
+             SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
+             ["Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Skills", "Opportunity_Summary", "Opportunity_Type", "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted"]);
+
+        await SeedSchema(ArtifactType.Indy,
+            _appSettings.SSISchemaFullNameYoID,
+            ["Organization_Name", "Organization_LogoURL", "User_DisplayName", "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Education", "User_Country"]);
+
+        _logger.LogInformation("Processed SSI default schema seeding");
       }
       catch (Exception ex)
       {
@@ -120,7 +106,7 @@ namespace Yoma.Core.Domain.SSI.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -130,107 +116,95 @@ namespace Yoma.Core.Domain.SSI.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSITenantCreationScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
-      {
-        _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(ProcessTenantCreation), _environmentProvider.Environment, DateTimeOffset.UtcNow);
-        return;
-      }
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessTenantCreation), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
-
-          _logger.LogInformation("Processing SSI tenant creation");
-
-          var itemIdsToSkip = new List<Guid>();
-          while (executeUntil > DateTimeOffset.UtcNow)
-          {
-            var items = _ssiTenantService.ListPendingCreationSchedule(_scheduleJobOptions.SSITenantCreationScheduleBatchSize, itemIdsToSkip);
-            if (items.Count == 0) break;
-
-            foreach (var item in items)
-            {
-              try
-              {
-                _logger.LogInformation("Processing SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
-
-                TenantRequest request;
-                var entityType = Enum.Parse<EntityType>(item.EntityType, true);
-                switch (entityType)
-                {
-                  case EntityType.User:
-                    if (!item.UserId.HasValue)
-                      throw new InvalidOperationException($"Entity type '{item.EntityType}': User id is null");
-
-                    var user = _userService.GetById(item.UserId.Value, false, true);
-
-                    request = new TenantRequest
-                    {
-                      // utilize user id, ensuring a consistent tenant reference or name even if the name is altered
-                      Referent = user.Id.ToString(),
-                      Name = user.DisplayName?.RemoveSpecialCharacters() ?? user.Username,
-                      ImageUrl = user.PhotoURL,
-                      Roles = [Role.Holder]
-                    };
-                    break;
-
-                  case EntityType.Organization:
-                    if (!item.OrganizationId.HasValue)
-                      throw new InvalidOperationException($"Entity type '{item.EntityType}': Organization id is null");
-
-                    var org = _organizationService.GetById(item.OrganizationId.Value, false, true, false);
-
-                    request = new TenantRequest
-                    {
-                      //requiring uniqueness for both the name (wallet label) and its corresponding referent (wallet name) as issuers and verifiers are published to the trust registry
-                      Referent = org.NameHashValue, //use hash value of name; name can not be reused (see OrganizationService Create / Update)
-                      Name = org.Name.RemoveSpecialCharacters(),
-                      ImageUrl = org.LogoURL,
-                      Roles = [Role.Holder, Role.Issuer, Role.Verifier]
-                    };
-                    break;
-
-                  default:
-                    throw new InvalidOperationException($"Entity type '{item.EntityType}' not supported");
-                }
-
-                item.TenantId = await _ssiProviderClient.EnsureTenant(request);
-                item.Status = TenantCreationStatus.Created;
-                await _ssiTenantService.UpdateScheduleCreation(item);
-
-                _logger.LogInformation("Processed SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
-              }
-              catch (Exception ex)
-              {
-                _logger.LogError(ex, "Failed to created SSI tenant for '{entityType}'and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
-
-                item.Status = TenantCreationStatus.Error;
-                item.ErrorReason = ex.Message;
-                await _ssiTenantService.UpdateScheduleCreation(item);
-
-                itemIdsToSkip.Add(item.Id);
-              }
-
-              if (executeUntil <= DateTimeOffset.UtcNow) break;
-            }
-          }
-
-          _logger.LogInformation("Processed SSI tenant creation");
+          _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(ProcessTenantCreation), _environmentProvider.Environment, DateTimeOffset.UtcNow);
+          return;
         }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessTenantCreation), ex.Message);
+
+        _logger.LogInformation("Processing SSI tenant creation");
+
+        var itemIdsToSkip = new List<Guid>();
+        while (executeUntil > DateTimeOffset.UtcNow)
+        {
+          var items = _ssiTenantService.ListPendingCreationSchedule(_scheduleJobOptions.SSITenantCreationScheduleBatchSize, itemIdsToSkip);
+          if (items.Count == 0) break;
+
+          foreach (var item in items)
+          {
+            try
+            {
+              _logger.LogInformation("Processing SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
+
+              TenantRequest request;
+              var entityType = Enum.Parse<EntityType>(item.EntityType, true);
+              switch (entityType)
+              {
+                case EntityType.User:
+                  if (!item.UserId.HasValue)
+                    throw new InvalidOperationException($"Entity type '{item.EntityType}': User id is null");
+
+                  var user = _userService.GetById(item.UserId.Value, false, true);
+
+                  request = new TenantRequest
+                  {
+                    // utilize user id, ensuring a consistent tenant reference or name even if the name is altered
+                    Referent = user.Id.ToString(),
+                    Name = user.DisplayName?.RemoveSpecialCharacters() ?? user.Username,
+                    ImageUrl = user.PhotoURL,
+                    Roles = [Role.Holder]
+                  };
+                  break;
+
+                case EntityType.Organization:
+                  if (!item.OrganizationId.HasValue)
+                    throw new InvalidOperationException($"Entity type '{item.EntityType}': Organization id is null");
+
+                  var org = _organizationService.GetById(item.OrganizationId.Value, false, true, false);
+
+                  request = new TenantRequest
+                  {
+                    //requiring uniqueness for both the name (wallet label) and its corresponding referent (wallet name) as issuers and verifiers are published to the trust registry
+                    Referent = org.NameHashValue, //use hash value of name; name can not be reused (see OrganizationService Create / Update)
+                    Name = org.Name.RemoveSpecialCharacters(),
+                    ImageUrl = org.LogoURL,
+                    Roles = [Role.Holder, Role.Issuer, Role.Verifier]
+                  };
+                  break;
+
+                default:
+                  throw new InvalidOperationException($"Entity type '{item.EntityType}' not supported");
+              }
+
+              item.TenantId = await _ssiProviderClient.EnsureTenant(request);
+              item.Status = TenantCreationStatus.Created;
+              await _ssiTenantService.UpdateScheduleCreation(item);
+
+              _logger.LogInformation("Processed SSI tenant creation for '{entityType}' and item with id '{id}'", item.EntityType, item.Id);
+            }
+            catch (Exception ex)
+            {
+              _logger.LogError(ex, "Failed to created SSI tenant for '{entityType}'and item with id '{id}': {errorMessage}", item.EntityType, item.Id, ex.Message);
+
+              item.Status = TenantCreationStatus.Error;
+              item.ErrorReason = ex.Message;
+              await _ssiTenantService.UpdateScheduleCreation(item);
+
+              itemIdsToSkip.Add(item.Id);
+            }
+
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
+          }
+        }
+
+        _logger.LogInformation("Processed SSI tenant creation");
       }
       catch (Exception ex)
       {
@@ -238,7 +212,7 @@ namespace Yoma.Core.Domain.SSI.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
 
@@ -248,189 +222,177 @@ namespace Yoma.Core.Domain.SSI.Services
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.SSICredentialIssuanceScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
-      {
-        _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(ProcessCredentialIssuance), _environmentProvider.Environment, DateTimeOffset.UtcNow);
-        return;
-      }
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(ProcessCredentialIssuance), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        if (!_appSettings.SSIEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
+          _logger.LogInformation("{Process} skipped for environment '{environment}' at {dateStamp} as SSI is not enabled.", nameof(ProcessCredentialIssuance), _environmentProvider.Environment, DateTimeOffset.UtcNow);
+          return;
+        }
 
-          _logger.LogInformation("Processing SSI credential issuance");
+        _logger.LogInformation("Processing SSI credential issuance");
 
-          var itemIdsToSkip = new List<Guid>();
-          while (executeUntil > DateTimeOffset.UtcNow)
+        var itemIdsToSkip = new List<Guid>();
+        while (executeUntil > DateTimeOffset.UtcNow)
+        {
+          var items = _ssiCredentialService.ListPendingIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, itemIdsToSkip);
+          if (items.Count == 0) break;
+
+          foreach (var item in items)
           {
-            var items = _ssiCredentialService.ListPendingIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, itemIdsToSkip);
-            if (items.Count == 0) break;
-
-            foreach (var item in items)
+            try
             {
-              try
-              {
-                _logger.LogInformation("Processing SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
+              _logger.LogInformation("Processing SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
 
-                var request = new CredentialIssuanceRequest
-                {
-                  ClientReferent = new KeyValuePair<string, string>(SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()),
-                  SchemaType = item.SchemaType.ToString(),
-                  SchemaName = item.SchemaName,
-                  ArtifactType = item.ArtifactType,
-                  Attributes = new Dictionary<string, string>()
+              var request = new CredentialIssuanceRequest
+              {
+                ClientReferent = new KeyValuePair<string, string>(SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()),
+                SchemaType = item.SchemaType.ToString(),
+                SchemaName = item.SchemaName,
+                ArtifactType = item.ArtifactType,
+                Attributes = new Dictionary<string, string>()
                                 {
                                     { SSISchemaService.SchemaAttribute_Internal_DateIssued, DateTimeOffset.UtcNow.ToString()},
                                     { SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()}
                                 }
-                };
+              };
 
-                SSISchema schema;
-                User user;
-                (bool proceed, string tenantId) tenantIssuer;
-                (bool proceed, string tenantId) tenantHolder;
-                switch (item.SchemaType)
-                {
-                  case SchemaType.YoID:
-                    if (!item.UserId.HasValue)
-                      throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'User id is null");
-                    user = _userService.GetById(item.UserId.Value, true, true);
-                    user.DisplayName ??= user.Username; //default display name to username if null
-
-                    var organization = _organizationService.GetByNameOrNull(_appSettings.YomaOrganizationName, true, true);
-                    if (organization == null)
-                    {
-                      _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with id '{id}' " +
-                          "was skipped as the '{orgName}' organization could not be found", item.SchemaType, item.Id, _appSettings.YomaOrganizationName);
-                      itemIdsToSkip.Add(item.Id);
-                      continue;
-                    }
-
-                    tenantIssuer = GetTenantId(item, EntityType.Organization, organization.Id);
-                    if (!tenantIssuer.proceed)
-                    {
-                      itemIdsToSkip.Add(item.Id);
-                      continue;
-                    }
-                    request.TenantIdIssuer = tenantIssuer.tenantId;
-
-                    tenantHolder = GetTenantId(item, EntityType.User, user.Id);
-                    if (!tenantHolder.proceed)
-                    {
-                      itemIdsToSkip.Add(item.Id);
-                      continue;
-                    }
-                    request.TenantIdHolder = tenantHolder.tenantId;
-
-                    schema = await _ssiSchemaService.GetByFullName(item.SchemaName);
-
-                    foreach (var entity in schema.Entities)
-                    {
-                      var entityType = Type.GetType(entity.TypeName)
-                          ?? throw new InvalidOperationException($"Failed to get the entity of type '{entity.TypeName}'");
-
-                      switch (entityType)
-                      {
-                        case Type t when t == typeof(User):
-                          ReflectEntityValues(request, entity, t, user);
-                          break;
-
-                        case Type t when t == typeof(Organization):
-                          ReflectEntityValues(request, entity, t, organization);
-                          break;
-
-                        default:
-                          throw new InvalidOperationException($"Entity of type '{entity.TypeName}' not supported");
-                      }
-                    }
-                    break;
-
-                  case SchemaType.Opportunity:
-                    if (!item.MyOpportunityId.HasValue)
-                      throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'My' opportunity id is null");
-                    var myOpportunity = _myOpportunityService.GetById(item.MyOpportunityId.Value, true, true, false);
-
-                    tenantIssuer = GetTenantId(item, EntityType.Organization, myOpportunity.OrganizationId);
-                    if (!tenantIssuer.proceed)
-                    {
-                      itemIdsToSkip.Add(item.Id);
-                      continue;
-                    }
-                    request.TenantIdIssuer = tenantIssuer.tenantId;
-
-                    tenantHolder = GetTenantId(item, EntityType.User, myOpportunity.UserId);
-                    if (!tenantHolder.proceed)
-                    {
-                      itemIdsToSkip.Add(item.Id);
-                      continue;
-                    }
-                    request.TenantIdHolder = tenantHolder.tenantId;
-
-                    schema = await _ssiSchemaService.GetByFullName(item.SchemaName);
-
-                    foreach (var entity in schema.Entities)
-                    {
-                      var entityType = Type.GetType(entity.TypeName)
-                          ?? throw new InvalidOperationException($"Failed to get the entity of type '{entity.TypeName}'");
-
-                      switch (entityType)
-                      {
-                        case Type t when t == typeof(Opportunity.Models.Opportunity):
-                          var opportunity = _opportunityService.GetById(myOpportunity.OpportunityId, true, true, false);
-                          ReflectEntityValues(request, entity, t, opportunity);
-                          break;
-
-                        case Type t when t == typeof(MyOpportunity.Models.MyOpportunity):
-                          ReflectEntityValues(request, entity, t, myOpportunity);
-                          break;
-
-                        default:
-                          throw new InvalidOperationException($"Entity of type '{entity.TypeName}' not supported");
-                      }
-                    }
-                    break;
-
-                  default:
-                    throw new InvalidOperationException($"Schema type '{item.SchemaType}' not supported");
-                }
-
-                item.CredentialId = await _ssiProviderClient.IssueCredential(request);
-                item.Status = CredentialIssuanceStatus.Issued;
-                await _ssiCredentialService.UpdateScheduleIssuance(item);
-
-                _logger.LogInformation("Processed SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
-              }
-              catch (Exception ex)
+              SSISchema schema;
+              User user;
+              (bool proceed, string tenantId) tenantIssuer;
+              (bool proceed, string tenantId) tenantHolder;
+              switch (item.SchemaType)
               {
-                _logger.LogError(ex, "Failed to issue SSI credential for schema type '{schemaType}' and item with id '{id}': {errorMessage}", item.SchemaType, item.Id, ex.Message);
+                case SchemaType.YoID:
+                  if (!item.UserId.HasValue)
+                    throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'User id is null");
+                  user = _userService.GetById(item.UserId.Value, true, true);
+                  user.DisplayName ??= user.Username; //default display name to username if null
 
-                item.Status = CredentialIssuanceStatus.Error;
-                item.ErrorReason = ex.Message;
-                await _ssiCredentialService.UpdateScheduleIssuance(item);
+                  var organization = _organizationService.GetByNameOrNull(_appSettings.YomaOrganizationName, true, true);
+                  if (organization == null)
+                  {
+                    _logger.LogInformation("Processing of SSI credential issuance for schema type '{schemaType}' and item with id '{id}' " +
+                        "was skipped as the '{orgName}' organization could not be found", item.SchemaType, item.Id, _appSettings.YomaOrganizationName);
+                    itemIdsToSkip.Add(item.Id);
+                    continue;
+                  }
 
-                itemIdsToSkip.Add(item.Id);
+                  tenantIssuer = GetTenantId(item, EntityType.Organization, organization.Id);
+                  if (!tenantIssuer.proceed)
+                  {
+                    itemIdsToSkip.Add(item.Id);
+                    continue;
+                  }
+                  request.TenantIdIssuer = tenantIssuer.tenantId;
+
+                  tenantHolder = GetTenantId(item, EntityType.User, user.Id);
+                  if (!tenantHolder.proceed)
+                  {
+                    itemIdsToSkip.Add(item.Id);
+                    continue;
+                  }
+                  request.TenantIdHolder = tenantHolder.tenantId;
+
+                  schema = await _ssiSchemaService.GetByFullName(item.SchemaName);
+
+                  foreach (var entity in schema.Entities)
+                  {
+                    var entityType = Type.GetType(entity.TypeName)
+                        ?? throw new InvalidOperationException($"Failed to get the entity of type '{entity.TypeName}'");
+
+                    switch (entityType)
+                    {
+                      case Type t when t == typeof(User):
+                        ReflectEntityValues(request, entity, t, user);
+                        break;
+
+                      case Type t when t == typeof(Organization):
+                        ReflectEntityValues(request, entity, t, organization);
+                        break;
+
+                      default:
+                        throw new InvalidOperationException($"Entity of type '{entity.TypeName}' not supported");
+                    }
+                  }
+                  break;
+
+                case SchemaType.Opportunity:
+                  if (!item.MyOpportunityId.HasValue)
+                    throw new InvalidOperationException($"Schema type '{item.SchemaType}': 'My' opportunity id is null");
+                  var myOpportunity = _myOpportunityService.GetById(item.MyOpportunityId.Value, true, true, false);
+
+                  tenantIssuer = GetTenantId(item, EntityType.Organization, myOpportunity.OrganizationId);
+                  if (!tenantIssuer.proceed)
+                  {
+                    itemIdsToSkip.Add(item.Id);
+                    continue;
+                  }
+                  request.TenantIdIssuer = tenantIssuer.tenantId;
+
+                  tenantHolder = GetTenantId(item, EntityType.User, myOpportunity.UserId);
+                  if (!tenantHolder.proceed)
+                  {
+                    itemIdsToSkip.Add(item.Id);
+                    continue;
+                  }
+                  request.TenantIdHolder = tenantHolder.tenantId;
+
+                  schema = await _ssiSchemaService.GetByFullName(item.SchemaName);
+
+                  foreach (var entity in schema.Entities)
+                  {
+                    var entityType = Type.GetType(entity.TypeName)
+                        ?? throw new InvalidOperationException($"Failed to get the entity of type '{entity.TypeName}'");
+
+                    switch (entityType)
+                    {
+                      case Type t when t == typeof(Opportunity.Models.Opportunity):
+                        var opportunity = _opportunityService.GetById(myOpportunity.OpportunityId, true, true, false);
+                        ReflectEntityValues(request, entity, t, opportunity);
+                        break;
+
+                      case Type t when t == typeof(MyOpportunity.Models.MyOpportunity):
+                        ReflectEntityValues(request, entity, t, myOpportunity);
+                        break;
+
+                      default:
+                        throw new InvalidOperationException($"Entity of type '{entity.TypeName}' not supported");
+                    }
+                  }
+                  break;
+
+                default:
+                  throw new InvalidOperationException($"Schema type '{item.SchemaType}' not supported");
               }
 
-              if (executeUntil <= DateTimeOffset.UtcNow) break;
-            }
-          }
+              item.CredentialId = await _ssiProviderClient.IssueCredential(request);
+              item.Status = CredentialIssuanceStatus.Issued;
+              await _ssiCredentialService.UpdateScheduleIssuance(item);
 
-          _logger.LogInformation("Processed SSI credential issuance");
+              _logger.LogInformation("Processed SSI credential issuance for schema type '{schemaType}' and item with id '{id}'", item.SchemaType, item.Id);
+            }
+            catch (Exception ex)
+            {
+              _logger.LogError(ex, "Failed to issue SSI credential for schema type '{schemaType}' and item with id '{id}': {errorMessage}", item.SchemaType, item.Id, ex.Message);
+
+              item.Status = CredentialIssuanceStatus.Error;
+              item.ErrorReason = ex.Message;
+              await _ssiCredentialService.UpdateScheduleIssuance(item);
+
+              itemIdsToSkip.Add(item.Id);
+            }
+
+            if (executeUntil <= DateTimeOffset.UtcNow) break;
+          }
         }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(ProcessCredentialIssuance), ex.Message);
+
+        _logger.LogInformation("Processed SSI credential issuance");
       }
       catch (Exception ex)
       {
@@ -438,7 +400,7 @@ namespace Yoma.Core.Domain.SSI.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion

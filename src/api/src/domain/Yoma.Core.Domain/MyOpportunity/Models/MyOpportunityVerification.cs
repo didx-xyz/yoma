@@ -12,6 +12,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public Guid MyOpportunityId { get; set; }
 
+    [JsonIgnore]
+    public string UserDisplayName { get; set; }
+
     public Guid VerificationTypeId { get; set; }
 
     public VerificationType VerificationType { get; set; }

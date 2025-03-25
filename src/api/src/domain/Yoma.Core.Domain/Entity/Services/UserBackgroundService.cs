@@ -1,5 +1,3 @@
-using Hangfire;
-using Hangfire.Storage;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Reflection;
@@ -47,37 +45,25 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       const string lockIdentifier = "user_seed_photos";
       var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
-
-      if (!await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration))
-      {
-        _logger.LogInformation("{Process} is already running. Skipping execution attempt at {dateStamp}", nameof(SeedPhotos), DateTimeOffset.UtcNow);
-        return;
-      }
+      var lockAcquired = false;
 
       try
       {
-        using (JobStorage.Current.GetConnection().AcquireDistributedLock(lockIdentifier, lockDuration))
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
         {
-          _logger.LogInformation("Lock '{lockIdentifier}' acquired by {hostName} at {dateStamp}. Lock duration set to {lockDurationInMinutes} minutes",
-            lockIdentifier, Environment.MachineName, DateTimeOffset.UtcNow, lockDuration.TotalMinutes);
-
-          if (!_appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
-          {
-            _logger.LogInformation("User image seeding seeding skipped for environment '{environment}'", _environmentProvider.Environment);
-            return;
-          }
-
-          _logger.LogInformation("Processing user image seeding");
-
-          var items = _userRepository.Query().Where(o => !o.PhotoId.HasValue).ToList();
-          await SeedPhotos(items);
-
-          _logger.LogInformation("Processed user image seeding");
+          _logger.LogInformation("User image seeding seeding skipped for environment '{environment}'", _environmentProvider.Environment);
+          return;
         }
-      }
-      catch (DistributedLockTimeoutException ex)
-      {
-        _logger.LogError(ex, "Could not acquire distributed lock for {process}: {errorMessage}", nameof(SeedPhotos), ex.Message);
+
+        _logger.LogInformation("Processing user image seeding");
+
+        var items = _userRepository.Query().Where(o => !o.PhotoId.HasValue).ToList();
+        await SeedPhotos(items);
+
+        _logger.LogInformation("Processed user image seeding");
       }
       catch (Exception ex)
       {
@@ -85,7 +71,7 @@ namespace Yoma.Core.Domain.Entity.Services
       }
       finally
       {
-        await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
     #endregion
