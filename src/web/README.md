@@ -1,60 +1,78 @@
+# 🌐 Yoma Web
+
+## ✨ Overview
+
+Yoma Web is a modern, responsive frontend application built with NextJS 15 & React 19. It provides an intuitive interface for users to interact with the Yoma platform, enabling them to access opportunities, manage their profiles, and connect with organizations. The application is also available as a Progressive Web App (PWA), allowing users to install it on their devices for offline access and an app-like experience.
+
 <p align="center">
-<img src="assets/preview.png" width="650" />
+<img src="../../docs/images/overview-web.png" width="650" />
 </p>
 
-<h1 align="center" style="border-bottom: none !important; margin-bottom: 5px !important;">Yoma Web</h1>
+## 🚀 Quick Start
 
-<br />
+1. Install dependencies:
 
-> ✨ **Note:** This repo will be moved to the DiDx git in the future
+   ```bash
+   yarn install
+   # or
+   npm install
+   ```
 
-<br />
+2. Start the development server:
 
-### Quick Start
+   ```bash
+   yarn dev
+   # or
+   npm run dev
+   ```
 
-* Install dependencies by running `yarn` or `npm install`.
+3. 🎉 Open [http://localhost:3000](http://localhost:3000) in your browser to see the application!
 
-* Run `yarn start` or `npm run start` to start the local development server...
+## 📋 Available Scripts
 
-* 😎 **That's it!** You're ready to go....
+| Command          | Description                                        |
+| ---------------- | -------------------------------------------------- |
+| `yarn dev`       | Starts the development server                      |
+| `yarn build`     | Creates an optimized production build              |
+| `yarn start`     | Runs the built app in production mode              |
+| `yarn lint`      | Runs ESLint to catch code quality issues           |
+| `yarn test`      | Executes Jest tests                                |
+| `yarn analyze`   | Runs the bundle analyzer to visualize bundle sizes |
+| `yarn cypress`   | Opens Cypress for end-to-end testing               |
+| `yarn storybook` | Starts Storybook for component development         |
 
-<br />
+## 📁 Project Structure
 
-### Project Structure
+```
+src/
+├── components/     # Reusable UI components
+├── contexts/       # React contexts for state management
+├── hooks/          # Custom React hooks
+├── layouts/        # Page layout components
+├── lib/            # Libraries and utility functions
+├── pages/          # Next.js page components
+├── public/         # Static assets
+├── styles/         # Global styles and theme
+└── types/          # TypeScript type definitions
+```
 
-- This is a [T3 Stack](https://create.t3.gg/) project bootstrapped with `create-t3-app`.
-- **Flux** is used for state management and all Flux specific files are located inside `src/flux`. Transitioning to a more robust solution such as Redux is also fairly simple.
-- All primary templates are located inside `src/views`.
-- There is only one single layout defined (Default) inside `src/layouts`, however, the current structure provides an easy way of extending the UI kit. 
-- The `src/components` directory hosts all template-specific subcomponents in their own subdirectory.
+## 🧪 Testing
 
-- Other extra styles specific to the libraries used are located inside `src/assets`....
-- The `src/utils` directory contains generic utilities.
+This project uses:
 
+- Jest for unit and integration tests
+- Cypress for end-to-end testing
 
-<br />
-
-### Available Scripts
-
-### `npm start`
-
-Runs the app in the development mode.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.
-
-### Virtual Environment
-
-Create isolated node.js environments and integrate with python virtual env. This will allow you to install packages without affecting your system's installation.
+Run tests with:
 
 ```bash
-python3.9 -m venv venv
-source ./venv/bin/activate
-pip install nodeenv
-nodeenv -p --node=16.15.0
+# Unit and integration tests
+yarn test
+
+# End-to-end tests
+yarn cypress
 ```
+
+## 📚 Documentation
+
+For more details on architecture, design decisions, and component guidelines, please refer to our [documentation](../../docs/README.md).
