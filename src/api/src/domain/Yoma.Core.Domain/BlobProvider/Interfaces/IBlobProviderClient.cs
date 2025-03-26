@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.BlobProvider.Interfaces
 
     Task<(string ContentType, byte[] Data)> Download(string filename);
 
-    Task<(string ContentType, string TempSourceFile)> DownloadToDisk(string filename);
+    Task<(string ContentType, string TempSourceFile)> DownloadToFile(string filename);
 
     string GetUrl(string filename, string? filenameFriendly = null, int? urlExpirationInMinutes = null);
 

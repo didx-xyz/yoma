@@ -131,7 +131,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
       }
     }
 
-    public async Task<(string ContentType, string TempSourceFile)> DownloadToDisk(string filename)
+    public async Task<(string ContentType, string TempSourceFile)> DownloadToFile(string filename)
     {
       if (string.IsNullOrWhiteSpace(filename))
         throw new ArgumentNullException(nameof(filename));

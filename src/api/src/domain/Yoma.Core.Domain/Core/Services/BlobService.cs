@@ -107,13 +107,13 @@ namespace Yoma.Core.Domain.Core.Services
       return FileHelper.FromByteArray(item.OriginalFileName, contentType, data);
     }
 
-    public async Task<(string OriginalFileName, string ContentType, string TempSourceFile)> DownloadRawToDisk(Guid id)
+    public async Task<(string OriginalFileName, string ContentType, string TempSourceFile)> DownloadRawToFile(Guid id)
     {
       var item = GetById(id);
 
       var client = _blobProviderClientFactory.CreateClient(item.StorageType);
 
-      var (contentType, tempSourceFile) = await client.DownloadToDisk(item.Key);
+      var (contentType, tempSourceFile) = await client.DownloadToFile(item.Key);
 
       return (item.OriginalFileName, contentType, tempSourceFile);
     }

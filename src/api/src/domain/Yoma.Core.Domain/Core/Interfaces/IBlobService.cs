@@ -17,7 +17,7 @@ namespace Yoma.Core.Domain.Core.Interfaces
 
     Task<IFormFile> Download(Guid id);
 
-    Task<(string OriginalFileName, string ContentType, string TempSourceFile)> DownloadRawToDisk(Guid id);
+    Task<(string OriginalFileName, string ContentType, string TempSourceFile)> DownloadRawToFile(Guid id);
 
     string GetURL(Guid id, string? filename = null, int? urlExpirationInMinutes = null);
 

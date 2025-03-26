@@ -89,7 +89,7 @@ namespace Yoma.Core.Domain.Core.Helpers
       return FromByteArray(fileName, "application/zip", zipStream.ToArray());
     }
 
-    public static IFormFile ZipToDisk(List<IFormFile> files, string fileName)
+    public static IFormFile ZipToFile(List<IFormFile> files, string fileName)
     {
       if (files == null || files.Count == 0)
         throw new ArgumentNullException(nameof(files));

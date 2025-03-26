@@ -155,7 +155,7 @@ namespace Yoma.Core.Domain.Core.Services
                   {
                     //zip files and upload to blob storage; TransactionScope not used as the upload can take long, causing an aborted scope or connection
                     //if schedule update fails, the blob object and db entries are deleted
-                    downloadZipped = FileHelper.ZipToDisk(files, $"Download{zipFileNameSuffix}.zip");
+                    downloadZipped = FileHelper.ZipToFile(files, $"Download{zipFileNameSuffix}.zip");
                     blobObject = await _blobService.Create(downloadZipped, FileType.ZipArchive, BlobProvider.StorageType.Private);
 
                     //update schedule
