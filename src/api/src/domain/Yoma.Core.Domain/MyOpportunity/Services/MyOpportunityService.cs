@@ -305,7 +305,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       try
       {
-        if (files.Files.Count == 1) return files.Files.First();
         return FileHelper.Zip(files.Files, $"Files.zip");
       }
       finally
