@@ -59,7 +59,7 @@ brew install mise
 sudo port install mise
 ```
 
-_`mise` is **not** compatible with Windows - use WSL2._
+_`mise` is compatible with Windows, but it is recommended to use WSL2 ([FAQ](https://mise.jdx.dev/faq.html#windows-support))._
 
 Once you've got `mise` installed, you can install the required tooling by running `mise install` in the project root.
 
