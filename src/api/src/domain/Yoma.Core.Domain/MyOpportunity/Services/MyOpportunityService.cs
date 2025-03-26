@@ -408,7 +408,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         if (!item.FileId.HasValue) throw new InvalidOperationException("File id expected");
 
         //add task to download in parallel
-        downloadTasks.Add(DownloadFileToFile(item.FileId.Value, item.UserDisplayName, filter.UserId.HasValue));
+        downloadTasks.Add(DownloadToFile(item.FileId.Value, item.UserDisplayName, filter.UserId.HasValue));
       }
 
       //execute all downloads in parallel
@@ -1171,7 +1171,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #endregion
 
     #region Private Members
-    private async Task<IFormFile?> DownloadFileToFile(Guid fileId, string userDisplayName, bool userExplictlySpecified)
+    private async Task<IFormFile?> DownloadToFile(Guid fileId, string userDisplayName, bool userExplictlySpecified)
     {
       var (originalFileName, contentType, tempSourceFile) = await _blobService.DownloadRawToFile(fileId);
 
