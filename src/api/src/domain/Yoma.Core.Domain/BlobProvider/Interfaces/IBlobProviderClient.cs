@@ -4,7 +4,11 @@ namespace Yoma.Core.Domain.BlobProvider.Interfaces
   {
     Task Create(string filename, string contentType, byte[] file);
 
+    Task CreateFromFile(string filename, string contentType, string sourceFilePath);
+
     Task<(string ContentType, byte[] Data)> Download(string filename);
+
+    Task<(string ContentType, string TempSourceFile)> DownloadToFile(string filename);
 
     string GetUrl(string filename, string? filenameFriendly = null, int? urlExpirationInMinutes = null);
 

@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Core.Validators
   {
     #region Class Variables
     private readonly string[] extensions;
-    private readonly int maxSizeBytes;
+    private readonly long maxSizeBytes;
     #endregion
 
     #region Public Members
@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.Core.Validators
 
         case FileType.ZipArchive:
           extensions = [".zip"];
-          maxSizeBytes = 500_000_000;
+          maxSizeBytes = 10_000_000_000;
           break;
 
         default:

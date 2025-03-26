@@ -233,7 +233,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     throw new InvalidOperationException($"Embedded resource '{resourcePathCertificate}' not found");
 
                   byte[] resourceBytes;
-                  using (var memoryStream = new MemoryStream())
+                  await using (var memoryStream = new MemoryStream())
                   {
                     resourceStream.CopyTo(memoryStream);
                     resourceBytes = memoryStream.ToArray();
@@ -256,7 +256,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     throw new InvalidOperationException($"Embedded resource '{resourcePathPicture}' not found");
 
                   byte[] resourceBytes;
-                  using (var memoryStream = new MemoryStream())
+                  await using (var memoryStream = new MemoryStream())
                   {
                     resourceStream.CopyTo(memoryStream);
                     resourceBytes = memoryStream.ToArray();
@@ -278,7 +278,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     throw new InvalidOperationException($"Embedded resource '{resourcePathVoiceNote}' not found");
 
                   byte[] resourceBytes;
-                  using (var memoryStream = new MemoryStream())
+                  await using (var memoryStream = new MemoryStream())
                   {
                     resourceStream.CopyTo(memoryStream);
                     resourceBytes = memoryStream.ToArray();
@@ -300,7 +300,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
                     throw new InvalidOperationException($"Embedded resource '{resourcePathVideo}' not found");
 
                   byte[] resourceBytes;
-                  using (var memoryStream = new MemoryStream())
+                  await using (var memoryStream = new MemoryStream())
                   {
                     resourceStream.CopyTo(memoryStream);
                     resourceBytes = memoryStream.ToArray();
