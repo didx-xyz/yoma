@@ -20,6 +20,20 @@ namespace Yoma.Core.Domain.Core.Helpers
         throw new InvalidOperationException($"The file '{file.FileName}' is already registered for tracking.");
     }
 
+    public static bool TryGetTempPath(IFormFile file, out string? tempPath)
+    {
+      ArgumentNullException.ThrowIfNull(file, nameof(file));
+
+      if (_tracked.TryGetValue(file, out var value))
+      {
+        tempPath = value.TempPath;
+        return true;
+      }
+
+      tempPath = null;
+      return false;
+    }
+
     public static void Delete(List<IFormFile> files)
     {
       if (files == null || files.Count == 0) return;

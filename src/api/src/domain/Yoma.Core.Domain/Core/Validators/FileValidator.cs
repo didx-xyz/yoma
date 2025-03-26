@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Core.Validators
   {
     #region Class Variables
     private readonly string[] extensions;
-    private readonly int maxSizeBytes;
+    private readonly long maxSizeBytes;
     #endregion
 
     #region Public Members
@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.Core.Validators
 
         case FileType.ZipArchive:
           extensions = [".zip"];
-          maxSizeBytes = 500_000_000;
+          maxSizeBytes = 10_000_000_000;
           break;
 
         default:
@@ -58,18 +58,7 @@ namespace Yoma.Core.Domain.Core.Validators
       if (!extensions.Contains(file.GetExtension(), StringComparer.InvariantCultureIgnoreCase))
         throw new BusinessException($"Only supports file formats '{string.Join(",", extensions)}'");
 
-      using var stream = file.OpenReadStream();
-
-      long fileLength;
-      if (stream is FileStream fs)
-      {
-        var path = fs.Name;
-        fileLength = new FileInfo(path).Length;
-      }
-      else
-        fileLength = file.Length;
-
-      if (fileLength > maxSizeBytes)
+      if (file.Length > maxSizeBytes)
         throw new BusinessException($"Only supports file size smaller or equal to '{Math.Round((decimal)maxSizeBytes / 1000000, 2)}MB'");
     }
     #endregion

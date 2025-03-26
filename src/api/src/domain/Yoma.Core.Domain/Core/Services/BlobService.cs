@@ -85,10 +85,8 @@ namespace Yoma.Core.Domain.Core.Services
 
         result = await _blobObjectRepository.Create(result);
 
-        using var stream = file.OpenReadStream();
-
-        if (stream is FileStream fs)
-          await client.CreateFromFile(key, file.ContentType, fs.Name);
+        if (TempFileTracker.TryGetTempPath(file, out var tempPath) && !string.IsNullOrEmpty(tempPath))
+          await client.CreateFromFile(key, file.ContentType, tempPath);
         else
           await client.Create(key, file.ContentType, file.ToBinary());
 

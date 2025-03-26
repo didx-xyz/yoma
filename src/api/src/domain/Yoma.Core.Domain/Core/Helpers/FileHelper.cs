@@ -55,7 +55,7 @@ namespace Yoma.Core.Domain.Core.Helpers
         ContentDisposition = new System.Net.Mime.ContentDisposition() { FileName = fileName }.ToString()
       };
 
-      // Track temp file and stream for cleanup later
+      // track temp file and stream for cleanup later
       TempFileTracker.Register(result, tempSourceFile, stream);
 
       return result;
@@ -72,8 +72,8 @@ namespace Yoma.Core.Domain.Core.Helpers
       if (!Path.GetExtension(fileName).Equals(".zip", StringComparison.CurrentCultureIgnoreCase))
         throw new ArgumentException("File name must end with '.zip' extension", nameof(fileName));
 
-      using var memoryStream = new MemoryStream();
-      using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, true))
+      using var zipStream = new MemoryStream();
+      using (var archive = new ZipArchive(zipStream, ZipArchiveMode.Create, true))
       {
         foreach (var file in files)
         {
@@ -81,12 +81,12 @@ namespace Yoma.Core.Domain.Core.Helpers
 
           var entry = archive.CreateEntry(entryName, CompressionLevel.Fastest);
           using var entryStream = entry.Open();
-          using var fileStream = file.OpenReadStream();
-          fileStream.CopyTo(entryStream);
+          using var inputStream = file.OpenReadStream();
+          inputStream.CopyTo(entryStream);
         }
       }
 
-      return FromByteArray(fileName, "application/zip", memoryStream.ToArray());
+      return FromByteArray(fileName, "application/zip", zipStream.ToArray());
     }
 
     public static IFormFile ZipToDisk(List<IFormFile> files, string fileName)

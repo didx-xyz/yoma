@@ -49,7 +49,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
       if (file == null || file.Length == 0)
         throw new ArgumentNullException(nameof(file));
 
-      using var stream = new MemoryStream(file);
+      await using var stream = new MemoryStream(file);
 
       var request = new PutObjectRequest
       {
@@ -81,6 +81,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
 
       if (string.IsNullOrWhiteSpace(sourceFilePath))
         throw new ArgumentNullException(nameof(sourceFilePath));
+      sourceFilePath = sourceFilePath.Trim();
 
       if (!File.Exists(sourceFilePath))
         throw new FileNotFoundException("Source file does not exist", sourceFilePath);
@@ -105,7 +106,6 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
       }
     }
 
-
     public async Task<(string ContentType, byte[] Data)> Download(string filename)
     {
       if (string.IsNullOrWhiteSpace(filename))
@@ -121,7 +121,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
       try
       {
         using var response = await _client.GetObjectAsync(request);
-        using var memoryStream = new MemoryStream();
+        await using var memoryStream = new MemoryStream();
         await response.ResponseStream.CopyToAsync(memoryStream);
         return (response.Headers.ContentType, memoryStream.ToArray());
       }

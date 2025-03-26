@@ -16,7 +16,7 @@ namespace Yoma.Core.Api.Middleware
 
     public override async Task<InputFormatterResult> ReadRequestBodyAsync(InputFormatterContext context)
     {
-      var stream = new MemoryStream();
+      await using var stream = new MemoryStream();
       await context.HttpContext.Request.Body.CopyToAsync(stream);
       return await InputFormatterResult.SuccessAsync(stream.ToArray());
     }

@@ -87,7 +87,7 @@ namespace Yoma.Core.Domain.Entity.Services
           ?? throw new InvalidOperationException($"Embedded resource '{resourcePath}' not found");
 
       byte[] resourceBytes;
-      using (var memoryStream = new MemoryStream())
+      await using (var memoryStream = new MemoryStream())
       {
         resourceStream.CopyTo(memoryStream);
         resourceBytes = memoryStream.ToArray();

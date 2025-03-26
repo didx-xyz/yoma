@@ -306,7 +306,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       try
       {
         if (files.Files.Count == 1) return files.Files.First();
-
         return FileHelper.Zip(files.Files, $"Files.zip");
       }
       finally
@@ -1182,6 +1181,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       if (!userExplictlySpecified)
       {
+        if (string.IsNullOrWhiteSpace(userDisplayName)) userDisplayName = "Unknown";
+        userDisplayName = userDisplayName.Trim();
+
         var displayNameCleaned = userDisplayName.RemoveSpecialCharacters();
         displayNameCleaned = displayNameCleaned.Replace(' ', '_');
         originalFileName = $"{displayNameCleaned}{FileHelper.Zip_FileName_Path_Separator}{originalFileName}";
