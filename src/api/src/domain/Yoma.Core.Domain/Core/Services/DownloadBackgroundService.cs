@@ -165,7 +165,7 @@ namespace Yoma.Core.Domain.Core.Services
                   }
                   finally
                   {
-                    FileHelper.DeleteTempFilesOnDisk([.. files, downloadZipped]);
+                    TempFileTracker.Delete([.. files, downloadZipped]);
                   }
                 }
 

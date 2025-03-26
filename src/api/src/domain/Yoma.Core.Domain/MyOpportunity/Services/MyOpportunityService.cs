@@ -311,7 +311,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
       finally
       {
-        FileHelper.DeleteTempFilesOnDisk(files.Files);
+        TempFileTracker.Delete(files.Files);
       }
     }
 

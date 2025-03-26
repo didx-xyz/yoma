@@ -10,28 +10,35 @@ namespace Yoma.Core.Domain.Core.Helpers
     public static void Register(IFormFile file, string tempPath, FileStream stream)
     {
       ArgumentNullException.ThrowIfNull(file, nameof(file));
+
       ArgumentException.ThrowIfNullOrWhiteSpace(tempPath, nameof(tempPath));
+      tempPath = tempPath.Trim();
+
       ArgumentNullException.ThrowIfNull(stream, nameof(stream));
 
-      _tracked[file] = (tempPath.Trim(), stream);
+      if (!_tracked.TryAdd(file, (tempPath, stream)))
+        throw new InvalidOperationException($"The file '{file.FileName}' is already registered for tracking.");
     }
 
-    public static bool IsTracked(IFormFile file)
+    public static void Delete(List<IFormFile> files)
     {
-      ArgumentNullException.ThrowIfNull(file, nameof(file));
-      return _tracked.ContainsKey(file);
-    }
+      if (files == null || files.Count == 0) return;
 
-    public static (string TempPath, FileStream Stream)? Get(IFormFile file)
-    {
-      ArgumentNullException.ThrowIfNull(file, nameof(file));
-      return _tracked.TryGetValue(file, out var result) ? result : null;
-    }
+      foreach (var file in files)
+      {
+        try
+        {
+          if (!_tracked.TryGetValue(file, out var tempFile)) continue;
 
-    public static void Remove(IFormFile file)
-    {
-      ArgumentNullException.ThrowIfNull(file, nameof(file));
-      _tracked.TryRemove(file, out _);
+          tempFile.Stream.Dispose();
+          if (File.Exists(tempFile.TempPath)) File.Delete(tempFile.TempPath);
+        }
+        catch { }
+        finally
+        {
+          _tracked.TryRemove(file, out _);
+        }
+      }
     }
   }
 }

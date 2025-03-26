@@ -140,40 +140,5 @@ namespace Yoma.Core.Domain.Core.Helpers
 
       return (fileName, stream.ToArray());
     }
-
-    public static void DeleteTempFilesOnDisk(List<IFormFile> files)
-    {
-      if (files == null || files.Count == 0)
-        return;
-
-      foreach (var file in files)
-      {
-        try
-        {
-          var tracked = TempFileTracker.Get(file);
-          if (tracked == null) continue;
-
-          var (tempPath, stream) = tracked.Value;
-
-          try
-          {
-            stream.Dispose(); // Ensure stream is closed
-          }
-          catch { /* optional: log */ }
-
-          try
-          {
-            if (File.Exists(tempPath))
-              File.Delete(tempPath);
-          }
-          catch { /* optional: log */ }
-        }
-        catch { /* optional: log */ }
-        finally
-        {
-          TempFileTracker.Remove(file); // always clean up the tracking
-        }
-      }
-    }
   }
 }
