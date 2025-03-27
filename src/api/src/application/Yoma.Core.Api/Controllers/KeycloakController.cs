@@ -147,17 +147,35 @@ namespace Yoma.Core.Api.Controllers
 
       _logger.LogInformation("Found Keycloak user with username '{username}'", kcUser.Username);
 
-      // try to locate the user based on their external Keycloak ID.
-      // this is the preferred lookup since users who have already completed their first login
-      // will have an external ID stored in the system.
-      var userRequest = _userService.GetByExternalIdOrNull(kcUser.Id, false, false)?.ToUserRequest();
+      var timeout = TimeSpan.FromSeconds(15);
+      var startTime = DateTimeOffset.UtcNow;
+      UserRequest? userRequest;
 
-      // if no user is found by their external ID, fall back to locating the user by their username.
-      // this caters to cases where the user was created in Yoma (via B2B integration) before
-      // registering and completing their first login. In such cases, the external ID won't exist yet.
-      // also, handle test users on the development environment who might not have an associated external ID.
-      // a user cannot change their phone number or email address until they have completed their first login.
-      userRequest ??= _userService.GetByUsernameOrNull(kcUser.Username, false, false)?.ToUserRequest();
+      while (true)
+      {
+        // try to locate the user based on their external Keycloak ID.
+        // this is the preferred lookup since users who have already completed their first login
+        // will have an external ID stored in the system.
+        userRequest = _userService.GetByExternalIdOrNull(kcUser.Id, false, false)?.ToUserRequest();
+
+        // if no user is found by their external ID, fall back to locating the user by their username.
+        // this caters to cases where the user was created in Yoma (via B2B integration) before
+        // registering and completing their first login. In such cases, the external ID won't exist yet.
+        // also, handle test users on the development environment who might not have an associated external ID.
+        // a user cannot change their phone number or email address until they have completed their first login.
+        userRequest ??= _userService.GetByUsernameOrNull(kcUser.Username, false, false)?.ToUserRequest();
+
+        // only attempt lookup once during registration.
+        // retries are reserved for UpdateProfile and Login to handle race conditions
+        // where those webhooks may fire before the registration transaction completes.
+        if (type == WebhookRequestEventType.Register) break; 
+        if (userRequest != null) break;
+        if (DateTimeOffset.UtcNow - startTime >= timeout) break;
+
+        _logger.LogDebug("Retrying retrieval of the Yoma user: ExternalId: '{externalId}' | Username '{username}'", kcUser.Id, kcUser.Username);
+
+        await Task.Delay(1000);
+      }
 
       switch (type)
       {

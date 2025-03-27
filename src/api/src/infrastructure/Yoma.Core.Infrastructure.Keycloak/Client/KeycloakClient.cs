@@ -82,7 +82,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (string.IsNullOrEmpty(username))
         throw new ArgumentNullException(nameof(username));
 
-      var timeout = 15000;
+      var timeout = TimeSpan.FromSeconds(15);
       var startTime = DateTimeOffset.UtcNow;
       UserRepresentation? kcUser = null;
       using (var usersApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient))
@@ -90,10 +90,11 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         while (true)
         {
           kcUser = (await usersApi.GetUsersAsync(_keycloakAuthenticationOptions.Realm, username: username, exact: true)).SingleOrDefault();
-          if (kcUser != null) break;
 
-          if ((DateTimeOffset.UtcNow - startTime).TotalMilliseconds >= timeout) break;
-          Thread.Sleep(1000);
+          if (kcUser != null) break;
+          if (DateTimeOffset.UtcNow - startTime >= timeout) break;
+
+          await Task.Delay(1000);
         }
       }
 
@@ -108,7 +109,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (string.IsNullOrEmpty(id))
         throw new ArgumentNullException(nameof(id));
 
-      var timeout = 15000;
+      var timeout = TimeSpan.FromSeconds(15);
       var startTime = DateTimeOffset.UtcNow;
       UserRepresentation? kcUser = null;
 
@@ -121,9 +122,11 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
             kcUser = await usersApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id);
           }
           catch { }
+
           if (kcUser != null) break;
-          if ((DateTimeOffset.UtcNow - startTime).TotalMilliseconds >= timeout) break;
-          Thread.Sleep(1000);
+          if (DateTimeOffset.UtcNow - startTime >= timeout) break;
+
+          await Task.Delay(1000);
         }
       }
 
