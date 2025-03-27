@@ -153,11 +153,16 @@ namespace Yoma.Core.Domain.SSI.Services
 
                   var user = _userService.GetById(item.UserId.Value, false, true);
 
+                  var displayNameCleaned = user.DisplayName?.RemoveSpecialCharacters();
+                  var displayNameFallback = user.Username.Contains('@')
+                    ? user.Username.Split('@').First()
+                    : user.Username.RemoveSpecialCharacters();
+
                   request = new TenantRequest
                   {
                     // utilize user id, ensuring a consistent tenant reference or name even if the name is altered
                     Referent = user.Id.ToString(),
-                    Name = user.DisplayName?.RemoveSpecialCharacters() ?? user.Username,
+                    Name = string.IsNullOrEmpty(displayNameCleaned) ? displayNameFallback : displayNameCleaned,
                     ImageUrl = user.PhotoURL,
                     Roles = [Role.Holder]
                   };
