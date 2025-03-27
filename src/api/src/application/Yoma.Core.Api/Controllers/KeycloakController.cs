@@ -167,8 +167,8 @@ namespace Yoma.Core.Api.Controllers
 
         // only attempt lookup once during registration.
         // retries are reserved for UpdateProfile and Login to handle race conditions
-        // where those webhooks may fire before the registration transaction completes.
-        if (type == WebhookRequestEventType.Register) break; 
+        // where those webhooks may fire before the registration transaction completes
+        if (type == WebhookRequestEventType.Register) break;
         if (userRequest != null) break;
         if (DateTimeOffset.UtcNow - startTime >= timeout) break;
 
