@@ -77,8 +77,8 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       if (!int.TryParse(request.ExternalId, out var externalIdParsed))
         throw new InvalidOperationException($"Invalid external id '{request.ExternalId}'. Integer expected");
 
-      //at time of execution, if the opportunity end date is in the past, we treat it as an inactivation.
-      //this avoids triggering an update, as the external system does not allow closing dates in the past — we pause the opportunity instead.
+      // at time of execution, if the opportunity end date is in the past, we treat it as an inactivation.
+      // this avoids triggering an update, as the external system does not allow closing dates in the past — we pause the opportunity instead.
       var dateEndInThePast = request.Opportunity.DateEnd <= DateTime.UtcNow;
       var opportunityStatus = request.Opportunity.Status;
       if (dateEndInThePast) opportunityStatus = Domain.Opportunity.Status.Inactive;
