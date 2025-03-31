@@ -42,8 +42,20 @@ import { RoundedImage } from "~/components/RoundedImage";
 import { HomeSearchInputLarge } from "~/components/Home/HomeSearchInputLarge";
 import { THEME_ORANGE } from "~/lib/constants";
 import type { NextPageWithLayout } from "./_app";
+import { useTranslation } from "next-i18next";
+import { serverSideTranslations } from "next-i18next/serverSideTranslations";
+
+// At the bottom of the file, add:
+export async function getStaticProps({ locale }: { locale: string }) {
+  return {
+    props: {
+      ...(await serverSideTranslations(locale, ["common"])),
+    },
+  };
+}
 
 const Home: NextPageWithLayout = () => {
+  const { t } = useTranslation("common");
   const router = useRouter();
 
   const onSearchInputSubmit = useCallback(
@@ -79,11 +91,12 @@ const Home: NextPageWithLayout = () => {
           {/* LEFT: HEADERS AND TEXT */}
           <div className="flex min-h-80 max-w-md flex-col gap-2 overflow-hidden pt-8 text-white md:py-8">
             <h6 className="text-sm uppercase tracking-widest">
-              Welcome to Yoma
+              {t("welcome")}
             </h6>
             <h1 className="text-xl font-bold tracking-wide sm:text-xl md:text-2xl">
-              A world of opportunities
+              {t("hello")}
             </h1>
+
             <p className="text-md tracking-tight">
               Yoma is your friendly platform of trusted partners, bringing you
               the freshest opportunities to keep your skills sharp and stay in

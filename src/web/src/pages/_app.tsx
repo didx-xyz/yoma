@@ -25,6 +25,7 @@ import { GoogleAnalytics } from "~/components/GoogleAnalytics";
 import Router from "next/router";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
+import { appWithTranslation } from "next-i18next";
 
 // configure font for tailwindcss
 const nunito = Nunito({
@@ -99,4 +100,4 @@ const MyApp = ({
   );
 };
 
-export default MyApp;
+export default appWithTranslation(MyApp);

@@ -60,15 +60,17 @@ const config = {
   },
 
   /**
-   * If you have `experimental: { appDir: true }` set, then you must comment the below `i18n` config
-   * out.
+   * Use sub-path routing for i18n
    *
-   * @see https://github.com/vercel/next.js/issues/41980
+   * @see https://nextjs.org/docs/pages/building-your-application/routing/internationalization
    */
   i18n: {
-    locales: ["en"],
     defaultLocale: "en",
+    locales: ["en", "es", "fr", "pt", "sw"],
   },
+  localePath: "./public/locales",
+  reloadOnPrerender: process.env.NODE_ENV === "development",
+  trailingSlash: true,
 
   // silence client-side warnings about legacy JS API
   // https://github.com/vercel/next.js/issues/71638

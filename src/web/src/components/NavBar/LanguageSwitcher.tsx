@@ -8,26 +8,26 @@ import {
   GA_CATEGORY_USER,
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
+import { useRouter } from "next/router";
 
-// The following cookie name is important because it's Google-predefined for the translation engine purpose
-const COOKIE_NAME = "googtrans";
+// Use Next.js 15's cookie for locale
+const COOKIE_NAME = "NEXT_LOCALE";
 
-// We should know a predefined nickname of a language and provide its title (the name for displaying)
+// Hard-coded language configuration
+const hardcodedConfig = {
+  languages: [
+    { name: "en", title: "English" },
+    { name: "es", title: "Español" },
+    { name: "fr", title: "Français" },
+    { name: "pt", title: "Português" },
+    { name: "sw", title: "Swahili" },
+  ],
+  defaultLanguage: "en",
+};
+
 interface LanguageDescriptor {
   name: string;
   title: string;
-}
-
-// The following definition describes typings for JS-based declarations in public/assets/scripts/lang-config.js
-declare global {
-  // eslint-disable-next-line @typescript-eslint/no-namespace
-  namespace globalThis {
-    // eslint-disable-next-line
-    var __GOOGLE_TRANSLATION_CONFIG__: {
-      languages: LanguageDescriptor[];
-      defaultLanguage: string;
-    };
-  }
 }
 
 const LanguageSwitcher: React.FC<{
@@ -37,38 +37,25 @@ const LanguageSwitcher: React.FC<{
   tabIndex?: number;
 }> = ({ className, classNameIcon, classNameSelect, tabIndex }) => {
   const [currentLanguage, setCurrentLanguage] = useState<string>();
-  const [languageConfig, setLanguageConfig] = useState<any>();
-
+  const [languageConfig, setLanguageConfig] =
+    useState<typeof hardcodedConfig>();
+  const router = useRouter();
   const setCurrentLanguageAtom = useSetAtom(currentLanguageAtom);
 
-  // When the component has initialized, we must activate the translation engine the following way.
   useEffect(() => {
-    // 1. Read the cookie
+    // 1. Read the cookie NEXT_LOCALE
     const cookies = parseCookies();
-    const existingLanguageCookieValue = cookies[COOKIE_NAME];
+    let languageValue = cookies[COOKIE_NAME];
 
-    let languageValue;
-    if (existingLanguageCookieValue) {
-      // 2. If the cookie is defined, extract a language nickname from there.
-      const sp = existingLanguageCookieValue.split("/");
-      if (sp.length > 2) {
-        languageValue = sp[2];
-      }
+    // 2. If cookie is not present, use the hard-coded default language.
+    if (!languageValue) {
+      languageValue = hardcodedConfig.defaultLanguage;
     }
-    // 3. If __GOOGLE_TRANSLATION_CONFIG__ is defined and we still not decided about languageValue, let's take a current language from the predefined defaultLanguage below.
-    if (global.__GOOGLE_TRANSLATION_CONFIG__ && !languageValue) {
-      languageValue = global.__GOOGLE_TRANSLATION_CONFIG__.defaultLanguage;
-    }
-    if (languageValue) {
-      // 4. Set the current language if we have a related decision.
-      setCurrentLanguage(languageValue);
-      // 4.1. Set the current language atom (so other components can get the current langauge)
-      setCurrentLanguageAtom(languageValue);
-    }
-    // 5. Set the language config.
-    if (global.__GOOGLE_TRANSLATION_CONFIG__) {
-      setLanguageConfig(global.__GOOGLE_TRANSLATION_CONFIG__);
-    }
+    setCurrentLanguage(languageValue);
+    setCurrentLanguageAtom(languageValue);
+
+    // 3. Set the language config.
+    setLanguageConfig(hardcodedConfig);
   }, [setCurrentLanguageAtom]);
 
   // Don't display anything if current language information is unavailable.
@@ -76,31 +63,20 @@ const LanguageSwitcher: React.FC<{
     return null;
   }
 
-  // The following function switches the current language
+  // Function to switch the current language
   const switchLanguage = (lang: string) => {
-    // We just need to set the related cookie and reload the page
-    // "/auto/" prefix is Google's definition as far as a cookie name
-
-    // Get the current hostname from the window location
-    const cookieDomain = window.location.hostname;
-    // Split the hostname into its constituent parts
-    const domainParts = cookieDomain.split(".");
-    // Get the last two parts of the domain (e.g., 'example.com' from 'www.example.com')
-    // This works for domains of variable length (e.g., 'a.b.c.d', 'a.b.c', 'a.b', 'a')
-    // If the domain has only one part (e.g., 'localhost'), it takes that single part
-    const cookieParent = domainParts
-      .slice(Math.max(domainParts.length - 2, 0))
-      .join(".");
-
-    setCookie(null, COOKIE_NAME, "/auto/" + lang);
-    setCookie(null, COOKIE_NAME, "/auto/" + lang, {
-      domain: `.${cookieParent}`,
+    // Set the NEXT_LOCALE cookie with the new language value.
+    setCookie(null, COOKIE_NAME, lang, {
+      path: "/",
     });
 
     // 📊 GOOGLE ANALYTICS: track event
     trackGAEvent(GA_CATEGORY_USER, GA_ACTION_USER_LANGUAGE_CHANGE, lang);
 
-    window.location.reload();
+    // Instead of reloading the page, use the router to change the locale
+    // This will work with your middleware.ts
+    const { pathname, asPath, query } = router;
+    router.push({ pathname, query }, asPath, { locale: lang });
   };
 
   return (
