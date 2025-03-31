@@ -1,5 +1,10 @@
 using FluentValidation;
+using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
+using System.Xml.Linq;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
@@ -14,6 +19,8 @@ namespace Yoma.Core.Domain.SSI.Services
   public class SSISchemaService : ISSISchemaService
   {
     #region Class Variables
+    private readonly AppSettings _appSettings;
+    private readonly IMemoryCache _memoryCache;
     private readonly ISSIProviderClient _ssiProviderClient;
     private readonly ISSISchemaEntityService _ssiSchemaEntityService;
     private readonly ISSISchemaTypeService _ssiSchemaTypeService;
@@ -29,13 +36,16 @@ namespace Yoma.Core.Domain.SSI.Services
     #endregion
 
     #region Constructor
-    public SSISchemaService(
+    public SSISchemaService(IOptions<AppSettings> appSettings,
+        IMemoryCache memoryCache,
         ISSIProviderClientFactory ssiProviderClientFactory,
         ISSISchemaEntityService ssiSchemaEntityService,
         ISSISchemaTypeService ssiSchemaTypeService,
         SchemaRequestValidatorCreate schemaRequestValidatorCreate,
         SchemaRequestValidatorUpdate schemaRequestValidatorUpdate)
     {
+      _appSettings = appSettings.Value;
+      _memoryCache = memoryCache;
       _ssiProviderClient = ssiProviderClientFactory.CreateClient();
       _ssiSchemaEntityService = ssiSchemaEntityService;
       _ssiSchemaTypeService = ssiSchemaTypeService;
@@ -47,69 +57,26 @@ namespace Yoma.Core.Domain.SSI.Services
     #region Public Members
     public async Task<SSISchema> GetById(string id)
     {
-      var schema = await _ssiProviderClient.GetSchemaById(id);
-      return ConvertToSSISchema(schema);
+      var schema = (await ListCached(false)).SingleOrDefault(o => o.Id == id)
+        ?? throw new EntityNotFoundException($"{nameof(Schema)} with id '{id}' does not exists");
+
+      return schema;
     }
 
     public async Task<SSISchema> GetByFullName(string fullName)
     {
-      var schema = await _ssiProviderClient.GetSchemaByName(fullName);
-      return ConvertToSSISchema(schema);
+      var schema = (await GetByFullNameOrNull(fullName)) ?? throw new EntityNotFoundException($"{nameof(Schema)} with name '{fullName}' does not exists");
+      return schema;
     }
 
     public async Task<SSISchema?> GetByFullNameOrNull(string fullName)
     {
-      var schema = await _ssiProviderClient.GetSchemaByNameOrNull(fullName);
-      if (schema == null) return null;
-      return ConvertToSSISchema(schema);
+      return (await ListCached(true)).SingleOrDefault(o => o.Name == fullName);
     }
 
     public async Task<List<SSISchema>> List(SchemaType? type)
     {
-      var schemas = await _ssiProviderClient.ListSchemas(true);
-
-      var results = new List<SSISchema>();
-
-      //no configured schemas found 
-      if (schemas == null || schemas.Count == 0) return results;
-
-      var matchedEntitiesGrouped = _ssiSchemaEntityService.List(null)
-          .SelectMany(entity => schemas
-          .Where(schema => schema.AttributeNames
-              .Any(attributeName => entity.Properties?.Any(property =>
-                  string.Equals(property.AttributeName, attributeName, StringComparison.InvariantCultureIgnoreCase)
-              ) == true
-          ))
-          .Select(schema => new
-          {
-            SchemaId = schema.Id,
-            Entity = entity,
-            MatchedProperties = entity.Properties?
-                  .Where(property => schema.AttributeNames
-                      .Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase))
-                  .ToList() ?? []
-          })
-          )
-          .GroupBy(item => item.SchemaId, item => new SSISchemaEntity
-          {
-            Id = item.Entity.Id,
-            Name = item.Entity.Name,
-            TypeName = item.Entity.TypeName,
-            Properties = item.MatchedProperties
-          })
-          .ToDictionary(group => group.Key, group => group.ToList());
-
-      // No matches found for schema attributes that match entities
-      if (matchedEntitiesGrouped == null || matchedEntitiesGrouped.Count == 0) return results;
-
-      schemas = [.. schemas.Where(o => o.Name.Split(SchemaName_TypeDelimiter).Length == 2)];
-
-      results = [.. schemas.Where(o => matchedEntitiesGrouped.ContainsKey(o.Id)).Select(o =>
-          ConvertToSSISchema(o, matchedEntitiesGrouped.TryGetValue(o.Id, out var entities) ? entities : null))];
-
-      var mismatchedSchemas = results.Where(o => o.Entities?.Any(e => !e.Types?.Any(t => t?.Type == o.Type) == true) == true).ToList();
-      if (mismatchedSchemas != null && mismatchedSchemas.Count != 0)
-        throw new DataInconsistencyException($"Schema(s) '{string.Join(",", mismatchedSchemas.Select(o => $"{o.Name}|{o.Type}"))}': Schema type vs entity schema type mismatches detected");
+      var results = await ListCached(true);
 
       if (type == null) return results;
 
@@ -156,6 +123,8 @@ namespace Yoma.Core.Domain.SSI.Services
         ArtifactType = schemaExisting.ArtifactType, //preserve existing artifact store; switching of artifact stores only allowed with 'Create'
         Attributes = request.Attributes
       });
+
+      _memoryCache.Remove(CacheHelper.GenerateKey<SSISchema>());
 
       return ConvertToSSISchema(schema);
     }
@@ -209,6 +178,8 @@ namespace Yoma.Core.Domain.SSI.Services
         Attributes = request.Attributes
       });
 
+      _memoryCache.Remove(CacheHelper.GenerateKey<SSISchema>());
+
       return ConvertToSSISchema(schema);
     }
 
@@ -244,6 +215,82 @@ namespace Yoma.Core.Domain.SSI.Services
     #endregion
 
     #region Private Members
+    private async Task<List<SSISchema>> ListCached(bool latestVersion)
+    {
+      List<SSISchema> results;
+
+      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
+        results = await ListInternal();
+      else
+      {
+        results = await _memoryCache.GetOrCreateAsync(CacheHelper.GenerateKey<SSISchema>(), async entry =>
+        {
+          entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+          entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
+          return await ListInternal();
+        }) ?? throw new InvalidOperationException($"Failed to retrieve cached list of '{nameof(SSISchema)}s'");
+      }
+
+      if (latestVersion)
+      {
+        results = [.. results
+          .GroupBy(schema => schema.Name)
+          .Select(g => g.OrderByDescending(s => s.Version).First())];
+      }
+
+      return results;
+    }
+
+    private async Task<List<SSISchema>> ListInternal()
+    {
+      var schemas = await _ssiProviderClient.ListSchemas(false);
+
+      var results = new List<SSISchema>();
+
+      //no configured schemas found 
+      if (schemas == null || schemas.Count == 0) return results;
+
+      var matchedEntitiesGrouped = _ssiSchemaEntityService.List(null)
+          .SelectMany(entity => schemas
+          .Where(schema => schema.AttributeNames
+              .Any(attributeName => entity.Properties?.Any(property =>
+                  string.Equals(property.AttributeName, attributeName, StringComparison.InvariantCultureIgnoreCase)
+              ) == true
+          ))
+          .Select(schema => new
+          {
+            SchemaId = schema.Id,
+            Entity = entity,
+            MatchedProperties = entity.Properties?
+                  .Where(property => schema.AttributeNames
+                      .Contains(property.AttributeName, StringComparer.InvariantCultureIgnoreCase))
+                  .ToList() ?? []
+          })
+          )
+          .GroupBy(item => item.SchemaId, item => new SSISchemaEntity
+          {
+            Id = item.Entity.Id,
+            Name = item.Entity.Name,
+            TypeName = item.Entity.TypeName,
+            Properties = item.MatchedProperties
+          })
+          .ToDictionary(group => group.Key, group => group.ToList());
+
+      // No matches found for schema attributes that match entities
+      if (matchedEntitiesGrouped == null || matchedEntitiesGrouped.Count == 0) return results;
+
+      schemas = [.. schemas.Where(o => o.Name.Split(SchemaName_TypeDelimiter).Length == 2)];
+
+      results = [.. schemas.Where(o => matchedEntitiesGrouped.ContainsKey(o.Id)).Select(o =>
+          ConvertToSSISchema(o, matchedEntitiesGrouped.TryGetValue(o.Id, out var entities) ? entities : null))];
+
+      var mismatchedSchemas = results.Where(o => o.Entities?.Any(e => !e.Types?.Any(t => t?.Type == o.Type) == true) == true).ToList();
+      if (mismatchedSchemas != null && mismatchedSchemas.Count != 0)
+        throw new DataInconsistencyException($"Schema(s) '{string.Join(",", mismatchedSchemas.Select(o => $"{o.Name}|{o.Type}"))}': Schema type vs entity schema type mismatches detected");
+
+      return results;
+    }
+
     private SSISchema ConvertToSSISchema(Schema schema)
     {
       var matchedEntities = _ssiSchemaEntityService.List(null)
@@ -285,7 +332,7 @@ namespace Yoma.Core.Domain.SSI.Services
         TypeId = schemaType.Id,
         Type = Enum.Parse<SchemaType>(schemaType.Name, true),
         TypeDescription = schemaType.Description,
-        Version = schema.Version.ToString(),
+        Version = schema.Version,
         ArtifactType = schema.ArtifactType,
         Entities = matchedEntities ?? [],
         PropertyCount = matchedEntities?.Sum(o => o.Properties?.Count)
