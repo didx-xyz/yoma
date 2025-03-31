@@ -47,7 +47,7 @@ namespace Yoma.Core.Domain.SSI.Services
         SchemaTypeId = schema.TypeId,
         ArtifactType = schema.ArtifactType,
         SchemaName = schema.Name,
-        SchemaVersion = schema.Version,
+        SchemaVersion = schema.Version.ToString(),
         StatusId = statusPendingId
       };
 
