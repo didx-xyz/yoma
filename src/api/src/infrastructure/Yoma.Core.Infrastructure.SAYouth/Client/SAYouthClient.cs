@@ -77,20 +77,29 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
       if (!int.TryParse(request.ExternalId, out var externalIdParsed))
         throw new InvalidOperationException($"Invalid external id '{request.ExternalId}'. Integer expected");
 
-      var requestUpsert = ToRequestUpsert(request);
+      //at time of execution, if the opportunity end date is in the past, we treat it as an inactivation.
+      //this avoids triggering an update, as the external system does not allow closing dates in the past — we pause the opportunity instead.
+      var dateEndInThePast = request.Opportunity.DateEnd <= DateTime.UtcNow;
+      var opportunityStatus = request.Opportunity.Status;
+      if (dateEndInThePast) opportunityStatus = Domain.Opportunity.Status.Inactive;
 
-      var response = await _options.BaseUrl
-        .AppendPathSegment("Opportunity/Skilling")
-        .SetQueryParam("opportunityId", externalIdParsed)
-        .WithAuthHeaders(GetAuthHeaders())
-        .PutJsonAsync(requestUpsert)
-        .EnsureSuccessStatusCodeAsync()
-        .ReceiveJson<OpportunityUpsertResponse>();
+      if (!dateEndInThePast)
+      {
+        var requestUpsert = ToRequestUpsert(request);
+
+        var response = await _options.BaseUrl
+          .AppendPathSegment("Opportunity/Skilling")
+          .SetQueryParam("opportunityId", externalIdParsed)
+          .WithAuthHeaders(GetAuthHeaders())
+          .PutJsonAsync(requestUpsert)
+          .EnsureSuccessStatusCodeAsync()
+          .ReceiveJson<OpportunityUpsertResponse>();
+      }
 
       var requestAction = new OpportunityActionRequest { OpportunityId = externalIdParsed };
       StatusAction? action = null;
 
-      switch (request.Opportunity.Status)
+      switch (opportunityStatus)
       {
         case Domain.Opportunity.Status.Active:
           // ensure not paused
@@ -102,7 +111,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
         case Domain.Opportunity.Status.Inactive:
           // ensure paused
           action = StatusAction.Pause;
-          requestAction.Reason = "Opportunity updated and inactivated by Yoma";
+          requestAction.Reason = "Opportunity updated, with end date in the past or explicitly inactivated by Yoma";
           break;
 
         case Domain.Opportunity.Status.Expired:

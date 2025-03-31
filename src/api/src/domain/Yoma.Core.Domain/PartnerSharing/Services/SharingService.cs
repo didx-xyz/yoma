@@ -80,7 +80,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
     /// Schedules an update for a partner sharing entity.
     /// An entity can only be scheduled for update if it has been created and processed, and is not already scheduled for update (status pending or error) (idempotent).
     /// If the entity does not exist, it will be scheduled for creation else an update.
-    /// If a creation if pending, the entity will eventually be created with the latest info, thus no update needed.
+    /// If a creation if pending, the entity will eventually be created with the latest info, thus no update needed (see ISharingBackgroundService.ProcessSharing re-evaluation of creatable status).
     /// If an update is pending, the entity will eventually be updated with the latest info, thus another update not needed.
     /// Once an entity, such as an opportunity, is deleted, it cannot be reinstated. If scheduled for deletion an error will be thrown (logical invocation error).
     /// Error status requires manual intervention and the entity will eventually be consistent with the latest scheduled action
@@ -199,6 +199,17 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
 
       switch (item.Status)
       {
+        case ProcessingStatus.Aborted:
+          // invoked during sharing background processing (ProcessSharing) when a scheduled 'Create'
+          // is no longer valid to execute — e.g., opportunity is no longer in a creatable state
+          // or the associated organization is inactive. Aborting prevents unnecessary errors or retries.
+          var action = Enum.Parse<ProcessingAction>(item.Action, true);
+          if (action != ProcessingAction.Create)
+            throw new InvalidOperationException($"Action of '{action}' not supported for status '{item.Status}'");
+          item.ErrorReason = null;
+          item.RetryCount = null;
+          break;
+
         case ProcessingStatus.Processed:
           if (string.IsNullOrEmpty(item.EntityExternalId))
             throw new ArgumentNullException(nameof(item), "External id required");

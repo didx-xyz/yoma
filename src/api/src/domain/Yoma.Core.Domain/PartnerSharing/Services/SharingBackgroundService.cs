@@ -114,9 +114,21 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                       //trigger points:
                       // - IOpportunityService.Create (explicit)
 
-                      //scheduling failsafe
-                      if (!SharingService.Statuses_Opportunity_Creatable.Contains(opportunity.Status))
-                        throw new InvalidOperationException($"Action '{action}': Opportunity status of '{string.Join(',', SharingService.Statuses_Opportunity_Creatable)}' expected. Current status '{opportunity.Status}'");
+                      //with ScheduleUpdate (where the opportunity isn't loaded and logic is kept lightweight), a pending create is left untouched.
+                      //during processing, we re-evaluate whether the opportunity is still valid for creation.
+                      //if it’s no longer creatable (e.g., due to status or organization state), we abort the create here to prevent invalid partner data.
+                      if (opportunity.OrganizationStatus != OrganizationStatus.Active || !SharingService.Statuses_Opportunity_Creatable.Contains(opportunity.Status))
+                      {
+                        var reason = opportunity.OrganizationStatus != OrganizationStatus.Active
+                          ? $"Associated organization is no longer '{OrganizationStatus.Active}'"
+                          : $"Opportunity status of '{string.Join(", ", SharingService.Statuses_Opportunity_Creatable)}' expected. Current status '{opportunity.Status}'";
+
+                        _logger.LogInformation("Action '{action}': Aborting for '{entityType}' and item with id '{id}'. {reason}", action, item.EntityType, item.Id, reason);
+
+                        item.Status = ProcessingStatus.Aborted;
+                        await _sharingService.UpdateSchedule(item);
+                        continue;
+                      }
 
                       item.EntityExternalId = await sharingProviderClient.CreateOpportunity(request);
                       break;
