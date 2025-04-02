@@ -638,12 +638,12 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         </div>
                       </div>
 
-                      {errors.commitmentInterval && (
+                      {errors.commitmentInterval?.root?.message && (
                         <FormMessage
                           messageType={FormMessageType.Warning}
                           className="p-0"
                         >
-                          {`${errors.commitmentInterval.message}`}
+                          {`${errors.commitmentInterval.root?.message}`}
                         </FormMessage>
                       )}
                     </div>
