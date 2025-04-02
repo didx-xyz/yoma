@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.Entity.Validators
       RuleFor(x => x.Username).NotEmpty();
       RuleFor(x => x.FirstName).Length(1, 125).When(x => !string.IsNullOrEmpty(x.FirstName));
       RuleFor(x => x.Surname).Length(1, 125).When(x => !string.IsNullOrEmpty(x.Surname));
-      RuleFor(x => x.PhoneNumber).Must(PhoneNumberValidator.IsValidPhoneNumber).WithMessage("'{PropertyName}' must be a valid phone number in international format.").When(x => !string.IsNullOrEmpty(x.PhoneNumber));
+      RuleFor(x => x.PhoneNumber).Must(PhoneNumberValidator.IsValidPhoneNumber).WithMessage("'{PropertyName}' must be a valid phone number in international format (e.g. +27831234567).").When(x => !string.IsNullOrEmpty(x.PhoneNumber));
       RuleFor(x => x.DateLastLogin).Must(NotInFuture).WithMessage("'{PropertyName}' is in the future.");
     }
     #endregion

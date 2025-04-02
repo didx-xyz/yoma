@@ -26,7 +26,7 @@ namespace Yoma.Core.Domain.Entity.Validators
       RuleFor(x => x.PrimaryContactName).NotEmpty().Length(1, 255).WithMessage("'{PropertyName}' is required must be between 1 and 255 characters.");
       RuleFor(x => x.PrimaryContactEmail).NotEmpty().Length(1, 320).EmailAddress().WithMessage("'{PropertyName}' is required and must be a valid email address.");
       RuleFor(x => x.PrimaryContactPhone).Cascade(CascadeMode.Stop).NotEmpty().WithMessage("'{PropertyName}' is required.")
-        .Must(PhoneNumberValidator.IsValidPhoneNumber).WithMessage("'{PropertyName}' must be a valid phone number in international format.");
+        .Must(PhoneNumberValidator.IsValidPhoneNumber).WithMessage("'{PropertyName}' must be a valid phone number in international format (e.g. +27831234567).");
       RuleFor(x => x.VATIN).Length(1, 255).When(x => !string.IsNullOrEmpty(x.VATIN)).WithMessage("'{PropertyName}' must be between 1 and 255 characters.");
       RuleFor(x => x.TaxNumber).Length(1, 255).When(x => !string.IsNullOrEmpty(x.TaxNumber)).WithMessage("'{PropertyName}' must be between 1 and 255 characters.");
       RuleFor(x => x.RegistrationNumber).Length(1, 255).When(x => !string.IsNullOrEmpty(x.RegistrationNumber)).WithMessage("'{PropertyName}' must be between 1 and 255 characters.");
@@ -66,7 +66,7 @@ namespace Yoma.Core.Domain.Entity.Validators
             (!string.IsNullOrWhiteSpace(admin) &&
             (new EmailAddressAttribute().IsValid(admin) || PhoneNumberValidator.IsValidPhoneNumber(admin))
             )))
-        .WithMessage("Additional administrative username(s) must contain either a valid email address or phone number.")
+        .WithMessage("Additional administrative username(s) must contain either a valid email address or phone number in international format (e.g. +27831234567).")
         .When(x => x.Admins != null && x.Admins.Count != 0);
 
       RuleFor(x => x.ZltoRewardPool)

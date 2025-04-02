@@ -34,7 +34,7 @@ namespace Yoma.Core.Domain.ActionLink.Validators
           .Must(item =>
               new EmailAddressAttribute().IsValid(item) ||
               PhoneNumberValidator.IsValidPhoneNumber(item))
-          .WithMessage("'Distribution List' contain(s) empty, invalid email address(es) or phone number(s).");
+          .WithMessage("'Distribution List' contains one or more empty or invalid email addresses or international phone numbers (e.g. +27831234567).");
         });
 
       RuleFor(x => x.DateEnd).Must(date => !date.HasValue || date.Value.ToEndOfDay() > DateTimeOffset.UtcNow).WithMessage("'{PropertyName}' must be in the future.");
