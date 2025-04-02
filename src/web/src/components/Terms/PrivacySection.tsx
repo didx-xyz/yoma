@@ -93,31 +93,31 @@ const PrivacySection = () => {
           have a number of different partners that provide value to youth on the
           platform. Below are the types of partners involved currently.
         </p>
-        <p className="ml-3 text-gray-dark">
+        <p className="text-gray-dark ml-3">
           - Opportunity partners (OP). These are independent opportunity
           providers who list their opportunities on Yoma for youth to
           participate in. They are responsible for hosting, managing, reviewing
           and rewarding youth for completing opportunities.
         </p>
-        <p className="mb-0 ml-4 text-gray-dark">
+        <p className="text-gray-dark mb-0 ml-4">
           &#9702; Our current list of opportunity partners on the platform
           comprises of:
         </p>
-        <p className="-mb-2 ml-5 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-5">
           <span className="font-semibold text-black">&#8226; Atingi</span>
         </p>
-        <p className="-mb-2 ml-5 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-5">
           <span className="font-semibold text-black">&#8226; Rlabs</span>
         </p>
-        <p className="-mb-2 ml-5 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-5">
           <span className="font-semibold text-black">&#8226; Umuzi</span>
         </p>
-        <p className="-mb-2 ml-5 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-5">
           <span className="font-semibold text-black">
             &#8226; Africa Coding Network
           </span>
         </p>
-        <p className="ml-5 text-gray-dark">
+        <p className="text-gray-dark ml-5">
           <span className="font-semibold text-black">&#8226; Goodwall</span>
         </p>
         <p className="mb-2 text-lg font-semibold text-black">Introduction</p>
@@ -174,7 +174,7 @@ const PrivacySection = () => {
         <p className="mb-2 ml-3 font-semibold text-black">
           a) Personal Data in the User Profile
         </p>
-        <p className="ml-4 text-gray-dark">
+        <p className="text-gray-dark ml-4">
           When you register on Yoma, you can choose a password and provide first
           name, last name, country of residence and a valid email address. We
           require your full name, e-mail address and password to successfully
@@ -196,14 +196,14 @@ const PrivacySection = () => {
           earning opportunities. Users have the possibility to object to this
           use at any time.
         </p>
-        <p className="ml-4 text-gray-dark">
+        <p className="text-gray-dark ml-4">
           Retention period: 12 months, or until the user requests that their
           data be deleted from the platform.
         </p>
         <p className="mb-2 ml-3 font-semibold text-black">
           b) Other Personal Data
         </p>
-        <p className="ml-4 text-gray-dark">
+        <p className="text-gray-dark ml-4">
           When you use the Yoma website and services, we may collect other
           information about your activities on the Website, including challenges
           or competitions you have participated in and content you have
@@ -214,14 +214,14 @@ const PrivacySection = () => {
           you provide to us directly, whether through our platforms, personal
           interaction or via phone, SMSs or any other medium.
         </p>
-        <p className="ml-4 text-gray-dark">
+        <p className="text-gray-dark ml-4">
           Retention period: 12 months, or until the user requests that their
           data be deleted from the platform.
         </p>
         <p className="mb-2 ml-3 font-semibold text-black">
           c) Technical and Log Data
         </p>
-        <p className="ml-4 text-gray-dark">
+        <p className="text-gray-dark ml-4">
           When you access and use Yoma, log data will be stored. We collect or
           retrieve your information using technologies such as cookies, web
           beacons (explained below) and other technologies. Depending on how you
@@ -238,12 +238,12 @@ const PrivacySection = () => {
           do not have access to the data. Thus, this data cannot be seen by the
           other participants or partners.
         </p>
-        <p className="ml-4 text-gray-dark">
+        <p className="text-gray-dark ml-4">
           Retention period: 12 months, or until the user requests that their
           data be deleted from the platform.
         </p>
         <p className="mb-0 ml-5 font-semibold text-black">Cookies:</p>
-        <span className="mb-2 ml-5 text-gray-dark">
+        <span className="text-gray-dark mb-2 ml-5">
           &#8226; Websites collect information on their visitors using
           &quot;cookies&quot;. Cookies are text files assisting websites to
           identify visitors by allotting a unique identifying code to each
@@ -255,7 +255,7 @@ const PrivacySection = () => {
           cookies we use, please see our Cookie Policy.
         </span>
         <p className="mb-0 ml-5 font-semibold text-black">Web beacons:</p>
-        <span className="mb-2 ml-5 text-gray-dark">
+        <span className="text-gray-dark mb-2 ml-5">
           &#8226; A web beacon is a technique used on web pages to be able to
           check that a user has accessed some content. Web beacons are typically
           used by third parties to monitor the activity of users at a website
@@ -283,48 +283,48 @@ const PrivacySection = () => {
         <p className="mb-2 text-lg font-semibold text-black">
           How we collect Information
         </p>
-        <p className="mb-0 ml-3 text-gray-dark">
+        <p className="text-gray-dark mb-0 ml-3">
           <span className="font-semibold text-black">
             1. We collect information directly from you.{" "}
           </span>
           This includes personal data you provide when you:
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Register and create an account on our website
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Update your profile or post in public areas
         </p>
-        <p className="ml-4 text-gray-dark">
+        <p className="text-gray-dark ml-4">
           &#8226; Participate in specific features or offerings
         </p>
-        <p className="mb-0 ml-3 text-gray-dark">
+        <p className="text-gray-dark mb-0 ml-3">
           <span className="font-semibold text-black">
             2. We may collect information from others, such as Yoma
           </span>
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Register on Yoma via one of the opportunity partners
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Choose to participate in a challenge from an opportunity
           partner
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Ask for verification of a completed learning opportunity
         </p>
-        <p className="ml-4 text-gray-dark">&#8226; Want to redeem Zltos</p>
-        <p className="mb-0 ml-3 text-gray-dark">
+        <p className="text-gray-dark ml-4">&#8226; Want to redeem Zltos</p>
+        <p className="text-gray-dark mb-0 ml-3">
           <span className="font-semibold text-black">
             3. We collect some information automatically, such as technical data
             about the devices and activities you undertake on the platform.{" "}
           </span>
-          Data<p className="ml-3 text-gray-dark">is collected when you:</p>
+          Data<p className="text-gray-dark ml-3">is collected when you:</p>
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Log in to the platform
         </p>
-        <p className="ml-4 text-gray-dark">
+        <p className="text-gray-dark ml-4">
           &#8226; Interact with our website and offerings
         </p>
         <p className="mb-2 text-lg font-semibold text-black">
@@ -333,22 +333,22 @@ const PrivacySection = () => {
         <p className="text-gray-dark">
           We use the information collected for the following purposes:
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Providing access to the platform and to the related services
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Customising the platform and your user experience
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Communicating with you regarding your account (e.g., if we may
           want to notify you about changes to our platforms or provide you with
           information about services)
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Informing you about specific opportunities and/or offers on
           the platform that may be of interest for you (based on your consent).
         </p>
-        <p className="mb-4 ml-4 text-gray-dark">
+        <p className="text-gray-dark mb-4 ml-4">
           &#8226; Analysing and improving our services based on aggregated
           information
         </p>
@@ -369,19 +369,19 @@ const PrivacySection = () => {
                 privacyTable.privacyTable.map((item, index) => {
                   return (
                     <tr key={index}>
-                      <td className="border p-px text-left text-gray-dark md:p-2">
+                      <td className="text-gray-dark border p-px text-left md:p-2">
                         {item["Section"]}
                       </td>
-                      <td className="border p-px text-left text-gray-dark md:p-2">
+                      <td className="text-gray-dark border p-px text-left md:p-2">
                         {item["Data name"]}
                       </td>
-                      <td className="border p-px text-left text-gray-dark md:p-2">
+                      <td className="text-gray-dark border p-px text-left md:p-2">
                         {item["Data category"]}
                       </td>
-                      <td className="border p-px text-left text-gray-dark md:p-2">
+                      <td className="text-gray-dark border p-px text-left md:p-2">
                         {item["Data type"]}
                       </td>
-                      <td className="border p-px text-left text-gray-dark md:p-2">
+                      <td className="text-gray-dark border p-px text-left md:p-2">
                         {item["Reason for collection"]}
                       </td>
                     </tr>
@@ -397,13 +397,13 @@ const PrivacySection = () => {
         <p className="mb-2 text-lg font-semibold text-black">
           Comment on the purpose
         </p>
-        <p className="mb-2 text-gray-dark">
+        <p className="text-gray-dark mb-2">
           We will only use your personal data for the purposes for which we
           collected it, unless we reasonably consider that we need to use it for
           another reason and that reason is compatible with the original
           purpose.
         </p>
-        <p className="mb-2 text-gray-dark">
+        <p className="text-gray-dark mb-2">
           If we need to use your personal data for an unrelated purpose, we will
           notify you and we will explain the purpose and legal basis which
           allows us to do so.
@@ -460,7 +460,7 @@ const PrivacySection = () => {
           our control.
         </p>
         <p className="mb-2 font-semibold text-black">Yoma Technical Team</p>
-        <p className="mb-2 text-gray-dark">
+        <p className="text-gray-dark mb-2">
           This is the design and development team responsible with building and
           maintaining the platform. Only members of this team have access to the
           various databases and user information that is not encrypted. Access
@@ -477,7 +477,7 @@ const PrivacySection = () => {
           technical team needs specific details in order to help the user or
           diagnose a problem.
         </p>
-        <p className="mb-1 ml-3 text-gray-dark">
+        <p className="text-gray-dark mb-1 ml-3">
           &#8226; We are committed to protect your personal information. We
           don&apos;t share your personal information with or give access to
           third parties unless you provide explicit consent to do so. Before any
@@ -487,11 +487,11 @@ const PrivacySection = () => {
           share your information. Circumstances in which we may share personal
           information with third parties:
         </p>
-        <p className="ml-3 text-gray-dark">
+        <p className="text-gray-dark ml-3">
           &#8226; We may share information with ecosystem partners or
           third-party providers.
         </p>
-        <p className="mb-2 text-gray-dark">
+        <p className="text-gray-dark mb-2">
           We may share information with ecosystem partners or third-party
           providers. Ecosystem partners are partners on the platform such as OPs
           and EPs who are actively engaged in connecting with the youth and
@@ -500,7 +500,7 @@ const PrivacySection = () => {
           offering, for example, a third-party chat bot to help deal with user
           queries.
         </p>
-        <p className="mb-2 text-gray-dark">
+        <p className="text-gray-dark mb-2">
           Let&apos;s take a closer look at how, when, and why we may share data
           with these two parties.
         </p>
@@ -555,30 +555,30 @@ const PrivacySection = () => {
           We may have to share your personal data with the parties set out below
           for the purposes set out in the table above.
         </p>
-        <p className="-mb-2 ml-3 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-3">
           &#8226; External Third Parties Service
         </p>
-        <p className="-mb-2 ml-3 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-3">
           &#8226; Providers based in the UK who provide IT and system
           administration services
         </p>
-        <p className="-mb-2 ml-3 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-3">
           &#8226; Professional advisers including lawyers, bankers, auditors and
           insurers based in the UK who provide consultancy, banking, legal,
           insurance and accounting services.
         </p>
-        <p className="-mb-2 ml-3 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-3">
           &#8226; Carefully selected external consultants who support Yoma in
           delivering their service to members.
         </p>
-        <p className="ml-3 text-gray-dark">
+        <p className="text-gray-dark ml-3">
           &#8226; Third parties to whom we may choose to sell, transfer, or
           merge parts of our business or our assets. Alternatively, we may seek
           to acquire other businesses or merge with them. If a change happens to
           our business, then the new owners may use your personal data in the
           same way as set out in this privacy notice.
         </p>
-        <p className="mb-2 text-gray-dark">
+        <p className="text-gray-dark mb-2">
           We require all third parties to respect the security of your personal
           data and to treat it in accordance with the law. We do not allow our
           third-party service providers to use your personal data for their own
@@ -588,20 +588,20 @@ const PrivacySection = () => {
         <p className="mb-2 font-semibold text-black">
           Links to Third-Party Websites:
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; There are different types of learning, earning and impact
           opportunities provided on Yoma. These opportunities are generally
           provided by partners of Yoma. To access an opportunity, our platform
           may provide links to third-party websites.
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; An additional registration on the partner&apos;s platform may
           be required. Do note that other websites may have varying Terms of
           Service, Privacy Policies and Copyright Policies. We advise our
           customers to read the policies governing third-party websites and note
           the Personal Information collected by them, before using the website.
         </p>
-        <p className="ml-4 text-gray-dark">
+        <p className="text-gray-dark ml-4">
           &#8226; Our Privacy Policy applies only to content, use, data
           collection and privacy relating to our website and platforms.
         </p>
@@ -615,7 +615,7 @@ const PrivacySection = () => {
           process your personal data on our instructions and they are subject to
           a duty of confidentiality.
         </p>
-        <p className="mb-0 text-gray-dark">
+        <p className="text-gray-dark mb-0">
           We have put in place procedures to deal with any suspected personal
           data breach and will notify you and any applicable regulator of a
           breach where we are legally required to do so.
@@ -627,45 +627,45 @@ const PrivacySection = () => {
           Unless subject to an exemption under the data protection laws, you
           have the following rights with respect to your personal data:
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Be informed that your personal information is being collected
           – at the point of collection – and the purposes for which it is being
           processed, retention periods and who it will be shared with;
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Access personal data held and processed by us;
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Rectification of any personal data that is inaccurate or
           incomplete;
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Erasure, or right to &quot;be forgotten&quot; if you would
           like to remove yourself and your data from the platform. This is
           initiated and executed by the youth/user;
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Erasure, or right to &quot;be forgotten&quot; if your data is
           no longer necessary for the purpose for which it was collected and
           Consent is the lawful basis for processing;
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Request that processing is restricted although we may still
           store their personal data; this is an alternative to requesting
           erasure of your data and the restriction is likely to be for a fixed
           period;
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Data portability if data is processed by automated means,
           which means to receive your data, or some of your data, in a format
           that can be easily used by another person (including the data subject
           themselves) or organisation;
         </p>
-        <p className="-mb-2 ml-4 text-gray-dark">
+        <p className="text-gray-dark -mb-2 ml-4">
           &#8226; Object to processing in certain circumstances, including
           preventing the use of their data for direct marketing;
         </p>
-        <p className="ml-4 text-gray-dark">
+        <p className="text-gray-dark ml-4">
           &#8226; Request human intervention if automated decision-making or
           profiling is used.
         </p>
@@ -702,22 +702,22 @@ const PrivacySection = () => {
           This Privacy Notice is reviewed periodically in line with our policy
           review schedule.
         </p>
-        <p className="mb-2 text-gray-dark">
+        <p className="text-gray-dark mb-2">
           Please keep us informed if your personal data changes during your
           relationship with us. It is important that the personal data we hold
           about you is accurate and current.
         </p>
-        <p className="mb-0 text-gray-dark">
+        <p className="text-gray-dark mb-0">
           If this does not resolve your complaint to your satisfaction, you have
           the right to lodge a complaint with the Information
           Commissioner&apos;s Office. You can contact them as follows:
         </p>
-        <p className="-mb-4 text-gray-dark">Commissioner</p>
-        <p className="-mb-4 text-gray-dark">
+        <p className="text-gray-dark -mb-4">Commissioner</p>
+        <p className="text-gray-dark -mb-4">
           Wycliffe House, Water Lane, Wilmslow, Cheshire, SK9 5AF, England, UK
         </p>
-        <p className="-mb-4 text-gray-dark">Tel.: +44 3031231113,</p>
-        <p className="-mb-4 text-gray-dark">
+        <p className="text-gray-dark -mb-4">Tel.: +44 3031231113,</p>
+        <p className="text-gray-dark -mb-4">
           E-Mail: dataprotectionfee@ico.org.uk or by using the following Link
         </p>
         <p className="text-gray-dark">

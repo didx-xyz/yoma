@@ -395,7 +395,12 @@ const Organisations: NextPageWithLayout<{
               }`}
               onClick={() => router.push("/organisations")}
             >
-              All
+              All{" "}
+              {(totalCountAll ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountAll}
+                </div>
+              )}
             </a>
             <a
               role="tab"
@@ -406,7 +411,12 @@ const Organisations: NextPageWithLayout<{
               }`}
               onClick={() => router.push("/organisations?status=Active")}
             >
-              Active
+              Active{" "}
+              {(totalCountActive ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountActive}
+                </div>
+              )}
             </a>
             <a
               role="tab"
@@ -418,6 +428,11 @@ const Organisations: NextPageWithLayout<{
               onClick={() => router.push("/organisations?status=Inactive")}
             >
               Pending
+              {(totalCountInactive ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountInactive}
+                </div>
+              )}
             </a>
             <a
               role="tab"
@@ -428,7 +443,12 @@ const Organisations: NextPageWithLayout<{
               }`}
               onClick={() => router.push("/organisations?status=Declined")}
             >
-              Declined
+              Declined{" "}
+              {(totalCountDeclined ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountDeclined}
+                </div>
+              )}
             </a>
             <a
               role="tab"
@@ -440,6 +460,11 @@ const Organisations: NextPageWithLayout<{
               onClick={() => router.push("/organisations?status=Deleted")}
             >
               Deleted
+              {(totalCountDeleted ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountDeleted}
+                </div>
+              )}
             </a>
           </CustomSlider>
 

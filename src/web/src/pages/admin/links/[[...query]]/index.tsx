@@ -649,6 +649,38 @@ const Links: NextPageWithLayout<{
               )}
             </Link>
             <Link
+              href={`/admin/links?statuses=expired`}
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "expired"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+              role="tab"
+            >
+              Expired
+              {(totalCountExpired ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountExpired}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/admin/links?statuses=limitReached`}
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "limitReached"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+              role="tab"
+            >
+              Limit Reached
+              {(totalCountLimitReached ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountLimitReached}
+                </div>
+              )}
+            </Link>
+            <Link
               href={`/admin/links?statuses=deleted`}
               role="tab"
               className={`border-b-4 py-2 whitespace-nowrap text-white ${

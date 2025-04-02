@@ -27,7 +27,7 @@ const PublicBadges: React.FC<BadgesProps> = ({ opportunity }) => {
   }, [opportunity]);
 
   return (
-    <div className="mb-2 mt-4 flex flex-row flex-wrap gap-1 text-xs font-bold text-green-dark md:my-2">
+    <div className="text-green-dark mt-4 mb-2 flex flex-row flex-wrap gap-1 text-xs font-bold md:my-2">
       {opportunity?.commitmentIntervalCount && (
         <div className="badge bg-green-light text-green">
           <Image
@@ -139,14 +139,14 @@ const PublicBadges: React.FC<BadgesProps> = ({ opportunity }) => {
           {opportunity.verificationEnabled &&
             opportunity.verificationMethod === "Manual" &&
             !opportunity?.participantLimitReached && (
-              <div className="badge bg-red-100 text-error">
+              <div className="badge text-error bg-red-100">
                 <IoMdCloudUpload className="h-4 w-4" />
                 <span className="ml-1">Upload Only</span>
               </div>
             )}
           {(!opportunity.verificationEnabled ||
             opportunity.verificationMethod !== "Manual") && (
-            <div className="badge bg-red-100 text-error">
+            <div className="badge text-error bg-red-100">
               <IoMdWarning className="h-4 w-4" />
               <span className="ml-1">Expired</span>
             </div>

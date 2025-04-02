@@ -36,17 +36,17 @@ const OpportunityCard: React.FC<InputProps> = ({ data, displayType }) => {
         />
 
         <div className="truncatex flex flex-col justify-center gap-1">
-          <h1 className="line-clamp-1 text-xs font-medium text-gray-dark">
+          <h1 className="text-gray-dark line-clamp-1 text-xs font-medium">
             {data.organizationName}
           </h1>
-          <h2 className="line-clamp-2 text-sm font-semibold leading-tight md:line-clamp-1">
+          <h2 className="line-clamp-2 text-sm leading-tight font-semibold md:line-clamp-1">
             {data.opportunityTitle}
           </h2>
         </div>
       </div>
 
       <div className="flex h-full max-h-[60px] flex-row">
-        <p className="line-clamp-4 text-xs font-light text-gray-dark">
+        <p className="text-gray-dark line-clamp-4 text-xs font-light">
           {data.opportunitySummary}
         </p>
       </div>
@@ -63,7 +63,7 @@ const OpportunityCard: React.FC<InputProps> = ({ data, displayType }) => {
             <div className="flex flex-row flex-wrap gap-2">
               {data.skills?.map((skill, index) => (
                 <div
-                  className="badge truncate whitespace-nowrap rounded-md bg-green-light text-[12px] font-semibold text-green"
+                  className="badge bg-green-light text-green truncate rounded-md text-[12px] font-semibold whitespace-nowrap"
                   key={`skill_${index}`}
                 >
                   {skill.name}

@@ -17,7 +17,7 @@ export const Unauthorized = () => (
           width={100}
           sizes="100vw"
           priority={true}
-          className="mt-2 h-auto rounded-full p-4 shadow-custom"
+          className="shadow-custom mt-2 h-auto rounded-full p-4"
         />
         <h4>403 - Not authorized</h4>
         <p className="p-4 text-sm">

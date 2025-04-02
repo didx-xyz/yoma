@@ -39,9 +39,9 @@ export const SkillsChart: React.FC<{
     return (
       <>
         {data?.legend.map((name, index) => (
-          <div key={index} className="flex select-none flex-col gap-1">
+          <div key={index} className="flex flex-col gap-1 select-none">
             <div className="flex flex-row items-center gap-3">
-              <span className="rounded-lg bg-gray-light p-1">🎖️</span>
+              <span className="bg-gray-light rounded-lg p-1">🎖️</span>
               <span className="text-md font-semibold">{name}</span>
             </div>
             {data?.count[index] != null && (
@@ -123,7 +123,7 @@ export const SkillsChart: React.FC<{
           }}
         />
       ) : (
-        <div className="mx-4 flex flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
+        <div className="bg-gray-light mx-4 flex flex-col items-center justify-center rounded-lg p-4 text-center text-xs">
           Not enough data to display
         </div>
       )}

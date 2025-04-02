@@ -15,13 +15,13 @@ export const LoadingSkeleton: React.FC<{
           {columnsArray.map((_, colIndex) => (
             <div key={`col-${colIndex}`} className="flex w-full flex-col gap-4">
               <div className="flex items-center gap-4">
-                <div className="skeleton h-16 w-20 shrink-0 rounded-full bg-gray"></div>
+                <div className="skeleton bg-gray h-16 w-20 shrink-0 rounded-full"></div>
                 <div className="flex flex-col gap-4">
-                  <div className="skeleton h-4 w-24 bg-gray"></div>
-                  <div className="skeleton h-4 w-32 bg-gray"></div>
+                  <div className="skeleton bg-gray h-4 w-24"></div>
+                  <div className="skeleton bg-gray h-4 w-32"></div>
                 </div>
               </div>
-              <div className="skeleton h-32 w-full bg-gray"></div>
+              <div className="skeleton bg-gray h-32 w-full"></div>
             </div>
           ))}
         </div>

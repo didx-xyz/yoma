@@ -36,7 +36,7 @@ export const SignInButton: React.FC<{
         />
       )}
       {!isButtonLoading && <IoMdFingerPrint className="h-6 w-6 text-white" />}
-      <p className="uppercase text-white">Sign In</p>
+      <p className="text-white uppercase">Sign In</p>
     </button>
   );
 };

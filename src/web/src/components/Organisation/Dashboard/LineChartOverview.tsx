@@ -73,7 +73,7 @@ export const LineChartOverview: React.FC<{
           }}
         >
           <div className="flex flex-row items-center gap-3">
-            <div className="rounded-lg bg-gray-light p-1">
+            <div className="bg-gray-light rounded-lg p-1">
               {name === "Views"
                 ? "👀"
                 : name === "Go-To Clicks"
@@ -224,7 +224,7 @@ export const LineChartOverview: React.FC<{
         />
       ) : (
         <div
-          className="flex h-full items-start justify-center rounded-lg bg-gray-light"
+          className="bg-gray-light flex h-full items-start justify-center rounded-lg"
           style={{ height: chartHeight }}
         >
           <NoRowsMessage

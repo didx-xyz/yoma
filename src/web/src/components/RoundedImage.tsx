@@ -15,7 +15,7 @@ export const RoundedImage: React.FC<{
 }) => {
   return (
     <div
-      className="h-[${containerHeight}px] w-[${containerWidth}px] flex items-center justify-center rounded-full bg-white shadow-lg"
+      className="flex h-[${containerHeight}px] w-[${containerWidth}px] items-center justify-center rounded-full bg-white shadow-lg"
       style={{
         width: `${containerSize}px`,
         height: `${containerSize}px`,

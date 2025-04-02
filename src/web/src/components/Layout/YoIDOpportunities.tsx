@@ -91,9 +91,9 @@ const YoIDOpportunities: TabProps = ({ children }) => {
               key={tab.title}
               href={tab.url!}
               rel="noopener noreferrer"
-              className={`btn btn-sm flex items-center border-gray text-xs text-gray-dark hover:border-gray-dark ${
+              className={`btn btn-sm border-gray text-gray-dark hover:border-gray-dark flex items-center text-xs ${
                 tab.selected
-                  ? "btn-secondary border-0 !text-gray hover:text-white"
+                  ? "btn-secondary !text-gray border-0 hover:text-white"
                   : ""
               }`}
             >
@@ -108,7 +108,7 @@ const YoIDOpportunities: TabProps = ({ children }) => {
         >
           Just completed an opportunity? Click
           <Link
-            className="mx-1 font-bold text-green hover:underline"
+            className="text-green mx-1 font-bold hover:underline"
             href="/yoid/opportunities/add"
           >
             here
