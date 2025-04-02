@@ -338,13 +338,13 @@ const SchemaCreateEdit: NextPageWithLayout<{
       {isLoading && <Loading />}
       <PageBackground />
 
-      <div className="container z-10 mt-20 max-w-5xl px-2 py-4">
+      <div className="z-10 container mt-20 max-w-5xl px-2 py-4">
         {/* BREADCRUMB */}
         <div className="breadcrumbs text-sm text-white">
           <ul>
             <li>
               <Link
-                className="font-bold text-white hover:text-gray"
+                className="hover:text-gray font-bold text-white"
                 href={`/admin/schemas`}
               >
                 <IoMdArrowRoundBack className="mr-1 inline-block h-4 w-4" />
@@ -414,7 +414,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                   }`}
                 >
                   <span
-                    className={`mr-2 rounded-full bg-gray-dark px-1.5 py-0.5 text-xs font-medium text-white ${
+                    className={`bg-gray-dark mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
                       isValidStep1 && isValidStep2 && isValidStep3
                         ? "bg-green"
                         : "bg-gray-dark"
@@ -429,7 +429,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
           </ul>
           {/* dropdown menu */}
           <select
-            className="select select-bordered select-sm md:hidden"
+            className="select select-sm md:hidden"
             onChange={(e) => {
               switch (e.target.value) {
                 case "General information":
@@ -453,7 +453,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
           </select>
 
           {/* forms */}
-          <div className="flex flex-grow flex-col items-center rounded-lg bg-white">
+          <div className="flex grow flex-col items-center rounded-lg bg-white">
             <div className="flex w-full max-w-xl flex-col p-4">
               {step === 1 && (
                 <>
@@ -471,14 +471,14 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       onSubmitStep(2, data),
                     )}
                   >
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <label className="label">
                         <span className="label-text">Schema name</span>
                       </label>
                       {id === "create" && (
                         <input
                           type="text"
-                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                          className="input border-gray focus:border-gray rounded-md focus:outline-none"
                           placeholder="Enter schema name"
                           {...registerStep1("name")}
                           contentEditable
@@ -488,7 +488,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       {id !== "create" && (
                         <input
                           type="text"
-                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                          className="input border-gray focus:border-gray rounded-md focus:outline-none"
                           value={schema?.displayName ?? ""}
                           contentEditable
                           disabled={true}
@@ -497,7 +497,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                       {errorsStep1.name && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${errorsStep1.name.message}`}
                           </span>
                         </label>
@@ -505,14 +505,14 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                       {id !== "create" && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             Schema name cannot be changed for existing schemas
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <label className="label">
                         <span className="label-text">Schema type</span>
                       </label>
@@ -535,7 +535,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                       {errorsStep1.typeId && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${errorsStep1.typeId.message}`}
                           </span>
                         </label>
@@ -543,14 +543,14 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                       {id !== "create" && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             Schema type cannot be changed for existing schemas
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <label className="label">
                         <span className="label-text">Artifact type</span>
                       </label>
@@ -600,7 +600,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                       {errorsStep1.artifactType && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${errorsStep1.artifactType.message}`}
                           </span>
                         </label>
@@ -608,19 +608,19 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                       {id !== "create" && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             Artifact type cannot be changed for existing schemas
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
                       {id === "create" && (
                         <button
                           type="button"
-                          className="btn btn-warning btn-sm flex-grow"
+                          className="btn btn-warning btn-sm grow"
                           onClick={handleCancel}
                         >
                           Cancel
@@ -628,7 +628,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       )}
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm flex-grow"
+                        className="btn btn-success btn-sm grow"
                       >
                         Next
                       </button>
@@ -652,7 +652,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       onSubmitStep(3, data),
                     )}
                   >
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <Controller
                         control={controlStep2}
                         name="attributes"
@@ -667,18 +667,18 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                       {errorsStep2.attributes && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${errorsStep2.attributes.message}`}
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
                       <button
                         type="button"
-                        className="btn btn-warning btn-sm flex-grow"
+                        className="btn btn-warning btn-sm grow"
                         onClick={() => {
                           setStep(1);
                         }}
@@ -688,7 +688,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm flex-grow"
+                        className="btn btn-success btn-sm grow"
                       >
                         {id === "create" ? "Next" : "Submit"}
                       </button>
@@ -713,7 +713,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       onSubmitStep(4, data),
                     )}
                   >
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <label className="label">
                         <span className="label-text -ml-1 font-bold">
                           Schema name
@@ -724,14 +724,14 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       </label>
                       {errorsStep1.name && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${errorsStep1.name.message}`}
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <label className="label">
                         <span className="label-text -ml-1 font-bold">
                           Schema type
@@ -745,14 +745,14 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       </label>
                       {errorsStep1.name && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${errorsStep1.name.message}`}
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <label className="label">
                         <span className="label-text -ml-1 font-bold">
                           Artifact type
@@ -769,14 +769,14 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       </label>
                       {errorsStep1.artifactType && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${errorsStep1.artifactType.message}`}
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <label className="label">
                         <span className="label-text -ml-1 font-bold">
                           Attributes
@@ -844,18 +844,18 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       </label> */}
                       {errorsStep2.attributes && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${errorsStep2.attributes.message}`}
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-2">
                       <button
                         type="button"
-                        className="btn btn-warning btn-sm flex-grow"
+                        className="btn btn-warning btn-sm grow"
                         onClick={() => {
                           setStep(2);
                         }}
@@ -864,7 +864,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       </button>
                       <button
                         type="submit"
-                        className="btn btn-success btn-sm flex-grow"
+                        className="btn btn-success btn-sm grow"
                         disabled={
                           !(isValidStep1 && isValidStep2 && isValidStep3)
                         }

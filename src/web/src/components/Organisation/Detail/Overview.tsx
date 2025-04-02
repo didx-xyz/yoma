@@ -13,57 +13,57 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
       <div className="flex flex-col gap-2">
         <h5 className="font-bold tracking-wider">Organisation Details</h5>
         {organisation?.name && (
-          <div className="form-control">
+          <fieldset className="fieldset">
             <label className="label">
               <span className="label-text text-gray-dark">Name:</span>
             </label>
             <label className="label">
               <div className="label-text">{organisation?.name}</div>
             </label>
-          </div>
+          </fieldset>
         )}
         {organisation?.websiteURL && (
-          <div className="form-control">
+          <fieldset className="fieldset">
             <label className="label">
               <span className="label-text text-gray-dark">Website:</span>
             </label>
             <Link
-              className="hover:text-success-600 focus:text-success-600 active:text-success-700 pl-1 text-success transition duration-150 ease-in-out"
+              className="hover:text-success-600 focus:text-success-600 active:text-success-700 text-success pl-1 transition duration-150 ease-in-out"
               href={organisation?.websiteURL}
             >
               {organisation?.websiteURL}
             </Link>
-          </div>
+          </fieldset>
         )}
         {organisation?.tagline && (
-          <div className="form-control">
+          <fieldset className="fieldset">
             <label className="label">
               <span className="label-text text-gray-dark">Tagline:</span>
             </label>
             <label className="label">
               <div className="label-text">{organisation?.tagline}</div>
             </label>
-          </div>
+          </fieldset>
         )}
         {organisation?.biography && (
-          <div className="form-control">
+          <fieldset className="fieldset">
             <label className="label">
               <span className="label-text text-gray-dark">Biography:</span>
             </label>
             <label className="label">
               <div className="label-text">{organisation?.biography}</div>
             </label>
-          </div>
+          </fieldset>
         )}
 
-        <div className="form-control">
+        <fieldset className="fieldset">
           <label className="label">
             <span className="label-text text-gray-dark">Logo:</span>
           </label>
-          <div className="flex min-w-max items-center justify-center">
+          <fieldset className="flex min-w-max items-center justify-center">
             {/* NO IMAGE */}
             {!organisation?.logoURL && (
-              <IoMdImage className="text-gray-400 h-20 w-20" />
+              <IoMdImage className="h-20 w-20 text-gray-400" />
             )}
 
             {/* EXISTING IMAGE */}
@@ -75,14 +75,14 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
                 src={organisation.logoURL}
               />
             )}
-          </div>
-        </div>
+          </fieldset>
+        </fieldset>
 
         <div className="divider"></div>
 
         <h5 className="font-bold tracking-wider">Contact Details</h5>
 
-        <div className="form-control">
+        <fieldset className="fieldset">
           <label className="label">
             <span className="label-text text-gray-dark">Primary Contact:</span>
           </label>
@@ -95,9 +95,9 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
               {organisation?.primaryContactPhone}
             </div>
           </label>
-        </div>
+        </fieldset>
 
-        <div className="form-control">
+        <fieldset className="fieldset">
           <label className="label">
             <span className="label-text text-gray-dark">Address:</span>
           </label>
@@ -114,13 +114,13 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
               {organisation?.country}
             </div>
           </label>
-        </div>
+        </fieldset>
 
         <div className="divider"></div>
 
         <h5 className="font-bold tracking-wider">Roles</h5>
 
-        <div className="form-control">
+        <fieldset className="fieldset">
           <label className="label">
             <span className="label-text text-gray-dark">
               Interested in becoming:
@@ -135,13 +135,13 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
               </li>
             ))}
           </ul>
-        </div>
+        </fieldset>
 
         <div className="divider"></div>
 
         <h5 className="font-bold tracking-wider">Company Registration</h5>
 
-        <div className="form-control">
+        <fieldset className="fieldset">
           <label className="label">
             <span className="label-text text-gray-dark">Documents:</span>
           </label>
@@ -155,7 +155,7 @@ export const Overview: React.FC<InputProps> = ({ organisation }) => {
               </li>
             ))}
           </ul>
-        </div>
+        </fieldset>
 
         <div className="divider"></div>
 

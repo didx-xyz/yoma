@@ -12,10 +12,10 @@ export const UnderConstruction = () => (
           🚀
         </div>
 
-        <h2 className="text-gray-900 my-2 text-lg font-medium">
+        <h2 className="my-2 text-lg font-medium text-gray-900">
           Under development
         </h2>
-        <p className="text-gray-500 text-center">Coming soon ;)</p>
+        <p className="text-center text-gray-500">Coming soon ;)</p>
       </div>
     </div>
   </>

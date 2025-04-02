@@ -107,19 +107,19 @@ const MySkills: NextPageWithLayout<{
                   <Link
                     key={`${item.id}_${index}`}
                     href={item?.infoURL ? (item?.infoURL as any) : "#noaction"}
-                    className="flex h-[150px] flex-col rounded-lg bg-white p-4 shadow-custom"
+                    className="shadow-custom flex h-[150px] flex-col rounded-lg bg-white p-4"
                     aria-disabled={item?.infoURL ? false : true}
                   >
                     <div className="flex h-full flex-col gap-2">
-                      <div className="flex flex-grow flex-row items-start justify-start">
+                      <div className="flex grow flex-row items-start justify-start">
                         <div className="flex flex-col items-start justify-start gap-2">
-                          <p className="line-clamp-2 max-h-[45px] overflow-hidden text-ellipsis text-base font-semibold text-black">
+                          <p className="line-clamp-2 max-h-[45px] overflow-hidden text-base font-semibold text-ellipsis text-black">
                             {item.name}
                           </p>
                         </div>
                       </div>
 
-                      <div className="flex flex-row text-xs text-gray-dark">
+                      <div className="text-gray-dark flex flex-row text-xs">
                         Skill issued by {item.organizations.length} partner
                         {item.organizations.length > 1 ? "s" : ""}
                       </div>

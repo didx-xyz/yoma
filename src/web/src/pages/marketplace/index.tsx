@@ -143,7 +143,7 @@ const Marketplace: NextPageWithLayout<{
         >
           <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
             <div className="mt-20 flex flex-col items-center justify-center gap-4 p-4 md:p-0">
-              <div className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+              <div className="border-green-dark -mt-8 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg">
                 <Image
                   src={iconLocation}
                   alt="Icon Location"
@@ -154,7 +154,7 @@ const Marketplace: NextPageWithLayout<{
                 />
               </div>
               <h3>What is your Country?</h3>
-              <p className="rounded-lg bg-gray-light p-4 text-center md:w-[450px]">
+              <p className="bg-gray-light rounded-lg p-4 text-center md:w-[450px]">
                 Select your country to view the available stores and items
               </p>
 
@@ -175,11 +175,11 @@ const Marketplace: NextPageWithLayout<{
                 // }}
               />
 
-              <div className="mt-4 flex w-full flex-grow justify-center gap-4">
+              <div className="mt-4 flex w-full grow justify-center gap-4">
                 <button
                   id="letsGoButton"
                   type="button"
-                  className="btn w-3/4 max-w-[300px] rounded-full border-purple bg-purple normal-case text-white hover:bg-purple disabled:bg-gray disabled:text-gray-dark disabled:brightness-90"
+                  className="btn border-purple bg-purple hover:bg-purple disabled:bg-gray disabled:text-gray-dark w-3/4 max-w-[300px] rounded-full text-white normal-case disabled:brightness-90"
                   onClick={() => {
                     setUserCountrySelection(selectedCountry ?? "");
                     setCountrySelectorDialogVisible(false);

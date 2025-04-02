@@ -416,7 +416,7 @@ export const Global: React.FC = () => {
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
-            <div className="-mt-8 flex items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
+            <div className="border-purple-dark -mt-8 flex items-center justify-center rounded-full bg-white p-2 shadow-lg">
               <FcViewDetails className="size-8 md:size-10" />
             </div>
 
@@ -429,7 +429,7 @@ export const Global: React.FC = () => {
               </h5>
             </div>
 
-            <p className="text-sm text-gray-dark">
+            <p className="text-gray-dark text-sm">
               Please take a moment to update your profile to ensure your details
               are current. Your information will be used to issue credentials in
               your Yo-ID wallet.
@@ -470,8 +470,8 @@ export const Global: React.FC = () => {
         className="md:max-h-[640px] md:w-[700px]"
       >
         <div className="flex flex-col gap-2">
-          <div className="relative flex h-32 flex-row bg-green p-4">
-            <h1 className="flex-grow"></h1>
+          <div className="bg-green relative flex h-32 flex-row p-4">
+            <h1 className="grow"></h1>
             <Image
               src={stamp1}
               alt="Stamp1"
@@ -490,7 +490,7 @@ export const Global: React.FC = () => {
             />
           </div>
           <div className="flex flex-col items-center justify-center gap-8 px-6 pb-8 text-center md:px-12">
-            <div className="z-30 -mb-6 -mr-4 -mt-24 flex items-center justify-center">
+            <div className="z-30 -mt-24 -mr-4 -mb-6 flex items-center justify-center">
               <Image
                 src={YoIDCard}
                 alt="Yo-ID Card"
@@ -509,7 +509,7 @@ export const Global: React.FC = () => {
               </h5>
             </div>
 
-            <div className="flex max-w-md flex-col gap-4 text-start text-sm text-gray-dark">
+            <div className="text-gray-dark flex max-w-md flex-col gap-4 text-start text-sm">
               <div>
                 This will issue you a Yo-ID credential, viewable in your
                 passport.
@@ -527,10 +527,10 @@ export const Global: React.FC = () => {
               </div>
             </div>
 
-            <div className="mt-4 flex flex-grow flex-col items-center gap-6">
+            <div className="mt-4 flex grow flex-col items-center gap-6">
               <button
                 type="button"
-                className="btn btn-primary btn-wide rounded-full normal-case text-white"
+                className="btn btn-primary btn-wide rounded-full text-white normal-case"
                 onClick={onClickYoIDOnboardingConfirm}
                 disabled={isYoIDOnboardingLoading}
               >
@@ -564,7 +564,7 @@ export const Global: React.FC = () => {
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 md:px-12">
-            <div className="-mt-8 flex items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
+            <div className="border-purple-dark -mt-8 flex items-center justify-center rounded-full bg-white p-2 shadow-lg">
               <FcSettings className="size-8 md:size-10" />
             </div>
 
@@ -595,7 +595,7 @@ export const Global: React.FC = () => {
             {/* skip for now link */}
             <button
               type="button"
-              className="text-sm text-black underline hover:text-green"
+              className="hover:text-green text-sm text-black underline"
               onClick={() => {
                 setSettingsDialogVisible(false);
                 postLoginChecks(userProfile!, true);
@@ -619,7 +619,7 @@ export const Global: React.FC = () => {
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex h-16 flex-row p-8 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
-            <div className="-mt-8 flex items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
+            <div className="border-purple-dark -mt-8 flex items-center justify-center rounded-full bg-white p-2 shadow-lg">
               <FcCamera className="size-8 md:size-10" />
             </div>
 
@@ -652,7 +652,7 @@ export const Global: React.FC = () => {
             {/* skip for now link */}
             <button
               type="button"
-              className="text-sm text-black underline hover:text-green"
+              className="hover:text-green text-sm text-black underline"
               onClick={() => {
                 setPhotoUploadDialogVisible(false);
               }}
@@ -675,7 +675,7 @@ export const Global: React.FC = () => {
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
           <div className="bg-theme flex h-16 flex-row p-4 shadow-lg"></div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
-            <div className="-mt-8 flex items-center justify-center rounded-full border-purple-dark bg-white p-2 shadow-lg">
+            <div className="border-purple-dark -mt-8 flex items-center justify-center rounded-full bg-white p-2 shadow-lg">
               <FcKey className="size-8 md:size-10" />
             </div>
 
@@ -686,7 +686,7 @@ export const Global: React.FC = () => {
               <div className="text-md">{loginMessage}</div>
             </div>
 
-            <div className="mt-8 flex flex-grow gap-4">
+            <div className="mt-8 flex grow gap-4">
               <SignInButton />
             </div>
           </div>

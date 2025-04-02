@@ -91,10 +91,10 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
     <div className={`flex flex-col gap-2 ${className}`}>
       {/* Header */}
       <div className="bg-theme flex flex-row p-4 shadow-lg">
-        <h1 className="flex-grow"></h1>
+        <h1 className="grow"></h1>
         <button
           type="button"
-          className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+          className="btn btn-circle text-gray-dark hover:bg-gray"
           onClick={onClose}
         >
           <IoMdClose className="h-6 w-6"></IoMdClose>
@@ -103,8 +103,8 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
 
       <div className="flex flex-col items-center justify-center gap-4">
         {/* Icon */}
-        <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-          <FaDownload className="h-8 w-8 text-yellow" />
+        <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
+          <FaDownload className="text-yellow h-8 w-8" />
         </div>
 
         <div
@@ -115,7 +115,7 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
           <div className="mb-4 flex flex-col items-center gap-1 text-center">
             <h3>Export Opportunities</h3>
 
-            <div className="max-w-md tracking-wide text-gray-dark">
+            <div className="text-gray-dark max-w-md tracking-wide">
               {(totalCount ?? 0) === 0 && (
                 <>
                   Your results are empty. Please try again with different
@@ -156,7 +156,7 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
                 </FormMessage>
               )}
 
-              <div className="rounded-lg border-[1px] border-gray p-4">
+              <div className="border-gray rounded-lg border-[1px] p-4">
                 {/* Download Button */}
                 <div className="flex flex-col items-center gap-4 text-center">
                   <div className="font-sm font-semibold">
@@ -169,7 +169,7 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
 
                   <button
                     type="button"
-                    className="bg-theme btn w-64 normal-case text-white hover:brightness-110 disabled:border-0 disabled:brightness-90"
+                    className="bg-theme btn w-64 text-white normal-case hover:brightness-110 disabled:border-0 disabled:brightness-90"
                     onClick={handleDownload}
                     disabled={isLoadingDownload || isLoadingEmail}
                   >
@@ -191,9 +191,9 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
 
                 {/* Divider */}
                 <div className="my-4 flex w-full items-center">
-                  <div className="flex-grow border-t border-gray"></div>
+                  <div className="border-gray grow border-t"></div>
                   <div className="px-2 text-sm text-black">OR</div>
-                  <div className="flex-grow border-t border-gray"></div>
+                  <div className="border-gray grow border-t"></div>
                 </div>
 
                 {/* Email Button */}
@@ -208,7 +208,7 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
 
                   <button
                     type="button"
-                    className="bg-theme btn w-64 normal-case text-white hover:brightness-110 disabled:border-0 disabled:brightness-90"
+                    className="bg-theme btn w-64 text-white normal-case hover:brightness-110 disabled:border-0 disabled:brightness-90"
                     onClick={handleEmail}
                     disabled={isLoadingDownload || isLoadingEmail}
                   >
@@ -232,10 +232,10 @@ const OpportunityExport: React.FC<OpportunityExportDialogProps> = ({
           )}
 
           {/* Cancel Button */}
-          <div className="my-4 flex w-full flex-grow items-center justify-center gap-4">
+          <div className="my-4 flex w-full grow items-center justify-center gap-4">
             <button
               type="button"
-              className="btn btn-outline w-64 flex-shrink rounded-full border-green bg-white normal-case text-green hover:border-0 hover:bg-green hover:text-white"
+              className="btn btn-outline border-green text-green hover:bg-green w-64 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
               onClick={() => {
                 onClose();
                 setIsLoadingDownload(false);

@@ -53,10 +53,10 @@ export const OrganisationCardComponent: React.FC<{
         "",
         <div
           key="confirm-dialog-content"
-          className="text-gray-500 flex h-full flex-col space-y-2"
+          className="flex h-full flex-col space-y-2 text-gray-500"
         >
           <div className="flex flex-row items-center gap-2">
-            <IoMdWarning className="h-6 w-6 text-warning" />
+            <IoMdWarning className="text-warning h-6 w-6" />
             <p className="text-lg">Confirm</p>
           </div>
 
@@ -121,7 +121,7 @@ export const OrganisationCardComponent: React.FC<{
   return (
     <div
       key={`orgCard_${key}`}
-      className="flex flex-row rounded-xl bg-white shadow-custom transition duration-300 dark:bg-neutral-700"
+      className="shadow-custom flex flex-row rounded-xl bg-white transition duration-300"
     >
       {isLoading && <Loading />}
 
@@ -138,39 +138,39 @@ export const OrganisationCardComponent: React.FC<{
       <div className="relative flex w-3/4 flex-col justify-start p-2 pr-4">
         <Link
           href={link}
-          className={`my-1 truncate overflow-ellipsis whitespace-nowrap font-medium ${
+          className={`my-1 truncate font-medium text-ellipsis whitespace-nowrap ${
             item.status === "Inactive" ? "pr-20" : ""
           }`}
         >
           {item.name}
         </Link>
-        <p className="h-[40px] overflow-hidden text-ellipsis text-sm">
+        <p className="h-[40px] overflow-hidden text-sm text-ellipsis">
           {item.tagline}
         </p>
 
         <div className="mt-2 flex flex-row">
-          <div className="z-30 flex flex-grow flex-row items-center">
+          <div className="z-30 flex grow flex-row items-center">
             {item.status == "Active" && (
               <>
-                <span className="mr-2 h-2 w-2 rounded-full bg-success"></span>
+                <span className="bg-success mr-2 h-2 w-2 rounded-full"></span>
                 <div className="text-xs">{item.status}</div>
               </>
             )}
             {item.status == "Inactive" && (
               <>
-                <span className="mr-2 h-2 w-2 rounded-full bg-warning"></span>
+                <span className="bg-warning mr-2 h-2 w-2 rounded-full"></span>
                 <div className="text-xs">Pending</div>
               </>
             )}
             {item.status == "Deleted" && (
               <>
-                <span className="mr-2 h-2 w-2 rounded-full bg-error"></span>
+                <span className="bg-error mr-2 h-2 w-2 rounded-full"></span>
                 <div className="text-xs">{item.status}</div>
               </>
             )}
             {item.status == "Declined" && (
               <>
-                <span className="mr-2 h-2 w-2 rounded-full bg-error"></span>
+                <span className="bg-error mr-2 h-2 w-2 rounded-full"></span>
                 <div className="text-xs">{item.status}</div>
               </>
             )}
@@ -187,12 +187,12 @@ export const OrganisationCardComponent: React.FC<{
                 <IoIosSettings className="h-7 w-7 md:h-5 md:w-5" />
               </div>
 
-              <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
+              <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
                 {item?.status != "Deleted" && (
                   <li>
                     <Link
                       href={`/organisations/${item?.id}/edit?${_returnUrl}`}
-                      className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                      className="text-gray-dark flex flex-row items-center hover:brightness-50"
                     >
                       <FaPencilAlt className="mr-2 h-3 w-3" />
                       Edit
@@ -205,7 +205,7 @@ export const OrganisationCardComponent: React.FC<{
                     {item?.status == "Active" && (
                       <li>
                         <button
-                          className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                          className="text-gray-dark flex flex-row items-center hover:brightness-50"
                           onClick={() =>
                             updateStatus(OrganizationStatus.Inactive)
                           }
@@ -219,7 +219,7 @@ export const OrganisationCardComponent: React.FC<{
                     {item?.status == "Inactive" && (
                       <li>
                         <button
-                          className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                          className="text-gray-dark flex flex-row items-center hover:brightness-50"
                           onClick={() =>
                             updateStatus(OrganizationStatus.Active)
                           }

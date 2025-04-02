@@ -10,8 +10,8 @@ interface CustomSliderProps {
 
 const CustomSlider = ({
   children,
-  className,
-  sliderClassName,
+  className = "",
+  sliderClassName = "",
 }: CustomSliderProps) => {
   const sliderRef = useRef<HTMLDivElement>(null);
   const [showPrevButton, setShowPrevButton] = useState(false);
@@ -134,12 +134,12 @@ const CustomSlider = ({
     >
       {showPrevButton && (
         <>
-          <div className="absolute left-0 top-0 z-10 h-full w-10 backdrop-blur-[0.6px] md:w-12"></div>
-          <div className="absolute left-0 top-1/2 z-20 flex h-fit w-10 -translate-y-1/2 items-center justify-center md:w-12">
+          <div className="absolute top-0 left-0 z-10 h-full w-10 backdrop-blur-[0.6px] md:w-12"></div>
+          <div className="absolute top-1/2 left-0 z-20 flex h-fit w-10 -translate-y-1/2 items-center justify-center md:w-12">
             <button
               type="button"
               onClick={onScrollLeft}
-              className="group btn btn-circle btn-sm h-8 w-8 cursor-pointer border-[1.5px] border-orange bg-orange px-2 text-black hover:border-orange hover:bg-orange hover:brightness-90 disabled:!cursor-not-allowed md:h-10 md:w-10"
+              className="group btn btn-circle btn-sm border-orange bg-orange hover:border-orange hover:bg-orange h-8 w-8 cursor-pointer border-[1.5px] px-2 text-black hover:brightness-90 disabled:!cursor-not-allowed md:h-10 md:w-10"
             >
               <MdKeyboardArrowLeft className="text-lg md:text-3xl" />
             </button>
@@ -148,7 +148,7 @@ const CustomSlider = ({
       )}
       <div
         ref={sliderRef}
-        className={`flex gap-[2px] overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap ${styles.noscrollbar} ${sliderClassName}`}
+        className={`flex gap-[2px] overflow-x-auto overflow-y-hidden scroll-smooth whitespace-nowrap select-none ${styles.noscrollbar} ${sliderClassName}`}
         onMouseDown={handleMouseDown}
         onMouseLeave={handleMouseLeave}
         onMouseUp={handleMouseUp}
@@ -161,12 +161,12 @@ const CustomSlider = ({
       </div>
       {showNextButton && (
         <>
-          <div className="absolute right-0 top-0 z-10 h-full w-10 backdrop-blur-[0.6px] md:w-12"></div>
-          <div className="absolute right-0 top-1/2 z-20 flex h-fit w-10 -translate-y-1/2 items-center justify-center md:w-12">
+          <div className="absolute top-0 right-0 z-10 h-full w-10 backdrop-blur-[0.6px] md:w-12"></div>
+          <div className="absolute top-1/2 right-0 z-20 flex h-fit w-10 -translate-y-1/2 items-center justify-center md:w-12">
             <button
               type="button"
               onClick={onScrollRight}
-              className="group btn btn-circle btn-sm h-8 w-8 cursor-pointer border-[1.5px] border-orange bg-orange px-2 text-black delay-300 hover:border-orange hover:bg-orange hover:brightness-90 disabled:!cursor-not-allowed md:h-10 md:w-10"
+              className="group btn btn-circle btn-sm border-orange bg-orange hover:border-orange hover:bg-orange h-8 w-8 cursor-pointer border-[1.5px] px-2 text-black delay-300 hover:brightness-90 disabled:!cursor-not-allowed md:h-10 md:w-10"
             >
               <MdKeyboardArrowRight className="text-lg md:text-3xl" />
             </button>

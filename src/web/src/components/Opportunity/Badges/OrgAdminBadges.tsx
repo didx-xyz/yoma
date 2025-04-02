@@ -12,8 +12,8 @@ interface BadgesProps {
 
 const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
   return (
-    <div className="flex flex-row flex-wrap gap-2 border-none font-bold text-green-dark">
-      <div className="badge rounded-md border-none bg-green-light text-xs text-green">
+    <div className="text-green-dark flex flex-row flex-wrap gap-2 border-none font-bold">
+      <div className="badge bg-green-light text-green rounded-md border-none text-xs">
         <Image
           src={iconClock}
           alt="Icon Clock"
@@ -28,7 +28,7 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
         }`}</span>
       </div>
 
-      <div className="badge border-none bg-blue-light text-xs text-blue">
+      <div className="badge bg-blue-light text-blue border-none text-xs">
         <IoMdPerson className="h-4 w-4" />
 
         <span className="ml-1">
@@ -62,7 +62,7 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
       )}
 
       {(opportunity?.zltoReward ?? 0) > 0 && (
-        <div className="badge whitespace-nowrap border-none bg-orange-light text-orange">
+        <div className="badge bg-orange-light text-orange border-none whitespace-nowrap">
           <Image
             src={iconZlto}
             alt="Icon Zlto"

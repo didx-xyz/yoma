@@ -309,7 +309,7 @@ const OrganisationCreate: NextPageWithLayout<{
                 <h2 className="font-semibold tracking-wide">
                   Organisation details
                 </h2>
-                <p className="my-2 text-gray-dark">
+                <p className="text-gray-dark my-2">
                   General organisation information
                 </p>
               </div>
@@ -334,7 +334,7 @@ const OrganisationCreate: NextPageWithLayout<{
               </ul>
               <div className="my-4 flex flex-col text-center">
                 <h2 className="font-semibold tracking-wide">Contact details</h2>
-                <p className="my-2 text-gray-dark">
+                <p className="text-gray-dark my-2">
                   Organisation contact information
                 </p>
               </div>
@@ -368,7 +368,7 @@ const OrganisationCreate: NextPageWithLayout<{
                 <h2 className="font-semibold tracking-wide">
                   Organisation roles
                 </h2>
-                <p className="my-2 text-gray-dark">
+                <p className="text-gray-dark my-2">
                   Organisation role information
                 </p>
               </div>
@@ -397,7 +397,7 @@ const OrganisationCreate: NextPageWithLayout<{
                 <h2 className="font-semibold tracking-wide">
                   Organisation Admins
                 </h2>
-                <p className="my-2 text-gray-dark">
+                <p className="text-gray-dark my-2">
                   Who can sign-in and manage the organisation?
                 </p>
               </div>

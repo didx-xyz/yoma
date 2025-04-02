@@ -23,7 +23,7 @@ export const PaginationInfoComponent: React.FC<InputProps> = ({
   }, [currentPage, pageSize]);
 
   return (
-    <div className="flex gap-2 text-sm text-gray-dark">
+    <div className="text-gray-dark flex gap-2 text-sm">
       <span>
         Showing {startRow} - {startRow - 1 + itemCount}
         {totalItems && ` out of ${totalItems}`} results

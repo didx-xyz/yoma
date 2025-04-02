@@ -29,11 +29,11 @@ const MobileCard: React.FC<MobileCardProps> = ({
   const router = useRouter();
 
   return (
-    <div className="rounded-lg bg-white p-4 text-gray-dark shadow-custom">
+    <div className="text-gray-dark shadow-custom rounded-lg bg-white p-4">
       <div className="mb-2 flex items-center">
         <input
           type="checkbox"
-          className="checkbox-primary checkbox mr-2 h-6 w-6 border-gray-dark"
+          className="checkbox-primary checkbox border-gray-dark mr-2 h-6 w-6"
           checked={selectedRows?.some((x) => x.id == item.id)}
           onChange={(e) => handleRowSelect(e, item)}
         />
@@ -68,18 +68,18 @@ const MobileCard: React.FC<MobileCardProps> = ({
               {item.verificationStatus == "Pending" && (
                 <button
                   type="button"
-                  className="btn btn-sm flex-nowrap border-gray bg-white text-gray-dark hover:bg-gray hover:text-white"
+                  className="btn btn-sm border-gray text-gray-dark hover:bg-gray flex-nowrap bg-white hover:text-white"
                   onClick={() => {
                     onVerify(item);
                   }}
                 >
-                  <IoMdAlert className="mr-2 inline-block h-6 w-6 text-yellow" />
+                  <IoMdAlert className="text-yellow mr-2 inline-block h-6 w-6" />
                   Pending
                 </button>
               )}
               {item.verificationStatus == "Completed" && (
                 <div className="flex flex-row items-center gap-2">
-                  <IoMdCheckmark className="h-6 w-6 text-green" />
+                  <IoMdCheckmark className="text-green h-6 w-6" />
                   Completed
                 </div>
               )}

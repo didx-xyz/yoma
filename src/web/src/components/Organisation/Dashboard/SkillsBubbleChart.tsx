@@ -125,7 +125,7 @@ export const SkillsBubbleChart: React.FC<SkillsBubbleChartProps> = ({
               }`}
               onClick={() => handleSkillClick(index)}
             >
-              <div className="flex select-none flex-row items-center gap-3">
+              <div className="flex flex-row items-center gap-3 select-none">
                 <div className="rounded-full p-2" style={bubbleStyle}>
                   {/*  */}
                 </div>
@@ -136,7 +136,7 @@ export const SkillsBubbleChart: React.FC<SkillsBubbleChartProps> = ({
                   {skill.name}
                 </div>
               </div>
-              <div className="select-none text-xl font-bold">
+              <div className="text-xl font-bold select-none">
                 {skill.countCompleted.toLocaleString()}
               </div>
             </div>
@@ -253,7 +253,7 @@ export const SkillsBubbleChart: React.FC<SkillsBubbleChartProps> = ({
           chartEvents={chartEvents as ReactGoogleChartEvent[]}
         />
       ) : (
-        <div className="mx-4 flex flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
+        <div className="bg-gray-light mx-4 flex flex-col items-center justify-center rounded-lg p-4 text-center text-xs">
           Not enough data to display
         </div>
       )}

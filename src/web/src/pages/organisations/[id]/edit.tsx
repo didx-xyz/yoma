@@ -462,14 +462,14 @@ const OrganisationUpdate: NextPageWithLayout<{
 
       <PageBackground />
 
-      <div className="container z-10 mt-16 max-w-7xl px-2 py-8">
+      <div className="z-10 container mt-16 max-w-7xl px-2 py-8">
         {isLoading && <Loading />}
 
         {/* BREADCRUMB */}
         {activeRoleView !== RoleView.User && (
           <div className="flex flex-row text-xs text-white">
             <Link
-              className="flex items-center justify-center font-bold hover:text-gray"
+              className="hover:text-gray flex items-center justify-center font-bold"
               href={getSafeUrl(returnUrl?.toString(), `/organisations`)}
             >
               <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4" />
@@ -479,7 +479,7 @@ const OrganisationUpdate: NextPageWithLayout<{
             <div className="mx-2 font-bold">|</div>
 
             <Link
-              className="flex max-w-[300px] items-center justify-center overflow-hidden text-ellipsis whitespace-nowrap font-bold hover:text-gray md:max-w-[400px] lg:max-w-[800px]"
+              className="hover:text-gray flex max-w-[300px] items-center justify-center overflow-hidden font-bold text-ellipsis whitespace-nowrap md:max-w-[400px] lg:max-w-[800px]"
               href={`/organisations/${id}${
                 returnUrl
                   ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
@@ -500,18 +500,18 @@ const OrganisationUpdate: NextPageWithLayout<{
         {/* CONTENT */}
         <div className="flex flex-col justify-center gap-4 md:flex-row">
           {/* MENU */}
-          <ul className="menu-horizontal hidden h-max w-full items-center justify-center gap-4 rounded-lg bg-white p-4 font-semibold shadow-custom md:menu md:menu-vertical md:max-w-[265px]">
+          <ul className="menu-horizontal shadow-custom menu md:menu-vertical hidden h-max w-full items-center justify-center gap-4 rounded-lg bg-white p-4 font-semibold md:max-w-[265px]">
             {menuItems.map((item) => (
               <li
                 key={item.step}
                 className={`w-full rounded-lg p-1 ${
                   step === item.step
-                    ? "bg-green-light font-bold text-green hover:bg-green-light"
+                    ? "bg-green-light text-green hover:bg-green-light font-bold"
                     : "bg-gray-light text-gray-dark hover:bg-gray"
                 }`}
               >
                 <a onClick={() => setStep(item.step)} id={item.id}>
-                  <span className="mr-2 rounded-full bg-green px-1.5 py-0.5 text-xs font-medium text-white">
+                  <span className="bg-green mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white">
                     {item.step}
                   </span>
                   {item.label}
@@ -521,7 +521,7 @@ const OrganisationUpdate: NextPageWithLayout<{
           </ul>
           {/* DROPDOWN MENU */}
           <select
-            className="select select-md focus:border-none focus:outline-none md:hidden"
+            className="select select-md w-full focus:border-none focus:outline-none md:hidden"
             onChange={(e) => {
               const selectedItem = menuItems.find(
                 (item) => item.label === e.target.value,
@@ -614,13 +614,16 @@ const OrganisationUpdate: NextPageWithLayout<{
               <>
                 {isAdmin ? (
                   <div>
-                    <div role="tablist" className="tabs tabs-bordered">
+                    <div
+                      role="tablist"
+                      className="tabs tabs-border gap-6 select-none"
+                    >
                       <a
                         role="tab"
-                        className={`tab-lg tab ${
+                        className={`border-b-4 py-2 font-semibold whitespace-nowrap ${
                           activeTab === "orgSettings"
-                            ? "tab-active bg-white text-black"
-                            : "text-gray"
+                            ? "border-orange text-gray-dark"
+                            : "hover:border-orange text-gray"
                         }`}
                         onClick={() => setActiveTab("orgSettings")}
                       >
@@ -628,10 +631,10 @@ const OrganisationUpdate: NextPageWithLayout<{
                       </a>
                       <a
                         role="tab"
-                        className={`tab-lg tab ${
+                        className={`border-b-4 py-2 font-semibold whitespace-nowrap ${
                           activeTab === "ssoSettings"
-                            ? "tab-active bg-white text-black"
-                            : "text-gray"
+                            ? "border-orange text-gray-dark"
+                            : "hover:border-orange text-gray"
                         }`}
                         onClick={() => setActiveTab("ssoSettings")}
                       >

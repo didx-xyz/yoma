@@ -51,7 +51,7 @@ export const WalletCard: React.FC<{
       />
 
       <div className="flex h-full flex-col gap-2 text-xs text-black md:text-sm">
-        <div className="h-full content-center justify-center gap-2 text-gray-dark">
+        <div className="text-gray-dark h-full content-center justify-center gap-2">
           <span className="text-xs">
             <span className="font-semibold italic">ZLTO</span> - Your digital
             wallet for managing rewards and transactions.
@@ -64,7 +64,7 @@ export const WalletCard: React.FC<{
             className="ml-2 inline-block align-middle"
             tabIndex={-1}
           >
-            <IoIosInformationCircleOutline className="h-5 w-5 text-green" />
+            <IoIosInformationCircleOutline className="text-green h-5 w-5" />
           </button>
         </div>
         <div className="flex flex-col gap-1 border-y-2 border-dotted border-[#FFD69C] py-2">

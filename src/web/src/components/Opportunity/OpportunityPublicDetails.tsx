@@ -264,11 +264,11 @@ const OpportunityPublicDetails: React.FC<{
             className={`md:max-h-[350px] md:w-[500px]`}
           >
             <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
-              <div className="flex flex-row bg-green p-4 shadow-lg">
-                <h1 className="flex-grow"></h1>
+              <div className="bg-green flex flex-row p-4 shadow-lg">
+                <h1 className="grow"></h1>
                 <button
                   type="button"
-                  className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+                  className="btn btn-circle text-gray-dark hover:bg-gray"
                   onClick={() => {
                     setLoginDialogVisible(false);
                   }}
@@ -283,16 +283,16 @@ const OpportunityPublicDetails: React.FC<{
 
                 <h5>Please sign-in to continue</h5>
 
-                <div className="mt-8 flex flex-grow gap-4">
+                <div className="mt-8 flex grow gap-4">
                   <button
                     type="button"
-                    className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
+                    className="btn border-purple text-purple rounded-full bg-white normal-case md:w-[150px]"
                     onClick={() => setLoginDialogVisible(false)}
                   >
-                    <IoMdClose className="h-5 w-5 text-purple" /> Cancel
+                    <IoMdClose className="text-purple h-5 w-5" /> Cancel
                   </button>
 
-                  <SignInButton className="btn transform gap-2 border-0 border-none bg-purple px-4 shadow-lg transition-all duration-300 ease-in-out hover:bg-purple-light hover:brightness-95 disabled:!cursor-wait disabled:bg-purple-light md:w-[150px]" />
+                  <SignInButton className="btn bg-purple hover:bg-purple-light disabled:bg-purple-light transform gap-2 border-0 border-none px-4 shadow-lg transition-all duration-300 ease-in-out hover:brightness-95 disabled:!cursor-wait md:w-[150px]" />
                 </div>
               </div>
             </div>
@@ -308,11 +308,11 @@ const OpportunityPublicDetails: React.FC<{
             className={`md:max-h-[500px] md:w-[600px]`}
           >
             <div className="pb-10x flex h-full flex-col gap-2 overflow-y-auto">
-              <div className="flex flex-row bg-green p-4 shadow-lg">
-                <h1 className="flex-grow"></h1>
+              <div className="bg-green flex flex-row p-4 shadow-lg">
+                <h1 className="grow"></h1>
                 <button
                   type="button"
-                  className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+                  className="btn btn-circle text-gray-dark hover:bg-gray"
                   onClick={() => {
                     setGotoOpportunityDialogVisible(false);
                   }}
@@ -321,13 +321,13 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4 p-4 md:p-0">
-                <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-                  <FaExclamationTriangle className="h-8 w-8 text-yellow" />
+                <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
+                  <FaExclamationTriangle className="text-yellow h-8 w-8" />
                 </div>
 
                 <div className="font-semibold">You are now leaving Yoma!</div>
 
-                <div className="mt-4 rounded-lg bg-gray p-4 text-center md:w-[450px]">
+                <div className="bg-gray mt-4 rounded-lg p-4 text-center md:w-[450px]">
                   Remember to{" "}
                   <strong>upload your completion certificate</strong> on this
                   page upon finishing to <strong>earn your ZLTO</strong>.
@@ -339,7 +339,7 @@ const OpportunityPublicDetails: React.FC<{
                 </div>
 
                 {user && (
-                  <div className="italic text-gray-dark">
+                  <div className="text-gray-dark italic">
                     <FormCheckbox
                       id="dontShowAgain"
                       label="Do not show this message again"
@@ -354,15 +354,15 @@ const OpportunityPublicDetails: React.FC<{
                   </div>
                 )}
 
-                <div className="mt-6 flex w-full flex-grow flex-col justify-center gap-4 md:flex-row">
+                <div className="mt-6 flex w-full grow flex-col justify-center gap-4 md:flex-row">
                   {user && (
                     <button
                       type="button"
                       className={
-                        "btn btn-outline rounded-full border-purple bg-white normal-case text-purple hover:text-purple md:w-[250px]" +
+                        "btn btn-outline border-purple text-purple hover:text-purple rounded-full bg-white normal-case md:w-[250px]" +
                         `${
                           isOppSaved
-                            ? " border-none bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow"
+                            ? " bg-yellow-light text-yellow hover:bg-yellow-light hover:text-yellow border-none"
                             : ""
                         }`
                       }
@@ -378,7 +378,7 @@ const OpportunityPublicDetails: React.FC<{
 
                   <button
                     type="button"
-                    className="btn btn-primary normal-case text-white md:w-[250px]"
+                    className="btn btn-primary text-white normal-case md:w-[250px]"
                     onClick={onProceedToOpportunity}
                     disabled={!opportunityInfo.url}
                   >
@@ -427,11 +427,11 @@ const OpportunityPublicDetails: React.FC<{
             className={`md:max-h-[410px] md:w-[600px]`}
           >
             <div className="flex w-full flex-col gap-2">
-              <div className="flex flex-row bg-green p-4 shadow-lg">
-                <h1 className="flex-grow"></h1>
+              <div className="bg-green flex flex-row p-4 shadow-lg">
+                <h1 className="grow"></h1>
                 <button
                   type="button"
-                  className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+                  className="btn btn-circle text-gray-dark hover:bg-gray"
                   onClick={() => {
                     setCompleteOpportunitySuccessDialogVisible(false);
                   }}
@@ -440,7 +440,7 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4">
-                <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
+                <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white p-1 shadow-lg">
                   <Image
                     src={iconSuccess}
                     alt="Icon Success"
@@ -457,15 +457,15 @@ const OpportunityPublicDetails: React.FC<{
                   <strong>{opportunityInfo.organizationName}</strong> is busy
                   reviewing your submission. Once approved, the opportunity will
                   be automatically added to your CV. This may take between{" "}
-                  <span className="font-bold text-blue underline decoration-blue decoration-2">
+                  <span className="text-blue decoration-blue font-bold underline decoration-2">
                     3-4 business days
                   </span>
                   .
                 </div>
-                <div className="mt-4 flex flex-grow gap-4">
+                <div className="mt-4 flex grow gap-4">
                   <button
                     type="button"
-                    className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[200px]"
+                    className="btn border-purple text-purple rounded-full bg-white normal-case md:w-[200px]"
                     onClick={() =>
                       setCompleteOpportunitySuccessDialogVisible(false)
                     }
@@ -487,11 +487,11 @@ const OpportunityPublicDetails: React.FC<{
             className={`md:max-h-[450px] md:w-[600px]`}
           >
             <div className="flex flex-col gap-2">
-              <div className="flex flex-row bg-green p-4 shadow-lg">
-                <h1 className="flex-grow"></h1>
+              <div className="bg-green flex flex-row p-4 shadow-lg">
+                <h1 className="grow"></h1>
                 <button
                   type="button"
-                  className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+                  className="btn btn-circle text-gray-dark hover:bg-gray"
                   onClick={() => {
                     setCancelOpportunityDialogVisible(false);
                   }}
@@ -500,8 +500,8 @@ const OpportunityPublicDetails: React.FC<{
                 </button>
               </div>
               <div className="flex flex-col items-center justify-center gap-4">
-                <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-                  <FaExclamationTriangle className="h-8 w-8 text-yellow" />
+                <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
+                  <FaExclamationTriangle className="text-yellow h-8 w-8" />
                 </div>
 
                 <div className="font-semibold">
@@ -515,10 +515,10 @@ const OpportunityPublicDetails: React.FC<{
                   your application and delete all uploaded files, click the
                   button below.
                 </div>
-                <div className="mt-4 flex flex-grow gap-4">
+                <div className="mt-4 flex grow gap-4">
                   <button
                     type="button"
-                    className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[200px]"
+                    className="btn border-purple text-purple rounded-full bg-white normal-case md:w-[200px]"
                     onClick={onOpportunityCancel}
                   >
                     Cancel submission & Delete all files
@@ -536,7 +536,7 @@ const OpportunityPublicDetails: React.FC<{
               onRequestClose={() => {
                 setShareOpportunityDialogVisible(false);
               }}
-              className={`md:max-h-[520px] md:w-[700px]`}
+              className={`md:max-h-[550px] md:w-[700px]`}
             >
               <Share
                 opportunity={opportunityInfo}
@@ -549,14 +549,14 @@ const OpportunityPublicDetails: React.FC<{
 
       {opportunityInfo && (
         <div className="flex flex-col gap-4">
-          <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-4 shadow-lg md:p-6">
-            <div className="flex flex-grow flex-col gap-1">
-              <div className="flex flex-grow flex-col">
+          <div className="relative flex grow flex-row gap-1 rounded-lg bg-white p-4 shadow-lg md:p-6">
+            <div className="flex grow flex-col gap-1">
+              <div className="flex grow flex-col">
                 <div className="relative flex justify-start">
-                  <h4 className="max-w-[215px] text-xl font-semibold leading-7 text-black md:max-w-[1125px] md:text-2xl md:leading-8">
+                  <h4 className="max-w-[215px] text-xl leading-7 font-semibold text-black md:max-w-[1125px] md:text-2xl md:leading-8">
                     {opportunityInfo.title}
                   </h4>
-                  <div className="absolute -right-2 -top-2 md:right-0 md:top-0">
+                  <div className="absolute -top-2 -right-2 md:top-0 md:right-0">
                     <AvatarImage
                       icon={opportunityInfo.organizationLogoURL ?? null}
                       alt="Company Logo"
@@ -565,7 +565,7 @@ const OpportunityPublicDetails: React.FC<{
                   </div>
                 </div>
 
-                <h6 className="max-w-[215px] text-sm text-gray-dark md:max-w-[1125px]">
+                <h6 className="text-gray-dark max-w-[215px] text-sm md:max-w-[1125px]">
                   By {opportunityInfo.organizationName}
                 </h6>
 
@@ -574,7 +574,7 @@ const OpportunityPublicDetails: React.FC<{
 
                 {/* DATES */}
                 {opportunityInfo.status == "Active" && (
-                  <div className="flex flex-col text-sm text-gray-dark">
+                  <div className="text-gray-dark flex flex-col text-sm">
                     <div>
                       {opportunityInfo.dateStart && (
                         <>
@@ -604,12 +604,12 @@ const OpportunityPublicDetails: React.FC<{
 
                 {/* BUTTONS */}
                 <div className="mt-4 flex flex-col gap-4 md:flex-row">
-                  <div className="flex flex-grow flex-col gap-4 md:flex-row">
+                  <div className="flex grow flex-col gap-4 md:flex-row">
                     {opportunityInfo.url &&
                       opportunityInfo.status !== "Expired" && (
                         <button
                           type="button"
-                          className="btn btn-sm h-10 w-full rounded-full bg-green normal-case text-white hover:bg-green-dark disabled:border-0 disabled:bg-green disabled:text-white md:w-[250px]"
+                          className="btn btn-sm bg-green hover:bg-green-dark disabled:bg-green h-10 w-full rounded-full text-sm text-white normal-case disabled:border-0 disabled:text-white md:w-[250px]"
                           onClick={onGoToOpportunity}
                           disabled={preview}
                         >
@@ -641,7 +641,7 @@ const OpportunityPublicDetails: React.FC<{
                             !verificationStatusIsLoading && (
                               <button
                                 type="button"
-                                className="btn btn-sm h-10 w-full rounded-full border-green bg-white normal-case text-green hover:bg-green-dark hover:text-white md:w-[280px]"
+                                className="btn btn-sm border-green text-green hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
                                 onClick={() =>
                                   user
                                     ? setCompleteOpportunityDialogVisible(true)
@@ -667,25 +667,25 @@ const OpportunityPublicDetails: React.FC<{
                             verificationStatus.status == "Pending" && (
                               <button
                                 type="button"
-                                className="btn btn-sm h-10 w-full rounded-full border-0 bg-gray-light normal-case text-gray-dark hover:bg-green-dark hover:text-white md:w-[250px]"
+                                className="btn btn-sm bg-gray-light text-gray-dark hover:bg-green-dark h-10 w-full rounded-full border-0 text-sm normal-case hover:text-white md:w-[250px]"
                                 onClick={() =>
                                   setCancelOpportunityDialogVisible(true)
                                 }
                               >
                                 Pending verification
-                                <IoMdClose className="ml-1 mt-[2px] h-4 w-4 text-gray-dark" />
+                                <IoMdClose className="text-gray-dark mt-[2px] ml-1 h-4 w-4" />
                               </button>
                             )}
 
                           {verificationStatus &&
                             verificationStatus.status == "Completed" && (
-                              <div className="md:text-md flex h-10 items-center justify-center rounded-full border border-purple bg-white px-4 text-center text-sm font-bold text-purple">
+                              <div className="md:text-md border-purple text-purple flex h-10 items-center justify-center rounded-full border bg-white px-4 text-center text-sm font-bold">
                                 Completed
                                 <IoMdCheckmark
                                   strikethroughThickness={2}
                                   overlineThickness={2}
                                   underlineThickness={2}
-                                  className="ml-1 h-4 w-4 text-green"
+                                  className="text-green ml-1 h-4 w-4"
                                 />
                               </div>
                             )}
@@ -697,11 +697,11 @@ const OpportunityPublicDetails: React.FC<{
                     <button
                       type="button"
                       className={
-                        "btn btn-sm h-10 w-full flex-shrink flex-nowrap rounded-full border-gray-dark normal-case text-gray-dark disabled:text-gray-dark md:max-w-[120px] " +
+                        "btn btn-sm border-gray-dark text-gray-dark disabled:text-gray-dark h-10 w-full shrink flex-nowrap rounded-full text-sm normal-case md:max-w-[120px] " +
                         ` ${
                           isOppSaved
                             ? "border-yellow bg-yellow-light text-yellow"
-                            : "bg-white hover:bg-green-dark hover:text-white"
+                            : "hover:bg-green-dark bg-white hover:text-white"
                         }`
                       }
                       onClick={onUpdateSavedOpportunity}
@@ -719,7 +719,7 @@ const OpportunityPublicDetails: React.FC<{
 
                     <button
                       type="button"
-                      className="btn btn-sm h-10 w-full flex-shrink flex-nowrap rounded-full border-gray-dark bg-white normal-case text-gray-dark hover:bg-green-dark hover:text-white disabled:text-gray-dark md:max-w-[120px]"
+                      className="btn btn-sm border-gray-dark text-gray-dark hover:bg-green-dark disabled:text-gray-dark h-10 w-full shrink flex-nowrap rounded-full bg-white text-sm normal-case hover:text-white md:max-w-[120px]"
                       onClick={onShareOpportunity}
                       // ensure opportunity is published and active (user logged in check is done in function)
                       disabled={
@@ -739,7 +739,7 @@ const OpportunityPublicDetails: React.FC<{
           </div>
 
           <div className="flex flex-col gap-4 md:flex-row">
-            <div className="flex-grow rounded-lg bg-white p-2 shadow-lg md:w-[66%]">
+            <div className="grow rounded-lg bg-white p-2 shadow-lg md:w-[66%]">
               <Editor value={opportunityInfo.description} readonly={true} />
             </div>
             <div className="flex flex-col gap-2 rounded-lg shadow-lg md:w-[33%]">
@@ -816,7 +816,7 @@ const OpportunityPublicDetails: React.FC<{
                     {opportunityInfo.categories?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                        className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
                       >
                         {item.name}
                       </div>
@@ -841,7 +841,7 @@ const OpportunityPublicDetails: React.FC<{
                     {opportunityInfo.languages?.map((item) => (
                       <div
                         key={item.id}
-                        className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                        className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
                       >
                         {item.name}
                       </div>
@@ -884,7 +884,7 @@ const OpportunityPublicDetails: React.FC<{
                     {opportunityInfo.countries?.map((country) => (
                       <div
                         key={country.id}
-                        className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                        className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
                       >
                         {country.name}
                       </div>

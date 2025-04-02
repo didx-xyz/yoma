@@ -131,12 +131,12 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
   );
 
   return (
-    <div className="flex flex-grow flex-col">
+    <div className="flex grow flex-col">
       <form
         onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-2"
       >
-        <div className="flex w-full flex-grow flex-row flex-wrap gap-2 md:w-fit lg:flex-row">
+        <div className="flex w-full grow flex-row flex-wrap gap-2 md:w-fit lg:flex-row">
           {/* ORGANISATIONS */}
           {filterOptions?.includes(
             StoreAccessControlRuleSearchFilterOptions.ORGANIZATIONS,
@@ -183,7 +183,7 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
               />
               {formState.errors.organizations && (
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
+                  <span className="label-text-alt text-red-500 italic">
                     {`${formState.errors.organizations.message}`}
                   </span>
                 </label>
@@ -233,7 +233,7 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
               />
               {formState.errors.stores && (
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
+                  <span className="label-text-alt text-red-500 italic">
                     {`${formState.errors.stores.message}`}
                   </span>
                 </label>

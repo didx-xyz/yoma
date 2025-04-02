@@ -28,7 +28,7 @@ export const OpportunityCard: React.FC<{
           href={`/organisations/${orgId}/opportunities/${
             opportunity.id
           }/info?returnUrl=${encodeURIComponent(router.asPath)}`}
-          className="line-clamp-2 h-10 w-full whitespace-break-spaces text-sm font-semibold underline"
+          className="line-clamp-2 h-10 w-full text-sm font-semibold whitespace-break-spaces underline"
           title={opportunity.title}
         >
           {opportunity.title}

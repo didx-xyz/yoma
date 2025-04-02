@@ -10,7 +10,7 @@ const FormToggle: React.FC<{
       <input
         type="checkbox"
         id={id}
-        className="toggle toggle-secondary text-red-400 disabled:border-gray"
+        className="toggle toggle-success disabled:border-gray"
         {...inputProps}
       />
       <span className="label-text ml-4">{label}</span>

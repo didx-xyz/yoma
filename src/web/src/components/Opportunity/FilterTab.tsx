@@ -26,7 +26,7 @@ const FilterTab: React.FC<InputProps> = ({ openFilter }) => {
 
   return (
     <div
-      className={`fixed top-16 z-30 flex h-10 w-[8rem] cursor-pointer select-none items-center justify-center gap-2 rounded-b-lg bg-orange text-center text-sm font-semibold tracking-wide text-white transition-opacity duration-300 md:h-8 ${
+      className={`bg-orange fixed top-16 z-30 flex h-10 w-[8rem] cursor-pointer items-center justify-center gap-2 rounded-b-lg text-center text-sm font-semibold tracking-wide text-white transition-opacity duration-300 select-none md:h-8 ${
         isVisible ? "opacity-100" : "opacity-0"
       }`}
       onClick={() => openFilter(true)}

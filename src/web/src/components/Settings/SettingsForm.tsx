@@ -162,7 +162,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
         )}
 
         {!!visibleItems?.length && (
-          <div className="flex flex-col gap-4 rounded-lg bg-gray-light p-4">
+          <div className="bg-gray-light flex flex-col gap-4 rounded-lg p-4">
             {visibleItems?.map((item: SettingItem) => (
               <div key={`${group.group}_${depth}_${item.key}`}>
                 {item.type == "Boolean" && (
@@ -242,7 +242,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
             {onCancel && (
               <button
                 type="button"
-                className="btn btn-warning w-1/2 flex-shrink normal-case md:btn-wide"
+                className="btn btn-warning md:btn-wide w-1/2 shrink normal-case"
                 onClick={onCancel}
               >
                 Cancel
@@ -251,7 +251,7 @@ const SettingsForm: React.FC<SettingsFormProps> = ({
 
             <button
               type="submit"
-              className="btn btn-success w-1/2 flex-shrink normal-case md:btn-wide"
+              className="btn btn-success md:btn-wide w-1/2 shrink normal-case"
               disabled={isLoading}
             >
               Submit

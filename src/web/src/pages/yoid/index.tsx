@@ -207,7 +207,7 @@ const YoIDDashboard: NextPageWithLayout<{
             className="absolute left-[7.5rem] flex sm:left-[8.5rem] lg:left-[9rem]"
           >
             {graphView ? "📋" : "📈"}&nbsp;
-            <span className="my-auto text-xs text-gray-dark underline">
+            <span className="text-gray-dark my-auto text-xs underline">
               {graphView ? "View Summary" : "View Graph"}
             </span>
           </button>

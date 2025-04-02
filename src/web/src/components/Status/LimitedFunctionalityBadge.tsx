@@ -11,7 +11,7 @@ const LimitedFunctionalityBadge: React.FC = () => {
     return null;
   }
   return (
-    <div className="badge ml-2 h-6 rounded-md bg-green-light font-bold uppercase text-yellow">
+    <div className="badge bg-green-light text-yellow ml-2 h-6 rounded-md font-bold uppercase">
       Limited functionality
     </div>
   );

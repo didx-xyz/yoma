@@ -20,9 +20,9 @@ const OpportunityCard: React.FC<{
   return (
     <div className="h-[200px] w-[250px] overflow-hidden rounded-lg bg-white p-4 shadow-lg">
       <div className="flex">
-        <div className="flex flex-grow flex-col">
-          <p className="text-xs text-gray-dark">{organisation}</p>
-          <h2 className="h-[42px] overflow-hidden text-ellipsis text-sm font-bold leading-tight">
+        <div className="flex grow flex-col">
+          <p className="text-gray-dark text-xs">{organisation}</p>
+          <h2 className="h-[42px] overflow-hidden text-sm leading-tight font-bold text-ellipsis">
             {title}
           </h2>
         </div>
@@ -36,14 +36,14 @@ const OpportunityCard: React.FC<{
         </div>
       </div>
 
-      <p className="mt-2 h-[70px] text-ellipsis text-xs text-gray-dark">
+      <p className="text-gray-dark mt-2 h-[70px] text-xs text-ellipsis">
         {description}
       </p>
 
       <div className="flex items-center justify-between">
         {/* BADGES */}
-        <div className="my-2 flex flex-row gap-2 text-xs font-bold text-green-dark">
-          <div className="badge h-6 whitespace-nowrap rounded-md border-none bg-green-light px-2 text-green">
+        <div className="text-green-dark my-2 flex flex-row gap-2 text-xs font-bold">
+          <div className="badge bg-green-light text-green h-6 rounded-md border-none px-2 whitespace-nowrap">
             <Image
               src={iconClock}
               alt="Icon Clock"
@@ -68,11 +68,11 @@ const OpportunityCard: React.FC<{
             />
             <span className="ml-1 text-xs">{students}</span>
           </div> */}
-          <div className="badge h-6 rounded-md border-none bg-purple-soft text-xs font-semibold text-purple-shade">
+          <div className="badge bg-purple-soft text-purple-shade h-6 rounded-md border-none text-xs font-semibold">
             <IoMdPlay />
             <span className="ml-1">Started</span>
           </div>
-          <div className="badge h-6 whitespace-nowrap rounded-md border-none bg-yellow-light text-yellow">
+          <div className="badge bg-yellow-light text-yellow h-6 rounded-md border-none whitespace-nowrap">
             <Image
               src={iconZlto}
               alt="Icon Zlto"

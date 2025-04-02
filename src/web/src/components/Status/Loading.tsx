@@ -1,4 +1,4 @@
-import styles from "./Loading.module.scss";
+import styles from "./Loading.module.css";
 
 export const Loading: React.FC = () => {
   return (

@@ -57,10 +57,10 @@ const SelectButtons: React.FC<SelectButtonsProps> = ({
           key={`${id}_${bt.id}`}
           type="button"
           onClick={() => handleButton(bt.id)}
-          className={`btn btn-sm max-w-[300px] text-xs text-gray-dark ${
+          className={`btn btn-sm text-gray-dark max-w-[300px] text-xs ${
             bt.selected
               ? "btn-primary text-white"
-              : "border-gray bg-white hover:border-gray-dark"
+              : "border-gray hover:border-gray-dark bg-white"
           }`}
         >
           <p className="truncate">{bt.title}</p>
@@ -70,7 +70,7 @@ const SelectButtons: React.FC<SelectButtonsProps> = ({
       {maxRows && buttonState.length > maxRows && (
         <button
           type="button"
-          className="btn btn-sm border-gray text-xs text-gray-dark hover:border-gray-dark"
+          className="btn btn-sm border-gray text-gray-dark hover:border-gray-dark text-xs"
           onClick={() => setShowMore(!showMore)}
         >
           {showMore ? (

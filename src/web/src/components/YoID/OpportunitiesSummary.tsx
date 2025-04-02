@@ -83,11 +83,11 @@ export const OpportunitiesSummary: React.FC<{
           key={index}
           href={item.href}
           style={{ background: item.background }}
-          className="flex aspect-square w-[30%] min-w-[80px] flex-col items-center justify-center rounded-full border-2 border-orange bg-green p-2 text-center text-white shadow-custom"
+          className="border-orange bg-green shadow-custom flex aspect-square w-[30%] min-w-[80px] flex-col items-center justify-center rounded-full border-2 p-2 text-center text-white"
           onClick={onClick}
         >
-          <div className="flex h-full w-full flex-col items-center justify-center rounded-full bg-green">
-            <div className="whitespace-nowrap text-sm font-semibold">
+          <div className="bg-green flex h-full w-full flex-col items-center justify-center rounded-full">
+            <div className="text-sm font-semibold whitespace-nowrap">
               {item.emoji} {item.count}
             </div>
             <span className="text-sx -mt-3x" style={{ fontSize: "0.65rem" }}>

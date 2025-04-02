@@ -163,10 +163,10 @@ export const UserMenu: React.FC = () => {
         <div className="drawer-side">
           <label htmlFor="userMenu-drawer" className="drawer-overlay"></label>
           {/* MENU ITEMS */}
-          <div className="h-screen max-w-[20rem] overflow-y-auto rounded-bl-lg rounded-br-none rounded-tl-lg rounded-tr-none bg-[#FFF5E7]">
-            <div className="flex h-full select-none flex-col gap-2 p-4 [-webkit-user-drag:none] [user-drag:none]">
+          <div className="h-screen max-w-[20rem] overflow-y-auto rounded-tl-lg rounded-tr-none rounded-br-none rounded-bl-lg bg-[#FFF5E7]">
+            <div className="flex h-full flex-col gap-2 p-4 select-none [-webkit-user-drag:none] [user-drag:none]">
               {/* USER (YOID) */}
-              <div className="flex h-full flex-col items-center gap-1 p-2 text-gray-dark">
+              <div className="text-gray-dark flex h-full flex-col items-center gap-1 p-2">
                 {/* BACKGROUND IMAGES */}
 
                 {/* WORLD MAP */}
@@ -185,7 +185,7 @@ export const UserMenu: React.FC = () => {
                   width={161}
                   sizes="100vw"
                   priority={true}
-                  className="user-select-none pointer-events-none absolute left-32 top-56 -z-10 h-auto -rotate-6 opacity-50"
+                  className="user-select-none pointer-events-none absolute top-56 left-32 -z-10 h-auto -rotate-6 opacity-50"
                 />
                 {/* STAMP 1 */}
                 <Image
@@ -194,10 +194,10 @@ export const UserMenu: React.FC = () => {
                   width={135}
                   sizes="100vw"
                   priority={true}
-                  className="user-select-none pointer-events-none absolute inset-x-2 left-32 top-[500px] -z-10 h-auto -rotate-3 opacity-50"
+                  className="user-select-none pointer-events-none absolute inset-x-2 top-[500px] left-32 -z-10 h-auto -rotate-3 opacity-50"
                 />
 
-                <div className="relative z-10 mr-2 mt-6 overflow-hidden rounded-full shadow">
+                <div className="relative z-10 mt-6 mr-2 overflow-hidden rounded-full shadow">
                   <AvatarImage
                     icon={userProfile?.photoURL}
                     alt="User logo"
@@ -209,15 +209,15 @@ export const UserMenu: React.FC = () => {
                 </div>
                 {userProfile?.emailConfirmed && userProfile?.yoIDOnboarded && (
                   <div className="-mt-1 flex flex-row items-center">
-                    <div className="mr-1 text-xs text-gray-dark">Verified</div>
-                    <IoIosCheckmarkCircle className="h-6 w-6 text-success" />
+                    <div className="text-gray-dark mr-1 text-xs">Verified</div>
+                    <IoIosCheckmarkCircle className="text-success h-6 w-6" />
                   </div>
                 )}
 
                 {/* CLOSE BUTTON */}
                 <label
                   htmlFor="userMenu-drawer"
-                  className="drawer-close btn btn-sm absolute right-2 top-2 !rounded-full border-none text-black shadow-none hover:bg-orange"
+                  className="drawer-close btn btn-sm hover:bg-orange absolute top-2 right-2 !rounded-full border-none text-black shadow-none"
                   aria-label="close sidebar"
                   tabIndex={isDrawerOpen ? 0 : -1}
                   onKeyDown={(e) => {
@@ -254,7 +254,7 @@ export const UserMenu: React.FC = () => {
                 </div>
               </div>
 
-              <div className="divider my-2 !bg-gray" />
+              <div className="divider !bg-gray my-2" />
 
               {/* YoID Dashboard components */}
               <div className="flex flex-row gap-2">
@@ -313,7 +313,7 @@ export const UserMenu: React.FC = () => {
                     tabIndex={isDrawerOpen ? 0 : -1}
                   >
                     {graphView ? "📋" : "📈"}&nbsp;
-                    <span className="my-auto text-xs text-gray-dark underline">
+                    <span className="text-gray-dark my-auto text-xs underline">
                       {graphView ? "View Summary" : "View Graph"}
                     </span>
                   </button>
@@ -377,7 +377,7 @@ export const UserMenu: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <button
                       onClick={toggleCollapsePassport}
-                      className="flex h-[24px] w-full flex-row items-center gap-2 text-xs text-gray-dark md:text-sm"
+                      className="text-gray-dark flex h-[24px] w-full flex-row items-center gap-2 text-xs md:text-sm"
                       tabIndex={isDrawerOpen ? 0 : -1}
                     >
                       <span className="w-full truncate text-start text-xs font-bold tracking-wider text-black md:text-sm">
@@ -411,7 +411,7 @@ export const UserMenu: React.FC = () => {
 
                   {/* open passport button */}
                   <Link
-                    className="btn btn-sm gap-2 border-0 border-none bg-orange px-4 text-white shadow-lg hover:bg-orange hover:brightness-95 disabled:!cursor-wait disabled:brightness-95"
+                    className="btn btn-sm bg-orange hover:bg-orange gap-2 border-0 border-none px-4 text-white shadow-lg hover:brightness-95 disabled:!cursor-wait disabled:brightness-95"
                     onClick={() => setDrawerOpen(false)}
                     href={`/yoid/passport`}
                     tabIndex={isDrawerOpen ? 0 : -1}
@@ -421,7 +421,7 @@ export const UserMenu: React.FC = () => {
                   </Link>
                 </div>
                 <div className="flex w-full flex-col gap-2">
-                  <div className="divider my-4 !bg-gray" />
+                  <div className="divider !bg-gray my-4" />
                   <SignOutButton />
                 </div>
               </div>

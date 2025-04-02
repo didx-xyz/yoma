@@ -130,13 +130,13 @@ const CustomModal: FC<CustomModalProps> = ({
       {createPortal(
         <div className="fixed inset-0 z-40">
           <div
-            className="fixed inset-0 bg-overlay"
+            className="bg-overlay fixed inset-0"
             onClick={handleOverlayClick}
           />
           <div
             ref={modalRef}
             tabIndex={-1}
-            className={`visible fixed bottom-0 left-0 right-0 top-0 flex-grow scale-95 overflow-hidden overflow-y-auto bg-white transition-all duration-300 ease-in-out ${animationClasses} md:m-auto md:rounded-3xl ${className}`}
+            className={`visible fixed top-0 right-0 bottom-0 left-0 grow scale-95 overflow-hidden overflow-y-auto bg-white transition-all duration-300 ease-in-out ${animationClasses} md:m-auto md:rounded-3xl ${className}`}
           >
             {children}
           </div>

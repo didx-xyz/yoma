@@ -1,0 +1,44 @@
+:root {
+  /* Core colors */
+  --color-white: #ffffff;
+  --color-white-shade: #f7f7f7;
+  --color-black: #020304;
+
+  /* Blue variants */
+  --color-blue: #4cade9;
+  --color-blue-light: #edf6fd;
+  --color-blue-shade: #5eb5eb;
+  --color-blue-dark: #2487c5;
+
+  /* Purple variants */
+  --color-purple: #41204b;
+  --color-purple-light: #8a8fd6;
+  --color-purple-dark: #5f65b9;
+  --color-purple-soft: #c3a2cd;
+  --color-purple-shade: #54365d;
+  --color-purple-tint: #e7d4ed;
+
+  /* Other primary colors */
+  --color-pink: #fe4d57;
+  --color-orange: #f9ab3e;
+  --color-orange-light: #fdeed8;
+
+  /* Green variants */
+  --color-green: #387f6a;
+  --color-green-tint: #4c8c79;
+  --color-green-light: #e6f5f3;
+  --color-green-dark: #4ca78c;
+
+  /* Yellow variants */
+  --color-yellow: #d48414;
+  --color-yellow-light: #fddf99;
+  --color-yellow-tint: #fae4c6;
+
+  /* Gray variants */
+  --color-gray-dark: #565b6f;
+  --color-gray: #dce0e5;
+  --color-gray-light: #f3f6fa;
+
+  /* Utility colors */
+  --color-overlay: rgba(0, 0, 0, 0.5);
+}

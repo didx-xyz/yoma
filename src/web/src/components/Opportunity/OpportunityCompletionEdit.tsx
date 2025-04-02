@@ -455,15 +455,15 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
       <form
         key={`OpportunityComplete_${id}`}
-        className="flex h-full flex-col gap-2 overflow-y-auto overflow-x-hidden"
+        className="flex h-full flex-col gap-2 overflow-x-hidden overflow-y-auto"
         onSubmit={handleSubmit(onSubmit)}
       >
         <div className="flex flex-col gap-2">
-          <div className="flex flex-row bg-green p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
+          <div className="bg-green flex flex-row p-4 shadow-lg">
+            <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={onClose}
             >
               <IoMdClose className="h-6 w-6"></IoMdClose>
@@ -471,7 +471,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           </div>
           <div className="flex flex-col">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
+              <div className="border-green-dark -mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white p-1 shadow-lg">
                 <Image
                   src={iconSuccess}
                   alt="Icon Success"
@@ -491,7 +491,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 <h4 className="font-semibold">
                   Well done for completing this opportunity!
                 </h4>
-                <div className="tracking-wide text-gray-dark">
+                <div className="text-gray-dark tracking-wide">
                   Upload the required documents below, and once approved,
                   we&apos;ll add the accreditation to your CV!
                 </div>
@@ -499,19 +499,19 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
               {/* WHEN DID YOU FINISH? */}
               <div
-                className="flex flex-col rounded-lg border-dotted bg-gray-light"
+                className="bg-gray-light flex flex-col rounded-lg border-dotted"
                 style={{ animationDelay: "0.8s" }}
               >
                 <div className="flex w-full flex-row">
                   <div className="ml-2 p-4 md:p-6">
                     <FcCalendar className="size-10" />
                   </div>
-                  <div className="flex flex-grow flex-col p-4">
+                  <div className="flex grow flex-col p-4">
                     <div className="font-semibold md:text-start">
                       When did you finish?
                     </div>
 
-                    <div className="text-sm italic text-gray-dark">
+                    <div className="text-gray-dark text-sm italic">
                       Choose the date that you completed this opportunity.
                     </div>
 
@@ -522,7 +522,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         render={({ field: { onChange, value } }) => (
                           <input
                             type="date"
-                            className="input input-sm input-bordered block w-36 rounded-md border-gray focus:border-gray focus:outline-none"
+                            className="input input-sm input-bordered border-gray focus:border-gray block w-36 rounded-md focus:outline-none"
                             placeholder="End Date"
                             onChange={(e) => {
                               // Convert the YYYY-MM-DD string to an ISO string for the form state
@@ -559,17 +559,17 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
               {/* HOW LONG DID IT TAKE? */}
               <div
-                className="flex flex-col rounded-lg border-dotted bg-gray-light"
+                className="bg-gray-light flex flex-col rounded-lg border-dotted"
                 style={{ animationDelay: "0.7s" }}
               >
                 <div className="flex w-full flex-row">
                   <div className="ml-2 p-4 md:p-6">
                     <FcAlarmClock className="size-10" />
                   </div>
-                  <div className="flex flex-grow flex-col p-4">
+                  <div className="flex grow flex-col p-4">
                     <div className="font-semibold">How long did it take?</div>
 
-                    <div className="text-sm italic text-gray-dark">
+                    <div className="text-gray-dark text-sm italic">
                       Choose the time it took to complete this opportunity.
                     </div>
 
@@ -577,7 +577,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       {/* COMMITMENT INTERVALS */}
                       <div className="flex flex-col pb-2">
                         <div className="flex flex-row justify-start gap-4">
-                          <span className="mt-1 text-xs font-semibold text-gray-dark">
+                          <span className="text-gray-dark mt-1 text-xs font-semibold">
                             0
                           </span>
 
@@ -595,7 +595,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                                   value={value}
                                   onChange={(val) => onChange(val)}
                                 />
-                                <span className="-mb-3 mt-2 h-8 text-xs font-semibold text-gray-dark">
+                                <span className="text-gray-dark mt-2 -mb-3 h-8 text-xs font-semibold">
                                   {value > 0 && watchIntervalId != null && (
                                     <>
                                       {`${value} ${
@@ -610,7 +610,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                             )}
                           />
 
-                          <span className="mt-1 text-xs font-semibold text-gray-dark">
+                          <span className="text-gray-dark mt-1 text-xs font-semibold">
                             {timeIntervalMax}
                           </span>
                         </div>
@@ -638,12 +638,12 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         </div>
                       </div>
 
-                      {errors.commitmentInterval && (
+                      {errors.commitmentInterval?.root?.message && (
                         <FormMessage
                           messageType={FormMessageType.Warning}
                           className="p-0"
                         >
-                          {`${errors.commitmentInterval.message}`}
+                          {`${errors.commitmentInterval.root?.message}`}
                         </FormMessage>
                       )}
                     </div>
@@ -820,16 +820,16 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
               {/* FEEDBACK */}
               <div
-                className="flex flex-col rounded-lg border-dotted bg-gray-light"
+                className="bg-gray-light flex flex-col rounded-lg border-dotted"
                 style={{ animationDelay: "1.2s" }}
               >
                 <div className="flex w-full flex-row">
                   <div className="ml-2 p-4 md:p-6">
                     <FcIdea className="size-10" />
                   </div>
-                  <div className="flex flex-grow flex-col p-4">
+                  <div className="flex grow flex-col p-4">
                     <div className="font-semibold">Before you go!</div>
-                    <div className="text-sm italic text-gray-dark">
+                    <div className="text-gray-dark text-sm italic">
                       Please rate your experience & provide feedback.
                     </div>
                     <div className="form-control mt-4 gap-2">
@@ -877,7 +877,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                           render={({ field: { onChange, value } }) => (
                             <textarea
                               //className="textarea textarea-bordered w-full"
-                              className="blockx textarea textarea-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                              className="blockx textarea textarea-bordered border-gray focus:border-gray w-full rounded-md focus:outline-none"
                               placeholder="Enter your feedback"
                               value={value || ""}
                               onChange={onChange}
@@ -925,17 +925,17 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 </FormMessage>
               )}
 
-              <div className="mb-10 mt-4 flex flex-grow gap-4">
+              <div className="mt-4 mb-10 flex grow gap-4">
                 <button
                   type="button"
-                  className="btn btn-outline btn-primary w-1/2 flex-shrink rounded-full border-purple bg-white normal-case text-purple"
+                  className="btn btn-outline btn-primary border-purple text-purple w-1/2 shrink rounded-full bg-white normal-case"
                   onClick={onClose}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="btn btn-primary w-1/2 flex-shrink rounded-full bg-purple normal-case text-white"
+                  className="btn btn-primary bg-purple w-1/2 shrink rounded-full text-white normal-case"
                 >
                   Submit
                 </button>

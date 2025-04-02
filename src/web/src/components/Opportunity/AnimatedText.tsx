@@ -22,7 +22,7 @@ const AnimatedText: React.FC<AnimatedTextProps> = ({ sentences }) => {
 
   return (
     <div
-      className={`md:text-md flex h-[3rem] w-[300px] flex-col justify-center text-center text-sm font-normal text-purple-soft transition-opacity duration-500 md:h-fit md:w-full ${
+      className={`md:text-md text-purple-soft flex h-[3rem] w-[300px] flex-col justify-center text-center text-sm font-normal transition-opacity duration-500 md:h-fit md:w-full ${
         fade ? "opacity-100" : "opacity-0"
       }`}
     >

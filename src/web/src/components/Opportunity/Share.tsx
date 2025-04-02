@@ -107,11 +107,11 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
   return (
     <div className="flex h-full flex-col gap-2 overflow-y-auto">
       {/* HEADER WITH CLOSE BUTTON */}
-      <div className="flex flex-row bg-green p-4 shadow-lg">
-        <h1 className="flex-grow"></h1>
+      <div className="bg-green flex flex-row p-4 shadow-lg">
+        <h1 className="grow"></h1>
         <button
           type="button"
-          className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+          className="btn btn-circle text-gray-dark hover:bg-gray"
           onClick={onClose}
         >
           <IoMdClose className="h-6 w-6"></IoMdClose>
@@ -130,14 +130,14 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
       {/* MAIN CONTENT */}
       {!linkInfoIsLoading && (
         <div className="flex flex-col items-center justify-center gap-4 p-8">
-          <div className="-mt-16 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-orange shadow-lg">
+          <div className="border-green-dark bg-orange -mt-16 flex h-12 w-12 items-center justify-center rounded-full shadow-lg">
             <IoShareSocialOutline className="h-7 w-7 text-white" />
           </div>
 
           <h3>Share this opportunity!</h3>
 
           {/* OPPORTUNITY DETAILS (smaller) */}
-          <div className="mt-4 flex w-full flex-col rounded-lg p-4 shadow-custom">
+          <div className="shadow-custom mt-4 flex w-full flex-col rounded-lg p-4">
             <div className="flex gap-4">
               <div className="mb-1 flex items-center">
                 <AvatarImage
@@ -147,10 +147,10 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
                 />
               </div>
               <div className="flex flex-col gap-1 md:max-w-[420px]">
-                <h4 className="line-clamp-2 max-w-[170px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight md:max-w-[420px]">
+                <h4 className="line-clamp-2 max-w-[170px] overflow-hidden text-[18px] leading-tight font-semibold text-ellipsis md:max-w-[420px]">
                   {opportunity?.title}
                 </h4>
-                <h6 className="line-clamp-2 max-w-[180px] overflow-hidden text-ellipsis text-xs font-medium text-gray-dark md:max-w-[420px]">
+                <h6 className="text-gray-dark line-clamp-2 max-w-[180px] overflow-hidden text-xs font-medium text-ellipsis md:max-w-[420px]">
                   By {opportunity?.organizationName}
                 </h6>
               </div>
@@ -161,7 +161,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
 
             {/* DATES */}
             {opportunity?.status == "Active" && (
-              <div className="flex flex-col text-sm text-gray-dark">
+              <div className="text-gray-dark flex flex-col text-sm">
                 <div>
                   {opportunity.dateStart && (
                     <>
@@ -191,7 +191,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
           </div>
 
           {/* BUTTONS */}
-          <div className="mb-2 mt-10 grid w-full grid-cols-1 gap-4 md:mb-6 md:grid-cols-2">
+          <div className="mt-10 mb-2 grid w-full grid-cols-1 gap-4 md:mb-6 md:grid-cols-2">
             <button
               onClick={onClick_CopyToClipboard}
               className="btn btn-outline btn-primary"

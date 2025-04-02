@@ -55,12 +55,12 @@ const MarketplaceLayout: TabProps = ({ children }) => {
           onClose={() => setWhatIsZltoDialogVisible(false)}
         />
 
-        <div className="container z-10 mt-24 py-4">
+        <div className="z-10 container mt-24 py-4">
           {/* SIGN IN TO SEE YOUR ZLTO BALANCE */}
           {!userProfile && (
             <div className="mb-8 flex h-36 flex-col items-center justify-center gap-4 text-white">
               <div className="flex flex-row items-center justify-center">
-                <h5 className="flex-grow text-center tracking-widest">
+                <h5 className="grow text-center tracking-widest">
                   Sign in to see your Zlto balance
                 </h5>
               </div>
@@ -79,14 +79,14 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                     )}`}
                   />
                 </div>
-                <div className="flex flex-grow flex-col justify-center">
+                <div className="flex grow flex-col justify-center">
                   <h1>0</h1>
                 </div>
               </div>
               <div className="flex flex-row gap-4">
                 <button
                   type="button"
-                  className="btn rounded-full border-2 border-blue-dark brightness-110"
+                  className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent text-white brightness-110 hover:!border-white hover:!brightness-100"
                   onClick={() => {
                     setWhatIsZltoDialogVisible(true);
                   }}
@@ -94,7 +94,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                   What is Zlto?
                 </button>
 
-                <SignInButton className="btn rounded-full !border-2 !border-solid !border-blue-dark !bg-transparent brightness-110 hover:!border-white hover:!brightness-100" />
+                <SignInButton className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent brightness-110 hover:!border-white hover:!brightness-100" />
               </div>
             </div>
           )}
@@ -104,7 +104,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
             <div className="mb-8 flex h-36 flex-col items-center justify-center gap-4 text-white">
               <div>
                 <div className="flex flex-row items-center justify-center">
-                  <h5 className="mb-2 flex-grow text-center tracking-widest">
+                  <h5 className="mb-2 grow text-center tracking-widest">
                     My Zlto balance
                   </h5>
                 </div>
@@ -126,7 +126,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                   {/* ZLTO Balances */}
                   <div className="flex flex-col items-start justify-center gap-1 border-y-2 border-dotted border-white py-1">
                     <div className="flex flex-row items-center gap-2">
-                      <p className="w-28 text-xs uppercase tracking-widest">
+                      <p className="w-28 text-xs tracking-widest uppercase">
                         Processing:
                       </p>
 
@@ -142,7 +142,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                     </div>
 
                     <div className="flex flex-row items-center gap-2">
-                      <p className="w-28 text-xs uppercase tracking-widest">
+                      <p className="w-28 text-xs tracking-widest uppercase">
                         Available:
                       </p>
 
@@ -158,7 +158,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
                     </div>
 
                     <div className="flex flex-row items-center gap-2">
-                      <p className="w-28 text-xs uppercase tracking-widest">
+                      <p className="w-28 text-xs tracking-widest uppercase">
                         Total:
                       </p>
                       <div className="flex items-center text-xs font-bold text-white">
@@ -178,7 +178,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
               <div className="flex flex-row gap-4">
                 <button
                   type="button"
-                  className="btn rounded-full border-2 border-blue-dark brightness-110"
+                  className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent text-white brightness-110 hover:!border-white hover:!brightness-100"
                   onClick={() => {
                     setWhatIsZltoDialogVisible(true);
                   }}
@@ -188,15 +188,16 @@ const MarketplaceLayout: TabProps = ({ children }) => {
 
                 <Link
                   href="/yoid/wallet"
-                  className="btn rounded-full border-2 border-blue-dark brightness-110"
+                  className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent text-white brightness-110 hover:!border-white hover:!brightness-100"
                 >
                   My vouchers
                 </Link>
               </div>
             </div>
           )}
+
           {/* MAIN CONTENT */}
-          <div className="flex-growx mt-20 flex items-center justify-center p-4">
+          <div className="growx mt-20 flex items-center justify-center p-4">
             {children}
           </div>
         </div>

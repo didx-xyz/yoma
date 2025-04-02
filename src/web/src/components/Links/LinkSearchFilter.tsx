@@ -169,12 +169,12 @@ export const LinkSearchFilters: React.FC<{
   //#endregion opportunities
 
   return (
-    <div className="flex flex-grow flex-col">
+    <div className="flex grow flex-col">
       <form
         onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-2"
       >
-        <div className="flex w-full flex-grow flex-row flex-wrap gap-2 md:w-fit lg:flex-row">
+        <div className="flex w-full grow flex-row flex-wrap gap-2 md:w-fit lg:flex-row">
           {/* ORGANISATIONS */}
           {filterOptions?.includes(LinkFilterOptions.ORGANIZATIONS) && (
             <span className="w-full md:w-72">
@@ -214,7 +214,7 @@ export const LinkSearchFilters: React.FC<{
               />
               {formState.errors.organizations && (
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
+                  <span className="label-text-alt text-red-500 italic">
                     {`${formState.errors.organizations.message}`}
                   </span>
                 </label>
@@ -253,7 +253,7 @@ export const LinkSearchFilters: React.FC<{
               />
               {formState.errors.entities && (
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
+                  <span className="label-text-alt text-red-500 italic">
                     {`${formState.errors.entities.message}`}
                   </span>
                 </label>

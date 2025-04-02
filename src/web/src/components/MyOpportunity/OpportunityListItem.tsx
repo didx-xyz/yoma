@@ -30,7 +30,7 @@ const OpportunityListItem: React.FC<{
   return (
     <Link
       href={`/opportunities/${data.opportunityId}`}
-      className="flex cursor-pointer flex-col gap-1 rounded-lg border-none border-gray bg-white p-4 shadow-custom"
+      className="border-gray shadow-custom flex cursor-pointer flex-col gap-1 rounded-lg border-none bg-white p-4"
     >
       <div className="mb-2 flex flex-row gap-2">
         <AvatarImage
@@ -39,11 +39,11 @@ const OpportunityListItem: React.FC<{
           size={60}
         />
 
-        <div className="flex flex-col justify-center gap-1 overflow-ellipsis">
-          <h1 className="line-clamp-1 text-xs font-medium text-gray-dark">
+        <div className="flex flex-col justify-center gap-1 text-ellipsis">
+          <h1 className="text-gray-dark line-clamp-1 text-xs font-medium">
             {data.organizationName}
           </h1>
-          <h2 className="line-clamp-2 text-[18px] font-semibold leading-tight md:line-clamp-1">
+          <h2 className="line-clamp-2 text-[18px] leading-tight font-semibold md:line-clamp-1">
             {data.opportunityTitle}
           </h2>
         </div>
@@ -67,7 +67,7 @@ const OpportunityListItem: React.FC<{
             <div className="flex flex-row flex-wrap gap-2">
               {data.skills?.map((skill, index) => (
                 <div
-                  className="badge truncate whitespace-nowrap rounded-md bg-green-light text-[12px] font-semibold text-green"
+                  className="badge bg-green-light text-green truncate rounded-md text-[12px] font-semibold whitespace-nowrap"
                   key={`skill_${index}`}
                 >
                   {skill.name}

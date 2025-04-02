@@ -15,8 +15,8 @@ export const OppSearchInputLarge: React.FC<{
   onSearch,
   openFilter,
   maxWidth = 0, // The default maxWidth is set to 0, which means it will be auto
-  inputClassName,
-  buttonClassName,
+  inputClassName = "",
+  buttonClassName = "",
 }) => {
   const [searchInputValue, setSearchInputValue] = useState(defaultValue);
 
@@ -40,7 +40,7 @@ export const OppSearchInputLarge: React.FC<{
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex w-full flex-grow"
+      className="flex w-full grow"
       autoComplete="off"
       spellCheck="false"
     >
@@ -48,7 +48,7 @@ export const OppSearchInputLarge: React.FC<{
         {openFilter && (
           <button
             type="button"
-            className={`${buttonClassName} btn join-item inline-flex items-center justify-center rounded-l-full border border-r-0 border-orange bg-orange text-black hover:border-orange hover:text-orange`}
+            className={`${buttonClassName} join-item border-orange bg-orange hover:bg-purple hover:text-orange inline-flex items-center justify-center rounded-l-full border p-4 text-black`}
             onClick={() => openFilter(true)}
           >
             <IoMdOptions className="h-4 w-4 md:h-6 md:w-6" />
@@ -58,11 +58,7 @@ export const OppSearchInputLarge: React.FC<{
         <input
           type="search"
           placeholder={placeholder ?? "Search..."}
-          className={`${inputClassName} placeholder:text-md input-md w-full rounded-bl-3xl rounded-tl-3xl border-l-0 border-none border-orange bg-white bg-opacity-10 text-white placeholder-white placeholder:font-bold focus:outline-none md:!pl-8 md:placeholder:text-[16px] lg:w-full ${
-            openFilter
-              ? "rounded-bl-none rounded-tl-none"
-              : "rounded-bl-3xl rounded-tl-3xl"
-          }`}
+          className={`${inputClassName} input-lg join-item w-full bg-white/10 text-white placeholder-white placeholder:font-bold focus:outline-none md:!px-8`}
           style={{ maxWidth: maxWidthStyle }}
           value={searchInputValue ?? ""}
           onChange={(e) => setSearchInputValue(e.target.value)}
@@ -74,7 +70,7 @@ export const OppSearchInputLarge: React.FC<{
         />
 
         <button
-          className={`${buttonClassName} hover:border-1 btn btn-primary join-item inline-flex items-center justify-center rounded-r-full border-l-0 border-orange bg-orange text-black hover:border-l-0 hover:border-orange hover:text-orange disabled:brightness-75`}
+          className={`${buttonClassName} join-item border-orange bg-orange hover:bg-purple hover:text-orange inline-flex items-center justify-center rounded-r-full border p-4 text-black disabled:brightness-75`}
           type="submit"
           disabled={
             searchInputValue === null ||

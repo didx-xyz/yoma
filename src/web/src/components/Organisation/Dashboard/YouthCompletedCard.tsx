@@ -10,7 +10,7 @@ export const YouthCompletedCard: React.FC<{
     <div className="m-2 flex h-72 w-72 flex-col gap-2 rounded-lg bg-white px-2 py-4 text-xs shadow">
       <div className="mb-1 flex items-center gap-2 text-sm">
         <AvatarImage alt="Person Image" size={40} />
-        <div className="line-clamp-2 flex h-10 w-full items-center whitespace-break-spaces text-sm font-semibold">
+        <div className="line-clamp-2 flex h-10 w-full items-center text-sm font-semibold whitespace-break-spaces">
           {opportunity.displayName}
         </div>
       </div>

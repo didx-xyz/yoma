@@ -230,7 +230,7 @@ export const OrgContactEdit: React.FC<InputProps> = ({
           error={formState.errors.countryId?.message?.toString()}
         >
           <select
-            className="select select-bordered border-gray focus:border-gray focus:outline-none"
+            className="select border-gray focus:border-gray focus:outline-none"
             {...register("countryId")}
             style={{ fontSize: "1rem" }}
           >
@@ -267,7 +267,7 @@ export const OrgContactEdit: React.FC<InputProps> = ({
           {onCancel && (
             <button
               type="button"
-              className="btn btn-warning w-1/2 flex-shrink normal-case md:btn-wide"
+              className="btn btn-warning md:btn-wide w-1/2 shrink normal-case"
               onClick={onCancel}
             >
               {cancelButtonText}
@@ -276,7 +276,7 @@ export const OrgContactEdit: React.FC<InputProps> = ({
           {onSubmit && (
             <button
               type="submit"
-              className="btn btn-success w-1/2 flex-shrink normal-case md:btn-wide"
+              className="btn btn-success md:btn-wide w-1/2 shrink normal-case"
             >
               {submitButtonText}
             </button>

@@ -36,6 +36,7 @@ import { getOrganisations } from "~/api/services/organisations";
 import type { SelectOption } from "~/api/models/lookups";
 import type { OrganizationSearchFilter } from "~/api/models/organisation";
 import { OrganisationCardComponent } from "~/components/Organisation/OrganisationCardComponent";
+import CustomSlider from "~/components/Carousel/CustomSlider";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -375,185 +376,107 @@ const Organisations: NextPageWithLayout<{
         <title>Yoma | Organisations</title>
       </Head>
 
-      <PageBackground className="h-[14.5rem] md:h-[18rem]" />
+      <PageBackground className="h-[14.8rem] md:h-[18.4rem]" />
 
-      <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
+      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
-          <h3 className="mb-6 mt-3 flex items-center text-3xl font-semibold tracking-normal text-white md:mb-9 md:mt-0">
+          <h3 className="mt-3 mb-6 flex items-center text-3xl font-semibold tracking-normal text-white md:mt-0 md:mb-9">
             Organisations
           </h3>
 
           {/* TABBED NAVIGATION */}
-          <div className="z-10 flex justify-center md:justify-start">
-            <div className="flex w-full gap-2">
-              {/* LEFT BUTTON MOBILE */}
-              <div className="-ml-1 mb-1 flex items-center md:hidden">
-                <button
-                  className="ease-bounce focus:outline-none active:scale-90"
-                  onClick={() => {
-                    const tabList = document.querySelector('[role="tablist"]');
-                    if (tabList) {
-                      tabList.scrollLeft -= 100;
-                    }
-                  }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              {/* TABS */}
-              <div
-                className="tabs tabs-bordered w-full gap-2 overflow-x-scroll md:overflow-hidden"
-                role="tablist"
-              >
-                <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
-                  <ul className="-mb-px flex w-full justify-between gap-4 overflow-x-auto md:justify-start md:gap-0">
-                    <li className="md:w-24">
-                      <Link
-                        href={`/organisations`}
-                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          !status
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        All
-                        {(totalCountAll ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountAll}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="md:w-24">
-                      <Link
-                        href={`/organisations?status=Active`}
-                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          status === "Active"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Active
-                        {(totalCountActive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountActive}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="md:w-24">
-                      <Link
-                        href={`/organisations?status=Inactive`}
-                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          status === "Inactive"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Pending
-                        {(totalCountInactive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountInactive}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="md:w-24">
-                      <Link
-                        href={`/organisations?status=Declined`}
-                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          status === "Declined"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Declined
-                        {(totalCountDeclined ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountDeclined}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="md:w-24">
-                      <Link
-                        href={`/organisations?status=Deleted`}
-                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          status === "Deleted"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Deleted
-                        {(totalCountDeleted ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountDeleted}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                  </ul>
+          <CustomSlider sliderClassName="!gap-6">
+            <a
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                status === null
+                  ? "active border-orange"
+                  : "hover:border-gray hover:text-gray border-transparent"
+              }`}
+              onClick={() => router.push("/organisations")}
+            >
+              All{" "}
+              {(totalCountAll ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountAll}
                 </div>
-              </div>
-
-              {/* RIGHT BUTTON MOBILE */}
-              <div className="-mr-1 mb-1 flex items-center md:hidden">
-                <button
-                  className="ease-bounce focus:outline-none active:scale-90"
-                  onClick={() => {
-                    const tabList = document.querySelector('[role="tablist"]');
-                    if (tabList) {
-                      tabList.scrollLeft += 100;
-                    }
-                  }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
+              )}
+            </a>
+            <a
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                status === "Active"
+                  ? "active border-orange"
+                  : "hover:border-gray hover:text-gray border-transparent"
+              }`}
+              onClick={() => router.push("/organisations?status=Active")}
+            >
+              Active{" "}
+              {(totalCountActive ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountActive}
+                </div>
+              )}
+            </a>
+            <a
+              role="tab"
+              className={`border-b-4 py-2 font-semibold whitespace-nowrap text-white ${
+                status === "Inactive"
+                  ? "active border-orange"
+                  : "hover:border-gray hover:text-gray border-transparent"
+              }`}
+              onClick={() => router.push("/organisations?status=Inactive")}
+            >
+              Pending
+              {(totalCountInactive ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountInactive}
+                </div>
+              )}
+            </a>
+            <a
+              role="tab"
+              className={`border-b-4 py-2 font-semibold whitespace-nowrap text-white ${
+                status === "Declined"
+                  ? "active border-orange"
+                  : "hover:border-gray hover:text-gray border-transparent"
+              }`}
+              onClick={() => router.push("/organisations?status=Declined")}
+            >
+              Declined{" "}
+              {(totalCountDeclined ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountDeclined}
+                </div>
+              )}
+            </a>
+            <a
+              role="tab"
+              className={`border-b-4 py-2 font-semibold whitespace-nowrap text-white ${
+                status === "Deleted"
+                  ? "active border-orange"
+                  : "hover:border-gray hover:text-gray border-transparent"
+              }`}
+              onClick={() => router.push("/organisations?status=Deleted")}
+            >
+              Deleted
+              {(totalCountDeleted ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountDeleted}
+                </div>
+              )}
+            </a>
+          </CustomSlider>
 
           {/* SEARCH INPUT */}
-          <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
+          <div className="flex w-full grow items-center justify-between gap-4 sm:justify-end">
             <SearchInput defaultValue={query} onSearch={onSearchInputSubmit} />
 
             <Link
               href={`/organisations/register${`?returnUrl=${encodeURIComponent(
                 getSafeUrl(returnUrl?.toString(), router.asPath),
               )}`}`}
-              className="bg-theme btn btn-circle btn-secondary btn-sm h-fit w-fit whitespace-nowrap !border-none p-1 text-xs text-white shadow-custom brightness-105 md:p-2 md:px-4"
+              className="bg-theme btn btn-circle btn-secondary btn-sm shadow-custom h-fit w-fit !border-none p-1 text-xs whitespace-nowrap text-white brightness-105 md:p-2 md:px-4"
               id="btnCreateOpportunity" // e2e
             >
               <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />

@@ -24,6 +24,7 @@ import {
   searchStoreAccessControlRule,
   updateStatusStoreAccessControlRule,
 } from "~/api/services/marketplace";
+import CustomSlider from "~/components/Carousel/CustomSlider";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -288,10 +289,10 @@ const Stores: NextPageWithLayout<{
         "",
         <div
           key="confirm-dialog-content"
-          className="text-gray-500 flex h-full flex-col space-y-2"
+          className="flex h-full flex-col space-y-2 text-gray-500"
         >
           <div className="flex flex-row items-center gap-2">
-            <IoMdWarning className="h-6 w-6 text-warning" />
+            <IoMdWarning className="text-warning h-6 w-6" />
             <p className="text-lg">Confirm</p>
           </div>
 
@@ -373,11 +374,11 @@ const Stores: NextPageWithLayout<{
           <IoIosSettings className="h-4 w-4" />
         </button>
 
-        <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
+        <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
           {item?.status === "Active" && (
             <li>
               <button
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                className="text-gray-dark flex flex-row items-center hover:brightness-50"
                 onClick={() =>
                   updateRuleStatus(
                     item.id,
@@ -392,7 +393,7 @@ const Stores: NextPageWithLayout<{
           {item?.status === "Inactive" && (
             <li>
               <button
-                className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                className="text-gray-dark flex flex-row items-center hover:brightness-50"
                 onClick={() =>
                   updateRuleStatus(item.id, StoreAccessControlRuleStatus.Active)
                 }
@@ -406,7 +407,7 @@ const Stores: NextPageWithLayout<{
             <>
               <li>
                 <button
-                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
                   onClick={() =>
                     router.push(
                       `/admin/stores/${item.id}?returnUrl=${encodeURIComponent(
@@ -420,7 +421,7 @@ const Stores: NextPageWithLayout<{
               </li>
               <li>
                 <button
-                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
                   onClick={() =>
                     updateRuleStatus(
                       item.id,
@@ -449,108 +450,86 @@ const Stores: NextPageWithLayout<{
       <Head>
         <title>Yoma | Admin Marketplace Store Access Rules</title>
       </Head>
-      <PageBackground className="h-[14.5rem] md:h-[18rem]" />
+      <PageBackground className="h-[14.8rem] md:h-[18.4rem]" />
 
       {isLoading && <Loading />}
-
       <InfoModal
         isOpen={infoModalVisible}
         onClose={() => setInfoModalVisible(false)}
       />
-
-      <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
+      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
-          <h3 className="mb-6 mt-3 flex items-center text-xl font-semibold tracking-normal text-white md:mb-9 md:mt-0 md:text-3xl">
+          <h3 className="mt-3 mb-6 flex items-center truncate text-3xl font-semibold tracking-normal text-white md:mt-0 md:mb-9">
             Marketplace Store Access Rules
           </h3>
 
           {/* TABBED NAVIGATION */}
-          <div className="z-10 flex justify-center md:justify-start">
-            <div className="flex w-full gap-2">
-              {/* TABS */}
-              <div
-                className="tabs tabs-bordered w-full gap-2 overflow-x-scroll md:overflow-hidden"
-                role="tablist"
-              >
-                <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
-                  <ul className="-mb-px flex w-full justify-center gap-0 overflow-x-scroll md:justify-start">
-                    <li className="whitespace-nowrap px-4">
-                      <Link
-                        href={`/admin/stores`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          !statuses
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        All
-                        {(totalCountAll ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountAll}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="whitespace-nowrap px-4">
-                      <Link
-                        href={`/admin/stores?statuses=active`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "active"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Active
-                        {(totalCountActive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountActive}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="whitespace-nowrap px-4">
-                      <Link
-                        href={`/admin/stores?statuses=inactive`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "inactive"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Inactive
-                        {(totalCountInactive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountInactive}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="whitespace-nowrap px-4">
-                      <Link
-                        href={`/admin/stores?statuses=deleted`}
-                        className={`inline-block w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "deleted"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Deleted
-                        {(totalCountDeleted ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountDeleted}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                  </ul>
+          <CustomSlider sliderClassName="!gap-6">
+            <Link
+              href={`/admin/stores`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                !statuses
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              All
+              {(totalCountAll ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountAll}
                 </div>
-              </div>
-            </div>
-          </div>
+              )}
+            </Link>
+            <Link
+              href={`/admin/stores?statuses=active`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "active"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Active
+              {(totalCountActive ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountActive}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/admin/stores?statuses=inactive`}
+              role="tab"
+              className={`border-b-4 py-2 font-semibold whitespace-nowrap text-white ${
+                statuses === "inactive"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Inactive
+              {(totalCountInactive ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountInactive}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/admin/stores?statuses=deleted`}
+              role="tab"
+              className={`border-b-4 py-2 font-semibold whitespace-nowrap text-white ${
+                statuses === "deleted"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Deleted
+              {(totalCountDeleted ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountDeleted}
+                </div>
+              )}
+            </Link>
+          </CustomSlider>
 
           {/* INFO MESSAGE AND OPEN POPUP */}
           <FormMessage messageType={FormMessageType.Info}>
@@ -566,7 +545,7 @@ const Stores: NextPageWithLayout<{
           </FormMessage>
 
           {/* SEARCH INPUT */}
-          <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
+          <div className="flex w-full grow items-center justify-between gap-4 sm:justify-end">
             {/* FILTER */}
             <StoreAccessControlRuleSearchFilters
               searchFilter={searchFilter}
@@ -582,7 +561,7 @@ const Stores: NextPageWithLayout<{
               href={`/admin/stores/create${`?returnUrl=${encodeURIComponent(
                 getSafeUrl(returnUrl, router.asPath),
               )}`}`}
-              className="bg-theme btn btn-circle btn-secondary btn-sm h-fit w-fit whitespace-nowrap !border-none p-1 text-xs text-white shadow-custom brightness-105 md:p-2 md:px-4"
+              className="bg-theme btn btn-circle btn-secondary btn-sm shadow-custom h-fit w-fit !border-none p-1 text-xs whitespace-nowrap text-white brightness-105 md:p-2 md:px-4"
               id="btnCreateLink"
             >
               <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />
@@ -591,7 +570,7 @@ const Stores: NextPageWithLayout<{
           </div>
         </div>
 
-        <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
+        <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
           {/* NO ROWS */}
           {dataRules && dataRules.items?.length === 0 && (
             <div className="flex h-fit flex-col items-center rounded-lg bg-white">
@@ -610,7 +589,7 @@ const Stores: NextPageWithLayout<{
                 {dataRules.items.map((item) => (
                   <div
                     key={`grid_xs_${item.id}`}
-                    className="rounded-lg bg-white p-4 shadow-custom"
+                    className="shadow-custom rounded-lg bg-white p-4"
                   >
                     <div className="mb-2 flex flex-col">
                       <Link
@@ -628,7 +607,7 @@ const Stores: NextPageWithLayout<{
                         {item.name}
                       </span>
 
-                      <span className="font-semiboldx max-w-[340px] truncate text-xs text-gray-dark">
+                      <span className="font-semiboldx text-gray-dark max-w-[340px] truncate text-xs">
                         {item.description}
                       </span>
                     </div>
@@ -655,7 +634,7 @@ const Stores: NextPageWithLayout<{
                           <div className="flex flex-col">
                             {item?.storeItemCategories?.map((o) => (
                               <div key={o.id}>
-                                <div className="max-w-[200px] overflow-hidden truncate text-ellipsis whitespace-nowrap text-xs font-semibold text-gray-dark">
+                                <div className="text-gray-dark max-w-[200px] truncate overflow-hidden text-xs font-semibold text-ellipsis whitespace-nowrap">
                                   {o.name}
                                 </div>
                               </div>
@@ -670,7 +649,7 @@ const Stores: NextPageWithLayout<{
                         <span className="text-xs font-bold tracking-widest">
                           Age:
                         </span>
-                        <span className="text-xs font-semibold text-gray-dark">
+                        <span className="text-gray-dark text-xs font-semibold">
                           {item.ageFrom && item.ageTo
                             ? `From ${item.ageFrom} To ${item.ageTo}`
                             : item.ageFrom
@@ -685,7 +664,7 @@ const Stores: NextPageWithLayout<{
                         <span className="text-xs font-bold tracking-widest">
                           Gender:
                         </span>
-                        <span className="text-xs font-semibold text-gray-dark">
+                        <span className="text-gray-dark text-xs font-semibold">
                           {item.gender}
                         </span>
                       </div>
@@ -699,7 +678,7 @@ const Stores: NextPageWithLayout<{
                             <div key={o.id} className="w-[200px] truncate">
                               <Link
                                 href={`/organisations/${item.organizationId}/opportunities/${o.id}`}
-                                className="text-xs font-semibold text-gray-dark underline"
+                                className="text-gray-dark text-xs font-semibold underline"
                               >
                                 {o.title}
                               </Link>
@@ -757,50 +736,50 @@ const Stores: NextPageWithLayout<{
               </div>
 
               {/* DEKSTOP */}
-              <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table md:table-xs">
+              <table className="border-gray-light md:table-xs hidden border-separate rounded-lg border-x-2 border-t-2 md:table">
                 <thead>
                   <tr className="border-gray text-gray-dark">
-                    <th className="border-b-2 border-gray-light !py-4">
+                    <th className="border-gray-light border-b-2 !py-4">
                       Organisation
                     </th>
-                    <th className="border-b-2 border-gray-light !py-4">Name</th>
-                    <th className="border-b-2 border-gray-light">
+                    <th className="border-gray-light border-b-2 !py-4">Name</th>
+                    <th className="border-gray-light border-b-2">
                       Description
                     </th>
-                    <th className="border-b-2 border-gray-light !py-4">
+                    <th className="border-gray-light border-b-2 !py-4">
                       Store / Item Categories
                     </th>
-                    <th className="border-b-2 border-gray-light !py-4">
+                    <th className="border-gray-light border-b-2 !py-4">
                       Conditions
                     </th>
-                    <th className="border-b-2 border-gray-light">Date</th>
-                    <th className="border-b-2 border-gray-light">Status</th>
-                    <th className="border-b-2 border-gray-light">Actions</th>
+                    <th className="border-gray-light border-b-2">Date</th>
+                    <th className="border-gray-light border-b-2">Status</th>
+                    <th className="border-gray-light border-b-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {dataRules.items.map((item) => (
                     <tr key={`grid_md_${item.id}`}>
-                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4 !align-top">
                         <Link
                           href={`/organisations/${
                             item.organizationId
                           }${`?returnUrl=${encodeURIComponent(
                             getSafeUrl(returnUrl, router.asPath),
                           )}`}`}
-                          className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap text-sm text-gray-dark underline"
+                          className="text-gray-dark max-w-[80px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
                         >
                           {item.organizationName}
                         </Link>
                       </td>
 
-                      <td className="max-w-[100px] truncate border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light max-w-[100px] truncate border-b-2 !py-4 !align-top">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.name}
                         </div>
                       </td>
 
-                      <td className="max-w-[100px] truncate border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light max-w-[100px] truncate border-b-2 !py-4 !align-top">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.description}
                         </div>
@@ -815,7 +794,7 @@ const Stores: NextPageWithLayout<{
                         </div>
                       </td> */}
 
-                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4 !align-top">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.store.name!}
                         </div>
@@ -825,7 +804,7 @@ const Stores: NextPageWithLayout<{
                             return (
                               <span
                                 key={`storeItemCategories_${index}`}
-                                className="text-xs text-gray-dark"
+                                className="text-gray-dark text-xs"
                               >
                                 {item.name}
                               </span>
@@ -834,7 +813,7 @@ const Stores: NextPageWithLayout<{
                         </div>
                       </td>
 
-                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4 !align-top">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[300px]">
                           <span className="mr-1 font-bold">Age:</span>
                           <span>
@@ -860,7 +839,7 @@ const Stores: NextPageWithLayout<{
                               <div key={o.id} className="w-[120px] truncate">
                                 <Link
                                   href={`/organisations/${item.organizationId}/opportunities/${o.id}`}
-                                  className="text-xs font-semibold text-gray-dark underline"
+                                  className="text-gray-dark text-xs font-semibold underline"
                                 >
                                   {o.title}
                                 </Link>
@@ -870,7 +849,7 @@ const Stores: NextPageWithLayout<{
                         </div>
                       </td>
 
-                      <td className="border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light border-b-2 !py-4 !align-top">
                         {item.dateModified ? (
                           <span className="badge bg-yellow-light text-yellow">
                             <IoMdCalendar className="h-4 w-4" />
@@ -886,7 +865,7 @@ const Stores: NextPageWithLayout<{
                       </td>
 
                       {/* STATUS */}
-                      <td className="border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light border-b-2 !py-4 !align-top">
                         {item.status == "Active" && (
                           <span className="badge bg-blue-light text-blue">
                             Active
@@ -906,7 +885,7 @@ const Stores: NextPageWithLayout<{
                       </td>
 
                       {/* ACTIONS */}
-                      <td className="border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light border-b-2 !py-4 !align-top">
                         {renderDropdown(item)}
                       </td>
                     </tr>
