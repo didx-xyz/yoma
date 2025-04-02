@@ -210,13 +210,13 @@ export const DashboardFilterHorizontal: React.FC<{
   }, [setDefaultOpportunityOptions, searchFilter?.opportunities]);
 
   return (
-    <div className="flex flex-grow flex-col gap-3">
+    <div className="flex grow flex-col gap-3">
       <form
         onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-2"
       >
         <div className="md:flex-rowx items-centerx justify-centerx md:justify-startx flex w-full flex-col gap-2">
-          <div className="items-centerx flex w-full flex-grow flex-col flex-wrap gap-2 md:w-fit md:flex-row">
+          <div className="items-centerx flex w-full grow flex-col flex-wrap gap-2 md:w-fit md:flex-row">
             {/* ORGANISATIONS */}
             {isAdmin && (
               <span className="w-full md:w-72">
@@ -252,7 +252,7 @@ export const DashboardFilterHorizontal: React.FC<{
                 />
                 {formState.errors.organizations && (
                   <label className="label font-bold">
-                    <span className="label-text-alt italic text-red-500">
+                    <span className="label-text-alt text-red-500 italic">
                       {`${formState.errors.organizations.message}`}
                     </span>
                   </label>
@@ -268,7 +268,7 @@ export const DashboardFilterHorizontal: React.FC<{
                   name="startDate"
                   render={({ field: { onChange, value } }) => (
                     <DatePicker
-                      className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
+                      className="input focus:border-gray h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:outline-none md:w-32"
                       onChange={(date) => {
                         onChange(toISOStringForTimezone(date));
                         void handleSubmit(onSubmitHandler)();
@@ -282,7 +282,7 @@ export const DashboardFilterHorizontal: React.FC<{
 
                 {formState.errors.startDate && (
                   <label className="label">
-                    <span className="label-text-alt px-4 text-base italic text-red-500">
+                    <span className="label-text-alt px-4 text-base text-red-500 italic">
                       {`${formState.errors.startDate.message}`}
                     </span>
                   </label>
@@ -296,7 +296,7 @@ export const DashboardFilterHorizontal: React.FC<{
                   name="endDate"
                   render={({ field: { onChange, value } }) => (
                     <DatePicker
-                      className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none md:w-32"
+                      className="input focus:border-gray h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:outline-none md:w-32"
                       onChange={(date) => {
                         // change time to 1 second to midnight
                         if (date) date.setHours(23, 59, 59, 999);
@@ -312,7 +312,7 @@ export const DashboardFilterHorizontal: React.FC<{
 
                 {formState.errors.endDate && (
                   <label className="label">
-                    <span className="label-text-alt px-4 text-base italic text-red-500">
+                    <span className="label-text-alt px-4 text-base text-red-500 italic">
                       {`${formState.errors.endDate.message}`}
                     </span>
                   </label>
@@ -359,14 +359,14 @@ export const DashboardFilterHorizontal: React.FC<{
               />
               {formState.errors.opportunities && (
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
+                  <span className="label-text-alt text-red-500 italic">
                     {`${formState.errors.opportunities.message}`}
                   </span>
                 </label>
               )}
             </span>
 
-            <div className="mx-auto flex items-center text-center text-xs font-bold text-gray md:mx-1 md:text-left">
+            <div className="text-gray mx-auto flex items-center text-center text-xs font-bold md:mx-1 md:text-left">
               or
             </div>
 
@@ -417,7 +417,7 @@ export const DashboardFilterHorizontal: React.FC<{
 
               {formState.errors.categories && (
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
+                  <span className="label-text-alt text-red-500 italic">
                     {`${formState.errors.categories.message}`}
                   </span>
                 </label>

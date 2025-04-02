@@ -456,11 +456,11 @@ const StoreRuleDetails: NextPageWithLayout<{
         "",
         <div key="confirm-dialog-content" className="flex flex-col">
           <div className="flex flex-row items-center gap-2">
-            <IoMdWarning className="h-6 w-6 text-warning" />
+            <IoMdWarning className="text-warning h-6 w-6" />
             <p className="text-lg">Submit</p>
           </div>
 
-          <div className="text-xs leading-6 text-gray-dark md:text-sm">
+          <div className="text-gray-dark text-xs leading-6 md:text-sm">
             Are you sure you want to submit your rule?
             <br />
             These details can be changed later.
@@ -740,11 +740,11 @@ const StoreRuleDetails: NextPageWithLayout<{
         className={`md:max-h-[400px] md:w-[500px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
-          <div className="flex flex-row bg-green p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
+          <div className="bg-green flex flex-row p-4 shadow-lg">
+            <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={() => {
                 setSaveChangesDialogVisible(false);
               }}
@@ -753,22 +753,22 @@ const StoreRuleDetails: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <FaExclamationTriangle className="h-8 w-8 text-yellow" />
+            <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
+              <FaExclamationTriangle className="text-yellow h-8 w-8" />
             </div>
 
             <div className="font-semibold">
               Your recent changes have not been saved!
             </div>
 
-            <div className="mt-4 rounded-lg bg-gray p-4 text-center md:w-[450px]">
+            <div className="bg-gray mt-4 rounded-lg p-4 text-center md:w-[450px]">
               Please make sure to save your changes to prevent any loss of data.
             </div>
 
-            <div className="mt-4 flex w-full flex-grow justify-center gap-4">
+            <div className="mt-4 flex w-full grow justify-center gap-4">
               <button
                 type="button"
-                className="btn w-1/2 rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
+                className="btn border-purple text-purple w-1/2 rounded-full bg-white normal-case md:w-[150px]"
                 onClick={onClickContinueWithoutSaving}
               >
                 <span className="ml-1">Continue without saving</span>
@@ -776,7 +776,7 @@ const StoreRuleDetails: NextPageWithLayout<{
 
               <button
                 type="button"
-                className="btn w-1/2 rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[150px]"
+                className="btn bg-purple hover:bg-purple-light w-1/2 rounded-full text-white normal-case md:w-[150px]"
                 onClick={onClickSaveAndContinue}
               >
                 <p className="text-white">Save and continue</p>
@@ -787,11 +787,11 @@ const StoreRuleDetails: NextPageWithLayout<{
       </CustomModal>
 
       {/* PAGE */}
-      <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-2 py-4">
+      <div className="z-10 container mt-20 max-w-7xl overflow-hidden px-2 py-4">
         {/* BREADCRUMB */}
         <div className="flex flex-row items-center text-xs text-white">
           <Link
-            className="flex items-center justify-center font-bold hover:text-gray"
+            className="hover:text-gray flex items-center justify-center font-bold"
             href={getSafeUrl(returnUrl?.toString(), `/admin/stores`)}
           >
             <IoMdArrowRoundBack className="bg-theme mr-2 inline-block h-4 w-4" />
@@ -800,7 +800,7 @@ const StoreRuleDetails: NextPageWithLayout<{
           <div className="mx-2 font-bold">|</div>
           {ruleId == "create" ? "Create" : "Edit"}
         </div>
-        <h3 className="mb-6 mt-2 font-bold text-white">
+        <h3 className="mt-2 mb-6 font-bold text-white">
           {ruleId == "create" ? "New rule" : storeAccessControlRule?.name}
         </h3>
 
@@ -808,7 +808,7 @@ const StoreRuleDetails: NextPageWithLayout<{
         <div ref={htmlRef} />
         <div className="flex flex-col gap-4 md:flex-row">
           {/* LEFT VERTICAL MENU */}
-          <ul className="menu hidden h-max w-60 flex-none gap-3 rounded-lg bg-white p-4 font-semibold shadow-custom md:flex md:justify-center">
+          <ul className="menu shadow-custom hidden h-max w-60 flex-none gap-3 rounded-lg bg-white p-4 font-semibold md:flex md:justify-center">
             <li onClick={() => onClick_Menu(1)}>
               <a
                 className={`${
@@ -872,7 +872,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                 } py-3`}
               >
                 <span
-                  className={`mr-2 rounded-full bg-gray-dark px-1.5 py-0.5 text-xs font-medium text-white ${
+                  className={`bg-gray-dark mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
                     formStateStep1.isValid &&
                     formStateStep2.isValid &&
                     formStateStep3.isValid
@@ -918,18 +918,19 @@ const StoreRuleDetails: NextPageWithLayout<{
           </select>
 
           {/* FORMS */}
-          <div className="flex w-full flex-grow flex-col items-center overflow-hidden rounded-lg bg-white shadow-custom">
+          <div className="shadow-custom flex w-full grow flex-col items-center overflow-hidden rounded-lg bg-white">
             <div className="flex w-full flex-col px-2 py-4 md:p-8">
               {step === 1 && (
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold tracking-wider">General</h5>
-                    <p className="text-sm">
+
+                    <FormMessage messageType={FormMessageType.Info}>
                       Marketplace Store Access Rules are conditions to control
                       the visibility of a ZLTO store and its item categories to
                       users. This system allows precise targeting based on user
                       demographics and achievements.
-                    </p>
+                    </FormMessage>
                   </div>
 
                   <form
@@ -948,7 +949,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                     >
                       <input
                         type="text"
-                        className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                        className="input border-gray focus:border-gray rounded-md focus:outline-none"
                         placeholder="Name"
                         {...registerStep1("name")}
                         maxLength={255}
@@ -965,7 +966,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                       error={formStateStep1.errors.description?.message}
                     >
                       <textarea
-                        className="input textarea textarea-bordered h-32 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
+                        className="input textarea border-gray focus:border-gray h-32 rounded-md text-[1rem] leading-tight focus:outline-none"
                         placeholder="Description"
                         {...registerStep1("description")}
                         maxLength={500}
@@ -975,7 +976,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                     {/* BUTTONS */}
                     <div className="my-4 flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
                       <Link
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         href={getSafeUrl(
                           returnUrl?.toString(),
                           `/admin/stores`,
@@ -986,7 +987,7 @@ const StoreRuleDetails: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
                       </button>
@@ -999,14 +1000,15 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold tracking-wider">Store</h5>
-                    <p className="text-sm">
+
+                    <FormMessage messageType={FormMessageType.Info}>
                       Configure a ZLTO store for users by having a ZLTO
                       representative set up the store based on your
                       specifications. You can select the organization and a
                       store, with the option to choose specific item categories.
                       Visibility conditions will apply to either the entire
                       store or the selected item categories.
-                    </p>
+                    </FormMessage>
                   </div>
                   <form
                     ref={formRef2}
@@ -1226,7 +1228,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                     <div className="my-4 flex items-center justify-center gap-2 md:justify-end md:gap-4">
                       <button
                         type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         onClick={() => {
                           onClick_Menu(1);
                         }}
@@ -1236,7 +1238,7 @@ const StoreRuleDetails: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
                       </button>
@@ -1249,13 +1251,14 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold">Conditions</h5>
-                    <p className="text-sm">
+
+                    <FormMessage messageType={FormMessageType.Info}>
                       These rules ensure the store is accessible only to users
                       who meet criteria like age, gender, and completed
                       opportunities. All specified conditions must be met for
                       visibility, and multiple rules can be created with OR
                       logic determining visibility across different rules.
-                    </p>
+                    </FormMessage>
                   </div>
 
                   <form
@@ -1472,7 +1475,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                     <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       <button
                         type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         onClick={() => {
                           onClick_Menu(2);
                         }}
@@ -1481,7 +1484,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                       </button>
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
                       </button>
@@ -1494,9 +1497,10 @@ const StoreRuleDetails: NextPageWithLayout<{
                 <>
                   <div className="mb-4 flex flex-col">
                     <h5 className="font-bold">Preview</h5>
-                    <p className="text-sm">
+
+                    <FormMessage messageType={FormMessageType.Warning}>
                       Please review the details before submitting it.
-                    </p>
+                    </FormMessage>
                   </div>
 
                   <form
@@ -1544,16 +1548,16 @@ const StoreRuleDetails: NextPageWithLayout<{
                               found based on the specified store info:
                             </FormMessage>
 
-                            <table className="table table-xs border-separate rounded-lg border-x-2 border-t-2 border-gray-light">
+                            <table className="table-xs border-gray-light table border-separate rounded-lg border-x-2 border-t-2">
                               <thead>
                                 <tr className="border-gray">
-                                  <th className="border-b-2 border-gray-light !py-4">
+                                  <th className="border-gray-light border-b-2 !py-4">
                                     Store
                                   </th>
-                                  <th className="border-b-2 border-gray-light !py-4">
+                                  <th className="border-gray-light border-b-2 !py-4">
                                     Conditions
                                   </th>
-                                  <th className="border-b-2 border-gray-light !py-4">
+                                  <th className="border-gray-light border-b-2 !py-4">
                                     User Count
                                   </th>
                                 </tr>
@@ -1561,7 +1565,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                               <tbody>
                                 {preview.rulesRelated.map((item, index) => (
                                   <tr key={index}>
-                                    <td className="truncate border-b-2 border-gray-light !py-4 !align-top">
+                                    <td className="border-gray-light truncate border-b-2 !py-4 !align-top">
                                       <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                                         {item.rule.store.name!}
                                       </div>
@@ -1572,7 +1576,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                                             return (
                                               <span
                                                 key={`storeItemCategories_${index}`}
-                                                className="text-xs text-gray-dark"
+                                                className="text-gray-dark text-xs"
                                               >
                                                 {item.name}
                                               </span>
@@ -1582,7 +1586,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                                       </div>
                                     </td>
 
-                                    <td className="truncate border-b-2 border-gray-light !py-4 !align-top">
+                                    <td className="border-gray-light truncate border-b-2 !py-4 !align-top">
                                       {(item.rule.ageFrom ||
                                         item.rule.ageTo) && (
                                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[300px]">
@@ -1627,7 +1631,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                                                 >
                                                   <Link
                                                     href={`/organisations/${item.rule.organizationId}/opportunities/${o.id}`}
-                                                    className="text-xs font-semibold text-gray-dark underline"
+                                                    className="text-gray-dark text-xs font-semibold underline"
                                                   >
                                                     {o.title}
                                                   </Link>
@@ -1639,7 +1643,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                                       )}
                                     </td>
 
-                                    <td className="truncate border-b-2 border-gray-light !py-4 !align-top">
+                                    <td className="border-gray-light truncate border-b-2 !py-4 !align-top">
                                       {item.userCount}
                                     </td>
                                   </tr>
@@ -1704,7 +1708,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                           return (
                             <span
                               key={`storeItemCategories_${index}`}
-                              className="text-xs text-gray-dark"
+                              className="text-gray-dark text-xs"
                             >
                               {category ? category.label : item}
                             </span>
@@ -1748,7 +1752,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                             return (
                               <span
                                 key={`opportunities_${index}`}
-                                className="text-xs text-gray-dark"
+                                className="text-gray-dark text-xs"
                               >
                                 {opportunity ? opportunity.title : item}
                               </span>
@@ -1758,10 +1762,10 @@ const StoreRuleDetails: NextPageWithLayout<{
 
                         <FormField label="Opportunity Option">
                           {formData.opportunityOption == "All" && (
-                            <span className="text-xs text-gray-dark">All</span>
+                            <span className="text-gray-dark text-xs">All</span>
                           )}
                           {formData.opportunityOption == "Any" && (
-                            <span className="text-xs text-gray-dark">Any</span>
+                            <span className="text-gray-dark text-xs">Any</span>
                           )}
                         </FormField>
                       </>
@@ -1771,7 +1775,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                     <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       <button
                         type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         onClick={() => {
                           onClick_Menu(3);
                         }}
@@ -1780,7 +1784,7 @@ const StoreRuleDetails: NextPageWithLayout<{
                       </button>
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow disabled:bg-gray-light md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success disabled:bg-gray-light grow md:w-1/3 md:grow-0"
                         disabled={
                           !(
                             formStateStep1.isValid &&

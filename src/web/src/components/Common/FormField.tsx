@@ -20,7 +20,7 @@ const FormField: React.FC<{
   children,
 }) => {
   return (
-    <div className="form-control flex gap-2">
+    <fieldset className="fieldset">
       {label && (
         <FormLabel
           label={label}
@@ -33,7 +33,7 @@ const FormField: React.FC<{
       {children}
 
       {error && showError && <FormError label={error} />}
-    </div>
+    </fieldset>
   );
 };
 export default FormField;

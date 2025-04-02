@@ -377,11 +377,11 @@ const LinkDetails: NextPageWithLayout<{
           className="flex h-full flex-col space-y-2"
         >
           <div className="flex flex-row items-center gap-2">
-            <IoMdWarning className="h-6 w-6 text-warning" />
+            <IoMdWarning className="text-warning h-6 w-6" />
             <p className="text-lg">Submit</p>
           </div>
 
-          <div className="text-md flex flex-col gap-3 leading-6 text-gray-dark md:text-sm">
+          <div className="text-md text-gray-dark flex flex-col gap-3 leading-6 md:text-sm">
             <p>Are you sure you want to submit your link for approval?</p>
 
             <p>
@@ -596,11 +596,11 @@ const LinkDetails: NextPageWithLayout<{
         className={`md:max-h-[400px] md:w-[500px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
-          <div className="flex flex-row bg-green p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
+          <div className="bg-green flex flex-row p-4 shadow-lg">
+            <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={() => {
                 setSaveChangesDialogVisible(false);
               }}
@@ -609,22 +609,22 @@ const LinkDetails: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <FaExclamationTriangle className="h-8 w-8 text-yellow" />
+            <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
+              <FaExclamationTriangle className="text-yellow h-8 w-8" />
             </div>
 
             <div className="font-semibold">
               Your recent changes have not been saved!
             </div>
 
-            <div className="mt-4 rounded-lg bg-gray p-4 text-center md:w-[450px]">
+            <div className="bg-gray mt-4 rounded-lg p-4 text-center md:w-[450px]">
               Please make sure to save your changes to prevent any loss of data.
             </div>
 
             <div className="mt-4 flex justify-center gap-4 px-4">
               <button
                 type="button"
-                className="btn w-52 rounded-full border-purple bg-white normal-case text-purple"
+                className="btn border-purple text-purple w-52 rounded-full bg-white normal-case"
                 onClick={onClickContinueWithoutSaving}
               >
                 <span className="ml-1">Continue without saving</span>
@@ -632,7 +632,7 @@ const LinkDetails: NextPageWithLayout<{
 
               <button
                 type="button"
-                className="btn w-52 rounded-full bg-purple normal-case text-white hover:bg-purple-light"
+                className="btn bg-purple hover:bg-purple-light w-52 rounded-full text-white normal-case"
                 onClick={onClickSaveAndContinue}
               >
                 <p className="text-white">Save and continue</p>
@@ -643,11 +643,11 @@ const LinkDetails: NextPageWithLayout<{
       </CustomModal>
 
       {/* PAGE */}
-      <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-2 py-4">
+      <div className="z-10 container mt-20 max-w-7xl overflow-hidden px-2 py-4">
         {/* BREADCRUMB */}
         <div className="flex flex-row items-center text-xs text-white">
           <Link
-            className="flex items-center justify-center font-bold hover:text-gray"
+            className="hover:text-gray flex items-center justify-center font-bold"
             href={getSafeUrl(
               returnUrl?.toString(),
               `/organisations/${id}/links`,
@@ -660,11 +660,11 @@ const LinkDetails: NextPageWithLayout<{
           Create
         </div>
 
-        <h3 className="mb-6 mt-2 font-bold text-white">New link</h3>
+        <h3 className="mt-2 mb-6 font-bold text-white">New link</h3>
 
         <div className="flex flex-col gap-4 md:flex-row">
           {/* LEFT VERTICAL MENU */}
-          <ul className="menu hidden h-max w-60 flex-none gap-3 rounded-lg bg-white p-4 font-semibold shadow-custom md:flex md:justify-center">
+          <ul className="menu shadow-custom hidden h-max w-60 flex-none gap-3 rounded-lg bg-white p-4 font-semibold md:flex md:justify-center">
             <li onClick={() => onClick_Menu(1)}>
               <a
                 className={`${
@@ -710,7 +710,7 @@ const LinkDetails: NextPageWithLayout<{
                 } py-3`}
               >
                 <span
-                  className={`mr-2 rounded-full bg-gray-dark px-1.5 py-0.5 text-xs font-medium text-white ${
+                  className={`bg-gray-dark mr-2 rounded-full px-1.5 py-0.5 text-xs font-medium text-white ${
                     formStateStep1.isValid &&
                     formStateStep2.isValid &&
                     formStateStep3.isValid
@@ -752,7 +752,7 @@ const LinkDetails: NextPageWithLayout<{
           </select>
 
           {/* FORMS */}
-          <div className="flex w-full flex-grow flex-col items-center overflow-hidden rounded-lg bg-white shadow-custom">
+          <div className="shadow-custom flex w-full grow flex-col items-center overflow-hidden rounded-lg bg-white">
             <div className="flex w-full flex-col px-2 py-4 md:p-8">
               {step === 1 && (
                 <>
@@ -771,7 +771,7 @@ const LinkDetails: NextPageWithLayout<{
                       onSubmitStep(2, data),
                     )}
                   >
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <label className="flex flex-col">
                         <div className="label-text font-bold">Type</div>
                         <div className="label-text-alt my-2">
@@ -806,15 +806,15 @@ const LinkDetails: NextPageWithLayout<{
 
                       {formStateStep1.errors.entityType && (
                         <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${formStateStep1.errors.entityType.message}`}
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
                     {watchEntityType == "0" && (
-                      <div className="form-control">
+                      <fieldset className="fieldset">
                         <label className="flex flex-col">
                           <div className="label-text font-bold">
                             Opportunity
@@ -854,17 +854,17 @@ const LinkDetails: NextPageWithLayout<{
 
                         {formStateStep1.errors.entityId && (
                           <label className="label">
-                            <span className="label-text-alt italic text-red-500">
+                            <span className="label-text-alt text-red-500 italic">
                               {`${formStateStep1.errors.entityId.message}`}
                             </span>
                           </label>
                         )}
-                      </div>
+                      </fieldset>
                     )}
 
                     {watchEntityType == "1" && <>Job TODO</>}
 
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <label className="flex flex-col">
                         <div className="label-text font-bold">Name</div>
                         <div className="label-text-alt my-2">
@@ -874,21 +874,21 @@ const LinkDetails: NextPageWithLayout<{
                       </label>
                       <input
                         type="text"
-                        className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                        className="input border-gray focus:border-gray rounded-md focus:outline-none"
                         placeholder="Name"
                         {...registerStep1("name")}
                         contentEditable
                       />
                       {formStateStep1.errors.name && (
                         <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${formStateStep1.errors.name.message}`}
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <label className="flex flex-col">
                         <div className="label-text font-bold">Description</div>
                         <div className="label-text-alt my-2">
@@ -897,23 +897,23 @@ const LinkDetails: NextPageWithLayout<{
                         </div>
                       </label>
                       <textarea
-                        className="input textarea textarea-bordered h-32 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
+                        className="input textarea border-gray focus:border-gray h-32 rounded-md text-[1rem] leading-tight focus:outline-none"
                         placeholder="Description"
                         {...registerStep1("description")}
                       />
                       {formStateStep1.errors.description && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${formStateStep1.errors.description.message}`}
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
                     {/* BUTTONS */}
                     <div className="my-4 flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
                       <Link
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         href={getSafeUrl(
                           returnUrl?.toString(),
                           `/organisations/${id}/links`,
@@ -924,7 +924,7 @@ const LinkDetails: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
                       </button>
@@ -950,7 +950,7 @@ const LinkDetails: NextPageWithLayout<{
                     )}
                   >
                     {/* LOCK TO DISTRIBUTION LIST */}
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <div className="label-text font-bold">Limited Link</div>
                       <label
                         htmlFor="lockToDistributionList"
@@ -969,17 +969,17 @@ const LinkDetails: NextPageWithLayout<{
                       </label>
                       {formStateStep2.errors.lockToDistributionList && (
                         <label className="label -mb-5">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${formStateStep2.errors.lockToDistributionList.message}`}
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
                     {!watchLockToDistributionList && (
                       <>
                         {/* USAGE LIMIT */}
-                        <div className="form-control">
+                        <fieldset className="fieldset">
                           <label className="flex flex-col">
                             <div className="label-text font-bold">
                               Number of participants
@@ -990,7 +990,7 @@ const LinkDetails: NextPageWithLayout<{
                           </label>
                           <input
                             type="number"
-                            className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none disabled:border-gray-light disabled:text-gray"
+                            className="input border-gray focus:border-gray disabled:border-gray-light disabled:text-gray rounded-md focus:outline-none"
                             placeholder="Enter number"
                             {...registerStep2("usagesLimit", {
                               valueAsNumber: true,
@@ -1001,7 +1001,7 @@ const LinkDetails: NextPageWithLayout<{
                           />
 
                           <label className="label">
-                            <span className="label-text-alt italic text-yellow">
+                            <span className="label-text-alt text-yellow italic">
                               Note: This link can be claimed by anyone who
                               receives it. Participants can send between one
                               another to claim. Consider using a limited link,
@@ -1011,15 +1011,15 @@ const LinkDetails: NextPageWithLayout<{
 
                           {formStateStep2.errors.usagesLimit && (
                             <label className="label -mb-5">
-                              <span className="label-text-alt italic text-red-500">
+                              <span className="label-text-alt text-red-500 italic">
                                 {`${formStateStep2.errors.usagesLimit.message}`}
                               </span>
                             </label>
                           )}
-                        </div>
+                        </fieldset>
 
                         {/* EXPIRY DATE */}
-                        <div className="form-control">
+                        <fieldset className="fieldset">
                           <label className="flex flex-col">
                             <div className="label-text font-bold">
                               Expiry date
@@ -1034,7 +1034,7 @@ const LinkDetails: NextPageWithLayout<{
                             name="dateEnd"
                             render={({ field: { onChange, value } }) => (
                               <DatePicker
-                                className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                                className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
                                 onChange={(date) => onChange(date)}
                                 selected={value ? new Date(value) : null}
                                 placeholderText="Select End Date"
@@ -1045,18 +1045,18 @@ const LinkDetails: NextPageWithLayout<{
 
                           {formStateStep2.errors.dateEnd && (
                             <label className="label -mb-5">
-                              <span className="label-text-alt italic text-red-500">
+                              <span className="label-text-alt text-red-500 italic">
                                 {`${formStateStep2.errors.dateEnd.message}`}
                               </span>
                             </label>
                           )}
-                        </div>
+                        </fieldset>
                       </>
                     )}
 
                     {watchLockToDistributionList && (
                       <>
-                        <div className="form-control">
+                        <fieldset className="fieldset">
                           <label className="label font-bold">
                             <span className="label-text">Participants</span>
                           </label>
@@ -1067,7 +1067,7 @@ const LinkDetails: NextPageWithLayout<{
                             render={({ field: { onChange, value } }) => (
                               <CreatableSelect
                                 isMulti
-                                className="form-control mb-2 w-full"
+                                className="mb-2 w-full"
                                 onChange={(val) => {
                                   // when pasting multiple values, split them by DELIMETER_PASTE_MULTI and remove duplicates
                                   const emails = Array.from(
@@ -1093,7 +1093,7 @@ const LinkDetails: NextPageWithLayout<{
                           />
 
                           <label className="label">
-                            <span className="label-text-alt italic text-yellow">
+                            <span className="label-text-alt text-yellow italic">
                               Note: Participants will have to click on the link
                               in the email and claim their completion.
                             </span>
@@ -1101,12 +1101,12 @@ const LinkDetails: NextPageWithLayout<{
 
                           {formStateStep2.errors.distributionList && (
                             <label className="label font-bold">
-                              <span className="label-text-alt italic text-red-500">
+                              <span className="label-text-alt text-red-500 italic">
                                 {`${formStateStep2.errors.distributionList.message}`}
                               </span>
                             </label>
                           )}
-                        </div>
+                        </fieldset>
                       </>
                     )}
 
@@ -1114,7 +1114,7 @@ const LinkDetails: NextPageWithLayout<{
                     <div className="my-4 flex items-center justify-center gap-2 md:justify-end md:gap-4">
                       <button
                         type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         onClick={() => {
                           onClick_Menu(1);
                         }}
@@ -1124,7 +1124,7 @@ const LinkDetails: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
                       </button>
@@ -1150,7 +1150,7 @@ const LinkDetails: NextPageWithLayout<{
                     )}
                   >
                     {/* TYPE */}
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <div className="flex flex-col">
                         <div className="label-text text-base font-semibold">
                           Type
@@ -1166,16 +1166,16 @@ const LinkDetails: NextPageWithLayout<{
 
                         {formStateStep1.errors.entityType && (
                           <label className="label">
-                            <span className="label-text-alt italic text-red-500">
+                            <span className="label-text-alt text-red-500 italic">
                               {`${formStateStep1.errors.entityType.message}`}
                             </span>
                           </label>
                         )}
                       </div>
-                    </div>
+                    </fieldset>
 
                     {/* LINK PREVIEW */}
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <div className="flex flex-col">
                         <div className="label-text text-base font-semibold">
                           Social Preview
@@ -1196,15 +1196,15 @@ const LinkDetails: NextPageWithLayout<{
                       )}
                       {formStateStep1.errors.entityId && (
                         <label className="label">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${formStateStep1.errors.entityId.message}`}
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
                     {/* USAGE */}
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       <div className="flex flex-col">
                         <div className="label-text text-base font-semibold">
                           Limits
@@ -1265,7 +1265,7 @@ const LinkDetails: NextPageWithLayout<{
 
                             {/* PARTICIPANTS */}
                             {(formData.distributionList?.length ?? 0) > 0 && (
-                              <label className="label label-text pl-0 pt-0 text-xs">
+                              <label className="label label-text pt-0 pl-0 text-xs">
                                 <div className="flex flex-row flex-wrap gap-1">
                                   {formData.distributionList?.map(
                                     (item, index) => (
@@ -1283,13 +1283,13 @@ const LinkDetails: NextPageWithLayout<{
                           </>
                         )}
                       </div>
-                    </div>
+                    </fieldset>
 
                     {/* BUTTONS */}
                     <div className="my-4 flex items-center justify-center gap-4 md:justify-end">
                       <button
                         type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         onClick={() => {
                           onClick_Menu(2);
                         }}
@@ -1298,7 +1298,7 @@ const LinkDetails: NextPageWithLayout<{
                       </button>
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow disabled:bg-gray-light md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success disabled:bg-gray-light grow md:w-1/3 md:grow-0"
                         disabled={
                           !(
                             formStateStep1.isValid &&

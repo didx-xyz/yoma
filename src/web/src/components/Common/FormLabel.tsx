@@ -16,19 +16,19 @@ const FormLabel: React.FC<{
 
         {tooltip && (
           <FormTooltip label={tooltip}>
-            <IoIosInformationCircleOutline className="h-5 w-5 text-green" />
+            <IoIosInformationCircleOutline className="text-green h-5 w-5" />
           </FormTooltip>
         )}
 
         {showWarningIcon && (
           <FormTooltip label="This field is required.">
-            <IoMdAlert className="mr-2x h-5 w-5 text-yellow" />
+            <IoMdAlert className="mr-2x text-yellow h-5 w-5" />
           </FormTooltip>
         )}
       </span>
 
       {subLabel && (
-        <span className="text-xs text-gray-dark">
+        <span className="text-gray-dark text-xs">
           {subLabel.split("\\n").map((line, index, array) => (
             <Fragment key={index}>
               {line}

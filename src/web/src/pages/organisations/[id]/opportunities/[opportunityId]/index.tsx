@@ -1467,11 +1467,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         className={`md:max-h-[450px] md:w-[500px]`}
       >
         <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
-          <div className="flex flex-row bg-green p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
+          <div className="bg-green flex flex-row p-4 shadow-lg">
+            <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={() => {
                 setOppExpiredModalVisible(false);
               }}
@@ -1480,8 +1480,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <FaExclamationTriangle className="h-8 w-8 text-yellow" />
+            <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
+              <FaExclamationTriangle className="text-yellow h-8 w-8" />
             </div>
 
             <div className="font-semibold">Opportunity expired!</div>
@@ -1499,7 +1499,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               </p>
             </div>
 
-            <div className="mt-8 flex flex-grow gap-4">
+            <div className="mt-8 flex grow gap-4">
               <button
                 type="button"
                 className="btn btn-primary btn-wide rounded-full normal-case"
@@ -1529,11 +1529,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         className={`md:max-h-[400px] md:w-[500px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
-          <div className="flex flex-row bg-green p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
+          <div className="bg-green flex flex-row p-4 shadow-lg">
+            <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={() => {
                 setSaveChangesDialogVisible(false);
               }}
@@ -1542,22 +1542,22 @@ const OpportunityAdminDetails: NextPageWithLayout<{
             </button>
           </div>
           <div className="flex flex-col items-center justify-center gap-4">
-            <div className="-mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
-              <FaExclamationTriangle className="h-8 w-8 text-yellow" />
+            <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
+              <FaExclamationTriangle className="text-yellow h-8 w-8" />
             </div>
 
             <div className="font-semibold">
               Your recent changes have not been saved!
             </div>
 
-            <div className="mt-4 rounded-lg bg-gray p-4 text-center md:w-[450px]">
+            <div className="bg-gray mt-4 rounded-lg p-4 text-center md:w-[450px]">
               Please make sure to save your changes to prevent any loss of data.
             </div>
 
             <div className="mt-4 flex justify-center gap-4 px-4">
               <button
                 type="button"
-                className="btn w-1/2 rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
+                className="btn border-purple text-purple w-1/2 rounded-full bg-white normal-case md:w-[150px]"
                 onClick={onClickContinueWithoutSaving}
               >
                 <span className="ml-1">Continue without saving</span>
@@ -1565,7 +1565,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
               <button
                 type="button"
-                className="btn w-1/2 rounded-full bg-purple normal-case text-white hover:bg-purple-light md:w-[150px]"
+                className="btn bg-purple hover:bg-purple-light w-1/2 rounded-full text-white normal-case md:w-[150px]"
                 onClick={onClickSaveAndContinue}
               >
                 <p className="text-white">Save and continue</p>
@@ -1576,11 +1576,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       </CustomModal>
 
       {/* PAGE */}
-      <div className="container z-10 mt-20 max-w-7xl overflow-hidden px-2 py-4">
+      <div className="z-10 container mt-20 max-w-7xl overflow-hidden px-2 py-4">
         {/* BREADCRUMB */}
         <div className="flex flex-row items-center text-xs text-white">
           <Link
-            className="flex items-center justify-center font-bold hover:text-gray"
+            className="hover:text-gray flex items-center justify-center font-bold"
             href={getSafeUrl(
               returnUrl?.toString(),
               `/organisations/${id}/opportunities`,
@@ -1597,7 +1597,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           ) : (
             <>
               <Link
-                className="mt-0 max-w-[250px] overflow-hidden text-ellipsis whitespace-nowrap font-bold hover:text-gray md:max-w-[400px] lg:max-w-[800px]"
+                className="hover:text-gray mt-0 max-w-[250px] overflow-hidden font-bold text-ellipsis whitespace-nowrap md:max-w-[400px] lg:max-w-[800px]"
                 href={`/organisations/${id}/opportunities/${opportunityId}/info${
                   returnUrl
                     ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
@@ -1616,7 +1616,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
         {/* HEADING */}
         {opportunityId == "create" ? (
-          <h3 className="mb-6 mt-2 font-bold text-white">New opportunity</h3>
+          <h3 className="mt-2 mb-6 font-bold text-white">New opportunity</h3>
         ) : (
           <div className="flex flex-row items-center">
             {/* LOGO */}
@@ -1637,7 +1637,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               )}
             </div>
             {/* TITLE */}
-            <h3 className="overflow-hidden text-ellipsis whitespace-nowrap font-bold text-white">
+            <h3 className="overflow-hidden font-bold text-ellipsis whitespace-nowrap text-white">
               {opportunity?.title}
             </h3>
           </div>
@@ -1646,20 +1646,20 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         {/* MAIN CONTENT */}
         <div className="flex flex-col gap-4 md:flex-row">
           {/* MD: LEFT VERTICAL MENU */}
-          <ul className="menu hidden h-max w-64 flex-none gap-3 rounded-lg bg-white p-4 font-semibold shadow-custom md:flex md:justify-center">
+          <ul className="menu shadow-custom hidden h-max w-64 flex-none gap-3 rounded-lg bg-white p-4 font-semibold md:flex md:justify-center">
             {menuItems.map((item) => (
               <li key={item.step} onClick={() => onStep(item.step)}>
                 <a
                   className={`${
                     item.step === step
-                      ? "bg-green-light font-bold text-green hover:bg-green-light"
+                      ? "bg-green-light text-green hover:bg-green-light font-bold"
                       : "bg-gray-light text-gray-dark hover:bg-gray"
                   } py-3`}
                 >
                   {item.formState.isValid ? (
-                    <IoIosCheckmarkCircle className="h-6 w-6 text-green" />
+                    <IoIosCheckmarkCircle className="text-green h-6 w-6" />
                   ) : (
-                    <IoMdAlert className="h-6 w-6 text-yellow" />
+                    <IoMdAlert className="text-yellow h-6 w-6" />
                   )}
                   {item.label}
                 </a>
@@ -1686,7 +1686,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           </select>
 
           {/* FORMS */}
-          <div className="flex w-full flex-grow flex-col items-center overflow-hidden rounded-lg bg-white shadow-custom">
+          <div className="shadow-custom flex w-full grow flex-col items-center overflow-hidden rounded-lg bg-white">
             <div className="flex w-full flex-col px-2 py-4 md:p-8">
               {step === 1 && (
                 <>
@@ -1742,7 +1742,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           <Select
                             instanceId="typeId"
                             classNames={{
-                              control: () => "input pr-0 pl-2 !border-gray",
+                              control: () =>
+                                "input w-full pr-0 pl-2 !border-gray",
                             }}
                             options={opportunityTypesOptions}
                             onBlur={onBlur} // mark the field as touched
@@ -1788,7 +1789,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           <Select
                             instanceId="engagementTypeId"
                             classNames={{
-                              control: () => "input !border-gray pr-0 pl-2",
+                              control: () =>
+                                "input w-full !border-gray pr-0 pl-2",
                             }}
                             options={engagementTypesOptions}
                             onBlur={onBlur} // mark the field as touched
@@ -1836,7 +1838,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             instanceId="categories"
                             classNames={{
                               control: () =>
-                                "input !border-gray pr-0 pl-2 py-1 h-fit",
+                                "input w-full !border-gray pr-0 pl-2 py-1 h-fit",
                             }}
                             isMulti={true}
                             options={categoriesOptions}
@@ -1875,7 +1877,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     >
                       <input
                         type="text"
-                        className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                        className="input border-gray focus:border-gray rounded-md focus:outline-none"
                         placeholder="Enter link..."
                         maxLength={2048}
                         {...registerStep1("uRL")}
@@ -1894,7 +1896,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     >
                       {/* TODO: replace with FormTextArea component */}
                       <textarea
-                        className="input textarea textarea-bordered h-16 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
+                        className="input textarea border-gray focus:border-gray h-16 w-full rounded-md text-[1rem] leading-tight focus:outline-none"
                         placeholder="Enter summary..."
                         maxLength={150}
                         {...registerStep1("summary")}
@@ -1935,7 +1937,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     {/* BUTTONS */}
                     <div className="flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
                       <Link
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         href={getSafeUrl(
                           returnUrl?.toString(),
                           `/organisations/${id}/opportunities`,
@@ -1946,7 +1948,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
                       </button>
@@ -1991,7 +1993,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             instanceId="languages"
                             classNames={{
                               control: () =>
-                                "input !border-gray pr-0 pl-2 h-fit py-1",
+                                "input w-full !border-gray pr-0 pl-2 h-fit py-1",
                             }}
                             isMulti={true}
                             options={languagesOptions}
@@ -2038,7 +2040,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             instanceId="countries"
                             classNames={{
                               control: () =>
-                                "input !border-gray pr-0 pl-2 h-fit py-1",
+                                "input w-full !border-gray pr-0 pl-2 h-fit py-1",
                             }}
                             isMulti={true}
                             options={countriesOptions}
@@ -2084,7 +2086,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                           <Select
                             instanceId="difficultyId"
                             classNames={{
-                              control: () => "input !border-gray pr-0 pl-2",
+                              control: () =>
+                                "input w-full !border-gray pr-0 pl-2",
                             }}
                             isMulti={false}
                             options={difficultiesOptions}
@@ -2132,7 +2135,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         >
                           <input
                             type="number"
-                            className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                            className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
                             placeholder="Enter number..."
                             {...registerStep2("commitmentIntervalCount", {
                               valueAsNumber: true,
@@ -2159,7 +2162,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               <Select
                                 instanceId="commitmentIntervalId"
                                 classNames={{
-                                  control: () => "input !border-gray pr-0 pl-2",
+                                  control: () =>
+                                    "input w-full !border-gray pr-0 pl-2",
                                 }}
                                 options={timeIntervalsOptions}
                                 onBlur={onBlur} // mark the field as touched
@@ -2214,7 +2218,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                 field: { onChange, onBlur, value },
                               }) => (
                                 <DatePicker
-                                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                                  className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
                                   wrapperClassName="w-full"
                                   onBlur={onBlur} // mark the field as touched
                                   onChange={(date) => onChange(date)}
@@ -2240,7 +2244,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                 field: { onChange, onBlur, value },
                               }) => (
                                 <DatePicker
-                                  className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                                  className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
                                   wrapperClassName="w-full"
                                   onBlur={onBlur} // mark the field as touched
                                   onChange={(date) => onChange(date)}
@@ -2273,7 +2277,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                         render={({ field: { onBlur } }) => (
                           <input
                             type="number"
-                            className="input input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none md:w-1/2"
+                            className="input border-gray focus:border-gray w-full rounded-md focus:outline-none md:w-1/2"
                             placeholder="Enter number..."
                             {...registerStep2("participantLimit", {
                               valueAsNumber: true,
@@ -2307,7 +2311,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <div className="flex items-center justify-center gap-2 md:justify-end md:gap-4">
                       <button
                         type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         onClick={() => {
                           onStep(1);
                         }}
@@ -2317,7 +2321,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
                       </button>
@@ -2343,7 +2347,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     )}
                     {/* show available balance badge if reward pool is available on organisation-level */}
                     {organisation?.zltoRewardPool && (
-                      <div className="badge !rounded-full bg-orange px-4 text-white">
+                      <div className="badge bg-orange !rounded-full px-4 text-white">
                         Available Balance:{" "}
                         {new Intl.NumberFormat().format(
                           organisation?.zltoRewardBalance ?? 0,
@@ -2404,7 +2408,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                   render={({ field: { onBlur } }) => (
                                     <input
                                       type="number"
-                                      className="input input-bordered w-1/2 rounded-md border-gray focus:border-gray focus:outline-none"
+                                      className="input border-gray focus:border-gray w-1/2 rounded-md focus:outline-none"
                                       placeholder="Enter reward amount..."
                                       {...registerStep3("zltoReward", {
                                         valueAsNumber: true,
@@ -2491,7 +2495,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                       render={({ field: { onBlur } }) => (
                                         <input
                                           type="number"
-                                          className="input input-bordered w-1/2 rounded-md border-gray focus:border-gray focus:outline-none"
+                                          className="input border-gray focus:border-gray w-1/2 rounded-md focus:outline-none"
                                           placeholder="Enter pool amount..."
                                           {...registerStep3("zltoRewardPool", {
                                             valueAsNumber: true,
@@ -2567,7 +2571,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <div className="flex items-center justify-center gap-4 md:justify-end">
                       <button
                         type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         onClick={() => {
                           onStep(2);
                         }}
@@ -2577,7 +2581,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
                       </button>
@@ -2623,7 +2627,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               instanceId="skills"
                               classNames={{
                                 control: () =>
-                                  "input input-xs text-[1rem] h-fit !border-gray",
+                                  "input w-full input-xs text-[1rem] h-fit !border-gray",
                               }}
                               isMulti={true}
                               defaultOptions={true} // calls loadSkills for initial results when clicking on the dropdown
@@ -2659,7 +2663,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <div className="flex items-center justify-center gap-4 md:justify-end">
                       <button
                         type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         onClick={() => {
                           onStep(3);
                         }}
@@ -2669,7 +2673,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
                       </button>
@@ -2715,7 +2719,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               instanceId="keywords"
                               classNames={{
                                 control: () =>
-                                  "input !border-gray pr-0 pl-2 h-fit py-1",
+                                  "input w-full !border-gray pr-0 pl-2 h-fit py-1",
                               }}
                               isMulti={true}
                               onBlur={onBlur} // mark the field as touched
@@ -2750,7 +2754,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <div className="flex items-center justify-center gap-4 md:justify-end">
                       <button
                         type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         onClick={() => {
                           onStep(4);
                         }}
@@ -2760,7 +2764,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
                       </button>
@@ -3025,7 +3029,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                       </FormMessage>
                                     )} */}
 
-                                      <div className="form-control w-full">
+                                      <fieldset className="fieldset w-full">
                                         <label className="label">
                                           <span className="label-text">
                                             Description
@@ -3033,7 +3037,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                         </label>
                                         <input
                                           type="text"
-                                          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+                                          className="input border-gray focus:border-gray rounded-md focus:outline-none"
                                           placeholder="Enter description"
                                           onChange={(e) => {
                                             // update the description in the verificationTypes array
@@ -3062,7 +3066,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                           disabled={!watchVerificationEnabled}
                                           id={`input_verificationType_${item.displayName}`} // e2e
                                         />
-                                      </div>
+                                      </fieldset>
                                     </>
                                   )}
                                 </div>
@@ -3075,7 +3079,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <div className="flex items-center justify-center gap-4 md:justify-end">
                       <button
                         type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         onClick={() => {
                           onStep(5);
                         }}
@@ -3085,7 +3089,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
                       </button>
@@ -3111,7 +3115,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                       onSubmitStep(8, data),
                     )}
                   >
-                    <div className="form-control">
+                    <fieldset className="fieldset">
                       {watchVerificationEnabled == true && (
                         <FormMessage messageType={FormMessageType.Info}>
                           Verification is enabled. The opportunity will issue a
@@ -3129,12 +3133,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                       {formStateStep7.errors.credentialIssuanceEnabled && (
                         <label className="label -mb-5 font-bold">
-                          <span className="label-text-alt italic text-red-500">
+                          <span className="label-text-alt text-red-500 italic">
                             {`${formStateStep7.errors.credentialIssuanceEnabled.message}`}
                           </span>
                         </label>
                       )}
-                    </div>
+                    </fieldset>
 
                     {watchCredentialIssuanceEnabled && (
                       <>
@@ -3160,7 +3164,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                                 instanceId="ssiSchemaName"
                                 classNames={{
                                   control: () =>
-                                    "input !border-gray pr-0 pl-2 h-fit py-1",
+                                    "input w-full !border-gray pr-0 pl-2 h-fit py-1",
                                 }}
                                 options={schemasOptions}
                                 onBlur={onBlur} // mark the field as touched
@@ -3218,7 +3222,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <div className="flex items-center justify-center gap-4 md:justify-end">
                       <button
                         type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         onClick={() => {
                           onStep(6);
                         }}
@@ -3228,7 +3232,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success grow md:w-1/3 md:grow-0"
                       >
                         Next
                       </button>
@@ -3392,7 +3396,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                     <div className="flex items-center justify-center gap-4 md:justify-end">
                       <button
                         type="button"
-                        className="btn btn-warning flex-grow md:w-1/3 md:flex-grow-0"
+                        className="btn btn-warning grow md:w-1/3 md:grow-0"
                         onClick={() => {
                           onStep(7);
                         }}
@@ -3402,7 +3406,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
                       <button
                         type="submit"
-                        className="btn btn-success flex-grow disabled:bg-gray-light md:w-1/3 md:flex-grow-0"
+                        className="btn btn-success disabled:bg-gray-light grow md:w-1/3 md:grow-0"
                         disabled={
                           !(
                             formStateStep1.isValid &&

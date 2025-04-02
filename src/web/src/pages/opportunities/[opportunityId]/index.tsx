@@ -105,17 +105,17 @@ const OpportunityDetails: NextPageWithLayout<{
 
       <PageBackground />
 
-      <div className="container z-10 mt-16 max-w-7xl overflow-hidden px-2 py-4 md:mt-20">
+      <div className="z-10 container mt-16 max-w-7xl overflow-hidden px-2 py-4 md:mt-20">
         {/* BREADCRUMB */}
         <div className="flex flex-col gap-2 py-6 sm:flex-row">
-          <div className="flex-grow overflow-hidden text-ellipsis px-2 text-sm md:whitespace-nowrap">
+          <div className="grow overflow-hidden px-2 text-sm text-ellipsis md:whitespace-nowrap">
             <ul>
               <li className="inline">
                 <button
-                  className="inline text-white hover:text-gray"
+                  className="hover:text-gray inline text-white"
                   onClick={() => router.back()}
                 >
-                  <IoMdArrowRoundBack className="mb-[2px] mr-1 inline h-4 w-4" />
+                  <IoMdArrowRoundBack className="mr-1 mb-[2px] inline h-4 w-4" />
                   Opportunities
                 </button>
               </li>

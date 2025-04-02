@@ -267,9 +267,9 @@ const Stores: NextPageWithLayout<{
         onClose={() => setInfoModalVisible(false)}
       />
 
-      <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
+      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
-          <h3 className="mb-6 mt-3 flex items-center text-xl font-semibold tracking-normal text-white md:mb-9 md:mt-0 md:text-3xl">
+          <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal text-white md:mt-0 md:mb-9 md:text-3xl">
             Marketplace Store Access Rules
           </h3>
 
@@ -278,78 +278,78 @@ const Stores: NextPageWithLayout<{
             <div className="flex w-full gap-2">
               {/* TABS */}
               <div
-                className="tabs tabs-bordered w-full gap-2 overflow-x-scroll md:overflow-hidden"
+                className="tabs w-full gap-2 overflow-x-scroll md:overflow-hidden"
                 role="tablist"
               >
-                <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
+                <div className="text-gray-dark border-b border-transparent text-center text-sm font-medium">
                   <ul className="-mb-px flex w-full justify-center gap-0 overflow-x-scroll md:justify-start">
-                    <li className="whitespace-nowrap px-4">
+                    <li className="px-4 whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/stores`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           !statuses
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         All
                         {(totalCountAll ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountAll}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="whitespace-nowrap px-4">
+                    <li className="px-4 whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/stores?statuses=active`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           statuses === "active"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Active
                         {(totalCountActive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountActive}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="whitespace-nowrap px-4">
+                    <li className="px-4 whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/stores?statuses=inactive`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           statuses === "inactive"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Inactive
                         {(totalCountInactive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountInactive}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="whitespace-nowrap px-4">
+                    <li className="px-4 whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/stores?statuses=deleted`}
-                        className={`inline-block w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
                           statuses === "deleted"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Deleted
                         {(totalCountDeleted ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountDeleted}
                           </div>
                         )}
@@ -375,7 +375,7 @@ const Stores: NextPageWithLayout<{
           </FormMessage>
 
           {/* SEARCH INPUT */}
-          <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
+          <div className="flex w-full grow items-center justify-between gap-4 sm:justify-end">
             {/* FILTER */}
             <StoreAccessControlRuleSearchFilters
               searchFilter={searchFilter}
@@ -385,7 +385,7 @@ const Stores: NextPageWithLayout<{
           </div>
         </div>
 
-        <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
+        <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
           {/* NO ROWS */}
           {dataRules && dataRules.items?.length === 0 && (
             <div className="flex h-fit flex-col items-center rounded-lg bg-white">
@@ -404,14 +404,14 @@ const Stores: NextPageWithLayout<{
                 {dataRules.items.map((item) => (
                   <div
                     key={`grid_xs_${item.id}`}
-                    className="rounded-lg bg-white p-4 shadow-custom"
+                    className="shadow-custom rounded-lg bg-white p-4"
                   >
                     <div className="mb-2 flex flex-col">
                       <span className="mt-2 max-w-[340px] truncate text-sm font-semibold">
                         {item.name}
                       </span>
 
-                      <span className="font-semiboldx max-w-[340px] truncate text-xs text-gray-dark">
+                      <span className="font-semiboldx text-gray-dark max-w-[340px] truncate text-xs">
                         {item.description}
                       </span>
                     </div>
@@ -438,7 +438,7 @@ const Stores: NextPageWithLayout<{
                           <div className="flex flex-col">
                             {item?.storeItemCategories?.map((o) => (
                               <div key={o.id}>
-                                <div className="max-w-[200px] overflow-hidden truncate text-ellipsis whitespace-nowrap text-xs font-semibold text-gray-dark">
+                                <div className="text-gray-dark max-w-[200px] truncate overflow-hidden text-xs font-semibold text-ellipsis whitespace-nowrap">
                                   {o.name}
                                 </div>
                               </div>
@@ -453,7 +453,7 @@ const Stores: NextPageWithLayout<{
                         <span className="text-xs font-bold tracking-widest">
                           Age:
                         </span>
-                        <span className="text-xs font-semibold text-gray-dark">
+                        <span className="text-gray-dark text-xs font-semibold">
                           {item.ageFrom && item.ageTo
                             ? `From ${item.ageFrom} To ${item.ageTo}`
                             : item.ageFrom
@@ -468,7 +468,7 @@ const Stores: NextPageWithLayout<{
                         <span className="text-xs font-bold tracking-widest">
                           Gender:
                         </span>
-                        <span className="text-xs font-semibold text-gray-dark">
+                        <span className="text-gray-dark text-xs font-semibold">
                           {item.gender}
                         </span>
                       </div>
@@ -482,7 +482,7 @@ const Stores: NextPageWithLayout<{
                             <div key={o.id} className="w-[200px] truncate">
                               <Link
                                 href={`/organisations/${item.organizationId}/opportunities/${o.id}`}
-                                className="text-xs font-semibold text-gray-dark underline"
+                                className="text-gray-dark text-xs font-semibold underline"
                               >
                                 {o.title}
                               </Link>
@@ -535,39 +535,39 @@ const Stores: NextPageWithLayout<{
               </div>
 
               {/* DEKSTOP */}
-              <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table md:table-xs">
+              <table className="border-gray-light md:table-xs hidden border-separate rounded-lg border-x-2 border-t-2 md:table">
                 <thead>
                   <tr className="border-gray text-gray-dark">
-                    <th className="border-b-2 border-gray-light !py-4">Name</th>
-                    <th className="border-b-2 border-gray-light">
+                    <th className="border-gray-light border-b-2 !py-4">Name</th>
+                    <th className="border-gray-light border-b-2">
                       Description
                     </th>
-                    <th className="border-b-2 border-gray-light !py-4">
+                    <th className="border-gray-light border-b-2 !py-4">
                       Store / Item Categories
                     </th>
-                    <th className="border-b-2 border-gray-light !py-4">
+                    <th className="border-gray-light border-b-2 !py-4">
                       Conditions
                     </th>
-                    <th className="border-b-2 border-gray-light">Date</th>
-                    <th className="border-b-2 border-gray-light">Status</th>
+                    <th className="border-gray-light border-b-2">Date</th>
+                    <th className="border-gray-light border-b-2">Status</th>
                   </tr>
                 </thead>
                 <tbody>
                   {dataRules.items.map((item) => (
                     <tr key={`grid_md_${item.id}`}>
-                      <td className="max-w-[100px] truncate border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light max-w-[100px] truncate border-b-2 !py-4 !align-top">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.name}
                         </div>
                       </td>
 
-                      <td className="max-w-[100px] truncate border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light max-w-[100px] truncate border-b-2 !py-4 !align-top">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.description}
                         </div>
                       </td>
 
-                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4 !align-top">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.store.name!}
                         </div>
@@ -577,7 +577,7 @@ const Stores: NextPageWithLayout<{
                             return (
                               <span
                                 key={`storeItemCategories_${index}`}
-                                className="text-xs text-gray-dark"
+                                className="text-gray-dark text-xs"
                               >
                                 {item.name}
                               </span>
@@ -586,7 +586,7 @@ const Stores: NextPageWithLayout<{
                         </div>
                       </td>
 
-                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4 !align-top">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[300px]">
                           <span className="mr-1 font-bold">Age:</span>
                           <span>
@@ -612,7 +612,7 @@ const Stores: NextPageWithLayout<{
                               <div key={o.id} className="w-[120px] truncate">
                                 <Link
                                   href={`/organisations/${item.organizationId}/opportunities/${o.id}`}
-                                  className="text-xs font-semibold text-gray-dark underline"
+                                  className="text-gray-dark text-xs font-semibold underline"
                                 >
                                   {o.title}
                                 </Link>
@@ -622,7 +622,7 @@ const Stores: NextPageWithLayout<{
                         </div>
                       </td>
 
-                      <td className="border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light border-b-2 !py-4 !align-top">
                         {item.dateModified ? (
                           <span className="badge bg-yellow-light text-yellow">
                             <IoMdCalendar className="h-4 w-4" />
@@ -638,7 +638,7 @@ const Stores: NextPageWithLayout<{
                       </td>
 
                       {/* STATUS */}
-                      <td className="border-b-2 border-gray-light !py-4 !align-top">
+                      <td className="border-gray-light border-b-2 !py-4 !align-top">
                         {item.status == "Active" && (
                           <span className="badge bg-blue-light text-blue">
                             Active

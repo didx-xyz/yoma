@@ -16,7 +16,7 @@ const FormTextArea: React.FC<{
 }> = ({ inputProps }) => {
   return (
     <textarea
-      className="input textarea textarea-bordered h-16 rounded-md border-gray text-[1rem] leading-tight focus:border-gray focus:outline-none"
+      className="input textarea border-gray focus:border-gray h-16 w-full rounded-md text-[1rem] leading-tight focus:outline-none"
       {...inputProps}
     />
   );

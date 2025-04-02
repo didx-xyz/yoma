@@ -146,10 +146,10 @@ const MyWallet: NextPageWithLayout<{
         {currentItem && (
           <div className="flex h-full flex-col gap-2 overflow-y-auto pb-2">
             <div className="flex flex-row p-4">
-              <h1 className="flex-grow"></h1>
+              <h1 className="grow"></h1>
               <button
                 type="button"
-                className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
+                className="btn bg-gray text-gray-dark hover:bg-gray-light rounded-full border-0 p-3"
                 onClick={() => {
                   setItemDialogVisible(false);
                 }}
@@ -164,11 +164,11 @@ const MyWallet: NextPageWithLayout<{
 
               <div className="justify-centerx flex w-full flex-col gap-4">
                 <div className="flex w-full flex-col justify-center gap-1">
-                  <div className="text-xs font-bold text-gray-dark">
+                  <div className="text-gray-dark text-xs font-bold">
                     Voucher Code
                   </div>
 
-                  <div className="flex w-full flex-row items-center rounded-full bg-gray p-2">
+                  <div className="bg-gray flex w-full flex-row items-center rounded-full p-2">
                     <div className="w-full font-semibold">
                       {currentItem.code}
                     </div>
@@ -182,23 +182,23 @@ const MyWallet: NextPageWithLayout<{
                 </div>
 
                 <div className="flex w-full flex-col md:flex-row">
-                  <div className="w-full text-xs text-gray-dark">Paid with</div>
-                  <div className="whitespace-nowrap text-sm font-semibold">
+                  <div className="text-gray-dark w-full text-xs">Paid with</div>
+                  <div className="text-sm font-semibold whitespace-nowrap">
                     {currentItem.amount} ZLTO
                   </div>
                 </div>
 
                 <div className="flex w-full flex-col md:flex-row">
-                  <div className="w-full text-xs text-gray-dark">
+                  <div className="text-gray-dark w-full text-xs">
                     Transaction number
                   </div>
-                  <div className="whitespace-nowrap text-sm font-semibold">
+                  <div className="text-sm font-semibold whitespace-nowrap">
                     {currentItem.id}
                   </div>
                 </div>
 
                 <div className="flex w-full flex-col gap-2">
-                  <div className="w-full text-xs text-gray-dark">
+                  <div className="text-gray-dark w-full text-xs">
                     Instructions
                   </div>
                   <div
@@ -210,10 +210,10 @@ const MyWallet: NextPageWithLayout<{
                 </div>
               </div>
 
-              <div className="mt-2 flex flex-grow gap-4">
+              <div className="mt-2 flex grow gap-4">
                 <button
                   type="button"
-                  className="btn w-[150px] rounded-full bg-purple normal-case text-white hover:bg-purple-light hover:text-white"
+                  className="btn bg-purple hover:bg-purple-light w-[150px] rounded-full text-white normal-case hover:text-white"
                   onClick={() => {
                     setItemDialogVisible(false);
                   }}
@@ -284,7 +284,7 @@ const MyWallet: NextPageWithLayout<{
 
                   <button
                     type="button"
-                    className="btn w-[150px] rounded-full bg-purple normal-case text-white hover:bg-purple-light hover:text-white"
+                    className="btn bg-purple hover:bg-purple-light w-[150px] rounded-full text-white normal-case hover:text-white"
                     onClick={() => {
                       handlePagerChange(pageNumber - 1);
                     }}

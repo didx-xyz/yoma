@@ -30,6 +30,7 @@ import {
   searchLinks,
   updateLinkStatus,
 } from "~/api/services/actionLinks";
+import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import {
@@ -424,7 +425,7 @@ const Links: NextPageWithLayout<{
       <Head>
         <title>Yoma | Admin Links</title>
       </Head>
-      <PageBackground className="h-[14.5rem] md:h-[18rem]" />
+      <PageBackground className="h-[14.8rem] md:h-[18.4rem]" />
 
       {isLoading && <Loading />}
 
@@ -437,7 +438,7 @@ const Links: NextPageWithLayout<{
       >
         <div className="flex h-full flex-col space-y-2">
           <div className="flex flex-row items-center bg-white px-4 pt-2">
-            <div className="flex w-64 flex-grow flex-col pl-2">
+            <div className="flex w-64 grow flex-col pl-2">
               <div className="truncate text-sm font-semibold">
                 {selectedRow?.name}
               </div>
@@ -446,32 +447,32 @@ const Links: NextPageWithLayout<{
 
             <button
               type="button"
-              className="btn scale-[0.55] rounded-full border-green-dark bg-green-dark p-[7px] text-white hover:text-green"
+              className="btn border-green-dark bg-green-dark hover:text-green scale-[0.55] rounded-full p-[7px] text-white"
               onClick={onCloseCommentsDialog}
             >
               <IoMdClose className="h-8 w-8"></IoMdClose>
             </button>
           </div>
 
-          <div className="flex flex-grow flex-col gap-4 bg-gray-light px-6 pb-10">
-            <div className="form-control mt-8 rounded-lg bg-white px-4 py-2">
+          <div className="bg-gray-light flex grow flex-col gap-4 px-6 pb-10">
+            <fieldset className="fieldset mt-8 rounded-lg bg-white px-4 py-2">
               <label className="label">
-                <span className="font-semibold text-gray-dark">
+                <span className="text-gray-dark font-semibold">
                   Enter comments below:
                 </span>
               </label>
               <textarea
-                className="input input-bordered my-2 h-[100px] border-gray-light p-2"
+                className="input border-gray-light my-2 h-[100px] p-2"
                 onChange={(e) => setVerifyComments(e.target.value)}
               />
-            </div>
+            </fieldset>
           </div>
 
           {/* BUTTONS */}
           <div className="flex flex-row place-items-center justify-center px-6 py-4 pt-2">
-            <div className="flex flex-grow">
+            <div className="flex grow">
               <button
-                className="btn btn-sm flex-nowrap border-black bg-white py-5 text-black md:btn-sm hover:bg-black hover:text-white"
+                className="btn btn-sm md:btn-sm flex-nowrap border-black bg-white py-5 text-black hover:bg-black hover:text-white"
                 onClick={onCloseCommentsDialog}
               >
                 <IoMdClose className="h-6 w-6" />
@@ -481,7 +482,7 @@ const Links: NextPageWithLayout<{
             <div className="flex gap-4">
               {linkStatus == LinkStatus.Active && (
                 <button
-                  className="btn btn-sm flex-nowrap border-green bg-white py-5 text-green hover:bg-green hover:text-white"
+                  className="btn btn-sm border-green text-green hover:bg-green flex-nowrap bg-white py-5 hover:text-white"
                   onClick={onPerformLinkStatusChange}
                 >
                   Approve
@@ -529,7 +530,7 @@ const Links: NextPageWithLayout<{
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           {/* HEADER WITH CLOSE BUTTON */}
           <div className="bg-theme flex flex-row p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
+            <h1 className="grow"></h1>
             <button
               type="button"
               className="bg-theme btn rounded-full border-0 p-3 text-white brightness-75"
@@ -543,7 +544,7 @@ const Links: NextPageWithLayout<{
           </div>
           {/* MAIN CONTENT */}
           <div className="flex flex-col items-center justify-center gap-4 p-8">
-            <div className="-mt-16 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+            <div className="border-green-dark -mt-16 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
               <IoShareSocialOutline className="h-7 w-7" />
             </div>
 
@@ -563,7 +564,7 @@ const Links: NextPageWithLayout<{
 
             <button
               type="button"
-              className="btn mt-10 rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
+              className="btn border-purple text-purple mt-10 rounded-full bg-white normal-case md:w-[150px]"
               onClick={() => {
                 setShowQRCode(false);
                 setQRCodeImageData(null);
@@ -575,156 +576,98 @@ const Links: NextPageWithLayout<{
         </div>
       </CustomModal>
 
-      <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
+      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
-          <h3 className="mb-6 mt-3 flex items-center text-3xl font-semibold tracking-normal text-white md:mb-9 md:mt-0">
+          <h3 className="mt-3 mb-6 flex items-center text-3xl font-semibold tracking-normal text-white md:mt-0 md:mb-9">
             Links
           </h3>
 
           {/* TABBED NAVIGATION */}
-          <div className="z-10 flex justify-center md:justify-start">
-            <div className="flex w-full gap-2">
-              {/* TABS */}
-              <div
-                className="tabs tabs-bordered w-full gap-2 overflow-x-scroll md:overflow-hidden"
-                role="tablist"
-              >
-                <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
-                  <ul className="-mb-px flex w-full justify-center gap-0 overflow-x-scroll md:justify-start">
-                    <li className="whitespace-nowrap px-4">
-                      <Link
-                        href={`/admin/links`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          !statuses
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        All
-                        {(totalCountAll ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountAll}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="whitespace-nowrap px-4">
-                      <Link
-                        href={`/admin/links?statuses=active`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "active"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Active
-                        {(totalCountActive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountActive}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="whitespace-nowrap px-4">
-                      <Link
-                        href={`/admin/links?statuses=inactive`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "inactive"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Inactive
-                        {(totalCountInactive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountInactive}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="whitespace-nowrap px-4">
-                      <Link
-                        href={`/admin/links?statuses=declined`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "declined"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Declined
-                        {(totalCountDeclined ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountDeclined}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="whitespace-nowrap px-4">
-                      <Link
-                        href={`/admin/links?statuses=expired`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "expired"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Expired
-                        {(totalCountExpired ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountExpired}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="whitespace-nowrap px-4">
-                      <Link
-                        href={`/admin/links?statuses=limitReached`}
-                        className={`inline-block w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "limitReached"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Limit Reached
-                        {(totalCountLimitReached ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountLimitReached}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="whitespace-nowrap px-4">
-                      <Link
-                        href={`/admin/links?statuses=deleted`}
-                        className={`inline-block w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "deleted"
-                            ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
-                        }`}
-                        role="tab"
-                      >
-                        Deleted
-                        {(totalCountDeleted ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
-                            {totalCountDeleted}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                  </ul>
+          <CustomSlider sliderClassName="!gap-6">
+            <Link
+              href={`/admin/links`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                !statuses
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              All
+              {(totalCountAll ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountAll}
                 </div>
-              </div>
-            </div>
-          </div>
+              )}
+            </Link>
+            <Link
+              href={`/admin/links?statuses=active`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "active"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Active
+              {(totalCountActive ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountActive}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/admin/links?statuses=inactive`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "inactive"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Inactive
+              {(totalCountInactive ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountInactive}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/admin/links?statuses=declined`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "declined"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Declined
+              {(totalCountDeclined ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountDeclined}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/admin/links?statuses=deleted`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "deleted"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Deleted
+              {(totalCountDeleted ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountDeleted}
+                </div>
+              )}
+            </Link>
+          </CustomSlider>
 
           {/* SEARCH INPUT */}
-          <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
+          <div className="flex w-full grow items-center justify-between gap-4 sm:justify-end">
             {/* LINKS FILTER */}
             <LinkSearchFilters
               searchFilter={searchFilter}
@@ -737,7 +680,7 @@ const Links: NextPageWithLayout<{
           </div>
         </div>
 
-        <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
+        <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
           {/* NO ROWS */}
           {links && links.items?.length === 0 && (
             <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
@@ -756,7 +699,7 @@ const Links: NextPageWithLayout<{
                 {links.items.map((item) => (
                   <div
                     key={`grid_xs_${item.id}`}
-                    className="rounded-lg bg-white p-4 shadow-custom"
+                    className="shadow-custom rounded-lg bg-white p-4"
                   >
                     <div className="mb-2 flex flex-col">
                       {item.entityOrganizationId &&
@@ -767,7 +710,7 @@ const Links: NextPageWithLayout<{
                             }${`?returnUrl=${encodeURIComponent(
                               getSafeUrl(returnUrl, router.asPath),
                             )}`}`}
-                            className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-bold text-gray-dark underline"
+                            className="text-gray-dark max-w-[300px] overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap underline"
                           >
                             {item.entityOrganizationName}
                           </Link>
@@ -783,7 +726,7 @@ const Links: NextPageWithLayout<{
                             }/info${`?returnUrl=${encodeURIComponent(
                               getSafeUrl(returnUrl, router.asPath),
                             )}`}`}
-                            className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark underline"
+                            className="text-gray-dark max-w-[300px] overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap underline"
                           >
                             {item.entityTitle}
                           </Link>
@@ -792,11 +735,11 @@ const Links: NextPageWithLayout<{
                         <>{item.entityTitle}</>
                       )}
 
-                      <span className="mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark">
+                      <span className="text-gray-dark mt-2 overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap">
                         {item.name}
                       </span>
 
-                      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold text-gray-dark">
+                      <span className="text-gray-dark overflow-hidden text-xs font-semibold text-ellipsis whitespace-nowrap">
                         {item.description}
                       </span>
                     </div>
@@ -903,11 +846,11 @@ const Links: NextPageWithLayout<{
                               <IoIosSettings className="h-4 w-4" />
                             </button>
 
-                            <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
+                            <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
                               {item?.status == "Inactive" && (
                                 <li>
                                   <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
                                     onClick={() =>
                                       onOpenCommentsDialog(
                                         item,
@@ -923,7 +866,7 @@ const Links: NextPageWithLayout<{
                               {item?.status == "Inactive" && (
                                 <li>
                                   <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
                                     onClick={() =>
                                       onOpenCommentsDialog(
                                         item,
@@ -941,7 +884,7 @@ const Links: NextPageWithLayout<{
                                 item?.status == "Declined") && (
                                 <li>
                                   <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
                                     onClick={() =>
                                       onOpenCommentsDialog(
                                         item,
@@ -957,7 +900,7 @@ const Links: NextPageWithLayout<{
                               {item?.status === "Declined" && (
                                 <li>
                                   <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
                                     onClick={() =>
                                       onOpenCommentsDialog(
                                         item,
@@ -979,31 +922,31 @@ const Links: NextPageWithLayout<{
               </div>
 
               {/* DEKSTOP */}
-              <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table">
+              <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table">
                 <thead>
                   <tr className="border-gray text-gray-dark">
-                    <th className="border-b-2 border-gray-light !py-4">
+                    <th className="border-gray-light border-b-2 !py-4">
                       Organisation
                     </th>
-                    <th className="border-b-2 border-gray-light !py-4">
+                    <th className="border-gray-light border-b-2 !py-4">
                       Opportunity
                     </th>
-                    <th className="border-b-2 border-gray-light !py-4">Name</th>
-                    <th className="border-b-2 border-gray-light">
+                    <th className="border-gray-light border-b-2 !py-4">Name</th>
+                    <th className="border-gray-light border-b-2">
                       Description
                     </th>
-                    <th className="border-b-2 border-gray-light">Usage</th>
-                    <th className="border-b-2 border-gray-light">Expires</th>
-                    <th className="border-b-2 border-gray-light">Status</th>
-                    <th className="border-b-2 border-gray-light">Link</th>
-                    <th className="border-b-2 border-gray-light">QR</th>
-                    <th className="border-b-2 border-gray-light">Actions</th>
+                    <th className="border-gray-light border-b-2">Usage</th>
+                    <th className="border-gray-light border-b-2">Expires</th>
+                    <th className="border-gray-light border-b-2">Status</th>
+                    <th className="border-gray-light border-b-2">Link</th>
+                    <th className="border-gray-light border-b-2">QR</th>
+                    <th className="border-gray-light border-b-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {links.items.map((item) => (
                     <tr key={`grid_md_${item.id}`} className="">
-                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4">
+                      <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4">
                         {item.entityOrganizationId &&
                           item.entityOrganizationName && (
                             <Link
@@ -1012,13 +955,13 @@ const Links: NextPageWithLayout<{
                               }${`?returnUrl=${encodeURIComponent(
                                 getSafeUrl(returnUrl, router.asPath),
                               )}`}`}
-                              className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap text-sm text-gray-dark underline"
+                              className="text-gray-dark max-w-[80px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
                             >
                               {item.entityOrganizationName}
                             </Link>
                           )}
                       </td>
-                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4">
+                      <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4">
                         {item.entityType == "Opportunity" &&
                           item.entityOrganizationId && (
                             <Link
@@ -1029,7 +972,7 @@ const Links: NextPageWithLayout<{
                               }/info${`?returnUrl=${encodeURIComponent(
                                 getSafeUrl(returnUrl, router.asPath),
                               )}`}`}
-                              className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap text-sm text-gray-dark underline"
+                              className="text-gray-dark max-w-[80px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
                             >
                               {item.entityTitle}
                             </Link>
@@ -1039,19 +982,19 @@ const Links: NextPageWithLayout<{
                         )}
                       </td>
 
-                      <td className="max-w-[100px] truncate border-b-2 border-gray-light !py-4">
+                      <td className="border-gray-light max-w-[100px] truncate border-b-2 !py-4">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.name}
                         </div>
                       </td>
 
-                      <td className="max-w-[100px] border-b-2 border-gray-light">
+                      <td className="border-gray-light max-w-[100px] border-b-2">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.description}
                         </div>
                       </td>
 
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-gray-light border-b-2">
                         {item.lockToDistributionList && (
                           <span className="badge bg-green-light text-yellow">
                             <IoMdLock className="h-4 w-4" />
@@ -1073,7 +1016,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </td>
 
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-gray-light border-b-2">
                         {item.dateEnd ? (
                           <span className="badge bg-yellow-light text-yellow">
                             <IoMdCalendar className="h-4 w-4" />
@@ -1089,7 +1032,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* STATUS */}
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-gray-light border-b-2">
                         {item.status == "Active" && (
                           <span className="badge bg-blue-light text-blue">
                             Active
@@ -1123,7 +1066,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* LINK */}
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-gray-light border-b-2">
                         <button
                           onClick={() =>
                             onClick_CopyToClipboard(
@@ -1137,7 +1080,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* QR */}
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-gray-light border-b-2">
                         <button
                           onClick={() => onClick_GenerateQRCode(item)}
                           className="badge bg-green-light text-green"
@@ -1147,7 +1090,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* ACTIONS */}
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-gray-light border-b-2">
                         {(item?.status == "Inactive" ||
                           item?.status == "Active" ||
                           item?.status == "Declined") && (
@@ -1156,11 +1099,11 @@ const Links: NextPageWithLayout<{
                               <IoIosSettings className="h-4 w-4" />
                             </button>
 
-                            <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
+                            <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
                               {item?.status == "Inactive" && (
                                 <li>
                                   <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
                                     onClick={() =>
                                       onOpenCommentsDialog(
                                         item,
@@ -1176,7 +1119,7 @@ const Links: NextPageWithLayout<{
                               {item?.status == "Inactive" && (
                                 <li>
                                   <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
                                     onClick={() =>
                                       onOpenCommentsDialog(
                                         item,
@@ -1194,7 +1137,7 @@ const Links: NextPageWithLayout<{
                                 item?.status == "Declined") && (
                                 <li>
                                   <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
                                     onClick={() =>
                                       onOpenCommentsDialog(
                                         item,
@@ -1210,7 +1153,7 @@ const Links: NextPageWithLayout<{
                               {item?.status === "Declined" && (
                                 <li>
                                   <button
-                                    className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
                                     onClick={() =>
                                       onOpenCommentsDialog(
                                         item,

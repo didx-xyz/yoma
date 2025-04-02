@@ -352,7 +352,7 @@ const Links: NextPageWithLayout<{
   const renderAddLinkButton = useCallback(() => {
     if (currentOrganisationInactive) {
       return (
-        <span className="bg-theme flex w-56 cursor-not-allowed flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-75">
+        <span className="bg-theme flex w-56 cursor-not-allowed flex-row items-center justify-center rounded-full p-1 text-xs whitespace-nowrap text-white brightness-75">
           Add link (disabled)
         </span>
       );
@@ -363,7 +363,7 @@ const Links: NextPageWithLayout<{
         href={`/organisations/${id}/links/create${`?returnUrl=${encodeURIComponent(
           getSafeUrl(returnUrl, router.asPath),
         )}`}`}
-        className="bg-theme btn btn-circle btn-secondary btn-sm h-fit w-fit whitespace-nowrap !border-none p-1 text-xs text-white shadow-custom brightness-105 md:p-2 md:px-4"
+        className="bg-theme btn btn-circle btn-secondary btn-sm shadow-custom h-fit w-fit !border-none p-1 text-xs whitespace-nowrap text-white brightness-105 md:p-2 md:px-4"
         id="btnCreateLink"
       >
         <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />
@@ -379,10 +379,10 @@ const Links: NextPageWithLayout<{
         "",
         <div
           key="confirm-dialog-content"
-          className="text-gray-500 flex h-full flex-col space-y-2"
+          className="flex h-full flex-col space-y-2 text-gray-500"
         >
           <div className="flex flex-row items-center gap-2">
-            <IoMdWarning className="h-6 w-6 text-warning" />
+            <IoMdWarning className="text-warning h-6 w-6" />
             <p className="text-lg">Confirm</p>
           </div>
 
@@ -489,11 +489,11 @@ const Links: NextPageWithLayout<{
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           {/* HEADER WITH CLOSE BUTTON */}
-          <div className="flex flex-row bg-green p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
+          <div className="bg-green flex flex-row p-4 shadow-lg">
+            <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={() => {
                 setShowQRCode(false);
                 setQRCodeImageData(null);
@@ -505,7 +505,7 @@ const Links: NextPageWithLayout<{
 
           {/* MAIN CONTENT */}
           <div className="flex flex-col items-center justify-center gap-4 p-8">
-            <div className="-mt-16 flex h-12 w-12 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+            <div className="border-green-dark -mt-16 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
               <IoShareSocialOutline className="h-7 w-7" />
             </div>
 
@@ -525,7 +525,7 @@ const Links: NextPageWithLayout<{
 
             <button
               type="button"
-              className="btn mt-10 rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
+              className="btn border-purple text-purple mt-10 rounded-full bg-white normal-case md:w-[150px]"
               onClick={() => {
                 setShowQRCode(false);
                 setQRCodeImageData(null);
@@ -537,9 +537,9 @@ const Links: NextPageWithLayout<{
         </div>
       </CustomModal>
 
-      <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
+      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
-          <h3 className="mb-6 mt-3 flex items-center text-3xl font-semibold tracking-normal text-white md:mb-9 md:mt-0">
+          <h3 className="mt-3 mb-6 flex items-center text-3xl font-semibold tracking-normal text-white md:mt-0 md:mb-9">
             Links <LimitedFunctionalityBadge />
           </h3>
 
@@ -548,132 +548,132 @@ const Links: NextPageWithLayout<{
             <div className="flex w-full gap-2">
               {/* TABS */}
               <div
-                className="tabs tabs-bordered w-full gap-2 overflow-x-scroll md:overflow-hidden"
+                className="tabs w-full gap-2 overflow-x-scroll md:overflow-hidden"
                 role="tablist"
               >
-                <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
+                <div className="text-gray-dark border-b border-transparent text-center text-sm font-medium">
                   <ul className="-mb-px flex w-full justify-center gap-0 overflow-x-scroll md:justify-start">
-                    <li className="whitespace-nowrap px-4">
+                    <li className="px-4 whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/links`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           !statuses
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         All{" "}
                         {(totalCountAll ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountAll}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="whitespace-nowrap px-4">
+                    <li className="px-4 whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/links?statuses=active`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           statuses === "active"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Active
                         {(totalCountActive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountActive}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="whitespace-nowrap px-4">
+                    <li className="px-4 whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/links?statuses=inactive`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           statuses === "inactive"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Inactive
                         {(totalCountInactive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountInactive}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="whitespace-nowrap px-4">
+                    <li className="px-4 whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/links?statuses=declined`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           statuses === "declined"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Declined
                         {(totalCountDeclined ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountDeclined}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="whitespace-nowrap px-4">
+                    <li className="px-4 whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/links?statuses=expired`}
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           statuses === "expired"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Expired
                         {(totalCountExpired ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountExpired}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="whitespace-nowrap px-4">
+                    <li className="px-4 whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/links?statuses=limitReached`}
-                        className={`inline-block w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
                           statuses === "limitReached"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Limit Reached
                         {(totalCountLimitReached ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountLimitReached}
                           </div>
                         )}
                       </Link>
                     </li>
-                    <li className="whitespace-nowrap px-4">
+                    <li className="px-4 whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/links?statuses=deleted`}
-                        className={`inline-block w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
                           statuses === "deleted"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Deleted
                         {(totalCountDeleted ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountDeleted}
                           </div>
                         )}
@@ -686,7 +686,7 @@ const Links: NextPageWithLayout<{
           </div>
 
           {/* SEARCH INPUT */}
-          <div className="flex w-full flex-grow items-center justify-between gap-4 sm:justify-end">
+          <div className="flex w-full grow items-center justify-between gap-4 sm:justify-end">
             {/* LINKS FILTER */}
             <LinkSearchFilters
               searchFilter={searchFilter}
@@ -698,7 +698,7 @@ const Links: NextPageWithLayout<{
           </div>
         </div>
 
-        <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
+        <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
           {/* NO ROWS */}
           {links && links.items?.length === 0 && (
             <>
@@ -735,7 +735,7 @@ const Links: NextPageWithLayout<{
                 {links.items.map((item) => (
                   <div
                     key={`grid_xs_${item.id}`}
-                    className="rounded-lg bg-white p-4 shadow-custom"
+                    className="shadow-custom rounded-lg bg-white p-4"
                   >
                     <div className="mb-2 flex flex-col">
                       {item.entityType == "Opportunity" && (
@@ -747,7 +747,7 @@ const Links: NextPageWithLayout<{
                           }/info${`?returnUrl=${encodeURIComponent(
                             getSafeUrl(returnUrl, router.asPath),
                           )}`}`}
-                          className="max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark underline"
+                          className="text-gray-dark max-w-[300px] overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap underline"
                         >
                           {item.entityTitle}
                         </Link>
@@ -756,11 +756,11 @@ const Links: NextPageWithLayout<{
                         <>{item.entityTitle}</>
                       )}
 
-                      <span className="mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-sm font-semibold text-gray-dark">
+                      <span className="text-gray-dark mt-2 overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap">
                         {item.name}
                       </span>
 
-                      <span className="overflow-hidden text-ellipsis whitespace-nowrap text-xs font-semibold text-gray-dark">
+                      <span className="text-gray-dark overflow-hidden text-xs font-semibold text-ellipsis whitespace-nowrap">
                         {item.description}
                       </span>
                     </div>
@@ -867,10 +867,10 @@ const Links: NextPageWithLayout<{
                               <IoIosSettings className="h-4 w-4" />
                             </button>
 
-                            <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
+                            <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
                               <li>
                                 <button
-                                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
                                   onClick={() =>
                                     updateStatus(item, LinkStatus.Deleted)
                                   }
@@ -888,28 +888,28 @@ const Links: NextPageWithLayout<{
               </div>
 
               {/* DEKSTOP */}
-              <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table">
+              <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table">
                 <thead>
                   <tr className="border-gray text-gray-dark">
-                    <th className="border-b-2 border-gray-light !py-4">
+                    <th className="border-gray-light border-b-2 !py-4">
                       Opportunity
                     </th>
-                    <th className="border-b-2 border-gray-light !py-4">Name</th>
-                    <th className="border-b-2 border-gray-light">
+                    <th className="border-gray-light border-b-2 !py-4">Name</th>
+                    <th className="border-gray-light border-b-2">
                       Description
                     </th>
-                    <th className="border-b-2 border-gray-light">Usage</th>
-                    <th className="border-b-2 border-gray-light">Expires</th>
-                    <th className="border-b-2 border-gray-light">Status</th>
-                    <th className="border-b-2 border-gray-light">Link</th>
-                    <th className="border-b-2 border-gray-light">QR</th>
-                    <th className="border-b-2 border-gray-light">Actions</th>
+                    <th className="border-gray-light border-b-2">Usage</th>
+                    <th className="border-gray-light border-b-2">Expires</th>
+                    <th className="border-gray-light border-b-2">Status</th>
+                    <th className="border-gray-light border-b-2">Link</th>
+                    <th className="border-gray-light border-b-2">QR</th>
+                    <th className="border-gray-light border-b-2">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {links.items.map((item) => (
                     <tr key={`grid_md_${item.id}`} className="">
-                      <td className="max-w-[200px] truncate border-b-2 border-gray-light !py-4">
+                      <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4">
                         {item.entityType == "Opportunity" &&
                           item.entityOrganizationId && (
                             <Link
@@ -920,7 +920,7 @@ const Links: NextPageWithLayout<{
                               }/info${`?returnUrl=${encodeURIComponent(
                                 getSafeUrl(returnUrl, router.asPath),
                               )}`}`}
-                              className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap text-sm text-gray-dark underline"
+                              className="text-gray-dark max-w-[80px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
                             >
                               {item.entityTitle}
                             </Link>
@@ -930,19 +930,19 @@ const Links: NextPageWithLayout<{
                         )}
                       </td>
 
-                      <td className="max-w-[100px] truncate border-b-2 border-gray-light !py-4">
+                      <td className="border-gray-light max-w-[100px] truncate border-b-2 !py-4">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.name}
                         </div>
                       </td>
 
-                      <td className="max-w-[100px] border-b-2 border-gray-light">
+                      <td className="border-gray-light max-w-[100px] border-b-2">
                         <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
                           {item.description}
                         </div>
                       </td>
 
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-gray-light border-b-2">
                         {item.lockToDistributionList && (
                           <span className="badge bg-green-light text-yellow">
                             <IoMdLock className="h-4 w-4" />
@@ -964,7 +964,7 @@ const Links: NextPageWithLayout<{
                         )}
                       </td>
 
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-gray-light border-b-2">
                         {item.dateEnd ? (
                           <span className="badge bg-yellow-light text-yellow">
                             <IoMdCalendar className="h-4 w-4" />
@@ -980,7 +980,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* STATUS */}
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-gray-light border-b-2">
                         {item.status == "Active" && (
                           <span className="badge bg-blue-light text-blue">
                             Active
@@ -1014,7 +1014,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* LINK */}
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-gray-light border-b-2">
                         <button
                           onClick={() =>
                             onClick_CopyToClipboard(
@@ -1028,7 +1028,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* QR */}
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-gray-light border-b-2">
                         <button
                           onClick={() => onClick_GenerateQRCode(item)}
                           className="badge bg-green-light text-green"
@@ -1038,7 +1038,7 @@ const Links: NextPageWithLayout<{
                       </td>
 
                       {/* ACTIONS */}
-                      <td className="border-b-2 border-gray-light">
+                      <td className="border-gray-light border-b-2">
                         {(item?.status == "Inactive" ||
                           item?.status == "Active" ||
                           item?.status == "Declined") && (
@@ -1047,10 +1047,10 @@ const Links: NextPageWithLayout<{
                               <IoIosSettings className="h-4 w-4" />
                             </button>
 
-                            <ul className="menu dropdown-content z-50 w-52 rounded-box bg-base-100 p-2 shadow">
+                            <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
                               <li>
                                 <button
-                                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
                                   onClick={() =>
                                     updateStatus(item, LinkStatus.Deleted)
                                   }

@@ -93,22 +93,6 @@ const navBarLinksAdmin: TabItem[] = [
     selected: false,
     iconImage: "🛒",
   },
-  // {
-  //   title: "Schemas",
-  //   description: "Schemas",
-  //   url: "/admin/schemas",
-  //   badgeCount: null,
-  //   selected: false,
-  //   iconImage: null,
-  // },
-  // {
-  //   title: "Connections",
-  //   description: "Connections",
-  //   url: "/admin/connections",
-  //   badgeCount: null,
-  //   selected: false,
-  //   iconImage: null,
-  // },
 ];
 
 export const Navbar: React.FC = () => {
@@ -183,14 +167,6 @@ export const Navbar: React.FC = () => {
           selected: false,
           iconImage: "🔗",
         },
-        // {
-        //   title: "Marketplace Store Rules",
-        //   description: "Marketplace Store Rules",
-        //   url: `/organisations/${currentOrganisationId}/stores`,
-        //   badgeCount: null,
-        //   selected: false,
-        //   iconImage: "🛒",
-        // },
         {
           title: "Settings",
           description: "Settings",
@@ -211,7 +187,7 @@ export const Navbar: React.FC = () => {
     return (
       <li
         key={`userMenu_orgs_${organisation.id}`}
-        className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
+        className="btn btn-sm text-gray-dark items-start !rounded-md border-none bg-white text-sm shadow-none"
       >
         <Link
           href={
@@ -221,10 +197,10 @@ export const Navbar: React.FC = () => {
           }
           onClick={() => setDrawerOpen(false)}
           id={`userMenu_orgs_${organisation.name}`} // e2e
-          className="w-full py-0"
+          className="w-full"
           tabIndex={isDrawerOpen ? 0 : -1}
         >
-          <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center">
             <AvatarImage
               icon={organisation?.logoURL ?? null}
               alt={`${organisation.name} logo`}
@@ -239,20 +215,20 @@ export const Navbar: React.FC = () => {
               {organisation.status == "Active" && (
                 <>
                   <span
-                    className="tooltip tooltip-left tooltip-secondary mr-2 h-2 w-2 rounded-full bg-success"
+                    className="tooltip tooltip-left tooltip-secondary bg-success mr-2 h-2 w-2 rounded-full"
                     data-tip="Active"
                   ></span>
                 </>
               )}
               {organisation.status == "Inactive" && (
                 <span
-                  className="tooltip tooltip-left tooltip-secondary mr-2 h-2 w-2 rounded-full bg-warning"
+                  className="tooltip tooltip-left tooltip-secondary bg-warning mr-2 h-2 w-2 rounded-full"
                   data-tip="Pending"
                 ></span>
               )}
               {organisation.status == "Declined" && (
                 <span
-                  className="tooltip tooltip-left tooltip-secondary mr-2 h-2 w-2 rounded-full bg-error"
+                  className="tooltip tooltip-left tooltip-secondary bg-error mr-2 h-2 w-2 rounded-full"
                   data-tip="Declined"
                 ></span>
               )}
@@ -262,7 +238,7 @@ export const Navbar: React.FC = () => {
             <div className="flex items-center">
               <button
                 key={organisation.id}
-                className="tooltip tooltip-left tooltip-secondary rounded-full bg-white p-1 text-gray-dark shadow duration-300 hover:bg-gray-dark hover:text-gray-light"
+                className="tooltip tooltip-left tooltip-secondary text-gray-dark hover:bg-gray-dark hover:text-gray-light rounded-full bg-white p-1 shadow duration-300"
                 onClick={(e) => {
                   e.preventDefault();
                   setDrawerOpen(false);
@@ -287,12 +263,12 @@ export const Navbar: React.FC = () => {
   };
 
   return (
-    <div className="fixed left-0 right-0 top-0 z-40">
+    <div className="fixed top-0 right-0 left-0 z-40">
       <div className={`bg-theme navbar z-40`}>
         <div className="flex w-full justify-between md:flex md:justify-between">
           {/* hover menu */}
           <div
-            className="absolute left-0 top-1/5 h-[100vh] w-[2px] bg-transparent"
+            className="absolute top-1/5 left-0 h-[100vh] w-[2px] bg-transparent"
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
           ></div>
@@ -334,8 +310,8 @@ export const Navbar: React.FC = () => {
                     className="drawer-overlay"
                   ></label>
                 )}
-                <div className="min-h-screen max-w-[20rem] overflow-y-auto rounded-bl-none rounded-br-lg rounded-tl-none rounded-tr-lg bg-white p-4">
-                  <div className="flex h-full touch-none select-none flex-col gap-2 [-webkit-user-drag:none] [user-drag:none]">
+                <div className="min-h-screen max-w-[20rem] overflow-y-auto rounded-tl-none rounded-tr-lg rounded-br-lg rounded-bl-none bg-white p-4">
+                  <div className="flex h-full touch-none flex-col gap-2 select-none [-webkit-user-drag:none] [user-drag:none]">
                     <div className="flex grow-0 flex-row items-center justify-center">
                       <div className="grow">
                         <Image
@@ -350,7 +326,7 @@ export const Navbar: React.FC = () => {
                       </div>
                       <label
                         htmlFor="nav-drawer"
-                        className="drawer-close btn btn-sm !rounded-full border-none text-gray-dark shadow-md hover:bg-gray"
+                        className="drawer-close btn btn-sm text-gray-dark hover:bg-gray !rounded-full border-none shadow-md"
                         aria-label="close sidebar"
                         tabIndex={isDrawerOpen ? 0 : -1}
                         onKeyDown={(e) => {
@@ -364,22 +340,22 @@ export const Navbar: React.FC = () => {
                       </label>
                     </div>
 
-                    <div className="divider my-2 grow-0 !bg-gray" />
+                    <div className="divider !bg-gray my-2 grow-0" />
 
-                    <ul className="menu grow p-0">
+                    <ul className="menu -m-2 w-full p-0">
                       {currentNavbarLinks.map((link, index) => (
                         <li
                           key={`lnkNavbarMenuModal_${index}`}
-                          className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
+                          className="btn btn-sm text-gray-dark items-start !rounded-md border-none bg-white text-sm shadow-none"
                         >
                           <Link
                             href={link.url!}
                             onClick={() => setDrawerOpen(false)}
                             id={`lnkNavbarMenuModal_${link.title}`}
-                            className="w-full py-0"
                             tabIndex={isDrawerOpen ? 0 : -1}
+                            className="w-full"
                           >
-                            <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                            <span className="flex h-6 w-6 shrink-0 items-center justify-center">
                               {link.iconImage}
                             </span>
                             <span>{link.title}</span>
@@ -388,36 +364,36 @@ export const Navbar: React.FC = () => {
                       ))}
                     </ul>
 
-                    <div className="divider my-2 grow-0 !bg-gray" />
+                    <div className="divider !bg-gray my-2 grow-0" />
 
                     <LanguageSwitcher
-                      className="ml-1 bg-transparent !py-1 px-3 hover:bg-gray-light"
+                      className="hover:bg-gray ml-1 bg-transparent px-3 !py-1"
                       classNameIcon="text-gray-dark !h-5 !w-5"
                       classNameSelect="text-gray-dark text-sm"
                       tabIndex={isDrawerOpen ? 0 : -1}
                     />
 
-                    <div className="divider my-2 grow-0 !bg-gray" />
+                    <div className="divider !bg-gray my-2 grow-0" />
 
                     {(userProfile?.adminsOf?.length ?? 0) > 0 && (
                       <>
                         <div
-                          className="h-full max-h-[120px] overflow-x-hidden overflow-y-scroll"
+                          className="h-full max-h-[140px] overflow-x-hidden overflow-y-scroll py-2"
                           id="organisations"
                         >
-                          <ul className="menu grow p-0">
+                          <ul className="menu -m-2 w-full p-0">
                             <li
                               key="userMenu_orgs_all"
-                              className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
+                              className="btn btn-sm text-gray-dark items-start !rounded-md border-none bg-white text-sm shadow-none"
                             >
                               <Link
                                 href="/organisations"
                                 onClick={() => setDrawerOpen(false)}
                                 id="userMenu_orgs_all"
                                 tabIndex={isDrawerOpen ? 0 : -1}
-                                className="w-full py-0"
+                                className="w-full"
                               >
-                                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center">
                                   🏢
                                 </span>
                                 <span>My organisations</span>
@@ -429,24 +405,24 @@ export const Navbar: React.FC = () => {
                             )}
                           </ul>
                         </div>
-                        <div className="divider my-2 grow-0 !bg-gray" />
+                        <div className="divider !bg-gray my-2 grow-0" />
                       </>
                     )}
 
                     {(activeRoleView == RoleView.Admin || isAdmin) && (
                       <>
-                        <ul className="menu grow p-0">
+                        <ul className="menu -m-2 w-full p-0">
                           <li
                             key="userMenu_admin"
-                            className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
+                            className="btn btn-sm text-gray-dark items-start !rounded-md border-none bg-white text-sm shadow-none"
                           >
                             <button
                               onClick={toggleAdminMenu}
                               id="userMenu_admin"
                               tabIndex={isDrawerOpen ? 0 : -1}
-                              className="flex w-full items-center py-0"
+                              className="flex w-full items-center"
                             >
-                              <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                              <span className="flex h-6 w-6 shrink-0 items-center justify-center">
                                 🛠️
                               </span>
                               <span>Administration</span>
@@ -459,30 +435,29 @@ export const Navbar: React.FC = () => {
                               </span>
                             </button>
                           </li>
-                        </ul>
-                        {isAdminMenuOpen && (
-                          <ul className="menu grow p-0">
+
+                          {isAdminMenuOpen && (
                             <li
                               key="userMenu_admin_overview"
-                              className="btn btn-sm items-start !rounded-md border-none bg-white p-0 py-4 text-sm text-gray-dark shadow-none hover:bg-gray-light"
+                              className="btn btn-sm text-gray-dark items-start !rounded-md border-none bg-white text-sm shadow-none"
                             >
                               <Link
                                 href="/organisations/dashboard"
                                 onClick={() => setDrawerOpen(false)}
                                 id="userMenu_admin_overview"
                                 tabIndex={isDrawerOpen ? 0 : -1}
-                                className="flex w-full items-center" // Make the Link fill the li
+                                className="w-full"
                               >
-                                <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center">
                                   📈
                                 </span>
                                 <span>Overview</span>
                               </Link>
                             </li>
-                          </ul>
-                        )}
+                          )}
+                        </ul>
 
-                        <div className="divider my-2 grow-0 !bg-gray" />
+                        <div className="divider !bg-gray my-2 grow-0" />
                       </>
                     )}
 
@@ -500,7 +475,7 @@ export const Navbar: React.FC = () => {
                       />
                     )}
 
-                    <div className="divider my-2 grow-0 !bg-gray" />
+                    <div className="divider !bg-gray my-2 grow-0" />
 
                     <SocialMediaLinks tabIndex={isDrawerOpen ? 0 : -1} />
 

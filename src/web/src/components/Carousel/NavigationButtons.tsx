@@ -6,12 +6,9 @@ export const NavigationButtons: React.FC<{
 }> = ({ nextDisabled, prevDisabled }) => {
   return (
     <div className="flex justify-center gap-2">
-      <ButtonBack
-        className="group btn btn-circle btn-sm h-10 w-10 transform-gpu cursor-pointer border-[1.5px] border-purple bg-transparent text-black transition-all duration-500 ease-bounce disabled:!cursor-not-allowed md:h-8 md:w-8 xl:hover:scale-110 xl:hover:border-purple xl:hover:bg-purple"
-        disabled={prevDisabled}
-      >
+      <ButtonBack className="btn btn-circle group" disabled={prevDisabled}>
         <svg
-          className="mr-[2px] h-[45%] w-[45%] transform text-purple transition-all duration-500 ease-bounce group-disabled:text-gray xl:group-hover:scale-110 xl:group-hover:text-white"
+          className="text-purple group-disabled:text-gray-light h-[45%] w-[45%]"
           viewBox="0 0 532 532"
         >
           <path
@@ -22,12 +19,9 @@ export const NavigationButtons: React.FC<{
           />
         </svg>
       </ButtonBack>
-      <ButtonNext
-        className="group btn btn-circle btn-sm h-10 w-10 transform-gpu cursor-pointer border-[1.5px] border-purple bg-transparent text-black transition-all duration-500 ease-bounce disabled:border-gray md:h-8 md:w-8 xl:hover:scale-110 xl:hover:border-purple xl:hover:bg-purple"
-        disabled={nextDisabled}
-      >
+      <ButtonNext className="btn btn-circle group" disabled={nextDisabled}>
         <svg
-          className="ml-[2px] h-[45%] w-[45%] transform text-purple transition-all duration-500 ease-bounce disabled:bg-gray-light group-disabled:text-gray xl:group-hover:scale-110 xl:group-hover:text-white"
+          className="text-purple group-disabled:text-gray-light h-[45%] w-[45%]"
           viewBox="0 0 532 532"
         >
           <path

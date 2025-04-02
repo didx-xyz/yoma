@@ -88,14 +88,14 @@ const Schemas: NextPageWithLayout<{
 
       <PageBackground />
 
-      <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
+      <div className="z-10 container mt-20 max-w-5xl px-2 py-8">
         <div className="flex flex-row gap-2 py-4">
-          <h2 className="flex flex-grow font-semibold text-white">Schemas</h2>
+          <h2 className="flex grow font-semibold text-white">Schemas</h2>
 
           <div className="flex gap-2 sm:justify-end">
             <Link
               href={`/admin/schemas/create`}
-              className="bg-theme flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110"
+              className="bg-theme flex w-40 flex-row items-center justify-center rounded-full p-1 text-xs whitespace-nowrap text-white brightness-105 hover:brightness-110"
             >
               <IoIosAdd className="mr-1 h-5 w-5" />
               Add schema

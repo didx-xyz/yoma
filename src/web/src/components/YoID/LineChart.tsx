@@ -56,7 +56,7 @@ export const LineChart: React.FC<{
 
   const Legend = () => (
     <div
-      className={`mb-2 flex flex-grow flex-row justify-between ${
+      className={`mb-2 flex grow flex-row justify-between ${
         forceSmall ? "text-xs" : "text-xs md:justify-normal md:gap-4 md:text-sm"
       }`}
     >
@@ -69,7 +69,7 @@ export const LineChart: React.FC<{
           style={{ borderColor: colors[index] }}
           href={`/yoid/opportunities/${name.toLowerCase()}`}
         >
-          <div className="flex flex-grow items-center gap-2 whitespace-nowrap">
+          <div className="flex grow items-center gap-2 whitespace-nowrap">
             <span className="">
               {name == "Completed"
                 ? "✅"
@@ -166,7 +166,7 @@ export const LineChart: React.FC<{
           ]}
         />
       ) : (
-        <div className="flex h-full items-center justify-center rounded-lg bg-gray-light">
+        <div className="bg-gray-light flex h-full items-center justify-center rounded-lg">
           <NoRowsMessage
             title={"Not enough data to display."}
             description={

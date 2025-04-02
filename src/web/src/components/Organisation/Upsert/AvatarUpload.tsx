@@ -91,7 +91,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
   }, [onUploadComplete, onRemoveImageExisting]);
 
   return (
-    <div className="form-control flex flex-col items-center justify-center rounded-lg bg-gray-light p-4">
+    <fieldset className="fieldset bg-gray-light flex flex-col items-center justify-center rounded-lg p-4">
       {/* CROPPING MODAL */}
       <CustomModal
         isOpen={cropModalVisible}
@@ -103,10 +103,10 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex flex-row items-center p-4 shadow-lg">
-            <h3 className="flex-grow text-white">Edit</h3>
+            <h3 className="grow text-white">Edit</h3>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-gray p-3 text-gray-dark hover:bg-gray-light"
+              className="btn bg-gray text-gray-dark hover:bg-gray-light rounded-full border-0 p-3"
               onClick={() => setCropModalVisible(false)}
             >
               <IoMdClose className="h-6 w-6" />
@@ -138,7 +138,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
                   step={0.01}
                   value={zoom}
                   onChange={(e) => setZoom(parseFloat(e.target.value))}
-                  className="h-12 w-60 accent-green"
+                  className="accent-green h-12 w-60"
                 />
               </div>
               <div className="flex gap-4">
@@ -172,7 +172,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         />
 
         {selectedImage && (
-          <div className="flex flex-grow justify-end gap-4">
+          <div className="flex grow justify-end gap-4">
             <button
               className="btn btn-secondary rounded-full text-white"
               onClick={() => setCropModalVisible(true)}
@@ -196,7 +196,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         <div className="mt-4 flex w-full justify-center rounded-lg bg-white py-8">
           <div className="indicator">
             <button
-              className="filepond--file-action-button filepond--action-remove-item indicator-item !z-10 !cursor-pointer rounded-full bg-gray-light hover:bg-error"
+              className="filepond--file-action-button filepond--action-remove-item indicator-item bg-gray-light hover:bg-error !z-10 !cursor-pointer rounded-full"
               type="button"
               data-align="left"
               onClick={clearFile}
@@ -222,7 +222,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </fieldset>
   );
 };
 

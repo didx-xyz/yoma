@@ -51,7 +51,7 @@ export const FileUpload: React.FC<InputProps> = ({
   return (
     <div
       key={`OpportunityFileUpload_${id}`}
-      className="flex w-full flex-col rounded-lg border-dotted bg-gray-light"
+      className="bg-gray-light flex w-full flex-col rounded-lg border-dotted"
     >
       <div className="flex w-full flex-row">
         <div className="ml-2 p-4 md:p-6">
@@ -67,14 +67,14 @@ export const FileUpload: React.FC<InputProps> = ({
           )}
           {iconAlt && <div>{iconAlt}</div>}
         </div>
-        <div className="flex flex-grow flex-col p-4">
+        <div className="flex grow flex-col p-4">
           <div className="font-semibold">{label}</div>
-          <div className="text-sm italic text-gray-dark">{fileTypesLabels}</div>
+          <div className="text-gray-dark text-sm italic">{fileTypesLabels}</div>
 
           <div className="mt-4 flex flex-col gap-4">
             <button
               type="button"
-              className="md:mr-2x md:scale-100x btn btn-circle btn-sm w-[95px] scale-[1.15x] border-green bg-transparent normal-case text-green hover:border-green"
+              className="md:mr-2x md:scale-100x btn btn-circle btn-sm border-green text-green hover:border-green w-[95px] scale-[1.15x] bg-transparent normal-case"
               onClick={fileUpload}
             >
               <Image
@@ -103,14 +103,14 @@ export const FileUpload: React.FC<InputProps> = ({
                     key={`OpportunityFileUpload_${id}_${index}`}
                     className="flex flex-row items-center justify-between"
                   >
-                    <div className="flex flex-grow flex-col">
+                    <div className="flex grow flex-col">
                       <div className="text-xs font-bold">{file.name}</div>
-                      <div className="text-xs italic text-gray-dark">
+                      <div className="text-gray-dark text-xs italic">
                         {file.size}
                       </div>
                     </div>
                     <button
-                      className="btn btn-sm !rounded-full border-none text-gray-dark shadow-md hover:bg-gray"
+                      className="btn btn-sm text-gray-dark hover:bg-gray !rounded-full border-none shadow-md"
                       onClick={() => {
                         const newData = data.filter((_, i) => i !== index);
                         setFiles(newData);

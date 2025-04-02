@@ -166,10 +166,10 @@ const OpportunityDetails: NextPageWithLayout<{
         "",
         <div
           key="confirm-dialog-content"
-          className="text-gray-500 flex h-full flex-col space-y-2"
+          className="flex h-full flex-col space-y-2 text-gray-500"
         >
           <div className="flex flex-row items-center gap-2">
-            <IoMdWarning className="h-6 w-6 text-warning" />
+            <IoMdWarning className="text-warning h-6 w-6" />
             <p className="text-lg">Confirm</p>
           </div>
 
@@ -247,10 +247,10 @@ const OpportunityDetails: NextPageWithLayout<{
         "",
         <div
           key="confirm-dialog-content"
-          className="text-gray-500 flex h-full flex-col space-y-2"
+          className="flex h-full flex-col space-y-2 text-gray-500"
         >
           <div className="flex flex-row items-center gap-2">
-            <IoMdWarning className="h-6 w-6 text-warning" />
+            <IoMdWarning className="text-warning h-6 w-6" />
             <p className="text-lg">Confirm</p>
           </div>
 
@@ -362,14 +362,14 @@ const OpportunityDetails: NextPageWithLayout<{
 
       <PageBackground />
 
-      <div className="container z-10 mt-20 max-w-7xl px-2 py-4">
+      <div className="z-10 container mt-20 max-w-7xl px-2 py-4">
         <div className="flex flex-col gap-2 py-4 sm:flex-row">
           {/* BREADCRUMB */}
-          <div className="inline flex-grow overflow-hidden text-ellipsis whitespace-nowrap text-sm">
+          <div className="inline grow overflow-hidden text-sm text-ellipsis whitespace-nowrap">
             <ul className="inline">
               <li className="inline">
                 <Link
-                  className="inline font-bold text-white hover:text-gray"
+                  className="hover:text-gray inline font-bold text-white"
                   href={getSafeUrl(
                     returnUrl?.toString(),
                     `/organisations/${opportunity?.organizationId}/opportunities`,
@@ -390,7 +390,7 @@ const OpportunityDetails: NextPageWithLayout<{
           </div>
           <div className="flex gap-2 sm:justify-end">
             <button
-              className="bg-theme hover:bg-theme flex w-40 flex-row items-center justify-center whitespace-nowrap rounded-full p-1 text-xs text-white brightness-105 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-gray-dark"
+              className="bg-theme hover:bg-theme disabled:bg-gray-dark flex w-40 flex-row items-center justify-center rounded-full p-1 text-xs whitespace-nowrap text-white brightness-105 hover:brightness-110 disabled:cursor-not-allowed"
               onClick={() => {
                 setManageOpportunityMenuVisible(true);
               }}
@@ -410,7 +410,7 @@ const OpportunityDetails: NextPageWithLayout<{
             onRequestClose={() => {
               setManageOpportunityMenuVisible(false);
             }}
-            className={`!bottom-auto left-2 right-2 top-[175px] md:left-[80%] md:right-[5%] md:top-[145px] md:w-44 xl:left-[76.7%] xl:right-[23%]`}
+            className={`top-[175px] right-2 !bottom-auto left-2 md:top-[145px] md:right-[5%] md:left-[80%] md:w-44 xl:right-[23%] xl:left-[76.7%]`}
           >
             <div className="flex flex-col gap-4 p-4 text-xs">
               {opportunity?.status != "Deleted" && (
@@ -420,7 +420,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       ? `?returnUrl=${encodeURIComponent(returnUrl.toString())}`
                       : ""
                   }`}
-                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
                 >
                   <FaPencilAlt className="mr-2 h-3 w-3" />
                   Edit
@@ -433,7 +433,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 (user?.roles.some((x) => x === "Admin") &&
                   opportunity?.status == "Deleted")) && (
                 <button
-                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
                   onClick={() => updateStatus(Status.Inactive)}
                 >
                   <FaClock className="mr-2 h-3 w-3" />
@@ -442,7 +442,7 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               {opportunity?.status == "Inactive" && (
                 <button
-                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
                   onClick={() => updateStatus(Status.Active)}
                 >
                   <FaClock className="mr-2 h-3 w-3" />
@@ -453,7 +453,7 @@ const OpportunityDetails: NextPageWithLayout<{
               {/* hidden status */}
               {opportunity?.hidden && (
                 <button
-                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
                   onClick={() => updateHidden(false)}
                 >
                   <FaEye className="mr-2 h-3 w-3" />
@@ -462,7 +462,7 @@ const OpportunityDetails: NextPageWithLayout<{
               )}
               {!opportunity?.hidden && (
                 <button
-                  className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
                   onClick={() => updateHidden(true)}
                 >
                   <FaEyeSlash className="mr-2 h-3 w-3" />
@@ -475,7 +475,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 <>
                   {opportunity?.featured && (
                     <button
-                      className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                      className="text-gray-dark flex flex-row items-center hover:brightness-50"
                       onClick={() => updateFeaturedFlag(false)}
                     >
                       <FaExclamation className="mr-2 h-3 w-3" />
@@ -485,7 +485,7 @@ const OpportunityDetails: NextPageWithLayout<{
 
                   {!opportunity?.featured && (
                     <button
-                      className="flex flex-row items-center text-gray-dark hover:brightness-50"
+                      className="text-gray-dark flex flex-row items-center hover:brightness-50"
                       onClick={() => updateFeaturedFlag(true)}
                     >
                       <FaExclamation className="mr-2 h-3 w-3" />
@@ -512,13 +512,13 @@ const OpportunityDetails: NextPageWithLayout<{
 
         {opportunity && (
           <div className="flex flex-col gap-4">
-            <div className="relative flex flex-grow flex-row gap-1 rounded-lg bg-white p-6 shadow-custom">
-              <div className="flex flex-col gap-2 md:flex-grow">
+            <div className="shadow-custom relative flex grow flex-row gap-1 rounded-lg bg-white p-6">
+              <div className="flex flex-col gap-2 md:grow">
                 <div className="relative">
-                  <h4 className="line-clamp-2 max-w-[80%] flex-grow text-xl font-semibold text-black md:text-2xl">
+                  <h4 className="line-clamp-2 max-w-[80%] grow text-xl font-semibold text-black md:text-2xl">
                     {opportunity.title}
                   </h4>
-                  <span className="absolute right-0 top-0">
+                  <span className="absolute top-0 right-0">
                     {/* COMPANY LOGO */}
                     <AvatarImage
                       icon={opportunity?.organizationLogoURL ?? null}
@@ -528,7 +528,7 @@ const OpportunityDetails: NextPageWithLayout<{
                   </span>
                 </div>
 
-                <h6 className="line-clamp-2 text-sm text-gray-dark">
+                <h6 className="text-gray-dark line-clamp-2 text-sm">
                   By {opportunity.organizationName}
                 </h6>
 
@@ -536,7 +536,7 @@ const OpportunityDetails: NextPageWithLayout<{
                 <OrgAdminBadges opportunity={opportunity} isAdmin={isAdmin} />
 
                 {/* DATES */}
-                <div className="flex flex-col text-sm text-gray-dark">
+                <div className="text-gray-dark flex flex-col text-sm">
                   <div>
                     {opportunity?.dateStart && (
                       <>
@@ -566,17 +566,17 @@ const OpportunityDetails: NextPageWithLayout<{
             </div>
 
             <div className="flex flex-col gap-2 md:flex-row">
-              <div className="flex-grow rounded-lg bg-white p-2 shadow-lg md:w-[66%]">
+              <div className="grow rounded-lg bg-white p-2 shadow-lg md:w-[66%]">
                 <Editor value={opportunity.description} readonly={true} />
               </div>
               <div className="flex w-full flex-col gap-2 md:w-[33%]">
                 <div className="flex flex-col rounded-lg bg-white p-6">
                   <div className="mb-2 flex flex-row items-center gap-1 text-sm font-bold">
-                    <IoMdPerson className="h-6 w-6 text-gray" />
+                    <IoMdPerson className="text-gray h-6 w-6" />
                     Participants
                   </div>
-                  <div className="flex flex-row items-center gap-4 rounded-lg bg-gray p-4">
-                    <div className="text-3xl font-bold text-gray-dark">
+                  <div className="bg-gray flex flex-row items-center gap-4 rounded-lg p-4">
+                    <div className="text-gray-dark text-3xl font-bold">
                       {opportunity?.participantCountTotal ?? 0}
                     </div>
 
@@ -590,11 +590,11 @@ const OpportunityDetails: NextPageWithLayout<{
                             : ""
                         }`}
                       >
-                        <div className="flex flex-row items-center gap-2 rounded-lg bg-yellow-light p-1">
-                          <div className="badge badge-warning rounded-lg bg-yellow text-white">
+                        <div className="bg-yellow-light flex flex-row items-center gap-2 rounded-lg p-1">
+                          <div className="badge badge-warning bg-yellow rounded-lg text-white">
                             {opportunity?.participantCountPending}
                           </div>
-                          <div className="text-xs font-bold text-yellow">
+                          <div className="text-yellow text-xs font-bold">
                             to be verified
                           </div>
                         </div>
@@ -620,7 +620,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.skills?.map((item) => (
                         <div
                           key={item.id}
-                          className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
                         >
                           {item.name}
                         </div>
@@ -673,7 +673,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.categories?.map((item) => (
                         <div
                           key={item.id}
-                          className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
                         >
                           {item.name}
                         </div>
@@ -698,7 +698,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.languages?.map((item) => (
                         <div
                           key={item.id}
-                          className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
                         >
                           {item.name}
                         </div>
@@ -739,7 +739,7 @@ const OpportunityDetails: NextPageWithLayout<{
                       {opportunity?.countries?.map((country) => (
                         <div
                           key={country.id}
-                          className="badge h-full min-h-6 rounded-md border-0 bg-green py-1 text-xs font-semibold text-white"
+                          className="badge bg-green h-full min-h-6 rounded-md border-0 py-1 text-xs font-semibold text-white"
                         >
                           {country.name}
                         </div>

@@ -85,13 +85,13 @@ export const EngagementRowFilter: React.FC<{
   );
 
   return (
-    <div className="flex flex-grow flex-col gap-3">
+    <div className="flex grow flex-col gap-3">
       <form
         onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-2"
       >
         <div className="flex flex-row items-center gap-2">
-          <div className="whitespace-nowrap text-sm font-bold text-gray-dark">
+          <div className="text-gray-dark text-sm font-bold whitespace-nowrap">
             Filter by:
           </div>
 
@@ -136,7 +136,7 @@ export const EngagementRowFilter: React.FC<{
 
               {formState.errors.countries && (
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
+                  <span className="label-text-alt text-red-500 italic">
                     {`${formState.errors.countries.message}`}
                   </span>
                 </label>

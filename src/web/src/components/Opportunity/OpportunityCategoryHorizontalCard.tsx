@@ -23,7 +23,7 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
   return (
     <button
       onClick={handleClick}
-      className={`group flex aspect-square select-none flex-col items-center rounded-lg border-gray px-1 py-2 duration-0`}
+      className={`group border-gray flex aspect-square flex-col items-center rounded-lg px-1 py-2 duration-0 select-none`}
     >
       <div className="flex flex-col gap-2 md:gap-1">
         <div className="flex items-center justify-center">
@@ -34,19 +34,19 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
           />
         </div>
 
-        <div className="flex flex-grow flex-col">
-          <div className="flex flex-grow flex-col">
-            <h1 className="h-8 w-[94px] whitespace-normal text-center text-[11px] font-semibold leading-tight text-black md:text-[11.3px]">
+        <div className="flex grow flex-col">
+          <div className="flex grow flex-col">
+            <h1 className="h-8 w-[94px] text-center text-[11px] leading-tight font-semibold whitespace-normal text-black md:text-[11.3px]">
               {data.name}
             </h1>
 
-            <h6 className="text-center text-[9px] font-bold leading-tight text-orange md:text-[10px]">
+            <h6 className="text-orange text-center text-[9px] leading-tight font-bold md:text-[10px]">
               <strong>{data.count}</strong> available
             </h6>
 
             {/* selected line */}
             <span
-              className={`mt-1 block h-0.5 max-w-0 bg-green transition-all duration-500 ${
+              className={`bg-green mt-1 block h-0.5 max-w-0 transition-all duration-500 ${
                 selected ? "max-w-full" : "group-hover:max-w-full"
               }`}
             ></span>

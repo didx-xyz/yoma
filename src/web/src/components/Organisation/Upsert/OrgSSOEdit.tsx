@@ -54,56 +54,56 @@ export const OrgSSOEdit: React.FC<InputProps> = ({
       onSubmit={handleSubmit(onSubmitHandler)}
       className="flex flex-col gap-2"
     >
-      <div className="form-control">
+      <fieldset className="fieldset">
         <label className="label font-bold">
           <span className="label-text">SSO Client Id Inbound</span>
         </label>
-        <p className="-mt-1 mb-2 ml-1 text-sm text-gray-dark">
+        <p className="text-gray-dark -mt-1 mb-2 ml-1 text-sm">
           Your organisation&apos;s SSO client inbound id
         </p>
         <input
           type="text"
-          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+          className="input border-gray focus:border-gray rounded-md focus:outline-none"
           {...register("ssoClientIdInbound")}
           data-autocomplete="sso-client-id-inbound"
         />
         {formState.errors.ssoClientIdInbound && (
           <label className="label font-bold">
-            <span className="label-text-alt italic text-red-500">
+            <span className="label-text-alt text-red-500 italic">
               {`${formState.errors.ssoClientIdInbound.message}`}
             </span>
           </label>
         )}
-      </div>
+      </fieldset>
 
-      <div className="form-control">
+      <fieldset className="fieldset">
         <label className="label font-bold">
           <span className="label-text">SSO Client Id Outbound</span>
         </label>
-        <p className="-mt-1 mb-2 ml-1 text-sm text-gray-dark">
+        <p className="text-gray-dark -mt-1 mb-2 ml-1 text-sm">
           Your organisation&apos;s SSO client outbound id
         </p>
         <input
           type="text"
-          className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+          className="input border-gray focus:border-gray rounded-md focus:outline-none"
           {...register("ssoClientIdOutbound")}
           data-autocomplete="sso-client-id-outbound"
         />
         {formState.errors.ssoClientIdOutbound && (
           <label className="label font-bold">
-            <span className="label-text-alt italic text-red-500">
+            <span className="label-text-alt text-red-500 italic">
               {`${formState.errors.ssoClientIdOutbound.message}`}
             </span>
           </label>
         )}
-      </div>
+      </fieldset>
 
       {/* BUTTONS */}
       <div className="mt-4 flex flex-row items-center justify-end gap-4">
         {onCancel && (
           <button
             type="button"
-            className="btn btn-warning w-1/2 flex-shrink normal-case md:btn-wide"
+            className="btn btn-warning md:btn-wide w-1/2 shrink normal-case"
             onClick={(data) => onCancel(data)}
           >
             {cancelButtonText}
@@ -112,7 +112,7 @@ export const OrgSSOEdit: React.FC<InputProps> = ({
         {onSubmit && (
           <button
             type="submit"
-            className="btn btn-success w-1/2 flex-shrink normal-case md:btn-wide"
+            className="btn btn-success md:btn-wide w-1/2 shrink normal-case"
           >
             {submitButtonText}
           </button>

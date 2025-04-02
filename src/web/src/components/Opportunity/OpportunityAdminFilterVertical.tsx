@@ -93,7 +93,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
     <>
       <form onSubmit={handleSubmit(onSubmitHandler)} className="flex flex-col">
         <div className="flex flex-row p-4">
-          <h1 className="my-auto flex-grow text-2xl font-bold">Filter</h1>
+          <h1 className="my-auto grow text-2xl font-bold">Filter</h1>
           <button
             type="button"
             className="btn btn-primary rounded-full px-3"
@@ -103,7 +103,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
           </button>
         </div>
 
-        <div className="-mb-2 flex flex-col bg-gray-light">
+        <div className="bg-gray-light -mb-2 flex flex-col">
           <div className="join join-vertical w-full">
             {/* CATEGORIES */}
             {lookups_categories &&
@@ -112,7 +112,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                 filterOptions?.includes(
                   OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
                 )) && (
-                <div className="collapse join-item collapse-arrow">
+                <div className="join-item collapse-arrow collapse">
                   <input type="checkbox" name="my-accordion-1" />
                   <div className="collapse-title text-xl font-medium">
                     Topics
@@ -123,7 +123,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                         {lookups_categories.map((item) => (
                           <div
                             key={`fs_searchfilter_categories_${item.id}`}
-                            className="flex h-[70px] flex-grow flex-row items-center justify-center gap-4 p-2"
+                            className="flex h-[70px] grow flex-row items-center justify-center gap-4 p-2"
                           >
                             <label
                               className="flex cursor-pointer items-center justify-center"
@@ -137,14 +137,14 @@ export const OpportunityAdminFilterVertical: React.FC<{
                             </label>
 
                             <label
-                              className="flex w-full flex-grow cursor-pointer flex-col"
+                              className="flex w-full grow cursor-pointer flex-col"
                               htmlFor={`checkbox_${item.id}`}
                             >
-                              <div className="flex flex-grow flex-col">
-                                <h1 className="h-7 overflow-hidden text-ellipsis text-lg font-semibold text-black">
+                              <div className="flex grow flex-col">
+                                <h1 className="h-7 overflow-hidden text-lg font-semibold text-ellipsis text-black">
                                   {item.name}
                                 </h1>
-                                <h6 className="text-sm text-gray-dark">
+                                <h6 className="text-gray-dark text-sm">
                                   {item.count} available
                                 </h6>
                               </div>
@@ -164,7 +164,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
                     {formState.errors.categories && (
                       <label className="label font-bold">
-                        <span className="label-text-alt italic text-red-500">
+                        <span className="label-text-alt text-red-500 italic">
                           {`${formState.errors.categories.message}`}
                         </span>
                       </label>
@@ -182,7 +182,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
             {/* TYPES */}
             {filterOptions?.includes(OpportunityFilterOptions.TYPES) && (
-              <div className="collapse join-item collapse-arrow">
+              <div className="join-item collapse-arrow collapse">
                 <input type="checkbox" name="my-accordion-2" />
                 <div className="collapse-title text-xl font-medium">
                   Opportunity type
@@ -195,7 +195,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input input-bordered h-fit py-1",
+                          control: () => "input h-fit py-1",
                         }}
                         isMulti={true}
                         options={lookups_types.map((c) => ({
@@ -217,7 +217,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
                   {formState.errors.types && (
                     <label className="label font-bold">
-                      <span className="label-text-alt italic text-red-500">
+                      <span className="label-text-alt text-red-500 italic">
                         {`${formState.errors.types.message}`}
                       </span>
                     </label>
@@ -228,7 +228,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
             {/* COUNTRIES */}
             {filterOptions?.includes(OpportunityFilterOptions.COUNTRIES) && (
-              <div className="collapse join-item collapse-arrow">
+              <div className="join-item collapse-arrow collapse">
                 <input type="checkbox" name="my-accordion-3" />
                 <div className="collapse-title text-xl font-medium">
                   Location
@@ -241,7 +241,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input input-bordered h-fit py-1",
+                          control: () => "input h-fit py-1",
                         }}
                         isMulti={true}
                         options={lookups_countries.map((c) => ({
@@ -264,7 +264,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
                   {formState.errors.countries && (
                     <label className="label font-bold">
-                      <span className="label-text-alt italic text-red-500">
+                      <span className="label-text-alt text-red-500 italic">
                         {`${formState.errors.countries.message}`}
                       </span>
                     </label>
@@ -275,7 +275,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
             {/* LANGUAGES */}
             {filterOptions?.includes(OpportunityFilterOptions.LANGUAGES) && (
-              <div className="collapse join-item collapse-arrow">
+              <div className="join-item collapse-arrow collapse">
                 <input type="checkbox" name="my-accordion-4" />
                 <div className="collapse-title text-xl font-medium">
                   Language
@@ -288,7 +288,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input input-bordered h-fit py-1",
+                          control: () => "input h-fit py-1",
                         }}
                         isMulti={true}
                         options={lookups_languages.map((c) => ({
@@ -310,7 +310,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
                   {formState.errors.languages && (
                     <label className="label font-bold">
-                      <span className="label-text-alt italic text-red-500">
+                      <span className="label-text-alt text-red-500 italic">
                         {`${formState.errors.languages.message}`}
                       </span>
                     </label>
@@ -323,7 +323,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
             {filterOptions?.includes(
               OpportunityFilterOptions.ORGANIZATIONS,
             ) && (
-              <div className="collapse join-item collapse-arrow">
+              <div className="join-item collapse-arrow collapse">
                 <input type="checkbox" name="my-accordion-5" />
                 <div className="collapse-title text-xl font-medium">
                   Organisation
@@ -336,7 +336,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                     render={({ field: { onChange, value } }) => (
                       <Select
                         classNames={{
-                          control: () => "input input-bordered h-fit py-1",
+                          control: () => "input h-fit py-1",
                         }}
                         isMulti={true}
                         options={lookups_organisations.map((c) => ({
@@ -358,7 +358,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
                   {formState.errors.organizations && (
                     <label className="label font-bold">
-                      <span className="label-text-alt italic text-red-500">
+                      <span className="label-text-alt text-red-500 italic">
                         {`${formState.errors.organizations.message}`}
                       </span>
                     </label>
@@ -371,7 +371,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
             {filterOptions?.includes(
               OpportunityFilterOptions.PUBLISHEDSTATES,
             ) && (
-              <div className="collapse join-item collapse-arrow">
+              <div className="join-item collapse-arrow collapse">
                 <input type="checkbox" name="my-accordion-7" />
                 <div className="collapse-title text-xl font-medium">Status</div>
                 <div className="collapse-content overflow-hidden">
@@ -402,7 +402,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
                   {formState.errors.publishedStates && (
                     <label className="label font-bold">
-                      <span className="label-text-alt italic text-red-500">
+                      <span className="label-text-alt text-red-500 italic">
                         {`${formState.errors.publishedStates.message}`}
                       </span>
                     </label>
@@ -413,7 +413,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
             {/* STATUSES */}
             {filterOptions?.includes(OpportunityFilterOptions.STATUSES) && (
-              <div className="collapse join-item collapse-arrow">
+              <div className="join-item collapse-arrow collapse">
                 <input type="checkbox" name="my-accordion-8" />
                 <div className="collapse-title text-xl font-medium">Status</div>
                 <div className="collapse-content">
@@ -444,7 +444,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
                   {formState.errors.statuses && (
                     <label className="label font-bold">
-                      <span className="label-text-alt italic text-red-500">
+                      <span className="label-text-alt text-red-500 italic">
                         {`${formState.errors.statuses.message}`}
                       </span>
                     </label>
@@ -470,7 +470,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                         name="startDate"
                         render={({ field: { onChange, value } }) => (
                           <DatePicker
-                            className="input input-sm input-bordered w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                            className="input input-sm border-gray focus:border-gray w-full rounded-md focus:outline-none"
                             onChange={(date) => {
                               onChange(toISOStringForTimezone(date));
                               void handleSubmit(onSubmitHandler)();
@@ -483,7 +483,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
                       {formState.errors.startDate && (
                         <label className="label">
-                          <span className="label-text-alt px-4 text-base italic text-red-500">
+                          <span className="label-text-alt px-4 text-base text-red-500 italic">
                             {`${formState.errors.startDate.message}`}
                           </span>
                         </label>
@@ -501,7 +501,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
                         name="endDate"
                         render={({ field: { onChange, value } }) => (
                           <DatePicker
-                            className="input input-sm input-bordered z-50 w-full rounded-md border-gray focus:border-gray focus:outline-none"
+                            className="input input-sm border-gray focus:border-gray z-50 w-full rounded-md focus:outline-none"
                             onChange={(date) => {
                               onChange(toISOStringForTimezone(date));
                               void handleSubmit(onSubmitHandler)();
@@ -515,7 +515,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
 
                       {formState.errors.endDate && (
                         <label className="label">
-                          <span className="label-text-alt px-4 text-base italic text-red-500">
+                          <span className="label-text-alt px-4 text-base text-red-500 italic">
                             {`${formState.errors.endDate.message}`}
                           </span>
                         </label>
@@ -533,7 +533,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
           {onSubmit && (
             <button
               type="submit"
-              className="btn btn-primary w-full flex-grow rounded-full md:w-40"
+              className="btn btn-primary w-full grow rounded-full md:w-40"
             >
               {submitButtonText}
             </button>
@@ -541,7 +541,7 @@ export const OpportunityAdminFilterVertical: React.FC<{
           {onClear && (
             <button
               type="button"
-              className="btn btn-warning w-full flex-grow rounded-full md:w-40"
+              className="btn btn-warning w-full grow rounded-full md:w-40"
               onClick={onClear}
             >
               {clearButtonText}

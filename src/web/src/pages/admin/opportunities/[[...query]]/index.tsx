@@ -554,10 +554,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      <div className="container z-10 mt-14 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
+      <div className="z-10 container mt-14 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
         {/* TITLE & SEARCH INPUT */}
         <div className="flex flex-col gap-2 py-4 sm:flex-row">
-          <h2 className="mb-4 flex flex-grow items-center font-semibold text-white">
+          <h2 className="mb-4 flex grow items-center font-semibold text-white">
             Opportunities
           </h2>
 
@@ -641,9 +641,9 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                     {searchResults.items.map((opportunity) => (
                       <div
                         key={`sm_${opportunity.id}`}
-                        className="flex flex-col justify-between gap-4 rounded-lg bg-white p-4 shadow-custom"
+                        className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
                       >
-                        <div className="flex flex-row gap-2 border-b-2 border-gray-light">
+                        <div className="border-gray-light flex flex-row gap-2 border-b-2">
                           <span title={opportunity.title} className="w-full">
                             <Link
                               href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}/info?returnUrl=${encodeURIComponent(router.asPath)}`}
@@ -656,7 +656,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             <Link
                               href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
                             >
-                              <FaEdit className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                              <FaEdit className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
                             </Link>
                           </span>
                           <span title="Download completion files">
@@ -666,7 +666,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                 downloadVerificationFiles(e, opportunity.id);
                               }}
                             >
-                              <FaDownload className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                              <FaDownload className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
                             </button>
                           </span>
                           {opportunity?.url && (
@@ -677,27 +677,27 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                   onClick_CopyToClipboard(opportunity.url!);
                                 }}
                               >
-                                <FaLink className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                                <FaLink className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
                               </button>
                             </span>
                           )}
                         </div>
 
-                        <div className="flex flex-col gap-2 text-gray-dark">
+                        <div className="text-gray-dark flex flex-col gap-2">
                           {/* ZLTO Reward */}
                           <div className="flex justify-between">
                             <p className="text-sm tracking-wider">ZLTO</p>
                             <div className="flex flex-col gap-2">
                               {opportunity.zltoReward == null && (
                                 <span
-                                  className={`badge bg-orange-light px-4 text-orange`}
+                                  className={`badge bg-orange-light text-orange px-4`}
                                 >
                                   <span className="ml-1 text-xs">Disabled</span>
                                 </span>
                               )}
                               {opportunity.zltoReward != null && (
                                 <span
-                                  className={`badge min-w-20 bg-gray-light px-4 text-gray-dark`}
+                                  className={`badge bg-gray-light text-gray-dark min-w-20 px-4`}
                                 >
                                   <Image
                                     src={iconZlto}
@@ -720,7 +720,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             </p>
                             <div className="flex flex-col gap-2">
                               <span
-                                className={`badge min-w-20 bg-gray-light px-4 text-gray-dark`}
+                                className={`badge bg-gray-light text-gray-dark min-w-20 px-4`}
                               >
                                 <Image
                                   src={iconZlto}
@@ -783,28 +783,28 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   </div>
 
                   {/* DESKTOP */}
-                  <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table md:table-auto">
+                  <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
                     <thead>
                       <tr className="!border-gray-light text-gray-dark">
-                        <th className="border-b-2 border-gray-light !py-4">
+                        <th className="border-gray-light border-b-2 !py-4">
                           Title
                         </th>
-                        <th className="border-b-2 border-gray-light text-center">
+                        <th className="border-gray-light border-b-2 text-center">
                           Actions
                         </th>
-                        <th className="border-b-2 border-gray-light text-center">
+                        <th className="border-gray-light border-b-2 text-center">
                           ZLTO
                         </th>
-                        <th className="border-b-2 border-gray-light text-center">
+                        <th className="border-gray-light border-b-2 text-center">
                           ZLTO Cumulative
                         </th>
-                        <th className="border-b-2 border-gray-light text-center">
+                        <th className="border-gray-light border-b-2 text-center">
                           Participants
                         </th>
-                        <th className="border-b-2 border-gray-light text-center">
+                        <th className="border-gray-light border-b-2 text-center">
                           Status
                         </th>
-                        <th className="border-b-2 border-gray-light text-center">
+                        <th className="border-gray-light border-b-2 text-center">
                           Visible
                         </th>
                       </tr>
@@ -812,7 +812,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                     <tbody>
                       {searchResults.items.map((opportunity) => (
                         <tr key={`md_${opportunity.id}`}>
-                          <td className="border-b-2 border-gray-light">
+                          <td className="border-gray-light border-b-2">
                             <span
                               className="tooltip tooltip-top tooltip-secondary"
                               data-tip={opportunity.title}
@@ -825,7 +825,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               </Link>
                             </span>
                           </td>
-                          <td className="w-28 border-b-2 border-gray-light text-center">
+                          <td className="border-gray-light w-28 border-b-2 text-center">
                             <span
                               className="tooltip tooltip-top tooltip-secondary"
                               data-tip="Edit"
@@ -833,7 +833,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               <Link
                                 href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
                               >
-                                <FaEdit className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                                <FaEdit className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
                               </Link>
                             </span>
                             <span
@@ -846,7 +846,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                   downloadVerificationFiles(e, opportunity.id)
                                 }
                               >
-                                <FaDownload className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                                <FaDownload className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
                               </button>
                             </span>
                             {opportunity?.url && (
@@ -860,22 +860,22 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                     onClick_CopyToClipboard(opportunity.url!)
                                   }
                                 >
-                                  <FaLink className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                                  <FaLink className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
                                 </button>
                               </span>
                             )}
                           </td>
-                          <td className="w-28 border-b-2 border-gray-light text-center">
+                          <td className="border-gray-light w-28 border-b-2 text-center">
                             {opportunity.zltoReward == null && (
                               <span
-                                className={`badge bg-orange-light px-4 text-orange`}
+                                className={`badge bg-orange-light text-orange px-4`}
                               >
                                 <span className="ml-1 text-xs">Disabled</span>
                               </span>
                             )}
                             {opportunity.zltoReward != null && (
                               <span
-                                className={`badge bg-gray-light px-4 text-gray-dark`}
+                                className={`badge bg-gray-light text-gray-dark px-4`}
                               >
                                 <Image
                                   src={iconZlto}
@@ -889,9 +889,9 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               </span>
                             )}
                           </td>
-                          <td className="w-28 border-b-2 border-gray-light text-center">
+                          <td className="border-gray-light w-28 border-b-2 text-center">
                             <span
-                              className={`badge bg-gray-light px-4 text-gray-dark`}
+                              className={`badge bg-gray-light text-gray-dark px-4`}
                             >
                               <Image
                                 src={iconZlto}
@@ -904,19 +904,19 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               </span>
                             </span>
                           </td>
-                          <td className="border-b-2 border-gray-light text-center">
+                          <td className="border-gray-light border-b-2 text-center">
                             <span
                               className={`badge ${opportunity.participantCountTotal > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                             >
                               {opportunity.participantCountTotal}
                             </span>
                           </td>
-                          <td className="flex gap-2 border-b-2 border-gray-light text-center">
+                          <td className="border-gray-light flex gap-2 border-b-2 text-center">
                             <OpportunityStatus
                               status={opportunity?.status?.toString()}
                             />
                           </td>
-                          <td className="border-b-2 border-gray-light text-center">
+                          <td className="border-gray-light border-b-2 text-center">
                             <div className="flex justify-between">
                               <div className="flex w-20 justify-start gap-2">
                                 {opportunity?.hidden ? (

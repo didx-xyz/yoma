@@ -63,15 +63,15 @@ export const HomeSearchInputLarge: React.FC<{
   const maxWidthStyle = maxWidth === 0 ? "auto" : `${maxWidth}px`;
 
   return (
-    <form onSubmit={handleSubmit} className="flex w-full flex-grow">
-      <div className="join w-full overflow-hidden rounded-l-full rounded-r-full border-none bg-white bg-opacity-20 shadow-lg lg:my-0">
+    <form onSubmit={handleSubmit} className="flex w-full grow">
+      <div className="join w-full overflow-hidden rounded-l-full rounded-r-full border-none bg-white/10 shadow-lg lg:my-0">
         <input
           type="search"
           placeholder={currentPlaceholder}
-          className={`${inputClassName} input-md w-full rounded-bl-3xl rounded-tl-3xl border-none bg-transparent text-white placeholder-white duration-500 placeholder:text-[14px] placeholder:font-bold placeholder:!transition-opacity focus:outline-none md:!pl-8 md:placeholder:text-[16px] lg:w-full ${
+          className={`${inputClassName} input-lg w-full rounded-tl-3xl rounded-bl-3xl border-none bg-transparent px-8 text-white placeholder-white duration-500 placeholder:text-[14px] placeholder:font-bold placeholder:!transition-opacity focus:outline-none md:placeholder:text-[16px] lg:w-full ${
             openFilter
-              ? "rounded-bl-none rounded-tl-none"
-              : "rounded-bl-3xl rounded-tl-3xl"
+              ? "rounded-tl-none rounded-bl-none"
+              : "rounded-tl-3xl rounded-bl-3xl"
           } ${fade ? "opacity-100" : "opacity-0"}`}
           style={{ maxWidth: maxWidthStyle }}
           value={searchInputValue ?? ""}
@@ -92,11 +92,13 @@ export const HomeSearchInputLarge: React.FC<{
           maxLength={50}
         />
         <button
-          className={`${buttonClassName} hover:border-1 btn btn-primary join-item inline-flex items-center justify-center rounded-r-full border-l-0 border-green bg-green text-white hover:border-l-0 hover:border-purple disabled:brightness-75`}
+          className={`${buttonClassName} join-item border-green bg-green hover:bg-purple inline-flex items-center justify-center rounded-r-full border p-4 text-white disabled:brightness-75`}
           type="submit"
           disabled={
-            !!searchInputValue &&
-            !(searchInputValue.length >= 3 && searchInputValue.length <= 50)
+            searchInputValue === null ||
+            searchInputValue === undefined ||
+            searchInputValue.length < 3 ||
+            searchInputValue.length > 50
           }
         >
           <svg

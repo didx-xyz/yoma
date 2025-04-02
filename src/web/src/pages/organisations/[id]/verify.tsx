@@ -206,7 +206,7 @@ const OrganisationDetails: NextPageWithLayout<{
         <div className="my-4 flex justify-center gap-4 md:justify-end">
           <button
             type="button"
-            className="btn btn-warning flex-grow md:w-1/4 md:flex-grow-0"
+            className="btn btn-warning grow md:w-1/4 md:grow-0"
             onClick={() => {
               setVerifyActionApprove(false);
               setModalVerifySingleVisible(true);
@@ -217,7 +217,7 @@ const OrganisationDetails: NextPageWithLayout<{
             Reject
           </button>
           <button
-            className="btn btn-success flex-grow md:w-1/4 md:flex-grow-0"
+            className="btn btn-success grow md:w-1/4 md:grow-0"
             onClick={() => {
               setVerifyActionApprove(true);
               setModalVerifySingleVisible(true);
@@ -236,8 +236,8 @@ const OrganisationDetails: NextPageWithLayout<{
     content = (
       <div className="py-8">
         <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white py-8">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-green-dark bg-green-light">
-            <IoIosCheckmark className="h-16 w-16 text-green" />
+          <div className="border-green-dark bg-green-light mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+            <IoIosCheckmark className="text-green h-16 w-16" />
           </div>
           <h4 className="mb-2 font-bold">Application approved!</h4>
           <p>{organisation?.name} has been added to your organisations.</p>
@@ -245,7 +245,7 @@ const OrganisationDetails: NextPageWithLayout<{
 
         <div className="mb-4 flex flex-row place-items-center justify-center px-6 py-4 pt-2">
           <button
-            className="btn btn-outline btn-sm flex-nowrap rounded-full px-10 py-5 text-green hover:border-green hover:bg-green hover:text-white"
+            className="btn btn-outline btn-sm text-green hover:border-green hover:bg-green flex-nowrap rounded-full px-10 py-5 hover:text-white"
             onClick={() => router.push("/organisations")}
           >
             View all organisations
@@ -259,8 +259,8 @@ const OrganisationDetails: NextPageWithLayout<{
     content = (
       <div className="py-8">
         <div className="flex h-full w-full flex-col place-items-center justify-center rounded-lg bg-white py-8">
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full border-green-dark bg-green-light">
-            <IoIosCheckmark className="h-16 w-16 text-green" />
+          <div className="border-green-dark bg-green-light mb-4 flex h-16 w-16 items-center justify-center rounded-full">
+            <IoIosCheckmark className="text-green h-16 w-16" />
           </div>
           <h4 className="mb-2 font-bold">Application rejected!</h4>
           <p>{organisation?.name} has been rejected.</p>
@@ -268,7 +268,7 @@ const OrganisationDetails: NextPageWithLayout<{
 
         <div className="mb-4 flex flex-row place-items-center justify-center px-6 py-4 pt-2">
           <button
-            className="btn btn-outline btn-sm flex-nowrap rounded-full px-10 py-5 text-green hover:border-green hover:bg-green hover:text-white"
+            className="btn btn-outline btn-sm text-green hover:border-green hover:bg-green flex-nowrap rounded-full px-10 py-5 hover:text-white"
             onClick={() => router.push("/organisations")}
           >
             View all organisations
@@ -307,18 +307,18 @@ const OrganisationDetails: NextPageWithLayout<{
             organisation?
           </p>
 
-          <div className="form-control">
+          <fieldset className="fieldset">
             <label className="label">
-              <span className="text-gray-700 label-text">
+              <span className="label-text text-gray-700">
                 Enter comments below:
               </span>
             </label>
             <textarea
-              className="input input-bordered w-full"
+              className="input w-full"
               onBlur={(e) => setVerifyComments(e.target.value)}
               id="txtVerifyComments"
             />
-          </div>
+          </fieldset>
 
           {/* BUTTONS */}
           <div className="mt-10 flex h-full flex-row place-items-center justify-center space-x-2">
@@ -353,12 +353,12 @@ const OrganisationDetails: NextPageWithLayout<{
         </div>
       </CustomModal>
 
-      <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
+      <div className="z-10 container mt-20 max-w-5xl px-2 py-8">
         {isLoading && <Loading />}
         {/* BREADCRUMB */}
         <div className="flex flex-row text-xs text-white">
           <Link
-            className="flex items-center justify-center font-bold hover:text-gray"
+            className="hover:text-gray flex items-center justify-center font-bold"
             href={getSafeUrl(returnUrl?.toString(), `/organisations`)}
           >
             <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4" />

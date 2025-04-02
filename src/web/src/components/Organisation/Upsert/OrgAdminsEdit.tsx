@@ -89,7 +89,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
         onSubmit={handleSubmit(onSubmitHandler)}
         className="flex flex-col gap-2"
       >
-        <div className="form-control">
+        <fieldset className="fieldset">
           <label className="label cursor-pointer font-bold">
             <span className="label-text">I will be the organisation admin</span>
             <input
@@ -100,14 +100,14 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
           </label>
           {formState.errors.addCurrentUserAsAdmin && (
             <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
+              <span className="label-text-alt text-red-500 italic">
                 {`${formState.errors.addCurrentUserAsAdmin.message}`}
               </span>
             </label>
           )}
-        </div>
+        </fieldset>
 
-        <div className="form-control">
+        <fieldset className="fieldset">
           <label className="label font-bold">
             <span className="label-text">Add additional admins</span>
           </label>
@@ -123,7 +123,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
                   value: val,
                 }))}
                 isMulti
-                className="form-control mb-2 w-full"
+                className="mb-2 w-full"
                 onChange={(val) => {
                   // when pasting multiple values, split them by DELIMETER_PASTE_MULTI
                   const emails = val
@@ -147,19 +147,19 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
           />
           {formState.errors.admins && (
             <label className="label font-bold">
-              <span className="label-text-alt italic text-red-500">
+              <span className="label-text-alt text-red-500 italic">
                 {`${formState.errors.admins.message}`}
               </span>
             </label>
           )}
-        </div>
+        </fieldset>
 
         {/* BUTTONS */}
         <div className="mt-4 flex flex-row items-center justify-end gap-4">
           {onCancel && (
             <button
               type="button"
-              className="btn btn-warning w-1/2 flex-shrink normal-case md:btn-wide"
+              className="btn btn-warning md:btn-wide w-1/2 shrink normal-case"
               onClick={(data) => onCancel(data)}
             >
               {cancelButtonText}
@@ -168,7 +168,7 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
           {onSubmit && (
             <button
               type="submit"
-              className="btn btn-success w-1/2 flex-shrink normal-case md:btn-wide"
+              className="btn btn-success md:btn-wide w-1/2 shrink normal-case"
             >
               {submitButtonText}
             </button>

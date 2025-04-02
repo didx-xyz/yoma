@@ -135,11 +135,11 @@ const MyPassport: NextPageWithLayout<{
       >
         <div className="flex flex-col gap-2">
           <div className="flex flex-col gap-2">
-            <div className="flex flex-row bg-green p-4 shadow-lg">
-              <h1 className="flex-grow"></h1>
+            <div className="bg-green flex flex-row p-4 shadow-lg">
+              <h1 className="grow"></h1>
               <button
                 type="button"
-                className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+                className="btn btn-circle text-gray-dark hover:bg-gray"
                 onClick={() => {
                   setCredentialDialogVisible(false);
                 }}
@@ -157,39 +157,39 @@ const MyPassport: NextPageWithLayout<{
                   />
                 )}
 
-                <div className="flex flex-grow flex-col gap-4 overflow-y-scroll p-4 pb-8 pt-0 md:max-h-[480px] md:min-h-[350px]">
+                <div className="flex grow flex-col gap-4 overflow-y-scroll p-4 pt-0 pb-8 md:max-h-[480px] md:min-h-[350px]">
                   <h4 className="text-center">{activeCredential?.title}</h4>
 
                   {/* CREDENTIAL DETAILS */}
-                  <div className="rounded border-dotted bg-gray-light p-4 shadow">
-                    <ul className="divide-gray-200 divide-y">
+                  <div className="bg-gray-light rounded border-dotted p-4 shadow">
+                    <ul className="divide-y divide-gray-200">
                       <li className="py-4">
                         <div className="flex justify-between text-sm">
-                          <p className="text-gray-500 font-semibold md:w-64">
+                          <p className="font-semibold text-gray-500 md:w-64">
                             Issuer
                           </p>
-                          <p className="text-gray-900 text-end">
+                          <p className="text-end text-gray-900">
                             {activeCredential?.issuer}
                           </p>
                         </div>
                       </li>
                       <li className="py-4">
                         <div className="flex justify-between text-sm">
-                          <p className="text-gray-500 font-semibold md:w-64">
+                          <p className="font-semibold text-gray-500 md:w-64">
                             Artifact Type
                           </p>
-                          <p className="text-gray-900 text-end">
+                          <p className="text-end text-gray-900">
                             {activeCredential?.artifactType}
                           </p>
                         </div>
                       </li>
                       <li className="py-4">
                         <div className="flex justify-between text-sm">
-                          <p className="text-gray-500 font-semibold md:w-64">
+                          <p className="font-semibold text-gray-500 md:w-64">
                             Date Issued
                           </p>
                           {activeCredential?.dateIssued && (
-                            <p className="text-gray-900 text-end">
+                            <p className="text-end text-gray-900">
                               <Moment
                                 format={DATETIME_FORMAT_SYSTEM}
                                 utc={true}
@@ -202,10 +202,10 @@ const MyPassport: NextPageWithLayout<{
                       </li>
                       <li className="py-4">
                         <div className="flex justify-between text-sm">
-                          <p className="text-gray-500 font-semibold md:w-64">
+                          <p className="font-semibold text-gray-500 md:w-64">
                             Schema Type
                           </p>
-                          <p className="text-gray-900 text-end">
+                          <p className="text-end text-gray-900">
                             {activeCredential?.schemaType}
                           </p>
                         </div>
@@ -214,10 +214,10 @@ const MyPassport: NextPageWithLayout<{
                       {activeCredential?.attributes?.map((attr, index) => (
                         <li key={index} className="py-4">
                           <div className="flex justify-between text-sm">
-                            <p className="text-gray-500 font-semibold md:w-64">
+                            <p className="font-semibold text-gray-500 md:w-64">
                               {attr.nameDisplay}
                             </p>
-                            <p className="text-gray-900 text-end">
+                            <p className="text-end text-gray-900">
                               {attr.valueDisplay}
                             </p>
                           </div>
@@ -226,10 +226,10 @@ const MyPassport: NextPageWithLayout<{
                     </ul>
                   </div>
 
-                  <div className="mt-4 flex flex-grow items-center justify-center gap-4 pb-14">
+                  <div className="mt-4 flex grow items-center justify-center gap-4 pb-14">
                     <button
                       type="button"
-                      className="btn btn-outline btn-primary w-1/2 rounded-full border-purple bg-white normal-case text-purple md:w-[300px]"
+                      className="btn btn-outline btn-primary border-purple text-purple w-1/2 rounded-full bg-white normal-case md:w-[300px]"
                       onClick={() => {
                         setCredentialDialogVisible(false);
                       }}
@@ -287,16 +287,16 @@ const MyPassport: NextPageWithLayout<{
                 {data.items.map((item, index) => (
                   <div
                     key={index}
-                    className="flex h-[180px] cursor-pointer flex-col rounded-lg bg-white p-4 shadow-custom"
+                    className="shadow-custom flex h-[180px] cursor-pointer flex-col rounded-lg bg-white p-4"
                     onClick={() => handleOnClickCredential(item)}
                   >
                     <div className="flex h-full flex-row">
-                      <div className="flex flex-grow flex-row items-start justify-start">
+                      <div className="flex grow flex-row items-start justify-start">
                         <div className="flex flex-col items-start justify-start gap-1">
-                          <p className="line-clamp-2 max-h-[35px] max-w-[210px] overflow-hidden text-ellipsis pr-2 text-xs font-medium text-gray-dark">
+                          <p className="text-gray-dark line-clamp-2 max-h-[35px] max-w-[210px] overflow-hidden pr-2 text-xs font-medium text-ellipsis">
                             {item.issuer}
                           </p>
-                          <p className="line-clamp-3 max-h-[80px] max-w-[210px] overflow-hidden text-ellipsis pr-2 text-sm font-bold">
+                          <p className="line-clamp-3 max-h-[80px] max-w-[210px] overflow-hidden pr-2 text-sm font-bold text-ellipsis">
                             {item.title}
                           </p>
                         </div>
@@ -310,7 +310,7 @@ const MyPassport: NextPageWithLayout<{
                       </div>
                     </div>
                     <div className="flex flex-row items-center justify-center">
-                      <div className="flex flex-grow text-xs tracking-widest text-gray-dark">
+                      <div className="text-gray-dark flex grow text-xs tracking-widest">
                         <Moment format={DATETIME_FORMAT_SYSTEM} utc={true}>
                           {item.dateIssued!}
                         </Moment>

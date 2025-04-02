@@ -78,7 +78,7 @@ const Home: NextPageWithLayout = () => {
         <div className="grid grid-cols-1 gap-6 md:max-w-5xl lg:grid-cols-2">
           {/* LEFT: HEADERS AND TEXT */}
           <div className="flex min-h-80 max-w-md flex-col gap-2 overflow-hidden pt-8 text-white md:py-8">
-            <h6 className="text-sm uppercase tracking-widest">
+            <h6 className="text-sm tracking-widest uppercase">
               Welcome to Yoma
             </h6>
             <h1 className="text-xl font-bold tracking-wide sm:text-xl md:text-2xl">
@@ -99,7 +99,7 @@ const Home: NextPageWithLayout = () => {
 
           {/* RIGHT: TWO CARDS AND WOMAN IMAGES */}
           <div className="hidden h-96 lg:flex">
-            <div className="relative ml-auto mr-[7.5rem]">
+            <div className="relative mr-[7.5rem] ml-auto">
               <div className="z-0 mt-5 opacity-70">
                 <OpportunityCard
                   title="Foundations of Food & Beverage Business"
@@ -112,7 +112,7 @@ const Home: NextPageWithLayout = () => {
                   image={imageLogoUCT}
                 />
               </div>
-              <div className="absolute left-[7.5rem] top-32 z-10">
+              <div className="absolute top-32 left-[7.5rem] z-10">
                 <OpportunityCard
                   title="A Career in Tourism"
                   organisation="Atingi"
@@ -134,7 +134,7 @@ const Home: NextPageWithLayout = () => {
               style={{
                 zIndex: 0,
               }}
-              className="absolute right-0 top-12 h-auto"
+              className="absolute top-12 right-0 h-auto"
             />
           </div>
         </div>
@@ -144,7 +144,7 @@ const Home: NextPageWithLayout = () => {
           <h2 className="text-2xl font-semibold tracking-wide text-black">
             Our mission
           </h2>
-          <p className="w-60 text-center text-gray-dark lg:w-full">
+          <p className="text-gray-dark w-60 text-center lg:w-full">
             We&apos;re here to help you grow, make a positive difference, and
             thrive.
           </p>
@@ -156,11 +156,11 @@ const Home: NextPageWithLayout = () => {
           <div className="mx-auto max-w-[380px] rounded-xl bg-white shadow-lg">
             {/* GRADIENT CARD */}
             <div className="-mt-4 flex flex-col items-center justify-center">
-              <div className="mx-4 w-56 scale-[0.95] rounded-lg bg-gradient-to-b from-white to-gray p-4 shadow-xl md:scale-100">
+              <div className="to-gray mx-4 w-56 scale-[0.95] rounded-lg bg-gradient-to-b from-white p-4 shadow-xl md:scale-100">
                 {/* CARTEDEO TITLE AND LOGO */}
                 <div className="flex items-center justify-between">
-                  <div className="w-full flex-grow">
-                    <h2 className="notranslate text-sm font-semibold text-gray-dark">
+                  <div className="w-full grow">
+                    <h2 className="notranslate text-gray-dark text-sm font-semibold">
                       Cartedo
                     </h2>
                     <p className="font-bold text-black">Design Thinking</p>
@@ -173,12 +173,12 @@ const Home: NextPageWithLayout = () => {
                   />
                 </div>
 
-                <span className="absolute -left-10 mt-4 inline-flex items-center rounded-md bg-green px-3 py-0.5 text-sm font-medium text-white">
+                <span className="bg-green absolute -left-10 mt-4 inline-flex items-center rounded-md px-3 py-0.5 text-sm font-medium text-white">
                   <IoMdCheckmark className="mr-2 h-4 w-4 text-white" />
                   Verified
                 </span>
 
-                <p className="ml-16 mt-12 text-xs text-gray-dark">
+                <p className="text-gray-dark mt-12 ml-16 text-xs">
                   2024-03-12 07:14:49
                 </p>
               </div>
@@ -188,7 +188,7 @@ const Home: NextPageWithLayout = () => {
             <div className="p-6">
               <h3 className="font-semibold">Grow</h3>
 
-              <p className="mt-2 leading-7 text-gray-dark">
+              <p className="text-gray-dark mt-2 leading-7">
                 Improve your skills through learning opportunities, and showcase
                 them on Yoma to pursue your dreams.
               </p>
@@ -211,7 +211,7 @@ const Home: NextPageWithLayout = () => {
 
             <div className="z-10 mt-[34px] p-2">
               <h3 className="font-semibold">Impact</h3>
-              <p className="mt-2 leading-7 text-gray-dark">
+              <p className="text-gray-dark mt-2 leading-7">
                 Make a difference in your community, and build your profile by
                 participating in our impact tasks.
               </p>
@@ -234,7 +234,7 @@ const Home: NextPageWithLayout = () => {
 
             <div className="z-10 -mt-[4px] p-2">
               <h3 className="font-semibold">Thrive</h3>
-              <p className="mt-2 leading-7 text-gray-dark">
+              <p className="text-gray-dark mt-2 leading-7">
                 Track your progress on Yoma YoID and unlock new skills by
                 completing opportunities.
               </p>
@@ -243,7 +243,7 @@ const Home: NextPageWithLayout = () => {
         </div>
 
         {/* GREEN BACKGROUND */}
-        <div className="mt-10 flex h-[32rem] w-screen justify-center bg-green bg-[url('/images/world-map-transparent.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat lg:h-96">
+        <div className="bg-green mt-10 flex h-[32rem] w-screen justify-center bg-[url('/images/world-map-transparent.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat lg:h-96">
           <div className="flex w-full flex-col md:max-w-lg lg:max-w-5xl">
             {/* ID CARD & SIGN IN BUTTON */}
             <div className="flex flex-col items-center lg:flex-row lg:items-start">
@@ -263,7 +263,7 @@ const Home: NextPageWithLayout = () => {
                   width={135}
                   sizes="100vw"
                   priority={true}
-                  className="user-select-none pointer-events-none absolute -bottom-5 right-0 z-0 h-auto rotate-12 mix-blend-plus-lighter"
+                  className="user-select-none pointer-events-none absolute right-0 -bottom-5 z-0 h-auto rotate-12 mix-blend-plus-lighter"
                 />
                 <Image
                   src={imageCardID}
@@ -277,8 +277,8 @@ const Home: NextPageWithLayout = () => {
               </div>
 
               {/* RIGHT: HEADERS AND TEXT */}
-              <div className="z-10 mt-4 flex flex-col gap-2 px-4 text-white md:max-w-lg lg:-ml-8 lg:mt-[7.5rem] lg:w-[648px] lg:px-0">
-                <h6 className="text-xs font-bold uppercase tracking-wider">
+              <div className="z-10 mt-4 flex flex-col gap-2 px-4 text-white md:max-w-lg lg:mt-[7.5rem] lg:-ml-8 lg:w-[648px] lg:px-0">
+                <h6 className="text-xs font-bold tracking-wider uppercase">
                   Your Yo-ID
                 </h6>
                 <h1 className="text-3xl font-semibold tracking-wide">
@@ -309,7 +309,7 @@ const Home: NextPageWithLayout = () => {
             <h1 className="text-center text-base font-semibold">
               Passionate about youth empowerment?
             </h1>
-            <p className="flex-grow text-center text-gray-dark lg:text-sm">
+            <p className="text-gray-dark grow text-center lg:text-sm">
               Collaborate with your community, find and complete opportunities,
               win prizes!
             </p>
@@ -354,7 +354,7 @@ const Home: NextPageWithLayout = () => {
             <h1 className="text-center text-base font-semibold">
               Looking for a more simple experience?
             </h1>
-            <p className="flex-grow text-center text-gray-dark lg:text-sm">
+            <p className="text-gray-dark grow text-center lg:text-sm">
               Less features, less data. Find and complete opportunities, and
               redeem for reward on the marketplace.
             </p>
@@ -362,7 +362,7 @@ const Home: NextPageWithLayout = () => {
               {/* CONTINUE BUTTON */}
               <Link
                 href="/opportunities"
-                className="btn z-10 w-[220px] border-none bg-purple normal-case text-white hover:bg-purple hover:text-white hover:brightness-110"
+                className="btn bg-purple hover:bg-purple z-10 w-[220px] border-none text-white normal-case hover:text-white hover:brightness-110"
               >
                 Continue
               </Link>
@@ -385,10 +385,10 @@ const Home: NextPageWithLayout = () => {
             <h1 className="-mt-2 text-center text-base font-semibold">
               Want to just chat with Yoma?
             </h1>
-            <div className="mt-6 flex rounded-full bg-orange px-6 py-2 text-xs font-semibold uppercase text-white">
+            <div className="bg-orange mt-6 flex rounded-full px-6 py-2 text-xs font-semibold text-white uppercase">
               Coming soon
             </div>
-            <p className="flex-grow pt-6 text-center text-gray-dark lg:text-sm">
+            <p className="text-gray-dark grow pt-6 text-center lg:text-sm">
               Our AI chatbot will let you into the system with almost no data!
             </p>
           </div>
@@ -401,7 +401,7 @@ const Home: NextPageWithLayout = () => {
               <h2 className="text-2xl font-semibold text-black">
                 How do I earn rewards?
               </h2>
-              <p className="leading-6 text-gray-dark">
+              <p className="text-gray-dark leading-6">
                 After you&apos;ve successfully completed opportunities with our
                 partners, return to Yoma, upload the necessary verification
                 documents for the opportunity, and get ready to enjoy some
@@ -421,7 +421,7 @@ const Home: NextPageWithLayout = () => {
                   zIndex: 1,
                 }}
               />
-              <p className="-mt-4 leading-6 text-gray-dark lg:-mt-0">
+              <p className="text-gray-dark -mt-4 leading-6 lg:-mt-0">
                 Zlto is Yoma&apos;s fantastic reward currency. Redeem your
                 hard-earned rewards in the Marketplace and experience the
                 incredible benefits that await you!
@@ -432,13 +432,13 @@ const Home: NextPageWithLayout = () => {
             <div className="flex items-center justify-center">
               <Link
                 href="/marketplace"
-                className="btn mt-8 w-[260px] rounded-xl border-none bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110 lg:mr-auto"
+                className="btn bg-green hover:bg-green mt-8 w-[260px] rounded-xl border-none text-white normal-case hover:text-white hover:brightness-110 lg:mr-auto"
               >
                 Visit Marketplace
               </Link>
             </div>
           </div>
-          <div className="flex flex-col items-center justify-center lg:ml-auto lg:mr-12">
+          <div className="flex flex-col items-center justify-center lg:mr-12 lg:ml-auto">
             <div className="flex flex-col md:gap-3">
               <div className="flex flex-row">
                 <Image
@@ -479,7 +479,7 @@ const Home: NextPageWithLayout = () => {
         </div>
 
         {/* GRAY BACKGROUND */}
-        <div className="mt-10 flex w-screen justify-center bg-gray bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat md:h-[560px] lg:mt-8 lg:h-[420px]">
+        <div className="bg-gray mt-10 flex w-screen justify-center bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat md:h-[560px] lg:mt-8 lg:h-[420px]">
           <div className="flex w-full flex-col md:max-w-lg lg:max-w-5xl lg:flex-row">
             <div className="flex flex-col items-center justify-center md:items-start lg:w-full">
               <div className="relative -mt-14 mr-auto flex scale-[0.75] flex-col md:scale-100 lg:-mt-80">
@@ -490,7 +490,7 @@ const Home: NextPageWithLayout = () => {
                   image={imageMtn}
                 />
 
-                <div className="absolute left-24 top-32 -z-10">
+                <div className="absolute top-32 left-24 -z-10">
                   <MarketplaceCard
                     title="R50 airtime"
                     organisation="Vodacom"
@@ -505,7 +505,7 @@ const Home: NextPageWithLayout = () => {
                 <h2 className="text-2xl font-semibold text-black">
                   Yoma Marketplace
                 </h2>
-                <p className="text-center text-gray-dark lg:text-left">
+                <p className="text-gray-dark text-center lg:text-left">
                   Unlock the power of your Zlto rewards in the Yoma marketplace!
                   Treat yourself to selected products like airtime and data.
                 </p>
@@ -514,7 +514,7 @@ const Home: NextPageWithLayout = () => {
               {/* MARKETPLACE BUTTON */}
               <Link
                 href="/marketplace"
-                className="btn mt-8 w-[260px] rounded-xl border-none bg-purple normal-case text-white hover:bg-purple hover:text-white hover:brightness-110 lg:mr-auto"
+                className="btn bg-purple hover:bg-purple mt-8 w-[260px] rounded-xl border-none text-white normal-case hover:text-white hover:brightness-110 lg:mr-auto"
               >
                 Start shopping
               </Link>

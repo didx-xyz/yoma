@@ -20,15 +20,15 @@ export const OpportunitiesGrid: React.FC<InputProps> = ({
       {(data?.items?.length ?? 0) > 0 && (
         <div className="gap-6x flex flex-col">
           <div className="flex flex-row">
-            <div className="flex flex-grow">
-              <div className="overflow-hidden text-ellipsis whitespace-nowrap text-xl font-semibold text-black md:max-w-[800px]">
+            <div className="flex grow">
+              <div className="overflow-hidden text-xl font-semibold text-ellipsis whitespace-nowrap text-black md:max-w-[800px]">
                 {title}
               </div>
             </div>
             {viewAllUrl && (
               <Link
                 href={viewAllUrl}
-                className="my-auto items-end text-sm text-gray-dark"
+                className="text-gray-dark my-auto items-end text-sm"
               >
                 View all
               </Link>
