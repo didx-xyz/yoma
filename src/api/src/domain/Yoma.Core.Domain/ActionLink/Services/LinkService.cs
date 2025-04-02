@@ -246,7 +246,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         if (item.Contains('@'))
           return item.Trim();
 
-        return item.NormalizePhoneNumber();
+        return item.NormalizePhoneNumber(true);
       }).ToList();
 
       await _linkRequestCreateValidatorVerify.ValidateAndThrowAsync(request);

@@ -259,7 +259,7 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      request.PhoneNumber = request.PhoneNumber?.NormalizePhoneNumber();
+      request.PhoneNumber = request.PhoneNumber?.NormalizePhoneNumber(true);
 
       await _userRequestValidator.ValidateAndThrowAsync(request);
 

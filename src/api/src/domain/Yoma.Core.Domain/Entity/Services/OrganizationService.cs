@@ -283,10 +283,10 @@ namespace Yoma.Core.Domain.Entity.Services
         if (item.Contains('@'))
           return item.Trim();
 
-        return item.NormalizePhoneNumber();
+        return item.NormalizePhoneNumber(true);
       }).ToList();
 
-      request.PrimaryContactPhone = request.PrimaryContactPhone?.NormalizePhoneNumber();
+      request.PrimaryContactPhone = request.PrimaryContactPhone?.NormalizePhoneNumber(true);
 
       await _organizationCreateRequestValidator.ValidateAndThrowAsync(request);
 
@@ -428,10 +428,10 @@ namespace Yoma.Core.Domain.Entity.Services
         if (item.Contains('@'))
           return item.Trim();
 
-        return item.NormalizePhoneNumber();
+        return item.NormalizePhoneNumber(true);
       }).ToList();
 
-      request.PrimaryContactPhone = request.PrimaryContactPhone?.NormalizePhoneNumber();
+      request.PrimaryContactPhone = request.PrimaryContactPhone?.NormalizePhoneNumber(true);
 
       await _organizationUpdateRequestValidator.ValidateAndThrowAsync(request);
 
@@ -912,7 +912,7 @@ namespace Yoma.Core.Domain.Entity.Services
           if (item.Contains('@'))
             return item.Trim();
 
-          return item.NormalizePhoneNumber();
+          return item.NormalizePhoneNumber(true);
         })
         .ToList();
 

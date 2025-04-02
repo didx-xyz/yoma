@@ -19,7 +19,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     /// 3. Removing any whitespace
     /// 4. Formatting to E.164 (e.g. +27831234567)
     /// </summary>
-    public static string? NormalizePhoneNumber(this string? input)
+    public static string? NormalizePhoneNumber(this string? input, bool returnOriginalOnFormatFailure)
     {
       input = input?.Trim();
       if (string.IsNullOrEmpty(input)) return null;
@@ -35,7 +35,7 @@ namespace Yoma.Core.Domain.Core.Extensions
       }
       catch (NumberParseException)
       {
-        return null;
+        return returnOriginalOnFormatFailure ? input : null;
       }
     }
 
