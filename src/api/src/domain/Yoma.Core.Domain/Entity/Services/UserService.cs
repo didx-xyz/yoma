@@ -25,8 +25,6 @@ namespace Yoma.Core.Domain.Entity.Services
     #region Class Variables
     private readonly AppSettings _appSettings;
     private readonly IBlobService _blobService;
-    private readonly IGenderService _genderService;
-    private readonly ICountryService _countryService;
     private readonly ISkillService _skillService;
     private readonly ISSITenantService _ssiTenantService;
     private readonly ISSICredentialService _ssiCredentialService;
@@ -45,8 +43,6 @@ namespace Yoma.Core.Domain.Entity.Services
     public UserService(
         IOptions<AppSettings> appSettings,
         IBlobService blobService,
-        IGenderService genderService,
-        ICountryService countryService,
         ISkillService skillService,
         ISSITenantService ssiTenantService,
         ISSICredentialService ssiCredentialService,
@@ -62,8 +58,6 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       _appSettings = appSettings.Value;
       _blobService = blobService;
-      _genderService = genderService;
-      _countryService = countryService;
       _skillService = skillService;
       _ssiTenantService = ssiTenantService;
       _ssiCredentialService = ssiCredentialService;
@@ -264,6 +258,8 @@ namespace Yoma.Core.Domain.Entity.Services
     public async Task<User> Upsert(UserRequest request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      request.PhoneNumber = request.PhoneNumber?.NormalizePhoneNumber(true);
 
       await _userRequestValidator.ValidateAndThrowAsync(request);
 
