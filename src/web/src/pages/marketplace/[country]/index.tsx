@@ -349,7 +349,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
           "",
           <div
             key="confirm-dialog-content"
-            className="text-gray-500 flex h-full flex-col space-y-2"
+            className="flex h-full flex-col space-y-2 text-gray-500"
           >
             <div className="flex flex-row space-x-2">
               <IoMdWarning className="gl-icon-yellow h-6 w-6" />
@@ -376,7 +376,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
           "",
           <div
             key="confirm-dialog-content"
-            className="text-gray-500 flex h-full flex-col space-y-2"
+            className="flex h-full flex-col space-y-2 text-gray-500"
           >
             <div className="flex flex-row space-x-2">
               <IoMdWarning className="gl-icon-yellow h-6 w-6" />
@@ -510,11 +510,11 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         className={`md:max-h-[300px] md:w-[450px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
-          <div className="flex flex-row bg-blue p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
+          <div className="bg-blue flex flex-row p-4 shadow-lg">
+            <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={() => {
                 setLoginDialogVisible(false);
               }}
@@ -529,16 +529,16 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
             <h5>Please sign-in to continue</h5>
 
-            <div className="mt-4 flex flex-grow gap-4">
+            <div className="mt-4 flex grow gap-4">
               <button
                 type="button"
-                className="btn rounded-full border-purple bg-white normal-case text-purple md:w-[150px]"
+                className="btn border-purple text-purple rounded-full bg-white normal-case md:w-[150px]"
                 onClick={() => setLoginDialogVisible(false)}
               >
                 Cancel
               </button>
 
-              <SignInButton className="btn transform gap-2 border-0 border-none bg-purple px-4 shadow-lg transition-all duration-300 ease-in-out hover:bg-purple-light hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:bg-purple-light md:w-[150px]" />
+              <SignInButton className="btn bg-purple hover:bg-purple-light disabled:bg-purple-light transform gap-2 border-0 border-none px-4 shadow-lg transition-all duration-300 ease-in-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait md:w-[150px]" />
             </div>
           </div>
         </div>
@@ -556,10 +556,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         {currentItem && (
           <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
             <div className="flex flex-row p-4">
-              <h1 className="flex-grow"></h1>
+              <h1 className="grow"></h1>
               <button
                 type="button"
-                className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+                className="btn btn-circle text-gray-dark hover:bg-gray"
                 onClick={() => {
                   setBuyDialogVisible(false);
                 }}
@@ -569,7 +569,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             </div>
             <div className="flex flex-col items-center justify-center gap-4">
               {currentItem?.imageURL && (
-                <div className="-mt-8 flex h-14 w-14 items-center justify-center rounded-full border-green-dark bg-white shadow-lg">
+                <div className="border-green-dark -mt-8 flex h-14 w-14 items-center justify-center rounded-full bg-white shadow-lg">
                   <Image
                     src={currentItem?.imageURL ?? ""}
                     alt="Icon Zlto"
@@ -590,10 +590,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                 Would you like to proceed?
               </div>
 
-              <div className="-mt-2 flex flex-grow gap-4">
+              <div className="-mt-2 flex grow gap-4">
                 <button
                   type="button"
-                  className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
+                  className="btn bg-purple hover:bg-purple rounded-full text-white normal-case hover:text-white md:w-[150px]"
                   onClick={() => {
                     onBuyConfirm(currentItem);
                   }}
@@ -602,7 +602,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                 </button>
                 <button
                   type="button"
-                  className="btn rounded-full border-purple bg-white normal-case text-purple hover:bg-purple hover:text-white md:w-[150px]"
+                  className="btn border-purple text-purple hover:bg-purple rounded-full bg-white normal-case hover:text-white md:w-[150px]"
                   onClick={() => {
                     setBuyDialogVisible(false);
                   }}
@@ -627,10 +627,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
         {currentItem && (
           <div className="pb-12x flex h-full flex-col gap-2 overflow-y-auto pb-6">
             <div className="flex flex-row p-4">
-              <h1 className="flex-grow"></h1>
+              <h1 className="grow"></h1>
               <button
                 type="button"
-                className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+                className="btn btn-circle text-gray-dark hover:bg-gray"
                 onClick={() => {
                   // reload the page to refresh the data
                   router.reload();
@@ -653,7 +653,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                 </div>
               )}
 
-              <div className="flex w-full flex-col gap-4 rounded-lg border-2 border-dotted border-gray p-4 text-center">
+              <div className="border-gray flex w-full flex-col gap-4 rounded-lg border-2 border-dotted p-4 text-center">
                 <p
                   dangerouslySetInnerHTML={{ __html: currentItem.description }}
                 ></p>
@@ -666,17 +666,17 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                 You will be able to find your instructions within your products!
               </div>
 
-              <div className="flex flex-grow gap-4">
+              <div className="flex grow gap-4">
                 <Link
                   href="/yoid/wallet"
-                  className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
+                  className="btn bg-purple hover:bg-purple rounded-full text-white normal-case hover:text-white md:w-[150px]"
                 >
                   My Products
                 </Link>
 
                 <button
                   type="button"
-                  className="btn rounded-full border-purple bg-white normal-case text-purple hover:bg-purple hover:text-white md:w-[150px]"
+                  className="btn border-purple text-purple hover:bg-purple rounded-full bg-white normal-case hover:text-white md:w-[150px]"
                   onClick={() => {
                     // reload the page to refresh the data
                     router.reload();
@@ -701,10 +701,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
           <div className="flex flex-row p-4">
-            <h1 className="flex-grow"></h1>
+            <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={() => {
                 setBuyDialogErrorVisible(false);
               }}
@@ -725,10 +725,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
               ))}
             </div>
 
-            <div className="mt-4 flex flex-grow gap-4">
+            <div className="mt-4 flex grow gap-4">
               <button
                 type="button"
-                className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
+                className="btn bg-purple hover:bg-purple rounded-full text-white normal-case hover:text-white md:w-[150px]"
                 onClick={() => {
                   setBuyDialogErrorVisible(false);
                 }}
@@ -751,10 +751,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto pb-12">
           <div className="flex flex-row p-4">
-            <h1 className="flex-grow"></h1>
+            <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={() => {
                 setItemLockedDialogVisible(false);
               }}
@@ -773,7 +773,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                   className="h-auto"
                 />
                 {currentItem?.storeAccessControlRuleResult?.locked && (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-dark bg-opacity-50">
+                  <div className="bg-gray-dark/50 absolute inset-0 flex items-center justify-center">
                     <FaLock className="text-white" />
                   </div>
                 )}
@@ -801,7 +801,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                                 <p className="text-sm">{reason.reason}</p>
                               </div>
 
-                              <ul className="list-insidex ml-10 mt-2 list-disc text-left">
+                              <ul className="list-insidex mt-2 ml-10 list-disc text-left">
                                 {reason.links?.map((link, linkIndex) => (
                                   <li key={`link_${linkIndex}`}>
                                     <Link
@@ -809,7 +809,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                                       href={link.url}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-sm text-blue hover:underline"
+                                      className="text-blue text-sm hover:underline"
                                     >
                                       {link.title}
                                     </Link>
@@ -824,10 +824,10 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
                 )}
               </div>
             </div>
-            <div className="mt-4 flex flex-grow gap-4">
+            <div className="mt-4 flex grow gap-4">
               <button
                 type="button"
-                className="btn rounded-full bg-purple normal-case text-white hover:bg-purple hover:text-white md:w-[150px]"
+                className="btn bg-purple hover:bg-purple rounded-full text-white normal-case hover:text-white md:w-[150px]"
                 onClick={() => {
                   setItemLockedDialogVisible(false);
                 }}
@@ -846,7 +846,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       <div className="flex w-full flex-col gap-4 md:max-w-7xl">
         {/* FILTER: COUNTRY */}
         <div className="flex flex-row items-center justify-start gap-4">
-          <div className="text-sm font-semibold text-gray-dark">Filter by:</div>
+          <div className="text-gray-dark text-sm font-semibold">Filter by:</div>
           <Select
             instanceId={"country"}
             classNames={{

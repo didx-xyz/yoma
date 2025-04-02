@@ -204,7 +204,7 @@ export const OpportunityFilterVertical: React.FC<{
         className="flex h-full flex-col overflow-y-auto"
       >
         <div className="flex flex-row px-8 py-4">
-          <h1 className="my-auto flex-grow text-2xl font-bold">Filter</h1>
+          <h1 className="my-auto grow text-2xl font-bold">Filter</h1>
           <button
             type="button"
             className="btn btn-primary rounded-full px-3"
@@ -213,7 +213,7 @@ export const OpportunityFilterVertical: React.FC<{
             <IoMdClose className="h-6 w-6"></IoMdClose>
           </button>
         </div>
-        <div className="flex flex-col gap-4 bg-gray-light px-8 py-4">
+        <div className="bg-gray-light flex flex-col gap-4 px-8 py-4">
           {/* VALUECONTAINS: hidden input */}
           <input
             type="hidden"
@@ -222,7 +222,7 @@ export const OpportunityFilterVertical: React.FC<{
           />
 
           {/* TYPES */}
-          <div className="form-control gap-1">
+          <fieldset className="fieldset gap-1">
             <label className="label">
               <span className="label-text font-semibold">
                 What type of opportunity are you looking for?
@@ -252,15 +252,15 @@ export const OpportunityFilterVertical: React.FC<{
 
             {formState.errors.types && (
               <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
+                <span className="label-text-alt text-red-500 italic">
                   {`${formState.errors.types.message}`}
                 </span>
               </label>
             )}
-          </div>
+          </fieldset>
 
           {/* ENGAGEMENT TYPES */}
-          <div className="form-control gap-1">
+          <fieldset className="fieldset gap-1">
             <label className="label">
               <span className="label-text font-semibold">
                 What type of engagement are you looking for?
@@ -290,22 +290,22 @@ export const OpportunityFilterVertical: React.FC<{
 
             {formState.errors.engagementTypes && (
               <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
+                <span className="label-text-alt text-red-500 italic">
                   {`${formState.errors.engagementTypes.message}`}
                 </span>
               </label>
             )}
-          </div>
+          </fieldset>
 
           {/* COMMITMENT INTERVALS */}
-          <div className="form-control gap-1">
+          <fieldset className="fieldset gap-1">
             <label className="label">
               <span className="label-text font-semibold">
                 How much time would you like to invest?
               </span>
             </label>
             <div className="flex w-full flex-row justify-start gap-4">
-              <span className="mt-1 text-xs font-semibold text-gray-dark">
+              <span className="text-gray-dark mt-1 text-xs font-semibold">
                 0
               </span>
 
@@ -325,7 +325,7 @@ export const OpportunityFilterVertical: React.FC<{
                       value={value}
                       onChange={(val) => onChange(val)}
                     />
-                    <span className="-mb-3 mt-2 h-8 text-xs font-semibold text-gray-dark">
+                    <span className="text-gray-dark mt-2 -mb-3 h-8 text-xs font-semibold">
                       {value > 0 && watchIntervalId != null && (
                         <>
                           {`${value} ${
@@ -338,7 +338,7 @@ export const OpportunityFilterVertical: React.FC<{
                 )}
               />
 
-              <span className="mt-1 text-xs font-semibold text-gray-dark">
+              <span className="text-gray-dark mt-1 text-xs font-semibold">
                 {timeIntervalMax}
               </span>
             </div>
@@ -362,10 +362,10 @@ export const OpportunityFilterVertical: React.FC<{
                 )}
               />
             </div>
-          </div>
+          </fieldset>
 
           {/* ZLTO REWARD RANGES */}
-          <div className="form-control -mb-3 flex flex-row items-center gap-4">
+          <fieldset className="fieldset -mb-3 flex flex-row items-center gap-4">
             <label className="label">
               <span className="label-text font-semibold">ZLTO Reward</span>
             </label>
@@ -385,15 +385,15 @@ export const OpportunityFilterVertical: React.FC<{
 
             {formState.errors.zltoRewardRanges && (
               <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
+                <span className="label-text-alt text-red-500 italic">
                   {`${formState.errors.zltoRewardRanges.message}`}
                 </span>
               </label>
             )}
-          </div>
+          </fieldset>
 
           {/* COUNTRIES */}
-          <div className="form-control gap-1">
+          <fieldset className="fieldset gap-1">
             <label className="label">
               <span className="label-text font-semibold">Country</span>
             </label>
@@ -421,15 +421,15 @@ export const OpportunityFilterVertical: React.FC<{
 
             {formState.errors.countries && (
               <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
+                <span className="label-text-alt text-red-500 italic">
                   {`${formState.errors.countries.message}`}
                 </span>
               </label>
             )}
-          </div>
+          </fieldset>
 
           {/* LANGUAGES */}
-          <div className="form-control gap-1">
+          <fieldset className="fieldset gap-1">
             <label className="label">
               <span className="label-text font-semibold">Languages</span>
             </label>
@@ -457,15 +457,15 @@ export const OpportunityFilterVertical: React.FC<{
 
             {formState.errors.languages && (
               <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
+                <span className="label-text-alt text-red-500 italic">
                   {`${formState.errors.languages.message}`}
                 </span>
               </label>
             )}
-          </div>
+          </fieldset>
 
           {/* ORGANIZATIONS */}
-          <div className="form-control gap-1">
+          <fieldset className="fieldset gap-1">
             <label className="label">
               <span className="label-text font-semibold">Providers</span>
             </label>
@@ -494,15 +494,15 @@ export const OpportunityFilterVertical: React.FC<{
 
             {formState.errors.organizations && (
               <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
+                <span className="label-text-alt text-red-500 italic">
                   {`${formState.errors.organizations.message}`}
                 </span>
               </label>
             )}
-          </div>
+          </fieldset>
 
           {/* PUBLISHED STATES */}
-          <div className="form-control gap-1">
+          <fieldset className="fieldset gap-1">
             <label className="label">
               <span className="label-text font-semibold">
                 What status would you like to see?
@@ -531,12 +531,12 @@ export const OpportunityFilterVertical: React.FC<{
 
             {formState.errors.publishedStates && (
               <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
+                <span className="label-text-alt text-red-500 italic">
                   {`${formState.errors.publishedStates.message}`}
                 </span>
               </label>
             )}
-          </div>
+          </fieldset>
         </div>
 
         {/* BUTTONS */}
@@ -544,7 +544,7 @@ export const OpportunityFilterVertical: React.FC<{
           {onClear && (
             <button
               type="button"
-              className="btn btn-warning w-full flex-grow rounded-full md:w-40"
+              className="btn btn-warning w-full grow rounded-full md:w-40"
               onClick={onClear}
             >
               {clearButtonText}
@@ -553,7 +553,7 @@ export const OpportunityFilterVertical: React.FC<{
           {onSubmit && (
             <button
               type="submit"
-              className="btn btn-primary w-full flex-grow rounded-full md:w-40"
+              className="btn btn-primary w-full grow rounded-full md:w-40"
             >
               {submitButtonText}
             </button>

@@ -18,7 +18,7 @@ import { Navbar } from "~/components/NavBar/Navbar";
 import { Global } from "~/components/Global";
 import ConfirmationModalContextProvider from "~/context/modalConfirmationContext";
 import { config } from "~/lib/react-query-config";
-import "~/styles/globals.scss";
+import "~/styles/globals.css";
 import "~/styles/FileUpload.css";
 import { THEME_PURPLE } from "~/lib/constants";
 import { GoogleAnalytics } from "~/components/GoogleAnalytics";
@@ -79,10 +79,7 @@ const MyApp = ({
         <ThemeProvider enableSystem={false} forcedTheme={theme}>
           <QueryClientProvider client={queryClient}>
             <HydrationBoundary state={pageProps.dehydratedState}>
-              <div
-                id="mainContent"
-                className={`${nunito.variable} font-nunito`}
-              >
+              <div id="mainContent" className={`${nunito.className}`}>
                 <ConfirmationModalContextProvider>
                   <Global />
                   <Navbar />

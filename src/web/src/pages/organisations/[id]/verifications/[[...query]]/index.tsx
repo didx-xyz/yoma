@@ -614,47 +614,47 @@ const OpportunityVerifications: NextPageWithLayout<{
         className={`md:max-h-[620px] md:w-[800px]`}
       >
         <div className="flex h-full flex-col space-y-2">
-          <div className="flex flex-row items-center bg-green p-4 shadow-lg">
-            <h4 className="flex-grow pl-2 font-semibold text-white">
+          <div className="bg-green flex flex-row items-center p-4 shadow-lg">
+            <h4 className="grow pl-2 font-semibold text-white">
               {tempSelectedRows?.length} Participant
               {(selectedRows?.length ?? 0) > 1 ? "s" : ""}
             </h4>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={onCloseVerificationModal}
             >
               <IoMdClose className="h-6 w-6"></IoMdClose>
             </button>
           </div>
 
-          <div className="flex flex-grow flex-col gap-3 bg-gray-light p-4 pt-4">
-            <div className="bg-gray-lightx flex flex-grow flex-col gap-3">
+          <div className="bg-gray-light flex grow flex-col gap-3 p-4 pt-4">
+            <div className="bg-gray-lightx flex grow flex-col gap-3">
               {tempSelectedRows?.map((row) => (
                 <OpportunityCompletionRead data={row} key={row?.id} />
               ))}
             </div>
 
             <div className="flex flex-col gap-4 pb-10">
-              <div className="form-control rounded-lg bg-white px-4 py-2">
+              <fieldset className="fieldset rounded-lg bg-white px-4 py-2">
                 <label className="label">
-                  <span className="font-semibold text-gray-dark">
+                  <span className="text-gray-dark font-semibold">
                     Enter comments below:
                   </span>
                 </label>
                 <textarea
-                  className="input input-bordered my-2 h-[100px] border-gray-light p-2"
+                  className="input border-gray-light my-2 h-[100px] p-2"
                   onChange={(e) => setVerifyComments(e.target.value)}
                 />
-              </div>
+              </fieldset>
             </div>
           </div>
 
           {/* BUTTONS */}
           <div className="flex flex-row place-items-center justify-center px-6 py-4 pt-2">
-            <div className="flex flex-grow">
+            <div className="flex grow">
               <button
-                className="btn btn-outline w-64 flex-shrink rounded-full border-green bg-white normal-case text-green hover:border-0 hover:bg-green hover:text-white"
+                className="btn btn-outline border-green text-green hover:bg-green w-64 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
                 onClick={onCloseVerificationModal}
               >
                 <IoMdClose className="h-6 w-6" />
@@ -664,7 +664,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             <div className="flex gap-4">
               {(bulkActionApprove == null || !bulkActionApprove) && (
                 <button
-                  className="btn w-64 flex-shrink rounded-full border-red-500 bg-white normal-case text-red-500 hover:border-0 hover:bg-red-500 hover:text-white"
+                  className="btn w-64 shrink rounded-full border-red-500 bg-white text-red-500 normal-case hover:border-0 hover:bg-red-500 hover:text-white"
                   onClick={() => onVerify(false)}
                 >
                   <FaThumbsDown className="h-4 w-4" />
@@ -674,7 +674,7 @@ const OpportunityVerifications: NextPageWithLayout<{
 
               {(bulkActionApprove == null || bulkActionApprove) && (
                 <button
-                  className="btn w-64 flex-shrink rounded-full border-green bg-white normal-case text-green hover:border-0 hover:bg-green hover:text-white"
+                  className="btn border-green text-green hover:bg-green w-64 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
                   onClick={() => onVerify(true)}
                 >
                   <FaThumbsUp className="h-4 w-4" />
@@ -694,38 +694,38 @@ const OpportunityVerifications: NextPageWithLayout<{
         className={`md:max-h-[620px] md:w-[800px]`}
       >
         <div className="flex h-full flex-col space-y-2 overflow-y-auto">
-          <div className="flex flex-row items-center bg-green p-4 shadow-lg">
-            <h4 className="flex-grow pl-2 font-semibold text-white">
+          <div className="bg-green flex flex-row items-center p-4 shadow-lg">
+            <h4 className="grow pl-2 font-semibold text-white">
               {verificationResponse?.items?.length} Participant
               {(verificationResponse?.items?.length ?? 0) > 1 ? "s" : ""}
             </h4>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={onCloseVerificationModal}
             >
               <IoMdClose className="h-6 w-6"></IoMdClose>
             </button>
           </div>
-          <div className="flex flex-grow flex-col bg-gray">
-            <div className="flex flex-grow flex-col bg-gray-light px-6 py-8">
+          <div className="bg-gray flex grow flex-col">
+            <div className="bg-gray-light flex grow flex-col px-6 py-8">
               <div className="flex h-full w-full flex-col gap-4 rounded-lg bg-white p-4 text-center">
                 {verificationResponse?.items.map((item) => (
                   <div
                     key={`verificationResult_${item.userId}-${item.opportunityId}`}
-                    className="gap-4 space-y-2 rounded-lg border-2 border-gray-light p-4"
+                    className="border-gray-light gap-4 space-y-2 rounded-lg border-2 p-4"
                   >
-                    <div className="flex h-fit flex-col items-center gap-4 text-gray-dark md:flex-row">
-                      <div className="h-fit rounded-full bg-green-light">
+                    <div className="text-gray-dark flex h-fit flex-col items-center gap-4 md:flex-row">
+                      <div className="bg-green-light h-fit rounded-full">
                         {item.success && (
-                          <IoIosCheckmark className="h-8 w-8 text-green md:h-10 md:w-10" />
+                          <IoIosCheckmark className="text-green h-8 w-8 md:h-10 md:w-10" />
                         )}
                         {!item.success && (
                           <IoIosClose className="h-8 w-8 text-red-400 md:h-10 md:w-10" />
                         )}
                       </div>
                       <p
-                        className="text-md w-full truncate text-start font-bold leading-5 tracking-wide text-gray-dark"
+                        className="text-md text-gray-dark w-full truncate text-start leading-5 font-bold tracking-wide"
                         title={item.opportunityTitle!}
                       >
                         {item.opportunityTitle}
@@ -733,7 +733,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                     </div>
                     <div className="border-gray">
                       <div>
-                        <div className="flex flex-row items-center gap-2 text-center text-sm text-gray-dark md:text-left md:text-base">
+                        <div className="text-gray-dark flex flex-row items-center gap-2 text-center text-sm md:text-left md:text-base">
                           {item.success && (
                             <>
                               {verificationResponse.status == "Completed" && (
@@ -746,12 +746,12 @@ const OpportunityVerifications: NextPageWithLayout<{
                                       {item.userDisplayName}
                                     </div>{" "}
                                     was successfully
-                                    <strong className="mx-1 text-green">
+                                    <strong className="text-green mx-1">
                                       approved.
                                     </strong>
                                   </p>
                                   <p className="flex flex-row gap-2 text-sm">
-                                    <IoInformationCircleOutline className="size-5 text-blue" />
+                                    <IoInformationCircleOutline className="text-blue size-5" />
                                     We&apos;ve sent them an email to share the
                                     good news!
                                   </p>
@@ -764,12 +764,12 @@ const OpportunityVerifications: NextPageWithLayout<{
                                       {item.userDisplayName}
                                     </strong>{" "}
                                     was successfully
-                                    <strong className="mx-1 text-error">
+                                    <strong className="text-error mx-1">
                                       rejected.
                                     </strong>
                                   </p>
                                   <p className="flex flex-row gap-2 text-sm">
-                                    <IoInformationCircleOutline className="size-5 text-blue" />
+                                    <IoInformationCircleOutline className="text-blue size-5" />
                                     We&apos;ve sent them an email with your
                                     comments.
                                   </p>
@@ -796,7 +796,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           {/* BUTTON */}
           <div className="flex flex-row place-items-center justify-end px-6 py-4 pt-2">
             <button
-              className="btn btn-outline btn-sm flex-nowrap rounded-full px-10 py-5 text-green hover:border-green hover:bg-green hover:text-white"
+              className="btn btn-outline btn-sm text-green hover:border-green hover:bg-green flex-nowrap rounded-full px-10 py-5 hover:text-white"
               onClick={onCloseVerificationResultModal}
             >
               Close
@@ -850,7 +850,7 @@ const OpportunityVerifications: NextPageWithLayout<{
       </CustomModal>
 
       {/* PAGE */}
-      <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[4.9rem]">
+      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[4.9rem]">
         <div className="flex flex-col gap-4 py-4">
           <h3 className="flex items-center text-3xl font-semibold tracking-normal text-white">
             Submissions <LimitedFunctionalityBadge />
@@ -859,7 +859,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           {/* FILTERS */}
           <div>
             <div className="flex flex-col gap-4 md:flex-row">
-              <div className="flex flex-grow flex-col items-center justify-start gap-4 md:flex-row">
+              <div className="flex grow flex-col items-center justify-start gap-4 md:flex-row">
                 <div className="text-sm font-semibold text-white">
                   Filter by:
                 </div>
@@ -911,7 +911,7 @@ const OpportunityVerifications: NextPageWithLayout<{
           <div className="z-10x flex justify-center md:justify-start">
             <div className="flex w-full gap-2">
               {/* LEFT BUTTON MOBILE */}
-              <div className="-ml-1 mb-1 flex items-center md:hidden">
+              <div className="mb-1 -ml-1 flex items-center md:hidden">
                 <button
                   className="ease-bounce focus:outline-none active:scale-90"
                   onClick={() => {
@@ -940,24 +940,24 @@ const OpportunityVerifications: NextPageWithLayout<{
 
               {/* TABS */}
               <div
-                className="tabs tabs-bordered w-full gap-2 overflow-x-scroll md:overflow-hidden"
+                className="tabs w-full gap-2 overflow-x-scroll md:overflow-hidden"
                 role="tablist"
               >
-                <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
+                <div className="text-gray-dark border-b border-transparent text-center text-sm font-medium">
                   <ul className="-mb-px flex w-full justify-center gap-8 md:justify-start">
                     <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterVerificationStatus("")}
-                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                        className={`inline-block h-10 w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
                           !verificationStatus
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         All
                         {(totalCountAll ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountAll}
                           </div>
                         )}
@@ -966,16 +966,16 @@ const OpportunityVerifications: NextPageWithLayout<{
                     <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterVerificationStatus("Pending")}
-                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                        className={`inline-block h-10 w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
                           verificationStatus === "Pending"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Pending
                         {(totalCountPending ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountPending}
                           </div>
                         )}
@@ -984,16 +984,16 @@ const OpportunityVerifications: NextPageWithLayout<{
                     <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterVerificationStatus("Completed")}
-                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                        className={`inline-block h-10 w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
                           verificationStatus === "Completed"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Completed
                         {(totalCountCompleted ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountCompleted}
                           </div>
                         )}
@@ -1002,16 +1002,16 @@ const OpportunityVerifications: NextPageWithLayout<{
                     <li className="whitespace-nowrap">
                       <button
                         onClick={() => onFilterVerificationStatus("Rejected")}
-                        className={`inline-block h-10 w-full whitespace-nowrap rounded-t-lg border-b-4 py-2 text-white duration-300 ${
+                        className={`inline-block h-10 w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
                           verificationStatus === "Rejected"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Rejected
                         {(totalCountRejected ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountRejected}
                           </div>
                         )}
@@ -1058,7 +1058,7 @@ const OpportunityVerifications: NextPageWithLayout<{
               onClick={() => {
                 setImportDialogOpen(true);
               }}
-              className="btn btn-sm w-36 flex-nowrap border-green bg-green text-white hover:bg-white hover:text-green"
+              className="btn btn-sm border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
             >
               <FaUpload className="h-4 w-4" /> Import
             </button>
@@ -1066,7 +1066,7 @@ const OpportunityVerifications: NextPageWithLayout<{
             <button
               type="button"
               onClick={() => setExportDialogOpen(true)}
-              className="btn btn-sm w-36 flex-nowrap border-green bg-green text-white hover:bg-white hover:text-green"
+              className="btn btn-sm border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
             >
               <FaDownload className="h-4 w-4" /> Export
             </button>
@@ -1078,7 +1078,7 @@ const OpportunityVerifications: NextPageWithLayout<{
               searchResults.items?.length > 0 && (
                 <>
                   <button
-                    className="btn btn-sm w-36 flex-nowrap border-green bg-white text-green hover:bg-green hover:text-white"
+                    className="btn btn-sm border-green text-green hover:bg-green w-36 flex-nowrap bg-white hover:text-white"
                     onClick={() => onChangeBulkAction(true)}
                   >
                     <FaThumbsUp className="h-4 w-4" />
@@ -1117,7 +1117,7 @@ const OpportunityVerifications: NextPageWithLayout<{
 
             {/* RESULTS */}
             {searchResults && searchResults.items?.length > 0 && (
-              <div className="overflow-x-auto md:rounded-lg md:shadow-custom">
+              <div className="md:shadow-custom overflow-x-auto md:rounded-lg">
                 {/* DESKTOP */}
                 <table className="hidden bg-white md:table md:rounded-lg">
                   <thead className="text-sm">
@@ -1125,7 +1125,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                       <th className="w-[35px] !py-6 pr-4">
                         <input
                           type="checkbox"
-                          className="checkbox-primary checkbox checkbox-sm rounded border-gray-dark bg-white"
+                          className="checkbox-primary checkbox checkbox-sm border-gray-dark rounded bg-white"
                           checked={
                             selectedRows?.length === searchResults.items?.length
                           }
@@ -1142,12 +1142,12 @@ const OpportunityVerifications: NextPageWithLayout<{
                     {searchResults.items.map((item) => (
                       <tr
                         key={item.id}
-                        className="!h-[70px] !border-gray bg-white text-gray-dark"
+                        className="!border-gray text-gray-dark !h-[70px] bg-white"
                       >
                         <td className="w-[35px] pt-4">
                           <input
                             type="checkbox"
-                            className="checkbox-primary checkbox checkbox-sm rounded border-gray-dark bg-white"
+                            className="checkbox-primary checkbox checkbox-sm border-gray-dark rounded bg-white"
                             checked={selectedRows?.some((x) => x.id == item.id)}
                             onChange={(e) => handleRowSelect(e, item)}
                           />
@@ -1180,14 +1180,14 @@ const OpportunityVerifications: NextPageWithLayout<{
                               item.verificationStatus == "Pending" && (
                                 <button
                                   type="button"
-                                  className="btn btn-sm flex-nowrap border-gray bg-white text-gray-dark hover:bg-gray hover:text-white"
+                                  className="btn btn-sm border-gray text-gray-dark hover:bg-gray flex-nowrap bg-white hover:text-white"
                                   onClick={() => {
                                     setBulkActionApprove(null);
                                     setTempSelectedRows([item]);
                                     setModalVerifyVisible(true);
                                   }}
                                 >
-                                  <IoMdAlert className="mr-2 h-6 w-6 text-yellow" />
+                                  <IoMdAlert className="text-yellow mr-2 h-6 w-6" />
                                   Pending
                                 </button>
                               )}
@@ -1196,7 +1196,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                             {item.verificationStatus &&
                               item.verificationStatus == "Completed" && (
                                 <div className="flex flex-row">
-                                  <IoMdCheckmark className="mr-2 h-6 w-6 text-green" />
+                                  <IoMdCheckmark className="text-green mr-2 h-6 w-6" />
                                   Completed
                                 </div>
                               )}

@@ -737,7 +737,7 @@ const OrganisationDashboard: NextPageWithLayout<{
         <title>Yoma | Organisation Dashboard</title>
       </Head>
 
-      <PageBackground className="h-[328px] md:h-[332px]" />
+      <PageBackground className="h-[341px] md:h-[348px]" />
 
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
@@ -779,7 +779,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           <div className="bg-theme flex h-16 flex-row justify-end p-8 shadow-lg">
             <button
               type="button"
-              className="btn -mr-4 -mt-6 rounded-full border-0 bg-gray-light p-3 text-gray-dark hover:bg-gray"
+              className="btn bg-gray-light text-gray-dark hover:bg-gray -mt-6 -mr-4 rounded-full border-0 p-3"
               onClick={() =>
                 setGotoCompletedConversionRatioDialogVisible(false)
               }
@@ -789,7 +789,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
             <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
-              <IoMdInformationCircleOutline className="size-7 text-blue" />
+              <IoMdInformationCircleOutline className="text-blue size-7" />
             </div>
 
             <div className="flex flex-col gap-2">
@@ -802,7 +802,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               </div>
             </div>
 
-            <div className="divider my-1 grow-0 !bg-gray" />
+            <div className="divider !bg-gray my-1 grow-0" />
 
             <div className="flex flex-col gap-4 text-sm">
               <div className="flex items-start gap-2">
@@ -851,7 +851,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               </div>
             </div>
 
-            <div className="divider my-1 grow-0 !bg-gray" />
+            <div className="divider !bg-gray my-1 grow-0" />
 
             {/* BUTTONS */}
             <div
@@ -859,7 +859,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             >
               <button
                 type="button"
-                className="w-1/2z btn btn-warning btn-wide flex-shrink normal-case"
+                className="w-1/2z btn btn-warning btn-wide shrink normal-case"
                 onClick={() => {
                   setGotoCompletedConversionRatioDialogVisible(false);
                 }}
@@ -884,7 +884,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           <div className="bg-theme flex h-16 flex-row justify-end p-8 shadow-lg">
             <button
               type="button"
-              className="btn -mr-4 -mt-6 rounded-full border-0 bg-gray-light p-3 text-gray-dark hover:bg-gray"
+              className="btn bg-gray-light text-gray-dark hover:bg-gray -mt-6 -mr-4 rounded-full border-0 p-3"
               onClick={() => setCompletedYouthOpportunitiesDialogVisible(false)}
             >
               <IoMdClose className="h-6 w-6"></IoMdClose>
@@ -892,7 +892,7 @@ const OrganisationDashboard: NextPageWithLayout<{
           </div>
           <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
             <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
-              <IoMdTrophy className="size-7 text-orange" />
+              <IoMdTrophy className="text-orange size-7" />
             </div>
 
             <div className="flex flex-col gap-2">
@@ -900,7 +900,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 Completed Opportunities
               </h4>
               <div className="flex flex-row gap-1 text-sm">
-                <div className="text-sm font-semibold italic tracking-widest">
+                <div className="text-sm font-semibold tracking-widest italic">
                   {completedYouthOpportunities?.displayName}
                 </div>
                 <div>has completed the following opportunities:</div>
@@ -955,7 +955,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         </td>
                         <td className="p-2x flex items-center">
                           {opportunity.verified ? (
-                            <IoMdCheckmarkCircleOutline className="size-5 text-green" />
+                            <IoMdCheckmarkCircleOutline className="text-green size-5" />
                           ) : (
                             <IoMdCloseCircleOutline className="size-5 text-red-500" />
                           )}
@@ -980,7 +980,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             >
               <button
                 type="button"
-                className="w-1/2z btn btn-warning btn-wide flex-shrink normal-case"
+                className="w-1/2z btn btn-warning btn-wide shrink normal-case"
                 onClick={() => {
                   setCompletedYouthOpportunitiesDialogVisible(false);
                 }}
@@ -992,12 +992,12 @@ const OrganisationDashboard: NextPageWithLayout<{
         </div>
       </CustomModal>
 
-      <div className="container z-10 mt-[4rem] max-w-7xl overflow-hidden p-4">
+      <div className="z-10 container mt-[4rem] max-w-7xl overflow-hidden p-4">
         <div className="flex flex-col gap-4">
           {/* HEADER */}
           <div className="flex flex-col gap-2">
             {/* WELCOME MSG */}
-            <div className="overflow-hidden text-ellipsis whitespace-nowrap pt-1 text-xl font-semibold text-white md:text-2xl">
+            <div className="overflow-hidden pt-1 text-xl font-semibold text-ellipsis whitespace-nowrap text-white md:text-2xl">
               {timeOfDayEmoji} Good {timeOfDay}&nbsp;
               {user?.name}!
             </div>
@@ -1132,85 +1132,87 @@ const OrganisationDashboard: NextPageWithLayout<{
           {(isAdmin || searchFilter.organizations) && (
             <>
               {/* TABS */}
-              <div className="relative mt-4 flex items-center">
-                <CustomSlider sliderClassName="tabs tabs-lifted !gap-0 border-gray text-white">
-                  {isAdmin && (
-                    <a
-                      role="tab"
-                      className={`group tab relative !border-none ${
-                        activeTab === "ecosystem"
-                          ? "bg-gray-light font-semibold text-black"
-                          : ""
-                      }`}
-                      onClick={() => setActiveTab("ecosystem")}
-                    >
-                      🌐 Ecosystem
-                    </a>
-                  )}
+              <CustomSlider sliderClassName="!gap-6 mt-4">
+                {isAdmin && (
                   <a
                     role="tab"
-                    className={`group tab relative !border-none ${
-                      activeTab === "engagement"
-                        ? "bg-gray-light font-semibold text-black"
-                        : ""
+                    className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                      activeTab === "ecosystem"
+                        ? "border-orange"
+                        : "hover:border-orange hover:text-gray"
                     }`}
-                    onClick={() => setActiveTab("engagement")}
+                    onClick={() => setActiveTab("ecosystem")}
                   >
-                    🤝 Engagement
+                    🌐 Ecosystem
                   </a>
-                  <a
-                    role="tab"
-                    className={`group tab relative !border-none font-semibold ${
-                      activeTab === "rewards" ? "bg-gray-light text-black" : ""
-                    }`}
-                    onClick={() => setActiveTab("rewards")}
-                  >
-                    🏆 Rewards & Skills
-                  </a>
-                  <a
-                    role="tab"
-                    className={`group tab relative !border-none font-semibold ${
-                      activeTab === "demographics"
-                        ? "bg-gray-light text-black"
-                        : ""
-                    }`}
-                    onClick={() => setActiveTab("demographics")}
-                  >
-                    📊 Demographics
-                  </a>
-                  <a
-                    role="tab"
-                    className={`group tab relative !border-none font-semibold ${
-                      activeTab === "completedYouth"
-                        ? "bg-gray-light text-black"
-                        : ""
-                    }`}
-                    onClick={() => setActiveTab("completedYouth")}
-                  >
-                    ✅ Completed Youth
-                  </a>
-                  <a
-                    role="tab"
-                    className={`group tab relative !border-none font-semibold ${
-                      activeTab === "selectedOpportunities"
-                        ? "bg-gray-light text-black"
-                        : ""
-                    }`}
-                    onClick={() => setActiveTab("selectedOpportunities")}
-                  >
-                    🚀 Selected Opportunities
-                  </a>
-                  <a
-                    role="tab"
-                    className={`group tab relative !border-none font-semibold ${
-                      activeTab === "sso" ? "bg-gray-light text-black" : ""
-                    }`}
-                    onClick={() => setActiveTab("sso")}
-                  >
-                    🔑 SSO
-                  </a>
-                </CustomSlider>
-              </div>
+                )}
+                <a
+                  role="tab"
+                  className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                    activeTab === "engagement"
+                      ? "border-orange"
+                      : "hover:border-orange hover:text-gray"
+                  }`}
+                  onClick={() => setActiveTab("engagement")}
+                >
+                  🤝 Engagement
+                </a>
+                <a
+                  role="tab"
+                  className={`border-b-4 py-2 font-semibold whitespace-nowrap text-white ${
+                    activeTab === "rewards"
+                      ? "border-orange"
+                      : "hover:border-orange hover:text-gray"
+                  }`}
+                  onClick={() => setActiveTab("rewards")}
+                >
+                  🏆 Rewards & Skills
+                </a>
+                <a
+                  role="tab"
+                  className={`border-b-4 py-2 font-semibold whitespace-nowrap text-white ${
+                    activeTab === "demographics"
+                      ? "border-orange"
+                      : "hover:border-orange hover:text-gray"
+                  }`}
+                  onClick={() => setActiveTab("demographics")}
+                >
+                  📊 Demographics
+                </a>
+                <a
+                  role="tab"
+                  className={`border-b-4 py-2 font-semibold whitespace-nowrap text-white ${
+                    activeTab === "completedYouth"
+                      ? "border-orange"
+                      : "hover:border-orange hover:text-gray"
+                  }`}
+                  onClick={() => setActiveTab("completedYouth")}
+                >
+                  ✅ Completed Youth
+                </a>
+                <a
+                  role="tab"
+                  className={`border-b-4 py-2 font-semibold whitespace-nowrap text-white ${
+                    activeTab === "selectedOpportunities"
+                      ? "border-orange"
+                      : "hover:border-orange hover:text-gray"
+                  }`}
+                  onClick={() => setActiveTab("selectedOpportunities")}
+                >
+                  🚀 Selected Opportunities
+                </a>
+                <a
+                  role="tab"
+                  className={`border-b-4 py-2 font-semibold whitespace-nowrap text-white ${
+                    activeTab === "sso"
+                      ? "border-orange"
+                      : "hover:border-orange hover:text-gray"
+                  }`}
+                  onClick={() => setActiveTab("sso")}
+                >
+                  🔑 SSO
+                </a>
+              </CustomSlider>
 
               {/* DASHBOARD */}
               <Suspense
@@ -1236,7 +1238,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                 {isAdmin && activeTab === "ecosystem" && (
                   <div className="flex w-full flex-col justify-between overflow-hidden rounded-lg bg-white p-4 shadow">
                     <div className="flex flex-row items-center gap-3">
-                      <div className="rounded-lg bg-gray-light p-1">📈</div>
+                      <div className="bg-gray-light rounded-lg p-1">📈</div>
                       <div className="text-md font-semibold">
                         Cumulative Completions
                       </div>
@@ -1254,15 +1256,15 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "engagement" && (
-                  <div className="flex animate-fade-in flex-col gap-4">
+                  <div className="animate-fade-in flex flex-col gap-4">
                     {/* ENGAGEMENT */}
                     <div className="flex flex-col">
                       <div className="flex flex-col gap-4 md:flex-row">
                         <div className="flex h-full flex-col gap-4 sm:flex-row md:flex-col">
                           {/* OPPORTUNITY COUNTS */}
-                          <div className="h-30 flex w-full min-w-[310px] flex-col gap-2 rounded-lg bg-white p-4 shadow">
+                          <div className="flex h-30 w-full min-w-[310px] flex-col gap-2 rounded-lg bg-white p-4 shadow">
                             <div className="flex items-center gap-3">
-                              <div className="items-center rounded-lg bg-gray-light p-1">
+                              <div className="bg-gray-light items-center rounded-lg p-1">
                                 🚀
                               </div>
                               <div className="text-md font-semibold">
@@ -1283,7 +1285,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                           {/* GOTO/COMPLETED CONVERSION RATE */}
                           <div className="flex h-full min-h-[185px] w-full min-w-[310px] flex-col gap-4 rounded-lg bg-white p-4 shadow">
                             <div className="flex flex-row items-center gap-3">
-                              <div className="rounded-lg bg-gray-light p-1">
+                              <div className="bg-gray-light rounded-lg p-1">
                                 🎯
                               </div>
                               <div className="text-md font-semibold">
@@ -1291,7 +1293,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                               </div>
                             </div>
 
-                            <div className="card-xs card flex flex-grow flex-col bg-gray shadow-sm">
+                            <div className="card-xs card bg-gray flex grow flex-col shadow-xs">
                               <div className="flex flex-col gap-2 px-4 py-2 text-sm tracking-tighter md:text-sm">
                                 <div className="flex flex-row items-center">
                                   <div>
@@ -1319,7 +1321,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                                   </div>
                                 </div>
 
-                                <div className="divider my-1 grow-0 !bg-green" />
+                                <div className="divider !bg-green my-1 grow-0" />
 
                                 <div className="flex flex-row items-center gap-5">
                                   <div>
@@ -1346,7 +1348,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                                   </div>
                                 </div>
 
-                                <div className="divider my-1 grow-0 !bg-green" />
+                                <div className="divider !bg-green my-1 grow-0" />
 
                                 <div className="flex flex-row items-center gap-5">
                                   <div>
@@ -1363,7 +1365,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                               </div>
                             </div>
 
-                            <div className="flex flex-row gap-1 text-xs text-gray-dark">
+                            <div className="text-gray-dark flex flex-row gap-1 text-xs">
                               <div className="">
                                 Data before
                                 <span className="mx-1 font-bold underline">
@@ -1374,10 +1376,10 @@ const OrganisationDashboard: NextPageWithLayout<{
                             </div>
 
                             <div className="flex flex-row gap-1">
-                              <IoMdInformationCircleOutline className="size-5 text-blue" />
+                              <IoMdInformationCircleOutline className="text-blue size-5" />
                               <button
                                 type="button"
-                                className="text-sm text-blue"
+                                className="text-blue text-sm"
                                 onClick={() =>
                                   setGotoCompletedConversionRatioDialogVisible(
                                     true,
@@ -1390,9 +1392,9 @@ const OrganisationDashboard: NextPageWithLayout<{
                           </div>
 
                           {/* OVERALL CONVERSION RATE */}
-                          <div className="flex !h-full !min-h-[220px] w-full min-w-[310px] flex-grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem]">
+                          <div className="flex !h-full !min-h-[220px] w-full min-w-[310px] grow flex-col gap-0 overflow-hidden rounded-lg bg-white p-4 shadow md:h-[11rem]">
                             <div className="flex flex-row items-center gap-3">
-                              <div className="rounded-lg bg-gray-light p-1">
+                              <div className="bg-gray-light rounded-lg p-1">
                                 🎯
                               </div>
                               <div className="text-md font-semibold">
@@ -1424,7 +1426,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                               ?.completedCountFromNavigatedExternalLinkTracking &&
                               !!engagementData?.opportunities?.conversionRate
                                 ?.viewedCountFromNavigatedExternalLinkTracking && (
-                                <div className="flex flex-grow flex-row items-end gap-1 text-xs text-gray-dark">
+                                <div className="text-gray-dark flex grow flex-row items-end gap-1 text-xs">
                                   <div>
                                     Data before
                                     <span className="mx-1 font-bold underline">
@@ -1450,13 +1452,13 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "rewards" && (
-                  <div className="flex animate-fade-in flex-col gap-1">
+                  <div className="animate-fade-in flex flex-col gap-1">
                     <div className="flex flex-col gap-4 md:flex-row">
                       <div className="flex flex-col gap-4 md:w-[20.75rem]">
                         {/* TOTAL AMOUNT AWARDED */}
-                        <div className="flex min-h-[185px] w-full min-w-[310px] flex-grow flex-col overflow-hidden rounded-lg bg-white p-4 shadow">
+                        <div className="flex min-h-[185px] w-full min-w-[310px] grow flex-col overflow-hidden rounded-lg bg-white p-4 shadow">
                           <div className="flex flex-row items-center gap-3">
-                            <div className="rounded-lg bg-gray-light p-1">
+                            <div className="bg-gray-light rounded-lg p-1">
                               🏆
                             </div>
                             <div className="text-md font-semibold">
@@ -1464,8 +1466,8 @@ const OrganisationDashboard: NextPageWithLayout<{
                             </div>
                           </div>
 
-                          <div className="-mt-16 flex flex-grow items-center gap-3">
-                            <div className="flex-growx text-3xl font-semibold">
+                          <div className="-mt-16 flex grow items-center gap-3">
+                            <div className="growx text-3xl font-semibold">
                               {engagementData?.opportunities.reward.totalAmount.toLocaleString() ??
                                 0}
                             </div>
@@ -1489,7 +1491,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                       <div className="flex w-full flex-col overflow-hidden rounded-lg bg-white p-4 shadow">
                         <div className="flex flex-row items-center gap-3">
-                          <div className="rounded-lg bg-gray-light p-1">🎖️</div>
+                          <div className="bg-gray-light rounded-lg p-1">🎖️</div>
                           <div className="text-md font-semibold">
                             Top Skills Awarded
                           </div>
@@ -1512,12 +1514,12 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "demographics" && (
-                  <div className="flex w-full animate-fade-in flex-col gap-1">
+                  <div className="animate-fade-in flex w-full flex-col gap-1">
                     <div className="flex flex-col gap-4 lg:flex-row">
                       {/* COUNTRIES */}
                       <div className="h-full w-full rounded-lg bg-white p-4 shadow">
                         <div className="flex flex-row items-center gap-3">
-                          <div className="rounded-lg bg-gray-light p-1">🌍</div>
+                          <div className="bg-gray-light rounded-lg p-1">🌍</div>
                           <div className="text-md font-semibold">Countries</div>
                         </div>
                         {engagementData?.demographics?.countries?.items && (
@@ -1537,7 +1539,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         {/* EDUCATION */}
                         <div className="h-full w-full min-w-[310px] rounded-lg bg-white p-4 shadow">
                           <div className="flex flex-row items-center gap-3">
-                            <div className="rounded-lg bg-gray-light p-1">
+                            <div className="bg-gray-light rounded-lg p-1">
                               🎓
                             </div>
                             <div className="text-md font-semibold">
@@ -1562,7 +1564,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         {/* GENDERS */}
                         <div className="h-full w-full min-w-[310px] rounded-lg bg-white p-4 shadow">
                           <div className="flex flex-row items-center gap-3">
-                            <div className="rounded-lg bg-gray-light p-1">
+                            <div className="bg-gray-light rounded-lg p-1">
                               🚻
                             </div>
                             <div className="text-md font-semibold">Genders</div>
@@ -1585,7 +1587,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                         {/* AGE */}
                         <div className="h-full w-full min-w-[310px] rounded-lg bg-white p-4 shadow">
                           <div className="flex flex-row items-center gap-3">
-                            <div className="rounded-lg bg-gray-light p-1">
+                            <div className="bg-gray-light rounded-lg p-1">
                               🎂
                             </div>
                             <div className="text-md font-semibold">Age</div>
@@ -1610,11 +1612,11 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "completedYouth" && (
-                  <div className="flex animate-fade-in flex-col gap-1">
+                  <div className="animate-fade-in flex flex-col gap-1">
                     {/* COMPLETED YOUTH */}
                     <div className="h-full w-full rounded-lg bg-white p-4 shadow">
                       <div className="flex flex-row items-center gap-3">
-                        <div className="rounded-lg bg-gray-light p-1">✅</div>
+                        <div className="bg-gray-light rounded-lg p-1">✅</div>
                         <div className="text-md font-semibold">
                           Completed by Youth
                         </div>
@@ -1759,11 +1761,11 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "selectedOpportunities" && (
-                  <div className="flex animate-fade-in flex-col">
+                  <div className="animate-fade-in flex flex-col">
                     {/* SELECTED OPPORTUNITIES */}
                     <div className="h-full w-full rounded-lg bg-white p-4 shadow">
                       <div className="flex flex-row items-center gap-3">
-                        <div className="rounded-lg bg-gray-light p-1">🚀</div>
+                        <div className="bg-gray-light rounded-lg p-1">🚀</div>
                         <div className="text-md font-semibold">
                           Selected Opportunities
                         </div>
@@ -1852,7 +1854,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                                             opportunity.navigatedExternalLinkCount
                                           }
                                         </td>
-                                        <td className="whitespace-nowrap text-center">
+                                        <td className="text-center whitespace-nowrap">
                                           <OpportunityStatus
                                             status={opportunity?.status?.toString()}
                                           />
@@ -1907,13 +1909,13 @@ const OrganisationDashboard: NextPageWithLayout<{
                 )}
 
                 {activeTab === "sso" && ssoData && (
-                  <div className="gap-x4 flex animate-fade-in flex-col">
+                  <div className="gap-x4 animate-fade-in flex flex-col">
                     {/* SSO SUMMARY */}
                     {ssoData?.outboundLoginCount !== null &&
                       ssoData?.inboundLoginCount !== null && (
                         <div className="mb-4 flex flex-col rounded-lg bg-white p-4 shadow">
                           <div className="mb-4 flex items-center gap-2">
-                            <div className="rounded-lg bg-gray-light p-1">
+                            <div className="bg-gray-light rounded-lg p-1">
                               <span>🔑</span>
                             </div>
                             <span className="font-semibold">
@@ -1957,7 +1959,7 @@ const OrganisationDashboard: NextPageWithLayout<{
 
                     {/* INDIVIDUAL ORGANIZATION CHARTS */}
                     {ssoData?.items && ssoData.items.length > 0 && (
-                      <div className="flex animate-fade-in flex-col gap-4">
+                      <div className="animate-fade-in flex flex-col gap-4">
                         {ssoData.items.map((item) => (
                           <SsoChartCombined key={item.id} data={item} />
                         ))}
@@ -1979,7 +1981,7 @@ const OrganisationDashboard: NextPageWithLayout<{
                     )}
 
                     {(!ssoData || ssoData.items?.length === 0) && (
-                      <div className="flex h-full items-center justify-center rounded-lg bg-gray-light">
+                      <div className="bg-gray-light flex h-full items-center justify-center rounded-lg">
                         <NoRowsMessage
                           title={"No configuration found"}
                           description={

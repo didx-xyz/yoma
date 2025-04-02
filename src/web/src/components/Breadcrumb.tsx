@@ -16,7 +16,7 @@ const Breadcrumb: React.FC<InputProps> = ({ items }) => {
           <li key={index}>
             {item.url ? (
               <Link
-                className="max-w-[200px] overflow-hidden text-ellipsis font-bold hover:text-gray-dark"
+                className="hover:text-gray-dark max-w-[200px] overflow-hidden font-bold text-ellipsis"
                 href={item.url}
               >
                 {item.iconImage && (

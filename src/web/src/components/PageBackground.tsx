@@ -9,7 +9,7 @@ export const PageBackground: React.FC<{
 }> = ({ className = "h-80", includeStamps }) => {
   return (
     <div
-      className={`bg-theme absolute left-0 top-0 z-0 flex w-full items-center justify-center ${className}`}
+      className={`bg-theme absolute top-0 left-0 z-0 flex w-full items-center justify-center ${className}`}
     >
       {/* WORLD MAP */}
       <Image

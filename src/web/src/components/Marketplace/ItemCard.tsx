@@ -40,12 +40,12 @@ const ItemCardComponent: React.FC<InputProps> = ({
     >
       <div className="flex w-full flex-col items-start justify-start gap-2 md:scale-100">
         {/* HEADER & IMAGE */}
-        <div className="flex w-full flex-grow flex-row items-start justify-between">
+        <div className="flex w-full grow flex-row items-start justify-between">
           <div className="flex flex-col items-start justify-start gap-1">
-            <p className="mr-1 max-w-[170px] truncate text-xs font-medium text-gray-dark md:max-w-[250px]">
+            <p className="text-gray-dark mr-1 max-w-[170px] truncate text-xs font-medium md:max-w-[250px]">
               {company}
             </p>
-            <p className="items-centerx line-clamp-2 flex h-10 w-full whitespace-break-spaces text-sm font-semibold">
+            <p className="items-centerx line-clamp-2 flex h-10 w-full text-sm font-semibold whitespace-break-spaces">
               {item.name}
             </p>
           </div>
@@ -80,7 +80,7 @@ const ItemCardComponent: React.FC<InputProps> = ({
         <div className="flex flex-row items-center justify-start gap-2">
           {(item.amount ?? 0) > 0 && (
             <div className="flex">
-              <div className="badge h-6 whitespace-nowrap rounded-md bg-yellow-light text-yellow">
+              <div className="badge bg-yellow-light text-yellow h-6 rounded-md whitespace-nowrap">
                 <Image
                   src={iconZlto}
                   alt="Icon Zlto"
@@ -93,14 +93,14 @@ const ItemCardComponent: React.FC<InputProps> = ({
               </div>
             </div>
           )}
-          <div className="badge h-6 whitespace-nowrap rounded-md bg-gray text-gray-dark">
+          <div className="badge bg-gray text-gray-dark h-6 rounded-md whitespace-nowrap">
             <span className="ml-1 text-xs">{item.count ?? 0} left</span>
           </div>
         </div>
 
         {/* LOCKED/UNLOCKED */}
         {item.storeAccessControlRuleResult?.locked && (
-          <div className="absolute bottom-0 right-0 flex flex-col items-center justify-start gap-2 rounded-md bg-gray-light px-2 py-1">
+          <div className="bg-gray-light absolute right-0 bottom-0 flex flex-col items-center justify-start gap-2 rounded-md px-2 py-1">
             <IoMdLock className="text-orange" />
             <p className="text-red text-xs font-semibold tracking-wide">
               Locked

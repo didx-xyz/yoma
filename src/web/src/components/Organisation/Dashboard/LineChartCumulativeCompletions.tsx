@@ -69,8 +69,8 @@ export const LineChartCumulativeCompletions: React.FC<{
             );
           }}
         >
-          <div className="flex select-none flex-row items-center gap-3">
-            <div className="rounded-lg bg-gray-light p-1">🏢</div>
+          <div className="flex flex-row items-center gap-3 select-none">
+            <div className="bg-gray-light rounded-lg p-1">🏢</div>
             <div
               className="text-md tooltip tooltip-secondary max-w-20 truncate font-semibold md:max-w-36"
               data-tip={name}
@@ -223,7 +223,7 @@ export const LineChartCumulativeCompletions: React.FC<{
           ]}
         />
       ) : (
-        <div className="flex h-full items-center justify-center rounded-lg bg-gray-light">
+        <div className="bg-gray-light flex h-full items-center justify-center rounded-lg">
           <NoRowsMessage
             title={"Not enough data to display."}
             description={

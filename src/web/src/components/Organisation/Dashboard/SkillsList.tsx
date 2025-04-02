@@ -68,7 +68,7 @@ export const SkillsList: React.FC<SkillsListChartProps> = ({ data }) => {
       {data?.topCompleted.map((skill) => (
         <div
           key={`legend-${skill.id}`}
-          className="flex cursor-pointer select-none flex-col gap-1"
+          className="flex cursor-pointer flex-col gap-1 select-none"
           onClick={() =>
             setSelectedSkill((prevSkill) =>
               prevSkill === skill.id ? null : skill.id,
@@ -539,7 +539,7 @@ export const SkillsList: React.FC<SkillsListChartProps> = ({ data }) => {
   // Show placeholder when no data available
   if (!data?.topCompleted.length) {
     return (
-      <div className="flex h-full items-center justify-center rounded-lg bg-gray-light">
+      <div className="bg-gray-light flex h-full items-center justify-center rounded-lg">
         <NoRowsMessage
           title={"Not enough data to display."}
           description={
@@ -551,7 +551,7 @@ export const SkillsList: React.FC<SkillsListChartProps> = ({ data }) => {
   }
 
   return (
-    <div className="flex h-full w-full flex-col rounded-lg border-2 border-dotted border-gray">
+    <div className="border-gray flex h-full w-full flex-col rounded-lg border-2 border-dotted">
       <CustomSlider
         className="!m-4 !min-h-[80px]"
         sliderClassName="!md:gap-8 !gap-4"
@@ -561,7 +561,7 @@ export const SkillsList: React.FC<SkillsListChartProps> = ({ data }) => {
 
       <canvas
         ref={canvasRef}
-        className="mt-4 h-full w-full flex-grow rounded"
+        className="mt-4 h-full w-full grow rounded"
         onMouseMove={handleMouseMove}
         onMouseDown={handleMouseDown}
         onMouseUp={handleMouseUp}

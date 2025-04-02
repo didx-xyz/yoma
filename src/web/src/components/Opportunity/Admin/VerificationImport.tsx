@@ -142,11 +142,11 @@ export const VerificationImport: React.FC<InputProps> = ({
         onSubmit={handleSubmit(onSubmit)}
       >
         <div className="flex flex-col gap-2">
-          <div className="flex flex-row bg-green p-4 shadow-lg">
-            <h1 className="flex-grow"></h1>
+          <div className="bg-green flex flex-row p-4 shadow-lg">
+            <h1 className="grow"></h1>
             <button
               type="button"
-              className="btn rounded-full border-0 bg-white p-3 text-gray-dark hover:bg-gray"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
               onClick={onClose}
             >
               <IoMdClose className="h-6 w-6"></IoMdClose>
@@ -154,8 +154,8 @@ export const VerificationImport: React.FC<InputProps> = ({
           </div>
           <div className="flex flex-col">
             <div className="flex flex-col items-center justify-center gap-4">
-              <div className="-mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full border-green-dark bg-white p-1 shadow-lg">
-                <FaUpload className="h-8 w-8 text-yellow" />
+              <div className="border-green-dark -mt-11 mb-4 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white p-1 shadow-lg">
+                <FaUpload className="text-yellow h-8 w-8" />
               </div>
             </div>
 
@@ -167,7 +167,7 @@ export const VerificationImport: React.FC<InputProps> = ({
                 <h4 className="font-semibold tracking-wide">
                   Import Submissions
                 </h4>
-                <div className="tracking-wide text-gray-dark">
+                <div className="text-gray-dark tracking-wide">
                   <p>
                     Upload a CSV file to import submissions for your
                     organisation.
@@ -176,7 +176,7 @@ export const VerificationImport: React.FC<InputProps> = ({
               </div>
 
               {/* HELP QUESTIONS */}
-              <div className="collapse collapse-arrow rounded-lg border border-gray text-left leading-relaxed">
+              <div className="collapse-arrow border-gray collapse rounded-lg border text-left leading-relaxed">
                 <input type="radio" name="opp-accordion" />
                 <div className="collapse-title font-semibold">
                   What must the file contain?
@@ -246,7 +246,7 @@ export const VerificationImport: React.FC<InputProps> = ({
                 </div>
               </div>
 
-              <div className="bg-base-100x collapse collapse-arrow rounded-lg border border-gray text-left leading-relaxed">
+              <div className="bg-base-100x collapse-arrow border-gray collapse rounded-lg border text-left leading-relaxed">
                 <input type="radio" name="opp-accordion" />
                 <div className="collapse-title font-semibold">Sample File</div>
                 <div className="collapse-content text-sm">
@@ -265,30 +265,28 @@ export const VerificationImport: React.FC<InputProps> = ({
               </div>
 
               {/* FILE UPLOAD */}
-              <div className="flex w-full flex-col rounded-lg border-dotted bg-gray-light">
-                <div className="form-control">
-                  <FileUpload
-                    id="importFileUpload"
-                    files={[]}
-                    fileTypes={[...ACCEPTED_CSV_TYPES].join(",")}
-                    fileTypesLabels={[...ACCEPTED_CSV_TYPES_LABEL].join(",")}
-                    allowMultiple={false}
-                    iconAlt={<FcDocument className="size-10" />}
-                    onUploadComplete={(files) => {
-                      setValue("importFile", files[0], {
-                        shouldValidate: true,
-                      });
-                    }}
-                  >
-                    <>
-                      {errors.importFile && (
-                        <FormMessage messageType={FormMessageType.Warning}>
-                          {`${errors.importFile.message}`}
-                        </FormMessage>
-                      )}
-                    </>
-                  </FileUpload>
-                </div>
+              <div className="bg-gray-light flex w-full flex-col rounded-lg border-dotted">
+                <FileUpload
+                  id="importFileUpload"
+                  files={[]}
+                  fileTypes={[...ACCEPTED_CSV_TYPES].join(",")}
+                  fileTypesLabels={[...ACCEPTED_CSV_TYPES_LABEL].join(",")}
+                  allowMultiple={false}
+                  iconAlt={<FcDocument className="size-10" />}
+                  onUploadComplete={(files) => {
+                    setValue("importFile", files[0], {
+                      shouldValidate: true,
+                    });
+                  }}
+                >
+                  <>
+                    {errors.importFile && (
+                      <FormMessage messageType={FormMessageType.Warning}>
+                        {`${errors.importFile.message}`}
+                      </FormMessage>
+                    )}
+                  </>
+                </FileUpload>
               </div>
 
               {/* IMPORT RESPONSE */}
@@ -319,17 +317,17 @@ export const VerificationImport: React.FC<InputProps> = ({
                   </>
                 )}
 
-              <div className="mb-10 mt-4 flex w-full flex-grow gap-4">
+              <div className="mt-4 mb-10 flex w-full grow gap-4">
                 <button
                   type="button"
-                  className="btn btn-outline w-1/2 flex-shrink rounded-full border-green bg-white normal-case text-green hover:border-0 hover:bg-green hover:text-white"
+                  className="btn btn-outline border-green text-green hover:bg-green w-1/2 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
                   onClick={onClose}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="hover:border-1 btn w-1/2 flex-shrink rounded-full border-0 bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110"
+                  className="btn bg-green hover:bg-green w-1/2 shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
                 >
                   Import
                 </button>

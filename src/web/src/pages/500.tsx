@@ -8,7 +8,7 @@ import Link from "next/link";
 const Status500: NextPageWithLayout = () => {
   return (
     <div className="container flex flex-col items-center justify-start gap-12 md:mt-44 md:px-4">
-      <div className="bg-theme z-2 absolute top-0 h-[256px] w-full"></div>
+      <div className="bg-theme absolute top-0 z-2 h-[256px] w-full"></div>
       <div className="z-10 flex h-full w-full max-w-md flex-col place-items-center justify-center gap-8 rounded-xl bg-white p-4 md:h-fit md:max-w-2xl md:p-16">
         <Image
           src={IconRingBuoy}
@@ -16,16 +16,16 @@ const Status500: NextPageWithLayout = () => {
           width={100}
           sizes="100vw"
           priority={true}
-          className="mt-2 h-auto rounded-full p-4 shadow-custom"
+          className="shadow-custom mt-2 h-auto rounded-full p-4"
         />
 
         <h2 className="-mb-6 font-bold">Oops!</h2>
-        <p className="text-center text-gray-dark">
+        <p className="text-gray-dark text-center">
           There was an unexpected error. Please try again later.
         </p>
         <Link
           href="/"
-          className="btn btn-success mb-4 mt-2 rounded-3xl px-8 text-white"
+          className="btn btn-success mt-2 mb-4 rounded-3xl px-8 text-white"
         >
           Take me home
         </Link>

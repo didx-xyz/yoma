@@ -18,13 +18,13 @@ export const InternalServerError: React.FC = () => {
             width={100}
             sizes="100vw"
             priority={true}
-            className="mt-2 h-auto rounded-full p-4 shadow-custom"
+            className="shadow-custom mt-2 h-auto rounded-full p-4"
           />
           <h4>Error</h4>
-          <p className="text-gray-500 text-center">
+          <p className="text-center text-gray-500">
             We are unable to show this page right now.
           </p>
-          <p className="text-gray-500 text-center">Please try again later.</p>
+          <p className="text-center text-gray-500">Please try again later.</p>
           <Link className="btn btn-primary px-12" href="/">
             Go back
           </Link>

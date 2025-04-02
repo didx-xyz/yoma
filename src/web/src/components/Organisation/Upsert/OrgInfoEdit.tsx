@@ -226,7 +226,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           {onCancel && (
             <button
               type="button"
-              className="btn btn-warning w-1/2 flex-shrink normal-case md:btn-wide"
+              className="btn btn-warning md:btn-wide w-1/2 shrink normal-case"
               onClick={onCancel}
             >
               {cancelButtonText}
@@ -235,7 +235,7 @@ export const OrgInfoEdit: React.FC<InputProps> = ({
           {onSubmit && (
             <button
               type="submit"
-              className="btn btn-success w-1/2 flex-shrink normal-case md:btn-wide"
+              className="btn btn-success md:btn-wide w-1/2 shrink normal-case"
             >
               {submitButtonText}
             </button>

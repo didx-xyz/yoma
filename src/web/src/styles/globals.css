@@ -1,0 +1,562 @@
+@import "tailwindcss";
+@import "./colors.css";
+
+/* TailwindCSS overrides */
+@theme {
+  /* Font sizes */
+  --text-xs: 0.775rem;
+  --text-sm: 0.9rem;
+  --text-base: 1.1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.875rem;
+  --text-3xl: 2.25rem;
+  --text-4xl: 2.625rem;
+  --text-5xl: 3.25rem;
+  --text-6xl: 4.25rem;
+  --text-7xl: 5.25rem;
+  --text-8xl: 6.25rem;
+  --text-9xl: 7.25rem;
+
+  /* Line height */
+  --line-height-xs: 1rem;
+  --line-height-sm: 1.25rem;
+  --line-height-base: 1.5rem;
+  --line-height-lg: 1.75rem;
+  --line-height-xl: 1.75rem;
+  --line-height-2xl: 2rem;
+  --line-height-3xl: 2.5rem;
+  --line-height-4xl: 2.75rem;
+  --line-height-5xl: 1;
+  --line-height-6xl: 1;
+  --line-height-7xl: 1;
+  --line-height-8xl: 1;
+  --line-height-9xl: 1;
+
+  /* Shadows */
+  --shadow-custom:
+    0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04);
+
+  /* Transition timing functions */
+  --ease-bounce: cubic-bezier(0.175, 1.485, 0.32, 1.275);
+
+  /* Animation variables */
+  --animate-spin: spin 1s linear infinite;
+  --animate-ping: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+  --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  --animate-bounce: bounce 1s infinite;
+  --animate-fade-in: fade-in 0.3s ease-in-out forwards;
+  --animate-fade-out: fade-out 0.3s ease-in-out forwards;
+  --animate-slide-in-bottom: slide-in-bottom 0.5s ease-in-out forwards;
+  --animate-slide-out-bottom: slide-out-bottom 0.3s ease-in-out forwards;
+  --animate-slide-in-top: slide-in-top 0.5s ease-in-out forwards;
+  --animate-slide-out-top: slide-out-top 0.5s ease-in-out forwards;
+  --animate-slide-in-left: slide-in-left 0.5s ease-in-out forwards;
+  --animate-slide-out-left: slide-out-left 0.5s ease-in-out forwards;
+  --animate-slide-in-right: slide-in-right 0.5s ease-in-out forwards;
+  --animate-slide-out-right: slide-out-right 0.5s ease-in-out forwards;
+  --animate-wiggle: wiggle 2s ease-in-out infinite;
+  --animate-wiggle-once: wiggle 0.5s ease-in-out forwards;
+  --animate-pulse-once: pulse 1s cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  --animate-enter: enter 0.3s ease-out forwards;
+  --animate-exit: exit 0.3s ease-in forwards;
+  --animate-spin-once: spin-once 0.5s ease-in-out forwards;
+  --animate-bounce-once: bounce-once 0.5s ease-in-out forwards;
+
+  /* Positioning */
+  --inset-1/5: 20%;
+
+  /* Keyframe definitions */
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+  @keyframes ping {
+    75%,
+    100% {
+      transform: scale(2);
+      opacity: 0;
+    }
+  }
+  @keyframes pulse {
+    50% {
+      opacity: 0.5;
+    }
+  }
+  @keyframes bounce {
+    0%,
+    100% {
+      transform: translateY(-25%);
+      animation-timing-function: cubic-bezier(0.8, 0, 1, 1);
+    }
+    50% {
+      transform: none;
+      animation-timing-function: cubic-bezier(0, 0, 0.2, 1);
+    }
+  }
+  @keyframes fade-in {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes fade-out {
+    0% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+  @keyframes slide-in-bottom {
+    0% {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes slide-out-bottom {
+    0% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(100%);
+      opacity: 0;
+    }
+  }
+  @keyframes slide-in-top {
+    0% {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  @keyframes slide-out-top {
+    0% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+  }
+  @keyframes slide-in-left {
+    0% {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  @keyframes slide-out-left {
+    0% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(-100%);
+      opacity: 0;
+    }
+  }
+  @keyframes slide-in-right {
+    0% {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+  }
+  @keyframes slide-out-right {
+    0% {
+      transform: translateX(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateX(100%);
+      opacity: 0;
+    }
+  }
+  @keyframes wiggle {
+    0% {
+      transform: rotate(-3deg);
+    }
+    25% {
+      transform: rotate(3deg);
+    }
+    50% {
+      transform: rotate(-3deg);
+    }
+    75% {
+      transform: rotate(3deg);
+    }
+    100% {
+      transform: rotate(-3deg);
+    }
+  }
+  @keyframes enter {
+    0% {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    100% {
+      opacity: 1;
+      transform: scale(1);
+      visibility: visible;
+    }
+  }
+  @keyframes exit {
+    0% {
+      opacity: 1;
+      transform: scale(1);
+      visibility: visible;
+    }
+    100% {
+      opacity: 0;
+      transform: scale(0.95);
+      visibility: hidden;
+    }
+  }
+  @keyframes fadeIn {
+    0% {
+      opacity: 0;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  @keyframes spin-once {
+    0% {
+      transform: rotate(0deg);
+      opacity: 0;
+    }
+    50% {
+      transform: rotate(180deg);
+      opacity: 0.5;
+    }
+    100% {
+      transform: rotate(360deg);
+      opacity: 1;
+    }
+  }
+  @keyframes bounce-once {
+    0% {
+      transform: scale(1);
+      opacity: 0;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.7;
+    }
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+/* DaisyUI light theme overrides */
+@plugin "daisyui" {
+  themes: light --default;
+}
+
+@plugin "daisyui/theme" {
+  name: "light";
+  default: true;
+  --color-primary: #41204b;
+  --color-primary-content: #ffffff;
+  --color-secondary: #387f6a;
+  --color-secondary-content: #ffffff;
+  --color-accent: oklch(65% 0.25 160);
+  --color-accent-content: oklch(98% 0.01 160);
+  --color-neutral: oklch(50% 0.05 240);
+  --color-neutral-content: oklch(98% 0.01 240);
+  --color-info: #4cade9;
+  --color-info-content: oklch(98% 0.01 220);
+  --color-success: #387f6a;
+  --color-success-content: oklch(98% 0.01 140);
+  --color-warning: #f9ab3e;
+  --color-warning-content: oklch(20% 0.05 80);
+  --color-error: #fe4d57;
+  --color-error-content: oklch(98% 0.01 30);
+}
+
+@theme {
+  /* Basic colors */
+  --color-white: var(--color-white);
+  --color-white-shade: var(--color-white-shade);
+  --color-black: var(--color-black);
+
+  /* Blue variants */
+  --color-blue: var(--color-blue);
+  --color-blue-light: var(--color-blue-light);
+  --color-blue-shade: var(--color-blue-shade);
+  --color-blue-dark: var(--color-blue-dark);
+
+  /* Purple variants */
+  --color-purple: var(--color-purple);
+  --color-purple-light: var(--color-purple-light);
+  --color-purple-dark: var(--color-purple-dark);
+  --color-purple-soft: var(--color-purple-soft);
+  --color-purple-shade: var(--color-purple-shade);
+  --color-purple-tint: var(--color-purple-tint);
+
+  /* Pink */
+  --color-pink: var(--color-pink);
+
+  /* Orange variants */
+  --color-orange: var(--color-orange);
+  --color-orange-light: var(--color-orange-light);
+
+  /* Green variants */
+  --color-green: var(--color-green);
+  --color-green-tint: var(--color-green-tint);
+  --color-green-light: var(--color-green-light);
+  --color-green-dark: var(--color-green-dark);
+
+  /* Yellow variants */
+  --color-yellow: var(--color-yellow);
+  --color-yellow-light: var(--color-yellow-light);
+  --color-yellow-tint: var(--color-yellow-tint);
+
+  /* Gray variants */
+  --color-gray: var(--color-gray);
+  --color-gray-dark: var(--color-gray-dark);
+  --color-gray-light: var(--color-gray-light);
+
+  /* Overlay */
+  --color-overlay: var(--color-overlay);
+}
+
+@layer base {
+  h1 {
+    @apply text-2xl tracking-tighter md:text-4xl;
+  }
+  h2 {
+    @apply text-xl tracking-tighter md:text-3xl;
+  }
+  h3 {
+    @apply text-lg tracking-tighter md:text-2xl;
+  }
+  h4 {
+    @apply text-base tracking-tighter md:text-xl;
+  }
+  h5 {
+    @apply text-sm tracking-tighter md:text-lg;
+  }
+  h6 {
+    @apply text-xs tracking-tighter md:text-base;
+  }
+}
+
+/* Body Styles */
+body {
+  background-color: var(--color-white);
+}
+
+/* Button Styles */
+.btn {
+  @apply rounded-full;
+}
+.btn-success {
+  @apply text-white;
+}
+
+/* Badge Styles */
+.badge {
+  @apply h-6 overflow-hidden rounded-md border-none text-xs font-bold whitespace-nowrap;
+}
+
+/* Divider Styles */
+.divider {
+  @apply h-[2px] rounded-full;
+  background-color: var(--color-gray-light);
+}
+
+/* Modal Overlay */
+.modal-overlay {
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+/* Scrollbar Customization */
+:root {
+  --primary: var(--color-gray-light);
+  --secondary: var(--color-gray-dark);
+}
+/* Chrome, Edge, and Safari */
+*::-webkit-scrollbar {
+  width: 12px;
+}
+*::-webkit-scrollbar-track {
+  background: var(--primary);
+  border-radius: 5px;
+}
+*::-webkit-scrollbar-thumb {
+  background-color: var(--secondary);
+  border-radius: 14px;
+  border: 3px solid var(--primary);
+}
+
+/* Side-Drawer Scroll Fix */
+/* Prevent white-space on the right of the side-drawer when open */
+/* https://github.com/saadeghi/daisyui/issues/2859 */
+html {
+  scrollbar-gutter: auto !important;
+}
+html:has(body.content-overflow-y) {
+  scrollbar-gutter: stable !important;
+}
+
+/* Theme Overrides */
+:root .bg-theme {
+  background-color: var(--color-purple);
+}
+[data-theme="purple"] .bg-theme {
+  background-color: var(--color-purple);
+}
+[data-theme="green"] .bg-theme {
+  background-color: var(--color-green);
+}
+[data-theme="blue"] .bg-theme {
+  background-color: var(--color-blue);
+}
+[data-theme="orange"] .bg-theme {
+  background-color: var(--color-orange);
+}
+
+/* Miscellaneous Styles */
+/* Hide the Google Translate toolbar */
+.skiptranslate {
+  display: none !important;
+}
+
+/* Carousel Item Alignment Fix */
+.slide {
+  text-align: inherit !important;
+}
+
+/* Prevent Dragging of Elements on iOS */
+.no-drag {
+  -webkit-user-drag: none;
+}
+
+/* Opportunity Horizontal Filter Carousel Pill Color */
+.rssas-circle {
+  background: var(--color-purple) !important;
+}
+
+/* Hide the scrollbar on the slider tray */
+.rssas-slider-tray {
+  &::-webkit-scrollbar {
+    display: none; /* Safari and Chrome */
+  }
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+/* Adjust Z-Index for Feedback Button */
+/* Prevent the feedback button from covering the user menu drawer */
+#beacon-container .BeaconFabButtonFrame {
+  z-index: 30 !important;
+}
+
+/* Third-Party Library Overrides */
+/* NProgress Styles */
+#nprogress .bar {
+  height: 5.5px !important;
+  background: var(--color-white) !important;
+  opacity: 0.3 !important;
+}
+#nprogress .peg {
+  display: none !important;
+}
+
+/* React-Toastify Styles */
+.Toastify__close-button {
+  @apply text-white opacity-100;
+}
+.Toastify__close-button:hover,
+.Toastify__close-button:focus {
+  @apply scale-110;
+}
+
+/* React-datepicker Styles */
+.react-datepicker-popper {
+  z-index: 9999 !important;
+}
+
+/* MDXEditor Overrides */
+.mdxeditor-popup-container {
+  z-index: 2000 !important;
+}
+.editor.editable .mdxeditor {
+  border-style: solid;
+  border-width: 1px;
+  border-color: var(--color-gray);
+  border-radius: var(--radius-medium);
+}
+.editor.readonly .mdxeditor {
+  padding: 0;
+  margin: 0;
+}
+.editor.readonly .mdxeditor-toolbar {
+  display: none;
+}
+.mdxeditor ol,
+.mdxeditor ul {
+  list-style-type: disc !important;
+  margin-left: 0.5rem !important;
+  padding-left: 0.5rem !important;
+}
+.mdxeditor li {
+  text-indent: 0.5rem;
+}
+.mdxeditor li[role="checkbox"]::before,
+.mdxeditor li[role="checkbox"]::after {
+  margin-top: 5px;
+}
+.mdxeditor ol {
+  list-style-type: decimal !important;
+}
+.mdxeditor :where(blockquote):not(:where([class~="not-prose"] *)) {
+  font-weight: 500 !important;
+  font-style: italic !important;
+  color: var(--tw-prose-quotes) !important;
+  border-left-width: 0.25rem !important;
+  border-left-color: var(--color-gray) !important;
+  quotes: "201C" "201D" "2018" "2019" !important;
+  margin-top: 1.6em !important;
+  margin-bottom: 1.6em !important;
+  padding-left: 1em !important;
+}
+
+/* Media Queries */
+/* Hide widgets on mobile devices */
+@media (max-width: 760px) {
+  /* Hide Help Scout */
+  #beacon-container {
+    display: none !important;
+  }
+  /* Hide Gleac Chat */
+  .widget {
+    visibility: hidden !important;
+  }
+  /* Hide HubSpot Messages */
+  #hubspot-messages-iframe-container {
+    visibility: hidden !important;
+  }
+}

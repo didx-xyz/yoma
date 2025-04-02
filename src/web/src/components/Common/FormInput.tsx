@@ -16,7 +16,7 @@ const FormInput: React.FC<{
 }> = ({ inputProps }) => {
   return (
     <input
-      className="input input-bordered rounded-md border-gray focus:border-gray focus:outline-none"
+      className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
       {...inputProps}
     />
   );

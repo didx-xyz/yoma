@@ -220,17 +220,17 @@ export const DashboardFilterVertical: React.FC<{
       >
         {/* Header */}
         <div className="flex flex-row px-4 py-4 md:px-8">
-          <div className="my-autox flex flex-grow flex-col gap-1">
+          <div className="my-autox flex grow flex-col gap-1">
             <div className="flex flex-row items-center gap-4 text-xl font-bold">
               <IoMdOptions className="h-5 w-5" /> Filter
             </div>
-            <div className="text-sm font-semibold text-gray-dark">
+            <div className="text-gray-dark text-sm font-semibold">
               Select the criteria below to filter the dashboard.
             </div>
           </div>
           <button
             type="button"
-            className="bg-theme btn rounded-full border-0 p-3 text-gray-light hover:brightness-90"
+            className="bg-theme btn text-gray-light rounded-full border-0 p-3 hover:brightness-90"
             onClick={onCancel}
           >
             <IoMdClose className="h-6 w-6" />
@@ -238,10 +238,10 @@ export const DashboardFilterVertical: React.FC<{
         </div>
 
         {/* Filter Fields */}
-        <div className="flex flex-col gap-4 bg-gray-light p-2 md:px-8">
+        <div className="bg-gray-light flex flex-col gap-4 p-2 md:px-8">
           {/* Organisations Async Dropdown */}
           {isAdmin && (
-            <div className="form-control gap-1">
+            <fieldset className="fieldset gap-1">
               <label className="label">
                 <span className="label-text flex font-semibold">
                   <span className="flex gap-2">
@@ -286,16 +286,16 @@ export const DashboardFilterVertical: React.FC<{
               />
               {formState.errors.organizations && (
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
+                  <span className="label-text-alt text-red-500 italic">
                     {formState.errors.organizations.message as string}
                   </span>
                 </label>
               )}
-            </div>
+            </fieldset>
           )}
 
           {/* Countries Async Dropdown */}
-          <div className="form-control gap-1">
+          <fieldset className="fieldset gap-1">
             <label className="label">
               <span className="label-text flex font-semibold">
                 <span className="flex gap-2">
@@ -352,16 +352,17 @@ export const DashboardFilterVertical: React.FC<{
             />
             {formState.errors.countries && (
               <label className="label font-bold">
-                <span className="label-text-alt italic text-red-500">
+                <span className="label-text-alt text-red-500 italic">
                   {formState.errors.countries.message as string}
                 </span>
               </label>
             )}
-          </div>
+          </fieldset>
+
           {/* Date Pickers */}
           <div className="flex flex-col items-start gap-4 md:flex-row md:gap-14">
             {/* Start Date */}
-            <div className="form-control w-full gap-1">
+            <fieldset className="fieldset w-full gap-1">
               <label className="label">
                 <span className="label-text flex font-semibold">
                   <span className="flex gap-2">
@@ -375,7 +376,7 @@ export const DashboardFilterVertical: React.FC<{
                 name="startDate"
                 render={({ field: { onChange, value } }) => (
                   <DatePicker
-                    className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
+                    className="input focus:border-gray h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:outline-none"
                     onChange={(date) => onChange(toISOStringForTimezone(date))}
                     selected={value ? new Date(value) : null}
                     placeholderText="Start Date"
@@ -385,15 +386,15 @@ export const DashboardFilterVertical: React.FC<{
               />
               {formState.errors.startDate && (
                 <label className="label">
-                  <span className="label-text-alt px-4 text-base italic text-red-500">
+                  <span className="label-text-alt px-4 text-base text-red-500 italic">
                     {formState.errors.startDate.message as string}
                   </span>
                 </label>
               )}
-            </div>
+            </fieldset>
 
             {/* End Date */}
-            <div className="form-control w-full gap-1">
+            <fieldset className="fieldset w-full gap-1">
               <label className="label">
                 <span className="label-text flex font-semibold">
                   <span className="flex gap-2">
@@ -407,7 +408,7 @@ export const DashboardFilterVertical: React.FC<{
                 name="endDate"
                 render={({ field: { onChange, value } }) => (
                   <DatePicker
-                    className="input input-bordered h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
+                    className="input focus:border-gray h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:outline-none"
                     onChange={(date) => {
                       if (date) date.setHours(23, 59, 59, 999);
                       onChange(toISOStringForTimezone(date));
@@ -420,17 +421,18 @@ export const DashboardFilterVertical: React.FC<{
               />
               {formState.errors.endDate && (
                 <label className="label">
-                  <span className="label-text-alt px-4 text-base italic text-red-500">
+                  <span className="label-text-alt px-4 text-base text-red-500 italic">
                     {formState.errors.endDate.message as string}
                   </span>
                 </label>
               )}
-            </div>
+            </fieldset>
           </div>
+
           {/* Opportunities & Categories */}
           <div className="flex flex-col items-start gap-4 md:flex-row">
             {/* Opportunities Async Dropdown */}
-            <div className="form-control w-full gap-1">
+            <fieldset className="fieldset w-full gap-1">
               <label className="label">
                 <span className="label-text flex font-semibold">
                   <span className="flex gap-2">
@@ -476,19 +478,19 @@ export const DashboardFilterVertical: React.FC<{
               />
               {formState.errors.opportunities && (
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
+                  <span className="label-text-alt text-red-500 italic">
                     {formState.errors.opportunities.message as string}
                   </span>
                 </label>
               )}
-            </div>
+            </fieldset>
 
-            <div className="md: mx-auto mt-12 flex h-full w-full items-start justify-center text-center text-xs font-bold text-gray-dark">
+            <div className="md: text-gray-dark mx-auto mt-12 flex h-full w-full items-start justify-center text-center text-xs font-bold">
               OR
             </div>
 
             {/* Categories Select Dropdown */}
-            <div className="form-control w-full gap-1">
+            <fieldset className="fieldset w-full gap-1">
               <label className="label">
                 <span className="label-text flex font-semibold">
                   <span className="flex gap-2">
@@ -552,12 +554,12 @@ export const DashboardFilterVertical: React.FC<{
               />
               {formState.errors.categories && (
                 <label className="label font-bold">
-                  <span className="label-text-alt italic text-red-500">
+                  <span className="label-text-alt text-red-500 italic">
                     {formState.errors.categories.message as string}
                   </span>
                 </label>
               )}
-            </div>
+            </fieldset>
           </div>
         </div>
 
@@ -566,7 +568,7 @@ export const DashboardFilterVertical: React.FC<{
           {onClear && (
             <button
               type="button"
-              className="btn btn-neutral w-full flex-grow rounded-full !border-gray-dark hover:bg-gray-light md:w-40"
+              className="btn btn-neutral !border-gray-dark hover:bg-gray-light w-full grow rounded-full md:w-40"
               onClick={onClear}
             >
               {clearButtonText}
@@ -575,7 +577,7 @@ export const DashboardFilterVertical: React.FC<{
           {onSubmit && (
             <button
               type="submit"
-              className="bg-theme border-0-full btn w-full flex-grow rounded text-gray-light hover:brightness-90 md:w-40"
+              className="bg-theme border-0-full btn text-gray-light w-full grow rounded hover:brightness-90 md:w-40"
             >
               {submitButtonText}
             </button>

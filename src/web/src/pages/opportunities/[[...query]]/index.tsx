@@ -1133,16 +1133,16 @@ const Opportunities: NextPageWithLayout<{
         )}
       </CustomModal>
 
-      <div className="container z-10 mt-16 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
+      <div className="z-10 container mt-16 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
         <div className="mb-3 flex flex-col items-center justify-center gap-2 pt-6 text-white md:mb-9">
-          <h3 className="w-[300px] flex-grow flex-wrap text-center text-xl font-semibold md:w-full md:text-2xl">
-            Find <span className="mx-2 text-orange">opportunities</span> to
-            <span className="mx-2 text-orange">unlock</span> your future.
+          <h3 className="w-[300px] grow flex-wrap text-center text-xl font-semibold md:w-full md:text-2xl">
+            Find <span className="text-orange mx-2">opportunities</span> to
+            <span className="text-orange mx-2">unlock</span> your future.
           </h3>
           <AnimatedText sentences={oppTypeDescriptions} />
 
           <div className="w-full px-2 md:w-[600px] md:items-center md:justify-center">
-            <div className="mb-8 mt-1 flex flex-row items-center justify-center md:mb-4 md:mt-8">
+            <div className="mt-1 mb-8 flex flex-row items-center justify-center md:mt-8 md:mb-4">
               <OppSearchInputLarge
                 onSearch={onSearchInputSubmit}
                 placeholder="Search..."

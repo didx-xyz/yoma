@@ -14,22 +14,22 @@ const TransactionItemComponent: React.FC<{
   return (
     <button
       key={key}
-      className="relative flex aspect-square h-64 w-full flex-col gap-1 rounded-lg bg-white p-5 shadow-sm sm:max-w-[300px]"
+      className="relative flex aspect-square h-64 w-full flex-col gap-1 rounded-lg bg-white p-5 shadow-xs sm:max-w-[300px]"
       onClick={onClick}
     >
       <div className="flex flex-row">
         <div className="flex flex-row">
-          <div className="flex w-3/5 flex-grow flex-col">
-            <h2 className="line-clamp-3 h-[70px] max-w-[210px] overflow-hidden text-ellipsis text-start text-[18px] font-semibold leading-tight">
+          <div className="flex w-3/5 grow flex-col">
+            <h2 className="line-clamp-3 h-[70px] max-w-[210px] overflow-hidden text-start text-[18px] leading-tight font-semibold text-ellipsis">
               {data.name}
             </h2>
           </div>
-          <div className="absolute right-4 top-3">
+          <div className="absolute top-3 right-4">
             <AvatarImage icon={iconZlto} alt="Zlto Icon" size={50} />
           </div>
         </div>
       </div>
-      <div className="flex max-w-[280px] flex-grow flex-row">
+      <div className="flex max-w-[280px] grow flex-row">
         <p
           className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-start text-sm font-light"
           dangerouslySetInnerHTML={{ __html: data.instructions }}
@@ -37,7 +37,7 @@ const TransactionItemComponent: React.FC<{
       </div>
 
       {/* DATES */}
-      <div className="flex flex-col text-sm text-gray-dark">
+      <div className="text-gray-dark flex flex-col text-sm">
         <div>
           {data.dateStamp && (
             <>
@@ -53,7 +53,7 @@ const TransactionItemComponent: React.FC<{
       </div>
 
       {/* BADGES */}
-      <div className="bottom-5x flex flex-row gap-1 whitespace-nowrap pt-2 text-green-dark">
+      <div className="bottom-5x text-green-dark flex flex-row gap-1 pt-2 whitespace-nowrap">
         {data?.status == "New" && (
           <div className="badge bg-green-light text-green">
             <IoMdAlert className="mr-1" />

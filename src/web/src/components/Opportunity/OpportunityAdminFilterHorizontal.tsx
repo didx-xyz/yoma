@@ -152,7 +152,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
   const countText = `${totalCount?.toLocaleString()} ${resultText}`;
 
   return (
-    <div className="flex flex-grow flex-col">
+    <div className="flex grow flex-col">
       {lookups_categories &&
         lookups_categories.length > 0 &&
         (filterOptions?.includes(OpportunityFilterOptions.CATEGORIES) ||
@@ -181,7 +181,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
           className="hidden flex-col gap-2 md:flex"
         >
           <div className="flex flex-col gap-2">
-            <div className="mr-4 flex text-sm font-bold text-gray-dark">
+            <div className="text-gray-dark mr-4 flex text-sm font-bold">
               Filter by:
             </div>
 
@@ -234,7 +234,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
 
                     {formState.errors.types && (
                       <label className="label font-bold">
-                        <span className="label-text-alt italic text-red-500">
+                        <span className="label-text-alt text-red-500 italic">
                           {`${formState.errors.types.message}`}
                         </span>
                       </label>
@@ -283,7 +283,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                     />
                     {formState.errors.countries && (
                       <label className="label font-bold">
-                        <span className="label-text-alt italic text-red-500">
+                        <span className="label-text-alt text-red-500 italic">
                           {`${formState.errors.countries.message}`}
                         </span>
                       </label>
@@ -333,7 +333,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
 
                     {formState.errors.languages && (
                       <label className="label font-bold">
-                        <span className="label-text-alt italic text-red-500">
+                        <span className="label-text-alt text-red-500 italic">
                           {`${formState.errors.languages.message}`}
                         </span>
                       </label>
@@ -383,7 +383,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
 
                     {formState.errors.organizations && (
                       <label className="label font-bold">
-                        <span className="label-text-alt italic text-red-500">
+                        <span className="label-text-alt text-red-500 italic">
                           {`${formState.errors.organizations.message}`}
                         </span>
                       </label>
@@ -429,7 +429,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
 
                     {formState.errors.publishedStates && (
                       <label className="label font-bold">
-                        <span className="label-text-alt italic text-red-500">
+                        <span className="label-text-alt text-red-500 italic">
                           {`${formState.errors.publishedStates.message}`}
                         </span>
                       </label>
@@ -473,7 +473,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
 
                     {formState.errors.statuses && (
                       <label className="label font-bold">
-                        <span className="label-text-alt italic text-red-500">
+                        <span className="label-text-alt text-red-500 italic">
                           {`${formState.errors.statuses.message}`}
                         </span>
                       </label>
@@ -491,7 +491,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                       name="startDate"
                       render={({ field: { onChange, value } }) => (
                         <DatePicker
-                          className="input input-sm input-bordered w-32 rounded border-gray !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
+                          className="input input-sm border-gray focus:border-gray w-32 rounded !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:outline-none"
                           onChange={(date) => {
                             onChange(toISOStringForTimezone(date));
                             void handleSubmit(onSubmitHandler)();
@@ -504,7 +504,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
 
                     {formState.errors.startDate && (
                       <label className="label">
-                        <span className="label-text-alt px-4 text-base italic text-red-500">
+                        <span className="label-text-alt px-4 text-base text-red-500 italic">
                           {`${formState.errors.startDate.message}`}
                         </span>
                       </label>
@@ -520,7 +520,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                       name="endDate"
                       render={({ field: { onChange, value } }) => (
                         <DatePicker
-                          className="input input-sm input-bordered w-32 rounded border-gray !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:border-gray focus:outline-none"
+                          className="input input-sm border-gray focus:border-gray w-32 rounded !py-[1.13rem] !text-xs placeholder:text-xs placeholder:text-[#828181] focus:outline-none"
                           onChange={(date) => {
                             onChange(toISOStringForTimezone(date));
                             void handleSubmit(onSubmitHandler)();
@@ -533,7 +533,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
 
                     {formState.errors.endDate && (
                       <label className="label">
-                        <span className="label-text-alt px-4 text-base italic text-red-500">
+                        <span className="label-text-alt px-4 text-base text-red-500 italic">
                           {`${formState.errors.endDate.message}`}
                         </span>
                       </label>
@@ -543,10 +543,10 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
               </div>
 
               {/* BUTTONS */}
-              <div className="mb-auto mt-1 flex gap-2">
+              <div className="mt-1 mb-auto flex gap-2">
                 <button
                   type="button"
-                  className="btn btn-sm my-auto border-2 border-green px-6 text-xs font-semibold text-green"
+                  className="btn btn-sm border-green text-green my-auto border-2 px-6 text-xs font-semibold"
                   onClick={onClear}
                 >
                   {clearButtonText}
@@ -557,7 +557,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                 ) && (
                   <button
                     type="button"
-                    className="btn btn-sm my-auto border-2 border-green text-xs font-semibold text-green"
+                    className="btn btn-sm border-green text-green my-auto border-2 text-xs font-semibold"
                     onClick={onOpenFilterFullWindow}
                   >
                     View All Filters
@@ -573,7 +573,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
         <div className="mt-4 flex h-fit flex-col md:mt-6">
           <div className="flex items-center justify-between">
             {/* COUNT RESULT TEXT */}
-            <div className="h-10 whitespace-nowrap text-xl font-semibold text-black">
+            <div className="h-10 text-xl font-semibold whitespace-nowrap text-black">
               {countText && totalCount && totalCount > 0 ? (
                 <span>{countText}</span>
               ) : null}
@@ -585,7 +585,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                 <button
                   type="button"
                   onClick={() => exportToCsv(true)}
-                  className="btn btn-sm w-36 flex-nowrap border-blue bg-white text-blue hover:bg-blue hover:text-white"
+                  className="btn btn-sm border-blue text-blue hover:bg-blue w-36 flex-nowrap bg-white hover:text-white"
                 >
                   <FaDownload className="h-4 w-4" /> Export
                 </button>

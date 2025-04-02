@@ -25,20 +25,20 @@ export const PassportCard: React.FC<{
   }
 
   return (
-    <div className="flex flex-grow flex-col justify-center text-xs md:text-sm">
+    <div className="flex grow flex-col justify-center text-xs md:text-sm">
       <Image src={stamp1} alt="Stamps" className="absolute opacity-50" />
       <div className="text-gray-dark">
         Your digital passport contains the credentials you receive from
         completing opportunities.
       </div>
-      <div className="flex flex-grow items-center justify-end">
+      <div className="flex grow items-center justify-end">
         <div className="flex flex-col gap-1">
           {data?.map((item) => (
             <div
               key={item.schemaType}
               className="flex flex-row flex-nowrap gap-2"
             >
-              <span className="flex flex-grow items-center whitespace-nowrap">
+              <span className="flex grow items-center whitespace-nowrap">
                 {item.schemaType === "YoID" && (
                   <span>
                     💳<span className="ml-2">Identity</span>
@@ -57,7 +57,7 @@ export const PassportCard: React.FC<{
                     </span>
                   )}
               </span>
-              <span className="badge badge-xs ml-4 min-w-[40px] bg-gray px-2">
+              <span className="badge badge-xs bg-gray ml-4 min-w-[40px] px-2">
                 {item.totalCount ?? "0"}
               </span>
             </div>

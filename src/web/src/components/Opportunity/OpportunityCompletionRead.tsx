@@ -38,7 +38,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
       <Link
         href={fileUrl ?? "/"}
         target="_blank"
-        className="flex items-center rounded-full bg-gray text-sm text-green"
+        className="bg-gray text-green flex items-center rounded-full text-sm"
       >
         <div className="flex w-full flex-row">
           <div className="flex items-center px-4 py-2">
@@ -111,15 +111,15 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
       className="flex flex-col gap-3 rounded-lg bg-white p-4"
     >
       <div className="flex flex-row">
-        <div className="flex flex-grow flex-col">
+        <div className="flex grow flex-col">
           <p className="h-6 text-lg font-bold text-black">
             {data?.userDisplayName}
           </p>
-          <p className="text-sm text-gray-dark">
+          <p className="text-gray-dark text-sm">
             {data?.userEmail ?? data?.userPhoneNumer}
           </p>
-          <p className="mt-2 flex flex-row items-center text-sm text-gray-dark">
-            <IoMdPin className="mr-2 h-4 w-4 text-gray-dark" />
+          <p className="text-gray-dark mt-2 flex flex-row items-center text-sm">
+            <IoMdPin className="text-gray-dark mr-2 h-4 w-4" />
             {data?.userCountry}
           </p>
         </div>
@@ -132,7 +132,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
         </div>
       </div>
 
-      <div className="divider m-0 h-[1px] gap-1 bg-gray-light" />
+      <div className="divider bg-gray-light m-0 h-[1px] gap-1" />
 
       {data?.verifications?.map((item) => (
         <div key={item.fileId}>
@@ -164,7 +164,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
           {item.verificationType == "Location" && (
             <>
               <button
-                className="flex w-full items-center rounded-full bg-gray text-sm text-green"
+                className="bg-gray text-green flex w-full items-center rounded-full text-sm"
                 onClick={() => {
                   setShowLocation(!showLocation);
                 }}
@@ -187,7 +187,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
                   )}
                   {googleInstance && markerPosition != null && (
                     <>
-                      <div className="flex flex-row gap-2 text-gray-dark">
+                      <div className="text-gray-dark flex flex-row gap-2">
                         <div>Pin location: </div>
                         <div className="font-bold">
                           Lat: {markerPosition.lat} Lng: {markerPosition.lng}
@@ -224,7 +224,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
         </div>
       ))}
       {data?.dateStart && (
-        <div className="flex flex-row gap-2 text-sm text-gray-dark md:h-3">
+        <div className="text-gray-dark flex flex-row gap-2 text-sm md:h-3">
           <div>Started opportunity on: </div>
           <div className="font-bold">
             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
@@ -234,7 +234,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
         </div>
       )}
       {data?.dateEnd && (
-        <div className="flex flex-row gap-2 text-sm text-gray-dark">
+        <div className="text-gray-dark flex flex-row gap-2 text-sm">
           <div>Finished opportunity on: </div>
           <div className="font-bold">
             <Moment format={DATE_FORMAT_HUMAN} utc={true}>
@@ -244,7 +244,7 @@ export const OpportunityCompletionRead: React.FC<InputProps> = ({
         </div>
       )}
       {data?.commitmentInterval && (data?.commitmentIntervalCount ?? 0) > 0 && (
-        <div className="flex flex-row gap-2 text-sm text-gray-dark">
+        <div className="text-gray-dark flex flex-row gap-2 text-sm">
           <div>Time to complete: </div>
           <div className="font-bold">
             {data.commitmentIntervalCount} {data.commitmentInterval}(s)

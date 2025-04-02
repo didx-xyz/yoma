@@ -31,7 +31,7 @@ const NoRowsMessage: React.FC<{
         </div>
 
         <div
-          className="text-xs text-gray-dark md:text-sm"
+          className="text-gray-dark text-xs md:text-sm"
           dangerouslySetInnerHTML={{
             __html:
               description ??

@@ -64,7 +64,7 @@ const Success: NextPageWithLayout = () => {
             Please note this process might take up to <b>48 hours</b>.
           </p>
           <Link href="/">
-            <button className="font-sm btn mt-8 w-[17rem] border-green bg-white normal-case text-green hover:bg-green hover:text-white md:w-[21.5rem]">
+            <button className="font-sm btn border-green text-green hover:bg-green mt-8 w-[17rem] bg-white normal-case hover:text-white md:w-[21.5rem]">
               Take me home
             </button>
           </Link>

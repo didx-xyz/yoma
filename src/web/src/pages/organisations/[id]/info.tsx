@@ -104,11 +104,11 @@ const OrganisationOverview: NextPageWithLayout<{
 
       <PageBackground />
 
-      <div className="container z-10 mt-20 max-w-5xl px-2 py-8">
+      <div className="z-10 container mt-20 max-w-5xl px-2 py-8">
         {/* BREADCRUMB */}
-        <div className="flex flex-row text-xs text-gray">
+        <div className="text-gray flex flex-row text-xs">
           <Link
-            className="font-bold text-white hover:text-gray"
+            className="hover:text-gray font-bold text-white"
             href={getSafeUrl(returnUrl?.toString(), "/organisations")}
           >
             Organisations

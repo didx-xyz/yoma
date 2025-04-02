@@ -39,7 +39,7 @@ export const SsoChart: React.FC<{
         {data?.legend.map((name, index) => (
           <div key={index} className="mt-4 flex flex-col gap-2">
             <div className="flex flex-row items-center gap-3">
-              <span className="rounded-lg bg-green-light p-1">
+              <span className="bg-green-light rounded-lg p-1">
                 <Image
                   alt="Login count Icon"
                   src="/images/icon-viewed-green.svg"
@@ -112,7 +112,7 @@ export const SsoChart: React.FC<{
             }}
           />
         ) : (
-          <div className="mx-4 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center text-xs">
+          <div className="bg-gray-light mx-4 flex w-full flex-col items-center justify-center rounded-lg p-4 text-center text-xs">
             Not enough data to display
           </div>
         )}

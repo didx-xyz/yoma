@@ -18,7 +18,7 @@ export const VerifyOverview: React.FC<InputProps> = ({ organisation }) => {
       <div className="flex flex-col gap-2">
         <h5 className="mb-2 pl-1 font-bold">Organisation details</h5>
         {organisation?.name && (
-          <div className="form-control">
+          <fieldset className="fieldset">
             <label className="label">
               <span className="label-text font-semibold">
                 Organisation name
@@ -29,15 +29,15 @@ export const VerifyOverview: React.FC<InputProps> = ({ organisation }) => {
                 {organisation?.name}
               </div>
             </label>
-          </div>
+          </fieldset>
         )}
 
-        <div className="form-control">
+        <fieldset className="fieldset">
           <label className="label">
             <span className="label-text font-semibold">Physical address</span>
           </label>
           <label className="label">
-            <div className="label-text -mt-4 text-gray-dark">
+            <div className="label-text text-gray-dark -mt-4">
               {organisation?.streetAddress},&nbsp;
               {organisation?.city},&nbsp;
               {organisation?.province},&nbsp;
@@ -45,20 +45,20 @@ export const VerifyOverview: React.FC<InputProps> = ({ organisation }) => {
               {organisation?.postalCode}
             </div>
           </label>
-        </div>
+        </fieldset>
 
         {organisation?.websiteURL && (
-          <div className="form-control">
+          <fieldset className="fieldset">
             <label className="label">
               <span className="label-text font-semibold">Website URL</span>
             </label>
             <Link
-              className="label-text -mt-2 pl-1 text-green underline transition duration-150 ease-in-out"
+              className="label-text text-green -mt-2 pl-1 underline transition duration-150 ease-in-out"
               href={organisation?.websiteURL}
             >
               {organisation?.websiteURL}
             </Link>
-          </div>
+          </fieldset>
         )}
 
         <div className="my-2 flex min-w-max flex-col items-start justify-start">
@@ -67,7 +67,7 @@ export const VerifyOverview: React.FC<InputProps> = ({ organisation }) => {
           </label>
           {/* NO IMAGE */}
           {!organisation?.logoURL && (
-            <IoMdImage className="text-gray-400 h-20 w-20" />
+            <IoMdImage className="h-20 w-20 text-gray-400" />
           )}
 
           {/* EXISTING IMAGE */}
@@ -81,7 +81,7 @@ export const VerifyOverview: React.FC<InputProps> = ({ organisation }) => {
         </div>
 
         {organisation?.tagline && (
-          <div className="form-control">
+          <fieldset className="fieldset">
             <label className="label">
               <span className="label-text font-semibold">
                 Organisation tagline
@@ -92,11 +92,11 @@ export const VerifyOverview: React.FC<InputProps> = ({ organisation }) => {
                 {organisation?.tagline}
               </div>
             </label>
-          </div>
+          </fieldset>
         )}
 
         {organisation?.biography && (
-          <div className="form-control -mb-1">
+          <fieldset className="fieldset -mb-1">
             <label className="label">
               <span className="label-text font-semibold">
                 Organisation biography
@@ -107,27 +107,27 @@ export const VerifyOverview: React.FC<InputProps> = ({ organisation }) => {
                 {organisation?.biography}
               </div>
             </label>
-          </div>
+          </fieldset>
         )}
 
-        <div className="divider h-[2px] bg-gray-light"></div>
+        <div className="divider bg-gray-light h-[2px]"></div>
 
         <h5 className="-mb-2 pl-1 font-bold">Organisation roles</h5>
-        <div className="form-control mb-2">
+        <fieldset className="fieldset mb-2">
           {organisation?.providerTypes?.map((item) => (
             <label
               htmlFor={item.id}
               className="label justify-normal"
               key={item.id}
             >
-              <span className="label-text -mb-2 text-gray-dark">
+              <span className="label-text text-gray-dark -mb-2">
                 {item.name} provider
               </span>
             </label>
           ))}
-        </div>
+        </fieldset>
 
-        <div className="form-control">
+        <fieldset className="fieldset">
           <label className="label">
             <span className="label-text font-semibold">
               Company registration documents
@@ -140,22 +140,22 @@ export const VerifyOverview: React.FC<InputProps> = ({ organisation }) => {
               key={item.fileId}
               href={item.url}
               target="_blank"
-              className="my-2 rounded-lg bg-gray-light p-4 text-xs text-green"
+              className="bg-gray-light text-green my-2 rounded-lg p-4 text-xs"
             >
               {item.originalFileName}
             </Link>
           ))}
-        </div>
+        </fieldset>
 
-        <div className="divider h-[2px] bg-gray-light"></div>
+        <div className="divider bg-gray-light h-[2px]"></div>
 
-        <label className="label -mb-4 -mt-1">
+        <label className="label -mt-1 -mb-4">
           <span className="label-text font-semibold">
             Organisation admin&#40;s&#41;
           </span>
         </label>
         {organisationAdmins?.map((item) => (
-          <div key={item.id} className="form-control">
+          <fieldset className="fieldset" key={item.id}>
             <label className="label -mb-4">
               <span className="label-text text-gray-dark">
                 {item.firstName} {item.surname}
@@ -164,7 +164,7 @@ export const VerifyOverview: React.FC<InputProps> = ({ organisation }) => {
             <label className="label">
               <div className="label-text text-gray-dark">{item.email}</div>
             </label>
-          </div>
+          </fieldset>
         ))}
       </div>
     </>

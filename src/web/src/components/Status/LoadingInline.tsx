@@ -10,7 +10,7 @@ export const LoadingInline: React.FC<{
   return (
     <div className={`flex items-center justify-center gap-4 ${className}`}>
       <div
-        className={`animate-spin rounded-full border-b-2 border-t-2 ${classNameSpinner}`}
+        className={`animate-spin rounded-full border-t-2 border-b-2 ${classNameSpinner}`}
       />
       <p className={`${classNameLabel}`}>Loading...</p>
     </div>

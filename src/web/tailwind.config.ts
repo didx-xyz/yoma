@@ -1,57 +1,84 @@
 import { type Config } from "tailwindcss";
 
-/* eslint-disable */
 export default {
   content: ["./src/**/*.{js,ts,jsx,tsx}"],
+
   theme: {
     extend: {
       colors: {
-        white: "#FFFFFF",
-        "white-shade": "#F7F7F7",
+        white: "#ffffff",
+        "white-shade": "#f7f7f7",
         black: "#020304",
-        blue: "#4CADE9",
-        "blue-light": "#EDF6FD",
-        "blue-shade": "#5eb5eb",
-        "blue-dark": "#2487C5",
-        purple: "#41204B",
-        "purple-light": "#8A8FD6",
-        "purple-dark": "#5F65B9",
-        "purple-soft": "#C3A2CD",
-        "purple-shade": "#54365D",
-        "purple-tint": "#E7D4ED",
-        pink: "#FE4D57",
-        orange: "#F9AB3E",
-        "orange-light": "#FDEED8",
-        green: "#387F6A",
-        "green-tint": "#4C8C79",
-        "green-light": "#E6F5F3",
-        "green-dark": "#4CA78C",
-        yellow: "#D48414",
-        "yellow-light": "#FDDF99",
-        "yellow-tint": "#FAE4C6",
-        "gray-dark": "#565B6F",
-        gray: "#DCE0E5",
-        "gray-light": "#F3F6FA",
+        blue: {
+          DEFAULT: "#4cade9",
+          light: "#edf6fd",
+          shade: "#5eb5eb",
+          dark: "#2487c5",
+        },
+        purple: {
+          DEFAULT: "#41204b",
+          light: "#8a8fd6",
+          dark: "#5f65b9",
+          soft: "#c3a2cd",
+          shade: "#54365d",
+          tint: "#e7d4ed",
+        },
+        pink: "#fe4d57",
+        orange: {
+          DEFAULT: "#f9ab3e",
+          light: "#fdeed8",
+        },
+        green: {
+          DEFAULT: "#387f6a",
+          tint: "#4c8c79",
+          light: "#e6f5f3",
+          dark: "#4ca78c",
+        },
+        yellow: {
+          DEFAULT: "#d48414",
+          light: "#fddf99",
+          tint: "#fae4c6",
+        },
+        gray: {
+          DEFAULT: "#dce0e5",
+          dark: "#565b6f",
+          light: "#f3f6fa",
+        },
         overlay: "rgba(0, 0, 0, 0.5)",
       },
       fontFamily: {
-        nunito: ["var(--font-nunito)"],
+        nunito: ["Nunito", "sans-serif"],
       },
-      fontSize: {
-        xs: ["0.775rem", { lineHeight: "1rem" }], // Default: 0.75rem
-        sm: ["0.9rem", { lineHeight: "1.25rem" }], // Default: 0.875rem
-        base: ["1.1rem", { lineHeight: "1.5rem" }], // Default: 1rem
-        lg: ["1.25rem", { lineHeight: "1.75rem" }], // Default: 1.125rem
-        xl: ["1.5rem", { lineHeight: "1.75rem" }], // Default: 1.25rem
-        "2xl": ["1.875rem", { lineHeight: "2rem" }], // Default: 1.5rem
-        "3xl": ["2.25rem", { lineHeight: "2.5rem" }], // Default: 1.875rem
-        "4xl": ["2.625rem", { lineHeight: "2.75rem" }], // Default: 2.25rem
-        "5xl": ["3.25rem", { lineHeight: "1" }], // Default: 3rem
-        "6xl": ["4.25rem", { lineHeight: "1" }], // Default: 3.75rem
-        "7xl": ["5.25rem", { lineHeight: "1" }], // Default: 4.5rem
-        "8xl": ["6.25rem", { lineHeight: "1" }], // Default: 6rem
-        "9xl": ["7.25rem", { lineHeight: "1" }], // Default: 8rem
-      },
+      //   fontSize: {
+      //     xs: "0.775rem",
+      //     sm: "0.9rem",
+      //     base: "1.1rem",
+      //     lg: "1.25rem",
+      //     xl: "1.5rem",
+      //     "2xl": "1.875rem",
+      //     "3xl": "2.25rem",
+      //     "4xl": "2.625rem",
+      //     "5xl": "3.25rem",
+      //     "6xl": "4.25rem",
+      //     "7xl": "5.25rem",
+      //     "8xl": "6.25rem",
+      //     "9xl": "7.25rem",
+      //   },
+      //   lineHeight: {
+      //     xs: "1rem",
+      //     sm: "1.25rem",
+      //     base: "1.5rem",
+      //     lg: "1.75rem",
+      //     xl: "1.75rem",
+      //     "2xl": "2rem",
+      //     "3xl": "2.5rem",
+      //     "4xl": "2.75rem",
+      //     "5xl": "1",
+      //     "6xl": "1",
+      //     "7xl": "1",
+      //     "8xl": "1",
+      //     "9xl": "1",
+      //   },
       boxShadow: {
         custom:
           "0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)",
@@ -163,27 +190,5 @@ export default {
       },
     },
   },
-  darkMode: "class",
-  plugins: [require("daisyui")],
-  daisyui: {
-    logs: false,
-    themes: [
-      {
-        light: {
-          ...require("daisyui/src/theming/themes")["[data-theme=light]"],
-          primary: "#41204B",
-          "primary-focus": "#33193b",
-          "primary-content": "#ffffff",
-          secondary: "#387F6A",
-          "secondary-focus": "#bd0091",
-          "secondary-content": "#ffffff",
-          info: "#4CADE9",
-          success: "#387F6A",
-          warning: "#F9AB3E",
-          error: "#FE4D57",
-        },
-      },
-    ],
-  },
+  //darkMode: "class",
 } satisfies Config;
-/* eslint-enable */

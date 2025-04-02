@@ -117,8 +117,8 @@ const CustomCarousel: React.FC<{
     >
       <div className="mb-2 flex flex-col gap-6">
         <div className="flex max-w-full flex-row px-2 md:max-w-7xl">
-          <div className="flex flex-grow flex-col">
-            <div className="overflow-hidden text-ellipsis whitespace-nowrap text-lg font-semibold text-black md:max-w-[800px] md:text-xl">
+          <div className="flex grow flex-col">
+            <div className="overflow-hidden text-lg font-semibold text-ellipsis whitespace-nowrap text-black md:max-w-[800px] md:text-xl">
               {title}
             </div>
             <div className="text-gray-dark">{description}</div>
@@ -138,7 +138,7 @@ const CustomCarousel: React.FC<{
             {viewAllUrl && (
               <Link
                 href={viewAllUrl}
-                className="flex w-14 select-none whitespace-nowrap border-b-2 border-transparent text-center text-sm tracking-wide text-gray-dark duration-300 md:mb-[3.5px] xl:hover:border-purple xl:hover:text-purple"
+                className="text-gray-dark xl:hover:border-purple xl:hover:text-purple flex w-14 border-b-2 border-transparent text-center text-sm tracking-wide whitespace-nowrap duration-300 select-none md:mb-[3.5px]"
               >
                 View All
               </Link>
@@ -161,7 +161,7 @@ const CustomCarousel: React.FC<{
         })}
       </Slider>
 
-      <div className="my-2 mt-2 flex w-full place-content-start md:mb-10 md:mt-1">
+      <div className="my-2 mt-2 flex w-full place-content-start md:mt-1 md:mb-10">
         <div className="mx-auto flex w-full justify-center gap-4 md:mx-0 md:mr-auto md:justify-start md:gap-6">
           {screenWidth < 768 && (
             <SelectedSnapDisplay

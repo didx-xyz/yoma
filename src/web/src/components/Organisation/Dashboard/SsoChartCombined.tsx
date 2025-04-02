@@ -85,10 +85,10 @@ export const SsoChartCombined: React.FC<{
       <div className="flex items-center gap-3">
         <div className="flex items-center gap-2">
           {!data.logoURL && (
-            <div className="rounded-full bg-green-light p-2 text-lg">🏢</div>
+            <div className="bg-green-light rounded-full p-2 text-lg">🏢</div>
           )}
           {data.logoURL && (
-            <div className="rounded-full bg-green-light p-2 text-lg">
+            <div className="bg-green-light rounded-full p-2 text-lg">
               <Image
                 src={data.logoURL}
                 alt={data.name}
@@ -113,22 +113,22 @@ export const SsoChartCombined: React.FC<{
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-green-light p-1">
+              <div className="bg-green-light rounded-lg p-1">
                 <span>➡️</span>
               </div>
               <span className="font-semibold">Outbound SSO</span>
             </div>
-            <span className="bg-blue-100 text-blue-600 badge bg-gray">
+            <span className="badge bg-gray bg-blue-100 text-blue-600">
               {outboundTotal.toLocaleString()} logins
             </span>
           </div>
           {data.outbound?.enabled ? (
-            <div className="text-gray-600 truncate text-sm">
+            <div className="truncate text-sm text-gray-600">
               <span className="font-semibold">Client ID:</span>{" "}
               {data.outbound.clientId || "N/A"}
             </div>
           ) : (
-            <div className="badge bg-warning text-sm italic text-gray-dark">
+            <div className="badge bg-warning text-gray-dark text-sm italic">
               Disabled
             </div>
           )}
@@ -140,22 +140,22 @@ export const SsoChartCombined: React.FC<{
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="rounded-lg bg-green-light p-1">
+              <div className="bg-green-light rounded-lg p-1">
                 <span>⬅️</span>
               </div>
               <span className="font-semibold">Inbound SSO</span>
             </div>
-            <span className="bg-purple-100 text-purple-600 badge bg-gray">
+            <span className="badge bg-gray bg-purple-100 text-purple-600">
               {inboundTotal.toLocaleString()} logins
             </span>
           </div>
           {data.inbound?.enabled ? (
-            <div className="text-gray-600 truncate text-sm">
+            <div className="truncate text-sm text-gray-600">
               <span className="font-semibold">Client ID:</span>{" "}
               {data.inbound.clientId || "N/A"}
             </div>
           ) : (
-            <div className="badge bg-warning text-sm italic text-gray-dark">
+            <div className="badge bg-warning text-gray-dark text-sm italic">
               Disabled
             </div>
           )}
@@ -202,8 +202,8 @@ export const SsoChartCombined: React.FC<{
           }}
         />
       ) : (
-        <div className="flex h-[150px] w-full flex-col items-center justify-center rounded-lg bg-gray-light p-4 text-center">
-          <span className="text-sm text-gray-dark">
+        <div className="bg-gray-light flex h-[150px] w-full flex-col items-center justify-center rounded-lg p-4 text-center">
+          <span className="text-gray-dark text-sm">
             Not enough data to display chart
           </span>
           {(outboundTotal > 0 || inboundTotal > 0) && (

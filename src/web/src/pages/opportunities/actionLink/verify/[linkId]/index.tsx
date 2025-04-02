@@ -96,7 +96,7 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
       <OpportunityMetaTags opportunityInfo={opportunityInfo} />
 
       <div className="container flex flex-col items-center justify-start gap-12 md:mt-44 md:px-4">
-        <div className="bg-theme z-2 absolute top-0 h-[256px] w-full"></div>
+        <div className="bg-theme absolute top-0 z-2 h-[256px] w-full"></div>
 
         {action === OpportunityAction.Login && (
           <div className="z-10 flex h-full w-full max-w-md flex-col place-items-center justify-center gap-8 rounded-xl bg-white p-4 md:h-fit md:max-w-2xl md:p-16">
@@ -106,11 +106,11 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
               width={100}
               sizes="100vw"
               priority={true}
-              className="mt-2 h-auto rounded-full p-4 shadow-custom"
+              className="shadow-custom mt-2 h-auto rounded-full p-4"
             />
             <h2 className="-mb-6 font-bold">Almost there...</h2>
 
-            <p className="text-center text-gray-dark">
+            <p className="text-gray-dark text-center">
               Please sign in to complete the opportunity and earn your rewards.
             </p>
 
@@ -121,7 +121,7 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
               organizationName={opportunityInfo?.organizationName}
             />
 
-            <SignInButton className="btn rounded-full bg-purple normal-case text-white hover:bg-purple-light disabled:border-0 disabled:bg-purple-light md:w-[150px]" />
+            <SignInButton className="btn bg-purple hover:bg-purple-light disabled:bg-purple-light rounded-full text-white normal-case disabled:border-0 md:w-[150px]" />
           </div>
         )}
 
@@ -133,11 +133,11 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
               width={100}
               sizes="100vw"
               priority={true}
-              className="mt-2 h-auto rounded-full p-4 shadow-custom"
+              className="shadow-custom mt-2 h-auto rounded-full p-4"
             />
             <h2 className="-mb-6 font-bold">Error</h2>
 
-            <p className="text-center text-gray-dark">
+            <p className="text-gray-dark text-center">
               There was a problem completing the opportunity:
             </p>
 
@@ -191,11 +191,11 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
               width={80}
               sizes="100vw"
               priority={true}
-              className="mt-2 h-auto rounded-full p-4 shadow-custom"
+              className="shadow-custom mt-2 h-auto rounded-full p-4"
             />
             <h2 className="-mb-6 font-bold">Congratulations!</h2>
 
-            <p className="text-center text-gray-dark">
+            <p className="text-gray-dark text-center">
               You have successfully completed the following opportunity.
             </p>
 
@@ -206,7 +206,7 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
               organizationName={opportunityInfo?.organizationName}
             />
 
-            <p className="text-center text-gray-dark">
+            <p className="text-gray-dark text-center">
               View your completed opportunity & rewards in the YoID section.
             </p>
 

@@ -63,7 +63,7 @@ export const PieChart: React.FC<{
           }}
         />
       ) : (
-        <div className="mt-6 flex w-full flex-col items-center justify-center rounded-lg bg-gray-light p-10 text-center text-xs">
+        <div className="bg-gray-light mt-6 flex w-full flex-col items-center justify-center rounded-lg p-10 text-center text-xs">
           Not enough data to display.
         </div>
       )}

@@ -18,11 +18,11 @@ const Terms: NextPageWithLayout = () => {
         <title>Yoma - Terms and Conditions</title>
       </Head>
 
-      <div className="flex justify-center border-b border-gray md:justify-start">
+      <div className="border-gray flex justify-center border-b md:justify-start">
         <div
-          className={`flex-grow cursor-pointer px-4 py-2 text-center md:flex-grow-0 ${
+          className={`grow cursor-pointer px-4 py-2 text-center md:grow-0 ${
             activeTab === "privacy"
-              ? "border-b-4 border-orange font-semibold text-black"
+              ? "border-orange border-b-4 font-semibold text-black"
               : "text-gray-dark"
           }`}
           onClick={() => handleTabClick("privacy")}
@@ -30,9 +30,9 @@ const Terms: NextPageWithLayout = () => {
           Privacy Policy
         </div>
         <div
-          className={`flex-grow cursor-pointer px-4 py-2 text-center md:flex-grow-0 ${
+          className={`grow cursor-pointer px-4 py-2 text-center md:grow-0 ${
             activeTab === "terms"
-              ? "border-b-4 border-orange font-semibold text-black"
+              ? "border-orange border-b-4 font-semibold text-black"
               : "text-gray-dark"
           }`}
           onClick={() => handleTabClick("terms")}
@@ -43,13 +43,13 @@ const Terms: NextPageWithLayout = () => {
 
       <div className="mt-8">
         {activeTab === "privacy" && (
-          <div className="my-8 flex flex-col rounded-lg md:p-8 md:shadow-custom">
+          <div className="md:shadow-custom my-8 flex flex-col rounded-lg md:p-8">
             <PrivacySection />
           </div>
         )}
 
         {activeTab === "terms" && (
-          <div className="my-8 flex flex-col rounded-lg md:p-8 md:shadow-custom">
+          <div className="md:shadow-custom my-8 flex flex-col rounded-lg md:p-8">
             <TermsSection />
           </div>
         )}

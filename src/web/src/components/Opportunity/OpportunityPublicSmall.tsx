@@ -27,11 +27,11 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
     return (
       <>
         <div className="flex flex-row">
-          <div className="flex w-full flex-grow flex-col">
-            <div className="w-[220px] truncate text-xs font-medium text-gray-dark">
+          <div className="flex w-full grow flex-col">
+            <div className="text-gray-dark w-[220px] truncate text-xs font-medium">
               {data.organizationName}
             </div>
-            <div className="mt-1 line-clamp-2 h-[45px] w-[220px] overflow-hidden text-ellipsis text-[18px] font-semibold leading-tight">
+            <div className="mt-1 line-clamp-2 h-[45px] w-[220px] overflow-hidden text-[18px] leading-tight font-semibold text-ellipsis">
               {data.title}
             </div>
           </div>
@@ -44,14 +44,14 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
           </div>
         </div>
         <div className="mb-auto flex w-[280px] flex-row">
-          <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-ellipsis text-sm font-light">
+          <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-sm font-light text-ellipsis">
             {data.summary ?? data.description}
           </p>
         </div>
 
         {/* DATES */}
         {data.status == "Active" && data.dateEnd && (
-          <div className="flex flex-row items-center text-sm text-gray-dark">
+          <div className="text-gray-dark flex flex-row items-center text-sm">
             <span className="mr-2 font-bold">Ends:</span>
             <span className="text-xs tracking-widest text-black">
               <Moment format={DATE_FORMAT_HUMAN} utc={true}>
@@ -62,7 +62,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
         )}
 
         {/* BADGES */}
-        <div className="flex flex-row flex-wrap gap-2 overflow-hidden whitespace-normal pt-2 text-green-dark md:flex-nowrap md:whitespace-nowrap">
+        <div className="text-green-dark flex flex-row flex-wrap gap-2 overflow-hidden pt-2 whitespace-normal md:flex-nowrap md:whitespace-nowrap">
           <div className="badge bg-green-light text-green">
             <Image
               src={iconClock}
@@ -128,7 +128,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
                         </div>
                       )}
                     {!data.participantLimitReached && (
-                      <div className="badge bg-red-100 text-error">
+                      <div className="badge text-error bg-red-100">
                         <IoMdCloudUpload className="h-4 w-4" />
                         <span className="ml-1">Upload Only</span>
                       </div>
@@ -137,7 +137,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
                 )}
               {!data.verificationEnabled &&
                 data.verificationMethod !== "Manual" && (
-                  <div className="badge bg-red-100 text-error">
+                  <div className="badge text-error bg-red-100">
                     <IoMdWarning className="h-4 w-4" />
                     <span className="ml-1">Expired</span>
                   </div>
@@ -156,7 +156,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   ) : (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex h-[15.5rem] w-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-sm"
+      className="relative flex h-[15.5rem] w-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-xs"
     >
       {renderContent()}
     </Link>

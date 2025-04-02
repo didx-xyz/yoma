@@ -118,20 +118,20 @@ const LocationPicker: React.FC<InputProps> = ({
   return (
     <div
       key={id}
-      className="flex w-full flex-col rounded-lg border-dotted bg-gray-light"
+      className="bg-gray-light flex w-full flex-col rounded-lg border-dotted"
     >
       <div className="flex w-full flex-row">
         <div className="ml-2 p-4 md:p-6">
           <FcGlobe className="size-10" />
         </div>
-        <div className="flex flex-grow flex-col p-4">
+        <div className="flex grow flex-col p-4">
           <div className="font-semibold">{label}</div>
-          <div className="text-sm italic text-gray-dark">
+          <div className="text-gray-dark text-sm italic">
             Select a pin location below or
             <button
               onClick={onClick_UseCurrentLocation}
               type="button"
-              className="ml-1 text-sm text-purple underline"
+              className="text-purple ml-1 text-sm underline"
             >
               use your current location
             </button>

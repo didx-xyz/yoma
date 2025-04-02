@@ -13,9 +13,9 @@ const MarketplaceCard: React.FC<{
   return (
     <div className="h-[140px] w-[270px] overflow-hidden rounded-lg bg-white p-4 shadow-lg">
       <div className="flex">
-        <div className="flex flex-grow flex-col">
-          <p className="text-xs text-gray-dark">{organisation}</p>
-          <h2 className="h-[42px] overflow-hidden text-ellipsis text-sm font-bold leading-tight">
+        <div className="flex grow flex-col">
+          <p className="text-gray-dark text-xs">{organisation}</p>
+          <h2 className="h-[42px] overflow-hidden text-sm leading-tight font-bold text-ellipsis">
             {title}
           </h2>
         </div>
@@ -31,7 +31,7 @@ const MarketplaceCard: React.FC<{
 
       <div className="mt-6 flex items-center justify-between">
         {/* BADGES */}
-        <div className="badge h-6 whitespace-nowrap rounded-md border-none bg-yellow-light text-yellow">
+        <div className="badge bg-yellow-light text-yellow h-6 rounded-md border-none whitespace-nowrap">
           <Image
             src={iconZlto}
             alt="Icon Zlto"

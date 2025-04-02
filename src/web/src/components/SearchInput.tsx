@@ -48,13 +48,13 @@ export const SearchInput: React.FC<InputProps> = ({
         <button
           type="submit"
           aria-label="Search"
-          className={`btn-search bg-theme btn join-item btn-sm !h-[38px] !rounded-r-lg border-0 text-sm brightness-105 hover:brightness-110 disabled:brightness-75 ${heightOverride} ${className}`}
+          className={`bg-theme justify-centerx !h-[38px] rounded-r-full border-0 p-3 text-white ${heightOverride} ${className}`}
           disabled={
             !!searchInputValue &&
             !(searchInputValue.length >= 3 && searchInputValue.length <= 50)
           }
         >
-          <IoMdSearch className="icon-search h-6 w-6 text-white" />
+          <IoMdSearch className="-mt-1 h-6 w-6 text-white" />
         </button>
       </div>
     </form>

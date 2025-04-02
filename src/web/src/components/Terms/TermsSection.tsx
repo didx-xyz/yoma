@@ -1,6 +1,6 @@
 const TermsSection: React.FC = () => {
   return (
-    <div className="flex flex-col gap-4 overflow-hidden text-gray-dark">
+    <div className="text-gray-dark flex flex-col gap-4 overflow-hidden">
       <h1 className="mb-4 text-3xl font-bold text-black">Terms of Use</h1>
       <p className="mb-4">
         Thank you for your interest in Yoma, as hosted by RLabs. Yoma operates

@@ -4,5 +4,5 @@
     "lib": ["es5", "dom"],
     "types": ["cypress", "cypress-file-upload"]
   },
-  "include": ["**/*.ts"]
+  "include": ["**/*.ts", "src/web/tailwind.config.js"]
 }

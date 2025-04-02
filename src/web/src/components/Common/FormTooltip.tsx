@@ -9,7 +9,7 @@ const FormTooltip: React.FC<{
   return (
     <span className={`tooltip tooltip-secondary ${className}`} data-tip={label}>
       {!children && (
-        <IoIosInformationCircleOutline className="h-5 w-5 text-green" />
+        <IoIosInformationCircleOutline className="text-green h-5 w-5" />
       )}
       {children}
     </span>

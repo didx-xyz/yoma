@@ -472,7 +472,7 @@ const Opportunities: NextPageWithLayout<{
         />
       </CustomModal>
 
-      <div className="container z-10 mt-14 max-w-7xl px-2 py-8 md:mt-[4.9rem]">
+      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[4.9rem]">
         <div className="flex flex-col gap-4 py-4">
           <h3 className="flex items-center text-3xl font-semibold tracking-normal text-white">
             Opportunities <LimitedFunctionalityBadge />
@@ -481,7 +481,7 @@ const Opportunities: NextPageWithLayout<{
           {/* FILTERS */}
           <div>
             <div className="flex flex-col gap-4 md:flex-row">
-              <div className="flex flex-grow flex-col items-center justify-start gap-4 md:flex-row">
+              <div className="flex grow flex-col items-center justify-start gap-4 md:flex-row">
                 {/* <div className="text-sm font-semibold text-white">
                   Filter by:
                 </div> */}
@@ -515,10 +515,10 @@ const Opportunities: NextPageWithLayout<{
             <div className="flex w-full gap-2">
               {/* TABS */}
               <div
-                className="tabs tabs-bordered w-full gap-2 overflow-x-scroll md:overflow-hidden"
+                className="tabs w-full gap-2 overflow-x-scroll md:overflow-hidden"
                 role="tablist"
               >
-                <div className="border-b border-transparent text-center text-sm font-medium text-gray-dark">
+                <div className="text-gray-dark border-b border-transparent text-center text-sm font-medium">
                   <ul className="-mb-px flex w-full justify-center gap-8 md:justify-start">
                     <li className="whitespace-nowrap">
                       <button
@@ -526,13 +526,13 @@ const Opportunities: NextPageWithLayout<{
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           !status
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         All
                         {(totalCountAll ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountAll}
                           </div>
                         )}
@@ -544,13 +544,13 @@ const Opportunities: NextPageWithLayout<{
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Active"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Active
                         {(totalCountActive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountActive}
                           </div>
                         )}
@@ -562,13 +562,13 @@ const Opportunities: NextPageWithLayout<{
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Inactive"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Inactive
                         {(totalCountInactive ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountInactive}
                           </div>
                         )}
@@ -580,13 +580,13 @@ const Opportunities: NextPageWithLayout<{
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Expired"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Expired
                         {(totalCountExpired ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountExpired}
                           </div>
                         )}
@@ -598,13 +598,13 @@ const Opportunities: NextPageWithLayout<{
                         className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
                           status === "Deleted"
                             ? "active border-orange"
-                            : "border-transparent hover:border-gray hover:text-gray"
+                            : "hover:border-gray hover:text-gray border-transparent"
                         }`}
                         role="tab"
                       >
                         Deleted
                         {(totalCountDeleted ?? 0) > 0 && (
-                          <div className="badge my-auto ml-2 bg-warning p-1 text-[12px] font-semibold text-white">
+                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                             {totalCountDeleted}
                           </div>
                         )}
@@ -617,12 +617,12 @@ const Opportunities: NextPageWithLayout<{
           </div>
 
           {/* BUTTONS */}
-          <div className="flex w-full flex-grow items-center justify-between gap-1 sm:justify-end">
+          <div className="flex w-full grow items-center justify-between gap-1 sm:justify-end">
             <Link
               href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
                 getSafeUrl(returnUrl?.toString(), router.asPath),
               )}`}`}
-              className={`btn btn-sm w-36 flex-nowrap border-green bg-white text-green hover:bg-green hover:text-white ${
+              className={`btn btn-sm border-green text-green hover:bg-green w-36 flex-nowrap bg-white hover:text-white ${
                 currentOrganisationInactive ? "disabled" : ""
               }`}
               id="btnCreateOpportunity" // e2e
@@ -635,7 +635,7 @@ const Opportunities: NextPageWithLayout<{
               onClick={() => {
                 setImportDialogOpen(true);
               }}
-              className={`btn btn-sm w-36 flex-nowrap border-green bg-green text-white hover:bg-white hover:text-green ${
+              className={`btn btn-sm border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white ${
                 currentOrganisationInactive ? "disabled" : ""
               }`}
             >
@@ -645,7 +645,7 @@ const Opportunities: NextPageWithLayout<{
             <button
               type="button"
               onClick={() => setExportDialogOpen(true)}
-              className="btn btn-sm w-36 flex-nowrap border-green bg-green text-white hover:bg-white hover:text-green"
+              className="btn btn-sm border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
             >
               <FaDownload className="h-4 w-4" /> Export
             </button>
@@ -660,7 +660,7 @@ const Opportunities: NextPageWithLayout<{
         )}
 
         {!isLoadingSearchResults && (
-          <div className="rounded-lg md:bg-white md:p-4 md:shadow-custom">
+          <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
             {/* NO ROWS */}
             {searchResults && searchResults.items?.length === 0 && !query && (
               <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
@@ -671,7 +671,7 @@ const Opportunities: NextPageWithLayout<{
                   }
                 />
                 {currentOrganisationInactive ? (
-                  <span className="btn btn-primary rounded-3xl bg-purple px-16 brightness-75">
+                  <span className="btn btn-primary bg-purple rounded-3xl px-16 brightness-75">
                     Add opportunity (disabled)
                   </span>
                 ) : (
@@ -705,9 +705,9 @@ const Opportunities: NextPageWithLayout<{
                   {searchResults.items.map((opportunity) => (
                     <div
                       key={`sm_${opportunity.id}`}
-                      className="flex flex-col justify-between gap-4 rounded-lg bg-white p-4 shadow-custom"
+                      className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
                     >
-                      <div className="flex flex-row gap-2 border-b-2 border-gray-light">
+                      <div className="border-gray-light flex flex-row gap-2 border-b-2">
                         <span title={opportunity.title} className="w-full">
                           <Link
                             href={`/organisations/${id}/opportunities/${opportunity.id}/info${`?returnUrl=${encodeURIComponent(
@@ -723,7 +723,7 @@ const Opportunities: NextPageWithLayout<{
                           <Link
                             href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
                           >
-                            <FaEdit className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                            <FaEdit className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
                           </Link>
                         </span>
 
@@ -734,7 +734,7 @@ const Opportunities: NextPageWithLayout<{
                               downloadVerificationFiles(e, opportunity.id);
                             }}
                           >
-                            <FaDownload className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                            <FaDownload className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
                           </button>
                         </span>
 
@@ -746,27 +746,27 @@ const Opportunities: NextPageWithLayout<{
                                 onClick_CopyToClipboard(opportunity.url!);
                               }}
                             >
-                              <FaLink className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                              <FaLink className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
                             </button>
                           </span>
                         )}
                       </div>
 
-                      <div className="flex flex-col gap-2 text-gray-dark">
+                      <div className="text-gray-dark flex flex-col gap-2">
                         {/* ZLTO Reward */}
                         <div className="flex justify-between">
                           <p className="text-sm tracking-wider">ZLTO</p>
                           <div className="flex flex-col gap-2">
                             {opportunity.zltoReward == null && (
                               <span
-                                className={`badge bg-orange-light px-4 text-orange`}
+                                className={`badge bg-orange-light text-orange px-4`}
                               >
                                 <span className="ml-1 text-xs">Disabled</span>
                               </span>
                             )}
                             {opportunity.zltoReward != null && (
                               <span
-                                className={`badge min-w-20 bg-gray-light px-4 text-gray-dark`}
+                                className={`badge bg-gray-light text-gray-dark min-w-20 px-4`}
                               >
                                 <Image
                                   src={iconZlto}
@@ -789,7 +789,7 @@ const Opportunities: NextPageWithLayout<{
                           </p>
                           <div className="flex flex-col gap-2">
                             <span
-                              className={`badge min-w-20 bg-gray-light px-4 text-gray-dark`}
+                              className={`badge bg-gray-light text-gray-dark min-w-20 px-4`}
                             >
                               <Image
                                 src={iconZlto}
@@ -855,7 +855,7 @@ const Opportunities: NextPageWithLayout<{
                           {opportunity.participantCountPending > 0 ? (
                             <Link
                               href={`/organisations/${id}/verifications?opportunity=${opportunity.id}&verificationStatus=Pending`}
-                              className="badge min-w-20 bg-orange-light text-orange"
+                              className="badge bg-orange-light text-orange min-w-20"
                             >
                               <IoIosWarning className="h-4 w-4" />
                               <span className="ml-1 text-xs">
@@ -863,7 +863,7 @@ const Opportunities: NextPageWithLayout<{
                               </span>
                             </Link>
                           ) : (
-                            <span className="badge min-w-20 bg-gray-light text-gray-dark">
+                            <span className="badge bg-gray-light text-gray-dark min-w-20">
                               <span className="text-xs">
                                 {opportunity.participantCountPending}
                               </span>
@@ -904,37 +904,37 @@ const Opportunities: NextPageWithLayout<{
                 </div>
 
                 {/* DESKTOP */}
-                <table className="hidden border-separate rounded-lg border-x-2 border-t-2 border-gray-light md:table md:table-auto">
+                <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
                   <thead>
                     <tr className="border-gray text-gray-dark">
-                      <th className="border-b-2 border-gray-light !py-4">
+                      <th className="border-gray-light border-b-2 !py-4">
                         Title
                       </th>
-                      <th className="border-b-2 border-gray-light text-center">
+                      <th className="border-gray-light border-b-2 text-center">
                         Actions
                       </th>
-                      <th className="border-b-2 border-gray-light text-center">
+                      <th className="border-gray-light border-b-2 text-center">
                         ZLTO
                       </th>
                       {/* <th className="border-b-2 border-gray-light text-center">
                         ZLTO Cumulative
                       </th> */}
-                      <th className="border-b-2 border-gray-light text-center">
+                      <th className="border-gray-light border-b-2 text-center">
                         Views
                       </th>
-                      <th className="border-b-2 border-gray-light text-center">
+                      <th className="border-gray-light border-b-2 text-center">
                         Clicks
                       </th>
-                      <th className="border-b-2 border-gray-light text-center">
+                      <th className="border-gray-light border-b-2 text-center">
                         Completions
                       </th>
-                      <th className="border-b-2 border-gray-light text-center">
+                      <th className="border-gray-light border-b-2 text-center">
                         Pending
                       </th>
-                      <th className="border-b-2 border-gray-light text-center">
+                      <th className="border-gray-light border-b-2 text-center">
                         Status
                       </th>
-                      <th className="border-b-2 border-gray-light text-center">
+                      <th className="border-gray-light border-b-2 text-center">
                         Visible
                       </th>
                     </tr>
@@ -942,7 +942,7 @@ const Opportunities: NextPageWithLayout<{
                   <tbody>
                     {searchResults.items.map((opportunity) => (
                       <tr key={`md_${opportunity.id}`}>
-                        <td className="flex h-14 flex-row items-center gap-2 border-b-2 border-gray-light">
+                        <td className="border-gray-light flex h-14 flex-row items-center gap-2 border-b-2">
                           <span
                             className="tooltip tooltip-top tooltip-secondary"
                             data-tip={opportunity.title}
@@ -960,7 +960,7 @@ const Opportunities: NextPageWithLayout<{
                             </Link>
                           </span>
                         </td>
-                        <td className="w-28 border-b-2 border-gray-light text-center">
+                        <td className="border-gray-light w-28 border-b-2 text-center">
                           <span
                             className="tooltip tooltip-top tooltip-secondary"
                             data-tip="Edit"
@@ -968,7 +968,7 @@ const Opportunities: NextPageWithLayout<{
                             <Link
                               href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
                             >
-                              <FaEdit className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                              <FaEdit className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
                             </Link>
                           </span>
 
@@ -982,7 +982,7 @@ const Opportunities: NextPageWithLayout<{
                                 downloadVerificationFiles(e, opportunity.id);
                               }}
                             >
-                              <FaDownload className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                              <FaDownload className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
                             </button>
                           </span>
 
@@ -997,22 +997,22 @@ const Opportunities: NextPageWithLayout<{
                                   onClick_CopyToClipboard(opportunity.url!);
                                 }}
                               >
-                                <FaLink className="size-4 text-gray-dark hover:scale-125 hover:animate-pulse hover:text-blue" />
+                                <FaLink className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
                               </button>
                             </span>
                           )}
                         </td>
-                        <td className="w-28 border-b-2 border-gray-light text-center">
+                        <td className="border-gray-light w-28 border-b-2 text-center">
                           {opportunity.zltoReward == null && (
                             <span
-                              className={`badge bg-orange-light px-4 text-orange`}
+                              className={`badge bg-orange-light text-orange px-4`}
                             >
                               <span className="ml-1 text-xs">Disabled</span>
                             </span>
                           )}
                           {opportunity.zltoReward != null && (
                             <span
-                              className={`badge bg-gray-light px-4 text-gray-dark`}
+                              className={`badge bg-gray-light text-gray-dark px-4`}
                             >
                               <Image
                                 src={iconZlto}
@@ -1041,7 +1041,7 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           </span>
                         </td> */}
-                        <td className="border-b-2 border-gray-light text-center">
+                        <td className="border-gray-light border-b-2 text-center">
                           <span
                             className={`badge ${opportunity.countViewed > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                           >
@@ -1050,21 +1050,21 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           </span>
                         </td>
-                        <td className="border-b-2 border-gray-light text-center">
+                        <td className="border-gray-light border-b-2 text-center">
                           <span
                             className={`badge ${opportunity.countNavigatedExternalLink > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                           >
                             {opportunity.countNavigatedExternalLink}
                           </span>
                         </td>
-                        <td className="border-b-2 border-gray-light text-center">
+                        <td className="border-gray-light border-b-2 text-center">
                           <span
                             className={`badge ${opportunity.participantCountCompleted > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                           >
                             {opportunity.participantCountCompleted}
                           </span>
                         </td>
-                        <td className="border-b-2 border-gray-light text-center">
+                        <td className="border-gray-light border-b-2 text-center">
                           {opportunity.participantCountPending > 0 ? (
                             <Link
                               href={`/organisations/${id}/verifications?opportunity=${opportunity.id}&verificationStatus=Pending`}
@@ -1083,12 +1083,12 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           )}
                         </td>
-                        <td className="border-b-2 border-gray-light text-center">
+                        <td className="border-gray-light border-b-2 text-center">
                           <OpportunityStatus
                             status={opportunity?.status?.toString()}
                           />
                         </td>
-                        <td className="border-b-2 border-gray-light text-center">
+                        <td className="border-gray-light border-b-2 text-center">
                           <div className="flex justify-between">
                             <div className="flex w-20 justify-start gap-2">
                               {opportunity?.hidden ? (

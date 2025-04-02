@@ -88,7 +88,7 @@ const YoIDLayout: TabProps = ({ children }) => {
           onClose={() => setYoIdModalVisible(false)}
         />
 
-        <div className="container z-10 mt-20 p-4 md:mt-24">
+        <div className="z-10 container mt-20 p-4 md:mt-24">
           {/* HEADER */}
           <div className="flex flex-row justify-center gap-4">
             <div className="hidden sm:flex sm:scale-75 md:scale-90">
@@ -128,7 +128,7 @@ const YoIDLayout: TabProps = ({ children }) => {
                     key={tab.title}
                     href={tab.url!}
                     rel="noopener noreferrer"
-                    className={`btn btn-xs flex h-8 items-center border-orange bg-orange text-xs tracking-wide text-white lg:btn-sm hover:border-orange hover:bg-purple hover:text-white ${
+                    className={`btn btn-xs border-orange bg-orange lg:btn-sm hover:border-orange hover:bg-purple flex h-8 items-center text-xs tracking-wide text-white hover:text-white ${
                       tab.selected ? "border-orange bg-purple text-white" : ""
                     }`}
                     title={`Go to ${tab.title}`}
@@ -141,7 +141,7 @@ const YoIDLayout: TabProps = ({ children }) => {
           </div>
 
           {/* MAIN CONTENT */}
-          <div className="mt-[2rem] flex flex-grow flex-col items-center justify-center md:mt-[1rem]">
+          <div className="mt-[2rem] flex grow flex-col items-center justify-center md:mt-[1rem]">
             {/* CHILDREN */}
             {children}
           </div>

@@ -25,7 +25,7 @@ export const Header: React.FC<InputProps> = ({
       {url && (
         <Link
           href={url}
-          className="flex items-center whitespace-nowrap rounded-md text-sm text-gray-dark"
+          className="text-gray-dark flex items-center rounded-md text-sm whitespace-nowrap"
           onClick={onClick}
           tabIndex={tabIndex}
           title="View all"
