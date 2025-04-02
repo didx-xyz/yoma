@@ -2,7 +2,7 @@ using FluentValidation;
 using System.ComponentModel.DataAnnotations;
 using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core.Extensions;
-using Yoma.Core.Domain.Core.Validators;
+using Yoma.Core.Domain.Core.Helpers;
 
 namespace Yoma.Core.Domain.ActionLink.Validators
 {
@@ -33,7 +33,7 @@ namespace Yoma.Core.Domain.ActionLink.Validators
           .NotEmpty()
           .Must(item =>
               new EmailAddressAttribute().IsValid(item) ||
-              RegExValidators.PhoneNumber().IsMatch(item))
+              PhoneNumberValidator.IsValidPhoneNumber(item))
           .WithMessage("'Distribution List' contain(s) empty, invalid email address(es) or phone number(s).");
         });
 

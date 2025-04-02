@@ -58,7 +58,7 @@ namespace Yoma.Core.Domain.Entity.Models
     [Required]
     public bool AddCurrentUserAsAdmin { get; set; }
 
-    public List<string>? Admins { get; set; }
+    public List<string?>? Admins { get; set; }
 
     /// <summary>
     /// Outbound SSO Client ID used for configuring SSO, allowing logins on third-party systems using Yoma credentials

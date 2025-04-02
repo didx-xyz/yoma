@@ -30,19 +30,6 @@ namespace Yoma.Core.Domain.Core.Extensions
     }
 
     /// <summary>
-    /// Strip all masking characters & inner spaces, except '+', e.g: (###) ###-#### | +## (##) ###-####
-    /// </summary>
-    /// <param name="e"></param>
-    /// <returns></returns>
-    public static string NormalizeContact(this string input)
-    {
-      ArgumentNullException.ThrowIfNull(input, nameof(input));
-
-      var rgx = RegexContactNumber();
-      return rgx.Replace(input.Normalize().Trim(), "");
-    }
-
-    /// <summary>
     /// remove all space characters
     /// </summary>
     /// <param name="e"></param>
@@ -157,9 +144,6 @@ namespace Yoma.Core.Domain.Core.Extensions
     #region Private Members
     [GeneratedRegex("[ ]{2,}", RegexOptions.None)]
     private static partial Regex RegexDoubleSpacing();
-
-    [GeneratedRegex("[^a-zA-Z0-9]")]
-    private static partial Regex RegexContactNumber();
 
     [GeneratedRegex("(\\b[a-zA-Z])[a-zA-Z]*\\.* ?")]
     private static partial Regex RegexInitials();

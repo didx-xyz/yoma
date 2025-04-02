@@ -238,6 +238,17 @@ namespace Yoma.Core.Domain.ActionLink.Services
     {
       ArgumentNullException.ThrowIfNull(request);
 
+      request.DistributionList = request.DistributionList?.Select(item =>
+      {
+        if (string.IsNullOrWhiteSpace(item))
+          return item;
+
+        if (item.Contains('@'))
+          return item.Trim();
+
+        return item.NormalizePhoneNumber();
+      }).ToList();
+
       await _linkRequestCreateValidatorVerify.ValidateAndThrowAsync(request);
 
       if (request.DistributionList != null)

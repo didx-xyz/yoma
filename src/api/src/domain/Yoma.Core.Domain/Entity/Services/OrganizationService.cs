@@ -275,6 +275,19 @@ namespace Yoma.Core.Domain.Entity.Services
 
       request.WebsiteURL = request.WebsiteURL?.EnsureHttpsScheme();
 
+      request.Admins = request.Admins?.Select(item =>
+      {
+        if (string.IsNullOrWhiteSpace(item))
+          return item;
+
+        if (item.Contains('@'))
+          return item.Trim();
+
+        return item.NormalizePhoneNumber();
+      }).ToList();
+
+      request.PrimaryContactPhone = request.PrimaryContactPhone?.NormalizePhoneNumber();
+
       await _organizationCreateRequestValidator.ValidateAndThrowAsync(request);
 
       var existingByName = GetByNameOrNull(request.Name, false, false);
@@ -406,6 +419,19 @@ namespace Yoma.Core.Domain.Entity.Services
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       request.WebsiteURL = request.WebsiteURL?.EnsureHttpsScheme();
+
+      request.Admins = request.Admins?.Select(item =>
+      {
+        if (string.IsNullOrWhiteSpace(item))
+          return item;
+
+        if (item.Contains('@'))
+          return item.Trim();
+
+        return item.NormalizePhoneNumber();
+      }).ToList();
+
+      request.PrimaryContactPhone = request.PrimaryContactPhone?.NormalizePhoneNumber();
 
       await _organizationUpdateRequestValidator.ValidateAndThrowAsync(request);
 
@@ -872,7 +898,23 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       var result = GetById(id, true, true, ensureOrganizationAuthorization);
 
+      if (usernames == null || usernames.Count == 0)
+        throw new ArgumentNullException(nameof(usernames));
+
       ValidateUpdatable(result);
+
+      List<string?>? normalizedUsernames = usernames?
+        .Select(item =>
+        {
+          if (string.IsNullOrWhiteSpace(item))
+            return (string?)null;
+
+          if (item.Contains('@'))
+            return item.Trim();
+
+          return item.NormalizePhoneNumber();
+        })
+        .ToList();
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
 
@@ -881,7 +923,7 @@ namespace Yoma.Core.Domain.Entity.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-        result = await AssignAdmins(result, usernames, OrganizationReapprovalAction.ReapprovalWithNotification);
+        result = await AssignAdmins(result, normalizedUsernames, OrganizationReapprovalAction.ReapprovalWithNotification);
         result.ModifiedByUserId = user.Id;
         result = await _organizationRepository.Update(result);
         scope.Complete();
@@ -1135,7 +1177,7 @@ namespace Yoma.Core.Domain.Entity.Services
       return (organization, blobObject);
     }
 
-    private async Task<Organization> AssignAdmins(Organization organization, List<string> usernames, OrganizationReapprovalAction reapprovalAction)
+    private async Task<Organization> AssignAdmins(Organization organization, List<string?>? usernames, OrganizationReapprovalAction reapprovalAction)
     {
       if (usernames == null || usernames.Count == 0)
         throw new ArgumentNullException(nameof(usernames));
@@ -1146,6 +1188,8 @@ namespace Yoma.Core.Domain.Entity.Services
         var updated = false;
         foreach (var username in usernames)
         {
+          if (string.IsNullOrWhiteSpace(username)) throw new ArgumentNullException(nameof(usernames), "Contains empty values");
+
           var user = _userService.GetByUsername(username, false, false);
           if (!user.ExternalId.HasValue)
             throw new InvalidOperationException($"External id expected for user with id '{user.Id}'");
