@@ -204,7 +204,7 @@ const YoIDDashboard: NextPageWithLayout<{
           />
           <button
             onClick={() => setGraphView(!graphView)}
-            className="absolute left-[7.5rem] flex sm:left-[8.5rem] lg:left-[9rem]"
+            className="absolute left-[9rem] flex sm:left-[8.5rem] lg:left-[9rem]"
           >
             {graphView ? "📋" : "📈"}&nbsp;
             <span className="text-gray-dark my-auto text-xs underline">

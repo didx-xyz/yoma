@@ -461,7 +461,7 @@ export const UserProfileForm: React.FC<{
             error={formState.errors.countryId?.message?.toString()}
           >
             <select
-              className="select border-gray focus:border-gray focus:outline-none"
+              className="select border-gray focus:border-gray w-full focus:outline-none"
               {...register("countryId")}
             >
               <option value="">Please select</option>
@@ -484,7 +484,7 @@ export const UserProfileForm: React.FC<{
             error={formState.errors.educationId?.message?.toString()}
           >
             <select
-              className="select border-gray focus:border-gray focus:outline-none"
+              className="select border-gray focus:border-gray w-full focus:outline-none"
               {...register("educationId")}
             >
               <option value="">Please select</option>
@@ -507,7 +507,7 @@ export const UserProfileForm: React.FC<{
             error={formState.errors.genderId?.message?.toString()}
           >
             <select
-              className="select border-gray focus:border-gray focus:outline-none"
+              className="select border-gray focus:border-gray w-full focus:outline-none"
               {...register("genderId")}
             >
               <option value="">Please select</option>
@@ -533,7 +533,7 @@ export const UserProfileForm: React.FC<{
               inputProps={{
                 type: "date",
                 className:
-                  "input w-full rounded-md border-gray focus:border-gray focus:outline-none",
+                  "input w-full rounded-md border-gray focus:border-gray w-full focus:outline-none",
                 ...register("dateOfBirth"),
               }}
             />
@@ -564,7 +564,7 @@ export const UserProfileForm: React.FC<{
           {onCancel && (
             <button
               type="button"
-              className="btn btn-warning md:btn-wide w-1/2 shrink normal-case"
+              className="btn btn-warning w-1/2 shrink normal-case"
               onClick={onCancel}
             >
               {cancelButtonText}
@@ -573,7 +573,7 @@ export const UserProfileForm: React.FC<{
 
           <button
             type="submit"
-            className="btn btn-success md:btn-wide w-1/2 shrink normal-case"
+            className="btn btn-success w-1/2 shrink normal-case"
           >
             {submitButtonText}
           </button>

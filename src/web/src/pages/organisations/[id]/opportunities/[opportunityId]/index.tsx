@@ -1464,7 +1464,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         onRequestClose={() => {
           setOppExpiredModalVisible(false);
         }}
-        className={`md:max-h-[450px] md:w-[500px]`}
+        className={`md:max-h-[500px] md:w-[600px]`}
       >
         <div className="flex h-full flex-col gap-4 overflow-y-auto pb-8">
           <div className="bg-green flex flex-row p-4 shadow-lg">
