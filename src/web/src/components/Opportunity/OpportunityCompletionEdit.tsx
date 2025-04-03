@@ -102,13 +102,19 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         });
       } else {
         // Validate dateEnd
-        const endDate = new Date(values.dateEnd).setHours(0, 0, 0, 0);
-        const today = new Date().setHours(0, 0, 0, 0);
-        const oppEndDate = opportunityInfo?.dateEnd
-          ? new Date(opportunityInfo.dateEnd).setHours(0, 0, 0, 0)
+        // Ensure valid date objects with time set to zero for comparison
+        const endDateObj = values.dateEnd ? new Date(values.dateEnd) : null;
+        const todayObj = new Date();
+        const oppEndDateObj = opportunityInfo?.dateEnd
+          ? new Date(opportunityInfo.dateEnd)
           : null;
 
-        if (endDate > today) {
+        // Set time to 00:00:00 for comparing just the dates
+        if (endDateObj) endDateObj.setHours(0, 0, 0, 0);
+        todayObj.setHours(0, 0, 0, 0);
+        if (oppEndDateObj) oppEndDateObj.setHours(0, 0, 0, 0);
+
+        if (endDateObj && endDateObj > todayObj) {
           ctx.addIssue({
             message:
               "End date cannot be in the future. Please select today's date or earlier.",
@@ -117,9 +123,9 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           });
         }
 
-        if (oppEndDate && endDate > oppEndDate) {
+        if (endDateObj && oppEndDateObj && endDateObj > oppEndDateObj) {
           ctx.addIssue({
-            message: `End date cannot be later than the opportunity end date of '${oppEndDate}'.`,
+            message: `End date cannot be later than the opportunity end date of '${oppEndDateObj.toLocaleDateString()}'.`,
             code: z.ZodIssueCode.custom,
             path: ["dateEnd"],
           });
@@ -515,7 +521,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       Choose the date that you completed this opportunity.
                     </div>
 
-                    <div className="form-control mt-4 gap-2">
+                    <div className="mt-4 flex flex-col gap-2">
                       <Controller
                         control={control}
                         name="dateEnd"
@@ -573,7 +579,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                       Choose the time it took to complete this opportunity.
                     </div>
 
-                    <div className="form-control mt-4 gap-2">
+                    <div className="mt-4 flex flex-col gap-2">
                       {/* COMMITMENT INTERVALS */}
                       <div className="flex flex-col pb-2">
                         <div className="flex flex-row justify-start gap-4">
@@ -832,7 +838,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                     <div className="text-gray-dark text-sm italic">
                       Please rate your experience & provide feedback.
                     </div>
-                    <div className="form-control mt-4 gap-2">
+                    <div className="mt-4 flex flex-col gap-2">
                       {/* STAR RATING */}
                       <div className="mb-4 flex flex-col gap-2">
                         <div>Rating</div>

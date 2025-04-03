@@ -326,7 +326,7 @@ export const Navbar: React.FC = () => {
                       </div>
                       <label
                         htmlFor="nav-drawer"
-                        className="drawer-close btn btn-sm text-gray-dark hover:bg-gray !rounded-full border-none shadow-md"
+                        className="drawer-close btn btn-sm btn-circle text-gray-dark hover:bg-gray !rounded-full border-none shadow-md"
                         aria-label="close sidebar"
                         tabIndex={isDrawerOpen ? 0 : -1}
                         onKeyDown={(e) => {

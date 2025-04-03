@@ -58,7 +58,7 @@ export const OppSearchInputLarge: React.FC<{
         <input
           type="search"
           placeholder={placeholder ?? "Search..."}
-          className={`${inputClassName} input-lg join-item w-full bg-white/10 text-white placeholder-white placeholder:font-bold focus:outline-none md:!px-8`}
+          className={`${inputClassName} input-lg join-item md:!px-8x w-full bg-white/10 px-4 text-white placeholder-white placeholder:font-bold focus:outline-none`}
           style={{ maxWidth: maxWidthStyle }}
           value={searchInputValue ?? ""}
           onChange={(e) => setSearchInputValue(e.target.value)}
