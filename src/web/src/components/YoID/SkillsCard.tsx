@@ -17,7 +17,7 @@ export const SkillsCard: React.FC<{ data: UserSkillInfo[] }> = ({ data }) => {
   }
 
   return (
-    <>
+    <div className="flex flex-wrap gap-1">
       {data?.map((item) => (
         <div key={item.id} className="badge bg-green px-2 py-1 text-white">
           {item.infoURL && <Link href={item.infoURL}>{item.name}</Link>}
@@ -26,6 +26,6 @@ export const SkillsCard: React.FC<{ data: UserSkillInfo[] }> = ({ data }) => {
           )}
         </div>
       ))}
-    </>
+    </div>
   );
 };

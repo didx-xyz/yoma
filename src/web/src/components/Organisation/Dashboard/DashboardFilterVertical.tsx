@@ -564,11 +564,11 @@ export const DashboardFilterVertical: React.FC<{
         </div>
 
         {/* Action buttons */}
-        <div className="mx-4 my-8 flex flex-col items-center justify-center gap-6 md:flex-row">
+        <div className="mx-4 my-8 flex flex-col items-center justify-center gap-2 md:flex-row">
           {onClear && (
             <button
               type="button"
-              className="btn btn-neutral !border-gray-dark hover:bg-gray-light w-full grow rounded-full md:w-40"
+              className="btn w-1/2 grow rounded-full"
               onClick={onClear}
             >
               {clearButtonText}
@@ -577,7 +577,7 @@ export const DashboardFilterVertical: React.FC<{
           {onSubmit && (
             <button
               type="submit"
-              className="bg-theme border-0-full btn text-gray-light w-full grow rounded hover:brightness-90 md:w-40"
+              className="bg-theme border-0-full btn text-gray-light w-1/2 hover:brightness-90"
             >
               {submitButtonText}
             </button>

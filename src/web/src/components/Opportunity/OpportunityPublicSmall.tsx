@@ -62,7 +62,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
         )}
 
         {/* BADGES */}
-        <div className="text-green-dark flex flex-row flex-wrap gap-2 overflow-hidden pt-2 whitespace-normal md:flex-nowrap md:whitespace-nowrap">
+        <div className="flex flex-row flex-wrap gap-2 pt-2">
           <div className="badge bg-green-light text-green">
             <Image
               src={iconClock}

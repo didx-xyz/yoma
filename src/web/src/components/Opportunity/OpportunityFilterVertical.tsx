@@ -207,7 +207,7 @@ export const OpportunityFilterVertical: React.FC<{
           <h1 className="my-auto grow text-2xl font-bold">Filter</h1>
           <button
             type="button"
-            className="btn btn-primary rounded-full px-3"
+            className="btn btn-circle btn-primary"
             onClick={onCancel}
           >
             <IoMdClose className="h-6 w-6"></IoMdClose>

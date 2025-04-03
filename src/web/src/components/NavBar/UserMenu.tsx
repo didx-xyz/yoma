@@ -217,7 +217,7 @@ export const UserMenu: React.FC = () => {
                 {/* CLOSE BUTTON */}
                 <label
                   htmlFor="userMenu-drawer"
-                  className="drawer-close btn btn-sm hover:bg-orange absolute top-2 right-2 !rounded-full border-none text-black shadow-none"
+                  className="drawer-close btn btn-sm btn-circle hover:bg-orange absolute top-2 right-2 border-none text-black"
                   aria-label="close sidebar"
                   tabIndex={isDrawerOpen ? 0 : -1}
                   onKeyDown={(e) => {

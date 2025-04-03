@@ -91,7 +91,7 @@ const YoIDOpportunities: TabProps = ({ children }) => {
               key={tab.title}
               href={tab.url!}
               rel="noopener noreferrer"
-              className={`btn btn-sm border-gray text-gray-dark hover:border-gray-dark flex items-center text-xs ${
+              className={`btn btn-sm border-gray text-gray-dark hover:border-gray-dark flex items-center text-xs shadow-md ${
                 tab.selected
                   ? "btn-secondary !text-gray border-0 hover:text-white"
                   : ""

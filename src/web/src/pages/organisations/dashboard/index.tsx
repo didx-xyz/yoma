@@ -1057,7 +1057,7 @@ const OrganisationDashboard: NextPageWithLayout<{
             {/* BUTTON */}
             <button
               type="button"
-              className="bg-theme btn btn-sm flex w-full items-center justify-center rounded-l-full border-none tracking-widest text-white brightness-[1.12] hover:brightness-95 md:w-40"
+              className="bg-theme btn btn-sm flex w-full items-center justify-center rounded-l-full border-none tracking-widest text-white shadow-md brightness-[1.12] hover:brightness-95 md:w-40"
               onClick={() => setFilterFullWindowVisible(true)}
             >
               <IoMdOptions className="h-5 w-5" />

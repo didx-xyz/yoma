@@ -128,7 +128,7 @@ const YoIDLayout: TabProps = ({ children }) => {
                     key={tab.title}
                     href={tab.url!}
                     rel="noopener noreferrer"
-                    className={`btn btn-xs border-orange bg-orange lg:btn-sm hover:border-orange hover:bg-purple flex h-8 items-center text-xs tracking-wide text-white hover:text-white ${
+                    className={`btn btn-xs border-orange bg-orange lg:btn-sm hover:border-orange hover:bg-purple flex h-8 items-center text-xs tracking-wide text-white shadow-md hover:text-white ${
                       tab.selected ? "border-orange bg-purple text-white" : ""
                     }`}
                     title={`Go to ${tab.title}`}

@@ -136,7 +136,7 @@ const CustomModal: FC<CustomModalProps> = ({
           <div
             ref={modalRef}
             tabIndex={-1}
-            className={`visible fixed top-0 right-0 bottom-0 left-0 grow scale-95 overflow-hidden overflow-y-auto bg-white transition-all duration-300 ease-in-out ${animationClasses} md:m-auto md:rounded-3xl ${className}`}
+            className={`visible fixed top-0 right-0 bottom-0 left-0 grow overflow-hidden overflow-y-auto bg-white transition-all duration-300 ease-in-out ${animationClasses} md:m-auto md:rounded-3xl ${className}`}
           >
             {children}
           </div>
