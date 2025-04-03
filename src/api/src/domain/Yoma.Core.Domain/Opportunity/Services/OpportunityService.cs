@@ -1984,7 +1984,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         var countriesNameRemoved = PartnerService.RequiredCountries_AnyOf_All
           .Where(rc => countriesCodeAlpha2Removed.Contains(rc.CodeAlpha2, StringComparer.InvariantCultureIgnoreCase)).Select(rc => rc.Country).ToList();
 
-        reasons.Add($"The following countr{(countriesCodeAlpha2Removed.Count == 1 ? "y was" : "ies were")} cannot be removed: '{string.Join(", ", countriesNameRemoved)}'");
+        reasons.Add($"The following country(ies) cannot be removed: '{string.Join(", ", countriesNameRemoved)}'");
       }
 
       if (reasons.Count == 0) return;
