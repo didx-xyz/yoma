@@ -121,7 +121,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
               case Partner.SAYouth:
                 //only include opportunities of type learning, within countries World-Wide or South Africa and with an end date
                 //once shared, the type can not be changed
-                if (opportunity.Type != Opportunity.Type.Learning.ToString())
+                if (!string.Equals(opportunity.Type, Opportunity.Type.Learning.ToString(), StringComparison.InvariantCultureIgnoreCase))
                 {
                   _logger.LogInformation("Partner sharing filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not a learning type and will be skipped",
                     EntityType.Opportunity, entityId, partner);
