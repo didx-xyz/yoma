@@ -177,22 +177,21 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                       if (!SharingService.Statuses_Opportunity_CanDelete.Contains(opportunity.Status))
                         throw new InvalidOperationException($"Action '{action}': Opportunity status of '{string.Join(',', SharingService.Statuses_Opportunity_CanDelete)}' expected. Current status '{opportunity.Status}'");
 
-                      //Temporarily removed
-                      //switch (opportunity.Status)
-                      //{
-                      //  case Status.Active:
-                      //  case Status.Inactive:
-                      //  case Status.Expired:
-                      //    if (opportunity.OrganizationStatus != OrganizationStatus.Deleted)
-                      //      throw new InvalidOperationException($"Processing action {action}: Opportunity with status {opportunity.Status} must be associated with a deleted organization");
-                      //    break;
+                      switch (opportunity.Status)
+                      {
+                        case Status.Active:
+                        case Status.Inactive:
+                        case Status.Expired:
+                          if (opportunity.OrganizationStatus != OrganizationStatus.Deleted)
+                            throw new InvalidOperationException($"Processing action {action}: Opportunity with status {opportunity.Status} must be associated with a deleted organization");
+                          break;
 
-                      //  case Status.Deleted:
-                      //    break;
+                        case Status.Deleted:
+                          break;
 
-                      //  default:
-                      //    throw new InvalidOperationException($"Opportunity status of '{opportunity.Status}' not supported");
-                      //}
+                        default:
+                          throw new InvalidOperationException($"Opportunity status of '{opportunity.Status}' not supported");
+                      }
 
                       await sharingProviderClient.DeleteOpportunity(item.EntityExternalId);
                       break;
