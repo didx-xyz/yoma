@@ -38,7 +38,9 @@ namespace Yoma.Core.Domain.Core
   public enum Country
   {
     [Description("WW")]
-    Worldwide
+    Worldwide,
+    [Description("ZA")]
+    SouthAfrica
   }
 
   public enum SpatialType

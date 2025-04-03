@@ -34,6 +34,7 @@ using System.Reflection;
 using CsvHelper.Configuration.Attributes;
 using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.SSI;
+using Yoma.Core.Domain.PartnerSharing.Services.Lookups;
 
 namespace Yoma.Core.Domain.Opportunity.Services
 {
@@ -1967,11 +1968,24 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (opportunityCurrent.ShareWithPartners == true && request.ShareWithPartners != true)
         reasons.Add("Option to share with partners cannot be disabled after it has been enabled");
 
+      if (opportunityCurrent.TypeId != request.TypeId)
+        reasons.Add("Type cannot be changed");
+
       if (opportunityCurrent.DateEnd.HasValue && !request.DateEnd.HasValue)
         reasons.Add("End date cannot be removed once it has been set");
 
-      if (opportunityCurrent.TypeId != request.TypeId)
-        reasons.Add("Type cannot be changed");
+      var countriesCodeAlpha2Required = PartnerService.RequiredCountries_AnyOf_All.Select(o => o.CodeAlpha2).ToList();
+      var countriesCodeAlpha2Current = opportunityCurrent.Countries?.Select(c => c.CodeAlpha2).Intersect(countriesCodeAlpha2Required, StringComparer.InvariantCultureIgnoreCase).ToList();
+      var countriesCodeAlpha2Request = request.Countries?.Select(c => _countryService.GetById(c).CodeAlpha2).Intersect(countriesCodeAlpha2Required, StringComparer.InvariantCultureIgnoreCase).ToList();
+      var countriesCodeAlpha2Removed = countriesCodeAlpha2Current?.Except(countriesCodeAlpha2Request ?? [], StringComparer.InvariantCultureIgnoreCase).ToList();
+
+      if (countriesCodeAlpha2Removed?.Count > 0)
+      {
+        var countriesNameRemoved = PartnerService.RequiredCountries_AnyOf_All
+          .Where(rc => countriesCodeAlpha2Removed.Contains(rc.CodeAlpha2, StringComparer.InvariantCultureIgnoreCase)).Select(rc => rc.Country).ToList();
+
+        reasons.Add($"The following countr{(countriesCodeAlpha2Removed.Count == 1 ? "y was" : "ies were")} cannot be removed: '{string.Join(", ", countriesNameRemoved)}'");
+      }
 
       if (reasons.Count == 0) return;
 
