@@ -8,6 +8,8 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.PartnerSharing.Interfaces.Lookups;
+using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 
 namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
 {
@@ -19,6 +21,11 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
     private readonly IMemoryCache _memoryCache;
     private readonly IOpportunityService _opportunityService;
     private readonly IRepository<Models.Lookups.Partner> _partnerRepository;
+
+    private static readonly (Country Country, string CodeAlpha2)[] RequiredCountries_AnyOf_SAYouth =
+      [(Country.SouthAfrica, Country.SouthAfrica.ToDescription()), (Country.Worldwide, Country.Worldwide.ToDescription())];
+
+    public static readonly (Country Country, string CodeAlpha2)[] RequiredCountries_AnyOf_All = RequiredCountries_AnyOf_SAYouth;
     #endregion
 
     #region Constructor
@@ -97,12 +104,12 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
         switch (entityType)
         {
           case EntityType.Opportunity:
-            var opportunity = _opportunityService.GetById(entityId, false, false, false);
+            var opportunity = _opportunityService.GetById(entityId, true, false, false);
 
             //once shared, flag can not be disabled
             if (opportunity.ShareWithPartners != true)
             {
-              _logger.LogInformation("Partner sharing filtering: Entity {entityType} with id {entityId} not flagged for sharing and will be skipped", EntityType.Opportunity, entityId);
+              _logger.LogInformation("Partner sharing filtering: Entity '{entityType}' with id '{entityId}' not flagged for sharing and will be skipped", EntityType.Opportunity, entityId);
               continue;
             }
 
@@ -112,18 +119,30 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
             switch (partner)
             {
               case Partner.SAYouth:
-                //only include opportunities with an end date and of type learning
-                //once shared, end date can be changed but not removed
-                if (!opportunity.DateEnd.HasValue)
+                //only include opportunities of type learning, within countries World-Wide or South Africa and with an end date
+                //once shared, the type can not be changed
+                if (!string.Equals(opportunity.Type, Opportunity.Type.Learning.ToString(), StringComparison.InvariantCultureIgnoreCase))
                 {
-                  _logger.LogInformation("Partner sharing filtering: Entity {entityType} with id {entityId} for partner {partner} does not have an end date and will be skipped", EntityType.Opportunity, entityId, partner);
+                  _logger.LogInformation("Partner sharing filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not a learning type and will be skipped",
+                    EntityType.Opportunity, entityId, partner);
                   continue;
                 }
 
-                //once shared, the type can not be changed
-                if (opportunity.Type != Opportunity.Type.Learning.ToString())
+                //once shared, end date can be changed but not removed
+                if (!opportunity.DateEnd.HasValue)
                 {
-                  _logger.LogInformation("Partner sharing filtering: Entity {EntityType} with id {EntityId} for partner {Partner} is not a learning type and will be skipped", EntityType.Opportunity, entityId, partner);
+                  _logger.LogInformation("Partner sharing filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' does not have an end date and will be skipped",
+                    EntityType.Opportunity, entityId, partner);
+                  continue;
+                }
+
+                //once shared, requird countries can not be removed but can be added
+                if (opportunity.Countries == null ||
+                  !opportunity.Countries.Any(c => RequiredCountries_AnyOf_SAYouth.Any(s => string.Equals(s.CodeAlpha2, c.CodeAlpha2, StringComparison.InvariantCultureIgnoreCase))))
+                {
+                  _logger.LogInformation(
+                    "Partner sharing filtering: Entity '{entityType}' with id '{entityId}' for partner '{partner}' is not associated with any of the required countries '{requiredCountries}' and will be skipped",
+                    EntityType.Opportunity, entityId, partner, string.Join(", ", RequiredCountries_AnyOf_SAYouth.Select(c => c.Country)));
                   continue;
                 }
 
