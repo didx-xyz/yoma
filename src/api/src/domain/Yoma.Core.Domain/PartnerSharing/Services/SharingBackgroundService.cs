@@ -177,6 +177,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                       if (!SharingService.Statuses_Opportunity_CanDelete.Contains(opportunity.Status))
                         throw new InvalidOperationException($"Action '{action}': Opportunity status of '{string.Join(',', SharingService.Statuses_Opportunity_CanDelete)}' expected. Current status '{opportunity.Status}'");
 
+                      //Temporarily removed
                       //switch (opportunity.Status)
                       //{
                       //  case Status.Active:
