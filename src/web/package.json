@@ -43,7 +43,7 @@
     "react-scroll-snap-anime-slider": "^1.5.3",
     "react-select": "^5.10.1",
     "react-toastify": "^11.0.5",
-    "sharp": "^0.33.5",
+    "sharp": "^0.34.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
