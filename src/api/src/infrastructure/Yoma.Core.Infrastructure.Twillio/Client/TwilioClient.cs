@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 using Twilio.Clients;
 using Twilio.Rest.Api.V2010.Account;
 using Twilio.Types;
-using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -13,6 +12,24 @@ using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Infrastructure.Twilio.Models;
 
+/*
+Sample appsettings.json payload:
+
+"Twilio": {
+  "AccountSid": "ACXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
+  "AuthToken": "your_auth_token_here",
+  "From": {
+    "WhatsApp": "+15557186878",
+    "SMS": {
+      "ZA": "+27600193536"
+    }
+  },
+  "TemplatesWhatsApp": {
+    "Organization_Approval_Requested": "template_id_1",
+    "Opportunity_Published": "template_id_2"
+  }
+}
+*/
 namespace Yoma.Core.Infrastructure.Twilio.Client
 {
   public partial class TwilioClient : IMessageProviderClient
@@ -21,15 +38,17 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
     private readonly ILogger<TwilioClient> _logger;
     private readonly AppSettings _appSettings;
     private readonly IEnvironmentProvider _environmentProvider;
-    private readonly TwilioOpptions _options;
+    private readonly TwilioOptions _options;
     private readonly ITwilioRestClient _twilioClient;
+
+    private static readonly MessageType[] PreferredMessageTypeOrder = [MessageType.WhatsApp, MessageType.SMS];
     #endregion
 
     #region Constructor
     public TwilioClient(ILogger<TwilioClient> logger,
         AppSettings appSettings,
         IEnvironmentProvider environmentProvider,
-        TwilioOpptions options,
+        TwilioOptions options,
         ITwilioRestClient twilioClient)
     {
       _logger = logger;
@@ -41,61 +60,43 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
     #endregion
 
     #region Public Members
-    public async Task Send<T>(MessageType deliveryType, NotificationType notificationType, List<NotificationRecipient> recipients, T data)
+    public async Task Send<T>(MessageType allowedMessageTypes, NotificationType notificationType, List<NotificationRecipient> recipients, T data)
      where T : NotificationBase
     {
-      await Send(deliveryType, notificationType, [(recipients, data)]);
+      await Send(allowedMessageTypes, notificationType, [(recipients, data)]);
     }
 
-    public async Task Send<T>(MessageType deliveryType, NotificationType notificationType, List<(List<NotificationRecipient> Recipients, T Data)> recipientDataGroups)
-     where T : NotificationBase
+    /// <summary>
+    /// Sends a notification to one or more recipients using the allowed message types (e.g., WhatsApp and/or SMS),
+    /// attempting fallback between types per recipient in the predefined order: WhatsApp → SMS.
+    ///
+    /// - Each recipient is processed in parallel on its own thread.
+    /// - WhatsApp requires a configured template and 'From' number; if missing, an exception is thrown.
+    /// - SMS is optional; if the template or 'From' number is missing or unsupported for the recipient's country, it will be skipped with an info log.
+    /// - If all allowed message types fail for a recipient due to Twilio API errors or exceptions, the last failure reason is logged (not thrown).
+    /// - Input validation errors (null/empty groups or missing configuration) throw immediately.
+    /// </summary>
+    public async Task Send<T>(MessageType allowedMessageTypes, NotificationType notificationType, List<(List<NotificationRecipient> Recipients, T Data)> recipientDataGroups)
+        where T : NotificationBase
     {
+      if ((allowedMessageTypes & MessageType.Email) != 0)
+        throw new ArgumentException($"'{MessageType.Email}' is not a valid message type for Twilio", nameof(allowedMessageTypes));
+
+      if ((allowedMessageTypes & (MessageType.WhatsApp | MessageType.SMS)) == 0)
+        throw new ArgumentException($"At least one valid message type ('{MessageType.WhatsApp | MessageType.SMS}') must be specified", nameof(allowedMessageTypes));
+
       if (!_appSettings.TwilioEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
-        _logger.LogInformation("Sending of {deliveryType} skipped for environment '{environment}'", deliveryType, _environmentProvider.Environment);
+        _logger.LogInformation("Sending of '{allowedMessageTypes}' skipped for environment '{environment}'", allowedMessageTypes, _environmentProvider.Environment);
         return;
       }
 
       if (recipientDataGroups == null || recipientDataGroups.Count == 0)
-        throw new ArgumentNullException(nameof(recipientDataGroups));
+        throw new ArgumentNullException(nameof(recipientDataGroups), "Recipient data groups are null or empty");
 
-      // Messages will only be sent if the 'From' number is configured based on the delivery type :
-      // - For SMS: The 'From' number must be configured for SMS in _options.From
-      // - For WhatsApp: The 'From' number must be configured for WhatsApp in _options.From
-      if (_options.From == null || !_options.From.ContainsKey(deliveryType.ToString()))
-      {
-        _logger.LogInformation("Sending of {deliveryType} skipped: 'From' number not configured", deliveryType);
-        return;
-      }
+      var notificationKey = notificationType.ToString();
+      var sendTasks = new List<Task>();
 
-      // Messages will only be sent if:
-      // - For SMS, the template exists in the resources file (SMSTemplates)
-      // - For WhatsApp, the template ID is configured in _options.Templates
-      var smsTemplate = string.Empty;
-      switch (deliveryType)
-      {
-        case MessageType.SMS:
-          smsTemplate = SMSTemplates.ResourceManager.GetString(notificationType.ToString());
-          if (string.IsNullOrWhiteSpace(smsTemplate))
-          {
-            _logger.LogInformation("Sending of {deliveryType} skipped: Template for notification type '{notificationType}' not configured", deliveryType, notificationType);
-            return;
-          }
-          break;
-
-        case MessageType.WhatsApp:
-          if (_options.Templates == null || !_options.Templates.ContainsKey(notificationType.ToString()))
-          {
-            _logger.LogWarning("Sending of {deliveryType} skipped: Template for notification type '{notificationType}' not configured", deliveryType, notificationType);
-            return;
-          }
-          break;
-
-        default:
-          throw new InvalidOperationException($"Unsupported delivery type: {deliveryType}");
-      }
-
-      var failedRecipients = new List<string>();
       foreach (var (recipients, data) in recipientDataGroups)
       {
         if (recipients == null || recipients.Count == 0)
@@ -104,46 +105,121 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
         if (data == null)
           throw new ArgumentNullException(nameof(recipientDataGroups), "Contains null data");
 
-        //ensure environment suffix
         data.SubjectSuffix = _environmentProvider.Environment == Domain.Core.Environment.Production
             ? string.Empty
             : $"{_environmentProvider.Environment.ToDescription()} - ";
 
         foreach (var recipient in recipients)
         {
-          data.RecipientDisplayName = string.IsNullOrEmpty(recipient.DisplayName) ? recipient.Username : recipient.DisplayName;
-
-          var messageOptions = deliveryType switch
+          sendTasks.Add(Task.Run(async () =>
           {
-            MessageType.SMS => new CreateMessageOptions(new PhoneNumber(recipient.PhoneNumber))
+            var recipientId = !string.IsNullOrWhiteSpace(recipient.PhoneNumber) ? recipient.PhoneNumber : recipient.Username;
+
+            if (string.IsNullOrWhiteSpace(recipient.PhoneNumber))
             {
-              From = new PhoneNumber(_options.From[deliveryType.ToString()]),
-              Body = ParseSMSBody(smsTemplate, data.ContentVariables)
-            },
+              _logger.LogInformation("{recipientId}: Skipped — Missing phone number", recipientId);
+              return;
+            }
 
-            MessageType.WhatsApp => new CreateMessageOptions(new PhoneNumber($"whatsapp:{recipient.PhoneNumber}"))
+            data.RecipientDisplayName = string.IsNullOrWhiteSpace(recipient.DisplayName)
+                ? recipient.Username
+                : recipient.DisplayName;
+
+            var delivered = false;
+            string? lastTwilioFailure = null;
+
+            foreach (var messageType in PreferredMessageTypeOrder)
             {
-              From = new PhoneNumber(_options.From[deliveryType.ToString()]),
-              ContentSid = _options.Templates![notificationType.ToString()],
-              ContentVariables = JsonConvert.SerializeObject(data.ContentVariables)
-            },
+              if (!allowedMessageTypes.HasFlag(messageType))
+                continue;
 
-            _ => throw new InvalidOperationException($"Unsupported delivery type: {deliveryType}")
-          };
+              CreateMessageOptions messageOptions;
+              string? fromNumber;
 
-          var response = await MessageResource.CreateAsync(messageOptions, _twilioClient);
-          if (!response.ErrorCode.HasValue) continue;
+              try
+              {
+                switch (messageType)
+                {
+                  case MessageType.SMS:
+                    var smsTemplate = SMSTemplates.ResourceManager.GetString(notificationKey);
+                    if (string.IsNullOrWhiteSpace(smsTemplate))
+                    {
+                      _logger.LogInformation("{recipientId}: Skipped — SMS template for '{notificationKey}' not configured", recipientId, notificationKey);
+                      continue;
+                    }
 
-          var message = string.IsNullOrEmpty(response.ErrorMessage) ? "Unknown error" : response.ErrorMessage;
-          var detail = $"{recipient.PhoneNumber}: {message} ({response.ErrorCode.Value})";
-          failedRecipients.Add(detail);
+                    var alpha2 = PhoneNumberExtensions.ToPhoneNumberCountryCodeAlpha2(recipient.PhoneNumber);
+                    if (string.IsNullOrEmpty(alpha2) ||
+                        _options.From?.SMS == null ||
+                        !_options.From.SMS.TryGetValue(alpha2.ToUpperInvariant(), out fromNumber) ||
+                        string.IsNullOrWhiteSpace(fromNumber))
+                    {
+                      _logger.LogInformation("{recipientId}: Skipped — SMS 'From' number not configured for country {country}", recipientId, alpha2 ?? "Unknown");
+                      continue;
+                    }
+
+                    messageOptions = new CreateMessageOptions(new PhoneNumber(recipient.PhoneNumber))
+                    {
+                      From = new PhoneNumber(fromNumber),
+                      Body = ParseSMSBody(smsTemplate, data.ContentVariables)
+                    };
+                    break;
+
+                  case MessageType.WhatsApp:
+                    if (_options.TemplatesWhatsApp == null ||
+                        !_options.TemplatesWhatsApp.TryGetValue(notificationKey, out var templateId))
+                      throw new InvalidOperationException($"WhatsApp template for '{notificationKey}' not configured");
+                    //{ 
+                    //  _logger.LogInformation("{recipientId}: Skipped — WhatsApp template for '{notificationKey}' not configured", recipientId, notificationKey);
+                    //  continue;
+                    //}
+
+                    fromNumber = _options.From?.WhatsApp;
+                    if (string.IsNullOrWhiteSpace(fromNumber))
+                      throw new InvalidOperationException("WhatsApp 'From' number is not configured");
+                    //{
+                    //  _logger.LogInformation("{recipientId}: Skipped — WhatsApp 'From' number not configured", recipientId);
+                    //  continue;
+                    //}
+
+                    messageOptions = new CreateMessageOptions(new PhoneNumber($"whatsapp:{recipient.PhoneNumber}"))
+                    {
+                      From = new PhoneNumber($"whatsapp:{fromNumber}"),
+                      ContentSid = templateId,
+                      ContentVariables = JsonConvert.SerializeObject(data.ContentVariables)
+                    };
+                    break;
+
+                  default:
+                    throw new InvalidOperationException($"Unsupported message type: {messageType}");
+                }
+
+                var response = await MessageResource.CreateAsync(messageOptions, _twilioClient);
+                if (!response.ErrorCode.HasValue)
+                {
+                  delivered = true;
+                  break;
+                }
+
+                lastTwilioFailure = $"{recipientId}: Twilio error — {response.ErrorMessage ?? "Unknown error"} ({response.ErrorCode.Value})";
+              }
+              catch (Exception ex)
+              {
+                lastTwilioFailure = $"{recipientId}: Twilio error — {ex.Message}";
+              }
+            }
+
+            if (!delivered && !string.IsNullOrEmpty(lastTwilioFailure))
+            {
+              _logger.LogError("Notification failed for recipient {recipient}: {reason}", recipientId, lastTwilioFailure);
+            }
+          }));
         }
       }
 
-      if (failedRecipients.Count == 0) return;
-      var consolidatedErrorMessage = $"Failed to send {deliveryType}:{Environment.NewLine}{string.Join(Environment.NewLine, failedRecipients)}";
-      throw new HttpClientException(System.Net.HttpStatusCode.InternalServerError, consolidatedErrorMessage);
+      await Task.WhenAll(sendTasks).FlattenAggregateException();
     }
+
     #endregion
 
     #region Private Members

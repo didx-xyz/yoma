@@ -2,7 +2,6 @@ using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
@@ -10,7 +9,6 @@ using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
-using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Notification;
 using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
@@ -42,7 +40,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
   {
     #region Class Variables
     private readonly ILogger<OpportunityService> _logger;
-    private readonly AppSettings _appSettings;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     private readonly IOpportunityStatusService _opportunityStatusService;
@@ -90,7 +87,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
     #region Constructor
     public OpportunityService(ILogger<OpportunityService> logger,
-        IOptions<AppSettings> appSettings,
         IHttpContextAccessor httpContextAccessor,
         IOpportunityStatusService opportunityStatusService,
         IOpportunityCategoryService opportunityCategoryService,
@@ -124,7 +120,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
         IExecutionStrategyService executionStrategyService)
     {
       _logger = logger;
-      _appSettings = appSettings.Value;
       _httpContextAccessor = httpContextAccessor;
 
       _opportunityStatusService = opportunityStatusService;
@@ -1119,7 +1114,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       });
 
       //raise events post transaction completion
-      await Task.WhenAll(results.Select(result => _mediator.Publish(new OpportunityEvent(result.ActionTaken, result.Opportunity))));
+      await Task.WhenAll(results.Select(result => _mediator.Publish(new OpportunityEvent(result.ActionTaken, result.Opportunity)))).FlattenAggregateException();
     }
 
     public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true)

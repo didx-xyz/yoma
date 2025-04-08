@@ -1,6 +1,6 @@
 namespace Yoma.Core.Infrastructure.Twilio.Models
 {
-  public class TwilioOpptions
+  public class TwilioOptions
   {
     public const string Section = "Twilio";
 
@@ -8,8 +8,15 @@ namespace Yoma.Core.Infrastructure.Twilio.Models
 
     public string AuthToken { get; set; }
 
-    public Dictionary<string, string>? From { get; set; }
+    public TwillioOptionsFrom From { get; set; }
 
-    public Dictionary<string, string>? Templates { get; set; }
+    public Dictionary<string, string>? TemplatesWhatsApp { get; set; } // Key: NotificationType enum string value, Value: Twilio WhatsApp template id
+  }
+
+  public class TwillioOptionsFrom
+  {
+    public string? WhatsApp { get; set; }
+
+    public Dictionary<string, string>? SMS { get; set; } // Key: Country alpha 2 code (e.g., "ZA"), Value: From number include country dailing code (e.g., "+27XXXXXXXXX")
   }
 }

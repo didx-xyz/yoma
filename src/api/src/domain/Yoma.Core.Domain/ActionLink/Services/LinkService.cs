@@ -641,6 +641,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         }).ToList();
 
         await _notificationDeliveryService.Send(NotificationType.ActionLink_Verify_Distribution, recipients, data);
+
         _logger.LogInformation("Successfully sent notification");
       }
       catch (Exception ex)

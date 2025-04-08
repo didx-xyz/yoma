@@ -29,38 +29,38 @@ namespace Yoma.Core.Api.Middleware
     private static Task HandleExceptionAsync(HttpContext context, Exception ex)
     {
       context.Response.StatusCode = (int)HttpStatusCode.InternalServerError; //default
+      var exNormalized = ex;
 
       List<ErrorResponseItem> errorResponse;
-      switch (ex)
+      switch (exNormalized)
       {
-        case FluentValidation.ValidationException:
-          var validationException = (FluentValidation.ValidationException)ex;
+        case FluentValidation.ValidationException validationException:
           context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
 
           if (!validationException.Errors.Any()) break;
 
-          errorResponse = [.. validationException.Errors.Select(o => new ErrorResponseItem() { Type = ex.GetType().Name, Message = o.ErrorMessage })];
+          errorResponse = [.. validationException.Errors.Select(o => new ErrorResponseItem() { Type = exNormalized.GetType().Name, Message = o.ErrorMessage })];
           return context.Response.WriteAsJsonAsync(errorResponse);
 
         case EntityNotFoundException:
           context.Response.StatusCode = (int)HttpStatusCode.NotFound;
           break;
+
         case BusinessException:
         case ValidationException:
           context.Response.StatusCode = (int)HttpStatusCode.BadRequest;
           break;
+
         case SecurityException:
         case System.Security.SecurityException:
           context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
           break;
-        case DataCollisionException:
-        case DataInconsistencyException:
-          context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
+        
+        case AggregateException aggregateException:
+          exNormalized = aggregateException.Flatten();
           break;
 
-        case HttpClientException:
-          var httpClientException = (HttpClientException)ex;
-
+        case HttpClientException httpClientException:
           //ensure B2B codes reflects the codes supported by the API
           context.Response.StatusCode = (int)httpClientException.StatusCode switch
           {
@@ -73,7 +73,7 @@ namespace Yoma.Core.Api.Middleware
           break;
       }
 
-      errorResponse = [new() { Type = ex.GetType().Name, Message = ex.Message }];
+      errorResponse = [new() { Type = exNormalized.GetType().Name, Message = exNormalized.Message }];
 
       return context.Response.WriteAsJsonAsync(errorResponse);
     }

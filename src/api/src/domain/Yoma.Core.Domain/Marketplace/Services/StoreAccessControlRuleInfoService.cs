@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.Extensions.Options;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -65,7 +66,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
     {
       var results = _storeAccessControlRuleService.Search(filter, ensureOrganizationAuthorization);
 
-      var items = await Task.WhenAll(results.Items.Select(ToInfo));
+      var items = await Task.WhenAll(results.Items.Select(ToInfo)).FlattenAggregateException();
       return new StoreAccessControlRuleSearchResultsInfo
       {
         TotalCount = results.TotalCount,
@@ -88,11 +89,11 @@ namespace Yoma.Core.Domain.Marketplace.Services
       {
         UserCount = result.UserCount,
         UserCountTotal = result.UserCountTotal,
-        RulesRelated = [.. (await Task.WhenAll(result.RulesRelated.Select(async item => new StoreAccessControlRulePreviewItemInfo
+        RulesRelated = [.. await Task.WhenAll(result.RulesRelated.Select(async item => new StoreAccessControlRulePreviewItemInfo
         {
           UserCount = item.UserCount,
           Rule = await ToInfo(item.Rule)
-        })))]
+        })).FlattenAggregateException()]
       };
     }
 
@@ -125,11 +126,11 @@ namespace Yoma.Core.Domain.Marketplace.Services
       {
         UserCount = result.UserCount,
         UserCountTotal = result.UserCountTotal,
-        RulesRelated = [.. (await Task.WhenAll(result.RulesRelated.Select(async item => new StoreAccessControlRulePreviewItemInfo
+        RulesRelated = [.. await Task.WhenAll(result.RulesRelated.Select(async item => new StoreAccessControlRulePreviewItemInfo
         {
           UserCount = item.UserCount,
           Rule = await ToInfo(item.Rule)
-        })))]
+        })).FlattenAggregateException()]
       };
     }
 
