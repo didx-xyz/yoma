@@ -202,7 +202,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                     break;
 
                   case MessageType.WhatsApp:
-                    var timeout = TimeSpan.FromSeconds(2);
+                    var timeout = TimeSpan.FromSeconds(6);
                     var startTime = DateTimeOffset.UtcNow;
 
                     while (true)
