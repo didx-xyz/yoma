@@ -288,6 +288,21 @@ keycloak:
       value: "300"
     - name: KC_SPI_PHONE_DEFAULT_YOMA_DEFAULT_NUMBER_REGEX
       value: "^\\+?\\d+$"
+    - name: KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_WHATSAPP_NUMBER
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "keycloak.fullname" . }}-twilio
+          key: whatsapp-number
+    - name: KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_WHATSAPP_APP_HASH
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "keycloak.fullname" . }}-twilio
+          key: whatsapp-hash
+    - name: KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_WHATSAPP_TEMPLATE_ID
+      valueFrom:
+        secretKeyRef:
+          name: {{ include "keycloak.fullname" . }}-twilio
+          key: whatsapp-template-id
 
   affinity: |-
     nodeAffinity:
