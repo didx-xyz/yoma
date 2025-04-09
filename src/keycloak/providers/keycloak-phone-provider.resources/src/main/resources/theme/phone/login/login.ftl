@@ -80,7 +80,7 @@
 		  		  <div class="links">
 					<#-- BUTTON: use phone -->
 					<button type="button" class="link" v-on:click="phoneActivated = true" tabindex="0" >
-						<i aria-hidden="true" class="link-icon fa fa-check"></i>
+						<i aria-hidden="true" class="link-icon fa fa-phone"></i>
 						<span class="link-text">${msg("signInWithPhone")}</span>
 					</button>
 
