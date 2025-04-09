@@ -153,7 +153,7 @@ namespace Yoma.Core.Domain.Notification.Services
       };
     }
 
-    public string OpportunityAnnouncedItemURL(NotificationType emailType, Guid opportunityId, Guid organizationId)
+    public string OpportunityPublishedItemURL(NotificationType emailType, Guid opportunityId, Guid organizationId)
     {
       if (opportunityId == Guid.Empty)
         throw new ArgumentNullException(nameof(opportunityId));

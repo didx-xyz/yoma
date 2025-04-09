@@ -2,56 +2,52 @@ using Newtonsoft.Json;
 
 namespace Yoma.Core.Domain.Notification.Models
 {
-  public class NotificationActionLinkVerify : NotificationBase
+  public class NotificationOpportunityPublished : NotificationBase
   {
-    [JsonProperty("entityTypeDesc")]
-    public string EntityTypeDesc { get; set; }
-
-    [JsonProperty("yoIDURL")]
-    public string? YoIDURL { get; set; }
-
-    [JsonProperty("items")]
-    public List<NotificationActionLinkVerifyItem> Items { get; set; }
+    [JsonProperty("opportunities")]
+    public List<NotificationOpportunityPublishedItem> Opportunities { get; set; }
 
     public override Dictionary<string, string> ContentVariables(MessageType messageType)
     {
-      if (messageType != MessageType.SMS && messageType != MessageType.WhatsApp)
-        throw new ArgumentOutOfRangeException(nameof(messageType), $"Only {MessageType.SMS} or {MessageType.WhatsApp} are supported");
+      if (messageType is not MessageType.SMS and not MessageType.WhatsApp)
+        throw new NotSupportedException($"Only '{MessageType.SMS}' or '{MessageType.WhatsApp}' are supported");
 
-      if (Items == null || Items.Count == 0)
-        throw new InvalidOperationException($"{nameof(Items)} are not set or empty");
+      if (Opportunities == null || Opportunities.Count != 1)
+        throw new InvalidOperationException("Exactly one opportunity is required to generate content variables");
 
-      var url = Items.Single().URL;
-      var urlFormatted = messageType == MessageType.WhatsApp
-        ? new Uri(url).PathAndQuery.TrimStart('/')
-        : url;
+      var opportunity = Opportunities.Single();
+      var url = new Uri(opportunity.URL);
+      var formattedUrl = messageType == MessageType.WhatsApp
+        ? url.PathAndQuery.TrimStart('/')
+        : url.ToString();
 
       return new Dictionary<string, string>
       {
-        { "1", SubjectSuffix },
-        { "2", EntityTypeDesc },
-        { "3", urlFormatted }
+        { "1", RecipientDisplayName },
+        { "2", SubjectSuffix },
+        { "3", formattedUrl }
       };
     }
 
     public override List<NotificationBase> FlattenItems()
     {
-      if (Items == null || Items.Count == 0)
-        throw new InvalidOperationException($"{nameof(Items)} are not set or empty");
+      if (Opportunities == null || Opportunities.Count == 0)
+        throw new InvalidOperationException($"{nameof(Opportunities)} are not set or empty");
 
-      return [.. Items.Select(item => new NotificationActionLinkVerify
+      return [.. Opportunities.Select(item => new NotificationOpportunityPublished
       {
         SubjectSuffix = SubjectSuffix,
         RecipientDisplayName = RecipientDisplayName,
-        EntityTypeDesc = EntityTypeDesc,
-        YoIDURL = YoIDURL,
-        Items = [item]
+        Opportunities = [item]
       })];
     }
   }
 
-  public class NotificationActionLinkVerifyItem
+  public class NotificationOpportunityPublishedItem
   {
+    [JsonIgnore]
+    public Guid Id { get; set; }
+
     [JsonProperty("title")]
     public string Title { get; set; }
 

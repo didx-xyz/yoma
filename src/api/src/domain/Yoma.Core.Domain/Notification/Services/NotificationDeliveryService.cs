@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
 
@@ -52,7 +53,10 @@ namespace Yoma.Core.Domain.Notification.Services
 
       // message notifications
       if (Supported(type, MessageType.SMS | MessageType.WhatsApp) && messageRecipients.Count > 0)
-        await _messageProviderClient.Send(MessageType.SMS | MessageType.WhatsApp, type, messageRecipients, data);
+      {
+        var tasks = data.FlattenItems().Select(item => _messageProviderClient.Send(MessageType.SMS | MessageType.WhatsApp, type, messageRecipients, item));
+        await Task.WhenAll(tasks).FlattenAggregateException();
+      }
     }
 
     /// <summary>
@@ -105,7 +109,12 @@ namespace Yoma.Core.Domain.Notification.Services
 
       // message notifications
       if (Supported(type, MessageType.SMS | MessageType.WhatsApp) && messageRecipientGroups.Count > 0)
-        await _messageProviderClient.Send(MessageType.SMS | MessageType.WhatsApp, type, messageRecipientGroups);
+      {
+        var messageTasks = messageRecipientGroups.SelectMany(group => group.Data.FlattenItems()
+        .Select(item => _messageProviderClient.Send(MessageType.SMS | MessageType.WhatsApp, type, group.Recipients, item)));
+
+        await Task.WhenAll(messageTasks).FlattenAggregateException();
+      }
     }
     #endregion
 

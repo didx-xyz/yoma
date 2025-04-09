@@ -105,9 +105,10 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
         if (data == null)
           throw new ArgumentNullException(nameof(recipientDataGroups), "Contains null data");
 
+        //ensure environment suffix
         data.SubjectSuffix = _environmentProvider.Environment == Domain.Core.Environment.Production
             ? string.Empty
-            : $"{_environmentProvider.Environment.ToDescription()} - ";
+            : $" ({_environmentProvider.Environment.ToDescription()})";
 
         foreach (var recipient in recipients)
         {
@@ -161,7 +162,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                     messageOptions = new CreateMessageOptions(new PhoneNumber(recipient.PhoneNumber))
                     {
                       From = new PhoneNumber(fromNumber),
-                      Body = ParseSMSBody(smsTemplate, data.ContentVariables)
+                      Body = ParseSMSBody(smsTemplate, data.ContentVariables(messageType))
                     };
                     break;
 
@@ -186,7 +187,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                     {
                       From = new PhoneNumber($"whatsapp:{fromNumber}"),
                       ContentSid = templateId,
-                      ContentVariables = JsonConvert.SerializeObject(data.ContentVariables)
+                      ContentVariables = JsonConvert.SerializeObject(data.ContentVariables(messageType))
                     };
                     break;
 

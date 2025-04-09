@@ -9,6 +9,20 @@ namespace Yoma.Core.Domain.Notification.Models
 
     [JsonProperty("opportunities")]
     public List<NotificationOpportunityExpirationItem> Opportunities { get; set; }
+
+    public override List<NotificationBase> FlattenItems()
+    {
+      if (Opportunities == null || Opportunities.Count == 0)
+        throw new InvalidOperationException($"{nameof(Opportunities)} are not set or empty");
+
+      return [.. Opportunities.Select(item => new NotificationOpportunityExpiration
+      {
+        SubjectSuffix = SubjectSuffix,
+        RecipientDisplayName = RecipientDisplayName,
+        WithinNextDays = WithinNextDays,
+        Opportunities = [item]
+      })];
+    }
   }
 
   public class NotificationOpportunityExpirationItem

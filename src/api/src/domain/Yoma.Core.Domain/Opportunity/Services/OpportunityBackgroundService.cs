@@ -269,7 +269,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         int pageSize = 1000;
         while (executeUntil > DateTimeOffset.UtcNow)
         {
-          var recipientDataGroups = new List<(List<NotificationRecipient> Recipients, NotificationOpportunityAnnounced Data)>();
+          var recipientDataGroups = new List<(List<NotificationRecipient> Recipients, NotificationOpportunityPublished Data)>();
 
           var searchResult = _userService.Search(
               new UserSearchFilter // implicitly includes only users with a confirmed notification
@@ -303,15 +303,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
                 .ToList();
             if (countryOpportunities.Count == 0) continue;
 
-            var data = new NotificationOpportunityAnnounced
+            var data = new NotificationOpportunityPublished
             {
-              Opportunities = [.. countryOpportunities.Select(item => new NotificationOpportunityAnnouncedItem
+              Opportunities = [.. countryOpportunities.Select(item => new NotificationOpportunityPublishedItem
               {
                 Id = item.Id,
                 Title = item.Title,
                 DateStart = item.DateStart,
                 DateEnd = item.DateEnd,
-                URL = _notificationURLFactory.OpportunityAnnouncedItemURL(notificationType, item.Id, item.OrganizationId),
+                URL = _notificationURLFactory.OpportunityPublishedItemURL(notificationType, item.Id, item.OrganizationId),
                 ZltoReward = item.ZltoReward,
                 YomaReward = item.YomaReward
               })]
@@ -321,7 +321,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             var existingGroup = recipientDataGroups.FirstOrDefault(group =>
                 new HashSet<Guid>(group.Data.Opportunities.Select(o => o.Id)).SetEquals(new HashSet<Guid>(countryOpportunities.Select(o => o.Id))));
 
-            if (existingGroup.Equals(default((List<NotificationRecipient> Recipients, NotificationOpportunityAnnounced Data))))
+            if (existingGroup.Equals(default((List<NotificationRecipient> Recipients, NotificationOpportunityPublished Data))))
             {
               // create a new recipient list
               var recipients = userGroup.Value.Select(u => new NotificationRecipient

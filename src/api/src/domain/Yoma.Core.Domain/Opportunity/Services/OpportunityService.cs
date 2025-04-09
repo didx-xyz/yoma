@@ -2009,14 +2009,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
             throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
         }
 
-        var data = new NotificationOpportunityAnnounced
+        var data = new NotificationOpportunityPublished
         {
           Opportunities = [new()
           {
             Title = opportunity.Title,
             DateStart = opportunity.DateStart,
             DateEnd = opportunity.DateEnd,
-            URL = _notificationURLFactory.OpportunityAnnouncedItemURL(type, opportunity.Id, opportunity.OrganizationId),
+            URL = _notificationURLFactory.OpportunityPublishedItemURL(type, opportunity.Id, opportunity.OrganizationId),
             ZltoReward = opportunity.ZltoReward,
             YomaReward = opportunity.YomaReward
           }]
