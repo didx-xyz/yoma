@@ -170,18 +170,10 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                     if (_options.TemplatesWhatsApp == null ||
                         !_options.TemplatesWhatsApp.TryGetValue(notificationKey, out var templateId))
                       throw new InvalidOperationException($"WhatsApp template for '{notificationKey}' not configured");
-                    //{ 
-                    //  _logger.LogInformation("{recipientId}: Skipped — WhatsApp template for '{notificationKey}' not configured", recipientId, notificationKey);
-                    //  continue;
-                    //}
 
                     fromNumber = _options.From?.WhatsApp;
                     if (string.IsNullOrWhiteSpace(fromNumber))
                       throw new InvalidOperationException("WhatsApp 'From' number is not configured");
-                    //{
-                    //  _logger.LogInformation("{recipientId}: Skipped — WhatsApp 'From' number not configured", recipientId);
-                    //  continue;
-                    //}
 
                     messageOptions = new CreateMessageOptions(new PhoneNumber($"whatsapp:{recipient.PhoneNumber}"))
                     {
@@ -196,17 +188,58 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                 }
 
                 var response = await MessageResource.CreateAsync(messageOptions, _twilioClient);
-                if (!response.ErrorCode.HasValue)
+
+                if (response.ErrorCode.HasValue)
                 {
-                  delivered = true;
+                  lastTwilioFailure = $"{recipientId}: Twilio API error — {response.ErrorMessage ?? "Unknown error"} ({response.ErrorCode.Value})";
                   break;
                 }
 
-                lastTwilioFailure = $"{recipientId}: Twilio error — {response.ErrorMessage ?? "Unknown error"} ({response.ErrorCode.Value})";
+                switch (messageType)
+                {
+                  case MessageType.SMS:
+                    delivered = true;
+                    break;
+
+                  case MessageType.WhatsApp:
+                    var timeout = TimeSpan.FromSeconds(2);
+                    var startTime = DateTimeOffset.UtcNow;
+
+                    while (true)
+                    {
+                      MessageResource message;
+                      try
+                      {
+                        message = await MessageResource.FetchAsync(new FetchMessageOptions(response.Sid), _twilioClient);
+
+                        if (message.Status == MessageResource.StatusEnum.Delivered)
+                        {
+                          delivered = true;
+                          break;
+                        }
+                      }
+                      catch (Exception ex)
+                      {
+                        lastTwilioFailure = $"{recipientId}: Polling error.  — {ex.Message}";
+                        break;
+                      }
+
+                      if (DateTimeOffset.UtcNow - startTime >= timeout) break;
+                      await Task.Delay(500);
+                    }
+
+                    if (!delivered && string.IsNullOrEmpty(lastTwilioFailure))
+                      lastTwilioFailure = $"{recipientId}: Polling timed out — message not confirmed as delivered";
+
+                    break;
+
+                  default:
+                    throw new InvalidOperationException($"Unsupported message type: {messageType}");
+                }
               }
               catch (Exception ex)
               {
-                lastTwilioFailure = $"{recipientId}: Twilio error — {ex.Message}";
+                lastTwilioFailure = $"{recipientId}: Notification send failed — {ex.Message}";
               }
             }
 
