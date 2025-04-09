@@ -146,8 +146,13 @@ public class TwilioSmsSenderServiceProvider extends FullSmsSenderAbstractService
                 creator.setContentVariables("{\"1\":\"" + otpCode + "\"}");
             }
 
-            // Send the message
-            Message message_response = creator.create();
+            // Send the message and capture response
+            Message messageResponse = creator.create();
+            String messageSid = messageResponse.getSid();
+            logger.info("WhatsApp message sent with SID: " + messageSid);
+
+            // Poll for message status to verify delivery
+            checkMessageDeliveryStatus(messageSid);
 
         } catch (ApiException e) {
             // Common Twilio error codes for WhatsApp
@@ -167,6 +172,62 @@ public class TwilioSmsSenderServiceProvider extends FullSmsSenderAbstractService
             logger.warn("WhatsApp general exception: " + e.getMessage());
             throw new MessageSendException("WhatsApp general exception: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Checks the delivery status of a sent WhatsApp message
+     *
+     * @param messageSid The SID of the message to check
+     * @throws MessageSendException if the message delivery fails
+     */
+    private void checkMessageDeliveryStatus(String messageSid) throws MessageSendException {
+        final int MAX_RETRY = 3;
+        final int RETRY_DELAY_MS = 2000; // 2 seconds between checks
+
+        for (int attempt = 0; attempt < MAX_RETRY; attempt++) {
+            try {
+                // Add a small delay between status checks
+                if (attempt > 0) {
+                    Thread.sleep(RETRY_DELAY_MS);
+                }
+
+                // Fetch the message status
+                Message fetchedMessage = Message.fetcher(messageSid).fetch();
+                String status = fetchedMessage.getStatus().toString();
+
+                logger.info("WhatsApp message " + messageSid + " status: " + status);
+
+                // Check message status
+                switch (status) {
+                    case "delivered":
+                        // Only consider delivered as successful state
+                        logger.info("WhatsApp message " + messageSid + " successfully delivered");
+                        return;
+                    case "sent":
+                    case "queued":
+                    case "sending":
+                        // Still processing, continue to next attempt
+                        continue;
+                    case "undelivered":
+                    case "failed":
+                        throw new MessageSendException("WhatsApp message delivery failed. Status: " + status, null);
+                    default:
+                        logger.warn("Unknown WhatsApp message status: " + status);
+                    // Continue checking on unknown status
+                }
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                logger.warn("Thread interrupted while waiting for WhatsApp status check");
+            } catch (ApiException e) {
+                logger.error("Error checking WhatsApp message status: " + e.getMessage());
+                // Continue checking despite API errors
+            }
+        }
+
+        // After all retries, if we didn't return successfully or throw a specific exception,
+        // throw a general message about uncertain delivery
+        logger.warn("Could not confirm WhatsApp message delivery after " + MAX_RETRY + " attempts");
+        throw new MessageSendException("WhatsApp message delivery status is uncertain after multiple checks", null);
     }
 
     /**
