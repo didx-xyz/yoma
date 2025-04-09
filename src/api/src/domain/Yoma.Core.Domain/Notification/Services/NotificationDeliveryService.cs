@@ -144,7 +144,7 @@ namespace Yoma.Core.Domain.Notification.Services
       };
 
       if ((messageTypes & supported) != 0) return true;
-      _logger.LogInformation("Notification skipped: Notification type '{type}' is not supported for message type(s) '{messageTypes}'", type, messageTypes);
+      _logger.LogInformation("Notification skipped: Notification type '{type}' is not supported for the provided message type(s)", type);
       return false;
     }
     #endregion
