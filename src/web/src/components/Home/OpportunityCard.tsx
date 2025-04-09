@@ -18,7 +18,7 @@ const OpportunityCard: React.FC<{
   image: StaticImageData;
 }> = ({ title, organisation, description, hours, reward, image }) => {
   return (
-    <div className="h-[200px] w-[250px] overflow-hidden rounded-lg bg-white p-4 shadow-lg">
+    <div className="h-[200px] w-[270px] overflow-hidden rounded-lg bg-white p-4 shadow-lg">
       <div className="flex">
         <div className="flex grow flex-col">
           <p className="text-gray-dark text-xs">{organisation}</p>
