@@ -55,7 +55,7 @@ namespace Yoma.Core.Api.Middleware
         case System.Security.SecurityException:
           context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
           break;
-        
+
         case AggregateException aggregateException:
           exNormalized = aggregateException.Flatten();
           break;

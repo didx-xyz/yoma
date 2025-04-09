@@ -21,10 +21,10 @@ namespace Yoma.Core.Domain.Notification
   }
 
   [Flags]
-  public enum MessageType 
+  public enum MessageType
   {
     Email = 1,
-    SMS = 2 ,
+    SMS = 2,
     WhatsApp = 4
   }
 }
