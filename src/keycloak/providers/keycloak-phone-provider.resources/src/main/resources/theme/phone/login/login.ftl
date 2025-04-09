@@ -251,7 +251,7 @@
                 computed: {
                   maskedPhoneNumber() {
                     if (!this.phoneNumber) return '';
-                    return this.phoneNumber.substring(0, 3) + ' **** ' + this.phoneNumber.substring(this.phoneNumber.length - 2);
+            		return this.phoneNumber;
                   },
                   formattedCountdown() {
                     const minutes = Math.floor(this.codeExpiresIn / 60);
@@ -304,14 +304,19 @@
                           this.clearMessages();
                         })
                       .catch(e => {
-                        if (e?.response?.status === 400) {
-                            // set code send status to ALREADY_SENT
-                            this.codeSendStatus = CODE_SEND_STATUS.ALREADY_SENT;
+						if (e?.response?.status === 400) {
+							const errorMessage = e.response.data.error;
+							if (errorMessage.startsWith("ALREADY_SENT")) {
+								const expiryMatch = errorMessage.match(/Expiry: (\d+)/);
+								const expiryTime = expiryMatch ? parseInt(expiryMatch[1], 10) : 300; // Default to 300 seconds if not found
 
-                            this.countDownExpiresIn(e.response.data.error || 300); // 5 minutes default
+								// set code send status to ALREADY_SENT
+								this.codeSendStatus = CODE_SEND_STATUS.ALREADY_SENT;
 
-                            return;
-                        }
+								this.countDownExpiresIn(expiryTime);
+								return;
+							}
+						}
 
                         // show server error
                         this.messagePhoneNumberError = e.response.data.error;

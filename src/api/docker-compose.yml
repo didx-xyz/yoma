@@ -104,10 +104,14 @@ services:
       KC_LOG_LEVEL: INFO
       # Custom providers
       KC_SPI_PHONE_DEFAULT_SERVICE: dummy
+      # Twilio Configuration - supports both SMS & WhatsApp
       # KC_SPI_PHONE_DEFAULT_SERVICE: twilio
       # KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_ACCOUNT: your_account_sid
       # KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_TOKEN: your_auth_token
       # KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_NUMBER: your_number
+      # KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_WHATSAPP_NUMBER: your_number
+      # KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_WHATSAPP_APP_HASH: your_app_hash
+      # KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_WHATSAPP_TEMPLATE_ID: your_template_id
       KC_SPI_PHONE_DEFAULT_TOKEN_EXPIRES_IN: 300 # sms expires, 5 mins
       # Notice: will match after canonicalize number. eg: INTERNATIONAL: +41 44 668 18 00 , NATIONAL: 044 668 18 00 , E164: +41446681800
       KC_SPI_PHONE_DEFAULT_YOMA_DEFAULT_NUMBER_REGEX: ^\\+?\\d+$

@@ -117,37 +117,42 @@ public class DefaultPhoneProvider implements PhoneProvider {
     @Override
     public int sendTokenCode(String phoneNumber, String sourceAddr, TokenCodeType type, String kind) {
 
-        logger.info("send code to:" + phoneNumber);
+        logger.info(String.format("Attempting to send %s code to phone: %s from source: %s",
+                type.label, phoneNumber, sourceAddr != null ? sourceAddr : "unknown"));
 
-        // if (getTokenCodeService().isAbusing(phoneNumber, type, sourceAddr, sourceHourMaximum, targetHourMaximum)) {
-        //     throw new ForbiddenException("You have used your hourly limit of OTPs, please try again in an hour.");
-        // }
+        logger.debug(String.format("Checking abuse limits for %s - target hour max: %d, source hour max: %d",
+                phoneNumber, targetHourMaximum, sourceHourMaximum));
+
         getTokenCodeService().isAbusing(phoneNumber, type, sourceAddr, sourceHourMaximum, targetHourMaximum);
 
         TokenCodeRepresentation ongoing = getTokenCodeService().ongoingProcess(phoneNumber, type);
         if (ongoing != null) {
-            logger.info(String.format("No need of sending a new %s code for %s", type.label, phoneNumber));
+            logger.info(String.format("Ongoing %s code already exists for %s, expires in %d seconds",
+                    type.label, phoneNumber,
+                    (int) ((ongoing.getExpiresAt().getTime() - Instant.now().toEpochMilli()) / 1000)));
+
             int expiryTime = (int) ((ongoing.getExpiresAt().getTime() - Instant.now().toEpochMilli()) / 1000);
 
             // We have already sent an OTP to {0}, use this pin, or wait {1} before requesting a new one.
-            throw new BadRequestException(String.format("%d", expiryTime));
-            //throw new BadRequestException(String.format("We have already sent an OTP to {0}, use this pin, or wait %d before requesting a new one.", expiryTime));
+            throw new BadRequestException(String.format("ALREADY_SENT Expiry: %d", expiryTime));
         }
 
         TokenCodeRepresentation token = TokenCodeRepresentation.forPhoneNumber(phoneNumber);
+        logger.debug(String.format("Generated new token code for %s with expiry of %d seconds", phoneNumber, tokenExpiresIn));
 
         try {
+            logger.debug(String.format("Using message service: %s to send %s code", service, type.label));
             session.getProvider(MessageSenderService.class, service).sendSmsMessage(type, phoneNumber, token.getCode(), tokenExpiresIn, kind);
             getTokenCodeService().persistCode(token, type, tokenExpiresIn);
 
-            logger.info(String.format("Sent %s code to %s over %s", type.label, phoneNumber, service));
+            logger.info(String.format("Successfully sent %s code to %s using service: %s (expires in %d seconds)",
+                    type.label, phoneNumber, service, tokenExpiresIn));
 
         } catch (MessageSendException e) {
-            logger.error(String.format("Message sending to %s failed with %s:", phoneNumber, e.toString()));
-            throw new ServiceUnavailableException("Internal server error");
+            logger.error(String.format("Failed to send %s code to %s: %s", type.label, phoneNumber, e.getMessage()), e);
+            throw new ServiceUnavailableException(e.getMessage());
         }
 
         return tokenExpiresIn;
     }
-
 }
