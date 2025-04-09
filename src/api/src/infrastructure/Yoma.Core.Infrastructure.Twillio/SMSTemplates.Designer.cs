@@ -59,5 +59,41 @@ namespace Yoma.Core.Infrastructure.Twilio {
                 resourceCulture = value;
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Yoma{1} - You’ve completed {2}. Claim it here: {3}.
+        /// </summary>
+        internal static string ActionLink_Verify_Distribution {
+            get {
+                return ResourceManager.GetString("ActionLink_Verify_Distribution", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Yoma{2} - A new opportunity just dropped! Check it out: {3}.
+        /// </summary>
+        internal static string Opportunity_Published {
+            get {
+                return ResourceManager.GetString("Opportunity_Published", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Yoma{2} - Your submission has been approved! View your YoID: {3}.
+        /// </summary>
+        internal static string Opportunity_Verification_Completed {
+            get {
+                return ResourceManager.GetString("Opportunity_Verification_Completed", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Yoma{2} - Your submission wasn&apos;t approved. Please try again: {3}.
+        /// </summary>
+        internal static string Opportunity_Verification_Rejected {
+            get {
+                return ResourceManager.GetString("Opportunity_Verification_Rejected", resourceCulture);
+            }
+        }
     }
 }

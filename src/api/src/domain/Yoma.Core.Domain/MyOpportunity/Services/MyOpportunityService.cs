@@ -411,7 +411,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       }
 
       //execute all downloads in parallel
-      var downloadedFiles = await Task.WhenAll(downloadTasks);
+      var downloadedFiles = await Task.WhenAll(downloadTasks).FlattenAggregateException();
 
       //add downloaded files to the result; empty files returned as null — ignored (legacy data)
       results.Files = downloadedFiles?.OfType<IFormFile>().ToList();

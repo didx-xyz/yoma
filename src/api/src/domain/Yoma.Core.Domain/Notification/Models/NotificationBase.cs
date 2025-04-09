@@ -10,7 +10,11 @@ namespace Yoma.Core.Domain.Notification.Models
     [JsonProperty("recipientDisplayName")]
     public string RecipientDisplayName { get; set; }
 
-    [JsonIgnore]
-    public virtual Dictionary<string, string> ContentVariables => throw new NotImplementedException();
+    public virtual Dictionary<string, string> ContentVariables(MessageType messageType)
+    {
+      throw new NotImplementedException();
+    }
+
+    public abstract List<NotificationBase> FlattenItems();
   }
 }

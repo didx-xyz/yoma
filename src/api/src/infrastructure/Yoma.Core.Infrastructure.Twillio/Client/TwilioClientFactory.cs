@@ -14,7 +14,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
     private readonly ILogger<TwilioClient> _logger;
     private readonly AppSettings _appSettings;
     private readonly IEnvironmentProvider _environmentProvider;
-    private readonly TwilioOpptions _options;
+    private readonly TwilioOptions _options;
     private readonly ITwilioRestClient _twilioClient;
     #endregion
 
@@ -22,7 +22,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
     public TwilioClientFactory(ILogger<TwilioClient> logger,
         IOptions<AppSettings> appSettings,
         IEnvironmentProvider environmentProvider,
-        IOptions<TwilioOpptions> options,
+        IOptions<TwilioOptions> options,
         ITwilioRestClient twilioClient)
     {
       _logger = logger;

@@ -2,7 +2,6 @@ using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using SendGrid;
 using SendGrid.Helpers.Mail;
-using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -48,6 +47,14 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
       await Send(type, [(recipients, data)]);
     }
 
+    /// <summary>
+    /// Sends an email notification using SendGrid for the specified notification type and grouped recipient data.
+    ///
+    /// - Each group of personalizations (up to 1000) is sent as a batch, each executed on its own thread.
+    /// - SendGrid API failures (error responses or exceptions) are logged per batch and do not throw.
+    /// - Input validation errors (null/empty groups or missing template config) throw immediately.
+    /// - The environment suffix is added to the subject unless the environment is Production.
+    /// </summary>
     public async Task Send<T>(NotificationType type, List<(List<NotificationRecipient> Recipients, T Data)> recipientDataGroups)
       where T : NotificationBase
     {
@@ -61,7 +68,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
         throw new ArgumentNullException(nameof(recipientDataGroups));
 
       if (!_options.Templates.ContainsKey(type.ToString()))
-        throw new ArgumentException($"Email template id for type '{type}' not configured", nameof(type));
+        throw new InvalidOperationException($"Email template id for type '{type}' not configured");
 
       foreach (var (recipients, data) in recipientDataGroups)
       {
@@ -83,30 +90,45 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
       //process in chunks of 1000 personalizations each
       var batches = personalizations.Chunk(Limit_Personalization).ToList();
 
+      var tasks = new List<Task>();
+
       foreach (var batch in batches)
       {
-        var msg = new SendGridMessage
+        tasks.Add(Task.Run(async () =>
         {
-          TemplateId = _options.Templates[type.ToString()],
-          From = new EmailAddress(_options.From.Email, _options.From.Name),
-          Personalizations = [.. batch]
-        };
+          try
+          {
+            var msg = new SendGridMessage
+            {
+              TemplateId = _options.Templates[type.ToString()],
+              From = new EmailAddress(_options.From.Email, _options.From.Name),
+              Personalizations = [.. batch]
+            };
 
-        if (_options.ReplyTo != null) msg.ReplyTo = new EmailAddress(_options.ReplyTo.Email, _options.ReplyTo.Name);
+            if (_options.ReplyTo != null)
+              msg.ReplyTo = new EmailAddress(_options.ReplyTo.Email, _options.ReplyTo.Name);
 
-        var response = await _sendGridClient.SendEmailAsync(msg);
-        if (response.IsSuccessStatusCode) continue;
+            var response = await _sendGridClient.SendEmailAsync(msg);
+            if (response.IsSuccessStatusCode)
+              return;
 
-        var responseBody = await response.Body.ReadAsStringAsync();
-        var errorResponse = JsonConvert.DeserializeObject<Models.SendGridErrorResponse>(responseBody)
-            ?? throw new HttpClientException(response.StatusCode, "Failed to send email: Reason unknown");
+            var responseBody = await response.Body.ReadAsStringAsync();
+            var errorResponse = JsonConvert.DeserializeObject<SendGridErrorResponse>(responseBody);
 
-        var errorMessages = errorResponse.Errors != null && errorResponse.Errors.Count != 0
-          ? string.Join(" | ", errorResponse.Errors.Select(e => e.Message?.Trim()).Where(e => !string.IsNullOrEmpty(e)))
-          : "No error details provided";
+            var errorMessages = errorResponse?.Errors != null && errorResponse.Errors.Count != 0
+                ? string.Join(" | ", errorResponse.Errors.Select(e => e.Message?.Trim()).Where(e => !string.IsNullOrEmpty(e)))
+                : "No error details provided";
 
-        throw new HttpClientException(response.StatusCode, errorMessages);
+            _logger.LogError("SendGrid batch failed with status {status}: {errors}", response.StatusCode, errorMessages);
+          }
+          catch (Exception ex)
+          {
+            _logger.LogError(ex, "Unhandled exception while sending email batch");
+          }
+        }));
       }
+
+      await Task.WhenAll(tasks).FlattenAggregateException();
     }
     #endregion
 

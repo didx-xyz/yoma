@@ -6,6 +6,19 @@ namespace Yoma.Core.Domain.Notification.Models
   {
     [JsonProperty("organizations")]
     public List<NotificationOrganizationApprovalItem> Organizations { get; set; }
+
+    public override List<NotificationBase> FlattenItems()
+    {
+      if (Organizations == null || Organizations.Count == 0)
+        throw new InvalidOperationException($"{nameof(Organizations)} are not set or empty");
+
+      return [.. Organizations.Select(item => new NotificationOrganizationApproval
+      {
+        SubjectSuffix = SubjectSuffix,
+        RecipientDisplayName = RecipientDisplayName,
+        Organizations = [item]
+      })];
+    }
   }
 
   public class NotificationOrganizationApprovalItem

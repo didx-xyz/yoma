@@ -6,6 +6,19 @@ namespace Yoma.Core.Domain.Notification.Models
   {
     [JsonProperty("links")]
     public List<NotificationActionLinkVerifyApprovalItem> Links { get; set; }
+
+    public override List<NotificationBase> FlattenItems()
+    {
+      if (Links == null || Links.Count == 0)
+        throw new InvalidOperationException($"{nameof(Links)} are not set or empty");
+
+      return [.. Links.Select(item => new NotificationActionLinkVerifyApproval
+      {
+        SubjectSuffix = SubjectSuffix,
+        RecipientDisplayName = RecipientDisplayName,
+        Links = [item]
+      })];
+    }
   }
 
   public class NotificationActionLinkVerifyApprovalItem

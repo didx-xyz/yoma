@@ -24,5 +24,7 @@ namespace Yoma.Core.Domain.Notification.Models
 
     [JsonProperty("commentFormatted")]
     public string? CommentFormatted => !string.IsNullOrEmpty(Comment) ? Comment : "No additional information";
+
+    public override List<NotificationBase> FlattenItems() => [this];
   }
 }

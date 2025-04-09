@@ -11,13 +11,13 @@ namespace Yoma.Core.Infrastructure.Twilio
   {
     public static void ConfigureServices_MessageProvider(this IServiceCollection services, IConfiguration configuration)
     {
-      services.Configure<TwilioOpptions>(options => configuration.GetSection(TwilioOpptions.Section).Bind(options));
+      services.Configure<TwilioOptions>(options => configuration.GetSection(TwilioOptions.Section).Bind(options));
     }
 
     public static void ConfigureServices_InfrastructureMessageProvider(this IServiceCollection services, IConfiguration configuration)
     {
-      var options = configuration.GetSection(TwilioOpptions.Section).Get<TwilioOpptions>()
-          ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{TwilioOpptions.Section}'");
+      var options = configuration.GetSection(TwilioOptions.Section).Get<TwilioOptions>()
+          ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{TwilioOptions.Section}'");
 
       services.AddSingleton<ITwilioRestClient>(sp =>
       {

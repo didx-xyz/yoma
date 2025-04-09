@@ -13,12 +13,41 @@ namespace Yoma.Core.Domain.Notification.Models
     [JsonProperty("opportunities")]
     public List<NotificationOpportunityVerificationItem> Opportunities { get; set; }
 
-    [JsonIgnore]
-    public override Dictionary<string, string> ContentVariables => new()
+    public override Dictionary<string, string> ContentVariables(MessageType messageType)
     {
-      { "1", SubjectSuffix },
-      { "2", RecipientDisplayName }
-    };
+      if (messageType is not MessageType.SMS and not MessageType.WhatsApp)
+        throw new NotSupportedException($"Only '{MessageType.SMS}' or '{MessageType.WhatsApp}' are supported");
+
+      if (string.IsNullOrWhiteSpace(YoIDURL))
+        throw new InvalidOperationException("YoIDURL is not set");
+
+      var url = new Uri(YoIDURL);
+      var formattedUrl = messageType == MessageType.WhatsApp
+        ? url.PathAndQuery.TrimStart('/')
+        : url.ToString();
+
+      return new Dictionary<string, string>
+      {
+        { "1", RecipientDisplayName },
+        { "2", SubjectSuffix },
+        { "3", formattedUrl }
+      };
+    }
+
+    public override List<NotificationBase> FlattenItems()
+    {
+      if (Opportunities == null || Opportunities.Count == 0)
+        throw new InvalidOperationException($"{nameof(Opportunities)} are not set or empty");
+
+      return [.. Opportunities.Select(item => new NotificationOpportunityVerification
+      {
+        SubjectSuffix = SubjectSuffix,
+        RecipientDisplayName = RecipientDisplayName,
+        YoIDURL = YoIDURL,
+        VerificationURL = VerificationURL,
+        Opportunities = [item]
+      })];
+    }
   }
 
   public class NotificationOpportunityVerificationItem
