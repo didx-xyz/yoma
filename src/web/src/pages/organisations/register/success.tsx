@@ -58,7 +58,7 @@ const Success: NextPageWithLayout = () => {
             <br /> successfully submitted
           </h4>
           <p className="p-4 text-sm">
-            Once approved, we&apos;ll drop you an email to let you know.
+            Once approved, we&apos;ll send you a notification to let you know.
           </p>
           <p className="text-sm">
             Please note this process might take up to <b>48 hours</b>.

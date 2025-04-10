@@ -752,8 +752,8 @@ const OpportunityVerifications: NextPageWithLayout<{
                                   </p>
                                   <p className="flex flex-row gap-2 text-sm">
                                     <IoInformationCircleOutline className="text-blue size-5" />
-                                    We&apos;ve sent them an email to share the
-                                    good news!
+                                    We&apos;ve sent them a notification to share
+                                    the good news!
                                   </p>
                                 </div>
                               )}
@@ -770,8 +770,8 @@ const OpportunityVerifications: NextPageWithLayout<{
                                   </p>
                                   <p className="flex flex-row gap-2 text-sm">
                                     <IoInformationCircleOutline className="text-blue size-5" />
-                                    We&apos;ve sent them an email with your
-                                    comments.
+                                    We&apos;ve sent them an notification with
+                                    your comments.
                                   </p>
                                 </div>
                               )}

@@ -474,9 +474,6 @@ const StoreRuleDetails: NextPageWithLayout<{
       try {
         let message = "";
 
-        // dismiss all toasts
-        toast.dismiss();
-
         // HACK: api want nulls and not empty arrays...
         if (data.opportunities?.length == 0) data.opportunities = null;
         if (!data.storeItemCategories?.length) data.storeItemCategories = null;
@@ -504,7 +501,7 @@ const StoreRuleDetails: NextPageWithLayout<{
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
           type: "error",
-          toastId: "link",
+          toastId: "rule",
           autoClose: false,
           icon: false,
         });

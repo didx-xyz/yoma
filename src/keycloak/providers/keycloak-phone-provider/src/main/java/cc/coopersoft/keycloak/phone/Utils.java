@@ -96,13 +96,17 @@ public class Utils {
         var defaultRegion = defaultRegion(session);
         logger.info(String.format("default region '%s' will be used", defaultRegion));
         try {
+            // Parse the phone number using the default region
             var parsedNumber = phoneNumberUtil.parse(resultPhoneNumber, defaultRegion);
+
+            // First validation: Use Google's libphonenumber to validate the number against country-specific rules
             if (provider.validPhoneNumber() && !phoneNumberUtil.isValidNumber(parsedNumber)) {
                 logger.info(String.format("Phone number [%s] Valid fail with google's libphonenumber", resultPhoneNumber));
                 throw new PhoneNumberInvalidException(PhoneNumberInvalidException.ErrorType.VALID_FAIL,
                         String.format("Phone number [%s] Valid fail with google's libphonenumber", resultPhoneNumber));
             }
 
+            // Format the validated phone number according to configuration
             var canonicalizeFormat = provider.canonicalizePhoneNumber();
             try {
                 resultPhoneNumber = canonicalizeFormat
@@ -116,6 +120,8 @@ public class Utils {
                 resultPhoneNumber = phoneNumberUtil.format(parsedNumber, PhoneNumberFormat.E164);
             }
 
+            // Second validation: Apply optional custom regex pattern for additional filtering
+            // This allows administrators to restrict phone numbers beyond standard validation
             var phoneNumberRegex = provider.phoneNumberRegex();
             if (!phoneNumberRegex.map(resultPhoneNumber::matches).orElse(true)) {
                 logger.info(String.format("Phone number [%s] not match regex '%s'", resultPhoneNumber, phoneNumberRegex.orElse("")));

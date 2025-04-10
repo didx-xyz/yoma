@@ -10,6 +10,11 @@ import FormInput from "~/components/Common/FormInput";
 import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessage";
 import FormTextArea from "~/components/Common/FormTextArea";
 import type { OrganizationRequestViewModel } from "~/models/organisation";
+import {
+  validateEmail,
+  normalizeAndValidatePhoneNumber,
+  normalizeAndValidateEmail,
+} from "~/lib/validate";
 
 export interface InputProps {
   formData: OrganizationRequestViewModel | null;
@@ -51,7 +56,6 @@ export const OrgContactEdit: React.FC<InputProps> = ({
       .string()
       .min(1, "Postal code is required.")
       .max(10, "Maximum of 10 characters allowed."),
-
     primaryContactName: zod
       .string()
       .min(1, "Primary contact name is required.")
@@ -60,19 +64,65 @@ export const OrgContactEdit: React.FC<InputProps> = ({
       .string()
       .min(1, "Email is required.")
       .max(320, "Maximum of 320 characters allowed.")
-      .email("Invalid email address."),
+      .transform((val) => {
+        // Always normalize the email format first
+        return val.replace(/\s/g, "").toLowerCase();
+      })
+      .refine(
+        validateEmail,
+        "Please enter a valid email address (name@gmail.com)",
+      ),
     primaryContactPhone: zod
       .string()
       .min(1, "Primary contact phone is required.")
       .max(50, "Maximum of 50 characters allowed.")
-      .regex(/^\+?[0-9]{1,4}[0-9]{7,14}$/, "Invalid phone number format."),
+      .refine(
+        (val) => normalizeAndValidatePhoneNumber(val).isValid,
+        "Please enter a valid phone number (+27125555555)",
+      )
+      .transform((val) => {
+        const result = normalizeAndValidatePhoneNumber(val);
+        return result.normalizedNumber || val; // Fall back to original if normalization fails
+      }),
   });
 
   const form = useForm({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { register, handleSubmit, formState, reset, trigger } = form;
+  const { register, handleSubmit, formState, reset, trigger, setValue } = form;
+
+  // Function to normalize email on blur
+  const normalizeEmailOnBlur = (event: React.FocusEvent<HTMLInputElement>) => {
+    const value = event.target.value;
+    if (!value) return;
+
+    const result = normalizeAndValidateEmail(value);
+    if (result.isValid && result.normalizedEmail) {
+      // Update the form value with the normalized email
+      setValue("primaryContactEmail", result.normalizedEmail, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  };
+
+  // Add function to normalize phone number on blur
+  const normalizePhoneNumberOnBlur = (
+    event: React.FocusEvent<HTMLInputElement>,
+  ) => {
+    const value = event.target.value;
+    if (!value) return;
+
+    const result = normalizeAndValidatePhoneNumber(value);
+    if (result.isValid && result.normalizedNumber) {
+      // Update the form value with the normalized phone number
+      setValue("primaryContactPhone", result.normalizedNumber, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  };
 
   // set default values
   useEffect(() => {
@@ -140,7 +190,9 @@ export const OrgContactEdit: React.FC<InputProps> = ({
               type: "email",
               placeholder: "Your organisation's primary contact email",
               maxLength: 320,
-              ...register("primaryContactEmail"),
+              ...register("primaryContactEmail", {
+                onBlur: normalizeEmailOnBlur,
+              }),
             }}
           />
         </FormField>
@@ -159,7 +211,9 @@ export const OrgContactEdit: React.FC<InputProps> = ({
               type: "phone",
               placeholder: "Your organisation's primary contact phone",
               maxLength: 50,
-              ...register("primaryContactPhone"),
+              ...register("primaryContactPhone", {
+                onBlur: normalizePhoneNumberOnBlur,
+              }),
             }}
           />
         </FormField>

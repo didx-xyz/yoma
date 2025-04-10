@@ -1197,9 +1197,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       try {
         let message = "";
 
-        // dismiss all toasts
-        toast.dismiss();
-
         // convert dates to string in format "YYYY-MM-DD"
         data.dateStart = data.dateStart
           ? moment.utc(data.dateStart).format(DATE_FORMAT_SYSTEM)
@@ -1269,6 +1266,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
         toast(message, {
           type: "success",
+          toastId: "opportunity",
         });
         console.log(message); // e2e
 
@@ -1285,6 +1283,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
           type: "error",
           autoClose: false,
           icon: false,
+          toastId: "opportunity",
         });
 
         setIsLoading(false);
