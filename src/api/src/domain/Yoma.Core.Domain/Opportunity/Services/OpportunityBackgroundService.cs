@@ -272,7 +272,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           var recipientDataGroups = new List<(List<NotificationRecipient> Recipients, NotificationOpportunityPublished Data)>();
 
           var searchResult = _userService.Search(
-              new UserSearchFilter // implicitly includes only users with a confirmed notification
+              new UserSearchFilter // implicitly only included users which has onboarded their YoId
               {
                 YoIDOnboarded = true,
                 PageNumber = pageNumber,
