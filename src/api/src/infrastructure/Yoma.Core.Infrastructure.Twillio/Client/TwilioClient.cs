@@ -220,7 +220,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                       }
                       catch (Exception ex)
                       {
-                        lastTwilioFailure = $"{recipientId}: Polling error.  — {ex.Message}";
+                        lastTwilioFailure = $"{recipientId}: Polling error — {ex.Message}";
                         break;
                       }
 
