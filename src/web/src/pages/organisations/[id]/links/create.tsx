@@ -1197,7 +1197,7 @@ const LinkDetails: NextPageWithLayout<{
                           />
 
                           {formStateStep2.errors.distributionList && (
-                            <label className="label font-bold">
+                            <label className="label">
                               <span
                                 className="label-text-alt whitespace-break-spaces text-red-500 italic"
                                 dangerouslySetInnerHTML={{
