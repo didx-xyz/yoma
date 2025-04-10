@@ -261,11 +261,13 @@ namespace Yoma.Core.Api.Controllers
             return;
           }
 
-          //after email verification, the login event is raised. 
-          //an admin may have reverted an email update request, so ensure the email matches Keycloak, which is the source of truth.
+          // after email verification, the login event is raised.
+          // an admin may have reverted an email update request, so ensure the email matches Keycloak — the source of truth.
+          // the phone number is synced for eventual consistency and to handle changes made outside of the standard flow.
           userRequest.Username = kcUser.Username.Trim();
           userRequest.Email = kcUser.Email?.Trim().ToLower();
           userRequest.EmailConfirmed = kcUser.EmailVerified;
+          userRequest.PhoneNumber = kcUser.PhoneNumber?.Trim();
           userRequest.PhoneNumberConfirmed = kcUser.PhoneNumberVerified;
           userRequest.DateLastLogin = DateTimeOffset.UtcNow;
 
