@@ -5,7 +5,12 @@ import CreatableSelect from "react-select/creatable";
 import zod from "zod";
 import { type OrganizationRequestBase } from "~/api/models/organisation";
 import { DELIMETER_PASTE_MULTI } from "~/lib/constants";
-import { validateEmail, validatePhoneNumber } from "~/lib/validate";
+import {
+  validateEmail,
+  validatePhoneNumber,
+  normalizeAndValidateEmail,
+  normalizeAndValidatePhoneNumber,
+} from "~/lib/validate";
 
 export interface InputProps {
   organisation: OrganizationRequestBase | null;
@@ -25,15 +30,42 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
   const schema = zod
     .object({
       addCurrentUserAsAdmin: zod.boolean().optional(),
-      admins: zod.array(zod.string()).optional(),
+      admins: zod
+        .array(zod.string())
+        .optional()
+        .transform((items) => {
+          // Normalize each email and phone number in the array and remove duplicates
+          if (!items) return items;
+
+          return Array.from(
+            new Set(
+              items.map((item) => {
+                // Try to normalize as email
+                const emailResult = normalizeAndValidateEmail(item);
+                if (emailResult.isValid && emailResult.normalizedEmail) {
+                  return emailResult.normalizedEmail;
+                }
+
+                // Try to normalize as phone number
+                const phoneResult = normalizeAndValidatePhoneNumber(item);
+                if (phoneResult.isValid && phoneResult.normalizedNumber) {
+                  return phoneResult.normalizedNumber;
+                }
+
+                // Return original if can't normalize
+                return item;
+              }),
+            ),
+          );
+        }),
       ssoClientIdInbound: zod.string().optional(),
       ssoClientIdOutbound: zod.string().optional(),
     })
-    .superRefine((values, ctx) => {
+    .superRefine((data, ctx) => {
       // admins is required if addCurrentUserAsAdmin is false
       if (
-        !values.addCurrentUserAsAdmin &&
-        (values.admins == null || values.admins?.length < 1)
+        !data.addCurrentUserAsAdmin &&
+        (data.admins == null || data.admins?.length < 1)
       ) {
         ctx.addIssue({
           message:
@@ -42,27 +74,30 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
           path: ["admins"],
         });
       }
-    })
-    .refine(
-      (data) => {
-        // validate all items are valid email addresses or phone numbers
-        return data.admins?.every(
-          (userName) =>
-            validateEmail(userName) || validatePhoneNumber(userName),
+
+      // Check all admins for valid format (email or phone)
+      if (data.admins && data.admins.length > 0) {
+        const invalidEntries = data.admins.filter(
+          (userName: string) =>
+            !(validateEmail(userName) || validatePhoneNumber(userName)),
         );
-      },
-      {
-        message:
-          "Please enter valid email addresses (name@gmail.com) or phone numbers (+27125555555).",
-        path: ["admins"],
-      },
-    );
+
+        if (invalidEntries.length > 0) {
+          ctx.addIssue({
+            code: zod.ZodIssueCode.custom,
+            message: `Please enter valid email addresses (name@gmail.com) or phone numbers (+27125555555).\n\nInvalid entries: ${invalidEntries.join(", ")}`,
+            path: ["admins"],
+          });
+        }
+      }
+    });
 
   const form = useForm({
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { register, handleSubmit, formState, reset } = form;
+  const { register, handleSubmit, formState, reset, setValue, getValues } =
+    form;
 
   // set default values
   useEffect(() => {
@@ -82,6 +117,37 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
     },
     [onSubmit],
   );
+
+  // Helper function to normalize admin values - only normalize valid entries
+  const normalizeAdminValues = (values: string[]): string[] => {
+    if (!values || values.length === 0) return values;
+
+    return Array.from(
+      new Set(
+        values.map((value) => {
+          // Skip empty or whitespace-only entries
+          if (!value || value.trim() === "") {
+            return value;
+          }
+
+          // Try email normalization first - only apply if valid
+          const emailResult = normalizeAndValidateEmail(value);
+          if (emailResult.isValid && emailResult.normalizedEmail) {
+            return emailResult.normalizedEmail;
+          }
+
+          // Try phone normalization - only apply if valid
+          const phoneResult = normalizeAndValidatePhoneNumber(value);
+          if (phoneResult.isValid && phoneResult.normalizedNumber) {
+            return phoneResult.normalizedNumber;
+          }
+
+          // Return original if not valid
+          return value;
+        }),
+      ),
+    );
+  };
 
   return (
     <>
@@ -126,13 +192,32 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
                 className="mb-2 w-full"
                 onChange={(val) => {
                   // when pasting multiple values, split them by DELIMETER_PASTE_MULTI
-                  const emails = val
+                  const rawValues = val
                     .flatMap((item) => item.value.split(DELIMETER_PASTE_MULTI))
-                    .map((email) => email.trim()) // Trim each email
+                    .map((email) => email.trim()) // Trim each value
                     .filter((email) => email !== ""); // Filter out empty strings
-                  onChange(emails);
+
+                  // Only update with normalized values for valid entries
+                  if (rawValues.length > 0) {
+                    // Normalize the values
+                    const normalizedValues = normalizeAdminValues(rawValues);
+
+                    // Update the form with normalized values
+                    onChange(normalizedValues);
+                  } else {
+                    onChange([]);
+                  }
                 }}
-                value={value?.map((val: any) => ({
+                onBlur={() => {
+                  // Normalize existing values on blur
+                  const currentValues = getValues("admins") || [];
+                  const normalizedValues = normalizeAdminValues(currentValues);
+                  setValue("admins", normalizedValues, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                  });
+                }}
+                value={(value || []).map((val: string) => ({
                   label: val,
                   value: val,
                 }))}
@@ -147,9 +232,15 @@ export const OrgAdminsEdit: React.FC<InputProps> = ({
           />
           {formState.errors.admins && (
             <label className="label font-bold">
-              <span className="label-text-alt text-red-500 italic">
-                {`${formState.errors.admins.message}`}
-              </span>
+              <span
+                className="label-text-alt whitespace-break-spaces text-red-500 italic"
+                dangerouslySetInnerHTML={{
+                  __html:
+                    formState.errors.admins.message
+                      ?.toString()
+                      .replace(/\n/g, "<br/>") || "",
+                }}
+              />
             </label>
           )}
         </fieldset>

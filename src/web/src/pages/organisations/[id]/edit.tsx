@@ -196,47 +196,6 @@ const OrganisationUpdate: NextPageWithLayout<{
       fileVersion: 0,
     });
 
-  //   useEffect(() => {
-  //     if (organisation) {
-  //       setOrganizationRequestBase({
-  //         id: organisation.id ?? "",
-  //         name: organisation.name ?? "",
-  //         websiteURL: organisation.websiteURL ?? "",
-  //         primaryContactName: organisation.primaryContactName ?? "",
-  //         primaryContactEmail: organisation.primaryContactEmail ?? "",
-  //         primaryContactPhone: organisation.primaryContactPhone ?? "",
-  //         vATIN: organisation.vATIN ?? "",
-  //         taxNumber: organisation.taxNumber ?? "",
-  //         registrationNumber: organisation.registrationNumber ?? "",
-  //         city: organisation.city ?? "",
-  //         countryId: organisation.countryId ?? "",
-  //         streetAddress: organisation.streetAddress ?? "",
-  //         province: organisation.province ?? "",
-  //         postalCode: organisation.postalCode ?? "",
-  //         tagline: organisation.tagline ?? "",
-  //         biography: organisation.biography ?? "",
-  //         providerTypes: organisation.providerTypes?.map((x) => x.id) ?? [],
-  //         logo: organisation.logoURL ?? "",
-  //         addCurrentUserAsAdmin: isUserAdminOfCurrentOrg,
-  //         admins:
-  //           organisation.administrators
-  //             ?.map((x) => x.email ?? x.phoneNumber)
-  //             .filter((x): x is string => x !== null) ?? [],
-  //         registrationDocuments: [],
-  //         educationProviderDocuments: [],
-  //         businessDocuments: [],
-  //         registrationDocumentsDelete: [],
-  //         educationProviderDocumentsDelete: [],
-  //         businessDocumentsDelete: [],
-  //         ssoClientIdInbound: organisation.ssoClientIdInbound ?? "",
-  //         ssoClientIdOutbound: organisation.ssoClientIdOutbound ?? "",
-  //         zltoRewardPool: organisation.zltoRewardPool ?? null,
-  //         yomaRewardPool: organisation.yomaRewardPool ?? null,
-  //         fileVersion: 0,
-  //       });
-  //     }
-  //   }, [organisation, isUserAdminOfCurrentOrg]);
-
   const menuItems = useMemo(() => {
     const items = [
       { step: 1, label: "Details", id: "lnkOrganisationDetails" },
@@ -274,9 +233,6 @@ const OrganisationUpdate: NextPageWithLayout<{
       setIsLoading(true);
 
       try {
-        // clear all toasts
-        toast.dismiss();
-
         /// update api
         const logo = model.logo;
 
@@ -495,8 +451,10 @@ const OrganisationUpdate: NextPageWithLayout<{
             </div>
           </div>
         )}
+
         {/* LOGO/TITLE */}
         <LogoTitle logoUrl={organisation?.logoURL} title={organisation?.name} />
+
         {/* CONTENT */}
         <div className="flex flex-col justify-center gap-4 md:flex-row">
           {/* MENU */}
@@ -519,6 +477,7 @@ const OrganisationUpdate: NextPageWithLayout<{
               </li>
             ))}
           </ul>
+
           {/* DROPDOWN MENU */}
           <select
             className="select select-md w-full focus:border-none focus:outline-none md:hidden"

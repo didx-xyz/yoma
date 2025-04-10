@@ -552,7 +552,7 @@ const Links: NextPageWithLayout<{
                 role="tablist"
               >
                 <div className="text-gray-dark border-b border-transparent text-center text-sm font-medium">
-                  <ul className="-mb-px flex w-full justify-center gap-0 overflow-x-scroll md:justify-start">
+                  <ul className="-mb-px flex w-full justify-center md:justify-start">
                     <li className="px-4 whitespace-nowrap">
                       <Link
                         href={`/organisations/${id}/links`}

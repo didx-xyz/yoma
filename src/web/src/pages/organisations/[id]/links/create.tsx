@@ -39,6 +39,7 @@ import {
   searchCriteriaOpportunities,
 } from "~/api/services/opportunities";
 import CustomModal from "~/components/Common/CustomModal";
+import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import MainLayout from "~/components/Layout/Main";
 import SocialPreview from "~/components/Opportunity/SocialPreview";
 import { PageBackground } from "~/components/PageBackground";
@@ -60,7 +61,12 @@ import {
 import { trackGAEvent } from "~/lib/google-analytics";
 import { config } from "~/lib/react-query-config";
 import { debounce, getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import { validateEmail, validatePhoneNumber } from "~/lib/validate";
+import {
+  validateEmail,
+  validatePhoneNumber,
+  normalizeAndValidateEmail,
+  normalizeAndValidatePhoneNumber,
+} from "~/lib/validate";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
 
@@ -179,69 +185,113 @@ const LinkDetails: NextPageWithLayout<{
       }),
       dateEnd: z.union([z.string(), z.date(), z.null()]).optional(),
       lockToDistributionList: z.boolean().optional(),
-      distributionList: z.union([z.array(z.string()), z.null()]).optional(),
+      distributionList: z
+        .union([z.array(z.string()), z.null()])
+        .optional()
+        .transform((items) => {
+          // Normalize each email and phone number in the array
+          if (!items) return items;
+
+          return items.map((item) => {
+            // Try to normalize as email
+            const emailResult = normalizeAndValidateEmail(item);
+            if (emailResult.isValid && emailResult.normalizedEmail) {
+              return emailResult.normalizedEmail;
+            }
+
+            // Try to normalize as phone number
+            const phoneResult = normalizeAndValidatePhoneNumber(item);
+            if (phoneResult.isValid && phoneResult.normalizedNumber) {
+              return phoneResult.normalizedNumber;
+            }
+
+            // Return original if can't normalize
+            return item;
+          });
+        }),
     })
-    .refine(
-      (data) => {
-        // if not locked to the distribution list, you must specify either a usage limit or an end date.
-        if (
-          !data.lockToDistributionList &&
-          data.usagesLimit == null &&
-          data.dateEnd == null
-        ) {
-          return false;
+    .superRefine((data, ctx) => {
+      // If lockToDistributionList is true, then distributionList is required
+      if (
+        data.lockToDistributionList &&
+        (data.distributionList == null || data.distributionList?.length < 1)
+      ) {
+        ctx.addIssue({
+          message: "Please enter at least one email address or phone number.",
+          code: z.ZodIssueCode.custom,
+          path: ["distributionList"],
+        });
+      }
+
+      // Check all distribution list entries for valid format (email or phone)
+      if (data.distributionList && data.distributionList.length > 0) {
+        const invalidEntries = data.distributionList.filter(
+          (userName: string) =>
+            !(validateEmail(userName) || validatePhoneNumber(userName)),
+        );
+
+        if (invalidEntries.length > 0) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Please enter valid email addresses (name@gmail.com) or phone numbers (+27125555555).\n\nInvalid entries: ${invalidEntries.join(", ")}`,
+            path: ["distributionList"],
+          });
         }
 
-        return true;
-      },
-      {
-        message:
-          "If not limited to the distribution list, you must specify either a usage limit or an expiry date.",
-        path: ["lockToDistributionList"],
-      },
-    )
-    .refine(
-      (data) => {
-        // if lockToDistributionList is true, then distributionList is required
-        return (
-          !data.lockToDistributionList ||
-          (data.distributionList?.length ?? 0) > 0
+        // Count emails and phone numbers
+        const emails = data.distributionList.filter((item) =>
+          validateEmail(item),
         );
-      },
-      {
-        message: "Please enter at least one email address or phone number.",
-        path: ["distributionList"],
-      },
-    )
-    .refine(
-      (data) => {
-        // validate all items are valid email addresses or phone numbers
-        return data.distributionList?.every(
-          (userName) =>
-            validateEmail(userName) || validatePhoneNumber(userName),
+        const phoneNumbers = data.distributionList.filter((item) =>
+          validatePhoneNumber(item),
         );
-      },
-      {
-        message:
-          "Please enter valid email addresses (name@gmail.com) or phone numbers (+27125555555).",
-        path: ["distributionList"],
-      },
-    )
-    .refine(
-      (data) => {
-        // if lockToDistributionList is false and dateEnd is not null, then validate that the dateEnd is not in the past.
-        if (!data.lockToDistributionList && data.dateEnd !== null) {
-          const now = new Date();
-          const dateEnd = data.dateEnd ? new Date(data.dateEnd) : undefined;
-          return dateEnd ? dateEnd >= now : true;
+
+        // Enforce limits on emails (max 10,000)
+        if (emails.length > 10000) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Maximum of 10,000 email addresses allowed. You currently have ${emails.length} emails.`,
+            path: ["distributionList"],
+          });
         }
-        return true;
-      },
-      {
-        message: "The expiry date must be in the future.",
-        path: ["dateEnd"],
-      },
-    );
+
+        // Enforce limits on phone numbers (max 100)
+        if (phoneNumbers.length > 100) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Maximum of 100 phone numbers allowed. You currently have ${phoneNumbers.length} phone numbers.`,
+            path: ["distributionList"],
+          });
+        }
+      }
+
+      // If lockToDistributionList is false and dateEnd is not null, validate that dateEnd is not in the past
+      if (!data.lockToDistributionList && data.dateEnd !== null) {
+        const now = new Date();
+        const dateEnd = data.dateEnd ? new Date(data.dateEnd) : undefined;
+        if (dateEnd && dateEnd < now) {
+          ctx.addIssue({
+            message: "The expiry date must be in the future.",
+            code: z.ZodIssueCode.custom,
+            path: ["dateEnd"],
+          });
+        }
+      }
+
+      // If not limited to distribution list, must specify either usage limit or end date
+      if (
+        !data.lockToDistributionList &&
+        data.usagesLimit == null &&
+        data.dateEnd == null
+      ) {
+        ctx.addIssue({
+          message:
+            "If not limited to the distribution list, you must specify either a usage limit or an expiry date.",
+          code: z.ZodIssueCode.custom,
+          path: ["lockToDistributionList"],
+        });
+      }
+    });
 
   const schemaStep3 = z.object({});
 
@@ -252,7 +302,10 @@ const LinkDetails: NextPageWithLayout<{
     control: controlStep1,
     reset: resetStep1,
     watch: watchStep1,
+    getValues,
+    setValue,
   } = useForm({
+    mode: "all",
     resolver: zodResolver(schemaStep1),
     defaultValues: formData,
   });
@@ -267,6 +320,7 @@ const LinkDetails: NextPageWithLayout<{
     reset: resetStep2,
     watch: watchStep2,
   } = useForm({
+    mode: "all",
     resolver: zodResolver(schemaStep2),
     defaultValues: formData,
   });
@@ -278,6 +332,7 @@ const LinkDetails: NextPageWithLayout<{
 
     reset: resetStep3,
   } = useForm({
+    mode: "all",
     resolver: zodResolver(schemaStep3),
     defaultValues: formData,
   });
@@ -398,9 +453,6 @@ const LinkDetails: NextPageWithLayout<{
 
       try {
         let message = "";
-
-        // dismiss all toasts
-        toast.dismiss();
 
         //  convert dates to string in format "YYYY-MM-DD"
         data.dateEnd = data.dateEnd
@@ -573,6 +625,37 @@ const LinkDetails: NextPageWithLayout<{
     },
     1000,
   );
+
+  // Helper function to normalize distribution list values - only normalize valid entries
+  const normalizeDistributionList = (values: string[]): string[] => {
+    if (!values || values.length === 0) return values;
+
+    return Array.from(
+      new Set(
+        values.map((value) => {
+          // Skip empty or whitespace-only entries
+          if (!value || value.trim() === "") {
+            return value;
+          }
+
+          // Try email normalization first - only apply if valid
+          const emailResult = normalizeAndValidateEmail(value);
+          if (emailResult.isValid && emailResult.normalizedEmail) {
+            return emailResult.normalizedEmail;
+          }
+
+          // Try phone normalization - only apply if valid
+          const phoneResult = normalizeAndValidatePhoneNumber(value);
+          if (phoneResult.isValid && phoneResult.normalizedNumber) {
+            return phoneResult.normalizedNumber;
+          }
+
+          // Return original if not valid
+          return value;
+        }),
+      ),
+    );
+  };
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -779,6 +862,7 @@ const LinkDetails: NextPageWithLayout<{
                           for.
                         </div>
                       </label>
+
                       <Controller
                         control={controlStep1}
                         name="entityType"
@@ -962,13 +1046,15 @@ const LinkDetails: NextPageWithLayout<{
                           id="lockToDistributionList"
                           className="checkbox-secondary checkbox"
                         />
-                        <span className="label-text ml-4">
-                          Only emails or phone numbers entered below can use
-                          this link.
+                        <span className="label-text ml-4 whitespace-break-spaces">
+                          Only email addresses (maximum 10,000) or phone numbers
+                          (maximum 100) listed below will be able to use this
+                          link.
                         </span>
                       </label>
+
                       {formStateStep2.errors.lockToDistributionList && (
-                        <label className="label -mb-5">
+                        <label className="label">
                           <span className="label-text-alt text-red-500 italic">
                             {`${formStateStep2.errors.lockToDistributionList.message}`}
                           </span>
@@ -1000,14 +1086,12 @@ const LinkDetails: NextPageWithLayout<{
                             max={MAX_INT32}
                           />
 
-                          <label className="label">
-                            <span className="label-text-alt text-yellow italic">
-                              Note: This link can be claimed by anyone who
-                              receives it. Participants can send between one
-                              another to claim. Consider using a limited link,
-                              or create multiple links to reduce risk.
-                            </span>
-                          </label>
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            This link can be claimed by anyone who receives it.
+                            Participants can send between one another to claim.
+                            Consider using a limited link, or create multiple
+                            links to reduce risk.
+                          </FormMessage>
 
                           {formStateStep2.errors.usagesLimit && (
                             <label className="label -mb-5">
@@ -1034,7 +1118,7 @@ const LinkDetails: NextPageWithLayout<{
                             name="dateEnd"
                             render={({ field: { onChange, value } }) => (
                               <DatePicker
-                                className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
+                                className="input border-gray focus:border-gray rounded-md focus:outline-none"
                                 onChange={(date) => onChange(date)}
                                 selected={value ? new Date(value) : null}
                                 placeholderText="Select End Date"
@@ -1057,8 +1141,10 @@ const LinkDetails: NextPageWithLayout<{
                     {watchLockToDistributionList && (
                       <>
                         <fieldset className="fieldset">
-                          <label className="label font-bold">
-                            <span className="label-text">Participants</span>
+                          <label className="flex flex-col">
+                            <div className="label-text font-bold">
+                              Participants
+                            </div>
                           </label>
 
                           <Controller
@@ -1067,10 +1153,10 @@ const LinkDetails: NextPageWithLayout<{
                             render={({ field: { onChange, value } }) => (
                               <CreatableSelect
                                 isMulti
-                                className="mb-2 w-full"
+                                className="w-full"
                                 onChange={(val) => {
                                   // when pasting multiple values, split them by DELIMETER_PASTE_MULTI and remove duplicates
-                                  const emails = Array.from(
+                                  const userNames = Array.from(
                                     new Set(
                                       val
                                         .flatMap((item) =>
@@ -1078,11 +1164,29 @@ const LinkDetails: NextPageWithLayout<{
                                             DELIMETER_PASTE_MULTI,
                                           ),
                                         )
-                                        .map((email) => email.trim())
-                                        .filter((email) => email !== ""),
+                                        .map((item) => item.trim())
+                                        .filter((item) => item !== ""),
                                     ),
                                   );
-                                  onChange(emails);
+                                  // Normalize the values
+                                  const normalizedValues =
+                                    normalizeDistributionList(userNames);
+                                  onChange(normalizedValues);
+                                }}
+                                onBlur={() => {
+                                  // Normalize existing values on blur
+                                  const currentValues =
+                                    getValues("distributionList") || [];
+                                  const normalizedValues =
+                                    normalizeDistributionList(currentValues);
+                                  setValue(
+                                    "distributionList",
+                                    normalizedValues,
+                                    {
+                                      shouldValidate: true,
+                                      shouldDirty: true,
+                                    },
+                                  );
                                 }}
                                 value={value?.map((val: any) => ({
                                   label: val,
@@ -1092,20 +1196,24 @@ const LinkDetails: NextPageWithLayout<{
                             )}
                           />
 
-                          <label className="label">
-                            <span className="label-text-alt text-yellow italic">
-                              Note: Participants will have to click on the link
-                              in the email and claim their completion.
-                            </span>
-                          </label>
-
                           {formStateStep2.errors.distributionList && (
-                            <label className="label font-bold">
-                              <span className="label-text-alt text-red-500 italic">
-                                {`${formStateStep2.errors.distributionList.message}`}
-                              </span>
+                            <label className="label">
+                              <span
+                                className="label-text-alt whitespace-break-spaces text-red-500 italic"
+                                dangerouslySetInnerHTML={{
+                                  __html:
+                                    formStateStep2.errors.distributionList.message
+                                      ?.toString()
+                                      .replace(/\n/g, "<br/>") || "",
+                                }}
+                              />
                             </label>
                           )}
+
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            Participants will have to click on the link in the
+                            notification and claim their completion.
+                          </FormMessage>
                         </fieldset>
                       </>
                     )}
@@ -1152,9 +1260,7 @@ const LinkDetails: NextPageWithLayout<{
                     {/* TYPE */}
                     <fieldset className="fieldset">
                       <div className="flex flex-col">
-                        <div className="label-text text-base font-semibold">
-                          Type
-                        </div>
+                        <div className="label-text font-bold">Type</div>
 
                         <div className="label label-text pl-0 text-sm">
                           {
@@ -1177,7 +1283,7 @@ const LinkDetails: NextPageWithLayout<{
                     {/* LINK PREVIEW */}
                     <fieldset className="fieldset">
                       <div className="flex flex-col">
-                        <div className="label-text text-base font-semibold">
+                        <div className="label-text font-bold">
                           Social Preview
                         </div>
                         <div className="label label-text pl-0 text-sm">
@@ -1206,9 +1312,7 @@ const LinkDetails: NextPageWithLayout<{
                     {/* USAGE */}
                     <fieldset className="fieldset">
                       <div className="flex flex-col">
-                        <div className="label-text text-base font-semibold">
-                          Limits
-                        </div>
+                        <div className="label-text font-bold">Limits</div>
 
                         {!formData.lockToDistributionList && (
                           <>
@@ -1247,14 +1351,17 @@ const LinkDetails: NextPageWithLayout<{
                         )}
 
                         {formData.lockToDistributionList && (
-                          <>
+                          <div className="flex flex-col gap-2">
                             {/* LIMITED TO PARTICIPANTS */}
                             <label className="label label-text pl-0 text-sm">
                               <div className="flex flex-row gap-1">
                                 Limited to the following
-                                <div className="font-semibold text-black">
-                                  {formData.distributionList?.length}
-                                </div>
+                                {(formData.distributionList?.length ?? 0) >
+                                  1 && (
+                                  <div className="font-semibold text-black underline">
+                                    {formData.distributionList?.length}
+                                  </div>
+                                )}{" "}
                                 participant
                                 {formData.distributionList?.length !== 1
                                   ? "s"
@@ -1280,7 +1387,7 @@ const LinkDetails: NextPageWithLayout<{
                                 </div>
                               </label>
                             )}
-                          </>
+                          </div>
                         )}
                       </div>
                     </fieldset>

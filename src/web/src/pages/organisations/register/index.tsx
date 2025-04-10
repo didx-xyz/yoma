@@ -139,9 +139,6 @@ const OrganisationCreate: NextPageWithLayout<{
       setIsLoading(true);
 
       try {
-        // clear all toasts
-        toast.dismiss();
-
         // update api
         const logo = model.logo;
 
@@ -296,7 +293,7 @@ const OrganisationCreate: NextPageWithLayout<{
 
       {/* CONTENT */}
       <div className="flex items-center justify-center">
-        <div className="mt-20 flex w-full max-w-lg flex-col rounded-lg bg-white p-4 md:p-12">
+        <div className="mt-20 flex w-full max-w-xl flex-col rounded-lg bg-white p-4 md:p-12">
           {step == 1 && (
             <>
               <ul className="steps steps-horizontal mx-auto w-72">
