@@ -902,7 +902,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Username}'");
 
       if (myOpportunity.VerificationStatus != VerificationStatus.Pending)
-        throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
+        throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToString().ToLower()} for opportunity '{opportunity.Title}'");
 
       var itemsExisting = new List<MyOpportunityVerification>();
       var itemsExistingDeleted = new List<MyOpportunityVerification>();
@@ -1280,7 +1280,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Username}'");
 
       if (item.VerificationStatus != VerificationStatus.Pending)
-        throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
+        throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToString().ToLower()} for opportunity '{opportunity.Title}'");
 
       if (item.VerificationStatus == status) return;
 
@@ -1302,7 +1302,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           case VerificationStatus.Completed:
             if (item.DateEnd.HasValue && item.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
-              throw new ValidationException($"Verification can not be completed as the end date for 'my' opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
+              throw new ValidationException($"Verification can not be completed as the end date for opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
 
             EnsureNoEarlierPendingVerificationsForOtherStudents(user, opportunity, item, instantVerification);
 
@@ -1520,10 +1520,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           case VerificationStatus.Pending:
             if (request.OverridePending) break;
-            throw new ValidationException($"Verification is {myOpportunity.VerificationStatus?.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
+            throw new ValidationException($"Verification is already {myOpportunity.VerificationStatus?.ToString().ToLower()} for opportunity '{opportunity.Title}'. Please check your YoID for more information.");
 
           case VerificationStatus.Completed:
-            throw new ValidationException($"Verification is {myOpportunity.VerificationStatus?.ToString().ToLower()} for 'my' opportunity '{opportunity.Title}'");
+            throw new ValidationException($"Verification is already {myOpportunity.VerificationStatus?.ToString().ToLower()} for opportunity '{opportunity.Title}'. Please check your YoID for more information.");
 
           case VerificationStatus.Rejected: //can be re-send for verification
             break;
