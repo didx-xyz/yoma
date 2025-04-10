@@ -141,7 +141,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         OrderInstructions =
         [
           new() { OrderBy = e => e.DateStart, SortOrder = Core.FilterSortOrder.Descending },
-          new() { OrderBy = e => e.DateEnd ?? DateTimeOffset.MaxValue, SortOrder = Core.FilterSortOrder.Descending },
+          new() { OrderBy = e => e.DateEnd ?? DateTimeOffset.MaxValue, SortOrder = Core.FilterSortOrder.Ascending },
           new() { OrderBy = e => e.Title, SortOrder = Core.FilterSortOrder.Ascending },
           new() { OrderBy = e => e.Id, SortOrder = Core.FilterSortOrder.Ascending } //ensure deterministic sorting / consistent pagination results
         ]
