@@ -106,6 +106,8 @@ config-cli:
     CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT: https://keycloak.atingi.org/realms/master/broker/yoma-prod/endpoint
     CLIENT_GOODWALL_URL: https://www.goodwall.io
     CLIENT_GOODWALL_URL_REDIRECT: goodwallauth://yomaredirect
+    CLIENT_IIASA_URL: https://geoqauth.main.geo-wiki.org
+    CLIENT_IIASA_URL_REDIRECT: https://geoqauth.main.geo-wiki.org/signin-yoma-oidc
 
   init:
     enabled: true
