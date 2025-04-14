@@ -202,7 +202,10 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                     break;
 
                   case MessageType.WhatsApp:
-                    var timeout = TimeSpan.FromSeconds(6);
+                    if (_options.DeliveryPollingWhatsAppTimeoutInSeconds <= 0)
+                      throw new InvalidOperationException("WhatsApp delivery polling timeout is not configured");
+
+                    var timeout = TimeSpan.FromSeconds(_options.DeliveryPollingWhatsAppTimeoutInSeconds);
                     var startTime = DateTimeOffset.UtcNow;
 
                     while (true)
