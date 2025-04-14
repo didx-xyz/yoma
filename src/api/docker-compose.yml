@@ -165,6 +165,9 @@ services:
       CLIENT_YOMA_WEB_SECRET: superSecretYomaWebClientSecret
       CLIENT_ATINGI_SECRET: superSecretAtingiClientSecret
       CLIENT_GOODWALL_SECRET: superSecretAtingiClientSecret
+      CLIENT_IIASA_SECRET: superSecretIIASAClientSecret
+      CLIENT_IIASA_URL: https://localhost:44345
+      CLIENT_IIASA_URL_REDIRECT: https://localhost:44345/signin-yoma-oidc
       SA_YOMA_API_PASSWORD: &KCAdminPassword superSecretYomaApiServiceAccountPassword
       SMTP_PASSWORD: superSecretSmtpPassword
     volumes:
