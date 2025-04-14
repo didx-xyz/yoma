@@ -11,6 +11,8 @@ namespace Yoma.Core.Infrastructure.Twilio.Models
     public TwillioOptionsFrom From { get; set; }
 
     public Dictionary<string, string>? TemplatesWhatsApp { get; set; } // Key: NotificationType enum string value, Value: Twilio WhatsApp template id
+
+    public int DeliveryPollingWhatsAppTimeoutInSeconds { get; set; }
   }
 
   public class TwillioOptionsFrom
