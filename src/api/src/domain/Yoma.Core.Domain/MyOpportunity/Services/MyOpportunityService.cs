@@ -880,7 +880,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         await _linkService.LogUsage(link.Id);
 
-        var request = new MyOpportunityRequestVerify { InstantOrImportedVerification = true };
+        var request = new MyOpportunityRequestVerify { InstantOrImportedVerification = true, OverridePending = true };
         await PerformActionSendForVerification(user, link.EntityId, request, null); //any verification method
 
         await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, "Auto-verification");
