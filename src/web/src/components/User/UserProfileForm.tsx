@@ -295,8 +295,8 @@ export const UserProfileForm: React.FC<{
               (userProfile?.email ?? "") && (
               <div className="mt-2">
                 <FormMessage messageType={FormMessageType.Warning}>
-                  Updating your email will sign you out. Check your email to
-                  verify it when you sign in again.
+                  Updating your email will log you out. Check your email to
+                  verify it when you log in again.
                 </FormMessage>
               </div>
             )}
@@ -348,7 +348,7 @@ export const UserProfileForm: React.FC<{
 
             {watchUpdatePhoneNumber && (
               <FormMessage messageType={FormMessageType.Warning}>
-                You will need to sign in again and will be prompted to change
+                You will need to log in again and will be prompted to change
                 your phone number.
               </FormMessage>
             )}
@@ -384,8 +384,8 @@ export const UserProfileForm: React.FC<{
                 {watchEmail
                   ? "You will receive an email with instructions to reset your email."
                   : formData.phoneNumber
-                    ? "You will be prompted to change your password upon signing in again."
-                    : "Changing your password will require you to sign in again."}
+                    ? "You will be prompted to change your password upon logging in again."
+                    : "Changing your password will require you to log in again."}
               </FormMessage>
             )}
           </>

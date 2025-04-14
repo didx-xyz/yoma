@@ -160,15 +160,15 @@ export const Global: React.FC = () => {
   //#endregion Functions
 
   //#region Event Handlers
-  // 🔔 POST SIGN-IN
-  // get user profile after sign in & perform post login checks
+  // 🔔 POST LOG-IN
+  // get user profile after log in & perform post login checks
   useEffect(() => {
     // TODO: disabled for now. need to fix issue with GA login event beging tracked twice
     if (sessionStatus === "loading") return;
 
     // check error
     if (session?.error) {
-      setLoginMessage("There was an error signing in. Please sign in again.");
+      setLoginMessage("There was an error signing in. Please log in again.");
       return;
     }
 
@@ -195,7 +195,7 @@ export const Global: React.FC = () => {
         .catch((e) => {
           if (e.response?.status === 401) {
             // show dialog to login again
-            setLoginMessage("Your session has expired. Please sign in again.");
+            setLoginMessage("Your session has expired. Please log in again.");
             setLoginDialogVisible(true);
           }
 
@@ -214,7 +214,7 @@ export const Global: React.FC = () => {
       const signInAgain = urlParams.get("signInAgain");
 
       if (existingSessionCookieValue || signInAgain) {
-        // sign in with keycloak
+        // log in with keycloak
         handleUserSignIn(currentLanguage);
       }
     }
@@ -324,10 +324,10 @@ export const Global: React.FC = () => {
     if (session?.error) {
       // show dialog to login again
       if (session?.error === "RefreshAccessTokenError") {
-        setLoginMessage("Your session has expired. Please sign in again.");
+        setLoginMessage("Your session has expired. Please log in again.");
         setLoginDialogVisible(true);
       } else {
-        setLoginMessage("There was an error signing in. Please sign in again.");
+        setLoginMessage("There was an error logging in. Please try again.");
         setLoginDialogVisible(true);
       }
 

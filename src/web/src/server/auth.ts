@@ -92,7 +92,7 @@ export const authOptions: NextAuthOptions = {
         return refreshAccessToken(token);
       }
 
-      // Initial sign in
+      // Initial log in
       if (account && user) {
         // get roles from access_token
         const { realm_access } = decode(account.access_token);

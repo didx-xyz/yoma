@@ -15,7 +15,7 @@ export const SignInButton: React.FC<{
   const handleLogin = useCallback(async () => {
     setIsButtonLoading(true);
 
-    // sign in with keycloak
+    // log in with keycloak
     await handleUserSignIn(currentLanguage);
   }, [currentLanguage]);
 
@@ -27,7 +27,7 @@ export const SignInButton: React.FC<{
       disabled={isButtonLoading}
       id="btnSignIn"
       tabIndex={tabIndex}
-      title="Sign in"
+      title="Login"
     >
       {isButtonLoading && (
         <LoadingInline
@@ -36,7 +36,7 @@ export const SignInButton: React.FC<{
         />
       )}
       {!isButtonLoading && <IoMdFingerPrint className="h-6 w-6 text-white" />}
-      <p className="text-white uppercase">Sign In</p>
+      <p className="text-white uppercase">Login</p>
     </button>
   );
 };

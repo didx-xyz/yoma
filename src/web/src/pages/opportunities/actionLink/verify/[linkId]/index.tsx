@@ -111,7 +111,7 @@ const OpportunityActionLinkVerify: NextPageWithLayout<{
             <h2 className="-mb-6 font-bold">Almost there...</h2>
 
             <p className="text-gray-dark text-center">
-              Please sign in to complete the opportunity and earn your rewards.
+              Please log in to complete the opportunity and earn your rewards.
             </p>
 
             <SocialPreview

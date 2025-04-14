@@ -27,7 +27,7 @@ export const handleUserSignIn = async (currentLanguage: string) => {
     ? `${currentUrl.origin}${currentUrl.pathname}?${searchParams.toString()}`
     : `${currentUrl.origin}${currentUrl.pathname}`;
 
-  // sign in with keycloak
+  // log in with keycloak
   signIn(
     ((await fetchClientEnv()).NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER ||
       "") as string,
