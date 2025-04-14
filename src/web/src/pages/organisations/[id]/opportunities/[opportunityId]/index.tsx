@@ -1540,7 +1540,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               <IoMdClose className="h-6 w-6"></IoMdClose>
             </button>
           </div>
-          <div className="flex flex-col items-center justify-center gap-4">
+          <div className="flex flex-col items-center justify-center gap-4 p-4">
             <div className="border-green-dark -mt-11 flex h-[4.5rem] w-[4.5rem] items-center justify-center rounded-full bg-white shadow-lg">
               <FaExclamationTriangle className="text-yellow h-8 w-8" />
             </div>
@@ -1553,10 +1553,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
               Please make sure to save your changes to prevent any loss of data.
             </div>
 
-            <div className="mt-4 flex justify-center gap-4 px-4">
+            <div className="mt-4 flex w-full justify-center gap-4 px-4">
               <button
                 type="button"
-                className="btn border-purple text-purple w-1/2 rounded-full bg-white normal-case md:w-[150px]"
+                className="btn border-purple text-purple w-1/2 rounded-full bg-white normal-case"
                 onClick={onClickContinueWithoutSaving}
               >
                 <span className="ml-1">Continue without saving</span>
@@ -1564,7 +1564,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
               <button
                 type="button"
-                className="btn bg-purple hover:bg-purple-light w-1/2 rounded-full text-white normal-case md:w-[150px]"
+                className="btn bg-purple hover:bg-purple-light w-1/2 rounded-full text-white normal-case"
                 onClick={onClickSaveAndContinue}
               >
                 <p className="text-white">Save and continue</p>
@@ -1668,7 +1668,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
           {/* XS: DROPDOWN MENU */}
           <select
-            className="select select-md focus:border-none focus:outline-none md:hidden"
+            className="select select-md w-full focus:border-none focus:outline-none md:hidden"
             onChange={(e) => {
               const selectedLabel = e.target.value;
               const selectedItem = menuItems.find(
@@ -2829,7 +2829,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                             {/* AUTOMATIC */}
                             <FormRadio
                               id="verificationEnabledAutomatic"
-                              label="Verification should happen automatically (if available)"
+                              label="Automatic for opportunities that have been CSV uploaded"
                               inputProps={{
                                 checked:
                                   value === true &&
