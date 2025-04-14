@@ -1197,10 +1197,10 @@ const Opportunities: NextPageWithLayout<{
           {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
           {!isSearchPerformed && (
             <>
-              {/* Most Recently Published */}
+              {/* RECENTLY ADDED */}
               {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
                 <CustomCarousel
-                  id={`opportunities_allOpportunities`}
+                  id={`opportunities_recentPublishedOpportunities`}
                   title="Recently added 🆕"
                   description="Fresh opportunities, updated daily."
                   viewAllUrl="/opportunities?page=1"
