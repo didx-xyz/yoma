@@ -1197,12 +1197,31 @@ const Opportunities: NextPageWithLayout<{
           {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
           {!isSearchPerformed && (
             <>
+              {/* Most Recently Published */}
+              {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
+                <CustomCarousel
+                  id={`opportunities_allOpportunities`}
+                  title="Recently added 🆕"
+                  description="Fresh opportunities, updated daily."
+                  viewAllUrl="/opportunities?page=1"
+                  data={opportunities_allOpportunities.items}
+                  loadData={loadDataOpportunities}
+                  totalAll={opportunities_allOpportunities.totalCount!}
+                  renderSlide={(item, index) => (
+                    <OpportunityPublicSmallComponent
+                      key={`opportunities_recentPublishedOpportunities_${item.id}_${index}`}
+                      data={item}
+                    />
+                  )}
+                />
+              )}
+
               {/* FEATURED */}
               {(opportunities_featured?.totalCount ?? 0) > 0 && (
                 <CustomCarousel
                   id={`opportunities_featured`}
                   title="Featured 🌟"
-                  description="Explore our featured opportunities"
+                  description="Explore our featured opportunities."
                   viewAllUrl="/opportunities?featured=true"
                   data={opportunities_featured.items}
                   loadData={loadDataFeatured}
@@ -1221,7 +1240,7 @@ const Opportunities: NextPageWithLayout<{
                 <CustomCarousel
                   id={`opportunities_trending`}
                   title="Trending 🔥"
-                  description="The most viewed opportunities"
+                  description="The most viewed opportunities."
                   viewAllUrl="/opportunities?mostViewed=true"
                   data={opportunities_trending.items}
                   loadData={loadDataTrending}
@@ -1240,7 +1259,7 @@ const Opportunities: NextPageWithLayout<{
                 <CustomCarousel
                   id={`opportunities_mostCompleted`}
                   title="Most completed 🏆"
-                  description="The most completed opportunities"
+                  description="The most completed opportunities."
                   viewAllUrl="/opportunities?mostCompleted=true"
                   data={opportunities_mostCompleted.items}
                   loadData={loadDataMostCompleted}
@@ -1259,7 +1278,7 @@ const Opportunities: NextPageWithLayout<{
                 <CustomCarousel
                   id={`opportunities_learning`}
                   title="Learning Courses 📚"
-                  description="Discover exciting online courses"
+                  description="Discover exciting online courses."
                   viewAllUrl="/opportunities?types=Learning"
                   data={opportunities_learning.items}
                   loadData={loadDataLearning}
@@ -1278,7 +1297,7 @@ const Opportunities: NextPageWithLayout<{
                 <CustomCarousel
                   id={`opportunities_tasks`}
                   title="Micro-tasks ⚡"
-                  description="Contribute to real-world projects"
+                  description="Contribute to real-world projects."
                   viewAllUrl="/opportunities?types=Micro-task"
                   data={opportunities_tasks.items}
                   loadData={loadDataTasks}
@@ -1297,7 +1316,7 @@ const Opportunities: NextPageWithLayout<{
                 <CustomCarousel
                   id={`opportunities_events`}
                   title="Events 🎉"
-                  description="Explore events to attend"
+                  description="Explore events to attend."
                   viewAllUrl="/opportunities?types=Event"
                   data={opportunities_events.items}
                   loadData={loadDataEvents}
@@ -1316,7 +1335,7 @@ const Opportunities: NextPageWithLayout<{
                 <CustomCarousel
                   id={`opportunities_other`}
                   title="Other 💡"
-                  description="Explore other opportunities"
+                  description="Explore other opportunities."
                   viewAllUrl="/opportunities?types=Other"
                   data={opportunities_other.items}
                   loadData={loadDataOther}
@@ -1324,25 +1343,6 @@ const Opportunities: NextPageWithLayout<{
                   renderSlide={(item, index) => (
                     <OpportunityPublicSmallComponent
                       key={`opportunities_other_${item.id}_${index}`}
-                      data={item}
-                    />
-                  )}
-                />
-              )}
-
-              {/* ALL OPPORTUNITIES */}
-              {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
-                <CustomCarousel
-                  id={`opportunities_allOpportunities`}
-                  title="All Opportunities 🌍"
-                  description="Explore all available opportunities"
-                  viewAllUrl="/opportunities?page=1"
-                  data={opportunities_allOpportunities.items}
-                  loadData={loadDataOpportunities}
-                  totalAll={opportunities_allOpportunities.totalCount!}
-                  renderSlide={(item, index) => (
-                    <OpportunityPublicSmallComponent
-                      key={`opportunities_allOpportunities_${item.id}_${index}`}
                       data={item}
                     />
                   )}
