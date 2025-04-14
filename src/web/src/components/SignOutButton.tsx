@@ -24,7 +24,7 @@ export const SignOutButton: React.FC<{
       disabled={isButtonLoading}
       id="btnSignOut"
       tabIndex={tabIndex}
-      title="Sign out"
+      title="Log out"
     >
       {isButtonLoading && (
         <LoadingInline
@@ -33,7 +33,7 @@ export const SignOutButton: React.FC<{
         />
       )}
       {!isButtonLoading && <IoMdLogOut className="h-6 w-6 text-white" />}
-      <p className="text-white">Sign Out</p>
+      <p className="text-white">Logout</p>
     </button>
   );
 };

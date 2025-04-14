@@ -20,7 +20,7 @@ const Status401: NextPageWithLayout = () => {
         />
         <h2 className="-mb-6 font-bold">401 - Not authorized</h2>
         <p className="text-gray-dark text-center">
-          Please sign in to view this page.
+          Please log in to view this page.
         </p>
 
         <SignInButton className="btn bg-purple hover:bg-purple-light disabled:bg-purple-light rounded-full text-white normal-case disabled:border-0 md:w-[150px]" />

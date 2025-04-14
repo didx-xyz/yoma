@@ -245,7 +245,7 @@ const Home: NextPageWithLayout = () => {
         {/* GREEN BACKGROUND */}
         <div className="bg-green mt-10 flex h-[32rem] w-screen justify-center bg-[url('/images/world-map-transparent.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat lg:h-96">
           <div className="flex w-full flex-col md:max-w-lg lg:max-w-5xl">
-            {/* ID CARD & SIGN IN BUTTON */}
+            {/* ID CARD & LOG IN BUTTON */}
             <div className="flex flex-col items-center lg:flex-row lg:items-start">
               {/* LEFT: ID CARD  */}
               <div className="-my-6 mt-0 flex w-[448px] scale-75 flex-col items-center md:-my-0 md:-mt-14 md:scale-100 md:items-start lg:-ml-[45px]">

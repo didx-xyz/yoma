@@ -3,7 +3,6 @@ import iconClock from "public/images/icon-clock.svg";
 import { IoMdPause, IoMdPerson, IoMdPlay } from "react-icons/io";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import iconZlto from "public/images/icon-zlto.svg";
-import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 interface BadgesProps {
   opportunity: OpportunityInfo | undefined;
@@ -107,15 +106,9 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
       <div className="flex justify-between">
         <div className="flex w-20 justify-start gap-2">
           {opportunity?.hidden ? (
-            <span className="badge bg-yellow-tint text-yellow">
-              <FaEyeSlash className="mr-1 text-sm" />
-              Hidden
-            </span>
+            <span className="badge bg-yellow-tint text-yellow">Hidden</span>
           ) : (
-            <span className="badge bg-green-light text-green">
-              <FaEye className="mr-1 text-sm" />
-              Visible
-            </span>
+            <span className="badge bg-green-light text-green">Visible</span>
           )}
         </div>
       </div>

@@ -56,12 +56,12 @@ const MarketplaceLayout: TabProps = ({ children }) => {
         />
 
         <div className="z-10 container mt-24 py-4">
-          {/* SIGN IN TO SEE YOUR ZLTO BALANCE */}
+          {/* LOG IN TO SEE YOUR ZLTO BALANCE */}
           {!userProfile && (
             <div className="mb-8 flex h-36 flex-col items-center justify-center gap-4 text-white">
               <div className="flex flex-row items-center justify-center">
                 <h5 className="grow text-center tracking-widest">
-                  Sign in to see your Zlto balance
+                  Log in to see your Zlto balance
                 </h5>
               </div>
               <div className="flex flex-row gap-2">
@@ -86,7 +86,7 @@ const MarketplaceLayout: TabProps = ({ children }) => {
               <div className="flex flex-row gap-4">
                 <button
                   type="button"
-                  className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent text-white brightness-110 hover:!border-white hover:!brightness-100"
+                  className="btn !border-blue-dark rounded-full !border-2 !border-solid !bg-transparent text-white shadow-none brightness-110 hover:!border-white hover:!brightness-100"
                   onClick={() => {
                     setWhatIsZltoDialogVisible(true);
                   }}
