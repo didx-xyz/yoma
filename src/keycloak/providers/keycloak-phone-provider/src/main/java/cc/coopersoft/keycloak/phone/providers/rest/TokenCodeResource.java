@@ -60,9 +60,9 @@ public class TokenCodeResource {
 
         // check if the phone number is valid for the requested operation
         if ((TokenCodeType.AUTH.equals(tokenCodeType) || TokenCodeType.RESET.equals(tokenCodeType)) && !phoneNumberExists) {
-            throw new ForbiddenException("We can't find your number, sign up first if you haven't.");
+            throw new ForbiddenException("We can't find your number, register first if you haven't.");
         } else if (TokenCodeType.REGISTRATION.equals(tokenCodeType) && phoneNumberExists) {
-            throw new ForbiddenException("This phone number is already registered. Sign in or use a different number.");
+            throw new ForbiddenException("This phone number is already registered. Login or use a different number.");
         }
 
         logger.info(String.format("Requested %s code to %s", tokenCodeType.label, phoneNumber));

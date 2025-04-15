@@ -31,7 +31,6 @@
             {{ messageEmailError }}
           </div>
 
-
           <div class="links">
             <#-- BUTTON: use phone -->
             <button type="button" class="link" v-on:click="phoneNumberAsUsername = true" tabindex="0">
