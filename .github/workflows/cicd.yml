@@ -108,28 +108,97 @@ jobs:
         with: ${{ matrix.config }}
         env: ${{ matrix.env }}
 
-  build:
-    name: Build and push
+  docker-build:
+    name: Build Docker Images
+    permissions:
+      contents: read
+    runs-on: ${{ matrix.runs-on }}
+
+    concurrency:
+      group: ${{ github.workflow }}-build-${{ matrix.image }}-${{ matrix.arch }}-${{ github.ref }}
+      cancel-in-progress: true
+
+    needs: lint
+
+    strategy:
+      matrix:
+        image: ["yoma-api", "yoma-web"]
+        arch: ["amd64", "arm64"]
+        include:
+          - arch: amd64
+            runs-on: ubuntu-latest
+          - arch: arm64
+            runs-on: ubuntu-24.04-arm
+          - image: yoma-api
+            context: ./src/api
+            helm: ./helm/yoma-api
+            file: ./src/api/Dockerfile
+            buildArgs: ""
+          - image: yoma-web
+            context: ./src/web
+            helm: ./helm/yoma-web
+            file: ./src/web/Dockerfile
+            buildArgs: |-
+              NEXT_PUBLIC_ENVIRONMENT=production
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
+        id: filter
+        with:
+          base: master
+          filters: |-
+            changes:
+              - '${{ matrix.context }}/**'
+              - '${{ matrix.helm }}/**'
+      - name: Should build?
+        id: should-run
+        run: |-
+          if [ "${{ github.event_name }}" = "release" ] || \
+              [ "${{ steps.filter.outputs.changes }}" = "true" ] || \
+              [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+              echo run=true >> $GITHUB_OUTPUT
+          else
+            echo run=false >> $GITHUB_OUTPUT
+          fi
+      - uses: docker/setup-buildx-action@v3
+        if: steps.should-run.outputs.run == 'true'
+        with:
+          cache-binary: false
+          install: true
+          version: latest
+      - uses: docker/build-push-action@v6
+        if: steps.should-run.outputs.run == 'true'
+        with:
+          platforms: linux/${{ matrix.arch }}
+          context: ${{ matrix.context }}
+          file: ${{ matrix.file }}
+          push: false
+          cache-from: |
+            type=gha,scope=build-${{ matrix.image }}-${{ matrix.arch }}
+            type=registry,ref=${{ env.REGISTRY }}/${{ matrix.image }}:latest
+          cache-to: type=gha,scope=build-${{ matrix.image }}-${{ matrix.arch }}
+          build-args: ${{ matrix.buildArgs }}
+
+  docker-push:
+    name: Push Docker Images
     permissions:
       contents: read
       packages: write
     runs-on: ubuntu-latest
 
     concurrency:
-      group: ${{ github.workflow }}-build-${{ matrix.image }}-${{ github.ref }}
+      group: ${{ github.workflow }}-push-${{ matrix.image }}-${{ github.ref }}
       cancel-in-progress: true
 
-    needs:
-      - lint
+    needs: docker-build
 
     outputs:
       image_version: ${{ steps.meta.outputs.version }}
 
     strategy:
       matrix:
-        image:
-          - yoma-api
-          - yoma-web
+        image: ["yoma-api", "yoma-web"]
         include:
           - image: yoma-api
             context: ./src/api
@@ -199,9 +268,9 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: |
-            type=gha,scope=build-${{ matrix.image }}
+            type=gha,scope=build-${{ matrix.image }}-arm64
+            type=gha,scope=build-${{ matrix.image }}-amd64
             type=registry,ref=${{ env.REGISTRY }}/${{ matrix.image }}:latest
-          cache-to: type=gha,mode=max,scope=build-${{ matrix.image }}
           build-args: ${{ matrix.buildArgs }}
 
   test-e2e:
@@ -210,7 +279,7 @@ jobs:
       id-token: write
       contents: read
       packages: read
-    needs: build
+    needs: docker-push
     runs-on: ubuntu-latest
     env:
       PUBLIC_S3_ACCESS_KEY: ${{ secrets.PUBLIC_S3_ACCESS_KEY }}
@@ -283,8 +352,8 @@ jobs:
           docker compose -f ./src/api/docker-compose.yml pull
           docker compose -f ./src/web/docker-compose.yml pull
         env:
-          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
+          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
+          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
         continue-on-error: true
       - name: Start services
         if: steps.should-run.outputs.run == 'true'
@@ -292,8 +361,8 @@ jobs:
           docker compose -f ./src/api/docker-compose.yml up -d
           docker compose -f ./src/web/docker-compose.yml up -d
         env:
-          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.build.outputs.image_version || 'latest' }}
-          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.build.outputs.image_version || 'latest' }}
+          API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
+          YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
 
       - uses: actions/setup-node@v4
         if: steps.should-run.outputs.run == 'true'
@@ -338,14 +407,14 @@ jobs:
       id-token: write
       contents: write
       packages: read
-    needs: [test-e2e, build]
+    needs: [test-e2e, docker-push]
     runs-on: ubuntu-latest
 
     env:
       TAILSCALE_VERSION: latest
       HELMFILE_VERSION: v0.171.0
       HELM_VERSION: v3.17.1
-      TAG: ${{ needs.build.outputs.image_version }}
+      TAG: ${{ needs.docker-push.outputs.image_version }}
 
     concurrency:
       group: ${{ github.workflow }}-deploy-${{ github.event_name == 'release' && 'prod' || (github.event_name == 'push' && github.event.repository.default_branch == github.ref_name) && 'stage' || 'dev' }}
