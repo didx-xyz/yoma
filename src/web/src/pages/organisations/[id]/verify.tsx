@@ -32,8 +32,9 @@ import {
   patchOrganisationStatus,
 } from "~/api/services/organisations";
 import CustomModal from "~/components/Common/CustomModal";
+import FormTextArea from "~/components/Common/FormTextArea";
 import MainLayout from "~/components/Layout/Main";
-import { VerifyOverview } from "~/components/Organisation/Detail/VerifyOverview";
+import { OrgOverview } from "~/components/Organisation/Detail/OrgOverview";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
 import { PageBackground } from "~/components/PageBackground";
 import { ApiErrors } from "~/components/Status/ApiErrors";
@@ -200,7 +201,7 @@ const OrganisationDetails: NextPageWithLayout<{
   if (!approved && !rejected) {
     content = (
       <div>
-        <VerifyOverview organisation={organisation}></VerifyOverview>
+        <OrgOverview organisation={organisation} />
 
         {/* BUTTONS */}
         <div className="my-4 flex justify-center gap-4 md:justify-end">
@@ -293,7 +294,7 @@ const OrganisationDetails: NextPageWithLayout<{
         onRequestClose={() => {
           setModalVerifySingleVisible(false);
         }}
-        className={`h-[230px] w-[380px]`}
+        className={`md:h-[300px] md:w-[500px]`}
       >
         <div className="flex h-full flex-col space-y-2 p-4">
           <div className="flex flex-row space-x-2">
@@ -308,20 +309,20 @@ const OrganisationDetails: NextPageWithLayout<{
           </p>
 
           <fieldset className="fieldset">
-            <label className="label">
-              <span className="label-text text-gray-700">
-                Enter comments below:
-              </span>
-            </label>
-            <textarea
-              className="input w-full"
-              onBlur={(e) => setVerifyComments(e.target.value)}
-              id="txtVerifyComments"
+            <legend className="fieldset-legend">Comments:</legend>
+
+            <FormTextArea
+              inputProps={{
+                id: "txtVerifyComments",
+                placeholder: "Enter comments here...",
+                maxLength: 480,
+                onBlur: (e) => setVerifyComments(e.target.value),
+              }}
             />
           </fieldset>
 
           {/* BUTTONS */}
-          <div className="mt-10 flex h-full flex-row place-items-center justify-center space-x-2">
+          <div className="mt-4 flex grow flex-row justify-center space-x-2">
             <button
               className="btn-default btn btn-sm flex-nowrap"
               onClick={() => setModalVerifySingleVisible(false)}
@@ -355,6 +356,7 @@ const OrganisationDetails: NextPageWithLayout<{
 
       <div className="z-10 container mt-20 max-w-5xl px-2 py-8">
         {isLoading && <Loading />}
+
         {/* BREADCRUMB */}
         <div className="flex flex-row text-xs text-white">
           <Link
@@ -366,21 +368,14 @@ const OrganisationDetails: NextPageWithLayout<{
           </Link>
           <div className="mx-2 font-bold">|</div>
 
-          <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
-            {organisation?.name}
-          </span>
+          <span>Verify</span>
         </div>
 
         {/* LOGO/TITLE */}
-        <div className="-mt-2 flex flex-row">
-          <LogoTitle
-            logoUrl={organisation?.logoURL}
-            title={organisation?.name}
-          />
-        </div>
+        <LogoTitle logoUrl={organisation?.logoURL} title={organisation?.name} />
 
         {/* CONTENT */}
-        <div className="flex flex-col items-center pt-4">
+        <div className="flex flex-col items-center">
           <div className="flex w-full flex-col gap-2 rounded-lg bg-white p-8 shadow-lg lg:w-[600px]">
             {content}
           </div>

@@ -281,7 +281,7 @@ export const OrgContactEdit: React.FC<InputProps> = ({
           error={formState.errors.countryId?.message?.toString()}
         >
           <select
-            className="select border-gray focus:border-gray focus:outline-none"
+            className="select border-gray focus:border-gray w-full focus:outline-none"
             {...register("countryId")}
             style={{ fontSize: "1rem" }}
           >
