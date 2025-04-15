@@ -1,26 +1,27 @@
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Link from "next/link";
+import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
 import "react-datepicker/dist/react-datepicker.css";
+import { IoMdArrowRoundBack } from "react-icons/io";
 import { type Organization } from "~/api/models/organisation";
 import { getOrganisationById } from "~/api/services/organisations";
 import MainLayout from "~/components/Layout/Main";
-import { Overview } from "~/components/Organisation/Detail/Overview";
+import { OrgOverview } from "~/components/Organisation/Detail/OrgOverview";
 import { LogoTitle } from "~/components/Organisation/LogoTitle";
-import { authOptions, type User } from "~/server/auth";
 import { PageBackground } from "~/components/PageBackground";
-import { Unauthorized } from "~/components/Status/Unauthorized";
-import type { NextPageWithLayout } from "~/pages/_app";
-import { config } from "~/lib/react-query-config";
-import { useRouter } from "next/router";
-import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
-import axios from "axios";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import { config } from "~/lib/react-query-config";
+import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import type { NextPageWithLayout } from "~/pages/_app";
+import { authOptions, type User } from "~/server/auth";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -106,17 +107,19 @@ const OrganisationOverview: NextPageWithLayout<{
 
       <div className="z-10 container mt-20 max-w-5xl px-2 py-8">
         {/* BREADCRUMB */}
-        <div className="text-gray flex flex-row text-xs">
+        <div className="flex flex-row text-xs text-white">
           <Link
-            className="hover:text-gray font-bold text-white"
-            href={getSafeUrl(returnUrl?.toString(), "/organisations")}
+            className="hover:text-gray flex items-center justify-center font-bold"
+            href={getSafeUrl(returnUrl?.toString(), `/organisations`)}
           >
+            <IoMdArrowRoundBack className="mr-2 inline-block h-4 w-4" />
             Organisations
           </Link>
-          <div className="mx-2">/</div>
-          <div className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap text-white">
-            {organisation?.name}
-          </div>
+          <div className="mx-2 font-bold">|</div>
+
+          <span className="max-w-[600px] overflow-hidden text-ellipsis whitespace-nowrap">
+            Edit
+          </span>
         </div>
 
         {/* LOGO/TITLE */}
@@ -124,8 +127,8 @@ const OrganisationOverview: NextPageWithLayout<{
 
         {/* CONTENT */}
         <div className="flex flex-col items-center">
-          <div className="flex w-full flex-col gap-2 rounded-lg bg-white p-4 shadow-lg lg:w-[600px]">
-            <Overview organisation={organisation}></Overview>
+          <div className="flex w-full flex-col gap-2 rounded-lg bg-white p-8 shadow-lg lg:w-[600px]">
+            <OrgOverview organisation={organisation} />
           </div>
         </div>
 
