@@ -2,18 +2,20 @@ namespace Yoma.Core.Domain.Notification.Interfaces
 {
   public interface INotificationURLFactory
   {
-    string OrganizationApprovalItemURL(NotificationType emailType, Guid organizationId);
+    string OrganizationApprovalItemURL(NotificationType notificationType, Guid organizationId);
 
-    string OpportunityVerificationItemURL(NotificationType emailType, Guid opportunityId, Guid? organizationId);
+    string OpportunityVerificationItemURL(NotificationType notificationType, Guid opportunityId, Guid? organizationId);
 
-    string? OpportunityVerificationYoIDURL(NotificationType emailType);
+    string? OpportunityVerificationYoIDURL(NotificationType notificationType);
 
-    string? OpportunityVerificationURL(NotificationType emailType, Guid organizationId);
+    string? OpportunityVerificationURL(NotificationType notificationType, Guid organizationId);
 
-    string OpportunityExpirationItemURL(NotificationType emailType, Guid opportunityId, Guid organizationId);
+    string OpportunitiesPublicURL(NotificationType notificationType, List<Guid>? countryIds);
 
-    string OpportunityPublishedItemURL(NotificationType emailType, Guid opportunityId, Guid organizationId);
+    string OpportunityExpirationItemURL(NotificationType notificationType, Guid opportunityId, Guid organizationId);
 
-    string ActionLinkVerifyApprovalItemUrl(NotificationType emailType, Guid? organizationId);
+    string OpportunityPublishedItemURL(NotificationType notificationType, Guid opportunityId, Guid organizationId);
+
+    string ActionLinkVerifyApprovalItemUrl(NotificationType notificationType, Guid? organizationId);
   }
 }

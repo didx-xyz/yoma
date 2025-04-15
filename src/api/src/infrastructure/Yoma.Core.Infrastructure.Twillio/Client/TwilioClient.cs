@@ -239,7 +239,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                   default:
                     throw new InvalidOperationException($"Unsupported message type: {messageType}");
                 }
-              }
+              } 
               catch (Exception ex)
               {
                 lastTwilioFailure = $"{recipientId}: Notification send failed — {ex.Message}";

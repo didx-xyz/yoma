@@ -121,7 +121,7 @@
     <value>Yoma{1} - You’ve completed {2}. Claim it here: {3}</value>
   </data>
   <data name="Opportunity_Published" xml:space="preserve">
-    <value>Yoma{2} - A new opportunity just dropped! Check it out: {3}</value>
+    <value>Yoma{2} - New opportunities just dropped! Check it out: {3}</value>
   </data>
   <data name="Opportunity_Verification_Completed" xml:space="preserve">
     <value>Yoma{2} - Your submission has been approved! View your YoID: {3}</value>

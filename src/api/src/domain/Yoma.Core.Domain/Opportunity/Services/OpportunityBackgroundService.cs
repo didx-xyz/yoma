@@ -260,7 +260,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private async Task SendNotificationPublished(List<Models.Opportunity> items, DateTimeOffset executeUntil)
     {
       var notificationType = NotificationType.Opportunity_Published;
-      var countryWorldWideId = _countryService.GetByCodeAplha2(Core.Country.Worldwide.ToDescription()).Id;
+      var countryWorldwideId = _countryService.GetByCodeAplha2(Core.Country.Worldwide.ToDescription()).Id;
 
       try
       {
@@ -288,23 +288,25 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           // group users by country, defaulting to worldwide if not set
           var usersByCountry = users
-              .GroupBy(u => u.CountryId ?? countryWorldWideId)
+              .GroupBy(u => u.CountryId ?? countryWorldwideId)
               .ToDictionary(group => group.Key, group => group.ToList());
 
           foreach (var userGroup in usersByCountry)
           {
             var countryId = userGroup.Key;
+            var countryIds = new List<Guid> { countryId }.Union(new List<Guid> { countryWorldwideId }).ToList();
 
             // filter opportunities based on the user's country or worldwide, defaulting to worldwide if no countries are set
             var countryOpportunities = items
                 .Where(opportunity => opportunity.Countries == null ||
                                       opportunity.Countries.Any(c => c.Id == countryId) ||
-                                      opportunity.Countries.Any(c => c.Id == countryWorldWideId))
+                                      opportunity.Countries.Any(c => c.Id == countryWorldwideId))
                 .ToList();
             if (countryOpportunities.Count == 0) continue;
 
             var data = new NotificationOpportunityPublished
             {
+              URLOpportunitiesPublic = _notificationURLFactory.OpportunitiesPublicURL(notificationType, countryIds),
               Opportunities = [.. countryOpportunities.Select(item => new NotificationOpportunityPublishedItem
               {
                 Id = item.Id,
