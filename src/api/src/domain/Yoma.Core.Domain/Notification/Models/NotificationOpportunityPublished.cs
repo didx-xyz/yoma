@@ -4,6 +4,9 @@ namespace Yoma.Core.Domain.Notification.Models
 {
   public class NotificationOpportunityPublished : NotificationBase
   {
+    [JsonIgnore]
+    public string? URLOpportunitiesPublic { get; set; }
+
     [JsonProperty("opportunities")]
     public List<NotificationOpportunityPublishedItem> Opportunities { get; set; }
 
@@ -12,11 +15,13 @@ namespace Yoma.Core.Domain.Notification.Models
       if (messageType is not MessageType.SMS and not MessageType.WhatsApp)
         throw new NotSupportedException($"Only '{MessageType.SMS}' or '{MessageType.WhatsApp}' are supported");
 
-      if (Opportunities == null || Opportunities.Count != 1)
-        throw new InvalidOperationException("Exactly one opportunity is required to generate content variables");
+      //if (Opportunities == null || Opportunities.Count != 1)
+      //  throw new InvalidOperationException("Exactly one opportunity is required to generate content variables");
 
-      var opportunity = Opportunities.Single();
-      var url = new Uri(opportunity.URL);
+      if (string.IsNullOrWhiteSpace(URLOpportunitiesPublic))
+        throw new InvalidOperationException($"{nameof(URLOpportunitiesPublic)} is not set");
+
+      var url = new Uri(URLOpportunitiesPublic.Trim());
       var formattedUrl = messageType == MessageType.WhatsApp
         ? url.PathAndQuery.TrimStart('/')
         : url.ToString();
@@ -31,15 +36,17 @@ namespace Yoma.Core.Domain.Notification.Models
 
     public override List<NotificationBase> FlattenItems()
     {
-      if (Opportunities == null || Opportunities.Count == 0)
-        throw new InvalidOperationException($"{nameof(Opportunities)} are not set or empty");
+      return [this]; //send signle message pointing to '/opportunities?countries={country}' filtered by the user country if specified
 
-      return [.. Opportunities.Select(item => new NotificationOpportunityPublished
-      {
-        SubjectSuffix = SubjectSuffix,
-        RecipientDisplayName = RecipientDisplayName,
-        Opportunities = [item]
-      })];
+      //if (Opportunities == null || Opportunities.Count == 0)
+      //  throw new InvalidOperationException($"{nameof(Opportunities)} are not set or empty");
+
+      //return [.. Opportunities.Select(item => new NotificationOpportunityPublished
+      //{
+      //  SubjectSuffix = SubjectSuffix,
+      //  RecipientDisplayName = RecipientDisplayName,
+      //  Opportunities = [item]
+      //})];
     }
   }
 

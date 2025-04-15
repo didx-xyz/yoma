@@ -70,7 +70,7 @@ namespace Yoma.Core.Infrastructure.Twilio {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Yoma{2} - A new opportunity just dropped! Check it out: {3}.
+        ///   Looks up a localized string similar to Yoma{2} - New opportunities just dropped! Check it out: {3}.
         /// </summary>
         internal static string Opportunity_Published {
             get {

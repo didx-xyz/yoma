@@ -131,7 +131,7 @@ namespace Yoma.Core.Domain.Notification.Services
         NotificationType.Opportunity_Expiration_Expired => MessageType.Email, //sent to organization admin
         NotificationType.Opportunity_Expiration_WithinNextDays => MessageType.Email, //sent to organization admin
         NotificationType.Opportunity_Posted_Admin => MessageType.Email, //sent to admin
-        NotificationType.Opportunity_Verification_Pending => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, //sent to youth
+        NotificationType.Opportunity_Verification_Pending => MessageType.Email, //sent to youth; SMS and WhatsApp not supported due to cost constraints
         NotificationType.Opportunity_Verification_Pending_Admin => MessageType.Email, //sent to organization admin
         NotificationType.ActionLink_Verify_Distribution => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, //sent to youth mailing / distribution list
         NotificationType.ActionLink_Verify_Approval_Requested => MessageType.Email, //sent to admin
