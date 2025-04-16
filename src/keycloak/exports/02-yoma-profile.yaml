@@ -15,6 +15,7 @@ userProfile:
           - user
         edit:
           - user
+          - admin
       selector:
         scopes: []
       validations:
@@ -386,15 +387,16 @@ userProfile:
       displayName: "Terms & conditions accepted"
       required:
         roles:
-          - admin
           - user
+          - admin
         scopes: []
       permissions:
         edit:
           - user
-        view:
           - admin
+        view:
           - user
+          - admin
       annotations:
         inputType: number
 scopeMappings:

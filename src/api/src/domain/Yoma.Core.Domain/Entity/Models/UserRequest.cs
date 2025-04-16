@@ -12,6 +12,8 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public string? PhoneNumber { get; set; }
 
+    public Guid? CountryId { get; set; }
+
     public bool? EmailConfirmed { get; set; }
 
     public bool? PhoneNumberConfirmed { get; set; }
