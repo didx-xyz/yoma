@@ -59,7 +59,7 @@ const SelectButtons: React.FC<SelectButtonsProps> = ({
           onClick={() => handleButton(bt.id)}
           className={`btn btn-sm text-gray-dark max-w-[300px] text-xs ${
             bt.selected
-              ? "btn-primary text-white"
+              ? "btn-secondary text-white"
               : "border-gray hover:border-gray-dark bg-white"
           }`}
         >
