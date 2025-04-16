@@ -520,7 +520,7 @@ clients:
     adminUrl: $(env:CLIENT_ATINGI_URL)
     baseUrl: $(env:CLIENT_ATINGI_URL)
     surrogateAuthRequired: false
-    enabled: true
+    enabled: $(env:CLIENT_ATINGI_ENABLED)
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
     secret: $(env:CLIENT_ATINGI_SECRET)
@@ -570,7 +570,7 @@ clients:
     adminUrl: $(env:CLIENT_GOODWALL_URL)
     baseUrl: $(env:CLIENT_GOODWALL_URL)
     surrogateAuthRequired: false
-    enabled: true
+    enabled: $(env:CLIENT_GOODWALL_ENABLED)
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
     secret: $(env:CLIENT_GOODWALL_SECRET)
@@ -620,7 +620,7 @@ clients:
     adminUrl: $(env:CLIENT_IIASA_URL)
     baseUrl: $(env:CLIENT_IIASA_URL)
     surrogateAuthRequired: false
-    enabled: true
+    enabled: $(env:CLIENT_IIASA_ENABLED)
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
     secret: $(env:CLIENT_IIASA_SECRET)
@@ -667,7 +667,7 @@ clients:
     name: maza-app
     description: Maza App client for API based user onboarding (private client)
     surrogateAuthRequired: false
-    enabled: true
+    enabled: $(env:CLIENT_MAZA_APP_ENABLED)
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
     secret: $(env:CLIENT_MAZA_APP_SECRET)
@@ -711,7 +711,7 @@ clients:
     name: unicef-kenya
     description: UNICEF Kenya SMS client for API based user onboarding (private client)
     surrogateAuthRequired: false
-    enabled: true
+    enabled: $(env:CLIENT_UNICEF_KENYA_ENABLED)
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
     secret: $(env:CLIENT_UNICEF_KENYA_SECRET)
