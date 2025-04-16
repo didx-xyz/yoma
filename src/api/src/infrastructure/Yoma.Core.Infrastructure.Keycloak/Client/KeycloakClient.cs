@@ -251,7 +251,8 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
           FirstName = request.FirstName ?? string.Empty,
           LastName = request.LastName ?? string.Empty,
           Email = request.Email ?? string.Empty,
-          EmailVerified = request.VerifyEmail ? false : kcUser.EmailVerified,
+          // set to false if VerifyEmail is requested; else null if no email, otherwise preserve or default to false
+          EmailVerified = request.VerifyEmail ? false : string.IsNullOrEmpty(request.Email) ? null : kcUser.EmailVerified ?? false,
           Enabled = kcUser.Enabled,
           Attributes = kcUser.Attributes ?? [],
           RequiredActions = [] //reset required actions
