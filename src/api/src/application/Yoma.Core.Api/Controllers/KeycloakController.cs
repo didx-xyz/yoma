@@ -135,7 +135,7 @@ namespace Yoma.Core.Api.Controllers
         return;
       }
 
-      var userId = payload.UserId;
+      var userId = Guid.Parse(payload.UserId);
 
       _logger.LogInformation("Trying to find the Keycloak user with id '{userId}'", userId);
       var kcUser = await _identityProviderClient.GetUserById(userId);

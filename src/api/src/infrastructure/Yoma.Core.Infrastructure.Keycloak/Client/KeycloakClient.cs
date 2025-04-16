@@ -16,6 +16,8 @@ using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.IdentityProvider.Models;
 using Yoma.Core.Infrastructure.Keycloak.Extensions;
 using Yoma.Core.Infrastructure.Keycloak.Models;
+using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Interfaces;
 
 namespace Yoma.Core.Infrastructure.Keycloak.Client
 {
@@ -23,16 +25,20 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
   {
     #region Class Variables
     private readonly ILogger<KeycloakClient> _logger;
+    private readonly IEnvironmentProvider _environmentProvider;
     private readonly KeycloakAdminOptions _keycloakAdminOptions;
     private readonly KeycloakAuthenticationOptions _keycloakAuthenticationOptions;
     private readonly AuthenticationHttpClient _httpClient;
     #endregion
 
     #region Constructor
-    public KeycloakClient(ILogger<KeycloakClient> logger, KeycloakAdminOptions keycloakAdminOptions,
-        KeycloakAuthenticationOptions keycloakAuthenticationOptions)
+    public KeycloakClient(ILogger<KeycloakClient> logger,
+      IEnvironmentProvider environmentProvider,
+      KeycloakAdminOptions keycloakAdminOptions,
+      KeycloakAuthenticationOptions keycloakAuthenticationOptions)
     {
       _logger = logger;
+      _environmentProvider = environmentProvider;
       _keycloakAdminOptions = keycloakAdminOptions;
       _keycloakAuthenticationOptions = keycloakAuthenticationOptions;
 
@@ -84,34 +90,33 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
       var timeout = TimeSpan.FromSeconds(15);
       var startTime = DateTimeOffset.UtcNow;
-      UserRepresentation? kcUser = null;
+      UserRepresentation? result = null;
       using (var usersApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient))
       {
         while (true)
         {
-          kcUser = (await usersApi.GetUsersAsync(_keycloakAuthenticationOptions.Realm, username: username, exact: true)).SingleOrDefault();
+          result = (await usersApi.GetUsersAsync(_keycloakAuthenticationOptions.Realm, username: username, exact: true)).SingleOrDefault();
 
-          if (kcUser != null) break;
+          if (result != null) break;
           if (DateTimeOffset.UtcNow - startTime >= timeout) break;
 
           await Task.Delay(1000);
         }
       }
 
-      if (kcUser == null) return null;
+      if (result == null) return null;
 
-      return kcUser.ToUser();
+      return result.ToUser();
     }
 
-    public async Task<User?> GetUserById(string? id)
+    public async Task<User?> GetUserById(Guid id)
     {
-      id = id?.Trim();
-      if (string.IsNullOrEmpty(id))
+      if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
 
       var timeout = TimeSpan.FromSeconds(15);
       var startTime = DateTimeOffset.UtcNow;
-      UserRepresentation? kcUser = null;
+      UserRepresentation? result = null;
 
       using (var usersApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient))
       {
@@ -119,81 +124,189 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         {
           try
           {
-            kcUser = await usersApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id);
+            result = await usersApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
           }
           catch { }
 
-          if (kcUser != null) break;
+          if (result != null) break;
           if (DateTimeOffset.UtcNow - startTime >= timeout) break;
 
           await Task.Delay(1000);
         }
       }
 
-      if (kcUser == null) return null;
+      if (result == null) return null;
 
-      return kcUser.ToUser();
+      return result.ToUser();
     }
 
-
-    public async Task UpdateUser(User user, bool resetPassword, bool sendVerifyEmail, bool updatePhoneNumber)
+    /// <summary>
+    /// Creates a user in Keycloak using the provided details.
+    /// 
+    /// Notes:
+    /// - `PostUsersAsync` does not persist credentials (`Credentials` field is ignored),
+    ///   so password must be set in a separate call after user creation.
+    /// - Phone number remains unconfirmed if specified; it will be confirmed automatically on first login via OTP.
+    /// - A strong temporary password is assigned and the `UPDATE_PASSWORD` action is explicitly added to enforce
+    ///   a password reset on first login, regardless of login method.
+    /// - Setting `Temporary = true` alone is not always sufficient for enforcing password change across all login flows;
+    ///   `UPDATE_PASSWORD` is required for consistent behavior.
+    /// </summary>
+    public async Task<User> CreateUser(UserRequestCreate request)
     {
-      using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      var request = new UserRepresentation
+      var requestKeycloak = new UserRepresentation
       {
-        Id = user.Id.ToString(),
-        Username = user.Username,
-        Email = user.Email ?? string.Empty,
-        FirstName = user.FirstName ?? string.Empty,
-        LastName = user.LastName ?? string.Empty,
-        EmailVerified = user.EmailVerified,
+        Username = request.Username,
+        Email = request.Email ?? string.Empty,
+        FirstName = request.FirstName ?? string.Empty,
+        LastName = request.LastName ?? string.Empty,
+        Enabled = true,
+        Attributes = [],
+        RequiredActions = ["UPDATE_PASSWORD"]
+      };
+
+      if (!string.IsNullOrEmpty(request.PhoneNumber))
+        requestKeycloak.Attributes.Add(CustomAttributes.PhoneNumber.ToDescription(), [request.PhoneNumber]);
+
+      if (!string.IsNullOrEmpty(request.Gender))
+        requestKeycloak.Attributes.Add(CustomAttributes.Gender.ToDescription(), [request.Gender]);
+
+      if (!string.IsNullOrEmpty(request.Country))
+        requestKeycloak.Attributes.Add(CustomAttributes.Country.ToDescription(), [request.Country]);
+
+      if (!string.IsNullOrEmpty(request.Education))
+        requestKeycloak.Attributes.Add(CustomAttributes.Education.ToDescription(), [request.Education]);
+
+      if (!string.IsNullOrEmpty(request.DateOfBirth))
+        requestKeycloak.Attributes.Add(CustomAttributes.DateOfBirth.ToDescription(), [request.DateOfBirth]);
+
+      requestKeycloak.Attributes.Add(CustomAttributes.TermsAndConditions.ToDescription(), [true.ToString().ToLower()]);
+
+      User? result = null;
+      try
+      {
+        using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
+
+        // create the user in Keycloak (credentials will be ignored here)
+        await userApi.PostUsersAsync(_keycloakAuthenticationOptions.Realm, requestKeycloak);
+
+        // fetch the created user to retrieve their Keycloak Id
+        result = await GetUserByUsername(request.Username);
+        if (result == null)
+          throw new InvalidOperationException($"User '{request.Username}' was not found after creation.");
+
+        // set the password via the official API call
+        var credential = new CredentialRepresentation
+        {
+          Type = "password",
+          Value = PasswordHelper.GenerateStrongPassword(),
+          Temporary = true
+        };
+
+        await userApi.PutUsersResetPasswordByUserIdAsync(_keycloakAuthenticationOptions.Realm, result.Id.ToString(), credential);
+
+        // if email is provided, trigger email verification — email is unconfirmed by default
+        if (_environmentProvider.Environment != Domain.Core.Environment.Local && !string.IsNullOrEmpty(request.Email))
+          await userApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, result.Id.ToString()); // same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
+      }
+      catch (Exception ex)
+      {
+        if (result != null)
+          try
+          {
+            await DeleteUser(result.Id);
+          }
+          catch (Exception deleteEx)
+          {
+            _logger.LogWarning(deleteEx, "Failed to roll back creation of Keycloak user '{username}'", request.Username);
+          }
+
+        throw new TechnicalException($"Error creating user '{request.Username}' in Keycloak", ex);
+      }
+
+      return result;
+    }
+
+    /// <summary>
+    /// Important: Keycloak's PUT /users/{id} endpoint performs a full update.
+    /// Omitting fields like EmailVerified or PhoneNumberVerified will result in them being cleared.
+    /// Therefore, always include these fields in the update request, even if their values haven't changed.
+    /// Reference: https://github.com/keycloak/keycloak/issues/28220
+    /// </summary>
+    public async Task UpdateUser(UserRequestUpdate request)
+    {
+      ArgumentNullException.ThrowIfNull(request, nameof(request));
+
+      if (request.VerifyEmail) request.EmailVerified = false;
+
+      var requestKeycloak = new UserRepresentation
+      {
+        Id = request.Id.ToString(),
+        Username = request.Username,
+        Email = request.Email ?? string.Empty,
+        FirstName = request.FirstName ?? string.Empty,
+        LastName = request.LastName ?? string.Empty,
+        EmailVerified = request.EmailVerified,
         Attributes = [],
         RequiredActions = []
       };
 
+      // if updating the phone number, add the "UPDATE_PHONE_NUMBER" action
+      if (request.UpdatePhoneNumber) requestKeycloak.RequiredActions.Add("UPDATE_PHONE_NUMBER");
 
-      if (!string.IsNullOrEmpty(user.PhoneNumber))
-        request.Attributes.Add(CustomAttributes.PhoneNumber.ToDescription(), [user.PhoneNumber.Trim()]);
+      // add "UPDATE_PASSWORD" to prompt the user to change their password on next login; 
+      // applies regardless of whether the user has an email; avoids triggering a reset password email
+      if (request.ResetPassword) requestKeycloak.RequiredActions.Add("UPDATE_PASSWORD");
 
-      if (!string.IsNullOrEmpty(user.Gender))
-        request.Attributes.Add(CustomAttributes.Gender.ToDescription(), [user.Gender]);
+      if (!string.IsNullOrEmpty(request.PhoneNumber))
+        requestKeycloak.Attributes.Add(CustomAttributes.PhoneNumber.ToDescription(), [request.PhoneNumber]);
 
-      if (!string.IsNullOrEmpty(user.Country))
-        request.Attributes.Add(CustomAttributes.Country.ToDescription(), [user.Country]);
+      if (!string.IsNullOrEmpty(request.Gender))
+        requestKeycloak.Attributes.Add(CustomAttributes.Gender.ToDescription(), [request.Gender]);
 
-      if (!string.IsNullOrEmpty(user.Education))
-        request.Attributes.Add(CustomAttributes.Education.ToDescription(), [user.Education]);
+      if (!string.IsNullOrEmpty(request.Country))
+        requestKeycloak.Attributes.Add(CustomAttributes.Country.ToDescription(), [request.Country]);
 
-      if (!string.IsNullOrEmpty(user.DateOfBirth))
-        request.Attributes.Add(CustomAttributes.DateOfBirth.ToDescription(), [user.DateOfBirth]);
+      if (!string.IsNullOrEmpty(request.Education))
+        requestKeycloak.Attributes.Add(CustomAttributes.Education.ToDescription(), [request.Education]);
 
-      if (user.PhoneNumberVerified.HasValue)
-        request.Attributes.Add(CustomAttributes.PhoneNumberVerified.ToDescription(), [user.PhoneNumberVerified.Value.ToString().ToLower()]);
+      if (!string.IsNullOrEmpty(request.DateOfBirth))
+        requestKeycloak.Attributes.Add(CustomAttributes.DateOfBirth.ToDescription(), [request.DateOfBirth]);
+
+      if (request.PhoneNumberVerified.HasValue)
+        requestKeycloak.Attributes.Add(CustomAttributes.PhoneNumberVerified.ToDescription(), [request.PhoneNumberVerified.Value.ToString().ToLower()]);
 
       try
       {
-        // if updating the phone number, add the "UPDATE_PHONE_NUMBER" action
-        if (updatePhoneNumber) request.RequiredActions.Add("UPDATE_PHONE_NUMBER");
-
-        // if resetting the password and the user has no email, add "UPDATE_PASSWORD" as a non - email action
-        if (resetPassword && string.IsNullOrEmpty(request.Email)) request.RequiredActions.Add("UPDATE_PASSWORD");
+        using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
 
         // update user details in keycloak
-        await userApi.PutUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), request);
+        await userApi.PutUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString(), requestKeycloak);
 
         // send verify email if required
-        if (sendVerifyEmail)
-          await userApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString()); // same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
+        if (_environmentProvider.Environment != Domain.Core.Environment.Local && request.VerifyEmail)
+          await userApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString()); // same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
 
         // if resetting the password and the user has an email, trigger the password reset email action
-        if (resetPassword && !string.IsNullOrEmpty(request.Email))
-          await userApi.PutUsersExecuteActionsEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, user.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); // admin initiated update password email action (executeActions)
+        // if (request.ResetPassword && request.HasEmail)
+        //  await userApi.PutUsersExecuteActionsEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); // admin initiated update password email action (executeActions)
       }
       catch (Exception ex)
       {
-        throw new TechnicalException($"Error updating user {user.Id} in Keycloak", ex);
+        throw new TechnicalException($"Error updating user '{request.Id}' in Keycloak", ex);
       }
+    }
+
+    public async Task DeleteUser(Guid id)
+    {
+      if (id == Guid.Empty)
+        throw new ArgumentNullException(nameof(id));
+
+      using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
+
+      await userApi.DeleteUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
     }
 
     public async Task EnsureVerifyEmailActionRemovedIfNoEmail(Guid id)

@@ -9,9 +9,13 @@ namespace Yoma.Core.Domain.Entity.Validators
     public SettingsRequestValidator()
     {
       RuleFor(x => x.Settings)
-         .NotNull().WithMessage("One or more settings required")
-         .NotEmpty().WithMessage("One or more settings required")
-         .Must(settings => settings.Values.All(value => value != null)).WithMessage("Setting values can be null");
+        .NotEmpty().WithMessage("One or more 'Settings' are required.")
+        .DependentRules(() =>
+        {
+          RuleFor(x => x.Settings)
+          .Must(s => s.Values.All(v => v != null))
+          .WithMessage("'Setting' values must be non-null.");
+        });
     }
     #endregion
   }

@@ -113,11 +113,11 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Update the user's profile (Authenticated User)",
-      Description = "Updated within Yoma and the identity provider, optionally requesting a email verification and/or password reset")]
+      Description = "Update the user in both Yoma and the identity provider, optionally requesting a email verification and/or password reset")]
     [HttpPatch()]
     [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public async Task<IActionResult> UpdateProfile([FromBody] UserRequestProfile request)
+    public async Task<IActionResult> UpdateProfile([FromBody] UserRequestUpdateProfile request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateProfile));
 

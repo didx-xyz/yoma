@@ -15,7 +15,9 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<UserProfile> UpdateSettings(SettingsRequest settings);
 
-    Task<UserProfile> Update(UserRequestProfile request);
+    Task<UserProfile> Create(UserRequestCreateProfile request);
+
+    Task<UserProfile> Update(UserRequestUpdateProfile request);
 
     Task<UserProfile> YoIDOnboard();
   }
