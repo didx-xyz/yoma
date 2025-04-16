@@ -215,7 +215,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                       {
                         message = await MessageResource.FetchAsync(new FetchMessageOptions(response.Sid), _twilioClient);
 
-                        if (message.Status == MessageResource.StatusEnum.Delivered)
+                        if (message.Status == MessageResource.StatusEnum.Delivered || message.Status == MessageResource.StatusEnum.Read)
                         {
                           delivered = true;
                           break;
