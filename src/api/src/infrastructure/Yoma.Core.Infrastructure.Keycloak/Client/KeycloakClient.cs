@@ -207,6 +207,9 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
         await userApi.PutUsersResetPasswordByUserIdAsync(_keycloakAuthenticationOptions.Realm, result.Id.ToString(), credential);
 
+        //add newly registered user to the default "User" role
+        await EnsureRoles(result.Id, [Constants.Role_User]);
+
         // if email is provided, trigger email verification — email is unconfirmed by default
         if (_environmentProvider.Environment != Domain.Core.Environment.Local && !string.IsNullOrEmpty(request.Email))
           await userApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, result.Id.ToString()); // same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
