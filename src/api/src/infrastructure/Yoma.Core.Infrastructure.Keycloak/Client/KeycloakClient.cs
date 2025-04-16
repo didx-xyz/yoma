@@ -182,7 +182,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (!string.IsNullOrEmpty(request.DateOfBirth))
         requestKeycloak.Attributes.Add(CustomAttributes.DateOfBirth.ToDescription(), [request.DateOfBirth]);
 
-      requestKeycloak.Attributes.Add(CustomAttributes.TermsAndConditions.ToDescription(), [true.ToString().ToLower()]);
+      requestKeycloak.Attributes.Add(CustomAttributes.TermsAndConditions.ToDescription(), ["Yes"]);
 
       User? result = null;
       try
