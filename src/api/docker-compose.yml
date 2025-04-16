@@ -168,6 +168,8 @@ services:
       CLIENT_IIASA_SECRET: superSecretIIASAClientSecret
       CLIENT_IIASA_URL: https://localhost:44345
       CLIENT_IIASA_URL_REDIRECT: https://localhost:44345/signin-yoma-oidc
+      CLIENT_MAZA_APP_SECRET: superSecretMazaAppClientSecret
+      CLIENT_UNICEF_KENYA_SECRET: superSecretUnicefKenyaClientSecret
       SA_YOMA_API_PASSWORD: &KCAdminPassword superSecretYomaApiServiceAccountPassword
       SMTP_PASSWORD: superSecretSmtpPassword
     volumes:
