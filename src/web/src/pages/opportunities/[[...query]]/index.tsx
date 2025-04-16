@@ -11,6 +11,7 @@ import {
   useState,
   type ReactElement,
 } from "react";
+import Select from "react-select";
 import type {
   EngagementType,
   SelectOption,
@@ -311,6 +312,8 @@ const Opportunities: NextPageWithLayout<{
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
   const queryClient = useQueryClient();
   const currentLanguage = useAtomValue(currentLanguageAtom);
+  const [selectedCountry, setSelectedCountry] = useState<string | null>();
+  const [selectedLanguage, setSelectedLanguage] = useState<string | null>();
 
   const { data: lookups_countries } = useQuery({
     queryKey: ["opportunities", "countries", session?.user?.id],
@@ -340,6 +343,24 @@ const Opportunities: NextPageWithLayout<{
     { value: "1", label: "Ongoing" },
     ...(session ? [{ value: "2", label: "Expired / Upload Only" }] : []), // logged in users can see expired
   ];
+
+  //#region memos for lookups
+  const countryOptions = useMemo(() => {
+    if (!lookups_countries) return [];
+    return lookups_countries.map((c) => ({
+      value: c.name,
+      label: c.name,
+    }));
+  }, [lookups_countries]);
+
+  const languageOptions = useMemo(() => {
+    if (!lookups_languages) return [];
+    return lookups_languages.map((c) => ({
+      value: c.name,
+      label: c.name,
+    }));
+  }, [lookups_languages]);
+  //#endregion memos for lookups
 
   //#region filters
   // get filter parameters from route
@@ -800,6 +821,27 @@ const Opportunities: NextPageWithLayout<{
     },
     [searchFilter, onSubmitFilter],
   );
+
+  const onSubmitFilter_Localization = useCallback(() => {
+    if (!selectedCountry && !selectedLanguage) return;
+
+    // let filter: OpportunitySearchFilter = {
+    //   countries: [selectedCountry],
+    //   languages: [selectedLanguage],
+    // };
+
+    let filter: any = {};
+
+    if (selectedCountry) {
+      filter.countries = [selectedCountry];
+    }
+
+    if (selectedLanguage) {
+      filter.languages = [selectedLanguage];
+    }
+
+    redirectWithSearchFilterParams(filter);
+  }, [selectedCountry, selectedLanguage, redirectWithSearchFilterParams]);
   //#endregion events
 
   //#region carousels
@@ -1139,6 +1181,7 @@ const Opportunities: NextPageWithLayout<{
             Find <span className="text-orange mx-2">opportunities</span> to
             <span className="text-orange mx-2">unlock</span> your future.
           </h3>
+
           <AnimatedText sentences={oppTypeDescriptions} />
 
           <div className="w-full px-2 md:w-[600px] md:items-center md:justify-center">
@@ -1197,6 +1240,70 @@ const Opportunities: NextPageWithLayout<{
           {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
           {!isSearchPerformed && (
             <>
+              {/* COUNTRY LOCALIZATION */}
+              <div className="hero bg-green mb-8 rounded-lg bg-[url('/images/world-map-transparent.png')] bg-[size:800px] bg-center bg-no-repeat py-8 text-white">
+                <div className="hero-content text-center">
+                  <div className="flex flex-col items-center justify-center gap-4">
+                    <h1 className="text-xl font-bold md:text-2xl">
+                      🚀 Explore Opportunities Near You! 🗺️
+                    </h1>
+                    <p>
+                      Find opportunities based on your location and language
+                      preferences.
+                    </p>
+                    <div className="flex flex-row gap-4">
+                      <Select
+                        instanceId={"country"}
+                        classNames={{
+                          control: () => "input input-xs w-[200px]",
+                        }}
+                        options={countryOptions}
+                        onChange={(val) => setSelectedCountry(val?.value ?? "")}
+                        // value={countryOptions?.find(
+                        //   (c) => c.value === selectedCountry,
+                        // )}
+                        placeholder="Country"
+                        isClearable={true}
+                        inputId="input_country" // e2e
+                        // fix menu z-index issue
+                        menuPortalTarget={myRef.current!}
+                        styles={{
+                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        }}
+                      />
+
+                      <Select
+                        instanceId={"language"}
+                        classNames={{
+                          control: () => "input input-xs w-[200px]",
+                        }}
+                        options={languageOptions}
+                        onChange={(val) =>
+                          setSelectedLanguage(val?.value ?? "")
+                        }
+                        // value={countryOptions?.find(
+                        //   (c) => c.value === selectedCountry,
+                        // )}
+                        placeholder="Language"
+                        isClearable={true}
+                        inputId="input_language" // e2e
+                        // fix menu z-index issue
+                        menuPortalTarget={myRef.current!}
+                        styles={{
+                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                        }}
+                      />
+                    </div>
+                    <button
+                      className="btn btn-warning mt-2 w-36 shadow-none"
+                      onClick={onSubmitFilter_Localization}
+                    >
+                      Let&apos;s Go!
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* RECENTLY ADDED */}
               {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
                 <CustomCarousel
@@ -1358,6 +1465,7 @@ const Opportunities: NextPageWithLayout<{
                 {!searchResults ||
                   (searchResults.items.length === 0 && (
                     <NoRowsMessage
+                      className="!h-60"
                       title={"No opportunities found"}
                       description={
                         "Please try refining your search query or filters above."

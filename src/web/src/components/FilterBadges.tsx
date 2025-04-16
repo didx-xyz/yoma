@@ -43,7 +43,7 @@ const FilterBadges: React.FC<{
               <button
                 type="button"
                 key={`searchFilter_filter_badge_${key}_${item}`}
-                className="bg-green-light text-green flex h-6 max-w-[200px] items-center rounded-md border-none p-2 select-none"
+                className="bg-green-light text-green flex h-6 max-w-[200px] cursor-pointer items-center rounded-md border-none p-2 select-none"
                 onClick={() => removeFilter(key, item)}
               >
                 <p className="mr-2 truncate text-center text-xs font-semibold">
@@ -67,7 +67,7 @@ const FilterBadges: React.FC<{
         {filteredKeys.length > 0 && (
           <button
             type="button"
-            className="bg-gray text-gray-dark flex h-6 max-w-[200px] items-center justify-between rounded-md border-none p-2 select-none"
+            className="bg-gray text-gray-dark flex h-6 max-w-[200px] cursor-pointer items-center justify-between rounded-md border-none p-2 select-none"
             onClick={() => onSubmit({})}
           >
             <p className="mr-2 truncate text-center text-xs font-semibold">

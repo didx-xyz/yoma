@@ -319,7 +319,7 @@ export const OpportunityFilterVertical: React.FC<{
                   <div className="flex w-full flex-col justify-center text-center md:w-64">
                     <input
                       type="range"
-                      className="range range-warning bg-white"
+                      className="range range-success bg-whitex"
                       min="0"
                       max={timeIntervalMax}
                       value={value}
@@ -376,7 +376,7 @@ export const OpportunityFilterVertical: React.FC<{
               render={({ field: { onChange, value } }) => (
                 <input
                   type="checkbox"
-                  className="toggle toggle-warning border-gray-dark bg-gray-dark"
+                  className="toggle toggle-success"
                   checked={value}
                   onChange={(val) => onChange(val)}
                 />
