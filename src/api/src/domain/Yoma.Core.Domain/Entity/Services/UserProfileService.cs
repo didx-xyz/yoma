@@ -220,7 +220,6 @@ namespace Yoma.Core.Domain.Entity.Services
       }
 
       result.Email = request.Email?.ToLower();
-      if (emailUpdated) result.EmailConfirmed = false;
       result.FirstName = request.FirstName.TitleCase();
       result.Surname = request.Surname.TitleCase();
       result.DisplayName = request.DisplayName;
@@ -255,8 +254,6 @@ namespace Yoma.Core.Domain.Entity.Services
           Country = result.CountryId.HasValue ? _countryService.GetById(result.CountryId.Value).Name : null,
           Education = result.EducationId.HasValue ? _educationService.GetById(result.EducationId.Value).Name : null,
           DateOfBirth = result.DateOfBirth.HasValue ? result.DateOfBirth.Value.ToString("yyyy/MM/dd") : null,
-          EmailVerified = result.EmailConfirmed,
-          PhoneNumberVerified = result.PhoneNumberConfirmed,
           ResetPassword = request.ResetPassword,
           VerifyEmail = emailUpdated,
           UpdatePhoneNumber = request.UpdatePhoneNumber

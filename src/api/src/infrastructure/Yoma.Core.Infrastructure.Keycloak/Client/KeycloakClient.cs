@@ -159,40 +159,31 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       var requestKeycloak = new UserRepresentation
       {
         Username = request.Username,
-        Email = request.Email ?? string.Empty,
         FirstName = request.FirstName ?? string.Empty,
         LastName = request.LastName ?? string.Empty,
+        Email = request.Email ?? string.Empty,
+        EmailVerified = string.IsNullOrEmpty(request.Email) ? null : false, // if specified, set verified to false
         Enabled = true,
         Attributes = [],
         RequiredActions = ["UPDATE_PASSWORD"]
       };
 
-      if (!string.IsNullOrEmpty(request.PhoneNumber))
-        requestKeycloak.Attributes.Add(CustomAttributes.PhoneNumber.ToDescription(), [request.PhoneNumber]);
-
-      if (!string.IsNullOrEmpty(request.Gender))
-        requestKeycloak.Attributes.Add(CustomAttributes.Gender.ToDescription(), [request.Gender]);
-
-      if (!string.IsNullOrEmpty(request.Country))
-        requestKeycloak.Attributes.Add(CustomAttributes.Country.ToDescription(), [request.Country]);
-
-      if (!string.IsNullOrEmpty(request.Education))
-        requestKeycloak.Attributes.Add(CustomAttributes.Education.ToDescription(), [request.Education]);
-
-      if (!string.IsNullOrEmpty(request.DateOfBirth))
-        requestKeycloak.Attributes.Add(CustomAttributes.DateOfBirth.ToDescription(), [request.DateOfBirth]);
-
-      requestKeycloak.Attributes.Add(CustomAttributes.TermsAndConditions.ToDescription(), ["Yes"]);
+      requestKeycloak.Attributes.SetAttribute(CustomAttributes.PhoneNumber, request.PhoneNumber);
+      requestKeycloak.Attributes.SetAttribute(CustomAttributes.PhoneNumberVerified, string.IsNullOrEmpty(request.PhoneNumber) ? null : false.ToString().ToLower()); // if specified, set verified to false
+      requestKeycloak.Attributes.SetAttribute(CustomAttributes.Gender, request.Gender);
+      requestKeycloak.Attributes.SetAttribute(CustomAttributes.Country, request.Country);
+      requestKeycloak.Attributes.SetAttribute(CustomAttributes.Education, request.Education);
+      requestKeycloak.Attributes.SetAttribute(CustomAttributes.DateOfBirth, request.DateOfBirth);
+      requestKeycloak.Attributes.SetAttribute(CustomAttributes.TermsAndConditions, "Yes"); // accepted on behalf of the user
 
       User? result = null;
       try
       {
-        using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
+        using var usersApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
 
         // create the user in Keycloak (credentials will be ignored here)
-        await userApi.PostUsersAsync(_keycloakAuthenticationOptions.Realm, requestKeycloak);
+        await usersApi.PostUsersAsync(_keycloakAuthenticationOptions.Realm, requestKeycloak);
 
-        // fetch the created user to retrieve their Keycloak Id
         result = await GetUserByUsername(request.Username);
         if (result == null)
           throw new InvalidOperationException($"User '{request.Username}' was not found after creation.");
@@ -205,14 +196,14 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
           Temporary = true
         };
 
-        await userApi.PutUsersResetPasswordByUserIdAsync(_keycloakAuthenticationOptions.Realm, result.Id.ToString(), credential);
+        await usersApi.PutUsersResetPasswordByUserIdAsync(_keycloakAuthenticationOptions.Realm, result.Id.ToString(), credential);
 
         //add newly registered user to the default "User" role
         await EnsureRoles(result.Id, [Constants.Role_User]);
 
         // if email is provided, trigger email verification — email is unconfirmed by default
         if (_environmentProvider.Environment != Domain.Core.Environment.Local && !string.IsNullOrEmpty(request.Email))
-          await userApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, result.Id.ToString()); // same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
+          await usersApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, result.Id.ToString()); // same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
       }
       catch (Exception ex)
       {
@@ -234,67 +225,66 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
     /// <summary>
     /// Important: Keycloak's PUT /users/{id} endpoint performs a full update.
-    /// Omitting fields like EmailVerified or PhoneNumberVerified will result in them being cleared.
-    /// Therefore, always include these fields in the update request, even if their values haven't changed.
+    /// Omitting any standard field (e.g., EmailVerified, FirstName) or attribute (e.g., custom fields in `Attributes`)
+    /// will result in that field or attribute being cleared on the user.
+    /// Therefore, you must first fetch the existing user, preserve all fields and attributes not being updated,
+    /// and include them in the final update request.
     /// Reference: https://github.com/keycloak/keycloak/issues/28220
     /// </summary>
     public async Task UpdateUser(UserRequestUpdate request)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      if (request.VerifyEmail) request.EmailVerified = false;
+      if (request.VerifyEmail && string.IsNullOrEmpty(request.Email))
+        throw new ArgumentNullException(nameof(request), "Email is required when VerifyEmail is true");
 
-      var requestKeycloak = new UserRepresentation
-      {
-        Id = request.Id.ToString(),
-        Username = request.Username,
-        Email = request.Email ?? string.Empty,
-        FirstName = request.FirstName ?? string.Empty,
-        LastName = request.LastName ?? string.Empty,
-        EmailVerified = request.EmailVerified,
-        Attributes = [],
-        RequiredActions = []
-      };
-
-      // if updating the phone number, add the "UPDATE_PHONE_NUMBER" action
-      if (request.UpdatePhoneNumber) requestKeycloak.RequiredActions.Add("UPDATE_PHONE_NUMBER");
-
-      // add "UPDATE_PASSWORD" to prompt the user to change their password on next login; 
-      // applies regardless of whether the user has an email; avoids triggering a reset password email
-      if (request.ResetPassword) requestKeycloak.RequiredActions.Add("UPDATE_PASSWORD");
-
-      if (!string.IsNullOrEmpty(request.PhoneNumber))
-        requestKeycloak.Attributes.Add(CustomAttributes.PhoneNumber.ToDescription(), [request.PhoneNumber]);
-
-      if (!string.IsNullOrEmpty(request.Gender))
-        requestKeycloak.Attributes.Add(CustomAttributes.Gender.ToDescription(), [request.Gender]);
-
-      if (!string.IsNullOrEmpty(request.Country))
-        requestKeycloak.Attributes.Add(CustomAttributes.Country.ToDescription(), [request.Country]);
-
-      if (!string.IsNullOrEmpty(request.Education))
-        requestKeycloak.Attributes.Add(CustomAttributes.Education.ToDescription(), [request.Education]);
-
-      if (!string.IsNullOrEmpty(request.DateOfBirth))
-        requestKeycloak.Attributes.Add(CustomAttributes.DateOfBirth.ToDescription(), [request.DateOfBirth]);
-
-      if (request.PhoneNumberVerified.HasValue)
-        requestKeycloak.Attributes.Add(CustomAttributes.PhoneNumberVerified.ToDescription(), [request.PhoneNumberVerified.Value.ToString().ToLower()]);
-
+      using var usersApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
       try
       {
-        using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
+        var kcUser = await usersApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString())
+          ?? throw new InvalidOperationException($"User '{request.Id}' was not found in Keycloak.");
+
+        var requestKeycloak = new UserRepresentation
+        {
+          Id = request.Id.ToString(),
+          Username = request.Username,
+          FirstName = request.FirstName ?? string.Empty,
+          LastName = request.LastName ?? string.Empty,
+          Email = request.Email ?? string.Empty,
+          EmailVerified = request.VerifyEmail ? false : kcUser.EmailVerified,
+          Enabled = kcUser.Enabled,
+          Attributes = kcUser.Attributes ?? [],
+          RequiredActions = [] //reset required actions
+        };
+
+        requestKeycloak.Attributes.SetAttribute(CustomAttributes.PhoneNumber, request.PhoneNumber);
+
+        // if phone number is empty, clear the verified flag (null); else use existing attribute value if present, defaulting to false if not explicitly set
+        var phoneNumberVerified = string.IsNullOrEmpty(request.PhoneNumber) ? (bool?)null
+          : requestKeycloak.Attributes.TryGetValue(CustomAttributes.PhoneNumberVerified.ToDescription(), out var values)
+              && bool.TryParse(values?.FirstOrDefault(), out var parsed)
+              && parsed;
+        requestKeycloak.Attributes.SetAttribute(CustomAttributes.PhoneNumberVerified, phoneNumberVerified?.ToString().ToLower());
+
+        requestKeycloak.Attributes.SetAttribute(CustomAttributes.Gender, request.Gender);
+        requestKeycloak.Attributes.SetAttribute(CustomAttributes.Country, request.Country);
+        requestKeycloak.Attributes.SetAttribute(CustomAttributes.Education, request.Education);
+        requestKeycloak.Attributes.SetAttribute(CustomAttributes.DateOfBirth, request.DateOfBirth);
+        //customAttributes.TermsAndConditions preserved
+
+        // if updating the phone number, add the "UPDATE_PHONE_NUMBER" action
+        if (request.UpdatePhoneNumber) requestKeycloak.RequiredActions.Add("UPDATE_PHONE_NUMBER");
+
+        // add "UPDATE_PASSWORD" to prompt the user to change their password on next login; 
+        // applies regardless of whether the user has an email; avoids triggering a reset password email
+        if (request.ResetPassword) requestKeycloak.RequiredActions.Add("UPDATE_PASSWORD");
 
         // update user details in keycloak
-        await userApi.PutUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString(), requestKeycloak);
+        await usersApi.PutUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString(), requestKeycloak);
 
-        // send verify email if required
+        // send verify email if required; same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
         if (_environmentProvider.Environment != Domain.Core.Environment.Local && request.VerifyEmail)
-          await userApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString()); // same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
-
-        // if resetting the password and the user has an email, trigger the password reset email action
-        // if (request.ResetPassword && request.HasEmail)
-        //  await userApi.PutUsersExecuteActionsEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString(), requestBody: ["UPDATE_PASSWORD"]); // admin initiated update password email action (executeActions)
+          await usersApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString());
       }
       catch (Exception ex)
       {

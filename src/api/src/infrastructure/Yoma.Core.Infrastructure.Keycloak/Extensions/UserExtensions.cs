@@ -29,5 +29,21 @@ namespace Yoma.Core.Infrastructure.Keycloak.Extensions
 
       return result;
     }
+
+    public static void SetAttribute(this Dictionary<string, List<string>> attributes, CustomAttributes attribute, string? value)
+    {
+      value = value?.Trim();
+
+      var key = attribute.ToDescription();
+
+      if (string.IsNullOrEmpty(value))
+      {
+        attributes.Remove(key);
+        return;
+      }
+
+      // add the attribute if not present, or update the existing value
+      attributes[key] = [value];
+    }
   }
 }
