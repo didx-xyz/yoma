@@ -1304,25 +1304,6 @@ const Opportunities: NextPageWithLayout<{
                 </div>
               </div>
 
-              {/* RECENTLY ADDED */}
-              {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
-                <CustomCarousel
-                  id={`opportunities_recentPublishedOpportunities`}
-                  title="Recently added 🆕"
-                  description="Fresh opportunities, updated daily."
-                  viewAllUrl="/opportunities?page=1"
-                  data={opportunities_allOpportunities.items}
-                  loadData={loadDataOpportunities}
-                  totalAll={opportunities_allOpportunities.totalCount!}
-                  renderSlide={(item, index) => (
-                    <OpportunityPublicSmallComponent
-                      key={`opportunities_recentPublishedOpportunities_${item.id}_${index}`}
-                      data={item}
-                    />
-                  )}
-                />
-              )}
-
               {/* FEATURED */}
               {(opportunities_featured?.totalCount ?? 0) > 0 && (
                 <CustomCarousel
@@ -1336,6 +1317,25 @@ const Opportunities: NextPageWithLayout<{
                   renderSlide={(item, index) => (
                     <OpportunityPublicSmallComponent
                       key={`opportunities_featured_${item.id}_${index}`}
+                      data={item}
+                    />
+                  )}
+                />
+              )}
+
+              {/* RECENTLY ADDED */}
+              {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
+                <CustomCarousel
+                  id={`opportunities_recentPublishedOpportunities`}
+                  title="New 🆕"
+                  description="Fresh opportunities, updated daily."
+                  viewAllUrl="/opportunities?page=1"
+                  data={opportunities_allOpportunities.items}
+                  loadData={loadDataOpportunities}
+                  totalAll={opportunities_allOpportunities.totalCount!}
+                  renderSlide={(item, index) => (
+                    <OpportunityPublicSmallComponent
+                      key={`opportunities_recentPublishedOpportunities_${item.id}_${index}`}
                       data={item}
                     />
                   )}
