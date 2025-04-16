@@ -388,7 +388,6 @@ userProfile:
       required:
         roles:
           - user
-          - admin
         scopes: []
       permissions:
         edit:
