@@ -520,7 +520,7 @@ clients:
     adminUrl: $(env:CLIENT_ATINGI_URL)
     baseUrl: $(env:CLIENT_ATINGI_URL)
     surrogateAuthRequired: false
-    enabled: true
+    enabled: $(env:CLIENT_ATINGI_ENABLED)
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
     secret: $(env:CLIENT_ATINGI_SECRET)
@@ -570,7 +570,7 @@ clients:
     adminUrl: $(env:CLIENT_GOODWALL_URL)
     baseUrl: $(env:CLIENT_GOODWALL_URL)
     surrogateAuthRequired: false
-    enabled: true
+    enabled: $(env:CLIENT_GOODWALL_ENABLED)
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
     secret: $(env:CLIENT_GOODWALL_SECRET)
@@ -620,7 +620,7 @@ clients:
     adminUrl: $(env:CLIENT_IIASA_URL)
     baseUrl: $(env:CLIENT_IIASA_URL)
     surrogateAuthRequired: false
-    enabled: true
+    enabled: $(env:CLIENT_IIASA_ENABLED)
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
     secret: $(env:CLIENT_IIASA_SECRET)
@@ -658,6 +658,94 @@ clients:
       - yoma-api
       - email
       - audience_scope
+    optionalClientScopes:
+      - address
+      - phone
+      - microprofile-jwt
+  - id: ff74b115-0fdb-4a94-9e05-7459601ae7ee
+    clientId: maza-app
+    name: maza-app
+    description: Maza App client for API based user onboarding (private client)
+    surrogateAuthRequired: false
+    enabled: $(env:CLIENT_MAZA_APP_ENABLED)
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_MAZA_APP_SECRET)
+    redirectUris:
+      - "/*"
+    webOrigins:
+      - "/*"
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: true
+    publicClient: false
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      oidc.ciba.grant.enabled: "false"
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      backchannel.logout.revoke.offline.tokens: "false"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: true
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - roles
+      - offline_access
+      - profile
+      - yoma-api
+      - audience_scope
+      - email
+    optionalClientScopes:
+      - address
+      - phone
+      - microprofile-jwt
+  - id: 259d0a20-1c74-4c0e-8797-3df0fb628113
+    clientId: unicef-kenya
+    name: unicef-kenya
+    description: UNICEF Kenya SMS client for API based user onboarding (private client)
+    surrogateAuthRequired: false
+    enabled: $(env:CLIENT_UNICEF_KENYA_ENABLED)
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_UNICEF_KENYA_SECRET)
+    redirectUris:
+      - "/*"
+    webOrigins:
+      - "/*"
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: true
+    publicClient: false
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      oidc.ciba.grant.enabled: "false"
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      backchannel.logout.revoke.offline.tokens: "false"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: true
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - roles
+      - offline_access
+      - profile
+      - yoma-api
+      - audience_scope
+      - email
     optionalClientScopes:
       - address
       - phone
