@@ -5,7 +5,6 @@ environments:
   dev:
     values:
       - namespace: yoma-v3-dev
-        arch: amd64
         tag: {{ env "TAG" | default "master" }}
         ddInjectEnabled: false
         ddProfilingEnabled: false
@@ -14,7 +13,6 @@ environments:
   stage:
     values:
       - namespace: yoma-v3-stage
-        arch: amd64
         tag: {{ env "TAG" | default "master" }}
         ddInjectEnabled: true
         ddProfilingEnabled: false
@@ -23,7 +21,6 @@ environments:
   prod:
     values:
       - namespace: yoma-v3-prod
-        arch: amd64
         tag: {{ env "TAG" | default "master" }}
         ddInjectEnabled: true
         ddProfilingEnabled: false
@@ -45,17 +42,17 @@ repositories:
 releases:
 {{ if eq .Environment.Name "local" }}
   - name: ingress-nginx
-    namespace: "ingress-nginx"
+    namespace: ingress-nginx
     # https://github.com/kubernetes/ingress-nginx/tree/main/charts/ingress-nginx
     chart: ingress-nginx/ingress-nginx
-    version: "4.10.0"
+    version: 4.12.1
 {{ end }}
   - name: keycloak
     labels:
       app: keycloak
     namespace: {{ .Values.namespace }}
     chart: ./helm/keycloak
-    version: "0.3.2"
+    version: 0.3.2
     values:
       - ./helm/keycloak/conf/{{ .Environment.Name }}/values.yaml
       - keycloak:
@@ -72,7 +69,7 @@ releases:
     namespace: {{ .Values.namespace }}
     # https://github.com/bitnami/charts/tree/main/bitnami/postgresql
     chart: oci://registry-1.docker.io/bitnamicharts/postgresql
-    version: "15.2.5"
+    version: 16.6.3
     installed: {{ .Values.postgresEnabled }}
     set:
       - name: fullnameOverride
@@ -92,7 +89,7 @@ releases:
     namespace: {{ .Values.namespace }}
     # https://github.com/bitnami/charts/tree/main/bitnami/postgresql
     chart: oci://registry-1.docker.io/bitnamicharts/postgresql
-    version: "15.2.5"
+    version: 16.6.3
     installed: {{ .Values.postgresEnabled }}
     set:
       - name: fullnameOverride
@@ -116,7 +113,7 @@ releases:
     namespace: {{ .Values.namespace }}
     # https://github.com/bitnami/charts/tree/main/bitnami/redis
     chart: oci://registry-1.docker.io/bitnamicharts/redis
-    version: "19.1.3"
+    version: 20.12.1
     installed: {{ .Values.redisEnabled }}
     values:
       - fullnameOverride: redis
@@ -135,15 +132,13 @@ releases:
       app: yoma-api
     namespace: {{ .Values.namespace }}
     chart: ./helm/yoma-api
-    version: "0.1.0"
+    version: 0.1.0
     set:
       - name: image.tag
         value: {{ .Values.tag }}
     values:
       - ./helm/yoma-api/conf/base/values.yaml
       - ./helm/yoma-api/conf/{{ .Environment.Name }}/values.yaml
-      - nodeSelector:
-          kubernetes.io/arch: {{ .Values.arch }}
       - env:
           DD_PROFILING_ENABLED: {{ .Values.ddProfilingEnabled }}
         deploymentLabels:
@@ -160,15 +155,13 @@ releases:
       app: yoma-web
     namespace: {{ .Values.namespace }}
     chart: ./helm/yoma-web
-    version: "0.1.0"
+    version: 0.1.0
     set:
       - name: image.tag
         value: {{ .Values.tag }}
     values:
       - ./helm/yoma-web/conf/base/values.yaml
       - ./helm/yoma-web/conf/{{ .Environment.Name }}/values.yaml
-      - nodeSelector:
-          kubernetes.io/arch: {{ .Values.arch }}
       - env:
           DD_PROFILING_ENABLED: {{ .Values.ddProfilingEnabled }}
         deploymentLabels:
