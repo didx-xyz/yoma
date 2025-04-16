@@ -48,7 +48,7 @@ export const OppSearchInputLarge: React.FC<{
         {openFilter && (
           <button
             type="button"
-            className={`${buttonClassName} join-item border-orange bg-orange hover:bg-purple hover:text-orange inline-flex items-center justify-center rounded-l-full border p-4 text-black`}
+            className={`${buttonClassName} join-item border-orange bg-orange hover:bg-purple hover:text-orange inline-flex cursor-pointer items-center justify-center rounded-l-full border p-4 text-black`}
             onClick={() => openFilter(true)}
           >
             <IoMdOptions className="h-4 w-4 md:h-6 md:w-6" />
@@ -70,7 +70,7 @@ export const OppSearchInputLarge: React.FC<{
         />
 
         <button
-          className={`${buttonClassName} join-item border-orange bg-orange hover:bg-purple hover:text-orange inline-flex items-center justify-center rounded-r-full border p-4 text-black disabled:brightness-75`}
+          className={`${buttonClassName} join-item border-orange bg-orange hover:bg-purple hover:text-orange inline-flex cursor-pointer items-center justify-center rounded-r-full border p-4 text-black disabled:brightness-75`}
           type="submit"
           disabled={
             searchInputValue === null ||
