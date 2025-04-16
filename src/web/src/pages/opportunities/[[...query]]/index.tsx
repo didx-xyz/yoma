@@ -1323,10 +1323,10 @@ const Opportunities: NextPageWithLayout<{
                 />
               )}
 
-              {/* RECENTLY ADDED */}
+              {/* NEW */}
               {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
                 <CustomCarousel
-                  id={`opportunities_recentPublishedOpportunities`}
+                  id={`opportunities_newOpportunities`}
                   title="New 🆕"
                   description="Fresh opportunities, updated daily."
                   viewAllUrl="/opportunities?page=1"
@@ -1335,7 +1335,7 @@ const Opportunities: NextPageWithLayout<{
                   totalAll={opportunities_allOpportunities.totalCount!}
                   renderSlide={(item, index) => (
                     <OpportunityPublicSmallComponent
-                      key={`opportunities_recentPublishedOpportunities_${item.id}_${index}`}
+                      key={`opportunities_newOpportunities_${item.id}_${index}`}
                       data={item}
                     />
                   )}
