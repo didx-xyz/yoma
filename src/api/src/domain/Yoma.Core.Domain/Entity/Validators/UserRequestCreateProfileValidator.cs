@@ -54,7 +54,7 @@ namespace Yoma.Core.Domain.Entity.Validators
     private bool CountryExists(string? codeAlpha2)
     {
       codeAlpha2 = codeAlpha2?.Trim();
-      if (string.IsNullOrEmpty(codeAlpha2)) return true; 
+      if (string.IsNullOrEmpty(codeAlpha2)) return true;
 
       var country = _countryService.GetByCodeAplha2OrNull(codeAlpha2);
       if (country == null) return false;

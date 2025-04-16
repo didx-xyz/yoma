@@ -186,7 +186,7 @@ namespace Yoma.Core.Domain.Entity.Services
           }
           catch (Exception ex)
           {
-            _logger.LogWarning(ex, "Failed to roll back creation of Keycloak user '{username}'", result.Username);
+            _logger.LogWarning(ex, "Failed to roll back creation of Keycloak user '{username}'", result.Username.SanitizeLogValue());
           }
 
         throw;

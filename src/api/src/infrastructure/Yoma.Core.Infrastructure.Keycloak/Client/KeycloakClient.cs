@@ -220,7 +220,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
           }
           catch (Exception deleteEx)
           {
-            _logger.LogWarning(deleteEx, "Failed to roll back creation of Keycloak user '{username}'", request.Username);
+            _logger.LogWarning(deleteEx, "Failed to roll back creation of Keycloak user '{username}'", request.Username.SanitizeLogValue());
           }
 
         throw new TechnicalException($"Error creating user '{request.Username}' in Keycloak", ex);
