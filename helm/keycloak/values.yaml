@@ -350,7 +350,7 @@ keycloak:
     admission.datadoghq.com/enabled: "false" # disabled by default (for now)
   podAnnotations:
     # gcr.io/datadoghq/dd-lib-java-init
-    admission.datadoghq.com/java-lib.version: v1.47.3
+    admission.datadoghq.com/java-lib.version: v1.48.1
     ad.datadoghq.com/keycloak.logs: '[{ "service": "keycloak", "source": "jboss_wildfly" }]'
 
   lifecycleHooks: |
