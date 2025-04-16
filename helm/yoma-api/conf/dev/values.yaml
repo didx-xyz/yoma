@@ -99,8 +99,6 @@ postInstallHook:
     PGUSER: yoma
     PGDATABASE: yoma-dev
     PGPORT: "5432"
-  nodeSelector:
-    kubernetes.io/arch: amd64
 
   volumes:
     - name: init
