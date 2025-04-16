@@ -158,7 +158,15 @@ namespace Yoma.Core.Api
         s.SwaggerEndpoint(Swagger_JsonUrl, $"Yoma Core Api ({_environment.ToDescription()} {Constants.Api_Version})");
         s.RoutePrefix = "";
         s.OAuthClientId(_identityProviderAuthOptions.ClientId);
-        if (_environment == Domain.Core.Environment.Local) s.OAuthClientSecret(_identityProviderAuthOptions.ClientSecret);
+
+        switch (_environment)
+        {
+          case Domain.Core.Environment.Local:
+          case Domain.Core.Environment.Development:
+            s.OAuthClientSecret(_identityProviderAuthOptions.ClientSecret);
+            break;
+        }
+
         s.OAuthScopeSeparator(OAuth_Scope_Separator);
       });
 
