@@ -18,6 +18,7 @@ using Yoma.Core.Infrastructure.Keycloak.Extensions;
 using Yoma.Core.Infrastructure.Keycloak.Models;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Infrastructure.Keycloak.Client
 {
@@ -25,6 +26,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
   {
     #region Class Variables
     private readonly ILogger<KeycloakClient> _logger;
+    private readonly AppSettings _appSettings;
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly KeycloakAdminOptions _keycloakAdminOptions;
     private readonly KeycloakAuthenticationOptions _keycloakAuthenticationOptions;
@@ -33,11 +35,13 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
     #region Constructor
     public KeycloakClient(ILogger<KeycloakClient> logger,
+      AppSettings appSettings,
       IEnvironmentProvider environmentProvider,
       KeycloakAdminOptions keycloakAdminOptions,
       KeycloakAuthenticationOptions keycloakAuthenticationOptions)
     {
       _logger = logger;
+      _appSettings = appSettings;
       _environmentProvider = environmentProvider;
       _keycloakAdminOptions = keycloakAdminOptions;
       _keycloakAuthenticationOptions = keycloakAuthenticationOptions;
@@ -203,7 +207,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
         // if email is provided, trigger email verification — email is unconfirmed by default; same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
         if (_environmentProvider.Environment != Domain.Core.Environment.Local && !string.IsNullOrEmpty(request.Email))
-          await usersApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, result.Id.ToString(), "yoma-web"); //TODO: move to config
+          await usersApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, result.Id.ToString(), _appSettings.YomaWebClientId);
       }
       catch (Exception ex)
       {
@@ -285,7 +289,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
         // send verify email if required; same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
         if (_environmentProvider.Environment != Domain.Core.Environment.Local && request.VerifyEmail)
-          await usersApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString(), "yoma-web"); //TODO: move to config
+          await usersApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString(), _appSettings.YomaWebClientId); 
       }
       catch (Exception ex)
       {
