@@ -55,7 +55,7 @@ volumeMounts:
 
 initContainers:
   - name: check-postgres
-    image: postgres:16
+    image: postgres:17-alpine
     imagePullPolicy: IfNotPresent
     command:
       - sh
@@ -71,7 +71,7 @@ initContainers:
       - name: PGHOST
         value: &databaseName postgres-yoma
   - name: check-redis
-    image: redis:7
+    image: redis:7-alpine
     imagePullPolicy: IfNotPresent
     command:
       - sh

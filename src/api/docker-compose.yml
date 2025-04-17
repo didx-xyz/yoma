@@ -1,7 +1,7 @@
 name: yoma-v3
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: yoma-postgres
     # ports:
     #   - 5432:5432
@@ -26,7 +26,7 @@ services:
   #     - "80:80"
 
   redis:
-    image: redis:7.2-alpine
+    image: redis:7-alpine
     container_name: redis
     ports:
       - 6379:6379
@@ -37,7 +37,7 @@ services:
       retries: 3
 
   postgres-init: # Initialise the local postgresql server by populating a test user and organisation(s) for local dev
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: postgres-init
     depends_on:
       postgres:
@@ -69,7 +69,7 @@ services:
       - ../keycloak/providers/jars:/local-providers # our custom JAR folder, mounted in a separate directory and copied to container
 
   keycloak-pg:
-    image: postgres:16-alpine
+    image: postgres:17-alpine
     container_name: keycloak-pg
     ports:
       - 5432:5432
