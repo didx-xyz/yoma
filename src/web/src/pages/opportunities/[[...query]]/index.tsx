@@ -312,7 +312,7 @@ const Opportunities: NextPageWithLayout<{
   lookups_timeIntervals,
 }) => {
   const router = useRouter();
-  const { data: session, status: sessionStatus } = useSession();
+  const { status: sessionStatus } = useSession();
   const userProfile = useAtomValue(userProfileAtom);
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
@@ -1331,20 +1331,18 @@ const Opportunities: NextPageWithLayout<{
 
           {/* DIVIDER */}
           <div className="divider !bg-gray" />
-          {targetedCountryName}
+
           {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
           {!isSearchPerformed && (
             <>
               {/* COUNTRY LOCALIZATION */}
               {sessionStatus === "loading" ||
               isLoading_opportunities_targeted_country ? (
-                <LoadingSkeleton />
+                <LoadingSkeleton className="!h-[357.594px]" />
               ) : (
                 <>
-                  {/* For unauthenticated users OR authenticated users not in targeted countries */}
-                  {(sessionStatus === "unauthenticated" ||
-                    (sessionStatus === "authenticated" &&
-                      !targetedCountryName)) && (
+                  {/* COUNTRY/LANGUAGE SELECTION (ANONYMOUS USERS OR USER NOT IN TARGETED COUNTRY) */}
+                  {sessionStatus === "unauthenticated" && (
                     <div className="bg-green mt-4 mb-8 rounded-lg bg-[url('/images/world-map-transparent.png')] bg-[size:800px] bg-center bg-no-repeat p-4 text-white md:py-8">
                       <div className="text-center">
                         <div className="flex flex-col items-center justify-center gap-4">
@@ -1413,9 +1411,9 @@ const Opportunities: NextPageWithLayout<{
                     </div>
                   )}
 
-                  {/* For authenticated users in targeted countries */}
+                  {/* OPPORTUNITIES FOR TARGETED COUNTRY */}
                   {sessionStatus === "authenticated" && targetedCountryName && (
-                    <>
+                    <div className="!h-[357.594px]">
                       {(opportunities_targeted_country?.totalCount ?? 0) >
                         0 && (
                         <CustomCarousel
@@ -1434,7 +1432,7 @@ const Opportunities: NextPageWithLayout<{
                           )}
                         />
                       )}
-                    </>
+                    </div>
                   )}
                 </>
               )}

@@ -45,6 +45,7 @@ import {
   performActionVerifyBulk,
   searchMyOpportunitiesAdmin,
 } from "~/api/services/myOpportunities";
+import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import MainLayout from "~/components/Layout/Main";
@@ -570,17 +571,6 @@ const OpportunityVerifications: NextPageWithLayout<{
     [searchFilter, redirectWithSearchFilterParams],
   );
 
-  const onFilterVerificationStatus = useCallback(
-    (verificationStatus: string) => {
-      searchFilter.pageNumber = 1;
-      searchFilter.verificationStatuses = verificationStatus
-        ? verificationStatus.split("|")
-        : null;
-      redirectWithSearchFilterParams(searchFilter);
-    },
-    [searchFilter, redirectWithSearchFilterParams],
-  );
-
   const handlePagerChange = useCallback(
     (value: number) => {
       searchFilter.pageNumber = value;
@@ -599,12 +589,12 @@ const OpportunityVerifications: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Submissions</title>
+        <title>Yoma | ✅ Submissions</title>
       </Head>
 
       {isLoading && <Loading />}
 
-      <PageBackground className="h-[21rem] md:h-[17rem]" />
+      <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
 
       {/* MODAL DIALOG FOR VERIFY */}
       <CustomModal
@@ -850,249 +840,144 @@ const OpportunityVerifications: NextPageWithLayout<{
       </CustomModal>
 
       {/* PAGE */}
-      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[4.9rem]">
+      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
-          <h3 className="flex items-center text-3xl font-semibold tracking-normal text-white">
-            Submissions <LimitedFunctionalityBadge />
+          <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:mt-0 md:mb-9 md:text-3xl">
+            ✅ Submissions <LimitedFunctionalityBadge />
           </h3>
 
+          {/* TABBED NAVIGATION */}
+          <CustomSlider sliderClassName="!gap-6">
+            <Link
+              href={`/organisations/${id}/verifications`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                !verificationStatus
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              All
+              {(totalCountAll ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountAll}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/organisations/${id}/verifications?verificationStatus=Pending`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                verificationStatus === "Pending"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Pending
+              {(totalCountPending ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountPending}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/organisations/${id}/verifications?verificationStatus=Completed`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                verificationStatus === "Completed"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Completed
+              {(totalCountCompleted ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountCompleted}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/organisations/${id}/verifications?verificationStatus=Rejected`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                verificationStatus === "Rejected"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Rejected
+              {(totalCountRejected ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountRejected}
+                </div>
+              )}
+            </Link>
+          </CustomSlider>
+
           {/* FILTERS */}
-          <div>
-            <div className="flex flex-col gap-4 md:flex-row">
-              <div className="flex grow flex-col items-center justify-start gap-4 md:flex-row">
-                <div className="text-sm font-semibold text-white">
-                  Filter by:
-                </div>
+          <div className="flex w-full grow flex-col items-center justify-between gap-4 sm:justify-end lg:flex-row">
+            <div className="flex w-full flex-col gap-4 md:flex-row">
+              <Select
+                instanceId={"opportunities"}
+                className="w-full md:max-w-72"
+                classNames={{
+                  control: () => "input input-xs w-full !border-0 !rounded-lg",
+                }}
+                options={dataOpportunitiesForVerification}
+                onChange={(val) => onFilterOpportunity(val?.value ?? "")}
+                value={dataOpportunitiesForVerification?.find(
+                  (c) => c.value === opportunity,
+                )}
+                placeholder="Opportunities"
+                isClearable={true}
+              />
 
-                {/* OPPORTUNITIES FILTER */}
-                <div className="w-full md:w-72">
-                  <Select
-                    instanceId={"opportunities"}
-                    classNames={{
-                      control: () =>
-                        "input input-xs md:w-[330px] !border-0 !rounded-lg",
-                    }}
-                    options={dataOpportunitiesForVerification}
-                    onChange={(val) => onFilterOpportunity(val?.value ?? "")}
-                    value={dataOpportunitiesForVerification?.find(
-                      (c) => c.value === opportunity,
-                    )}
-                    placeholder="Opportunities"
-                    isClearable={true}
-                  />
-                </div>
-              </div>
-
-              {/* SEARCH INPUT */}
               <SearchInput defaultValue={query} onSearch={onSearch} />
             </div>
-          </div>
 
-          {/* FILTER BADGES */}
-          {/* <FilterBadges
-            searchFilter={searchFilter}
-            excludeKeys={[
-              "pageNumber",
-              "pageSize",
-              "userId",
-              "organizations",
-              "action",
-              "verificationStatuses",
-            ]}
-            resolveValue={(key, value) => {
-
-              return value;
-            }}
-            //onSubmit={(e) => onSubmitFilter(e)}
-            onSubmit={(e) => {}}
-          /> */}
-
-          {/* TABBED NAVIGATION */}
-          <div className="z-10x flex justify-center md:justify-start">
-            <div className="flex w-full gap-2">
-              {/* LEFT BUTTON MOBILE */}
-              <div className="mb-1 -ml-1 flex items-center md:hidden">
-                <button
-                  className="ease-bounce focus:outline-none active:scale-90"
-                  onClick={() => {
-                    const tabList = document.querySelector('[role="tablist"]');
-                    if (tabList) {
-                      tabList.scrollLeft -= 100;
-                    }
-                  }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M15 19l-7-7 7-7"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              {/* TABS */}
-              <div
-                className="tabs w-full gap-2 overflow-x-scroll md:overflow-hidden"
-                role="tablist"
+            {/* BUTTONS */}
+            <div className="flex w-full grow flex-wrap items-center gap-2 md:justify-end">
+              <button
+                type="button"
+                onClick={() => {
+                  setImportDialogOpen(true);
+                }}
+                className="btn btn-sm md:btn-md border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
               >
-                <div className="text-gray-dark border-b border-transparent text-center text-sm font-medium">
-                  <ul className="-mb-px flex w-full justify-center gap-8 md:justify-start">
-                    <li className="whitespace-nowrap">
-                      <button
-                        onClick={() => onFilterVerificationStatus("")}
-                        className={`inline-block h-10 w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
-                          !verificationStatus
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        All
-                        {(totalCountAll ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountAll}
-                          </div>
-                        )}
-                      </button>
-                    </li>
-                    <li className="whitespace-nowrap">
-                      <button
-                        onClick={() => onFilterVerificationStatus("Pending")}
-                        className={`inline-block h-10 w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
-                          verificationStatus === "Pending"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Pending
-                        {(totalCountPending ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountPending}
-                          </div>
-                        )}
-                      </button>
-                    </li>
-                    <li className="whitespace-nowrap">
-                      <button
-                        onClick={() => onFilterVerificationStatus("Completed")}
-                        className={`inline-block h-10 w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
-                          verificationStatus === "Completed"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Completed
-                        {(totalCountCompleted ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountCompleted}
-                          </div>
-                        )}
-                      </button>
-                    </li>
-                    <li className="whitespace-nowrap">
-                      <button
-                        onClick={() => onFilterVerificationStatus("Rejected")}
-                        className={`inline-block h-10 w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
-                          verificationStatus === "Rejected"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Rejected
-                        {(totalCountRejected ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountRejected}
-                          </div>
-                        )}
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-              </div>
+                <FaUpload className="h-4 w-4" /> Import
+              </button>
 
-              {/* RIGHT BUTTON MOBILE */}
-              <div className="-mr-1 mb-1 flex items-center md:hidden">
-                <button
-                  className="ease-bounce focus:outline-none active:scale-90"
-                  onClick={() => {
-                    const tabList = document.querySelector('[role="tablist"]');
-                    if (tabList) {
-                      tabList.scrollLeft += 100;
-                    }
-                  }}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="h-8 w-8 text-white"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M9 5l7 7-7 7"
-                    />
-                  </svg>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setExportDialogOpen(true)}
+                className="btn btn-sm md:btn-md border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
+              >
+                <FaDownload className="h-4 w-4" /> Export
+              </button>
+
+              {/* show approve/reject buttons for 'all' & 'pending' tabs */}
+              {(!verificationStatus || verificationStatus === "Pending") &&
+                !isLoadingSearchResults &&
+                searchResults &&
+                searchResults.items?.length > 0 && (
+                  <>
+                    <button
+                      className="btn btn-sm md:btn-md border-green text-green hover:bg-green w-36 flex-nowrap bg-white hover:text-white"
+                      onClick={() => onChangeBulkAction(true)}
+                    >
+                      <FaThumbsUp className="h-4 w-4" />
+                      Approve
+                    </button>
+                    <button
+                      className="btn btn-sm md:btn-md w-36 flex-nowrap border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white"
+                      onClick={() => onChangeBulkAction(false)}
+                    >
+                      <FaThumbsDown className="h-4 w-4" />
+                      Reject
+                    </button>
+                  </>
+                )}
             </div>
-          </div>
-
-          {/* BUTTONS */}
-          <div className="flex w-full flex-row justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                setImportDialogOpen(true);
-              }}
-              className="btn btn-sm border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
-            >
-              <FaUpload className="h-4 w-4" /> Import
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setExportDialogOpen(true)}
-              className="btn btn-sm border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
-            >
-              <FaDownload className="h-4 w-4" /> Export
-            </button>
-
-            {/* show approve/reject buttons for 'all' & 'pending' tabs */}
-            {(!verificationStatus || verificationStatus === "Pending") &&
-              !isLoadingSearchResults &&
-              searchResults &&
-              searchResults.items?.length > 0 && (
-                <>
-                  <button
-                    className="btn btn-sm border-green text-green hover:bg-green w-36 flex-nowrap bg-white hover:text-white"
-                    onClick={() => onChangeBulkAction(true)}
-                  >
-                    <FaThumbsUp className="h-4 w-4" />
-                    Approve
-                  </button>
-                  <button
-                    className="btn btn-sm w-36 flex-nowrap border-red-500 bg-white text-red-500 hover:bg-red-500 hover:text-white"
-                    onClick={() => onChangeBulkAction(false)}
-                  >
-                    <FaThumbsDown className="h-4 w-4" />
-                    Reject
-                  </button>
-                </>
-              )}
           </div>
         </div>
 

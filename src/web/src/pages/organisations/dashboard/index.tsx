@@ -734,7 +734,7 @@ const OrganisationDashboard: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Organisation Dashboard</title>
+        <title>Yoma | 🏢 Dashboard</title>
       </Head>
 
       <PageBackground className="h-[341px] md:h-[348px]" />

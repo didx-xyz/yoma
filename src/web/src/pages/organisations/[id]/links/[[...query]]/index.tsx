@@ -35,6 +35,7 @@ import {
   searchLinks,
   updateLinkStatus,
 } from "~/api/services/actionLinks";
+import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import {
@@ -471,9 +472,10 @@ const Links: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Links</title>
+        <title>Yoma | 🔗 Links</title>
       </Head>
-      <PageBackground className="h-[14.5rem] md:h-[18rem]" />
+
+      <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
 
       {isLoading && <Loading />}
 
@@ -539,155 +541,128 @@ const Links: NextPageWithLayout<{
 
       <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
-          <h3 className="mt-3 mb-6 flex items-center text-3xl font-semibold tracking-normal text-white md:mt-0 md:mb-9">
-            Links <LimitedFunctionalityBadge />
+          <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:mt-0 md:mb-9 md:text-3xl">
+            🔗 Links <LimitedFunctionalityBadge />
           </h3>
 
           {/* TABBED NAVIGATION */}
-          <div className="z-10 flex justify-center md:justify-start">
-            <div className="flex w-full gap-2">
-              {/* TABS */}
-              <div
-                className="tabs w-full gap-2 overflow-x-scroll md:overflow-hidden"
-                role="tablist"
-              >
-                <div className="text-gray-dark border-b border-transparent text-center text-sm font-medium">
-                  <ul className="-mb-px flex w-full justify-center md:justify-start">
-                    <li className="px-4 whitespace-nowrap">
-                      <Link
-                        href={`/organisations/${id}/links`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          !statuses
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        All{" "}
-                        {(totalCountAll ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountAll}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="px-4 whitespace-nowrap">
-                      <Link
-                        href={`/organisations/${id}/links?statuses=active`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "active"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Active
-                        {(totalCountActive ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountActive}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="px-4 whitespace-nowrap">
-                      <Link
-                        href={`/organisations/${id}/links?statuses=inactive`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "inactive"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Inactive
-                        {(totalCountInactive ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountInactive}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="px-4 whitespace-nowrap">
-                      <Link
-                        href={`/organisations/${id}/links?statuses=declined`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "declined"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Declined
-                        {(totalCountDeclined ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountDeclined}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="px-4 whitespace-nowrap">
-                      <Link
-                        href={`/organisations/${id}/links?statuses=expired`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          statuses === "expired"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Expired
-                        {(totalCountExpired ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountExpired}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="px-4 whitespace-nowrap">
-                      <Link
-                        href={`/organisations/${id}/links?statuses=limitReached`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
-                          statuses === "limitReached"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Limit Reached
-                        {(totalCountLimitReached ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountLimitReached}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                    <li className="px-4 whitespace-nowrap">
-                      <Link
-                        href={`/organisations/${id}/links?statuses=deleted`}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 whitespace-nowrap text-white duration-300 ${
-                          statuses === "deleted"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Deleted
-                        {(totalCountDeleted ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountDeleted}
-                          </div>
-                        )}
-                      </Link>
-                    </li>
-                  </ul>
+          <CustomSlider sliderClassName="!gap-6">
+            <Link
+              href={`/organisations/${id}/links`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                !statuses
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              All
+              {(totalCountAll ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountAll}
                 </div>
-              </div>
-            </div>
-          </div>
+              )}
+            </Link>
+            <Link
+              href={`/organisations/${id}/links?statuses=active`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "active"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Active
+              {(totalCountActive ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountActive}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/organisations/${id}/links?statuses=inactive`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "inactive"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Inactive
+              {(totalCountInactive ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountInactive}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/organisations/${id}/links?statuses=declined`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "declined"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Declined
+              {(totalCountDeclined ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountDeclined}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/organisations/${id}/links?statuses=expired`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "expired"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Expired
+              {(totalCountExpired ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountExpired}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/organisations/${id}/links?statuses=limitReached`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "limitReached"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Limit Reached
+              {(totalCountLimitReached ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountLimitReached}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/organisations/${id}/links?statuses=deleted`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                statuses === "deleted"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Deleted
+              {(totalCountDeleted ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountDeleted}
+                </div>
+              )}
+            </Link>
+          </CustomSlider>
 
-          {/* SEARCH INPUT */}
+          {/* FILTERS */}
           <div className="flex w-full grow items-center justify-between gap-4 sm:justify-end">
-            {/* LINKS FILTER */}
             <LinkSearchFilters
               searchFilter={searchFilter}
               filterOptions={[LinkFilterOptions.ENTITIES]}

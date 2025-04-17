@@ -14,7 +14,7 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import { FaDownload, FaEdit, FaEye, FaEyeSlash, FaLink } from "react-icons/fa";
+import { FaDownload, FaEdit, FaLink } from "react-icons/fa";
 import { IoMdPerson } from "react-icons/io";
 import { toast } from "react-toastify";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
@@ -486,10 +486,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Admin Opportunities</title>
+        <title>Yoma | 🏆 Opportunities</title>
       </Head>
 
-      <PageBackground className="h-[14.5rem] md:h-[18rem]" />
+      <PageBackground className="h-[14.8rem] md:h-[18.4rem]" />
 
       {isLoadingSearchResults && <Loading />}
 
@@ -554,14 +554,13 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
       <div ref={myRef} />
 
-      <div className="z-10 container mt-14 w-full overflow-hidden px-2 py-1 md:mt-20 md:max-w-7xl md:py-4">
-        {/* TITLE & SEARCH INPUT */}
-        <div className="flex flex-col gap-2 py-4 sm:flex-row">
-          <h2 className="mb-4 flex grow items-center font-semibold text-white">
-            Opportunities
-          </h2>
+      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
+        <div className="flex flex-col gap-4 py-4">
+          <h3 className="mt-3 mb-6 flex items-center text-3xl font-semibold tracking-normal text-white md:mt-0 md:mb-9">
+            🏆 Opportunities
+          </h3>
 
-          <div className="my-4 flex h-fit justify-center gap-2 md:justify-end">
+          <div className="-mt-5 flex w-full grow items-center justify-between gap-4 sm:justify-end">
             <SearchInputLarge
               openFilter={setFilterFullWindowVisible}
               maxWidth={400}
@@ -569,43 +568,43 @@ const OpportunitiesAdmin: NextPageWithLayout<{
               onSearch={onSearchInputSubmit}
             />
           </div>
-        </div>
 
-        {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
-        {lookups_categories &&
-          lookups_countries &&
-          lookups_languages &&
-          lookups_organisations && (
-            <OpportunityAdminFilterHorizontal
-              htmlRef={myRef.current!}
-              searchFilter={searchFilter}
-              lookups_categories={lookups_categories}
-              lookups_countries={lookups_countries}
-              lookups_languages={lookups_languages}
-              lookups_types={lookups_types}
-              lookups_organisations={lookups_organisations}
-              lookups_publishedStates={lookups_publishedStates}
-              lookups_statuses={lookups_statuses}
-              clearButtonText="Clear"
-              onClear={onClearFilter}
-              onSubmit={onSubmitFilter}
-              onOpenFilterFullWindow={() => {
-                setFilterFullWindowVisible(!filterFullWindowVisible);
-              }}
-              filterOptions={[
-                OpportunityFilterOptions.TYPES,
-                OpportunityFilterOptions.COUNTRIES,
-                OpportunityFilterOptions.LANGUAGES,
-                OpportunityFilterOptions.ORGANIZATIONS,
-                OpportunityFilterOptions.DATE_START,
-                OpportunityFilterOptions.DATE_END,
-                OpportunityFilterOptions.STATUSES,
-                OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
-              ]}
-              totalCount={searchResults?.totalCount ?? 0}
-              exportToCsv={setExportDialogOpen}
-            />
-          )}
+          {/* FILTER ROW: CATEGORIES DROPDOWN FILTERS (SELECT) FOR COUNTRIES, LANGUAGES, TYPE, ORGANISATIONS ETC  */}
+          {lookups_categories &&
+            lookups_countries &&
+            lookups_languages &&
+            lookups_organisations && (
+              <OpportunityAdminFilterHorizontal
+                htmlRef={myRef.current!}
+                searchFilter={searchFilter}
+                lookups_categories={lookups_categories}
+                lookups_countries={lookups_countries}
+                lookups_languages={lookups_languages}
+                lookups_types={lookups_types}
+                lookups_organisations={lookups_organisations}
+                lookups_publishedStates={lookups_publishedStates}
+                lookups_statuses={lookups_statuses}
+                clearButtonText="Clear"
+                onClear={onClearFilter}
+                onSubmit={onSubmitFilter}
+                onOpenFilterFullWindow={() => {
+                  setFilterFullWindowVisible(!filterFullWindowVisible);
+                }}
+                filterOptions={[
+                  OpportunityFilterOptions.TYPES,
+                  OpportunityFilterOptions.COUNTRIES,
+                  OpportunityFilterOptions.LANGUAGES,
+                  OpportunityFilterOptions.ORGANIZATIONS,
+                  OpportunityFilterOptions.DATE_START,
+                  OpportunityFilterOptions.DATE_END,
+                  OpportunityFilterOptions.STATUSES,
+                  OpportunityFilterOptions.VIEWALLFILTERSBUTTON,
+                ]}
+                totalCount={searchResults?.totalCount ?? 0}
+                exportToCsv={setExportDialogOpen}
+              />
+            )}
+        </div>
 
         {/* SEARCH RESULTS */}
         {!isLoadingSearchResults && (
@@ -763,15 +762,13 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                           {/* Visible */}
                           <div className="flex justify-between">
                             <p className="text-sm tracking-wider">Visible</p>
-                            <div className="flex w-20 justify-start gap-2">
+                            <div className="flex justify-start gap-2">
                               {opportunity?.hidden ? (
-                                <span className="badge bg-yellow-tint text-yellow">
-                                  <FaEyeSlash className="mr-1 text-sm" />
+                                <span className="badge bg-yellow-tint text-yellow w-20">
                                   Hidden
                                 </span>
                               ) : (
-                                <span className="badge bg-green-light text-green">
-                                  <FaEye className="mr-1 text-sm" />
+                                <span className="badge bg-green-light text-green w-20">
                                   Visible
                                 </span>
                               )}
@@ -917,21 +914,15 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                             />
                           </td>
                           <td className="border-gray-light border-b-2 text-center">
-                            <div className="flex justify-between">
-                              <div className="flex w-20 justify-start gap-2">
-                                {opportunity?.hidden ? (
-                                  <span className="badge bg-blue-light text-gray-dark">
-                                    <FaEyeSlash className="mr-1 text-sm" />
-                                    Hidden
-                                  </span>
-                                ) : (
-                                  <span className="badge bg-green-light text-green">
-                                    <FaEye className="mr-1 text-sm" />
-                                    Visible
-                                  </span>
-                                )}
-                              </div>
-                            </div>
+                            {opportunity?.hidden ? (
+                              <span className="badge bg-yellow-tint text-yellow w-20">
+                                Hidden
+                              </span>
+                            ) : (
+                              <span className="badge bg-green-light text-green w-20">
+                                Visible
+                              </span>
+                            )}
                           </td>
                         </tr>
                       ))}

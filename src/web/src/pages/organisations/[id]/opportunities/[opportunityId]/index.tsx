@@ -9,6 +9,7 @@ import axios, { type AxiosError } from "axios";
 import moment from "moment";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
@@ -1449,6 +1450,10 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
   return (
     <>
+      <Head>
+        <title>Yoma | 🏆 Opportunity</title>
+      </Head>
+
       {isLoading && <Loading />}
 
       <PageBackground />

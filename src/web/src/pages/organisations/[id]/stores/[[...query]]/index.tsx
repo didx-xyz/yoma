@@ -270,7 +270,7 @@ const Stores: NextPageWithLayout<{
       <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
           <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal text-white md:mt-0 md:mb-9 md:text-3xl">
-            Marketplace Store Access Rules
+            🛒 Marketplace Store Access Rules
           </h3>
 
           {/* TABBED NAVIGATION */}

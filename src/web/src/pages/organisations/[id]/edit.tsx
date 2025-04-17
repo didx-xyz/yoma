@@ -233,6 +233,9 @@ const OrganisationUpdate: NextPageWithLayout<{
       setIsLoading(true);
 
       try {
+        // clear toasts
+        toast.dismiss();
+
         /// update api
         const logo = model.logo;
 
@@ -351,7 +354,7 @@ const OrganisationUpdate: NextPageWithLayout<{
       } catch (error) {
         toast(<ApiErrors error={error} />, {
           type: "error",
-          toastId: "patchOrganisation",
+          toastId: "patchOrganisationError",
           autoClose: false,
           icon: false,
         });
@@ -413,7 +416,7 @@ const OrganisationUpdate: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma Admin | Edit organisation</title>
+        <title>Yoma Admin | 🏢 Organisation Edit</title>
       </Head>
 
       <PageBackground />
