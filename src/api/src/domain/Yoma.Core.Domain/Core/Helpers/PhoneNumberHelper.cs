@@ -21,7 +21,8 @@ namespace Yoma.Core.Domain.Core.Helpers
 
       try
       {
-        var number = _phoneUtil.Parse(input, null); // no trimming
+        // Use "ZZ" to force international context and prevent changes
+        var number = _phoneUtil.Parse(input, "ZZ");
         return _phoneUtil.IsValidNumber(number);
       }
       catch (NumberParseException)
