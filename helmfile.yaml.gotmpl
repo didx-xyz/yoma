@@ -80,6 +80,10 @@ releases:
         value: keycloak
       - name: primary.resourcesPreset
         value: medium
+      - name: primary.persistentVolumeClaimRetentionPolicy.enabled
+        value: true
+      - name: primary.persistentVolumeClaimRetentionPolicy.whenDeleted
+        value: Delete
     secrets:
       - ./helm/postgresql-keycloak/conf/{{ .Environment.Name }}/secrets.yaml
 
@@ -100,6 +104,10 @@ releases:
         value: yoma-dev
       - name: primary.resourcesPreset
         value: medium
+      - name: primary.persistentVolumeClaimRetentionPolicy.enabled
+        value: true
+      - name: primary.persistentVolumeClaimRetentionPolicy.whenDeleted
+        value: Delete
       # - name: primary.extendedConfiguration
       #   value: |
       #     log_statement = 'all'
@@ -124,6 +132,9 @@ releases:
           replicaCount: 1
           persistence:
             enabled: false
+          persistentVolumeClaimRetentionPolicy:
+            enabled: true
+            whenDeleted: Delete
         replica:
           replicaCount: 0
 
