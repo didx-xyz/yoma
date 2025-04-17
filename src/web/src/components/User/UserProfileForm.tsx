@@ -381,11 +381,8 @@ export const UserProfileForm: React.FC<{
 
             {watchResetPassword && (
               <FormMessage messageType={FormMessageType.Warning}>
-                {watchEmail
-                  ? "You will receive an email with instructions to reset your email."
-                  : formData.phoneNumber
-                    ? "You will be prompted to change your password upon logging in again."
-                    : "Changing your password will require you to log in again."}
+                You will need to log in again and will be prompted to change
+                your password.
               </FormMessage>
             )}
           </>
