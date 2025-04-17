@@ -413,10 +413,6 @@ jobs:
       HELMFILE_VERSION: v0.171.0
       HELM_VERSION: v3.17.3
       TAG: ${{ needs.docker-push.outputs.image_version }}
-      HELM_PLUGINS: >-
-        https://github.com/databus23/helm-diff,
-        https://github.com/jkroepke/helm-secrets,
-        https://github.com/aslafy-z/helm-git
 
     concurrency:
       group: ${{ github.workflow }}-deploy-${{ github.event_name == 'release' && 'prod' || (github.event_name == 'push' && github.event.repository.default_branch == github.ref_name) && 'stage' || 'dev' }}
@@ -485,7 +481,10 @@ jobs:
           helmfile-args: |
             destroy \
               --environment dev
-          helm-plugins: ${{ env.HELM_PLUGINS }}
+          helm-plugins: >-
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets,
+            https://github.com/aslafy-z/helm-git
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
       - name: Delete Pods and PVCs
@@ -503,7 +502,10 @@ jobs:
               --selector=app=redis
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
-          helm-plugins: ${{ env.HELM_PLUGINS }}
+          helm-plugins: >-
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets,
+            https://github.com/aslafy-z/helm-git
       # Diff on PR draft, otherwise Apply
       - name: Helmfile Apply/Diff Keycloak
         if: (
@@ -522,7 +524,10 @@ jobs:
               --set postInstallHook.ref=${{ github.event_name == 'release' && github.ref_name || github.sha }}
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
-          helm-plugins: ${{ env.HELM_PLUGINS }}
+          helm-plugins: >-
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets,
+            https://github.com/aslafy-z/helm-git
       # On fresh deployment we want single replica due to DB migrations
       - name: Helmfile Apply Fresh API
         if: github.event.inputs.reset-deployments == 'true'
@@ -536,7 +541,10 @@ jobs:
               --set replicaCount=1
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
-          helm-plugins: ${{ env.HELM_PLUGINS }}
+          helm-plugins: >-
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets,
+            https://github.com/aslafy-z/helm-git
       - name: Helmfile Apply/Diff API
         if: (
           github.event_name == 'release' ||
@@ -552,7 +560,10 @@ jobs:
               --set postInstallHook.ref=${{ github.event_name == 'release' && github.ref_name || github.sha }}
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
-          helm-plugins: ${{ env.HELM_PLUGINS }}
+          helm-plugins: >-
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets,
+            https://github.com/aslafy-z/helm-git
       - name: Trigger Vercel Production Deployment
         if: github.event_name == 'release'
         run: |
@@ -572,4 +583,7 @@ jobs:
               --selector app=yoma-web
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
-          helm-plugins: ${{ env.HELM_PLUGINS }}
+          helm-plugins: >-
+            https://github.com/databus23/helm-diff,
+            https://github.com/jkroepke/helm-secrets,
+            https://github.com/aslafy-z/helm-git
