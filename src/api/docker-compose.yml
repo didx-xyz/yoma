@@ -25,13 +25,13 @@ services:
   #   ports:
   #     - "80:80"
 
-  redis:
-    image: redis:7-alpine
-    container_name: redis
+  valkey:
+    image: valkey/valkey:8-alpine
+    container_name: valkey
     ports:
       - 6379:6379
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "valkey-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -243,7 +243,7 @@ services:
       ASPNETCORE_ENVIRONMENT: Local
       ASPNETCORE_URLS: "http://+:5000"
       ConnectionStrings__SQLConnection: "Host=postgres;Port=5432;Database=yoma-dev;Username=postgres;Password=P@ssword1;SslMode=Prefer;Trust Server Certificate=True;Include Error Detail=true;"
-      ConnectionStrings__RedisConnection: "redis:6379"
+      ConnectionStrings__RedisConnection: "valkey:6379"
       Logging__LogLevel__Default: "Debug"
       Logging__LogLevel__Microsoft: "Debug"
       Logging__LogLevel__Microsoft.Hosting.Lifetime: "Information"
@@ -259,7 +259,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      redis:
+      valkey:
         condition: service_healthy
 
   yoma-api-health:

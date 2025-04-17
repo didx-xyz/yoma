@@ -499,7 +499,7 @@ jobs:
               --environment dev \
               --selector=app=postgresql-keycloak \
               --selector=app=postgresql \
-              --selector=app=redis
+              --selector=app=valkey
           helmfile-version: ${{ env.HELMFILE_VERSION }}
           helm-version: ${{ env.HELM_VERSION }}
           helm-plugins: >-

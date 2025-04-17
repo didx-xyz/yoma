@@ -70,15 +70,15 @@ initContainers:
     env:
       - name: PGHOST
         value: &databaseName postgres-yoma
-  - name: check-redis
-    image: redis:7-alpine
+  - name: check-valkey
+    image: valkey/valkey:8-alpine
     imagePullPolicy: IfNotPresent
     command:
       - sh
       - -c
       - |
-        until redis-cli -h redis-master -p 6379 ping; do
-          echo "Waiting for Redis to be ready..."
+        until valkey-cli -h valkey-primary -p 6379 ping; do
+          echo "Waiting for Valkey to be ready..."
           sleep 1
         done
 
