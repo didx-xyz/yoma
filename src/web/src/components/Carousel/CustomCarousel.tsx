@@ -124,7 +124,7 @@ const CustomCarousel: React.FC<{
             <div className="text-gray-dark">{description}</div>
           </div>
 
-          <div className="flex items-end gap-4">
+          <div className="flex items-center gap-4">
             <div className="flex items-center">
               <div className="hidden w-full gap-4 md:flex">
                 <SelectedSnapDisplay

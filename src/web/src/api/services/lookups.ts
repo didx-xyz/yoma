@@ -12,23 +12,6 @@ import type {
 import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
 import ApiServer from "~/lib/axiosServer";
 
-//TODO: remove/change once api is ready
-// export const getAges = async (
-//   context?: GetServerSidePropsContext | GetStaticPropsContext,
-// ): Promise<Gender[]> => {
-//   // const instance = context ? ApiServer(context) : await ApiClient;
-//   // const { data } = await instance.get<Gender[]>("/lookup/gender");
-//   // return data;
-
-//   // return hard-code data for now
-//   return Promise.resolve([
-//     { name: "0-19", id: "0-19" },
-//     { name: "20-39", id: "20-39" },
-//     { name: "40-59", id: "40-59" },
-//     { name: "60+", id: "60+" },
-//   ]);
-// };
-
 export const getGenders = async (
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Gender[]> => {

@@ -166,7 +166,7 @@ export const UserMenu: React.FC = () => {
           <div className="h-screen max-w-[20rem] overflow-y-auto rounded-tl-lg rounded-tr-none rounded-br-none rounded-bl-lg bg-[#FFF5E7]">
             <div className="flex h-full flex-col gap-2 p-4 select-none [-webkit-user-drag:none] [user-drag:none]">
               {/* USER (YOID) */}
-              <div className="text-gray-dark flex h-full flex-col items-center gap-1 p-2">
+              <div className="text-gray-dark flex flex-col items-center gap-1 p-2">
                 {/* BACKGROUND IMAGES */}
 
                 {/* WORLD MAP */}

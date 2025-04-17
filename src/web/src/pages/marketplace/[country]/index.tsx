@@ -48,7 +48,7 @@ import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
-  COUNTRY_WW,
+  COUNTRY_CODE_WW,
   GA_ACTION_MARKETPLACE_ITEM_BUY,
   GA_CATEGORY_OPPORTUNITY,
   THEME_BLUE,
@@ -75,7 +75,7 @@ async function fetchMarketplaceData(
 ): Promise<MarketplaceData> {
   const lookups_countries = await listSearchCriteriaCountries(context);
   const lookups_categories = await listStoreCategories(
-    country ?? COUNTRY_WW,
+    country ?? COUNTRY_CODE_WW,
     context,
   );
   const data_storeItems = [];
@@ -120,15 +120,18 @@ async function fetchMarketplaceData(
   }
 
   // if country not WW, then include some WW items
-  if (country !== COUNTRY_WW) {
-    const lookups_categoriesWW = await listStoreCategories(COUNTRY_WW, context);
+  if (country !== COUNTRY_CODE_WW) {
+    const lookups_categoriesWW = await listStoreCategories(
+      COUNTRY_CODE_WW,
+      context,
+    );
 
     for (const category of lookups_categoriesWW) {
       const stores = await searchStores(
         {
           pageNumber: null,
           pageSize: null,
-          countryCodeAlpha2: COUNTRY_WW,
+          countryCodeAlpha2: COUNTRY_CODE_WW,
           categoryId: category.id ?? null,
         },
         context,
@@ -855,7 +858,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
             options={countryOptions}
             onChange={(val) => onFilterCountry(val?.value ?? "")}
             value={countryOptions?.find(
-              (c) => c.value === (country?.toString() ?? COUNTRY_WW),
+              (c) => c.value === (country?.toString() ?? COUNTRY_CODE_WW),
             )}
             placeholder="Country"
             // fix menu z-index issue
