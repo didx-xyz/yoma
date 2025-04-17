@@ -201,9 +201,9 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         //add newly registered user to the default "User" role
         await EnsureRoles(result.Id, [Constants.Role_User]);
 
-        // if email is provided, trigger email verification — email is unconfirmed by default
+        // if email is provided, trigger email verification — email is unconfirmed by default; same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
         if (_environmentProvider.Environment != Domain.Core.Environment.Local && !string.IsNullOrEmpty(request.Email))
-          await usersApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, result.Id.ToString()); // same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
+          await usersApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, result.Id.ToString(), "yoma-web"); //TODO: move to config
       }
       catch (Exception ex)
       {
@@ -285,7 +285,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
         // send verify email if required; same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
         if (_environmentProvider.Environment != Domain.Core.Environment.Local && request.VerifyEmail)
-          await usersApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString());
+          await usersApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString(), "yoma-web"); //TODO: move to config
       }
       catch (Exception ex)
       {
