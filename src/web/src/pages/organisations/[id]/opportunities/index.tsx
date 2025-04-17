@@ -18,8 +18,6 @@ import { useCallback, useMemo, useState, type ReactElement } from "react";
 import {
   FaDownload,
   FaEdit,
-  FaEye,
-  FaEyeSlash,
   FaLink,
   FaPlusCircle,
   FaUpload,
@@ -33,6 +31,7 @@ import {
 } from "~/api/models/opportunity";
 import { downloadVerificationFilesAdmin } from "~/api/services/myOpportunities";
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
+import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
@@ -379,15 +378,6 @@ const Opportunities: NextPageWithLayout<{
     [searchFilter, redirectWithSearchFilterParams],
   );
 
-  const onFilterStatus = useCallback(
-    (status: string) => {
-      searchFilter.pageNumber = 1;
-      searchFilter.statuses = status ? status.split("|") : null;
-      redirectWithSearchFilterParams(searchFilter);
-    },
-    [searchFilter, redirectWithSearchFilterParams],
-  );
-
   const onClick_CopyToClipboard = useCallback((url: string) => {
     navigator.clipboard.writeText(url);
     toast.success("URL copied to clipboard!", { autoClose: 2000 });
@@ -426,10 +416,10 @@ const Opportunities: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Opportunities</title>
+        <title>Yoma | 🏆 Opportunities</title>
       </Head>
 
-      <PageBackground className="h-[21rem] md:h-[17rem]" />
+      <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
 
       {/* IMPORT DIALOG */}
       <CustomModal
@@ -472,183 +462,134 @@ const Opportunities: NextPageWithLayout<{
         />
       </CustomModal>
 
-      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[4.9rem]">
+      <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
-          <h3 className="flex items-center text-3xl font-semibold tracking-normal text-white">
-            Opportunities <LimitedFunctionalityBadge />
+          <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:mt-0 md:mb-9 md:text-3xl">
+            🏆 Opportunities <LimitedFunctionalityBadge />
           </h3>
 
-          {/* FILTERS */}
-          <div>
-            <div className="flex flex-col gap-4 md:flex-row">
-              <div className="flex grow flex-col items-center justify-start gap-4 md:flex-row">
-                {/* <div className="text-sm font-semibold text-white">
-                  Filter by:
-                </div> */}
-
-                {/* OPPORTUNITIES FILTER */}
-                {/* <div className="w-full md:w-72">
-                  <Select
-                    instanceId={"opportunities"}
-                    classNames={{
-                      control: () =>
-                        "input input-xs md:w-[330px] !border-0 !rounded-lg",
-                    }}
-                    options={dataOpportunitiesForVerification}
-                    onChange={(val) => onFilterOpportunity(val?.value ?? "")}
-                    value={dataOpportunitiesForVerification?.find(
-                      (c) => c.value === opportunity,
-                    )}
-                    placeholder="Opportunities"
-                    isClearable={true}
-                  />
-                </div> */}
-              </div>
-
-              {/* SEARCH INPUT */}
-              <SearchInput defaultValue={query} onSearch={onSearch} />
-            </div>
-          </div>
-
           {/* TABBED NAVIGATION */}
-          <div className="z-10 flex justify-center md:justify-start">
-            <div className="flex w-full gap-2">
-              {/* TABS */}
-              <div
-                className="tabs w-full gap-2 overflow-x-scroll md:overflow-hidden"
-                role="tablist"
-              >
-                <div className="text-gray-dark border-b border-transparent text-center text-sm font-medium">
-                  <ul className="-mb-px flex w-full justify-center gap-8 md:justify-start">
-                    <li className="whitespace-nowrap">
-                      <button
-                        onClick={() => onFilterStatus("")}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          !status
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        All
-                        {(totalCountAll ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountAll}
-                          </div>
-                        )}
-                      </button>
-                    </li>
-                    <li className="whitespace-nowrap">
-                      <button
-                        onClick={() => onFilterStatus("Active")}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          status === "Active"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Active
-                        {(totalCountActive ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountActive}
-                          </div>
-                        )}
-                      </button>
-                    </li>
-                    <li className="whitespace-nowrap">
-                      <button
-                        onClick={() => onFilterStatus("Inactive")}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          status === "Inactive"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Inactive
-                        {(totalCountInactive ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountInactive}
-                          </div>
-                        )}
-                      </button>
-                    </li>
-                    <li className="whitespace-nowrap">
-                      <button
-                        onClick={() => onFilterStatus("Expired")}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          status === "Expired"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Expired
-                        {(totalCountExpired ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountExpired}
-                          </div>
-                        )}
-                      </button>
-                    </li>
-                    <li className="whitespace-nowrap">
-                      <button
-                        onClick={() => onFilterStatus("Deleted")}
-                        className={`inline-block w-full rounded-t-lg border-b-4 py-2 text-white duration-300 ${
-                          status === "Deleted"
-                            ? "active border-orange"
-                            : "hover:border-gray hover:text-gray border-transparent"
-                        }`}
-                        role="tab"
-                      >
-                        Deleted
-                        {(totalCountDeleted ?? 0) > 0 && (
-                          <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                            {totalCountDeleted}
-                          </div>
-                        )}
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* BUTTONS */}
-          <div className="flex w-full grow items-center justify-between gap-1 sm:justify-end">
+          <CustomSlider sliderClassName="!gap-6">
             <Link
-              href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
-                getSafeUrl(returnUrl?.toString(), router.asPath),
-              )}`}`}
-              className={`btn btn-sm border-green text-green hover:bg-green w-36 flex-nowrap bg-white hover:text-white ${
-                currentOrganisationInactive ? "disabled" : ""
+              href={`/organisations/${id}/opportunities`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                !status
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
               }`}
-              id="btnCreateOpportunity" // e2e
             >
-              <FaPlusCircle className="h-4 w-4" /> Add
+              All
+              {(totalCountAll ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountAll}
+                </div>
+              )}
             </Link>
-
-            <button
-              type="button"
-              onClick={() => {
-                setImportDialogOpen(true);
-              }}
-              className={`btn btn-sm border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white ${
-                currentOrganisationInactive ? "disabled" : ""
+            <Link
+              href={`/organisations/${id}/opportunities?status=Active`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                status === "Active"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
               }`}
             >
-              <FaUpload className="h-4 w-4" /> Import
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setExportDialogOpen(true)}
-              className="btn btn-sm border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
+              Active
+              {(totalCountActive ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountActive}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/organisations/${id}/opportunities?status=Inactive`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                status === "Inactive"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
             >
-              <FaDownload className="h-4 w-4" /> Export
-            </button>
+              Inactive
+              {(totalCountInactive ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountInactive}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/organisations/${id}/opportunities?status=Expired`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                status === "Expired"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Expired
+              {(totalCountExpired ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountExpired}
+                </div>
+              )}
+            </Link>
+            <Link
+              href={`/organisations/${id}/opportunities?status=Deleted`}
+              role="tab"
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
+                status === "Deleted"
+                  ? "border-orange"
+                  : "hover:border-orange hover:text-gray"
+              }`}
+            >
+              Deleted
+              {(totalCountDeleted ?? 0) > 0 && (
+                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
+                  {totalCountDeleted}
+                </div>
+              )}
+            </Link>
+          </CustomSlider>
+
+          {/* FILTERS */}
+          <div className="flex w-full grow flex-col items-center justify-between gap-4 sm:justify-end md:flex-row">
+            <SearchInput defaultValue={query} onSearch={onSearch} />
+
+            {/* BUTTONS */}
+            <div className="flex w-full grow items-center justify-between gap-2 sm:justify-end">
+              <Link
+                href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
+                  getSafeUrl(returnUrl?.toString(), router.asPath),
+                )}`}`}
+                className={`btn btn-sm border-green text-green hover:bg-green flex-1 flex-nowrap bg-white hover:text-white md:min-w-36 md:flex-0 ${
+                  currentOrganisationInactive ? "disabled" : ""
+                }`}
+                id="btnCreateOpportunity" // e2e
+              >
+                <FaPlusCircle className="h-4 w-4" /> Add
+              </Link>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setImportDialogOpen(true);
+                }}
+                className={`btn btn-sm border-green bg-green hover:text-green flex-1 flex-nowrap text-white hover:bg-white md:min-w-36 md:flex-0 ${
+                  currentOrganisationInactive ? "disabled" : ""
+                }`}
+              >
+                <FaUpload className="h-4 w-4" /> Import
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setExportDialogOpen(true)}
+                className="btn btn-sm border-green bg-green hover:text-green flex-1 flex-nowrap text-white hover:bg-white md:min-w-36 md:flex-0"
+              >
+                <FaDownload className="h-4 w-4" /> Export
+              </button>
+            </div>
           </div>
         </div>
 
@@ -884,15 +825,13 @@ const Opportunities: NextPageWithLayout<{
                         {/* Visible */}
                         <div className="flex justify-between">
                           <p className="text-sm tracking-wider">Visible</p>
-                          <div className="flex w-20 justify-start gap-2">
+                          <div className="flex justify-start gap-2">
                             {opportunity?.hidden ? (
-                              <span className="badge bg-yellow-tint text-yellow">
-                                <FaEyeSlash className="mr-1 text-sm" />
+                              <span className="badge bg-yellow-tint text-yellow w-20">
                                 Hidden
                               </span>
                             ) : (
-                              <span className="badge bg-green-light text-green">
-                                <FaEye className="mr-1 text-sm" />
+                              <span className="badge bg-green-light text-green w-20">
                                 Visible
                               </span>
                             )}
@@ -1089,21 +1028,15 @@ const Opportunities: NextPageWithLayout<{
                           />
                         </td>
                         <td className="border-gray-light border-b-2 text-center">
-                          <div className="flex justify-between">
-                            <div className="flex w-20 justify-start gap-2">
-                              {opportunity?.hidden ? (
-                                <span className="badge bg-yellow-tint text-yellow">
-                                  <FaEyeSlash className="mr-1 text-sm" />
-                                  Hidden
-                                </span>
-                              ) : (
-                                <span className="badge bg-green-light text-green">
-                                  <FaEye className="mr-1 text-sm" />
-                                  Visible
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                          {opportunity?.hidden ? (
+                            <span className="badge bg-yellow-tint text-yellow w-20">
+                              Hidden
+                            </span>
+                          ) : (
+                            <span className="badge bg-green-light text-green w-20">
+                              Visible
+                            </span>
+                          )}
                         </td>
                       </tr>
                     ))}

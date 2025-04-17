@@ -8,7 +8,7 @@ export const Footer: React.FC<{
   tabIndex?: number;
 }> = ({ showSocialMediaLinks, tabIndex }) => {
   return (
-    <footer className="flex w-full items-center p-2 px-4">
+    <footer className="flex w-full items-center overflow-x-hidden p-2 px-4">
       <div className="flex grow flex-row gap-4">
         {/* LINKS */}
         <div className="flex flex-col gap-1 text-xs">

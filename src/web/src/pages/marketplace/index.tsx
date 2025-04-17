@@ -21,7 +21,7 @@ import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { COUNTRY_WW, THEME_BLUE } from "~/lib/constants";
+import { COUNTRY_CODE_WW, THEME_BLUE } from "~/lib/constants";
 import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
 
@@ -101,7 +101,7 @@ const Marketplace: NextPageWithLayout<{
       const country = lookups_countries.find(
         (x) => x.id == userProfile.countryId,
       );
-      const codeAlpha2 = country ? country.codeAlpha2 : COUNTRY_WW; // if not found, default to WW
+      const codeAlpha2 = country ? country.codeAlpha2 : COUNTRY_CODE_WW; // if not found, default to WW
       onFilterCountry(codeAlpha2);
     } else if (userCountrySelection) {
       onFilterCountry(userCountrySelection);

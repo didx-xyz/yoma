@@ -373,7 +373,7 @@ const Organisations: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Organisations</title>
+        <title>Yoma | 🏢 Organisations</title>
       </Head>
 
       <PageBackground className="h-[14.8rem] md:h-[18.4rem]" />
@@ -381,7 +381,7 @@ const Organisations: NextPageWithLayout<{
       <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
           <h3 className="mt-3 mb-6 flex items-center text-3xl font-semibold tracking-normal text-white md:mt-0 md:mb-9">
-            Organisations
+            🏢 Organisations
           </h3>
 
           {/* TABBED NAVIGATION */}

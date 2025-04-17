@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import type { Session } from "next-auth";
 import { useCallback, useEffect, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
@@ -17,10 +16,10 @@ import {
   type OpportunityType,
 } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
-import { getUserProfile } from "~/api/services/user";
 import SelectButtons from "../Common/SelectButtons";
 import { useAtomValue } from "jotai";
 import { currentLanguageAtom } from "~/lib/store";
+import type { UserProfile } from "~/api/models/user";
 
 export const OpportunityFilterVertical: React.FC<{
   searchFilter: OpportunitySearchFilter;
@@ -36,7 +35,7 @@ export const OpportunityFilterVertical: React.FC<{
   clearButtonText?: string;
   submitButtonText?: string;
   onClear?: () => void;
-  session: Session | null;
+  userProfile: UserProfile | null;
 }> = ({
   searchFilter,
   lookups_countries,
@@ -51,7 +50,7 @@ export const OpportunityFilterVertical: React.FC<{
   submitButtonText = "Submit",
   onClear,
   clearButtonText,
-  session,
+  userProfile,
 }) => {
   const currentLanguage = useAtomValue(currentLanguageAtom);
 
@@ -158,18 +157,16 @@ export const OpportunityFilterVertical: React.FC<{
 
     // default to user's country
     let countries = searchFilter?.countries;
-    if ((countries?.length ?? 0) == 0 && session) {
-      getUserProfile().then((data) => {
-        if (data.countryId) {
-          const countryLookup = lookups_countries.find(
-            (country) => country.id === data.countryId,
-          );
-          if (countryLookup) {
-            countries = [countryLookup.name];
-          }
-          setValue("countries", countries);
+    if ((countries?.length ?? 0) == 0 && userProfile) {
+      if (userProfile.countryId) {
+        const countryLookup = lookups_countries.find(
+          (country) => country.id === userProfile.countryId,
+        );
+        if (countryLookup) {
+          countries = [countryLookup.name];
         }
-      });
+        setValue("countries", countries);
+      }
     } else {
       setValue("countries", countries);
     }
@@ -189,7 +186,7 @@ export const OpportunityFilterVertical: React.FC<{
     }
   }, [
     searchFilter,
-    session,
+    userProfile,
     currentLanguage,
     setValue,
     lookups_countries,

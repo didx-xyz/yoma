@@ -448,11 +448,13 @@ const Stores: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Admin Marketplace Store Access Rules</title>
+        <title>Yoma | 🛒 Marketplace Store Access Rules</title>
       </Head>
+
       <PageBackground className="h-[14.8rem] md:h-[18.4rem]" />
 
       {isLoading && <Loading />}
+
       <InfoModal
         isOpen={infoModalVisible}
         onClose={() => setInfoModalVisible(false)}
@@ -460,7 +462,7 @@ const Stores: NextPageWithLayout<{
       <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
           <h3 className="mt-3 mb-6 flex items-center truncate text-3xl font-semibold tracking-normal text-white md:mt-0 md:mb-9">
-            Marketplace Store Access Rules
+            🛒 Marketplace Store Access Rules
           </h3>
 
           {/* TABBED NAVIGATION */}
@@ -500,7 +502,7 @@ const Stores: NextPageWithLayout<{
             <Link
               href={`/admin/stores?statuses=inactive`}
               role="tab"
-              className={`border-b-4 py-2 font-semibold whitespace-nowrap text-white ${
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
                 statuses === "inactive"
                   ? "border-orange"
                   : "hover:border-orange hover:text-gray"
@@ -516,7 +518,7 @@ const Stores: NextPageWithLayout<{
             <Link
               href={`/admin/stores?statuses=deleted`}
               role="tab"
-              className={`border-b-4 py-2 font-semibold whitespace-nowrap text-white ${
+              className={`border-b-4 py-2 whitespace-nowrap text-white ${
                 statuses === "deleted"
                   ? "border-orange"
                   : "hover:border-orange hover:text-gray"

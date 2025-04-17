@@ -35,7 +35,7 @@ export const SearchInput: React.FC<InputProps> = ({
       <div className="join w-full md:w-auto">
         <input
           type="search"
-          className={`input input-xs join-item !h-[38px] w-full border-0 !pl-4 placeholder-[#858585] focus:outline-0 ${heightOverride}`}
+          className={`input input-xs join-item !h-[38px] w-full rounded-l-lg border-0 !pl-4 placeholder-[#858585] focus:outline-0 md:w-60 ${heightOverride}`}
           placeholder={placeholder ?? "Search..."}
           autoComplete="off"
           value={searchInputValue ?? ""}
@@ -48,7 +48,7 @@ export const SearchInput: React.FC<InputProps> = ({
         <button
           type="submit"
           aria-label="Search"
-          className={`bg-theme justify-centerx !h-[38px] rounded-r-full border-0 p-3 text-white ${heightOverride} ${className}`}
+          className={`bg-theme justify-centerx !h-[38px] rounded-r-lg border-0 p-3 text-white ${heightOverride} ${className}`}
           disabled={
             !!searchInputValue &&
             !(searchInputValue.length >= 3 && searchInputValue.length <= 50)

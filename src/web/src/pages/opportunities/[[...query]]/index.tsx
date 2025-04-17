@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue } from "jotai";
 import type { GetStaticPaths, GetStaticProps } from "next";
-import { useSession } from "next-auth/react";
 import Head from "next/head";
 import { useRouter } from "next/router";
 import {
@@ -50,6 +49,10 @@ import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { Loading } from "~/components/Status/Loading";
 import {
+  COUNTRY_ID_KENYA,
+  COUNTRY_ID_MOZAMIQUE,
+  COUNTRY_ID_NIGERIA,
+  COUNTRY_ID_SOUTH_AFRICA,
   OPPORTUNITY_TYPES_EVENT,
   OPPORTUNITY_TYPES_LEARNING,
   OPPORTUNITY_TYPES_OTHER,
@@ -57,8 +60,10 @@ import {
   PAGE_SIZE,
   PAGE_SIZE_MINIMUM,
 } from "~/lib/constants";
-import { currentLanguageAtom } from "~/lib/store";
+import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
+import { useSession } from "next-auth/react";
+import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 
 // 👇 SSG
 // This page is statically generated at build time on server-side
@@ -307,7 +312,8 @@ const Opportunities: NextPageWithLayout<{
   lookups_timeIntervals,
 }) => {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { status: sessionStatus } = useSession();
+  const userProfile = useAtomValue(userProfileAtom);
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
   const queryClient = useQueryClient();
@@ -315,25 +321,27 @@ const Opportunities: NextPageWithLayout<{
   const [selectedCountry, setSelectedCountry] = useState<string | null>();
   const [selectedLanguage, setSelectedLanguage] = useState<string | null>();
 
+  const oppTypeDescriptions = [
+    "A learning opportunity is a self-paced online course that you can finish at your convenience.",
+    "Explore events to attend",
+    "Contribute to real-world projects with micro-tasks",
+  ];
+
+  //#region QUERIES
   const { data: lookups_countries } = useQuery({
-    queryKey: ["opportunities", "countries", session?.user?.id],
+    queryKey: ["opportunities", "countries", userProfile?.id],
     queryFn: async () => {
       const states = [PublishedState.Active, PublishedState.NotStarted];
-      if (session !== null) states.push(PublishedState.Expired);
+      if (userProfile !== null) states.push(PublishedState.Expired);
 
       return await getOpportunityCountries(states);
     },
   });
   const { data: lookups_languages } = useQuery({
-    queryKey: [
-      "opportunities",
-      "languages",
-      session?.user?.id,
-      currentLanguage,
-    ],
+    queryKey: ["opportunities", "languages", userProfile?.id, currentLanguage],
     queryFn: async () => {
       const states = [PublishedState.Active, PublishedState.NotStarted];
-      if (session !== null) states.push(PublishedState.Expired);
+      if (userProfile !== null) states.push(PublishedState.Expired);
 
       return await getOpportunityLanguages(states, currentLanguage);
     },
@@ -341,10 +349,67 @@ const Opportunities: NextPageWithLayout<{
   const lookups_publishedStates: SelectOption[] = [
     { value: "0", label: "Not started" },
     { value: "1", label: "Ongoing" },
-    ...(session ? [{ value: "2", label: "Expired / Upload Only" }] : []), // logged in users can see expired
+    ...(userProfile ? [{ value: "2", label: "Expired / Upload Only" }] : []), // logged in users can see expired
   ];
 
-  //#region memos for lookups
+  // this checks if the user is in one of the targeted countries (Nigeria, South Africa, Kenya, Mozamique)
+  const targetedCountryName = useMemo(() => {
+    // Ensure necessary data is available (still need lookups_countries to know if data is ready, though not used for name lookup)
+    if (!userProfile?.countryId) {
+      return null;
+    }
+
+    // Define target countries and their names
+    const targetCountries = [
+      { id: COUNTRY_ID_NIGERIA, name: "Nigeria" },
+      { id: COUNTRY_ID_SOUTH_AFRICA, name: "South Africa" },
+      { id: COUNTRY_ID_KENYA, name: "Kenya" },
+      { id: COUNTRY_ID_MOZAMIQUE, name: "Mozambique" },
+    ];
+
+    // Convert user's country ID to lowercase for comparison
+    const userCountryIdLower = userProfile.countryId.toLowerCase();
+
+    // Find the matching target country by comparing lowercase IDs
+    const matchedTarget = targetCountries.find(
+      (target) => target.id.toLowerCase() === userCountryIdLower,
+    );
+
+    // Return the hardcoded name if a match is found, otherwise null
+    return matchedTarget ? matchedTarget.name : null;
+  }, [userProfile?.countryId]);
+
+  // if the user is in one of the targeted countries (Nigeria, South Africa, Kenya, Mozamique)
+  // then fetch results for that country (carousel)
+  const {
+    data: opportunities_targeted_country,
+    isLoading: isLoading_opportunities_targeted_country,
+  } = useQuery({
+    queryKey: ["opportunities", "targeted_country", userProfile?.countryId],
+    queryFn: async () => {
+      if (!targetedCountryName || !userProfile?.countryId) return null;
+
+      return await searchOpportunities({
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MINIMUM,
+        categories: null,
+        countries: [userProfile.countryId],
+        languages: null,
+        types: null,
+        engagementTypes: null,
+        valueContains: null,
+        commitmentInterval: null,
+        mostViewed: null,
+        mostCompleted: false,
+        organizations: null,
+        zltoReward: null,
+        publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+        featured: null,
+      });
+    },
+    enabled: !!targetedCountryName,
+  });
+
   const countryOptions = useMemo(() => {
     if (!lookups_countries) return [];
     return lookups_countries.map((c) => ({
@@ -360,10 +425,11 @@ const Opportunities: NextPageWithLayout<{
       label: c.name,
     }));
   }, [lookups_languages]);
-  //#endregion memos for lookups
 
-  //#region filters
-  // get filter parameters from route
+  //#endregion QUERIES
+
+  //#region FILTERS
+  // get filter parameters from querystring
   const {
     query,
     page,
@@ -547,7 +613,7 @@ const Opportunities: NextPageWithLayout<{
                 [
                   PublishedState.Active,
                   PublishedState.NotStarted,
-                  ...(session ? [PublishedState.Expired] : []),
+                  ...(userProfile ? [PublishedState.Expired] : []),
                 ],
           types:
             types != undefined
@@ -631,9 +697,9 @@ const Opportunities: NextPageWithLayout<{
         lookups_countries !== undefined &&
         lookups_languages !== undefined, // only run query if search is executed and data is available
     });
-  //#endregion filters
+  //#endregion FILTERS
 
-  //#region functions
+  //#region FUNCTIONS
   const getSearchFilterAsQueryString = useCallback(
     (searchFilter: OpportunitySearchFilter) => {
       if (!searchFilter) return null;
@@ -763,9 +829,9 @@ const Opportunities: NextPageWithLayout<{
     },
     [router, getSearchFilterAsQueryString, setFilterFullWindowVisible],
   );
-  //#endregion functions
+  //#endregion FUNCTIONS
 
-  //#region events
+  //#region EVENTS
   const handlePagerChange = useCallback(
     (value: number) => {
       searchFilter.pageNumber = value;
@@ -825,11 +891,6 @@ const Opportunities: NextPageWithLayout<{
   const onSubmitFilter_Localization = useCallback(() => {
     if (!selectedCountry && !selectedLanguage) return;
 
-    // let filter: OpportunitySearchFilter = {
-    //   countries: [selectedCountry],
-    //   languages: [selectedLanguage],
-    // };
-
     let filter: any = {};
 
     if (selectedCountry) {
@@ -842,9 +903,9 @@ const Opportunities: NextPageWithLayout<{
 
     redirectWithSearchFilterParams(filter);
   }, [selectedCountry, selectedLanguage, redirectWithSearchFilterParams]);
-  //#endregion events
+  //#endregion EVENTS
 
-  //#region carousels
+  //#region CAROUSELS
   const fetchDataAndUpdateCache = useCallback(
     async (
       queryKey: string[],
@@ -1124,13 +1185,47 @@ const Opportunities: NextPageWithLayout<{
     },
     [opportunities_featured, fetchDataAndUpdateCache],
   );
-  //#endregion carousels
 
-  const oppTypeDescriptions = [
-    "A learning opportunity is a self-paced online course that you can finish at your convenience.",
-    "Explore events to attend",
-    "Contribute to real-world projects with micro-tasks",
-  ];
+  const loadDataOpportunitiesForTargetedCountry = useCallback(
+    async (startRow: number) => {
+      if (startRow > (opportunities_targeted_country?.totalCount ?? 0)) {
+        return {
+          items: [],
+          totalCount: 0,
+        };
+      }
+      if (!userProfile?.countryId) return null;
+
+      const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
+
+      return fetchDataAndUpdateCache(
+        ["opportunitiesForTargetedCountry", pageNumber.toString()],
+        {
+          pageNumber: pageNumber,
+          pageSize: PAGE_SIZE_MINIMUM,
+          categories: null,
+          countries: [userProfile.countryId],
+          languages: null,
+          types: null,
+          engagementTypes: null,
+          valueContains: null,
+          commitmentInterval: null,
+          mostViewed: null,
+          mostCompleted: null,
+          featured: null,
+          organizations: null,
+          zltoReward: null,
+          publishedStates: [PublishedState.Active, PublishedState.NotStarted],
+        },
+      );
+    },
+    [
+      opportunities_targeted_country,
+      userProfile?.countryId,
+      fetchDataAndUpdateCache,
+    ],
+  );
+  //#endregion CAROUSELS
 
   return (
     <>
@@ -1138,7 +1233,7 @@ const Opportunities: NextPageWithLayout<{
         <title>Yoma | 🏆 Opportunities</title>
       </Head>
 
-      <PageBackground className="h-[300px]" />
+      <PageBackground className="h-[310px]" />
       <FilterTab openFilter={setFilterFullWindowVisible} />
 
       {isSearchPerformed && isLoading && <Loading />}
@@ -1170,7 +1265,7 @@ const Opportunities: NextPageWithLayout<{
             onSubmit={(e) => onSubmitFilter(e)}
             onClear={onClearFilter}
             clearButtonText="Clear All Filters"
-            session={session}
+            userProfile={userProfile}
           />
         )}
       </CustomModal>
@@ -1234,75 +1329,113 @@ const Opportunities: NextPageWithLayout<{
             />
           </div>
 
-          {/* divider */}
+          {/* DIVIDER */}
           <div className="divider !bg-gray" />
 
           {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
           {!isSearchPerformed && (
             <>
               {/* COUNTRY LOCALIZATION */}
-              <div className="hero bg-green mb-8 rounded-lg bg-[url('/images/world-map-transparent.png')] bg-[size:800px] bg-center bg-no-repeat py-8 text-white">
-                <div className="hero-content text-center">
-                  <div className="flex flex-col items-center justify-center gap-4">
-                    <h1 className="text-xl font-bold md:text-2xl">
-                      🚀 Explore Opportunities Near You! 🗺️
-                    </h1>
-                    <p>
-                      Find opportunities based on your location and language
-                      preferences.
-                    </p>
-                    <div className="flex flex-row gap-4">
-                      <Select
-                        instanceId={"country"}
-                        classNames={{
-                          control: () => "input input-xs w-[200px]",
-                        }}
-                        options={countryOptions}
-                        onChange={(val) => setSelectedCountry(val?.value ?? "")}
-                        // value={countryOptions?.find(
-                        //   (c) => c.value === selectedCountry,
-                        // )}
-                        placeholder="Country"
-                        isClearable={true}
-                        inputId="input_country" // e2e
-                        // fix menu z-index issue
-                        menuPortalTarget={myRef.current!}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                      />
+              {sessionStatus === "loading" ||
+              isLoading_opportunities_targeted_country ? (
+                <LoadingSkeleton className="!h-[357.594px]" />
+              ) : (
+                <>
+                  {/* COUNTRY/LANGUAGE SELECTION (ANONYMOUS USERS OR USER NOT IN TARGETED COUNTRY) */}
+                  {sessionStatus === "unauthenticated" && (
+                    <div className="bg-green mt-4 mb-8 rounded-lg bg-[url('/images/world-map-transparent.png')] bg-[size:800px] bg-center bg-no-repeat p-4 text-white md:py-8">
+                      <div className="text-center">
+                        <div className="flex flex-col items-center justify-center gap-4">
+                          <h1 className="text-sm font-bold md:text-2xl">
+                            🚀 Explore Opportunities Near You! 🗺️
+                          </h1>
+                          <p className="text-xs md:text-base">
+                            Find opportunities based on your location and
+                            language preferences.
+                          </p>
+                          <div className="flex flex-row gap-4">
+                            <Select
+                              instanceId={"country"}
+                              classNames={{
+                                control: () =>
+                                  "input input-xs md:w-[200px] w-full",
+                              }}
+                              options={countryOptions}
+                              onChange={(val) =>
+                                setSelectedCountry(val?.value ?? "")
+                              }
+                              placeholder="Country"
+                              isClearable={true}
+                              inputId="input_country" // e2e
+                              // fix menu z-index issue
+                              menuPortalTarget={myRef.current!}
+                              styles={{
+                                menuPortal: (base) => ({
+                                  ...base,
+                                  zIndex: 9999,
+                                }),
+                              }}
+                            />
 
-                      <Select
-                        instanceId={"language"}
-                        classNames={{
-                          control: () => "input input-xs w-[200px]",
-                        }}
-                        options={languageOptions}
-                        onChange={(val) =>
-                          setSelectedLanguage(val?.value ?? "")
-                        }
-                        // value={countryOptions?.find(
-                        //   (c) => c.value === selectedCountry,
-                        // )}
-                        placeholder="Language"
-                        isClearable={true}
-                        inputId="input_language" // e2e
-                        // fix menu z-index issue
-                        menuPortalTarget={myRef.current!}
-                        styles={{
-                          menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                        }}
-                      />
+                            <Select
+                              instanceId={"language"}
+                              classNames={{
+                                control: () =>
+                                  "input input-xs md:w-[200px] w-full",
+                              }}
+                              options={languageOptions}
+                              onChange={(val) =>
+                                setSelectedLanguage(val?.value ?? "")
+                              }
+                              placeholder="Language"
+                              isClearable={true}
+                              inputId="input_language" // e2e
+                              // fix menu z-index issue
+                              menuPortalTarget={myRef.current!}
+                              styles={{
+                                menuPortal: (base) => ({
+                                  ...base,
+                                  zIndex: 9999,
+                                }),
+                              }}
+                            />
+                          </div>
+                          <button
+                            className="btn btn-xs md:btn-md btn-warning mt-2 w-36 shadow-none"
+                            onClick={onSubmitFilter_Localization}
+                          >
+                            Let&apos;s Go!
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                    <button
-                      className="btn btn-warning mt-2 w-36 shadow-none"
-                      onClick={onSubmitFilter_Localization}
-                    >
-                      Let&apos;s Go!
-                    </button>
-                  </div>
-                </div>
-              </div>
+                  )}
+
+                  {/* OPPORTUNITIES FOR TARGETED COUNTRY */}
+                  {sessionStatus === "authenticated" && targetedCountryName && (
+                    <div className="!h-[357.594px]">
+                      {(opportunities_targeted_country?.totalCount ?? 0) >
+                        0 && (
+                        <CustomCarousel
+                          id={`opportunities_targeted_country`}
+                          title={`Opportunities in ${targetedCountryName} 🗺️`}
+                          description="Explore opportunities in your country."
+                          viewAllUrl={`/opportunities?countries=${targetedCountryName}`}
+                          data={opportunities_targeted_country!.items}
+                          loadData={loadDataOpportunitiesForTargetedCountry}
+                          totalAll={opportunities_targeted_country!.totalCount!}
+                          renderSlide={(item, index) => (
+                            <OpportunityPublicSmallComponent
+                              key={`opportunities_targeted_country_${item.id}_${index}`}
+                              data={item}
+                            />
+                          )}
+                        />
+                      )}
+                    </div>
+                  )}
+                </>
+              )}
 
               {/* FEATURED */}
               {(opportunities_featured?.totalCount ?? 0) > 0 && (

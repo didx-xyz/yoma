@@ -42,6 +42,7 @@ import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
+import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -423,9 +424,10 @@ const Links: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | Admin Links</title>
+        <title>Yoma | 🔗 Links</title>
       </Head>
-      <PageBackground className="h-[14.8rem] md:h-[18.4rem]" />
+
+      <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
 
       {isLoading && <Loading />}
 
@@ -578,8 +580,8 @@ const Links: NextPageWithLayout<{
 
       <div className="z-10 container mt-14 max-w-7xl px-2 py-8 md:mt-[7rem]">
         <div className="flex flex-col gap-4 py-4">
-          <h3 className="mt-3 mb-6 flex items-center text-3xl font-semibold tracking-normal text-white md:mt-0 md:mb-9">
-            Links
+          <h3 className="mt-3 mb-6 flex items-center text-xl font-semibold tracking-normal whitespace-nowrap text-white md:mt-0 md:mb-9 md:text-3xl">
+            🔗 Links <LimitedFunctionalityBadge />
           </h3>
 
           {/* TABBED NAVIGATION */}
