@@ -289,7 +289,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
 
         // send verify email if required; same result as PutUsersExecuteActionsEmailByIdAsync["VERIFY_EMAIL"]
         if (_environmentProvider.Environment != Domain.Core.Environment.Local && request.VerifyEmail)
-          await usersApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString(), _appSettings.YomaWebClientId); 
+          await usersApi.PutUsersSendVerifyEmailByUserIdAsync(_keycloakAuthenticationOptions.Realm, request.Id.ToString(), _appSettings.YomaWebClientId);
       }
       catch (Exception ex)
       {
