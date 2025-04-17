@@ -182,7 +182,7 @@ public class TwilioSmsSenderServiceProvider extends FullSmsSenderAbstractService
      */
     private void checkMessageDeliveryStatus(String messageSid) throws MessageSendException {
         final int MAX_RETRY = 3;
-        final int RETRY_DELAY_MS = 2000; // 2 seconds between checks
+        final int RETRY_DELAY_MS = 3000; // 3 seconds between checks
 
         for (int attempt = 0; attempt < MAX_RETRY; attempt++) {
             try {
@@ -200,8 +200,12 @@ public class TwilioSmsSenderServiceProvider extends FullSmsSenderAbstractService
                 // Check message status
                 switch (status) {
                     case "delivered":
-                        // Only consider delivered as successful state
+                        // Consider delivered as successful state
                         logger.info("WhatsApp message " + messageSid + " successfully delivered");
+                        return;
+                    case "read":
+                        // Message was read by recipient, consider as successful state
+                        logger.info("WhatsApp message " + messageSid + " was read by recipient");
                         return;
                     case "sent":
                     case "queued":
