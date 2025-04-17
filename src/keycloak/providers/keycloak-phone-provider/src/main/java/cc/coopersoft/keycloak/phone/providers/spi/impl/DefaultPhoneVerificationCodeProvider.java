@@ -178,6 +178,9 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
 
         if (updateUserPhoneNumber) {
 
+            // Set phoneNumberVerified to true for the current user
+            user.setSingleAttribute("phoneNumberVerified", "true");
+
             session.users()
                     .searchForUserByUserAttributeStream(session.getContext().getRealm(), "phoneNumber", phoneNumber)
                     .filter(u -> !u.getId().equals(user.getId()))
