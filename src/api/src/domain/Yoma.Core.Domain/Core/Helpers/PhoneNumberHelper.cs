@@ -22,7 +22,7 @@ namespace Yoma.Core.Domain.Core.Helpers
       try
       {
         // Use "ZZ" to force international context and prevent changes
-        var number = _phoneUtil.Parse(input, "ZZ");
+        var number = _phoneUtil.Parse(input, null);
         return _phoneUtil.IsValidNumber(number);
       }
       catch (NumberParseException)
