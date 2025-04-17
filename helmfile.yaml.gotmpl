@@ -9,7 +9,7 @@ environments:
         ddInjectEnabled: false
         ddProfilingEnabled: false
         postgresEnabled: true
-        redisEnabled: true
+        valkeyEnabled: true
   stage:
     values:
       - namespace: yoma-v3-stage
@@ -17,7 +17,7 @@ environments:
         ddInjectEnabled: true
         ddProfilingEnabled: false
         postgresEnabled: false
-        redisEnabled: false
+        valkeyEnabled: false
   prod:
     values:
       - namespace: yoma-v3-prod
@@ -25,7 +25,7 @@ environments:
         ddInjectEnabled: true
         ddProfilingEnabled: false
         postgresEnabled: false
-        redisEnabled: false
+        valkeyEnabled: false
 ---
 repositories:
 {{ if eq .Environment.Name "local" }}
@@ -73,13 +73,17 @@ releases:
     installed: {{ .Values.postgresEnabled }}
     set:
       - name: fullnameOverride
-        value: postgresql-keycloak
+        value: postgres-keycloak
       - name: auth.username
         value: keycloak
       - name: auth.database
         value: keycloak
       - name: primary.resourcesPreset
         value: medium
+      - name: primary.persistentVolumeClaimRetentionPolicy.enabled
+        value: true
+      - name: primary.persistentVolumeClaimRetentionPolicy.whenDeleted
+        value: Delete
     secrets:
       - ./helm/postgresql-keycloak/conf/{{ .Environment.Name }}/secrets.yaml
 
@@ -100,6 +104,10 @@ releases:
         value: yoma-dev
       - name: primary.resourcesPreset
         value: medium
+      - name: primary.persistentVolumeClaimRetentionPolicy.enabled
+        value: true
+      - name: primary.persistentVolumeClaimRetentionPolicy.whenDeleted
+        value: Delete
       # - name: primary.extendedConfiguration
       #   value: |
       #     log_statement = 'all'
@@ -107,23 +115,26 @@ releases:
     secrets:
       - ./helm/postgresql-yoma/conf/{{ .Environment.Name }}/secrets.yaml
 
-  - name: redis
+  - name: valkey
     labels:
-      app: redis
+      app: valkey
     namespace: {{ .Values.namespace }}
-    # https://github.com/bitnami/charts/tree/main/bitnami/redis
-    chart: oci://registry-1.docker.io/bitnamicharts/redis
-    version: 20.12.0
-    installed: {{ .Values.redisEnabled }}
+    # https://github.com/bitnami/charts/tree/main/bitnami/valkey
+    chart: oci://registry-1.docker.io/bitnamicharts/valkey
+    version: 3.0.1
+    installed: {{ .Values.valkeyEnabled }}
     values:
-      - fullnameOverride: redis
+      - fullnameOverride: valkey
         architecture: standalone
         auth:
           enabled: false
-        master:
-          count: 1
+        primary:
+          replicaCount: 1
           persistence:
             enabled: false
+          persistentVolumeClaimRetentionPolicy:
+            enabled: true
+            whenDeleted: Delete
         replica:
           replicaCount: 0
 

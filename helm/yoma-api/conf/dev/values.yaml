@@ -55,7 +55,7 @@ volumeMounts:
 
 initContainers:
   - name: check-postgres
-    image: postgres:16
+    image: postgres:17-alpine
     imagePullPolicy: IfNotPresent
     command:
       - sh
@@ -70,15 +70,15 @@ initContainers:
     env:
       - name: PGHOST
         value: &databaseName postgres-yoma
-  - name: check-redis
-    image: redis:7
+  - name: check-valkey
+    image: valkey/valkey:8-alpine
     imagePullPolicy: IfNotPresent
     command:
       - sh
       - -c
       - |
-        until redis-cli -h redis-master -p 6379 ping; do
-          echo "Waiting for Redis to be ready..."
+        until valkey-cli -h valkey-primary -p 6379 ping; do
+          echo "Waiting for Valkey to be ready..."
           sleep 1
         done
 
@@ -88,7 +88,7 @@ postInstallHook:
     repository: postgres
     pullPolicy: Always
     # Overrides the image tag whose default is the chart appVersion.
-    tag: "16.1"
+    tag: 17-alpine
   command:
     - /bin/bash
     - -c
