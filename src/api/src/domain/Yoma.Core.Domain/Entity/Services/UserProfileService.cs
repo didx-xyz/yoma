@@ -142,10 +142,12 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         Username = request.Email ?? request.PhoneNumber,
         Email = request.Email?.ToLower(),
+        EmailConfirmed = string.IsNullOrEmpty(request.Email) ? null : false,
         FirstName = request.FirstName.TitleCase(),
         Surname = request.Surname.TitleCase(),
         DisplayName = request.DisplayName,
         PhoneNumber = request.PhoneNumber,
+        PhoneNumberConfirmed = string.IsNullOrEmpty(request.PhoneNumber) ? null : false,
         CountryId = countryId,
         EducationId = request.EducationId,
         GenderId = request.GenderId,
@@ -228,6 +230,10 @@ namespace Yoma.Core.Domain.Entity.Services
       result.EducationId = request.EducationId;
       result.GenderId = request.GenderId;
       result.DateOfBirth = request.DateOfBirth?.RemoveTime();
+
+      // see _identityProviderClient.UpdateUser — similar behavior, but this relies on DB state and will sync from the identity provider on next login.
+      result.EmailConfirmed = emailUpdated ? false : string.IsNullOrEmpty(result.Email) ? null : result.EmailConfirmed ?? false;
+      result.PhoneNumberConfirmed = string.IsNullOrEmpty(result.PhoneNumber) ? null : result.PhoneNumberConfirmed ?? false;
 
       //failsafe
       if (string.IsNullOrEmpty(result.Email) && string.IsNullOrEmpty(result.PhoneNumber))
