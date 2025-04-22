@@ -1430,8 +1430,14 @@ namespace Yoma.Core.Domain.Entity.Services
             //send notification to super administrators
             var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
             recipients = superAdmins?.Select(o => new NotificationRecipient
-            { Username = o.Username, PhoneNumber = o.PhoneNumber, PhoneNumberConfirmed = o.PhoneNumberVerified,
-              Email = o.Email, EmailConfirmed = o.EmailVerified, DisplayName = o.ToDisplayName() ?? o.Username }).ToList();
+            {
+              Username = o.Username,
+              PhoneNumber = o.PhoneNumber,
+              PhoneNumberConfirmed = o.PhoneNumberVerified,
+              Email = o.Email,
+              EmailConfirmed = o.EmailVerified,
+              DisplayName = o.ToDisplayName() ?? o.Username
+            }).ToList();
 
             dataOrg.Comment = organization.CommentApproval;
             dataOrg.URL = _notificationURLFactory.OrganizationApprovalItemURL(type, organization.Id);
@@ -1441,8 +1447,14 @@ namespace Yoma.Core.Domain.Entity.Services
           case NotificationType.Organization_Approval_Declined:
             //send notification to organization administrators
             recipients = organization.Administrators?.Select(o => new NotificationRecipient
-            { Username = o.Username, PhoneNumber = o.PhoneNumber, PhoneNumberConfirmed = o.PhoneNumberConfirmed,
-              Email = o.Email, EmailConfirmed = o.EmailConfirmed, DisplayName = o.DisplayName }).ToList();
+            {
+              Username = o.Username,
+              PhoneNumber = o.PhoneNumber,
+              PhoneNumberConfirmed = o.PhoneNumberConfirmed,
+              Email = o.Email,
+              EmailConfirmed = o.EmailConfirmed,
+              DisplayName = o.DisplayName
+            }).ToList();
 
             dataOrg.Comment = organization.CommentApproval;
             dataOrg.URL = _notificationURLFactory.OrganizationApprovalItemURL(type, organization.Id);

@@ -55,7 +55,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
         Id = value.Id,
         Username = value.Username,
         Email = value.Email,
-        EmailConfirmed = value.EmailConfirmed,  
+        EmailConfirmed = value.EmailConfirmed,
         FirstName = value.FirstName,
         Surname = value.Surname,
         DisplayName = value.DisplayName ?? value.Username,

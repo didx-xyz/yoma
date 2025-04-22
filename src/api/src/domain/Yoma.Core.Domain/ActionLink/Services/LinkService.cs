@@ -635,7 +635,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           return new NotificationRecipient
           {
             Email = isEmail ? item : null,
-            EmailConfirmed = isEmail ? true: null, //assume confirmed for action link verify distribution
+            EmailConfirmed = isEmail ? true : null, //assume confirmed for action link verify distribution
             PhoneNumber = isEmail ? null : item,
             PhoneNumberConfirmed = isEmail ? null : true, //assume confirmed for action link verify distribution
             Username = item
@@ -666,8 +666,14 @@ namespace Yoma.Core.Domain.ActionLink.Services
             //send notification to super administrators
             var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
             recipients = superAdmins?.Select(o => new NotificationRecipient
-            { Username = o.Username, PhoneNumber = o.PhoneNumber, PhoneNumberConfirmed = o.PhoneNumberVerified,
-              Email = o.Email, EmailConfirmed = o.EmailVerified, DisplayName = o.ToDisplayName() ?? o.Username }).ToList();
+            {
+              Username = o.Username,
+              PhoneNumber = o.PhoneNumber,
+              PhoneNumberConfirmed = o.PhoneNumberVerified,
+              Email = o.Email,
+              EmailConfirmed = o.EmailVerified,
+              DisplayName = o.ToDisplayName() ?? o.Username
+            }).ToList();
 
             dataLink.Comment = link.CommentApproval;
             dataLink.URL = _notificationURLFactory.ActionLinkVerifyApprovalItemUrl(type, null);
@@ -687,8 +693,14 @@ namespace Yoma.Core.Domain.ActionLink.Services
                 var organization = _organizationService.GetById(link.OpportunityOrganizationId.Value, true, false, false);
 
                 recipients = organization.Administrators?.Select(o => new NotificationRecipient
-                { Username = o.Username, PhoneNumber = o.PhoneNumber, PhoneNumberConfirmed = o.PhoneNumberConfirmed,
-                  Email = o.Email, EmailConfirmed = o.EmailConfirmed, DisplayName = o.DisplayName }).ToList();
+                {
+                  Username = o.Username,
+                  PhoneNumber = o.PhoneNumber,
+                  PhoneNumberConfirmed = o.PhoneNumberConfirmed,
+                  Email = o.Email,
+                  EmailConfirmed = o.EmailConfirmed,
+                  DisplayName = o.DisplayName
+                }).ToList();
 
                 dataLink.Comment = link.CommentApproval;
                 dataLink.URL = _notificationURLFactory.ActionLinkVerifyApprovalItemUrl(type, organization.Id);
