@@ -294,7 +294,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           foreach (var userGroup in usersByCountry)
           {
             var countryId = userGroup.Key;
-            var countryIds = new List<Guid> { countryId }.Union(new List<Guid> { countryWorldwideId }).ToList();
+            var countryIds = new List<Guid> { countryId }.Union([countryWorldwideId]).ToList();
 
             // filter opportunities based on the user's country or worldwide, defaulting to worldwide if no countries are set
             var countryOpportunities = items
@@ -330,7 +330,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
               {
                 Username = u.Username,
                 PhoneNumber = u.PhoneNumber,
+                PhoneNumberConfirmed = u.PhoneNumberConfirmed,
                 Email = u.Email,
+                EmailConfirmed = u.EmailConfirmed,
                 DisplayName = u.DisplayName
               }).ToList();
 
@@ -343,7 +345,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
               {
                 Username = u.Username,
                 PhoneNumber = u.PhoneNumber,
+                PhoneNumberConfirmed = u.PhoneNumberConfirmed,
                 Email = u.Email,
+                EmailConfirmed = u.EmailConfirmed,
                 DisplayName = u.DisplayName
               })]);
             }
@@ -376,7 +380,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           var recipients = new List<NotificationRecipient>
                         {
-                            new() { Username = group.Key.Username, PhoneNumber = group.Key.PhoneNumber, Email = group.Key.Email, DisplayName = group.Key.DisplayName }
+                            new() { Username = group.Key.Username, PhoneNumber = group.Key.PhoneNumber, PhoneNumberConfirmed = group.Key.PhoneNumberConfirmed,
+                              Email = group.Key.Email, EmailConfirmed = group.Key.EmailConfirmed, DisplayName = group.Key.DisplayName }
                         };
 
           var data = new NotificationOpportunityExpiration

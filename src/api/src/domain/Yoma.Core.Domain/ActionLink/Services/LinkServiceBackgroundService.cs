@@ -166,7 +166,15 @@ namespace Yoma.Core.Domain.ActionLink.Services
                   //send notification to organization administrators
                   var organization = _organizationService.GetById(item.OpportunityOrganizationId.Value, true, false, false);
 
-                  recipients = organization.Administrators?.Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.DisplayName }).ToList();
+                  recipients = organization.Administrators?.Select(o => new NotificationRecipient
+                  {
+                    Username = o.Username,
+                    PhoneNumber = o.PhoneNumber,
+                    PhoneNumberConfirmed = o.PhoneNumberConfirmed,
+                    Email = o.Email,
+                    EmailConfirmed = o.EmailConfirmed,
+                    DisplayName = o.DisplayName
+                  }).ToList();
 
                   dataLink.Comment = item.CommentApproval;
                   dataLink.URL = _notificationURLFactory.ActionLinkVerifyApprovalItemUrl(notificationType, organization.Id);

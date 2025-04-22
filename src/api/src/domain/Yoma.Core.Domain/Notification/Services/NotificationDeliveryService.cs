@@ -44,8 +44,9 @@ namespace Yoma.Core.Domain.Notification.Services
       recipients = _notificationPreferenceFilterService.FilterRecipients(type, recipients);
       if (recipients == null || recipients.Count == 0) return;
 
-      var emailRecipients = recipients.Where(r => !string.IsNullOrEmpty(r.Email)).ToList();
-      var messageRecipients = recipients.Except(emailRecipients).ToList();
+      // only send to recipients with confirmed email or phone number; others are silently ignored.
+      var emailRecipients = recipients.Where(r => !string.IsNullOrWhiteSpace(r.Email) && r.EmailConfirmed == true).ToList();
+      var messageRecipients = recipients.Except(emailRecipients).Where(r => !string.IsNullOrWhiteSpace(r.PhoneNumber) && r.PhoneNumberConfirmed == true).ToList();
 
       // email notifications
       if (Supported(type, MessageType.Email) && emailRecipients.Count > 0)
@@ -82,24 +83,21 @@ namespace Yoma.Core.Domain.Notification.Services
       if (recipientDataGroups.Count == 0) return;
 
       var emailRecipientGroups = recipientDataGroups
-          .SelectMany(group => new[]
-          {
-          (
-              Recipients: group.Recipients.Where(r => !string.IsNullOrEmpty(r.Email)).ToList(),
-              group.Data
-          )
-            })
+          .Select(group => (
+              Recipients: group.Recipients
+                  .Where(r => !string.IsNullOrWhiteSpace(r.Email) && r.EmailConfirmed == true)
+                  .ToList(),
+              group.Data))
           .Where(group => group.Recipients.Count > 0)
           .ToList();
 
       var messageRecipientGroups = recipientDataGroups
-          .SelectMany(group => new[]
-          {
-          (
-              Recipients: group.Recipients.Where(r => string.IsNullOrEmpty(r.Email)).ToList(),
-              group.Data
-          )
-          })
+          .Select(group => (
+              Recipients: group.Recipients
+                  .Except(emailRecipientGroups.SelectMany(g => g.Recipients))
+                  .Where(r => !string.IsNullOrWhiteSpace(r.PhoneNumber) && r.PhoneNumberConfirmed == true)
+                  .ToList(),
+              group.Data))
           .Where(group => group.Recipients.Count > 0)
           .ToList();
 

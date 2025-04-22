@@ -118,7 +118,8 @@ namespace Yoma.Core.Domain.Entity.Services
             {
               var recipients = new List<NotificationRecipient>
                         {
-                            new() { Username = group.Key.Username, PhoneNumber = group.Key.PhoneNumber, Email = group.Key.Email, DisplayName = group.Key.DisplayName }
+                            new() { Username = group.Key.Username, PhoneNumber = group.Key.PhoneNumber, PhoneNumberConfirmed = group.Key.PhoneNumberConfirmed,
+                              Email = group.Key.Email, EmailConfirmed = group.Key.EmailConfirmed, DisplayName = group.Key.DisplayName }
                         };
 
               var data = new NotificationOrganizationApproval

@@ -2001,7 +2001,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           case NotificationType.Opportunity_Posted_Admin:
             var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
-            recipients = superAdmins?.Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.ToDisplayName() ?? o.Username }).ToList();
+            recipients = superAdmins?.Select(o => new NotificationRecipient
+            {
+              Username = o.Username,
+              PhoneNumber = o.PhoneNumber,
+              PhoneNumberConfirmed = o.PhoneNumberVerified,
+              Email = o.Email,
+              EmailConfirmed = o.EmailVerified,
+              DisplayName = o.ToDisplayName() ?? o.Username
+            }).ToList();
 
             break;
 
