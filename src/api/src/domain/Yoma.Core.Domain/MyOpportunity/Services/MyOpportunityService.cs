@@ -1548,7 +1548,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //used by notifications
       myOpportunity.Username = user.Username;
       myOpportunity.UserPhoneNumber = user.PhoneNumber;
+      myOpportunity.UserPhoneNumberConfirmed = user.PhoneNumberConfirmed;
       myOpportunity.UserEmail = user.Email;
+      myOpportunity.UserEmailConfirmed = user.EmailConfirmed;
       myOpportunity.UserDisplayName = user.DisplayName ?? user.Username;
       myOpportunity.OpportunityTitle = opportunity.Title;
       myOpportunity.OrganizationId = opportunity.OrganizationId;
@@ -1575,10 +1577,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           NotificationType.Opportunity_Verification_Rejected or
           NotificationType.Opportunity_Verification_Completed or
           NotificationType.Opportunity_Verification_Pending =>
-              [new() { Username = myOpportunity.Username, PhoneNumber = myOpportunity.UserPhoneNumber, Email = myOpportunity.UserEmail, DisplayName = myOpportunity.UserDisplayName }],
+              [new() { Username = myOpportunity.Username, PhoneNumber = myOpportunity.UserPhoneNumber, PhoneNumberConfirmed = myOpportunity.UserPhoneNumberConfirmed,
+                Email = myOpportunity.UserEmail, EmailConfirmed = myOpportunity.UserEmailConfirmed, DisplayName = myOpportunity.UserDisplayName }],
 
           NotificationType.Opportunity_Verification_Pending_Admin =>
-              [.. _organizationService.ListAdmins(myOpportunity.OrganizationId, false, false).Select(o => new NotificationRecipient { Username = o.Username, PhoneNumber = o.PhoneNumber, Email = o.Email, DisplayName = o.DisplayName })],
+              [.. _organizationService.ListAdmins(myOpportunity.OrganizationId, false, false).Select(o => new NotificationRecipient
+              { Username = o.Username, PhoneNumber = o.PhoneNumber, PhoneNumberConfirmed = o.PhoneNumberConfirmed,
+                Email = o.Email, EmailConfirmed = o.EmailConfirmed, DisplayName = o.DisplayName })],
 
           _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported"),
         };

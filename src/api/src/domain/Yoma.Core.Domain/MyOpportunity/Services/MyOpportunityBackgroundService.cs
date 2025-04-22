@@ -102,7 +102,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           items = await _myOpportunityRepository.Update(items);
 
-          var groupedMyOpportunities = items.GroupBy(item => new { item.Username, item.UserEmail, item.UserPhoneNumber, item.UserDisplayName });
+          var groupedMyOpportunities = items.GroupBy(item => new
+            { item.Username, item.UserEmail, item.UserEmailConfirmed, item.UserPhoneNumber, item.UserPhoneNumberConfirmed, item.UserDisplayName });
 
           var notificationType = NotificationType.Opportunity_Verification_Rejected;
           foreach (var group in groupedMyOpportunities)
@@ -111,7 +112,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             {
               var recipients = new List<NotificationRecipient>
                 {
-                  new() { Username = group.Key.Username, PhoneNumber = group.Key.UserPhoneNumber, Email = group.Key.UserEmail, DisplayName = group.Key.UserDisplayName }
+                  new() { Username = group.Key.Username, PhoneNumber = group.Key.UserPhoneNumber, PhoneNumberConfirmed = group.Key.UserPhoneNumberConfirmed,
+                    Email = group.Key.UserEmail, EmailConfirmed = group.Key.UserEmailConfirmed, DisplayName = group.Key.UserDisplayName }
                 };
 
               var data = new NotificationOpportunityVerification

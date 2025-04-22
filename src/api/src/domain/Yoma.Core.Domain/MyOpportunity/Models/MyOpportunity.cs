@@ -15,7 +15,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public string? UserEmail { get; set; }
 
+    public bool? UserEmailConfirmed { get; set; }
+
     public string? UserPhoneNumber { get; set; }
+
+    public bool? UserPhoneNumberConfirmed { get; set; }
 
     public string UserDisplayName { get; set; }
 

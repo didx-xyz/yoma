@@ -55,10 +55,12 @@ namespace Yoma.Core.Domain.Entity.Extensions
         Id = value.Id,
         Username = value.Username,
         Email = value.Email,
+        EmailConfirmed = value.EmailConfirmed,  
         FirstName = value.FirstName,
         Surname = value.Surname,
         DisplayName = value.DisplayName ?? value.Username,
         PhoneNumber = value.PhoneNumber,
+        PhoneNumberConfirmed = value.PhoneNumberConfirmed,
         CountryId = value.CountryId
       };
     }
