@@ -46,13 +46,13 @@ namespace Yoma.Core.Domain.Core.Extensions
     /// </summary>
     /// <param name="input"></param>
     /// <returns></returns>
-    public static bool EqualsInvariantCultureIgnoreCase(this string input, string comparate)
+    public static bool EqualsInvariantCultureIgnoreCase(this string input, string compareTo)
     {
       ArgumentNullException.ThrowIfNull(input, nameof(input));
 
-      ArgumentNullException.ThrowIfNull(comparate, nameof(comparate));
+      ArgumentNullException.ThrowIfNull(compareTo, nameof(compareTo));
 
-      return string.Equals(input, comparate, StringComparison.InvariantCultureIgnoreCase);
+      return string.Equals(input, compareTo, StringComparison.InvariantCultureIgnoreCase);
     }
 
     /// <summary>
@@ -114,7 +114,7 @@ namespace Yoma.Core.Domain.Core.Extensions
       var asciiOnly = stringBuilder.ToString().Normalize(NormalizationForm.FormC);
 
       // remove all non-alphanumeric characters
-      var result = NonAplhaNumberic().Replace(asciiOnly, string.Empty);
+      var result = NonAlphaNumeric().Replace(asciiOnly, string.Empty);
       return result.Trim(); // remove leading and trailing spaces
     }
 
@@ -149,7 +149,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     private static partial Regex RegexInitials();
 
     [GeneratedRegex("[^a-zA-Z0-9 ]")] // include a space in the regex pattern
-    private static partial Regex NonAplhaNumberic();
+    private static partial Regex NonAlphaNumeric();
 
     [GeneratedRegex(@"\*")]
     private static partial Regex MarkdownAsterisks();

@@ -180,7 +180,7 @@ namespace Yoma.Core.Domain.Entity.Services
       }
       catch
       {
-        //rollback user createtion in keycloak
+        //rollback user creation in keycloak
         if (result.ExternalId.HasValue)
           try
           {
