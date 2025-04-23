@@ -28,9 +28,8 @@ namespace Yoma.Core.Domain.Notification.Models
 
       return new Dictionary<string, string>
       {
-        { "1", RecipientDisplayName },
-        { "2", SubjectSuffix },
-        { "3", formattedUrl }
+        { "1", SubjectSuffix },
+        { "2", formattedUrl }
       };
     }
 
