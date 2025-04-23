@@ -7,7 +7,7 @@ using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
-using Yoma.Core.Domain.Core.Helpers;
+using Yoma.Core.Domain.Core.Helpers;s
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Notification;
 using Yoma.Core.Domain.Notification.Interfaces;
@@ -2008,7 +2008,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
               PhoneNumberConfirmed = o.PhoneNumberVerified,
               Email = o.Email,
               EmailConfirmed = o.EmailVerified,
-              DisplayName = o.ToDisplayName() 
+              DisplayName = o.ToDisplayName()
             }).ToList();
 
             break;
