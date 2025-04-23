@@ -70,7 +70,7 @@ namespace Yoma.Core.Infrastructure.Twilio {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Yoma{2} - New opportunities just dropped! Check it out: {3}.
+        ///   Looks up a localized string similar to Yoma{2} - New opportunities are available. Check it out: {3}.
         /// </summary>
         internal static string Opportunity_Published {
             get {
@@ -79,7 +79,7 @@ namespace Yoma.Core.Infrastructure.Twilio {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Yoma{2} - Your submission has been approved! View your YoID: {3}.
+        ///   Looks up a localized string similar to Yoma{2} - Your submission has been approved. View your YoID: {3}.
         /// </summary>
         internal static string Opportunity_Verification_Completed {
             get {
@@ -88,7 +88,16 @@ namespace Yoma.Core.Infrastructure.Twilio {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Yoma{2} - Your submission wasn&apos;t approved. Please try again: {3}.
+        ///   Looks up a localized string similar to Yoma{2} - Your submission is under review. View your YoID: {3}.
+        /// </summary>
+        internal static string Opportunity_Verification_Pending {
+            get {
+                return ResourceManager.GetString("Opportunity_Verification_Pending", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Yoma{2} - Your submission wasn&apos;t approved. View your YoID: {3}.
         /// </summary>
         internal static string Opportunity_Verification_Rejected {
             get {

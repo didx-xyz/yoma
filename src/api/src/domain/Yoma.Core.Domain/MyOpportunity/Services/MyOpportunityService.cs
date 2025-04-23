@@ -532,7 +532,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             g.Sum(e => Convert.ToInt32(e.Values[3]))  //saved
         ))
         .OrderByDescending(e => e.Date)
-        .Take(Constants.TimeIntervalSummary_Data_MaxNoOfPoints)
+        .Take(Core.Constants.TimeIntervalSummary_Data_MaxNoOfPoints)
         .Reverse()
         .ToList();
 

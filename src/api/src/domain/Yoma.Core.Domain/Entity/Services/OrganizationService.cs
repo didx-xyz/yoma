@@ -1213,7 +1213,7 @@ namespace Yoma.Core.Domain.Entity.Services
           }
 
           //ensure organization admin role
-          await _identityProviderClient.EnsureRoles(user.ExternalId.Value, [Constants.Role_OrganizationAdmin]);
+          await _identityProviderClient.EnsureRoles(user.ExternalId.Value, [Core.Constants.Role_OrganizationAdmin]);
         }
 
         if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined, null);
@@ -1254,7 +1254,7 @@ namespace Yoma.Core.Domain.Entity.Services
           }
 
           if (items.Count == 0) //no longer an admin of any organization, remove organization admin role
-            await _identityProviderClient.RemoveRoles(user.ExternalId.Value, [Constants.Role_OrganizationAdmin]);
+            await _identityProviderClient.RemoveRoles(user.ExternalId.Value, [Core.Constants.Role_OrganizationAdmin]);
         }
 
         if (updated) organization = await SendForReapproval(organization, reapprovalAction, OrganizationStatus.Declined, null);
@@ -1428,7 +1428,7 @@ namespace Yoma.Core.Domain.Entity.Services
         {
           case NotificationType.Organization_Approval_Requested:
             //send notification to super administrators
-            var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
+            var superAdmins = await _identityProviderClient.ListByRole(Core.Constants.Role_Admin);
             recipients = superAdmins?.Select(o => new NotificationRecipient
             {
               Username = o.Username,
@@ -1436,7 +1436,7 @@ namespace Yoma.Core.Domain.Entity.Services
               PhoneNumberConfirmed = o.PhoneNumberVerified,
               Email = o.Email,
               EmailConfirmed = o.EmailVerified,
-              DisplayName = o.ToDisplayName() ?? o.Username
+              DisplayName = o.ToDisplayName()
             }).ToList();
 
             dataOrg.Comment = organization.CommentApproval;

@@ -122,9 +122,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
               return;
             }
 
-            data.RecipientDisplayName = string.IsNullOrWhiteSpace(recipient.DisplayName)
-                ? recipient.Username
-                : recipient.DisplayName;
+            data.RecipientDisplayName = string.IsNullOrWhiteSpace(recipient.DisplayName) ? Constants.Default_Recipient_DisplayName : recipient.DisplayName;
 
             var delivered = false;
             string? lastTwilioFailure = null;

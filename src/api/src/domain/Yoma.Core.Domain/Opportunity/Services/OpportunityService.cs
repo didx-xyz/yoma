@@ -2000,7 +2000,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         switch (type)
         {
           case NotificationType.Opportunity_Posted_Admin:
-            var superAdmins = await _identityProviderClient.ListByRole(Constants.Role_Admin);
+            var superAdmins = await _identityProviderClient.ListByRole(Core.Constants.Role_Admin);
             recipients = superAdmins?.Select(o => new NotificationRecipient
             {
               Username = o.Username,
@@ -2008,7 +2008,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
               PhoneNumberConfirmed = o.PhoneNumberVerified,
               Email = o.Email,
               EmailConfirmed = o.EmailVerified,
-              DisplayName = o.ToDisplayName() ?? o.Username
+              DisplayName = o.ToDisplayName() 
             }).ToList();
 
             break;
@@ -2046,7 +2046,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (organizations?.Count == 0) organizations = null;
 
       if (ensureOrganizationAuthorization && !HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor) && organizations is not { Count: > 0 })
-        throw new ValidationException($"One or more organizations are required for '{Constants.Role_OrganizationAdmin}' role only");
+        throw new ValidationException($"One or more organizations are required for '{Core.Constants.Role_OrganizationAdmin}' role only");
 
       //validate existence
       if (organizations != null)
