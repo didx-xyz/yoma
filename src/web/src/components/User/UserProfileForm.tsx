@@ -78,15 +78,15 @@ export const UserProfileForm: React.FC<{
   });
 
   // 👇 use prefetched queries from server (if available)
-  const { data: genders } = useQuery({
+  const { data: genders, isLoading: isLoadingGenders } = useQuery({
     queryKey: ["genders"],
     queryFn: async () => await getGenders(),
   });
-  const { data: countries } = useQuery({
+  const { data: countries, isLoading: isLoadingCountries } = useQuery({
     queryKey: ["countries"],
     queryFn: async () => await getCountries(),
   });
-  const { data: educations } = useQuery({
+  const { data: educations, isLoading: isLoadingEducations } = useQuery({
     queryKey: ["educations"],
     queryFn: async () => await getEducations(),
   });
@@ -143,7 +143,12 @@ export const UserProfileForm: React.FC<{
 
   // set default values
   useEffect(() => {
-    if (!formData) {
+    if (
+      !formData ||
+      isLoadingCountries ||
+      isLoadingGenders ||
+      isLoadingEducations
+    ) {
       setIsLoading(true);
       return;
     } else {
@@ -154,7 +159,7 @@ export const UserProfileForm: React.FC<{
     if (!formData?.dateOfBirth) {
       formData.dateOfBirth = "";
     }
-    //HACK: ISO 8601 date needs to in the YYYY-MM-DD format for the input(type=date) to display correctly
+    //HACK: ISO 8601 date needs to be in the YYYY-MM-DD format for the input(type=date) to display correctly
     else if (formData.dateOfBirth != null) {
       const date = new Date(formData.dateOfBirth);
       formData.dateOfBirth = date.toISOString().slice(0, 10);
@@ -165,15 +170,23 @@ export const UserProfileForm: React.FC<{
     if (!formData.educationId) formData.educationId = "";
     if (!formData.genderId) formData.genderId = "";
 
-    //formData.resetPassword = false;
-
     // reset form
     // setTimeout is needed to prevent the form from being reset before the default values are set
     setTimeout(() => {
       reset(formData);
       trigger();
     }, 100);
-  }, [reset, trigger, formData]);
+  }, [
+    reset,
+    trigger,
+    formData,
+    countries,
+    genders,
+    educations,
+    isLoadingCountries,
+    isLoadingGenders,
+    isLoadingEducations,
+  ]);
 
   // form submission handler
   const onSubmitHandler = useCallback(
@@ -460,6 +473,7 @@ export const UserProfileForm: React.FC<{
             <select
               className="select border-gray focus:border-gray w-full focus:outline-none"
               {...register("countryId")}
+              disabled={isLoadingCountries} // Disable while countries are loading
             >
               <option value="">Please select</option>
               {countries?.map((country) => (
@@ -483,6 +497,7 @@ export const UserProfileForm: React.FC<{
             <select
               className="select border-gray focus:border-gray w-full focus:outline-none"
               {...register("educationId")}
+              disabled={isLoadingEducations} // Disable while educations are loading
             >
               <option value="">Please select</option>
               {educations?.map((item) => (
@@ -506,6 +521,7 @@ export const UserProfileForm: React.FC<{
             <select
               className="select border-gray focus:border-gray w-full focus:outline-none"
               {...register("genderId")}
+              disabled={isLoadingGenders} // Disable while genders are loading
             >
               <option value="">Please select</option>
               {genders?.map((item) => (
