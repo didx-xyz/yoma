@@ -151,9 +151,9 @@ export const UserProfileForm: React.FC<{
     ) {
       setIsLoading(true);
       return;
-    } else {
-      setIsLoading(false);
     }
+
+    setIsLoading(false);
 
     //HACK: no validation on date if value is null
     if (!formData?.dateOfBirth) {
@@ -180,9 +180,6 @@ export const UserProfileForm: React.FC<{
     reset,
     trigger,
     formData,
-    countries,
-    genders,
-    educations,
     isLoadingCountries,
     isLoadingGenders,
     isLoadingEducations,
