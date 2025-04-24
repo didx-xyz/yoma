@@ -1,4 +1,3 @@
-using Newtonsoft.Json;
 using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core.Helpers;
 
@@ -25,7 +24,6 @@ namespace Yoma.Core.Domain.ActionLink.Extensions
         UsagesLimit = value.UsagesLimit,
         UsagesTotal = value.UsagesTotal,
         UsagesAvailable = value.UsagesLimit.HasValue ? value.UsagesLimit - (value.UsagesTotal ?? 0) : null,
-        DistributionList = value.DistributionList == null ? null : JsonConvert.DeserializeObject<List<string>>(value.DistributionList),
         LockToDistributionList = value.LockToDistributionList,
         CommentApproval = value.CommentApproval,
         DateEnd = value.DateEnd,

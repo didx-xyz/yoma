@@ -11,7 +11,6 @@ using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.ActionLink.Interfaces.Lookups;
 using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.ActionLink.Validators;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -28,6 +27,7 @@ using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.ShortLinkProvider.Interfaces;
 using Yoma.Core.Domain.ShortLinkProvider.Models;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace Yoma.Core.Domain.ActionLink.Services
 {
@@ -36,6 +36,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     #region Class Variables
     private readonly ILogger<LinkService> _logger;
     private readonly AppSettings _appSettings;
+    private readonly IMemoryCache _memoryCache;
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly IShortLinkProviderClient _shortLinkProviderClient;
     private readonly IUserService _userService;
@@ -64,6 +65,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     #region Constructor
     public LinkService(ILogger<LinkService> logger,
       IOptions<AppSettings> appSettings,
+      IMemoryCache memoryCache,
       IHttpContextAccessor httpContextAccessor,
       IShortLinkProviderClientFactory shortLinkProviderClientFactory,
       IUserService userService,
@@ -83,6 +85,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     {
       _logger = logger;
       _appSettings = appSettings.Value;
+      _memoryCache = memoryCache;
       _httpContextAccessor = httpContextAccessor;
       _shortLinkProviderClient = shortLinkProviderClientFactory.CreateClient();
       _userService = userService;
@@ -321,7 +324,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       var action = Enum.Parse<LinkAction>(link.Action);
 
-      NotificationActionLinkVerify? notificationlDataDistributionList = null;
+      NotificationActionLinkVerify? notificationDataDistributionList = null;
       NotificationType? notificationType = null;
       switch (action)
       {
@@ -363,7 +366,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
                   if (!opportunity.Published)
                     throw new ValidationException($"Link cannot be activated as the opportunity '{opportunity.Title}' has not been published");
 
-                  notificationlDataDistributionList = new NotificationActionLinkVerify
+                  notificationDataDistributionList = new NotificationActionLinkVerify
                   {
                     EntityTypeDesc = $"{entityType.ToString().ToLower()}(ies)",
                     YoIDURL = _notificationURLFactory.OpportunityVerificationYoIDURL(NotificationType.ActionLink_Verify_Distribution),
@@ -435,7 +438,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       link = await _linkRepository.Update(link);
 
-      if (notificationlDataDistributionList != null) await SendNotification_ActionLinkVerifyDistributionList(link, notificationlDataDistributionList);
+      if (notificationDataDistributionList != null) await SendNotification_ActionLinkVerifyDistributionList(link, notificationDataDistributionList);
       if (notificationType.HasValue) await SendNotification(link, notificationType.Value);
 
       return link.ToLinkInfo(false);
@@ -586,7 +589,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         if (link.DistributionList == null)
           throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
 
-        var distributionList = JsonConvert.DeserializeObject<List<string>>(link.DistributionList);
+        var distributionList = ParseDistributionList(link);
 
         if (distributionList == null || distributionList.Count == 0)
           throw new DataInconsistencyException("Link is locked to a distribution list but no distribution list is defined");
@@ -621,6 +624,27 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       return link.ToLinkInfo(false);
     }
+
+    public List<string>? ParseDistributionList(Link link)
+    {
+      if (link.DistributionList == null) return null;
+
+      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
+        return JsonConvert.DeserializeObject<List<string>>(link.DistributionList);
+
+      var cacheKey = CacheHelper.GenerateKey<Link>(nameof(link.DistributionList), link.Id);
+
+      var result = _memoryCache.GetOrCreate(cacheKey, entry =>
+      {
+        entry.SlidingExpiration = TimeSpan.FromHours(_appSettings.CacheSlidingExpirationInHours);
+        entry.AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(_appSettings.CacheAbsoluteExpirationRelativeToNowInDays);
+
+        return JsonConvert.DeserializeObject<List<string>>(link.DistributionList);
+      }) ?? throw new InvalidOperationException("Failed to retrieve cached distribution list");
+
+      return result;
+    }
+
 
     private async Task SendNotification_ActionLinkVerifyDistributionList(Link link, NotificationActionLinkVerify data)
     {
