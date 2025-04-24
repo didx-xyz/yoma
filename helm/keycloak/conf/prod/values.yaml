@@ -67,29 +67,25 @@ keycloak:
                 values:
                   - spot
     podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                {{- include "keycloak.selectorLabels" . | nindent 12 }}
-              matchExpressions:
-                - key: app.kubernetes.io/component
-                  operator: NotIn
-                  values:
-                    - test
-            topologyKey: kubernetes.io/hostname
-        - weight: 100
-          podAffinityTerm:
-            labelSelector:
-              matchLabels:
-                {{- include "keycloak.selectorLabels" . | nindent 12 }}
-              matchExpressions:
-                - key: app.kubernetes.io/component
-                  operator: NotIn
-                  values:
-                    - test
-            topologyKey: topology.kubernetes.io/zone
+      requiredDuringSchedulingIgnoredDuringExecution:
+        - labelSelector:
+            matchLabels:
+              {{- include "keycloak.selectorLabels" . | nindent 12 }}
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: NotIn
+                values:
+                  - test
+          topologyKey: kubernetes.io/hostname
+        - labelSelector:
+            matchLabels:
+              {{- include "keycloak.selectorLabels" . | nindent 12 }}
+            matchExpressions:
+              - key: app.kubernetes.io/component
+                operator: NotIn
+                values:
+                  - test
+          topologyKey: topology.kubernetes.io/zone
 
 config-cli:
   enabled: true
