@@ -10,7 +10,6 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import Select from "react-select";
 import type {
   EngagementType,
   SelectOption,
@@ -318,8 +317,6 @@ const Opportunities: NextPageWithLayout<{
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
   const queryClient = useQueryClient();
   const currentLanguage = useAtomValue(currentLanguageAtom);
-  const [selectedCountry, setSelectedCountry] = useState<string | null>();
-  const [selectedLanguage, setSelectedLanguage] = useState<string | null>();
 
   const oppTypeDescriptions = [
     "A learning opportunity is a self-paced online course that you can finish at your convenience.",
@@ -409,23 +406,6 @@ const Opportunities: NextPageWithLayout<{
     },
     enabled: !!targetedCountryName,
   });
-
-  const countryOptions = useMemo(() => {
-    if (!lookups_countries) return [];
-    return lookups_countries.map((c) => ({
-      value: c.name,
-      label: c.name,
-    }));
-  }, [lookups_countries]);
-
-  const languageOptions = useMemo(() => {
-    if (!lookups_languages) return [];
-    return lookups_languages.map((c) => ({
-      value: c.name,
-      label: c.name,
-    }));
-  }, [lookups_languages]);
-
   //#endregion QUERIES
 
   //#region FILTERS
@@ -887,22 +867,6 @@ const Opportunities: NextPageWithLayout<{
     },
     [searchFilter, onSubmitFilter],
   );
-
-  const onSubmitFilter_Localization = useCallback(() => {
-    if (!selectedCountry && !selectedLanguage) return;
-
-    let filter: any = {};
-
-    if (selectedCountry) {
-      filter.countries = [selectedCountry];
-    }
-
-    if (selectedLanguage) {
-      filter.languages = [selectedLanguage];
-    }
-
-    redirectWithSearchFilterParams(filter);
-  }, [selectedCountry, selectedLanguage, redirectWithSearchFilterParams]);
   //#endregion EVENTS
 
   //#region CAROUSELS
