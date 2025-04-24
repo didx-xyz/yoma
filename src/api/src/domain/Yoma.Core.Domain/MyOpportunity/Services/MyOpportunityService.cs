@@ -38,6 +38,7 @@ using System.Reflection;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Helpers;
 using Yoma.Core.Domain.Lookups.Models;
+using System;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -883,7 +884,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         var request = new MyOpportunityRequestVerify { InstantOrImportedVerification = true, OverridePending = true };
         await PerformActionSendForVerification(user, link.EntityId, request, null); //any verification method
 
-        await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, "Auto-verification");
+        await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, null, "Auto-verification");
 
         scope.Complete();
       });
@@ -973,7 +974,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           user = _userService.GetById(item.UserId, false, false);
           opportunity = _opportunityService.GetById(item.OpportunityId, true, true, false);
 
-          await FinalizeVerification(user, opportunity, request.Status, false, request.Comment);
+          await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment);
 
           var successItem = new MyOpportunityResponseVerifyFinalizeBatchItem
           {
@@ -1021,7 +1022,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var user = _userService.GetById(request.UserId, false, false);
       var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
 
-      await FinalizeVerification(user, opportunity, request.Status, false, request.Comment);
+      await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment);
     }
 
     public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(bool includeExpired)
@@ -1128,13 +1129,15 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           if (isRequired)
           {
-            var rowNumber = args.Context?.Parser?.Row.ToString() ?? "Unknown";
+            var row = args.Context?.Parser?.Row;
+            var rowNumber = row.HasValue ? (row.Value - 1).ToString() : "Unknown";
             throw new ValidationException($"Missing required field '{fieldName}' in row '{rowNumber}'");
           }
         },
         BadDataFound = args =>
         {
-          var rowNumber = args.Context?.Parser?.Row.ToString() ?? "Unknown";
+          var row = args.Context?.Parser?.Row;
+          var rowNumber = row.HasValue ? (row.Value - 1).ToString() : "Unknown";
           throw new ValidationException($"Bad data format in row '{rowNumber}': Raw field data: '{args.Field}'");
         }
       };
@@ -1152,7 +1155,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         while (await csv.ReadAsync())
         {
-          var rowNumber = csv.Context?.Parser?.Row ?? -1;
+          var row = csv.Context?.Parser?.Row;
+          var rowNumber = row.HasValue ? (row.Value - 1).ToString() : "Unknown";
+
           try
           {
             var record = csv.GetRecord<MyOpportunityInfoCsvImport>();
@@ -1161,7 +1166,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           }
           catch (Exception ex)
           {
-            throw new ValidationException($"Error processing row '{(rowNumber == -1 ? "Unknown" : rowNumber)}': {ex.Message}");
+            throw new ValidationException($"Error processing row '{rowNumber}': {ex.Message}");
           }
         }
         scope.Complete();
@@ -1243,7 +1248,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true };
         await PerformActionSendForVerification(user, opportunity.Id, requestVerify, null); //any verification method
 
-        await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, requestImport.Comment);
+        await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, item.DateCompleted?.ToDateTimeOffset().ToEndOfDay(), requestImport.Comment);
 
         scope.Complete();
       });
@@ -1267,7 +1272,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     }
 
     //supported statuses: Rejected or Completed
-    private async Task FinalizeVerification(User user, Opportunity.Models.Opportunity opportunity, VerificationStatus status, bool instantVerification, string? comment)
+    private async Task FinalizeVerification(User user, Opportunity.Models.Opportunity opportunity, VerificationStatus status, bool instantVerification, DateTimeOffset? dateCompleted, string? comment)
     {
       //can complete, provided opportunity is published (and started) or expired (actioned prior to expiration)
       var canFinalize = opportunity.Status == Status.Expired;
@@ -1304,13 +1309,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
             if (item.DateEnd.HasValue && item.DateEnd.Value > DateTimeOffset.UtcNow.ToEndOfDay())
               throw new ValidationException($"Verification can not be completed as the end date for opportunity '{opportunity.Title}' has not been reached (end date '{item.DateEnd:yyyy-MM-dd}')");
 
+            if (!instantVerification && dateCompleted.HasValue)
+              throw new InvalidOperationException($"Date completed only supported by an instant verification");
+
+            if (dateCompleted.HasValue && dateCompleted.Value < opportunity.DateStart)
+              throw new ValidationException($"Date completed '{dateCompleted:yyyy-MM-dd}' can not be earlier than the opportunity start date '{opportunity.DateStart:yyyy-MM-dd}'");
+
             EnsureNoEarlierPendingVerificationsForOtherStudents(user, opportunity, item, instantVerification);
 
             //with instant-verifications ensureOrganizationAuthorization not checked as finalized immediately by the user (youth)
             var result = await _opportunityService.AllocateRewards(opportunity.Id, !instantVerification);
             item.ZltoReward = result.ZltoReward;
             item.YomaReward = result.YomaReward;
-            item.DateCompleted = DateTimeOffset.UtcNow;
+            item.DateCompleted = dateCompleted ?? DateTimeOffset.UtcNow;
 
             await _userService.AssignSkills(user, opportunity);
 
@@ -1456,7 +1467,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         return;
       }
 
-      //validation should ensure both start (provided no commitment was specified) and end dates are provided; failsafe by not setting commitement if not provided
+      //validation should ensure both start (provided no commitment was specified) and end dates are provided; failsafe by not setting commitment if not provided
       if (!request.DateStart.HasValue || !request.DateEnd.HasValue) return;
 
       var (Interval, Count) = TimeIntervalHelper.ConvertToCommitmentInterval(request.DateStart.Value, request.DateEnd.Value);

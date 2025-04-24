@@ -1072,13 +1072,15 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           if (isRequired)
           {
-            var rowNumber = args.Context?.Parser?.Row.ToString() ?? "Unknown";
+            var row = args.Context?.Parser?.Row;
+            var rowNumber = row.HasValue ? (row.Value - 1).ToString() : "Unknown";
             throw new ValidationException($"Missing required field '{fieldName}' in row '{rowNumber}'");
           }
         },
         BadDataFound = args =>
         {
-          var rowNumber = args.Context?.Parser?.Row.ToString() ?? "Unknown";
+          var row = args.Context?.Parser?.Row;
+          var rowNumber = row.HasValue ? (row.Value - 1).ToString() : "Unknown";
           throw new ValidationException($"Bad data format in row '{rowNumber}': Raw field data: '{args.Field}'");
         }
       };
@@ -1097,7 +1099,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         while (await csv.ReadAsync())
         {
-          var rowNumber = csv.Context?.Parser?.Row ?? -1;
+          var row = csv.Context?.Parser?.Row;
+          var rowNumber = row.HasValue ? (row.Value - 1).ToString() : "Unknown";
+
           try
           {
             var record = csv.GetRecord<OpportunityInfoCsvImport>();
@@ -1107,7 +1111,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           }
           catch (Exception ex)
           {
-            throw new ValidationException($"Error processing row '{(rowNumber == -1 ? "Unknown" : rowNumber)}': {ex.Message}");
+            throw new ValidationException($"Error processing row '{rowNumber}': {ex.Message}");
           }
         }
         scope.Complete();
