@@ -38,8 +38,6 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public DateTimeOffset? DateEnd { get; set; }
 
-    public List<string>? DistributionList { get; set; }
-
     public bool? LockToDistributionList { get; set; }
 
     public string? CommentApproval { get; set; }
