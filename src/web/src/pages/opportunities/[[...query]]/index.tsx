@@ -1341,99 +1341,26 @@ const Opportunities: NextPageWithLayout<{
                 <LoadingSkeleton className="!h-[357.594px]" />
               ) : (
                 <>
-                  {/* COUNTRY/LANGUAGE SELECTION (ANONYMOUS USERS OR USER NOT IN TARGETED COUNTRY) */}
-                  {sessionStatus === "unauthenticated" && (
-                    <div className="bg-green mt-4 mb-8 rounded-lg bg-[url('/images/world-map-transparent.png')] bg-[size:800px] bg-center bg-no-repeat p-4 text-white md:py-8">
-                      <div className="text-center">
-                        <div className="flex flex-col items-center justify-center gap-4">
-                          <h1 className="text-sm font-bold md:text-2xl">
-                            🚀 Explore Opportunities Near You! 🗺️
-                          </h1>
-                          <p className="text-xs md:text-base">
-                            Find opportunities based on your location and
-                            language preferences.
-                          </p>
-                          <div className="flex flex-row gap-4">
-                            <Select
-                              instanceId={"country"}
-                              classNames={{
-                                control: () =>
-                                  "input input-xs md:w-[200px] w-full",
-                              }}
-                              options={countryOptions}
-                              onChange={(val) =>
-                                setSelectedCountry(val?.value ?? "")
-                              }
-                              placeholder="Country"
-                              isClearable={true}
-                              inputId="input_country" // e2e
-                              // fix menu z-index issue
-                              menuPortalTarget={myRef.current!}
-                              styles={{
-                                menuPortal: (base) => ({
-                                  ...base,
-                                  zIndex: 9999,
-                                }),
-                              }}
-                            />
-
-                            <Select
-                              instanceId={"language"}
-                              classNames={{
-                                control: () =>
-                                  "input input-xs md:w-[200px] w-full",
-                              }}
-                              options={languageOptions}
-                              onChange={(val) =>
-                                setSelectedLanguage(val?.value ?? "")
-                              }
-                              placeholder="Language"
-                              isClearable={true}
-                              inputId="input_language" // e2e
-                              // fix menu z-index issue
-                              menuPortalTarget={myRef.current!}
-                              styles={{
-                                menuPortal: (base) => ({
-                                  ...base,
-                                  zIndex: 9999,
-                                }),
-                              }}
-                            />
-                          </div>
-                          <button
-                            className="btn btn-xs md:btn-md btn-warning mt-2 w-36 shadow-none"
-                            onClick={onSubmitFilter_Localization}
-                          >
-                            Let&apos;s Go!
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
                   {/* OPPORTUNITIES FOR TARGETED COUNTRY */}
-                  {sessionStatus === "authenticated" && targetedCountryName && (
-                    <div className="!h-[357.594px]">
-                      {(opportunities_targeted_country?.totalCount ?? 0) >
-                        0 && (
-                        <CustomCarousel
-                          id={`opportunities_targeted_country`}
-                          title={`Opportunities in ${targetedCountryName} 🗺️`}
-                          description="Explore opportunities in your country."
-                          viewAllUrl={`/opportunities?countries=${targetedCountryName}`}
-                          data={opportunities_targeted_country!.items}
-                          loadData={loadDataOpportunitiesForTargetedCountry}
-                          totalAll={opportunities_targeted_country!.totalCount!}
-                          renderSlide={(item, index) => (
-                            <OpportunityPublicSmallComponent
-                              key={`opportunities_targeted_country_${item.id}_${index}`}
-                              data={item}
-                            />
-                          )}
-                        />
-                      )}
-                    </div>
-                  )}
+                  {sessionStatus === "authenticated" &&
+                    targetedCountryName &&
+                    (opportunities_targeted_country?.totalCount ?? 0) > 0 && (
+                      <CustomCarousel
+                        id={`opportunities_targeted_country`}
+                        title={`Opportunities in ${targetedCountryName} 🗺️`}
+                        description="Explore opportunities in your country."
+                        viewAllUrl={`/opportunities?countries=${targetedCountryName}`}
+                        data={opportunities_targeted_country!.items}
+                        loadData={loadDataOpportunitiesForTargetedCountry}
+                        totalAll={opportunities_targeted_country!.totalCount!}
+                        renderSlide={(item, index) => (
+                          <OpportunityPublicSmallComponent
+                            key={`opportunities_targeted_country_${item.id}_${index}`}
+                            data={item}
+                          />
+                        )}
+                      />
+                    )}
                 </>
               )}
 
