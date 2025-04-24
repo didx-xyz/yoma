@@ -16,6 +16,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
     public string? Country { get; set; }
 
+    public DateOnly? DateCompleted { get; set; }
+
     [Required]
     public string OpporunityExternalId { get; set; }
   }

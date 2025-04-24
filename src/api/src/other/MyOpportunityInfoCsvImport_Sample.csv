@@ -1,6 +1,7 @@
-Email,PhoneNumber,FirstName,Surname,Gender,Country,OpporunityExternalId
-,1234567890,John,Doe,Male,US,External_ID1
-jane.smith@example.com,,Jane,Smith,Female,GB,External_ID2
-ali.khan@example.com,5512345678,,,Male,PK,External_ID3
-maria.garcia@example.com,34987654321,Maria,Garcia,,,External_ID4
-ali.khan@example.com,5512345678,Jim,Chen,Male,CN,External_ID5
+Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpporunityExternalId
+,+12025550123,John,Doe,Male,US,2024/12/31,External_ID1
+jane.smith@example.com,,Jane,Smith,Female,GB,2024/02/02,External_ID2
+ali.khan@example.com,+925512345678,,,Male,PK,2024/03/02,External_ID3
+maria.garcia@example.com,+27831234567,Maria,Garcia,,,,External_ID4
+ali.khan@example.com,+8613712345678,Jim,Chen,Male,CN,,External_ID5
+

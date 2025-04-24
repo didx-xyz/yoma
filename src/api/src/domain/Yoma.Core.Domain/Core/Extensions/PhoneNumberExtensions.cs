@@ -31,7 +31,7 @@ namespace Yoma.Core.Domain.Core.Extensions
         var cleaned = stripped.RemoveWhiteSpaces();
 
         // Use region "ZZ" to avoid altering the number
-        var number = _phoneUtil.Parse(cleaned, null);
+        var number = _phoneUtil.Parse(cleaned, "ZZ");
         return _phoneUtil.Format(number, PhoneNumberFormat.E164);
       }
       catch (NumberParseException)
@@ -48,7 +48,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     {
       ArgumentException.ThrowIfNullOrWhiteSpace(input, nameof(input));
 
-      var number = _phoneUtil.Parse(input, null);
+      var number = _phoneUtil.Parse(input, "ZZ");
       return _phoneUtil.GetRegionCodeForNumber(number);
     }
 
@@ -60,7 +60,7 @@ namespace Yoma.Core.Domain.Core.Extensions
     {
       ArgumentException.ThrowIfNullOrWhiteSpace(input, nameof(input));
 
-      var number = _phoneUtil.Parse(input, null);
+      var number = _phoneUtil.Parse(input, "ZZ");
       return $"+{number.CountryCode}";
     }
 
