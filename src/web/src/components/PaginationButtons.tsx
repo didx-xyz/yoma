@@ -7,7 +7,9 @@ interface InputProps {
   pageSize: number;
   showPages?: boolean;
   showInfo?: boolean;
-  onClick: (page: number) => void;
+  onClick: (page: number, pageSize?: number) => void;
+  showPageSizes?: boolean; // New prop to toggle page size dropdown
+  pageSizes?: number[]; // Optional array of page sizes
 }
 
 export const PaginationButtons: React.FC<InputProps> = ({
@@ -17,6 +19,8 @@ export const PaginationButtons: React.FC<InputProps> = ({
   showPages,
   showInfo,
   onClick,
+  showPageSizes,
+  pageSizes = [50, 100, 500, 1000], // Default page sizes
 }) => {
   const [inputValue, setInputValue] = useState(currentPage);
 
@@ -40,9 +44,9 @@ export const PaginationButtons: React.FC<InputProps> = ({
 
   const handlePagerChange = useCallback(
     (value: number) => {
-      onClick(value);
+      onClick(value, pageSize);
     },
-    [onClick],
+    [onClick, pageSize],
   );
 
   const handleInputChange = useCallback(
@@ -73,14 +77,40 @@ export const PaginationButtons: React.FC<InputProps> = ({
     [totalPages, currentPage, handlePagerChange],
   );
 
+  const handlePageSizeChange = useCallback(
+    (event: React.ChangeEvent<HTMLSelectElement>) => {
+      const newPageSize = parseInt(event.target.value, 10);
+      onClick(1, newPageSize); // Reset to page 1 and pass new page size
+    },
+    [onClick],
+  );
+
   return (
-    <>
-      <div className="mb-4 flex w-full items-center justify-center gap-2">
+    <div className="flex flex-col items-center gap-4">
+      {/* PAGE SIZE DROPDOWN */}
+      {showPageSizes && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs whitespace-nowrap">Page Size:</span>
+          <select
+            className="select select-sm border-grayx rounded-mdx w-20 focus:outline-none"
+            onChange={handlePageSizeChange}
+            value={pageSize} // Ensure the correct pageSize is selected
+          >
+            {pageSizes.map((size) => (
+              <option key={size} value={size}>
+                {size}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      <div className="join flex w-full items-center justify-center gap-2">
         {/* PREVIOUS BUTTON */}
         <button
           key={`PaginationItem_Prev`}
           type="button"
-          className="btn btn-square btn-sm bg-gray hover:bg-gray !rounded-md border-0 text-black disabled:invisible"
+          className="join-item btn btn-secondary"
           disabled={currentPage <= 1}
           onClick={() => handlePagerChange(currentPage - 1)}
         >
@@ -92,11 +122,11 @@ export const PaginationButtons: React.FC<InputProps> = ({
           totalPages != null &&
           currentPages.map((pageNumber, index) => {
             return (
-              <div key={`PaginationItem_${index}`}>
+              <div key={`PaginationItem_${index}`} className="join-item join">
                 {pageNumber === currentPage && (
                   <button
                     type="button"
-                    className="btn btn-square btn-primary btn-sm hover:bg-gray disabled:bg-gray-light cursor-default !rounded-md border-0 bg-white text-black"
+                    className="join-item btn-secondary btn btn-active"
                     disabled
                   >
                     {pageNumber}
@@ -106,7 +136,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
                 {pageNumber !== currentPage && (
                   <button
                     type="button"
-                    className="btn btn-square btn-primary btn-sm hover:bg-gray cursor-pointer !rounded-md border-0 bg-white text-black"
+                    className="join-item btn-secondary btn"
                     onClick={() => handlePagerChange(pageNumber)}
                   >
                     {pageNumber}
@@ -118,7 +148,7 @@ export const PaginationButtons: React.FC<InputProps> = ({
 
         {/* INFO */}
         {showInfo && totalPages != null && (
-          <div className="flex flex-row items-center gap-2 text-xs">
+          <div className="join-item flex flex-row items-center gap-2 text-xs">
             <span>Page</span>
             <input
               type="number"
@@ -139,13 +169,14 @@ export const PaginationButtons: React.FC<InputProps> = ({
         <button
           key={`PaginationItem_Next`}
           type="button"
-          className="btn btn-square btn-sm bg-gray hover:bg-gray !rounded-md border-0 text-black disabled:invisible"
+          //className="btn btn-square btn-sm bg-gray hover:bg-gray !rounded-md border-0 text-black disabled:invisible"
+          className="join-item btn-secondary btn"
           disabled={totalPages != null && currentPage >= totalPages}
           onClick={() => handlePagerChange(currentPage + 1)}
         >
           »
         </button>
       </div>
-    </>
+    </div>
   );
 };
