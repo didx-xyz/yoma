@@ -7,6 +7,7 @@ interface InputProps {
   onSearch?: (query: string) => void;
   heightOverride?: string | null;
   className?: string | null;
+  classNameIcon?: string | null;
 }
 
 export const SearchInput: React.FC<InputProps> = ({
@@ -15,6 +16,7 @@ export const SearchInput: React.FC<InputProps> = ({
   onSearch,
   heightOverride,
   className,
+  classNameIcon,
 }) => {
   const [searchInputValue, setSearchInputValue] = useState(defaultValue);
 
@@ -48,13 +50,13 @@ export const SearchInput: React.FC<InputProps> = ({
         <button
           type="submit"
           aria-label="Search"
-          className={`bg-theme justify-centerx !h-[38px] rounded-r-lg border-0 p-3 text-white ${heightOverride} ${className}`}
+          className={`bg-theme !h-[38px] cursor-pointer rounded-r-lg border-0 p-3 text-white ${heightOverride} ${className}`}
           disabled={
             !!searchInputValue &&
             !(searchInputValue.length >= 3 && searchInputValue.length <= 50)
           }
         >
-          <IoMdSearch className="-mt-1 h-6 w-6 text-white" />
+          <IoMdSearch className={`-mt-1 h-6 w-6 text-white ${classNameIcon}`} />
         </button>
       </div>
     </form>

@@ -1,5 +1,11 @@
 import type { Session } from "next-auth";
-import { ROLE_ADMIN, THEME_BLUE, THEME_GREEN, THEME_PURPLE } from "./constants";
+import {
+  ROLE_ADMIN,
+  ROLE_ORG_ADMIN,
+  THEME_BLUE,
+  THEME_GREEN,
+  THEME_PURPLE,
+} from "./constants";
 
 const isBuilding = process.env.CI === "true";
 
@@ -133,13 +139,21 @@ export function getSafeUrl(
   return returnUrl?.startsWith("/") ? returnUrl : defaultUrl;
 }
 
+// This function determines the theme to be used based on the user's role and optional organisation ID.
 export function getThemeFromRole(
   session: Session,
-  organisationId: string,
+  organisationId?: string,
 ): string {
   let theme = THEME_PURPLE;
-  if (session?.user?.adminsOf?.includes(organisationId)) theme = THEME_GREEN;
-  if (session?.user?.roles.includes(ROLE_ADMIN)) theme = THEME_BLUE;
+
+  if (organisationId) {
+    if (session?.user?.adminsOf?.includes(organisationId)) theme = THEME_GREEN;
+    if (session?.user?.roles.includes(ROLE_ADMIN)) theme = THEME_BLUE;
+  } else {
+    if (session?.user?.roles.includes(ROLE_ADMIN)) theme = THEME_BLUE;
+    else if (session?.user?.roles.includes(ROLE_ORG_ADMIN)) theme = THEME_GREEN;
+  }
+
   return theme;
 }
 
