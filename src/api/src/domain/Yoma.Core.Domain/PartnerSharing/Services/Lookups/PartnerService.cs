@@ -136,7 +136,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
                   continue;
                 }
 
-                //once shared, requird countries can not be removed but can be added
+                //once shared, required countries can not be removed but can be added
                 if (opportunity.Countries == null ||
                   !opportunity.Countries.Any(c => RequiredCountries_AnyOf_SAYouth.Any(s => string.Equals(s.CodeAlpha2, c.CodeAlpha2, StringComparison.InvariantCultureIgnoreCase))))
                 {
