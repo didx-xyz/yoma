@@ -10,7 +10,7 @@ This guide applies to both **Stage** and **Production** environments.
 
 ## 🔐 Authentication – Client Credentials Flow
 
-The SRE team will provide you with a **Client ID** and **Client Secret** per environment.
+The SRE team will provide you with a **Client ID** and **Client Secret** per environment. Please contact Yoma Support to initiate the request.
 
 To authenticate and obtain a **Bearer Token**, send a `POST` request to the token endpoint.
 
@@ -170,3 +170,9 @@ These endpoints return lists of available values and corresponding IDs.
 - Keycloak email verification and OTP phone confirmation happen **only at first login**.
 - After user creation, the user must complete **YoID onboarding** to activate reward features and credential issuance.
 - This document will be expanded as additional External Partner (B2B) APIs become available.
+
+---
+
+## 📚 Documentation
+
+For more details on architecture, design decisions, and component guidelines, please refer to our [documentation](/docs/README.md).
