@@ -19,6 +19,7 @@ import {
 import FormMessage, { FormMessageType } from "../../Common/FormMessage";
 import { Loading } from "../../Status/Loading";
 import { FileUpload } from "../FileUpload";
+import Link from "next/link";
 
 interface InputProps {
   [id: string]: any;
@@ -192,7 +193,17 @@ export const OpportunityImport: React.FC<InputProps> = ({
                       <li>EffortCount (numeric value)</li>
                       <li>EffortInterval (Hour, Day, Week, Month, Minute)</li>
                       <li>DateStart</li>
-                      <li>Skills (use Skill Lookup endpoint)</li>
+                      <li>
+                        Skills (use Skill Lookup endpoint or{" "}
+                        <Link
+                          href="/admin/skills"
+                          className="text-blue-600 underline"
+                          target="_blank"
+                        >
+                          click here
+                        </Link>{" "}
+                        to search for skills)
+                      </li>
                       <li>Keywords</li>
                       <li>Hidden</li>
                       <li>ExternalId</li>
@@ -254,6 +265,17 @@ export const OpportunityImport: React.FC<InputProps> = ({
                     <li>
                       Use the &quot;|&quot; delimiter for multiple Categories,
                       Languages, Skills.
+                    </li>
+                    <li>
+                      Skills (use Skill Lookup endpoint or{" "}
+                      <Link
+                        href="/admin/skills"
+                        className="text-blue-600 underline"
+                        target="_blank"
+                      >
+                        click here
+                      </Link>{" "}
+                      to search for skills)
                     </li>
                     <li>Ensure ExternalId is unique for each organization.</li>
                   </ul>
