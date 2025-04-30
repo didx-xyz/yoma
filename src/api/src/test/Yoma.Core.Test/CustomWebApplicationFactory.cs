@@ -7,7 +7,7 @@ namespace Yoma.Core.Test
   {
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
-      builder.UseEnvironment(Domain.Core.Environment.Local.ToString()); 
+      builder.UseEnvironment(Domain.Core.Environment.Local.ToString());
 
       builder.ConfigureAppConfiguration((context, configBuilder) =>
       {
