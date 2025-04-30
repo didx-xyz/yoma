@@ -1,3 +1,4 @@
+using CsvHelper.Configuration.Attributes;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
@@ -190,7 +191,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                 if (response.ErrorCode.HasValue)
                 {
                   lastTwilioFailure = $"{recipientId}: Twilio API error — {response.ErrorMessage ?? "Unknown error"} ({response.ErrorCode.Value})";
-                  break;
+                  continue;
                 }
 
                 switch (messageType)
@@ -237,6 +238,8 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                   default:
                     throw new InvalidOperationException($"Unsupported message type: {messageType}");
                 }
+
+                if (delivered) break;
               }
               catch (Exception ex)
               {
