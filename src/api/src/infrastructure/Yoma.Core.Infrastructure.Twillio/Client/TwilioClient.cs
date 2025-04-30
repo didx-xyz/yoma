@@ -1,4 +1,3 @@
-using CsvHelper.Configuration.Attributes;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
@@ -108,7 +107,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
 
         //ensure environment suffix
         data.SubjectSuffix = _environmentProvider.Environment == Domain.Core.Environment.Production
-            ? string.Empty
+            ? " " //empty string results in "63013 This message send failed because it violates Channel provider's policy"
             : $" ({_environmentProvider.Environment.ToDescription()})";
 
         foreach (var recipient in recipients)
@@ -214,10 +213,15 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                       {
                         message = await MessageResource.FetchAsync(new FetchMessageOptions(response.Sid), _twilioClient);
 
-                        if (message.Status == MessageResource.StatusEnum.Delivered || message.Status == MessageResource.StatusEnum.Read)
+                        if (message.Status == MessageResource.StatusEnum.Failed || message.Status == MessageResource.StatusEnum.Undelivered)
+                        {
+                          lastTwilioFailure = $"{recipientId}: Twilio API error — {message.ErrorMessage ?? "Unknown error"} ({message.ErrorCode})";
+                          break; //hard failure → stop polling
+                        }
+                        else if (message.Status == MessageResource.StatusEnum.Delivered || message.Status == MessageResource.StatusEnum.Read)
                         {
                           delivered = true;
-                          break;
+                          break; //success → stop polling
                         }
                       }
                       catch (Exception ex)
