@@ -48,6 +48,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.SA
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Yoma.Core.Infrastructure.Twilio", "src\infrastructure\Yoma.Core.Infrastructure.Twillio\Yoma.Core.Infrastructure.Twilio.csproj", "{B00B10EE-AC67-43BB-90D3-E2C1E9EBDA95}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Test", "Test", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Yoma.Core.Test", "src\test\Yoma.Core.Test\Yoma.Core.Test.csproj", "{CF364B3A-CC7A-F6FE-D213-ECB1B46B1AED}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -106,6 +110,10 @@ Global
 		{B00B10EE-AC67-43BB-90D3-E2C1E9EBDA95}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B00B10EE-AC67-43BB-90D3-E2C1E9EBDA95}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B00B10EE-AC67-43BB-90D3-E2C1E9EBDA95}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CF364B3A-CC7A-F6FE-D213-ECB1B46B1AED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CF364B3A-CC7A-F6FE-D213-ECB1B46B1AED}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CF364B3A-CC7A-F6FE-D213-ECB1B46B1AED}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CF364B3A-CC7A-F6FE-D213-ECB1B46B1AED}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -127,6 +135,8 @@ Global
 		{4988FBD6-4E1F-4830-A0EC-8975FE152FF1} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{A3E9E26D-ED27-4791-9A0C-5C1345FB99AD} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
 		{B00B10EE-AC67-43BB-90D3-E2C1E9EBDA95} = {2129F035-3D60-4CC4-AE25-9BFEE9340D8D}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {D3900302-4735-4E6F-A5DE-4D346F0B89F8}
+		{CF364B3A-CC7A-F6FE-D213-ECB1B46B1AED} = {02EA681E-C7D8-13C7-8484-4AC65E1B71E8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {D658A68F-8A10-4EF2-B8C9-F1350399BF58}
