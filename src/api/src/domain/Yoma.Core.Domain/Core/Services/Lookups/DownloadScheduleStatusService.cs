@@ -58,7 +58,7 @@ namespace Yoma.Core.Domain.Core.Services.Lookups
 
     public List<Models.Lookups.DownloadScheduleStatus> List()
     {
-      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
+      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
         return [.. _downloadScheduleStatusRepository.Query().OrderBy(o => o.Name)];
 
       var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<Models.Lookups.DownloadScheduleStatus>(), entry =>

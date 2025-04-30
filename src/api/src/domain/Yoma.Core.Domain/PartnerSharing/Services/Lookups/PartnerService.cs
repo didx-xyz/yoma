@@ -75,7 +75,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services.Lookups
 
     public List<Models.Lookups.Partner> List()
     {
-      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
+      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
         return [.. _partnerRepository.Query().OrderBy(o => o.Name)];
 
       var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<Models.Lookups.Partner>(), entry =>

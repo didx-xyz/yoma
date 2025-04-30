@@ -2,12 +2,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
-using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Notification;
 using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
-using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Models;
 
 namespace Yoma.Core.Test.Notification
@@ -75,7 +73,7 @@ namespace Yoma.Core.Test.Notification
     #endregion
 
     #region Private Members
-    private Domain.MyOpportunity.Models.MyOpportunity CreateTestMyOpportunity(string title)
+    private static Domain.MyOpportunity.Models.MyOpportunity CreateTestMyOpportunity(string title)
     {
       return new Domain.MyOpportunity.Models.MyOpportunity
       {
@@ -90,7 +88,7 @@ namespace Yoma.Core.Test.Notification
       };
     }
 
-    private List<NotificationRecipient> CreateTestRecipients() => [new()
+    private static List<NotificationRecipient> CreateTestRecipients() => [new()
     {
       Username = "testuser",
       PhoneNumber = "+27831234567",
@@ -99,50 +97,19 @@ namespace Yoma.Core.Test.Notification
     }];
 
 
-    private Opportunity CreateTestOpportunity(string title = "Test Opportunity")
+    private static Opportunity CreateTestOpportunity(string title = "Test Opportunity")
     {
       return new Opportunity
       {
         Id = Guid.NewGuid(),
         Title = title,
-        Description = "This is a test opportunity for WhatsApp notification testing.",
-        TypeId = Guid.NewGuid(),
-        Type = "Volunteering",
-        OrganizationId = Guid.NewGuid(),
-        OrganizationName = "Test Org",
-        OrganizationLogoURL = null,
-        OrganizationStatusId = Guid.NewGuid(),
-        OrganizationStatus = OrganizationStatus.Active,
-        ZltoReward = 100,
-        YomaReward = 50,
-        VerificationEnabled = true,
-        DifficultyId = Guid.NewGuid(),
-        Difficulty = "Easy",
-        CommitmentIntervalId = Guid.NewGuid(),
-        CommitmentInterval =TimeIntervalOption.Week,
-        CommitmentIntervalCount = 2,
-        CommitmentIntervalDescription = "2 weeks",
-        StatusId = Guid.NewGuid(),
-        Status = Status.Active,
         DateStart = DateTimeOffset.UtcNow.AddDays(1),
         DateEnd = DateTimeOffset.UtcNow.AddDays(10),
-        CredentialIssuanceEnabled = false,
-        Featured = true,
-        EngagementTypeId = Guid.NewGuid(),
-        EngagementType = EngagementTypeOption.Online,
-        ShareWithPartners = false,
-        Hidden = false,
-        DateCreated = DateTimeOffset.UtcNow.AddDays(-1),
-        CreatedByUserId = Guid.NewGuid(),
-        DateModified = DateTimeOffset.UtcNow,
-        ModifiedByUserId = Guid.NewGuid(),
-        Published = true,
-        Countries = null,
-        Categories = null,
-        Keywords = ["test", "whatsapp", "notification"]
+        ZltoReward = 100,
+        YomaReward = 50,
+        OrganizationId = Guid.NewGuid()
       };
     }
-
 
     private async Task SendNotification_WhatsAppOnly(Domain.MyOpportunity.Models.MyOpportunity myOpportunity, NotificationType type)
     {
@@ -169,7 +136,7 @@ namespace Yoma.Core.Test.Notification
 
     private async Task SendOpportunityPublishedNotification_WhatsAppOnly(Opportunity opportunity)
     {
-      var countryWorldwideId = _countryService.GetByCodeAplha2(Domain.Core.Country.Worldwide.ToDescription()).Id;
+      var countryWorldwideId = _countryService.GetByCodeAplha2(Country.Worldwide.ToDescription()).Id;
 
       var data = new NotificationOpportunityPublished
       {
