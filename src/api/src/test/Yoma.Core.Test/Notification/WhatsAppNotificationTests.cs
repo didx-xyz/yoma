@@ -68,7 +68,7 @@ namespace Yoma.Core.Test.Notification
     [Fact]
     public void Dispose()
     {
-      _scope.Dispose(); 
+      _scope.Dispose();
     }
     #endregion
 
