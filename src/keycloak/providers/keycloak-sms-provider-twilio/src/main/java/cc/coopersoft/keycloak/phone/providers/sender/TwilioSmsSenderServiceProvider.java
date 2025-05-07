@@ -181,8 +181,8 @@ public class TwilioSmsSenderServiceProvider extends FullSmsSenderAbstractService
      * @throws MessageSendException if the message delivery fails
      */
     private void checkMessageDeliveryStatus(String messageSid) throws MessageSendException {
-        final int MAX_RETRY = 3;
-        final int RETRY_DELAY_MS = 3000; // 3 seconds between checks
+        final int MAX_RETRY = 8;
+        final int RETRY_DELAY_MS = 2000; // 2 seconds between checks
 
         for (int attempt = 0; attempt < MAX_RETRY; attempt++) {
             try {
