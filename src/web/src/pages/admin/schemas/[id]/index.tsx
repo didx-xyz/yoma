@@ -77,7 +77,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
   }
 
   try {
-    const dataSchemaTypes = (await getSchemaTypes()).map((c) => ({
+    const dataSchemaTypes = (await getSchemaTypes(context)).map((c) => ({
       value: c.id,
       label: c.name,
     }));
@@ -791,7 +791,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         <table className="table w-full">
                           <thead>
                             <tr className="border-gray text-gray-dark">
-                              <th>Datasource</th>
+                              <th className="w-64">Datasource</th>
                               <th>Attribute</th>
                             </tr>
                           </thead>
@@ -823,7 +823,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         <table className="table w-full">
                           <thead>
                             <tr className="border-gray text-gray-dark">
-                              <th>Datasource</th>
+                              <th className="w-64">Datasource</th>
                               <th>Attribute</th>
                             </tr>
                           </thead>
