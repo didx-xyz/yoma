@@ -272,8 +272,8 @@ namespace Yoma.Core.Domain.SSI.Services
 
             tasks.Add(Task.Run(async () =>
             {
-              await using var scope = _scopeFactory.CreateAsyncScope();      
-              var credentialService = scope.ServiceProvider.GetRequiredService<ISSICredentialService>(); 
+              await using var scope = _scopeFactory.CreateAsyncScope();
+              var credentialService = scope.ServiceProvider.GetRequiredService<ISSICredentialService>();
               var schemaService = scope.ServiceProvider.GetRequiredService<ISSISchemaService>();
               var userService = scope.ServiceProvider.GetRequiredService<IUserService>();
               var organizationService = scope.ServiceProvider.GetRequiredService<IOrganizationService>();
