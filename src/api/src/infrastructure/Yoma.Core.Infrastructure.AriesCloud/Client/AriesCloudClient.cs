@@ -22,6 +22,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
     private readonly IRepository<Models.Connection> _connectionRepository;
 
+    private static readonly SemaphoreSlim _definitionLock = new(1, 1);
     private const string Schema_Prefix_JWT = "DEEGg5EAUmvm4goxOygg64p";
     #endregion
 
@@ -205,7 +206,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
         case ArtifactType.AnonCreds:
           var schemaCreateRequest = new CreateSchema
           {
-            Schema_type = Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models.SchemaType.Anoncreds,
             Name = request.Name,
             Version = version.ToString(),
             Attribute_names = request.Attributes
@@ -263,7 +263,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       {
         var createTenantRequest = new CreateTenantRequest
         {
-          Wallet_type = Wallet_type.AskarAnoncreds,
           Wallet_name = request.Referent,
           Wallet_label = request.Name,
           Roles = request.Roles.ToAriesRoles(),
@@ -342,11 +341,19 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       switch (request.ArtifactType)
       {
         case ArtifactType.AnonCreds:
-          var definitionId = await EnsureDefinition(clientIssuer, schema);
+          string definitionId;
+          await _definitionLock.WaitAsync();
+          try
+          {
+            definitionId = await EnsureDefinition(clientIssuer, schema);
+          }
+          finally
+          {
+            _definitionLock.Release();
+          }
 
           sendCredentialRequest = new SendCredential
           {
-            Type = CredentialType.Anoncreds,
             Connection_id = connection.SourceConnectionId,
             Anoncreds_credential_detail = new AnonCredsCredential
             {
