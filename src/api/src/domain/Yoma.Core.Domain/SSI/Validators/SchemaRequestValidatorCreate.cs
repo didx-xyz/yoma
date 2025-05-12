@@ -1,7 +1,7 @@
 using FluentValidation;
+using Yoma.Core.Domain.SSI.Helpers;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Models;
-using Yoma.Core.Domain.SSI.Services;
 
 namespace Yoma.Core.Domain.SSI.Validators
 {
@@ -17,11 +17,8 @@ namespace Yoma.Core.Domain.SSI.Validators
     {
       _ssiSchemaTypeService = ssiSchemaTypeService;
 
-      var fullName = string.Empty;
-      var systemCharacters = SSISchemaService.SchemaName_SystemCharacters.Union([SSISchemaService.SchemaName_TypeDelimiter]); //i.e. Opportunity|Learning
-
+      RuleFor(o => o.Name).Must(name => !SSISSchemaHelper.SystemCharacters.Any(c => name.Contains(c))).WithMessage(name => $"{{PropertyName}} cannot contain system characters '{string.Join(' ', SSISSchemaHelper.SystemCharacters)}'");
       RuleFor(x => x.TypeId).NotEmpty().Must(TypeExists).WithMessage($"Specified type is invalid / does not exist.");
-      RuleFor(o => o.Name).Must(name => !systemCharacters.Any(c => name.Contains(c))).WithMessage(name => $"{{PropertyName}} cannot contain system characters '{string.Join(' ', systemCharacters)}'");
     }
     #endregion
 
