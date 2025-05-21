@@ -486,8 +486,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     /// </summary>
     private static async Task<string> EnsureDefinition(ITenantClient clientIssuer, Domain.SSI.Models.Provider.Schema schema)
     {
-      var tagComponents = schema.Id.Split(':');
-      var tag = string.Join(string.Empty, tagComponents.Skip(1));
+      var tag = $"{schema.ArtifactType}:{schema.Name}:{schema.Version}";
 
       var existingDefinitions = await clientIssuer.GetCredentialDefinitionsAsync(schema_id: schema.Id);
       existingDefinitions = existingDefinitions?.Where(o => string.Equals(o.Tag, tag)).ToList();
