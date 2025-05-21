@@ -42,6 +42,10 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
     private readonly ITwilioRestClient _twilioClient;
 
     private static readonly MessageType[] PreferredMessageTypeOrder = [MessageType.WhatsApp, MessageType.SMS];
+
+    private static readonly HashSet<MessageResource.StatusEnum> MessageStatus_Delivered_Success = [MessageResource.StatusEnum.Delivered, MessageResource.StatusEnum.Read];
+    private static readonly HashSet<MessageResource.StatusEnum> MessageStatus_Delivered_Failure = [MessageResource.StatusEnum.Failed, MessageResource.StatusEnum.Undelivered];
+    private static readonly HashSet<MessageResource.StatusEnum> MessageStatus_Dispatched = [MessageResource.StatusEnum.Sent];
     #endregion
 
     #region Constructor
@@ -124,7 +128,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
 
             data.RecipientDisplayName = string.IsNullOrWhiteSpace(recipient.DisplayName) ? Constants.Default_Recipient_DisplayName : recipient.DisplayName;
 
-            var delivered = false;
+            var messageDelivered = false;
             string? lastTwilioFailure = null;
 
             foreach (var messageType in PreferredMessageTypeOrder)
@@ -196,13 +200,14 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                 switch (messageType)
                 {
                   case MessageType.SMS:
-                    delivered = true;
+                    messageDelivered = true;
                     break;
 
                   case MessageType.WhatsApp:
                     if (_options.DeliveryPollingWhatsAppTimeoutInSeconds <= 0)
                       throw new InvalidOperationException("WhatsApp delivery polling timeout is not configured");
 
+                    var messageDispatched = false;
                     var timeout = TimeSpan.FromSeconds(_options.DeliveryPollingWhatsAppTimeoutInSeconds);
                     var startTime = DateTimeOffset.UtcNow;
 
@@ -213,15 +218,21 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                       {
                         message = await MessageResource.FetchAsync(new FetchMessageOptions(response.Sid), _twilioClient);
 
-                        if (message.Status == MessageResource.StatusEnum.Failed || message.Status == MessageResource.StatusEnum.Undelivered)
+                        if (MessageStatus_Delivered_Failure.Contains(message.Status))
                         {
                           lastTwilioFailure = $"{recipientId}: Twilio API error — {message.ErrorMessage ?? "Unknown error"} ({message.ErrorCode})";
                           break; //hard failure → stop polling
                         }
-                        else if (message.Status == MessageResource.StatusEnum.Delivered || message.Status == MessageResource.StatusEnum.Read)
+                        else if (MessageStatus_Delivered_Success.Contains(message.Status))
                         {
-                          delivered = true;
+                          messageDelivered = true;
                           break; //success → stop polling
+                        }
+                        else if (MessageStatus_Dispatched.Contains(message.Status))
+                        {
+                          //message sent but not yet delivered – mark as dispatched but keep polling.
+                          //if it is still only dispatched when the polling timeout expires, treat it as delivered.
+                          messageDispatched = true;
                         }
                       }
                       catch (Exception ex)
@@ -230,12 +241,19 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                         break;
                       }
 
-                      if (DateTimeOffset.UtcNow - startTime >= timeout) break;
+                      //polling timeout
+                      if (DateTimeOffset.UtcNow - startTime >= timeout)
+                      {
+                        //if the message was dispatched, assume it was delivered after the polling timeout
+                        if (messageDispatched)
+                          messageDelivered = true;
+                        else
+                          lastTwilioFailure = $"{recipientId}: Polling timed out — message not confirmed as delivered";
+                        break;
+                      }
+
                       await Task.Delay(500);
                     }
-
-                    if (!delivered && string.IsNullOrEmpty(lastTwilioFailure))
-                      lastTwilioFailure = $"{recipientId}: Polling timed out — message not confirmed as delivered";
 
                     break;
 
@@ -243,7 +261,11 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
                     throw new InvalidOperationException($"Unsupported message type: {messageType}");
                 }
 
-                if (delivered) break;
+                if (messageDelivered)
+                {
+                  lastTwilioFailure = null;
+                  break;
+                }
               }
               catch (Exception ex)
               {
@@ -251,7 +273,7 @@ namespace Yoma.Core.Infrastructure.Twilio.Client
               }
             }
 
-            if (!delivered && !string.IsNullOrEmpty(lastTwilioFailure))
+            if (!messageDelivered && !string.IsNullOrEmpty(lastTwilioFailure))
             {
               _logger.LogError("Notification failed for recipient {recipient}: {reason}", recipientId, lastTwilioFailure);
             }
