@@ -607,8 +607,8 @@ const LinkDetails: NextPageWithLayout<{
           countries: null,
           titleContains: inputValue,
           published: true,
-          verificationMethod: VerificationMethod.Manual,
-          verificationEnabled: null,
+          verificationMethod: null,
+          verificationEnabled: true,
           pageNumber: 1,
           pageSize: PAGE_SIZE_MEDIUM,
         }).then((data) => {
