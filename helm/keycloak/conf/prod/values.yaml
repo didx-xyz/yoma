@@ -104,7 +104,6 @@ config-cli:
     CLIENT_GOODWALL_URL_REDIRECT: goodwallauth://yomaredirect
     CLIENT_IIASA_URL: https://geoqauth.main.geo-wiki.org
     CLIENT_IIASA_URL_REDIRECT: https://geoqauth.main.geo-wiki.org/signin-yoma-oidc
-    CLIENT_MAZA_APP_ENABLED: "false"
     CLIENT_UNICEF_KENYA_ENABLED: "false"
 
   init:
