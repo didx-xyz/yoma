@@ -2,23 +2,23 @@ ingress:
   internal:
     enabled: true
     rules:
-      - host: stage.yoma.world
+      - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:
           - path: /auth
   internal-admin:
     enabled: true
     rules:
-      - host: auth.stage.yoma.world
+      - host: auth.{{ .Values.keycloak.ingressDomain }}
   external:
     enabled: true
     rules:
-      - host: stage.yoma.world
+      - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:
           - path: /auth/realms/yoma
           - path: /auth/resources
           - path: /auth/js
       # Required for Vercel Rewrite
-      - host: keycloak.stage.yoma.world
+      - host: keycloak.{{ .Values.keycloak.ingressDomain }}
         paths:
           - path: /auth/realms/yoma
           - path: /auth/resources
@@ -29,6 +29,8 @@ postInstallHook:
 
 keycloak:
   replicas: 2
+
+  ingressDomain: stage.yoma.world
 
   themes:
     enabled: true
