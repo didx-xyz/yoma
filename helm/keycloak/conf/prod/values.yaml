@@ -2,29 +2,29 @@ ingress:
   internal:
     enabled: true
     rules:
-      - host: yoma.world
+      - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:
           - path: /auth
   internal-admin:
     enabled: true
     rules:
-      - host: auth.yoma.world
+      - host: auth.{{ .Values.keycloak.ingressDomain }}
   external:
     enabled: true
     annotations:
       nginx.ingress.kubernetes.io/configuration-snippet: |-
-        if ($host = 'auth.yoma.world') {
-          rewrite ^ https://yoma.world/auth$request_uri permanent;
+        if ($host = 'auth.{{ .Values.keycloak.ingressDomain }}') {
+          rewrite ^ https://{{ .Values.keycloak.ingressDomain }}/auth$request_uri permanent;
         }
     rules:
-      - host: auth.yoma.world
-      - host: yoma.world
+      - host: auth.{{ .Values.keycloak.ingressDomain }}
+      - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:
           - path: /auth/realms/yoma
           - path: /auth/resources
           - path: /auth/js
       # Required for Vercel Rewrite
-      - host: keycloak.yoma.world
+      - host: keycloak.{{ .Values.keycloak.ingressDomain }}
         paths:
           - path: /auth/realms/yoma
           - path: /auth/resources
@@ -35,6 +35,9 @@ postInstallHook:
 
 keycloak:
   replicas: 2
+
+  ingressDomain: yoma.world
+
   resources:
     requests:
       cpu: 250m
