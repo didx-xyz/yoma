@@ -4,6 +4,7 @@ using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
@@ -22,7 +23,6 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
     private readonly IRepository<Models.Connection> _connectionRepository;
 
-    private static readonly SemaphoreSlim _definitionLock = new(1, 1);
     private const string Schema_Prefix_JWT = "DEEGg5EAUmvm4goxOygg64p";
     #endregion
 
@@ -341,17 +341,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       switch (request.ArtifactType)
       {
         case ArtifactType.AnonCreds:
-          string definitionId;
-          await _definitionLock.WaitAsync();
-          try
-          {
-            definitionId = await EnsureDefinition(clientIssuer, schema);
-          }
-          finally
-          {
-            _definitionLock.Release();
-          }
-
+          var definitionId = await EnsureDefinition(clientIssuer, tenantIssuer.Wallet_id, schema);
+         
           sendCredentialRequest = new SendCredential
           {
             Connection_id = connection.SourceConnectionId,
@@ -484,26 +475,41 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     /// <summary>
     /// Ensure a credential definition for the specified issuer and schema (applies to artifact type anonCreds)
     /// </summary>
-    private static async Task<string> EnsureDefinition(ITenantClient clientIssuer, Domain.SSI.Models.Provider.Schema schema)
+    private static async Task<string> EnsureDefinition(ITenantClient clientIssuer, string tenantIssuerId, Domain.SSI.Models.Provider.Schema schema)
     {
       var tag = $"{schema.ArtifactType}:{schema.Name}:{schema.Version}";
+
+      // Global lock — allows only one thread in the entire app to execute at a time.
+      // Use only when definition creation must be fully serialized across all issuers and schemas.
+      //var lockKey = "global";
+
+      // Per-issuer lock — ensures only one schema definition is created at a time per issuer.
+      // Allows different issuers to create in parallel, but serializes all schemas for a single issuer.
+      //var lockKey = tenantIssuerId;
+
+      // 🔒 Per-definition lock — ensures only one thread creates a specific schema definition per issuer.
+      // Safest and most efficient level; allows concurrent definitions for different schemas and issuers.
+      var lockKey = $"{tenantIssuerId}:{schema.Id}";
 
       var existingDefinitions = await clientIssuer.GetCredentialDefinitionsAsync(schema_id: schema.Id);
       existingDefinitions = existingDefinitions?.Where(o => string.Equals(o.Tag, tag)).ToList();
       if (existingDefinitions?.Count > 1)
         throw new DataInconsistencyException($"More than one definition found with schema id and tag '{tag}'");
 
-      var definition = existingDefinitions?.SingleOrDefault();
-      if (definition != null) return definition.Id;
-
-      definition = await clientIssuer.CreateCredentialDefinitionAsync(new CreateCredentialDefinition
+      return await LockManagerScoped.RunWithLockAsync(lockKey, async () =>
       {
-        Schema_id = schema.Id,
-        Tag = tag,
-        Support_revocation = true
-      });
+        var definition = existingDefinitions?.SingleOrDefault();
+        if (definition != null) return definition.Id;
 
-      return definition.Id;
+        definition = await clientIssuer.CreateCredentialDefinitionAsync(new CreateCredentialDefinition
+        {
+          Schema_id = schema.Id,
+          Tag = tag,
+          Support_revocation = true
+        });
+
+        return definition.Id;
+      });
     }
 
     /// <summary>
@@ -511,72 +517,77 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     /// </summary>
     private async Task<Models.Connection> EnsureConnectionCI(Tenant tenantIssuer, ITenantClient clientIssuer, Tenant tenantHolder, ITenantClient clientHolder)
     {
-      var results = _connectionRepository.Query()
+      var lockKey = $"{tenantIssuer.Wallet_id}:{tenantHolder.Wallet_id}";
+
+      return await LockManagerScoped.RunWithLockAsync(lockKey, async () =>
+      {
+        var results = _connectionRepository.Query()
           .Where(o =>
               o.SourceTenantId == tenantIssuer.Wallet_id &&
               o.TargetTenantId == tenantHolder.Wallet_id)
           .ToList();
 
-      var result = results
-          .OrderByDescending(o =>
-              Enum.TryParse<Connection_protocol>(o.Protocol, true, out var parsedProtocol)
-                  ? (int)parsedProtocol
-                  : throw new InvalidOperationException($"Unknown protocol: {o.Protocol}"))
-          .FirstOrDefault();
+        var result = results
+            .OrderByDescending(o =>
+                Enum.TryParse<Connection_protocol>(o.Protocol, true, out var parsedProtocol)
+                    ? (int)parsedProtocol
+                    : throw new InvalidOperationException($"Unknown protocol: {o.Protocol}"))
+            .FirstOrDefault();
 
-      Connection? connectionIssuer = null;
-      if (result != null)
-      {
-        try
+        Connection? connectionIssuer = null;
+        if (result != null)
         {
-          //ensure connected (active)
-          connectionIssuer = await clientIssuer.GetConnectionByIdAsync(result.SourceConnectionId);
+          try
+          {
+            //ensure connected (active)
+            connectionIssuer = await clientIssuer.GetConnectionByIdAsync(result.SourceConnectionId);
 
-          if (connectionIssuer != null && string.Equals(connectionIssuer.State, ConnectionState.Completed.ToEnumMemberValue(), StringComparison.InvariantCultureIgnoreCase)) return result;
+            if (connectionIssuer != null && string.Equals(connectionIssuer.State, ConnectionState.Completed.ToEnumMemberValue(), StringComparison.InvariantCultureIgnoreCase)) return result;
 
-          await _connectionRepository.Delete(result);
+            await _connectionRepository.Delete(result);
+          }
+          catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+          {
+            if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+          }
         }
-        catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+
+        //find the issuer actor on the trust registry in order to get the public did
+        var clientPublic = _clientFactory.CreatePublicClient();
+        var actorIssuer = (await clientPublic.GetTrustRegistryActorsAsync(actor_id: tenantIssuer.Wallet_id)).SingleOrDefault()
+            ?? throw new InvalidOperationException($"Failed to retrieve actor with id (wallet id) '{tenantIssuer.Wallet_id}'");
+
+        Connection? connectionHolder = null;
+        WebhookEvent<Connection>? sseEvent = null;
+        await Task.Run(async () =>
         {
-          if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
-        }
-      }
+          //create connection to issuer as holder; issuer auto accepts connection
+          connectionHolder = await clientHolder.CreateDidExchangeRequestAsync(their_public_did: actorIssuer.Did, my_label: tenantHolder.Wallet_label);
 
-      //find the issuer actor on the trust registry in order to get the public did
-      var clientPublic = _clientFactory.CreatePublicClient();
-      var actorIssuer = (await clientPublic.GetTrustRegistryActorsAsync(actor_id: tenantIssuer.Wallet_id)).SingleOrDefault()
-          ?? throw new InvalidOperationException($"Failed to retrieve actor with id (wallet id) '{tenantIssuer.Wallet_id}'");
+          //await sse event on issuer's side (in order to retrieve the issuer connection id to the holder used to issue the credential)  
+          sseEvent = await _sseListenerService.Listen<Connection>(tenantIssuer.Wallet_id,
+                  Topic.Connections, "their_did", connectionHolder.My_did, ConnectionState.Completed.ToEnumMemberValue());
+        });
 
-      Connection? connectionHolder = null;
-      WebhookEvent<Connection>? sseEvent = null;
-      await Task.Run(async () =>
-      {
-        //create connection to issuer as holder; issuer auto accepts connection
-        connectionHolder = await clientHolder.CreateDidExchangeRequestAsync(their_public_did: actorIssuer.Did, my_label: tenantHolder.Wallet_label);
+        if (connectionHolder == null)
+          throw new InvalidOperationException($"Failed to create connection to the issuer as holder");
 
-        //await sse event on issuer's side (in order to retrieve the issuer connection id to the holder used to issue the credential)  
-        sseEvent = await _sseListenerService.Listen<Connection>(tenantIssuer.Wallet_id,
-                Topic.Connections, "their_did", connectionHolder.My_did, ConnectionState.Completed.ToEnumMemberValue());
+        if (sseEvent == null)
+          throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Connections}' and desired state '{ConnectionState.Completed}'");
+
+        result = new Models.Connection
+        {
+          SourceTenantId = tenantIssuer.Wallet_id,
+          SourceConnectionId = sseEvent.Payload.Connection_id,
+          TargetTenantId = tenantHolder.Wallet_id,
+          TargetConnectionId = connectionHolder.Connection_id,
+          Protocol = (connectionHolder.Connection_protocol?.ToString()) ?? throw new InvalidOperationException("Unable to obtain the required connection protocol")
+        };
+
+        result = await _connectionRepository.Create(result);
+
+        return result;
       });
-
-      if (connectionHolder == null)
-        throw new InvalidOperationException($"Failed to create connection to the issuer as holder");
-
-      if (sseEvent == null)
-        throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Connections}' and desired state '{ConnectionState.Completed}'");
-
-      result = new Models.Connection
-      {
-        SourceTenantId = tenantIssuer.Wallet_id,
-        SourceConnectionId = sseEvent.Payload.Connection_id,
-        TargetTenantId = tenantHolder.Wallet_id,
-        TargetConnectionId = connectionHolder.Connection_id,
-        Protocol = (connectionHolder.Connection_protocol?.ToString()) ?? throw new InvalidOperationException("Unable to obtain the required connection protocol")
-      };
-
-      result = await _connectionRepository.Create(result);
-
-      return result;
     }
 
     private async Task<string?> GetCredentialReferentByClientReferentOrNull(ITenantClient clientHolder, ArtifactType artifactType,
