@@ -2,17 +2,17 @@ ingress:
   internal:
     enabled: true
     rules:
-      - host: dev.yoma.world
+      - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:
           - path: /auth
   internal-admin:
     enabled: true
     rules:
-      - host: auth.dev.yoma.world
+      - host: auth.{{ .Values.keycloak.ingressDomain }}
   external:
     enabled: false
     rules:
-      - host: dev.yoma.world
+      - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:
           - path: /auth/realms/yoma
           - path: /auth/resources
@@ -23,6 +23,8 @@ postInstallHook:
 
 keycloak:
   replicas: 2
+
+  ingressDomain: dev.yoma.world
 
   themes:
     enabled: true

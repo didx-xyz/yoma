@@ -157,6 +157,8 @@ keycloak:
   image:
     tag: 22.0.1
 
+  ingressDomain: yoma.world
+
   command:
     - /opt/keycloak/bin/kc.sh
     - start
@@ -225,6 +227,10 @@ keycloak:
         -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless
         -Djava.awt.headless=true
         -Dkeycloak.profile.feature.upload_scripts=enabled
+    - name: KC_HOSTNAME
+      value: {{ .Values.ingressDomain }}
+    - name: KC_HOSTNAME_ADMIN
+      value: auth.{{ .Values.ingressDomain }}
     - name: KC_DB_URL_HOST
       valueFrom:
         secretKeyRef:
@@ -262,6 +268,8 @@ keycloak:
     - name: DD_LOGS_INJECTION
       value: "true"
     - name: DD_PROFILING_ENABLED
+      value: "false"
+    - name: DD_REMOTE_CONFIGURATION_ENABLED
       value: "false"
     - name: KC_JDBC_PARAMS
       value: sslmode=prefer
@@ -350,7 +358,7 @@ keycloak:
     admission.datadoghq.com/enabled: "false" # disabled by default (for now)
   podAnnotations:
     # gcr.io/datadoghq/dd-lib-java-init
-    admission.datadoghq.com/java-lib.version: v1.48.1
+    admission.datadoghq.com/java-lib.version: v1.49.0
     ad.datadoghq.com/keycloak.logs: '[{ "service": "keycloak", "source": "jboss_wildfly" }]'
 
   lifecycleHooks: |
