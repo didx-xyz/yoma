@@ -342,7 +342,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       {
         case ArtifactType.AnonCreds:
           var definitionId = await EnsureDefinition(clientIssuer, tenantIssuer.Wallet_id, schema);
-         
+
           sendCredentialRequest = new SendCredential
           {
             Connection_id = connection.SourceConnectionId,
