@@ -21,6 +21,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public Store Store { get; set; }
 
     public Task Task { get; set; }
+
+    public bool CalculateStoreItemCategoryCount { get; set; } = false;
   }
 
   public class Partner
