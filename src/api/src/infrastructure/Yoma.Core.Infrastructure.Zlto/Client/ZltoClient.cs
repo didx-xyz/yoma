@@ -285,14 +285,13 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
       var results = response.Items.Select(o => new Domain.Marketplace.Models.StoreItemCategory
       {
         Id = o.ItemCategoryId.ToString(),
-        StoreId = o.StoreId,
+        StoreId = storeId,
         Name = o.ItemCatName,
         Description = o.ItemCatDescription,
         Summary = o.ItemCatDetails,
         ImageURL = string.Equals(o.ItemCatImage, Image_Default_Empty_Value, StringComparison.InvariantCultureIgnoreCase) ? null : o.ItemCatImage,
-        Count = o.StoreItemCount,
         //o.StoreItemCount: internal count the does not reflect the available item count correctly
-        //Count = ListStoreItems(storeId, o.ItemCategoryId.ToString(), 100, 0).Result.Count, //ZLTO has an soft limit of 100; if you omit paging, they default to 10
+        Count = _options.CalculateStoreItemCategoryCount ? ListStoreItems(storeId, o.ItemCategoryId.ToString(), 100, 0).Result.Count : o.StoreItemCount, //ZLTO has an soft limit of 100; if you omit paging, they default to 10
         Amount = o.ItemCatZlto
 
       }).OrderBy(o => o.Name).ToList();
