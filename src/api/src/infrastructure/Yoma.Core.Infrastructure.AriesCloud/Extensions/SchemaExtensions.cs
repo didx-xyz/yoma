@@ -8,6 +8,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
   public static class SchemaExtensions
   {
     #region Public Members
+    //TODO: Requested type to be included on CredentialSchema in acapy
     public static List<Domain.SSI.Models.Provider.Schema>? ToSchema(this ICollection<CredentialSchema> schemas, bool latestVersion)
     {
       if (schemas.Count == 0) return null;
@@ -19,6 +20,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
       return results;
     }
 
+    //TODO: Requested type to be included on CredentialSchema in acapy
     public static Domain.SSI.Models.Provider.Schema ToSchema(this CredentialSchema o)
     {
       return new Domain.SSI.Models.Provider.Schema
@@ -26,7 +28,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
         Id = o.Id,
         Name = o.Name,
         Version = Version.Parse(o.Version).ToMajorMinor(),
-        ArtifactType = ArtifactType.Indy,
+        ArtifactType = ArtifactType.AnonCreds,
         AttributeNames = o.Attribute_names
       };
     }

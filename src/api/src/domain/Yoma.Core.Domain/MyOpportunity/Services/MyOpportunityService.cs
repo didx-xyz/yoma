@@ -354,7 +354,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         query = query.Where(o => o.VerificationStatusId == verificationStatusId);
       }
 
-      //verfication sub query
+      //verification sub query
       //verificationTypes
       var verificationTypeIds = verificationTypes.Select(t => _opportunityVerificationTypeService.GetByType(t).Id).ToList();
 

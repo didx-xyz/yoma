@@ -564,31 +564,21 @@ const SchemaCreateEdit: NextPageWithLayout<{
                               control: () => "input",
                             }}
                             isMulti={false}
-                            options={[
-                              {
-                                value: 0,
-                                label: "Indy",
-                              },
-                              {
-                                value: 1,
-                                label: "Ld_proof",
-                              },
-                              {
-                                value: 2,
-                                label: "JWS",
-                              },
-                            ]}
+                            options={Object.keys(ArtifactType)
+                              .filter((key) => isNaN(Number(key)))
+                              .map((key) => ({
+                                value:
+                                  ArtifactType[
+                                    key as keyof typeof ArtifactType
+                                  ],
+                                label: key,
+                              }))}
                             onChange={(val) => onChange(val?.value)}
                             value={
                               value != null
                                 ? {
                                     value: value,
-                                    label:
-                                      value === 0
-                                        ? "Indy"
-                                        : value === 1
-                                          ? "Ld_proof"
-                                          : "JWS",
+                                    label: ArtifactType[value as ArtifactType],
                                   }
                                 : null
                             }
@@ -760,11 +750,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                       </label>
                       <label className="label-text text-sm">
                         {formData.artifactType != null
-                          ? formData.artifactType === 0
-                            ? "Indy"
-                            : formData.artifactType === 1
-                              ? "Ld_proof"
-                              : "JWS"
+                          ? ArtifactType[formData.artifactType as ArtifactType]
                           : ""}
                       </label>
                       {errorsStep1.artifactType && (
@@ -791,7 +777,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         <table className="table w-full">
                           <thead>
                             <tr className="border-gray text-gray-dark">
-                              <th className="w-64">Datasource</th>
+                              <th className="w-[260px]">Datasource</th>
                               <th>Attribute</th>
                             </tr>
                           </thead>
@@ -823,7 +809,7 @@ const SchemaCreateEdit: NextPageWithLayout<{
                         <table className="table w-full">
                           <thead>
                             <tr className="border-gray text-gray-dark">
-                              <th className="w-64">Datasource</th>
+                              <th className="w-[260px]">Datasource</th>
                               <th>Attribute</th>
                             </tr>
                           </thead>

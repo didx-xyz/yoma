@@ -50,7 +50,7 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
     /// <summary>
     /// Sends an email notification using SendGrid for the specified notification type and grouped recipient data.
     ///
-    /// - Each group of personalizations (up to 1000) is sent as a batch, each executed on its own thread.
+    /// - Each group of personalization (up to 1000) is sent as a batch, each executed on its own thread.
     /// - SendGrid API failures (error responses or exceptions) are logged per batch and do not throw.
     /// - Input validation errors (null/empty groups or missing template config) throw immediately.
     /// - The environment suffix is added to the subject unless the environment is Production.
@@ -84,11 +84,11 @@ namespace Yoma.Core.Infrastructure.SendGrid.Client
             : $" ({_environmentProvider.Environment.ToDescription()})";
       }
 
-      //generate personalizations
-      var personalizations = ProcessRecipients(recipientDataGroups);
+      //generate personalization
+      var personalization = ProcessRecipients(recipientDataGroups);
 
-      //process in chunks of 1000 personalizations each
-      var batches = personalizations.Chunk(Limit_Personalization).ToList();
+      //process in chunks of 1000 personalization each
+      var batches = personalization.Chunk(Limit_Personalization).ToList();
 
       var tasks = new List<Task>();
 

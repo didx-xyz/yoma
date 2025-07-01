@@ -142,7 +142,7 @@ const Schemas: NextPageWithLayout<{
                       <td>{schema.version}</td>
                       <td>{schema.entities?.length}</td>
                       <td>{schema.typeDescription}</td>
-                      <td className="flex justify-center">
+                      <td>
                         <Link href={`/admin/schemas/${schema.name}`}>
                           <IoMdSettings className="h-4 w-4" />
                         </Link>
