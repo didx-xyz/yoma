@@ -75,7 +75,7 @@ ingress:
     className: nginx-internal
     annotations:
       nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
-      nginx.ingress.kubernetes.io/proxy-busy-buffer-size: 128k
+      nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 128k
       nginx.ingress.kubernetes.io/proxy-buffering: "on"
       nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
       nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
@@ -89,7 +89,7 @@ ingress:
     className: nginx-external
     annotations:
       nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
-      nginx.ingress.kubernetes.io/proxy-busy-buffer-size: 128k
+      nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 128k
       nginx.ingress.kubernetes.io/proxy-buffering: "on"
       nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
       nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
