@@ -1,0 +1,28 @@
+<#import "template.ftl" as layout>
+<#import "user-profile-commons.ftl" as userProfileCommons>
+<@layout.registrationLayout displayMessage=messagesPerField.exists('global') displayRequiredFields=true; section>
+    <#if section = "header">
+        ${msg("loginIdpReviewProfileTitle")}
+    <#elseif section = "form">
+        <script type="text/javascript">
+            // Redirect back to the client application
+            window.location.href = "${url.referrerURI?no_esc}";
+        </script>
+        <form id="kc-idp-review-profile-form" class="${properties.kcFormClass!}" action="${url.loginAction}" method="post">
+            <!-- The form remains here for fallback purposes -->
+            <#--  <@userProfileCommons.userProfileFormFields/>
+
+            <div class="${properties.kcFormGroupClass!}">
+                <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
+                    <div class="${properties.kcFormOptionsWrapperClass!}">
+                    </div>
+                </div>
+
+                <div id="kc-form-buttons" class="${properties.kcFormButtonsClass!}">
+                    <input class="${propeerties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}" type="submit" value="${msg("doSubmit")}" />
+                </div>
+            </div>  -->
+			Please wait...
+        </form>
+    </#if>
+</@layout.registrationLayout>
