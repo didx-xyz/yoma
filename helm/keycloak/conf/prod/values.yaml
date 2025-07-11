@@ -108,6 +108,9 @@ config-cli:
     CLIENT_IIASA_URL: https://geoqauth.main.geo-wiki.org
     CLIENT_IIASA_URL_REDIRECT: https://geoqauth.main.geo-wiki.org/signin-yoma-oidc
     CLIENT_UNICEF_KENYA_ENABLED: "false"
+    CLIENT_MINI_SASS_ENABLED: "false"
+    CLIENT_MINI_SASS_URL: https://minisass.org
+    CLIENT_MINI_SASS_URL_REDIRECT: https://minisass.org/authentication/api/yoma/callback
 
   init:
     enabled: true

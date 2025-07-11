@@ -467,3 +467,4 @@ config-cli:
     CLIENT_IIASA_ENABLED: "true"
     CLIENT_MAZA_APP_ENABLED: "true"
     CLIENT_UNICEF_KENYA_ENABLED: "true"
+    CLIENT_MINI_SASS_ENABLED: "true"
