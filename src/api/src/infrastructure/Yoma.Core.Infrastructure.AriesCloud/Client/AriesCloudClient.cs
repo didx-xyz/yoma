@@ -4,8 +4,8 @@ using Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models;
 using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
-using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Domain.SSI.Interfaces.Provider;
 using Yoma.Core.Domain.SSI.Models.Provider;
@@ -17,26 +17,22 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
   public class AriesCloudClient : ISSIProviderClient
   {
     #region Class Variables
-    private readonly AppSettings _appSettings;
     private readonly ClientFactory _clientFactory;
     private readonly ISSEListenerService _sseListenerService;
     private readonly IRepository<Models.Credential> _credentialRepository;
     private readonly IRepository<Models.CredentialSchema> _credentialSchemaRepository;
     private readonly IRepository<Models.Connection> _connectionRepository;
 
-    private const string Schema_Prefix_LDProof = "KtX2yAeljr0zZ9MuoQnIcWb";
     private const string Schema_Prefix_JWT = "DEEGg5EAUmvm4goxOygg64p";
     #endregion
 
     #region Constructor
-    public AriesCloudClient(AppSettings appSettings,
-        ClientFactory clientFactory,
+    public AriesCloudClient(ClientFactory clientFactory,
         ISSEListenerService sseListenerService,
         IRepository<Models.Credential> credentialRepository,
         IRepository<Models.CredentialSchema> credentialSchemaRepository,
         IRepository<Models.Connection> connectionRepository)
     {
-      _appSettings = appSettings;
       _clientFactory = clientFactory;
       _sseListenerService = sseListenerService;
       _credentialRepository = credentialRepository;
@@ -143,7 +139,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       CredInfo? resultAries = null;
       try
       {
-        resultAries = await client.GetIndyCredentialByIdAsync(id);
+        resultAries = await client.GetCredentialByIdAsync(id);
       }
       catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
       {
@@ -166,10 +162,9 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       var client = _clientFactory.CreateTenantClient(tenantId);
 
       //var paginationEnabled = start.HasValue || count.HasValue;
-      //TODO: ld_proofs
 
-      //indy credentials
-      var indyCredentials = await client.GetIndyCredentialsAsync();
+      //anon credentials
+      var anonCredentials = await client.GetCredentialsAsync();
 
       //jws credentials
       var query = _credentialRepository.Query().Where(o => o.TargetTenantId == tenantId && o.ArtifactType == ArtifactType.JWS.ToString());
@@ -187,7 +182,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       //}
       var jwsCredentials = query.ToList();
 
-      var results = (indyCredentials?.Results?.Select(o => o.ToCredential()) ?? [])
+      var results = (anonCredentials?.Results?.Select(o => o.ToCredential()) ?? [])
           .Concat(jwsCredentials?.Select(o => o.ToCredential()) ?? []).ToList();
 
       return results;
@@ -208,7 +203,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
       switch (request.ArtifactType)
       {
-        case ArtifactType.Indy:
+        case ArtifactType.AnonCreds:
           var schemaCreateRequest = new CreateSchema
           {
             Name = request.Name,
@@ -220,20 +215,12 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
           var schemaAries = await client.CreateSchemaAsync(schemaCreateRequest);
           return schemaAries.ToSchema();
 
-        case ArtifactType.LD_Proof:
         case ArtifactType.JWS:
           var protocolVersion = Constants.ProtocolVersion.TrimStart('v').TrimStart('V');
 
-          var schemaPrefix = request.ArtifactType switch
-          {
-            ArtifactType.LD_Proof => Schema_Prefix_LDProof,
-            ArtifactType.JWS => Schema_Prefix_JWT,
-            _ => throw new InvalidOperationException($"Artifact type of '{request.ArtifactType}' not supported"),
-          };
-
           var credentialSchema = new Models.CredentialSchema
           {
-            Id = $"{schemaPrefix}:{protocolVersion}:{request.Name}:{version}",
+            Id = $"{Schema_Prefix_JWT}:{protocolVersion}:{request.Name}:{version}",
             Name = request.Name,
             Version = version.ToString(),
             AttributeNames = JsonConvert.SerializeObject(request.Attributes),
@@ -353,14 +340,13 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       SendCredential sendCredentialRequest;
       switch (request.ArtifactType)
       {
-        case ArtifactType.Indy:
-          var definitionId = await EnsureDefinition(clientIssuer, schema);
+        case ArtifactType.AnonCreds:
+          var definitionId = await EnsureDefinition(clientIssuer, tenantIssuer.Wallet_id, schema);
 
           sendCredentialRequest = new SendCredential
           {
-            Type = CredentialType.Indy,
             Connection_id = connection.SourceConnectionId,
-            Indy_credential_detail = new IndyCredential
+            Anoncreds_credential_detail = new AnonCredsCredential
             {
               Credential_definition_id = definitionId,
               Attributes = request.Attributes
@@ -368,37 +354,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
           };
 
           await SendAndAcceptCredential(tenantHolder, clientHolder, clientIssuer, sendCredentialRequest);
-          break;
 
-        case ArtifactType.LD_Proof:
-          var dids = await clientIssuer.GetDIDsAsync();
-          var did = dids.SingleOrDefault(o => o.Key_type == DIDKey_type.Ed25519 && o.Posture == DIDPosture.Posted)
-              ?? throw new InvalidOperationException($"Failed to retrieve the issuer DID of type '{DIDKey_type.Ed25519}' and posture '{DIDPosture.Posted}'");
-          var credentialSubject = new Dictionary<string, string> { { "type", request.SchemaType } };
-          credentialSubject = credentialSubject.Concat(request.Attributes).ToDictionary(x => x.Key, x => x.Value);
-
-          sendCredentialRequest = new SendCredential
-          {
-            Type = CredentialType.Ld_proof,
-            Connection_id = connection.SourceConnectionId,
-            Ld_credential_detail = new LDProofVCDetail
-            {
-              Credential = new Aries.CloudAPI.DotnetSDK.AspCore.Clients.Models.Credential
-              {
-                Context = ["https://www.w3.org/2018/credentials/v1"], //TODO: Client (Yoma) hosted context based on schema i.e. https://w3id.org/citizenship/v1
-                Type = ["VerifiableCredential", request.SchemaType],
-                IssuanceDate = DateTimeOffset.UtcNow.ToString("yyyy-MM-dd"),
-                Issuer = did.Did,
-                CredentialSubject = JsonConvert.SerializeObject(credentialSubject),
-              },
-              Options = new LDProofVCOptions
-              {
-                ProofType = "Ed25519Signature2018"
-              }
-            }
-          };
-
-          await SendAndAcceptCredential(tenantHolder, clientHolder, clientIssuer, sendCredentialRequest);
           break;
 
         case ArtifactType.JWS:
@@ -414,7 +370,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
           var signedJWS = await clientIssuer.SignJWSAsync(signRequest);
 
-          //store the credential in the "db" wallet; at time of implementation, Aries did not support stroring of JWS credentials in the holder's wallet
+          //store the credential in the "db" wallet; at time of implementation, Aries did not support storing of JWS credentials in the holder's wallet
           var credential = new Models.Credential
           {
             ClientReferent = request.ClientReferent.Value,
@@ -517,29 +473,43 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     }
 
     /// <summary>
-    /// Ensure a credential definition for the specified issuer and schema (applies to artifact type Indy)
+    /// Ensure a credential definition for the specified issuer and schema (applies to artifact type anonCreds)
     /// </summary>
-    private static async Task<string> EnsureDefinition(ITenantClient clientIssuer, Domain.SSI.Models.Provider.Schema schema)
+    private static async Task<string> EnsureDefinition(ITenantClient clientIssuer, string tenantIssuerId, Domain.SSI.Models.Provider.Schema schema)
     {
-      var tagComponents = schema.Id.Split(':');
-      var tag = string.Join(string.Empty, tagComponents.Skip(1));
+      var tag = $"{schema.ArtifactType}:{schema.Name}:{schema.Version}";
+
+      // Global lock — allows only one thread in the entire app to execute at a time.
+      // Use only when definition creation must be fully serialized across all issuers and schemas.
+      //var lockKey = "global";
+
+      // Per-issuer lock — ensures only one schema definition is created at a time per issuer.
+      // Allows different issuers to create in parallel, but serializes all schemas for a single issuer.
+      //var lockKey = tenantIssuerId;
+
+      // 🔒 Per-definition lock — ensures only one thread creates a specific schema definition per issuer.
+      // Safest and most efficient level; allows concurrent definitions for different schemas and issuers.
+      var lockKey = $"{tenantIssuerId}:{schema.Id}";
 
       var existingDefinitions = await clientIssuer.GetCredentialDefinitionsAsync(schema_id: schema.Id);
       existingDefinitions = existingDefinitions?.Where(o => string.Equals(o.Tag, tag)).ToList();
       if (existingDefinitions?.Count > 1)
         throw new DataInconsistencyException($"More than one definition found with schema id and tag '{tag}'");
 
-      var definition = existingDefinitions?.SingleOrDefault();
-      if (definition != null) return definition.Id;
-
-      definition = await clientIssuer.CreateCredentialDefinitionAsync(new CreateCredentialDefinition
+      return await LockManagerScoped.RunWithLockAsync(lockKey, async () =>
       {
-        Schema_id = schema.Id,
-        Tag = tag,
-        Support_revocation = true
-      });
+        var definition = existingDefinitions?.SingleOrDefault();
+        if (definition != null) return definition.Id;
 
-      return definition.Id;
+        definition = await clientIssuer.CreateCredentialDefinitionAsync(new CreateCredentialDefinition
+        {
+          Schema_id = schema.Id,
+          Tag = tag,
+          Support_revocation = true
+        });
+
+        return definition.Id;
+      });
     }
 
     /// <summary>
@@ -547,72 +517,77 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     /// </summary>
     private async Task<Models.Connection> EnsureConnectionCI(Tenant tenantIssuer, ITenantClient clientIssuer, Tenant tenantHolder, ITenantClient clientHolder)
     {
-      var results = _connectionRepository.Query()
+      var lockKey = $"{tenantIssuer.Wallet_id}:{tenantHolder.Wallet_id}";
+
+      return await LockManagerScoped.RunWithLockAsync(lockKey, async () =>
+      {
+        var results = _connectionRepository.Query()
           .Where(o =>
               o.SourceTenantId == tenantIssuer.Wallet_id &&
               o.TargetTenantId == tenantHolder.Wallet_id)
           .ToList();
 
-      var result = results
-          .OrderByDescending(o =>
-              Enum.TryParse<Connection_protocol>(o.Protocol, true, out var parsedProtocol)
-                  ? (int)parsedProtocol
-                  : throw new InvalidOperationException($"Unknown protocol: {o.Protocol}"))
-          .FirstOrDefault();
+        var result = results
+            .OrderByDescending(o =>
+                Enum.TryParse<Connection_protocol>(o.Protocol, true, out var parsedProtocol)
+                    ? (int)parsedProtocol
+                    : throw new InvalidOperationException($"Unknown protocol: {o.Protocol}"))
+            .FirstOrDefault();
 
-      Connection? connectionIssuer = null;
-      if (result != null)
-      {
-        try
+        Connection? connectionIssuer = null;
+        if (result != null)
         {
-          //ensure connected (active)
-          connectionIssuer = await clientIssuer.GetConnectionByIdAsync(result.SourceConnectionId);
+          try
+          {
+            //ensure connected (active)
+            connectionIssuer = await clientIssuer.GetConnectionByIdAsync(result.SourceConnectionId);
 
-          if (connectionIssuer != null && string.Equals(connectionIssuer.State, ConnectionState.Completed.ToEnumMemberValue(), StringComparison.InvariantCultureIgnoreCase)) return result;
+            if (connectionIssuer != null && string.Equals(connectionIssuer.State, ConnectionState.Completed.ToEnumMemberValue(), StringComparison.InvariantCultureIgnoreCase)) return result;
 
-          await _connectionRepository.Delete(result);
+            await _connectionRepository.Delete(result);
+          }
+          catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+          {
+            if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+          }
         }
-        catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
+
+        //find the issuer actor on the trust registry in order to get the public did
+        var clientPublic = _clientFactory.CreatePublicClient();
+        var actorIssuer = (await clientPublic.GetTrustRegistryActorsAsync(actor_id: tenantIssuer.Wallet_id)).SingleOrDefault()
+            ?? throw new InvalidOperationException($"Failed to retrieve actor with id (wallet id) '{tenantIssuer.Wallet_id}'");
+
+        Connection? connectionHolder = null;
+        WebhookEvent<Connection>? sseEvent = null;
+        await Task.Run(async () =>
         {
-          if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
-        }
-      }
+          //create connection to issuer as holder; issuer auto accepts connection
+          connectionHolder = await clientHolder.CreateDidExchangeRequestAsync(their_public_did: actorIssuer.Did, my_label: tenantHolder.Wallet_label);
 
-      //find the issuer actor on the trust registry in order to get the public did
-      var clientPublic = _clientFactory.CreatePublicClient();
-      var actorIssuer = (await clientPublic.GetTrustRegistryActorsAsync(actor_id: tenantIssuer.Wallet_id)).SingleOrDefault()
-          ?? throw new InvalidOperationException($"Failed to retrieve actor with id (wallet id) '{tenantIssuer.Wallet_id}'");
+          //await sse event on issuer's side (in order to retrieve the issuer connection id to the holder used to issue the credential)  
+          sseEvent = await _sseListenerService.Listen<Connection>(tenantIssuer.Wallet_id,
+                  Topic.Connections, "their_did", connectionHolder.My_did, ConnectionState.Completed.ToEnumMemberValue());
+        });
 
-      Connection? connectionHolder = null;
-      WebhookEvent<Connection>? sseEvent = null;
-      await Task.Run(async () =>
-      {
-        //create connection to issuer as holder; issuer auto accepts connection
-        connectionHolder = await clientHolder.CreateDidExchangeRequestAsync(their_public_did: actorIssuer.Did, my_label: tenantHolder.Wallet_label);
+        if (connectionHolder == null)
+          throw new InvalidOperationException($"Failed to create connection to the issuer as holder");
 
-        //await sse event on issuer's side (in order to retrieve the issuer connection id to the holder used to issue the credential)  
-        sseEvent = await _sseListenerService.Listen<Connection>(tenantIssuer.Wallet_id,
-                Topic.Connections, "their_did", connectionHolder.My_did, ConnectionState.Completed.ToEnumMemberValue());
+        if (sseEvent == null)
+          throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Connections}' and desired state '{ConnectionState.Completed}'");
+
+        result = new Models.Connection
+        {
+          SourceTenantId = tenantIssuer.Wallet_id,
+          SourceConnectionId = sseEvent.Payload.Connection_id,
+          TargetTenantId = tenantHolder.Wallet_id,
+          TargetConnectionId = connectionHolder.Connection_id,
+          Protocol = (connectionHolder.Connection_protocol?.ToString()) ?? throw new InvalidOperationException("Unable to obtain the required connection protocol")
+        };
+
+        result = await _connectionRepository.Create(result);
+
+        return result;
       });
-
-      if (connectionHolder == null)
-        throw new InvalidOperationException($"Failed to create connection to the issuer as holder");
-
-      if (sseEvent == null)
-        throw new InvalidOperationException($"Failed to receive SSE event for topic '{Topic.Connections}' and desired state '{ConnectionState.Completed}'");
-
-      result = new Models.Connection
-      {
-        SourceTenantId = tenantIssuer.Wallet_id,
-        SourceConnectionId = sseEvent.Payload.Connection_id,
-        TargetTenantId = tenantHolder.Wallet_id,
-        TargetConnectionId = connectionHolder.Connection_id,
-        Protocol = (connectionHolder.Connection_protocol?.ToString()) ?? throw new InvalidOperationException("Unable to obtain the required connection protocol")
-      };
-
-      result = await _connectionRepository.Create(result);
-
-      return result;
     }
 
     private async Task<string?> GetCredentialReferentByClientReferentOrNull(ITenantClient clientHolder, ArtifactType artifactType,
@@ -620,56 +595,27 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     {
       switch (artifactType)
       {
-        case ArtifactType.Indy:
+        case ArtifactType.AnonCreds:
           var wqlQueryString = $"{{\"attr::{clientReferent.Key}::value\":\"{clientReferent.Value}\"}}";
 
-          var credsIndy = await clientHolder.GetIndyCredentialsAsync(null, null, wqlQueryString);
+          var credsAnon = await clientHolder.GetCredentialsAsync(null, null, wqlQueryString);
 
-          if (credsIndy?.Results?.Count > 1)
+          if (credsAnon?.Results?.Count > 1)
             throw new InvalidOperationException($"More than one credential found for client referent '{clientReferent}'");
 
-          var credIndy = credsIndy?.Results?.SingleOrDefault();
+          var credAnon = credsAnon?.Results?.SingleOrDefault();
 
-          if (credIndy == null)
+          if (credAnon == null)
           {
             if (throwNotFound)
               throw new InvalidOperationException($"Credential expected but not found for client referent '{clientReferent}'");
             return null;
           }
 
-          var resultIndy = credIndy?.Credential_id?.Trim();
-          if (string.IsNullOrEmpty(resultIndy))
-            throw new InvalidOperationException($"Credential referent expected but is null / empty client referent '{clientReferent}'");
-          return resultIndy;
-
-        case ArtifactType.LD_Proof:
-          VCRecordList? credsW3C = null;
-          try
-          {
-            credsW3C = await clientHolder.GetW3CCredentialsAsync(null, null, null);
-            //TODO: filter based on clientReferent.Value 
-          }
-          catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
-          {
-            if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
-          }
-
-          if (credsW3C?.Results?.Count > 1)
-            throw new InvalidOperationException($"More than one credential found for client referent '{clientReferent}'");
-
-          var credW3C = credsW3C?.Results?.SingleOrDefault();
-
-          if (credsW3C == null)
-          {
-            if (throwNotFound)
-              throw new InvalidOperationException($"Credential expected but not found for client referent '{clientReferent}'");
-            return null;
-          }
-
-          var resultW3C = credW3C?.Given_id?.Trim();
-          if (string.IsNullOrEmpty(resultW3C))
-            throw new InvalidOperationException($"Credential referent expected but is null / empty client referent '{clientReferent}'");
-          return resultW3C;
+          var resultAnon = credAnon?.Credential_id?.Trim();
+          if (string.IsNullOrEmpty(resultAnon))
+            throw new InvalidOperationException($"Credential id expected but is null / empty client referent '{clientReferent}'");
+          return resultAnon;
 
         case ArtifactType.JWS:
           var credJWS = _credentialRepository.Query().SingleOrDefault(o => o.ClientReferent == clientReferent.Value);

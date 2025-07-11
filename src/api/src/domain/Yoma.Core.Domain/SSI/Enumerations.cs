@@ -2,9 +2,8 @@ namespace Yoma.Core.Domain.SSI
 {
   public enum ArtifactType
   {
-    Indy,
-    LD_Proof,
-    JWS
+    JWS,
+    AnonCreds
   }
 
   public enum Role

@@ -10,7 +10,6 @@ namespace Yoma.Core.Domain.SSI.Validators
   {
     #region Class Variables
     private readonly ISSISchemaEntityService _ssiSchemaEntityService;
-
     #endregion
 
     #region Constructorx
@@ -20,7 +19,7 @@ namespace Yoma.Core.Domain.SSI.Validators
 
       RuleFor(x => x.Name).NotEmpty().WithMessage("{PropertyName} is required.");
       RuleFor(x => x.Attributes).Must(x => x.Count != 0 && x.All(attrib => !string.IsNullOrWhiteSpace(attrib) && AttributeExists(attrib)))
-          .WithMessage($"{{PropertyName}} is required, cannot contain empty or non-existent value(s) cannot start with an {SSISchemaService.SchemaAttribute_Internal_Prefix}.");
+        .WithMessage($"{{PropertyName}} is required, cannot contain empty or non-existent value(s) cannot start with an {SSISchemaService.SchemaAttribute_Internal_Prefix}.");
     }
     #endregion
 
