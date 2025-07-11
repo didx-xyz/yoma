@@ -91,6 +91,8 @@ config-cli:
     CLIENT_GOODWALL_URL_REDIRECT: goodwallauth://yomaredirect
     CLIENT_IIASA_URL: https://localhost:44345
     CLIENT_IIASA_URL_REDIRECT: https://localhost:44345/signin-yoma-oidc
+    CLIENT_MINI_SASS_URL: http://localhost:5000
+    CLIENT_MINI_SASS_URL_REDIRECT: http://localhost:5000/authentication/api/yoma/callback
 
   init:
     enabled: true

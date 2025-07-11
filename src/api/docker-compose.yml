@@ -175,6 +175,10 @@ services:
       CLIENT_MAZA_APP_SECRET: superSecretMazaAppClientSecret
       CLIENT_UNICEF_KENYA_ENABLED: "true"
       CLIENT_UNICEF_KENYA_SECRET: superSecretUnicefKenyaClientSecret
+      CLIENT_MINI_SASS_ENABLED: "true"
+      CLIENT_MINI_SASS_URL: "http://localhost:5000"
+      CLIENT_MINI_SASS_URL_REDIRECT: "http://localhost:5000/authentication/api/yoma/callback"
+      CLIENT_MINI_SASS_SECRET: superSecretMiniSassClientSecret
       SA_YOMA_API_PASSWORD: &KCAdminPassword superSecretYomaApiServiceAccountPassword
       SMTP_PASSWORD: superSecretSmtpPassword
     volumes:

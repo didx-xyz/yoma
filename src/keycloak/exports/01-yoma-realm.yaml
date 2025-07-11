@@ -750,6 +750,56 @@ clients:
       - address
       - phone
       - microprofile-jwt
+  - id: 4369c21f-5fee-41e7-82ec-a70b9e3a69a8
+    clientId: mini-sass
+    name: mini-sass
+    description: miniSASS SSO Partner (private client)
+    rootUrl: $(env:CLIENT_MINI_SASS_URL)
+    adminUrl: $(env:CLIENT_MINI_SASS_URL)
+    baseUrl: $(env:CLIENT_MINI_SASS_URL)
+    surrogateAuthRequired: false
+    enabled: $(env:CLIENT_MINI_SASS_ENABLED)
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_MINI_SASS_SECRET)
+    redirectUris:
+      - "/*"
+      - $(env:CLIENT_MINI_SASS_URL_REDIRECT)
+    webOrigins:
+      - $(env:CLIENT_MINI_SASS_URL)
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    publicClient: false
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      oidc.ciba.grant.enabled: "false"
+      post.logout.redirect.uris: $(env:CLIENT_MINI_SASS_URL)/*
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      backchannel.logout.revoke.offline.tokens: "false"
+      use.refresh.tokens: "true"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: true
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - offline_access
+      - profile
+      - roles
+      - yoma-api
+      - email
+      - audience_scope
+    optionalClientScopes:
+      - address
+      - phone
+      - microprofile-jwt
   - id: b213e030-ee27-4613-b06f-e7d4f160e98d
     clientId: broker
     name: "${client_broker}"
