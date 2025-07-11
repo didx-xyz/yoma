@@ -20,15 +20,15 @@
 	<PackageReference Include="Hangfire.Core" Version="1.8.20" />
 	<PackageReference Include="Hangfire.Dashboard.BasicAuthorization" Version="1.0.2" />
 	<PackageReference Include="Hangfire.PostgreSql" Version="1.20.12" />
-	<PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="9.0.6" />
-	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.6" />
-	<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.6" />
+	<PackageReference Include="Microsoft.AspNetCore.DataProtection.StackExchangeRedis" Version="9.0.7" />
+	<PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.7" />
+	<PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.7" />
 	<PackageReference Include="Serilog.AspNetCore" Version="9.0.0" />
-	<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.1" />
-	<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="9.0.1" />
-	<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="9.0.1" />
-	<PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="9.0.1" />
-	<PackageReference Include="System.Text.Encodings.Web" Version="9.0.6" />
+	<PackageReference Include="Swashbuckle.AspNetCore" Version="9.0.3" />
+	<PackageReference Include="Swashbuckle.AspNetCore.Annotations" Version="9.0.3" />
+	<PackageReference Include="Swashbuckle.AspNetCore.Newtonsoft" Version="9.0.3" />
+	<PackageReference Include="Swashbuckle.AspNetCore.ReDoc" Version="9.0.3" />
+	<PackageReference Include="System.Text.Encodings.Web" Version="9.0.7" />
   </ItemGroup>
 
   <ItemGroup>
