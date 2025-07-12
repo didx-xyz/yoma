@@ -491,13 +491,13 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       // Safest and most efficient level; allows concurrent definitions for different schemas and issuers.
       var lockKey = $"{tenantIssuerId}:{schema.Id}";
 
-      var existingDefinitions = await clientIssuer.GetCredentialDefinitionsAsync(schema_id: schema.Id);
-      existingDefinitions = existingDefinitions?.Where(o => string.Equals(o.Tag, tag)).ToList();
-      if (existingDefinitions?.Count > 1)
-        throw new DataInconsistencyException($"More than one definition found with schema id and tag '{tag}'");
-
       return await LockManagerScoped.RunWithLockAsync(lockKey, async () =>
       {
+        var existingDefinitions = await clientIssuer.GetCredentialDefinitionsAsync(schema_id: schema.Id);
+        existingDefinitions = existingDefinitions?.Where(o => string.Equals(o.Tag, tag)).ToList();
+        if (existingDefinitions?.Count > 1)
+          throw new DataInconsistencyException($"More than one definition found with schema id and tag '{tag}'");
+
         var definition = existingDefinitions?.SingleOrDefault();
         if (definition != null) return definition.Id;
 
