@@ -43,6 +43,11 @@ namespace Yoma.Core.Domain.Core
     SouthAfrica
   }
 
+  public enum Education
+  {
+    Other
+  }
+
   public enum SpatialType
   {
     None,

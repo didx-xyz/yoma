@@ -10,7 +10,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Entities
   public class Education : BaseEntity<Guid>
   {
     [Required]
-    [Column(TypeName = "varchar(20)")]
+    [Column(TypeName = "varchar(125)")]
     public string Name { get; set; }
 
     [Required]
