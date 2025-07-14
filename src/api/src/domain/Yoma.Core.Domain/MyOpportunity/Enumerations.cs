@@ -1,3 +1,5 @@
+using System.ComponentModel;
+
 namespace Yoma.Core.Domain.MyOpportunity
 {
   public enum Action
@@ -12,6 +14,7 @@ namespace Yoma.Core.Domain.MyOpportunity
   {
     None,
     Pending, //flagged as rejected if pending and not modified for x days
+    [Description("Declined")]
     Rejected,
     Completed
   }

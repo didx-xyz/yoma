@@ -79,6 +79,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private const string PlaceholderValue_HiddenDetails = "hidden";
 
     public static readonly VerificationType[] VerificationTypes_Downloadable = [VerificationType.FileUpload, VerificationType.Picture, VerificationType.VoiceNote, VerificationType.Video];
+    public static readonly VerificationStatus[] Statuses_Finalize = [VerificationStatus.Completed, VerificationStatus.Rejected];
     #endregion
 
     #region Constructor
@@ -538,7 +539,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var result = new TimeIntervalSummary
       {
-        Legend = ["Completed", "Pending", "Rejected", "Saved"],
+        Legend = ["Completed", "Pending", "Declined", "Saved"],
         Data = resultsCombined,
         Count = [itemsCompleted.Sum(o => o.Count), itemsPending.Sum(o => o.Count), itemsRejected.Sum(o => o.Count), itemSaved.Sum(o => o.Count)]
       };
@@ -902,7 +903,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Username}'");
 
       if (myOpportunity.VerificationStatus != VerificationStatus.Pending)
-        throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToString().ToLower()} for opportunity '{opportunity.Title}'");
+        throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToDescription().ToLower()} for opportunity '{opportunity.Title}'");
 
       var itemsExisting = new List<MyOpportunityVerification>();
       var itemsExistingDeleted = new List<MyOpportunityVerification>();
@@ -1284,7 +1285,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           ?? throw new ValidationException($"Opportunity '{opportunity.Title}' has not been sent for verification for user '{user.Username}'");
 
       if (item.VerificationStatus != VerificationStatus.Pending)
-        throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToString().ToLower()} for opportunity '{opportunity.Title}'");
+        throw new ValidationException($"Verification is not {VerificationStatus.Pending.ToDescription().ToLower()} for opportunity '{opportunity.Title}'");
 
       if (item.VerificationStatus == status) return;
 
@@ -1530,10 +1531,10 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           case VerificationStatus.Pending:
             if (request.OverridePending) break;
-            throw new ValidationException($"Verification is already {myOpportunity.VerificationStatus?.ToString().ToLower()} for opportunity '{opportunity.Title}'. Please check your YoID for more information.");
+            throw new ValidationException($"Verification is already {myOpportunity.VerificationStatus?.ToDescription().ToLower()} for opportunity '{opportunity.Title}'. Please check your YoID for more information.");
 
           case VerificationStatus.Completed:
-            throw new ValidationException($"Verification is already {myOpportunity.VerificationStatus?.ToString().ToLower()} for opportunity '{opportunity.Title}'. Please check your YoID for more information.");
+            throw new ValidationException($"Verification is already {myOpportunity.VerificationStatus?.ToDescription().ToLower()} for opportunity '{opportunity.Title}'. Please check your YoID for more information.");
 
           case VerificationStatus.Rejected: //can be re-send for verification
             break;
