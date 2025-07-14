@@ -82,7 +82,7 @@ namespace Yoma.Core.Domain.Lookups.Services
 
       query = query.OrderBy(o => o.CodeAlpha2 != Country.Worldwide.ToDescription()).ThenBy(o => o.Name); //ensure Worldwide appears first
 
-      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(Core.CacheItemType.Lookups))
+      if (!_appSettings.CacheEnabledByCacheItemTypesAsEnum.HasFlag(CacheItemType.Lookups))
         return [.. query];
 
       var result = _memoryCache.GetOrCreate(CacheHelper.GenerateKey<Models.Country>(excludeWorldwide is true), entry =>
