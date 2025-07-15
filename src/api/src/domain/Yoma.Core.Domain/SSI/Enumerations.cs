@@ -1,9 +1,12 @@
+using System.ComponentModel;
+
 namespace Yoma.Core.Domain.SSI
 {
   public enum ArtifactType
   {
     JWS,
-    AnonCreds
+    [Description("AnonCreds")]
+    ACR
   }
 
   public enum Role

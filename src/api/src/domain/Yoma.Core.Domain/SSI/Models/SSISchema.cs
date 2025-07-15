@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 
 namespace Yoma.Core.Domain.SSI.Models
@@ -19,6 +20,8 @@ namespace Yoma.Core.Domain.SSI.Models
     public Version Version { get; set; }
 
     public ArtifactType ArtifactType { get; set; }
+
+    public string ArtifactTypeDescription => ArtifactType.ToDescription();
 
     public List<SSISchemaEntity> Entities { get; set; }
 

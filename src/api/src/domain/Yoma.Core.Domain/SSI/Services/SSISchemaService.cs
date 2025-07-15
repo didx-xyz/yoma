@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.SSI.Helpers;
@@ -139,7 +140,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
       var existingSchema = await GetByFullNameOrNull(nameFull);
       if (existingSchema != null && existingSchema.ArtifactType == request.ArtifactType) //allow switching of artifact stores; version incrementally incremented across stores
-        throw new ValidationException($"Schema '{nameFull}' already exists in artifact store '{request.ArtifactType}'");
+        throw new ValidationException($"Schema '{nameFull}' already exists in artifact store '{request.ArtifactType.ToDescription()}'");
 
       if (!schemaType.SupportMultiple)
       {

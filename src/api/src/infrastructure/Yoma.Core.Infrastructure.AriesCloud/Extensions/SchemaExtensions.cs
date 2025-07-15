@@ -28,7 +28,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Extensions
         Id = o.Id,
         Name = o.Name,
         Version = Version.Parse(o.Version).ToMajorMinor(),
-        ArtifactType = ArtifactType.AnonCreds,
+        ArtifactType = ArtifactType.ACR,
         AttributeNames = o.Attribute_names
       };
     }

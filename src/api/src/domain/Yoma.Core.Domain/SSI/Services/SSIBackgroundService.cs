@@ -86,7 +86,7 @@ namespace Yoma.Core.Domain.SSI.Services
              SSISSchemaHelper.ToFullName(SchemaType.Opportunity, $"Default"),
              ["Opportunity_OrganizationName", "Opportunity_OrganizationLogoURL", "Opportunity_Title", "Opportunity_Skills", "Opportunity_Summary", "Opportunity_Type", "MyOpportunity_UserDisplayName", "MyOpportunity_UserDateOfBirth", "MyOpportunity_DateCompleted"]);
 
-        await SeedSchema(ArtifactType.AnonCreds,
+        await SeedSchema(ArtifactType.ACR,
             _appSettings.SSISchemaFullNameYoID,
             ["Organization_Name", "Organization_LogoURL", "User_DisplayName", "User_FirstName", "User_Surname", "User_DateOfBirth", "User_Email", "User_Gender", "User_Education", "User_Country"]);
 
@@ -480,7 +480,7 @@ namespace Yoma.Core.Domain.SSI.Services
       }
 
       if (schema.ArtifactType != artifactType)
-        throw new InvalidOperationException($"Artifact type mismatch detected for existing schema '{schemaFullName}': Requested '{artifactType}' vs. Existing '{schema.ArtifactType}'");
+        throw new InvalidOperationException($"Artifact type mismatch detected for existing schema '{schemaFullName}': Requested '{artifactType.ToDescription()}' vs. Existing '{schema.ArtifactType.ToDescription()}'");
 
       var misMatchesAttributes = attributes.Where(attr => !schema.Entities.Any(entity => entity.Properties?.Any(property => property.AttributeName == attr) == true)).ToList();
       if (misMatchesAttributes == null || misMatchesAttributes.Count == 0) return;
