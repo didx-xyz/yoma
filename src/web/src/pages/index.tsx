@@ -42,9 +42,13 @@ import { RoundedImage } from "~/components/RoundedImage";
 import { HomeSearchInputLarge } from "~/components/Home/HomeSearchInputLarge";
 import { THEME_ORANGE } from "~/lib/constants";
 import type { NextPageWithLayout } from "./_app";
+import { useSession } from "next-auth/react";
+import { SignInButton } from "~/components/SignInButton";
 
 const Home: NextPageWithLayout = () => {
   const router = useRouter();
+  const { data: session } = useSession();
+  const isAuthenticated = !!session?.user;
 
   const onSearchInputSubmit = useCallback(
     (query: string) => {
@@ -72,12 +76,12 @@ const Home: NextPageWithLayout = () => {
 
   return (
     <>
-      <PageBackground className="h-[360px] lg:h-[422px]" />
+      <PageBackground className="h-[392px] lg:h-[430px]" />
 
       <div className="z-10 mt-8 flex flex-col items-center justify-center overflow-hidden px-4 pt-8 lg:mt-20">
         <div className="grid grid-cols-1 gap-6 md:max-w-5xl lg:grid-cols-2">
           {/* LEFT: HEADERS AND TEXT */}
-          <div className="flex min-h-80 max-w-md flex-col gap-2 overflow-hidden pt-8 text-white md:py-8">
+          <div className="flex min-h-80 max-w-md flex-col gap-2 overflow-hidden pt-8 text-white md:py-4">
             <h6 className="text-sm tracking-widest uppercase">
               Welcome to Yoma
             </h6>
@@ -89,11 +93,23 @@ const Home: NextPageWithLayout = () => {
               the freshest opportunities to keep your skills sharp and stay in
               the loop with what&apos;s happening in the working world.
             </p>
-            <div className="my-2 flex w-full flex-row justify-start md:my-4">
+            <div className="my-2 flex w-full flex-col gap-3 md:my-4">
               <HomeSearchInputLarge
                 onSearch={onSearchInputSubmit}
                 maxWidth={0}
               />
+              {/* Show registration buttons only for non-authenticated users */}
+              {!isAuthenticated && (
+                <div className="flex flex-row gap-3">
+                  <SignInButton className="btn-sm md:btn-md bg-purple! flex-1 hover:brightness-150" />
+                  <Link
+                    href="/opportunities"
+                    className="btn bg-green btn-sm md:btn-md flex-1 border-0 text-white shadow-none hover:bg-white hover:text-black"
+                  >
+                    Browse Opportunities
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
 
@@ -140,7 +156,7 @@ const Home: NextPageWithLayout = () => {
         </div>
 
         {/* CENTER: OUR MISSION HEADER AND PARAGRAPH */}
-        <div className="flex flex-col items-center gap-2 md:mt-0">
+        <div className="mt-8 flex flex-col items-center gap-2 md:mt-0">
           <h2 className="text-2xl font-semibold tracking-wide text-black">
             Our mission
           </h2>
@@ -586,6 +602,20 @@ const Home: NextPageWithLayout = () => {
             </Link> */}
           </div>
         </div>
+
+        {/* REGISTRATION CALL-TO-ACTION - Only show for non-authenticated users */}
+        {!isAuthenticated && (
+          <div className="from-purple to-green my-16 flex w-full max-w-5xl flex-col items-center gap-6 rounded-xl bg-gradient-to-r p-8 text-white">
+            <h2 className="text-center text-2xl font-semibold">
+              Ready to start your journey?
+            </h2>
+            <p className="max-w-md text-center">
+              Join Yoma today and unlock a world of opportunities to grow, make
+              impact, and thrive.
+            </p>
+            <SignInButton className="btn text-purple n border-none bg-white px-8 py-3 hover:bg-gray-100" />
+          </div>
+        )}
 
         {/* PURPLE BACKGROUND */}
         {/* <div className="flex w-screen items-center justify-center bg-purple md:h-80">
