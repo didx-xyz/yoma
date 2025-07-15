@@ -35,6 +35,7 @@ const config = {
     KEYCLOAK_CLIENT_SECRET: process.env.KEYCLOAK_CLIENT_SECRET,
     API_BASE_URL: process.env.API_BASE_URL,
     MARKETPLACE_ENABLED: process.env.MARKETPLACE_ENABLED,
+    NEXT_PUBLIC_PASSPORT_ENABLED: process.env.NEXT_PUBLIC_PASSPORT_ENABLED,
   },
 
   // allow S3 bucket images to be loaded from https

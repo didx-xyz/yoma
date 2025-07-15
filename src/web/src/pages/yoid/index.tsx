@@ -25,6 +25,7 @@ import { userProfileAtom } from "~/lib/store";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 import { LoadingInline } from "~/components/Status/LoadingInline";
+import { env } from "process";
 
 export interface OrganizationSearchFilterSummaryViewModel {
   organization: string;
@@ -40,7 +41,6 @@ export interface OrganizationSearchFilterSummaryViewModel {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
-  const errorCode = null;
 
   // 👇 ensure authenticated
   if (!session) {
@@ -51,9 +51,13 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     };
   }
 
+  // check if passport is enabled
+  const passport_enabled =
+    env.NEXT_PUBLIC_PASSPORT_ENABLED?.toLowerCase() == "true" ? true : false;
+
   return {
     props: {
-      error: errorCode,
+      passport_enabled,
     },
   };
 }
@@ -61,7 +65,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 // YoID dashboard page
 const YoIDDashboard: NextPageWithLayout<{
   error?: number;
-}> = ({ error }) => {
+  passport_enabled: boolean;
+}> = ({ error, passport_enabled }) => {
   const [zltoModalVisible, setZltoModalVisible] = useState(false);
   const [userProfile] = useAtom(userProfileAtom);
   const [graphView, setGraphView] = useState(false);
@@ -155,18 +160,27 @@ const YoIDDashboard: NextPageWithLayout<{
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
           <Header title="🌐 Passport" url="/yoid/passport" />
           <div className="flex h-[185px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
-            <Suspense
-              isLoading={credentialsIsLoading}
-              error={credentialsError}
-              loader={
-                <LoadingInline
-                  className="h-[185px] flex-col p-0"
-                  classNameSpinner="h-12 w-12"
-                />
-              }
-            >
-              <PassportCard data={credentials!} />
-            </Suspense>
+            {passport_enabled ? (
+              <Suspense
+                isLoading={credentialsIsLoading}
+                error={credentialsError}
+                loader={
+                  <LoadingInline
+                    className="h-[185px] flex-col p-0"
+                    classNameSpinner="h-12 w-12"
+                  />
+                }
+              >
+                <PassportCard data={credentials!} />
+              </Suspense>
+            ) : (
+              <NoRowsMessage
+                title={"Update in Progress"}
+                description={
+                  "Credentials will begin displaying again soon. Thanks for your patience."
+                }
+              />
+            )}
           </div>
         </div>
 

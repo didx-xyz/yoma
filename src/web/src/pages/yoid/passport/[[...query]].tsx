@@ -28,6 +28,7 @@ import { DATETIME_FORMAT_SYSTEM, PAGE_SIZE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { authOptions } from "~/server/auth";
 import { type NextPageWithLayout } from "../../_app";
+import { env } from "process";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -40,6 +41,15 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       },
     };
   }
+
+  // check if passport is enabled
+  const passport_enabled =
+    env.NEXT_PUBLIC_PASSPORT_ENABLED?.toLowerCase() == "true" ? true : false;
+
+  if (!passport_enabled)
+    return {
+      props: { passport_enabled },
+    };
 
   const queryClient = new QueryClient(config);
   const { page } = context.query;
@@ -64,6 +74,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
       pageNumber: pageNumber,
+      passport_enabled,
     },
   };
 }
@@ -71,7 +82,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const MyPassport: NextPageWithLayout<{
   pageNumber: number;
   error: string;
-}> = ({ pageNumber, error }) => {
+  passport_enabled: boolean;
+}> = ({ pageNumber, error, passport_enabled }) => {
   const [credentialDialogVisible, setCredentialDialogVisible] = useState(false);
   const [activeCredential, setActiveCredential] =
     useState<SSICredentialInfo | null>(null);
@@ -89,7 +101,7 @@ const MyPassport: NextPageWithLayout<{
         pageSize: PAGE_SIZE,
         schemaType: null,
       }),
-    enabled: !error,
+    enabled: !error && passport_enabled,
   });
 
   // 🔔 pager change event
@@ -117,6 +129,24 @@ const MyPassport: NextPageWithLayout<{
   );
 
   if (error) return <Unauthorized />;
+
+  if (!passport_enabled)
+    return (
+      <>
+        <Head>
+          <title>Yoma | Passport Unavailable</title>
+        </Head>
+
+        <div className="container flex max-w-7xl flex-col items-center justify-center">
+          <NoRowsMessage
+            title={"Update in Progress"}
+            description={
+              "Credentials will begin displaying again soon. Thanks for your patience."
+            }
+          />
+        </div>
+      </>
+    );
 
   return (
     <>

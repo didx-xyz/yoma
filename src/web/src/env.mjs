@@ -36,6 +36,7 @@ export const env = createEnv({
     NEXT_PUBLIC_ENVIRONMENT: z.string(),
     NEXT_PUBLIC_GOOGLE_MAPS_API_KEY: z.string(),
     NEXT_PUBLIC_GA_MEASUREMENT_ID: z.string().optional(),
+    NEXT_PUBLIC_PASSPORT_ENABLED: z.boolean(),
   },
 
   /**
@@ -56,6 +57,10 @@ export const env = createEnv({
     NEXT_PUBLIC_GA_MEASUREMENT_ID: process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID,
     MARKETPLACE_ENABLED:
       (process.env.MARKETPLACE_ENABLED ?? "").toLowerCase() === "true"
+        ? true
+        : false,
+    NEXT_PUBLIC_PASSPORT_ENABLED:
+      (process.env.NEXT_PUBLIC_PASSPORT_ENABLED ?? "").toLowerCase() === "true"
         ? true
         : false,
   },
