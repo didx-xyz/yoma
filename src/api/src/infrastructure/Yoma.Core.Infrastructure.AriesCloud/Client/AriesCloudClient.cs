@@ -477,7 +477,12 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     /// </summary>
     private static async Task<string> EnsureDefinition(ITenantClient clientIssuer, string tenantIssuerId, Domain.SSI.Models.Provider.Schema schema)
     {
-      var tag = $"{schema.ArtifactType}:{schema.Name}:{schema.Version}";
+      // Omitted schema.Name (friendly name) from the credential definition tag.
+      // The tag is not used anywhere internally, and Acapy appends the YoID|Default- prefix.
+      // schema.Name is user-defined and variable (up to 125 chars), making the tag length unpredictable.
+      // Max tag length allowed by Acapy is 31 characters.
+      // var tag = $"{schema.ArtifactType}:{schema.Name}:{schema.Version}";
+      var tag = $"{schema.ArtifactType}:{schema.Version}";
 
       // Global lock — allows only one thread in the entire app to execute at a time.
       // Use only when definition creation must be fully serialized across all issuers and schemas.
