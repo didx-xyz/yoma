@@ -121,7 +121,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       if (results == null || results.Count == 0) return null;
 
       if (results.Count > 1)
-        throw new DataInconsistencyException($"More than one schema found with id '{id}' (specific version): {string.Join(", ", results.Select(o => $"{o.Name}:{o.ArtifactType}"))}");
+        throw new DataInconsistencyException($"More than one schema found with id '{id}' (specific version): {string.Join(", ", results.Select(o => $"{o.Name}:{o.ArtifactType.ToDescription()}"))}");
 
       return results.SingleOrDefault();
     }
@@ -203,7 +203,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
 
       switch (request.ArtifactType)
       {
-        case ArtifactType.AnonCreds:
+        case ArtifactType.ACR:
           var schemaCreateRequest = new CreateSchema
           {
             Name = request.Name,
@@ -340,7 +340,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
       SendCredential sendCredentialRequest;
       switch (request.ArtifactType)
       {
-        case ArtifactType.AnonCreds:
+        case ArtifactType.ACR:
           var definitionId = await EnsureDefinition(clientIssuer, tenantIssuer.Wallet_id, schema);
 
           sendCredentialRequest = new SendCredential
@@ -595,7 +595,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
     {
       switch (artifactType)
       {
-        case ArtifactType.AnonCreds:
+        case ArtifactType.ACR:
           var wqlQueryString = $"{{\"attr::{clientReferent.Key}::value\":\"{clientReferent.Value}\"}}";
 
           var credsAnon = await clientHolder.GetCredentialsAsync(null, null, wqlQueryString);
