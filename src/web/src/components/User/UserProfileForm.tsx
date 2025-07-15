@@ -259,8 +259,11 @@ export const UserProfileForm: React.FC<{
 
         // Remove the individual date fields from the submission data
         const {
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           dateOfBirthDay,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           dateOfBirthMonth,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           dateOfBirthYear,
           ...submissionData
         } = data;
