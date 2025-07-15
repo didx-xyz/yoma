@@ -150,8 +150,7 @@ export const UserProfileForm: React.FC<{
         return true;
       },
       {
-        message:
-          "Please enter a valid date of birth. Date cannot be in the future or before 1900.",
+        message: "Please enter a valid date of birth.",
       },
     ),
     resetPassword: zod.boolean(),
