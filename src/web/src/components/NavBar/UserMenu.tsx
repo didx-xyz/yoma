@@ -3,6 +3,7 @@ import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
+import React, { useEffect } from "react";
 import stamp1 from "public/images/stamp-1.png";
 import stamp2 from "public/images/stamp-2.png";
 import worldMap from "public/images/world-map.png";
@@ -35,6 +36,9 @@ import { WalletCard } from "../YoID/WalletCard";
 import { YoIdModal } from "../YoID/YoIdModal";
 import { SignOutButton } from "../SignOutButton";
 import { LoadingInline } from "../Status/LoadingInline";
+import NoRowsMessage from "../NoRowsMessage";
+import { fetchClientEnv } from "~/lib/utils";
+
 export const UserMenu: React.FC = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const onToggle = () => setDrawerOpen(!isDrawerOpen);
@@ -46,6 +50,18 @@ export const UserMenu: React.FC = () => {
   const [isCollapsedPassport, setCollapsedPassport] = useState(true);
   const toggleCollapsePassport = () =>
     setCollapsedPassport(!isCollapsedPassport);
+
+  // Fetch passport_enabled from client environment
+  const [passport_enabled, setPassportEnabled] = useState<boolean>(false);
+
+  // Load passport enabled setting
+  useEffect(() => {
+    const loadPassportSetting = async () => {
+      const clientEnv = await fetchClientEnv();
+      setPassportEnabled(clientEnv.NEXT_PUBLIC_PASSPORT_ENABLED === "true");
+    };
+    loadPassportSetting();
+  }, []);
 
   //#region YoID Dashboard
   const [graphView, setGraphView] = useState(false);
@@ -98,7 +114,7 @@ export const UserMenu: React.FC = () => {
 
         return combinedResults;
       }),
-    enabled: isDrawerOpen && !isCollapsedPassport,
+    enabled: isDrawerOpen && !isCollapsedPassport && passport_enabled,
   });
   //#endregion
 
@@ -394,18 +410,27 @@ export const UserMenu: React.FC = () => {
 
                   {!isCollapsedPassport && (
                     <div className="flex h-[185px] w-full flex-col items-center gap-4 rounded-lg bg-white p-4 shadow">
-                      <Suspense
-                        isLoading={credentialsIsLoading}
-                        error={credentialsError}
-                        loader={
-                          <LoadingInline
-                            className="h-[185px] flex-col p-0"
-                            classNameSpinner="h-12 w-12"
-                          />
-                        }
-                      >
-                        <PassportCard data={credentials!} />
-                      </Suspense>
+                      {passport_enabled ? (
+                        <Suspense
+                          isLoading={credentialsIsLoading}
+                          error={credentialsError}
+                          loader={
+                            <LoadingInline
+                              className="h-[185px] flex-col p-0"
+                              classNameSpinner="h-12 w-12"
+                            />
+                          }
+                        >
+                          <PassportCard data={credentials!} />
+                        </Suspense>
+                      ) : (
+                        <NoRowsMessage
+                          title={"Update in Progress"}
+                          description={
+                            "Credentials will begin displaying again soon. Thanks for your patience."
+                          }
+                        />
+                      )}
                     </div>
                   )}
 
