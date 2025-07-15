@@ -63,7 +63,13 @@ export const UserProfileForm: React.FC<{
   const [isLoading, setIsLoading] = useState(false);
   const [logoFiles, setLogoFiles] = useState<File[]>([]);
   const setUserProfileAtom = useSetAtom(userProfileAtom);
-  const [formData] = useState<UserRequestProfile>({
+  const [formData] = useState<
+    UserRequestProfile & {
+      dateOfBirthDay?: string;
+      dateOfBirthMonth?: string;
+      dateOfBirthYear?: string;
+    }
+  >({
     email: userProfile?.email ?? "",
     firstName: userProfile?.firstName ?? "",
     surname: userProfile?.surname ?? "",
@@ -73,6 +79,9 @@ export const UserProfileForm: React.FC<{
     educationId: userProfile?.educationId ?? "",
     genderId: userProfile?.genderId ?? "",
     dateOfBirth: userProfile?.dateOfBirth ?? "",
+    dateOfBirthDay: "",
+    dateOfBirthMonth: "",
+    dateOfBirthYear: "",
     resetPassword: false,
     updatePhoneNumber: false,
   });
@@ -118,15 +127,33 @@ export const UserProfileForm: React.FC<{
     countryId: zod.string().min(1, "Country is required."),
     educationId: zod.string().min(1, "Education is required."),
     genderId: zod.string().min(1, "Gender is required."),
-    dateOfBirth: zod.coerce
-      .date({
-        required_error: "Date of Birth is required.",
-        invalid_type_error: "Date of Birth is required.",
-      })
-      .min(new Date("1900/01/01"), {
-        message: "Date of Birth cannot be that far back in the past.",
-      })
-      .max(new Date(), { message: "Date of Birth cannot be in the future." }),
+    dateOfBirthDay: zod.string().min(1, "Day is required."),
+    dateOfBirthMonth: zod.string().min(1, "Month is required."),
+    dateOfBirthYear: zod.string().min(1, "Year is required."),
+    dateOfBirth: zod.string().refine(
+      (value) => {
+        if (!value) return false;
+        const date = new Date(value);
+        const minDate = new Date("1900/01/01");
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // Set to end of today to allow today's date
+
+        if (isNaN(date.getTime())) {
+          return false;
+        }
+        if (date < minDate) {
+          return false;
+        }
+        if (date > today) {
+          return false;
+        }
+        return true;
+      },
+      {
+        message:
+          "Please enter a valid date of birth. Date cannot be in the future or before 1900.",
+      },
+    ),
     resetPassword: zod.boolean(),
     updatePhoneNumber: zod.boolean(),
   });
@@ -135,11 +162,34 @@ export const UserProfileForm: React.FC<{
     mode: "all",
     resolver: zodResolver(schema),
   });
-  const { register, handleSubmit, formState, reset, watch, trigger } = form;
+  const { register, handleSubmit, formState, reset, watch, trigger, setValue } =
+    form;
   const watchEmail = watch("email");
   const watchUpdatePhoneNumber = watch("updatePhoneNumber");
   const watchResetPassword = watch("resetPassword");
   const watchPhoneNumber = watch("phoneNumber");
+  const watchDateOfBirthDay = watch("dateOfBirthDay");
+  const watchDateOfBirthMonth = watch("dateOfBirthMonth");
+  const watchDateOfBirthYear = watch("dateOfBirthYear");
+
+  // Update the combined dateOfBirth field when individual fields change
+  useEffect(() => {
+    if (watchDateOfBirthDay && watchDateOfBirthMonth && watchDateOfBirthYear) {
+      const combinedDate = `${watchDateOfBirthYear}-${watchDateOfBirthMonth}-${watchDateOfBirthDay}`;
+      setValue("dateOfBirth", combinedDate);
+      trigger("dateOfBirth");
+    } else {
+      // Clear dateOfBirth if any field is empty to trigger validation
+      setValue("dateOfBirth", "");
+      trigger("dateOfBirth");
+    }
+  }, [
+    watchDateOfBirthDay,
+    watchDateOfBirthMonth,
+    watchDateOfBirthYear,
+    setValue,
+    trigger,
+  ]);
 
   // set default values
   useEffect(() => {
@@ -158,11 +208,19 @@ export const UserProfileForm: React.FC<{
     //HACK: no validation on date if value is null
     if (!formData?.dateOfBirth) {
       formData.dateOfBirth = "";
+      formData.dateOfBirthDay = "";
+      formData.dateOfBirthMonth = "";
+      formData.dateOfBirthYear = "";
     }
-    //HACK: ISO 8601 date needs to be in the YYYY-MM-DD format for the input(type=date) to display correctly
+    //HACK: Parse existing date into separate day, month, year fields
     else if (formData.dateOfBirth != null) {
       const date = new Date(formData.dateOfBirth);
       formData.dateOfBirth = date.toISOString().slice(0, 10);
+      formData.dateOfBirthDay = date.getDate().toString().padStart(2, "0");
+      formData.dateOfBirthMonth = (date.getMonth() + 1)
+        .toString()
+        .padStart(2, "0");
+      formData.dateOfBirthYear = date.getFullYear().toString();
     }
     //HACK: 'expected string, received null' form validation error
     if (!formData.phoneNumber) formData.phoneNumber = "";
@@ -191,13 +249,32 @@ export const UserProfileForm: React.FC<{
       setIsLoading(true);
 
       try {
+        // Combine date fields into a single dateOfBirth field
+        if (
+          data.dateOfBirthDay &&
+          data.dateOfBirthMonth &&
+          data.dateOfBirthYear
+        ) {
+          data.dateOfBirth = `${data.dateOfBirthYear}-${data.dateOfBirthMonth}-${data.dateOfBirthDay}`;
+        }
+
+        // Remove the individual date fields from the submission data
+        const {
+          dateOfBirthDay,
+          dateOfBirthMonth,
+          dateOfBirthYear,
+          ...submissionData
+        } = data;
+
         // update photo
         if (logoFiles && logoFiles.length > 0) {
           await patchPhoto(logoFiles[0]);
         }
 
         // update api
-        const userProfileResult = await patchUser(data as UserRequestProfile);
+        const userProfileResult = await patchUser(
+          submissionData as UserRequestProfile,
+        );
 
         // update session
         await update({
@@ -533,20 +610,84 @@ export const UserProfileForm: React.FC<{
         {filterOptions?.includes(UserProfileFilterOptions.DATEOFBIRTH) && (
           <FormField
             label="Date of Birth"
-            showWarningIcon={!!formState.errors.dateOfBirth?.message}
-            showError={
-              !!formState.touchedFields.dateOfBirth || formState.isSubmitted
+            showWarningIcon={
+              !!(
+                formState.errors.dateOfBirth?.message ||
+                formState.errors.dateOfBirthDay?.message ||
+                formState.errors.dateOfBirthMonth?.message ||
+                formState.errors.dateOfBirthYear?.message
+              )
             }
-            error={formState.errors.dateOfBirth?.message?.toString()}
+            showError={
+              !!(
+                formState.touchedFields.dateOfBirth ||
+                formState.touchedFields.dateOfBirthDay ||
+                formState.touchedFields.dateOfBirthMonth ||
+                formState.touchedFields.dateOfBirthYear ||
+                formState.isSubmitted
+              )
+            }
+            error={
+              formState.errors.dateOfBirth?.message?.toString() ||
+              formState.errors.dateOfBirthDay?.message?.toString() ||
+              formState.errors.dateOfBirthMonth?.message?.toString() ||
+              formState.errors.dateOfBirthYear?.message?.toString()
+            }
           >
-            <FormInput
-              inputProps={{
-                type: "date",
-                className:
-                  "input w-full rounded-md border-gray focus:border-gray w-full focus:outline-none",
-                ...register("dateOfBirth"),
-              }}
-            />
+            <div className="flex gap-2">
+              <select
+                className="select border-gray focus:border-gray w-full focus:outline-none"
+                {...register("dateOfBirthDay")}
+              >
+                <option value="">Day</option>
+                {Array.from({ length: 31 }, (_, i) => i + 1).map((day) => (
+                  <option key={day} value={day.toString().padStart(2, "0")}>
+                    {day}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select border-gray focus:border-gray w-full focus:outline-none"
+                {...register("dateOfBirthMonth")}
+              >
+                <option value="">Month</option>
+                {[
+                  "January",
+                  "February",
+                  "March",
+                  "April",
+                  "May",
+                  "June",
+                  "July",
+                  "August",
+                  "September",
+                  "October",
+                  "November",
+                  "December",
+                ].map((month, index) => (
+                  <option
+                    key={month}
+                    value={(index + 1).toString().padStart(2, "0")}
+                  >
+                    {month}
+                  </option>
+                ))}
+              </select>
+              <select
+                className="select border-gray focus:border-gray w-full focus:outline-none"
+                {...register("dateOfBirthYear")}
+              >
+                <option value="">Year</option>
+                {Array.from(
+                  { length: 100 },
+                  (_, i) => new Date().getFullYear() - i,
+                ).map((year) => (
+                  <option key={year} value={year.toString()}>
+                    {year}
+                  </option>
+                ))}
+              </select>
+            </div>
           </FormField>
         )}
 
