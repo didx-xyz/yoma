@@ -47,7 +47,7 @@ import { SignInButton } from "~/components/SignInButton";
 
 const Home: NextPageWithLayout = () => {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const isAuthenticated = !!session?.user;
 
   const onSearchInputSubmit = useCallback(
@@ -99,7 +99,7 @@ const Home: NextPageWithLayout = () => {
                 maxWidth={0}
               />
               {/* Show registration buttons only for non-authenticated users */}
-              {!isAuthenticated && (
+              {status !== "loading" && !isAuthenticated && (
                 <div className="flex flex-row gap-3">
                   <SignInButton className="btn-sm md:btn-md bg-purple! flex-1 hover:brightness-150" />
                   <Link
@@ -604,7 +604,7 @@ const Home: NextPageWithLayout = () => {
         </div>
 
         {/* REGISTRATION CALL-TO-ACTION - Only show for non-authenticated users */}
-        {!isAuthenticated && (
+        {status !== "loading" && !isAuthenticated && (
           <div className="from-purple to-green my-16 flex w-full max-w-5xl flex-col items-center gap-6 rounded-xl bg-gradient-to-r p-8 text-white">
             <h2 className="text-center text-2xl font-semibold">
               Ready to start your journey?
