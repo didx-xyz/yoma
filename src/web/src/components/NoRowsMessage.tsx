@@ -18,12 +18,12 @@ const NoRowsMessage: React.FC<{
       className={`flex h-full w-full flex-col items-center justify-center rounded-xl bg-white p-4 text-center ${className}`}
     >
       <div
-        className={`mb-2 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg ${classNameIcon}`}
+        className={`flex items-center justify-center rounded-full bg-white p-2 shadow-lg ${classNameIcon}`}
       >
         {icon}
       </div>
 
-      <div className="max-w-lg">
+      <div className="mt-1 max-w-lg">
         <div className="my-2 font-semibold text-black md:text-sm">
           <div className="text-sm md:text-lg">
             {title ?? "No rows found..."}
