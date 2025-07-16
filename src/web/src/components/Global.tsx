@@ -1,30 +1,22 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAtomValue, useSetAtom } from "jotai";
 import { useSession } from "next-auth/react";
-import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
-import stamp1 from "public/images/stamp-1.png";
-import stamp2 from "public/images/stamp-2.png";
-import YoIDCard from "public/images/YoID-modal-card.webp";
 import { useCallback, useEffect, useState } from "react";
 import { FcCamera, FcKey, FcSettings, FcViewDetails } from "react-icons/fc";
-import { toast } from "react-toastify";
 import type { SettingsRequest } from "~/api/models/common";
 import type { UserProfile } from "~/api/models/user";
 import { getOrganisationById } from "~/api/services/organisations";
 import {
   getSettings,
   getUserProfile,
-  patchYoIDOnboarding,
   updateSettings,
 } from "~/api/services/user";
 import { handleUserSignIn } from "~/lib/authUtils";
 import {
   COOKIE_KEYCLOAK_SESSION,
   GA_ACTION_APP_SETTING_UPDATE,
-  GA_ACTION_USER_YOIDONBOARDINGCONFIRMED,
   GA_CATEGORY_USER,
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
@@ -45,7 +37,6 @@ import CustomModal from "./Common/CustomModal";
 import Suspense from "./Common/Suspense";
 import SettingsForm from "./Settings/SettingsForm";
 import { SignInButton } from "./SignInButton";
-import { ApiErrors } from "./Status/ApiErrors";
 import {
   UserProfileFilterOptions,
   UserProfileForm,
@@ -75,12 +66,10 @@ export const Global: React.FC = () => {
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [updateProfileDialogVisible, setUpdateProfileDialogVisible] =
     useState(false);
-  const [onboardingDialogVisible, setOnboardingDialogVisible] = useState(false);
   const [settingsDialogVisible, setSettingsDialogVisible] = useState(false);
   const [photoUploadDialogVisible, setPhotoUploadDialogVisible] =
     useState(false);
 
-  const [isYoIDOnboardingLoading, setIsYoIDOnboardingLoading] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
   const currentLanguage = useAtomValue(currentLanguageAtom);
 
@@ -132,9 +121,6 @@ export const Global: React.FC = () => {
       if (!isUserProfileCompleted(userProfile)) {
         // show update profile dialog
         setUpdateProfileDialogVisible(true);
-      } else if (!userProfile.yoIDOnboarded) {
-        // show onboarding dialog
-        setOnboardingDialogVisible(true);
       } else if (
         !skipSettings &&
         !userProfile?.settings?.items.find(
@@ -151,7 +137,6 @@ export const Global: React.FC = () => {
       }
     },
     [
-      setOnboardingDialogVisible,
       setUpdateProfileDialogVisible,
       setSettingsDialogVisible,
       setPhotoUploadDialogVisible,
@@ -335,42 +320,6 @@ export const Global: React.FC = () => {
     }
   }, [session?.error, setLoginDialogVisible, setLoginMessage]);
 
-  // 🔔 CLICK HANDLER: ONBOARDING DIALOG CONFIRMATION
-  const onClickYoIDOnboardingConfirm = useCallback(async () => {
-    try {
-      setIsYoIDOnboardingLoading(true);
-      toast.dismiss();
-
-      // update API
-      const userProfile = await patchYoIDOnboarding();
-
-      // 📊 GOOGLE ANALYTICS: track event
-      trackGAEvent(
-        GA_CATEGORY_USER,
-        GA_ACTION_USER_YOIDONBOARDINGCONFIRMED,
-        `User confirmed Yo-ID onboarding message at ${new Date().toISOString()}`,
-      );
-
-      // update ATOM
-      setUserProfile(userProfile);
-
-      // hide popup
-      setOnboardingDialogVisible(false);
-      setIsYoIDOnboardingLoading(false);
-
-      // perform post login checks
-      postLoginChecks(userProfile);
-    } catch (error) {
-      console.error(error);
-      setIsYoIDOnboardingLoading(false);
-      toast(<ApiErrors error={error} />, {
-        type: "error",
-        autoClose: false,
-        icon: false,
-      });
-    }
-  }, [setUserProfile, setOnboardingDialogVisible, postLoginChecks]);
-
   const handleSettingsSubmit = useCallback(
     async (updatedSettings: SettingsRequest) => {
       // ensure that the USER_SETTINGS_CONFIGURED is always set
@@ -455,98 +404,6 @@ export const Global: React.FC = () => {
                   UserProfileFilterOptions.DATEOFBIRTH,
                 ]}
               />
-            </div>
-          </div>
-        </div>
-      </CustomModal>
-
-      {/* YoID ONBOARDING DIALOG */}
-      <CustomModal
-        isOpen={onboardingDialogVisible}
-        shouldCloseOnOverlayClick={false}
-        onRequestClose={() => {
-          setOnboardingDialogVisible(false);
-        }}
-        className="md:max-h-[640px] md:w-[700px]"
-      >
-        <div className="flex flex-col gap-2">
-          <div className="bg-green relative flex h-32 flex-row p-4">
-            <h1 className="grow"></h1>
-            <Image
-              src={stamp1}
-              alt="Stamp1"
-              width={135}
-              sizes="100vw"
-              priority={true}
-              className="absolute left-[10%] z-0 h-auto -rotate-3 opacity-70 mix-blend-plus-lighter"
-            />
-            <Image
-              src={stamp2}
-              alt="Stamp2"
-              width={161}
-              sizes="100vw"
-              priority={true}
-              className="absolute right-0 z-0 h-auto rotate-12 opacity-70 mix-blend-plus-lighter"
-            />
-          </div>
-          <div className="flex flex-col items-center justify-center gap-8 px-6 pb-8 text-center md:px-12">
-            <div className="z-30 -mt-24 -mr-4 -mb-6 flex items-center justify-center">
-              <Image
-                src={YoIDCard}
-                alt="Yo-ID Card"
-                width={300}
-                className="h-auto"
-                sizes="100vw"
-                priority={true}
-              />
-            </div>
-            <div className="flex flex-col gap-2">
-              <h4 className="text-lg font-semibold tracking-wide md:text-2xl">
-                Activate your Yo-ID!
-              </h4>
-              <h5 className="text-sm font-semibold tracking-widest">
-                Your identity for the Yoma ecosystem.
-              </h5>
-            </div>
-
-            <div className="text-gray-dark flex max-w-md flex-col gap-4 text-start text-sm">
-              <div>
-                This will issue you a Yo-ID credential, viewable in your
-                passport.
-              </div>
-              <div>
-                We use the blockchain to anchor your achievements on the system.
-              </div>
-              <div>
-                This will in the future unlock verifiabilty behind your record
-                on Yoma.
-              </div>
-              <div>
-                So work hard, complete opportunities and build up your
-                verifiable impact and learning record.
-              </div>
-            </div>
-
-            <div className="mt-4 flex grow flex-col items-center gap-6">
-              <button
-                type="button"
-                className="btn btn-primary btn-wide rounded-full text-white normal-case"
-                onClick={onClickYoIDOnboardingConfirm}
-                disabled={isYoIDOnboardingLoading}
-              >
-                {isYoIDOnboardingLoading && isYoIDOnboardingLoading ? (
-                  <span className="loading loading-spinner">loading</span>
-                ) : (
-                  <span>Activate your Yo-ID</span>
-                )}
-              </button>
-              <Link
-                href="https://docs.yoma.world/technology/what-is-yoid"
-                target="_blank"
-                className="text-purple hover:underline"
-              >
-                Find out more
-              </Link>
             </div>
           </div>
         </div>
