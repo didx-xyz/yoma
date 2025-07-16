@@ -19,7 +19,6 @@ export const PassportCard: React.FC<{
           "All verified work is stored to your passport using Blockchain digital certificates.🤝"
         }
         icon={"🌐"}
-        classNameIcon={"h-[60px] w-[60px]"}
       />
     );
   }

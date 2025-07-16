@@ -36,9 +36,8 @@ export const WalletCard: React.FC<{
           "You will receive ZLTO for completing opportunities, which can be spent on the marketplace."
         }
         icon={
-          <Image src={iconZltoColor} alt="ZLTO" width={48} className="h-auto" />
+          <Image src={iconZltoColor} alt="ZLTO" width={28} className="h-auto" />
         }
-        classNameIcon={"size-20"}
       />
     );
   }

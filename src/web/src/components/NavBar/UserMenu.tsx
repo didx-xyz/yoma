@@ -298,12 +298,12 @@ export const UserMenu: React.FC = () => {
                     tabIndex={isDrawerOpen ? 0 : -1}
                     onClick={() => setDrawerOpen(false)}
                   />
-                  <div className="flex h-[195px] w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
+                  <div className="flex h-[195pxxx] h-full w-full flex-col gap-4 rounded-lg bg-white p-4 shadow">
                     <Suspense
                       isLoading={!userProfile}
                       loader={
                         <LoadingInline
-                          className="h-[195px] flex-col p-0"
+                          className="h-[195pxx] flex-col p-0"
                           classNameSpinner="h-12 w-12"
                         />
                       }
