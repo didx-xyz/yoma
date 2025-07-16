@@ -94,7 +94,7 @@ const MyOpportunitiesRejected: NextPageWithLayout<{
     (value: number) => {
       // redirect
       void router.push({
-        pathname: `/yoid/opportunities/rejected`,
+        pathname: `/yoid/opportunities/declined`,
         query: { ...(query && { query }), ...(value && { page: value }) },
       });
     },
@@ -106,7 +106,7 @@ const MyOpportunitiesRejected: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>Yoma | ❌ Rejected Opportunities</title>
+        <title>Yoma | ❌ Declined Opportunities</title>
       </Head>
 
       <Suspense isLoading={dataIsLoading} error={dataError}>
@@ -114,9 +114,9 @@ const MyOpportunitiesRejected: NextPageWithLayout<{
         {!data?.items?.length && (
           <div className="flex justify-center rounded-lg bg-white p-8 text-center">
             <NoRowsMessage
-              title={"No rejected opportunites found."}
+              title={"No declined opportunites found."}
               description={
-                "Any opportunities that have been rejected will be listed here for your reference."
+                "Any opportunities that have been declined will be listed here for your reference."
               }
             />
           </div>
