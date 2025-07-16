@@ -143,6 +143,7 @@ const MyPassport: NextPageWithLayout<{
             description={
               "Credentials will begin displaying again soon. Thanks for your patience."
             }
+            icon={<>⚙️</>}
           />
         </div>
       </>
