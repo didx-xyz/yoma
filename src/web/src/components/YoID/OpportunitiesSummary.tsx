@@ -71,7 +71,6 @@ export const OpportunitiesSummary: React.FC<{
           "You are able to complete opportunities, and get them verified. You can find your opportunities here."
         }
         icon={`🏆`}
-        classNameIcon={"h-[60px] w-[60px]"}
       />
     );
   }
