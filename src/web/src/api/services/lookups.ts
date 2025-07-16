@@ -21,10 +21,22 @@ export const getGenders = async (
 };
 
 export const getCountries = async (
+  excludeWorldwide?: boolean,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<Country[]> => {
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<Country[]>("/lookup/country");
+
+  // construct querystring parameters
+  const params = new URLSearchParams();
+  if (excludeWorldwide !== undefined) {
+    params.append("excludeWorldwide", excludeWorldwide.toString());
+  }
+
+  const url = params.toString()
+    ? `/lookup/country?${params.toString()}`
+    : "/lookup/country";
+
+  const { data } = await instance.get<Country[]>(url);
   return data;
 };
 
