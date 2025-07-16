@@ -57,6 +57,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   onSave,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const { data: session } = useSession();
 
   const { data: timeIntervalsData } = useQuery({
@@ -359,15 +360,15 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         feedback: data.feedback || null,
       };
 
-      // convert dates to string in format "YYYY-MM-DD"
+      // convert dates to UTC string in format "YYYY-MM-DD" while preserving UTC timezone
       if (request.dateStart) {
         request.dateStart = request.dateStart
-          ? moment.utc(data.dateStart).format(DATE_FORMAT_SYSTEM)
+          ? moment.utc(request.dateStart).format(DATE_FORMAT_SYSTEM)
           : null;
       }
       if (request.dateEnd) {
         request.dateEnd = request.dateEnd
-          ? moment.utc(data.dateEnd).format(DATE_FORMAT_SYSTEM)
+          ? moment.utc(request.dateEnd).format(DATE_FORMAT_SYSTEM)
           : null;
       }
 
@@ -446,9 +447,25 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
   // set default values
   useEffect(() => {
-    setValue("dateEnd", toISOStringForTimezone(new Date()));
+    // Set end date intelligently:
+    // - If opportunity end date is in the past, use that as default
+    // - If opportunity end date is in the future or doesn't exist, use today's date
+    const today = new Date();
+    const opportunityEndDate = opportunityInfo?.dateEnd
+      ? new Date(opportunityInfo.dateEnd)
+      : null;
+
+    let defaultDate = today; // Default to today
+
+    if (opportunityEndDate && opportunityEndDate <= today) {
+      // Only use opportunity end date if it's in the past or today
+      defaultDate = opportunityEndDate;
+    }
+
+    // Convert to UTC ISO string to maintain timezone consistency
+    setValue("dateEnd", defaultDate.toISOString());
     setValue("commitmentInterval.id", "Hour");
-  }, [setValue]);
+  }, [setValue, opportunityInfo?.dateEnd]);
 
   // trigger validation for these related fields
   useEffect(() => {
@@ -531,18 +548,20 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                             className="input input-sm input-bordered border-gray focus:border-gray block w-36 rounded-md focus:outline-none"
                             placeholder="End Date"
                             onChange={(e) => {
-                              // Convert the YYYY-MM-DD string to an ISO string for the form state
+                              // Convert the YYYY-MM-DD string to a UTC ISO string for the form state
                               if (e.target.value) {
-                                const date = new Date(e.target.value);
-                                onChange(toISOStringForTimezone(date));
+                                const date = new Date(
+                                  e.target.value + "T00:00:00Z",
+                                );
+                                onChange(date.toISOString());
                               } else {
                                 onChange(null);
                               }
                             }}
-                            // Format the ISO date string to YYYY-MM-DD for the input
+                            // Format the UTC ISO date string to YYYY-MM-DD for the input
                             value={
                               value
-                                ? moment(new Date(value)).format("YYYY-MM-DD")
+                                ? moment.utc(value).format("YYYY-MM-DD")
                                 : ""
                             }
                             max={moment().format("YYYY-MM-DD")} // Restrict to today or earlier
@@ -658,109 +677,110 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               </div>
 
               {/* FILE UPLOADS */}
-              <div
-                className="flex w-full flex-col items-center justify-center gap-4"
-                style={{ animationDelay: "1s" }}
-              >
-                {opportunityInfo?.verificationTypes?.find(
-                  (x) => x.type == "FileUpload",
-                ) && (
-                  <FileUpload
-                    id="fileUploadFileUpload"
-                    files={[]}
-                    fileTypes={[
-                      ...ACCEPTED_DOC_TYPES,
-                      ...ACCEPTED_IMAGE_TYPES,
-                    ].join(", ")}
-                    fileTypesLabels={[
-                      ...ACCEPTED_DOC_TYPES_LABEL,
-                      ...ACCEPTED_IMAGE_TYPES_LABEL,
-                    ].join(", ")}
-                    allowMultiple={false}
-                    label={
-                      opportunityInfo?.verificationTypes?.find(
-                        (x) => x.type == "FileUpload",
-                      )?.description
-                    }
-                    iconAlt={<FcGraduationCap className="size-10" />}
-                    onUploadComplete={(files) => {
-                      setValue("certificate", files[0], {
-                        shouldValidate: true,
-                      });
-                    }}
-                  >
-                    <>
-                      {errors.certificate && (
-                        <FormMessage messageType={FormMessageType.Warning}>
-                          {`${errors.certificate.message}`}
-                        </FormMessage>
-                      )}
-                    </>
-                  </FileUpload>
-                )}
+              {(opportunityInfo?.verificationTypes?.length ?? 0) > 0 && (
+                <div
+                  className="flex w-full flex-col items-center justify-center gap-4"
+                  style={{ animationDelay: "1s" }}
+                >
+                  {opportunityInfo?.verificationTypes?.find(
+                    (x) => x.type == "FileUpload",
+                  ) && (
+                    <FileUpload
+                      id="fileUploadFileUpload"
+                      files={[]}
+                      fileTypes={[
+                        ...ACCEPTED_DOC_TYPES,
+                        ...ACCEPTED_IMAGE_TYPES,
+                      ].join(", ")}
+                      fileTypesLabels={[
+                        ...ACCEPTED_DOC_TYPES_LABEL,
+                        ...ACCEPTED_IMAGE_TYPES_LABEL,
+                      ].join(", ")}
+                      allowMultiple={false}
+                      label={
+                        opportunityInfo?.verificationTypes?.find(
+                          (x) => x.type == "FileUpload",
+                        )?.description
+                      }
+                      iconAlt={<FcGraduationCap className="size-10" />}
+                      onUploadComplete={(files) => {
+                        setValue("certificate", files[0], {
+                          shouldValidate: true,
+                        });
+                      }}
+                    >
+                      <>
+                        {errors.certificate && (
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            {`${errors.certificate.message}`}
+                          </FormMessage>
+                        )}
+                      </>
+                    </FileUpload>
+                  )}
 
-                {opportunityInfo?.verificationTypes?.find(
-                  (x) => x.type == "Picture",
-                ) && (
-                  <FileUpload
-                    id="fileUploadPicture"
-                    files={[]}
-                    fileTypes={ACCEPTED_IMAGE_TYPES.join(", ")}
-                    fileTypesLabels={ACCEPTED_IMAGE_TYPES_LABEL.join(", ")}
-                    allowMultiple={false}
-                    label={
-                      opportunityInfo?.verificationTypes?.find(
-                        (x) => x.type == "Picture",
-                      )?.description
-                    }
-                    iconAlt={<FcCompactCamera className="size-10" />}
-                    onUploadComplete={(files) => {
-                      setValue("picture", files[0], { shouldValidate: true });
-                    }}
-                  >
-                    <>
-                      {errors.picture && (
-                        <FormMessage messageType={FormMessageType.Warning}>
-                          {`${errors.picture.message}`}
-                        </FormMessage>
-                      )}
-                    </>
-                  </FileUpload>
-                )}
+                  {opportunityInfo?.verificationTypes?.find(
+                    (x) => x.type == "Picture",
+                  ) && (
+                    <FileUpload
+                      id="fileUploadPicture"
+                      files={[]}
+                      fileTypes={ACCEPTED_IMAGE_TYPES.join(", ")}
+                      fileTypesLabels={ACCEPTED_IMAGE_TYPES_LABEL.join(", ")}
+                      allowMultiple={false}
+                      label={
+                        opportunityInfo?.verificationTypes?.find(
+                          (x) => x.type == "Picture",
+                        )?.description
+                      }
+                      iconAlt={<FcCompactCamera className="size-10" />}
+                      onUploadComplete={(files) => {
+                        setValue("picture", files[0], { shouldValidate: true });
+                      }}
+                    >
+                      <>
+                        {errors.picture && (
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            {`${errors.picture.message}`}
+                          </FormMessage>
+                        )}
+                      </>
+                    </FileUpload>
+                  )}
 
-                {opportunityInfo?.verificationTypes?.find(
-                  (x) => x.type == "VoiceNote",
-                ) && (
-                  <FileUpload
-                    id="fileUploadVoiceNote"
-                    files={[]}
-                    fileTypes={ACCEPTED_AUDIO_TYPES.join(", ")}
-                    fileTypesLabels={ACCEPTED_AUDIO_TYPES_LABEL.join(", ")}
-                    allowMultiple={false}
-                    label={
-                      opportunityInfo?.verificationTypes?.find(
-                        (x) => x.type == "VoiceNote",
-                      )?.description
-                    }
-                    iconAlt={<FcComments className="size-10" />}
-                    onUploadComplete={(files) => {
-                      setValue("voiceNote", files[0], {
-                        shouldValidate: true,
-                      });
-                    }}
-                  >
-                    <>
-                      {errors.voiceNote && (
-                        <FormMessage messageType={FormMessageType.Warning}>
-                          {`${errors.voiceNote.message}`}
-                        </FormMessage>
-                      )}
-                    </>
-                  </FileUpload>
-                )}
+                  {opportunityInfo?.verificationTypes?.find(
+                    (x) => x.type == "VoiceNote",
+                  ) && (
+                    <FileUpload
+                      id="fileUploadVoiceNote"
+                      files={[]}
+                      fileTypes={ACCEPTED_AUDIO_TYPES.join(", ")}
+                      fileTypesLabels={ACCEPTED_AUDIO_TYPES_LABEL.join(", ")}
+                      allowMultiple={false}
+                      label={
+                        opportunityInfo?.verificationTypes?.find(
+                          (x) => x.type == "VoiceNote",
+                        )?.description
+                      }
+                      iconAlt={<FcComments className="size-10" />}
+                      onUploadComplete={(files) => {
+                        setValue("voiceNote", files[0], {
+                          shouldValidate: true,
+                        });
+                      }}
+                    >
+                      <>
+                        {errors.voiceNote && (
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            {`${errors.voiceNote.message}`}
+                          </FormMessage>
+                        )}
+                      </>
+                    </FileUpload>
+                  )}
 
-                {/* NB: Video has been disabled due to file upload size limitations */}
-                {/* {opportunityInfo?.verificationTypes?.find(
+                  {/* NB: Video has been disabled due to file upload size limitations */}
+                  {/* {opportunityInfo?.verificationTypes?.find(
                   (x) => x.type == "Video",
                 ) && (
                   <FileUpload
@@ -791,40 +811,41 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   </FileUpload>
                 )} */}
 
-                {opportunityInfo?.verificationTypes?.find(
-                  (x) => x.type == "Location",
-                ) && (
-                  <LocationPicker
-                    id="locationpicker"
-                    label={
-                      opportunityInfo?.verificationTypes?.find(
-                        (x) => x.type == "Location",
-                      )?.description
-                    }
-                    onSelect={(coords) => {
-                      let result = null;
-                      if (!coords) result = null;
-                      else
-                        result = {
-                          type: SpatialType.Point,
-                          coordinates: [[coords.lng, coords.lat, 0]],
-                        };
+                  {opportunityInfo?.verificationTypes?.find(
+                    (x) => x.type == "Location",
+                  ) && (
+                    <LocationPicker
+                      id="locationpicker"
+                      label={
+                        opportunityInfo?.verificationTypes?.find(
+                          (x) => x.type == "Location",
+                        )?.description
+                      }
+                      onSelect={(coords) => {
+                        let result = null;
+                        if (!coords) result = null;
+                        else
+                          result = {
+                            type: SpatialType.Point,
+                            coordinates: [[coords.lng, coords.lat, 0]],
+                          };
 
-                      setValue("geometry", result, { shouldValidate: true });
-                    }}
-                  >
-                    <div className="px-4 pb-2">
-                      {errors.geometry && (
-                        <FormMessage messageType={FormMessageType.Warning}>
-                          {`${errors.geometry.message}`}
-                        </FormMessage>
-                      )}
-                    </div>
-                  </LocationPicker>
-                )}
-              </div>
+                        setValue("geometry", result, { shouldValidate: true });
+                      }}
+                    >
+                      <div className="px-4 pb-2">
+                        {errors.geometry && (
+                          <FormMessage messageType={FormMessageType.Warning}>
+                            {`${errors.geometry.message}`}
+                          </FormMessage>
+                        )}
+                      </div>
+                    </LocationPicker>
+                  )}
+                </div>
+              )}
 
-              {/* FEEDBACK */}
+              {/* FEEDBACK - CUSTOM EXPANDABLE SECTION */}
               <div
                 className="bg-gray-light flex flex-col rounded-lg border-dotted"
                 style={{ animationDelay: "1.2s" }}
@@ -836,93 +857,105 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                   <div className="flex grow flex-col p-4">
                     <div className="font-semibold">Before you go!</div>
                     <div className="text-gray-dark text-sm italic">
-                      Please rate your experience & provide feedback.
+                      Please rate your experience & provide feedback (optional).
                     </div>
-                    <div className="mt-4 flex flex-col gap-2">
-                      {/* STAR RATING */}
-                      <div className="mb-4 flex flex-col gap-2">
-                        <div>Rating</div>
-                        <Controller
-                          control={control}
-                          name="starRating"
-                          defaultValue={0}
-                          render={({ field: { onChange, value } }) => (
-                            <div className="rating">
-                              <input
-                                type="radio"
-                                name="rating-2"
-                                className="rating-hidden"
-                                checked={value === 0}
-                              />
-                              {[1, 2, 3, 4, 5].map((x) => (
-                                <input
-                                  key={x}
-                                  type="radio"
-                                  name="rating-2"
-                                  className="mask mask-star-2 bg-orange"
-                                  checked={value === x}
-                                  onChange={() => onChange(x)}
-                                />
-                              ))}
-                            </div>
-                          )}
-                        />
-                        {errors.starRating && (
-                          <FormMessage messageType={FormMessageType.Warning}>
-                            {`${errors.starRating.message}`}
-                          </FormMessage>
-                        )}
-                      </div>
-
-                      {/* FEEDBACK */}
-                      <div className="mb-4 flex flex-col gap-2">
-                        <div>Feedback</div>
-                        <Controller
-                          control={control}
-                          name="feedback"
-                          render={({ field: { onChange, value } }) => (
-                            <textarea
-                              //className="textarea textarea-bordered w-full"
-                              className="blockx textarea textarea-bordered border-gray focus:border-gray w-full rounded-md focus:outline-none"
-                              placeholder="Enter your feedback"
-                              value={value || ""}
-                              onChange={onChange}
-                            />
-                          )}
-                        />
-                        {errors.feedback && (
-                          <FormMessage messageType={FormMessageType.Warning}>
-                            {`${errors.feedback.message}`}
-                          </FormMessage>
-                        )}
-                      </div>
-
-                      {/* RECOMMENDABLE */}
-                      <div className="mb-4 flex flex-col gap-2">
-                        <div>
-                          Would you recommend this opportunity to a friend?
-                        </div>
-                        <Controller
-                          control={control}
-                          name="recommendable"
-                          render={({ field: { onChange, value } }) => (
-                            <input
-                              type="checkbox"
-                              className="toggle toggle-success"
-                              checked={value || false}
-                              onChange={(e) => onChange(e.target.checked)}
-                            />
-                          )}
-                        />
-                        {errors.recommendable && (
-                          <FormMessage messageType={FormMessageType.Warning}>
-                            {`${errors.recommendable.message}`}
-                          </FormMessage>
-                        )}
-                      </div>
+                    <div className="mt-2">
+                      <button
+                        type="button"
+                        className="btn btn-sm btn-outline btn-secondary rounded-full normal-case"
+                        onClick={() => setShowFeedback(!showFeedback)}
+                      >
+                        {showFeedback ? "Hide Feedback" : "Give Feedback"}
+                      </button>
                     </div>
                   </div>
                 </div>
+
+                {showFeedback && (
+                  <div className="mt-2 flex flex-col gap-2 border-t border-gray-200 px-4 pb-4">
+                    {/* STAR RATING */}
+                    <div className="mb-4 flex flex-col gap-2 pt-4">
+                      <div>Rating</div>
+                      <Controller
+                        control={control}
+                        name="starRating"
+                        defaultValue={0}
+                        render={({ field: { onChange, value } }) => (
+                          <div className="rating">
+                            <input
+                              type="radio"
+                              name="rating-2"
+                              className="rating-hidden"
+                              checked={value === 0}
+                            />
+                            {[1, 2, 3, 4, 5].map((x) => (
+                              <input
+                                key={x}
+                                type="radio"
+                                name="rating-2"
+                                className="mask mask-star-2 bg-orange"
+                                checked={value === x}
+                                onChange={() => onChange(x)}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      />
+                      {errors.starRating && (
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          {`${errors.starRating.message}`}
+                        </FormMessage>
+                      )}
+                    </div>
+
+                    {/* FEEDBACK */}
+                    <div className="mb-4 flex flex-col gap-2">
+                      <div>Feedback</div>
+                      <Controller
+                        control={control}
+                        name="feedback"
+                        render={({ field: { onChange, value } }) => (
+                          <textarea
+                            //className="textarea textarea-bordered w-full"
+                            className="blockx textarea textarea-bordered border-gray focus:border-gray w-full rounded-md focus:outline-none"
+                            placeholder="Enter your feedback"
+                            value={value || ""}
+                            onChange={onChange}
+                          />
+                        )}
+                      />
+                      {errors.feedback && (
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          {`${errors.feedback.message}`}
+                        </FormMessage>
+                      )}
+                    </div>
+
+                    {/* RECOMMENDABLE */}
+                    <div className="mb-4 flex flex-col gap-2">
+                      <div>
+                        Would you recommend this opportunity to a friend?
+                      </div>
+                      <Controller
+                        control={control}
+                        name="recommendable"
+                        render={({ field: { onChange, value } }) => (
+                          <input
+                            type="checkbox"
+                            className="toggle toggle-success"
+                            checked={value || false}
+                            onChange={(e) => onChange(e.target.checked)}
+                          />
+                        )}
+                      />
+                      {errors.recommendable && (
+                        <FormMessage messageType={FormMessageType.Warning}>
+                          {`${errors.recommendable.message}`}
+                        </FormMessage>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {!isValid && (
