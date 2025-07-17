@@ -215,7 +215,7 @@ const OrganisationDetails: NextPageWithLayout<{
             id="btnReject"
           >
             <IoMdThumbsDown className="h-6 w-6" />
-            Reject
+            Decline
           </button>
           <button
             className="btn btn-success grow md:w-1/4 md:grow-0"
@@ -263,8 +263,8 @@ const OrganisationDetails: NextPageWithLayout<{
           <div className="border-green-dark bg-green-light mb-4 flex h-16 w-16 items-center justify-center rounded-full">
             <IoIosCheckmark className="text-green h-16 w-16" />
           </div>
-          <h4 className="mb-2 font-bold">Application rejected!</h4>
-          <p>{organisation?.name} has been rejected.</p>
+          <h4 className="mb-2 font-bold">Application declined!</h4>
+          <p>{organisation?.name} has been declined.</p>
         </div>
 
         <div className="mb-4 flex flex-row place-items-center justify-center px-6 py-4 pt-2">
@@ -304,7 +304,7 @@ const OrganisationDetails: NextPageWithLayout<{
 
           <p className="text-sm leading-6">
             Are you sure you want to{" "}
-            <strong>{verifyActionApprove ? "approve" : "reject"}</strong> this
+            <strong>{verifyActionApprove ? "approve" : "decline"}</strong> this
             organisation?
           </p>
 
@@ -347,7 +347,7 @@ const OrganisationDetails: NextPageWithLayout<{
                 id="btnRejectModal"
               >
                 <IoMdThumbsDown className="h-6 w-6" />
-                Reject
+                Decline
               </button>
             )}
           </div>

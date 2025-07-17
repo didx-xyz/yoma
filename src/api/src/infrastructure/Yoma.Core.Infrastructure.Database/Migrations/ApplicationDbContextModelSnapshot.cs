@@ -794,7 +794,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("varchar(20)");
+                        .HasColumnType("varchar(125)");
 
                     b.HasKey("Id");
 

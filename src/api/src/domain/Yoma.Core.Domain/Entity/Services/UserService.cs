@@ -413,24 +413,31 @@ namespace Yoma.Core.Domain.Entity.Services
     {
       var result = GetByUsername(username, true, true);
 
-      if (result.YoIDOnboarded.HasValue && result.YoIDOnboarded.Value)
-        throw new ValidationException($"User with username '{username}' has already completed YoID onboarding");
+      return await YoIDOnboard(result);
+    }
+
+    public async Task<User> YoIDOnboard(User user)
+    {
+      ArgumentNullException.ThrowIfNull(user, nameof(user));
+
+      if (user.YoIDOnboarded.HasValue && user.YoIDOnboarded.Value)
+        return user;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
 
-        result.YoIDOnboarded = true;
-        result.DateYoIDOnboarded = DateTimeOffset.UtcNow;
-        result = await _userRepository.Update(result);
+        user.YoIDOnboarded = true;
+        user.DateYoIDOnboarded = DateTimeOffset.UtcNow;
+        user = await _userRepository.Update(user);
 
-        await _ssiTenantService.ScheduleCreation(EntityType.User, result.Id);
-        await _ssiCredentialService.ScheduleIssuance(_appSettings.SSISchemaFullNameYoID, result.Id);
+        await _ssiTenantService.ScheduleCreation(EntityType.User, user.Id);
+        await _ssiCredentialService.ScheduleIssuance(_appSettings.SSISchemaFullNameYoID, user.Id);
 
         scope.Complete();
       });
 
-      return result;
+      return user;
     }
 
     public async Task TrackLogin(UserRequestLoginEvent request)

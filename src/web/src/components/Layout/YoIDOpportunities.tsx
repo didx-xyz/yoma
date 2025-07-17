@@ -38,11 +38,11 @@ const YoIDOpportunities: TabProps = ({ children }) => {
         selected: router.asPath.startsWith("/yoid/opportunities/pending"),
       },
       {
-        title: "❌ Rejected",
-        description: "Opportunities that have been rejected",
-        url: "/yoid/opportunities/rejected",
+        title: "❌ Declined",
+        description: "Opportunities that have been declined",
+        url: "/yoid/opportunities/declined",
         badgeCount: userProfile?.opportunityCountRejected,
-        selected: router.asPath.startsWith("/yoid/opportunities/rejected"),
+        selected: router.asPath.startsWith("/yoid/opportunities/declined"),
       },
       {
         title: "💗 Saved",

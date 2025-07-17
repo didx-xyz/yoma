@@ -265,6 +265,9 @@ namespace Yoma.Core.Domain.Entity.Services
           UpdatePhoneNumber = request.UpdatePhoneNumber
         };
 
+        if (!result.YoIDOnboarded == true)
+          await _userService.YoIDOnboard(result);
+
         await _identityProviderClient.UpdateUser(requestIdentityProvider);
 
         scope.Complete();

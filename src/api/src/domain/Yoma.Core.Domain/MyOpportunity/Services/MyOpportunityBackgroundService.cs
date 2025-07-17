@@ -95,7 +95,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           foreach (var item in items)
           {
-            item.CommentVerification = $"Auto-Rejected due to being {string.Join("/", Statuses_Rejectable).ToLower()} for more than {_scheduleJobOptions.MyOpportunityRejectionIntervalInDays} days";
+            item.CommentVerification = $"Auto-Declined due to being {string.Join("/", Statuses_Rejectable).ToLower()} for more than {_scheduleJobOptions.MyOpportunityRejectionIntervalInDays} days";
             item.VerificationStatusId = statusRejectedId;
             _logger.LogInformation("'My' opportunity with id '{id}' flagged for verification rejection", item.Id);
           }

@@ -93,7 +93,7 @@ export const UserProfileForm: React.FC<{
   });
   const { data: countries, isLoading: isLoadingCountries } = useQuery({
     queryKey: ["countries"],
-    queryFn: async () => await getCountries(),
+    queryFn: async () => await getCountries(true),
   });
   const { data: educations, isLoading: isLoadingEducations } = useQuery({
     queryKey: ["educations"],
@@ -174,7 +174,15 @@ export const UserProfileForm: React.FC<{
   // Update the combined dateOfBirth field when individual fields change
   useEffect(() => {
     if (watchDateOfBirthDay && watchDateOfBirthMonth && watchDateOfBirthYear) {
-      const combinedDate = `${watchDateOfBirthYear}-${watchDateOfBirthMonth}-${watchDateOfBirthDay}`;
+      // Create date in UTC format to ensure consistent timezone handling
+      const utcDate = new Date(
+        Date.UTC(
+          parseInt(watchDateOfBirthYear),
+          parseInt(watchDateOfBirthMonth) - 1, // Month is 0-indexed
+          parseInt(watchDateOfBirthDay),
+        ),
+      );
+      const combinedDate = utcDate.toISOString(); // Full UTC datetime with timezone
       setValue("dateOfBirth", combinedDate);
       trigger("dateOfBirth");
     } else {
@@ -213,13 +221,15 @@ export const UserProfileForm: React.FC<{
     }
     //HACK: Parse existing date into separate day, month, year fields
     else if (formData.dateOfBirth != null) {
+      // Parse the UTC date string and extract UTC components
       const date = new Date(formData.dateOfBirth);
-      formData.dateOfBirth = date.toISOString().slice(0, 10);
-      formData.dateOfBirthDay = date.getDate().toString().padStart(2, "0");
-      formData.dateOfBirthMonth = (date.getMonth() + 1)
+      formData.dateOfBirth = date.toISOString(); // Full UTC datetime with timezone
+      // Use UTC methods to extract date components to maintain consistency
+      formData.dateOfBirthDay = date.getUTCDate().toString().padStart(2, "0");
+      formData.dateOfBirthMonth = (date.getUTCMonth() + 1)
         .toString()
         .padStart(2, "0");
-      formData.dateOfBirthYear = date.getFullYear().toString();
+      formData.dateOfBirthYear = date.getUTCFullYear().toString();
     }
     //HACK: 'expected string, received null' form validation error
     if (!formData.phoneNumber) formData.phoneNumber = "";
@@ -248,15 +258,6 @@ export const UserProfileForm: React.FC<{
       setIsLoading(true);
 
       try {
-        // Combine date fields into a single dateOfBirth field
-        if (
-          data.dateOfBirthDay &&
-          data.dateOfBirthMonth &&
-          data.dateOfBirthYear
-        ) {
-          data.dateOfBirth = `${data.dateOfBirthYear}-${data.dateOfBirthMonth}-${data.dateOfBirthDay}`;
-        }
-
         // Remove the individual date fields from the submission data
         const {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -267,6 +268,27 @@ export const UserProfileForm: React.FC<{
           dateOfBirthYear,
           ...submissionData
         } = data;
+
+        // Ensure dateOfBirth is always in UTC format in the submission data
+        if (
+          data.dateOfBirthDay &&
+          data.dateOfBirthMonth &&
+          data.dateOfBirthYear
+        ) {
+          // Create date in UTC format from individual fields
+          const utcDate = new Date(
+            Date.UTC(
+              parseInt(data.dateOfBirthYear),
+              parseInt(data.dateOfBirthMonth) - 1, // Month is 0-indexed
+              parseInt(data.dateOfBirthDay),
+            ),
+          );
+          submissionData.dateOfBirth = utcDate.toISOString(); // Full UTC datetime with timezone
+        } else if (data.dateOfBirth) {
+          // Ensure existing dateOfBirth value is in UTC format
+          const existingDate = new Date(data.dateOfBirth);
+          submissionData.dateOfBirth = existingDate.toISOString(); // Full UTC datetime with timezone
+        }
 
         // update photo
         if (logoFiles && logoFiles.length > 0) {

@@ -41,6 +41,8 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<User> YoIDOnboard(string username);
 
+    Task<User> YoIDOnboard(User user);
+
     Task TrackLogin(UserRequestLoginEvent request);
   }
 }

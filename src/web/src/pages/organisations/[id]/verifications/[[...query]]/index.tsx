@@ -633,7 +633,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                   </span>
                 </label>
                 <textarea
-                  className="input border-gray-light my-2 h-[100px] p-2"
+                  className="input border-gray-light my-2 h-[100px] w-full p-2"
                   onChange={(e) => setVerifyComments(e.target.value)}
                 />
               </fieldset>
@@ -641,37 +641,34 @@ const OpportunityVerifications: NextPageWithLayout<{
           </div>
 
           {/* BUTTONS */}
-          <div className="flex flex-row place-items-center justify-center px-6 py-4 pt-2">
-            <div className="flex grow">
-              <button
-                className="btn btn-outline border-green text-green hover:bg-green w-64 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
-                onClick={onCloseVerificationModal}
-              >
-                <IoMdClose className="h-6 w-6" />
-                Cancel
-              </button>
-            </div>
-            <div className="flex gap-4">
-              {(bulkActionApprove == null || !bulkActionApprove) && (
-                <button
-                  className="btn w-64 shrink rounded-full border-red-500 bg-white text-red-500 normal-case hover:border-0 hover:bg-red-500 hover:text-white"
-                  onClick={() => onVerify(false)}
-                >
-                  <FaThumbsDown className="h-4 w-4" />
-                  Reject
-                </button>
-              )}
+          <div className="flex flex-col gap-2 px-6 py-4 pt-2 sm:flex-row sm:place-items-center sm:justify-center">
+            <button
+              className="btn btn-outline border-green text-green hover:bg-green w-full shrink rounded-full bg-white normal-case hover:border-0 hover:text-white sm:w-48 md:w-64"
+              onClick={onCloseVerificationModal}
+            >
+              <IoMdClose className="h-6 w-6" />
+              Cancel
+            </button>
 
-              {(bulkActionApprove == null || bulkActionApprove) && (
-                <button
-                  className="btn border-green text-green hover:bg-green w-64 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
-                  onClick={() => onVerify(true)}
-                >
-                  <FaThumbsUp className="h-4 w-4" />
-                  Approve
-                </button>
-              )}
-            </div>
+            {(bulkActionApprove == null || !bulkActionApprove) && (
+              <button
+                className="btn w-full shrink rounded-full border-red-500 bg-white text-red-500 normal-case hover:border-0 hover:bg-red-500 hover:text-white sm:w-48 md:w-64"
+                onClick={() => onVerify(false)}
+              >
+                <FaThumbsDown className="h-4 w-4" />
+                Decline
+              </button>
+            )}
+
+            {(bulkActionApprove == null || bulkActionApprove) && (
+              <button
+                className="btn border-green text-green hover:bg-green w-full shrink rounded-full bg-white normal-case hover:border-0 hover:text-white sm:w-48 md:w-64"
+                onClick={() => onVerify(true)}
+              >
+                <FaThumbsUp className="h-4 w-4" />
+                Approve
+              </button>
+            )}
           </div>
         </div>
       </CustomModal>
@@ -755,12 +752,12 @@ const OpportunityVerifications: NextPageWithLayout<{
                                     </strong>{" "}
                                     was successfully
                                     <strong className="text-error mx-1">
-                                      rejected.
+                                      declined.
                                     </strong>
                                   </p>
                                   <p className="flex flex-row gap-2 text-sm">
                                     <IoInformationCircleOutline className="text-blue size-5" />
-                                    We&apos;ve sent them an notification with
+                                    We&apos;ve sent them a notification with
                                     your comments.
                                   </p>
                                 </div>
@@ -905,7 +902,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                   : "hover:border-orange hover:text-gray"
               }`}
             >
-              Rejected
+              Declined
               {(totalCountRejected ?? 0) > 0 && (
                 <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                   {totalCountRejected}
@@ -973,7 +970,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                       onClick={() => onChangeBulkAction(false)}
                     >
                       <FaThumbsDown className="h-4 w-4" />
-                      Reject
+                      Decline
                     </button>
                   </>
                 )}
@@ -1089,7 +1086,7 @@ const OpportunityVerifications: NextPageWithLayout<{
                               item.verificationStatus == "Rejected" && (
                                 <div className="flex flex-row">
                                   <IoMdClose className="mr-2 h-6 w-6 text-red-400" />
-                                  Rejected
+                                  Declined
                                 </div>
                               )}
                           </div>

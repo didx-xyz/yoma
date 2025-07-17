@@ -86,7 +86,7 @@ const MobileCard: React.FC<MobileCardProps> = ({
               {item.verificationStatus == "Rejected" && (
                 <div className="flex flex-row items-center gap-2">
                   <IoMdClose className="h-6 w-6 text-red-400" />
-                  Rejected
+                  Declined
                 </div>
               )}
             </>

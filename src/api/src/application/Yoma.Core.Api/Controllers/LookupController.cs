@@ -48,14 +48,14 @@ namespace Yoma.Core.Api.Controllers
 
     #region Public Members
     #region Anonymous Actions
-    [SwaggerOperation(Summary = "Return a list of countries")]
+    [SwaggerOperation(Summary = "Return a list of countries. Optionally exclude Worldwide")]
     [HttpGet("country")]
     [ProducesResponseType(typeof(List<Country>), (int)HttpStatusCode.OK)]
-    public IActionResult ListCountries()
+    public IActionResult ListCountries([FromQuery] bool? excludeWorldwide = null)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ListCountries));
 
-      var result = _countryService.List();
+      var result = _countryService.List(excludeWorldwide);
 
       _logger.LogInformation("Request {requestName} handled", nameof(ListCountries));
 

@@ -42,10 +42,10 @@ export const OpportunitiesSummary: React.FC<{
       emoji: "🕑",
     },
     {
-      href: "/yoid/opportunities/rejected",
+      href: "/yoid/opportunities/declined",
       background: `conic-gradient(from 180deg, #F9AB3E ${rejectedPercentage}%, #387F6A 0)`,
       count: data?.count[2] || 0,
-      label: "Rejected",
+      label: "Declined",
       emoji: "❌",
     },
   ];

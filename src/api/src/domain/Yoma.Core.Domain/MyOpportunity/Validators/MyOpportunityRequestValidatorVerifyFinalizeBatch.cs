@@ -10,8 +10,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
     #region Class Variables
     private readonly IUserService _userService;
     private readonly IOpportunityService _opportunityService;
-
-    private readonly static VerificationStatus[] Statuses_Finalize = [VerificationStatus.Completed, VerificationStatus.Rejected];
     #endregion
 
     #region Constructor
@@ -20,7 +18,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
       _userService = userService;
       _opportunityService = opportunityService;
 
-      RuleFor(x => x.Status).Must(x => Statuses_Finalize.Contains(x)).WithMessage($"{{PropertyName}} must be '{string.Join(" / ", Statuses_Finalize)}'.");
+      RuleFor(x => x.Status).Must(x => Services.MyOpportunityService.Statuses_Finalize.Contains(x)).WithMessage($"{{PropertyName}} must be '{string.Join(" / ", Services.MyOpportunityService.Statuses_Finalize)}'.");
       RuleFor(x => x.Comment)
           .MaximumLength(400)
           .WithMessage("{PropertyName} can not exceed 400 characters.")

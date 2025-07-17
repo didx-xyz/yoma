@@ -57,7 +57,7 @@ const YoIDLayout: TabProps = ({ children }) => {
       },
       {
         title: "🏆 Opportunities",
-        description: "Completed, pending, rejected & saved opportunities",
+        description: "Completed, pending, declined & saved opportunities",
         url: "/yoid/opportunities/completed",
         badgeCount: null,
         selected: router.asPath.startsWith("/yoid/opportunities"),
