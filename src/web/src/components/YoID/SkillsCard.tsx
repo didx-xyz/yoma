@@ -11,7 +11,6 @@ export const SkillsCard: React.FC<{ data: UserSkillInfo[] }> = ({ data }) => {
           "All your skills from completed opportunities will automatically appear here."
         }
         icon={"⚡"}
-        classNameIcon={"h-[60px] w-[60px]"}
       />
     );
   }
