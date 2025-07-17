@@ -1,10 +1,13 @@
 using CsvHelper.Configuration;
+using CsvHelper.Configuration.Attributes;
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using StackExchange.Redis;
+using System.Globalization;
+using System.Reflection;
 using System.Transactions;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.BlobProvider;
@@ -22,6 +25,9 @@ using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Lookups.Helpers;
+using Yoma.Core.Domain.Lookups.Models;
 using Yoma.Core.Domain.MyOpportunity.Extensions;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
@@ -32,12 +38,6 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
-using CsvHelper.Configuration.Attributes;
-using System.Globalization;
-using System.Reflection;
-using Yoma.Core.Domain.Lookups.Interfaces;
-using Yoma.Core.Domain.Lookups.Helpers;
-using Yoma.Core.Domain.Lookups.Models;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -419,11 +419,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return results;
     }
 
-    public MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId)
+    public MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId, User? user)
     {
       var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
 
-      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      user ??= _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
@@ -873,6 +873,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //send for verification
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
       var opportunity = _opportunityService.GetById(link.EntityId, true, true, false);
+
+      var statusVerification = GetVerificationStatus(opportunity.Id, user);
+      if (statusVerification.Status == VerificationStatus.Completed) return; //already verified
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {

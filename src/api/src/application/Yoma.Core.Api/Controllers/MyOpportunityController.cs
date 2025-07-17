@@ -172,7 +172,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(GetVerificationStatus));
 
-      var result = _myOpportunityService.GetVerificationStatus(opportunityId);
+      var result = _myOpportunityService.GetVerificationStatus(opportunityId, null);
 
       _logger.LogInformation("Request {requestName} handled", nameof(GetVerificationStatus));
 
