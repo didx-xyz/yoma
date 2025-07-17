@@ -90,7 +90,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     // 👇 prefetch queries on server
     const dataOrganisationProviderTypes =
       await getOrganisationProviderTypes(context);
-    const dataCountries = await getCountries(context);
+    const dataCountries = await getCountries(false, context);
     const dataOrganisation = await getOrganisationById(id, context);
 
     await Promise.all([
