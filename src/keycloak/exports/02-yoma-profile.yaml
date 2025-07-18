@@ -332,7 +332,6 @@ userProfile:
             - Yemen
             - Zambia
             - Zimbabwe
-            - Worldwide
     - name: dateOfBirth
       displayName: Date of birth
       permissions:
@@ -379,10 +378,11 @@ userProfile:
       validations:
         options:
           options:
-            - Primary
-            - Secondary
-            - Tertiary
-            - No formal education
+            - Primary (Grade 1–7 or equivalent)
+            - Secondary (Grade 8–12, Matric or equivalent)
+            - Tertiary (Diploma, Degree or equivalent)
+            - No formal education (No schooling attended)
+            - Other
     - name: terms_and_conditions
       displayName: "Terms & conditions accepted"
       required:

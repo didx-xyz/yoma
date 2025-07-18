@@ -866,17 +866,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       var link = _linkService.GetById(linkId, false, false);
 
-      link.AssertLinkInstantVerify();
-
-      //ensure link is still usable
-      _linkService.AssertActive(link.Id);
-
-      //send for verification
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
       var opportunity = _opportunityService.GetById(link.EntityId, true, true, false);
 
       var statusVerification = GetVerificationStatus(opportunity.Id, user);
       if (statusVerification.Status == VerificationStatus.Completed) return; //already verified
+
+      link.AssertLinkInstantVerify();
+
+      //ensure link is still usable
+      _linkService.AssertActive(link.Id);
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
