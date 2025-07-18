@@ -98,7 +98,7 @@ namespace Yoma.Core.Domain.SSI.Services
 
       //schemaType filter
       if (filter.SchemaType.HasValue) result.Items = [.. result.Items.Where(o => o.SchemaType == filter.SchemaType.Value)];
-      
+
       if (filter.TotalCountOnly)
       {
         result.TotalCount = items.Count;
