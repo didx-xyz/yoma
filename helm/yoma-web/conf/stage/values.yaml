@@ -8,7 +8,7 @@ env:
   NEXT_PUBLIC_API_BASE_URL: https://v3api.stage.yoma.world/api/v3
   NEXT_PUBLIC_ENVIRONMENT: staging
   MARKETPLACE_ENABLED: true
-  NEXT_PUBLIC_PASSPORT_ENABLED: false
+  NEXT_PUBLIC_PASSPORT_ENABLED: true
 
 ingress:
   internal:
