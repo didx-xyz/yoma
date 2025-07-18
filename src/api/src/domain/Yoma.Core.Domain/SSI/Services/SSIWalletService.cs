@@ -88,20 +88,22 @@ namespace Yoma.Core.Domain.SSI.Services
       //    start = filter.PageNumber == 1 ? 0 : (filter.PageNumber - 1) * filter.PageSize;
 
       var items = await _ssiProviderClient.ListCredentials(tenantId);
+      if (items == null || items.Count == 0) return result;
+
+      //parse all credential items first — in AcaPy RC6, the schemaId alone is no longer sufficient 
+      //to determine the schema type. Therefore, we must fully parse each credential before we can 
+      //apply schema-type-based filtering (previously done via _ssiSchemaService.SchemaIdValidateAndGetParts).
+      foreach (var item in items)
+        result.Items.Add(await ParseCredential<SSICredentialInfo>(item));
 
       //schemaType filter
-      if (filter.SchemaType.HasValue)
-        items = items?.Where(o => _ssiSchemaService.SchemaIdValidateAndGetParts(o.SchemaId).schemaType.Type == filter.SchemaType).ToList();
-      if (items == null || items.Count == 0) return result;
+      if (filter.SchemaType.HasValue) result.Items = [.. result.Items.Where(o => o.SchemaType == filter.SchemaType.Value)];
 
       if (filter.TotalCountOnly)
       {
         result.TotalCount = items.Count;
         return result;
       }
-
-      foreach (var item in items)
-        result.Items.Add(await ParseCredential<SSICredentialInfo>(item));
 
       result.Items = [.. result.Items.OrderByDescending(o => o.DateIssued).ThenBy(o => o.Id)]; //ensure deterministic sorting / consistent pagination results
 
