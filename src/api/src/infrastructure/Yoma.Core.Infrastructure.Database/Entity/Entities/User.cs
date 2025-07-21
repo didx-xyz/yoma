@@ -62,6 +62,8 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
     public string? Settings { get; set; }
 
+    public bool? ExternalIdpLinked { get; set; }
+
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 

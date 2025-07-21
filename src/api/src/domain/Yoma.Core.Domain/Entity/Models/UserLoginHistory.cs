@@ -14,6 +14,8 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public string? AuthType { get; set; }
 
+    public string? IdentityProvider { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
   }
 }

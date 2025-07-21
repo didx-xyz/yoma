@@ -147,7 +147,7 @@ namespace Yoma.Core.Api.Controllers
 
       _logger.LogInformation("Found Keycloak user with username '{username}'", kcUser.Username);
 
-      var timeout = TimeSpan.FromSeconds(15);
+      var timeout = TimeSpan.FromSeconds(10);
       var startTime = DateTimeOffset.UtcNow;
       UserRequest? userRequest;
 
@@ -243,6 +243,15 @@ namespace Yoma.Core.Api.Controllers
 
           if (type == WebhookRequestEventType.UpdateProfile) break;
 
+          if (userRequest.ExternalIdpLinked != true)
+          {
+            if (!string.IsNullOrWhiteSpace(payload.Details?.Register_method))
+            {
+              userRequest.ExternalIdpLinked = string.Equals(payload.Details?.Register_method, RegisterMethod.Broker.ToString(), StringComparison.InvariantCultureIgnoreCase);
+            }
+          }
+          _logger.LogInformation("User linked to external IDP: {externalIdpLinked}", userRequest.ExternalIdpLinked.HasValue ? userRequest.ExternalIdpLinked : "undefined");
+
           try
           {
             //add newly registered user to the default "User" role
@@ -309,7 +318,8 @@ namespace Yoma.Core.Api.Controllers
           ClientId = payload.ClientId,
           IpAddress = payload.IpAddress,
           AuthMethod = payload.Details?.Auth_method,
-          AuthType = payload.Details?.Auth_type
+          AuthType = payload.Details?.Auth_type,
+          IdentityProvider = payload.Details?.Identity_provider,
         });
 
         _logger.LogInformation("Tracked login for user with username '{username}'", userRequest.Username);

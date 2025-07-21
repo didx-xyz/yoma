@@ -49,6 +49,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         YoIDOnboarded = entity.YoIDOnboarded,
         DateYoIDOnboarded = entity.DateYoIDOnboarded,
         SettingsRaw = entity.Settings,
+        ExternalIdpLinked = entity.ExternalIdpLinked,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified,
         Skills = entity.Skills == null ? null : includeChildItems ?
@@ -117,6 +118,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         YoIDOnboarded = item.YoIDOnboarded,
         DateYoIDOnboarded = item.DateYoIDOnboarded,
         Settings = item.SettingsRaw,
+        ExternalIdpLinked = item.ExternalIdpLinked,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };
@@ -151,6 +153,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
       entity.YoIDOnboarded = item.YoIDOnboarded;
       entity.DateYoIDOnboarded = item.DateYoIDOnboarded;
       entity.Settings = item.SettingsRaw;
+      entity.ExternalIdpLinked = item.ExternalIdpLinked;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();

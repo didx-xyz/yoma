@@ -12,7 +12,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -31,12 +31,13 @@ services:
     ports:
       - 6379:6379
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test: [ "CMD", "valkey-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 3
 
-  postgres-init: # Initialise the local postgresql server by populating a test user and organisation(s) for local dev
+  postgres-init:
+    # Initialise the local postgresql server by populating a test user and organisation(s) for local dev
     image: postgres:17-alpine
     container_name: postgres-init
     depends_on:
@@ -55,7 +56,8 @@ services:
     command: >
       bash -c "PGPASSWORD=$$POSTGRES_PASSWORD psql -h $$PGHOST -U $$POSTGRES_USER -d $$POSTGRES_DB -f /post.sql"
 
-  keycloak-init: # Initialise the local Keycloak server by adding the bcrypt & webhook provider
+  keycloak-init:
+    # Initialise the local Keycloak server by adding the bcrypt & webhook provider
     image: curlimages/curl
     container_name: keycloak-init
     user: root
@@ -80,12 +82,13 @@ services:
     volumes:
       - keycloak-pg:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "keycloak"]
+      test: [ "CMD", "pg_isready", "-U", "keycloak" ]
       interval: 10s
       timeout: 5s
       retries: 3
 
-  keycloak: # Local Keycloak server
+  keycloak:
+    # Local Keycloak server
     # https://github.com/adorsys/keycloak-config-cli/pull/928
     image: quay.io/keycloak/keycloak:22.0.1
     container_name: keycloak
@@ -99,9 +102,11 @@ services:
       KC_DB_PASSWORD: keycloak
       KC_HEALTH_ENABLED: true
 
-      KC_HOSTNAME: keycloak
-
+      # ⚠️ DO NOT COMMIT — FOR LOCAL TESTING ONLY!
+      # Run Keycloak on localhost to test Google & Facebook logins locally.
+      # These overrides must be REVERTED or COMMENTED OUT before committing.
       # override Keycloak hostname for social provider redirects
+      KC_HOSTNAME: keycloak  # ← original value, leave commented
       # KC_HOSTNAME: "localhost"
       # KC_HOSTNAME_STRICT: "false"
       # KEYCLOAK_FRONTEND_URL: "http://localhost:8080"
@@ -136,7 +141,8 @@ services:
     volumes:
       - keycloak:/opt/keycloak/providers
 
-  keycloak-health: # Wait for Keycloak to be ready before running keycloak-config service
+  keycloak-health:
+    # Wait for Keycloak to be ready before running keycloak-config service
     image: curlimages/curl
     container_name: keycloak-health
     restart: "no"
@@ -145,7 +151,8 @@ services:
       keycloak:
         condition: service_started
 
-  keycloak-config: # Import Keycloak configuration
+  keycloak-config:
+    # Import Keycloak configuration
     image: adorsys/keycloak-config-cli:5.8.0-22.0.0
     container_name: keycloak-config
     environment:
@@ -246,7 +253,8 @@ services:
       yoma-api-health:
         condition: service_completed_successfully
 
-  yoma-api: # Local Yoma API server
+  yoma-api:
+    # Local Yoma API server
     # platform: linux/amd64 # Until we get multi-arch docker images
     image: ${REGISTRY:-local}/yoma-api:${API_TAG:-latest}
     container_name: yoma-api
@@ -282,17 +290,16 @@ services:
     container_name: yoma-api-health
     restart: "no"
     command: >
-      /bin/sh -c "
-      until curl -fsS 'http://yoma-api:5000/api/v3/lookup/skill?PageNumber=1&PageSize=10' | grep '\"totalCount\":\s*[1-9][0-9]*' > /dev/null; do
+      /bin/sh -c " until curl -fsS 'http://yoma-api:5000/api/v3/lookup/skill?PageNumber=1&PageSize=10' | grep '\"totalCount\":\s*[1-9][0-9]*' > /dev/null; do
         echo 'API data not populated yet.';
         sleep 5;
-      done;
-      echo 'API data populated. Health check passed.'"
+      done; echo 'API data populated. Health check passed.'"
     depends_on:
       yoma-api:
         condition: service_started
 
-  test-harness-health: # Wait for sqlserver-init to be finished.
+  test-harness-health:
+    # Wait for sqlserver-init to be finished.
     image: curlimages/curl
     container_name: test-harness-health
     restart: "no"

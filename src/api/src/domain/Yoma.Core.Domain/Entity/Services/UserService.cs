@@ -300,6 +300,7 @@ namespace Yoma.Core.Domain.Entity.Services
       result.PhoneNumberConfirmed = request.PhoneNumberConfirmed;
       result.DateLastLogin = request.DateLastLogin;
       result.ExternalId = request.ExternalId;
+      result.ExternalIdpLinked = request.ExternalIdpLinked;
 
       result = isNew ? await _userRepository.Create(result) : await _userRepository.Update(result);
 
@@ -454,6 +455,7 @@ namespace Yoma.Core.Domain.Entity.Services
       request.IpAddress = request.IpAddress?.Trim();
       request.AuthMethod = request.AuthMethod?.Trim();
       request.AuthType = request.AuthType?.Trim();
+      request.IdentityProvider = request.IdentityProvider?.Trim();  
 
       var item = new UserLoginHistory
       {
@@ -461,7 +463,8 @@ namespace Yoma.Core.Domain.Entity.Services
         ClientId = request.ClientId,
         IpAddress = request.IpAddress,
         AuthMethod = request.AuthMethod,
-        AuthType = request.AuthType
+        AuthType = request.AuthType,
+        IdentityProvider = request.IdentityProvider
       };
 
       await _userLoginHistoryRepository.Create(item);

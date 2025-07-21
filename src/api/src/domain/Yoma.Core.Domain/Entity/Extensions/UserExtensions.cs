@@ -43,6 +43,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
         DateOfBirth = user.DateOfBirth,
         DateLastLogin = user.DateLastLogin,
         ExternalId = user.ExternalId,
+        ExternalIdpLinked = user.ExternalIdpLinked
       };
     }
 
@@ -89,7 +90,8 @@ namespace Yoma.Core.Domain.Entity.Extensions
         DateLastLogin = value.DateLastLogin,
         YoIDOnboarded = value.YoIDOnboarded,
         DateYoIDOnboarded = value.DateYoIDOnboarded,
-        Settings = value.Settings
+        Settings = value.Settings,
+        ExternalIdpLinked = value.ExternalIdpLinked,
       };
     }
   }

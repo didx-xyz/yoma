@@ -11,5 +11,7 @@ namespace Yoma.Core.Domain.Entity.Models
     public string? AuthMethod { get; set; }
 
     public string? AuthType { get; set; }
+
+    public string? IdentityProvider { get; set; }
   }
 }

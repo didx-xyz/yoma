@@ -30,4 +30,12 @@ namespace Yoma.Core.Infrastructure.Keycloak
     [Description("LOGIN")]
     Login
   }
+
+  public enum RegisterMethod
+  {
+    [Description("form")]
+    Form,
+    [Description("broker")]
+    Broker
+  }
 }
