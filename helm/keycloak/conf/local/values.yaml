@@ -147,8 +147,6 @@ config-cli:
     CLIENT_GOODWALL_URL_REDIRECT: goodwallauth://yomaredirect
     CLIENT_MINI_SASS_URL: http://localhost:5000
     CLIENT_MINI_SASS_URL_REDIRECT: http://localhost:5000/authentication/api/yoma/callback
-    GOOGLE_CLIENT_ID: 723391059296-0002dg52bem1vq4gp6kqgm61molhvvdc.apps.googleusercontent.com
-    FACEBOOK_CLIENT_ID: "895741739433688"
 
   init:
     enabled: true
