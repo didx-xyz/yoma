@@ -63,7 +63,7 @@ namespace Yoma.Core.Api
       var appSettings = _configuration.GetSection(AppSettings.Section).Get<AppSettings>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{AppSettings.Section}'");
       _appSettings = appSettings;
 
-      _identityProviderAuthOptions = configuration.Configuration_IdentityProviderAuthenticationOptions(_environment);
+      _identityProviderAuthOptions = configuration.Configuration_IdentityProviderAuthenticationOptions();
     }
     #endregion
 
