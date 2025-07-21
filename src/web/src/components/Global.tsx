@@ -182,11 +182,6 @@ export const Global: React.FC = () => {
             // show dialog to login again
             setLoginMessage("Your session has expired. Please log in again.");
             setLoginDialogVisible(true);
-          } else {
-            // show error toast
-            toast.error(
-              "Something went wrong logging in. Please try again later or contact us for help.",
-            );
           }
 
           console.error(e);
