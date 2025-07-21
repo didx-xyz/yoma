@@ -455,7 +455,7 @@ namespace Yoma.Core.Domain.Entity.Services
       request.IpAddress = request.IpAddress?.Trim();
       request.AuthMethod = request.AuthMethod?.Trim();
       request.AuthType = request.AuthType?.Trim();
-      request.IdentityProvider = request.IdentityProvider?.Trim();  
+      request.IdentityProvider = request.IdentityProvider?.Trim();
 
       var item = new UserLoginHistory
       {
