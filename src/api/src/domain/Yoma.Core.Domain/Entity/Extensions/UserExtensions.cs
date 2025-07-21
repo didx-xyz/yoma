@@ -78,7 +78,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
         EmailConfirmed = value.EmailConfirmed,
         FirstName = value.FirstName,
         Surname = value.Surname,
-        DisplayName = value.DisplayName, //cannot default; model returned on api for editing as authenticated user (simular to user returned on api as admin)
+        DisplayName = value.DisplayName, //cannot default; model returned on api for editing as authenticated user (similar to user returned on api as admin)
         PhoneNumber = value.PhoneNumber,
         PhoneNumberConfirmed = value.PhoneNumberConfirmed,
         CountryId = value.CountryId,
@@ -92,6 +92,8 @@ namespace Yoma.Core.Domain.Entity.Extensions
         DateYoIDOnboarded = value.DateYoIDOnboarded,
         Settings = value.Settings,
         ExternalIdpLinked = value.ExternalIdpLinked,
+        DateCreated = value.DateCreated,
+        DateModified = value.DateModified
       };
     }
   }

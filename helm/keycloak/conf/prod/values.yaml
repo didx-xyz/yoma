@@ -111,8 +111,6 @@ config-cli:
     CLIENT_MINI_SASS_ENABLED: "false"
     CLIENT_MINI_SASS_URL: https://minisass.org
     CLIENT_MINI_SASS_URL_REDIRECT: https://minisass.org/authentication/api/yoma/callback
-    GOOGLE_CLIENT_ID: 723391059296-giq1bl8i85lkcdjqcmg5pkr3sj997jpk.apps.googleusercontent.com
-    FACEBOOK_CLIENT_ID: "1133788531942484"
 
   init:
     enabled: true

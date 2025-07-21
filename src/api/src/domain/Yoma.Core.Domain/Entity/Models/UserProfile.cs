@@ -42,6 +42,10 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public bool? ExternalIdpLinked { get; set; }
 
+    public DateTimeOffset DateCreated { get; set; }
+
+    public DateTimeOffset DateModified { get; set; }
+
     public List<OrganizationInfo> AdminsOf { get; set; }
 
     public UserProfileZlto Zlto { get; set; }
