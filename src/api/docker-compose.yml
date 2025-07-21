@@ -101,7 +101,7 @@ services:
 
       KC_HOSTNAME: keycloak
 
-      # override the hostname Keycloak uses in redirects:
+      # override Keycloak hostname for social provider redirects
       # KC_HOSTNAME: "localhost"
       # KC_HOSTNAME_STRICT: "false"
       # KEYCLOAK_FRONTEND_URL: "http://localhost:8080"
