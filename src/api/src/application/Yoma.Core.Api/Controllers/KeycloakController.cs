@@ -17,7 +17,7 @@ namespace Yoma.Core.Api.Controllers
   [Route($"api/{Common.Constants.Api_Version}/keycloak")]
   [ApiController]
   [AllowAnonymous]
-  [ApiExplorerSettings(IgnoreApi = false)]
+  [ApiExplorerSettings(IgnoreApi = true)]
   public class KeycloakController : Controller
   {
     #region Class Variables
@@ -147,7 +147,7 @@ namespace Yoma.Core.Api.Controllers
 
       _logger.LogInformation("Found Keycloak user with username '{username}'", kcUser.Username);
 
-      var userRequest = RetryHelper.RetryUntil(
+      var userRequest = RetryHelper.RetryUntil(_logger,
           () =>
           {
             // try to locate the user based on their external Keycloak ID.
