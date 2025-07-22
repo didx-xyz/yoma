@@ -1629,8 +1629,99 @@ enabledEventTypes:
   - UPDATE_PHONE_NUMBER
 adminEventsEnabled: true
 adminEventsDetailsEnabled: false
-identityProviders: []
-identityProviderMappers: []
+identityProviders:
+  - alias: google
+    providerId: google
+    enabled: true
+    trustEmail: true
+    storeToken: true
+    addReadTokenRoleOnCreate: false
+    linkOnly: false
+    authenticateByDefault: false
+    config:
+      clientId: $(env:GOOGLE_CLIENT_ID)
+      clientSecret: $(env:GOOGLE_CLIENT_SECRET)
+      issuer: "https://accounts.google.com"
+      defaultScopes: "openid email profile"
+  - alias: facebook
+    providerId: facebook
+    enabled: true
+    trustEmail: true
+    storeToken: true
+    addReadTokenRoleOnCreate: false
+    linkOnly: false
+    authenticateByDefault: false
+    config:
+      clientId: $(env:FACEBOOK_CLIENT_ID)
+      clientSecret: $(env:FACEBOOK_CLIENT_SECRET)
+      authorizationUrl: "https://www.facebook.com/dialog/oauth"
+      tokenUrl: "https://graph.facebook.com/v10.0/oauth/access_token"
+      userInfoUrl: "https://graph.facebook.com/me?fields=id,name,email,first_name,last_name,picture"
+      defaultScope: "email public_profile"
+identityProviderMappers:
+  #––– Google mappers –––
+  - name: email
+    identityProviderAlias: google
+    identityProviderMapper: google-user-attribute-mapper
+    config:
+      syncMode: INHERIT
+      userAttribute: email
+  - name: firstName
+    identityProviderAlias: google
+    identityProviderMapper: google-user-attribute-mapper
+    config:
+      syncMode: INHERIT
+      userAttribute: given_name
+  - name: lastName
+    identityProviderAlias: google
+    identityProviderMapper: google-user-attribute-mapper
+    config:
+      syncMode: INHERIT
+      userAttribute: family_name
+  - name: picture
+    identityProviderAlias: google
+    identityProviderMapper: google-user-attribute-mapper
+    config:
+      syncMode: INHERIT
+      userAttribute: picture
+  - name: phoneNumber
+    identityProviderAlias: google
+    identityProviderMapper: google-user-attribute-mapper
+    config:
+      syncMode: INHERIT
+      userAttribute: phone_number
+
+  #––– Facebook mappers –––
+  - name: firstName
+    identityProviderAlias: facebook
+    identityProviderMapper: facebook-user-attribute-mapper
+    config:
+      syncMode: INHERIT
+      userAttribute: first_name
+  - name: email
+    identityProviderAlias: facebook
+    identityProviderMapper: facebook-user-attribute-mapper
+    config:
+      syncMode: INHERIT
+      userAttribute: email
+  - name: lastName
+    identityProviderAlias: facebook
+    identityProviderMapper: facebook-user-attribute-mapper
+    config:
+      syncMode: INHERIT
+      userAttribute: last_name
+  - name: picture
+    identityProviderAlias: facebook
+    identityProviderMapper: facebook-user-attribute-mapper
+    config:
+      syncMode: INHERIT
+      userAttribute: picture.data.url
+  - name: phoneNumber
+    identityProviderAlias: facebook
+    identityProviderMapper: facebook-user-attribute-mapper
+    config:
+      syncMode: INHERIT
+      userAttribute: phone
 components:
   org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy:
     - id: 9cdd7fc0-614f-49f5-9048-81b25d9e0b47
@@ -1842,7 +1933,7 @@ authenticationFlows:
     authenticationExecutions:
       - authenticator: idp-confirm-link
         authenticatorFlow: false
-        requirement: REQUIRED
+        requirement: DISABLED # Changed from REQUIRED to DISABLED to skip the link confirmation page
         priority: 10
         autheticatorFlow: false
         userSetupAllowed: false
@@ -2022,7 +2113,7 @@ authenticationFlows:
       - authenticatorConfig: review profile config
         authenticator: idp-review-profile
         authenticatorFlow: false
-        requirement: REQUIRED
+        requirement: DISABLED # Changed from REQUIRED to DISABLED to skip the profile review step
         priority: 10
         autheticatorFlow: false
         userSetupAllowed: false

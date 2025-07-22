@@ -55,8 +55,7 @@ namespace Yoma.Core.Api.Controllers
       Description = "Creates the user in both the identity provider and Yoma. Either a phone number or an email address must be provided. " +
                     "Both are initially unconfirmed. Phone number will be verified upon first login using OTP. " +
                     "If an email address is provided, a verification email will be sent. " +
-                    "A strong temporary password is generated, and the user will be prompted to change it on first login. " +
-                    "The terms and conditions will be accepted on behalf of the user in Keycloak.")]
+                    "A strong temporary password is generated, and the user will be prompted to change it on first login.")]
     [HttpPost("user")]
     [ProducesResponseType(typeof(UserProfile), (int)HttpStatusCode.OK)]
     public async Task<IActionResult> UserCreateProfile([FromBody] UserRequestCreateProfile request)

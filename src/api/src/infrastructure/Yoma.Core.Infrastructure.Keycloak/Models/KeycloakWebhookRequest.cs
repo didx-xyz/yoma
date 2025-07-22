@@ -37,6 +37,12 @@ namespace Yoma.Core.Infrastructure.Keycloak.Models
     [JsonProperty("auth_type")]
     public string Auth_type { get; set; }
 
+    [JsonProperty("identity_provider")]
+    public string Identity_provider { get; set; }
+
+    [JsonProperty("register_method")]
+    public string Register_method { get; set; }
+
     [JsonProperty("redirect_uri")]
     public string Redirect_uri { get; set; }
 

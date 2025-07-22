@@ -27,6 +27,9 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Column(TypeName = "varchar(255)")]
     public string? AuthType { get; set; }
 
+    [Column(TypeName = "varchar(100)")]
+    public string? IdentityProvider { get; set; }
+
     [Required]
     public DateTimeOffset DateCreated { get; set; }
   }

@@ -454,6 +454,7 @@ namespace Yoma.Core.Domain.Entity.Services
       request.IpAddress = request.IpAddress?.Trim();
       request.AuthMethod = request.AuthMethod?.Trim();
       request.AuthType = request.AuthType?.Trim();
+      request.IdentityProvider = request.IdentityProvider?.Trim();
 
       var item = new UserLoginHistory
       {
@@ -461,7 +462,8 @@ namespace Yoma.Core.Domain.Entity.Services
         ClientId = request.ClientId,
         IpAddress = request.IpAddress,
         AuthMethod = request.AuthMethod,
-        AuthType = request.AuthType
+        AuthType = request.AuthType,
+        IdentityProvider = request.IdentityProvider
       };
 
       await _userLoginHistoryRepository.Create(item);

@@ -14,8 +14,6 @@ namespace Yoma.Core.Infrastructure.Keycloak
     Education,
     [Description("dateOfBirth")]
     DateOfBirth,
-    [Description("terms_and_conditions")]
-    TermsAndConditions,
     [Description("phoneNumberVerified")]
     PhoneNumberVerified
   }
@@ -29,5 +27,13 @@ namespace Yoma.Core.Infrastructure.Keycloak
     UpdateProfile,
     [Description("LOGIN")]
     Login
+  }
+
+  public enum RegisterMethod
+  {
+    [Description("form")]
+    Form,
+    [Description("broker")]
+    Broker
   }
 }

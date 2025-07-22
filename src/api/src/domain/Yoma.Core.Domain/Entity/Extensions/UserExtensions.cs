@@ -42,7 +42,7 @@ namespace Yoma.Core.Domain.Entity.Extensions
         GenderId = user.GenderId,
         DateOfBirth = user.DateOfBirth,
         DateLastLogin = user.DateLastLogin,
-        ExternalId = user.ExternalId,
+        ExternalId = user.ExternalId
       };
     }
 

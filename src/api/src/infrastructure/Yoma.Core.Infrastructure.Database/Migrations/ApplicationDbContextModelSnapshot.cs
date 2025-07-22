@@ -678,6 +678,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<DateTimeOffset>("DateCreated")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("IdentityProvider")
+                        .HasColumnType("varchar(100)");
+
                     b.Property<string>("IpAddress")
                         .HasColumnType("varchar(39)");
 

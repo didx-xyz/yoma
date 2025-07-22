@@ -446,7 +446,13 @@
                   <#list social.providers as p>
                       <a id="social-${p.alias}" class="${properties.kcFormSocialAccountListButtonClass!} <#if social.providers?size gt 3>${properties.kcFormSocialAccountGridItem!}</#if>"
                          type="button" href="${p.loginUrl}">
-                          <#if p.iconClasses?has_content>
+                          <#if p.alias == "google">
+                              <img class="${properties.kcCommonLogoIdP!} ${p.iconClasses!}" src="${url.resourcesPath}/img/google-logo.svg" alt="Google" />
+                              <span class="${properties.kcFormSocialAccountNameClass!} kc-social-icon-text">${p.displayName!}</span>
+                          <#elseif p.alias == "facebook">
+                              <img class="${properties.kcCommonLogoIdP!} ${p.iconClasses!}" src="${url.resourcesPath}/img/facebook-logo.svg" alt="Facebook" />
+                              <span class="${properties.kcFormSocialAccountNameClass!} kc-social-icon-text">${p.displayName!}</span>
+                          <#elseif p.iconClasses?has_content>
                               <i class="${properties.kcCommonLogoIdP!} ${p.iconClasses!}" aria-hidden="true"></i>
                               <span class="${properties.kcFormSocialAccountNameClass!} kc-social-icon-text">${p.displayName!}</span>
                           <#else>
@@ -455,6 +461,16 @@
                       </a>
                   </#list>
               </ul>
+          </div>
+
+		  <!-- Terms and Conditions -->
+          <div class="centered-div">
+            <div class="centered-checkbox">
+              <label for="terms_and_conditions" id="terms-label">
+			  	<span id="terms-prefix">${msg("termsText1")}</span>
+                <a href="https://yoma.world/terms" target="_blank" id="terms-text">${msg("termsText2")}</a>
+              </label>
+            </div>
           </div>
         </#if>
     </#if>

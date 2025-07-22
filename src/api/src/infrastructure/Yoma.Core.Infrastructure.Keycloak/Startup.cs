@@ -37,18 +37,22 @@ namespace Yoma.Core.Infrastructure.Keycloak
       services.AddTransient<IClaimsTransformation, KeyCloakClaimsTransformer>();
     }
 
-    public static IIdentityProviderAuthOptions Configuration_IdentityProviderAuthenticationOptions(this IConfiguration configuration)
+    public static IIdentityProviderAuthOptions Configuration_IdentityProviderAuthenticationOptions(this IConfiguration configuration /*, Domain.Core.Environment environment*/)
     {
       var authenticationOptions = AuthenticationOptions(configuration);
 
-      var tokenUri = authenticationOptions.AuthServerUrl
+      var authServerUrl = authenticationOptions.AuthServerUrl;
+      //run Keycloak swagger auth on localhost to test Google & Facebook logins locally
+      //if (environment == Domain.Core.Environment.Local) authServerUrl = "http://localhost:8080";
+
+      var tokenUri = authServerUrl
           .AppendPathSegment("realms")
           .AppendPathSegment(authenticationOptions.Realm)
           .AppendPathSegment("protocol")
           .AppendPathSegment("openid-connect")
           .AppendPathSegment("token").ToUri();
 
-      var authUri = authenticationOptions.AuthServerUrl
+      var authUri = authServerUrl
           .AppendPathSegment("realms")
           .AppendPathSegment(authenticationOptions.Realm)
           .AppendPathSegment("protocol")

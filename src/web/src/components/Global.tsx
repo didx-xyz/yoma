@@ -5,6 +5,7 @@ import { useRouter } from "next/router";
 import { parseCookies } from "nookies";
 import { useCallback, useEffect, useState } from "react";
 import { FcCamera, FcKey, FcSettings, FcViewDetails } from "react-icons/fc";
+import { toast } from "react-toastify";
 import type { SettingsRequest } from "~/api/models/common";
 import type { UserProfile } from "~/api/models/user";
 import { getOrganisationById } from "~/api/services/organisations";
@@ -182,6 +183,11 @@ export const Global: React.FC = () => {
             // show dialog to login again
             setLoginMessage("Your session has expired. Please log in again.");
             setLoginDialogVisible(true);
+          } else {
+            // show error toast
+            toast.error(
+              "Something went wrong logging in. Please try again later or contact us for help.",
+            );
           }
 
           console.error(e);

@@ -232,8 +232,8 @@
           <!-- Terms and Conditions -->
           <div class="centered-div">
             <div class="centered-checkbox">
-              <input type="checkbox" id="terms_and_conditions" name="terms_and_conditions" value="Yes" required v-model="terms_and_conditions" />
-              <label for="terms_and_conditions" id="terms-label"><span id="terms-prefix">${msg("termsText1")}</span>
+              <label for="terms_and_conditions" id="terms-label">
+			  	<span id="terms-prefix">${msg("termsText1")}</span>
                 <a href="https://yoma.world/terms" target="_blank" id="terms-text">${msg("termsText2")}</a>
               </label>
             </div>
@@ -285,7 +285,6 @@
           submitButtonDefaultText: "${msg('doRegisterBtn')}",
           resetSendCodeButton: false,
           KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
-          terms_and_conditions: false,
           codeSendStatus: <#if codeSendStatus??>'${codeSendStatus}'<#else>'NOT_SENT'</#if>,
           codeExpiresIn: <#if codeExpiresIn??>${codeExpiresIn}<#else>0</#if>,
           isPasswordValid: false,
@@ -424,9 +423,6 @@
             this.req(fullPhoneNumber);
           },
           onConfirmCode(event){
-            // auto check terms and conditions when verify code (prevent validation error)
-            this.terms_and_conditions = "Yes";
-
             // set essential form fields
             this.setFormFields();
 
@@ -468,8 +464,8 @@
             }
 
             if (validatePassword) {
-              // Validate the password and terms and conditions
-              const isValid = this.isPasswordValid && this.isPasswordConfirmValid && this.terms_and_conditions;
+              // Validate the password
+              const isValid = this.isPasswordValid && this.isPasswordConfirmValid;
               this.isFormValid = isValid;
               if (!isValid) return false;
             }
@@ -534,5 +530,39 @@
         }
       });
     </script>
+  <#elseif section = "info" >
+    <#if realm.password && !registrationDisabled??>
+      <div id="kc-login-container" style="margin-top: 20px;">
+        <a id="kc-login" href="${url.loginUrl}">
+          ${msg("alreadyHaveAccount")} ${msg("doLogin")}
+        </a>
+      </div>
+    </#if>
+  <#elseif section = "socialProviders" >
+    <#if realm.password && social.providers??>
+      <div id="kc-social-providers" class="${properties.kcFormSocialAccountSectionClass!}">
+          <hr/>
+          <h4>${msg("identity-provider-register-label")}</h4>
+          <ul class="${properties.kcFormSocialAccountListClass!} <#if social.providers?size gt 3>${properties.kcFormSocialAccountListGridClass!}</#if>">
+              <#list social.providers as p>
+                  <a id="social-${p.alias}" class="${properties.kcFormSocialAccountListButtonClass!} <#if social.providers?size gt 3>${properties.kcFormSocialAccountGridItem!}</#if>"
+                     type="button" href="${p.loginUrl}">
+                      <#if p.alias == "google">
+                          <img class="${properties.kcCommonLogoIdP!} ${p.iconClasses!}" src="${url.resourcesPath}/img/google-logo.svg" alt="Google" />
+                          <span class="${properties.kcFormSocialAccountNameClass!} kc-social-icon-text">${p.displayName!}</span>
+                      <#elseif p.alias == "facebook">
+                          <img class="${properties.kcCommonLogoIdP!} ${p.iconClasses!}" src="${url.resourcesPath}/img/facebook-logo.svg" alt="Facebook" />
+                          <span class="${properties.kcFormSocialAccountNameClass!} kc-social-icon-text">${p.displayName!}</span>
+                      <#elseif p.iconClasses?has_content>
+                          <i class="${properties.kcCommonLogoIdP!} ${p.iconClasses!}" aria-hidden="true"></i>
+                          <span class="${properties.kcFormSocialAccountNameClass!} kc-social-icon-text">${p.displayName!}</span>
+                      <#else>
+                          <span class="${properties.kcFormSocialAccountNameClass!}">${p.displayName!}</span>
+                      </#if>
+                  </a>
+              </#list>
+          </ul>
+      </div>
+    </#if>
   </#if>
 </@layout.registrationLayout>

@@ -22,6 +22,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         IpAddress = entity.IpAddress,
         AuthMethod = entity.AuthMethod,
         AuthType = entity.AuthType,
+        IdentityProvider = entity.IdentityProvider,
         DateCreated = entity.DateCreated
       });
     }
@@ -38,6 +39,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
         IpAddress = item.IpAddress,
         AuthMethod = item.AuthMethod,
         AuthType = item.AuthType,
+        IdentityProvider = item.IdentityProvider,
         DateCreated = item.DateCreated,
 
       };
