@@ -189,7 +189,6 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       requestKeycloak.Attributes.SetAttribute(CustomAttributes.Country, request.Country);
       requestKeycloak.Attributes.SetAttribute(CustomAttributes.Education, request.Education);
       requestKeycloak.Attributes.SetAttribute(CustomAttributes.DateOfBirth, request.DateOfBirth);
-      requestKeycloak.Attributes.SetAttribute(CustomAttributes.TermsAndConditions, "Yes"); // accepted on behalf of the user
 
       User? result = null;
       try
@@ -286,7 +285,6 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
         requestKeycloak.Attributes.SetAttribute(CustomAttributes.Country, request.Country);
         requestKeycloak.Attributes.SetAttribute(CustomAttributes.Education, request.Education);
         requestKeycloak.Attributes.SetAttribute(CustomAttributes.DateOfBirth, request.DateOfBirth);
-        //customAttributes.TermsAndConditions preserved
 
         // if updating the phone number, add the "UPDATE_PHONE_NUMBER" action
         if (request.UpdatePhoneNumber) requestKeycloak.RequiredActions.Add("UPDATE_PHONE_NUMBER");

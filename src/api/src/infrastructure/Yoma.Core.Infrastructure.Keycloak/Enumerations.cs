@@ -14,8 +14,6 @@ namespace Yoma.Core.Infrastructure.Keycloak
     Education,
     [Description("dateOfBirth")]
     DateOfBirth,
-    [Description("terms_and_conditions")]
-    TermsAndConditions,
     [Description("phoneNumberVerified")]
     PhoneNumberVerified
   }
