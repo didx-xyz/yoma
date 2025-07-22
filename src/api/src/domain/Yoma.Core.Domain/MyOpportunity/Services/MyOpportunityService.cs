@@ -1435,6 +1435,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return $"Opportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again";
     }
 
+    private void PerformActionSendForVerificationApplyDefaults(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity)
+    {
+      if (request.InstantOrImportedVerification) return;
+
+      if (!request.DateEnd.HasValue) request.DateEnd = DateTimeOffset.UtcNow;
+
+      if (!request.DateStart.HasValue && request.CommitmentInterval == null)
+      {
+        request.CommitmentInterval = new MyOpportunityRequestVerifyCommitmentInterval
+        {
+          Id = opportunity.CommitmentIntervalId,
+          Count = opportunity.CommitmentIntervalCount,
+          Option = opportunity.CommitmentInterval
+        };
+      }
+    }
+
     private void PerformActionSendForVerificationParseCommitment(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity)
     {
       if (request.DateStart.HasValue) request.DateStart = request.DateStart.RemoveTime();
@@ -1580,23 +1597,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       //sent to organization admins
       await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending_Admin);
-    }
-
-    private void PerformActionSendForVerificationApplyDefaults(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity)
-    {
-      if (request.InstantOrImportedVerification) return;
-
-      if (!request.DateEnd.HasValue) request.DateEnd = DateTimeOffset.UtcNow;
-
-      if (!request.DateStart.HasValue && request.CommitmentInterval == null)
-      {
-        request.CommitmentInterval = new MyOpportunityRequestVerifyCommitmentInterval
-        {
-          Id = opportunity.CommitmentIntervalId,
-          Count = opportunity.CommitmentIntervalCount,
-          Option = opportunity.CommitmentInterval
-        };
-      }
     }
 
     private async Task SendNotification(Models.MyOpportunity myOpportunity, NotificationType type)
