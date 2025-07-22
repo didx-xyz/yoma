@@ -1933,7 +1933,7 @@ authenticationFlows:
     authenticationExecutions:
       - authenticator: idp-confirm-link
         authenticatorFlow: false
-        requirement: REQUIRED
+        requirement: DISABLED # Changed from REQUIRED to DISABLED to skip the link confirmation page
         priority: 10
         autheticatorFlow: false
         userSetupAllowed: false
