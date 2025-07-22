@@ -171,7 +171,9 @@ namespace Yoma.Core.Api.Controllers
           },
           timeout: TimeSpan.FromSeconds(10),
           delay: TimeSpan.FromSeconds(1),
-          onRetry: attempt => { _logger.LogDebug("Retry {attempt}: Retrying retrieval of the Yoma user: ExternalId: '{externalId}' | Username '{username}'", attempt, kcUser.Id, kcUser.Username);
+          onRetry: attempt =>
+          {
+            _logger.LogDebug("Retry {attempt}: Retrying retrieval of the Yoma user: ExternalId: '{externalId}' | Username '{username}'", attempt, kcUser.Id, kcUser.Username);
           }
       );
 
