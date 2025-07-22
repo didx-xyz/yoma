@@ -300,7 +300,6 @@ namespace Yoma.Core.Domain.Entity.Services
       result.PhoneNumberConfirmed = request.PhoneNumberConfirmed;
       result.DateLastLogin = request.DateLastLogin;
       result.ExternalId = request.ExternalId;
-      result.ExternalIdpLinked = request.ExternalIdpLinked;
 
       result = isNew ? await _userRepository.Create(result) : await _userRepository.Update(result);
 

@@ -245,15 +245,6 @@ namespace Yoma.Core.Api.Controllers
 
           if (type == WebhookRequestEventType.UpdateProfile) break;
 
-          if (userRequest.ExternalIdpLinked != true)
-          {
-            if (!string.IsNullOrWhiteSpace(payload.Details?.Register_method))
-            {
-              userRequest.ExternalIdpLinked = string.Equals(payload.Details?.Register_method, RegisterMethod.Broker.ToString(), StringComparison.InvariantCultureIgnoreCase);
-            }
-          }
-          _logger.LogInformation("User linked to external IDP: {externalIdpLinked}", userRequest.ExternalIdpLinked.HasValue ? userRequest.ExternalIdpLinked : "undefined");
-
           try
           {
             //add newly registered user to the default "User" role

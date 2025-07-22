@@ -40,8 +40,6 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public SettingsInfo? Settings { get; set; }
 
-    public bool? ExternalIdpLinked { get; set; }
-
     public DateTimeOffset DateCreated { get; set; }
 
     public DateTimeOffset DateModified { get; set; }

@@ -21,7 +21,5 @@ namespace Yoma.Core.Domain.Entity.Models
     public DateTimeOffset? DateLastLogin { get; set; }
 
     public Guid? ExternalId { get; set; }
-
-    public bool? ExternalIdpLinked { get; set; }
   }
 }
