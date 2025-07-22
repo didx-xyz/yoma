@@ -147,7 +147,7 @@ namespace Yoma.Core.Api.Controllers
 
       _logger.LogInformation("Found Keycloak user with username '{username}'", kcUser.Username);
 
-      var userRequest = RetryHelper.RetryUntil(_logger,
+      var userRequest = RetryHelper.RetryUntil(
           () =>
           {
             // try to locate the user based on their external Keycloak ID.
@@ -170,11 +170,13 @@ namespace Yoma.Core.Api.Controllers
             return type == WebhookRequestEventType.Register || result != null;
           },
           timeout: TimeSpan.FromSeconds(10),
+          retryOnException: false,
           delay: TimeSpan.FromSeconds(1),
           onRetry: attempt =>
           {
             _logger.LogDebug("Retry {attempt}: Retrying retrieval of the Yoma user: ExternalId: '{externalId}' | Username '{username}'", attempt, kcUser.Id, kcUser.Username);
-          }
+          },
+          logger: _logger
       );
 
       switch (type)

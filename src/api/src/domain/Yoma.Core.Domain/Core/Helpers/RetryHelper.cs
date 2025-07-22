@@ -4,23 +4,24 @@ namespace Yoma.Core.Domain.Core.Helpers
 {
   public static class RetryHelper
   {
-    public static async Task<T?> RetryUntilAsync<T>(ILogger logger,
+    public static async Task<T?> RetryUntilAsync<T>(
       Func<Task<T?>> action,
       Func<T?, bool> exitCondition,
       TimeSpan timeout,
+      bool retryOnException,
       TimeSpan? delay = null,
-      Action<int>? onRetry = null)
+      Action<int>? onRetry = null,
+      ILogger? logger = null)
       where T : class
     {
-      ArgumentNullException.ThrowIfNull(logger);
       ArgumentNullException.ThrowIfNull(action);
       ArgumentNullException.ThrowIfNull(exitCondition);
 
       if (timeout <= TimeSpan.Zero)
-        throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be greater than TimeSpan.Zero.");
+        throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be greater than TimeSpan.Zero");
 
       if (delay is { } d && d <= TimeSpan.Zero)
-        throw new ArgumentOutOfRangeException(nameof(delay), "Delay must be greater than TimeSpan.Zero if specified.");
+        throw new ArgumentOutOfRangeException(nameof(delay), "Delay must be greater than TimeSpan.Zero if specified");
 
       var start = DateTimeOffset.UtcNow;
       var attempt = 0;
@@ -36,15 +37,25 @@ namespace Yoma.Core.Domain.Core.Helpers
         }
         catch (Exception ex)
         {
+          if (!retryOnException) throw;
+
           attempt++;
           onRetry?.Invoke(attempt);
-          logger.LogWarning(ex, "Retry attempt {attempt} failed with exception: {Message}", attempt, ex.Message);
+
+          logger?.LogWarning(ex, "Retry attempt {attempt} failed with exception: {message}", attempt, ex.Message);
+
           await Task.Delay(delay.Value);
           continue;
         }
 
-        if (exitCondition(result) || DateTimeOffset.UtcNow - start >= timeout)
+        if (exitCondition(result))
           return result;
+
+        if (DateTimeOffset.UtcNow - start >= timeout)
+        {
+          logger?.LogWarning("RetryUntilAsync: Timeout ({timeout}ms) reached after {attempts} attempts", timeout.TotalMilliseconds, attempt);
+          return result;
+        }
 
         attempt++;
         onRetry?.Invoke(attempt);
@@ -53,23 +64,24 @@ namespace Yoma.Core.Domain.Core.Helpers
       }
     }
 
-    public static T? RetryUntil<T>(ILogger logger,
-      Func<T?> action,
-      Func<T?, bool> exitCondition,
-      TimeSpan timeout,
-      TimeSpan? delay = null,
-      Action<int>? onRetry = null)
-      where T : class
+    public static T? RetryUntil<T>(
+       Func<T?> action,
+       Func<T?, bool> exitCondition,
+       TimeSpan timeout,
+       bool retryOnException,
+       TimeSpan? delay = null,
+       Action<int>? onRetry = null,
+       ILogger? logger = null)
+       where T : class
     {
-      ArgumentNullException.ThrowIfNull(logger);
       ArgumentNullException.ThrowIfNull(action);
       ArgumentNullException.ThrowIfNull(exitCondition);
 
       if (timeout <= TimeSpan.Zero)
-        throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be greater than TimeSpan.Zero.");
+        throw new ArgumentOutOfRangeException(nameof(timeout), "Timeout must be greater than TimeSpan.Zero");
 
       if (delay is { } d && d <= TimeSpan.Zero)
-        throw new ArgumentOutOfRangeException(nameof(delay), "Delay must be greater than TimeSpan.Zero if specified.");
+        throw new ArgumentOutOfRangeException(nameof(delay), "Delay must be greater than TimeSpan.Zero if specified");
 
       var start = DateTimeOffset.UtcNow;
       var attempt = 0;
@@ -85,15 +97,25 @@ namespace Yoma.Core.Domain.Core.Helpers
         }
         catch (Exception ex)
         {
+          if (!retryOnException)
+            throw;
+
           attempt++;
           onRetry?.Invoke(attempt);
-          logger.LogWarning(ex, "Retry attempt {attempt} failed with exception: {Message}", attempt, ex.Message);
+          logger?.LogWarning(ex, "Retry attempt {attempt} failed with exception: {message}", attempt, ex.Message);
+
           Thread.Sleep(delay.Value);
           continue;
         }
 
-        if (exitCondition(result) || DateTimeOffset.UtcNow - start >= timeout)
+        if (exitCondition(result))
           return result;
+
+        if (DateTimeOffset.UtcNow - start >= timeout)
+        {
+          logger?.LogWarning("RetryUntil: Timeout ({timeout}ms) reached after {attempts} attempts", timeout.TotalMilliseconds, attempt);
+          return result;
+        }
 
         attempt++;
         onRetry?.Invoke(attempt);

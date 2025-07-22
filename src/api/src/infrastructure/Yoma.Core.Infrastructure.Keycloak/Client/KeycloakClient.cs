@@ -92,20 +92,25 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (string.IsNullOrEmpty(username))
         throw new ArgumentNullException(nameof(username));
 
-      var timeout = TimeSpan.FromSeconds(15);
-      var startTime = DateTimeOffset.UtcNow;
       UserRepresentation? result = null;
       using (var usersApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient))
       {
-        while (true)
-        {
-          result = (await usersApi.GetUsersAsync(_keycloakAuthenticationOptions.Realm, username: username, exact: true)).SingleOrDefault();
-
-          if (result != null) break;
-          if (DateTimeOffset.UtcNow - startTime >= timeout) break;
-
-          await Task.Delay(1000);
-        }
+        result = await RetryHelper.RetryUntilAsync(
+          async () =>
+          {
+            var users = await usersApi.GetUsersAsync(_keycloakAuthenticationOptions.Realm, username: username, exact: true);
+            return users.SingleOrDefault();
+          },
+          exitCondition: user => user != null,
+          timeout: TimeSpan.FromSeconds(15),
+          retryOnException: false,
+          delay: TimeSpan.FromSeconds(1),
+          onRetry: attempt =>
+          {
+            _logger.LogDebug("Retry {attempt}: Retrying retrieval of Keycloak user '{username}' from realm '{realm}'", attempt, username, _keycloakAuthenticationOptions.Realm);
+          },
+          logger: _logger
+        );
       }
 
       if (result == null) return null;
@@ -118,25 +123,31 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
 
-      var timeout = TimeSpan.FromSeconds(15);
-      var startTime = DateTimeOffset.UtcNow;
       UserRepresentation? result = null;
-
       using (var usersApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient))
       {
-        while (true)
-        {
-          try
+        result = await RetryHelper.RetryUntilAsync(
+          async () =>
           {
-            result = await usersApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
-          }
-          catch { }
-
-          if (result != null) break;
-          if (DateTimeOffset.UtcNow - startTime >= timeout) break;
-
-          await Task.Delay(1000);
-        }
+            try
+            {
+              return await usersApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
+            }
+            catch 
+            {
+              return null; //swallow exception, treat as no result
+            }
+          },
+          exitCondition: user => user != null,
+          timeout: TimeSpan.FromSeconds(15),
+          retryOnException: false,
+          delay: TimeSpan.FromSeconds(1),
+          onRetry: attempt =>
+          {
+            _logger.LogDebug("Retry {attempt}: Retrying retrieval of Keycloak user by ID '{id}' from realm '{realm}'", attempt, id, _keycloakAuthenticationOptions.Realm);
+          },
+          logger: _logger
+        );
       }
 
       if (result == null) return null;
