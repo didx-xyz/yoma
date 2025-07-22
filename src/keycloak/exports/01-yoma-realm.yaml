@@ -1642,7 +1642,7 @@ identityProviders:
       clientId: $(env:GOOGLE_CLIENT_ID)
       clientSecret: $(env:GOOGLE_CLIENT_SECRET)
       issuer: "https://accounts.google.com"
-      defaultScopes: "openid email profile phone"
+      defaultScopes: "openid email profile"
   - alias: facebook
     providerId: facebook
     enabled: true
@@ -1656,8 +1656,8 @@ identityProviders:
       clientSecret: $(env:FACEBOOK_CLIENT_SECRET)
       authorizationUrl: "https://www.facebook.com/dialog/oauth"
       tokenUrl: "https://graph.facebook.com/v10.0/oauth/access_token"
-      userInfoUrl: "https://graph.facebook.com/me?fields=id,name,email,first_name,last_name,picture,mobile_phone"
-      defaultScope: "email public_profile user_mobile_phone"
+      userInfoUrl: "https://graph.facebook.com/me?fields=id,name,email,first_name,last_name,picture"
+      defaultScope: "email public_profile"
 identityProviderMappers:
   #––– Google mappers –––
   - name: email
