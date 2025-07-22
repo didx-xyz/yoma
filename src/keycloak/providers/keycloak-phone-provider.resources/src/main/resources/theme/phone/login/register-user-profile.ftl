@@ -232,8 +232,8 @@
           <!-- Terms and Conditions -->
           <div class="centered-div">
             <div class="centered-checkbox">
-              <input type="checkbox" id="terms_and_conditions" name="terms_and_conditions" value="Yes" required v-model="terms_and_conditions" />
-              <label for="terms_and_conditions" id="terms-label"><span id="terms-prefix">${msg("termsText1")}</span>
+              <label for="terms_and_conditions" id="terms-label">
+			  	<span id="terms-prefix">${msg("termsText1")}</span>
                 <a href="https://yoma.world/terms" target="_blank" id="terms-text">${msg("termsText2")}</a>
               </label>
             </div>
@@ -285,7 +285,6 @@
           submitButtonDefaultText: "${msg('doRegisterBtn')}",
           resetSendCodeButton: false,
           KC_HTTP_RELATIVE_PATH: <#if KC_HTTP_RELATIVE_PATH?has_content>'${KC_HTTP_RELATIVE_PATH}'<#else>''</#if>,
-          terms_and_conditions: false,
           codeSendStatus: <#if codeSendStatus??>'${codeSendStatus}'<#else>'NOT_SENT'</#if>,
           codeExpiresIn: <#if codeExpiresIn??>${codeExpiresIn}<#else>0</#if>,
           isPasswordValid: false,
@@ -424,9 +423,6 @@
             this.req(fullPhoneNumber);
           },
           onConfirmCode(event){
-            // auto check terms and conditions when verify code (prevent validation error)
-            this.terms_and_conditions = "Yes";
-
             // set essential form fields
             this.setFormFields();
 
@@ -468,8 +464,8 @@
             }
 
             if (validatePassword) {
-              // Validate the password and terms and conditions
-              const isValid = this.isPasswordValid && this.isPasswordConfirmValid && this.terms_and_conditions;
+              // Validate the password
+              const isValid = this.isPasswordValid && this.isPasswordConfirmValid;
               this.isFormValid = isValid;
               if (!isValid) return false;
             }

@@ -462,6 +462,16 @@
                   </#list>
               </ul>
           </div>
+
+		  <!-- Terms and Conditions -->
+          <div class="centered-div">
+            <div class="centered-checkbox">
+              <label for="terms_and_conditions" id="terms-label">
+			  	<span id="terms-prefix">${msg("termsText1")}</span>
+                <a href="https://yoma.world/terms" target="_blank" id="terms-text">${msg("termsText2")}</a>
+              </label>
+            </div>
+          </div>
         </#if>
     </#if>
 </@layout.registrationLayout>

@@ -383,21 +383,6 @@ userProfile:
             - Tertiary (Diploma, Degree or equivalent)
             - No formal education (No schooling attended)
             - Other
-    - name: terms_and_conditions
-      displayName: "Terms & conditions accepted"
-      required:
-        roles:
-          - user
-        scopes: []
-      permissions:
-        edit:
-          - user
-          - admin
-        view:
-          - user
-          - admin
-      annotations:
-        inputType: number
 scopeMappings:
   - clientScope: offline_access
     roles:
