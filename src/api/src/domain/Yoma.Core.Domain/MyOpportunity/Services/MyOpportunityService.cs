@@ -1488,10 +1488,13 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
+      var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
+
+      PerformActionSendForVerificationApplyDefaults(request, opportunity);
+
       await _myOpportunityRequestValidatorVerify.ValidateAndThrowAsync(request);
 
       //provided opportunity is published (and started) or expired
-      var opportunity = _opportunityService.GetById(opportunityId, true, true, false);
       var canSendForVerification = opportunity.Status == Status.Expired;
       if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
       if (!canSendForVerification)
@@ -1577,6 +1580,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       //sent to organization admins
       await SendNotification(myOpportunity, NotificationType.Opportunity_Verification_Pending_Admin);
+    }
+
+    private void PerformActionSendForVerificationApplyDefaults(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity)
+    {
+      if (request.InstantOrImportedVerification) return;
+
+      if (!request.DateEnd.HasValue) request.DateEnd = DateTimeOffset.UtcNow;
+
+      if (!request.DateStart.HasValue && request.CommitmentInterval == null)
+      {
+        request.CommitmentInterval = new MyOpportunityRequestVerifyCommitmentInterval
+        {
+          Id = opportunity.CommitmentIntervalId,
+          Count = opportunity.CommitmentIntervalCount,
+          Option = opportunity.CommitmentInterval
+        };
+      }
     }
 
     private async Task SendNotification(Models.MyOpportunity myOpportunity, NotificationType type)

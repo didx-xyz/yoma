@@ -35,7 +35,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
       RuleFor(x => x.DateStart)
         .NotEmpty()
         .When(x => x.CommitmentInterval == null && !x.InstantOrImportedVerification)
-        .WithMessage("Start date is required when the commitment interval (time to comnplete) is not specified.");
+        .WithMessage("Start date is required when the commitment interval (time to complete) is not specified.");
 
       RuleFor(x => x.CommitmentInterval)
         .NotNull()
