@@ -107,7 +107,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
           delay: TimeSpan.FromSeconds(1),
           onRetry: attempt =>
           {
-            _logger.LogDebug("Retry {attempt}: Retrying retrieval of Keycloak user '{username}' from realm '{realm}'", attempt, username, _keycloakAuthenticationOptions.Realm);
+            _logger.LogDebug("Retry {attempt}: Retrying retrieval of Keycloak user '{username}' from realm '{realm}'", attempt, username.SanitizeLogValue(), _keycloakAuthenticationOptions.Realm);
           },
           logger: _logger
         );
@@ -133,7 +133,7 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
             {
               return await usersApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
             }
-            catch 
+            catch
             {
               return null; //swallow exception, treat as no result
             }
