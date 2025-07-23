@@ -1475,7 +1475,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       TimeInterval? timeInterval;
 
-      //validation should ensure either the start date or commitment interval is provided; failsafe ensuring commitement takes preference
+      //validation should ensure either the start date or commitment interval is provided; failsafe ensuring commitment takes preference
       if (request.CommitmentInterval != null)
       {
         if (!request.DateEnd.HasValue) return;
@@ -1485,7 +1485,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         request.CommitmentInterval.Option = Enum.Parse<TimeIntervalOption>(timeInterval.Name, true);
 
         var totalMinutes = TimeIntervalHelper.ConvertToMinutes(timeInterval.Name, request.CommitmentInterval.Count);
-        request.DateStart = request.DateEnd.Value.AddMinutes(-totalMinutes).RemoveTime();
+
+        var calculatedStart = request.DateEnd.Value.AddMinutes(-totalMinutes).RemoveTime();
+
+        // ensure start date derived from commitment does not fall before the opportunity's actual start date
+        request.DateStart = calculatedStart < opportunity.DateStart ? opportunity.DateStart : calculatedStart;
 
         return;
       }

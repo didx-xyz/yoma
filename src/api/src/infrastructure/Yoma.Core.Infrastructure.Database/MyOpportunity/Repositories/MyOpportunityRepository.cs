@@ -120,6 +120,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
         VerificationStatusId = item.VerificationStatusId,
         CommentVerification = item.CommentVerification,
         CommitmentIntervalId = item.CommitmentIntervalId,
+        CommitmentIntervalCount = item.CommitmentIntervalCount,
         DateStart = item.DateStart,
         DateEnd = item.DateEnd,
         DateCompleted = item.DateCompleted,
