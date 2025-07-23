@@ -29,8 +29,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
 
       //with instant-verifications start or end date not captured
       RuleFor(x => x)
-        .Must(x => x.InstantOrImportedVerification || (!x.DateStart.HasValue && x.CommitmentInterval != null) || (x.DateStart.HasValue && x.CommitmentInterval == null))
-        .WithMessage("Either Start date or commitment interval (time to complete) must be specified, but not both.");
+        .Must(x => x.InstantOrImportedVerification || !(x.DateStart.HasValue && x.CommitmentInterval != null))
+        .WithMessage("Either start date or commitment interval (time to complete) must be specified, but not both.");
 
       RuleFor(x => x.DateStart)
         .NotEmpty()
