@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { IoMdSearch } from "react-icons/io";
 
 interface InputProps {
@@ -19,6 +19,11 @@ export const SearchInput: React.FC<InputProps> = ({
   classNameIcon,
 }) => {
   const [searchInputValue, setSearchInputValue] = useState(defaultValue);
+
+  // Keep searchInputValue in sync with defaultValue prop
+  useEffect(() => {
+    setSearchInputValue(defaultValue);
+  }, [defaultValue]);
 
   const handleSubmit = useCallback(
     (e: React.SyntheticEvent) => {
@@ -46,7 +51,6 @@ export const SearchInput: React.FC<InputProps> = ({
           onBlur={(e) => (e.target.placeholder = placeholder ?? "Search...")}
           maxLength={50}
         />
-
         <button
           type="submit"
           aria-label="Search"

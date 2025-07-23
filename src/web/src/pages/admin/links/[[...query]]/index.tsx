@@ -60,8 +60,16 @@ import { authOptions } from "~/server/auth";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const { type, action, statuses, organizations, entities, page, returnUrl } =
-    context.query;
+  const {
+    type,
+    action,
+    statuses,
+    organizations,
+    entities,
+    valueContains,
+    page,
+    returnUrl,
+  } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   // 👇 ensure authenticated
@@ -80,6 +88,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       statuses: statuses ?? null,
       organizations: organizations ?? null,
       entities: entities ?? null,
+      valueContains: valueContains ?? null,
       page: page ?? null,
       error: null,
       returnUrl: returnUrl ?? null,
@@ -93,6 +102,7 @@ const Links: NextPageWithLayout<{
   statuses?: string;
   organizations?: string;
   entities?: string;
+  valueContains?: string;
   page?: string;
   error?: number;
   returnUrl?: string;
@@ -102,6 +112,7 @@ const Links: NextPageWithLayout<{
   statuses,
   organizations,
   entities,
+  valueContains,
   page,
   error,
   returnUrl,
@@ -113,7 +124,7 @@ const Links: NextPageWithLayout<{
     string | null | undefined
   >(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [modalActionVisible, setModalActionVisisible] = useState(false);
+  const [modalActionVisible, setModalActionVisibile] = useState(false);
   const [verifyComments, setVerifyComments] = useState("");
   const [linkStatus, setLinkStatus] = useState<LinkStatus | null>(null);
   const [selectedRow, setSelectedRow] = useState<LinkInfo | null>();
@@ -123,7 +134,13 @@ const Links: NextPageWithLayout<{
     queryKey: [
       "Admin",
       "Links",
-      `${type}_${action}_${statuses}_${organizations}_${entities}_${page}`,
+      type ?? "",
+      action ?? "",
+      statuses ?? "",
+      organizations ?? "",
+      entities ?? "",
+      valueContains ?? "",
+      page ?? "",
     ],
     queryFn: () =>
       searchLinks({
@@ -134,11 +151,22 @@ const Links: NextPageWithLayout<{
         organizations: organizations ? organizations.split("|") : null,
         entities: entities ? entities.split("|") : null,
         statuses: statuses ? statuses.split("|") : null,
+        valueContains: valueContains ?? null,
       }),
     enabled: !error,
   });
   const { data: totalCountAll } = useQuery<number>({
-    queryKey: ["Admin", "Links", "TotalCount", null],
+    queryKey: [
+      "Admin",
+      "Links",
+      "TotalCount",
+      null,
+      type ?? "",
+      action ?? "",
+      organizations ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page) : 1,
@@ -146,13 +174,24 @@ const Links: NextPageWithLayout<{
         entityType: type ?? LinkEntityType.Opportunity,
         action: action ?? LinkAction.Verify,
         entities: entities ? entities.split("|") : null,
-        organizations: null,
+        organizations: organizations ? organizations.split("|") : null,
         statuses: null,
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountActive } = useQuery<number>({
-    queryKey: ["Admin", "Links", "TotalCount", LinkStatus.Active],
+    queryKey: [
+      "Admin",
+      "Links",
+      "TotalCount",
+      LinkStatus.Active,
+      type ?? "",
+      action ?? "",
+      organizations ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page) : 1,
@@ -160,13 +199,24 @@ const Links: NextPageWithLayout<{
         entityType: type ?? LinkEntityType.Opportunity,
         action: action ?? LinkAction.Verify,
         entities: entities ? entities.split("|") : null,
-        organizations: null,
+        organizations: organizations ? organizations.split("|") : null,
         statuses: [LinkStatus.Active],
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountInactive } = useQuery<number>({
-    queryKey: ["Admin", "Links", "TotalCount", LinkStatus.Inactive],
+    queryKey: [
+      "Admin",
+      "Links",
+      "TotalCount",
+      LinkStatus.Inactive,
+      type ?? "",
+      action ?? "",
+      organizations ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page) : 1,
@@ -174,13 +224,24 @@ const Links: NextPageWithLayout<{
         entityType: type ?? LinkEntityType.Opportunity,
         action: action ?? LinkAction.Verify,
         entities: entities ? entities.split("|") : null,
-        organizations: null,
+        organizations: organizations ? organizations.split("|") : null,
         statuses: [LinkStatus.Inactive],
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountDeclined } = useQuery<number>({
-    queryKey: ["Admin", "Links", "TotalCount", LinkStatus.Declined],
+    queryKey: [
+      "Admin",
+      "Links",
+      "TotalCount",
+      LinkStatus.Declined,
+      type ?? "",
+      action ?? "",
+      organizations ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page) : 1,
@@ -188,13 +249,24 @@ const Links: NextPageWithLayout<{
         entityType: type ?? LinkEntityType.Opportunity,
         action: action ?? LinkAction.Verify,
         entities: entities ? entities.split("|") : null,
-        organizations: null,
+        organizations: organizations ? organizations.split("|") : null,
         statuses: [LinkStatus.Declined],
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountExpired } = useQuery<number>({
-    queryKey: ["Admin", "Links", "TotalCount", LinkStatus.Expired],
+    queryKey: [
+      "Admin",
+      "Links",
+      "TotalCount",
+      LinkStatus.Expired,
+      type ?? "",
+      action ?? "",
+      organizations ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page) : 1,
@@ -202,13 +274,24 @@ const Links: NextPageWithLayout<{
         entityType: type ?? LinkEntityType.Opportunity,
         action: action ?? LinkAction.Verify,
         entities: entities ? entities.split("|") : null,
-        organizations: null,
+        organizations: organizations ? organizations.split("|") : null,
         statuses: [LinkStatus.Expired],
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountLimitReached } = useQuery<number>({
-    queryKey: ["Admin", "Links", "TotalCount", LinkStatus.LimitReached],
+    queryKey: [
+      "Admin",
+      "Links",
+      "TotalCount",
+      LinkStatus.LimitReached,
+      type ?? "",
+      action ?? "",
+      organizations ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page) : 1,
@@ -216,13 +299,24 @@ const Links: NextPageWithLayout<{
         entityType: type ?? LinkEntityType.Opportunity,
         action: action ?? LinkAction.Verify,
         entities: entities ? entities.split("|") : null,
-        organizations: null,
+        organizations: organizations ? organizations.split("|") : null,
         statuses: [LinkStatus.LimitReached],
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountDeleted } = useQuery<number>({
-    queryKey: ["Admin", "Links", "TotalCount", LinkStatus.Deleted],
+    queryKey: [
+      "Admin",
+      "Links",
+      "TotalCount",
+      LinkStatus.Deleted,
+      type ?? "",
+      action ?? "",
+      organizations ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page) : 1,
@@ -230,8 +324,9 @@ const Links: NextPageWithLayout<{
         entityType: type ?? LinkEntityType.Opportunity,
         action: action ?? LinkAction.Verify,
         entities: entities ? entities.split("|") : null,
-        organizations: null,
+        organizations: organizations ? organizations.split("|") : null,
         statuses: [LinkStatus.Deleted],
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -245,6 +340,7 @@ const Links: NextPageWithLayout<{
     organizations: organizations ? organizations.split("|") : null,
     entities: entities ? entities.split("|") : null,
     statuses: statuses ? statuses.split("|") : null,
+    valueContains: valueContains ?? null,
   });
 
   // 🎈 FUNCTIONS
@@ -273,6 +369,9 @@ const Links: NextPageWithLayout<{
         searchFilter?.statuses.length > 0
       )
         params.append("statuses", searchFilter?.statuses.join("|"));
+
+      if (searchFilter?.valueContains)
+        params.append("valueContains", searchFilter.valueContains);
 
       if (
         searchFilter.pageNumber !== null &&
@@ -348,21 +447,21 @@ const Links: NextPageWithLayout<{
     (item: LinkInfo, status: LinkStatus) => {
       setLinkStatus(status);
       setSelectedRow(item);
-      setModalActionVisisible(true);
+      setModalActionVisibile(true);
     },
-    [setLinkStatus, setSelectedRow, setModalActionVisisible],
+    [setLinkStatus, setSelectedRow, setModalActionVisibile],
   );
 
   const onCloseCommentsDialog = useCallback(() => {
     setVerifyComments("");
     setLinkStatus(null);
     setSelectedRow(null);
-    setModalActionVisisible(false);
+    setModalActionVisibile(false);
   }, [
     setVerifyComments,
     setLinkStatus,
     setSelectedRow,
-    setModalActionVisisible,
+    setModalActionVisibile,
   ]);
 
   const onPerformLinkStatusChange = useCallback(async () => {
@@ -706,6 +805,7 @@ const Links: NextPageWithLayout<{
             <LinkSearchFilters
               searchFilter={searchFilter}
               filterOptions={[
+                LinkFilterOptions.VALUECONTAINS,
                 LinkFilterOptions.ORGANIZATIONS,
                 LinkFilterOptions.ENTITIES,
               ]}

@@ -76,7 +76,8 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id } = context.params as IParams;
-  const { type, action, statuses, entities, page, returnUrl } = context.query;
+  const { type, action, statuses, entities, valueContains, page, returnUrl } =
+    context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
 
   // 👇 ensure authenticated
@@ -98,6 +99,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       action: action ?? null,
       statuses: statuses ?? null,
       entities: entities ?? null,
+      valueContains: valueContains ?? null,
       page: page ?? null,
       theme: theme,
       error: null,
@@ -112,11 +114,22 @@ const Links: NextPageWithLayout<{
   action?: string;
   statuses?: string;
   entities?: string;
+  valueContains?: string;
   page?: string;
   theme: string;
   error?: number;
   returnUrl?: string;
-}> = ({ id, type, action, statuses, entities, page, error, returnUrl }) => {
+}> = ({
+  id,
+  type,
+  action,
+  statuses,
+  entities,
+  valueContains,
+  page,
+  error,
+  returnUrl,
+}) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const currentOrganisationInactive = useAtomValue(
@@ -134,7 +147,12 @@ const Links: NextPageWithLayout<{
     queryKey: [
       "Links",
       id,
-      `${type}_${action}_${statuses}_${entities}_${page}`,
+      type ?? "",
+      action ?? "",
+      statuses ?? "",
+      entities ?? "",
+      valueContains ?? "",
+      page ?? "",
     ],
     queryFn: () =>
       searchLinks({
@@ -145,11 +163,20 @@ const Links: NextPageWithLayout<{
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: statuses ? statuses.toString().split("|") : null,
+        valueContains: valueContains ?? null,
       }),
     enabled: !error,
   });
   const { data: totalCountAll } = useQuery<number>({
-    queryKey: ["Links_TotalCount", id, null],
+    queryKey: [
+      "Links_TotalCount",
+      id,
+      null,
+      type ?? "",
+      action ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
@@ -159,11 +186,20 @@ const Links: NextPageWithLayout<{
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: null,
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountActive } = useQuery<number>({
-    queryKey: ["Links_TotalCount", id, LinkStatus.Active],
+    queryKey: [
+      "Links_TotalCount",
+      id,
+      LinkStatus.Active,
+      type ?? "",
+      action ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
@@ -173,11 +209,20 @@ const Links: NextPageWithLayout<{
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.Active],
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountInactive } = useQuery<number>({
-    queryKey: ["Links_TotalCount", id, LinkStatus.Inactive],
+    queryKey: [
+      "Links_TotalCount",
+      id,
+      LinkStatus.Inactive,
+      type ?? "",
+      action ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
@@ -187,11 +232,20 @@ const Links: NextPageWithLayout<{
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.Inactive],
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountDeclined } = useQuery<number>({
-    queryKey: ["Links_TotalCount", id, LinkStatus.Declined],
+    queryKey: [
+      "Links_TotalCount",
+      id,
+      LinkStatus.Declined,
+      type ?? "",
+      action ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
@@ -201,11 +255,20 @@ const Links: NextPageWithLayout<{
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.Declined],
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountExpired } = useQuery<number>({
-    queryKey: ["Links_TotalCount", id, LinkStatus.Expired],
+    queryKey: [
+      "Links_TotalCount",
+      id,
+      LinkStatus.Expired,
+      type ?? "",
+      action ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
@@ -215,11 +278,20 @@ const Links: NextPageWithLayout<{
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.Expired],
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountLimitReached } = useQuery<number>({
-    queryKey: ["Links_TotalCount", id, LinkStatus.LimitReached],
+    queryKey: [
+      "Links_TotalCount",
+      id,
+      LinkStatus.LimitReached,
+      type ?? "",
+      action ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
@@ -229,11 +301,20 @@ const Links: NextPageWithLayout<{
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.LimitReached],
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
   const { data: totalCountDeleted } = useQuery<number>({
-    queryKey: ["Links_TotalCount", id, LinkStatus.Deleted],
+    queryKey: [
+      "Links_TotalCount",
+      id,
+      LinkStatus.Deleted,
+      type ?? "",
+      action ?? "",
+      entities ?? "",
+      valueContains ?? "",
+    ],
     queryFn: () =>
       searchLinks({
         pageNumber: page ? parseInt(page.toString()) : 1,
@@ -243,6 +324,7 @@ const Links: NextPageWithLayout<{
         entities: entities ? entities.toString().split("|") : null,
         organizations: [id],
         statuses: [LinkStatus.Deleted],
+        valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
@@ -256,6 +338,7 @@ const Links: NextPageWithLayout<{
     entities: entities ? entities.toString().split("|") : null,
     statuses: statuses ? statuses.toString().split("|") : null,
     organizations: [id],
+    valueContains: valueContains ?? null,
   });
 
   // 🎈 FUNCTIONS
@@ -278,6 +361,9 @@ const Links: NextPageWithLayout<{
         searchFilter?.statuses.length > 0
       )
         params.append("statuses", searchFilter?.statuses.join("|"));
+
+      if (searchFilter?.valueContains)
+        params.append("valueContains", searchFilter.valueContains);
 
       if (
         searchFilter.pageNumber !== null &&
@@ -459,9 +545,10 @@ const Links: NextPageWithLayout<{
       type != undefined ||
       action != undefined ||
       statuses != undefined ||
-      entities != undefined
+      entities != undefined ||
+      valueContains != undefined
     );
-  }, [type, action, statuses, entities]);
+  }, [type, action, statuses, entities, valueContains]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -665,7 +752,10 @@ const Links: NextPageWithLayout<{
           <div className="flex w-full grow items-center justify-between gap-4 sm:justify-end">
             <LinkSearchFilters
               searchFilter={searchFilter}
-              filterOptions={[LinkFilterOptions.ENTITIES]}
+              filterOptions={[
+                LinkFilterOptions.VALUECONTAINS,
+                LinkFilterOptions.ENTITIES,
+              ]}
               onSubmit={(e) => onSubmitFilter(e)}
             />
 
