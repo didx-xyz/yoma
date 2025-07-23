@@ -7,6 +7,16 @@ const SocialPreview: React.FC<{
   logoURL: string | null | undefined;
   organizationName: string | null | undefined;
 }> = ({ name, description, logoURL, organizationName }) => {
+  // Function to remove markdown characters from text
+  const stripMarkdown = (text: string | null | undefined): string => {
+    if (!text) return "";
+    return text
+      .replace(/[#*_~`]/g, "") // Remove common markdown characters
+      .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // Convert links to plain text
+      .replace(/!\[([^\]]*)\]\([^)]+\)/g, "$1") // Convert images to alt text
+      .trim();
+  };
+
   return (
     <div className="border-gray flex w-full flex-col rounded-lg border-2 border-dotted p-4">
       <div className="flex gap-4">
@@ -21,7 +31,7 @@ const SocialPreview: React.FC<{
             {name}
           </h4>
           <h6 className="text-gray-dark overflow-hidden text-xs text-ellipsis whitespace-nowrap">
-            {description}
+            {stripMarkdown(description)}
           </h6>
         </div>
       </div>
