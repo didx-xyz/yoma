@@ -1439,7 +1439,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     {
       if (request.InstantOrImportedVerification) return;
 
-      if (!request.DateEnd.HasValue) request.DateEnd = DateTimeOffset.UtcNow;
+      if (!request.DateEnd.HasValue)
+      {
+        var now = DateTimeOffset.UtcNow;
+        request.DateEnd = opportunity.DateEnd.HasValue && opportunity.DateEnd.Value <= now ? opportunity.DateEnd.Value : now;
+      }
 
       if (!request.DateStart.HasValue && request.CommitmentInterval == null)
       {
