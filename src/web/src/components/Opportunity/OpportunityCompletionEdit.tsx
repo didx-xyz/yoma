@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -8,8 +7,6 @@ import { useCallback, useEffect, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm } from "react-hook-form";
 import {
-  FcAlarmClock,
-  FcCalendar,
   FcComments,
   FcCompactCamera,
   FcGraduationCap,
@@ -21,7 +18,6 @@ import z from "zod";
 import { SpatialType } from "~/api/models/common";
 import type { MyOpportunityRequestVerify } from "~/api/models/myOpportunity";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { getTimeIntervals } from "~/api/services/lookups";
 import { performActionSendForVerificationManual } from "~/api/services/myOpportunities";
 import {
   ACCEPTED_AUDIO_TYPES,
@@ -35,7 +31,6 @@ import {
   MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
 import FormMessage, { FormMessageType } from "../Common/FormMessage";
-import SelectButtons from "../Common/SelectButtons";
 import { ApiErrors } from "../Status/ApiErrors";
 import { Loading } from "../Status/Loading";
 import { FileUpload } from "./FileUpload";
@@ -59,10 +54,11 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   const [showFeedback, setShowFeedback] = useState(false);
   const { data: session } = useSession();
 
-  const { data: timeIntervalsData } = useQuery({
-    queryKey: ["timeIntervals"],
-    queryFn: async () => getTimeIntervals(),
-  });
+  /* DEPRECATED: The opportunity completion UI no longer requires these fields */
+  //   const { data: timeIntervalsData } = useQuery({
+  //     queryKey: ["timeIntervals"],
+  //     queryFn: async () => getTimeIntervals(),
+  //   });
 
   const schema = z
     .object({
@@ -401,7 +397,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           });
         });
     },
-    [onSave, opportunityInfo, session, timeIntervalsData],
+    [onSave, opportunityInfo, session /*, timeIntervalsData*/],
   );
 
   const {
@@ -419,41 +415,42 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   const watchIntervalId = watch("commitmentInterval.id");
   const watchIntervalCount = watch("commitmentInterval.count");
 
+  /* DEPRECATED: The opportunity completion UI no longer requires these fields */
   //* commitment interval slider
-  const [timeIntervalMax, setTimeIntervalMax] = useState(100);
+  //   const [timeIntervalMax, setTimeIntervalMax] = useState(100);
 
   // set the maximum based on the selected time interval
-  useEffect(() => {
-    // if watchIntervalId is an array (from SelectButtons) get the first value, else use the value
-    const watchInterval = Array.isArray(watchIntervalId)
-      ? watchIntervalId[0]
-      : watchIntervalId;
+  //   useEffect(() => {
+  //     // if watchIntervalId is an array (from SelectButtons) get the first value, else use the value
+  //     const watchInterval = Array.isArray(watchIntervalId)
+  //       ? watchIntervalId[0]
+  //       : watchIntervalId;
 
-    let max = 0;
-    switch (watchInterval) {
-      case "Minute":
-        max = 60;
-        break;
-      case "Hour":
-        max = 24;
-        break;
-      case "Day":
-        max = 30;
-        break;
-      case "Week":
-        max = 12;
-        break;
-      case "Month":
-        max = 60;
-        break;
-    }
+  //     let max = 0;
+  //     switch (watchInterval) {
+  //       case "Minute":
+  //         max = 60;
+  //         break;
+  //       case "Hour":
+  //         max = 24;
+  //         break;
+  //       case "Day":
+  //         max = 30;
+  //         break;
+  //       case "Week":
+  //         max = 12;
+  //         break;
+  //       case "Month":
+  //         max = 60;
+  //         break;
+  //     }
 
-    setTimeIntervalMax(max);
+  //     setTimeIntervalMax(max);
 
-    if (watchIntervalCount > max) {
-      setValue("commitmentInterval.count", max);
-    }
-  }, [watchIntervalId, watchIntervalCount, setTimeIntervalMax, setValue]);
+  //     if (watchIntervalCount > max) {
+  //       setValue("commitmentInterval.count", max);
+  //     }
+  //   }, [watchIntervalId, watchIntervalCount, setTimeIntervalMax, setValue]);
 
   // DEPRECATED: The opportunity completion UI no longer requires these fields
   // set default values
