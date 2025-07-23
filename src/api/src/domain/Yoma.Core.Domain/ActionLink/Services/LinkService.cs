@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IOrganizationService _organizationService;
     private readonly IOpportunityService _opportunityService;
     private readonly ILinkStatusService _linkStatusService;
-    private readonly IRepositoryBatched<Link> _linkRepository;
+    private readonly IRepositoryBatchedValueContains<Link> _linkRepository;
     private readonly IRepository<LinkUsageLog> _linkUsageLogRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly INotificationDeliveryService _notificationDeliveryService;
@@ -72,7 +72,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       IOrganizationService organizationService,
       ILinkStatusService linkStatusService,
       IOpportunityService opportunityService,
-      IRepositoryBatched<Link> linkRepository,
+      IRepositoryBatchedValueContains<Link> linkRepository,
       IRepository<LinkUsageLog> linkUsageLogRepository,
       IExecutionStrategyService executionStrategyService,
       INotificationDeliveryService notificationDeliveryService,
@@ -176,6 +176,10 @@ namespace Yoma.Core.Domain.ActionLink.Services
         default:
           throw new InvalidOperationException($"Invalid / unsupported entity type of '{filter.EntityType}'");
       }
+
+      //valueContains
+      if (!string.IsNullOrEmpty(filter.ValueContains))
+        query = _linkRepository.Contains(query, filter.ValueContains);
 
       query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
 

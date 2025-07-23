@@ -23,7 +23,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IOrganizationService _organizationService;
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly INotificationURLFactory _notificationURLFactory;
-    private readonly IRepositoryBatched<Link> _linkRepository;
+    private readonly IRepositoryBatchedValueContains<Link> _linkRepository;
     private readonly IDistributedLockService _distributedLockService;
 
     private static readonly LinkStatus[] Statuses_Expirable = [LinkStatus.Active];
@@ -39,7 +39,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         IOrganizationService organizationService,
         INotificationDeliveryService notificationDeliveryService,
         INotificationURLFactory notificationURLFactory,
-        IRepositoryBatched<Link> linkRepository,
+        IRepositoryBatchedValueContains<Link> linkRepository,
         IDistributedLockService distributedLockService)
     {
       _logger = logger;
