@@ -13,6 +13,7 @@ namespace Yoma.Core.Domain.ActionLink.Validators
       RuleFor(x => x.Statuses).Must(x => x == null || x.Count != 0).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.Entities).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
       RuleFor(x => x.Organizations).Must(x => x == null || x.Count == 0 || x.All(id => id != Guid.Empty)).WithMessage("{PropertyName} contains empty value(s).");
+      RuleFor(x => x.ValueContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.ValueContains));
     }
     #endregion
   }

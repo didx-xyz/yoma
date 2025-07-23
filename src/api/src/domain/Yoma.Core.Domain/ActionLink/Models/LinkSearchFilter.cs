@@ -13,5 +13,7 @@ namespace Yoma.Core.Domain.ActionLink.Models
     public List<Guid>? Entities { get; set; }
 
     public List<Guid>? Organizations { get; set; }
+
+    public string? ValueContains { get; set; }
   }
 }

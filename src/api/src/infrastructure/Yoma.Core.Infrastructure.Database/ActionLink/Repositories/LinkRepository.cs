@@ -1,12 +1,15 @@
+using Microsoft.EntityFrameworkCore;
+using System.Linq.Expressions;
 using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.ActionLink.Models;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 {
-  public class LinkRepository : BaseRepository<Entities.Link, Guid>, IRepositoryBatched<Link>
+  public class LinkRepository : BaseRepository<Entities.Link, Guid>, IRepositoryBatchedValueContains<Link>
   {
     #region Constructor
     public LinkRepository(ApplicationDbContext context) : base(context) { }
@@ -41,6 +44,24 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         DateModified = entity.DateModified,
         ModifiedByUserId = entity.ModifiedByUserId
       });
+    }
+
+    public Expression<Func<Link, bool>> Contains(Expression<Func<Link, bool>> predicate, string value)
+    {
+      //MS SQL: Contains
+      return predicate.Or(o => EF.Functions.ILike(o.Name, $"%{value}%")
+        || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.OpportunityTitle) && EF.Functions.ILike(o.OpportunityTitle, $"%{value}%"))
+        || (!string.IsNullOrEmpty(o.OpportunityOrganizationName) && EF.Functions.ILike(o.OpportunityOrganizationName, $"%{value}%")));
+    }
+
+    public IQueryable<Link> Contains(IQueryable<Link> query, string value)
+    {
+      //MS SQL: Contains
+      return query.Where(o => EF.Functions.ILike(o.Name, $"%{value}%")
+       || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%"))
+       || (!string.IsNullOrEmpty(o.OpportunityTitle) && EF.Functions.ILike(o.OpportunityTitle, $"%{value}%"))
+       || (!string.IsNullOrEmpty(o.OpportunityOrganizationName) && EF.Functions.ILike(o.OpportunityOrganizationName, $"%{value}%")));
     }
 
     public async Task<Link> Create(Link item)
