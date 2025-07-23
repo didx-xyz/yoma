@@ -1,5 +1,4 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
 import moment from "moment";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
@@ -8,8 +7,6 @@ import { useCallback, useEffect, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm } from "react-hook-form";
 import {
-  FcAlarmClock,
-  FcCalendar,
   FcComments,
   FcCompactCamera,
   FcGraduationCap,
@@ -21,7 +18,6 @@ import z from "zod";
 import { SpatialType } from "~/api/models/common";
 import type { MyOpportunityRequestVerify } from "~/api/models/myOpportunity";
 import type { OpportunityInfo } from "~/api/models/opportunity";
-import { getTimeIntervals } from "~/api/services/lookups";
 import { performActionSendForVerificationManual } from "~/api/services/myOpportunities";
 import {
   ACCEPTED_AUDIO_TYPES,
@@ -35,7 +31,6 @@ import {
   MAX_FILE_SIZE_LABEL,
 } from "~/lib/constants";
 import FormMessage, { FormMessageType } from "../Common/FormMessage";
-import SelectButtons from "../Common/SelectButtons";
 import { ApiErrors } from "../Status/ApiErrors";
 import { Loading } from "../Status/Loading";
 import { FileUpload } from "./FileUpload";
@@ -59,10 +54,11 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   const [showFeedback, setShowFeedback] = useState(false);
   const { data: session } = useSession();
 
-  const { data: timeIntervalsData } = useQuery({
-    queryKey: ["timeIntervals"],
-    queryFn: async () => getTimeIntervals(),
-  });
+  /* DEPRECATED: The opportunity completion UI no longer requires these fields */
+  //   const { data: timeIntervalsData } = useQuery({
+  //     queryKey: ["timeIntervals"],
+  //     queryFn: async () => getTimeIntervals(),
+  //   });
 
   const schema = z
     .object({
@@ -72,19 +68,25 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       geometry: z.any(),
       video: z.any(),
       dateStart: z.union([z.string(), z.null()]).optional(),
-      dateEnd: z.union([z.string(), z.null()]).optional(),
-      commitmentInterval: z
-        .object({
-          id: z
-            .any()
-            .transform((value) => (Array.isArray(value) ? value[0] : value)),
-          count: z.preprocess(
-            (val) => (val === "" ? undefined : Number(val)),
-            z.number(),
-          ),
-        })
-        .nullable()
-        .optional(),
+
+      // DEPRECATED: The opportunity completion UI no longer displays or requires the
+      // "When did you finish?" (dateEnd) and "How long did it take?" (commitmentInterval) inputs.
+      // If these values are not provided, the backend will automatically use the current date/time for dateEnd and the opportunity’s configured commitment interval.
+
+      //   dateEnd: z.union([z.string(), z.null()]).optional(),
+      //   commitmentInterval: z
+      //     .object({
+      //       id: z
+      //         .any()
+      //         .transform((value) => (Array.isArray(value) ? value[0] : value)),
+      //       count: z.preprocess(
+      //         (val) => (val === "" ? undefined : Number(val)),
+      //         z.number(),
+      //       ),
+      //     })
+      //     .nullable()
+      //     .optional(),
+
       recommendable: z.boolean().nullable().optional(),
       starRating: z.preprocess(
         (val) => (val === 0 ? null : val),
@@ -93,56 +95,57 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       feedback: z.string().nullable().optional(),
     })
     .superRefine((values, ctx) => {
+      // DEPRECATED: The opportunity completion UI no longer requires these fields
       // Validate that both dateEnd and commitmentInterval are provided
-      if (!values.dateEnd) {
-        ctx.addIssue({
-          message: "End date is required.",
-          code: z.ZodIssueCode.custom,
-          path: ["dateEnd"],
-        });
-      } else {
-        // Validate dateEnd
-        // Ensure valid date objects with time set to zero for comparison
-        const endDateObj = values.dateEnd ? new Date(values.dateEnd) : null;
-        const todayObj = new Date();
-        const oppEndDateObj = opportunityInfo?.dateEnd
-          ? new Date(opportunityInfo.dateEnd)
-          : null;
+      //   if (!values.dateEnd) {
+      //     ctx.addIssue({
+      //       message: "End date is required.",
+      //       code: z.ZodIssueCode.custom,
+      //       path: ["dateEnd"],
+      //     });
+      //   } else {
+      //     // Validate dateEnd
+      //     // Ensure valid date objects with time set to zero for comparison
+      //     const endDateObj = values.dateEnd ? new Date(values.dateEnd) : null;
+      //     const todayObj = new Date();
+      //     const oppEndDateObj = opportunityInfo?.dateEnd
+      //       ? new Date(opportunityInfo.dateEnd)
+      //       : null;
 
-        // Set time to 00:00:00 for comparing just the dates
-        if (endDateObj) endDateObj.setHours(0, 0, 0, 0);
-        todayObj.setHours(0, 0, 0, 0);
-        if (oppEndDateObj) oppEndDateObj.setHours(0, 0, 0, 0);
+      //     // Set time to 00:00:00 for comparing just the dates
+      //     if (endDateObj) endDateObj.setHours(0, 0, 0, 0);
+      //     todayObj.setHours(0, 0, 0, 0);
+      //     if (oppEndDateObj) oppEndDateObj.setHours(0, 0, 0, 0);
 
-        if (endDateObj && endDateObj > todayObj) {
-          ctx.addIssue({
-            message:
-              "End date cannot be in the future. Please select today's date or earlier.",
-            code: z.ZodIssueCode.custom,
-            path: ["dateEnd"],
-          });
-        }
+      //     if (endDateObj && endDateObj > todayObj) {
+      //       ctx.addIssue({
+      //         message:
+      //           "End date cannot be in the future. Please select today's date or earlier.",
+      //         code: z.ZodIssueCode.custom,
+      //         path: ["dateEnd"],
+      //       });
+      //     }
 
-        if (endDateObj && oppEndDateObj && endDateObj > oppEndDateObj) {
-          ctx.addIssue({
-            message: `End date cannot be later than the opportunity end date of '${oppEndDateObj.toLocaleDateString()}'.`,
-            code: z.ZodIssueCode.custom,
-            path: ["dateEnd"],
-          });
-        }
-      }
+      //     if (endDateObj && oppEndDateObj && endDateObj > oppEndDateObj) {
+      //       ctx.addIssue({
+      //         message: `End date cannot be later than the opportunity end date of '${oppEndDateObj.toLocaleDateString()}'.`,
+      //         code: z.ZodIssueCode.custom,
+      //         path: ["dateEnd"],
+      //       });
+      //     }
+      //   }
 
-      if (
-        !values.commitmentInterval ||
-        !values.commitmentInterval.id ||
-        (values.commitmentInterval.count ?? 0) <= 0
-      ) {
-        ctx.addIssue({
-          message: "Commitment interval is required.",
-          code: z.ZodIssueCode.custom,
-          path: ["commitmentInterval"],
-        });
-      }
+      //   if (
+      //     !values.commitmentInterval ||
+      //     !values.commitmentInterval.id ||
+      //     (values.commitmentInterval.count ?? 0) <= 0
+      //   ) {
+      //     ctx.addIssue({
+      //       message: "Commitment interval is required.",
+      //       code: z.ZodIssueCode.custom,
+      //       path: ["commitmentInterval"],
+      //     });
+      //   }
 
       // Certificate validation
       if (
@@ -344,16 +347,19 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         video: data.video,
         geometry: data.geometry,
         dateStart: data.dateStart || null,
-        dateEnd: data.dateEnd || null,
-        commitmentInterval: data.commitmentInterval
-          ? {
-              id:
-                timeIntervalsData?.find(
-                  (x) => x.name === data.commitmentInterval?.id,
-                )?.id ?? "",
-              count: data.commitmentInterval.count,
-            }
-          : null,
+        dateEnd: null,
+        commitmentInterval: null,
+        // DEPRECATED: The opportunity completion UI no longer requires these fields
+        // dateEnd: data.dateEnd || null,
+        // commitmentInterval: data.commitmentInterval
+        //   ? {
+        //       id:
+        //         timeIntervalsData?.find(
+        //           (x) => x.name === data.commitmentInterval?.id,
+        //         )?.id ?? "",
+        //       count: data.commitmentInterval.count,
+        //     }
+        //   : null,
         recommendable: data.recommendable || null,
         starRating: data.starRating || null,
         feedback: data.feedback || null,
@@ -365,11 +371,12 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           ? moment.utc(request.dateStart).format(DATE_FORMAT_SYSTEM)
           : null;
       }
-      if (request.dateEnd) {
-        request.dateEnd = request.dateEnd
-          ? moment.utc(request.dateEnd).format(DATE_FORMAT_SYSTEM)
-          : null;
-      }
+      // DEPRECATED: The opportunity completion UI no longer requires these fields
+      //   if (request.dateEnd) {
+      //     request.dateEnd = request.dateEnd
+      //       ? moment.utc(request.dateEnd).format(DATE_FORMAT_SYSTEM)
+      //       : null;
+      //   }
 
       setIsLoading(true);
 
@@ -390,7 +397,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
           });
         });
     },
-    [onSave, opportunityInfo, session, timeIntervalsData],
+    [onSave, opportunityInfo, session /*, timeIntervalsData*/],
   );
 
   const {
@@ -408,63 +415,65 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   const watchIntervalId = watch("commitmentInterval.id");
   const watchIntervalCount = watch("commitmentInterval.count");
 
+  /* DEPRECATED: The opportunity completion UI no longer requires these fields */
   //* commitment interval slider
-  const [timeIntervalMax, setTimeIntervalMax] = useState(100);
+  //   const [timeIntervalMax, setTimeIntervalMax] = useState(100);
 
   // set the maximum based on the selected time interval
-  useEffect(() => {
-    // if watchIntervalId is an array (from SelectButtons) get the first value, else use the value
-    const watchInterval = Array.isArray(watchIntervalId)
-      ? watchIntervalId[0]
-      : watchIntervalId;
+  //   useEffect(() => {
+  //     // if watchIntervalId is an array (from SelectButtons) get the first value, else use the value
+  //     const watchInterval = Array.isArray(watchIntervalId)
+  //       ? watchIntervalId[0]
+  //       : watchIntervalId;
 
-    let max = 0;
-    switch (watchInterval) {
-      case "Minute":
-        max = 60;
-        break;
-      case "Hour":
-        max = 24;
-        break;
-      case "Day":
-        max = 30;
-        break;
-      case "Week":
-        max = 12;
-        break;
-      case "Month":
-        max = 60;
-        break;
-    }
+  //     let max = 0;
+  //     switch (watchInterval) {
+  //       case "Minute":
+  //         max = 60;
+  //         break;
+  //       case "Hour":
+  //         max = 24;
+  //         break;
+  //       case "Day":
+  //         max = 30;
+  //         break;
+  //       case "Week":
+  //         max = 12;
+  //         break;
+  //       case "Month":
+  //         max = 60;
+  //         break;
+  //     }
 
-    setTimeIntervalMax(max);
+  //     setTimeIntervalMax(max);
 
-    if (watchIntervalCount > max) {
-      setValue("commitmentInterval.count", max);
-    }
-  }, [watchIntervalId, watchIntervalCount, setTimeIntervalMax, setValue]);
+  //     if (watchIntervalCount > max) {
+  //       setValue("commitmentInterval.count", max);
+  //     }
+  //   }, [watchIntervalId, watchIntervalCount, setTimeIntervalMax, setValue]);
 
+  // DEPRECATED: The opportunity completion UI no longer requires these fields
   // set default values
-  useEffect(() => {
-    // Set end date intelligently:
-    // - If opportunity end date is in the past, use that as default
-    // - If opportunity end date is in the future or doesn't exist, use today's date
-    const today = new Date();
-    const opportunityEndDate = opportunityInfo?.dateEnd
-      ? new Date(opportunityInfo.dateEnd)
-      : null;
+  //   useEffect(() => {
+  //     // Set end date intelligently:
+  //     // - If opportunity end date is in the past, use that as default
+  //     // - If opportunity end date is in the future or doesn't exist, use today's date
+  //     const today = new Date();
+  //     const opportunityEndDate = opportunityInfo?.dateEnd
+  //       ? new Date(opportunityInfo.dateEnd)
+  //       : null;
 
-    let defaultDate = today; // Default to today
+  //     let defaultDate = today; // Default to today
 
-    if (opportunityEndDate && opportunityEndDate <= today) {
-      // Only use opportunity end date if it's in the past or today
-      defaultDate = opportunityEndDate;
-    }
+  //     if (opportunityEndDate && opportunityEndDate <= today) {
+  //       // Only use opportunity end date if it's in the past or today
+  //       defaultDate = opportunityEndDate;
+  //     }
 
-    // Convert to UTC ISO string to maintain timezone consistency
-    setValue("dateEnd", defaultDate.toISOString());
-    setValue("commitmentInterval.id", "Hour");
-  }, [setValue, opportunityInfo?.dateEnd]);
+  //     // Convert to UTC ISO string to maintain timezone consistency
+  //     setValue("dateEnd", defaultDate.toISOString());
+  //     setValue("commitmentInterval.id", "Hour");
+  //   }, [setValue, opportunityInfo?.dateEnd]);
 
   // trigger validation for these related fields
   useEffect(() => {
@@ -519,8 +528,9 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                 </div>
               </div>
 
+              {/* DEPRECATED: The opportunity completion UI no longer requires these fields */}
               {/* WHEN DID YOU FINISH? */}
-              <div
+              {/* <div
                 className="bg-gray-light flex flex-col rounded-lg border-dotted"
                 style={{ animationDelay: "0.8s" }}
               >
@@ -579,10 +589,11 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
+              {/* DEPRECATED: The opportunity completion UI no longer requires these fields */}
               {/* HOW LONG DID IT TAKE? */}
-              <div
+              {/* <div
                 className="bg-gray-light flex flex-col rounded-lg border-dotted"
                 style={{ animationDelay: "0.7s" }}
               >
@@ -598,7 +609,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                     </div>
 
                     <div className="mt-4 flex flex-col gap-2">
-                      {/* COMMITMENT INTERVALS */}
+                        COMMITMENT INTERVALS
                       <div className="flex flex-col pb-2">
                         <div className="flex flex-row justify-start gap-4">
                           <span className="text-gray-dark mt-1 text-xs font-semibold">
@@ -673,7 +684,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                     </div>
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* FILE UPLOADS */}
               {(opportunityInfo?.verificationTypes?.length ?? 0) > 0 && (
