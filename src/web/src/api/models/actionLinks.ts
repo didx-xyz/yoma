@@ -66,6 +66,7 @@ export interface LinkSearchFilter extends PaginationFilter {
   statuses: LinkStatus[] | null | string[]; // NB: string[] null is not in the original model
   entities: string[] | null;
   organizations: string[] | null;
+  valueContains: string | null;
 }
 
 export interface LinkSearchResult {

@@ -11,8 +11,10 @@ import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
 import { debounce } from "~/lib/utils";
 import type { LinkSearchFilter } from "~/api/models/actionLinks";
 import { getOrganisations } from "~/api/services/organisations";
+import { SearchInput } from "../SearchInput";
 
 export enum LinkFilterOptions {
+  VALUECONTAINS = "valueContains",
   ORGANIZATIONS = "organizations",
   ENTITIES = "entities",
 }
@@ -59,6 +61,7 @@ export const LinkSearchFilters: React.FC<{
   const schema = zod.object({
     organizations: zod.array(zod.string()).optional().nullable(),
     entities: zod.array(zod.string()).optional().nullable(),
+    valueContains: zod.string().optional().nullable(),
   });
 
   const form = useForm({
@@ -168,13 +171,38 @@ export const LinkSearchFilters: React.FC<{
   }, [setDefaultOpportunityOptions, searchFilter?.entities]);
   //#endregion opportunities
 
+  // ⚠️ Avoid nested <form>: wrap controls in a <div> instead
   return (
     <div className="flex grow flex-col">
-      <form
-        onSubmit={handleSubmit(onSubmitHandler)}
-        className="flex flex-col gap-2"
-      >
+      <div className="flex flex-col gap-2">
         <div className="flex w-full grow flex-row flex-wrap gap-2 md:w-fit lg:flex-row">
+          {/* VALUE CONTAINS */}
+          {filterOptions?.includes(LinkFilterOptions.VALUECONTAINS) && (
+            <span className="w-full md:w-72">
+              <Controller
+                name="valueContains"
+                control={form.control}
+                render={({ field: { onChange, value } }) => (
+                  <SearchInput
+                    defaultValue={value ?? ""}
+                    onSearch={(query: string) => {
+                      onChange(query);
+                      void handleSubmit(onSubmitHandler)();
+                    }}
+                    placeholder="Search"
+                  />
+                )}
+              />
+              {formState.errors.valueContains && (
+                <label className="label font-bold">
+                  <span className="label-text-alt text-red-500 italic">
+                    {`${formState.errors.valueContains.message}`}
+                  </span>
+                </label>
+              )}
+            </span>
+          )}
+
           {/* ORGANISATIONS */}
           {filterOptions?.includes(LinkFilterOptions.ORGANIZATIONS) && (
             <span className="w-full md:w-72">
@@ -261,7 +289,7 @@ export const LinkSearchFilters: React.FC<{
             </span>
           )}
         </div>
-      </form>
+      </div>
     </div>
   );
 };
