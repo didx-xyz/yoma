@@ -1645,7 +1645,7 @@ identityProviders:
       defaultScopes: "openid email profile"
   - alias: facebook
     providerId: facebook
-    enabled: true
+    enabled: false
     trustEmail: true
     storeToken: true
     addReadTokenRoleOnCreate: false
