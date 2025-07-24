@@ -545,7 +545,7 @@
           <h4>${msg("identity-provider-register-label")}</h4>
           <ul class="${properties.kcFormSocialAccountListClass!} <#if social.providers?size gt 3>${properties.kcFormSocialAccountListGridClass!}</#if>">
               <#list social.providers as p>
-                  <a id="social-${p.alias}" class="${properties.kcFormSocialAccountListButtonClass!} <#if social.providers?size gt 3>${properties.kcFormSocialAccountGridItem!}</#if>"
+                  <a id="social-${p.alias}" class="social-provider-btn ${properties.kcFormSocialAccountListButtonClass!} <#if social.providers?size gt 3>${properties.kcFormSocialAccountGridItem!}</#if>"
                      type="button" href="${p.loginUrl}">
                       <#if p.alias == "google">
                           <img class="${properties.kcCommonLogoIdP!} ${p.iconClasses!}" src="${url.resourcesPath}/img/google-logo.svg" alt="Google" />
