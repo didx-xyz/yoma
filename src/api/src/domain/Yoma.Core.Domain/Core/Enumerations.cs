@@ -103,4 +103,12 @@ namespace Yoma.Core.Domain.Core
     MyOpportunityVerifications,
     MyOpportunityVerificationFiles
   }
+
+  public enum ExternalIdpProvider
+  {
+    [Description("google")]
+    Google,
+    [Description("facebook")]
+    Facebook
+  }
 }

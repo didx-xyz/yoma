@@ -689,7 +689,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId", "ClientId", "DateCreated");
+                    b.HasIndex("UserId", "ClientId", "IdentityProvider", "DateCreated");
 
                     b.ToTable("UserLoginHistory", "Entity");
                 });
