@@ -689,7 +689,9 @@ namespace Yoma.Core.Domain.Analytics.Services
         queryOrganization = queryOrganization.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
       }
 
-      result.Items = [.. queryOrganization
+      var organizations = queryOrganization.ToList();
+
+      result.Items = [.. organizations
         .Select(o => new OrganizationSSOInfo
         {
           Id = o.Id,
@@ -708,6 +710,36 @@ namespace Yoma.Core.Domain.Analytics.Services
             ClientId = o.SSOClientIdInbound
           }
         })];
+
+      // append non-partner inbound SSO (Google/Facebook) for admin-only visibility
+      if (HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor))
+      {
+        var organizationYoma = _organizationService.GetByNameOrNull(_appSettings.YomaOrganizationName, false, false);
+        if (organizationYoma != null)
+        {
+          foreach (var provider in Enum.GetValues<ExternalIdpProvider>())
+          {
+            result.Items.Add(new OrganizationSSOInfo
+            {
+              Id = organizationYoma.Id,
+              Name = organizationYoma.Name,
+              LogoId = organizationYoma.LogoId,
+              LogoStorageType = organizationYoma.LogoStorageType,
+              LogoKey = organizationYoma.LogoKey,
+              Outbound = new OrganizationSSO
+              {
+                Legend = "Outbound",
+                ClientId = null
+              },
+              Inbound = new OrganizationSSO
+              {
+                Legend = "Inbound",
+                ClientId = provider.ToDescription()
+              }
+            });
+          }
+        }
+      }
 
       var queryLogins = _userLoginHistoryRepository.Query();
 
@@ -728,10 +760,10 @@ namespace Yoma.Core.Domain.Analytics.Services
       {
         item.LogoURL = GetBlobObjectURL(item.LogoStorageType, item.LogoKey);
         if (item.Outbound.Enabled)
-          item.Outbound.Logins = GetSSODistinctLoginSummary(queryLogins, item.Outbound.ClientId);
+          item.Outbound.Logins = GetSSODistinctLoginSummaryOutbound(queryLogins, item.Outbound.ClientId);
 
         if (item.Inbound.Enabled)
-          item.Inbound.Logins = GetSSODistinctLoginSummary(queryLogins, item.Inbound.ClientId);
+          item.Inbound.Logins = GetSSODistinctLoginSummaryInbound(queryLogins, item.Inbound.ClientId);
       }
 
       result.OutboundLoginCount = result.Items.Where(o => o.Outbound.Enabled).Sum(o => o.Outbound.Logins?.Count.First());
@@ -741,8 +773,10 @@ namespace Yoma.Core.Domain.Analytics.Services
       return result;
     }
 
-    private static TimeIntervalSummary GetSSODistinctLoginSummary(IQueryable<UserLoginHistory> query, string? clientId)
+    private static TimeIntervalSummary GetSSODistinctLoginSummaryOutbound(IQueryable<UserLoginHistory> query, string? clientId)
     {
+      ArgumentNullException.ThrowIfNull(query, nameof(query));
+
       ArgumentException.ThrowIfNullOrEmpty(clientId, nameof(clientId));
 
 #pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
@@ -772,6 +806,46 @@ namespace Yoma.Core.Domain.Analytics.Services
 
       return new TimeIntervalSummary { Legend = ["Login count"], Data = resultsLogins, Count = [loginsUniqueCount] };
     }
+
+    private static TimeIntervalSummary GetSSODistinctLoginSummaryInbound(IQueryable<UserLoginHistory> query, string? provider)
+    {
+      ArgumentNullException.ThrowIfNull(query, nameof(query));
+
+      ArgumentException.ThrowIfNullOrEmpty(provider, nameof(provider));
+
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+      var loginsUniqueCount = query
+        .Where(o => !string.IsNullOrEmpty(o.IdentityProvider) && o.IdentityProvider.ToLower() == provider.ToLower())
+        .Select(o => o.UserId)
+        .Distinct()
+        .Count();
+
+      var loginsUniqueWeekly = query
+        .Where(o => !string.IsNullOrEmpty(o.IdentityProvider) && o.IdentityProvider.ToLower() == provider.ToLower())
+        .Select(o => new { o.DateCreated, o.UserId })
+        .GroupBy(x => x.DateCreated.AddDays(-(int)x.DateCreated.DayOfWeek).AddDays(7).Date)
+        .Select(group => new
+        {
+          WeekEnding = group.Key,
+          Count = group.Select(x => x.UserId).Distinct().Count()
+        })
+        .OrderByDescending(result => result.WeekEnding)
+        .Take(Constants.TimeIntervalSummary_Data_MaxNoOfPoints)
+        .Reverse()
+        .ToList();
+#pragma warning restore CA1862
+
+      var resultsLogins = new List<TimeValueEntry>();
+      loginsUniqueWeekly.ForEach(o => resultsLogins.Add(new TimeValueEntry(o.WeekEnding, o.Count)));
+
+      return new TimeIntervalSummary
+      {
+        Legend = [$"{provider} login count"],
+        Data = resultsLogins,
+        Count = [loginsUniqueCount]
+      };
+    }
+
 
     private IQueryable<OpportunityInfoAnalytics> SearchOrganizationOpportunitiesQueryBase(OrganizationSearchFilterOpportunity filter)
     {
