@@ -1,5 +1,5 @@
 <#import "template.ftl" as layout>
-<@layout.registrationLayout displayMessage=!messagesPerField.existsError('username','password','code','phoneNumber') displayInfo=realm.password && realm.registrationAllowed && !registrationDisabled??; section>
+<@layout.registrationLayout displayMessage=!messagesPerField.existsError('username','password') displayInfo=realm.password && realm.registrationAllowed && !registrationDisabled??; section>
     <#if section = "header">
         ${msg("loginAccountTitle")}
     <#elseif section = "form">
@@ -194,7 +194,7 @@
                         </label>
                       </div>
                     </div>
-                  </#if>  -->
+                  #if>  -->
 
                   <div id="kc-form-buttons">
                     <input type="hidden" id="id-hidden-input" name="credentialId" <#if auth.selectedCredential?has_content>value="${auth.selectedCredential}"</#if> />
@@ -205,7 +205,7 @@
                   </div>
                 </div>
 
-                <#--  <div id="kc-form-options">
+                <#--<div id="kc-form-options">
                   <div class="${properties.kcFormOptionsWrapperClass!}">
                     <#if realm.resetPasswordAllowed>
                       <div class="${properties.kcFormOptionsWrapperClass!}">
@@ -213,7 +213,7 @@
                       </div>
                     </#if>
                   </div>
-                </div>  -->
+                </div>-->
               </form>
             </#if>
           </div>
@@ -444,7 +444,7 @@
               <h4>${msg("identity-provider-login-label")}</h4>
               <ul class="${properties.kcFormSocialAccountListClass!} <#if social.providers?size gt 3>${properties.kcFormSocialAccountListGridClass!}</#if>">
                   <#list social.providers as p>
-                      <a id="social-${p.alias}" class="${properties.kcFormSocialAccountListButtonClass!} <#if social.providers?size gt 3>${properties.kcFormSocialAccountGridItem!}</#if>"
+                      <a id="social-${p.alias}" class="social-provider-btn ${properties.kcFormSocialAccountListButtonClass!} <#if social.providers?size gt 3>${properties.kcFormSocialAccountGridItem!}</#if>"
                          type="button" href="${p.loginUrl}">
                           <#if p.alias == "google">
                               <img class="${properties.kcCommonLogoIdP!} ${p.iconClasses!}" src="${url.resourcesPath}/img/google-logo.svg" alt="Google" />

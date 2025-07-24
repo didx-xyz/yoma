@@ -555,3 +555,54 @@ input#code {
   align-self: center;
   /* justify-content: flex-start; */
 }
+
+/* social providers */
+.social-provider-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  color: #461d4d;
+  border: 2px solid #e6e8eb;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(70, 29, 77, 0.08), 0 1.5px 4px rgba(0, 0, 0, 0.04);
+  font-size: 16px;
+  font-weight: 500;
+  padding: 12px 18px;
+  margin: 8px 0;
+  transition: box-shadow 0.2s, border-color 0.2s, color 0.2s, background 0.2s;
+  cursor: pointer;
+  min-height: 48px;
+  text-decoration: none;
+  gap: 12px;
+}
+
+.social-provider-btn:hover,
+.social-provider-btn:focus {
+  background: #f7f7fa;
+  color: #0099d3;
+  border-color: #0099d3;
+  box-shadow: 0 4px 16px rgba(70, 29, 77, 0.16), 0 2px 8px rgba(0, 0, 0, 0.08);
+  text-decoration: none;
+}
+
+.social-provider-btn img,
+.social-provider-btn i {
+  margin-right: 10px;
+  width: 24px;
+  height: 24px;
+}
+
+.social-provider-btn .kc-social-icon-text {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.social-provider-btn::after {
+  border: none;
+}
+
+/* hide facebook login for now */
+#social-facebook {
+  display: none;
+}
