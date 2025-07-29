@@ -23,6 +23,7 @@ ingress:
 env:
   NEXT_PUBLIC_ENVIRONMENT: local
   NEXT_PUBLIC_KEYCLOAK_DEFAULT_PROVIDER: yoma-web
+  NEXT_PUBLIC_PASSPORT_ENABLED: true
 
 livenessProbe:
   enabled: true
