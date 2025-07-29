@@ -16,6 +16,6 @@ namespace Yoma.Core.Domain.ActionLink.Interfaces
 
     Task<LinkInfo> LogUsage(Guid id);
 
-    Task<LinkInfo> UpdateStatus(Guid id, LinkRequestUpdateStatus request, bool ensureOrganizationAuthorization);
+    Task<LinkInfo> UpdateStatus(Guid id, LinkStatus status, bool ensureOrganizationAuthorization);
   }
 }

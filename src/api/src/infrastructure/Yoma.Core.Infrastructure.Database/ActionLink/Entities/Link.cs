@@ -55,9 +55,6 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
 
     public bool? LockToDistributionList { get; set; }
 
-    [Column(TypeName = "varchar(500)")]
-    public string? CommentApproval { get; set; }
-
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 

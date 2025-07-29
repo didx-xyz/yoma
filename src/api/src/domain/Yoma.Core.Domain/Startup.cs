@@ -3,7 +3,6 @@ using Hangfire;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
-using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.ActionLink.Interfaces.Lookups;
 using Yoma.Core.Domain.ActionLink.Services;
@@ -15,19 +14,16 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Services;
 using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Services;
-using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Services;
 using Yoma.Core.Domain.Entity.Services.Lookups;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Services;
-using Yoma.Core.Domain.Marketplace;
 using Yoma.Core.Domain.Marketplace.Interfaces;
 using Yoma.Core.Domain.Marketplace.Interfaces.Lookups;
 using Yoma.Core.Domain.Marketplace.Services;
 using Yoma.Core.Domain.Marketplace.Services.Lookups;
-using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Services;
 using Yoma.Core.Domain.MyOpportunity.Services.Lookups;
@@ -54,6 +50,7 @@ using Yoma.Core.Domain.SSI.Services.Lookups;
 using Yoma.Core.Domain.Core.Interfaces.Lookups;
 using Yoma.Core.Domain.Core.Services.Lookups;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 
 namespace Yoma.Core.Domain
 {
@@ -216,11 +213,11 @@ namespace Yoma.Core.Domain
       //opportunity
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Published Notifications ({Status.Active} and started in the last {options.OpportunityPublishedNotificationIntervalInDays} days)",
         s => s.ProcessPublishedNotifications(), options.OpportunityPublishedNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration ({Status.Active} that has ended)",
+      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration ({OpportunityBackgroundService.Statuses_Expirable.JoinNames()} that has ended)",
         s => s.ProcessExpiration(), options.OpportunityExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration Notifications ({Status.Active} ending within {options.OpportunityExpirationNotificationIntervalInDays} days)",
+      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration Notifications ({OpportunityBackgroundService.Statuses_Expirable.JoinNames()} ending within {options.OpportunityExpirationNotificationIntervalInDays} days)",
         s => s.ProcessExpirationNotifications(), options.OpportunityExpirationNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Deletion ({Status.Inactive} or {Status.Expired} for more than {options.OpportunityDeletionIntervalInDays} days)",
+      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Deletion ({OpportunityBackgroundService.Statuses_Deletion.JoinNames()} for more than {options.OpportunityDeletionIntervalInDays} days)",
         s => s.ProcessDeletion(), options.OpportunityDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //partner sharing
@@ -228,13 +225,13 @@ namespace Yoma.Core.Domain
         s => s.ProcessSharing(), options.PartnerSharingSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //my opportunity
-      RecurringJob.AddOrUpdate<IMyOpportunityBackgroundService>($"'My' Opportunity Verification Rejection ({VerificationStatus.Pending} for more than {options.MyOpportunityRejectionIntervalInDays} days)",
+      RecurringJob.AddOrUpdate<IMyOpportunityBackgroundService>($"'My' Opportunity Verification Rejection ({MyOpportunityBackgroundService.Statuses_Rejectable.JoinNames()} for more than {options.MyOpportunityRejectionIntervalInDays} days)",
         s => s.ProcessVerificationRejection(), options.MyOpportunityRejectionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //organization
-      RecurringJob.AddOrUpdate<IOrganizationBackgroundService>($"Organization Declination ({OrganizationStatus.Inactive} for more than {options.OrganizationDeclinationIntervalInDays} days)",
+      RecurringJob.AddOrUpdate<IOrganizationBackgroundService>($"Organization Declination ({OrganizationBackgroundService.Statuses_Declination.JoinNames()} for more than {options.OrganizationDeclinationIntervalInDays} days)",
         s => s.ProcessDeclination(), options.OrganizationDeclinationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-      RecurringJob.AddOrUpdate<IOrganizationBackgroundService>($"Organization Deletion ({OrganizationStatus.Declined} for more than {options.OrganizationDeletionIntervalInDays} days)",
+      RecurringJob.AddOrUpdate<IOrganizationBackgroundService>($"Organization Deletion ({OrganizationBackgroundService.Statuses_Deletion.JoinNames()} for more than {options.OrganizationDeletionIntervalInDays} days)",
         s => s.ProcessDeletion(), options.OrganizationDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //reward
@@ -251,15 +248,13 @@ namespace Yoma.Core.Domain
         s => s.ProcessCredentialIssuance(), options.SSICredentialIssuanceSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //action link
-      RecurringJob.AddOrUpdate<ILinkServiceBackgroundService>($"Action Link Expiration ({LinkStatus.Active} that has ended)",
+      RecurringJob.AddOrUpdate<ILinkServiceBackgroundService>($"Action Link Expiration ({LinkServiceBackgroundService.Statuses_Expirable.JoinNames()} that has ended)",
         s => s.ProcessExpiration(), options.ActionLinkExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-      RecurringJob.AddOrUpdate<ILinkServiceBackgroundService>($"Action Link Declination ({LinkStatus.Inactive} for more than {options.ActionLinkDeclinationScheduleIntervalInDays} days)",
-        s => s.ProcessDeclination(), options.ActionLinkDeclinationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-      RecurringJob.AddOrUpdate<ILinkServiceBackgroundService>($"Action Link Deletion ({LinkStatus.Declined} for more than {options.ActionLinkDeletionScheduleIntervalInDays} days)",
+      RecurringJob.AddOrUpdate<ILinkServiceBackgroundService>($"Action Link Deletion ({LinkServiceBackgroundService.Statuses_Deletion.JoinNames()} for more than {options.ActionLinkDeletionScheduleIntervalInDays} days)",
         s => s.ProcessDeletion(), options.ActionLinkDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //store access control rule
-      RecurringJob.AddOrUpdate<IStoreAccessControlRuleBackgroundService>($"Store Access Control Rule Deletion ({StoreAccessControlRuleStatus.Inactive} for more than {options.StoreAccessControlRuleDeletionScheduleIntervalInDays} days)",
+      RecurringJob.AddOrUpdate<IStoreAccessControlRuleBackgroundService>($"Store Access Control Rule Deletion ({StoreAccessControlRuleBackgroundService.Statuses_Deletion.JoinNames()} for more than {options.StoreAccessControlRuleDeletionScheduleIntervalInDays} days)",
         s => s.ProcessDeletion(), options.StoreAccessControlRuleDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //core (download schedule)

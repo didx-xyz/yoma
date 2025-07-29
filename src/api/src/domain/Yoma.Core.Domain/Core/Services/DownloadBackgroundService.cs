@@ -102,12 +102,12 @@ namespace Yoma.Core.Domain.Core.Services
               switch (type)
               {
                 case DownloadScheduleType.Opporunities:
-                  var filterOpporunities = JsonConvert.DeserializeObject<OpportunitySearchFilterAdmin>(item.Filter)
+                  var filterOpportunities = JsonConvert.DeserializeObject<OpportunitySearchFilterAdmin>(item.Filter)
                     ?? throw new InvalidOperationException("Failed to deserialize the filter");
 
-                  filterOpporunities.UnrestrictedQuery = true;
+                  filterOpportunities.UnrestrictedQuery = true;
 
-                  (fileName, bytes) = _opportunityInfoService.ExportToCSV(filterOpporunities, false, true);
+                  (fileName, bytes) = _opportunityInfoService.ExportToCSV(filterOpportunities, false, true);
 
                   files.Add(FileHelper.FromByteArray(fileName, "text/csv", bytes));
 
@@ -131,7 +131,7 @@ namespace Yoma.Core.Domain.Core.Services
                   var filterMyOpportunityVerificationFiles = JsonConvert.DeserializeObject<MyOpportunitySearchFilterVerificationFilesAdmin>(item.Filter)
                     ?? throw new InvalidOperationException("Failed to deserialize the filter");
 
-                  //completedVerificationsOnly is serilaized
+                  //completedVerificationsOnly is serialized
 
                   var result = await _myOpportunityService.DownloadVerificationFiles(filterMyOpportunityVerificationFiles, false);
                   if (result.Files != null && result.Files.Count > 0) files.AddRange(result.Files);

@@ -82,12 +82,6 @@ namespace Yoma.Core.Domain.Core.Models
 
     public int ActionLinkDeletionScheduleIntervalInDays { get; set; }
 
-    public string ActionLinkDeclinationSchedule { get; set; }
-
-    public int ActionLinkDeclinationScheduleBatchSize { get; set; }
-
-    public int ActionLinkDeclinationScheduleIntervalInDays { get; set; }
-
     public string PartnerSharingSchedule { get; set; }
 
     public int PartnerSharingScheduleBatchSize { get; set; }

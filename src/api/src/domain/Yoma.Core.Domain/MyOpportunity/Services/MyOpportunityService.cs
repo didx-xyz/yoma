@@ -397,8 +397,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         if (validateVerificationTypes)
         {
-          var notFound = verificationTypes.Except(items.Select(i => i.VerificationType).Distinct()).ToList();
-          if (notFound.Count > 0) throw new EntityNotFoundException($"Requested verification type(s) '{string.Join(", ", notFound)}' not found for opportunity with id '{filter.Opportunity}'");
+          var notFound = verificationTypes.Except(items.Select(i => i.VerificationType).Distinct()).ToArray();
+          if (notFound.Length > 0) throw new EntityNotFoundException($"Requested verification type(s) '{notFound.JoinNames()}' not found for opportunity with id '{filter.Opportunity}'");
         }
       }
 

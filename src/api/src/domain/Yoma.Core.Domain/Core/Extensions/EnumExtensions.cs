@@ -33,5 +33,17 @@ namespace Yoma.Core.Domain.Core.Extensions
 
       return attrib?.Description ?? value.ToString();
     }
+
+    public static string JoinNames<TEnum>(this TEnum[] values, string separator = "/")
+        where TEnum : Enum
+    {
+      if (values?.Length is not > 0)
+        throw new ArgumentException("Values array cannot be null or empty.", nameof(values));
+
+      if (string.IsNullOrEmpty(separator))
+        throw new ArgumentException("Separator cannot be null or empty", nameof(separator));
+
+      return string.Join(separator, values.Select(v => v.ToString()));
+    }
   }
 }

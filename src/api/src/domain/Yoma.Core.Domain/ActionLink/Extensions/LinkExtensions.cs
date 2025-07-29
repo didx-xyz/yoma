@@ -25,7 +25,6 @@ namespace Yoma.Core.Domain.ActionLink.Extensions
         UsagesTotal = value.UsagesTotal,
         UsagesAvailable = value.UsagesLimit.HasValue ? value.UsagesLimit - (value.UsagesTotal ?? 0) : null,
         LockToDistributionList = value.LockToDistributionList,
-        CommentApproval = value.CommentApproval,
         DateEnd = value.DateEnd,
         DateCreated = value.DateCreated,
         DateModified = value.DateModified

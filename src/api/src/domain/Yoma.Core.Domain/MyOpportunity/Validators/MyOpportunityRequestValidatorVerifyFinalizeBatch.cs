@@ -1,4 +1,5 @@
 using FluentValidation;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity.Interfaces;
@@ -18,7 +19,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
       _userService = userService;
       _opportunityService = opportunityService;
 
-      RuleFor(x => x.Status).Must(x => Services.MyOpportunityService.Statuses_Finalize.Contains(x)).WithMessage($"{{PropertyName}} must be '{string.Join(" / ", Services.MyOpportunityService.Statuses_Finalize)}'.");
+      RuleFor(x => x.Status).Must(x => Services.MyOpportunityService.Statuses_Finalize.Contains(x)).WithMessage($"{{PropertyName}} must be '{Services.MyOpportunityService.Statuses_Finalize.JoinNames()}'.");
       RuleFor(x => x.Comment)
           .MaximumLength(400)
           .WithMessage("{PropertyName} can not exceed 400 characters.")
