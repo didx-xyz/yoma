@@ -30,7 +30,6 @@ namespace Yoma.Core.Domain.Notification.Services
         throw new ArgumentNullException(nameof(organizationId));
 
       var result = _appSettings.AppBaseURL;
-      LinkStatus? status;
       switch (notificationType)
       {
         case NotificationType.ActionLink_Verify_Activated:
