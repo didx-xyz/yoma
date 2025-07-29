@@ -47,7 +47,6 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly INotificationURLFactory _notificationURLFactory;
-    private readonly IIdentityProviderClient _identityProviderClient;
 
     private readonly LinkRequestCreateValidatorShare _linkRequestCreateValidatorShare;
     private readonly LinkRequestCreateValidatorVerify _linkRequestCreateValidatorVerify;
@@ -73,7 +72,6 @@ namespace Yoma.Core.Domain.ActionLink.Services
       IExecutionStrategyService executionStrategyService,
       INotificationDeliveryService notificationDeliveryService,
       INotificationURLFactory notificationURLFactory,
-      IIdentityProviderClientFactory identityProviderClientFactory,
       LinkRequestCreateValidatorShare linkRequestCreateValidatorShare,
       LinkRequestCreateValidatorVerify linkRequestCreateValidatorVerify,
       LinkSearchFilterValidator linkSearchFilterValidator)
@@ -92,7 +90,6 @@ namespace Yoma.Core.Domain.ActionLink.Services
       _executionStrategyService = executionStrategyService;
       _notificationDeliveryService = notificationDeliveryService;
       _notificationURLFactory = notificationURLFactory;
-      _identityProviderClient = identityProviderClientFactory.CreateClient();
       _linkRequestCreateValidatorShare = linkRequestCreateValidatorShare;
       _linkRequestCreateValidatorVerify = linkRequestCreateValidatorVerify;
       _linkSearchFilterValidator = linkSearchFilterValidator;
