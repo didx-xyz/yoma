@@ -1638,6 +1638,7 @@ identityProviders:
     addReadTokenRoleOnCreate: false
     linkOnly: false
     authenticateByDefault: false
+    firstBrokerLoginFlowAlias: auto-link-social # auto-link social accounts
     config:
       clientId: $(env:GOOGLE_CLIENT_ID)
       clientSecret: $(env:GOOGLE_CLIENT_SECRET)
@@ -1651,6 +1652,7 @@ identityProviders:
     addReadTokenRoleOnCreate: false
     linkOnly: false
     authenticateByDefault: false
+    firstBrokerLoginFlowAlias: auto-link-social # auto-link social accounts
     config:
       clientId: $(env:FACEBOOK_CLIENT_ID)
       clientSecret: $(env:FACEBOOK_CLIENT_SECRET)
@@ -2378,6 +2380,21 @@ authenticationFlows:
         requirement: REQUIRED
         priority: 2
         autheticatorFlow: false
+        userSetupAllowed: false
+  - id: bc0e0bad-99da-44f2-856b-7f4ccf554537
+    alias: auto-link-social
+    description: Automatically link social users to existing accounts if email matches
+    providerId: basic-flow
+    topLevel: true
+    builtIn: false
+    authenticationExecutions:
+      - authenticator: idp-create-user-if-unique
+        requirement: ALTERNATIVE
+        priority: 10
+        userSetupAllowed: false
+      - authenticator: idp-auto-link
+        requirement: ALTERNATIVE
+        priority: 20
         userSetupAllowed: false
 authenticatorConfig:
   - id: 577777dc-5d9d-492c-adcf-d84f0b9295b6
