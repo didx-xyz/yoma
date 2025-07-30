@@ -7,5 +7,7 @@ namespace Yoma.Core.Domain.ActionLink.Models
     public Guid Id { get; set; }
 
     public LinkUsageStatus Usage { get; set; } = LinkUsageStatus.All;
+
+    public string? ValueContains { get; set; }
   }
 }
