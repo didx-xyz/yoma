@@ -236,29 +236,6 @@ const Links: NextPageWithLayout<{
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
   });
-  const { data: totalCountDeclined } = useQuery<number>({
-    queryKey: [
-      "Links_TotalCount",
-      id,
-      LinkStatus.Declined,
-      type ?? "",
-      action ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page.toString()) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? LinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.toString().split("|") : null,
-        organizations: [id],
-        statuses: [LinkStatus.Declined],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
   const { data: totalCountExpired } = useQuery<number>({
     queryKey: [
       "Links_TotalCount",
@@ -500,10 +477,7 @@ const Links: NextPageWithLayout<{
 
       try {
         // call api
-        await updateLinkStatus(item.id, {
-          status: status,
-          comment: null,
-        });
+        await updateLinkStatus(item.id, status);
 
         // 📊 GOOGLE ANALYTICS: track event
         trackGAEvent(
@@ -679,22 +653,6 @@ const Links: NextPageWithLayout<{
               {(totalCountInactive ?? 0) > 0 && (
                 <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                   {totalCountInactive}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/organisations/${id}/links?statuses=declined`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "declined"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Declined
-              {(totalCountDeclined ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountDeclined}
                 </div>
               )}
             </Link>
@@ -892,11 +850,6 @@ const Links: NextPageWithLayout<{
                           <span className="badge bg-green-light text-red-400">
                             Limit Reached
                           </span>
-                        )}{" "}
-                        {item.status == "Declined" && (
-                          <span className="badge bg-green-light text-red-400">
-                            Declined
-                          </span>
                         )}
                         {item.status == "Deleted" && (
                           <span className="badge bg-green-light text-red-400">
@@ -912,23 +865,27 @@ const Links: NextPageWithLayout<{
                               item?.shortURL ?? item?.uRL ?? "",
                             )
                           }
-                          className="badge bg-green-light text-green"
+                          className="badge bg-green-light text-green cursor-pointer"
+                          title="Copy Link to Clipboard"
                         >
                           <IoIosLink className="h-4 w-4" />
                         </button>
 
                         <button
                           onClick={() => onClick_GenerateQRCode(item)}
-                          className="badge bg-green-light text-green"
+                          className="badge bg-green-light text-green cursor-pointer"
+                          title="Generate QR Code"
                         >
                           <IoQrCode className="h-4 w-4" />
                         </button>
 
                         {(item?.status == "Inactive" ||
-                          item?.status == "Active" ||
-                          item?.status == "Declined") && (
+                          item?.status == "Active") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
-                            <button className="badge bg-green-light text-green">
+                            <button
+                              className="badge bg-green-light text-green cursor-pointer"
+                              title="Actions"
+                            >
                               <IoIosSettings className="h-4 w-4" />
                             </button>
 
@@ -943,6 +900,19 @@ const Links: NextPageWithLayout<{
                                   Delete
                                 </button>
                               </li>
+
+                              {item?.status == "Inactive" && (
+                                <li>
+                                  <button
+                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
+                                    onClick={() =>
+                                      updateStatus(item, LinkStatus.Active)
+                                    }
+                                  >
+                                    Activate
+                                  </button>
+                                </li>
+                              )}
                             </ul>
                           </div>
                         )}
@@ -1066,11 +1036,6 @@ const Links: NextPageWithLayout<{
                             Limit Reached
                           </span>
                         )}
-                        {item.status == "Declined" && (
-                          <span className="badge bg-green-light text-red-400">
-                            Declined
-                          </span>
-                        )}
                         {item.status == "Deleted" && (
                           <span className="badge bg-green-light text-red-400">
                             Deleted
@@ -1086,7 +1051,8 @@ const Links: NextPageWithLayout<{
                               item?.shortURL ?? item?.uRL ?? "",
                             )
                           }
-                          className="badge bg-green-light text-green"
+                          className="badge bg-green-light text-green cursor-pointer"
+                          title="Copy Link to Clipboard"
                         >
                           <IoIosLink className="h-4 w-4" />
                         </button>
@@ -1096,7 +1062,8 @@ const Links: NextPageWithLayout<{
                       <td className="border-gray-light border-b-2">
                         <button
                           onClick={() => onClick_GenerateQRCode(item)}
-                          className="badge bg-green-light text-green"
+                          className="badge bg-green-light text-green cursor-pointer"
+                          title="Generate QR Code"
                         >
                           <IoQrCode className="h-4 w-4" />
                         </button>
@@ -1105,10 +1072,12 @@ const Links: NextPageWithLayout<{
                       {/* ACTIONS */}
                       <td className="border-gray-light border-b-2">
                         {(item?.status == "Inactive" ||
-                          item?.status == "Active" ||
-                          item?.status == "Declined") && (
+                          item?.status == "Active") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
-                            <button className="badge bg-green-light text-green">
+                            <button
+                              className="badge bg-green-light text-green cursor-pointer"
+                              title="Actions"
+                            >
                               <IoIosSettings className="h-4 w-4" />
                             </button>
 
@@ -1123,6 +1092,19 @@ const Links: NextPageWithLayout<{
                                   Delete
                                 </button>
                               </li>
+
+                              {item?.status == "Inactive" && (
+                                <li>
+                                  <button
+                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
+                                    onClick={() =>
+                                      updateStatus(item, LinkStatus.Active)
+                                    }
+                                  >
+                                    Activate
+                                  </button>
+                                </li>
+                              )}
                             </ul>
                           </div>
                         )}

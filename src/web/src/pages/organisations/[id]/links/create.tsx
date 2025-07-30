@@ -433,17 +433,18 @@ const LinkDetails: NextPageWithLayout<{
         >
           <div className="flex flex-row items-center gap-2">
             <IoMdWarning className="text-warning h-6 w-6" />
-            <p className="text-lg">Submit</p>
+            <p className="text-lg">Publish</p>
           </div>
 
           <div className="text-md text-gray-dark flex flex-col gap-3 leading-6 md:text-sm">
-            <p>Are you sure you want to submit your link for approval?</p>
+            <p>Are you sure you want to publish your link?</p>
 
             <p>
-              An administrator must approve this link before it becomes active.
+              {data.lockToDistributionList
+                ? "This link requires manual activation because it has a distribution list."
+                : "This link will be auto-activated if the usage limit or expiry date has been met."}
             </p>
-
-            <p>Please note that these details cannot be changed later.</p>
+            <p>Once published, link details cannot be changed later.</p>
           </div>
         </div>,
       );

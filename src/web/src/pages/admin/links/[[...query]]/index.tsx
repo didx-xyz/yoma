@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -13,6 +14,7 @@ import {
   IoMdClose,
   IoMdLock,
   IoMdPerson,
+  IoMdWarning,
 } from "react-icons/io";
 import { IoQrCode, IoShareSocialOutline } from "react-icons/io5";
 import Moment from "react-moment";
@@ -46,6 +48,7 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
@@ -124,10 +127,7 @@ const Links: NextPageWithLayout<{
     string | null | undefined
   >(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [modalActionVisible, setModalActionVisibile] = useState(false);
-  const [verifyComments, setVerifyComments] = useState("");
-  const [linkStatus, setLinkStatus] = useState<LinkStatus | null>(null);
-  const [selectedRow, setSelectedRow] = useState<LinkInfo | null>();
+  const modalContext = useConfirmationModalContext();
 
   // 👇 use prefetched queries from server
   const { data: links } = useQuery<LinkSearchResult>({
@@ -226,31 +226,6 @@ const Links: NextPageWithLayout<{
         entities: entities ? entities.split("|") : null,
         organizations: organizations ? organizations.split("|") : null,
         statuses: [LinkStatus.Inactive],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
-  const { data: totalCountDeclined } = useQuery<number>({
-    queryKey: [
-      "Admin",
-      "Links",
-      "TotalCount",
-      LinkStatus.Declined,
-      type ?? "",
-      action ?? "",
-      organizations ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? LinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.split("|") : null,
-        organizations: organizations ? organizations.split("|") : null,
-        statuses: [LinkStatus.Declined],
         valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
@@ -443,76 +418,82 @@ const Links: NextPageWithLayout<{
     [queryClient],
   );
 
-  const onOpenCommentsDialog = useCallback(
-    (item: LinkInfo, status: LinkStatus) => {
-      setLinkStatus(status);
-      setSelectedRow(item);
-      setModalActionVisibile(true);
-    },
-    [setLinkStatus, setSelectedRow, setModalActionVisibile],
-  );
+  const updateStatus = useCallback(
+    async (item: LinkInfo, status: LinkStatus) => {
+      // confirm dialog
+      const result = await modalContext.showConfirmation(
+        "",
+        <div
+          key="confirm-dialog-content"
+          className="flex h-full flex-col space-y-2 text-gray-500"
+        >
+          <div className="flex flex-row items-center gap-2">
+            <IoMdWarning className="text-warning h-6 w-6" />
+            <p className="text-lg">Confirm</p>
+          </div>
 
-  const onCloseCommentsDialog = useCallback(() => {
-    setVerifyComments("");
-    setLinkStatus(null);
-    setSelectedRow(null);
-    setModalActionVisibile(false);
-  }, [
-    setVerifyComments,
-    setLinkStatus,
-    setSelectedRow,
-    setModalActionVisibile,
-  ]);
-
-  const onPerformLinkStatusChange = useCallback(async () => {
-    if (!selectedRow || linkStatus == null) return;
-    setIsLoading(true);
-
-    try {
-      // call api
-      await updateLinkStatus(selectedRow.id, {
-        status: linkStatus,
-        comment: verifyComments,
-      });
-
-      // 📊 GOOGLE ANALYTICS: track event
-      trackGAEvent(
-        GA_CATEGORY_OPPORTUNITY_LINK,
-        GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
-        `Status Changed to ${linkStatus} for Opportunity Link ID: ${selectedRow.id}`,
+          <div>
+            <p className="text-sm leading-6">
+              {status === LinkStatus.Active && (
+                <>
+                  Are you sure you want to <i>activate</i> this link?
+                </>
+              )}
+              {status === LinkStatus.Inactive && (
+                <>
+                  Are you sure you want to <i>inactivate</i> this link?
+                </>
+              )}
+              {status === LinkStatus.Deleted && (
+                <>
+                  Are you sure you want to <i>delete</i> this link?
+                </>
+              )}
+            </p>
+          </div>
+        </div>,
       );
+      if (!result) return;
 
-      // invalidate cache
-      // this will match all queries with the following prefixes ['Admin', 'Links', ...] (list data) & [''Admin', 'Links', 'TotalCount', ...] (tab counts)
-      await queryClient.invalidateQueries({
-        queryKey: ["Admin", "Links"],
-        exact: false,
-      });
+      setIsLoading(true);
 
-      toast.success("Link status updated");
-    } catch (error) {
-      toast(<ApiErrors error={error} />, {
-        type: "error",
-        toastId: "verifyCredential",
-        autoClose: 2000,
-        icon: false,
-      });
+      try {
+        // call api
+        await updateLinkStatus(item.id, status);
 
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_OPPORTUNITY_LINK,
+          GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
+          `Status Changed to ${status} for Opportunity Link ID: ${item.id}`,
+        );
+
+        // invalidate cache
+        // this will match all queries with the following prefixes ['Links', id] (list data) & ['Links_TotalCount', id] (tab counts)
+        await queryClient.invalidateQueries({
+          queryKey: ["Admin", "Links"],
+          exact: false,
+        });
+        // await queryClient.invalidateQueries({
+        //   queryKey: ["Links_TotalCount", id],
+        //   exact: false,
+        // });
+
+        toast.success("Link status updated");
+      } catch (error) {
+        toast(<ApiErrors error={error as AxiosError} />, {
+          type: "error",
+          toastId: `error-${item.id}`,
+          autoClose: false,
+          icon: false,
+        });
+      }
       setIsLoading(false);
 
       return;
-    }
-
-    setIsLoading(false);
-    onCloseCommentsDialog();
-  }, [
-    queryClient,
-    verifyComments,
-    selectedRow,
-    linkStatus,
-    setIsLoading,
-    onCloseCommentsDialog,
-  ]);
+    },
+    [queryClient, modalContext, setIsLoading],
+  );
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -529,94 +510,6 @@ const Links: NextPageWithLayout<{
       <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
 
       {isLoading && <Loading />}
-
-      {/* MODAL DIALOG FOR ACTIONS */}
-      <CustomModal
-        isOpen={modalActionVisible}
-        shouldCloseOnOverlayClick={true}
-        onRequestClose={onCloseCommentsDialog}
-        className={`md:max-h-[400px] md:w-[600px]`}
-      >
-        <div className="flex h-full flex-col space-y-2">
-          <div className="flex flex-row items-center bg-white px-4 pt-2">
-            <div className="flex w-64 grow flex-col pl-2">
-              <div className="truncate text-sm font-semibold">
-                {selectedRow?.name}
-              </div>
-              <div className="truncate text-xs">{selectedRow?.description}</div>
-            </div>
-
-            <button
-              type="button"
-              className="btn border-green-dark bg-green-dark hover:text-green scale-[0.55] rounded-full p-[7px] text-white"
-              onClick={onCloseCommentsDialog}
-            >
-              <IoMdClose className="h-8 w-8"></IoMdClose>
-            </button>
-          </div>
-
-          <div className="bg-gray-light flex grow flex-col gap-4 px-6 pb-10">
-            <fieldset className="fieldset mt-8 rounded-lg bg-white px-4 py-2">
-              <label className="label">
-                <span className="text-gray-dark font-semibold">
-                  Enter comments below:
-                </span>
-              </label>
-              <textarea
-                className="input border-gray-light my-2 h-[100px] p-2"
-                onChange={(e) => setVerifyComments(e.target.value)}
-              />
-            </fieldset>
-          </div>
-
-          {/* BUTTONS */}
-          <div className="flex flex-row place-items-center justify-center px-6 py-4 pt-2">
-            <div className="flex grow">
-              <button
-                className="btn btn-sm md:btn-sm flex-nowrap border-black bg-white py-5 text-black hover:bg-black hover:text-white"
-                onClick={onCloseCommentsDialog}
-              >
-                <IoMdClose className="h-6 w-6" />
-                Close
-              </button>
-            </div>
-            <div className="flex gap-4">
-              {linkStatus == LinkStatus.Active && (
-                <button
-                  className="btn btn-sm border-green text-green hover:bg-green flex-nowrap bg-white py-5 hover:text-white"
-                  onClick={onPerformLinkStatusChange}
-                >
-                  Approve
-                </button>
-              )}
-              {linkStatus == LinkStatus.Declined && (
-                <button
-                  className="btn btn-sm flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
-                  onClick={onPerformLinkStatusChange}
-                >
-                  Decline
-                </button>
-              )}
-              {linkStatus == LinkStatus.Inactive && (
-                <button
-                  className="btn btn-sm flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
-                  onClick={onPerformLinkStatusChange}
-                >
-                  Inactivate
-                </button>
-              )}
-              {linkStatus == LinkStatus.Deleted && (
-                <button
-                  className="btn btn-sm flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
-                  onClick={onPerformLinkStatusChange}
-                >
-                  Delete
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </CustomModal>
 
       {/* QR CODE DIALOG */}
       <CustomModal
@@ -730,22 +623,6 @@ const Links: NextPageWithLayout<{
               {(totalCountInactive ?? 0) > 0 && (
                 <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                   {totalCountInactive}
-                </div>
-              )}
-            </Link>
-            <Link
-              href={`/admin/links?statuses=declined`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "declined"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Declined
-              {(totalCountDeclined ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountDeclined}
                 </div>
               )}
             </Link>
@@ -940,11 +817,6 @@ const Links: NextPageWithLayout<{
                           <span className="badge bg-green-light text-red-400">
                             Limit Reached
                           </span>
-                        )}{" "}
-                        {item.status == "Declined" && (
-                          <span className="badge bg-green-light text-red-400">
-                            Declined
-                          </span>
                         )}
                         {item.status == "Deleted" && (
                           <span className="badge bg-green-light text-red-400">
@@ -960,89 +832,51 @@ const Links: NextPageWithLayout<{
                               item?.shortURL ?? item?.uRL ?? "",
                             )
                           }
-                          className="badge bg-green-light text-green"
+                          className="badge bg-green-light text-green cursor-pointer"
+                          title="Copy Link to Clipboard"
                         >
                           <IoIosLink className="h-4 w-4" />
                         </button>
 
                         <button
                           onClick={() => onClick_GenerateQRCode(item)}
-                          className="badge bg-green-light text-green"
+                          className="badge bg-green-light text-green cursor-pointer"
+                          title="Generate QR Code"
                         >
                           <IoQrCode className="h-4 w-4" />
                         </button>
 
                         {(item?.status == "Inactive" ||
-                          item?.status == "Active" ||
-                          item?.status == "Declined") && (
+                          item?.status == "Active") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
-                            <button className="badge bg-green-light text-green">
+                            <button
+                              className="badge bg-green-light text-green cursor-pointer"
+                              title="Actions"
+                            >
                               <IoIosSettings className="h-4 w-4" />
                             </button>
 
                             <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
-                              {item?.status == "Inactive" && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Active,
-                                      )
-                                    }
-                                  >
-                                    Approve
-                                  </button>
-                                </li>
-                              )}
+                              <li>
+                                <button
+                                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
+                                  onClick={() =>
+                                    updateStatus(item, LinkStatus.Deleted)
+                                  }
+                                >
+                                  Delete
+                                </button>
+                              </li>
 
                               {item?.status == "Inactive" && (
                                 <li>
                                   <button
                                     className="text-gray-dark flex flex-row items-center hover:brightness-50"
                                     onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Declined,
-                                      )
+                                      updateStatus(item, LinkStatus.Active)
                                     }
                                   >
-                                    Decline
-                                  </button>
-                                </li>
-                              )}
-
-                              {(item?.status == "Active" ||
-                                item?.status == "Inactive" ||
-                                item?.status == "Declined") && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Deleted,
-                                      )
-                                    }
-                                  >
-                                    Delete
-                                  </button>
-                                </li>
-                              )}
-
-                              {item?.status === "Declined" && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Inactive,
-                                      )
-                                    }
-                                  >
-                                    Make Inactive (send for reapproval)
+                                    Activate
                                   </button>
                                 </li>
                               )}
@@ -1187,11 +1021,6 @@ const Links: NextPageWithLayout<{
                             Limit Reached
                           </span>
                         )}
-                        {item.status == "Declined" && (
-                          <span className="badge bg-green-light text-red-400">
-                            Declined
-                          </span>
-                        )}
                         {item.status == "Deleted" && (
                           <span className="badge bg-green-light text-red-400">
                             Deleted
@@ -1207,7 +1036,8 @@ const Links: NextPageWithLayout<{
                               item?.shortURL ?? item?.uRL ?? "",
                             )
                           }
-                          className="badge bg-green-light text-green"
+                          className="badge bg-green-light text-green cursor-pointer"
+                          title="Copy Link to Clipboard"
                         >
                           <IoIosLink className="h-4 w-4" />
                         </button>
@@ -1217,7 +1047,8 @@ const Links: NextPageWithLayout<{
                       <td className="border-gray-light border-b-2">
                         <button
                           onClick={() => onClick_GenerateQRCode(item)}
-                          className="badge bg-green-light text-green"
+                          className="badge bg-green-light text-green cursor-pointer"
+                          title="Generate QR Code"
                         >
                           <IoQrCode className="h-4 w-4" />
                         </button>
@@ -1226,76 +1057,36 @@ const Links: NextPageWithLayout<{
                       {/* ACTIONS */}
                       <td className="border-gray-light border-b-2">
                         {(item?.status == "Inactive" ||
-                          item?.status == "Active" ||
-                          item?.status == "Declined") && (
+                          item?.status == "Active") && (
                           <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
-                            <button className="badge bg-green-light text-green">
+                            <button
+                              className="badge bg-green-light text-green cursor-pointer"
+                              title="Actions"
+                            >
                               <IoIosSettings className="h-4 w-4" />
                             </button>
 
                             <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
-                              {item?.status == "Inactive" && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Active,
-                                      )
-                                    }
-                                  >
-                                    Approve
-                                  </button>
-                                </li>
-                              )}
+                              <li>
+                                <button
+                                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
+                                  onClick={() =>
+                                    updateStatus(item, LinkStatus.Deleted)
+                                  }
+                                >
+                                  Delete
+                                </button>
+                              </li>
 
                               {item?.status == "Inactive" && (
                                 <li>
                                   <button
                                     className="text-gray-dark flex flex-row items-center hover:brightness-50"
                                     onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Declined,
-                                      )
+                                      updateStatus(item, LinkStatus.Active)
                                     }
                                   >
-                                    Decline
-                                  </button>
-                                </li>
-                              )}
-
-                              {(item?.status == "Active" ||
-                                item?.status == "Inactive" ||
-                                item?.status == "Declined") && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Deleted,
-                                      )
-                                    }
-                                  >
-                                    Delete
-                                  </button>
-                                </li>
-                              )}
-
-                              {item?.status === "Declined" && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Inactive,
-                                      )
-                                    }
-                                  >
-                                    Make Inactive (send for reapproval)
+                                    Activate
                                   </button>
                                 </li>
                               )}

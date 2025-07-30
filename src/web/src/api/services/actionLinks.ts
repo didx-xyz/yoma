@@ -5,9 +5,9 @@ import type {
   LinkInfo,
   LinkRequestCreateShare,
   LinkRequestCreateVerify,
-  LinkRequestUpdateStatus,
   LinkSearchFilter,
   LinkSearchResult,
+  LinkStatus,
 } from "../models/actionLinks";
 
 export const createLinkSharing = async (
@@ -58,15 +58,15 @@ export const searchLinks = async (
   return data;
 };
 
+//LAST HERE: need to rebuild docker
 export const updateLinkStatus = async (
   linkId: string,
-  request: LinkRequestUpdateStatus,
+  status: LinkStatus,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<LinkInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.patch<LinkInfo>(
-    `/actionLink/${linkId}/status`,
-    request,
+    `/actionLink/${linkId}/status?status=${status}`,
   );
   return data;
 };
