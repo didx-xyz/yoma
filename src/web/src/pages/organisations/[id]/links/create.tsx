@@ -4,6 +4,7 @@ import axios, { type AxiosError } from "axios";
 import moment from "moment";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
+import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
@@ -62,10 +63,10 @@ import { trackGAEvent } from "~/lib/google-analytics";
 import { config } from "~/lib/react-query-config";
 import { debounce, getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import {
-  validateEmail,
-  validatePhoneNumber,
   normalizeAndValidateEmail,
   normalizeAndValidatePhoneNumber,
+  validateEmail,
+  validatePhoneNumber,
 } from "~/lib/validate";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
@@ -135,6 +136,36 @@ const LinkDetails: NextPageWithLayout<{
 }> = ({ id, error }) => {
   const router = useRouter();
   const { returnUrl } = router.query;
+
+  // 👇 Parse querystring for default values
+  const qs = router.query;
+
+  const initialFormData: LinkRequestCreateVerify = {
+    name: typeof qs.name === "string" ? qs.name : "",
+    description: typeof qs.description === "string" ? qs.description : "",
+    entityType: typeof qs.entityType === "string" ? qs.entityType : "",
+    entityId: typeof qs.entityId === "string" ? qs.entityId : "",
+    usagesLimit:
+      typeof qs.usagesLimit === "string" && qs.usagesLimit !== ""
+        ? Number(qs.usagesLimit)
+        : null,
+    dateEnd:
+      typeof qs.dateEnd === "string" && qs.dateEnd !== "" ? qs.dateEnd : null,
+    distributionList: Array.isArray(qs.distributionList)
+      ? qs.distributionList
+      : typeof qs.distributionList === "string" && qs.distributionList !== ""
+        ? [qs.distributionList]
+        : [],
+    includeQRCode:
+      typeof qs.includeQRCode === "string" && qs.includeQRCode !== ""
+        ? qs.includeQRCode === "true"
+        : null,
+    lockToDistributionList:
+      typeof qs.lockToDistributionList === "string"
+        ? qs.lockToDistributionList === "true"
+        : false,
+  };
+
   const queryClient = useQueryClient();
 
   const formRef1 = useRef<HTMLFormElement>(null);
@@ -153,17 +184,8 @@ const LinkDetails: NextPageWithLayout<{
 
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<LinkRequestCreateVerify>({
-    name: "",
-    description: "",
-    entityType: "",
-    entityId: "",
-    usagesLimit: null,
-    dateEnd: null,
-    distributionList: [],
-    includeQRCode: null,
-    lockToDistributionList: false,
-  });
+  const [formData, setFormData] =
+    useState<LinkRequestCreateVerify>(initialFormData);
 
   const schemaStep1 = z.object({
     name: z
@@ -269,12 +291,19 @@ const LinkDetails: NextPageWithLayout<{
       if (!data.lockToDistributionList && data.dateEnd !== null) {
         const now = new Date();
         const dateEnd = data.dateEnd ? new Date(data.dateEnd) : undefined;
-        if (dateEnd && dateEnd < now) {
-          ctx.addIssue({
-            message: "The expiry date must be in the future.",
-            code: z.ZodIssueCode.custom,
-            path: ["dateEnd"],
-          });
+        if (dateEnd) {
+          // If dateEnd is today (any time), allow it
+          const isToday =
+            dateEnd.getFullYear() === now.getFullYear() &&
+            dateEnd.getMonth() === now.getMonth() &&
+            dateEnd.getDate() === now.getDate();
+          if (!isToday && dateEnd < now) {
+            ctx.addIssue({
+              message: "The expiry date must be in the future.",
+              code: z.ZodIssueCode.custom,
+              path: ["dateEnd"],
+            });
+          }
         }
       }
 
@@ -505,10 +534,14 @@ const LinkDetails: NextPageWithLayout<{
 
       setIsLoading(false);
 
-      // redirect to list after create
-      void router.push(`/organisations/${id}/links`);
+      // redirect to returnUrl if present, else to list after create
+      if (returnUrl) {
+        void router.push(returnUrl.toString());
+      } else {
+        void router.push(`/organisations/${id}/links`);
+      }
     },
-    [setIsLoading, id, queryClient, router, modalContext],
+    [setIsLoading, id, queryClient, router, modalContext, returnUrl],
   );
 
   // form submission handler
@@ -666,9 +699,13 @@ const LinkDetails: NextPageWithLayout<{
 
   return (
     <>
-      {isLoading && <Loading />}
+      <Head>
+        <title>Yoma | 🔗 Create Link</title>
+      </Head>
 
       <PageBackground />
+
+      {isLoading && <Loading />}
 
       {/* SAVE CHANGES DIALOG */}
       <CustomModal
@@ -997,16 +1034,19 @@ const LinkDetails: NextPageWithLayout<{
 
                     {/* BUTTONS */}
                     <div className="my-4 flex flex-row items-center justify-center gap-2 md:justify-end md:gap-4">
-                      <Link
+                      <button
+                        type="button"
                         className="btn btn-warning grow md:w-1/3 md:grow-0"
-                        href={getSafeUrl(
-                          returnUrl?.toString(),
-                          `/organisations/${id}/links`,
-                        )}
+                        onClick={() => {
+                          if (returnUrl) {
+                            router.push(returnUrl.toString());
+                          } else {
+                            router.push(`/organisations/${id}/links`);
+                          }
+                        }}
                       >
                         Cancel
-                      </Link>
-
+                      </button>
                       <button
                         type="submit"
                         className="btn btn-success grow md:w-1/3 md:grow-0"
@@ -1128,12 +1168,22 @@ const LinkDetails: NextPageWithLayout<{
                             )}
                           />
 
-                          {formStateStep2.errors.dateEnd && (
+                          {formStateStep2.errors.dateEnd ? (
                             <label className="label -mb-5">
                               <span className="label-text-alt text-red-500 italic">
                                 {`${formStateStep2.errors.dateEnd.message}`}
                               </span>
                             </label>
+                          ) : (
+                            <FormMessage messageType={FormMessageType.Info}>
+                              {watchStep2("dateEnd") &&
+                              moment(watchStep2("dateEnd")).isSame(
+                                moment(),
+                                "day",
+                              )
+                                ? "This link will expire at midnight today (23:59 AM)."
+                                : "This link will expire at the end of the day on the selected date."}
+                            </FormMessage>
                           )}
                         </fieldset>
                       </>

@@ -7,8 +7,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
+import { FaLink, FaQrcode, FaStar, FaTrash } from "react-icons/fa";
 import {
-  IoIosLink,
   IoIosSettings,
   IoMdCalendar,
   IoMdClose,
@@ -16,7 +16,7 @@ import {
   IoMdPerson,
   IoMdWarning,
 } from "react-icons/io";
-import { IoQrCode, IoShareSocialOutline } from "react-icons/io5";
+import { IoShareSocialOutline } from "react-icons/io5";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
 import {
@@ -495,6 +495,72 @@ const Links: NextPageWithLayout<{
     [queryClient, modalContext, setIsLoading],
   );
 
+  // Link actions dropdown
+  const renderLinkActionsDropdown = (link: LinkInfo) => (
+    <div className="dropdown dropdown-left">
+      <button type="button" title="Actions" className="cursor-pointer">
+        <IoIosSettings className="text-green hover:text-blue size-5 hover:scale-125 hover:animate-pulse" />
+      </button>
+      <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-64 gap-2 p-2 shadow">
+        <li>
+          <button
+            type="button"
+            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+            title="Copy URL to clipboard"
+            onClick={() => {
+              onClick_CopyToClipboard(link.uRL!);
+            }}
+          >
+            <FaLink className="text-green size-4" />
+            Copy Link
+          </button>
+        </li>
+
+        <li>
+          <button
+            type="button"
+            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+            title="Generate QR Code"
+            onClick={() => {
+              onClick_GenerateQRCode(link);
+            }}
+          >
+            <FaQrcode className="text-green size-4" />
+            Generate QR Code
+          </button>
+        </li>
+
+        {(link?.status == "Inactive" || link?.status == "Active") && (
+          <>
+            <li>
+              <button
+                type="button"
+                className="text-gray-dark flex flex-row items-center hover:brightness-50"
+                onClick={() => updateStatus(link, LinkStatus.Deleted)}
+              >
+                <FaTrash className="text-green size-4" />
+                Delete
+              </button>
+            </li>
+
+            {link?.status == "Inactive" && (
+              <li>
+                <button
+                  type="button"
+                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+                  onClick={() => updateStatus(link, LinkStatus.Active)}
+                >
+                  <FaStar className="text-green size-4" />
+                  Activate
+                </button>
+              </li>
+            )}
+          </>
+        )}
+      </ul>
+    </div>
+  );
+
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -709,53 +775,62 @@ const Links: NextPageWithLayout<{
               <div className="flex flex-col gap-4 md:hidden">
                 {links.items.map((item) => (
                   <div
-                    key={`grid_xs_${item.id}`}
-                    className="shadow-custom rounded-lg bg-white p-4"
+                    key={`sm_${item.id}`}
+                    className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
                   >
-                    <div className="mb-2 flex flex-col">
-                      {item.entityOrganizationId &&
-                        item.entityOrganizationName && (
-                          <Link
-                            href={`/organisations/${
-                              item.entityOrganizationId
-                            }${`?returnUrl=${encodeURIComponent(
-                              getSafeUrl(returnUrl, router.asPath),
-                            )}`}`}
-                            className="text-gray-dark max-w-[300px] overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap underline"
-                          >
-                            {item.entityOrganizationName}
-                          </Link>
-                        )}
-
-                      {item.entityType == "Opportunity" &&
-                        item.entityOrganizationId && (
-                          <Link
-                            href={`/organisations/${
-                              item.entityOrganizationId
-                            }/opportunities/${
-                              item.entityId
-                            }/info${`?returnUrl=${encodeURIComponent(
-                              getSafeUrl(returnUrl, router.asPath),
-                            )}`}`}
-                            className="text-gray-dark max-w-[300px] overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap underline"
-                          >
-                            {item.entityTitle}
-                          </Link>
-                        )}
-                      {item.entityType != "Opportunity" && (
-                        <>{item.entityTitle}</>
-                      )}
-
-                      <span className="text-gray-dark mt-2 overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap">
-                        {item.name}
+                    <div className="border-gray-light flex flex-row gap-2 border-b-2">
+                      <span title={item.entityTitle} className="w-full">
+                        <Link
+                          href={`/organisations/${
+                            item.entityOrganizationId
+                          }/opportunities/${
+                            item.entityId
+                          }/info${`?returnUrl=${encodeURIComponent(
+                            getSafeUrl(returnUrl, router.asPath),
+                          )}`}`}
+                          className="line-clamp-1 text-start font-semibold"
+                        >
+                          {item.entityTitle}
+                        </Link>
                       </span>
 
-                      <span className="text-gray-dark overflow-hidden text-xs font-semibold text-ellipsis whitespace-nowrap">
-                        {item.description}
-                      </span>
+                      {renderLinkActionsDropdown(item)}
                     </div>
 
-                    <div className="flex flex-col gap-1">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex justify-between">
+                        <p className="text-sm tracking-wider">Name</p>
+                        <p className="text-sm tracking-wider"> {item.name}</p>
+                      </div>
+
+                      {item.description && (
+                        <div className="flex justify-between">
+                          <p className="text-sm tracking-wider">Description</p>
+                          <p className="text-sm tracking-wider">
+                            {item.description}
+                          </p>
+                        </div>
+                      )}
+
+                      {item.entityOrganizationId &&
+                        item.entityOrganizationName && (
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">
+                              Organisation
+                            </p>
+                            <Link
+                              href={`/organisations/${
+                                item.entityOrganizationId
+                              }${`?returnUrl=${encodeURIComponent(
+                                getSafeUrl(returnUrl, router.asPath),
+                              )}`}`}
+                              className="text-gray-dark max-w-[300px] overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap underline"
+                            >
+                              {item.entityOrganizationName}
+                            </Link>
+                          </div>
+                        )}
+
                       <div className="flex justify-between">
                         <p className="text-sm tracking-wider">Usage</p>
 
@@ -824,66 +899,6 @@ const Links: NextPageWithLayout<{
                           </span>
                         )}
                       </div>
-
-                      <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() =>
-                            onClick_CopyToClipboard(
-                              item?.shortURL ?? item?.uRL ?? "",
-                            )
-                          }
-                          className="badge bg-green-light text-green cursor-pointer"
-                          title="Copy Link to Clipboard"
-                        >
-                          <IoIosLink className="h-4 w-4" />
-                        </button>
-
-                        <button
-                          onClick={() => onClick_GenerateQRCode(item)}
-                          className="badge bg-green-light text-green cursor-pointer"
-                          title="Generate QR Code"
-                        >
-                          <IoQrCode className="h-4 w-4" />
-                        </button>
-
-                        {(item?.status == "Inactive" ||
-                          item?.status == "Active") && (
-                          <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
-                            <button
-                              className="badge bg-green-light text-green cursor-pointer"
-                              title="Actions"
-                            >
-                              <IoIosSettings className="h-4 w-4" />
-                            </button>
-
-                            <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
-                              <li>
-                                <button
-                                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                  onClick={() =>
-                                    updateStatus(item, LinkStatus.Deleted)
-                                  }
-                                >
-                                  Delete
-                                </button>
-                              </li>
-
-                              {item?.status == "Inactive" && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      updateStatus(item, LinkStatus.Active)
-                                    }
-                                  >
-                                    Activate
-                                  </button>
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
                     </div>
                   </div>
                 ))}
@@ -906,9 +921,9 @@ const Links: NextPageWithLayout<{
                     <th className="border-gray-light border-b-2">Usage</th>
                     <th className="border-gray-light border-b-2">Expires</th>
                     <th className="border-gray-light border-b-2">Status</th>
-                    <th className="border-gray-light border-b-2">Link</th>
-                    <th className="border-gray-light border-b-2">QR</th>
-                    <th className="border-gray-light border-b-2">Actions</th>
+                    <th className="border-gray-light border-b-2 text-center">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -918,6 +933,7 @@ const Links: NextPageWithLayout<{
                         {item.entityOrganizationId &&
                           item.entityOrganizationName && (
                             <Link
+                              title={item.entityOrganizationName}
                               href={`/organisations/${
                                 item.entityOrganizationId
                               }${`?returnUrl=${encodeURIComponent(
@@ -929,10 +945,12 @@ const Links: NextPageWithLayout<{
                             </Link>
                           )}
                       </td>
+
                       <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4">
                         {item.entityType == "Opportunity" &&
                           item.entityOrganizationId && (
                             <Link
+                              title={item.entityTitle}
                               href={`/organisations/${
                                 item.entityOrganizationId
                               }/opportunities/${
@@ -1028,71 +1046,11 @@ const Links: NextPageWithLayout<{
                         )}
                       </td>
 
-                      {/* LINK */}
-                      <td className="border-gray-light border-b-2">
-                        <button
-                          onClick={() =>
-                            onClick_CopyToClipboard(
-                              item?.shortURL ?? item?.uRL ?? "",
-                            )
-                          }
-                          className="badge bg-green-light text-green cursor-pointer"
-                          title="Copy Link to Clipboard"
-                        >
-                          <IoIosLink className="h-4 w-4" />
-                        </button>
-                      </td>
-
-                      {/* QR */}
-                      <td className="border-gray-light border-b-2">
-                        <button
-                          onClick={() => onClick_GenerateQRCode(item)}
-                          className="badge bg-green-light text-green cursor-pointer"
-                          title="Generate QR Code"
-                        >
-                          <IoQrCode className="h-4 w-4" />
-                        </button>
-                      </td>
-
                       {/* ACTIONS */}
-                      <td className="border-gray-light border-b-2">
-                        {(item?.status == "Inactive" ||
-                          item?.status == "Active") && (
-                          <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
-                            <button
-                              className="badge bg-green-light text-green cursor-pointer"
-                              title="Actions"
-                            >
-                              <IoIosSettings className="h-4 w-4" />
-                            </button>
-
-                            <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
-                              <li>
-                                <button
-                                  className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                  onClick={() =>
-                                    updateStatus(item, LinkStatus.Deleted)
-                                  }
-                                >
-                                  Delete
-                                </button>
-                              </li>
-
-                              {item?.status == "Inactive" && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      updateStatus(item, LinkStatus.Active)
-                                    }
-                                  >
-                                    Activate
-                                  </button>
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-                        )}
+                      <td className="border-gray-light min-w-[180px] border-b-2 whitespace-nowrap">
+                        <div className="flex flex-row items-center justify-center gap-2">
+                          {renderLinkActionsDropdown(item)}
+                        </div>
                       </td>
                     </tr>
                   ))}

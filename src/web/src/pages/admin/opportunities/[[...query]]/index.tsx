@@ -15,7 +15,7 @@ import {
   type ReactElement,
 } from "react";
 import { FaDownload, FaEdit, FaLink } from "react-icons/fa";
-import { IoMdPerson } from "react-icons/io";
+import { IoIosSettings, IoMdPerson } from "react-icons/io";
 import { toast } from "react-toastify";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
@@ -483,6 +483,57 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     );
   };
 
+  const renderOpportunityActionsDropdown = (
+    opportunity: OpportunitySearchResultsInfo["items"][number],
+  ) => (
+    <div className="dropdown dropdown-left">
+      <button type="button" title="Actions" className="cursor-pointer">
+        <IoIosSettings className="text-green hover:text-blue size-5 hover:scale-125 hover:animate-pulse" />
+      </button>
+      <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-64 gap-2 p-2 shadow">
+        <li>
+          <button
+            type="button"
+            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+            title="Edit"
+            onClick={() => {
+              router.push(
+                `/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`,
+              );
+            }}
+          >
+            <FaEdit className="text-green size-4" />
+            Edit
+          </button>
+        </li>
+        <li>
+          <button
+            type="button"
+            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+            title="Download completion files"
+            onClick={(e) => downloadVerificationFiles(e, opportunity.id)}
+          >
+            <FaDownload className="text-green size-4" />
+            Download completion files
+          </button>
+        </li>
+        {opportunity?.url && (
+          <li>
+            <button
+              type="button"
+              className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+              title="Copy URL to clipboard"
+              onClick={() => onClick_CopyToClipboard(opportunity.url!)}
+            >
+              <FaLink className="text-green size-4" />
+              Copy Link
+            </button>
+          </li>
+        )}
+      </ul>
+    </div>
+  );
+
   return (
     <>
       <Head>
@@ -651,35 +702,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               {opportunity.title}
                             </Link>
                           </span>
-                          <span title="Edit">
-                            <Link
-                              href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
-                            >
-                              <FaEdit className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
-                            </Link>
-                          </span>
-                          <span title="Download completion files">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                downloadVerificationFiles(e, opportunity.id);
-                              }}
-                            >
-                              <FaDownload className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
-                            </button>
-                          </span>
-                          {opportunity?.url && (
-                            <span title="Copy URL to clipboard">
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  onClick_CopyToClipboard(opportunity.url!);
-                                }}
-                              >
-                                <FaLink className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
-                              </button>
-                            </span>
-                          )}
+                          {renderOpportunityActionsDropdown(opportunity)}
                         </div>
 
                         <div className="text-gray-dark flex flex-col gap-2">
@@ -786,23 +809,19 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                         <th className="border-gray-light border-b-2 !py-4">
                           Title
                         </th>
-                        <th className="border-gray-light border-b-2 text-center">
-                          Actions
-                        </th>
-                        <th className="border-gray-light border-b-2 text-center">
-                          ZLTO
-                        </th>
-                        <th className="border-gray-light border-b-2 text-center">
+                        <th className="border-gray-light border-b-2">ZLTO</th>
+                        <th className="border-gray-light border-b-2">
                           ZLTO Cumulative
                         </th>
-                        <th className="border-gray-light border-b-2 text-center">
+                        <th className="border-gray-light border-b-2">
                           Participants
                         </th>
-                        <th className="border-gray-light border-b-2 text-center">
-                          Status
-                        </th>
-                        <th className="border-gray-light border-b-2 text-center">
+                        <th className="border-gray-light border-b-2">Status</th>
+                        <th className="border-gray-light border-b-2">
                           Visible
+                        </th>
+                        <th className="border-gray-light border-b-2">
+                          Actions
                         </th>
                       </tr>
                     </thead>
@@ -821,46 +840,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                 {opportunity.title}
                               </Link>
                             </span>
-                          </td>
-                          <td className="border-gray-light w-28 border-b-2 text-center">
-                            <span
-                              className="tooltip tooltip-top tooltip-secondary"
-                              data-tip="Edit"
-                            >
-                              <Link
-                                href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
-                              >
-                                <FaEdit className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
-                              </Link>
-                            </span>
-                            <span
-                              className="tooltip tooltip-top tooltip-secondary ml-2"
-                              data-tip="Download completion files"
-                            >
-                              <button
-                                type="button"
-                                onClick={(e) =>
-                                  downloadVerificationFiles(e, opportunity.id)
-                                }
-                              >
-                                <FaDownload className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
-                              </button>
-                            </span>
-                            {opportunity?.url && (
-                              <span
-                                className="tooltip tooltip-top tooltip-secondary ml-2"
-                                data-tip="Copy URL to clipboard"
-                              >
-                                <button
-                                  type="button"
-                                  onClick={() =>
-                                    onClick_CopyToClipboard(opportunity.url!)
-                                  }
-                                >
-                                  <FaLink className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
-                                </button>
-                              </span>
-                            )}
                           </td>
                           <td className="border-gray-light w-28 border-b-2 text-center">
                             {opportunity.zltoReward == null && (
@@ -923,6 +902,12 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                                 Visible
                               </span>
                             )}
+                          </td>
+                          <td className="border-gray-light border-b-2 whitespace-nowrap">
+                            <div className="flex flex-row items-center justify-center gap-2">
+                              {/* ACTIONS */}
+                              {renderOpportunityActionsDropdown(opportunity)}
+                            </div>
                           </td>
                         </tr>
                       ))}

@@ -6,6 +6,7 @@ import {
 } from "@tanstack/react-query";
 import axios from "axios";
 import { useAtomValue } from "jotai";
+import moment from "moment";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -18,13 +19,16 @@ import { useCallback, useMemo, useState, type ReactElement } from "react";
 import {
   FaDownload,
   FaEdit,
+  FaExternalLinkAlt,
+  FaExternalLinkSquareAlt,
   FaLink,
   FaPlusCircle,
   FaUpload,
 } from "react-icons/fa";
-import { IoIosAdd, IoIosWarning } from "react-icons/io";
+import { IoIosAdd, IoIosSettings, IoIosWarning } from "react-icons/io";
 import { toast } from "react-toastify";
 import {
+  OpportunityInfo,
   Status,
   type OpportunitySearchFilterAdmin,
   type OpportunitySearchResults,
@@ -407,6 +411,81 @@ const Opportunities: NextPageWithLayout<{
   };
   //#endregion Event Handlers
 
+  // Opportunity actions dropdown
+  const renderOpportunityActionsDropdown = (opportunity: OpportunityInfo) => (
+    <div className="dropdown dropdown-left">
+      <button type="button" title="Actions" className="cursor-pointer">
+        <IoIosSettings className="text-green hover:text-blue size-5 hover:scale-125 hover:animate-pulse" />
+      </button>
+      <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-64 gap-2 p-2 shadow">
+        <li>
+          <Link
+            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+            href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
+          >
+            <FaEdit className="text-green size-4" />
+            Edit Opportunity Details
+          </Link>
+        </li>
+        <li>
+          <button
+            type="button"
+            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+            title="Download completion files"
+            onClick={(e) => {
+              downloadVerificationFiles(e, opportunity.id);
+            }}
+          >
+            <FaDownload className="text-green size-4" />
+            Download Completion Files
+          </button>
+        </li>
+        {opportunity?.url && (
+          <li>
+            <button
+              type="button"
+              className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+              title="Copy URL to clipboard"
+              onClick={() => {
+                onClick_CopyToClipboard(opportunity.url!);
+              }}
+            >
+              <FaLink className="text-green size-4" />
+              Copy External Link
+            </button>
+          </li>
+        )}
+        <li>
+          <Link
+            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+            href={`/organisations/${id}/links?entities=${opportunity.id}`}
+          >
+            <FaExternalLinkSquareAlt className="text-green size-4" />
+            View Attendance Links
+          </Link>
+        </li>
+        <li>
+          <Link
+            title="Create Attendance Link"
+            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+            href={`/organisations/${id}/links/create?name=${encodeURIComponent(
+              `Attendance-${moment().format("DDMMMYYYY")}`,
+            )}&description=&entityType=0&entityId=${opportunity.id}&usagesLimit=&dateEnd=${encodeURIComponent(
+              moment().format("DDMMMYYYY"),
+            )}&distributionList=&includeQRCode=&lockToDistributionList=false${`&returnUrl=${encodeURIComponent(
+              getSafeUrl(returnUrl?.toString(), router.asPath),
+            )}`}`}
+          >
+            <FaExternalLinkAlt className="text-green size-4" />
+            Create Attendance Link
+            <br />
+            (Quick Link)
+          </Link>
+        </li>
+      </ul>
+    </div>
+  );
+
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -554,15 +633,16 @@ const Opportunities: NextPageWithLayout<{
 
           {/* FILTERS */}
           <div className="flex w-full grow flex-col items-center justify-between gap-4 sm:justify-end md:flex-row">
-            <SearchInput defaultValue={query} onSearch={onSearch} />
-
+            <div className="flex w-full grow flex-row flex-wrap gap-2">
+              <SearchInput defaultValue={query} onSearch={onSearch} />
+            </div>
             {/* BUTTONS */}
-            <div className="flex w-full grow items-center justify-between gap-2 sm:justify-end">
+            <div className="flex w-full flex-row flex-nowrap items-center justify-between gap-2 sm:justify-end md:w-auto">
               <Link
                 href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
                   getSafeUrl(returnUrl?.toString(), router.asPath),
                 )}`}`}
-                className={`btn btn-sm border-green text-green hover:bg-green flex-1 flex-nowrap bg-white hover:text-white md:min-w-36 md:flex-0 ${
+                className={`btn btn-sm border-green text-green hover:bg-green flex-nowrap bg-white hover:text-white md:min-w-36 ${
                   currentOrganisationInactive ? "disabled" : ""
                 }`}
                 id="btnCreateOpportunity" // e2e
@@ -575,7 +655,7 @@ const Opportunities: NextPageWithLayout<{
                 onClick={() => {
                   setImportDialogOpen(true);
                 }}
-                className={`btn btn-sm border-green bg-green hover:text-green flex-1 flex-nowrap text-white hover:bg-white md:min-w-36 md:flex-0 ${
+                className={`btn btn-sm border-green bg-green hover:text-green flex-nowrap text-white hover:bg-white md:min-w-36 ${
                   currentOrganisationInactive ? "disabled" : ""
                 }`}
               >
@@ -585,7 +665,7 @@ const Opportunities: NextPageWithLayout<{
               <button
                 type="button"
                 onClick={() => setExportDialogOpen(true)}
-                className="btn btn-sm border-green bg-green hover:text-green flex-1 flex-nowrap text-white hover:bg-white md:min-w-36 md:flex-0"
+                className="btn btn-sm border-green bg-green hover:text-green flex-nowrap text-white hover:bg-white md:min-w-36"
               >
                 <FaDownload className="h-4 w-4" /> Export
               </button>
@@ -660,37 +740,7 @@ const Opportunities: NextPageWithLayout<{
                           </Link>
                         </span>
 
-                        <span title="Edit">
-                          <Link
-                            href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
-                          >
-                            <FaEdit className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
-                          </Link>
-                        </span>
-
-                        <span title="Download completion files">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              downloadVerificationFiles(e, opportunity.id);
-                            }}
-                          >
-                            <FaDownload className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
-                          </button>
-                        </span>
-
-                        {opportunity?.url && (
-                          <span title="Copy URL to clipboard">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onClick_CopyToClipboard(opportunity.url!);
-                              }}
-                            >
-                              <FaLink className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
-                            </button>
-                          </span>
-                        )}
+                        {renderOpportunityActionsDropdown(opportunity)}
                       </div>
 
                       <div className="text-gray-dark flex flex-col gap-2">
@@ -849,99 +899,33 @@ const Opportunities: NextPageWithLayout<{
                       <th className="border-gray-light border-b-2 !py-4">
                         Title
                       </th>
-                      <th className="border-gray-light border-b-2 text-center">
-                        Actions
-                      </th>
-                      <th className="border-gray-light border-b-2 text-center">
-                        ZLTO
-                      </th>
-                      {/* <th className="border-b-2 border-gray-light text-center">
-                        ZLTO Cumulative
-                      </th> */}
-                      <th className="border-gray-light border-b-2 text-center">
-                        Views
-                      </th>
-                      <th className="border-gray-light border-b-2 text-center">
-                        Clicks
-                      </th>
-                      <th className="border-gray-light border-b-2 text-center">
+                      <th className="border-gray-light border-b-2">ZLTO</th>
+                      <th className="border-gray-light border-b-2">Views</th>
+                      <th className="border-gray-light border-b-2">Clicks</th>
+                      <th className="border-gray-light border-b-2">
                         Completions
                       </th>
-                      <th className="border-gray-light border-b-2 text-center">
-                        Pending
-                      </th>
-                      <th className="border-gray-light border-b-2 text-center">
-                        Status
-                      </th>
-                      <th className="border-gray-light border-b-2 text-center">
-                        Visible
-                      </th>
+                      <th className="border-gray-light border-b-2">Pending</th>
+                      <th className="border-gray-light border-b-2">Status</th>
+                      <th className="border-gray-light border-b-2">Visible</th>
+                      <th className="border-gray-light border-b-2">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {searchResults.items.map((opportunity) => (
                       <tr key={`md_${opportunity.id}`}>
-                        <td className="border-gray-light flex h-14 flex-row items-center gap-2 border-b-2">
-                          <span
-                            className="tooltip tooltip-top tooltip-secondary"
-                            data-tip={opportunity.title}
+                        <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4">
+                          <Link
+                            title={opportunity.title}
+                            href={`/organisations/${id}/opportunities/${opportunity.id}/info${`?returnUrl=${encodeURIComponent(
+                              getSafeUrl(returnUrl?.toString(), router.asPath),
+                            )}`}`}
+                            className="text-gray-dark max-w-[80px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
                           >
-                            <Link
-                              href={`/organisations/${id}/opportunities/${opportunity.id}/info${`?returnUrl=${encodeURIComponent(
-                                getSafeUrl(
-                                  returnUrl?.toString(),
-                                  router.asPath,
-                                ),
-                              )}`}`}
-                              className="line-clamp-1 text-start"
-                            >
-                              {opportunity.title}
-                            </Link>
-                          </span>
+                            {opportunity.title}
+                          </Link>
                         </td>
-                        <td className="border-gray-light w-28 border-b-2 text-center">
-                          <span
-                            className="tooltip tooltip-top tooltip-secondary"
-                            data-tip="Edit"
-                          >
-                            <Link
-                              href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
-                            >
-                              <FaEdit className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
-                            </Link>
-                          </span>
-
-                          <span
-                            className="tooltip tooltip-top tooltip-secondary ml-2"
-                            data-tip="Download completion files"
-                          >
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                downloadVerificationFiles(e, opportunity.id);
-                              }}
-                            >
-                              <FaDownload className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
-                            </button>
-                          </span>
-
-                          {opportunity?.url && (
-                            <span
-                              className="tooltip tooltip-top tooltip-secondary ml-2"
-                              data-tip="Copy URL to clipboard"
-                            >
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  onClick_CopyToClipboard(opportunity.url!);
-                                }}
-                              >
-                                <FaLink className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
-                              </button>
-                            </span>
-                          )}
-                        </td>
-                        <td className="border-gray-light w-28 border-b-2 text-center">
+                        <td className="border-gray-light border-b-2">
                           {opportunity.zltoReward == null && (
                             <span
                               className={`badge bg-orange-light text-orange px-4`}
@@ -965,22 +949,7 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           )}
                         </td>
-                        {/* <td className="w-28 border-b-2 border-gray-light text-center">
-                          <span
-                            className={`badge bg-gray-light px-4 text-gray-dark`}
-                          >
-                            <Image
-                              src={iconZlto}
-                              alt="Zlto icon"
-                              width={16}
-                              className="h-auto"
-                            />
-                            <span className="ml-1 text-xs">
-                              {opportunity.zltoRewardCumulative ?? 0}
-                            </span>
-                          </span>
-                        </td> */}
-                        <td className="border-gray-light border-b-2 text-center">
+                        <td className="border-gray-light border-b-2">
                           <span
                             className={`badge ${opportunity.countViewed > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                           >
@@ -989,21 +958,21 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           </span>
                         </td>
-                        <td className="border-gray-light border-b-2 text-center">
+                        <td className="border-gray-light border-b-2">
                           <span
                             className={`badge ${opportunity.countNavigatedExternalLink > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                           >
                             {opportunity.countNavigatedExternalLink}
                           </span>
                         </td>
-                        <td className="border-gray-light border-b-2 text-center">
+                        <td className="border-gray-light border-b-2">
                           <span
                             className={`badge ${opportunity.participantCountCompleted > 0 ? "bg-green-light text-green" : "bg-gray-light text-gray-dark"}`}
                           >
                             {opportunity.participantCountCompleted}
                           </span>
                         </td>
-                        <td className="border-gray-light border-b-2 text-center">
+                        <td className="border-gray-light border-b-2">
                           {opportunity.participantCountPending > 0 ? (
                             <Link
                               href={`/organisations/${id}/verifications?opportunity=${opportunity.id}&verificationStatus=Pending`}
@@ -1022,12 +991,12 @@ const Opportunities: NextPageWithLayout<{
                             </span>
                           )}
                         </td>
-                        <td className="border-gray-light border-b-2 text-center">
+                        <td className="border-gray-light border-b-2">
                           <OpportunityStatus
                             status={opportunity?.status?.toString()}
                           />
                         </td>
-                        <td className="border-gray-light border-b-2 text-center">
+                        <td className="border-gray-light border-b-2">
                           {opportunity?.hidden ? (
                             <span className="badge bg-yellow-tint text-yellow w-20">
                               Hidden
@@ -1037,6 +1006,12 @@ const Opportunities: NextPageWithLayout<{
                               Visible
                             </span>
                           )}
+                        </td>
+                        <td className="border-gray-light border-b-2 whitespace-nowrap">
+                          <div className="flex flex-row items-center justify-center gap-2">
+                            {/* ACTIONS */}
+                            {renderOpportunityActionsDropdown(opportunity)}
+                          </div>
                         </td>
                       </tr>
                     ))}
