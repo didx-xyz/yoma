@@ -109,6 +109,23 @@ namespace Yoma.Core.Api.Controllers
 
       return StatusCode((int)HttpStatusCode.OK, result);
     }
+
+    [SwaggerOperation(
+    Summary = "Search link usage based on the supplied filter",
+      Description = "Returns the link details and a paged list of usage entries. Unclaimed results are only available if the link has a distribution list")]
+    [HttpPost("search/usage")]
+    [ProducesResponseType(typeof(LinkSearchResultsUsage), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult SearchUsage([FromBody] LinkSearchFilterUsage filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchUsage));
+
+      var result = _linkService.SearchUsage(filter, true);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchUsage));
+
+      return Ok(result);
+    }
     #endregion Administrative Actions
     #endregion
   }

@@ -19,4 +19,11 @@ namespace Yoma.Core.Domain.ActionLink
     LimitReached, // remains limitReached (not auto-deleted)
     Deleted
   }
+
+  public enum LinkUsageStatus
+  {
+    All,
+    Claimed,
+    Unclaimed
+  }
 }

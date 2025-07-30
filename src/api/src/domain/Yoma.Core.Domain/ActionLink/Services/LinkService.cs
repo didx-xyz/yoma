@@ -21,7 +21,6 @@ using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
-using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.ShortLinkProvider.Interfaces;
@@ -409,6 +408,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       return link.ToLinkInfo(false);
     }
+
+    public LinkSearchResultsUsage SearchUsage(LinkSearchFilterUsage filter, bool ensureOrganizationAuthorization)
+    {
+      throw new NotImplementedException();
+    }
     #endregion
 
     #region Private Members
@@ -591,7 +595,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return link.ToLinkInfo(false);
     }
 
-    public List<string>? ParseDistributionList(Link link)
+    private List<string>? ParseDistributionList(Link link)
     {
       if (link.DistributionList == null) return null;
 
