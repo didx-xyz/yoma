@@ -988,7 +988,7 @@ const Links: NextPageWithLayout<{
                 <tbody>
                   {links.items.map((item) => (
                     <tr key={`grid_md_${item.id}`} className="">
-                      {/* Link column */}
+                      {/* Link */}
                       <td className="border-gray-light w-[180px] max-w-[220px] border-b-2 !py-4 align-top">
                         <div className="flex flex-col gap-1">
                           <Link
@@ -1002,18 +1002,18 @@ const Links: NextPageWithLayout<{
                           >
                             {item.name}
                           </Link>
-                          {item.description && (
+                          {/* {item.description && (
                             <span
                               title={item.description}
                               className="block w-full max-w-[160px] overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500"
                             >
                               {item.description}
                             </span>
-                          )}
+                          )} */}
                         </div>
                       </td>
 
-                      {/* Opportunity column */}
+                      {/* Opportunity */}
                       <td className="border-gray-light w-[180px] max-w-[180px] border-b-2 !py-4 align-top">
                         {item.entityType == "Opportunity" &&
                           item.entityOrganizationId && (

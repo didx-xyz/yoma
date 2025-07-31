@@ -984,14 +984,14 @@ const Links: NextPageWithLayout<{
                           >
                             {item.name}
                           </Link>
-                          {item.description && (
+                          {/* {item.description && (
                             <span
                               title={item.description}
                               className="block w-full max-w-[160px] overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500"
                             >
                               {item.description}
                             </span>
-                          )}
+                          )} */}
                         </div>
                       </td>
 
@@ -1106,10 +1106,9 @@ const Links: NextPageWithLayout<{
                         )}
                       </td>
 
-                      {/* BUTTONS */}
+                      {/* ACTIONS */}
                       <td className="border-gray-light border-b-2 whitespace-nowrap">
                         <div className="flex flex-row items-center justify-center gap-2">
-                          {/* ACTIONS */}
                           {renderLinkActionsDropdown(item)}
                         </div>
                       </td>

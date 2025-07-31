@@ -486,7 +486,7 @@ const LinkDetails: NextPageWithLayout<{
 
         //  convert dates to string in format "YYYY-MM-DD"
         data.dateEnd = data.dateEnd
-          ? moment.utc(data.dateEnd).format(DATE_FORMAT_SYSTEM)
+          ? moment(data.dateEnd).format(DATE_FORMAT_SYSTEM)
           : null;
 
         // HACK: api want nulls and not empty arrays...
