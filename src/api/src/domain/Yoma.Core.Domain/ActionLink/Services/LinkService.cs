@@ -41,8 +41,9 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IOrganizationService _organizationService;
     private readonly IOpportunityService _opportunityService;
     private readonly ILinkStatusService _linkStatusService;
-    private readonly IRepositoryBatchedValueContains<Link> _linkRepository;
-    private readonly IRepository<LinkUsageLog> _linkUsageLogRepository;
+    private readonly IRepositoryBatchedValueContainsWithUnnested<Link> _linkRepository;
+    private readonly IRepositoryValueContains<LinkUsageLog> _linkUsageLogRepository;
+    private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly INotificationURLFactory _notificationURLFactory;
@@ -66,8 +67,9 @@ namespace Yoma.Core.Domain.ActionLink.Services
       IOrganizationService organizationService,
       ILinkStatusService linkStatusService,
       IOpportunityService opportunityService,
-      IRepositoryBatchedValueContains<Link> linkRepository,
-      IRepository<LinkUsageLog> linkUsageLogRepository,
+      IRepositoryBatchedValueContainsWithUnnested<Link> linkRepository,
+      IRepositoryValueContains<LinkUsageLog> linkUsageLogRepository,
+      IRepositoryValueContainsWithNavigation<User> userRepository,
       IExecutionStrategyService executionStrategyService,
       INotificationDeliveryService notificationDeliveryService,
       INotificationURLFactory notificationURLFactory,
@@ -86,6 +88,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       _linkStatusService = linkStatusService;
       _linkRepository = linkRepository;
       _linkUsageLogRepository = linkUsageLogRepository;
+      _userRepository = userRepository;
       _executionStrategyService = executionStrategyService;
       _notificationDeliveryService = notificationDeliveryService;
       _notificationURLFactory = notificationURLFactory;
@@ -411,7 +414,182 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
     public LinkSearchResultsUsage SearchUsage(LinkSearchFilterUsage filter, bool ensureOrganizationAuthorization)
     {
-      throw new NotImplementedException();
+      ArgumentNullException.ThrowIfNull(filter);
+
+      // TODO: Validator
+
+      var link = GetById(filter.Id);
+
+      if (ensureOrganizationAuthorization)
+        EnsureOrganizationAuthorization(link);
+
+      var distributionList = ParseDistributionList(link);
+
+      var result = new LinkSearchResultsUsage
+      {
+        Link = link.ToLinkInfo(false),
+        Items = []
+      };
+
+      IQueryable<UnnestedValue> unnestedQuery;
+
+      switch (filter.Usage)
+      {
+        case LinkUsageStatus.All:
+          if (distributionList == null || distributionList.Count == 0) goto case LinkUsageStatus.Claimed;
+
+          unnestedQuery = _linkRepository.UnnestValues(distributionList);
+
+          var queryAll = unnestedQuery
+            .GroupJoin(
+                _userRepository.Query(false),
+                d => d.Value.ToLower(),
+                u => u.Username.ToLower(),
+                (d, users) => new { d, users })
+            .SelectMany(
+                x => x.users.DefaultIfEmpty(),
+                (x, u) => new { x.d, u })
+            .GroupJoin(
+                _linkUsageLogRepository.Query().Where(x => x.LinkId == link.Id),
+                x => x.u != null ? x.u.Id : null,
+                l => (Guid?)l.UserId,
+                (x, usageLogs) => new { x.d, x.u, usageLogs })
+            .SelectMany(
+                x => x.usageLogs.DefaultIfEmpty(),
+                (x, l) => new LinkSearchResultsUsageItem
+                {
+                  UserId = x.u != null ? x.u.Id : null,
+                  Username = x.d.Value,
+                  Email = x.u != null ? x.u.Email : null,
+                  PhoneNumber = x.u != null ? x.u.PhoneNumber : null,
+                  DisplayName = x.u != null ? x.u.DisplayName : null,
+                  Country = x.u != null ? x.u.Country : null,
+                  DateOfBirth = x.u != null ? x.u.DateOfBirth : null,
+                  DateClaimed = l != null ? l.DateCreated : null
+                });
+
+          if (!string.IsNullOrWhiteSpace(filter.ValueContains))
+          {
+            var value = filter.ValueContains.ToLowerInvariant();
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+            queryAll = queryAll.Where(x =>
+                x.Username.ToLower().Contains(value) ||
+                (x.DisplayName != null && x.DisplayName.ToLower().Contains(value)));
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+          }
+
+          queryAll = queryAll.OrderBy(x => x.DisplayName ?? x.Username)
+                   .ThenBy(x => x.UserId);
+
+          if (filter.PaginationEnabled)
+          {
+            result.TotalCount = queryAll.Count();
+            queryAll = queryAll.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+          }
+
+          result.Items = [.. queryAll];
+          result.Items.ForEach(o =>
+          {
+            o.DisplayName ??= o.Username;
+            o.Age = o.DateOfBirth.HasValue ? o.DateOfBirth.Value.CalculateAge(null) : null;
+          });
+          break;
+
+        case LinkUsageStatus.Claimed:
+          var query = _linkUsageLogRepository.Query()
+              .Where(o => o.LinkId == link.Id);
+
+          if (!string.IsNullOrEmpty(filter.ValueContains))
+            query = _linkUsageLogRepository.Contains(query, filter.ValueContains);
+
+          query = query.OrderBy(o => o.UserDisplayName).ThenBy(o => o.Id);
+
+          if (filter.PaginationEnabled)
+          {
+            result.TotalCount = query.Count();
+            query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+          }
+
+          result.Items = [.. query.Select(o => new LinkSearchResultsUsageItem
+            {
+              UserId = o.UserId,
+              Username = o.Username,
+              Email = o.UserEmail,
+              PhoneNumber = o.UserPhoneNumber,
+              DisplayName = o.UserDisplayName,
+              Country = o.UserCountry,
+              DateOfBirth = o.UserDateOfBirth,
+              Age = o.UserDateOfBirth == null ? null : o.UserDateOfBirth.Value.CalculateAge(null),
+              DateClaimed = o.DateCreated
+            })];
+
+          break;
+
+        case LinkUsageStatus.Unclaimed:
+          if (distributionList == null || distributionList.Count == 0) break;
+
+          unnestedQuery = _linkRepository.UnnestValues(distributionList);
+
+          var queryUnclaimed = unnestedQuery
+            .GroupJoin(
+                _userRepository.Query(false),
+                d => d.Value.ToLower(),
+                u => u.Username.ToLower(),
+                (d, users) => new { d, users })
+            .SelectMany(
+                x => x.users.DefaultIfEmpty(),
+                (x, u) => new { x.d, u })
+            .GroupJoin(
+                _linkUsageLogRepository.Query().Where(x => x.LinkId == link.Id),
+                x => x.u != null ? x.u.Id : null,
+                l => (Guid?)l.UserId,
+                (x, usageLogs) => new { x.d, x.u, usageLogs })
+            .SelectMany(
+                x => x.usageLogs.DefaultIfEmpty(),
+                (x, l) => new LinkSearchResultsUsageItem
+                {
+                  UserId = x.u != null ? x.u.Id : null,
+                  Username = x.d.Value,
+                  Email = x.u != null ? x.u.Email : null,
+                  PhoneNumber = x.u != null ? x.u.PhoneNumber : null,
+                  DisplayName = x.u != null ? x.u.DisplayName : null,
+                  Country = x.u != null ? x.u.Country : null,
+                  DateOfBirth = x.u != null ? x.u.DateOfBirth : null,
+                  DateClaimed = null
+                })
+            .Where(x => x.DateClaimed == null);
+
+          if (!string.IsNullOrWhiteSpace(filter.ValueContains))
+          {
+            var value = filter.ValueContains.ToLowerInvariant();
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+            queryUnclaimed = queryUnclaimed.Where(x =>
+                x.Username.ToLower().Contains(value) ||
+                (x.DisplayName != null && x.DisplayName.ToLower().Contains(value)));
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+          }
+
+          queryUnclaimed = queryUnclaimed.OrderBy(x => x.DisplayName ?? x.Username).ThenBy(x => x.UserId);
+
+          if (filter.PaginationEnabled)
+          {
+            result.TotalCount = queryUnclaimed.Count();
+            queryUnclaimed = queryUnclaimed.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+          }
+
+          result.Items = [.. queryUnclaimed];
+          result.Items.ForEach(o =>
+          {
+            o.DisplayName ??= o.Username;
+            o.Age = o.DateOfBirth.HasValue ? o.DateOfBirth.Value.CalculateAge(null) : null;
+          });
+          break;
+
+        default:
+          throw new InvalidOperationException($"Invalid / unsupported usage status of '{filter.Usage}'");
+      }
+
+      return result;
     }
     #endregion
 

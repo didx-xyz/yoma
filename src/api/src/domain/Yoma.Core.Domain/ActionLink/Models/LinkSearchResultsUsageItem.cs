@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace Yoma.Core.Domain.ActionLink.Models
 {
   public class LinkSearchResultsUsageItem
@@ -13,6 +15,9 @@ namespace Yoma.Core.Domain.ActionLink.Models
     public string? DisplayName { get; set; }
 
     public string? Country { get; set; }
+
+    [JsonIgnore]
+    internal DateTimeOffset? DateOfBirth { get; set; }
 
     public int? Age { get; set; }
 

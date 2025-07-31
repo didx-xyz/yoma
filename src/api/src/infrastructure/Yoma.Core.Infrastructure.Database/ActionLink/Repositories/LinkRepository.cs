@@ -1,15 +1,18 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
+using NpgsqlTypes;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 {
-  public class LinkRepository : BaseRepository<Entities.Link, Guid>, IRepositoryBatchedValueContains<Link>
+  public class LinkRepository : BaseRepository<Entities.Link, Guid>, IRepositoryBatchedValueContainsWithUnnested<Link>
   {
     #region Constructor
     public LinkRepository(ApplicationDbContext context) : base(context) { }
@@ -61,6 +64,19 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
        || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%"))
        || (!string.IsNullOrEmpty(o.OpportunityTitle) && EF.Functions.ILike(o.OpportunityTitle, $"%{value}%"))
        || (!string.IsNullOrEmpty(o.OpportunityOrganizationName) && EF.Functions.ILike(o.OpportunityOrganizationName, $"%{value}%")));
+    }
+
+    public IQueryable<UnnestedValue> UnnestValues(IEnumerable<string> values)
+    {
+      var array = values?.Where(v => !string.IsNullOrWhiteSpace(v)).ToArray() ?? [];
+
+      var param = new NpgsqlParameter("p0", array)
+      {
+        NpgsqlDbType = NpgsqlDbType.Array | NpgsqlDbType.Text
+      };
+
+      return _context.Set<UnnestedValue>()
+          .FromSqlRaw("SELECT row_number() OVER () AS \"Id\", unnest(@p0) AS \"Value\"", param);
     }
 
     public async Task<Link> Create(Link item)

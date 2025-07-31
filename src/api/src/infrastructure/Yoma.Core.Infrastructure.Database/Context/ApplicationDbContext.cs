@@ -180,6 +180,13 @@ namespace Yoma.Core.Infrastructure.Database.Context
     #region Protected Members
     protected override void OnModelCreating(ModelBuilder builder)
     {
+      builder.Entity<Domain.Core.Models.UnnestedValue>(eb =>
+      {
+        eb.HasKey(x => x.Id); // keep the key for joins and EF tracking
+        eb.ToView(null); // mark it as not having a backing table or view
+        eb.Metadata.SetIsTableExcludedFromMigrations(true); // exclude from migrations
+      });
+
       foreach (var entityType in builder.Model.GetEntityTypes())
       {
         foreach (var property in entityType.GetProperties())

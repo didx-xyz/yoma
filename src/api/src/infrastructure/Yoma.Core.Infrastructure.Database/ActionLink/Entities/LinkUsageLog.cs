@@ -16,7 +16,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
 
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
-    public Entity.Entities.User? User { get; set; }
+    public Entity.Entities.User User { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

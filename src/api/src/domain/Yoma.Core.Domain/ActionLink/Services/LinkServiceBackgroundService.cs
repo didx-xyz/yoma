@@ -17,7 +17,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly ILinkStatusService _linkStatusService;
     private readonly IUserService _userService;
-    private readonly IRepositoryBatchedValueContains<Link> _linkRepository;
+    private readonly IRepositoryBatchedValueContainsWithUnnested<Link> _linkRepository;
     private readonly IDistributedLockService _distributedLockService;
 
     internal static readonly LinkStatus[] Statuses_Expirable = [LinkStatus.Active];
@@ -29,7 +29,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         IOptions<ScheduleJobOptions> scheduleJobOptions,
         ILinkStatusService linkStatusService,
         IUserService userService,
-        IRepositoryBatchedValueContains<Link> linkRepository,
+        IRepositoryBatchedValueContainsWithUnnested<Link> linkRepository,
         IDistributedLockService distributedLockService)
     {
       _logger = logger;

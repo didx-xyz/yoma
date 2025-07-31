@@ -78,8 +78,8 @@ namespace Yoma.Core.Infrastructure.Database
       #region Lookups
       services.AddScoped<IRepository<LinkStatus>, LinkStatusRepository>();
       #endregion Lookups
-      services.AddScoped<IRepositoryBatchedValueContains<Link>, LinkRepository>();
-      services.AddScoped<IRepository<LinkUsageLog>, LinkUsageLogRepository>();
+      services.AddScoped<IRepositoryBatchedValueContainsWithUnnested<Link>, LinkRepository>();
+      services.AddScoped<IRepositoryValueContains<LinkUsageLog>, LinkUsageLogRepository>();
       #endregion ActionLink
 
       #region Core
