@@ -51,6 +51,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly LinkRequestCreateValidatorShare _linkRequestCreateValidatorShare;
     private readonly LinkRequestCreateValidatorVerify _linkRequestCreateValidatorVerify;
     private readonly LinkSearchFilterValidator _linkSearchFilterValidator;
+    private readonly LinkSearchFilterUsageValidator _linkSearchFilterUsageValidator;
 
     //a link can only be made active ONCE as it might have a distribution list that gets notified upon activation; thus an active link can not be deactivated 
     private static readonly LinkStatus[] Statuses_Activatable = [LinkStatus.Inactive];
@@ -75,7 +76,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
       INotificationURLFactory notificationURLFactory,
       LinkRequestCreateValidatorShare linkRequestCreateValidatorShare,
       LinkRequestCreateValidatorVerify linkRequestCreateValidatorVerify,
-      LinkSearchFilterValidator linkSearchFilterValidator)
+      LinkSearchFilterValidator linkSearchFilterValidator,
+      LinkSearchFilterUsageValidator linkSearchFilterUsageValidator)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -95,6 +97,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       _linkRequestCreateValidatorShare = linkRequestCreateValidatorShare;
       _linkRequestCreateValidatorVerify = linkRequestCreateValidatorVerify;
       _linkSearchFilterValidator = linkSearchFilterValidator;
+      _linkSearchFilterUsageValidator = linkSearchFilterUsageValidator;
     }
     #endregion
 
@@ -416,12 +419,11 @@ namespace Yoma.Core.Domain.ActionLink.Services
     {
       ArgumentNullException.ThrowIfNull(filter);
 
-      // TODO: Validator
+      _linkSearchFilterUsageValidator.ValidateAndThrow(filter);
 
       var link = GetById(filter.Id);
 
-      if (ensureOrganizationAuthorization)
-        EnsureOrganizationAuthorization(link);
+      if (ensureOrganizationAuthorization) EnsureOrganizationAuthorization(link);
 
       var distributionList = ParseDistributionList(link);
 
