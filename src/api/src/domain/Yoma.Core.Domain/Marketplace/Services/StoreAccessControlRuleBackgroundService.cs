@@ -15,9 +15,9 @@ namespace Yoma.Core.Domain.Marketplace.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IStoreAccessControlRuleStatusService _storeAccessControlRuleStatusService;
     private readonly IDistributedLockService _distributedLockService;
-    private readonly IRepositoryBatchedValueContainsWithNavigation<StoreAccessControlRule> _storeAccessControlRuleRepistory;
+    private readonly IRepositoryBatchedValueContainsWithNavigation<StoreAccessControlRule> _storeAccessControlRuleRepository;
 
-    private static readonly StoreAccessControlRuleStatus[] Statuses_Deletion = [StoreAccessControlRuleStatus.Inactive];
+    internal static readonly StoreAccessControlRuleStatus[] Statuses_Deletion = [StoreAccessControlRuleStatus.Inactive];
     #endregion
 
     #region Constructor
@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       _scheduleJobOptions = scheduleJobOptions.Value;
       _storeAccessControlRuleStatusService = storeAccessControlRuleStatusService;
       _distributedLockService = distributedLockService;
-      _storeAccessControlRuleRepistory = storeAccessControlRuleRepistory;
+      _storeAccessControlRuleRepository = storeAccessControlRuleRepistory;
     }
     #endregion
 
@@ -57,7 +57,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
-          var items = _storeAccessControlRuleRepistory.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
+          var items = _storeAccessControlRuleRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
               o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.StoreAccessControlRuleDeletionScheduleIntervalInDays))
               .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.StoreAccessControlRuleDeletionScheduleBatchSize).ToList();
           if (items.Count == 0) break;
@@ -69,7 +69,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
             _logger.LogInformation("Store access control rule with id '{id}' flagged for deletion", item.Id);
           }
 
-          await _storeAccessControlRuleRepistory.Update(items);
+          await _storeAccessControlRuleRepository.Update(items);
 
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }

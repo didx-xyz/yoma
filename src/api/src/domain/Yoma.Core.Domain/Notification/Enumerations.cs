@@ -13,9 +13,7 @@ namespace Yoma.Core.Domain.Notification
     Opportunity_Verification_Pending, //sent to youth
     Opportunity_Verification_Pending_Admin, //sent to organization admin
     ActionLink_Verify_Distribution, //sent to youth mailing / distribution list
-    ActionLink_Verify_Approval_Requested, //sent to admin
-    ActionLink_Verify_Approval_Approved, //sent to organization admin
-    ActionLink_Verify_Approval_Declined, //sent to organization admin
+    ActionLink_Verify_Activated, //sent to organization admin
     Opportunity_Published, //sent to youth
     Download //sent to admin or organization admin
   }

@@ -422,19 +422,19 @@ namespace Yoma.Core.Domain.Marketplace.Services
         case StoreAccessControlRuleStatus.Active:
           if (result.Status == StoreAccessControlRuleStatus.Active) return result;
           if (!Statuses_Activatable.Contains(result.Status))
-            throw new ValidationException($"{nameof(StoreAccessControlRule)} can not be activated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
+            throw new ValidationException($"{nameof(StoreAccessControlRule)} can not be activated (current status '{result.Status}'). Required state '{Statuses_Activatable.JoinNames()}'");
           break;
 
         case StoreAccessControlRuleStatus.Inactive:
           if (result.Status == StoreAccessControlRuleStatus.Inactive) return result;
           if (!Statuses_DeActivatable.Contains(result.Status))
-            throw new ValidationException($"{nameof(StoreAccessControlRule)} can not be deactivated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
+            throw new ValidationException($"{nameof(StoreAccessControlRule)} can not be deactivated (current status '{result.Status}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
           break;
 
         case StoreAccessControlRuleStatus.Deleted:
           if (result.Status == StoreAccessControlRuleStatus.Deleted) return result;
           if (!Statuses_CanDelete.Contains(result.Status))
-            throw new ValidationException($"{nameof(StoreAccessControlRule)} can not be deleted (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
+            throw new ValidationException($"{nameof(StoreAccessControlRule)} can not be deleted (current status '{result.Status}'). Required state '{Statuses_CanDelete.JoinNames()}'");
           break;
 
         default:

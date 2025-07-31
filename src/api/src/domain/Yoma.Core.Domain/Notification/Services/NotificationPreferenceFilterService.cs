@@ -44,11 +44,10 @@ namespace Yoma.Core.Domain.Notification.Services
         NotificationType.Organization_Approval_Approved or NotificationType.Organization_Approval_Declined => Setting.Organization_Admin_Notification_Organization_Approval,
         NotificationType.Opportunity_Expiration_Expired or NotificationType.Opportunity_Expiration_WithinNextDays => Setting.Organization_Admin_Notification_Opportunity_Expiration,
         NotificationType.Opportunity_Verification_Pending_Admin => Setting.Organization_Admin_Notification_Opportunity_Completion,
-        NotificationType.ActionLink_Verify_Approval_Approved or NotificationType.ActionLink_Verify_Approval_Declined => Setting.Organization_Admin_Notification_ActionLink_Verify_Approval,
+        NotificationType.ActionLink_Verify_Activated => Setting.Organization_Admin_Notification_ActionLink_Verify_Activated,
         // admin
         NotificationType.Organization_Approval_Requested => Setting.Admin_Notification_Organization_Approval,
         NotificationType.Opportunity_Posted_Admin => Setting.Admin_Notification_Opportunity_Posted,
-        NotificationType.ActionLink_Verify_Approval_Requested => Setting.Admin_Notification_ActionLink_Verify_Approval,
         _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported"),
       };
       var result = new List<NotificationRecipient>();

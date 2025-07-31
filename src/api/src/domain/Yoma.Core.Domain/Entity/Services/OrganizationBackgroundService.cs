@@ -11,6 +11,7 @@ using Yoma.Core.Domain.Entity.Events;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.Core.Extensions;
 
 namespace Yoma.Core.Domain.Entity.Services
 {
@@ -30,8 +31,8 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IRepository<OrganizationDocument> _organizationDocumentRepository;
     private readonly IDistributedLockService _distributedLockService;
     private readonly IMediator _mediator;
-    private static readonly OrganizationStatus[] Statuses_Declination = [OrganizationStatus.Inactive];
-    private static readonly OrganizationStatus[] Statuses_Deletion = [OrganizationStatus.Declined];
+    internal static readonly OrganizationStatus[] Statuses_Declination = [OrganizationStatus.Inactive];
+    internal static readonly OrganizationStatus[] Statuses_Deletion = [OrganizationStatus.Declined];
     #endregion
 
     #region Constructor
@@ -95,7 +96,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
           foreach (var item in items)
           {
-            item.CommentApproval = $"Auto-Declined due to being {string.Join("/", Statuses_Declination).ToLower()} for more than {_scheduleJobOptions.OrganizationDeclinationIntervalInDays} days";
+            item.CommentApproval = $"Auto-Declined due to being {Statuses_Declination.JoinNames().ToLower()} for more than {_scheduleJobOptions.OrganizationDeclinationIntervalInDays} days";
             item.StatusId = statusDeclinedId;
             item.Status = OrganizationStatus.Declined;
             item.ModifiedByUserId = user.Id;

@@ -38,8 +38,6 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public bool? LockToDistributionList { get; set; }
 
-    public string? CommentApproval { get; set; }
-
     public DateTimeOffset DateCreated { get; set; }
 
     public Guid CreatedByUserId { get; set; }

@@ -13,6 +13,7 @@ using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
+using Yoma.Core.Domain.Core.Extensions;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -33,7 +34,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
     private readonly IDistributedLockService _distributedLockService;
 
-    private static readonly VerificationStatus[] Statuses_Rejectable = [VerificationStatus.Pending];
+    internal static readonly VerificationStatus[] Statuses_Rejectable = [VerificationStatus.Pending];
     #endregion
 
     #region Constructor
@@ -95,7 +96,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           foreach (var item in items)
           {
-            item.CommentVerification = $"Auto-Declined due to being {string.Join("/", Statuses_Rejectable).ToLower()} for more than {_scheduleJobOptions.MyOpportunityRejectionIntervalInDays} days";
+            item.CommentVerification = $"Auto-Declined due to being {Statuses_Rejectable.JoinNames().ToLower()} for more than {_scheduleJobOptions.MyOpportunityRejectionIntervalInDays} days";
             item.VerificationStatusId = statusRejectedId;
             _logger.LogInformation("'My' opportunity with id '{id}' flagged for verification rejection", item.Id);
           }

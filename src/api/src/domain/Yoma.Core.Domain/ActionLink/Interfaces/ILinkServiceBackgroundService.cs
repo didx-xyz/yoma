@@ -4,8 +4,6 @@ namespace Yoma.Core.Domain.ActionLink.Interfaces
   {
     Task ProcessExpiration();
 
-    Task ProcessDeclination();
-
     Task ProcessDeletion();
   }
 }

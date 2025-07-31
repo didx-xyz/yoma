@@ -1,4 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -6,15 +7,16 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
+import { FaLink, FaQrcode, FaSearch, FaStar, FaTrash } from "react-icons/fa";
 import {
-  IoIosLink,
   IoIosSettings,
   IoMdCalendar,
   IoMdClose,
   IoMdLock,
   IoMdPerson,
+  IoMdWarning,
 } from "react-icons/io";
-import { IoQrCode, IoShareSocialOutline } from "react-icons/io5";
+import { IoShareSocialOutline } from "react-icons/io5";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
 import {
@@ -46,11 +48,13 @@ import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityB
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
+import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import {
   DATE_FORMAT_HUMAN,
   GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
   GA_CATEGORY_OPPORTUNITY_LINK,
   PAGE_SIZE,
+  ROLE_ADMIN,
   THEME_BLUE,
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
@@ -70,13 +74,20 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     page,
     returnUrl,
   } = context.query;
-  const session = await getServerSession(context.req, context.res, authOptions);
 
-  // 👇 ensure authenticated
+  // 👇 ensure authenticated and authorized
+  const session = await getServerSession(context.req, context.res, authOptions);
   if (!session) {
     return {
       props: {
         error: 401,
+      },
+    };
+  }
+  if (!session.user?.roles?.includes(ROLE_ADMIN)) {
+    return {
+      props: {
+        error: 403,
       },
     };
   }
@@ -124,10 +135,7 @@ const Links: NextPageWithLayout<{
     string | null | undefined
   >(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [modalActionVisible, setModalActionVisibile] = useState(false);
-  const [verifyComments, setVerifyComments] = useState("");
-  const [linkStatus, setLinkStatus] = useState<LinkStatus | null>(null);
-  const [selectedRow, setSelectedRow] = useState<LinkInfo | null>();
+  const modalContext = useConfirmationModalContext();
 
   // 👇 use prefetched queries from server
   const { data: links } = useQuery<LinkSearchResult>({
@@ -226,31 +234,6 @@ const Links: NextPageWithLayout<{
         entities: entities ? entities.split("|") : null,
         organizations: organizations ? organizations.split("|") : null,
         statuses: [LinkStatus.Inactive],
-        valueContains: valueContains ?? null,
-      }).then((data) => data.totalCount ?? 0),
-    enabled: !error,
-  });
-  const { data: totalCountDeclined } = useQuery<number>({
-    queryKey: [
-      "Admin",
-      "Links",
-      "TotalCount",
-      LinkStatus.Declined,
-      type ?? "",
-      action ?? "",
-      organizations ?? "",
-      entities ?? "",
-      valueContains ?? "",
-    ],
-    queryFn: () =>
-      searchLinks({
-        pageNumber: page ? parseInt(page) : 1,
-        pageSize: PAGE_SIZE,
-        entityType: type ?? LinkEntityType.Opportunity,
-        action: action ?? LinkAction.Verify,
-        entities: entities ? entities.split("|") : null,
-        organizations: organizations ? organizations.split("|") : null,
-        statuses: [LinkStatus.Declined],
         valueContains: valueContains ?? null,
       }).then((data) => data.totalCount ?? 0),
     enabled: !error,
@@ -443,76 +426,166 @@ const Links: NextPageWithLayout<{
     [queryClient],
   );
 
-  const onOpenCommentsDialog = useCallback(
-    (item: LinkInfo, status: LinkStatus) => {
-      setLinkStatus(status);
-      setSelectedRow(item);
-      setModalActionVisibile(true);
-    },
-    [setLinkStatus, setSelectedRow, setModalActionVisibile],
-  );
+  const updateStatus = useCallback(
+    async (item: LinkInfo, status: LinkStatus) => {
+      // confirm dialog
+      const result = await modalContext.showConfirmation(
+        "",
+        <div
+          key="confirm-dialog-content"
+          className="flex h-full flex-col space-y-2 text-gray-500"
+        >
+          <div className="flex flex-row items-center gap-2">
+            <IoMdWarning className="text-warning h-6 w-6" />
+            <p className="text-lg">Confirm</p>
+          </div>
 
-  const onCloseCommentsDialog = useCallback(() => {
-    setVerifyComments("");
-    setLinkStatus(null);
-    setSelectedRow(null);
-    setModalActionVisibile(false);
-  }, [
-    setVerifyComments,
-    setLinkStatus,
-    setSelectedRow,
-    setModalActionVisibile,
-  ]);
-
-  const onPerformLinkStatusChange = useCallback(async () => {
-    if (!selectedRow || linkStatus == null) return;
-    setIsLoading(true);
-
-    try {
-      // call api
-      await updateLinkStatus(selectedRow.id, {
-        status: linkStatus,
-        comment: verifyComments,
-      });
-
-      // 📊 GOOGLE ANALYTICS: track event
-      trackGAEvent(
-        GA_CATEGORY_OPPORTUNITY_LINK,
-        GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
-        `Status Changed to ${linkStatus} for Opportunity Link ID: ${selectedRow.id}`,
+          <div>
+            <p className="text-sm leading-6">
+              {status === LinkStatus.Active && (
+                <>
+                  Are you sure you want to <i>activate</i> this link?
+                </>
+              )}
+              {status === LinkStatus.Inactive && (
+                <>
+                  Are you sure you want to <i>inactivate</i> this link?
+                </>
+              )}
+              {status === LinkStatus.Deleted && (
+                <>
+                  Are you sure you want to <i>delete</i> this link?
+                </>
+              )}
+            </p>
+          </div>
+        </div>,
       );
+      if (!result) return;
 
-      // invalidate cache
-      // this will match all queries with the following prefixes ['Admin', 'Links', ...] (list data) & [''Admin', 'Links', 'TotalCount', ...] (tab counts)
-      await queryClient.invalidateQueries({
-        queryKey: ["Admin", "Links"],
-        exact: false,
-      });
+      setIsLoading(true);
 
-      toast.success("Link status updated");
-    } catch (error) {
-      toast(<ApiErrors error={error} />, {
-        type: "error",
-        toastId: "verifyCredential",
-        autoClose: 2000,
-        icon: false,
-      });
+      try {
+        // call api
+        await updateLinkStatus(item.id, status);
 
+        // 📊 GOOGLE ANALYTICS: track event
+        trackGAEvent(
+          GA_CATEGORY_OPPORTUNITY_LINK,
+          GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
+          `Status Changed to ${status} for Opportunity Link ID: ${item.id}`,
+        );
+
+        // invalidate cache
+        // this will match all queries with the following prefixes ['Links', id] (list data) & ['Links_TotalCount', id] (tab counts)
+        await queryClient.invalidateQueries({
+          queryKey: ["Admin", "Links"],
+          exact: false,
+        });
+        // await queryClient.invalidateQueries({
+        //   queryKey: ["Links_TotalCount", id],
+        //   exact: false,
+        // });
+
+        toast.success("Link status updated");
+      } catch (error) {
+        toast(<ApiErrors error={error as AxiosError} />, {
+          type: "error",
+          toastId: `error-${item.id}`,
+          autoClose: false,
+          icon: false,
+        });
+      }
       setIsLoading(false);
 
       return;
-    }
+    },
+    [queryClient, modalContext, setIsLoading],
+  );
 
-    setIsLoading(false);
-    onCloseCommentsDialog();
-  }, [
-    queryClient,
-    verifyComments,
-    selectedRow,
-    linkStatus,
-    setIsLoading,
-    onCloseCommentsDialog,
-  ]);
+  // Link actions dropdown
+  const renderLinkActionsDropdown = (link: LinkInfo) => (
+    <div className="dropdown dropdown-left">
+      <button type="button" title="Actions" className="cursor-pointer">
+        <IoIosSettings className="text-green hover:text-blue size-5 hover:scale-125 hover:animate-pulse" />
+      </button>
+      <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-64 gap-2 p-2 shadow">
+        <li>
+          <button
+            type="button"
+            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+            title="Go to Link Overview"
+            onClick={() => {
+              void router.push(
+                `/organisations/${link.entityOrganizationId}/links/${link.id}${`?returnUrl=${encodeURIComponent(
+                  getSafeUrl(returnUrl, router.asPath),
+                )}`}`,
+              );
+            }}
+          >
+            <FaSearch className="text-green size-4" />
+            Go to Link Overview
+          </button>
+        </li>
+
+        <li>
+          <button
+            type="button"
+            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+            title="Copy URL to clipboard"
+            onClick={() => {
+              onClick_CopyToClipboard(link.uRL!);
+            }}
+          >
+            <FaLink className="text-green size-4" />
+            Copy Link
+          </button>
+        </li>
+
+        <li>
+          <button
+            type="button"
+            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+            title="Generate QR Code"
+            onClick={() => {
+              onClick_GenerateQRCode(link);
+            }}
+          >
+            <FaQrcode className="text-green size-4" />
+            Generate QR Code
+          </button>
+        </li>
+
+        {(link?.status == "Inactive" || link?.status == "Active") && (
+          <>
+            <li>
+              <button
+                type="button"
+                className="text-gray-dark flex flex-row items-center hover:brightness-50"
+                onClick={() => updateStatus(link, LinkStatus.Deleted)}
+              >
+                <FaTrash className="text-green size-4" />
+                Delete
+              </button>
+            </li>
+
+            {link?.status == "Inactive" && (
+              <li>
+                <button
+                  type="button"
+                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+                  onClick={() => updateStatus(link, LinkStatus.Active)}
+                >
+                  <FaStar className="text-green size-4" />
+                  Activate
+                </button>
+              </li>
+            )}
+          </>
+        )}
+      </ul>
+    </div>
+  );
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -529,94 +602,6 @@ const Links: NextPageWithLayout<{
       <PageBackground className="h-[14.3rem] md:h-[18.4rem]" />
 
       {isLoading && <Loading />}
-
-      {/* MODAL DIALOG FOR ACTIONS */}
-      <CustomModal
-        isOpen={modalActionVisible}
-        shouldCloseOnOverlayClick={true}
-        onRequestClose={onCloseCommentsDialog}
-        className={`md:max-h-[400px] md:w-[600px]`}
-      >
-        <div className="flex h-full flex-col space-y-2">
-          <div className="flex flex-row items-center bg-white px-4 pt-2">
-            <div className="flex w-64 grow flex-col pl-2">
-              <div className="truncate text-sm font-semibold">
-                {selectedRow?.name}
-              </div>
-              <div className="truncate text-xs">{selectedRow?.description}</div>
-            </div>
-
-            <button
-              type="button"
-              className="btn border-green-dark bg-green-dark hover:text-green scale-[0.55] rounded-full p-[7px] text-white"
-              onClick={onCloseCommentsDialog}
-            >
-              <IoMdClose className="h-8 w-8"></IoMdClose>
-            </button>
-          </div>
-
-          <div className="bg-gray-light flex grow flex-col gap-4 px-6 pb-10">
-            <fieldset className="fieldset mt-8 rounded-lg bg-white px-4 py-2">
-              <label className="label">
-                <span className="text-gray-dark font-semibold">
-                  Enter comments below:
-                </span>
-              </label>
-              <textarea
-                className="input border-gray-light my-2 h-[100px] p-2"
-                onChange={(e) => setVerifyComments(e.target.value)}
-              />
-            </fieldset>
-          </div>
-
-          {/* BUTTONS */}
-          <div className="flex flex-row place-items-center justify-center px-6 py-4 pt-2">
-            <div className="flex grow">
-              <button
-                className="btn btn-sm md:btn-sm flex-nowrap border-black bg-white py-5 text-black hover:bg-black hover:text-white"
-                onClick={onCloseCommentsDialog}
-              >
-                <IoMdClose className="h-6 w-6" />
-                Close
-              </button>
-            </div>
-            <div className="flex gap-4">
-              {linkStatus == LinkStatus.Active && (
-                <button
-                  className="btn btn-sm border-green text-green hover:bg-green flex-nowrap bg-white py-5 hover:text-white"
-                  onClick={onPerformLinkStatusChange}
-                >
-                  Approve
-                </button>
-              )}
-              {linkStatus == LinkStatus.Declined && (
-                <button
-                  className="btn btn-sm flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
-                  onClick={onPerformLinkStatusChange}
-                >
-                  Decline
-                </button>
-              )}
-              {linkStatus == LinkStatus.Inactive && (
-                <button
-                  className="btn btn-sm flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
-                  onClick={onPerformLinkStatusChange}
-                >
-                  Inactivate
-                </button>
-              )}
-              {linkStatus == LinkStatus.Deleted && (
-                <button
-                  className="btn btn-sm flex-nowrap border-red-500 bg-white py-5 text-red-500 hover:bg-red-500 hover:text-white"
-                  onClick={onPerformLinkStatusChange}
-                >
-                  Delete
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-      </CustomModal>
 
       {/* QR CODE DIALOG */}
       <CustomModal
@@ -734,22 +719,6 @@ const Links: NextPageWithLayout<{
               )}
             </Link>
             <Link
-              href={`/admin/links?statuses=declined`}
-              role="tab"
-              className={`border-b-4 py-2 whitespace-nowrap text-white ${
-                statuses === "declined"
-                  ? "border-orange"
-                  : "hover:border-orange hover:text-gray"
-              }`}
-            >
-              Declined
-              {(totalCountDeclined ?? 0) > 0 && (
-                <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
-                  {totalCountDeclined}
-                </div>
-              )}
-            </Link>
-            <Link
               href={`/admin/links?statuses=expired`}
               className={`border-b-4 py-2 whitespace-nowrap text-white ${
                 statuses === "expired"
@@ -832,273 +801,206 @@ const Links: NextPageWithLayout<{
               <div className="flex flex-col gap-4 md:hidden">
                 {links.items.map((item) => (
                   <div
-                    key={`grid_xs_${item.id}`}
-                    className="shadow-custom rounded-lg bg-white p-4"
+                    key={`sm_${item.id}`}
+                    className="shadow-custom flex flex-col gap-2 rounded-lg bg-white p-4"
                   >
-                    <div className="mb-2 flex flex-col">
-                      {item.entityOrganizationId &&
-                        item.entityOrganizationName && (
-                          <Link
-                            href={`/organisations/${
-                              item.entityOrganizationId
-                            }${`?returnUrl=${encodeURIComponent(
-                              getSafeUrl(returnUrl, router.asPath),
-                            )}`}`}
-                            className="text-gray-dark max-w-[300px] overflow-hidden text-sm font-bold text-ellipsis whitespace-nowrap underline"
+                    {/* Link & Actions */}
+                    <div className="border-gray-light flex flex-row gap-2 border-b-2 pb-2">
+                      <div className="flex w-full flex-col gap-1">
+                        <Link
+                          title={item.name}
+                          href={`/organisations/${
+                            item.entityOrganizationId
+                          }/links/${item.id}${`?returnUrl=${encodeURIComponent(
+                            getSafeUrl(returnUrl, router.asPath),
+                          )}`}`}
+                          className="text-gray-dark block w-full max-w-[300px] overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap underline"
+                        >
+                          {item.name}
+                        </Link>
+                        {item.description && (
+                          <span
+                            title={item.description}
+                            className="block w-full max-w-[300px] overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500"
                           >
-                            {item.entityOrganizationName}
-                          </Link>
+                            {item.description}
+                          </span>
                         )}
+                      </div>
+                      {renderLinkActionsDropdown(item)}
+                    </div>
 
-                      {item.entityType == "Opportunity" &&
-                        item.entityOrganizationId && (
-                          <Link
-                            href={`/organisations/${
-                              item.entityOrganizationId
-                            }/opportunities/${
-                              item.entityId
-                            }/info${`?returnUrl=${encodeURIComponent(
-                              getSafeUrl(returnUrl, router.asPath),
-                            )}`}`}
-                            className="text-gray-dark max-w-[300px] overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap underline"
-                          >
-                            {item.entityTitle}
-                          </Link>
-                        )}
-                      {item.entityType != "Opportunity" && (
-                        <>{item.entityTitle}</>
-                      )}
-
-                      <span className="text-gray-dark mt-2 overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap">
-                        {item.name}
+                    {/* Opportunity */}
+                    <div className="flex flex-row items-start justify-between py-1">
+                      <span className="text-gray-dark text-sm font-normal">
+                        Opportunity
                       </span>
-
-                      <span className="text-gray-dark overflow-hidden text-xs font-semibold text-ellipsis whitespace-nowrap">
-                        {item.description}
+                      <span className="text-sm">
+                        <Link
+                          href={`/organisations/${
+                            item.entityOrganizationId
+                          }/opportunities/${
+                            item.entityId
+                          }/info${`?returnUrl=${encodeURIComponent(
+                            getSafeUrl(returnUrl, router.asPath),
+                          )}`}`}
+                          className="text-gray-dark block max-w-[160px] overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap underline"
+                        >
+                          {item.entityTitle}
+                        </Link>
                       </span>
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                      <div className="flex justify-between">
-                        <p className="text-sm tracking-wider">Usage</p>
-
-                        {item.lockToDistributionList && (
-                          <span className="badge bg-green-light text-yellow">
-                            <IoMdLock className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
-                              {item.usagesTotal ?? "0"} /{" "}
-                              {item.usagesLimit ?? "0"}
-                            </span>
-                          </span>
-                        )}
-
-                        {!item.lockToDistributionList && (
-                          <span className="badge bg-green-light text-green">
-                            <IoMdPerson className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
-                              {item.usagesTotal ?? "0"} /{" "}
-                              {item.usagesLimit ?? "0"}
-                            </span>
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex justify-between">
-                        <p className="text-sm tracking-wider">Expires</p>
-                        {item.dateEnd ? (
-                          <span className="badge bg-yellow-light text-yellow">
-                            <IoMdCalendar className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
-                              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                                {item.dateEnd}
-                              </Moment>
-                            </span>
-                          </span>
-                        ) : (
-                          "N/A"
-                        )}
-                      </div>
-
-                      <div className="flex justify-between">
-                        <p className="text-sm tracking-wider">Status</p>
-                        {item.status == "Active" && (
-                          <span className="badge bg-blue-light text-blue">
-                            Active
-                          </span>
-                        )}
-                        {item.status == "Expired" && (
-                          <span className="badge bg-green-light text-yellow">
-                            Expired
-                          </span>
-                        )}
-                        {item.status == "Inactive" && (
-                          <span className="badge bg-yellow-tint text-yellow">
-                            Inactive
-                          </span>
-                        )}
-                        {item.status == "LimitReached" && (
-                          <span className="badge bg-green-light text-red-400">
-                            Limit Reached
-                          </span>
-                        )}{" "}
-                        {item.status == "Declined" && (
-                          <span className="badge bg-green-light text-red-400">
-                            Declined
-                          </span>
-                        )}
-                        {item.status == "Deleted" && (
-                          <span className="badge bg-green-light text-red-400">
-                            Deleted
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="flex justify-center gap-2">
-                        <button
-                          onClick={() =>
-                            onClick_CopyToClipboard(
-                              item?.shortURL ?? item?.uRL ?? "",
-                            )
-                          }
-                          className="badge bg-green-light text-green"
+                    {/* Organisation */}
+                    <div className="flex flex-row items-start justify-between py-1">
+                      <span className="text-gray-dark text-sm font-normal">
+                        Organisation
+                      </span>
+                      <span className="text-sm">
+                        <Link
+                          href={`/organisations/dashboard?organisations=${
+                            item.entityOrganizationId
+                          }${`&returnUrl=${encodeURIComponent(
+                            getSafeUrl(returnUrl, router.asPath),
+                          )}`}`}
+                          className="text-gray-dark block max-w-[160px] overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap underline"
                         >
-                          <IoIosLink className="h-4 w-4" />
-                        </button>
+                          {item.entityOrganizationName}
+                        </Link>
+                      </span>
+                    </div>
 
-                        <button
-                          onClick={() => onClick_GenerateQRCode(item)}
-                          className="badge bg-green-light text-green"
-                        >
-                          <IoQrCode className="h-4 w-4" />
-                        </button>
+                    {/* Usage */}
+                    <div className="flex flex-row items-center justify-between py-1">
+                      <span className="text-gray-dark text-sm font-normal">
+                        Usage
+                      </span>
+                      {item.lockToDistributionList ? (
+                        <span className="badge bg-green-light text-yellow flex items-center">
+                          <IoMdLock className="h-4 w-4" />
+                          <span className="ml-1 text-xs">
+                            {item.usagesTotal ?? "0"} /{" "}
+                            {item.usagesLimit ?? "0"}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="badge bg-green-light text-green flex items-center">
+                          <IoMdPerson className="h-4 w-4" />
+                          <span className="ml-1 text-xs">
+                            {item.usagesTotal ?? "0"} /{" "}
+                            {item.usagesLimit ?? "0"}
+                          </span>
+                        </span>
+                      )}
+                    </div>
 
-                        {(item?.status == "Inactive" ||
-                          item?.status == "Active" ||
-                          item?.status == "Declined") && (
-                          <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
-                            <button className="badge bg-green-light text-green">
-                              <IoIosSettings className="h-4 w-4" />
-                            </button>
+                    {/* Expires */}
+                    <div className="flex flex-row items-center justify-between py-1">
+                      <span className="text-gray-dark text-sm font-normal">
+                        Expires
+                      </span>
+                      {item.dateEnd ? (
+                        <span className="badge bg-yellow-light text-yellow flex items-center">
+                          <IoMdCalendar className="h-4 w-4" />
+                          <span className="ml-1 text-xs">
+                            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                              {item.dateEnd}
+                            </Moment>
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-500">N/A</span>
+                      )}
+                    </div>
 
-                            <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
-                              {item?.status == "Inactive" && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Active,
-                                      )
-                                    }
-                                  >
-                                    Approve
-                                  </button>
-                                </li>
-                              )}
-
-                              {item?.status == "Inactive" && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Declined,
-                                      )
-                                    }
-                                  >
-                                    Decline
-                                  </button>
-                                </li>
-                              )}
-
-                              {(item?.status == "Active" ||
-                                item?.status == "Inactive" ||
-                                item?.status == "Declined") && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Deleted,
-                                      )
-                                    }
-                                  >
-                                    Delete
-                                  </button>
-                                </li>
-                              )}
-
-                              {item?.status === "Declined" && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Inactive,
-                                      )
-                                    }
-                                  >
-                                    Make Inactive (send for reapproval)
-                                  </button>
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-                        )}
-                      </div>
+                    {/* Status */}
+                    <div className="flex flex-row items-center justify-between py-1">
+                      <span className="text-gray-dark text-sm font-normal">
+                        Status
+                      </span>
+                      {item.status == "Active" && (
+                        <span className="badge bg-blue-light text-blue">
+                          Active
+                        </span>
+                      )}
+                      {item.status == "Expired" && (
+                        <span className="badge bg-green-light text-yellow">
+                          Expired
+                        </span>
+                      )}
+                      {item.status == "Inactive" && (
+                        <span className="badge bg-yellow-tint text-yellow">
+                          Inactive
+                        </span>
+                      )}
+                      {item.status == "LimitReached" && (
+                        <span className="badge bg-green-light text-red-400">
+                          Limit Reached
+                        </span>
+                      )}
+                      {item.status == "Deleted" && (
+                        <span className="badge bg-green-light text-red-400">
+                          Deleted
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
 
               {/* DEKSTOP */}
-              <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table">
+              <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
                 <thead>
                   <tr className="border-gray text-gray-dark">
-                    <th className="border-gray-light border-b-2 !py-4">
-                      Organisation
-                    </th>
+                    <th className="border-gray-light border-b-2 !py-4">Link</th>
                     <th className="border-gray-light border-b-2 !py-4">
                       Opportunity
                     </th>
-                    <th className="border-gray-light border-b-2 !py-4">Name</th>
-                    <th className="border-gray-light border-b-2">
-                      Description
+                    <th className="border-gray-light border-b-2 !py-4">
+                      Organisation
                     </th>
                     <th className="border-gray-light border-b-2">Usage</th>
                     <th className="border-gray-light border-b-2">Expires</th>
                     <th className="border-gray-light border-b-2">Status</th>
-                    <th className="border-gray-light border-b-2">Link</th>
-                    <th className="border-gray-light border-b-2">QR</th>
-                    <th className="border-gray-light border-b-2">Actions</th>
+                    <th className="border-gray-light border-b-2 text-center">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {links.items.map((item) => (
                     <tr key={`grid_md_${item.id}`} className="">
-                      <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4">
-                        {item.entityOrganizationId &&
-                          item.entityOrganizationName && (
-                            <Link
-                              href={`/organisations/${
-                                item.entityOrganizationId
-                              }${`?returnUrl=${encodeURIComponent(
-                                getSafeUrl(returnUrl, router.asPath),
-                              )}`}`}
-                              className="text-gray-dark max-w-[80px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                      {/* Link */}
+                      <td className="border-gray-light w-[180px] max-w-[220px] border-b-2 !py-4 align-top">
+                        <div className="flex flex-col gap-1">
+                          <Link
+                            title={item.name}
+                            href={`/organisations/${
+                              item.entityOrganizationId
+                            }/links/${item.id}${`?returnUrl=${encodeURIComponent(
+                              getSafeUrl(returnUrl, router.asPath),
+                            )}`}`}
+                            className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                          >
+                            {item.name}
+                          </Link>
+                          {item.description && (
+                            <span
+                              title={item.description}
+                              className="block w-full max-w-[160px] overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500"
                             >
-                              {item.entityOrganizationName}
-                            </Link>
+                              {item.description}
+                            </span>
                           )}
+                        </div>
                       </td>
-                      <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4">
+
+                      {/* Opportunity */}
+                      <td className="border-gray-light w-[180px] max-w-[180px] border-b-2 !py-4 align-top">
                         {item.entityType == "Opportunity" &&
                           item.entityOrganizationId && (
                             <Link
+                              title={item.entityTitle}
                               href={`/organisations/${
                                 item.entityOrganizationId
                               }/opportunities/${
@@ -1106,26 +1008,36 @@ const Links: NextPageWithLayout<{
                               }/info${`?returnUrl=${encodeURIComponent(
                                 getSafeUrl(returnUrl, router.asPath),
                               )}`}`}
-                              className="text-gray-dark max-w-[80px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                              className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
                             >
                               {item.entityTitle}
                             </Link>
                           )}
                         {item.entityType != "Opportunity" && (
-                          <>{item.entityTitle}</>
+                          <span
+                            title={item.entityTitle}
+                            className="block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap"
+                          >
+                            {item.entityTitle}
+                          </span>
                         )}
                       </td>
 
-                      <td className="border-gray-light max-w-[100px] truncate border-b-2 !py-4">
-                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
-                          {item.name}
-                        </div>
-                      </td>
-
-                      <td className="border-gray-light max-w-[100px] border-b-2">
-                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
-                          {item.description}
-                        </div>
+                      {/* Organisation */}
+                      <td className="border-gray-light w-[180px] max-w-[180px] border-b-2 !py-4 align-top">
+                        {item.entityOrganizationId &&
+                          item.entityOrganizationName && (
+                            <Link
+                              href={`/organisations/dashboard?organisations=${
+                                item.entityOrganizationId
+                              }${`&returnUrl=${encodeURIComponent(
+                                getSafeUrl(returnUrl, router.asPath),
+                              )}`}`}
+                              className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                            >
+                              {item.entityOrganizationName}
+                            </Link>
+                          )}
                       </td>
 
                       <td className="border-gray-light border-b-2">
@@ -1187,11 +1099,6 @@ const Links: NextPageWithLayout<{
                             Limit Reached
                           </span>
                         )}
-                        {item.status == "Declined" && (
-                          <span className="badge bg-green-light text-red-400">
-                            Declined
-                          </span>
-                        )}
                         {item.status == "Deleted" && (
                           <span className="badge bg-green-light text-red-400">
                             Deleted
@@ -1199,109 +1106,12 @@ const Links: NextPageWithLayout<{
                         )}
                       </td>
 
-                      {/* LINK */}
-                      <td className="border-gray-light border-b-2">
-                        <button
-                          onClick={() =>
-                            onClick_CopyToClipboard(
-                              item?.shortURL ?? item?.uRL ?? "",
-                            )
-                          }
-                          className="badge bg-green-light text-green"
-                        >
-                          <IoIosLink className="h-4 w-4" />
-                        </button>
-                      </td>
-
-                      {/* QR */}
-                      <td className="border-gray-light border-b-2">
-                        <button
-                          onClick={() => onClick_GenerateQRCode(item)}
-                          className="badge bg-green-light text-green"
-                        >
-                          <IoQrCode className="h-4 w-4" />
-                        </button>
-                      </td>
-
-                      {/* ACTIONS */}
-                      <td className="border-gray-light border-b-2">
-                        {(item?.status == "Inactive" ||
-                          item?.status == "Active" ||
-                          item?.status == "Declined") && (
-                          <div className="dropdown dropdown-left -mr-3 w-10 md:-mr-4">
-                            <button className="badge bg-green-light text-green">
-                              <IoIosSettings className="h-4 w-4" />
-                            </button>
-
-                            <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-52 p-2 shadow">
-                              {item?.status == "Inactive" && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Active,
-                                      )
-                                    }
-                                  >
-                                    Approve
-                                  </button>
-                                </li>
-                              )}
-
-                              {item?.status == "Inactive" && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Declined,
-                                      )
-                                    }
-                                  >
-                                    Decline
-                                  </button>
-                                </li>
-                              )}
-
-                              {(item?.status == "Active" ||
-                                item?.status == "Inactive" ||
-                                item?.status == "Declined") && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Deleted,
-                                      )
-                                    }
-                                  >
-                                    Delete
-                                  </button>
-                                </li>
-                              )}
-
-                              {item?.status === "Declined" && (
-                                <li>
-                                  <button
-                                    className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                                    onClick={() =>
-                                      onOpenCommentsDialog(
-                                        item,
-                                        LinkStatus.Inactive,
-                                      )
-                                    }
-                                  >
-                                    Make Inactive (send for reapproval)
-                                  </button>
-                                </li>
-                              )}
-                            </ul>
-                          </div>
-                        )}
+                      {/* BUTTONS */}
+                      <td className="border-gray-light border-b-2 whitespace-nowrap">
+                        <div className="flex flex-row items-center justify-center gap-2">
+                          {/* ACTIONS */}
+                          {renderLinkActionsDropdown(item)}
+                        </div>
                       </td>
                     </tr>
                   ))}

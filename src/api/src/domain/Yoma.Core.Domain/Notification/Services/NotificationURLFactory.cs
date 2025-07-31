@@ -24,35 +24,27 @@ namespace Yoma.Core.Domain.Notification.Services
     #endregion
 
     #region Public Members
-    public string ActionLinkVerifyApprovalItemUrl(NotificationType notificationType, Guid? organizationId)
+    public string ActionLinkVerifyActivatedItemUrl(NotificationType notificationType, Guid? organizationId)
     {
       if (organizationId == Guid.Empty)
         throw new ArgumentNullException(nameof(organizationId));
 
       var result = _appSettings.AppBaseURL;
-      LinkStatus? status;
       switch (notificationType)
       {
-        case NotificationType.ActionLink_Verify_Approval_Requested:
-          result = result.AppendPathSegment("admin").AppendPathSegment("links").ToString();
-          status = LinkStatus.Inactive;
-          break;
-
-        case NotificationType.ActionLink_Verify_Approval_Approved:
-        case NotificationType.ActionLink_Verify_Approval_Declined:
+        case NotificationType.ActionLink_Verify_Activated:
           if (!organizationId.HasValue)
             throw new InvalidOperationException("Organization id expected");
 
           result = result.AppendPathSegment("organisations").AppendPathSegment(organizationId).AppendPathSegment("links").ToString();
+          result = result.SetQueryParam("statuses", LinkStatus.Active.ToString().ToLower());
 
-          status = notificationType == NotificationType.ActionLink_Verify_Approval_Approved ? LinkStatus.Active : LinkStatus.Declined;
           break;
 
         default:
           throw new ArgumentOutOfRangeException(nameof(notificationType), $"Type of '{notificationType}' not supported");
       }
 
-      result = result.SetQueryParam("statuses", status.Value.ToString().ToLower());
       return result;
     }
 

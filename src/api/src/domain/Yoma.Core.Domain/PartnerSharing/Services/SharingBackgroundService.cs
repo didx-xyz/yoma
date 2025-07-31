@@ -10,6 +10,7 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.PartnerSharing.Models;
+using Yoma.Core.Domain.Core.Extensions;
 
 namespace Yoma.Core.Domain.PartnerSharing.Services
 {
@@ -121,7 +122,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                       {
                         var reason = opportunity.OrganizationStatus != OrganizationStatus.Active
                           ? $"Associated organization is no longer '{OrganizationStatus.Active}'"
-                          : $"Opportunity status of '{string.Join(", ", SharingService.Statuses_Opportunity_Creatable)}' expected. Current status '{opportunity.Status}'";
+                          : $"Opportunity status of '{SharingService.Statuses_Opportunity_Creatable.JoinNames()}' expected. Current status '{opportunity.Status}'";
 
                         _logger.LogInformation("Action '{action}': Aborting for '{entityType}' and item with id '{id}'. {reason}", action, item.EntityType, item.Id, reason);
 
@@ -155,7 +156,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
 
                       //scheduling failsafe post implicit adjustment
                       if (!SharingService.Statuses_Opportunity_Updatable.Contains(opportunity.Status))
-                        throw new InvalidOperationException($"Action '{action}': Opportunity status of '{string.Join(',', SharingService.Statuses_Opportunity_Updatable)}' expected. Current status '{opportunity.Status}'");
+                        throw new InvalidOperationException($"Action '{action}': Opportunity status of '{SharingService.Statuses_Opportunity_Updatable.JoinNames()}' expected. Current status '{opportunity.Status}'");
 
                       request.ExternalId = item.EntityExternalId;
                       await sharingProviderClient.UpdateOpportunity(request);
@@ -175,7 +176,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
 
                       //scheduling failsafe
                       if (!SharingService.Statuses_Opportunity_CanDelete.Contains(opportunity.Status))
-                        throw new InvalidOperationException($"Action '{action}': Opportunity status of '{string.Join(',', SharingService.Statuses_Opportunity_CanDelete)}' expected. Current status '{opportunity.Status}'");
+                        throw new InvalidOperationException($"Action '{action}': Opportunity status of '{SharingService.Statuses_Opportunity_CanDelete.JoinNames()}' expected. Current status '{opportunity.Status}'");
 
                       switch (opportunity.Status)
                       {

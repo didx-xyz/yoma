@@ -629,7 +629,7 @@ namespace Yoma.Core.Domain.Entity.Services
             if (result.Status == OrganizationStatus.Active) return;
 
             if (!Statuses_Activatable.Contains(result.Status))
-              throw new ValidationException($"{nameof(Organization)} can not be activated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
+              throw new ValidationException($"{nameof(Organization)} can not be activated (current status '{result.Status}'). Required state '{Statuses_Activatable.JoinNames()}'");
 
             if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
@@ -647,7 +647,7 @@ namespace Yoma.Core.Domain.Entity.Services
             if (result.Status == OrganizationStatus.Inactive) return;
 
             if (!Statuses_DeActivatable.Contains(result.Status))
-              throw new ValidationException($"{nameof(Organization)} can not be deactivated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
+              throw new ValidationException($"{nameof(Organization)} can not be deactivated (current status '{result.Status}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
 
             if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
@@ -658,7 +658,7 @@ namespace Yoma.Core.Domain.Entity.Services
             if (result.Status == OrganizationStatus.Declined) return;
 
             if (!Statuses_Declinable.Contains(result.Status))
-              throw new ValidationException($"{nameof(Organization)} can not be declined (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Declinable)}'");
+              throw new ValidationException($"{nameof(Organization)} can not be declined (current status '{result.Status}'). Required state '{Statuses_Declinable.JoinNames()}'");
 
             if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
 
@@ -671,7 +671,7 @@ namespace Yoma.Core.Domain.Entity.Services
             if (result.Status == OrganizationStatus.Deleted) return;
 
             if (!Statuses_CanDelete.Contains(result.Status))
-              throw new ValidationException($"{nameof(Organization)} can not be deleted (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
+              throw new ValidationException($"{nameof(Organization)} can not be deleted (current status '{result.Status}'). Required state '{Statuses_CanDelete.JoinNames()}'");
             break;
 
           default:
@@ -1414,7 +1414,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private static void ValidateUpdatable(Organization organization)
     {
       if (!Statuses_Updatable.Contains(organization.Status))
-        throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+        throw new ValidationException($"{nameof(Organization)} '{organization.Name}' can no longer be updated (current status '{organization.Status}'). Required state '{Statuses_Updatable.JoinNames()}'");
     }
 
     private async Task SendNotification(Organization organization, NotificationType type)

@@ -1547,7 +1547,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         case Status.Active:
           if (result.Status == Status.Active) return result;
           if (!Statuses_Activatable.Contains(result.Status))
-            throw new ValidationException($"{nameof(Models.Opportunity)} can not be activated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
+            throw new ValidationException($"{nameof(Models.Opportunity)} can not be activated (current status '{result.Status}'). Required state '{Statuses_Activatable.JoinNames()}'");
 
           //ensure DateEnd was updated for re-activation of previously expired opportunities
           if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
@@ -1559,7 +1559,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         case Status.Inactive:
           if (result.Status == Status.Inactive) return result;
           if (!Statuses_DeActivatable.Contains(result.Status))
-            throw new ValidationException($"{nameof(Models.Opportunity)} can not be deactivated (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
+            throw new ValidationException($"{nameof(Models.Opportunity)} can not be deactivated (current status '{result.Status}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
 
           eventType = EventType.Update;
           break;
@@ -1567,7 +1567,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         case Status.Deleted:
           if (result.Status == Status.Deleted) return result;
           if (!Statuses_CanDelete.Contains(result.Status))
-            throw new ValidationException($"{nameof(Models.Opportunity)} can not be deleted (current status '{result.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
+            throw new ValidationException($"{nameof(Models.Opportunity)} can not be deleted (current status '{result.Status}'). Required state '{Statuses_CanDelete.JoinNames()}'");
 
           eventType = EventType.Delete;
           break;
@@ -1957,7 +1957,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private static void AssertUpdatable(Models.Opportunity opportunity)
     {
       if (!Statuses_Updatable.Contains(opportunity.Status))
-        throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{string.Join(" / ", Statuses_Updatable)}'");
+        throw new ValidationException($"{nameof(Models.Opportunity)} can no longer be updated (current status '{opportunity.Status}'). Required state '{Statuses_Updatable.JoinNames()}'");
     }
 
     private async Task AssertUpdatablePartnerSharing(OpportunityRequestUpdate request, Models.Opportunity opportunityCurrent)

@@ -21,8 +21,6 @@ using Yoma.Core.Domain.Notification.Interfaces;
 using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
-using Yoma.Core.Domain.IdentityProvider.Extensions;
-using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.ShortLinkProvider.Interfaces;
@@ -43,23 +41,21 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IOrganizationService _organizationService;
     private readonly IOpportunityService _opportunityService;
     private readonly ILinkStatusService _linkStatusService;
-    private readonly IRepositoryBatchedValueContains<Link> _linkRepository;
-    private readonly IRepository<LinkUsageLog> _linkUsageLogRepository;
+    private readonly IRepositoryBatchedValueContainsWithUnnested<Link> _linkRepository;
+    private readonly IRepositoryValueContains<LinkUsageLog> _linkUsageLogRepository;
+    private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly INotificationDeliveryService _notificationDeliveryService;
     private readonly INotificationURLFactory _notificationURLFactory;
-    private readonly IIdentityProviderClient _identityProviderClient;
 
     private readonly LinkRequestCreateValidatorShare _linkRequestCreateValidatorShare;
     private readonly LinkRequestCreateValidatorVerify _linkRequestCreateValidatorVerify;
     private readonly LinkSearchFilterValidator _linkSearchFilterValidator;
-    private readonly LinkRequestUpdateStatusValidator _linkRequestUpdateStatusValidator;
+    private readonly LinkSearchFilterUsageValidator _linkSearchFilterUsageValidator;
 
-    //a link can only be made active ONCE as it might have a distribution list that gets notified upon approval / activation; thus an active link can not be deactivated 
+    //a link can only be made active ONCE as it might have a distribution list that gets notified upon activation; thus an active link can not be deactivated 
     private static readonly LinkStatus[] Statuses_Activatable = [LinkStatus.Inactive];
-    private static readonly LinkStatus[] Statuses_Declinable = [LinkStatus.Inactive];
-    private static readonly LinkStatus[] Statuses_DeActivatable = [LinkStatus.Declined]; //send for re-approval
-    private static readonly LinkStatus[] Statuses_CanDelete = [LinkStatus.Active, LinkStatus.Inactive, LinkStatus.Declined];
+    private static readonly LinkStatus[] Statuses_CanDelete = [LinkStatus.Active, LinkStatus.Inactive];
     #endregion
 
     #region Constructor
@@ -72,16 +68,16 @@ namespace Yoma.Core.Domain.ActionLink.Services
       IOrganizationService organizationService,
       ILinkStatusService linkStatusService,
       IOpportunityService opportunityService,
-      IRepositoryBatchedValueContains<Link> linkRepository,
-      IRepository<LinkUsageLog> linkUsageLogRepository,
+      IRepositoryBatchedValueContainsWithUnnested<Link> linkRepository,
+      IRepositoryValueContains<LinkUsageLog> linkUsageLogRepository,
+      IRepositoryValueContainsWithNavigation<User> userRepository,
       IExecutionStrategyService executionStrategyService,
       INotificationDeliveryService notificationDeliveryService,
       INotificationURLFactory notificationURLFactory,
-      IIdentityProviderClientFactory identityProviderClientFactory,
       LinkRequestCreateValidatorShare linkRequestCreateValidatorShare,
       LinkRequestCreateValidatorVerify linkRequestCreateValidatorVerify,
       LinkSearchFilterValidator linkSearchFilterValidator,
-      LinkRequestUpdateStatusValidator linkRequestUpdateStatusValidator)
+      LinkSearchFilterUsageValidator linkSearchFilterUsageValidator)
     {
       _logger = logger;
       _appSettings = appSettings.Value;
@@ -94,14 +90,14 @@ namespace Yoma.Core.Domain.ActionLink.Services
       _linkStatusService = linkStatusService;
       _linkRepository = linkRepository;
       _linkUsageLogRepository = linkUsageLogRepository;
+      _userRepository = userRepository;
       _executionStrategyService = executionStrategyService;
       _notificationDeliveryService = notificationDeliveryService;
       _notificationURLFactory = notificationURLFactory;
-      _identityProviderClient = identityProviderClientFactory.CreateClient();
       _linkRequestCreateValidatorShare = linkRequestCreateValidatorShare;
       _linkRequestCreateValidatorVerify = linkRequestCreateValidatorVerify;
       _linkSearchFilterValidator = linkSearchFilterValidator;
-      _linkRequestUpdateStatusValidator = linkRequestUpdateStatusValidator;
+      _linkSearchFilterUsageValidator = linkSearchFilterUsageValidator;
     }
     #endregion
 
@@ -258,8 +254,10 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       await _linkRequestCreateValidatorVerify.ValidateAndThrowAsync(request);
 
+      var status = LinkStatus.Active;
       if (request.DistributionList != null)
       {
+        status = LinkStatus.Inactive; //initially inactive require manual activation before distribution
         request.DistributionList = [.. request.DistributionList.Distinct()];
         //with LockToDistributionList, DistributionList is required and usage limit is set to the count of the distribution list
         if (request.LockToDistributionList == true) request.UsagesLimit = request.DistributionList.Count;
@@ -268,7 +266,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       if (!request.UsagesLimit.HasValue && !request.DateEnd.HasValue)
         throw new ValidationException($"Either a usage limit or an end date is required");
 
-      var item = LinkFromRequest(request, LinkStatus.Inactive, ensureOrganizationAuthorization);
+      var item = LinkFromRequest(request, status, ensureOrganizationAuthorization);
       item.UsagesLimit = request.UsagesLimit;
       item.DateEnd = request.DateEnd.HasValue ? request.DateEnd.Value.ToEndOfDay() : null;
       item.DistributionList = request.DistributionList == null ? null : JsonConvert.SerializeObject(request.DistributionList);
@@ -305,7 +303,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           throw new InvalidOperationException($"Invalid / unsupported entity type of '{request.EntityType}'");
       }
 
-      await SendNotification(item, NotificationType.ActionLink_Verify_Approval_Requested);
+      await SendNotification(item, NotificationType.ActionLink_Verify_Activated);
 
       return item.ToLinkInfo(request.IncludeQRCode);
     }
@@ -317,40 +315,33 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return await LogUsage(link);
     }
 
-    public async Task<LinkInfo> UpdateStatus(Guid id, LinkRequestUpdateStatus request, bool ensureOrganizationAuthorization)
+    public async Task<LinkInfo> UpdateStatus(Guid id, LinkStatus status, bool ensureOrganizationAuthorization)
     {
-      ArgumentNullException.ThrowIfNull(request, nameof(request));
-
-      await _linkRequestUpdateStatusValidator.ValidateAndThrowAsync(request);
-
       var link = GetById(id);
       EnsureOrganizationAuthorization(link);
 
       var action = Enum.Parse<LinkAction>(link.Action);
 
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, !ensureOrganizationAuthorization), false, false);
+
       NotificationActionLinkVerify? notificationDataDistributionList = null;
-      NotificationType? notificationType = null;
       switch (action)
       {
         case LinkAction.Share:
           throw new ValidationException($"Link with action '{link.Action}' status can not be changed and remains active indefinitely");
 
         case LinkAction.Verify:
-          switch (request.Status)
+          switch (status)
           {
             case LinkStatus.Active:
               if (link.Status == LinkStatus.Active) return link.ToLinkInfo(false);
 
               if (!Statuses_Activatable.Contains(link.Status))
-                throw new ValidationException($"Link can not be activated (current status '{link.Status}'). Required state '{string.Join(" / ", Statuses_Activatable)}'");
-
-              if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
+                throw new ValidationException($"Link can not be activated (current status '{link.Status}'). Required state '{Statuses_Activatable.JoinNames()}'");
 
               //ensure not expired but not yet flagged by background service
               if (link.DateEnd.HasValue && link.DateEnd.Value <= DateTimeOffset.UtcNow)
                 throw new ValidationException($"Link cannot be activated because its end date ('{link.DateEnd:yyyy-MM-dd}') is in the past");
-
-              link.CommentApproval = request.Comment;
 
               var entityType = Enum.Parse<LinkEntityType>(link.EntityType, true);
               switch (entityType)
@@ -394,42 +385,17 @@ namespace Yoma.Core.Domain.ActionLink.Services
                   throw new InvalidOperationException($"Invalid / unsupported entity type of '{entityType}'");
               }
 
-              notificationType = NotificationType.ActionLink_Verify_Approval_Approved;
-              break;
-
-            case LinkStatus.Inactive:
-              if (link.Status == LinkStatus.Inactive) return link.ToLinkInfo(false);
-
-              if (!Statuses_DeActivatable.Contains(link.Status))
-                throw new ValidationException($"Link can not be deactivated (current status '{link.Status}'). Required state '{string.Join(" / ", Statuses_DeActivatable)}'");
-
-              if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
-
-              notificationType = NotificationType.ActionLink_Verify_Approval_Requested;
-              break;
-
-            case LinkStatus.Declined:
-              if (link.Status == LinkStatus.Declined) return link.ToLinkInfo(false);
-
-              if (!Statuses_Declinable.Contains(link.Status))
-                throw new ValidationException($"Link can not be deactivated (current status '{link.Status}'). Required state '{string.Join(" / ", Statuses_Declinable)}'");
-
-              if (!HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) throw new SecurityException("Unauthorized");
-
-              link.CommentApproval = request.Comment;
-
-              notificationType = NotificationType.ActionLink_Verify_Approval_Declined;
               break;
 
             case LinkStatus.Deleted:
               if (link.Status == LinkStatus.Deleted) return link.ToLinkInfo(false);
 
               if (!Statuses_CanDelete.Contains(link.Status))
-                throw new ValidationException($"Link can not be deactivated (current status '{link.Status}'). Required state '{string.Join(" / ", Statuses_CanDelete)}'");
+                throw new ValidationException($"Link can not be deactivated (current status '{link.Status}'). Required state '{Statuses_CanDelete.JoinNames()}'");
               break;
 
             default:
-              throw new InvalidOperationException($"Invalid / unsupported status of '{request.Status}'");
+              throw new InvalidOperationException($"Invalid / unsupported status of '{status}'");
           }
           break;
 
@@ -437,15 +403,195 @@ namespace Yoma.Core.Domain.ActionLink.Services
           throw new InvalidOperationException($"Invalid / unsupported action of '{action}'");
       }
 
-      link.StatusId = _linkStatusService.GetByName(request.Status.ToString()).Id;
-      link.Status = request.Status;
+      link.StatusId = _linkStatusService.GetByName(status.ToString()).Id;
+      link.Status = status;
+      link.ModifiedByUserId = user.Id;
 
       link = await _linkRepository.Update(link);
 
       if (notificationDataDistributionList != null) await SendNotification_ActionLinkVerifyDistributionList(link, notificationDataDistributionList);
-      if (notificationType.HasValue) await SendNotification(link, notificationType.Value);
+      await SendNotification(link, NotificationType.ActionLink_Verify_Activated);
 
       return link.ToLinkInfo(false);
+    }
+
+    public LinkSearchResultsUsage SearchUsage(LinkSearchFilterUsage filter, bool ensureOrganizationAuthorization)
+    {
+      ArgumentNullException.ThrowIfNull(filter);
+
+      _linkSearchFilterUsageValidator.ValidateAndThrow(filter);
+
+      var link = GetById(filter.Id);
+
+      if (ensureOrganizationAuthorization) EnsureOrganizationAuthorization(link);
+
+      var distributionList = ParseDistributionList(link);
+
+      var result = new LinkSearchResultsUsage
+      {
+        Link = link.ToLinkInfo(false),
+        Items = []
+      };
+
+      IQueryable<UnnestedValue> unnestedQuery;
+
+      switch (filter.Usage)
+      {
+        case LinkUsageStatus.All:
+          if (distributionList == null || distributionList.Count == 0) goto case LinkUsageStatus.Claimed;
+
+          unnestedQuery = _linkRepository.UnnestValues(distributionList);
+
+          var queryAll = unnestedQuery
+            .GroupJoin(
+                _userRepository.Query(false),
+                d => d.Value.ToLower(),
+                u => u.Username.ToLower(),
+                (d, users) => new { d, users })
+            .SelectMany(
+                x => x.users.DefaultIfEmpty(),
+                (x, u) => new { x.d, u })
+            .GroupJoin(
+                _linkUsageLogRepository.Query().Where(x => x.LinkId == link.Id),
+                x => x.u != null ? x.u.Id : null,
+                l => (Guid?)l.UserId,
+                (x, usageLogs) => new { x.d, x.u, usageLogs })
+            .SelectMany(
+                x => x.usageLogs.DefaultIfEmpty(),
+                (x, l) => new LinkSearchResultsUsageItem
+                {
+                  UserId = x.u != null ? x.u.Id : null,
+                  Username = x.d.Value,
+                  Email = x.u != null ? x.u.Email : null,
+                  PhoneNumber = x.u != null ? x.u.PhoneNumber : null,
+                  DisplayName = x.u != null ? x.u.DisplayName : null,
+                  Country = x.u != null ? x.u.Country : null,
+                  DateOfBirth = x.u != null ? x.u.DateOfBirth : null,
+                  DateClaimed = l != null ? l.DateCreated : null
+                });
+
+          if (!string.IsNullOrWhiteSpace(filter.ValueContains))
+          {
+            var value = filter.ValueContains.ToLowerInvariant();
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+            queryAll = queryAll.Where(x =>
+                x.Username.ToLower().Contains(value) ||
+                (x.DisplayName != null && x.DisplayName.ToLower().Contains(value)));
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+          }
+
+          queryAll = queryAll.OrderBy(x => x.DisplayName ?? x.Username)
+                   .ThenBy(x => x.UserId);
+
+          if (filter.PaginationEnabled)
+          {
+            result.TotalCount = queryAll.Count();
+            queryAll = queryAll.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+          }
+
+          result.Items = [.. queryAll];
+          result.Items.ForEach(o =>
+          {
+            o.DisplayName ??= o.Username;
+            o.Age = o.DateOfBirth.HasValue ? o.DateOfBirth.Value.CalculateAge(null) : null;
+          });
+          break;
+
+        case LinkUsageStatus.Claimed:
+          var query = _linkUsageLogRepository.Query()
+              .Where(o => o.LinkId == link.Id);
+
+          if (!string.IsNullOrEmpty(filter.ValueContains))
+            query = _linkUsageLogRepository.Contains(query, filter.ValueContains);
+
+          query = query.OrderBy(o => o.UserDisplayName).ThenBy(o => o.Id);
+
+          if (filter.PaginationEnabled)
+          {
+            result.TotalCount = query.Count();
+            query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+          }
+
+          result.Items = [.. query.Select(o => new LinkSearchResultsUsageItem
+            {
+              UserId = o.UserId,
+              Username = o.Username,
+              Email = o.UserEmail,
+              PhoneNumber = o.UserPhoneNumber,
+              DisplayName = o.UserDisplayName,
+              Country = o.UserCountry,
+              DateOfBirth = o.UserDateOfBirth,
+              Age = o.UserDateOfBirth == null ? null : o.UserDateOfBirth.Value.CalculateAge(null),
+              DateClaimed = o.DateCreated
+            })];
+
+          break;
+
+        case LinkUsageStatus.Unclaimed:
+          if (distributionList == null || distributionList.Count == 0) break;
+
+          unnestedQuery = _linkRepository.UnnestValues(distributionList);
+
+          var queryUnclaimed = unnestedQuery
+            .GroupJoin(
+                _userRepository.Query(false),
+                d => d.Value.ToLower(),
+                u => u.Username.ToLower(),
+                (d, users) => new { d, users })
+            .SelectMany(
+                x => x.users.DefaultIfEmpty(),
+                (x, u) => new { x.d, u })
+            .GroupJoin(
+                _linkUsageLogRepository.Query().Where(x => x.LinkId == link.Id),
+                x => x.u != null ? x.u.Id : null,
+                l => (Guid?)l.UserId,
+                (x, usageLogs) => new { x.d, x.u, usageLogs })
+            .SelectMany(
+                x => x.usageLogs.DefaultIfEmpty(),
+                (x, l) => new LinkSearchResultsUsageItem
+                {
+                  UserId = x.u != null ? x.u.Id : null,
+                  Username = x.d.Value,
+                  Email = x.u != null ? x.u.Email : null,
+                  PhoneNumber = x.u != null ? x.u.PhoneNumber : null,
+                  DisplayName = x.u != null ? x.u.DisplayName : null,
+                  Country = x.u != null ? x.u.Country : null,
+                  DateOfBirth = x.u != null ? x.u.DateOfBirth : null,
+                  DateClaimed = null
+                })
+            .Where(x => x.DateClaimed == null);
+
+          if (!string.IsNullOrWhiteSpace(filter.ValueContains))
+          {
+            var value = filter.ValueContains.ToLowerInvariant();
+#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+            queryUnclaimed = queryUnclaimed.Where(x =>
+                x.Username.ToLower().Contains(value) ||
+                (x.DisplayName != null && x.DisplayName.ToLower().Contains(value)));
+#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+          }
+
+          queryUnclaimed = queryUnclaimed.OrderBy(x => x.DisplayName ?? x.Username).ThenBy(x => x.UserId);
+
+          if (filter.PaginationEnabled)
+          {
+            result.TotalCount = queryUnclaimed.Count();
+            queryUnclaimed = queryUnclaimed.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+          }
+
+          result.Items = [.. queryUnclaimed];
+          result.Items.ForEach(o =>
+          {
+            o.DisplayName ??= o.Username;
+            o.Age = o.DateOfBirth.HasValue ? o.DateOfBirth.Value.CalculateAge(null) : null;
+          });
+          break;
+
+        default:
+          throw new InvalidOperationException($"Invalid / unsupported usage status of '{filter.Usage}'");
+      }
+
+      return result;
     }
     #endregion
 
@@ -629,7 +775,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return link.ToLinkInfo(false);
     }
 
-    public List<string>? ParseDistributionList(Link link)
+    private List<string>? ParseDistributionList(Link link)
     {
       if (link.DistributionList == null) return null;
 
@@ -682,34 +828,21 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
     private async Task SendNotification(Link link, NotificationType type)
     {
+      if (link.Status != LinkStatus.Active)
+      {
+        _logger.LogInformation("Link with id '{linkId}' is not active, skipping notification", link.Id);
+        return;
+      }
+
       try
       {
         List<NotificationRecipient>? recipients = null;
 
-        var dataLink = new NotificationActionLinkVerifyApprovalItem { Name = link.Name, EntityType = link.EntityType };
+        var dataLink = new NotificationActionLinkVerifyActivatedItem { Name = link.Name, EntityType = link.EntityType };
 
         switch (type)
         {
-          case NotificationType.ActionLink_Verify_Approval_Requested:
-            //send notification to super administrators
-            var superAdmins = await _identityProviderClient.ListByRole(Core.Constants.Role_Admin);
-            recipients = superAdmins?.Select(o => new NotificationRecipient
-            {
-              Username = o.Username,
-              PhoneNumber = o.PhoneNumber,
-              PhoneNumberConfirmed = o.PhoneNumberVerified,
-              Email = o.Email,
-              EmailConfirmed = o.EmailVerified,
-              DisplayName = o.ToDisplayName()
-            }).ToList();
-
-            dataLink.Comment = link.CommentApproval;
-            dataLink.URL = _notificationURLFactory.ActionLinkVerifyApprovalItemUrl(type, null);
-
-            break;
-
-          case NotificationType.ActionLink_Verify_Approval_Approved:
-          case NotificationType.ActionLink_Verify_Approval_Declined:
+          case NotificationType.ActionLink_Verify_Activated:
             var entityType = Enum.Parse<LinkEntityType>(link.EntityType, true);
             switch (entityType)
             {
@@ -730,8 +863,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
                   DisplayName = o.DisplayName
                 }).ToList();
 
-                dataLink.Comment = link.CommentApproval;
-                dataLink.URL = _notificationURLFactory.ActionLinkVerifyApprovalItemUrl(type, organization.Id);
+                dataLink.URL = _notificationURLFactory.ActionLinkVerifyActivatedItemUrl(type, organization.Id);
                 break;
 
               default:
@@ -744,7 +876,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
             throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
         }
 
-        var data = new NotificationActionLinkVerifyApproval
+        var data = new NotificationActionLinkVerifyActivated
         {
           Links = [dataLink]
         };

@@ -54,9 +54,9 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       if (opportunity.OrganizationStatus != Entity.OrganizationStatus.Active)
         return (false, $"Opportunity with id '{opportunity.Id}' belongs to an inactive organization");
 
-      var statuses = new List<Status>() { Status.Active, Status.Expired }; //ignore DateStart, includes both not started and started
+      var statuses = new Status[] { Status.Active, Status.Expired }; //ignore DateStart, includes both not started and started
       if (!statuses.Contains(opportunity.Status))
-        return (false, $"Opportunity with id '{opportunity.Id}' has an invalid status. Expected status(es): '{string.Join(", ", statuses)}'");
+        return (false, $"Opportunity with id '{opportunity.Id}' has an invalid status. Expected status(es): '{statuses.JoinNames()}");
 
       return (true, null);
     }

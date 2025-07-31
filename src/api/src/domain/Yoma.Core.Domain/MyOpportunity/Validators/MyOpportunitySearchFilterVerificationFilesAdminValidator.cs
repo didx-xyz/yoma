@@ -1,4 +1,5 @@
 using FluentValidation;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.MyOpportunity.Services;
@@ -23,11 +24,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
       if (filter.VerificationTypes == null || filter.VerificationTypes.Count == 0)
         return;
 
-      var nonDownloadable = filter.VerificationTypes.Distinct().Except(MyOpportunityService.VerificationTypes_Downloadable).ToList();
+      var nonDownloadable = filter.VerificationTypes.Distinct().Except(MyOpportunityService.VerificationTypes_Downloadable).ToArray();
 
-      if (nonDownloadable.Count == 0) return;
+      if (nonDownloadable.Length == 0) return;
       context.AddFailure(nameof(filter.VerificationTypes),
-          $"Verification type(s) '{string.Join(", ", nonDownloadable)}' is not supported / downloadable");
+          $"Verification type(s) '{nonDownloadable.JoinNames()}' is not supported / downloadable");
     }
     #endregion
   }

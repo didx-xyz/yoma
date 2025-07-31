@@ -1,8 +1,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
-using Yoma.Core.Domain.ActionLink.Interfaces;
 using System.Net;
+using Yoma.Core.Domain.ActionLink;
+using Yoma.Core.Domain.ActionLink.Interfaces;
 using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core;
 
@@ -94,19 +95,36 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Update link status",
-      Description = "An Admin have the power to activate, deactivate, decline or delete a link, whilst an Organization Admin can only delete. With a decline, an approval comment is required")]
+    [SwaggerOperation(Summary = "Update link status (Active / Deleted)",
+       Description = "Inactive links can be activated. Active or inactive links can be deleted")]
     [HttpPatch("{linkId}/status")]
     [ProducesResponseType(typeof(LinkInfo), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> UpdateStatus([FromRoute] Guid linkId, [FromBody] LinkRequestUpdateStatus request)
+    public async Task<IActionResult> UpdateStatus([FromRoute] Guid linkId, [FromQuery] LinkStatus status)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
 
-      var result = await _linkService.UpdateStatus(linkId, request, true);
+      var result = await _linkService.UpdateStatus(linkId, status, true);
       _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
 
       return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(
+    Summary = "Search link usage based on the supplied filter",
+      Description = "Returns the link details and a paged list of usage entries. Unclaimed results are only available if the link has a distribution list")]
+    [HttpPost("search/usage")]
+    [ProducesResponseType(typeof(LinkSearchResultsUsage), (int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public IActionResult SearchUsage([FromBody] LinkSearchFilterUsage filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchUsage));
+
+      var result = _linkService.SearchUsage(filter, true);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchUsage));
+
+      return Ok(result);
     }
     #endregion Administrative Actions
     #endregion

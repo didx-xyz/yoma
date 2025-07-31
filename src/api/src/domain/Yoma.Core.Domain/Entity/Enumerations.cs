@@ -47,10 +47,9 @@ namespace Yoma.Core.Domain.Entity
     Organization_Admin_Notification_Opportunity_Expiration,
     Organization_Admin_Notification_Organization_Approval,
     Organization_Admin_Notification_Opportunity_Completion,
-    Organization_Admin_Notification_ActionLink_Verify_Approval,
+    Organization_Admin_Notification_ActionLink_Verify_Activated,
     Admin_Notification_Opportunity_Posted,
     Admin_Notification_Organization_Approval,
-    Admin_Notification_ActionLink_Verify_Approval,
     User_Share_Contact_Info_With_Partners,
     Organization_Share_Address_Details_With_Partners,
     Organization_Share_Contact_Info_With_Partners

@@ -34,8 +34,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IRepositoryBatchedValueContainsWithNavigation<Models.Opportunity> _opportunityRepository;
     private readonly IDistributedLockService _distributedLockService;
     private readonly IMediator _mediator;
-    private static readonly Status[] Statuses_Expirable = [Status.Active];
-    private static readonly Status[] Statuses_Deletion = [Status.Inactive, Status.Expired];
+
+    internal static readonly Status[] Statuses_Expirable = [Status.Active];
+    internal static readonly Status[] Statuses_Deletion = [Status.Inactive, Status.Expired];
     #endregion
 
     #region Constructor
