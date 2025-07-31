@@ -450,7 +450,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
                     .Where(x => x.LinkId == link.Id)
                     .Select(x => x.Username.ToLower())
             ).Distinct();
-      
+
           var queryAll = identifiersQuery
             .GroupJoin(
                 _userRepository.Query(false),
@@ -569,7 +569,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
                 (x, l) => new LinkSearchResultsUsageItem
                 {
                   UserId = x.u != null ? x.u.Id : null,
-                  Username = x.id, 
+                  Username = x.id,
                   Email = x.u != null ? x.u.Email : null,
                   PhoneNumber = x.u != null ? x.u.PhoneNumber : null,
                   DisplayName = x.u != null ? x.u.DisplayName : null,
