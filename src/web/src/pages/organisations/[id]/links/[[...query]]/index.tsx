@@ -9,7 +9,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useMemo, useState, type ReactElement } from "react";
-import { FaLink, FaQrcode, FaStar, FaTrash } from "react-icons/fa";
+import { FaLink, FaQrcode, FaSearch, FaStar, FaTrash } from "react-icons/fa";
 import {
   IoIosAdd,
   IoIosSettings,
@@ -535,6 +535,24 @@ const Links: NextPageWithLayout<{
           <button
             type="button"
             className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+            title="Go to Link Overview"
+            onClick={() => {
+              void router.push(
+                `/organisations/${id}/links/${link.id}${`?returnUrl=${encodeURIComponent(
+                  getSafeUrl(returnUrl, router.asPath),
+                )}`}`,
+              );
+            }}
+          >
+            <FaSearch className="text-green size-4" />
+            Go to Link Overview
+          </button>
+        </li>
+
+        <li>
+          <button
+            type="button"
+            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
             title="Copy URL to clipboard"
             onClick={() => {
               onClick_CopyToClipboard(link.uRL!);
@@ -824,10 +842,40 @@ const Links: NextPageWithLayout<{
                 {links.items.map((item) => (
                   <div
                     key={`sm_${item.id}`}
-                    className="shadow-custom flex flex-col justify-between gap-4 rounded-lg bg-white p-4"
+                    className="shadow-custom flex flex-col gap-2 rounded-lg bg-white p-4"
                   >
-                    <div className="border-gray-light flex flex-row gap-2 border-b-2">
-                      <span title={item.entityTitle} className="w-full">
+                    {/* Link & Actions */}
+                    <div className="border-gray-light flex flex-row gap-2 border-b-2 pb-2">
+                      <div className="flex w-full flex-col gap-1">
+                        <Link
+                          title={item.name}
+                          href={`/organisations/${
+                            item.entityOrganizationId
+                          }/links/${item.id}${`?returnUrl=${encodeURIComponent(
+                            getSafeUrl(returnUrl, router.asPath),
+                          )}`}`}
+                          className="text-gray-dark block w-full max-w-[300px] overflow-hidden text-sm font-semibold text-ellipsis whitespace-nowrap underline"
+                        >
+                          {item.name}
+                        </Link>
+                        {item.description && (
+                          <span
+                            title={item.description}
+                            className="block w-full max-w-[300px] overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500"
+                          >
+                            {item.description}
+                          </span>
+                        )}
+                      </div>
+                      {renderLinkActionsDropdown(item)}
+                    </div>
+
+                    {/* Opportunity */}
+                    <div className="flex flex-row items-start justify-between py-1">
+                      <span className="text-gray-dark text-sm font-normal">
+                        Opportunity
+                      </span>
+                      <span className="text-sm">
                         <Link
                           href={`/organisations/${
                             item.entityOrganizationId
@@ -836,96 +884,86 @@ const Links: NextPageWithLayout<{
                           }/info${`?returnUrl=${encodeURIComponent(
                             getSafeUrl(returnUrl, router.asPath),
                           )}`}`}
-                          className="line-clamp-1 text-start font-semibold"
+                          className="text-gray-dark block max-w-[160px] overflow-hidden text-sm font-normal text-ellipsis whitespace-nowrap underline"
                         >
                           {item.entityTitle}
                         </Link>
                       </span>
-
-                      {renderLinkActionsDropdown(item)}
                     </div>
 
-                    <div className="flex flex-col gap-1">
-                      <div className="flex justify-between">
-                        <p className="text-sm tracking-wider">Name</p>
-                        <p className="text-sm tracking-wider"> {item.name}</p>
-                      </div>
-
-                      {item.description && (
-                        <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">Description</p>
-                          <p className="text-sm tracking-wider">
-                            {item.description}
-                          </p>
-                        </div>
+                    {/* Usage */}
+                    <div className="flex flex-row items-center justify-between py-1">
+                      <span className="text-gray-dark text-sm font-normal">
+                        Usage
+                      </span>
+                      {item.lockToDistributionList ? (
+                        <span className="badge bg-green-light text-yellow flex items-center">
+                          <IoMdLock className="h-4 w-4" />
+                          <span className="ml-1 text-xs">
+                            {item.usagesTotal ?? "0"} /{" "}
+                            {item.usagesLimit ?? "0"}
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="badge bg-green-light text-green flex items-center">
+                          <IoMdPerson className="h-4 w-4" />
+                          <span className="ml-1 text-xs">
+                            {item.usagesTotal ?? "0"} /{" "}
+                            {item.usagesLimit ?? "0"}
+                          </span>
+                        </span>
                       )}
+                    </div>
 
-                      <div className="flex justify-between">
-                        <p className="text-sm tracking-wider">Usage</p>
+                    {/* Expires */}
+                    <div className="flex flex-row items-center justify-between py-1">
+                      <span className="text-gray-dark text-sm font-normal">
+                        Expires
+                      </span>
+                      {item.dateEnd ? (
+                        <span className="badge bg-yellow-light text-yellow flex items-center">
+                          <IoMdCalendar className="h-4 w-4" />
+                          <span className="ml-1 text-xs">
+                            <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                              {item.dateEnd}
+                            </Moment>
+                          </span>
+                        </span>
+                      ) : (
+                        <span className="text-xs text-gray-500">N/A</span>
+                      )}
+                    </div>
 
-                        {item.lockToDistributionList && (
-                          <span className="badge bg-green-light text-yellow">
-                            <IoMdLock className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
-                              {item.usagesTotal ?? "0"} /{" "}
-                              {item.usagesLimit ?? "0"}
-                            </span>
-                          </span>
-                        )}
-
-                        {!item.lockToDistributionList && (
-                          <span className="badge bg-green-light text-green">
-                            <IoMdPerson className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
-                              {item.usagesTotal ?? "0"} /{" "}
-                              {item.usagesLimit ?? "0"}
-                            </span>
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex justify-between">
-                        <p className="text-sm tracking-wider">Expires</p>
-                        {item.dateEnd ? (
-                          <span className="badge bg-yellow-light text-yellow">
-                            <IoMdCalendar className="h-4 w-4" />
-                            <span className="ml-1 text-xs">
-                              <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                                {item.dateEnd}
-                              </Moment>
-                            </span>
-                          </span>
-                        ) : (
-                          "N/A"
-                        )}
-                      </div>
-                      <div className="flex justify-between">
-                        <p className="text-sm tracking-wider">Status</p>
-                        {item.status == "Active" && (
-                          <span className="badge bg-blue-light text-blue">
-                            Active
-                          </span>
-                        )}
-                        {item.status == "Expired" && (
-                          <span className="badge bg-green-light text-yellow">
-                            Expired
-                          </span>
-                        )}
-                        {item.status == "Inactive" && (
-                          <span className="badge bg-yellow-tint text-yellow">
-                            Inactive
-                          </span>
-                        )}
-                        {item.status == "LimitReached" && (
-                          <span className="badge bg-green-light text-red-400">
-                            Limit Reached
-                          </span>
-                        )}
-                        {item.status == "Deleted" && (
-                          <span className="badge bg-green-light text-red-400">
-                            Deleted
-                          </span>
-                        )}
-                      </div>
+                    {/* Status */}
+                    <div className="flex flex-row items-center justify-between py-1">
+                      <span className="text-gray-dark text-sm font-normal">
+                        Status
+                      </span>
+                      {item.status == "Active" && (
+                        <span className="badge bg-blue-light text-blue">
+                          Active
+                        </span>
+                      )}
+                      {item.status == "Expired" && (
+                        <span className="badge bg-green-light text-yellow">
+                          Expired
+                        </span>
+                      )}
+                      {item.status == "Inactive" && (
+                        <span className="badge bg-yellow-tint text-yellow">
+                          Inactive
+                        </span>
+                      )}
+                      {item.status == "LimitReached" && (
+                        <span className="badge bg-green-light text-red-400">
+                          Limit Reached
+                        </span>
+                      )}
+                      {item.status == "Deleted" && (
+                        <span className="badge bg-green-light text-red-400">
+                          Deleted
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -935,12 +973,9 @@ const Links: NextPageWithLayout<{
               <table className="border-gray-light hidden border-separate rounded-lg border-x-2 border-t-2 md:table md:table-auto">
                 <thead>
                   <tr className="border-gray text-gray-dark">
+                    <th className="border-gray-light border-b-2 !py-4">Link</th>
                     <th className="border-gray-light border-b-2 !py-4">
                       Opportunity
-                    </th>
-                    <th className="border-gray-light border-b-2 !py-4">Name</th>
-                    <th className="border-gray-light border-b-2">
-                      Description
                     </th>
                     <th className="border-gray-light border-b-2">Usage</th>
                     <th className="border-gray-light border-b-2">Expires</th>
@@ -953,7 +988,33 @@ const Links: NextPageWithLayout<{
                 <tbody>
                   {links.items.map((item) => (
                     <tr key={`grid_md_${item.id}`} className="">
-                      <td className="border-gray-light max-w-[200px] truncate border-b-2 !py-4">
+                      {/* Link column */}
+                      <td className="border-gray-light w-[180px] max-w-[220px] border-b-2 !py-4 align-top">
+                        <div className="flex flex-col gap-1">
+                          <Link
+                            title={item.name}
+                            href={`/organisations/${
+                              item.entityOrganizationId
+                            }/links/${item.id}${`?returnUrl=${encodeURIComponent(
+                              getSafeUrl(returnUrl, router.asPath),
+                            )}`}`}
+                            className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                          >
+                            {item.name}
+                          </Link>
+                          {item.description && (
+                            <span
+                              title={item.description}
+                              className="block w-full max-w-[160px] overflow-hidden text-xs text-ellipsis whitespace-nowrap text-gray-500"
+                            >
+                              {item.description}
+                            </span>
+                          )}
+                        </div>
+                      </td>
+
+                      {/* Opportunity column */}
+                      <td className="border-gray-light w-[180px] max-w-[180px] border-b-2 !py-4 align-top">
                         {item.entityType == "Opportunity" &&
                           item.entityOrganizationId && (
                             <Link
@@ -965,26 +1026,19 @@ const Links: NextPageWithLayout<{
                               }/info${`?returnUrl=${encodeURIComponent(
                                 getSafeUrl(returnUrl, router.asPath),
                               )}`}`}
-                              className="text-gray-dark max-w-[80px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
+                              className="text-gray-dark block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap underline"
                             >
                               {item.entityTitle}
                             </Link>
                           )}
                         {item.entityType != "Opportunity" && (
-                          <>{item.entityTitle}</>
+                          <span
+                            title={item.entityTitle}
+                            className="block w-full max-w-[160px] overflow-hidden text-sm text-ellipsis whitespace-nowrap"
+                          >
+                            {item.entityTitle}
+                          </span>
                         )}
-                      </td>
-
-                      <td className="border-gray-light max-w-[100px] truncate border-b-2 !py-4">
-                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
-                          {item.name}
-                        </div>
-                      </td>
-
-                      <td className="border-gray-light max-w-[100px] border-b-2">
-                        <div className="overflow-hidden text-ellipsis whitespace-nowrap md:max-w-[100px]">
-                          {item.description}
-                        </div>
                       </td>
 
                       <td className="border-gray-light border-b-2">

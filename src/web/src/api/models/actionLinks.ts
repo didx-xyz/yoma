@@ -22,9 +22,9 @@ export interface LinkInfo {
   name: string;
   description: string | null;
   entityType: LinkEntityType | string; //NB: string is not in the original model
-  action: LinkAction;
+  action: LinkAction | string; //NB:
   statusId: string;
-  status: LinkStatus | string; //NB: string is not in the original model
+  status: LinkStatus | string; //NB:
   entityId: string;
   entityTitle: string;
   entityOrganizationId: string | null;
@@ -71,4 +71,34 @@ export interface LinkSearchFilter extends PaginationFilter {
 export interface LinkSearchResult {
   totalCount: number | null;
   items: LinkInfo[];
+}
+
+export interface LinkSearchFilterUsage extends PaginationFilter {
+  id: string;
+  usage: LinkUsageStatus;
+  valueContains: string | null;
+}
+
+export enum LinkUsageStatus {
+  All,
+  Claimed,
+  Unclaimed,
+}
+
+export interface LinkSearchResultsUsage {
+  link: LinkInfo;
+  totalCount: number | null;
+  items: LinkSearchResultsUsageItem[];
+}
+
+export interface LinkSearchResultsUsageItem {
+  userId: string | null;
+  username: string;
+  email: string | null;
+  phoneNumber: string | null;
+  displayName: string | null;
+  country: string | null;
+  age: number | null;
+  claimed: boolean;
+  dateClaimed: string | null;
 }

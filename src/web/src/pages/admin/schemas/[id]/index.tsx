@@ -50,6 +50,7 @@ import type { SelectOption } from "~/api/models/lookups";
 import {
   GA_ACTION_ADMIN_SCHEMA_CREATE,
   GA_CATEGORY_SCHEMA,
+  ROLE_ADMIN,
   THEME_BLUE,
 } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -63,15 +64,23 @@ interface IParams extends ParsedUrlQuery {
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
   const { id } = context.params as IParams;
   const queryClient = new QueryClient(config);
   let errorCode = null;
 
+  // 👇 ensure authenticated and authorized
+  const session = await getServerSession(context.req, context.res, authOptions);
   if (!session) {
     return {
       props: {
         error: 401,
+      },
+    };
+  }
+  if (!session.user?.roles?.includes(ROLE_ADMIN)) {
+    return {
+      props: {
+        error: 403,
       },
     };
   }

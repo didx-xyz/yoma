@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { error } from "console";
 import { useAtomValue } from "jotai";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
