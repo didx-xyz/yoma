@@ -6,21 +6,23 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
-import { type ReactElement } from "react";
+import { useCallback, useState, type ReactElement } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import Moment from "react-moment";
 import {
+  LinkSearchFilterUsage,
   LinkSearchResultsUsage,
   LinkUsageStatus,
 } from "~/api/models/actionLinks";
 import { searchLinkUsage } from "~/api/services/actionLinks";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
+import { PaginationButtons } from "~/components/PaginationButtons";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { DATE_FORMAT_HUMAN } from "~/lib/constants";
+import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
@@ -34,6 +36,7 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id, linkId } = context.params as IParams;
+  const { valueContains, page } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
   const queryClient = new QueryClient(config);
   let errorCode = null;
@@ -57,8 +60,8 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
         id: linkId,
         usage: LinkUsageStatus.All,
         valueContains: null,
-        pageNumber: null,
-        pageSize: null,
+        pageNumber: page ? parseInt(page.toString()) : 1,
+        pageSize: PAGE_SIZE,
       },
       context,
     );
@@ -82,8 +85,10 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     props: {
       dehydratedState: dehydrate(queryClient),
       user: session?.user ?? null,
-      id,
-      linkId,
+      id: id ?? null,
+      linkId: linkId ?? null,
+      valueContains: valueContains ?? null,
+      page: page ?? null,
       theme,
       error: errorCode,
     },
@@ -93,10 +98,12 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 const LinkOverview: NextPageWithLayout<{
   id: string;
   linkId: string;
+  valueContains?: string;
+  page?: string;
   user: User;
   theme: string;
   error?: number;
-}> = ({ id, linkId, error }) => {
+}> = ({ id, linkId, valueContains, page, error }) => {
   const router = useRouter();
   const { returnUrl } = router.query;
 
@@ -105,6 +112,61 @@ const LinkOverview: NextPageWithLayout<{
     queryKey: ["link", linkId],
     enabled: !error,
   });
+
+  // search filter state
+  const [searchFilter] = useState<LinkSearchFilterUsage>({
+    id: linkId,
+    usage: LinkUsageStatus.All,
+    valueContains: valueContains ?? null,
+    pageNumber: page ? parseInt(page) : 1,
+    pageSize: PAGE_SIZE,
+  });
+
+  // 🎈 FUNCTIONS
+  const getSearchFilterAsQueryString = useCallback(
+    (searchFilter: LinkSearchFilterUsage) => {
+      if (!searchFilter) return null;
+
+      // construct querystring parameters from filter
+      const params = new URLSearchParams();
+
+      if (searchFilter?.valueContains)
+        params.append("valueContains", searchFilter.valueContains);
+
+      if (
+        searchFilter.pageNumber !== null &&
+        searchFilter.pageNumber !== undefined &&
+        searchFilter.pageNumber !== 1
+      )
+        params.append("page", searchFilter.pageNumber.toString());
+
+      if (params.size === 0) return null;
+      return params;
+    },
+    [],
+  );
+
+  const redirectWithSearchFilterParams = useCallback(
+    (filter: LinkSearchFilterUsage) => {
+      let url = `/organisations/${id}/links/${linkId}`;
+
+      const params = getSearchFilterAsQueryString(filter);
+      if (params != null && params.size > 0) url = `${url}?${params}`;
+
+      if (url != router.asPath)
+        void router.push(url, undefined, { scroll: false });
+    },
+    [id, linkId, router, getSearchFilterAsQueryString],
+  );
+
+  // 🔔 pager change event
+  const handlePagerChange = useCallback(
+    (value: number) => {
+      searchFilter.pageNumber = value;
+      redirectWithSearchFilterParams(searchFilter);
+    },
+    [searchFilter, redirectWithSearchFilterParams],
+  );
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -138,13 +200,12 @@ const LinkOverview: NextPageWithLayout<{
             {link?.link?.name}
           </span>
         </div>
-
         {/* LINK DETAILS */}
         <div className="animate-fade-in mx-auto mt-5 space-y-6 rounded-2xl bg-white p-6 shadow-md">
           {/* Title */}
           <div>
-            <h1 className="text-2xl font-bold">{link?.link?.name}</h1>
-            <p className="text-gray-500">{link?.link?.description}</p>
+            <h1 className="text-2xl font-bold">{link?.link?.name ?? "N/A"}</h1>
+            <p className="text-gray-500">{link?.link?.description ?? "N/A"}</p>
           </div>
 
           {/* Link Information */}
@@ -160,12 +221,16 @@ const LinkOverview: NextPageWithLayout<{
                     Status
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    {link?.link?.status === "Active" ? (
-                      <span className="text-green-600">✅ Active</span>
+                    {link?.link?.status ? (
+                      link?.link?.status === "Active" ? (
+                        <span className="text-green-600">✅ Active</span>
+                      ) : (
+                        <span className="text-red-600">
+                          ❌ {link?.link?.status?.toString()}
+                        </span>
+                      )
                     ) : (
-                      <span className="text-red-600">
-                        ❌ {link?.link?.status?.toString()}
-                      </span>
+                      "N/A"
                     )}
                   </div>
                 </div>
@@ -175,17 +240,21 @@ const LinkOverview: NextPageWithLayout<{
                     Action
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    {link?.link?.action === "Share" ? "🔗 Share" : "✅ Verify"}
+                    {link?.link?.action
+                      ? link?.link?.action === "Share"
+                        ? "Share"
+                        : "Verify"
+                      : "N/A"}
                   </div>
                 </div>
-                {/* Entity Type */}
+                {/* Entity Type / Opportunity */}
                 {link?.link?.entityType === "Opportunity" ? (
                   <div className="flex">
                     <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                       Opportunity
                     </div>
                     <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50">
-                      {link?.link?.entityTitle}
+                      {link?.link?.entityTitle ?? "N/A"}
                     </div>
                   </div>
                 ) : (
@@ -194,7 +263,7 @@ const LinkOverview: NextPageWithLayout<{
                       Entity Type
                     </div>
                     <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50">
-                      {link?.link?.entityType}
+                      {link?.link?.entityType ?? "N/A"}
                     </div>
                   </div>
                 )}
@@ -204,7 +273,7 @@ const LinkOverview: NextPageWithLayout<{
                     Organisation
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-50">
-                    {link?.link?.entityOrganizationName}
+                    {link?.link?.entityOrganizationName ?? "N/A"}
                   </div>
                 </div>
               </div>
@@ -224,15 +293,19 @@ const LinkOverview: NextPageWithLayout<{
                     URL
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    <a
-                      className="text-blue-600 underline"
-                      href={link?.link?.uRL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={link?.link?.uRL}
-                    >
-                      {link?.link?.uRL}
-                    </a>
+                    {link?.link?.uRL ? (
+                      <a
+                        className="text-blue-600 underline"
+                        href={link?.link?.uRL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={link?.link?.uRL}
+                      >
+                        {link?.link?.uRL}
+                      </a>
+                    ) : (
+                      "N/A"
+                    )}
                   </div>
                 </div>
                 {/* Short URL */}
@@ -241,34 +314,21 @@ const LinkOverview: NextPageWithLayout<{
                     Short URL
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    <a
-                      className="text-blue-600 underline"
-                      href={link?.link?.shortURL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      title={link?.link?.shortURL}
-                    >
-                      {link?.link?.shortURL}
-                    </a>
-                  </div>
-                </div>
-                {/* QR Code */}
-                {/* <div className="flex">
-                  <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
-                    QR Code
-                  </div>
-                  <div className="flex-1 border border-gray-200 px-4 py-2 text-sm">
-                    {link?.link?.qrCodeBase64 ? (
-                      <img
-                        src={`data:image/png;base64,${link.link.qrCodeBase64}`}
-                        alt="QR Code"
-                        className="inline-block h-8 w-8"
-                      />
+                    {link?.link?.shortURL ? (
+                      <a
+                        className="text-blue-600 underline"
+                        href={link?.link?.shortURL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        title={link?.link?.shortURL}
+                      >
+                        {link?.link?.shortURL}
+                      </a>
                     ) : (
-                      <span className="text-gray-400">❌ NA</span>
+                      "N/A"
                     )}
                   </div>
-                </div> */}
+                </div>
                 {/* Distribution List */}
                 {link?.link?.distributionList && (
                   <div className="flex md:col-span-2">
@@ -281,7 +341,7 @@ const LinkOverview: NextPageWithLayout<{
                     >
                       {link?.link?.distributionList?.length > 0
                         ? link?.link?.distributionList.join(", ")
-                        : "None"}
+                        : "N/A"}
                     </div>
                   </div>
                 )}
@@ -302,7 +362,9 @@ const LinkOverview: NextPageWithLayout<{
                     Used
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    {`${link?.link?.usagesTotal ?? 0} / ${link?.link?.usagesLimit ?? "∞"}`}
+                    {link?.link?.usagesTotal
+                      ? `${link?.link?.usagesTotal} / ${link?.link?.usagesLimit ?? "∞"}`
+                      : "N/A"}
                   </div>
                 </div>
                 {/* Available */}
@@ -311,7 +373,10 @@ const LinkOverview: NextPageWithLayout<{
                     Available
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    {link?.link?.usagesAvailable ?? "N/A"}
+                    {link?.link?.usagesAvailable !== undefined &&
+                    link?.link?.usagesAvailable !== null
+                      ? link?.link?.usagesAvailable
+                      : "N/A"}
                   </div>
                 </div>
                 {/* Expires */}
@@ -325,7 +390,7 @@ const LinkOverview: NextPageWithLayout<{
                         {link.link.dateEnd}
                       </Moment>
                     ) : (
-                      <span className="text-gray-400">❌ NA</span>
+                      "N/A"
                     )}
                   </div>
                 </div>
@@ -335,9 +400,13 @@ const LinkOverview: NextPageWithLayout<{
                     Created
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    <Moment format={DATE_FORMAT_HUMAN} utc={true}>
-                      {link?.link?.dateCreated}
-                    </Moment>
+                    {link?.link?.dateCreated ? (
+                      <Moment format={DATE_FORMAT_HUMAN} utc={true}>
+                        {link?.link?.dateCreated}
+                      </Moment>
+                    ) : (
+                      "N/A"
+                    )}
                   </div>
                 </div>
               </div>
@@ -351,7 +420,7 @@ const LinkOverview: NextPageWithLayout<{
             </h2>
             {link?.items && link.items.length > 0 ? (
               <div className="overflow-x-auto">
-                <div className="overflow-hiddenx rounded-lg border border-gray-200">
+                <div className="rounded-lg border border-gray-200">
                   <table className="min-w-full table-fixed border-collapse text-sm">
                     <thead className="bg-gray-50">
                       <tr>
@@ -380,25 +449,29 @@ const LinkOverview: NextPageWithLayout<{
                           className="hover:bg-gray-100"
                         >
                           <td className="border border-gray-200 px-4 py-2">
-                            {item.displayName ?? item.username}
+                            {item.displayName ?? item.username ?? "N/A"}
                           </td>
                           <td className="border border-gray-200 px-4 py-2">
-                            {item.email ?? "—"}
+                            {item.email ?? "N/A"}
                           </td>
                           <td className="border border-gray-200 px-4 py-2">
-                            {item.phoneNumber ?? "—"}
+                            {item.phoneNumber ?? "N/A"}
                           </td>
                           <td className="border border-gray-200 px-4 py-2">
-                            {item.country ?? "—"}
+                            {item.country ?? "N/A"}
                           </td>
                           <td className="border border-gray-200 px-4 py-2">
-                            {item.age ?? "—"}
+                            {item.age ?? "N/A"}
                           </td>
                           <td className="border border-gray-200 px-4 py-2">
-                            {item.claimed ? (
-                              <span className="text-green-600">✅ Yes</span>
+                            {item.claimed !== undefined ? (
+                              item.claimed ? (
+                                <span className="text-green-600">✅ Yes</span>
+                              ) : (
+                                <span className="text-red-500">❌ No</span>
+                              )
                             ) : (
-                              <span className="text-red-500">❌ No</span>
+                              "N/A"
                             )}
                           </td>
                           <td className="border border-gray-200 px-4 py-2">
@@ -407,13 +480,25 @@ const LinkOverview: NextPageWithLayout<{
                                 {item.dateClaimed}
                               </Moment>
                             ) : (
-                              "—"
+                              "N/A"
                             )}
                           </td>
                         </tr>
                       ))}
                     </tbody>
                   </table>
+                </div>
+
+                {/* PAGINATION */}
+                <div className="mt-2 grid place-items-center justify-center">
+                  <PaginationButtons
+                    currentPage={page ? parseInt(page) : 1}
+                    totalItems={link?.totalCount ?? 0}
+                    pageSize={PAGE_SIZE}
+                    onClick={handlePagerChange}
+                    showPages={false}
+                    showInfo={true}
+                  />
                 </div>
               </div>
             ) : (
