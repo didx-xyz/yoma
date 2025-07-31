@@ -1,6 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
+import { error } from "console";
 import { useAtomValue } from "jotai";
-import type { GetStaticPaths, GetStaticProps } from "next";
+import type { GetServerSidePropsContext } from "next";
+import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
@@ -45,40 +47,47 @@ import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { SearchInputLarge } from "~/components/SearchInputLarge";
+import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
-import { PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
+import { Unauthenticated } from "~/components/Status/Unauthenticated";
+import { Unauthorized } from "~/components/Status/Unauthorized";
+import { PAGE_SIZE, ROLE_ADMIN, THEME_BLUE } from "~/lib/constants";
 import { screenWidthAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
+import { authOptions } from "~/server/auth";
 
-// 👇 SSG
-// This function gets called at build time on server-side.
-// It may be called again, on a serverless function, if
-// revalidation is enabled and a new request comes in
-export const getStaticProps: GetStaticProps = async (context) => {
+// ⚠️ SSR
+export async function getServerSideProps(context: GetServerSidePropsContext) {
+  // 👇 ensure authenticated and authorized
+  const session = await getServerSession(context.req, context.res, authOptions);
+  if (!session) {
+    return {
+      props: {
+        error: 401,
+      },
+    };
+  }
+  if (!session.user?.roles?.includes(ROLE_ADMIN)) {
+    return {
+      props: {
+        error: 403,
+      },
+    };
+  }
+
   const lookups_types = await getOpportunityTypes(context);
 
   return {
     props: {
       lookups_types,
     },
-
-    // Next.js will attempt to re-generate the page:
-    // - When a request comes in
-    // - At most once every 300 seconds
-    revalidate: 300,
   };
-};
-
-export const getStaticPaths: GetStaticPaths = () => {
-  return {
-    paths: [],
-    fallback: "blocking",
-  };
-};
+}
 
 const OpportunitiesAdmin: NextPageWithLayout<{
   lookups_types: OpportunityType[];
-}> = ({ lookups_types }) => {
+  error?: number;
+}> = ({ lookups_types, error }) => {
   const router = useRouter();
   const myRef = useRef<HTMLDivElement>(null);
   const [filterFullWindowVisible, setFilterFullWindowVisible] = useState(false);
@@ -117,21 +126,25 @@ const OpportunitiesAdmin: NextPageWithLayout<{
   const { data: lookups_categories } = useQuery<OpportunityCategory[]>({
     queryKey: ["AdminOpportunitiesCategories"],
     queryFn: () => getCategoriesAdmin(null),
+    enabled: !error,
   });
 
   const { data: lookups_countries } = useQuery<Country[]>({
     queryKey: ["AdminOpportunitiesCountries"],
     queryFn: () => getCountriesAdmin(null),
+    enabled: !error,
   });
 
   const { data: lookups_languages } = useQuery<Language[]>({
     queryKey: ["AdminOpportunitiesLanguages"],
     queryFn: () => getLanguagesAdmin(null),
+    enabled: !error,
   });
 
   const { data: lookups_organisations } = useQuery<OrganizationInfo[]>({
     queryKey: ["AdminOpportunitiesOrganisations"],
     queryFn: () => getOrganisationsAdmin(),
+    enabled: !error,
   });
 
   // memo for isSearchPerformed based on filter parameters
@@ -260,7 +273,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   .filter((x) => x != "")
               : null,
         }),
-      //enabled: isSearchPerformed, // only run query if search is executed
+      enabled: !error,
     });
 
   // search filter state
@@ -533,6 +546,12 @@ const OpportunitiesAdmin: NextPageWithLayout<{
       </ul>
     </div>
   );
+
+  if (error) {
+    if (error === 401) return <Unauthenticated />;
+    else if (error === 403) return <Unauthorized />;
+    else return <InternalServerError />;
+  }
 
   return (
     <>

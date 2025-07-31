@@ -945,7 +945,9 @@ const Links: NextPageWithLayout<{
                     <th className="border-gray-light border-b-2">Usage</th>
                     <th className="border-gray-light border-b-2">Expires</th>
                     <th className="border-gray-light border-b-2">Status</th>
-                    <th className="border-gray-light border-b-2">Actions</th>
+                    <th className="border-gray-light border-b-2 text-center">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

@@ -12,7 +12,7 @@ import { IoIosAdd, IoMdSettings } from "react-icons/io";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { getSchemas } from "~/api/services/credentials";
 import type { SSISchema } from "~/api/models/credential";
-import { THEME_BLUE } from "~/lib/constants";
+import { ROLE_ADMIN, THEME_BLUE } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import axios from "axios";
@@ -20,15 +20,23 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
-  const session = await getServerSession(context.req, context.res, authOptions);
   const { query, page } = context.query;
   const queryClient = new QueryClient(config);
   let errorCode = null;
 
+  // 👇 ensure authenticated and authorized
+  const session = await getServerSession(context.req, context.res, authOptions);
   if (!session) {
     return {
       props: {
         error: 401,
+      },
+    };
+  }
+  if (!session.user?.roles?.includes(ROLE_ADMIN)) {
+    return {
+      props: {
+        error: 403,
       },
     };
   }

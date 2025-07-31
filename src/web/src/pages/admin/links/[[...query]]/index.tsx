@@ -54,6 +54,7 @@ import {
   GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
   GA_CATEGORY_OPPORTUNITY_LINK,
   PAGE_SIZE,
+  ROLE_ADMIN,
   THEME_BLUE,
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
@@ -73,13 +74,19 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     page,
     returnUrl,
   } = context.query;
+  // 👇 ensure authenticated and authorized
   const session = await getServerSession(context.req, context.res, authOptions);
-
-  // 👇 ensure authenticated
   if (!session) {
     return {
       props: {
         error: 401,
+      },
+    };
+  }
+  if (!session.user?.roles?.includes(ROLE_ADMIN)) {
+    return {
+      props: {
+        error: 403,
       },
     };
   }
