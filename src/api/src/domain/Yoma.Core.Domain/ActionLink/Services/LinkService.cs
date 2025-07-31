@@ -434,6 +434,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
       };
 
       IQueryable<UnnestedValue> unnestedQuery;
+      IQueryable<string> identifiersQuery;
 
       switch (filter.Usage)
       {
@@ -442,26 +443,34 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
           unnestedQuery = _linkRepository.UnnestValues(distributionList);
 
-          var queryAll = unnestedQuery
+          identifiersQuery =
+            unnestedQuery.Select(x => x.Value.ToLower())
+            .Concat(
+                _linkUsageLogRepository.Query()
+                    .Where(x => x.LinkId == link.Id)
+                    .Select(x => x.Username.ToLower())
+            ).Distinct();
+
+          var queryAll = identifiersQuery
             .GroupJoin(
                 _userRepository.Query(false),
-                d => d.Value.ToLower(),
+                id => id,
                 u => u.Username.ToLower(),
-                (d, users) => new { d, users })
+                (id, users) => new { id, users })
             .SelectMany(
                 x => x.users.DefaultIfEmpty(),
-                (x, u) => new { x.d, u })
+                (x, u) => new { x.id, u })
             .GroupJoin(
                 _linkUsageLogRepository.Query().Where(x => x.LinkId == link.Id),
                 x => x.u != null ? x.u.Id : null,
                 l => (Guid?)l.UserId,
-                (x, usageLogs) => new { x.d, x.u, usageLogs })
+                (x, usageLogs) => new { x.id, x.u, usageLogs })
             .SelectMany(
                 x => x.usageLogs.DefaultIfEmpty(),
                 (x, l) => new LinkSearchResultsUsageItem
                 {
                   UserId = x.u != null ? x.u.Id : null,
-                  Username = x.d.Value,
+                  Username = x.id,
                   Email = x.u != null ? x.u.Email : null,
                   PhoneNumber = x.u != null ? x.u.PhoneNumber : null,
                   DisplayName = x.u != null ? x.u.DisplayName : null,
@@ -532,32 +541,41 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
           unnestedQuery = _linkRepository.UnnestValues(distributionList);
 
-          var queryUnclaimed = unnestedQuery
+          identifiersQuery =
+            unnestedQuery.Select(x => x.Value.ToLower())
+            .Concat(
+                _linkUsageLogRepository.Query()
+                    .Where(x => x.LinkId == link.Id)
+                    .Select(x => x.Username.ToLower())
+            )
+            .Distinct();
+
+          var queryUnclaimed = identifiersQuery
             .GroupJoin(
                 _userRepository.Query(false),
-                d => d.Value.ToLower(),
+                id => id,
                 u => u.Username.ToLower(),
-                (d, users) => new { d, users })
+                (id, users) => new { id, users })
             .SelectMany(
                 x => x.users.DefaultIfEmpty(),
-                (x, u) => new { x.d, u })
+                (x, u) => new { x.id, u })
             .GroupJoin(
                 _linkUsageLogRepository.Query().Where(x => x.LinkId == link.Id),
                 x => x.u != null ? x.u.Id : null,
                 l => (Guid?)l.UserId,
-                (x, usageLogs) => new { x.d, x.u, usageLogs })
+                (x, usageLogs) => new { x.id, x.u, usageLogs })
             .SelectMany(
                 x => x.usageLogs.DefaultIfEmpty(),
                 (x, l) => new LinkSearchResultsUsageItem
                 {
                   UserId = x.u != null ? x.u.Id : null,
-                  Username = x.d.Value,
+                  Username = x.id,
                   Email = x.u != null ? x.u.Email : null,
                   PhoneNumber = x.u != null ? x.u.PhoneNumber : null,
                   DisplayName = x.u != null ? x.u.DisplayName : null,
                   Country = x.u != null ? x.u.Country : null,
                   DateOfBirth = x.u != null ? x.u.DateOfBirth : null,
-                  DateClaimed = null
+                  DateClaimed = l != null ? l.DateCreated : null
                 })
             .Where(x => x.DateClaimed == null);
 
