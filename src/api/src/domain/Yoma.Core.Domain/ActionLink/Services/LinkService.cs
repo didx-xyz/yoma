@@ -474,8 +474,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
                     (x, u) => new { x.id, u })
                 .GroupJoin(
                     _linkUsageLogRepository.Query().Where(l => l.LinkId == link.Id),
-                    x => x.u != null ? x.u.Id : null,
-                    l => (Guid?)l.UserId,
+                    x => x.id, // distribution list / identifier
+                    l => (l.UsernameClaimed ?? l.Username).ToLower(),
                     (x, logs) => new { x.id, x.u, logs })
                 .SelectMany(
                     x => x.logs.DefaultIfEmpty(),
@@ -595,8 +595,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
                     (x, u) => new { x.id, u })
                 .GroupJoin(
                     _linkUsageLogRepository.Query().Where(l => l.LinkId == link.Id),
-                    x => x.u != null ? x.u.Id : null,
-                    l => (Guid?)l.UserId,
+                    x => x.id, // distribution list / identifier
+                    l => (l.UsernameClaimed ?? l.Username).ToLower(),
                     (x, logs) => new { x.id, x.u, logs })
                 .SelectMany(
                     x => x.logs.DefaultIfEmpty(),
