@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public Guid UserId { get; set; }
 
+    public string? UsernameClaimed { get; set; }
+
     public string Username { get; set; }
 
     public string? UserEmail { get; set; }

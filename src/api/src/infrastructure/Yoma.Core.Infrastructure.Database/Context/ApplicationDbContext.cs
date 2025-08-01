@@ -183,7 +183,8 @@ namespace Yoma.Core.Infrastructure.Database.Context
       builder.Entity<Domain.Core.Models.UnnestedValue>(eb =>
       {
         eb.HasKey(x => x.Id); // keep the key for joins and EF tracking
-        eb.ToView(null); // mark it as not having a backing table or view
+        eb.ToTable("UnnestedValueDummy"); // dummy name to stop EF writing null
+        eb.ToView("unnested_values"); // mark it as not having a backing table or view
         eb.Metadata.SetIsTableExcludedFromMigrations(true); // exclude from migrations
       });
 

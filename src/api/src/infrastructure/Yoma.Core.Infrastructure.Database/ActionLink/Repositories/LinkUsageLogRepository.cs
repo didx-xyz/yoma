@@ -22,6 +22,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         Id = entity.Id,
         LinkId = entity.LinkId,
         UserId = entity.UserId,
+        UsernameClaimed = entity.UsernameClaimed,
         Username = entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,
         UserEmail = entity.User.Email,
         UserDisplayName = entity.User.DisplayName ?? entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,
@@ -57,6 +58,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         Id = item.Id,
         LinkId = item.LinkId,
         UserId = item.UserId,
+        UsernameClaimed = item.UsernameClaimed,
         DateCreated = item.DateCreated
       };
 

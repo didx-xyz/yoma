@@ -7,7 +7,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
 {
   [Table("UsageLog", Schema = "ActionLink")]
   [Index(nameof(LinkId), nameof(UserId), IsUnique = true)]
-  [Index(nameof(DateCreated))]
+  [Index(nameof(UsernameClaimed), nameof(DateCreated))]
   public class LinkUsageLog : BaseEntity<Guid>
   {
     [ForeignKey("LinkId")]
@@ -17,6 +17,9 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
     public Entity.Entities.User User { get; set; }
+
+    [Column(TypeName = "varchar(320)")]
+    public string? UsernameClaimed { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }
