@@ -19,6 +19,7 @@ import { searchLinkUsage } from "~/api/services/actionLinks";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
+import { SearchInput } from "~/components/SearchInput";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
@@ -59,7 +60,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       {
         id: linkId,
         usage: LinkUsageStatus.All,
-        valueContains: null,
+        valueContains: valueContains?.toString() ?? null,
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
       },
@@ -140,10 +141,15 @@ const LinkOverview: NextPageWithLayout<{
       )
         params.append("page", searchFilter.pageNumber.toString());
 
+      // Ensure returnUrl is included if present in router.query
+      if (router.query.returnUrl) {
+        params.append("returnUrl", router.query.returnUrl as string);
+      }
+
       if (params.size === 0) return null;
       return params;
     },
-    [],
+    [router.query.returnUrl],
   );
 
   const redirectWithSearchFilterParams = useCallback(
@@ -177,7 +183,7 @@ const LinkOverview: NextPageWithLayout<{
   return (
     <>
       <Head>
-        <title>{`Yoma Admin | ${link?.link?.name || "Link Details"}`}</title>
+        <title>{`Yoma | ${link?.link?.name || "Link Details"}`}</title>
       </Head>
 
       <PageBackground />
@@ -362,9 +368,9 @@ const LinkOverview: NextPageWithLayout<{
                     Used
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    {link?.link?.usagesTotal
-                      ? `${link?.link?.usagesTotal} / ${link?.link?.usagesLimit ?? "∞"}`
-                      : "N/A"}
+                    {link?.link?.usagesLimit
+                      ? `${link?.link?.usagesTotal ?? "0"} / ${link?.link?.usagesLimit}`
+                      : (link?.link?.usagesTotal ?? "0")}
                   </div>
                 </div>
                 {/* Available */}
@@ -373,10 +379,7 @@ const LinkOverview: NextPageWithLayout<{
                     Available
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    {link?.link?.usagesAvailable !== undefined &&
-                    link?.link?.usagesAvailable !== null
-                      ? link?.link?.usagesAvailable
-                      : "N/A"}
+                    {link?.link?.usagesAvailable ?? "0"}
                   </div>
                 </div>
                 {/* Expires */}
@@ -414,10 +417,22 @@ const LinkOverview: NextPageWithLayout<{
           </section>
 
           {/* Usage Details */}
-          <section>
-            <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
-              🧾 Usage Details
-            </h2>
+          <section className="flex flex-col justify-center gap-2">
+            <div className="items-centerx flex flex-col justify-between md:flex-row">
+              <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
+                🧾 Usage Details
+              </h2>
+
+              <SearchInput
+                defaultValue={searchFilter.valueContains ?? ""}
+                onSearch={(query: string) => {
+                  searchFilter.valueContains = query;
+                  redirectWithSearchFilterParams(searchFilter);
+                }}
+                placeholder="Search"
+              />
+            </div>
+
             {link?.items && link.items.length > 0 ? (
               <div className="overflow-x-auto">
                 <div className="rounded-lg border border-gray-200">
