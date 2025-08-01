@@ -439,72 +439,95 @@ namespace Yoma.Core.Domain.ActionLink.Services
       switch (filter.Usage)
       {
         case LinkUsageStatus.All:
-          if (distributionList == null || distributionList.Count == 0) goto case LinkUsageStatus.Claimed;
-
-          unnestedQuery = _linkRepository.UnnestValues(distributionList);
-
-          identifiersQuery =
-            unnestedQuery.Select(x => x.Value.ToLower())
-            .Concat(
-                _linkUsageLogRepository.Query()
-                    .Where(x => x.LinkId == link.Id)
-                    .Select(x => x.Username.ToLower())
-            ).Distinct();
-
-          var queryAll = identifiersQuery
-            .GroupJoin(
-                _userRepository.Query(false),
-                id => id,
-                u => u.Username.ToLower(),
-                (id, users) => new { id, users })
-            .SelectMany(
-                x => x.users.DefaultIfEmpty(),
-                (x, u) => new { x.id, u })
-            .GroupJoin(
-                _linkUsageLogRepository.Query().Where(x => x.LinkId == link.Id),
-                x => x.u != null ? x.u.Id : null,
-                l => (Guid?)l.UserId,
-                (x, usageLogs) => new { x.id, x.u, usageLogs })
-            .SelectMany(
-                x => x.usageLogs.DefaultIfEmpty(),
-                (x, l) => new LinkSearchResultsUsageItem
-                {
-                  UserId = x.u != null ? x.u.Id : null,
-                  Username = x.id,
-                  Email = x.u != null ? x.u.Email : null,
-                  PhoneNumber = x.u != null ? x.u.PhoneNumber : null,
-                  DisplayName = x.u != null ? x.u.DisplayName : null,
-                  Country = x.u != null ? x.u.Country : null,
-                  DateOfBirth = x.u != null ? x.u.DateOfBirth : null,
-                  DateClaimed = l != null ? l.DateCreated : null
-                });
-
-          if (!string.IsNullOrWhiteSpace(filter.ValueContains))
           {
-            var value = filter.ValueContains.ToLowerInvariant();
-#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-            queryAll = queryAll.Where(x =>
-                x.Username.ToLower().Contains(value) ||
-                (x.DisplayName != null && x.DisplayName.ToLower().Contains(value)));
-#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+            // Fall through to “Claimed” when no distribution list is supplied
+            if (distributionList == null || distributionList.Count == 0)
+              goto case LinkUsageStatus.Claimed;
+
+            // Identifiers = distribution list values + usernames from usage logs
+            // UsernameClaimed (snapshot at claim time) preferred over Username (current)
+            identifiersQuery =
+                _linkRepository.UnnestValues(distributionList)
+                               .Select(v => v.Value.ToLower())
+                .Concat(
+                    _linkUsageLogRepository.Query()
+                        .Where(l => l.LinkId == link.Id)
+                        .Select(l => (l.UsernameClaimed ?? l.Username).ToLower())
+                )
+                .Distinct();
+
+            // Query flow:
+            // identifier → user (matched via Email > PhoneNumber > Username) → usage log
+            var queryAll =
+                identifiersQuery
+                .GroupJoin(
+                    _userRepository.Query(false),
+                    id => id,
+                    u => u.Email != null
+                             ? u.Email.ToLower()
+                             : u.PhoneNumber != null
+                                 ? u.PhoneNumber.ToLower()
+                                 : u.Username.ToLower(),
+                    (id, users) => new { id, users })
+                .SelectMany(
+                    x => x.users.DefaultIfEmpty(),
+                    (x, u) => new { x.id, u })
+                .GroupJoin(
+                    _linkUsageLogRepository.Query().Where(l => l.LinkId == link.Id),
+                    x => x.u != null ? x.u.Id : null,
+                    l => (Guid?)l.UserId,
+                    (x, logs) => new { x.id, x.u, logs })
+                .SelectMany(
+                    x => x.logs.DefaultIfEmpty(),
+                    (x, l) => new LinkSearchResultsUsageItem
+                    {
+                      UserId = x.u != null ? x.u.Id : null,
+                      Username = x.id,  // Distribution list identifier
+                      Email = x.u != null ? x.u.Email : null,
+                      PhoneNumber = x.u != null ? x.u.PhoneNumber : null,
+                      DisplayName = x.u != null ? x.u.DisplayName : null,
+                      Country = x.u != null ? x.u.Country : null,
+                      DateOfBirth = x.u != null ? x.u.DateOfBirth : null,
+                      DateClaimed = l != null ? l.DateCreated : null
+                    });
+
+            // Optional “contains” filter
+            if (!string.IsNullOrWhiteSpace(filter.ValueContains))
+            {
+              var term = filter.ValueContains.ToLowerInvariant();
+#pragma warning disable CA1862
+              queryAll = queryAll.Where(r =>
+                  r.Username.ToLower().Contains(term) ||
+                  (r.DisplayName != null && r.DisplayName.ToLower().Contains(term)));
+#pragma warning restore CA1862
+            }
+
+            // Ordering and optional pagination
+            queryAll = queryAll
+                .OrderBy(r => r.DisplayName ?? r.Username)
+                .ThenBy(r => r.UserId);
+
+            if (filter.PaginationEnabled)
+            {
+              result.TotalCount = queryAll.Count();
+              queryAll = queryAll
+                  .Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value)
+                  .Take(filter.PageSize.Value);
+            }
+
+            // Materialize and apply final adjustments
+            result.Items = [.. queryAll];
+
+            foreach (var r in result.Items)
+            {
+              // Always prefer latest username: Email → PhoneNumber → Identifier
+              r.Username = r.Email ?? r.PhoneNumber ?? r.Username;
+              r.DisplayName ??= r.Username;
+              r.Age = r.DateOfBirth?.CalculateAge(null);
+            }
+
+            break;
           }
-
-          queryAll = queryAll.OrderBy(x => x.DisplayName ?? x.Username)
-                   .ThenBy(x => x.UserId);
-
-          if (filter.PaginationEnabled)
-          {
-            result.TotalCount = queryAll.Count();
-            queryAll = queryAll.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
-          }
-
-          result.Items = [.. queryAll];
-          result.Items.ForEach(o =>
-          {
-            o.DisplayName ??= o.Username;
-            o.Age = o.DateOfBirth.HasValue ? o.DateOfBirth.Value.CalculateAge(null) : null;
-          });
-          break;
 
         case LinkUsageStatus.Claimed:
           var query = _linkUsageLogRepository.Query()
@@ -537,73 +560,103 @@ namespace Yoma.Core.Domain.ActionLink.Services
           break;
 
         case LinkUsageStatus.Unclaimed:
-          if (distributionList == null || distributionList.Count == 0) break;
+          {
+            // If there is no distribution list, nothing can be unclaimed
+            if (distributionList == null || distributionList.Count == 0)
+              break;
 
-          unnestedQuery = _linkRepository.UnnestValues(distributionList);
+            // Identifiers = distribution list values + usernames from usage logs
+            // UsernameClaimed (snapshot at claim time) preferred over Username (current)
+            identifiersQuery =
+                _linkRepository.UnnestValues(distributionList)
+                               .Select(v => v.Value.ToLower())
+                .Concat(
+                    _linkUsageLogRepository.Query()
+                        .Where(l => l.LinkId == link.Id)
+                        .Select(l => (l.UsernameClaimed ?? l.Username).ToLower())
+                )
+                .Distinct();
 
-          identifiersQuery =
-            unnestedQuery.Select(x => x.Value.ToLower())
-            .Concat(
-                _linkUsageLogRepository.Query()
-                    .Where(x => x.LinkId == link.Id)
-                    .Select(x => x.Username.ToLower())
-            )
-            .Distinct();
-
-          var queryUnclaimed = identifiersQuery
-            .GroupJoin(
-                _userRepository.Query(false),
-                id => id,
-                u => u.Username.ToLower(),
-                (id, users) => new { id, users })
-            .SelectMany(
-                x => x.users.DefaultIfEmpty(),
-                (x, u) => new { x.id, u })
-            .GroupJoin(
-                _linkUsageLogRepository.Query().Where(x => x.LinkId == link.Id),
-                x => x.u != null ? x.u.Id : null,
-                l => (Guid?)l.UserId,
-                (x, usageLogs) => new { x.id, x.u, usageLogs })
-            .SelectMany(
-                x => x.usageLogs.DefaultIfEmpty(),
-                (x, l) => new LinkSearchResultsUsageItem
+            // Query flow:
+            // identifier → user (matched via Email > PhoneNumber > Username) → usage log
+            var queryUnclaimed =
+                identifiersQuery
+                .GroupJoin(
+                    _userRepository.Query(false),
+                    id => id,
+                    u => u.Email != null
+                             ? u.Email.ToLower()
+                             : u.PhoneNumber != null
+                                 ? u.PhoneNumber.ToLower()
+                                 : u.Username.ToLower(),
+                    (id, users) => new { id, users })
+                .SelectMany(
+                    x => x.users.DefaultIfEmpty(),
+                    (x, u) => new { x.id, u })
+                .GroupJoin(
+                    _linkUsageLogRepository.Query().Where(l => l.LinkId == link.Id),
+                    x => x.u != null ? x.u.Id : null,
+                    l => (Guid?)l.UserId,
+                    (x, logs) => new { x.id, x.u, logs })
+                .SelectMany(
+                    x => x.logs.DefaultIfEmpty(),
+                    (x, l) => new
+                    {
+                      x.id,
+                      x.u,
+                      DateClaimed = l != null ? l.DateCreated : (DateTimeOffset?)null
+                    })
+                // Keep only unclaimed items
+                .Where(x => x.DateClaimed == null)
+                .Select(x => new LinkSearchResultsUsageItem
                 {
                   UserId = x.u != null ? x.u.Id : null,
-                  Username = x.id,
+                  Username = x.id,  // Distribution list identifier
                   Email = x.u != null ? x.u.Email : null,
                   PhoneNumber = x.u != null ? x.u.PhoneNumber : null,
                   DisplayName = x.u != null ? x.u.DisplayName : null,
                   Country = x.u != null ? x.u.Country : null,
                   DateOfBirth = x.u != null ? x.u.DateOfBirth : null,
-                  DateClaimed = l != null ? l.DateCreated : null
-                })
-            .Where(x => x.DateClaimed == null);
+                  DateClaimed = null // Always null for unclaimed
+                });
 
-          if (!string.IsNullOrWhiteSpace(filter.ValueContains))
-          {
-            var value = filter.ValueContains.ToLowerInvariant();
-#pragma warning disable CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
-            queryUnclaimed = queryUnclaimed.Where(x =>
-                x.Username.ToLower().Contains(value) ||
-                (x.DisplayName != null && x.DisplayName.ToLower().Contains(value)));
-#pragma warning restore CA1862 // Use the 'StringComparison' method overloads to perform case-insensitive string comparisons
+            // Optional “contains” filter
+            if (!string.IsNullOrWhiteSpace(filter.ValueContains))
+            {
+              var term = filter.ValueContains.ToLowerInvariant();
+#pragma warning disable CA1862
+              queryUnclaimed = queryUnclaimed.Where(r =>
+                  r.Username.ToLower().Contains(term) ||
+                  (r.DisplayName != null && r.DisplayName.ToLower().Contains(term)));
+#pragma warning restore CA1862
+            }
+
+            // Ordering and optional pagination
+            queryUnclaimed = queryUnclaimed
+                .OrderBy(r => r.DisplayName ?? r.Username)
+                .ThenBy(r => r.UserId);
+
+            if (filter.PaginationEnabled)
+            {
+              result.TotalCount = queryUnclaimed.Count();
+              queryUnclaimed = queryUnclaimed
+                  .Skip((filter.PageNumber!.Value - 1) * filter.PageSize!.Value)
+                  .Take(filter.PageSize.Value);
+            }
+
+            // Materialize and apply final adjustments
+            result.Items = [.. queryUnclaimed];
+
+            foreach (var r in result.Items)
+            {
+              // Always prefer latest username: Email → PhoneNumber → Identifier
+              r.Username = r.Email ?? r.PhoneNumber ?? r.Username;
+              r.DisplayName ??= r.Username;
+              r.Age = r.DateOfBirth?.CalculateAge(null);
+            }
+
+            break;
           }
-
-          queryUnclaimed = queryUnclaimed.OrderBy(x => x.DisplayName ?? x.Username).ThenBy(x => x.UserId);
-
-          if (filter.PaginationEnabled)
-          {
-            result.TotalCount = queryUnclaimed.Count();
-            queryUnclaimed = queryUnclaimed.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
-          }
-
-          result.Items = [.. queryUnclaimed];
-          result.Items.ForEach(o =>
-          {
-            o.DisplayName ??= o.Username;
-            o.Age = o.DateOfBirth.HasValue ? o.DateOfBirth.Value.CalculateAge(null) : null;
-          });
-          break;
 
         default:
           throw new InvalidOperationException($"Invalid / unsupported usage status of '{filter.Usage}'");
@@ -777,6 +830,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         {
           LinkId = link.Id,
           UserId = user.Id,
+          UsernameClaimed = user.Username,
         });
 
         link.UsagesTotal = (link.UsagesTotal ?? 0) + 1;
@@ -812,7 +866,6 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       return result;
     }
-
 
     private async Task SendNotification_ActionLinkVerifyDistributionList(Link link, NotificationActionLinkVerify data)
     {
