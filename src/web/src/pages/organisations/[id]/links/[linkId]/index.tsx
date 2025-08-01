@@ -368,9 +368,9 @@ const LinkOverview: NextPageWithLayout<{
                     Used
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    {link?.link?.usagesTotal
-                      ? `${link?.link?.usagesTotal} / ${link?.link?.usagesLimit ?? "∞"}`
-                      : "N/A"}
+                    {link?.link?.usagesLimit
+                      ? `${link?.link?.usagesTotal ?? "0"} / ${link?.link?.usagesLimit}`
+                      : (link?.link?.usagesTotal ?? "0")}
                   </div>
                 </div>
                 {/* Available */}
@@ -379,10 +379,7 @@ const LinkOverview: NextPageWithLayout<{
                     Available
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    {link?.link?.usagesAvailable !== undefined &&
-                    link?.link?.usagesAvailable !== null
-                      ? link?.link?.usagesAvailable
-                      : "N/A"}
+                    {link?.link?.usagesAvailable ?? "0"}
                   </div>
                 </div>
                 {/* Expires */}
