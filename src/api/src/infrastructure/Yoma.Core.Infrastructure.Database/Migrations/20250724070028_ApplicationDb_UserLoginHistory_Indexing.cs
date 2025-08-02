@@ -19,7 +19,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_UserLoginHistory_UserId_ClientId_IdentityProvider_DateCreat~",
           schema: "Entity",
           table: "UserLoginHistory",
-          columns: new[] { "UserId", "ClientId", "IdentityProvider", "DateCreated" });
+          columns: ["UserId", "ClientId", "IdentityProvider", "DateCreated"]);
     }
 
     /// <inheritdoc />
@@ -34,7 +34,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_UserLoginHistory_UserId_ClientId_DateCreated",
           schema: "Entity",
           table: "UserLoginHistory",
-          columns: new[] { "UserId", "ClientId", "DateCreated" });
+          columns: ["UserId", "ClientId", "DateCreated"]);
     }
   }
 }

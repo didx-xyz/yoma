@@ -26,7 +26,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_UsageLog_UsernameClaimed_DateCreated",
           schema: "ActionLink",
           table: "UsageLog",
-          columns: new[] { "UsernameClaimed", "DateCreated" });
+          columns: ["UsernameClaimed", "DateCreated"]);
+
+      ApplicationDb_ActionLink_Log_UsernameClaimed_Seeding.Seed(migrationBuilder);
     }
 
     /// <inheritdoc />
