@@ -16,6 +16,6 @@ namespace Yoma.Core.Domain.Notification.Interfaces
 
     string OpportunityPublishedItemURL(NotificationType notificationType, Guid opportunityId, Guid organizationId);
 
-    string ActionLinkVerifyActivatedItemUrl(NotificationType notificationType, Guid? organizationId);
+    string ActionLinkVerifyActivatedItemUrl(NotificationType notificationType, Guid organizationId, Guid linkId);
   }
 }

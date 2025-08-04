@@ -1,6 +1,5 @@
 using Flurl;
 using Microsoft.Extensions.Options;
-using Yoma.Core.Domain.ActionLink;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Notification.Interfaces;
@@ -24,26 +23,24 @@ namespace Yoma.Core.Domain.Notification.Services
     #endregion
 
     #region Public Members
-    public string ActionLinkVerifyActivatedItemUrl(NotificationType notificationType, Guid? organizationId)
+    public string ActionLinkVerifyActivatedItemUrl(NotificationType notificationType, Guid organizationId, Guid linkId)
     {
       if (organizationId == Guid.Empty)
         throw new ArgumentNullException(nameof(organizationId));
 
-      var result = _appSettings.AppBaseURL;
-      switch (notificationType)
-      {
-        case NotificationType.ActionLink_Verify_Activated:
-          if (!organizationId.HasValue)
-            throw new InvalidOperationException("Organization id expected");
+      if(linkId == Guid.Empty)
+        throw new ArgumentNullException(nameof(linkId));
 
-          result = result.AppendPathSegment("organisations").AppendPathSegment(organizationId).AppendPathSegment("links").ToString();
-          result = result.SetQueryParam("statuses", LinkStatus.Active.ToString().ToLower());
+      if (notificationType != NotificationType.ActionLink_Verify_Activated)
+        throw new ArgumentOutOfRangeException(nameof(notificationType), $"Type of '{notificationType}' not supported");
 
-          break;
-
-        default:
-          throw new ArgumentOutOfRangeException(nameof(notificationType), $"Type of '{notificationType}' not supported");
-      }
+      var result = _appSettings.AppBaseURL
+        .AppendPathSegment("organisations")
+        .AppendPathSegment(organizationId)
+        .AppendPathSegment("links")
+        .AppendPathSegment(linkId)
+        .SetQueryParam("returnUrl", $"/organisations/{organizationId}/links")
+        .ToString();
 
       return result;
     }
