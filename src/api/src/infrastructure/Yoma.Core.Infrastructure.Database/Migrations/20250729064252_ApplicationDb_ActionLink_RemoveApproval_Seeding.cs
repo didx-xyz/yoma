@@ -28,7 +28,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
       #region Entity
       #region Lookups
-      // delete Admin_Email_ActionLink_Verify_Approval
+      // delete Admin_Notification_ActionLink_Verify_Approval
       migrationBuilder.DeleteData(
           schema: "Entity",
           table: "SettingsDefinition",
@@ -36,7 +36,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           keyValue: Guid.Parse("A2623732-9934-4B87-80BE-B93C0190D523")
       );
 
-      // rename Organization_Admin_Email_ActionLink_Verify_Approval >> Organization_Admin_Email_ActionLink_Verify_Activated
+      // rename Organization_Admin_Notification_ActionLink_Verify_Approval >> Organization_Admin_Notification_ActionLink_Verify_Activated
       migrationBuilder.UpdateData(
           schema: "Entity",
           table: "SettingsDefinition",
@@ -45,30 +45,30 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           columns: ["Key", "Description"],
           values:
           [
-            "Organization_Admin_Email_ActionLink_Verify_Activated",
+            "Organization_Admin_Notification_ActionLink_Verify_Activated",
             "Get notified when magic links are activated"
           ]
       );
       #endregion Lookups
       #region User
-      // replace Organization_Admin_Email_ActionLink_Verify_Approval key with the new Organization_Admin_Email_ActionLink_Verify_Activated key
+      // replace Organization_Admin_Notification_ActionLink_Verify_Approval key with the new Organization_Admin_Notification_ActionLink_Verify_Activated key
       migrationBuilder.Sql(
           "UPDATE \"Entity\".\"User\" " +
-          "SET \"Settings\" = REPLACE(\"Settings\", 'Organization_Admin_Email_ActionLink_Verify_Approval', 'Organization_Admin_Email_ActionLink_Verify_Activated') " +
-          "WHERE \"Settings\" LIKE '%Organization_Admin_Email_ActionLink_Verify_Approval%';");
+          "SET \"Settings\" = REPLACE(\"Settings\", 'Organization_Admin_Notification_ActionLink_Verify_Approval', 'Organization_Admin_Notification_ActionLink_Verify_Activated') " +
+          "WHERE \"Settings\" LIKE '%Organization_Admin_Notification_ActionLink_Verify_Approval%';");
 
-      // remove Admin_Email_ActionLink_Verify_Approval from Settings (handles first, middle, last positions)
+      // remove Admin_Notification_ActionLink_Verify_Approval from Settings (handles first, middle, last positions)
       migrationBuilder.Sql(@"
         UPDATE ""Entity"".""User""
         SET ""Settings"" = 
             TRIM(BOTH ',' FROM REGEXP_REPLACE(
                 REGEXP_REPLACE(
                     ""Settings"",
-                    '""Admin_Email_ActionLink_Verify_Approval""\s*:\s*(true|false)\s*,?', '', 'gi'
+                    '""Admin_Notification_ActionLink_Verify_Approval""\s*:\s*(true|false)\s*,?', '', 'gi'
                 ),
                 ',\s*}', '}', 'gi'
             ))
-        WHERE ""Settings"" LIKE '%Admin_Email_ActionLink_Verify_Approval%';");
+        WHERE ""Settings"" LIKE '%Admin_Notification_ActionLink_Verify_Approval%';");
       #endregion User
       #endregion Entity
     }
