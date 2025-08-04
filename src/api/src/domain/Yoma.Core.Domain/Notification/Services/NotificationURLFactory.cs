@@ -28,7 +28,7 @@ namespace Yoma.Core.Domain.Notification.Services
       if (organizationId == Guid.Empty)
         throw new ArgumentNullException(nameof(organizationId));
 
-      if(linkId == Guid.Empty)
+      if (linkId == Guid.Empty)
         throw new ArgumentNullException(nameof(linkId));
 
       if (notificationType != NotificationType.ActionLink_Verify_Activated)
