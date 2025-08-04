@@ -531,6 +531,19 @@ const Links: NextPageWithLayout<{
         <IoIosSettings className="text-green hover:text-blue size-5 hover:scale-125 hover:animate-pulse" />
       </button>
       <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-64 gap-2 p-2 shadow">
+        {link?.status == "Inactive" && (
+          <li>
+            <button
+              type="button"
+              className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
+              onClick={() => updateStatus(link, LinkStatus.Active)}
+            >
+              <FaStar className="text-green size-4" />
+              Activate
+            </button>
+          </li>
+        )}
+
         <li>
           <button
             type="button"
@@ -578,31 +591,16 @@ const Links: NextPageWithLayout<{
         </li>
 
         {(link?.status == "Inactive" || link?.status == "Active") && (
-          <>
-            <li>
-              <button
-                type="button"
-                className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                onClick={() => updateStatus(link, LinkStatus.Deleted)}
-              >
-                <FaTrash className="text-green size-4" />
-                Delete
-              </button>
-            </li>
-
-            {link?.status == "Inactive" && (
-              <li>
-                <button
-                  type="button"
-                  className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() => updateStatus(link, LinkStatus.Active)}
-                >
-                  <FaStar className="text-green size-4" />
-                  Activate
-                </button>
-              </li>
-            )}
-          </>
+          <li>
+            <button
+              type="button"
+              className="text-gray-dark flex flex-row items-center hover:brightness-50"
+              onClick={() => updateStatus(link, LinkStatus.Deleted)}
+            >
+              <FaTrash className="text-green size-4" />
+              Delete
+            </button>
+          </li>
         )}
       </ul>
     </div>
@@ -836,7 +834,7 @@ const Links: NextPageWithLayout<{
 
           {/* GRID */}
           {links && links.items?.length > 0 && (
-            <div className="">
+            <>
               {/* MOBILE */}
               <div className="flex flex-col gap-4 md:hidden">
                 {links.items.map((item) => (
@@ -1130,7 +1128,7 @@ const Links: NextPageWithLayout<{
                   showInfo={true}
                 />
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>

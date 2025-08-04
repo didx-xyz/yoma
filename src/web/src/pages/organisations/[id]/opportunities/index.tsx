@@ -720,7 +720,7 @@ const Opportunities: NextPageWithLayout<{
 
             {/* RESULTS */}
             {searchResults && searchResults.items?.length > 0 && (
-              <div className="md:overflow-x-auto">
+              <>
                 {/* MOBILE */}
                 <div className="flex flex-col gap-4 md:hidden">
                   {searchResults.items.map((opportunity) => (
@@ -1017,20 +1017,20 @@ const Opportunities: NextPageWithLayout<{
                     ))}
                   </tbody>
                 </table>
-              </div>
-            )}
 
-            <div className="mt-2 grid place-items-center justify-center">
-              {/* PAGINATION */}
-              <PaginationButtons
-                currentPage={page ? parseInt(page) : 1}
-                totalItems={searchResults?.totalCount ?? 0}
-                pageSize={PAGE_SIZE}
-                onClick={handlePagerChange}
-                showPages={false}
-                showInfo={true}
-              />
-            </div>
+                {/* PAGINATION */}
+                <div className="mt-2 grid place-items-center justify-center">
+                  <PaginationButtons
+                    currentPage={page ? parseInt(page) : 1}
+                    totalItems={searchResults?.totalCount ?? 0}
+                    pageSize={PAGE_SIZE}
+                    onClick={handlePagerChange}
+                    showPages={false}
+                    showInfo={true}
+                  />
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
