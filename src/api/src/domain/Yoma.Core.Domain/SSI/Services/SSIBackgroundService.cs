@@ -32,8 +32,6 @@ namespace Yoma.Core.Domain.SSI.Services
     private readonly ISSITenantService _ssiTenantService;
     private readonly ISSICredentialService _ssiCredentialService;
     private readonly IDistributedLockService _distributedLockService;
-
-    private const int Max_Parallelism = 5;
     #endregion
 
     #region Constructor
@@ -124,7 +122,7 @@ namespace Yoma.Core.Domain.SSI.Services
         _logger.LogInformation("Processing SSI tenant creation");
 
         var itemIdsToSkip = new ConcurrentBag<Guid>();
-        using var throttler = new SemaphoreSlim(Max_Parallelism);
+        using var throttler = new SemaphoreSlim(_appSettings.SSIParallelism.TenantCreation, _appSettings.SSIParallelism.TenantCreation);
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
@@ -256,7 +254,7 @@ namespace Yoma.Core.Domain.SSI.Services
         _logger.LogInformation("Processing SSI credential issuance");
 
         var itemIdsToSkip = new ConcurrentBag<Guid>();
-        using var throttler = new SemaphoreSlim(Max_Parallelism);
+        using var throttler = new SemaphoreSlim(_appSettings.SSIParallelism.CredentialIssuance, _appSettings.SSIParallelism.CredentialIssuance);
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {

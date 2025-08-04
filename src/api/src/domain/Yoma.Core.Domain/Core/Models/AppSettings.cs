@@ -141,6 +141,8 @@ namespace Yoma.Core.Domain.Core.Models
     /// Used when splitting large download requests into multiple scheduled pages.
     /// </summary>
     public int DownloadScheduleVerificationFilesBatchSize { get; set; }
+
+    public AppSettingsSSIParallelism SSIParallelism { get; set; }
     #endregion
 
     #region Private Members
