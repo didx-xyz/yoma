@@ -703,7 +703,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
               {/* RESULTS */}
               {searchResults && searchResults.items?.length > 0 && (
-                <div className="overflow-x-auto">
+                <>
                   {/* MOBILE */}
                   <div className="flex flex-col gap-4 md:hidden">
                     {searchResults.items.map((opportunity) => (
@@ -905,7 +905,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               {opportunity.participantCountTotal}
                             </span>
                           </td>
-                          <td className="border-gray-light flex gap-2 border-b-2 text-center">
+                          <td className="border-gray-light border-b-2 text-center">
                             <OpportunityStatus
                               status={opportunity?.status?.toString()}
                             />
@@ -943,7 +943,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                       onClick={handlePagerChange}
                     />
                   </div>
-                </div>
+                </>
               )}
             </div>
           </div>
