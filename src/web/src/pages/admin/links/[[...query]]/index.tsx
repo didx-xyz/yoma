@@ -794,7 +794,7 @@ const Links: NextPageWithLayout<{
 
           {/* GRID */}
           {links && links.items?.length > 0 && (
-            <div className="">
+            <>
               {/* MOBILE */}
               <div className="flex flex-col gap-4 md:hidden">
                 {links.items.map((item) => (
@@ -1126,7 +1126,7 @@ const Links: NextPageWithLayout<{
                   showInfo={true}
                 />
               </div>
-            </div>
+            </>
           )}
         </div>
       </div>
