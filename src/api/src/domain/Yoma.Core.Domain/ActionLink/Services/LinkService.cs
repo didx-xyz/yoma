@@ -817,7 +817,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
                   DisplayName = o.DisplayName
                 }).ToList();
 
-                dataLink.URL = _notificationURLFactory.ActionLinkVerifyActivatedItemUrl(type, organization.Id);
+                dataLink.URL = _notificationURLFactory.ActionLinkVerifyActivatedItemUrl(type, organization.Id, link.Id);
                 break;
 
               default:
