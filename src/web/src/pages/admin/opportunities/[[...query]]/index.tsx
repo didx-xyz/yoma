@@ -905,7 +905,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               {opportunity.participantCountTotal}
                             </span>
                           </td>
-                          <td className="border-gray-light flex gap-2 border-b-2 text-center">
+                          <td className="border-gray-light border-b-2 text-center">
                             <OpportunityStatus
                               status={opportunity?.status?.toString()}
                             />
