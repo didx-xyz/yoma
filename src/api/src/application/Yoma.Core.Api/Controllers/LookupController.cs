@@ -11,7 +11,7 @@ namespace Yoma.Core.Api.Controllers
   [ApiController]
   [AllowAnonymous]
   [SwaggerTag("(Anonymous)")]
-  public class LookupController : Controller
+  public class LookupController : ControllerBase
   {
     #region Class Variables
     private readonly ILogger<UserController> _logger;

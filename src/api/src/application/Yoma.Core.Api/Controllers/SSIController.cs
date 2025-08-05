@@ -15,7 +15,7 @@ namespace Yoma.Core.Api.Controllers
   [ApiController]
   [Authorize(Policy = Common.Constants.Authorization_Policy)]
   [SwaggerTag("(by default, Admin role required)")]
-  public class SSIController : Controller
+  public class SSIController : ControllerBase
   {
     #region Class Variables
     private readonly ILogger<SSIController> _logger;

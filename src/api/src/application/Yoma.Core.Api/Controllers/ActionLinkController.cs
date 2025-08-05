@@ -14,7 +14,7 @@ namespace Yoma.Core.Api.Controllers
   [ApiController]
   [Authorize(Policy = Common.Constants.Authorization_Policy)]
   [SwaggerTag("(by default, Admin or Organization Admin roles required)")]
-  public class ActionLinkController : Controller
+  public class ActionLinkController : ControllerBase
   {
     #region Class Variables
     private readonly ILogger<ActionLinkController> _logger;
