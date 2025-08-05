@@ -16,7 +16,7 @@ namespace Yoma.Core.Api.Controllers
   [ApiController]
   [Authorize(Policy = Common.Constants.Authorization_Policy)]
   [SwaggerTag("(by default, Admin or Organization Admin roles required)")]
-  public class OpportunityController : Controller
+  public class OpportunityController : ControllerBase
   {
     #region Class Variables
     private readonly ILogger<OpportunityController> _logger;

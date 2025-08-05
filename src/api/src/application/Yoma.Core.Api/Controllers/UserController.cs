@@ -13,7 +13,7 @@ namespace Yoma.Core.Api.Controllers
   [ApiController]
   [Authorize(Policy = Common.Constants.Authorization_Policy)]
   [SwaggerTag("(by default, User role required)")]
-  public class UserController : Controller
+  public class UserController : ControllerBase
   {
     #region Class Variables
     private readonly ILogger<UserController> _logger;

@@ -14,7 +14,7 @@ namespace Yoma.Core.Api.Controllers
   [Route($"api/{Common.Constants.Api_Version}/marketplace")]
   [ApiController]
   [SwaggerTag("(by default, Anonymous)")]
-  public class MarketplaceController : Controller
+  public class MarketplaceController : ControllerBase
   {
     #region Class Variables
     private readonly ILogger<MarketplaceController> _logger;
