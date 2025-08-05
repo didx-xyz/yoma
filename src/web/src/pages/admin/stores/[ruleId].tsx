@@ -64,7 +64,7 @@ import {
   GA_ACTION_STORE_ACCESS_CONTROL_RULE_CREATE,
   GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE,
   GA_CATEGORY_STORE_ACCESS_CONTROL_RULE,
-  MAX_INT32,
+  PAGE_SIZE_MAXIMUM,
   PAGE_SIZE_MEDIUM,
   THEME_BLUE,
 } from "~/lib/constants";
@@ -173,7 +173,7 @@ const StoreRuleDetails: NextPageWithLayout<{
     queryFn: async () =>
       getOrganisations({
         pageNumber: 1,
-        pageSize: MAX_INT32,
+        pageSize: PAGE_SIZE_MAXIMUM,
         statuses: ["Active"],
         valueContains: "",
         organizations: null,
@@ -586,7 +586,7 @@ const StoreRuleDetails: NextPageWithLayout<{
       categoryId: null,
       countryCodeAlpha2: watchCountry,
       pageNumber: 1,
-      pageSize: MAX_INT32,
+      pageSize: PAGE_SIZE_MAXIMUM,
     }).then((data) => {
       const options = data.items.map((store) => ({
         value: store.id,
@@ -607,7 +607,7 @@ const StoreRuleDetails: NextPageWithLayout<{
     searchStoreItemCategories({
       storeId: watchStoreId,
       pageNumber: 1,
-      pageSize: MAX_INT32,
+      pageSize: PAGE_SIZE_MAXIMUM,
     }).then((data) => {
       const options = data.items.map((category) => ({
         value: category.id,

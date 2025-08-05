@@ -568,7 +568,7 @@ const Links: NextPageWithLayout<{
             className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
             title="Copy URL to clipboard"
             onClick={() => {
-              onClick_CopyToClipboard(link.uRL!);
+              onClick_CopyToClipboard(link.url!);
             }}
           >
             <FaLink className="text-green size-4" />
