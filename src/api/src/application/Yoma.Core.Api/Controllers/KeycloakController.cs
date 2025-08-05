@@ -18,7 +18,7 @@ namespace Yoma.Core.Api.Controllers
   [ApiController]
   [AllowAnonymous]
   [ApiExplorerSettings(IgnoreApi = true)]
-  public class KeycloakController : Controller
+  public class KeycloakController : ControllerBase
   {
     #region Class Variables
     private readonly ILogger _logger;

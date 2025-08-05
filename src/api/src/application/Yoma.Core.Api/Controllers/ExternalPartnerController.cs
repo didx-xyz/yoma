@@ -14,7 +14,7 @@ namespace Yoma.Core.Api.Controllers
   [ApiController]
   [Authorize(Policy = Constants.Authorization_Policy_External_Partner)]
   [SwaggerTag("(by default, requires an external partner bearer token obtained via the Client Credentials flow)")]
-  public class ExternalPartnerController : Controller
+  public class ExternalPartnerController : ControllerBase
   {
     #region Class Variables
     private readonly ILogger<UserController> _logger;
