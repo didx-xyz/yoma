@@ -688,7 +688,7 @@ const LinkOverview: NextPageWithLayout<{
                     Available
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    {link?.link?.usagesAvailable ?? "0"}
+                    {link?.link?.usagesAvailable ?? "No limit"}
                   </div>
                 </div>
                 {/* EXPIRES */}
