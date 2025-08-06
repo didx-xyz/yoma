@@ -528,7 +528,7 @@ const Links: NextPageWithLayout<{
   const renderLinkActionsDropdown = (link: LinkInfo) => (
     <div className="dropdown dropdown-left">
       <button type="button" title="Actions" className="cursor-pointer">
-        <IoIosSettings className="text-green hover:text-blue size-5 hover:scale-125 hover:animate-pulse" />
+        <IoIosSettings className="text-green hover:text-blue size-5" />
       </button>
       <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-64 gap-2 p-2 shadow">
         {link?.status == "Inactive" && (
