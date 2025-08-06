@@ -29,7 +29,7 @@ export interface LinkInfo {
   entityTitle: string;
   entityOrganizationId: string | null;
   entityOrganizationName: string | null;
-  uRL: string;
+  url: string;
   shortURL: string;
   qrCodeBase64: string | null; // NB: casing not the same as api
   usagesLimit: number | null;
@@ -75,7 +75,7 @@ export interface LinkSearchResult {
 
 export interface LinkSearchFilterUsage extends PaginationFilter {
   id: string;
-  usage: LinkUsageStatus;
+  usage: LinkUsageStatus | string | null; // NB: string | null is not in the original model
   valueContains: string | null;
 }
 

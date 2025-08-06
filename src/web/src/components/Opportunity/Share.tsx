@@ -45,7 +45,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
     });
 
   const onClick_CopyToClipboard = useCallback(() => {
-    navigator.clipboard.writeText(linkInfo?.shortURL ?? linkInfo?.uRL ?? "");
+    navigator.clipboard.writeText(linkInfo?.shortURL ?? linkInfo?.url ?? "");
     toast.success("URL copied to clipboard!", { autoClose: 2000 });
   }, [linkInfo]);
 
@@ -94,7 +94,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
             opportunity.description.length > 200
               ? opportunity.description.substring(0, 197) + "..."
               : opportunity.description,
-          url: linkInfo?.shortURL ?? linkInfo?.uRL ?? "",
+          url: linkInfo?.shortURL ?? linkInfo?.url ?? "",
         })
         .then(() => console.log("Successful share"))
         .catch((error) => console.log("Error sharing", error));

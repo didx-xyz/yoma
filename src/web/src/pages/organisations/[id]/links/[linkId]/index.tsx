@@ -36,6 +36,7 @@ import {
   searchLinkUsage,
   updateLinkStatus,
 } from "~/api/services/actionLinks";
+import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
@@ -67,7 +68,7 @@ interface IParams extends ParsedUrlQuery {
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id, linkId } = context.params as IParams;
-  const { valueContains, page } = context.query;
+  const { valueContains, usage, page } = context.query;
   const session = await getServerSession(context.req, context.res, authOptions);
   const queryClient = new QueryClient(config);
   let errorCode = null;
@@ -89,7 +90,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     const linkData = await searchLinkUsage(
       {
         id: linkId,
-        usage: LinkUsageStatus.All,
+        usage: usage?.toString() ?? LinkUsageStatus.All,
         valueContains: valueContains?.toString() ?? null,
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
@@ -97,7 +98,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       context,
     );
     await queryClient.prefetchQuery({
-      queryKey: ["link", linkId],
+      queryKey: ["link", linkId, usage ?? "", valueContains ?? "", page ?? ""],
       queryFn: () => linkData,
     });
   } catch (error) {
@@ -119,6 +120,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       id: id ?? null,
       linkId: linkId ?? null,
       valueContains: valueContains ?? null,
+      usage: usage ?? null,
       page: page ?? null,
       theme,
       error: errorCode,
@@ -130,11 +132,12 @@ const LinkOverview: NextPageWithLayout<{
   id: string;
   linkId: string;
   valueContains?: string;
+  usage?: string;
   page?: string;
   user: User;
   theme: string;
   error?: number;
-}> = ({ id, linkId, valueContains, page, error }) => {
+}> = ({ id, linkId, valueContains, usage, page, error }) => {
   const router = useRouter();
   const queryClient = useQueryClient();
   const { returnUrl } = router.query;
@@ -147,11 +150,17 @@ const LinkOverview: NextPageWithLayout<{
 
   // 👇 fetch link details
   const { data: link } = useQuery<LinkSearchResultsUsage>({
-    queryKey: ["link", linkId],
+    queryKey: [
+      "link",
+      linkId,
+      usage ?? LinkUsageStatus.All,
+      valueContains ?? "",
+      page ?? "",
+    ],
     queryFn: () =>
       searchLinkUsage({
         id: linkId,
-        usage: LinkUsageStatus.All,
+        usage: usage ?? LinkUsageStatus.All,
         valueContains: valueContains?.toString() ?? null,
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
@@ -162,7 +171,7 @@ const LinkOverview: NextPageWithLayout<{
   // search filter state
   const [searchFilter] = useState<LinkSearchFilterUsage>({
     id: linkId,
-    usage: LinkUsageStatus.All,
+    usage: usage ?? null,
     valueContains: valueContains ?? null,
     pageNumber: page ? parseInt(page) : 1,
     pageSize: PAGE_SIZE,
@@ -178,6 +187,9 @@ const LinkOverview: NextPageWithLayout<{
 
       if (searchFilter?.valueContains)
         params.append("valueContains", searchFilter.valueContains);
+
+      if (searchFilter?.usage)
+        params.append("usage", searchFilter.usage.toString());
 
       if (
         searchFilter.pageNumber !== null &&
@@ -214,6 +226,15 @@ const LinkOverview: NextPageWithLayout<{
   const handlePagerChange = useCallback(
     (value: number) => {
       searchFilter.pageNumber = value;
+      redirectWithSearchFilterParams(searchFilter);
+    },
+    [searchFilter, redirectWithSearchFilterParams],
+  );
+
+  // 🔔 tab change event
+  const handleTabChange = useCallback(
+    (value: string | null) => {
+      searchFilter.usage = value;
       redirectWithSearchFilterParams(searchFilter);
     },
     [searchFilter, redirectWithSearchFilterParams],
@@ -354,7 +375,7 @@ const LinkOverview: NextPageWithLayout<{
             className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
             title="Copy URL to clipboard"
             onClick={() => {
-              onClick_CopyToClipboard(link.uRL!);
+              onClick_CopyToClipboard(link.url!);
             }}
           >
             <FaLink className="text-green size-4" />
@@ -486,9 +507,10 @@ const LinkOverview: NextPageWithLayout<{
             {link?.link?.name}
           </span>
         </div>
+
         {/* LINK DETAILS */}
         <div className="animate-fade-in mx-auto mt-5 space-y-6 rounded-2xl bg-white p-6 shadow-md">
-          {/* Title */}
+          {/* TITLE */}
           <div className="flex flex-row items-center justify-between gap-2">
             <div>
               <h1 className="text-2xl font-bold">
@@ -501,7 +523,7 @@ const LinkOverview: NextPageWithLayout<{
             <div>{renderLinkActionsDropdown(link?.link!)}</div>
           </div>
 
-          {/* Link Information */}
+          {/* LINK INFORMATION */}
           <section>
             <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
               📄 Link Information
@@ -573,7 +595,7 @@ const LinkOverview: NextPageWithLayout<{
             </div>
           </section>
 
-          {/* Link Access */}
+          {/* LINK ACCESS */}
           <section>
             <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
               🔗 Link Access
@@ -585,16 +607,16 @@ const LinkOverview: NextPageWithLayout<{
                   <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                     URL
                   </div>
-                  <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    {link?.link?.uRL ? (
+                  <div className="min-w-0 flex-1 truncate overflow-hidden border border-gray-200 px-4 py-2 align-middle whitespace-nowrap">
+                    {link?.link?.url ? (
                       <a
                         className="text-blue-600 underline"
-                        href={link?.link?.uRL}
+                        href={link?.link?.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        title={link?.link?.uRL}
+                        title={link?.link?.url}
                       >
-                        {link?.link?.uRL}
+                        {link?.link?.url}
                       </a>
                     ) : (
                       "N/A"
@@ -606,7 +628,7 @@ const LinkOverview: NextPageWithLayout<{
                   <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                     Short URL
                   </div>
-                  <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
+                  <div className="min-w-0 flex-1 truncate overflow-hidden border border-gray-200 px-4 py-2 align-middle whitespace-nowrap">
                     {link?.link?.shortURL ? (
                       <a
                         className="text-blue-600 underline"
@@ -642,14 +664,14 @@ const LinkOverview: NextPageWithLayout<{
             </div>
           </section>
 
-          {/* Usage Overview */}
+          {/* USAGE OVERVIEW */}
           <section>
             <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
               📊 Usage Overview
             </h2>
             <div className="overflow-x-auto">
               <div className="grid overflow-hidden rounded-lg border border-gray-200 md:grid-cols-2">
-                {/* Used */}
+                {/* USED */}
                 <div className="flex">
                   <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                     Used
@@ -660,16 +682,16 @@ const LinkOverview: NextPageWithLayout<{
                       : (link?.link?.usagesTotal ?? "0")}
                   </div>
                 </div>
-                {/* Available */}
+                {/* AVAILABLE */}
                 <div className="flex">
                   <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                     Available
                   </div>
                   <div className="flex-1 border border-gray-200 px-4 py-2 text-sm text-ellipsis whitespace-nowrap hover:bg-gray-100">
-                    {link?.link?.usagesAvailable ?? "0"}
+                    {link?.link?.usagesAvailable ?? "No limit"}
                   </div>
                 </div>
-                {/* Expires */}
+                {/* EXPIRES */}
                 <div className="flex">
                   <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                     Expires
@@ -684,7 +706,7 @@ const LinkOverview: NextPageWithLayout<{
                     )}
                   </div>
                 </div>
-                {/* Created */}
+                {/* CREATED */}
                 <div className="flex">
                   <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                     Created
@@ -703,7 +725,7 @@ const LinkOverview: NextPageWithLayout<{
             </div>
           </section>
 
-          {/* Usage Details */}
+          {/* USAGE DETAILS */}
           <section className="flex flex-col justify-center gap-2">
             <div className="items-centerx flex flex-col justify-between md:flex-row">
               <h2 className="mb-2 flex items-center gap-2 text-lg font-semibold">
@@ -719,6 +741,43 @@ const LinkOverview: NextPageWithLayout<{
                 placeholder="Search"
               />
             </div>
+
+            {/* TABBED NAVIGATION */}
+            <CustomSlider sliderClassName="!gap-6">
+              <div
+                onClick={() => handleTabChange(null)}
+                role="tab"
+                className={`cursor-pointer border-b-4 py-2 whitespace-nowrap text-black ${
+                  !usage
+                    ? "border-orange"
+                    : "hover:border-orange hover:text-gray text-gray"
+                }`}
+              >
+                All
+              </div>
+              <button
+                onClick={() => handleTabChange("claimed")}
+                role="tab"
+                className={`cursor-pointer border-b-4 py-2 whitespace-nowrap text-black ${
+                  usage === "claimed"
+                    ? "border-orange"
+                    : "hover:border-orange hover:text-gray text-gray"
+                }`}
+              >
+                Claimed
+              </button>
+              <div
+                onClick={() => handleTabChange("unclaimed")}
+                role="tab"
+                className={`cursor-pointer border-b-4 py-2 whitespace-nowrap text-black ${
+                  usage === "unclaimed"
+                    ? "border-orange"
+                    : "hover:border-orange hover:text-gray text-gray"
+                }`}
+              >
+                Unclaimed
+              </div>
+            </CustomSlider>
 
             {link?.items && link.items.length > 0 ? (
               <div className="overflow-x-auto">
