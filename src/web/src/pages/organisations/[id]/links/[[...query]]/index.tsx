@@ -899,7 +899,9 @@ const Links: NextPageWithLayout<{
                           <IoMdLock className="h-4 w-4" />
                           <span className="ml-1 text-xs">
                             {item.usagesTotal ?? "0"} /{" "}
-                            {item.usagesLimit ?? "0"}
+                            {item.usagesLimit !== null
+                              ? item.usagesLimit
+                              : "No limit"}
                           </span>
                         </span>
                       ) : (
@@ -907,7 +909,9 @@ const Links: NextPageWithLayout<{
                           <IoMdPerson className="h-4 w-4" />
                           <span className="ml-1 text-xs">
                             {item.usagesTotal ?? "0"} /{" "}
-                            {item.usagesLimit ?? "0"}
+                            {item.usagesLimit !== null
+                              ? item.usagesLimit
+                              : "No limit"}
                           </span>
                         </span>
                       )}
