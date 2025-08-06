@@ -72,9 +72,10 @@ const ItemCardComponent: React.FC<InputProps> = ({
         </div>
 
         {/* DESCRIPTION */}
-        <div className="my-2x h-[100px] max-w-[200px] overflow-hidden text-start text-sm font-light md:max-w-full">
-          Click to purchase this item.
-        </div>
+        <div
+          className="line-clamp-5 max-w-[200px] text-start text-sm font-light md:max-w-full"
+          dangerouslySetInnerHTML={{ __html: item.description }}
+        ></div>
 
         {/* BADGES */}
         <div className="flex flex-row items-center justify-start gap-2">
