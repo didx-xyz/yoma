@@ -20,9 +20,6 @@ import MainLayout from "~/components/Layout/Main";
 import OpportunityMetaTags from "~/components/Opportunity/OpportunityMetaTags";
 import OpportunityPublicDetails from "~/components/Opportunity/OpportunityPublicDetails";
 import { PageBackground } from "~/components/PageBackground";
-import { InternalServerError } from "~/components/Status/InternalServerError";
-import { Unauthenticated } from "~/components/Status/Unauthenticated";
-import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { type User, authOptions } from "~/server/auth";
@@ -101,12 +98,6 @@ const OpportunityDetails: NextPageWithLayout<{
   error?: number;
 }> = ({ user, opportunityInfo, error }) => {
   const router = useRouter();
-
-  if (error) {
-    if (error === 401) return <Unauthenticated />;
-    else if (error === 403) return <Unauthorized />;
-    else return <InternalServerError />;
-  }
 
   return (
     <>
