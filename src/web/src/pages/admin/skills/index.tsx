@@ -265,7 +265,7 @@ const Skills: NextPageWithLayout<{
                               onClick_CopyToClipboard(item.name!);
                             }}
                           >
-                            <FaCopy className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
+                            <FaCopy className="text-gray-dark hover:text-blue size-4" />
                           </button>
                         </span>
                       </div>
@@ -302,7 +302,7 @@ const Skills: NextPageWithLayout<{
                                 onClick_CopyToClipboard(opportunity.name!);
                               }}
                             >
-                              <FaCopy className="text-gray-dark hover:text-blue size-4 hover:scale-125 hover:animate-pulse" />
+                              <FaCopy className="text-gray-dark hover:text-blue size-4" />
                             </button>
                           </span>
                         </td>
