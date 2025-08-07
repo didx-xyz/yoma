@@ -97,8 +97,8 @@ config-cli:
     CLIENT_GOODWALL_URL_REDIRECT: goodwallauth://yomaredirect
     CLIENT_IIASA_URL: https://localhost:44345
     CLIENT_IIASA_URL_REDIRECT: https://localhost:44345/signin-yoma-oidc
-    CLIENT_MINI_SASS_URL: http://localhost:5000 # https://minisass.sta.do.kartoza.com
-    CLIENT_MINI_SASS_URL_REDIRECT: http://localhost:5000/authentication/api/yoma/callback # https://minisass.sta.do.kartoza.com/authentication/api/yoma/callback
+    CLIENT_MINI_SASS_URL: https://minisass.sta.do.kartoza.com
+    CLIENT_MINI_SASS_URL_REDIRECT: https://minisass.sta.do.kartoza.com/authentication/api/yoma/callback
     GOOGLE_CLIENT_ID: 1088325631106-bujeaidsr9a94fqq92qkpcnn1aa73phv.apps.googleusercontent.com
     FACEBOOK_CLIENT_ID: "895741739433688"
 
