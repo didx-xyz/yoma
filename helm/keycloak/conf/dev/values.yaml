@@ -94,7 +94,7 @@ config-cli:
     CLIENT_MINI_SASS_URL: http://localhost:5000
     CLIENT_MINI_SASS_URL_REDIRECT: http://localhost:5000/authentication/api/yoma/callback
     GOOGLE_CLIENT_ID: 1088325631106-bujeaidsr9a94fqq92qkpcnn1aa73phv.apps.googleusercontent.com
-    FACEBOOK_CLIENT_ID: "1062131229443108"
+    FACEBOOK_CLIENT_ID: "1062799539296547"
 
   init:
     enabled: true
