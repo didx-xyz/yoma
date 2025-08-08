@@ -1706,6 +1706,7 @@ identityProviderMappers:
     config:
       syncMode: INHERIT
       userAttribute: email
+      json.field.path: email
   - name: lastName
     identityProviderAlias: facebook
     identityProviderMapper: facebook-user-attribute-mapper
@@ -1872,6 +1873,7 @@ authenticationFlows:
     alias: Browser - Conditional OTP
     description: Flow to determine if the OTP is required for the authentication
     providerId: basic-flow
+
     topLevel: false
     builtIn: true
     authenticationExecutions:
