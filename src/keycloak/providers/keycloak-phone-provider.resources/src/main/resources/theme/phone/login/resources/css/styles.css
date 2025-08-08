@@ -601,8 +601,3 @@ input#code {
 .social-provider-btn::after {
   border: none;
 }
-
-/* hide facebook login for now */
-#social-facebook {
-  display: none;
-}
