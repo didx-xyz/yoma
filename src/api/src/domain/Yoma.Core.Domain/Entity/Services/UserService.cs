@@ -264,6 +264,10 @@ namespace Yoma.Core.Domain.Entity.Services
       await _userRequestValidator.ValidateAndThrowAsync(request);
 
       var usernameExpected = request.Email ?? request.PhoneNumber;
+      usernameExpected = usernameExpected?.Trim();
+      if (string.IsNullOrEmpty(usernameExpected))
+        throw new ValidationException($"Unable to resolve expected username. Email or phone number required");
+
       if (!string.Equals(request.Username, usernameExpected))
         throw new InvalidOperationException($"Username '{request.Username}' does not match expected value '{usernameExpected}'");
 
