@@ -143,6 +143,8 @@ namespace Yoma.Core.Domain.Core.Models
     public int DownloadScheduleVerificationFilesBatchSize { get; set; }
 
     public AppSettingsSSIParallelism SSIParallelism { get; set; }
+
+    public int CSVImportMaxProbeIssueCount { get; set; }
     #endregion
 
     #region Private Members

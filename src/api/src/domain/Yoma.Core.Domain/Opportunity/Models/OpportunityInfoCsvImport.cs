@@ -4,6 +4,13 @@ using Yoma.Core.Domain.Core.Converters;
 
 namespace Yoma.Core.Domain.Opportunity.Models
 {
+  /// <summary>
+  /// CSV import model for opportunities.
+  /// NOTE: Every property in this model must have exactly one CSV header alias:
+  /// - Either the property name itself, OR
+  /// - A single [Name("HeaderName")] attribute value.
+  /// Multiple aliases are not allowed to keep header-to-property mapping simple.
+  /// </summary>
   public class OpportunityInfoCsvImport
   {
     [Required]

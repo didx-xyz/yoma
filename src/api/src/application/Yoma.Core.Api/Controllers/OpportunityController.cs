@@ -4,6 +4,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -401,17 +402,17 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Import opportunities for the specified organization from a CSV file")]
     [HttpPost("import/{organizationId}/csv")]
-    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(CSVImportResult), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> ImportFromCSV([FromRoute] Guid organizationId, [Required] IFormFile file)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ImportFromCSV));
 
-      await _opportunityService.ImportFromCSV(file, organizationId, true);
+      var result = await _opportunityService.ImportFromCSV(file, organizationId, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(ImportFromCSV));
 
-      return StatusCode((int)HttpStatusCode.OK);
+      return StatusCode((int)HttpStatusCode.OK, result);
     }
 
     [SwaggerOperation(Summary = "Create a new opportunity")]
