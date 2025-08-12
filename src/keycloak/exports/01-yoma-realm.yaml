@@ -1652,7 +1652,7 @@ identityProviders:
     addReadTokenRoleOnCreate: false
     linkOnly: false
     authenticateByDefault: false
-    firstBrokerLoginFlowAlias: auto-link-social # auto-link social accounts
+    firstBrokerLoginFlowAlias: auto-link-facebook
     config:
       clientId: $(env:FACEBOOK_CLIENT_ID)
       clientSecret: $(env:FACEBOOK_CLIENT_SECRET)
@@ -1668,30 +1668,35 @@ identityProviderMappers:
     config:
       syncMode: INHERIT
       userAttribute: email
+      jsonField: email
   - name: firstName
     identityProviderAlias: google
     identityProviderMapper: google-user-attribute-mapper
     config:
       syncMode: INHERIT
-      userAttribute: given_name
+      userAttribute: firstName
+      jsonField: given_name
   - name: lastName
     identityProviderAlias: google
     identityProviderMapper: google-user-attribute-mapper
     config:
       syncMode: INHERIT
-      userAttribute: family_name
+      userAttribute: lastName
+      jsonField: family_name
   - name: picture
     identityProviderAlias: google
     identityProviderMapper: google-user-attribute-mapper
     config:
       syncMode: INHERIT
       userAttribute: picture
+      jsonField: picture
   - name: phoneNumber
     identityProviderAlias: google
     identityProviderMapper: google-user-attribute-mapper
     config:
       syncMode: INHERIT
-      userAttribute: phone_number
+      userAttribute: phoneNumber
+      jsonField: phone_number
 
   #––– Facebook mappers –––
   - name: firstName
@@ -1699,39 +1704,43 @@ identityProviderMappers:
     identityProviderMapper: facebook-user-attribute-mapper
     config:
       syncMode: INHERIT
-      userAttribute: first_name
+      userAttribute: firstName
+      jsonField: first_name
   - name: email
     identityProviderAlias: facebook
     identityProviderMapper: facebook-user-attribute-mapper
     config:
       syncMode: INHERIT
       userAttribute: email
-      json.field.path: email
+      jsonField: email
   - name: username
     identityProviderAlias: facebook
     identityProviderMapper: facebook-user-attribute-mapper
     config:
       syncMode: INHERIT
-      userAttribute: email
-      json.field.path: email
+      userAttribute: username
+      jsonField: email
   - name: lastName
     identityProviderAlias: facebook
     identityProviderMapper: facebook-user-attribute-mapper
     config:
       syncMode: INHERIT
-      userAttribute: last_name
+      userAttribute: lastName
+      jsonField: last_name
   - name: picture
     identityProviderAlias: facebook
     identityProviderMapper: facebook-user-attribute-mapper
     config:
       syncMode: INHERIT
-      userAttribute: picture.data.url
+      userAttribute: picture
+      jsonField: picture.data.url
   - name: phoneNumber
     identityProviderAlias: facebook
     identityProviderMapper: facebook-user-attribute-mapper
     config:
       syncMode: INHERIT
-      userAttribute: phone
+      userAttribute: phoneNumber
+      jsonField: phone
 components:
   org.keycloak.services.clientregistration.policy.ClientRegistrationPolicy:
     - id: 9cdd7fc0-614f-49f5-9048-81b25d9e0b47
@@ -2395,6 +2404,40 @@ authenticationFlows:
     description: Automatically link social users to existing accounts if email matches
     providerId: basic-flow
     topLevel: true
+    builtIn: false
+    authenticationExecutions:
+      - authenticator: idp-create-user-if-unique
+        requirement: ALTERNATIVE
+        priority: 10
+        userSetupAllowed: false
+      - authenticator: idp-auto-link
+        requirement: ALTERNATIVE
+        priority: 20
+        userSetupAllowed: false
+  - id: 1a8b8a2c-4b5e-4e9a-9b8d-0b7f0d5e9f01
+    alias: auto-link-facebook
+    description: Facebook require IdP email verification and auto-link if possible
+    providerId: basic-flow
+    topLevel: true
+    builtIn: false
+    authenticationExecutions:
+      - authenticator: require-idp-email
+        authenticatorFlow: false
+        requirement: REQUIRED
+        priority: 5
+        autheticatorFlow: false
+        userSetupAllowed: false
+      - authenticatorFlow: true
+        requirement: REQUIRED
+        priority: 10
+        autheticatorFlow: true
+        flowAlias: Auto link Facebook alternatives
+        userSetupAllowed: false
+  - id: 4f1c8a3b-5f0d-4b7f-9a71-2f4a1a2b3c4d
+    alias: Auto link Facebook alternatives
+    description: Alternatives for auto-link-facebook
+    providerId: basic-flow
+    topLevel: false
     builtIn: false
     authenticationExecutions:
       - authenticator: idp-create-user-if-unique
