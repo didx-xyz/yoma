@@ -230,10 +230,6 @@ keycloak:
         -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless
         -Djava.awt.headless=true
         -Dkeycloak.profile.feature.upload_scripts=enabled
-    - name: KC_HOSTNAME
-      value: {{ .Values.ingressDomain }}
-    - name: KC_HOSTNAME_ADMIN
-      value: auth.{{ .Values.ingressDomain }}
     - name: KC_DB_URL_HOST
       valueFrom:
         secretKeyRef:

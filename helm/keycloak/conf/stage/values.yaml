@@ -11,6 +11,22 @@ ingress:
       - host: auth.{{ .Values.keycloak.ingressDomain }}
   external:
     enabled: true
+    annotations:
+      nginx.ingress.kubernetes.io/configuration-snippet: |-
+        # Vercel passes the incorrect 'host' value in the 'Forwarded' header
+        # The 'X-Forwarded-Host' is already correct from Vercel
+        # We just need to fix the 'Forwarded' header to use it
+
+        # Build new 'Forwarded' header using the correct host from 'X-Forwarded-Host'
+        set $correct_forwarded "for=$remote_addr;host=$http_x_forwarded_host;proto=$scheme";
+
+        # If 'X-Real-IP' exists (from Vercel), use that for the 'for' field
+        if ($http_x_real_ip) {
+          set $correct_forwarded "for=$http_x_real_ip;host=$http_x_forwarded_host;proto=$scheme";
+        }
+
+        # Override the 'Forwarded' header with the corrected version
+        proxy_set_header Forwarded $correct_forwarded;
     rules:
       - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:
