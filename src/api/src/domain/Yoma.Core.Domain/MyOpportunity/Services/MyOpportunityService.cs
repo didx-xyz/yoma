@@ -1435,7 +1435,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return $"Opportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again";
     }
 
-    private void PerformActionSendForVerificationApplyDefaults(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity)
+    private static void PerformActionSendForVerificationApplyDefaults(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity)
     {
       if (request.InstantOrImportedVerification) return;
 

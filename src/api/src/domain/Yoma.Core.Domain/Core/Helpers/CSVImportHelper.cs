@@ -16,7 +16,7 @@ namespace Yoma.Core.Domain.Core.Helpers
     #endregion
 
     #region Public Members
-    public static CsvConfiguration CreateConfig<TModel>(List<CSVImportError> errors)
+    public static CsvConfiguration CreateConfig<TModel>(List<CSVImportErrorRow> errors)
     {
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
@@ -32,17 +32,6 @@ namespace Yoma.Core.Domain.Core.Helpers
 
         MissingFieldFound = args =>
         {
-          if (args.Context?.Reader?.HeaderRecord == null)
-          {
-            errors.Add(new CSVImportError
-            {
-              Row = 1,
-              Type = CSVImportErrorType.HeaderMissing,
-              Message = "The header row is missing"
-            });
-            return;
-          }
-
           // Exactly one alias per property: property name OR single [Name("...")].
           var fieldName = args.HeaderNames?.FirstOrDefault();
           if (fieldName == null) return;
@@ -55,21 +44,11 @@ namespace Yoma.Core.Domain.Core.Helpers
 
           var isRequired = property.GetCustomAttributes(typeof(RequiredAttribute), true).Length > 0;
           if (isRequired)
-          {
-            var row = args.Context?.Parser?.Row;
-            errors.Add(new CSVImportError
-            {
-              Row = row.HasValue ? row.Value : null,
-              Type = CSVImportErrorType.RequiredFieldMissing,
-              Message = "Missing required field",
-              Field = fieldName
-            });
-          }
+            AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", args.Context?.Parser?.Row, fieldName);
         },
 
         BadDataFound = args =>
         {
-          var row = args.Context?.Parser?.Row;
           var colIndex = args.Context?.Reader?.CurrentIndex;
           string? fieldName = null;
 
@@ -84,114 +63,124 @@ namespace Yoma.Core.Domain.Core.Helpers
           if (string.IsNullOrEmpty(fieldName) && colIndex.HasValue)
             message = $"Invalid value in column index {colIndex.Value}";
 
-          errors.Add(new CSVImportError
-          {
-            Row = row.HasValue ? row.Value : null,
-            Type = CSVImportErrorType.InvalidFieldValue,
-            Message = message,
-            Field = fieldName,
-            Value = args.Field
-          });
+          AddError(errors, CSVImportErrorType.InvalidFieldValue, message, args.Context?.Parser?.Row, fieldName, args.Field);
         }
       };
     }
 
-    public static void ValidateHeader<TModel>(CsvReader csv, List<CSVImportError> errors)
+    public static void ValidateHeader<TModel>(CsvReader csv, List<CSVImportErrorRow> errors)
     {
       ArgumentNullException.ThrowIfNull(csv, nameof(csv));
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
-      if (!csv.Read() || csv.Context?.Reader?.HeaderRecord == null)
+      if (!csv.Read() || csv.Context?.Reader?.HeaderRecord?.Length == 0)
       {
-        errors.Add(new CSVImportError
-        {
-          Row = 1,
-          Type = CSVImportErrorType.HeaderMissing,
-          Message = "The header row is missing"
-        });
+        AddError(errors, CSVImportErrorType.HeaderMissing, "The header row is missing", 1);
         return;
       }
+
+      // Register header mapping before reading data rows
+      csv.ReadHeader();
+
+      var header = (csv.Context?.Reader?.HeaderRecord) ?? throw new InvalidOperationException("CSV header is missing after reading the header row");
 
       var modelProps = _propsCache.GetOrAdd(typeof(TModel), t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
       var modelHeaders = modelProps.Select(GetPropertyName).ToHashSet(StringComparer.InvariantCultureIgnoreCase);
 
-      var header = csv.Context.Reader.HeaderRecord;
+      // Heuristic: if none of the parsed "headers" match expected model headers,
+      // the header was probably deleted and the first data row was treated as header.
+      var recognizedCount = header.Count(h => h != null && modelHeaders.Contains(h));
+      if (recognizedCount == 0)
+      {
+        AddError(errors, CSVImportErrorType.HeaderMissing, "The header row is missing. The first row appears to be a record.", 1);
+        return;
+      }
+
       var headerSet = header.ToHashSet(StringComparer.InvariantCultureIgnoreCase);
 
       // Duplicate columns in header
       var duplicates = header
           .GroupBy(h => h ?? string.Empty, StringComparer.InvariantCultureIgnoreCase)
           .Where(g => g.Count() > 1)
-          .Select(g => g.Key);
-
-      foreach (var dup in duplicates)
-      {
-        errors.Add(new CSVImportError
-        {
-          Row = 1,
-          Type = CSVImportErrorType.HeaderDuplicateColumn,
-          Message = "Duplicate column defined in the header",
-          Field = dup
-        });
-      }
+          .Select(g => g.Key).ToList();
+      duplicates.ForEach(o => AddError(errors, CSVImportErrorType.HeaderDuplicateColumn, "Duplicate column defined in the header", 1, o));
 
       // Unexpected columns in header
-      foreach (var h in headerSet)
-      {
-        if (!modelHeaders.Contains(h))
-        {
-          errors.Add(new CSVImportError
-          {
-            Row = 1,
-            Type = CSVImportErrorType.HeaderUnexpectedColumn,
-            Message = "Unexpected column defined in the header",
-            Field = h
-          });
-        }
-      }
+      headerSet.Where(h => !modelHeaders.Contains(h)).ToList().ForEach(h => AddError(errors, CSVImportErrorType.HeaderUnexpectedColumn, "Unexpected column defined in the header", 1, h));
 
       // Missing ANY model property in header
-      foreach (var expected in modelHeaders)
-      {
-        if (!headerSet.Contains(expected))
-        {
-          errors.Add(new CSVImportError
-          {
-            Row = 1,
-            Type = CSVImportErrorType.HeaderColumnMissing,
-            Message = "Header column missing",
-            Field = expected
-          });
-        }
-      }
+      modelHeaders.Where(h => !headerSet.Contains(h)).ToList().ForEach(h => AddError(errors, CSVImportErrorType.HeaderColumnMissing, "Header column missing", 1, h));
     }
 
-    public static CSVImportResult GetResults(List<CSVImportError> errors, int? rowsTotal)
+    public static CSVImportResult GetResults(List<CSVImportErrorRow> errors)
     {
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
-      var failed = errors.Count;
-      var succeeded = failed == 0;
-      var total = rowsTotal ?? 0;
+      var ordered = errors.OrderBy(e => e.Number ?? int.MaxValue).ToList();
+
+      if (!ContainsHeaderErrors(ordered))
+        throw new InvalidOperationException("Header-only failed result. Header errors expected");
+
+      return new CSVImportResult { Imported = false, HeaderErrors = true, Errors = ordered };
+    }
+
+    public static CSVImportResult GetResults(List<CSVImportErrorRow> errors, int recordsTotal)
+    {
+      ArgumentNullException.ThrowIfNull(errors, nameof(errors));
+
+      var ordered = errors.OrderBy(e => e.Number ?? int.MaxValue).ToList();
+
+      if (ContainsHeaderErrors(ordered))
+        throw new InvalidOperationException("Data rows result. No header errors expected");
+
+      var recordsFailed = ordered.Count(e => e.Number.HasValue);
 
       return new CSVImportResult
       {
-        Succeeded = succeeded,
-        RowsTotal = total,
-        RowsSucceeded = succeeded ? total : Math.Max(0, total - failed),
-        RowsFailed = failed,
-        Errors = errors
+        Imported = ordered.Count == 0,
+        HeaderErrors = false,
+        RecordsTotal = recordsTotal,
+        RecordsFailed = recordsFailed,
+        RecordsSucceeded = Math.Max(0, recordsTotal - recordsFailed),
+        Errors = ordered.Count == 0 ? null : ordered
       };
     }
 
-    public static bool ContainsHeaderErrors(List<CSVImportError> errors)
+    public static bool ContainsHeaderErrors(List<CSVImportErrorRow> errors)
     {
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
-      return errors.Any(e => e.Type == CSVImportErrorType.HeaderMissing ||
-                            e.Type == CSVImportErrorType.HeaderDuplicateColumn ||
-                            e.Type == CSVImportErrorType.HeaderUnexpectedColumn ||
-                            e.Type == CSVImportErrorType.HeaderColumnMissing);
+      return errors.Any(r => r.Items.Any(i =>
+        i.Type == CSVImportErrorType.HeaderMissing ||
+        i.Type == CSVImportErrorType.HeaderDuplicateColumn ||
+        i.Type == CSVImportErrorType.HeaderUnexpectedColumn ||
+        i.Type == CSVImportErrorType.HeaderColumnMissing));
+    }
+
+    public static void AddError(List<CSVImportErrorRow> errors, CSVImportErrorType type, string message, int? rowNumber = null,
+      string? field = null, string? value = null)
+    {
+      ArgumentNullException.ThrowIfNull(errors, nameof(errors));
+
+      message = message.Trim();
+      ArgumentException.ThrowIfNullOrEmpty(message, nameof(message));
+
+      if (rowNumber.HasValue && rowNumber <= 0) rowNumber = null;
+
+      field = field?.Trim();
+      if (string.IsNullOrEmpty(field)) field = null;
+
+      value = value?.Trim();
+      if (string.IsNullOrEmpty(value)) value = null;
+
+      var row = errors.FirstOrDefault(r => r.Number == rowNumber);
+      if (row == null)
+      {
+        row = new CSVImportErrorRow { Number = rowNumber, Items = [] };
+        errors.Add(row);
+      }
+
+      row.Items.Add(new CSVImportErrorItem { Type = type, Message = message, Field = field, Value = value });
     }
     #endregion
 

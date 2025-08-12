@@ -2,14 +2,16 @@ namespace Yoma.Core.Domain.Core.Models
 {
   public class CSVImportResult
   {
-    public bool Succeeded { get; set; }
+    public bool Imported { get; set; }
 
-    public int RowsTotal { get; set; }
+    public bool HeaderErrors { get; set; }
 
-    public int RowsSucceeded { get; set; }
+    public int RecordsTotal { get; set; }
 
-    public int RowsFailed { get; set; }
+    public int RecordsSucceeded { get; set; }
 
-    public List<CSVImportError>? Errors { get; set; }
+    public int RecordsFailed { get; set; }
+
+    public List<CSVImportErrorRow>? Errors { get; set; }
   }
 }

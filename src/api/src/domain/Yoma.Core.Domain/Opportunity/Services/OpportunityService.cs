@@ -1,3 +1,4 @@
+using CsvHelper.TypeConversion;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -1046,60 +1047,66 @@ namespace Yoma.Core.Domain.Opportunity.Services
       using var stream = file.OpenReadStream();
       using var reader = new StreamReader(stream);
 
-      var errors = new List<CSVImportError>();
+      var errors = new List<CSVImportErrorRow>();
 
       using var csv = new CsvHelper.CsvReader(reader, CSVImportHelper.CreateConfig<OpportunityInfoCsvImport>(errors));
 
       // Validate header before reading data rows
       CSVImportHelper.ValidateHeader<OpportunityInfoCsvImport>(csv, errors);
-      if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors, null);
-
-      // Register header mapping before reading data rows
-      csv.ReadHeader();
+      if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
 
       // PASS A — probe: parse + invoke domain logic per row in its own scope, but never Complete()
       var parsed = new List<(OpportunityInfoCsvImport Dto, int Row)>();
-      int rowsTotal = 0;
+      int recordsTotal = 0;
 
       var probedTitles = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
       while (await csv.ReadAsync())
       {
-        rowsTotal++;
-        var rowNumber = csv.Context?.Parser?.Row ?? rowsTotal;
+        recordsTotal++;
+        var rowNumber = csv.Context?.Parser?.Row ?? recordsTotal + 1;
 
         OpportunityInfoCsvImport dto;
         try
         {
+          var rec = csv.Parser.Record;
+          if (rec == null || rec.Length == 0 || rec.All(string.IsNullOrWhiteSpace))
+          {
+            CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, "The record is empty", rowNumber);
+            continue;
+          }
+          
           dto = csv.GetRecord<OpportunityInfoCsvImport>();
 
           if (probedTitles.Contains(dto.Title))
           {
-            errors.Add(new CSVImportError
-            {
-              Row = rowNumber,
-              Type = CSVImportErrorType.ProcessingError,
-              Message = $"Duplicate title found",
-              Field = nameof(OpportunityInfoCsvImport.Title),
-              Value = dto.Title
-            });
+            CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Duplicate title found", rowNumber, nameof(OpportunityInfoCsvImport.Title), dto.Title);
 
             if (errors.Count >= _appSettings.CSVImportMaxProbeIssueCount) break;
 
             continue;
           }
 
-          using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-          await ProcessImportAndUpsertOpportunity(organizationId, dto);
-          probedTitles.Add(dto.Title);
+          await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+          {
+            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            await ProcessImportAndUpsertOpportunity(organizationId, dto, true); //probe only, notifications not send
+            probedTitles.Add(dto.Title);
+            //probe only, do not commit the scope; disposed as aborted
+          });
+        }
+        catch (TypeConverterException ex)
+        {
+          var fieldName = ex.MemberMapData?.Names?.FirstOrDefault() ?? "Unknown";
+          var fieldValue = ex.Text;
+          CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, $"Invalid value", rowNumber, fieldName, fieldValue);
+
+          if (errors.Count >= _appSettings.CSVImportMaxProbeIssueCount) break;
+
+          continue;
         }
         catch (Exception ex)
         {
-          errors.Add(new CSVImportError
-          {
-            Row = rowNumber,
-            Type = CSVImportErrorType.ProcessingError,
-            Message = $"Error processing row: {ex.Message}"
-          });
+          CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Error processing row: {ex.Message}", rowNumber);
 
           if (errors.Count >= _appSettings.CSVImportMaxProbeIssueCount) break;
 
@@ -1109,18 +1116,21 @@ namespace Yoma.Core.Domain.Opportunity.Services
         parsed.Add((dto, rowNumber));
       }
 
+      if (recordsTotal == 0)
+        throw new ValidationException("CSV file is empty. The file contains no records found");
+
       if (errors.Count > 0)
-        return CSVImportHelper.GetResults(errors, rowsTotal);
+        return CSVImportHelper.GetResults(errors, recordsTotal);
 
       // PASS B — commit: single atomic transaction for the whole file
       var committed = new List<(Models.Opportunity Opportunity, EventType ActionTaken)>();
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
         foreach (var (dto, row) in parsed)
         {
-          var (opportunity, actionTaken) = await ProcessImportAndUpsertOpportunity(organizationId, dto);
+          var (opportunity, actionTaken) = await ProcessImportAndUpsertOpportunity(organizationId, dto, false);
           committed.Add((opportunity, actionTaken));
         }
 
@@ -1129,10 +1139,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await Task.WhenAll(committed.Select(r => _mediator.Publish(new OpportunityEvent(r.ActionTaken, r.Opportunity)))).FlattenAggregateException();
 
-      return CSVImportHelper.GetResults(errors, rowsTotal);
+      return CSVImportHelper.GetResults(errors, recordsTotal);
     }
 
-    public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true)
+    public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true, bool sendNotification = true)
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
@@ -1245,7 +1255,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
         result = await _opportunityRepository.Create(result);
 
         // categories
@@ -1269,7 +1279,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       result.SetPublished();
 
       //sent when created irrespective of the opportunity status; only trigger point; trigger point on status update has been removed (sent to admin)
-      await SendNotification(result, NotificationType.Opportunity_Posted_Admin);
+      if (sendNotification)
+        await SendNotification(result, NotificationType.Opportunity_Posted_Admin);
 
       if (raiseEvent)
         await _mediator.Publish(new OpportunityEvent(EventType.Create, result));
@@ -1390,7 +1401,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         await AssertUpdatablePartnerSharing(request, resultCurrent); //check will abort sharing if possible and needs to be rolled back if the update fails
 
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
         result = await _opportunityRepository.Update(result);
 
         // categories
@@ -1839,7 +1850,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
     #endregion
 
     #region Private Members
-    private async Task<(Models.Opportunity Opporunity, EventType ActionTaken)> ProcessImportAndUpsertOpportunity(Guid organizationId, OpportunityInfoCsvImport item)
+    private async Task<(Models.Opportunity Opporunity, EventType ActionTaken)> ProcessImportAndUpsertOpportunity(Guid organizationId, OpportunityInfoCsvImport item, bool probeOnly)
     {
       if (string.IsNullOrWhiteSpace(item.ExternalId))
         throw new ValidationException("External id is required");
@@ -1935,7 +1946,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       // Events raised by invoking method upon transaction completion
       var result = isNew
-        ? await Create((OpportunityRequestCreate)request, false, false)
+        ? await Create((OpportunityRequestCreate)request, false, false, !probeOnly)
         : await Update((OpportunityRequestUpdate)request, false);
 
       return (result, isNew ? EventType.Create : EventType.Update);

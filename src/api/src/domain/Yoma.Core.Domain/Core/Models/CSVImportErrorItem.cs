@@ -1,9 +1,7 @@
 namespace Yoma.Core.Domain.Core.Models
 {
-  public class CSVImportError
+  public class CSVImportErrorItem
   {
-    public int? Row { get; set; }
-
     public CSVImportErrorType Type { get; set; }
 
     public string Message { get; set; }
