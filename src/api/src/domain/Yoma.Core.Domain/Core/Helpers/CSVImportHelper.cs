@@ -118,7 +118,7 @@ namespace Yoma.Core.Domain.Core.Helpers
 
       var ordered = errors.OrderBy(e => e.Number ?? int.MaxValue).ToList();
       foreach (var item in ordered)
-        item.Items = [.. item.Items.OrderBy(i => (int)i.Type)]; 
+        item.Items = [.. item.Items.OrderBy(i => (int)i.Type)];
 
       if (!ContainsHeaderErrors(ordered))
         throw new InvalidOperationException("Header-only failed result. Header errors expected");
@@ -161,11 +161,13 @@ namespace Yoma.Core.Domain.Core.Helpers
         i.Type == CSVImportErrorType.HeaderColumnMissing));
     }
 
-    public static bool ContainsFieldErrors(List<CSVImportErrorRow> errors)
+    public static bool ContainsFieldErrors(List<CSVImportErrorRow> errors, int rowNumber)
     {
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
-      return errors.Any(r => r.Items.Any(i =>
+      ArgumentOutOfRangeException.ThrowIfNegativeOrZero(rowNumber);
+
+      return errors.Any(r => r.Number == rowNumber && r.Items.Any(i =>
         i.Type == CSVImportErrorType.RequiredFieldMissing ||
         i.Type == CSVImportErrorType.InvalidFieldValue));
     }

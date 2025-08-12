@@ -1090,7 +1090,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           // Skip ProcessImportAndUpsertOpportunity if there are field-level errors for this row,
           // because the DTO is incomplete or invalid and business logic cannot be meaningfully applied
-          if (CSVImportHelper.ContainsFieldErrors(errors)) continue;
+          if (CSVImportHelper.ContainsFieldErrors(errors, rowNumber)) continue;
 
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
@@ -1102,7 +1102,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         }
         catch (TypeConverterException ex)
         {
-          var fieldName = ex.MemberMapData?.Names?.FirstOrDefault() ?? "Unknown";
+          var fieldName = ex.MemberMapData?.Names?.FirstOrDefault();
           var fieldValue = ex.Text;
           CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, $"Invalid value", rowNumber, fieldName, fieldValue);
 
@@ -1144,7 +1144,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       }
 
       if (recordsTotal == 0)
-        throw new ValidationException("CSV file is empty. The file contains no records found");
+        throw new ValidationException("CSV file is empty. No records found");
 
       if (errors.Count > 0)
         return CSVImportHelper.GetResults(errors, recordsTotal);
