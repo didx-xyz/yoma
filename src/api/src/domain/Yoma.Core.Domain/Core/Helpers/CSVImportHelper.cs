@@ -117,6 +117,8 @@ namespace Yoma.Core.Domain.Core.Helpers
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
       var ordered = errors.OrderBy(e => e.Number ?? int.MaxValue).ToList();
+      foreach (var item in ordered)
+        item.Items = [.. item.Items.OrderBy(i => (int)i.Type)]; 
 
       if (!ContainsHeaderErrors(ordered))
         throw new InvalidOperationException("Header-only failed result. Header errors expected");
@@ -129,6 +131,8 @@ namespace Yoma.Core.Domain.Core.Helpers
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
       var ordered = errors.OrderBy(e => e.Number ?? int.MaxValue).ToList();
+      foreach (var item in ordered)
+        item.Items = [.. item.Items.OrderBy(i => (int)i.Type)];
 
       if (ContainsHeaderErrors(ordered))
         throw new InvalidOperationException("Data rows result. No header errors expected");
@@ -155,6 +159,15 @@ namespace Yoma.Core.Domain.Core.Helpers
         i.Type == CSVImportErrorType.HeaderDuplicateColumn ||
         i.Type == CSVImportErrorType.HeaderUnexpectedColumn ||
         i.Type == CSVImportErrorType.HeaderColumnMissing));
+    }
+
+    public static bool ContainsFieldErrors(List<CSVImportErrorRow> errors)
+    {
+      ArgumentNullException.ThrowIfNull(errors, nameof(errors));
+
+      return errors.Any(r => r.Items.Any(i =>
+        i.Type == CSVImportErrorType.RequiredFieldMissing ||
+        i.Type == CSVImportErrorType.InvalidFieldValue));
     }
 
     public static void AddError(List<CSVImportErrorRow> errors, CSVImportErrorType type, string message, int? rowNumber = null,

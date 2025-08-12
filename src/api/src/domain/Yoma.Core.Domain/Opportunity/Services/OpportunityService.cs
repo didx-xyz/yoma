@@ -1052,6 +1052,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       using var csv = new CsvHelper.CsvReader(reader, CSVImportHelper.CreateConfig<OpportunityInfoCsvImport>(errors));
 
       // Validate header before reading data rows
+      // Stop if errors — prevents invalid column-to-property mapping
       CSVImportHelper.ValidateHeader<OpportunityInfoCsvImport>(csv, errors);
       if (CSVImportHelper.ContainsHeaderErrors(errors)) return CSVImportHelper.GetResults(errors);
 
@@ -1076,6 +1077,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           }
 
           dto = csv.GetRecord<OpportunityInfoCsvImport>();
+          dto.ValidateRequired(errors, rowNumber);
 
           if (probedTitles.Contains(dto.Title))
           {
@@ -1085,6 +1087,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
             continue;
           }
+
+          // Skip ProcessImportAndUpsertOpportunity if there are field-level errors for this row,
+          // because the DTO is incomplete or invalid and business logic cannot be meaningfully applied
+          if (CSVImportHelper.ContainsFieldErrors(errors)) continue;
 
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
