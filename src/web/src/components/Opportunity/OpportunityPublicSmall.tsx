@@ -44,7 +44,7 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
           </div>
         </div>
         <div className="mb-auto flex w-[280px] flex-row">
-          <p className="text-[rgba(84, 88, 89, 1)] line-clamp-3 text-sm font-light text-ellipsis">
+          <p className="text-[rgba(84, 88, 89, 1)] line-clamp-4 text-sm font-light text-ellipsis">
             {data.summary ?? data.description}
           </p>
         </div>
@@ -150,13 +150,13 @@ const OpportunityPublicSmallComponent: React.FC<InputProps> = ({
   };
 
   return preview ? (
-    <div className="relative flex h-[15.5rem] w-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl">
+    <div className="relative flex h-[17.5rem] w-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-2xl">
       {renderContent()}
     </div>
   ) : (
     <Link
       href={`/opportunities/${data.id}`}
-      className="relative flex h-[15.5rem] w-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-xs"
+      className="relative flex h-[17.5rem] w-[19.2rem] flex-col gap-1 overflow-hidden rounded-lg bg-white p-4 shadow-xs"
     >
       {renderContent()}
     </Link>
