@@ -1234,7 +1234,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
         result = await _opportunityRepository.Create(result);
 
         // categories
@@ -1379,7 +1379,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         await AssertUpdatablePartnerSharing(request, resultCurrent); //check will abort sharing if possible and needs to be rolled back if the update fails
 
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
         result = await _opportunityRepository.Update(result);
 
         // categories
