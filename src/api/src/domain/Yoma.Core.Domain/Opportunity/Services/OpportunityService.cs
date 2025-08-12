@@ -1074,7 +1074,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
             CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, "The record is empty", rowNumber);
             continue;
           }
-          
+
           dto = csv.GetRecord<OpportunityInfoCsvImport>();
 
           if (probedTitles.Contains(dto.Title))
@@ -1104,9 +1104,30 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           continue;
         }
+        catch (CsvHelper.ReaderException ex)
+        {
+          var context = ex.Context?.Reader;
+          var index = context?.CurrentIndex ?? -1;
+          var header = context?.HeaderRecord;
+
+          var fieldName = (index >= 0 && header != null && index < header.Length)
+              ? header[index]
+              : "Unknown";
+
+          string? fieldValue = null;
+          var record = context?.Parser?.Record;
+          if (record != null && index >= 0 && index < record.Length)
+            fieldValue = record[index];
+
+          CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, "Invalid value", rowNumber, fieldName, fieldValue);
+
+          if (errors.Count >= _appSettings.CSVImportMaxProbeIssueCount) break;
+
+          continue;
+        }
         catch (Exception ex)
         {
-          CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Error processing row: {ex.Message}", rowNumber);
+          CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, ex.Message, rowNumber);
 
           if (errors.Count >= _appSettings.CSVImportMaxProbeIssueCount) break;
 
