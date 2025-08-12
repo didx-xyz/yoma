@@ -34,9 +34,21 @@ ingress:
       nginx.ingress.kubernetes.io/proxy-buffering: "on"
       nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
       nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
+      nginx.ingress.kubernetes.io/configuration-snippet: |-
+        # Vercel passes the incorrect 'host' value in the 'Forwarded' header
+        # So we need to rewrite it to use the expected 'host' value
+        set $correct_forwarded "for=$remote_addr;host={{ .Values.keycloak.ingressDomain }};proto=$scheme";
+
+        # If 'X-Real-IP' exists, use that for the 'for' field
+        if ($http_x_real_ip) {
+          set $correct_forwarded "for=$http_x_real_ip;host={{ .Values.keycloak.ingressDomain }};proto=$scheme";
+        }
+
+        # Override the 'Forwarded' header with the corrected version
+        proxy_set_header Forwarded $correct_forwarded;
     className: nginx-external
     rules:
-      - host: example.com
+      - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:
           # - path: /auth/realms/example
           - path: /auth/resources
