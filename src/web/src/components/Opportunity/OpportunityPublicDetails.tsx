@@ -114,6 +114,14 @@ const OpportunityPublicDetails: React.FC<{
     });
   }, [user, isOppSaved, opportunityInfo]);
 
+  // 👀 anonymous users: show login dialog (opportunity details are blurred)
+  useEffect(() => {
+    if (!user) {
+      setLoginDialogVisible(true);
+      return;
+    }
+  }, [user]);
+
   //#region Event Handlers
   const onUpdateSavedOpportunity = useCallback(() => {
     if (!user) {
@@ -261,38 +269,26 @@ const OpportunityPublicDetails: React.FC<{
             onRequestClose={() => {
               setLoginDialogVisible(false);
             }}
-            className={`md:max-h-[350px] md:w-[500px]`}
+            className="inset-2 top-1/2 right-auto bottom-auto left-1/2 h-[350px] w-[280px] -translate-x-1/2 -translate-y-1/2 rounded-2xl md:max-h-[350px] md:w-[600px]"
           >
             <div className="flex h-full flex-col gap-2 overflow-y-auto pb-8">
-              <div className="bg-green flex flex-row p-4 shadow-lg">
-                <h1 className="grow"></h1>
-                <button
-                  type="button"
-                  className="btn btn-circle text-gray-dark hover:bg-gray"
-                  onClick={() => {
-                    setLoginDialogVisible(false);
-                  }}
-                >
-                  <IoMdClose className="h-6 w-6"></IoMdClose>
-                </button>
-              </div>
-              <div className="flex flex-col items-center justify-center gap-4">
-                <div className="-mt-8 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
-                  <FcKey className="mr-px h-7 w-7 text-white" />
+              <div className="bg-theme flex h-16 flex-row p-4 shadow-lg"></div>
+              <div className="flex flex-col items-center justify-center gap-4 px-6 pb-8 text-center md:px-12">
+                <div className="border-purple-dark -mt-8 flex items-center justify-center rounded-full bg-white p-2 shadow-lg">
+                  <FcKey className="size-8 md:size-10" />
                 </div>
 
-                <h5>Please sign-in to continue</h5>
+                <div className="flex flex-col gap-2 text-center">
+                  <div className="text-xl font-semibold tracking-wide md:text-2xl">
+                    Login Required
+                  </div>
+                  <div className="md:text-md text-sm">
+                    Please login to see this opportunity.
+                  </div>
+                </div>
 
                 <div className="mt-8 flex grow gap-4">
-                  <button
-                    type="button"
-                    className="btn border-purple text-purple rounded-full bg-white normal-case md:w-[150px]"
-                    onClick={() => setLoginDialogVisible(false)}
-                  >
-                    <IoMdClose className="text-purple h-5 w-5" /> Cancel
-                  </button>
-
-                  <SignInButton className="btn bg-purple hover:bg-purple-light disabled:bg-purple-light transform gap-2 border-0 border-none px-4 shadow-lg transition-all duration-300 ease-in-out hover:brightness-95 disabled:!cursor-wait md:w-[150px]" />
+                  <SignInButton className="md:w-[150px]" />
                 </div>
               </div>
             </div>
@@ -548,7 +544,7 @@ const OpportunityPublicDetails: React.FC<{
       )}
 
       {opportunityInfo && (
-        <div className="flex flex-col gap-4">
+        <div className={`flex flex-col gap-4 ${!user ? "blur-xs" : ""}`}>
           <div className="relative flex grow flex-row gap-1 rounded-lg bg-white p-4 shadow-lg md:p-6">
             <div className="flex grow flex-col gap-1">
               <div className="flex grow flex-col">
