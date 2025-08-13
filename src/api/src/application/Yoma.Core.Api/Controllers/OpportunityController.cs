@@ -4,6 +4,7 @@ using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using System.Net;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -399,19 +400,22 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Import opportunities for the specified organization from a CSV file")]
+    [SwaggerOperation(Summary = "Validate or import opportunities for the specified organization from a CSV file",
+      Description = "If `validateOnly=true`, performs full validation without importing. " +
+                      "Returns detailed errors (up to the configured maximum). " +
+                      "If no errors are found and `validateOnly` is false or omitted, the opportunities are imported")]
     [HttpPost("import/{organizationId}/csv")]
-    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(CSVImportResult), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
-    public async Task<IActionResult> ImportFromCSV([FromRoute] Guid organizationId, [Required] IFormFile file)
+    public async Task<IActionResult> ImportFromCSV([FromRoute] Guid organizationId, [Required] IFormFile file, [FromQuery] bool? validateOnly)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(ImportFromCSV));
 
-      await _opportunityService.ImportFromCSV(file, organizationId, true);
+      var result = await _opportunityService.ImportFromCSV(file, organizationId, true, validateOnly);
 
       _logger.LogInformation("Request {requestName} handled", nameof(ImportFromCSV));
 
-      return StatusCode((int)HttpStatusCode.OK);
+      return StatusCode((int)HttpStatusCode.OK, result);
     }
 
     [SwaggerOperation(Summary = "Create a new opportunity")]

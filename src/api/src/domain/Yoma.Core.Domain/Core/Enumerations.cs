@@ -111,4 +111,15 @@ namespace Yoma.Core.Domain.Core
     [Description("facebook")]
     Facebook
   }
+
+  public enum CSVImportErrorType
+  {
+    HeaderMissing,
+    HeaderColumnMissing,
+    HeaderUnexpectedColumn,
+    HeaderDuplicateColumn,
+    RequiredFieldMissing,
+    InvalidFieldValue,
+    ProcessingError
+  }
 }

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Opportunity.Models;
 
@@ -42,9 +43,9 @@ namespace Yoma.Core.Domain.Opportunity.Interfaces
 
     OpportunitySearchResults Search(OpportunitySearchFilterAdmin filter, bool ensureOrganizationAuthorization);
 
-    Task ImportFromCSV(IFormFile file, Guid organizationId, bool ensureOrganizationAuthorization);
+    Task<CSVImportResult> ImportFromCSV(IFormFile file, Guid organizationId, bool ensureOrganizationAuthorization, bool? validateOnly = null);
 
-    Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true);
+    Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true, bool sendNotification = true);
 
     Task<Models.Opportunity> Update(OpportunityRequestUpdate request, bool ensureOrganizationAuthorization);
 
