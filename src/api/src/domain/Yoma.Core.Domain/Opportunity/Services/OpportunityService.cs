@@ -1083,7 +1083,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           {
             CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Duplicate title found", rowNumber, nameof(OpportunityInfoCsvImport.Title), dto.Title);
 
-            if (errors.Count >= _appSettings.CSVImportMaxProbeIssueCount) break;
+            if (errors.Count >= _appSettings.CSVImportMaxProbeErrorCount) break;
 
             continue;
           }
@@ -1104,7 +1104,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
         {
           CSVImportHelper.HandleExceptions(ex, errors, rowNumber);
 
-          if (errors.Count >= _appSettings.CSVImportMaxProbeIssueCount) break;
+          if (errors.Count >= _appSettings.CSVImportMaxProbeErrorCount) break;
 
           continue;
         }
