@@ -169,10 +169,6 @@ export const VIEWPORT_SIZE = {
 };
 
 export const COUNTRY_CODE_WW = "WW";
-export const COUNTRY_ID_NIGERIA = "2ba19f1d-998f-40ee-9af6-c6ab562e3040";
-export const COUNTRY_ID_SOUTH_AFRICA = "bab77522-001d-42cb-a1ee-394e16ee5613";
-export const COUNTRY_ID_KENYA = "a0573190-e86f-489e-8e05-87fdba1d442f";
-export const COUNTRY_ID_MOZAMIQUE = "96ff7073-fde0-4c70-a56b-b7e1256568c0";
 export const COOKIE_KEYCLOAK_SESSION = "KEYCLOAK_SESSION";
 export const SLOW_NETWORK_MESSAGE_TIMEOUT = 10000; // 10 seconds
 export const SLOW_NETWORK_ABORT_TIMEOUT = 45000; // 45 seconds
