@@ -5,6 +5,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -349,48 +350,35 @@ const Opportunities: NextPageWithLayout<{
     ...(userProfile ? [{ value: "2", label: "Expired / Upload Only" }] : []), // logged in users can see expired
   ];
 
-  // this checks if the user is in one of the targeted countries (Nigeria, South Africa, Kenya, Mozamique)
-  const targetedCountryName = useMemo(() => {
-    // Ensure necessary data is available (still need lookups_countries to know if data is ready, though not used for name lookup)
-    if (!userProfile?.countryId) {
+  // this checks if the logged-in user has a country and gets the country info for display
+  const userCountryInfo = useMemo(() => {
+    // Only for logged-in users
+    if (!userProfile?.countryId || !lookups_countries) {
       return null;
     }
 
-    // Define target countries and their names
-    const targetCountries = [
-      { id: COUNTRY_ID_NIGERIA, name: "Nigeria" },
-      { id: COUNTRY_ID_SOUTH_AFRICA, name: "South Africa" },
-      { id: COUNTRY_ID_KENYA, name: "Kenya" },
-      { id: COUNTRY_ID_MOZAMIQUE, name: "Mozambique" },
-    ];
-
-    // Convert user's country ID to lowercase for comparison
-    const userCountryIdLower = userProfile.countryId.toLowerCase();
-
-    // Find the matching target country by comparing lowercase IDs
-    const matchedTarget = targetCountries.find(
-      (target) => target.id.toLowerCase() === userCountryIdLower,
+    // Find the country in the lookups
+    const country = lookups_countries.find(
+      (c) => c.id.toLowerCase() === userProfile.countryId!.toLowerCase(),
     );
 
-    // Return the hardcoded name if a match is found, otherwise null
-    return matchedTarget ? matchedTarget.name : null;
-  }, [userProfile?.countryId]);
+    return country ? { id: userProfile.countryId, name: country.name } : null;
+  }, [userProfile?.countryId, lookups_countries]);
 
-  // if the user is in one of the targeted countries (Nigeria, South Africa, Kenya, Mozamique)
-  // then fetch results for that country (carousel)
+  // fetch results for user's country (carousel) - for all logged-in users regardless of country
   const {
-    data: opportunities_targeted_country,
-    isLoading: isLoading_opportunities_targeted_country,
+    data: opportunities_user_country,
+    isLoading: isLoading_opportunities_user_country,
   } = useQuery({
-    queryKey: ["opportunities", "targeted_country", userProfile?.countryId],
+    queryKey: ["opportunities", "user_country", userProfile?.countryId],
     queryFn: async () => {
-      if (!targetedCountryName || !userProfile?.countryId) return null;
+      if (!userCountryInfo?.id) return null;
 
       return await searchOpportunities({
         pageNumber: 1,
         pageSize: PAGE_SIZE_MINIMUM,
         categories: null,
-        countries: [userProfile.countryId],
+        countries: [userCountryInfo.id],
         languages: null,
         types: null,
         engagementTypes: null,
@@ -404,8 +392,35 @@ const Opportunities: NextPageWithLayout<{
         featured: null,
       });
     },
-    enabled: !!targetedCountryName,
+    enabled: !!userCountryInfo?.id,
   });
+
+  // Add state to manage carousel visibility with delay (only for logged-in users)
+  const [showCarousels, setShowCarousels] = useState(false);
+
+  // Add effect to handle carousel visibility with delay for logged-in users
+  useEffect(() => {
+    if (sessionStatus === "unauthenticated") {
+      // Anonymous users see carousels immediately
+      setShowCarousels(true);
+      return;
+    }
+
+    if (sessionStatus === "authenticated") {
+      // For logged-in users, wait for country data to load then add delay
+      const allCarouselsLoaded = !isLoading_opportunities_user_country;
+
+      if (allCarouselsLoaded) {
+        const timer = setTimeout(() => {
+          setShowCarousels(true);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+      }
+    }
+
+    // For loading state, showCarousels remains false (showing skeletons)
+  }, [sessionStatus, isLoading_opportunities_user_country]);
   //#endregion QUERIES
 
   //#region FILTERS
@@ -1150,25 +1165,25 @@ const Opportunities: NextPageWithLayout<{
     [opportunities_featured, fetchDataAndUpdateCache],
   );
 
-  const loadDataOpportunitiesForTargetedCountry = useCallback(
+  const loadDataOpportunitiesForUserCountry = useCallback(
     async (startRow: number) => {
-      if (startRow > (opportunities_targeted_country?.totalCount ?? 0)) {
+      if (startRow > (opportunities_user_country?.totalCount ?? 0)) {
         return {
           items: [],
           totalCount: 0,
         };
       }
-      if (!userProfile?.countryId) return null;
+      if (!userCountryInfo?.id) return null;
 
       const pageNumber = Math.ceil(startRow / PAGE_SIZE_MINIMUM);
 
       return fetchDataAndUpdateCache(
-        ["opportunitiesForTargetedCountry", pageNumber.toString()],
+        ["opportunitiesForUserCountry", pageNumber.toString()],
         {
           pageNumber: pageNumber,
           pageSize: PAGE_SIZE_MINIMUM,
           categories: null,
-          countries: [userProfile.countryId],
+          countries: [userCountryInfo.id],
           languages: null,
           types: null,
           engagementTypes: null,
@@ -1183,13 +1198,8 @@ const Opportunities: NextPageWithLayout<{
         },
       );
     },
-    [
-      opportunities_targeted_country,
-      userProfile?.countryId,
-      fetchDataAndUpdateCache,
-    ],
+    [opportunities_user_country, userCountryInfo?.id, fetchDataAndUpdateCache],
   );
-  //#endregion CAROUSELS
 
   return (
     <>
@@ -1299,185 +1309,197 @@ const Opportunities: NextPageWithLayout<{
           {/* NO SEARCH, SHOW LANDING PAGE (POPULAR, LATEST, ALL etc)*/}
           {!isSearchPerformed && (
             <>
-              {/* COUNTRY LOCALIZATION */}
-              {sessionStatus === "loading" ||
-              isLoading_opportunities_targeted_country ? (
-                <LoadingSkeleton className="!h-[357.594px]" />
-              ) : (
+              {/* LOADING STATE FOR ALL CAROUSELS - SHOW WHILE SESSION IS LOADING OR FOR LOGGED-IN USERS WAITING FOR DATA */}
+              {(sessionStatus === "loading" ||
+                (sessionStatus === "authenticated" && !showCarousels)) && (
+                <div className="space-y-8">
+                  <LoadingSkeleton className="!h-[357.594px]" />
+                  <LoadingSkeleton className="!h-[357.594px]" />
+                  <LoadingSkeleton className="!h-[357.594px]" />
+                  <LoadingSkeleton className="!h-[357.594px]" />
+                  <LoadingSkeleton className="!h-[357.594px]" />
+                  <LoadingSkeleton className="!h-[357.594px]" />
+                  <LoadingSkeleton className="!h-[357.594px]" />
+                  <LoadingSkeleton className="!h-[357.594px]" />
+                </div>
+              )}
+
+              {/* CAROUSELS - SHOWN IMMEDIATELY FOR ANONYMOUS OR AFTER LOADING WITH DELAY FOR LOGGED-IN */}
+              {showCarousels && (
                 <>
-                  {/* OPPORTUNITIES FOR TARGETED COUNTRY */}
+                  {/* OPPORTUNITIES FOR USER'S COUNTRY - ONLY FOR LOGGED-IN USERS */}
                   {sessionStatus === "authenticated" &&
-                    targetedCountryName &&
-                    (opportunities_targeted_country?.totalCount ?? 0) > 0 && (
+                    userCountryInfo &&
+                    (opportunities_user_country?.totalCount ?? 0) > 0 && (
                       <CustomCarousel
-                        id={`opportunities_targeted_country`}
-                        title={`Opportunities in ${targetedCountryName} 🗺️`}
+                        id={`opportunities_user_country`}
+                        title={`Opportunities in ${userCountryInfo.name} 🗺️`}
                         description="Explore opportunities in your country."
-                        viewAllUrl={`/opportunities?countries=${targetedCountryName}`}
-                        data={opportunities_targeted_country!.items}
-                        loadData={loadDataOpportunitiesForTargetedCountry}
-                        totalAll={opportunities_targeted_country!.totalCount!}
+                        viewAllUrl={`/opportunities?countries=${userCountryInfo.name}`}
+                        data={opportunities_user_country!.items}
+                        loadData={loadDataOpportunitiesForUserCountry}
+                        totalAll={opportunities_user_country!.totalCount!}
                         renderSlide={(item, index) => (
                           <OpportunityPublicSmallComponent
-                            key={`opportunities_targeted_country_${item.id}_${index}`}
+                            key={`opportunities_user_country_${item.id}_${index}`}
                             data={item}
                           />
                         )}
                       />
                     )}
+
+                  {/* FEATURED */}
+                  {(opportunities_featured?.totalCount ?? 0) > 0 && (
+                    <CustomCarousel
+                      id={`opportunities_featured`}
+                      title="Featured 🌟"
+                      description="Explore our featured opportunities."
+                      viewAllUrl="/opportunities?featured=true"
+                      data={opportunities_featured.items}
+                      loadData={loadDataFeatured}
+                      totalAll={opportunities_featured.totalCount!}
+                      renderSlide={(item, index) => (
+                        <OpportunityPublicSmallComponent
+                          key={`opportunities_featured_${item.id}_${index}`}
+                          data={item}
+                        />
+                      )}
+                    />
+                  )}
+
+                  {/* NEW */}
+                  {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
+                    <CustomCarousel
+                      id={`opportunities_newOpportunities`}
+                      title="New 🆕"
+                      description="Fresh opportunities, updated daily."
+                      viewAllUrl="/opportunities?page=1"
+                      data={opportunities_allOpportunities.items}
+                      loadData={loadDataOpportunities}
+                      totalAll={opportunities_allOpportunities.totalCount!}
+                      renderSlide={(item, index) => (
+                        <OpportunityPublicSmallComponent
+                          key={`opportunities_newOpportunities_${item.id}_${index}`}
+                          data={item}
+                        />
+                      )}
+                    />
+                  )}
+
+                  {/* TRENDING */}
+                  {(opportunities_trending?.totalCount ?? 0) > 0 && (
+                    <CustomCarousel
+                      id={`opportunities_trending`}
+                      title="Trending 🔥"
+                      description="The most viewed opportunities."
+                      viewAllUrl="/opportunities?mostViewed=true"
+                      data={opportunities_trending.items}
+                      loadData={loadDataTrending}
+                      totalAll={opportunities_trending.totalCount!}
+                      renderSlide={(item, index) => (
+                        <OpportunityPublicSmallComponent
+                          key={`opportunities_trending_${item.id}_${index}`}
+                          data={item}
+                        />
+                      )}
+                    />
+                  )}
+
+                  {/* MOST COMPLETED */}
+                  {(opportunities_mostCompleted?.totalCount ?? 0) > 0 && (
+                    <CustomCarousel
+                      id={`opportunities_mostCompleted`}
+                      title="Most completed 🏆"
+                      description="The most completed opportunities."
+                      viewAllUrl="/opportunities?mostCompleted=true"
+                      data={opportunities_mostCompleted.items}
+                      loadData={loadDataMostCompleted}
+                      totalAll={opportunities_mostCompleted.totalCount!}
+                      renderSlide={(item, index) => (
+                        <OpportunityPublicSmallComponent
+                          key={`opportunities_mostCompleted_${item.id}_${index}`}
+                          data={item}
+                        />
+                      )}
+                    />
+                  )}
+
+                  {/* LEARNING COURSES */}
+                  {(opportunities_learning?.totalCount ?? 0) > 0 && (
+                    <CustomCarousel
+                      id={`opportunities_learning`}
+                      title="Learning Courses 📚"
+                      description="Discover exciting online courses."
+                      viewAllUrl="/opportunities?types=Learning"
+                      data={opportunities_learning.items}
+                      loadData={loadDataLearning}
+                      totalAll={opportunities_learning.totalCount!}
+                      renderSlide={(item, index) => (
+                        <OpportunityPublicSmallComponent
+                          key={`opportunities_learning_${item.id}_${index}`}
+                          data={item}
+                        />
+                      )}
+                    />
+                  )}
+
+                  {/* TASKS */}
+                  {(opportunities_tasks?.totalCount ?? 0) > 0 && (
+                    <CustomCarousel
+                      id={`opportunities_tasks`}
+                      title="Micro-tasks ⚡"
+                      description="Contribute to real-world projects."
+                      viewAllUrl="/opportunities?types=Micro-task"
+                      data={opportunities_tasks.items}
+                      loadData={loadDataTasks}
+                      totalAll={opportunities_tasks.totalCount!}
+                      renderSlide={(item, index) => (
+                        <OpportunityPublicSmallComponent
+                          key={`opportunities_tasks_${item.id}_${index}`}
+                          data={item}
+                        />
+                      )}
+                    />
+                  )}
+
+                  {/* EVENTS */}
+                  {(opportunities_events?.totalCount ?? 0) > 0 && (
+                    <CustomCarousel
+                      id={`opportunities_events`}
+                      title="Events 🎉"
+                      description="Explore events to attend."
+                      viewAllUrl="/opportunities?types=Event"
+                      data={opportunities_events.items}
+                      loadData={loadDataEvents}
+                      totalAll={opportunities_events.totalCount!}
+                      renderSlide={(item, index) => (
+                        <OpportunityPublicSmallComponent
+                          key={`opportunities_events_${item.id}_${index}`}
+                          data={item}
+                        />
+                      )}
+                    />
+                  )}
+
+                  {/* OTHER */}
+                  {(opportunities_other?.totalCount ?? 0) > 0 && (
+                    <CustomCarousel
+                      id={`opportunities_other`}
+                      title="Other 💡"
+                      description="Explore other opportunities."
+                      viewAllUrl="/opportunities?types=Other"
+                      data={opportunities_other.items}
+                      loadData={loadDataOther}
+                      totalAll={opportunities_other.totalCount!}
+                      renderSlide={(item, index) => (
+                        <OpportunityPublicSmallComponent
+                          key={`opportunities_other_${item.id}_${index}`}
+                          data={item}
+                        />
+                      )}
+                    />
+                  )}
                 </>
-              )}
-
-              {/* FEATURED */}
-              {(opportunities_featured?.totalCount ?? 0) > 0 && (
-                <CustomCarousel
-                  id={`opportunities_featured`}
-                  title="Featured 🌟"
-                  description="Explore our featured opportunities."
-                  viewAllUrl="/opportunities?featured=true"
-                  data={opportunities_featured.items}
-                  loadData={loadDataFeatured}
-                  totalAll={opportunities_featured.totalCount!}
-                  renderSlide={(item, index) => (
-                    <OpportunityPublicSmallComponent
-                      key={`opportunities_featured_${item.id}_${index}`}
-                      data={item}
-                    />
-                  )}
-                />
-              )}
-
-              {/* NEW */}
-              {(opportunities_allOpportunities?.totalCount ?? 0) > 0 && (
-                <CustomCarousel
-                  id={`opportunities_newOpportunities`}
-                  title="New 🆕"
-                  description="Fresh opportunities, updated daily."
-                  viewAllUrl="/opportunities?page=1"
-                  data={opportunities_allOpportunities.items}
-                  loadData={loadDataOpportunities}
-                  totalAll={opportunities_allOpportunities.totalCount!}
-                  renderSlide={(item, index) => (
-                    <OpportunityPublicSmallComponent
-                      key={`opportunities_newOpportunities_${item.id}_${index}`}
-                      data={item}
-                    />
-                  )}
-                />
-              )}
-
-              {/* TRENDING */}
-              {(opportunities_trending?.totalCount ?? 0) > 0 && (
-                <CustomCarousel
-                  id={`opportunities_trending`}
-                  title="Trending 🔥"
-                  description="The most viewed opportunities."
-                  viewAllUrl="/opportunities?mostViewed=true"
-                  data={opportunities_trending.items}
-                  loadData={loadDataTrending}
-                  totalAll={opportunities_trending.totalCount!}
-                  renderSlide={(item, index) => (
-                    <OpportunityPublicSmallComponent
-                      key={`opportunities_trending_${item.id}_${index}`}
-                      data={item}
-                    />
-                  )}
-                />
-              )}
-
-              {/* MOST COMPLETED */}
-              {(opportunities_mostCompleted?.totalCount ?? 0) > 0 && (
-                <CustomCarousel
-                  id={`opportunities_mostCompleted`}
-                  title="Most completed 🏆"
-                  description="The most completed opportunities."
-                  viewAllUrl="/opportunities?mostCompleted=true"
-                  data={opportunities_mostCompleted.items}
-                  loadData={loadDataMostCompleted}
-                  totalAll={opportunities_mostCompleted.totalCount!}
-                  renderSlide={(item, index) => (
-                    <OpportunityPublicSmallComponent
-                      key={`opportunities_mostCompleted_${item.id}_${index}`}
-                      data={item}
-                    />
-                  )}
-                />
-              )}
-
-              {/* LEARNING COURSES */}
-              {(opportunities_learning?.totalCount ?? 0) > 0 && (
-                <CustomCarousel
-                  id={`opportunities_learning`}
-                  title="Learning Courses 📚"
-                  description="Discover exciting online courses."
-                  viewAllUrl="/opportunities?types=Learning"
-                  data={opportunities_learning.items}
-                  loadData={loadDataLearning}
-                  totalAll={opportunities_learning.totalCount!}
-                  renderSlide={(item, index) => (
-                    <OpportunityPublicSmallComponent
-                      key={`opportunities_learning_${item.id}_${index}`}
-                      data={item}
-                    />
-                  )}
-                />
-              )}
-
-              {/* TASKS */}
-              {(opportunities_tasks?.totalCount ?? 0) > 0 && (
-                <CustomCarousel
-                  id={`opportunities_tasks`}
-                  title="Micro-tasks ⚡"
-                  description="Contribute to real-world projects."
-                  viewAllUrl="/opportunities?types=Micro-task"
-                  data={opportunities_tasks.items}
-                  loadData={loadDataTasks}
-                  totalAll={opportunities_tasks.totalCount!}
-                  renderSlide={(item, index) => (
-                    <OpportunityPublicSmallComponent
-                      key={`opportunities_tasks_${item.id}_${index}`}
-                      data={item}
-                    />
-                  )}
-                />
-              )}
-
-              {/* EVENTS */}
-              {(opportunities_events?.totalCount ?? 0) > 0 && (
-                <CustomCarousel
-                  id={`opportunities_events`}
-                  title="Events 🎉"
-                  description="Explore events to attend."
-                  viewAllUrl="/opportunities?types=Event"
-                  data={opportunities_events.items}
-                  loadData={loadDataEvents}
-                  totalAll={opportunities_events.totalCount!}
-                  renderSlide={(item, index) => (
-                    <OpportunityPublicSmallComponent
-                      key={`opportunities_events_${item.id}_${index}`}
-                      data={item}
-                    />
-                  )}
-                />
-              )}
-
-              {/* OTHER */}
-              {(opportunities_other?.totalCount ?? 0) > 0 && (
-                <CustomCarousel
-                  id={`opportunities_other`}
-                  title="Other 💡"
-                  description="Explore other opportunities."
-                  viewAllUrl="/opportunities?types=Other"
-                  data={opportunities_other.items}
-                  loadData={loadDataOther}
-                  totalAll={opportunities_other.totalCount!}
-                  renderSlide={(item, index) => (
-                    <OpportunityPublicSmallComponent
-                      key={`opportunities_other_${item.id}_${index}`}
-                      data={item}
-                    />
-                  )}
-                />
               )}
             </>
           )}
