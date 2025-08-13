@@ -1037,7 +1037,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       return result;
     }
 
-    public async Task<CSVImportResult> ImportFromCSV(IFormFile file, Guid organizationId, bool ensureOrganizationAuthorization)
+    public async Task<CSVImportResult> ImportFromCSV(IFormFile file, Guid organizationId, bool ensureOrganizationAuthorization, bool? validateOnly = null)
     {
       if (file == null || file.Length == 0)
         throw new ArgumentNullException(nameof(file));
@@ -1100,40 +1100,9 @@ namespace Yoma.Core.Domain.Opportunity.Services
             //probe only, do not commit the scope; disposed as aborted
           });
         }
-        catch (TypeConverterException ex)
-        {
-          var fieldName = ex.MemberMapData?.Names?.FirstOrDefault();
-          var fieldValue = ex.Text;
-          CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, $"Invalid value", rowNumber, fieldName, fieldValue);
-
-          if (errors.Count >= _appSettings.CSVImportMaxProbeIssueCount) break;
-
-          continue;
-        }
-        catch (CsvHelper.ReaderException ex)
-        {
-          var context = ex.Context?.Reader;
-          var index = context?.CurrentIndex ?? -1;
-          var header = context?.HeaderRecord;
-
-          var fieldName = (index >= 0 && header != null && index < header.Length)
-              ? header[index]
-              : "Unknown";
-
-          string? fieldValue = null;
-          var record = context?.Parser?.Record;
-          if (record != null && index >= 0 && index < record.Length)
-            fieldValue = record[index];
-
-          CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, "Invalid value", rowNumber, fieldName, fieldValue);
-
-          if (errors.Count >= _appSettings.CSVImportMaxProbeIssueCount) break;
-
-          continue;
-        }
         catch (Exception ex)
         {
-          CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, ex.Message, rowNumber);
+          CSVImportHelper.HandleExceptions(ex, errors, rowNumber);
 
           if (errors.Count >= _appSettings.CSVImportMaxProbeIssueCount) break;
 
@@ -1146,8 +1115,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (recordsTotal == 0)
         throw new ValidationException("CSV file is empty. No records found");
 
-      if (errors.Count > 0)
-        return CSVImportHelper.GetResults(errors, recordsTotal);
+      var result = CSVImportHelper.GetResults(errors, recordsTotal, validateOnly);
+
+      // Stop here if there are validation errors or we're in probe mode
+      if (errors.Count > 0 || validateOnly == true) return result;
 
       // PASS B — commit: single atomic transaction for the whole file
       var committed = new List<(Models.Opportunity Opportunity, EventType ActionTaken)>();
@@ -1166,7 +1137,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await Task.WhenAll(committed.Select(r => _mediator.Publish(new OpportunityEvent(r.ActionTaken, r.Opportunity)))).FlattenAggregateException();
 
-      return CSVImportHelper.GetResults(errors, recordsTotal);
+      return result;
     }
 
     public async Task<Models.Opportunity> Create(OpportunityRequestCreate request, bool ensureOrganizationAuthorization, bool raiseEvent = true, bool sendNotification = true)

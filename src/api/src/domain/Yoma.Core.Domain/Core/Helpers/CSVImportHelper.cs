@@ -1,6 +1,7 @@
 using CsvHelper;
 using CsvHelper.Configuration;
 using CsvHelper.Configuration.Attributes;
+using CsvHelper.TypeConversion;
 using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
@@ -12,7 +13,7 @@ namespace Yoma.Core.Domain.Core.Helpers
   public static class CSVImportHelper
   {
     #region Class Variables
-    private static readonly ConcurrentDictionary<System.Type, PropertyInfo[]> _propsCache = new();
+    private static readonly ConcurrentDictionary<Type, PropertyInfo[]> _propsCache = new();
     #endregion
 
     #region Public Members
@@ -116,37 +117,37 @@ namespace Yoma.Core.Domain.Core.Helpers
     {
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
-      var ordered = errors.OrderBy(e => e.Number ?? int.MaxValue).ToList();
-      foreach (var item in ordered)
+      var orderedErrors = errors.OrderBy(e => e.Number ?? int.MaxValue).ToList();
+      foreach (var item in orderedErrors)
         item.Items = [.. item.Items.OrderBy(i => (int)i.Type)];
 
-      if (!ContainsHeaderErrors(ordered))
+      if (!ContainsHeaderErrors(orderedErrors))
         throw new InvalidOperationException("Header-only failed result. Header errors expected");
 
-      return new CSVImportResult { Imported = false, HeaderErrors = true, Errors = ordered };
+      return new CSVImportResult { Imported = false, HeaderErrors = true, Errors = orderedErrors };
     }
 
-    public static CSVImportResult GetResults(List<CSVImportErrorRow> errors, int recordsTotal)
+    public static CSVImportResult GetResults(List<CSVImportErrorRow> errors, int recordsTotal, bool? validateOnly)
     {
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
-      var ordered = errors.OrderBy(e => e.Number ?? int.MaxValue).ToList();
-      foreach (var item in ordered)
+      var orderedErrors = errors.OrderBy(e => e.Number ?? int.MaxValue).ToList();
+      foreach (var item in orderedErrors)
         item.Items = [.. item.Items.OrderBy(i => (int)i.Type)];
 
-      if (ContainsHeaderErrors(ordered))
+      if (ContainsHeaderErrors(orderedErrors))
         throw new InvalidOperationException("Data rows result. No header errors expected");
 
-      var recordsFailed = ordered.Count(e => e.Number.HasValue);
+      var recordsFailed = orderedErrors.Count(e => e.Number.HasValue);
 
       return new CSVImportResult
       {
-        Imported = ordered.Count == 0,
+        Imported = validateOnly != true && orderedErrors.Count == 0, // null or false => import when no errors
         HeaderErrors = false,
         RecordsTotal = recordsTotal,
         RecordsFailed = recordsFailed,
         RecordsSucceeded = Math.Max(0, recordsTotal - recordsFailed),
-        Errors = ordered.Count == 0 ? null : ordered
+        Errors = orderedErrors.Count == 0 ? null : orderedErrors
       };
     }
 
@@ -196,6 +197,52 @@ namespace Yoma.Core.Domain.Core.Helpers
       }
 
       row.Items.Add(new CSVImportErrorItem { Type = type, Message = message, Field = field, Value = value });
+    }
+
+    public static void HandleExceptions(Exception ex, List<CSVImportErrorRow> errors, int rowNumber)
+    {
+      ArgumentNullException.ThrowIfNull(ex, nameof(ex));
+
+      ArgumentNullException.ThrowIfNull(errors, nameof(errors));
+
+      ArgumentOutOfRangeException.ThrowIfNegativeOrZero(rowNumber);
+
+      switch (ex)
+      {
+        case TypeConverterException typeEx:
+          {
+            var fieldName = typeEx.MemberMapData?.Names?.FirstOrDefault();
+            var fieldValue = typeEx.Text;
+
+            AddError(errors, CSVImportErrorType.InvalidFieldValue, $"Invalid value", rowNumber, fieldName, fieldValue);
+
+            break;
+          }
+
+        case ReaderException readerEx:
+          {
+            var context = readerEx.Context?.Reader;
+            var index = context?.CurrentIndex ?? -1;
+            var header = context?.HeaderRecord;
+
+            var fieldName = (index >= 0 && header != null && index < header.Length)
+                ? header[index]
+                : "Unknown";
+
+            string? fieldValue = null;
+            var record = context?.Parser?.Record;
+            if (record != null && index >= 0 && index < record.Length)
+              fieldValue = record[index];
+
+            AddError(errors, CSVImportErrorType.InvalidFieldValue, "Invalid value", rowNumber, fieldName, fieldValue);
+            break;
+          }
+
+        default:
+          AddError(errors, CSVImportErrorType.ProcessingError, ex.Message, rowNumber);
+
+          break;
+      }
     }
     #endregion
 
