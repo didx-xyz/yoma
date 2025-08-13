@@ -93,8 +93,6 @@ export const Global: React.FC = () => {
         const {
           firstName,
           surname,
-          displayName,
-          //phoneNumber, ignore phone number for now
           countryId,
           educationId,
           genderId,
@@ -104,8 +102,6 @@ export const Global: React.FC = () => {
         if (
           !firstName ||
           !surname ||
-          !displayName ||
-          //!phoneNumber || ignore phone number for now
           !countryId ||
           !educationId ||
           !genderId ||
@@ -403,7 +399,6 @@ export const Global: React.FC = () => {
                 filterOptions={[
                   UserProfileFilterOptions.FIRSTNAME,
                   UserProfileFilterOptions.SURNAME,
-                  UserProfileFilterOptions.DISPLAYNAME,
                   UserProfileFilterOptions.COUNTRY,
                   UserProfileFilterOptions.EDUCATION,
                   UserProfileFilterOptions.GENDER,

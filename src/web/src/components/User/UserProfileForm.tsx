@@ -33,7 +33,6 @@ export enum UserProfileFilterOptions {
   EMAIL = "email",
   FIRSTNAME = "firstName",
   SURNAME = "surname",
-  DISPLAYNAME = "displayName",
   PHONENUMBER = "phoneNumber",
   COUNTRY = "country",
   EDUCATION = "education",
@@ -73,7 +72,7 @@ export const UserProfileForm: React.FC<{
     email: userProfile?.email ?? "",
     firstName: userProfile?.firstName ?? "",
     surname: userProfile?.surname ?? "",
-    displayName: userProfile?.displayName ?? "",
+    displayName: null,
     phoneNumber: userProfile?.phoneNumber ?? "",
     countryId: userProfile?.countryId ?? "",
     educationId: userProfile?.educationId ?? "",
@@ -116,14 +115,6 @@ export const UserProfileForm: React.FC<{
     ),
     firstName: zod.string().min(1, "First name is required."),
     surname: zod.string().min(1, "Last name is required."),
-    displayName: zod.string().optional(),
-    // phoneNumber: zod
-    //   .string()
-    //   .min(1, "Phone number is required.")
-    //   .regex(
-    //     /^[\\+]?[(]?[0-9]{3}[)]?[-\\s\\.]?[0-9]{3}[-\\s\\.]?[0-9]{4,6}$/,
-    //     "Phone number is invalid",
-    //   ),
     countryId: zod.string().min(1, "Country is required."),
     educationId: zod.string().min(1, "Education is required."),
     genderId: zod.string().min(1, "Gender is required."),
@@ -305,7 +296,7 @@ export const UserProfileForm: React.FC<{
           ...session,
           user: {
             ...session!.user,
-            name: data.displayName,
+            name: userProfileResult.displayName,
             email: data.email,
             profile: data,
           },
@@ -534,26 +525,6 @@ export const UserProfileForm: React.FC<{
                 className:
                   "input w-full rounded-md border-gray focus:border-gray focus:outline-none",
                 ...register("surname"),
-              }}
-            />
-          </FormField>
-        )}
-
-        {filterOptions?.includes(UserProfileFilterOptions.DISPLAYNAME) && (
-          <FormField
-            label="Display name"
-            showWarningIcon={!!formState.errors.displayName?.message}
-            showError={
-              !!formState.touchedFields.displayName || formState.isSubmitted
-            }
-            error={formState.errors.displayName?.message?.toString()}
-          >
-            <FormInput
-              inputProps={{
-                type: "text",
-                className:
-                  "input w-full rounded-md border-gray focus:border-gray focus:outline-none",
-                ...register("displayName"),
               }}
             />
           </FormField>

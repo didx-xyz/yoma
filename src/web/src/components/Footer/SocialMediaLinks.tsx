@@ -17,7 +17,7 @@ export const SocialMediaLinks: React.FC<{
         <FaInstagram className="h-6 w-6" />
       </a>
       <a
-        href="https://www.youtube.com/@yomaworld2266"
+        href="https://www.youtube.com/@Yoma.World.2019"
         target="_blank"
         rel="noopener noreferrer"
         className="text-gray-600 hover:text-gray-900"

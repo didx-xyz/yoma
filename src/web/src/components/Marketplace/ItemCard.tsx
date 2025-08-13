@@ -45,7 +45,7 @@ const ItemCardComponent: React.FC<InputProps> = ({
             <p className="text-gray-dark mr-1 max-w-[170px] truncate text-xs font-medium md:max-w-[250px]">
               {company}
             </p>
-            <p className="items-centerx line-clamp-2 flex h-10 w-full text-sm font-semibold whitespace-break-spaces">
+            <p className="line-clamp-2 flex h-10 max-w-[170px] truncate text-sm font-semibold whitespace-break-spaces">
               {item.name}
             </p>
           </div>
@@ -72,9 +72,10 @@ const ItemCardComponent: React.FC<InputProps> = ({
         </div>
 
         {/* DESCRIPTION */}
-        <div className="my-2x h-[100px] max-w-[200px] overflow-hidden text-start text-sm font-light md:max-w-full">
-          Click to purchase this item.
-        </div>
+        <div
+          className="line-clamp-5 h-[100px] max-w-[200px] text-start text-sm font-light md:max-w-full"
+          dangerouslySetInnerHTML={{ __html: item.description }}
+        ></div>
 
         {/* BADGES */}
         <div className="flex flex-row items-center justify-start gap-2">
