@@ -109,7 +109,6 @@ const MyProfile: NextPageWithLayout<{
                 UserProfileFilterOptions.EMAIL,
                 UserProfileFilterOptions.FIRSTNAME,
                 UserProfileFilterOptions.SURNAME,
-                UserProfileFilterOptions.DISPLAYNAME,
                 UserProfileFilterOptions.PHONENUMBER,
                 UserProfileFilterOptions.COUNTRY,
                 UserProfileFilterOptions.EDUCATION,

@@ -49,10 +49,6 @@ import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { Loading } from "~/components/Status/Loading";
 import {
-  COUNTRY_ID_KENYA,
-  COUNTRY_ID_MOZAMIQUE,
-  COUNTRY_ID_NIGERIA,
-  COUNTRY_ID_SOUTH_AFRICA,
   OPPORTUNITY_TYPES_EVENT,
   OPPORTUNITY_TYPES_LEARNING,
   OPPORTUNITY_TYPES_OTHER,
