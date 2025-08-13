@@ -544,7 +544,9 @@ const OpportunityPublicDetails: React.FC<{
       )}
 
       {opportunityInfo && (
-        <div className={`flex flex-col gap-4 ${!user ? "blur-xs" : ""}`}>
+        <div
+          className={`flex flex-col gap-4 ${!preview && !user ? "blur-xs" : ""}`}
+        >
           <div className="relative flex grow flex-row gap-1 rounded-lg bg-white p-4 shadow-lg md:p-6">
             <div className="flex grow flex-col gap-1">
               <div className="flex grow flex-col">
