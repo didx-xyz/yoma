@@ -11,13 +11,7 @@ ingress:
       - host: auth.{{ .Values.keycloak.ingressDomain }}
   external:
     enabled: true
-    annotations:
-      nginx.ingress.kubernetes.io/configuration-snippet: |-
-        if ($host = 'auth.{{ .Values.keycloak.ingressDomain }}') {
-          rewrite ^ https://{{ .Values.keycloak.ingressDomain }}/auth$request_uri permanent;
-        }
     rules:
-      - host: auth.{{ .Values.keycloak.ingressDomain }}
       - host: "{{ .Values.keycloak.ingressDomain }}"
         paths:
           - path: /auth/realms/yoma

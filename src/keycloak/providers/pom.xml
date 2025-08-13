@@ -54,6 +54,7 @@
         <module>keycloak-phone-provider.resources</module>
         <module>keycloak-sms-provider-dummy</module>
         <module>keycloak-sms-provider-twilio</module>
+        <module>email-required-authenticator</module>
     </modules>
 
     <dependencies>
@@ -169,6 +170,21 @@
                         </configuration>
                     </execution>
                 </executions>
+            </plugin>
+            <plugin>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>com.google.auto.service</groupId>
+                            <artifactId>auto-service</artifactId>
+                            <version>1.0-rc7</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
             </plugin>
         </plugins>
     </build>
