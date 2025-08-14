@@ -1081,14 +1081,14 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           if (!string.IsNullOrEmpty(dto.Title) && probedTitles.Contains(dto.Title))
           {
-            CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Duplicate title found", rowNumber, nameof(OpportunityInfoCsvImport.Title), dto.Title);
+            CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Duplicate entry found", rowNumber, nameof(OpportunityInfoCsvImport.Title), dto.Title);
             if (errors.Count >= _appSettings.CSVImportMaxProbeErrorCount) break;
             continue;
           }
 
           if (!string.IsNullOrEmpty(dto.ExternalId) && probedExternalIds.Contains(dto.ExternalId))
           {
-            CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Duplicate external ID found", rowNumber, nameof(OpportunityInfoCsvImport.ExternalId), dto.ExternalId);
+            CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Duplicate entry found", rowNumber, nameof(OpportunityInfoCsvImport.ExternalId), dto.ExternalId);
             if (errors.Count >= _appSettings.CSVImportMaxProbeErrorCount) break;
             continue;
           }

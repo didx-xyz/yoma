@@ -34,6 +34,7 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
+using static QRCoder.PayloadGenerator;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
@@ -1111,8 +1112,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var parsed = new List<(MyOpportunityInfoCsvImport Dto, int Row)>();
       int recordsTotal = 0;
 
-      var probedEmails = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
-      var probedPhoneNumbers = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+      var probedVerifications = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
 
       while (await csv.ReadAsync())
       {
@@ -1133,16 +1133,9 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           dto = csv.GetRecord<MyOpportunityInfoCsvImport>();
           dto.ValidateRequired(errors, rowNumber);
 
-          if (!string.IsNullOrEmpty(dto.Email) && probedEmails.Contains(dto.Email))
+          if (!string.IsNullOrEmpty(dto.VerificationEntry) && probedVerifications.Contains(dto.VerificationEntry))
           {
-            CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Duplicate email found", rowNumber, nameof(MyOpportunityInfoCsvImport.Email), dto.Email);
-            if (errors.Count >= _appSettings.CSVImportMaxProbeErrorCount) break;
-            continue;
-          }
-
-          if (!string.IsNullOrEmpty(dto.PhoneNumber) && probedPhoneNumbers.Contains(dto.PhoneNumber))
-          {
-            CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Duplicate phone number found", rowNumber, nameof(MyOpportunityInfoCsvImport.PhoneNumber), dto.PhoneNumber);
+            CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Duplicate entry found", rowNumber, $"{nameof(MyOpportunityInfoCsvImport.Username)} and {nameof(MyOpportunityInfoCsvImport.OpportunityExternalId)}", dto.VerificationEntry);
             if (errors.Count >= _appSettings.CSVImportMaxProbeErrorCount) break;
             continue;
           }
@@ -1155,8 +1148,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           {
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
             await ProcessImportVerification(request, dto, true); //probe only; notifications not send
-            if (!string.IsNullOrEmpty(dto.Email)) probedEmails.Add(dto.Email); //optional; either email or phone required
-            if (!string.IsNullOrEmpty(dto.PhoneNumber)) probedPhoneNumbers.Add(dto.PhoneNumber); //optional; either email or phone required
+            if (!string.IsNullOrEmpty(dto.VerificationEntry)) probedVerifications.Add(dto.VerificationEntry);
             //probe only, do not commit the scope; disposed as aborted
           });
         }
@@ -1228,25 +1220,24 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       Domain.Lookups.Models.Gender? gender = null;
       if (!string.IsNullOrEmpty(item.Gender)) gender = _genderService.GetByName(item.Gender);
 
-      var username = item.Email ?? item.PhoneNumber;
-      if (string.IsNullOrEmpty(username))
+      if (string.IsNullOrEmpty(item.Username))
         throw new ValidationException("Email or phone number required");
 
-      if (string.IsNullOrWhiteSpace(item.OpporunityExternalId))
+      if (string.IsNullOrWhiteSpace(item.OpportunityExternalId))
         throw new ValidationException("Opportunity external id required");
 
-      var opportunity = _opportunityService.GetByExternalId(requestImport.OrganizationId, item.OpporunityExternalId, true, true);
+      var opportunity = _opportunityService.GetByExternalId(requestImport.OrganizationId, item.OpportunityExternalId, true, true);
       if (opportunity.VerificationMethod != VerificationMethod.Automatic)
         throw new ValidationException($"Verification import not supported for opporunity '{opportunity.Title}'. The verification method must be set to 'Automatic'");
 
-      var user = _userService.GetByUsernameOrNull(username, false, false);
+      var user = _userService.GetByUsernameOrNull(item.Username, false, false);
       //user is created if not existing, or updated if not linked to an identity provider
       if (user == null || !user.ExternalId.HasValue)
       {
         var request = new UserRequest
         {
           Id = user?.Id,
-          Username = username,
+          Username = item.Username,
           Email = item.Email,
           PhoneNumber = item.PhoneNumber,
           FirstName = item.FirstName,

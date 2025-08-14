@@ -30,18 +30,30 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public DateOnly? DateCompleted { get; set; }
 
     [Required]
-    public string OpporunityExternalId { get; set; }
+    public string OpportunityExternalId { get; set; }
+
+    internal string? Username => !string.IsNullOrEmpty(Email) ? Email : PhoneNumber;
+
+    internal string? VerificationEntry
+    {
+      get
+      {
+        var parts = new[] { Username, OpportunityExternalId }
+            .Where(s => !string.IsNullOrEmpty(s));
+
+        return parts.Any() ? string.Join(", ", parts) : null;
+      }
+    }
     #endregion
 
     #region Internal Members
     internal void ValidateRequired(List<CSVImportErrorRow> errors, int? rowNumber)
     {
-      var username = !string.IsNullOrEmpty(Email) ? Email : PhoneNumber;
-      if (string.IsNullOrEmpty(username))
-        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, $"{nameof(Email)} or {nameof(PhoneNumber)}");
+      if (string.IsNullOrEmpty(Username))
+        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, $"{nameof(Username)}: {nameof(Email)} and / or {nameof(PhoneNumber)}");
 
-      if (string.IsNullOrEmpty(OpporunityExternalId))
-        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(OpporunityExternalId));
+      if (string.IsNullOrEmpty(OpportunityExternalId))
+        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(OpportunityExternalId));
     }
     #endregion
   }
