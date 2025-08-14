@@ -1,4 +1,4 @@
-Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpporunityExternalId
+Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId
 ,+12025550123,John,Doe,Male,US,2024/12/31,External_ID1
 jane.smith@example.com,,Jane,Smith,Female,GB,2024/02/02,External_ID2
 ali.khan@example.com,+925512345678,,,Male,PK,2024/03/02,External_ID3

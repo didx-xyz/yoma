@@ -57,6 +57,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Interfaces
 
     Task PerformActionInstantVerification(Guid linkId);
 
-    Task PerformActionImportVerificationFromCSV(MyOpportunityRequestVerifyImportCsv request, bool ensureOrganizationAuthorization);
+    Task<CSVImportResult> PerformActionImportVerificationFromCSV(MyOpportunityRequestVerifyImportCsv request, bool ensureOrganizationAuthorization);
   }
 }

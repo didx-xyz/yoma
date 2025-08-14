@@ -400,10 +400,10 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Validate or import opportunities for the specified organization from a CSV file",
-      Description = "If `validateOnly=true`, performs full validation without importing. " +
-                      "Returns detailed errors (up to the configured maximum). " +
-                      "If no errors are found and `validateOnly` is false or omitted, the opportunities are imported")]
+    [SwaggerOperation(
+      Summary = "Validate and import opportunities from a CSV file for the specified organization",
+      Description = "If `ValidateOnly`, performs full validation without importing. Returns detailed errors (up to the configured maximum). " +
+                    "If no errors are found and not `ValidateOnly` (false or omitted), the opportunities are imported")]
     [HttpPost("import/{organizationId}/csv")]
     [ProducesResponseType(typeof(CSVImportResult), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]

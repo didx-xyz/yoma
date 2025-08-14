@@ -130,19 +130,22 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK);
     }
 
-    [SwaggerOperation(Summary = "Import completions for the specified organization from a CSV file (Admin or Organization Admin roles required)")]
+    [SwaggerOperation(
+      Summary = "Validate and import completions from a CSV file for the specified organization (Admin or Organization Admin roles required)",
+      Description = "If `ValidateOnly`, performs full validation without importing. Returns detailed errors (up to the configured maximum). " +
+                    "If no errors are found and not `ValidateOnly` (false or omitted), the completion verifications are imported")]
     [HttpPost("action/verify/csv")]
-    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [ProducesResponseType(typeof(CSVImportResult), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
     public async Task<IActionResult> PerformActionImportVerificationFromCSV([FromForm] MyOpportunityRequestVerifyImportCsv request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(PerformActionImportVerificationFromCSV));
 
-      await _myOpportunityService.PerformActionImportVerificationFromCSV(request, true);
+      var result = await _myOpportunityService.PerformActionImportVerificationFromCSV(request, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(PerformActionImportVerificationFromCSV));
 
-      return StatusCode((int)HttpStatusCode.OK);
+      return StatusCode((int)HttpStatusCode.OK, result);
     }
 
     [SwaggerOperation(Summary = "Download all verification files associated with the opportunity for all completed submissions (Admin or Organization Admin roles required)",

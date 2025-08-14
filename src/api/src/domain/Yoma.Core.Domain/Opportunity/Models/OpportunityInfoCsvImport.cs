@@ -110,16 +110,16 @@ namespace Yoma.Core.Domain.Opportunity.Models
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(Languages));
 
       if (Countries == null || !Countries.Any(name => !string.IsNullOrWhiteSpace(name)))
-        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(Countries));
+        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, "Location");
 
       if (string.IsNullOrEmpty(Difficulty))
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(Difficulty));
 
       if (CommitmentIntervalCount <= 0)
-        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(CommitmentIntervalCount));
+        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, "EffortCount");
 
       if (string.IsNullOrEmpty(CommitmentInterval))
-        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(CommitmentInterval));
+        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, "EffortInterval");
 
       if (DateStart == DateOnly.MinValue)
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(DateStart));
