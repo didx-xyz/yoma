@@ -100,7 +100,7 @@ namespace Yoma.Core.Domain.Core
 
   public enum DownloadScheduleType
   {
-    Opporunities,
+    Opportunities,
     MyOpportunityVerifications,
     MyOpportunityVerificationFiles
   }
