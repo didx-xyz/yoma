@@ -1131,6 +1131,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           }
 
           dto = csv.GetRecord<MyOpportunityInfoCsvImport>();
+          dto.PhoneNumber = dto.PhoneNumber?.NormalizePhoneNumber(true);
+
           dto.ValidateRequired(errors, rowNumber);
 
           if (!string.IsNullOrEmpty(dto.VerificationEntry) && probedVerifications.Contains(dto.VerificationEntry))
