@@ -11,6 +11,7 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
@@ -292,7 +293,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (!string.IsNullOrEmpty(filter.TitleContains))
         query = _opportunityRepository.Contains(query, filter.TitleContains);
 
-      //opporunities
+      //opportunities
       if (filter.Opportunities != null && filter.Opportunities.Count != 0)
       {
         filter.Opportunities = [.. filter.Opportunities.Distinct()];
@@ -1040,6 +1041,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
     {
       if (file == null || file.Length == 0)
         throw new ArgumentNullException(nameof(file));
+
+      new FileValidator(FileType.CSV).Validate(file);
 
       var organization = _organizationService.GetById(organizationId, false, false, ensureOrganizationAuthorization);
 

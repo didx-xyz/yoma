@@ -13,6 +13,7 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
+using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Domain.Entity;
 using Yoma.Core.Domain.Entity.Helpers;
 using Yoma.Core.Domain.Entity.Interfaces;
@@ -1091,6 +1092,8 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
       await _myOpportunityRequestValidatorVerifyImportCsv.ValidateAndThrowAsync(request);
+
+      new FileValidator(FileType.CSV).Validate(request.File);
 
       var organization = _organizationService.GetById(request.OrganizationId, false, false, ensureOrganizationAuthorization);
 

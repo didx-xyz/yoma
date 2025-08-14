@@ -32,7 +32,8 @@ namespace Yoma.Core.Domain.Core
     Documents,
     VoiceNotes,
     Videos,
-    ZipArchive
+    ZipArchive,
+    CSV
   }
 
   public enum Country
