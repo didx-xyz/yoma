@@ -195,7 +195,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         //schedule the request for processing and return
         var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
-        await _downloadService.Schedule(user.Id, Core.DownloadScheduleType.Opporunities, filter);
+        await _downloadService.Schedule(user.Id, Core.DownloadScheduleType.Opportunities, filter);
         return (true, null, null);
       }
 

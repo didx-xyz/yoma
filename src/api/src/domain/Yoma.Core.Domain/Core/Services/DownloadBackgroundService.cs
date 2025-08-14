@@ -101,7 +101,7 @@ namespace Yoma.Core.Domain.Core.Services
               byte[] bytes;
               switch (type)
               {
-                case DownloadScheduleType.Opporunities:
+                case DownloadScheduleType.Opportunities:
                   var filterOpportunities = JsonConvert.DeserializeObject<OpportunitySearchFilterAdmin>(item.Filter)
                     ?? throw new InvalidOperationException("Failed to deserialize the filter");
 
