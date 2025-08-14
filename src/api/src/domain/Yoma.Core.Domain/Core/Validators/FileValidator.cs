@@ -46,6 +46,11 @@ namespace Yoma.Core.Domain.Core.Validators
           maxSizeBytes = 10_000_000_000;
           break;
 
+        case FileType.CSV:
+          extensions = [".csv"];
+          maxSizeBytes = 5_000_000;
+          break;
+
         default:
           throw new ArgumentOutOfRangeException(nameof(type), $"Unsupported type of '{type}'");
       }
