@@ -1,4 +1,3 @@
-using CsvHelper.TypeConversion;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Http;
@@ -1048,7 +1047,6 @@ namespace Yoma.Core.Domain.Opportunity.Services
       using var reader = new StreamReader(stream);
 
       var errors = new List<CSVImportErrorRow>();
-
       using var csv = new CsvHelper.CsvReader(reader, CSVImportHelper.CreateConfig<OpportunityInfoCsvImport>(errors));
 
       // Validate header before reading data rows
@@ -1061,6 +1059,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
       int recordsTotal = 0;
 
       var probedTitles = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+      var probedExternalIds = new HashSet<string>(StringComparer.InvariantCultureIgnoreCase);
+
       while (await csv.ReadAsync())
       {
         recordsTotal++;
@@ -1079,33 +1079,37 @@ namespace Yoma.Core.Domain.Opportunity.Services
           dto = csv.GetRecord<OpportunityInfoCsvImport>();
           dto.ValidateRequired(errors, rowNumber);
 
-          if (probedTitles.Contains(dto.Title))
+          if (!string.IsNullOrEmpty(dto.Title) && probedTitles.Contains(dto.Title))
           {
             CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Duplicate title found", rowNumber, nameof(OpportunityInfoCsvImport.Title), dto.Title);
-
             if (errors.Count >= _appSettings.CSVImportMaxProbeErrorCount) break;
-
             continue;
           }
 
-          // Skip ProcessImportAndUpsertOpportunity if there are field-level errors for this row,
+          if (!string.IsNullOrEmpty(dto.ExternalId) && probedExternalIds.Contains(dto.ExternalId))
+          {
+            CSVImportHelper.AddError(errors, CSVImportErrorType.ProcessingError, $"Duplicate external ID found", rowNumber, nameof(OpportunityInfoCsvImport.ExternalId), dto.ExternalId);
+            if (errors.Count >= _appSettings.CSVImportMaxProbeErrorCount) break;
+            continue;
+          }
+
+          // Skip domain logic if there are field-level errors for this row,
           // because the DTO is incomplete or invalid and business logic cannot be meaningfully applied
           if (CSVImportHelper.ContainsFieldErrors(errors, rowNumber)) continue;
 
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
             using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-            await ProcessImportAndUpsertOpportunity(organizationId, dto, true); //probe only, notifications not send
-            probedTitles.Add(dto.Title);
+            await ProcessImportAndUpsertOpportunity(organizationId, dto, true); //probe only; notifications not send
+            probedTitles.Add(dto.Title); //required; validated during processing
+            probedExternalIds.Add(dto.ExternalId); //required; validated during processing
             //probe only, do not commit the scope; disposed as aborted
           });
         }
         catch (Exception ex)
         {
           CSVImportHelper.HandleExceptions(ex, errors, rowNumber);
-
           if (errors.Count >= _appSettings.CSVImportMaxProbeErrorCount) break;
-
           continue;
         }
 

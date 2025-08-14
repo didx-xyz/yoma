@@ -9,5 +9,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public Guid OrganizationId { get; set; }
 
     public string? Comment { get; set; }
+
+    public bool? ValidateOnly { get; set; }
   }
 }
