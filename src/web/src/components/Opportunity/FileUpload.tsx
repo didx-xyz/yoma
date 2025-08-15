@@ -29,16 +29,21 @@ export const FileUpload: React.FC<InputProps> = ({
   onUploadComplete,
 }) => {
   const [data, setFiles] = useState<any[]>(files ?? []);
-
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // reset the native input so selecting the same file again triggers onChange
+  const resetNativeInput = () => {
+    if (inputRef.current) inputRef.current.value = "";
+  };
 
   const onFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      const result = allowMultiple
-        ? [...data, event.target.files[0]]
-        : [event.target.files[0]];
+      const picked = event.target.files[0];
+      const result = allowMultiple ? [...data, picked] : [picked];
       setFiles(result);
       if (onUploadComplete) onUploadComplete(result);
+      // allow re-selecting the same file after this selection
+      resetNativeInput();
     }
   };
 
@@ -92,6 +97,7 @@ export const FileUpload: React.FC<InputProps> = ({
               ref={inputRef}
               type="file"
               accept={fileTypes}
+              multiple={allowMultiple}
               onChange={onFileInputChange}
             />
 
@@ -110,6 +116,7 @@ export const FileUpload: React.FC<InputProps> = ({
                       </div>
                     </div>
                     <button
+                      type="button"
                       className="btn btn-sm text-gray-dark hover:bg-gray !rounded-full border-none shadow-md"
                       onClick={() => {
                         const newData = data.filter((_, i) => i !== index);
@@ -117,6 +124,8 @@ export const FileUpload: React.FC<InputProps> = ({
                         if (onUploadComplete) {
                           onUploadComplete(newData);
                         }
+                        // ensure selecting the same file again fires onChange
+                        resetNativeInput();
                       }}
                     >
                       <IoMdClose className="h-6 w-6" />
