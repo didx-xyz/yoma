@@ -1,4 +1,4 @@
-import { CSVImportResult, CSVImportErrorType } from "~/api/models/common";
+import { CSVImportResult, CSVImportErrorType } from "~/api/models/opportunity";
 
 // Normalize any API response/error into a consistent CSVImportResult
 export const toCSVResult = (
@@ -30,6 +30,7 @@ export const toCSVResult = (
           alias: "General",
           items: arr.map((e) => ({
             type: CSVImportErrorType.ProcessingError,
+            typeDescription: "Processing Error",
             message: e?.message ?? "An error occurred.",
             field: null,
             value: null,
@@ -51,6 +52,7 @@ export const toCSVResult = (
         items: [
           {
             type: CSVImportErrorType.ProcessingError,
+            typeDescription: "Processing Error",
             message: "An unknown error occurred. Please try again later.",
             field: null,
             value: null,

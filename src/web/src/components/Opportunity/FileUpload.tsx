@@ -3,6 +3,19 @@ import Image from "next/image";
 import { IoMdClose } from "react-icons/io";
 import iconUpload from "public/images/icon-upload.svg";
 
+const formatFileSize = (bytes: number, decimals = 1): string => {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
+  const i = Math.min(
+    sizes.length - 1,
+    Math.floor(Math.log(bytes) / Math.log(k)),
+  );
+  const size = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
+  return `${size} ${sizes[i]}`;
+};
+
 export interface InputProps {
   [id: string]: any;
   files: any[] | undefined;
@@ -74,7 +87,10 @@ export const FileUpload: React.FC<InputProps> = ({
         </div>
         <div className="flex grow flex-col p-4">
           <div className="font-semibold">{label}</div>
-          <div className="text-gray-dark text-sm italic">{fileTypesLabels}</div>
+          <div className="text-gray-dark text-sm">
+            Allowed file types:{" "}
+            <span className="font-bold italic">{fileTypesLabels}</span>
+          </div>
 
           <div className="mt-4 flex flex-col gap-4">
             <button
@@ -112,7 +128,7 @@ export const FileUpload: React.FC<InputProps> = ({
                     <div className="flex grow flex-col">
                       <div className="text-xs font-bold">{file.name}</div>
                       <div className="text-gray-dark text-xs italic">
-                        {file.size}
+                        {formatFileSize(file.size)}
                       </div>
                     </div>
                     <button

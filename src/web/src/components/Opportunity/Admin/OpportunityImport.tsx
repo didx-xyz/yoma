@@ -19,9 +19,9 @@ import FormMessage, { FormMessageType } from "../../Common/FormMessage";
 import { Loading } from "../../Status/Loading";
 import { FileUpload } from "../FileUpload";
 import Link from "next/link";
-import { CSVImportResult } from "~/api/models/common";
 import { CSVImportResults } from "../../Common/CSVImportResults";
 import { toCSVResult } from "~/lib/csv-import-helper";
+import { CSVImportResult } from "~/api/models/opportunity";
 
 interface InputProps {
   [id: string]: any;

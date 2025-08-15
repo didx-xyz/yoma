@@ -5,7 +5,7 @@ import {
   IoInformationCircleOutline,
 } from "react-icons/io5";
 import { IoMdWarning } from "react-icons/io";
-import { CSVImportResult, CSVImportErrorType } from "~/api/models/common";
+import { CSVImportErrorType, CSVImportResult } from "~/api/models/opportunity";
 
 interface CSVImportResultsProps {
   result: CSVImportResult;
@@ -71,7 +71,9 @@ export const CSVImportResults: React.FC<CSVImportResultsProps> = ({
           <div className="mt-6">
             <div className="text-base-content/80 mb-2 flex items-center gap-2 text-sm font-semibold">
               <IoInformationCircleOutline className="text-info h-5 w-5 shrink-0" />
-              <span className="leading-none">Import Summary</span>
+              <span className="leading-none">
+                {result.imported ? "Import Summary" : "Validation Summary"}
+              </span>
             </div>
             <div className="stats rounded-box bg-base-200/40 w-full shadow-inner">
               <div className="stat">
@@ -158,7 +160,7 @@ export const CSVImportResults: React.FC<CSVImportResultsProps> = ({
                               : "badge-info"
                         }`}
                       >
-                        {it.type}
+                        {it.typeDescription ?? it.type ?? "Unknown Error"}
                       </div>
                     </li>
                   ))}
