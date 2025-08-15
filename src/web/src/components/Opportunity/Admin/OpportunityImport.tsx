@@ -1,11 +1,11 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
-import { Fragment, useCallback, useState } from "react";
+import { useCallback, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { useForm } from "react-hook-form";
 import { FaUpload } from "react-icons/fa";
 import { FcDocument } from "react-icons/fc";
-import { IoMdClose, IoMdWarning } from "react-icons/io";
+import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
 import { importFromCSV } from "~/api/services/opportunities";
@@ -19,8 +19,9 @@ import FormMessage, { FormMessageType } from "../../Common/FormMessage";
 import { Loading } from "../../Status/Loading";
 import { FileUpload } from "../FileUpload";
 import Link from "next/link";
-import { CSVImportResult, CSVImportErrorType } from "~/api/models/opportunity";
-import { IoWarningOutline, IoCheckmarkCircleOutline } from "react-icons/io5";
+import { CSVImportResult } from "~/api/models/common";
+import { CSVImportResults } from "../../Common/CSVImportResults";
+import { toCSVResult } from "~/lib/csv-import-helper";
 
 interface InputProps {
   [id: string]: any;
@@ -75,67 +76,6 @@ export const OpportunityImport: React.FC<InputProps> = ({
         }
       }
     });
-
-  // Normalize any API response/error into a consistent CSVImportResult
-  const toCSVResult = (
-    data: any,
-    phase: "validation" | "import",
-  ): CSVImportResult => {
-    if (data && typeof data === "object" && !Array.isArray(data)) {
-      const r = data as Partial<CSVImportResult>;
-      return {
-        imported: phase === "import" ? !!r.imported : false,
-        headerErrors: !!r.headerErrors,
-        recordsTotal: Number(r.recordsTotal ?? 0),
-        recordsSucceeded: Number(r.recordsSucceeded ?? 0),
-        recordsFailed: Number(r.recordsFailed ?? 0),
-        errors: (r as any).errors ?? null,
-      };
-    }
-    if (Array.isArray(data)) {
-      const arr = data as Array<{ type?: string; message?: string }>;
-      return {
-        imported: phase === "import",
-        headerErrors: false,
-        recordsTotal: 0,
-        recordsSucceeded: 0,
-        recordsFailed: Math.max(1, arr.length),
-        errors: [
-          {
-            number: null,
-            alias: "General",
-            items: arr.map((e) => ({
-              type: "ProcessingError",
-              message: e?.message ?? "An error occurred.",
-              field: null,
-              value: null,
-            })),
-          },
-        ],
-      };
-    }
-    return {
-      imported: phase === "import",
-      headerErrors: false,
-      recordsTotal: 0,
-      recordsSucceeded: 0,
-      recordsFailed: 1,
-      errors: [
-        {
-          number: null,
-          alias: "General",
-          items: [
-            {
-              type: CSVImportErrorType.ProcessingError,
-              message: "An unknown error occurred. Please try again later.",
-              field: null,
-              value: null,
-            },
-          ],
-        },
-      ],
-    };
-  };
 
   const onValidate = useCallback(
     async (data: any) => {
@@ -383,139 +323,7 @@ export const OpportunityImport: React.FC<InputProps> = ({
 
               {/* IMPORT RESPONSE */}
               {result && (
-                <div
-                  className={`flex w-full flex-row rounded-lg border-[1px] p-4 ${
-                    !result.imported &&
-                    (result.headerErrors || result.recordsFailed > 0)
-                      ? "border-red-500"
-                      : "border-green"
-                  }`}
-                >
-                  <span className={`w-full content-center text-xs`}>
-                    <div className="flex flex-col gap-2">
-                      <div className="flex flex-row items-center gap-1">
-                        {!result.imported &&
-                        (result.headerErrors || result.recordsFailed > 0) ? (
-                          <IoWarningOutline
-                            className={`h-6 w-6 flex-none ${
-                              result.headerErrors || result.recordsFailed > 0
-                                ? "text-red-500"
-                                : "text-green"
-                            }`}
-                          />
-                        ) : (
-                          <IoCheckmarkCircleOutline
-                            className={`h-6 w-6 flex-none ${
-                              result.headerErrors || result.recordsFailed > 0
-                                ? "text-red-500"
-                                : "text-green"
-                            }`}
-                          />
-                        )}
-                        <div className="text-sm font-semibold">
-                          {result.imported
-                            ? "Import Completed"
-                            : result.headerErrors || result.recordsFailed > 0
-                              ? "Validation Failed"
-                              : "Validation Passed"}
-                        </div>
-                      </div>
-                    </div>
-                    {(!result.headerErrors || result.imported) && (
-                      <div className="flex items-center gap-2 py-2 text-xs font-semibold tracking-wide">
-                        Total Records
-                        <div className="badge badge-primary">
-                          {result.recordsTotal}
-                        </div>
-                        Succeeded
-                        <div className="badge badge-success">
-                          {result.recordsSucceeded}
-                        </div>
-                        Failed
-                        <div className="badge badge-warning">
-                          {result.recordsFailed}
-                        </div>
-                      </div>
-                    )}
-                    {result.errors && result.errors.length > 0 && (
-                      <div className="mt-2">
-                        <ul className="list bg-base-100 rounded-box border-base-200 border shadow-md">
-                          {result.errors.map((row, rIdx) => (
-                            <Fragment key={`row_${rIdx}`}>
-                              {/* Row header */}
-                              <li className="bg-base-200/50 border-b-gray flex items-center justify-between border-b px-4 py-2 text-[11px] font-semibold text-gray-500 uppercase opacity-80">
-                                <span className="inline-flex items-center gap-2">
-                                  <IoMdWarning className="text-warning h-4 w-4" />
-                                  {row.alias ?? "Row"} {row.number}
-                                </span>
-                                <span className="badge badge-ghost text-[10px]">
-                                  {row.items.length}{" "}
-                                  {row.items.length === 1 ? "error" : "errors"}
-                                </span>
-                              </li>
-
-                              {/* Row items */}
-                              {row.items.map((it, iIdx) => (
-                                <li
-                                  key={`row_${rIdx}_item_${iIdx}`}
-                                  className="list-row hover:bg-base-200/40 items-start gap-3 px-4 py-3 transition-colors"
-                                >
-                                  <div className="w-8 text-[11px] text-gray-500 tabular-nums">
-                                    {String(iIdx + 1).padStart(2, "0")}
-                                  </div>
-
-                                  <div className="list-col-grow">
-                                    <div className="text-xs font-medium">
-                                      {it.message}
-                                    </div>
-                                    {(it.field || it.value) && (
-                                      <div className="mt-1 flex flex-col gap-1 text-xs opacity-60">
-                                        {it.field && (
-                                          <span>
-                                            <strong>Field:</strong>{" "}
-                                            <code>{it.field}</code>
-                                          </span>
-                                        )}
-
-                                        {it.value && (
-                                          <span>
-                                            <strong>Value:</strong>{" "}
-                                            <code>{it.value}</code>
-                                          </span>
-                                        )}
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div
-                                    className={`badge text-xs ${
-                                      it.type === "ProcessingError"
-                                        ? "badge-warning"
-                                        : it.type === "InvalidFieldValue" ||
-                                            it.type === "RequiredFieldMissing"
-                                          ? "badge-error"
-                                          : "badge-info"
-                                    }`}
-                                  >
-                                    {it.type}
-                                  </div>
-                                </li>
-                              ))}
-                            </Fragment>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {!result.headerErrors &&
-                      result.recordsFailed === 0 &&
-                      !result.imported && (
-                        <div className="mt-2">
-                          No issues found. You can proceed to{" "}
-                          <span className="font-bold italic">Submit</span>.
-                        </div>
-                      )}
-                  </span>
-                </div>
+                <CSVImportResults result={result} importType="opportunities" />
               )}
 
               <div className="mt-4 mb-10 flex w-full grow gap-4">
@@ -528,7 +336,7 @@ export const OpportunityImport: React.FC<InputProps> = ({
                 </button>
                 <button
                   type="button"
-                  className="btn btn-outline border-green text-green hover:bg-green w-1/3 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
+                  className="btn bg-green hover:bg-green w-1/3 shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
                   onClick={() => handleSubmit(onValidate)()}
                   disabled={isLoading}
                 >

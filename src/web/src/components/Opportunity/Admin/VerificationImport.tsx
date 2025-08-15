@@ -8,7 +8,6 @@ import { FcDocument } from "react-icons/fc";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
-import type { ErrorResponseItem } from "~/api/models/common";
 import type { MyOpportunityRequestVerifyImportCsv } from "~/api/models/myOpportunity";
 import { performActionImportVerificationFromCSV } from "~/api/services/myOpportunities";
 import {
@@ -20,6 +19,9 @@ import {
 import FormMessage, { FormMessageType } from "../../Common/FormMessage";
 import { Loading } from "../../Status/Loading";
 import { FileUpload } from "../FileUpload";
+import { CSVImportResults } from "../../Common/CSVImportResults";
+import { toCSVResult } from "~/lib/csv-import-helper";
+import type { CSVImportResult } from "~/api/models/common";
 
 interface InputProps {
   [id: string]: any;
@@ -34,13 +36,7 @@ export const VerificationImport: React.FC<InputProps> = ({
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
-
-  const [importResponseSuccess, setImportResponseSuccess] = useState<
-    boolean | null
-  >(null);
-  const [importResponseError, setImportResponseError] = useState<
-    ErrorResponseItem[] | null
-  >(null);
+  const [result, setResult] = useState<CSVImportResult | null>(null);
 
   const schema = z
     .object({
@@ -80,10 +76,45 @@ export const VerificationImport: React.FC<InputProps> = ({
       }
     });
 
+  const onValidate = useCallback(
+    (data: any) => {
+      if (!session) {
+        toast.warning("You need to be logged in to import submissions.");
+        return;
+      }
+
+      // prevent form submission if no file is selected
+      if (data.importFile == null) {
+        return;
+      }
+
+      setIsLoading(true);
+
+      const request: MyOpportunityRequestVerifyImportCsv = {
+        file: data.importFile,
+        organizationId: id,
+        comment: data.comment,
+        validateOnly: true,
+      };
+
+      performActionImportVerificationFromCSV(request)
+        .then((res) => {
+          setResult(toCSVResult(res, "validation"));
+        })
+        .catch((error: any) => {
+          setResult(toCSVResult(error?.response?.data, "validation"));
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    },
+    [id, session],
+  );
+
   const onSubmit = useCallback(
     (data: any) => {
       if (!session) {
-        toast.warning("You need to be logged in to import opportunities.");
+        toast.warning("You need to be logged in to import submissions.");
         return;
       }
 
@@ -100,28 +131,37 @@ export const VerificationImport: React.FC<InputProps> = ({
         comment: data.comment,
       };
 
-      performActionImportVerificationFromCSV(request)
-        .then(() => {
-          setIsLoading(false);
-          if (onSave) {
-            onSave();
+      // Pass 1: validation
+      const validationRequest = { ...request, validateOnly: true };
+      performActionImportVerificationFromCSV(validationRequest)
+        .then((validationRaw) => {
+          const validationRes = toCSVResult(validationRaw, "validation");
+          setResult(validationRes);
+
+          if (validationRes.headerErrors || validationRes.recordsFailed > 0) {
+            setIsLoading(false);
+            return; // show validation errors
           }
 
-          // success message
-          setImportResponseSuccess(true);
-          setImportResponseError(null);
+          // Pass 2: import
+          const finalRequest = { ...request, validateOnly: false };
+          return performActionImportVerificationFromCSV(finalRequest);
+        })
+        .then((finalRaw) => {
+          if (finalRaw) {
+            const finalRes = toCSVResult(finalRaw, "import");
+            setResult(finalRes);
+            if (onSave) onSave();
+          }
         })
         .catch((error: any) => {
+          setResult(toCSVResult(error?.response?.data, "validation"));
+        })
+        .finally(() => {
           setIsLoading(false);
-
-          // error message
-          setImportResponseSuccess(false);
-          if (error?.response?.data) {
-            setImportResponseError(error.response?.data as ErrorResponseItem[]);
-          }
         });
     },
-    [onSave, id, session, setImportResponseSuccess, setImportResponseError],
+    [onSave, id, session],
   );
 
   const {
@@ -277,59 +317,44 @@ export const VerificationImport: React.FC<InputProps> = ({
                     setValue("importFile", files[0], {
                       shouldValidate: true,
                     });
+                    setResult(null); // clear previous results
                   }}
-                >
-                  <>
-                    {errors.importFile && (
-                      <FormMessage messageType={FormMessageType.Warning}>
-                        {`${errors.importFile.message}`}
-                      </FormMessage>
-                    )}
-                  </>
-                </FileUpload>
+                />
               </div>
 
-              {/* IMPORT RESPONSE */}
-              {importResponseSuccess != null &&
-                importResponseSuccess === true && (
-                  <FormMessage messageType={FormMessageType.Success}>
-                    Opportunities imported successfully!
-                  </FormMessage>
-                )}
+              {errors.importFile && (
+                <FormMessage messageType={FormMessageType.Warning}>
+                  {`${errors.importFile.message}`}
+                </FormMessage>
+              )}
 
-              {importResponseSuccess != null &&
-                importResponseSuccess === false && (
-                  <>
-                    {importResponseError && (
-                      <FormMessage messageType={FormMessageType.Error}>
-                        {importResponseError.map((err, index) => (
-                          <div key={index} className="text-sm">
-                            <strong>{err.type}:</strong> {err.message}
-                          </div>
-                        ))}
-                      </FormMessage>
-                    )}
-                    {!importResponseError && (
-                      <FormMessage messageType={FormMessageType.Error}>
-                        An unknown error occurred. Please try again later.
-                      </FormMessage>
-                    )}
-                  </>
-                )}
+              {/* IMPORT RESPONSE */}
+              {result && (
+                <CSVImportResults result={result} importType="submissions" />
+              )}
 
               <div className="mt-4 mb-10 flex w-full grow gap-4">
                 <button
                   type="button"
-                  className="btn btn-outline border-green text-green hover:bg-green w-1/2 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
+                  className="btn btn-outline border-green text-green hover:bg-green w-1/3 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
                   onClick={onClose}
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
-                  className="btn bg-green hover:bg-green w-1/2 shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                  type="button"
+                  className="btn bg-green hover:bg-green w-1/3 shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                  onClick={() => handleSubmit(onValidate)()}
+                  disabled={isLoading}
                 >
-                  Import
+                  Validate
+                </button>
+                <button
+                  type="submit"
+                  className="btn bg-green hover:bg-green w-1/3 shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                  disabled={isLoading}
+                >
+                  Submit
                 </button>
               </div>
             </div>

@@ -507,7 +507,7 @@ const Opportunities: NextPageWithLayout<{
         onRequestClose={() => {
           setImportDialogOpen(false);
         }}
-        className={`md:max-h-[650px] md:w-[600px]`}
+        className={`md:max-h-[650px] md:w-[700px]`}
       >
         <OpportunityImport
           id={id}

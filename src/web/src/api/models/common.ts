@@ -66,3 +66,31 @@ export enum SettingType {
 export interface SettingsRequest {
   settings: Record<string, any>;
 }
+
+export interface CSVImportResult {
+  imported: boolean;
+  headerErrors: boolean;
+  recordsTotal: number;
+  recordsSucceeded: number;
+  recordsFailed: number;
+  errors: CSVImportErrorRow[] | null;
+}
+
+export interface CSVImportErrorRow {
+  number: number | null;
+  alias: string;
+  items: CSVImportErrorItem[];
+}
+
+export interface CSVImportErrorItem {
+  type: CSVImportErrorType;
+  message: string;
+  field: string | null;
+  value: string | null;
+}
+
+export enum CSVImportErrorType {
+  ProcessingError = "ProcessingError",
+  RequiredFieldMissing = "RequiredFieldMissing",
+  InvalidFieldValue = "InvalidFieldValue",
+}

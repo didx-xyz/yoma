@@ -168,6 +168,7 @@ export interface MyOpportunityRequestVerifyImportCsv {
   file: FormFile;
   organizationId: string;
   comment: string | null;
+  validateOnly?: boolean | null;
 }
 
 export interface MyOpportunitySearchFilterVerificationFiles {
