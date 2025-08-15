@@ -21,6 +21,7 @@ import type {
   Status,
 } from "../models/opportunity";
 import type { OrganizationInfo } from "../models/organisation";
+import type { CSVImportResult } from "../models/opportunity";
 
 export const getOpportunitiesAdmin = async (
   filter: OpportunitySearchFilterAdmin,
@@ -425,22 +426,25 @@ export const updateFeatured = async (
 export const importFromCSV = async (
   organisationId: string,
   file: any,
+  validateOnly?: boolean,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
-) => {
+): Promise<CSVImportResult> => {
   const instance = context ? ApiServer(context) : await ApiClient;
 
   const formData = new FormData();
   formData.append("file", file);
 
-  const { data } = await instance.post(
-    `/opportunity/import/${organisationId}/csv`,
-    formData,
-    {
-      headers: {
-        "Content-Type": "multipart/form-data",
-      },
-    },
-  );
+  const params = new URLSearchParams();
+  if (validateOnly !== undefined)
+    params.append("validateOnly", String(validateOnly));
+
+  const url = `/opportunity/import/${organisationId}/csv${
+    params.toString() ? `?${params.toString()}` : ""
+  }`;
+
+  const { data } = await instance.post<CSVImportResult>(url, formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 
   return data;
 };

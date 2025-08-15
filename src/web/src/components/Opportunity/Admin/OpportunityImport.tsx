@@ -1,14 +1,13 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
-import { useCallback, useState } from "react";
+import { Fragment, useCallback, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { useForm } from "react-hook-form";
 import { FaUpload } from "react-icons/fa";
 import { FcDocument } from "react-icons/fc";
-import { IoMdClose } from "react-icons/io";
+import { IoMdClose, IoMdWarning } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
-import type { ErrorResponseItem } from "~/api/models/common";
 import { importFromCSV } from "~/api/services/opportunities";
 import {
   ACCEPTED_CSV_TYPES,
@@ -20,6 +19,8 @@ import FormMessage, { FormMessageType } from "../../Common/FormMessage";
 import { Loading } from "../../Status/Loading";
 import { FileUpload } from "../FileUpload";
 import Link from "next/link";
+import { CSVImportResult, CSVImportErrorType } from "~/api/models/opportunity";
+import { IoWarningOutline, IoCheckmarkCircleOutline } from "react-icons/io5";
 
 interface InputProps {
   [id: string]: any;
@@ -35,12 +36,7 @@ export const OpportunityImport: React.FC<InputProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
 
-  const [importResponseSuccess, setImportResponseSuccess] = useState<
-    boolean | null
-  >(null);
-  const [importResponseError, setImportResponseError] = useState<
-    ErrorResponseItem[] | null
-  >(null);
+  const [result, setResult] = useState<CSVImportResult | null>(null);
 
   const schema = z
     .object({
@@ -80,42 +76,123 @@ export const OpportunityImport: React.FC<InputProps> = ({
       }
     });
 
-  const onSubmit = useCallback(
-    (data: any) => {
+  // Normalize any API response/error into a consistent CSVImportResult
+  const toCSVResult = (
+    data: any,
+    phase: "validation" | "import",
+  ): CSVImportResult => {
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      const r = data as Partial<CSVImportResult>;
+      return {
+        imported: phase === "import" ? !!r.imported : false,
+        headerErrors: !!r.headerErrors,
+        recordsTotal: Number(r.recordsTotal ?? 0),
+        recordsSucceeded: Number(r.recordsSucceeded ?? 0),
+        recordsFailed: Number(r.recordsFailed ?? 0),
+        errors: (r as any).errors ?? null,
+      };
+    }
+    if (Array.isArray(data)) {
+      const arr = data as Array<{ type?: string; message?: string }>;
+      return {
+        imported: phase === "import",
+        headerErrors: false,
+        recordsTotal: 0,
+        recordsSucceeded: 0,
+        recordsFailed: Math.max(1, arr.length),
+        errors: [
+          {
+            number: null,
+            alias: "General",
+            items: arr.map((e) => ({
+              type: "ProcessingError",
+              message: e?.message ?? "An error occurred.",
+              field: null,
+              value: null,
+            })),
+          },
+        ],
+      };
+    }
+    return {
+      imported: phase === "import",
+      headerErrors: false,
+      recordsTotal: 0,
+      recordsSucceeded: 0,
+      recordsFailed: 1,
+      errors: [
+        {
+          number: null,
+          alias: "General",
+          items: [
+            {
+              type: CSVImportErrorType.ProcessingError,
+              message: "An unknown error occurred. Please try again later.",
+              field: null,
+              value: null,
+            },
+          ],
+        },
+      ],
+    };
+  };
+
+  const onValidate = useCallback(
+    async (data: any) => {
       if (!session) {
         toast.warning("You need to be logged in to import opportunities.");
         return;
       }
-
-      // prevent form submission if no file is selected
       if (data.importFile == null) {
         return;
       }
 
       setIsLoading(true);
-
-      importFromCSV(id, data.importFile)
-        .then(() => {
-          setIsLoading(false);
-          if (onSave) {
-            onSave();
-          }
-
-          // success message
-          setImportResponseSuccess(true);
-          setImportResponseError(null);
-        })
-        .catch((error: any) => {
-          setIsLoading(false);
-
-          // error message
-          setImportResponseSuccess(false);
-          if (error?.response?.data) {
-            setImportResponseError(error.response?.data as ErrorResponseItem[]);
-          }
-        });
+      try {
+        const res = await importFromCSV(id, data.importFile, true);
+        setResult(toCSVResult(res, "validation"));
+      } catch (error: any) {
+        setResult(toCSVResult(error?.response?.data, "validation"));
+      } finally {
+        setIsLoading(false);
+      }
     },
-    [onSave, id, session, setImportResponseSuccess, setImportResponseError],
+    [id, session],
+  );
+
+  const onSubmit = useCallback(
+    async (data: any) => {
+      if (!session) {
+        toast.warning("You need to be logged in to import opportunities.");
+        return;
+      }
+      if (data.importFile == null) {
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        // Pass 1: validation
+        const validationRaw = await importFromCSV(id, data.importFile, true);
+        const validationRes = toCSVResult(validationRaw, "validation");
+        setResult(validationRes);
+
+        if (validationRes.headerErrors || validationRes.recordsFailed > 0) {
+          return; // show validation errors
+        }
+
+        // Pass 2: import
+        const finalRaw = await importFromCSV(id, data.importFile, false);
+        const finalRes = toCSVResult(finalRaw, "import");
+        setResult(finalRes);
+        if (onSave) onSave();
+      } catch (error: any) {
+        setResult(toCSVResult(error?.response?.data, "validation"));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [onSave, id, session],
   );
 
   const {
@@ -292,60 +369,175 @@ export const OpportunityImport: React.FC<InputProps> = ({
                   allowMultiple={false}
                   iconAlt={<FcDocument className="size-10" />}
                   onUploadComplete={(files) => {
-                    setValue("importFile", files[0], {
-                      shouldValidate: true,
-                    });
+                    setValue("importFile", files[0], { shouldValidate: true });
+                    setResult(null); // clear previous results
                   }}
-                >
-                  <>
-                    {errors.importFile && (
-                      <FormMessage messageType={FormMessageType.Warning}>
-                        {`${errors.importFile.message}`}
-                      </FormMessage>
-                    )}
-                  </>
-                </FileUpload>
+                />
               </div>
 
-              {/* IMPORT RESPONSE */}
-              {importResponseSuccess != null &&
-                importResponseSuccess === true && (
-                  <FormMessage messageType={FormMessageType.Success}>
-                    Opportunities imported successfully!
-                  </FormMessage>
-                )}
+              {errors.importFile && (
+                <FormMessage messageType={FormMessageType.Warning}>
+                  {`${errors.importFile.message}`}
+                </FormMessage>
+              )}
 
-              {importResponseSuccess != null &&
-                importResponseSuccess === false && (
-                  <>
-                    {importResponseError && (
-                      <FormMessage messageType={FormMessageType.Error}>
-                        {importResponseError.map((err, index) => (
-                          <div key={index} className="text-sm">
-                            <strong>{err.type}:</strong> {err.message}
-                          </div>
-                        ))}
-                      </FormMessage>
+              {/* IMPORT RESPONSE */}
+              {result && (
+                <div
+                  className={`flex w-full flex-row rounded-lg border-[1px] p-4 ${
+                    !result.imported &&
+                    (result.headerErrors || result.recordsFailed > 0)
+                      ? "border-red-500"
+                      : "border-green"
+                  }`}
+                >
+                  <span className={`w-full content-center text-xs`}>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-row items-center gap-1">
+                        {!result.imported &&
+                        (result.headerErrors || result.recordsFailed > 0) ? (
+                          <IoWarningOutline
+                            className={`h-6 w-6 flex-none ${
+                              result.headerErrors || result.recordsFailed > 0
+                                ? "text-red-500"
+                                : "text-green"
+                            }`}
+                          />
+                        ) : (
+                          <IoCheckmarkCircleOutline
+                            className={`h-6 w-6 flex-none ${
+                              result.headerErrors || result.recordsFailed > 0
+                                ? "text-red-500"
+                                : "text-green"
+                            }`}
+                          />
+                        )}
+                        <div className="text-sm font-semibold">
+                          {result.imported
+                            ? "Import Completed"
+                            : result.headerErrors || result.recordsFailed > 0
+                              ? "Validation Failed"
+                              : "Validation Passed"}
+                        </div>
+                      </div>
+                    </div>
+                    {(!result.headerErrors || result.imported) && (
+                      <div className="flex items-center gap-2 py-2 text-xs font-semibold tracking-wide">
+                        Total Records
+                        <div className="badge badge-primary">
+                          {result.recordsTotal}
+                        </div>
+                        Succeeded
+                        <div className="badge badge-success">
+                          {result.recordsSucceeded}
+                        </div>
+                        Failed
+                        <div className="badge badge-warning">
+                          {result.recordsFailed}
+                        </div>
+                      </div>
                     )}
-                    {!importResponseError && (
-                      <FormMessage messageType={FormMessageType.Error}>
-                        An unknown error occurred. Please try again later.
-                      </FormMessage>
+                    {result.errors && result.errors.length > 0 && (
+                      <div className="mt-2">
+                        <ul className="list bg-base-100 rounded-box border-base-200 border shadow-md">
+                          {result.errors.map((row, rIdx) => (
+                            <Fragment key={`row_${rIdx}`}>
+                              {/* Row header */}
+                              <li className="bg-base-200/50 border-b-gray flex items-center justify-between border-b px-4 py-2 text-[11px] font-semibold text-gray-500 uppercase opacity-80">
+                                <span className="inline-flex items-center gap-2">
+                                  <IoMdWarning className="text-warning h-4 w-4" />
+                                  {row.alias ?? "Row"} {row.number}
+                                </span>
+                                <span className="badge badge-ghost text-[10px]">
+                                  {row.items.length}{" "}
+                                  {row.items.length === 1 ? "error" : "errors"}
+                                </span>
+                              </li>
+
+                              {/* Row items */}
+                              {row.items.map((it, iIdx) => (
+                                <li
+                                  key={`row_${rIdx}_item_${iIdx}`}
+                                  className="list-row hover:bg-base-200/40 items-start gap-3 px-4 py-3 transition-colors"
+                                >
+                                  <div className="w-8 text-[11px] text-gray-500 tabular-nums">
+                                    {String(iIdx + 1).padStart(2, "0")}
+                                  </div>
+
+                                  <div className="list-col-grow">
+                                    <div className="text-xs font-medium">
+                                      {it.message}
+                                    </div>
+                                    {(it.field || it.value) && (
+                                      <div className="mt-1 flex flex-col gap-1 text-xs opacity-60">
+                                        {it.field && (
+                                          <span>
+                                            <strong>Field:</strong>{" "}
+                                            <code>{it.field}</code>
+                                          </span>
+                                        )}
+
+                                        {it.value && (
+                                          <span>
+                                            <strong>Value:</strong>{" "}
+                                            <code>{it.value}</code>
+                                          </span>
+                                        )}
+                                      </div>
+                                    )}
+                                  </div>
+
+                                  <div
+                                    className={`badge text-xs ${
+                                      it.type === "ProcessingError"
+                                        ? "badge-warning"
+                                        : it.type === "InvalidFieldValue" ||
+                                            it.type === "RequiredFieldMissing"
+                                          ? "badge-error"
+                                          : "badge-info"
+                                    }`}
+                                  >
+                                    {it.type}
+                                  </div>
+                                </li>
+                              ))}
+                            </Fragment>
+                          ))}
+                        </ul>
+                      </div>
                     )}
-                  </>
-                )}
+                    {!result.headerErrors &&
+                      result.recordsFailed === 0 &&
+                      !result.imported && (
+                        <div className="mt-2">
+                          No issues found. You can proceed to{" "}
+                          <span className="font-bold italic">Submit</span>.
+                        </div>
+                      )}
+                  </span>
+                </div>
+              )}
 
               <div className="mt-4 mb-10 flex w-full grow gap-4">
                 <button
                   type="button"
-                  className="btn btn-outline border-green text-green hover:bg-green w-1/2 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
+                  className="btn btn-outline border-green text-green hover:bg-green w-1/3 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
                   onClick={onClose}
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
+                  className="btn btn-outline border-green text-green hover:bg-green w-1/3 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
+                  onClick={() => handleSubmit(onValidate)()}
+                  disabled={isLoading}
+                >
+                  Validate
+                </button>
+                <button
                   type="submit"
-                  className="btn bg-green hover:bg-green w-1/2 shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                  className="btn bg-green hover:bg-green w-1/3 shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                  disabled={isLoading}
                 >
                   Submit
                 </button>
