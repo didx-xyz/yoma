@@ -6,6 +6,7 @@ using System.Collections.Concurrent;
 using System.ComponentModel.DataAnnotations;
 using System.Globalization;
 using System.Reflection;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Core.Helpers
@@ -196,7 +197,7 @@ namespace Yoma.Core.Domain.Core.Helpers
         errors.Add(row);
       }
 
-      row.Items.Add(new CSVImportErrorItem { Type = type, Message = message, Field = field, Value = value });
+      row.Items.Add(new CSVImportErrorItem { Type = type, TypeDescription = type.ToDescription(), Message = message, Field = field, Value = value });
     }
 
     public static void HandleExceptions(Exception ex, List<CSVImportErrorRow> errors, int rowNumber)
