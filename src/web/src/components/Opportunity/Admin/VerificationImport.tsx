@@ -21,7 +21,7 @@ import { Loading } from "../../Status/Loading";
 import { FileUpload } from "../FileUpload";
 import { CSVImportResults } from "../../Common/CSVImportResults";
 import { toCSVResult } from "~/lib/csv-import-helper";
-import type { CSVImportResult } from "~/api/models/common";
+import { CSVImportResult } from "~/api/models/opportunity";
 
 interface InputProps {
   [id: string]: any;

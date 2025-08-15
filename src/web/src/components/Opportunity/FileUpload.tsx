@@ -3,6 +3,19 @@ import Image from "next/image";
 import { IoMdClose } from "react-icons/io";
 import iconUpload from "public/images/icon-upload.svg";
 
+const formatFileSize = (bytes: number, decimals = 1): string => {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const k = 1024;
+  const dm = decimals < 0 ? 0 : decimals;
+  const sizes = ["B", "KB", "MB", "GB", "TB", "PB"];
+  const i = Math.min(
+    sizes.length - 1,
+    Math.floor(Math.log(bytes) / Math.log(k)),
+  );
+  const size = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
+  return `${size} ${sizes[i]}`;
+};
+
 export interface InputProps {
   [id: string]: any;
   files: any[] | undefined;
@@ -29,16 +42,21 @@ export const FileUpload: React.FC<InputProps> = ({
   onUploadComplete,
 }) => {
   const [data, setFiles] = useState<any[]>(files ?? []);
-
   const inputRef = useRef<HTMLInputElement>(null);
+
+  // reset the native input so selecting the same file again triggers onChange
+  const resetNativeInput = () => {
+    if (inputRef.current) inputRef.current.value = "";
+  };
 
   const onFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
-      const result = allowMultiple
-        ? [...data, event.target.files[0]]
-        : [event.target.files[0]];
+      const picked = event.target.files[0];
+      const result = allowMultiple ? [...data, picked] : [picked];
       setFiles(result);
       if (onUploadComplete) onUploadComplete(result);
+      // allow re-selecting the same file after this selection
+      resetNativeInput();
     }
   };
 
@@ -69,7 +87,10 @@ export const FileUpload: React.FC<InputProps> = ({
         </div>
         <div className="flex grow flex-col p-4">
           <div className="font-semibold">{label}</div>
-          <div className="text-gray-dark text-sm italic">{fileTypesLabels}</div>
+          <div className="text-gray-dark text-sm">
+            Allowed file types:{" "}
+            <span className="font-bold italic">{fileTypesLabels}</span>
+          </div>
 
           <div className="mt-4 flex flex-col gap-4">
             <button
@@ -92,6 +113,7 @@ export const FileUpload: React.FC<InputProps> = ({
               ref={inputRef}
               type="file"
               accept={fileTypes}
+              multiple={allowMultiple}
               onChange={onFileInputChange}
             />
 
@@ -106,10 +128,11 @@ export const FileUpload: React.FC<InputProps> = ({
                     <div className="flex grow flex-col">
                       <div className="text-xs font-bold">{file.name}</div>
                       <div className="text-gray-dark text-xs italic">
-                        {file.size}
+                        {formatFileSize(file.size)}
                       </div>
                     </div>
                     <button
+                      type="button"
                       className="btn btn-sm text-gray-dark hover:bg-gray !rounded-full border-none shadow-md"
                       onClick={() => {
                         const newData = data.filter((_, i) => i !== index);
@@ -117,6 +140,8 @@ export const FileUpload: React.FC<InputProps> = ({
                         if (onUploadComplete) {
                           onUploadComplete(newData);
                         }
+                        // ensure selecting the same file again fires onChange
+                        resetNativeInput();
                       }}
                     >
                       <IoMdClose className="h-6 w-6" />

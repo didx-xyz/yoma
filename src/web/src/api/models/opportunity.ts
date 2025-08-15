@@ -346,6 +346,7 @@ export interface CSVImportErrorRow {
 
 export interface CSVImportErrorItem {
   type: CSVImportErrorType | string; //NB: string for compatibility
+  typeDescription: string;
   message: string;
   field: string | null;
   value: string | null;
