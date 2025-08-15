@@ -8,7 +8,6 @@ import { FcDocument } from "react-icons/fc";
 import { IoMdClose } from "react-icons/io";
 import { toast } from "react-toastify";
 import z from "zod";
-import type { ErrorResponseItem } from "~/api/models/common";
 import { importFromCSV } from "~/api/services/opportunities";
 import {
   ACCEPTED_CSV_TYPES,
@@ -20,6 +19,9 @@ import FormMessage, { FormMessageType } from "../../Common/FormMessage";
 import { Loading } from "../../Status/Loading";
 import { FileUpload } from "../FileUpload";
 import Link from "next/link";
+import { CSVImportResult } from "~/api/models/common";
+import { CSVImportResults } from "../../Common/CSVImportResults";
+import { toCSVResult } from "~/lib/csv-import-helper";
 
 interface InputProps {
   [id: string]: any;
@@ -35,12 +37,7 @@ export const OpportunityImport: React.FC<InputProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
 
-  const [importResponseSuccess, setImportResponseSuccess] = useState<
-    boolean | null
-  >(null);
-  const [importResponseError, setImportResponseError] = useState<
-    ErrorResponseItem[] | null
-  >(null);
+  const [result, setResult] = useState<CSVImportResult | null>(null);
 
   const schema = z
     .object({
@@ -80,42 +77,62 @@ export const OpportunityImport: React.FC<InputProps> = ({
       }
     });
 
-  const onSubmit = useCallback(
-    (data: any) => {
+  const onValidate = useCallback(
+    async (data: any) => {
       if (!session) {
         toast.warning("You need to be logged in to import opportunities.");
         return;
       }
-
-      // prevent form submission if no file is selected
       if (data.importFile == null) {
         return;
       }
 
       setIsLoading(true);
-
-      importFromCSV(id, data.importFile)
-        .then(() => {
-          setIsLoading(false);
-          if (onSave) {
-            onSave();
-          }
-
-          // success message
-          setImportResponseSuccess(true);
-          setImportResponseError(null);
-        })
-        .catch((error: any) => {
-          setIsLoading(false);
-
-          // error message
-          setImportResponseSuccess(false);
-          if (error?.response?.data) {
-            setImportResponseError(error.response?.data as ErrorResponseItem[]);
-          }
-        });
+      try {
+        const res = await importFromCSV(id, data.importFile, true);
+        setResult(toCSVResult(res, "validation"));
+      } catch (error: any) {
+        setResult(toCSVResult(error?.response?.data, "validation"));
+      } finally {
+        setIsLoading(false);
+      }
     },
-    [onSave, id, session, setImportResponseSuccess, setImportResponseError],
+    [id, session],
+  );
+
+  const onSubmit = useCallback(
+    async (data: any) => {
+      if (!session) {
+        toast.warning("You need to be logged in to import opportunities.");
+        return;
+      }
+      if (data.importFile == null) {
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        // Pass 1: validation
+        const validationRaw = await importFromCSV(id, data.importFile, true);
+        const validationRes = toCSVResult(validationRaw, "validation");
+        setResult(validationRes);
+
+        if (validationRes.headerErrors || validationRes.recordsFailed > 0) {
+          return; // show validation errors
+        }
+
+        // Pass 2: import
+        const finalRaw = await importFromCSV(id, data.importFile, false);
+        const finalRes = toCSVResult(finalRaw, "import");
+        setResult(finalRes);
+        if (onSave) onSave();
+      } catch (error: any) {
+        setResult(toCSVResult(error?.response?.data, "validation"));
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [onSave, id, session],
   );
 
   const {
@@ -292,60 +309,43 @@ export const OpportunityImport: React.FC<InputProps> = ({
                   allowMultiple={false}
                   iconAlt={<FcDocument className="size-10" />}
                   onUploadComplete={(files) => {
-                    setValue("importFile", files[0], {
-                      shouldValidate: true,
-                    });
+                    setValue("importFile", files[0], { shouldValidate: true });
+                    setResult(null); // clear previous results
                   }}
-                >
-                  <>
-                    {errors.importFile && (
-                      <FormMessage messageType={FormMessageType.Warning}>
-                        {`${errors.importFile.message}`}
-                      </FormMessage>
-                    )}
-                  </>
-                </FileUpload>
+                />
               </div>
 
-              {/* IMPORT RESPONSE */}
-              {importResponseSuccess != null &&
-                importResponseSuccess === true && (
-                  <FormMessage messageType={FormMessageType.Success}>
-                    Opportunities imported successfully!
-                  </FormMessage>
-                )}
+              {errors.importFile && (
+                <FormMessage messageType={FormMessageType.Warning}>
+                  {`${errors.importFile.message}`}
+                </FormMessage>
+              )}
 
-              {importResponseSuccess != null &&
-                importResponseSuccess === false && (
-                  <>
-                    {importResponseError && (
-                      <FormMessage messageType={FormMessageType.Error}>
-                        {importResponseError.map((err, index) => (
-                          <div key={index} className="text-sm">
-                            <strong>{err.type}:</strong> {err.message}
-                          </div>
-                        ))}
-                      </FormMessage>
-                    )}
-                    {!importResponseError && (
-                      <FormMessage messageType={FormMessageType.Error}>
-                        An unknown error occurred. Please try again later.
-                      </FormMessage>
-                    )}
-                  </>
-                )}
+              {/* IMPORT RESPONSE */}
+              {result && (
+                <CSVImportResults result={result} importType="opportunities" />
+              )}
 
               <div className="mt-4 mb-10 flex w-full grow gap-4">
                 <button
                   type="button"
-                  className="btn btn-outline border-green text-green hover:bg-green w-1/2 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
+                  className="btn btn-outline border-green text-green hover:bg-green w-1/3 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
                   onClick={onClose}
                 >
                   Cancel
                 </button>
                 <button
+                  type="button"
+                  className="btn bg-green hover:bg-green w-1/3 shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                  onClick={() => handleSubmit(onValidate)()}
+                  disabled={isLoading}
+                >
+                  Validate
+                </button>
+                <button
                   type="submit"
-                  className="btn bg-green hover:bg-green w-1/2 shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                  className="btn bg-green hover:bg-green w-1/3 shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                  disabled={isLoading}
                 >
                   Submit
                 </button>

@@ -304,9 +304,11 @@ export const performActionImportVerificationFromCSV = async (
 ): Promise<any> => {
   const formData = objectToFormData(model);
 
-  await (
+  const { data } = await (
     await ApiClient
   ).post(`/myopportunity/action/verify/csv`, formData, {
     headers: { "Content-Type": "multipart/form-data" },
   });
+
+  return data;
 };

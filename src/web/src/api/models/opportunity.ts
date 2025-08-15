@@ -328,3 +328,35 @@ export interface OpportunitySearchFilterCriteria extends PaginationFilter {
   verificationEnabled: boolean | null;
   verificationMethod: VerificationMethod | null;
 }
+
+export interface CSVImportResult {
+  imported: boolean;
+  headerErrors: boolean;
+  recordsTotal: number;
+  recordsSucceeded: number;
+  recordsFailed: number;
+  errors: CSVImportErrorRow[] | null;
+}
+
+export interface CSVImportErrorRow {
+  number: number | null;
+  alias: string;
+  items: CSVImportErrorItem[];
+}
+
+export interface CSVImportErrorItem {
+  type: CSVImportErrorType | string; //NB: string for compatibility
+  message: string;
+  field: string | null;
+  value: string | null;
+}
+
+export enum CSVImportErrorType {
+  HeaderMissing,
+  HeaderColumnMissing,
+  HeaderUnexpectedColumn,
+  HeaderDuplicateColumn,
+  RequiredFieldMissing,
+  InvalidFieldValue,
+  ProcessingError,
+}

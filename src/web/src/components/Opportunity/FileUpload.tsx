@@ -12,7 +12,7 @@ export interface InputProps {
   label?: string;
   icon?: any;
   iconAlt?: ReactElement | undefined;
-  children: ReactElement | undefined;
+  children?: ReactElement | undefined;
   onUploadComplete?: (data: any[]) => void;
 }
 
