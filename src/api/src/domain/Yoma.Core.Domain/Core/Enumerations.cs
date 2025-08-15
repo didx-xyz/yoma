@@ -115,12 +115,19 @@ namespace Yoma.Core.Domain.Core
 
   public enum CSVImportErrorType
   {
+    [Description("Header Missing")]
     HeaderMissing,
+    [Description("Header Column Missing")]
     HeaderColumnMissing,
+    [Description("Header Unexpected Column")]
     HeaderUnexpectedColumn,
+    [Description("Header Duplicate Column")]
     HeaderDuplicateColumn,
+    [Description("Required Field Missing")]
     RequiredFieldMissing,
+    [Description("Invalid Field Value")]
     InvalidFieldValue,
+    [Description("Processing Error")]
     ProcessingError
   }
 }

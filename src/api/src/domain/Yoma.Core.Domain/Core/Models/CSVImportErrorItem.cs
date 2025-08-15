@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.Core.Models
   {
     public CSVImportErrorType Type { get; set; }
 
+    public string TypeDescription { get; set; }
+
     public string Message { get; set; }
 
     public string? Field { get; set; }

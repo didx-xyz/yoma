@@ -35,7 +35,6 @@ using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
-using static QRCoder.PayloadGenerator;
 
 namespace Yoma.Core.Domain.MyOpportunity.Services
 {
