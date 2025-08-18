@@ -350,7 +350,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
                   if (!link.OpportunityId.HasValue || string.IsNullOrEmpty(link.OpportunityTitle))
                     throw new InvalidOperationException("Opportunity details expected");
 
-                  var opportunity = _opportunityService.GetById(link.OpportunityId.Value, false, true, ensureOrganizationAuthorization);
+                  var opportunity = _opportunityService.GetById(link.OpportunityId.Value, false, true, false);
 
                   if (!opportunity.VerificationEnabled)
                     throw new ValidationException($"Link cannot be activated as the opportunity '{opportunity.Title}' does not support verification");
@@ -361,23 +361,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
                   if (!opportunity.Published)
                     throw new ValidationException($"Link cannot be activated as the opportunity '{opportunity.Title}' has not been published");
 
-                  notificationDataDistributionList = new NotificationActionLinkVerify
-                  {
-                    EntityTypeDesc = $"{entityType.ToString().ToLower()}(ies)",
-                    YoIDURL = _notificationURLFactory.OpportunityVerificationYoIDURL(NotificationType.ActionLink_Verify_Distribution),
-                    Items =
-                    [
-                      new NotificationActionLinkVerifyItem
-                      {
-                        Title = opportunity.Title,
-                        DateStart = opportunity.DateStart,
-                        DateEnd = opportunity.DateEnd,
-                        URL = link.ShortURL,
-                        ZltoReward = opportunity.ZltoReward,
-                        YomaReward = opportunity.YomaReward
-                      }
-                    ]
-                  };
+                  notificationDataDistributionList = ToNotificationActionLinkVerify(link, entityType, opportunity);
 
                   break;
 
@@ -409,7 +393,9 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       link = await _linkRepository.Update(link);
 
-      if (notificationDataDistributionList != null) await SendNotification_ActionLinkVerifyDistributionList(link, notificationDataDistributionList);
+      if (notificationDataDistributionList != null)
+        await SendNotification_ActionLinkVerifyDistributionList(ParseDistributionList(link), notificationDataDistributionList);
+
       await SendNotification(link, NotificationType.ActionLink_Verify_Activated);
 
       return link.ToLinkInfo(false);
@@ -441,17 +427,9 @@ namespace Yoma.Core.Domain.ActionLink.Services
           if (distributionList == null || distributionList.Count == 0)
             if (filter.Usage == LinkUsageStatus.Unclaimed) break; else goto case LinkUsageStatus.Claimed;
 
-          // get claimed identifiers from usage log
-          var claimedIdentifiers = _linkUsageLogRepository.Query()
-            .Where(x => x.LinkId == link.Id && !string.IsNullOrEmpty(x.UsernameClaimed))
-            .Select(x => x.UsernameClaimed!.ToLower());
+          var queryUnclaimedIdentifiers = QueryUnclaimedIdentifiers(link, distributionList);
 
-          // get unclaimed = distribution list - claimed
-          var unclaimedIdentifiers = _linkRepository.UnnestValues(distributionList)
-            .Select(x => x.Value.ToLower())
-            .Where(x => !claimedIdentifiers.Contains(x));
-
-          var unclaimedQuery = unclaimedIdentifiers
+          var unclaimedQuery = queryUnclaimedIdentifiers
             .Select(identifier => new LinkSearchResultsUsageItem
             {
               UserId = null,
@@ -547,9 +525,112 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       return result;
     }
+
+    public async Task SendNotificationVerify(Guid linkId, bool ensureOrganizationAuthorization)
+    {
+      var link = GetById(linkId);
+
+      if (ensureOrganizationAuthorization) EnsureOrganizationAuthorization(link);
+
+      //sharing links should always remain active; they cannot be deactivated, have no end date, and are not subject to usage limits
+      AssertActive(link);
+
+      var action = Enum.Parse<LinkAction>(link.Action);
+      var entityType = Enum.Parse<LinkEntityType>(link.EntityType, true);
+
+      NotificationActionLinkVerify? notificationDataDistributionList;
+      switch (action)
+      {
+        case LinkAction.Share:
+          throw new ValidationException($"Cannot send reminders: link with action '{link.Action}' does not support reminders");
+
+        case LinkAction.Verify:
+          switch (entityType)
+          {
+            case LinkEntityType.Opportunity:
+              if (!link.OpportunityId.HasValue || !link.OpportunityOrganizationId.HasValue)
+                throw new DataInconsistencyException("Opportunity expected");
+
+              var opportunity = _opportunityService.GetById(link.OpportunityId.Value, false, true, false);
+
+              if (!opportunity.VerificationEnabled)
+                throw new ValidationException($"Cannot send reminders: opportunity '{opportunity.Title}' does not support verification");
+
+              if (!opportunity.VerificationMethod.HasValue) //support any verification method
+                throw new DataInconsistencyException($"Data inconsistency detected: The opportunity '{opportunity.Title}' has verification enabled, but no verification method is set");
+
+              if (!opportunity.Published)
+                throw new ValidationException($"Cannot send reminders: opportunity '{opportunity.Title}' has not been published");
+
+              notificationDataDistributionList = ToNotificationActionLinkVerify(link, entityType, opportunity);
+              break;
+
+            default:
+              throw new InvalidOperationException($"Invalid / unsupported entity type of '{entityType}'");
+          }
+          break;
+
+        default:
+          throw new InvalidOperationException($"Invalid / unsupported action of '{action}'");
+      }
+
+      if (notificationDataDistributionList == null)
+        throw new InvalidOperationException("Notification data for distribution list is null");
+
+      var distributionList = ParseDistributionList(link);
+
+      // link has no distribution list
+      if (distributionList == null || distributionList.Count == 0)
+        throw new ValidationException("Cannot send reminders: link has no distribution list");
+
+      var queryUnclaimedIdentifiers = QueryUnclaimedIdentifiers(link, distributionList);
+      var unclaimedDistributionList = queryUnclaimedIdentifiers.ToList();
+
+      //all already claimed
+      if (unclaimedDistributionList.Count == 0)
+        throw new ValidationException("Cannot send reminders: link has no unclaimed recipients");
+
+      await SendNotification_ActionLinkVerifyDistributionList(unclaimedDistributionList, notificationDataDistributionList);
+    }
     #endregion
 
     #region Private Members
+    private IQueryable<string> QueryUnclaimedIdentifiers(Link link, List<string> distributionList)
+    {
+      // get claimed identifiers from usage log
+      var claimedIdentifiers = _linkUsageLogRepository.Query()
+        .Where(x => x.LinkId == link.Id && !string.IsNullOrEmpty(x.UsernameClaimed))
+        .Select(x => x.UsernameClaimed!.ToLower());
+
+      // get unclaimed = distribution list - claimed
+      var unclaimedIdentifiers = _linkRepository.UnnestValues(distributionList)
+        .Select(x => x.Value.ToLower())
+        .Where(x => !claimedIdentifiers.Contains(x));
+
+      return unclaimedIdentifiers;
+    }
+
+    private NotificationActionLinkVerify ToNotificationActionLinkVerify(Link link, LinkEntityType entityType, Opportunity.Models.Opportunity opportunity)
+    {
+      return new NotificationActionLinkVerify
+      {
+        EntityTypeDesc = $"{entityType.ToString().ToLower()}(ies)",
+        YoIDURL = _notificationURLFactory.OpportunityVerificationYoIDURL(NotificationType.ActionLink_Verify_Distribution),
+        Items =
+        [
+          new NotificationActionLinkVerifyItem
+          {
+            Title = opportunity.Title,
+            DateStart = opportunity.DateStart,
+            DateEnd = opportunity.DateEnd,
+            URL = link.ShortURL,
+            ZltoReward = opportunity.ZltoReward,
+            YomaReward = opportunity.YomaReward
+          }
+        ]
+      };
+    }
+
     private Link GetById(Guid id)
     {
       if (id == Guid.Empty)
@@ -590,6 +671,10 @@ namespace Yoma.Core.Domain.ActionLink.Services
         case LinkStatus.LimitReached:
           throw new ValidationException("This link has reached its usage limit and cannot be used further");
         case LinkStatus.Active:
+          //ensure not expired but not yet flagged by background service
+          if (link.DateEnd.HasValue && link.DateEnd.Value <= DateTimeOffset.UtcNow)
+            throw new ValidationException("This link has expired and can no longer be used");
+
           return;
         default:
           throw new InvalidOperationException($"Invalid / unsupported status of '{link.Status}'");
@@ -750,10 +835,13 @@ namespace Yoma.Core.Domain.ActionLink.Services
       return result;
     }
 
-    private async Task SendNotification_ActionLinkVerifyDistributionList(Link link, NotificationActionLinkVerify data)
+    private async Task SendNotification_ActionLinkVerifyDistributionList(List<string>? distributionList, NotificationActionLinkVerify data)
     {
-      var distributionList = string.IsNullOrEmpty(link.DistributionList) ? null : JsonConvert.DeserializeObject<List<string>>(link.DistributionList);
-      if (distributionList == null) return;
+      if (distributionList == null || distributionList.Count == 0)
+      {
+        _logger.LogInformation("Skipping {notificationType}: distribution list is null or empty", NotificationType.ActionLink_Verify_Distribution);
+        return;
+      }
 
       try
       {
