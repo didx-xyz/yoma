@@ -19,5 +19,7 @@ namespace Yoma.Core.Domain.ActionLink.Interfaces
     Task<LinkInfo> UpdateStatus(Guid id, LinkStatus status, bool ensureOrganizationAuthorization);
 
     LinkSearchResultsUsage SearchUsage(LinkSearchFilterUsage filter, bool ensureOrganizationAuthorization);
+
+    Task SendNotificationVerify(Guid linkId, bool ensureOrganizationAuthorization);
   }
 }

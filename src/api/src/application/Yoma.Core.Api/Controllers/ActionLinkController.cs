@@ -124,7 +124,24 @@ namespace Yoma.Core.Api.Controllers
 
       _logger.LogInformation("Request {requestName} handled", nameof(SearchUsage));
 
-      return Ok(result);
+      return StatusCode((int)HttpStatusCode.OK, result);
+    }
+
+    [SwaggerOperation(
+    Summary = "Send instant-verify link reminders",
+      Description = "Triggers reminders to all unclaimed recipients for the specified instant-verify link")]
+    [HttpPost("{linkId}/instantVerify/reminders")]
+    [ProducesResponseType((int)HttpStatusCode.OK)]
+    [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
+    public async Task<IActionResult> SendInstantVerifyReminders([FromRoute] Guid linkId)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SendInstantVerifyReminders));
+
+      await _linkService.SendNotificationVerify(linkId, true);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SendInstantVerifyReminders));
+
+      return StatusCode((int)HttpStatusCode.OK);
     }
     #endregion Administrative Actions
     #endregion
