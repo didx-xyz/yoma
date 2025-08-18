@@ -4,7 +4,7 @@ import {
   useQuery,
   useQueryClient,
 } from "@tanstack/react-query";
-import axios, { AxiosError } from "axios";
+import axios from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -14,13 +14,7 @@ import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useState, type ReactElement } from "react";
 import "react-datepicker/dist/react-datepicker.css";
-import { FaLink, FaQrcode, FaStar, FaTrash } from "react-icons/fa";
-import {
-  IoIosSettings,
-  IoMdArrowRoundBack,
-  IoMdClose,
-  IoMdWarning,
-} from "react-icons/io";
+import { IoMdArrowRoundBack, IoMdClose } from "react-icons/io";
 import { IoShareSocialOutline } from "react-icons/io5";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
@@ -28,37 +22,25 @@ import {
   LinkInfo,
   LinkSearchFilterUsage,
   LinkSearchResultsUsage,
-  LinkStatus,
   LinkUsageStatus,
 } from "~/api/models/actionLinks";
-import {
-  getLinkById,
-  searchLinkUsage,
-  updateLinkStatus,
-} from "~/api/services/actionLinks";
+import { getLinkById, searchLinkUsage } from "~/api/services/actionLinks";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
 import { SearchInput } from "~/components/SearchInput";
-import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import {
-  DATE_FORMAT_HUMAN,
-  GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
-  GA_CATEGORY_OPPORTUNITY_LINK,
-  PAGE_SIZE,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
+import { LinkActions, LinkActionOptions } from "~/components/Links/LinkActions";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -98,7 +80,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
       context,
     );
     await queryClient.prefetchQuery({
-      queryKey: ["link", linkId, usage ?? "", valueContains ?? "", page ?? ""],
+      queryKey: ["Link", linkId, usage ?? "", valueContains ?? "", page ?? ""],
       queryFn: () => linkData,
     });
   } catch (error) {
@@ -141,8 +123,7 @@ const LinkOverview: NextPageWithLayout<{
   const router = useRouter();
   const queryClient = useQueryClient();
   const { returnUrl } = router.query;
-  const modalContext = useConfirmationModalContext();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading] = useState(false);
   const [showQRCode, setShowQRCode] = useState(false);
   const [qrCodeImageData, setQRCodeImageData] = useState<
     string | null | undefined
@@ -151,7 +132,7 @@ const LinkOverview: NextPageWithLayout<{
   // 👇 fetch link details
   const { data: link } = useQuery<LinkSearchResultsUsage>({
     queryKey: [
-      "link",
+      "Link",
       linkId,
       usage ?? LinkUsageStatus.All,
       valueContains ?? "",
@@ -240,87 +221,6 @@ const LinkOverview: NextPageWithLayout<{
     [searchFilter, redirectWithSearchFilterParams],
   );
 
-  const updateStatus = useCallback(
-    async (item: LinkInfo, status: LinkStatus) => {
-      // confirm dialog
-      const result = await modalContext.showConfirmation(
-        "",
-        <div
-          key="confirm-dialog-content"
-          className="flex h-full flex-col space-y-2 text-gray-500"
-        >
-          <div className="flex flex-row items-center gap-2">
-            <IoMdWarning className="text-warning h-6 w-6" />
-            <p className="text-lg">Confirm</p>
-          </div>
-
-          <div>
-            <p className="text-sm leading-6">
-              {status === LinkStatus.Active && (
-                <>
-                  Are you sure you want to <i>activate</i> this link?
-                </>
-              )}
-              {status === LinkStatus.Inactive && (
-                <>
-                  Are you sure you want to <i>inactivate</i> this link?
-                </>
-              )}
-              {status === LinkStatus.Deleted && (
-                <>
-                  Are you sure you want to <i>delete</i> this link?
-                </>
-              )}
-            </p>
-          </div>
-        </div>,
-      );
-      if (!result) return;
-
-      setIsLoading(true);
-
-      try {
-        // call api
-        await updateLinkStatus(item.id, status);
-
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY_LINK,
-          GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
-          `Status Changed to ${status} for Opportunity Link ID: ${item.id}`,
-        );
-
-        // invalidate cache
-        // this will match all queries with the following prefixes ['Links', id] (list data) & ['Links_TotalCount', id] (tab counts)
-        await queryClient.invalidateQueries({
-          queryKey: ["Links", id],
-          exact: false,
-        });
-        await queryClient.invalidateQueries({
-          queryKey: ["Links_TotalCount", id],
-          exact: false,
-        });
-
-        //toast.success("Link status updated");
-        // refresh the current link data
-        await queryClient.invalidateQueries({
-          queryKey: ["link", item.id],
-        });
-      } catch (error) {
-        toast(<ApiErrors error={error as AxiosError} />, {
-          type: "error",
-          toastId: `error-${item.id}`,
-          autoClose: false,
-          icon: false,
-        });
-      }
-      setIsLoading(false);
-
-      return;
-    },
-    [id, queryClient, modalContext, setIsLoading],
-  );
-
   const onClick_CopyToClipboard = useCallback((url: string) => {
     navigator.clipboard.writeText(url);
     toast.success("URL copied to clipboard!", { autoClose: 2000 });
@@ -347,70 +247,6 @@ const LinkOverview: NextPageWithLayout<{
         });
     },
     [queryClient],
-  );
-
-  // Link actions dropdown
-  const renderLinkActionsDropdown = (link: LinkInfo) => (
-    <div className="dropdown dropdown-left">
-      <button type="button" title="Actions" className="cursor-pointer">
-        <IoIosSettings className="text-green hover:text-blue size-5" />
-      </button>
-      <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-64 gap-2 p-2 shadow">
-        {link?.status == "Inactive" && (
-          <li>
-            <button
-              type="button"
-              className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-              onClick={() => updateStatus(link, LinkStatus.Active)}
-            >
-              <FaStar className="text-green size-4" />
-              Activate
-            </button>
-          </li>
-        )}
-
-        <li>
-          <button
-            type="button"
-            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-            title="Copy URL to clipboard"
-            onClick={() => {
-              onClick_CopyToClipboard(link.url!);
-            }}
-          >
-            <FaLink className="text-green size-4" />
-            Copy Link
-          </button>
-        </li>
-
-        <li>
-          <button
-            type="button"
-            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-            title="Generate QR Code"
-            onClick={() => {
-              onClick_GenerateQRCode(link);
-            }}
-          >
-            <FaQrcode className="text-green size-4" />
-            Generate QR Code
-          </button>
-        </li>
-
-        {(link?.status == "Inactive" || link?.status == "Active") && (
-          <li>
-            <button
-              type="button"
-              className="text-gray-dark flex flex-row items-center hover:brightness-50"
-              onClick={() => updateStatus(link, LinkStatus.Deleted)}
-            >
-              <FaTrash className="text-green size-4" />
-              Delete
-            </button>
-          </li>
-        )}
-      </ul>
-    </div>
   );
 
   if (error) {
@@ -520,7 +356,23 @@ const LinkOverview: NextPageWithLayout<{
                 {link?.link?.description ?? "N/A"}
               </p>
             </div>
-            <div>{renderLinkActionsDropdown(link?.link!)}</div>
+
+            {link?.link && (
+              <LinkActions
+                link={link?.link}
+                onCopyToClipboard={onClick_CopyToClipboard}
+                onGenerateQRCode={onClick_GenerateQRCode}
+                returnUrl={returnUrl?.toString()}
+                organizationId={id}
+                actionOptions={[
+                  LinkActionOptions.ACTIVATE,
+                  LinkActionOptions.REMIND_PARTICIPANTS,
+                  LinkActionOptions.COPY_LINK,
+                  LinkActionOptions.GENERATE_QR_CODE,
+                  LinkActionOptions.DELETE,
+                ]}
+              />
+            )}
           </div>
 
           {/* LINK INFORMATION */}
