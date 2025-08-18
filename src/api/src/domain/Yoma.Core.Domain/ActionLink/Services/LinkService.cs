@@ -318,7 +318,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
     public async Task<LinkInfo> UpdateStatus(Guid id, LinkStatus status, bool ensureOrganizationAuthorization)
     {
       var link = GetById(id);
-      EnsureOrganizationAuthorization(link);
+
+      if (ensureOrganizationAuthorization) EnsureOrganizationAuthorization(link);
 
       var action = Enum.Parse<LinkAction>(link.Action);
 
