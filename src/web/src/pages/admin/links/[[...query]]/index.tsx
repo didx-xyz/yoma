@@ -1,5 +1,4 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { AxiosError } from "axios";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -7,15 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
-import { FaLink, FaQrcode, FaSearch, FaStar, FaTrash } from "react-icons/fa";
-import {
-  IoIosSettings,
-  IoMdCalendar,
-  IoMdClose,
-  IoMdLock,
-  IoMdPerson,
-  IoMdWarning,
-} from "react-icons/io";
+import { IoMdCalendar, IoMdClose, IoMdLock, IoMdPerson } from "react-icons/io";
 import { IoShareSocialOutline } from "react-icons/io5";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
@@ -27,11 +18,7 @@ import {
   type LinkSearchFilter,
   type LinkSearchResult,
 } from "~/api/models/actionLinks";
-import {
-  getLinkById,
-  searchLinks,
-  updateLinkStatus,
-} from "~/api/services/actionLinks";
+import { getLinkById, searchLinks } from "~/api/services/actionLinks";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
@@ -39,25 +26,21 @@ import {
   LinkFilterOptions,
   LinkSearchFilters,
 } from "~/components/Links/LinkSearchFilter";
+import { LinkActionOptions, LinkActions } from "~/components/Links/LinkActions";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
-import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import LimitedFunctionalityBadge from "~/components/Status/LimitedFunctionalityBadge";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import {
   DATE_FORMAT_HUMAN,
-  GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
-  GA_CATEGORY_OPPORTUNITY_LINK,
   PAGE_SIZE,
   ROLE_ADMIN,
   THEME_BLUE,
 } from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
@@ -134,8 +117,7 @@ const Links: NextPageWithLayout<{
   const [qrCodeImageData, setQRCodeImageData] = useState<
     string | null | undefined
   >(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const modalContext = useConfirmationModalContext();
+  const [isLoading] = useState(false);
 
   // 👇 use prefetched queries from server
   const { data: links } = useQuery<LinkSearchResult>({
@@ -426,165 +408,6 @@ const Links: NextPageWithLayout<{
     [queryClient],
   );
 
-  const updateStatus = useCallback(
-    async (item: LinkInfo, status: LinkStatus) => {
-      // confirm dialog
-      const result = await modalContext.showConfirmation(
-        "",
-        <div
-          key="confirm-dialog-content"
-          className="flex h-full flex-col space-y-2 text-gray-500"
-        >
-          <div className="flex flex-row items-center gap-2">
-            <IoMdWarning className="text-warning h-6 w-6" />
-            <p className="text-lg">Confirm</p>
-          </div>
-
-          <div>
-            <p className="text-sm leading-6">
-              {status === LinkStatus.Active && (
-                <>
-                  Are you sure you want to <i>activate</i> this link?
-                </>
-              )}
-              {status === LinkStatus.Inactive && (
-                <>
-                  Are you sure you want to <i>inactivate</i> this link?
-                </>
-              )}
-              {status === LinkStatus.Deleted && (
-                <>
-                  Are you sure you want to <i>delete</i> this link?
-                </>
-              )}
-            </p>
-          </div>
-        </div>,
-      );
-      if (!result) return;
-
-      setIsLoading(true);
-
-      try {
-        // call api
-        await updateLinkStatus(item.id, status);
-
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY_LINK,
-          GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
-          `Status Changed to ${status} for Opportunity Link ID: ${item.id}`,
-        );
-
-        // invalidate cache
-        // this will match all queries with the following prefixes ['Links', id] (list data) & ['Links_TotalCount', id] (tab counts)
-        await queryClient.invalidateQueries({
-          queryKey: ["Admin", "Links"],
-          exact: false,
-        });
-        // await queryClient.invalidateQueries({
-        //   queryKey: ["Links_TotalCount", id],
-        //   exact: false,
-        // });
-
-        toast.success("Link status updated");
-      } catch (error) {
-        toast(<ApiErrors error={error as AxiosError} />, {
-          type: "error",
-          toastId: `error-${item.id}`,
-          autoClose: false,
-          icon: false,
-        });
-      }
-      setIsLoading(false);
-
-      return;
-    },
-    [queryClient, modalContext, setIsLoading],
-  );
-
-  // Link actions dropdown
-  const renderLinkActionsDropdown = (link: LinkInfo) => (
-    <div className="dropdown dropdown-left">
-      <button type="button" title="Actions" className="cursor-pointer">
-        <IoIosSettings className="text-green hover:text-blue size-5" />
-      </button>
-      <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-64 gap-2 p-2 shadow">
-        {link?.status == "Inactive" && (
-          <li>
-            <button
-              type="button"
-              className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-              onClick={() => updateStatus(link, LinkStatus.Active)}
-            >
-              <FaStar className="text-green size-4" />
-              Activate
-            </button>
-          </li>
-        )}
-
-        <li>
-          <button
-            type="button"
-            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-            title="Go to Link Overview"
-            onClick={() => {
-              void router.push(
-                `/organisations/${link.entityOrganizationId}/links/${link.id}${`?returnUrl=${encodeURIComponent(
-                  getSafeUrl(returnUrl, router.asPath),
-                )}`}`,
-              );
-            }}
-          >
-            <FaSearch className="text-green size-4" />
-            Go to Link Overview
-          </button>
-        </li>
-
-        <li>
-          <button
-            type="button"
-            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-            title="Copy URL to clipboard"
-            onClick={() => {
-              onClick_CopyToClipboard(link.url!);
-            }}
-          >
-            <FaLink className="text-green size-4" />
-            Copy Link
-          </button>
-        </li>
-
-        <li>
-          <button
-            type="button"
-            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-            title="Generate QR Code"
-            onClick={() => {
-              onClick_GenerateQRCode(link);
-            }}
-          >
-            <FaQrcode className="text-green size-4" />
-            Generate QR Code
-          </button>
-        </li>
-
-        {(link?.status == "Inactive" || link?.status == "Active") && (
-          <li>
-            <button
-              type="button"
-              className="text-gray-dark flex flex-row items-center hover:brightness-50"
-              onClick={() => updateStatus(link, LinkStatus.Deleted)}
-            >
-              <FaTrash className="text-green size-4" />
-              Delete
-            </button>
-          </li>
-        )}
-      </ul>
-    </div>
-  );
-
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -825,7 +648,21 @@ const Links: NextPageWithLayout<{
                           </span>
                         )}
                       </div>
-                      {renderLinkActionsDropdown(item)}
+
+                      <LinkActions
+                        link={item}
+                        onCopyToClipboard={onClick_CopyToClipboard}
+                        onGenerateQRCode={onClick_GenerateQRCode}
+                        returnUrl={returnUrl?.toString()}
+                        actionOptions={[
+                          LinkActionOptions.ACTIVATE,
+                          LinkActionOptions.GO_TO_OVERVIEW,
+                          LinkActionOptions.REMIND_PARTICIPANTS,
+                          LinkActionOptions.COPY_LINK,
+                          LinkActionOptions.GENERATE_QR_CODE,
+                          LinkActionOptions.DELETE,
+                        ]}
+                      />
                     </div>
 
                     {/* Opportunity */}
@@ -1111,7 +948,20 @@ const Links: NextPageWithLayout<{
                       {/* ACTIONS */}
                       <td className="border-gray-light border-b-2 whitespace-nowrap">
                         <div className="flex flex-row items-center justify-center gap-2">
-                          {renderLinkActionsDropdown(item)}
+                          <LinkActions
+                            link={item}
+                            onCopyToClipboard={onClick_CopyToClipboard}
+                            onGenerateQRCode={onClick_GenerateQRCode}
+                            returnUrl={returnUrl?.toString()}
+                            actionOptions={[
+                              LinkActionOptions.ACTIVATE,
+                              LinkActionOptions.GO_TO_OVERVIEW,
+                              LinkActionOptions.REMIND_PARTICIPANTS,
+                              LinkActionOptions.COPY_LINK,
+                              LinkActionOptions.GENERATE_QR_CODE,
+                              LinkActionOptions.DELETE,
+                            ]}
+                          />
                         </div>
                       </td>
                     </tr>

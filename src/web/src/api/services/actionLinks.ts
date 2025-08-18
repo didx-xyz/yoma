@@ -83,3 +83,11 @@ export const searchLinkUsage = async (
   );
   return data;
 };
+
+export const sendInstantVerifyReminders = async (
+  linkId: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<void> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  await instance.post(`/actionLink/${linkId}/instantVerify/reminders`);
+};
