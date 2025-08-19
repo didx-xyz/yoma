@@ -246,7 +246,10 @@ export const VerificationImport: React.FC<InputProps> = ({
                       <li>FirstName</li>
                       <li>Surname</li>
                       <li>Gender (Male, Female, Prefer not to say)</li>
-                      <li>Country (Alpha-2 code, use Country Lookup API)</li>
+                      <li>
+                        Country (use ISO CodeAlpha2, e.g. US|GB for United
+                        States and United Kingdom)
+                      </li>
                     </ul>
                   </div>
 
