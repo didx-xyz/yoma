@@ -8,7 +8,9 @@ namespace Yoma.Core.Domain.Entity.Extensions
     {
       ArgumentNullException.ThrowIfNull(user, nameof(user));
 
-      if (!string.IsNullOrEmpty(user.DisplayName)) return;
+      // Previously kept existing DisplayName if set, 
+      // now always override with FirstName + Surname
+      // if (!string.IsNullOrEmpty(user.DisplayName)) return;
       user.DisplayName = string.Join(' ', new[] { user.FirstName, user.Surname }.Where(o => !string.IsNullOrEmpty(o)));
       if (string.IsNullOrEmpty(user.DisplayName)) user.DisplayName = null;
     }
@@ -17,7 +19,9 @@ namespace Yoma.Core.Domain.Entity.Extensions
     {
       ArgumentNullException.ThrowIfNull(user, nameof(user));
 
-      if (!string.IsNullOrEmpty(user.DisplayName)) return;
+      // Previously kept existing DisplayName if set, 
+      // now always override with FirstName + Surname
+      // if (!string.IsNullOrEmpty(user.DisplayName)) return;
       user.DisplayName = string.Join(' ', new[] { user.FirstName, user.Surname }.Where(o => !string.IsNullOrEmpty(o)));
       if (string.IsNullOrEmpty(user.DisplayName)) user.DisplayName = null;
     }
