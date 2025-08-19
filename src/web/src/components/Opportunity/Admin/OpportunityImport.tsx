@@ -216,7 +216,7 @@ export const OpportunityImport: React.FC<InputProps> = ({
                       <li>Summary</li>
                       <li>Description</li>
                       <li>
-                        Languages (use ISO CodeAlpha2, e.g., AF|EN for Afrikaans
+                        Languages (use ISO CodeAlpha2, e.g. AF|EN for Afrikaans
                         and English)
                       </li>
                       <li>
