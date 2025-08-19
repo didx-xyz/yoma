@@ -199,11 +199,30 @@ export const OpportunityImport: React.FC<InputProps> = ({
                     <ul className="ml-5 list-disc">
                       <li>Title</li>
                       <li>Type (Learning, Event, Other, Micro-task)</li>
-                      <li>Categories (use | to separate multiple)</li>
+                      <li>
+                        Categories (use | to separate multiple)
+                        <ul className="mt-2 ml-8 list-disc text-gray-600">
+                          <li>Agriculture</li>
+                          <li>Career and Personal Development</li>
+                          <li>Business and Entrepreneurship</li>
+                          <li>Environment and Climate</li>
+                          <li>Technology and Digitization</li>
+                          <li>Tourism and Hospitality</li>
+                          <li>AI, Data and Analytics</li>
+                          <li>Creative Industry and Arts</li>
+                          <li>Other</li>
+                        </ul>
+                      </li>
                       <li>Summary</li>
                       <li>Description</li>
-                      <li>Languages (use Language Lookup endpoint)</li>
-                      <li>Location (Countries, use Country Lookup endpoint)</li>
+                      <li>
+                        Languages (use ISO CodeAlpha2, e.g., AF|EN for Afrikaans
+                        and English)
+                      </li>
+                      <li>
+                        Location (Countries, use ISO CodeAlpha2, e.g., US|GB for
+                        United States and United Kingdom)
+                      </li>
                       <li>
                         Difficulty (Beginner, Intermediate, Advanced, Any Level)
                       </li>
@@ -211,7 +230,7 @@ export const OpportunityImport: React.FC<InputProps> = ({
                       <li>EffortInterval (Hour, Day, Week, Month, Minute)</li>
                       <li>DateStart</li>
                       <li>
-                        Skills (use Skill Lookup endpoint or{" "}
+                        Skills (
                         <Link
                           href="/admin/skills"
                           className="text-blue-600 underline"
