@@ -153,7 +153,10 @@ All reference values must come from the bundled JSON files:
 - **EffortInterval / Type / Difficulty / Engagement**: must exist in their reference files (by **name**)
 - **DateStart**: required; not default/min; valid date
 - **DateEnd**: if present, **≥ DateStart**
-- **Keywords**: required; `|` list; no empty items; **no commas**; combined length **1–500**
+- **Keywords**: required; |-delimited list; no empty items; no commas (,); combined length 1–500.
+  Used for searching and discovery (SEO).
+  If not provided, must be auto-generated from available metadata fields: Title, Summary, Description, Categories, Skills, Type, Difficulty, EffortCount + EffortInterval, Languages, Location.
+  Auto-generation must produce trimmed, unique, and relevant terms, delimited with |.
 - **Languages**: required; each ISO alpha-2 code exists in languages reference
 - **Location**: required; each entry is ISO alpha-2 code from locations reference (incl. **`WW`**); combinations allowed
 - **Skills**: required in CSV; each must exist in `opportunities_skills.json` (**name**)
@@ -227,12 +230,27 @@ if (!DateOnly.TryParseExact(input, formats, CultureInfo.InvariantCulture, DateTi
 
 12) Custom GPT Runtime Behaviour (performance & UX)
 
-Do not auto-run validation. After generating/cleaning a CSV, ask: “Run validation now?”
-Only run full validation when the user explicitly says Yes.
-Always return download links for generated files (clean CSV, and if requested, validation report). Never output non-downloadable local file paths.
-Enforce | for all multi-select fields and trim spaces around the delimiter.
-Enforce Yes/No booleans via the model mapping.
-Resolve all list values strictly against the reference JSON files. If a value is not found, mark it invalid (do not auto-map).
+- Do not auto-run validation. After generating/cleaning a CSV, always ask: “Run validation now?”
+- Only run full validation when the user explicitly says Yes.
+- Never provide or offer validation report downloads — validation must only be used internally to highlight issues in responses.
+- Always return download links only for the generated clean CSV files.
+- Never output non-downloadable local file paths.
+- Detect and exclude phantom rows:
+  * Any row with a blank Title or completely empty fields must be ignored and not included in the final CSV.
+  * Such rows must not trigger validation errors — they are silently dropped.
+- Enforce | for all multi-select fields and trim spaces around the delimiter.
+- Enforce header order exactly as in the sample file.
+- Enforce Yes/No booleans using plain values only.
+- Resolve all list values strictly against the reference JSON files. If a value is not found, mark it invalid (do not auto-map).
+- Simplify answers for business users:
+  * Clearly state what was filled in and what is still missing in plain language.
+  * Do not reference technical terms (e.g., “DTO model”, “reference JSON”, “enum”).
+  * Do not explain internal logic or reasoning.
+  * Example style of output:
+    ✅ “I’ve added the Title, Summary, and Languages for each row.”
+    ⚠️ “The Skills field is still missing for 3 rows. Please provide them to complete the CSV.”
+
+
 
 
 
