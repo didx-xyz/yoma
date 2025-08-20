@@ -642,7 +642,7 @@ const Opportunities: NextPageWithLayout<{
                 href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
                   getSafeUrl(returnUrl?.toString(), router.asPath),
                 )}`}`}
-                className={`btn btn-sm border-green text-green hover:bg-green flex-nowrap bg-white hover:text-white md:min-w-36 ${
+                className={`btn btn-sm md:btn-md border-green text-green hover:bg-green w-36 flex-nowrap bg-white hover:text-white ${
                   currentOrganisationInactive ? "disabled" : ""
                 }`}
                 id="btnCreateOpportunity" // e2e
@@ -655,7 +655,7 @@ const Opportunities: NextPageWithLayout<{
                 onClick={() => {
                   setImportDialogOpen(true);
                 }}
-                className={`btn btn-sm border-green bg-green hover:text-green flex-nowrap text-white hover:bg-white md:min-w-36 ${
+                className={`btn btn-sm md:btn-md border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white ${
                   currentOrganisationInactive ? "disabled" : ""
                 }`}
               >
@@ -665,7 +665,7 @@ const Opportunities: NextPageWithLayout<{
               <button
                 type="button"
                 onClick={() => setExportDialogOpen(true)}
-                className="btn btn-sm border-green bg-green hover:text-green flex-nowrap text-white hover:bg-white md:min-w-36"
+                className="btn btn-sm md:btn-md border-green bg-green hover:text-green w-36 flex-nowrap text-white hover:bg-white"
               >
                 <FaDownload className="h-4 w-4" /> Export
               </button>
