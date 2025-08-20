@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "react-datepicker/dist/react-datepicker.css";
 import { useForm } from "react-hook-form";
 import { FaUpload } from "react-icons/fa";
@@ -37,6 +37,8 @@ export const VerificationImport: React.FC<InputProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { data: session } = useSession();
   const [result, setResult] = useState<CSVImportResult | null>(null);
+  const [importSuccess, setImportSuccess] = useState(false);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const schema = z
     .object({
@@ -152,6 +154,8 @@ export const VerificationImport: React.FC<InputProps> = ({
             const finalRes = toCSVResult(finalRaw, "import");
             setResult(finalRes);
             if (onSave) onSave();
+
+            setImportSuccess(true);
           }
         })
         .catch((error: any) => {
@@ -161,7 +165,7 @@ export const VerificationImport: React.FC<InputProps> = ({
           setIsLoading(false);
         });
     },
-    [onSave, id, session],
+    [onSave, id, session, setImportSuccess],
   );
 
   const {
@@ -171,6 +175,15 @@ export const VerificationImport: React.FC<InputProps> = ({
   } = useForm({
     resolver: zodResolver(schema),
   });
+
+  useEffect(() => {
+    if (result && resultsRef.current) {
+      resultsRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [result]);
 
   return (
     <>
@@ -308,22 +321,24 @@ export const VerificationImport: React.FC<InputProps> = ({
               </div>
 
               {/* FILE UPLOAD */}
-              <div className="bg-gray-light flex w-full flex-col rounded-lg border-dotted">
-                <FileUpload
-                  id="importFileUpload"
-                  files={[]}
-                  fileTypes={[...ACCEPTED_CSV_TYPES].join(",")}
-                  fileTypesLabels={[...ACCEPTED_CSV_TYPES_LABEL].join(",")}
-                  allowMultiple={false}
-                  iconAlt={<FcDocument className="size-10" />}
-                  onUploadComplete={(files) => {
-                    setValue("importFile", files[0], {
-                      shouldValidate: true,
-                    });
-                    setResult(null); // clear previous results
-                  }}
-                />
-              </div>
+              {!importSuccess && (
+                <div className="bg-gray-light flex w-full flex-col rounded-lg border-dotted">
+                  <FileUpload
+                    id="importFileUpload"
+                    files={[]}
+                    fileTypes={[...ACCEPTED_CSV_TYPES].join(",")}
+                    fileTypesLabels={[...ACCEPTED_CSV_TYPES_LABEL].join(",")}
+                    allowMultiple={false}
+                    iconAlt={<FcDocument className="size-10" />}
+                    onUploadComplete={(files) => {
+                      setValue("importFile", files[0], {
+                        shouldValidate: true,
+                      });
+                      setResult(null); // clear previous results
+                    }}
+                  />
+                </div>
+              )}
 
               {errors.importFile && (
                 <FormMessage messageType={FormMessageType.Warning}>
@@ -333,32 +348,52 @@ export const VerificationImport: React.FC<InputProps> = ({
 
               {/* IMPORT RESPONSE */}
               {result && (
-                <CSVImportResults result={result} importType="submissions" />
+                <div ref={resultsRef}>
+                  <CSVImportResults result={result} importType="submissions" />
+                </div>
               )}
 
               <div className="mt-4 mb-10 flex w-full grow gap-4">
                 <button
                   type="button"
-                  className="btn btn-outline border-green text-green hover:bg-green w-1/3 shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
+                  className="btn btn-outline border-green text-green hover:bg-green w-full shrink rounded-full bg-white normal-case hover:border-0 hover:text-white"
                   onClick={onClose}
                 >
-                  Cancel
+                  Close
                 </button>
-                <button
-                  type="button"
-                  className="btn bg-green hover:bg-green w-1/3 shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
-                  onClick={() => handleSubmit(onValidate)()}
-                  disabled={isLoading}
-                >
-                  Validate
-                </button>
-                <button
-                  type="submit"
-                  className="btn bg-green hover:bg-green w-1/3 shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
-                  disabled={isLoading}
-                >
-                  Submit
-                </button>
+                {!importSuccess && (
+                  <>
+                    <button
+                      type="button"
+                      className="btn bg-green hover:bg-green w-full shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                      onClick={() => handleSubmit(onValidate)()}
+                      disabled={isLoading}
+                    >
+                      Validate
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn bg-green hover:bg-green w-full shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                      disabled={isLoading}
+                    >
+                      Submit
+                    </button>
+                  </>
+                )}
+                {importSuccess && (
+                  <button
+                    type="button"
+                    className="btn bg-green hover:bg-green w-full shrink rounded-full border-0 text-white normal-case hover:border-1 hover:text-white hover:brightness-110"
+                    onClick={() => {
+                      setImportSuccess(false);
+                      setResult(null);
+                      setValue("importFile", null);
+                    }}
+                    disabled={isLoading}
+                  >
+                    Start Over
+                  </button>
+                )}
               </div>
             </div>
           </div>
