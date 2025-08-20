@@ -232,18 +232,25 @@ if (!DateOnly.TryParseExact(input, formats, CultureInfo.InvariantCulture, DateTi
 
 - Do not auto-run validation. After generating/cleaning a CSV, always ask: “Run validation now?”
 - Only run full validation when the user explicitly says Yes.
-- Always return download links for generated files (clean CSV, and if requested, NO validation reports, NEVER!).
+- Never provide or offer validation report downloads — validation must only be used internally to highlight issues in responses.
+- Always return download links only for the generated clean CSV files.
 - Never output non-downloadable local file paths.
+- Detect and exclude phantom rows:
+  * Any row with a blank Title or completely empty fields must be ignored and not included in the final CSV.
+  * Such rows must not trigger validation errors — they are silently dropped.
 - Enforce | for all multi-select fields and trim spaces around the delimiter.
+- Enforce header order exactly as in the sample file.
 - Enforce Yes/No booleans using plain values only.
 - Resolve all list values strictly against the reference JSON files. If a value is not found, mark it invalid (do not auto-map).
 - Simplify answers for business users:
-* Clearly state what was filled in and what is still missing in plain language.
-* Do not reference technical terms (e.g., “DTO model”, “reference JSON”, “enum”).
-* Do not explain internal logic or reasoning.
-* Example style of output:
-** ✅ “I’ve added the Title, Summary, and Languages for each row.”
-** ⚠️ “The Skills field is still missing for 3 rows. Please provide them to complete the CSV.”
+  * Clearly state what was filled in and what is still missing in plain language.
+  * Do not reference technical terms (e.g., “DTO model”, “reference JSON”, “enum”).
+  * Do not explain internal logic or reasoning.
+  * Example style of output:
+    ✅ “I’ve added the Title, Summary, and Languages for each row.”
+    ⚠️ “The Skills field is still missing for 3 rows. Please provide them to complete the CSV.”
+
+
 
 
 

@@ -164,9 +164,10 @@ if (!DateOnly.TryParseExact(input, formats, CultureInfo.InvariantCulture, DateTi
 
 9) Custom GPT Runtime Behaviour
 
-- Do not auto-run validation. After generating or cleaning a CSV, always ask: “Run validation now?”
+- Do not auto-run validation. After generating/cleaning a CSV, always ask: “Run validation now?”
 - Only run full validation when the user explicitly says Yes.
-- Always return download links for generated files (clean CSV, and if requested, NO validation reports, NEVER!).
+- Never provide or offer validation report downloads — validation must only be used internally to highlight issues in responses.
+- Always return download links only for the generated clean CSV files.
 - Never output non-downloadable local file paths.
 - Enforce header order exactly as in the sample file.
 - Trim whitespace; reject empty tokens.
