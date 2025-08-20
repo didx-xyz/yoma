@@ -47,13 +47,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     #endregion
 
     #region Internal Members
-    internal void ValidateRequired(List<CSVImportErrorRow> errors, int? rowNumber)
+    internal void Validate(List<CSVImportErrorRow> errors, int? rowNumber)
     {
       if (string.IsNullOrEmpty(Username))
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, $"{nameof(Username)}: {nameof(Email)} and / or {nameof(PhoneNumber)}");
 
       if (string.IsNullOrEmpty(OpportunityExternalId))
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(OpportunityExternalId));
+
+      if (OpportunityExternalId.Length > 50)
+        CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, "Must be between 1 and 50 characters", rowNumber, nameof(OpportunityExternalId), OpportunityExternalId);
     }
     #endregion
   }

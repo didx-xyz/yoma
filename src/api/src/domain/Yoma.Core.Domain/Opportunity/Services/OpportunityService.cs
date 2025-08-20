@@ -1080,7 +1080,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
           }
 
           dto = csv.GetRecord<OpportunityInfoCsvImport>();
-          dto.ValidateRequired(errors, rowNumber);
+          dto.Validate(errors, rowNumber);
 
           if (!string.IsNullOrEmpty(dto.Title) && probedTitles.Contains(dto.Title))
           {
