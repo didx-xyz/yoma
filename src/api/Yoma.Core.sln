@@ -20,11 +20,13 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E7BFE753-E55E-411C-8C02-9D1AEBBABE60}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		src\other\Completions (Submissions) CSV Import — README.txt = src\other\Completions (Submissions) CSV Import — README.txt
 		src\scripts\index_fragmentation_ms.sql = src\scripts\index_fragmentation_ms.sql
 		src\scripts\index_fragmentation_postgre.sql = src\scripts\index_fragmentation_postgre.sql
 		src\scripts\index_rebuild_reorganize_ms.sql = src\scripts\index_rebuild_reorganize_ms.sql
 		src\scripts\index_rebuild_reorganize_postgre.sql = src\scripts\index_rebuild_reorganize_postgre.sql
 		src\other\MyOpportunityInfoCsvImport_Sample.csv = src\other\MyOpportunityInfoCsvImport_Sample.csv
+		src\other\Opportunities CSV Import — README.txt = src\other\Opportunities CSV Import — README.txt
 		src\other\OpportunityInfoCsvImport_Sample.csv = src\other\OpportunityInfoCsvImport_Sample.csv
 	EndProjectSection
 EndProject
