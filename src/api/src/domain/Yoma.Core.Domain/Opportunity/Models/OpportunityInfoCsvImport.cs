@@ -87,7 +87,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     #endregion
 
     #region Internal Members
-    internal void ValidateRequired(List<CSVImportErrorRow> errors, int? rowNumber)
+    internal void Validate(List<CSVImportErrorRow> errors, int? rowNumber)
     {
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
@@ -116,7 +116,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(Difficulty));
 
       if (CommitmentIntervalCount <= 0)
-        CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, "EffortCount");
+        CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, "Must be greater than 0", rowNumber, "EffortCount", CommitmentIntervalCount.ToString());
 
       if (string.IsNullOrEmpty(CommitmentInterval))
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, "EffortInterval");
@@ -132,6 +132,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
       if (string.IsNullOrEmpty(ExternalId))
         CSVImportHelper.AddError(errors, CSVImportErrorType.RequiredFieldMissing, "Missing required field", rowNumber, nameof(ExternalId));
+
+      if (ExternalId.Length > 50)
+        CSVImportHelper.AddError(errors, CSVImportErrorType.InvalidFieldValue, "Must be between 1 and 50 characters", rowNumber, nameof(ExternalId), ExternalId);
     }
     #endregion
   }
