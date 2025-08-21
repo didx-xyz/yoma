@@ -1,6 +1,7 @@
 # Completions (Submissions) CSV Import — README
 
-This README defines the exact CSV structure, formatting, reference data, and validations for importing **Completions / Submissions**. It is written for our custom GPT to follow deterministically (no guessing; reference-data only).
+This document defines the exact CSV structure, formatting, reference data, and validations for importing **Completions / Submissions**.  
+It is written for our custom GPT to follow deterministically (no guessing; reference-data only).
 
 ------------------------------------------------------------------------------
 
@@ -10,12 +11,12 @@ This README defines the exact CSV structure, formatting, reference data, and val
   - completions_countries.json  (ISO alpha-2 codes; **WW (Worldwide) is NOT allowed**)
   - completions_genders.json    (use the `name` values exactly, e.g., Male, Female, Prefer not to say)
 
-- C# CSV DTO model: MyOpportunityInfoCsvImport.cs
+- C# CSV DTO model: `MyOpportunityInfoCsvImport.cs`
 
-- Sample CSV: MyOpportunityInfoCsvImport_Sample.csv
+- Sample CSV: `MyOpportunityInfoCsvImport_Sample.csv`  
   ➜ The **header row and order must exactly match** the sample.
 
-Headers (in this exact order):
+**Headers (in this exact order):**  
 Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId
 
 ------------------------------------------------------------------------------
@@ -37,33 +38,33 @@ Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExte
 At least **one** of **Email** or **PhoneNumber** must be provided (the “Username” requirement).  
 **OpportunityExternalId** is always required.
 
-- Email
+- **Email**
   - Optional if PhoneNumber is provided
   - If present: must be a valid email address
 
-- PhoneNumber
+- **PhoneNumber**
   - Optional if Email is provided
   - If present: must be a valid international number (E.164), e.g. **+27831234567**
 
-- FirstName
+- **FirstName**
   - Optional; if present: **1–125** characters
 
-- Surname
+- **Surname**
   - Optional; if present: **1–125** characters
 
-- Gender
+- **Gender**
   - Optional; if present: value must exist in **completions_genders.json** (`name` field exactly)
 
-- Country
+- **Country**
   - Optional; if present: ISO alpha-2 code from **completions_countries.json**
   - **`WW` (Worldwide) is NOT allowed** for user country
 
-- DateCompleted
+- **DateCompleted**
   - Optional
   - If present: must parse as **`YYYY-MM-DD`** or **`YYYY/MM/DD`**
   - If **omitted**, the system **defaults to current date/time (now)**
 
-- OpportunityExternalId
+- **OpportunityExternalId**
   - **Required**
   - Length: **1–50** characters
   - Must match an existing Opportunity’s ExternalId
@@ -73,8 +74,8 @@ At least **one** of **Email** or **PhoneNumber** must be provided (the “Userna
 ## 3) Reference Data (authoritative)
 
 All reference values must come from the bundled JSON files:
-- Genders → completions_genders.json (use the `name` value exactly)
-- Countries → completions_countries.json (ISO alpha-2; **no `WW`**)
+- **Genders** → completions_genders.json (use the `name` value exactly)
+- **Countries** → completions_countries.json (ISO alpha-2; **no `WW`**)
 
 If a value is not present in these files, it is **invalid**. Do not invent, guess, or “closest-match”.
 
@@ -130,54 +131,65 @@ Human-readable messages remain short; the field name and offending value are sup
 
 ## 7) Examples
 
-Headers:
+**Headers:**  
 Email,PhoneNumber,FirstName,Surname,Gender,Country,DateCompleted,OpportunityExternalId
 
-Valid (email given, date in `YYYY-MM-DD`):
+**Valid (email given, date in `YYYY-MM-DD`):**
 ```csv
 jane.doe@example.com,,Jane,Doe,Female,ZA,2025-08-01,OPP-12345
+```
 
-Valid (phone only, date in YYYY/MM/DD, DateCompleted present):
+**Valid (phone only, date in `YYYY/MM/DD`, DateCompleted present):**
+```csv
 ,+27831234567,John,Smith,Male,NG,2025/08/15,OPP-54321
+```
 
-Valid (no DateCompleted → defaults to now):
+**Valid (no DateCompleted → defaults to now):**
+```csv
 ali.khan@example.com,,Ali,Khan,Prefer not to say,GB,,EXT-0001
+```
 
-Invalid (WW not allowed as user country):
+**Invalid (WW not allowed as user country):**
+```csv
 test.user@example.com,,Test,User,Male,WW,2025-08-01,EXT-9999
+```
 
+------------------------------------------------------------------------------
 
-8) Parsing Note (DateOnly)
+## 8) Parsing Note (DateOnly)
 
 To accept both formats deterministically:
-yyyy-MM-dd
-yyyy/MM/dd
+- `yyyy-MM-dd`
+- `yyyy/MM/dd`
 
 (Zero-padded month and day are required.)
 
-Example implementation:
+Example:
+```csharp
 var formats = new[] { "yyyy-MM-dd", "yyyy/MM/dd" };
 if (!DateOnly.TryParseExact(input, formats, CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
 {
     // add error: InvalidFieldValue ("Invalid date format")
 }
+```
 
-9) Custom GPT Runtime Behaviour
+------------------------------------------------------------------------------
+
+## 9) Custom GPT Runtime Behaviour
 
 - Do not auto-run validation. After generating/cleaning a CSV, always ask: “Run validation now?”
 - Only run full validation when the user explicitly says Yes.
-- Never provide or offer validation report downloads — validation must only be used internally to highlight issues in responses.
+- Validation is background-only: highlight issues in the response; never provide or offer validation report downloads.
 - Always return download links only for the generated clean CSV files.
 - Never output non-downloadable local file paths.
 - Enforce header order exactly as in the sample file.
 - Trim whitespace; reject empty tokens.
+- Detect and exclude phantom rows:
+  - Rows that are completely blank must be ignored (not validated, silently dropped).
 - Resolve Gender and Country strictly against the reference JSON files. Reject WW for Country.
 - Simplify answers for business users:
-* Always explain in plain language what was already done and what is still needed.
-* Do not include technical jargon or internal system names.
-* Example style of output:
-** ✅ “The file has Email, Phone, and Opportunity ID filled in for all rows.”
-** ⚠️ “The Country is missing for 2 users, and Gender needs to be specified for 1 user.”
-
-
-
+  * Clearly state what was filled in and what is still needed.
+  * Do not include technical jargon or internal system names.
+  * Example style of output:
+    - ✅ “The file has Email, Phone, and Opportunity ID filled in for all rows.”
+    - ⚠️ “The Country is missing for 2 users, and Gender needs to be specified for 1 user.”
