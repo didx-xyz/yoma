@@ -71,19 +71,30 @@ releases:
     chart: oci://registry-1.docker.io/bitnamicharts/postgresql
     version: 16.6.3
     installed: {{ .Values.postgresEnabled }}
-    set:
-      - name: fullnameOverride
-        value: postgres-keycloak
-      - name: auth.username
-        value: keycloak
-      - name: auth.database
-        value: keycloak
-      - name: primary.resourcesPreset
-        value: medium
-      - name: primary.persistentVolumeClaimRetentionPolicy.enabled
-        value: true
-      - name: primary.persistentVolumeClaimRetentionPolicy.whenDeleted
-        value: Delete
+    values:
+      - global:
+          security:
+            # Required to override image repositories (`bitnami` -> `bitnamilegacy`)
+            # https://github.com/bitnami/charts/issues/35164
+            # https://github.com/bitnami/containers/issues/84600
+            allowInsecureImages: true
+        fullnameOverride: postgres-keycloak
+        image:
+          repository: bitnamilegacy/postgresql
+        auth:
+          username: keycloak
+          database: keycloak
+        primary:
+          resourcesPreset: medium
+          persistentVolumeClaimRetentionPolicy:
+            enabled: true
+            whenDeleted: Delete
+        volumePermissions:
+          image:
+            repository: bitnamilegacy/os-shell
+        metrics:
+          image:
+            repository: bitnamilegacy/postgres-exporter
     secrets:
       - ./helm/postgresql-keycloak/conf/{{ .Environment.Name }}/secrets.yaml
 
@@ -95,23 +106,30 @@ releases:
     chart: oci://registry-1.docker.io/bitnamicharts/postgresql
     version: 16.6.3
     installed: {{ .Values.postgresEnabled }}
-    set:
-      - name: fullnameOverride
-        value: postgres-yoma
-      - name: auth.username
-        value: yoma
-      - name: auth.database
-        value: yoma-dev
-      - name: primary.resourcesPreset
-        value: medium
-      - name: primary.persistentVolumeClaimRetentionPolicy.enabled
-        value: true
-      - name: primary.persistentVolumeClaimRetentionPolicy.whenDeleted
-        value: Delete
-      # - name: primary.extendedConfiguration
-      #   value: |
-      #     log_statement = 'all'
-      #     log_min_duration_statement = 0
+    values:
+      - global:
+          security:
+            # Required to override image repositories (`bitnami` -> `bitnamilegacy`)
+            # https://github.com/bitnami/charts/issues/35164
+            # https://github.com/bitnami/containers/issues/84600
+            allowInsecureImages: true
+        fullnameOverride: postgres-yoma
+        image:
+          repository: bitnamilegacy/postgresql
+        auth:
+          username: yoma
+          database: yoma-dev
+        primary:
+          resourcesPreset: medium
+          persistentVolumeClaimRetentionPolicy:
+            enabled: true
+            whenDeleted: Delete
+        volumePermissions:
+          image:
+            repository: bitnamilegacy/os-shell
+        metrics:
+          image:
+            repository: bitnamilegacy/postgres-exporter
     secrets:
       - ./helm/postgresql-yoma/conf/{{ .Environment.Name }}/secrets.yaml
 
@@ -124,7 +142,15 @@ releases:
     version: 3.0.1
     installed: {{ .Values.valkeyEnabled }}
     values:
-      - fullnameOverride: valkey
+      - global:
+          security:
+            # Required to override image repositories (`bitnami` -> `bitnamilegacy`)
+            # https://github.com/bitnami/charts/issues/35164
+            # https://github.com/bitnami/containers/issues/84600
+            allowInsecureImages: true
+        fullnameOverride: valkey
+        image:
+          repository: bitnamilegacy/valkey
         architecture: standalone
         auth:
           enabled: false
@@ -137,6 +163,18 @@ releases:
             whenDeleted: Delete
         replica:
           replicaCount: 0
+        sentinel:
+          image:
+            repository: bitnamilegacy/valkey-sentinel
+        metrics:
+          image:
+            repository: bitnamilegacy/valkey-exporter
+        volumePermissions:
+          image:
+            repository: bitnamilegacy/os-shell
+        kubectl:
+          image:
+            repository: bitnamilegacy/kubectl
 
   - name: yoma-api
     labels:
