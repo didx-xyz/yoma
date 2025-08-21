@@ -36,7 +36,8 @@ namespace Yoma.Core.Domain.Opportunity.Services
     private readonly IMediator _mediator;
 
     internal static readonly Status[] Statuses_Expirable = [Status.Active];
-    internal static readonly Status[] Statuses_Deletion = [Status.Inactive, Status.Expired];
+    // customer request: exclude Inactive from auto-deletion. Only Expired opportunities will be auto-deleted. Inactive will remain Inactive indefinitely until manually handled.
+    internal static readonly Status[] Statuses_Deletion = [/* Status.Inactive, */Status.Expired];
     #endregion
 
     #region Constructor
