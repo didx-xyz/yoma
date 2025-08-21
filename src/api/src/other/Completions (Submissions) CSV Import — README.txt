@@ -11,9 +11,9 @@ It is written for our custom GPT to follow deterministically (no guessing; refer
   - completions_countries.json  (ISO alpha-2 codes; **WW (Worldwide) is NOT allowed**)
   - completions_genders.json    (use the `name` values exactly, e.g., Male, Female, Prefer not to say)
 
-- C# CSV DTO model: `completions_csv_import.cs`
+- C# CSV DTO model: `MyOpportunityInfoCsvImport.cs`
 
-- Sample CSV: `Completions_Csv_Import_Sample.csv`  
+- Sample CSV: `MyOpportunityInfoCsvImport_Sample.csv`  
   ➜ The **header row and order must exactly match** the sample.
 
 **Headers (in this exact order):**  
