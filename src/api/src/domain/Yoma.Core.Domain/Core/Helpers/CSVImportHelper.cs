@@ -94,7 +94,7 @@ namespace Yoma.Core.Domain.Core.Helpers
       var recognizedCount = header.Count(h => h != null && modelHeaders.Contains(h));
       if (recognizedCount == 0)
       {
-        AddError(errors, CSVImportErrorType.HeaderMissing, "The header row is missing. The first row appears to be a record.", 1);
+        AddError(errors, CSVImportErrorType.HeaderMissing, "Header row appears to be missing — the first row does not look like a valid header and may instead be a record or incorrectly formatted", 1);
         return;
       }
 

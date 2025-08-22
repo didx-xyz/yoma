@@ -1104,6 +1104,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       var errors = new List<CSVImportErrorRow>();
       using var csv = new CsvHelper.CsvReader(reader, CSVImportHelper.CreateConfig<MyOpportunityInfoCsvImport>(errors));
+      csv.Context.TypeConverterOptionsCache.GetOptions<string>().NullValues.Add(string.Empty);
 
       // Validate header before reading data rows
       // Stop if errors — prevents invalid column-to-property mapping
