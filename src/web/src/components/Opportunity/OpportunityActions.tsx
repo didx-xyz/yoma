@@ -59,8 +59,6 @@ interface OpportunityActionsProps {
   opportunity: OpportunityInfo;
   user?: { roles: string[] };
   organizationId: string;
-  onCopyToClipboard?: (url: string) => void;
-  onDownloadCompletionFiles?: (opportunityId: string) => void;
   returnUrl?: string;
   actionOptions?: OpportunityActionOptions[];
   disabled?: boolean;
@@ -71,8 +69,6 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
   opportunity,
   user,
   organizationId,
-  onCopyToClipboard,
-  onDownloadCompletionFiles,
   returnUrl,
   actionOptions = [
     OpportunityActionOptions.EDIT_DETAILS,
@@ -322,9 +318,8 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
     [queryClient, opportunity.id],
   );
 
-  const handleCopyToClipboard = onCopyToClipboard || defaultCopyToClipboard;
-  const handleDownloadCompletionFiles =
-    onDownloadCompletionFiles || defaultDownloadCompletionFiles;
+  const handleCopyToClipboard = defaultCopyToClipboard;
+  const handleDownloadCompletionFiles = defaultDownloadCompletionFiles;
 
   return (
     <>

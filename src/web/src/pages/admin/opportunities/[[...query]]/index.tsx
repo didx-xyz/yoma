@@ -15,9 +15,7 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import { FaDownload, FaEdit, FaLink } from "react-icons/fa";
-import { IoIosSettings, IoMdPerson } from "react-icons/io";
-import { toast } from "react-toastify";
+import { IoMdPerson } from "react-icons/io";
 import type { Country, Language, SelectOption } from "~/api/models/lookups";
 import type {
   OpportunityCategory,
@@ -27,7 +25,6 @@ import type {
 } from "~/api/models/opportunity";
 import { OpportunityFilterOptions } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
-import { downloadVerificationFilesAdmin } from "~/api/services/myOpportunities";
 import {
   getCategoriesAdmin,
   getCountriesAdmin,
@@ -40,6 +37,10 @@ import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import OpportunityExport from "~/components/Opportunity/Admin/OpportunityExport";
+import {
+  OpportunityActions,
+  OpportunityActionOptions,
+} from "~/components/Opportunity/OpportunityActions";
 import { OpportunityAdminFilterHorizontal } from "~/components/Opportunity/OpportunityAdminFilterHorizontal";
 import { OpportunityAdminFilterVertical } from "~/components/Opportunity/OpportunityAdminFilterVertical";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
@@ -101,7 +102,7 @@ const OpportunitiesAdmin: NextPageWithLayout<{
 
   const lookups_statuses: SelectOption[] = [
     { value: "0", label: "Active" },
-    { value: "1", label: "Deleted" },
+    { value: "1", label: "Archived" },
     { value: "2", label: "Expired" },
     { value: "3", label: "Inactive" },
   ];
@@ -266,6 +267,10 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                   ?.toString()
                   .split("|")
                   .map((x) => {
+                    // Convert "Archived" display label to "Deleted" for API lookup
+                    if (x === "Archived") {
+                      return "1"; // Value for Deleted status
+                    }
                     const item = lookups_statuses.find((y) => y.label === x);
                     return item ? item?.value : "";
                   })
@@ -467,85 +472,6 @@ const OpportunitiesAdmin: NextPageWithLayout<{
     void router.push("/admin/opportunities", undefined, { scroll: true });
   }, [router]);
 
-  const onClick_CopyToClipboard = useCallback((url: string) => {
-    navigator.clipboard.writeText(url);
-    toast.success("URL copied to clipboard!", { autoClose: 2000 });
-  }, []);
-
-  const downloadVerificationFiles = async (
-    e: React.MouseEvent<HTMLButtonElement>,
-    opportunityId: string,
-  ) => {
-    e.preventDefault();
-
-    try {
-      await downloadVerificationFilesAdmin({
-        opportunity: opportunityId,
-        verificationTypes: null,
-      });
-    } catch (error) {
-      console.error(error);
-      toast.error("Download failed. Please try again later.", {
-        autoClose: false,
-      });
-    }
-
-    toast.success(
-      "Your request is scheduled for processing. You will receive an email when the download is ready.",
-    );
-  };
-
-  const renderOpportunityActionsDropdown = (
-    opportunity: OpportunitySearchResultsInfo["items"][number],
-  ) => (
-    <div className="dropdown dropdown-left">
-      <button type="button" title="Actions" className="cursor-pointer">
-        <IoIosSettings className="text-green hover:text-blue size-5" />
-      </button>
-      <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-64 gap-2 p-2 shadow">
-        <li>
-          <button
-            type="button"
-            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-            title="Edit"
-            onClick={() => {
-              router.push(
-                `/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`,
-              );
-            }}
-          >
-            <FaEdit className="text-green size-4" />
-            Edit
-          </button>
-        </li>
-        <li>
-          <button
-            type="button"
-            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-            title="Download completion files"
-            onClick={(e) => downloadVerificationFiles(e, opportunity.id)}
-          >
-            <FaDownload className="text-green size-4" />
-            Download completion files
-          </button>
-        </li>
-        {opportunity?.url && (
-          <li>
-            <button
-              type="button"
-              className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-              title="Copy URL to clipboard"
-              onClick={() => onClick_CopyToClipboard(opportunity.url!)}
-            >
-              <FaLink className="text-green size-4" />
-              Copy Link
-            </button>
-          </li>
-        )}
-      </ul>
-    </div>
-  );
-
   if (error) {
     if (error === 401) return <Unauthenticated />;
     else if (error === 403) return <Unauthorized />;
@@ -720,7 +646,26 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                               {opportunity.title}
                             </Link>
                           </span>
-                          {renderOpportunityActionsDropdown(opportunity)}
+                          <OpportunityActions
+                            opportunity={opportunity}
+                            user={{ roles: [ROLE_ADMIN] }}
+                            organizationId={opportunity.organizationId}
+                            returnUrl={router.asPath}
+                            actionOptions={[
+                              OpportunityActionOptions.EDIT_DETAILS,
+                              OpportunityActionOptions.DOWNLOAD_COMPLETION_FILES,
+                              OpportunityActionOptions.COPY_EXTERNAL_LINK,
+                              OpportunityActionOptions.VIEW_ATTENDANCE_LINKS,
+                              OpportunityActionOptions.CREATE_ATTENDANCE_LINK,
+                              OpportunityActionOptions.MAKE_ACTIVE,
+                              OpportunityActionOptions.MAKE_INACTIVE,
+                              OpportunityActionOptions.MAKE_VISIBLE,
+                              OpportunityActionOptions.MAKE_HIDDEN,
+                              OpportunityActionOptions.MARK_FEATURED,
+                              OpportunityActionOptions.UNMARK_FEATURED,
+                              OpportunityActionOptions.DELETE,
+                            ]}
+                          />
                         </div>
 
                         <div className="text-gray-dark flex flex-col gap-2">
@@ -924,7 +869,26 @@ const OpportunitiesAdmin: NextPageWithLayout<{
                           <td className="border-gray-light border-b-2 whitespace-nowrap">
                             <div className="flex flex-row items-center justify-center gap-2">
                               {/* ACTIONS */}
-                              {renderOpportunityActionsDropdown(opportunity)}
+                              <OpportunityActions
+                                opportunity={opportunity}
+                                user={{ roles: [ROLE_ADMIN] }}
+                                organizationId={opportunity.organizationId}
+                                returnUrl={router.asPath}
+                                actionOptions={[
+                                  OpportunityActionOptions.EDIT_DETAILS,
+                                  OpportunityActionOptions.DOWNLOAD_COMPLETION_FILES,
+                                  OpportunityActionOptions.COPY_EXTERNAL_LINK,
+                                  OpportunityActionOptions.VIEW_ATTENDANCE_LINKS,
+                                  OpportunityActionOptions.CREATE_ATTENDANCE_LINK,
+                                  OpportunityActionOptions.MAKE_ACTIVE,
+                                  OpportunityActionOptions.MAKE_INACTIVE,
+                                  OpportunityActionOptions.MAKE_VISIBLE,
+                                  OpportunityActionOptions.MAKE_HIDDEN,
+                                  OpportunityActionOptions.MARK_FEATURED,
+                                  OpportunityActionOptions.UNMARK_FEATURED,
+                                  OpportunityActionOptions.DELETE,
+                                ]}
+                              />
                             </div>
                           </td>
                         </tr>
