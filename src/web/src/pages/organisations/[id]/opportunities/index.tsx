@@ -17,13 +17,11 @@ import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useMemo, useState, type ReactElement } from "react";
 import { FaDownload, FaPlusCircle, FaRocket, FaUpload } from "react-icons/fa";
 import { IoIosAdd, IoIosWarning } from "react-icons/io";
-import { toast } from "react-toastify";
 import {
   Status,
   type OpportunitySearchFilterAdmin,
   type OpportunitySearchResults,
 } from "~/api/models/opportunity";
-import { downloadVerificationFilesAdmin } from "~/api/services/myOpportunities";
 import { getOpportunitiesAdmin } from "~/api/services/opportunities";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
@@ -375,11 +373,6 @@ const Opportunities: NextPageWithLayout<{
     },
     [searchFilter, redirectWithSearchFilterParams],
   );
-
-  const onClick_CopyToClipboard = useCallback((url: string) => {
-    navigator.clipboard.writeText(url);
-    toast.success("URL copied to clipboard!", { autoClose: 2000 });
-  }, []);
   //#endregion Event Handlers
 
   if (error) {
@@ -645,28 +638,6 @@ const Opportunities: NextPageWithLayout<{
                         <OpportunityActions
                           opportunity={opportunity}
                           organizationId={id}
-                          onCopyToClipboard={onClick_CopyToClipboard}
-                          onDownloadCompletionFiles={async (
-                            opportunityId: string,
-                          ) => {
-                            try {
-                              await downloadVerificationFilesAdmin({
-                                opportunity: opportunityId,
-                                verificationTypes: null,
-                              });
-                              toast.success(
-                                "Your request is scheduled for processing. You will receive an email when the download is ready.",
-                              );
-                            } catch (error) {
-                              console.error(error);
-                              toast.error(
-                                "Download failed. Please try again later.",
-                                {
-                                  autoClose: false,
-                                },
-                              );
-                            }
-                          }}
                           returnUrl={getSafeUrl(
                             returnUrl?.toString(),
                             router.asPath,
@@ -958,28 +929,6 @@ const Opportunities: NextPageWithLayout<{
                             <OpportunityActions
                               opportunity={opportunity}
                               organizationId={id}
-                              onCopyToClipboard={onClick_CopyToClipboard}
-                              onDownloadCompletionFiles={async (
-                                opportunityId: string,
-                              ) => {
-                                try {
-                                  await downloadVerificationFilesAdmin({
-                                    opportunity: opportunityId,
-                                    verificationTypes: null,
-                                  });
-                                  toast.success(
-                                    "Your request is scheduled for processing. You will receive an email when the download is ready.",
-                                  );
-                                } catch (error) {
-                                  console.error(error);
-                                  toast.error(
-                                    "Download failed. Please try again later.",
-                                    {
-                                      autoClose: false,
-                                    },
-                                  );
-                                }
-                              }}
                               returnUrl={getSafeUrl(
                                 returnUrl?.toString(),
                                 router.asPath,
