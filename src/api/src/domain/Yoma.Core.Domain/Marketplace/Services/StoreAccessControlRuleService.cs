@@ -18,7 +18,6 @@ using Yoma.Core.Domain.Marketplace.Models;
 using Yoma.Core.Domain.Marketplace.Validators;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
-using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 
@@ -438,7 +437,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
           break;
 
         default:
-          throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status}' not supported");
+          throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(StoreAccessControlRuleStatus)} of '{status}' not supported");
       }
 
       var statusId = _storeAccessControlRuleStatusService.GetByName(status.ToString()).Id;

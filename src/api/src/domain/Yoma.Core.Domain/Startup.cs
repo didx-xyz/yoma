@@ -217,7 +217,7 @@ namespace Yoma.Core.Domain
         s => s.ProcessExpiration(), options.OpportunityExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Expiration Notifications ({OpportunityBackgroundService.Statuses_Expirable.JoinNames()} ending within {options.OpportunityExpirationNotificationIntervalInDays} days)",
         s => s.ProcessExpirationNotifications(), options.OpportunityExpirationNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
-      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Deletion ({OpportunityBackgroundService.Statuses_Deletion.JoinNames()} for more than {options.OpportunityDeletionIntervalInDays} days)",
+      RecurringJob.AddOrUpdate<IOpportunityBackgroundService>($"Opportunity Deletion [Archiving] ({OpportunityBackgroundService.Statuses_Deletion.JoinNames()} for more than {options.OpportunityDeletionIntervalInDays} days)",
         s => s.ProcessDeletion(), options.OpportunityDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //partner sharing
