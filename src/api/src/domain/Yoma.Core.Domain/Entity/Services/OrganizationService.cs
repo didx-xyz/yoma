@@ -24,7 +24,6 @@ using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.IdentityProvider.Extensions;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
-using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Services
@@ -675,7 +674,7 @@ namespace Yoma.Core.Domain.Entity.Services
             break;
 
           default:
-            throw new ArgumentOutOfRangeException(nameof(request), $"{nameof(Status)} of '{request.Status}' not supported");
+            throw new ArgumentOutOfRangeException(nameof(request), $"{nameof(OrganizationStatus)} of '{request.Status}' not supported");
         }
 
         var statusId = _organizationStatusService.GetByName(request.Status.ToString()).Id;

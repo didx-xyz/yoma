@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.Core.Extensions
       if (string.IsNullOrEmpty(separator))
         throw new ArgumentException("Separator cannot be null or empty", nameof(separator));
 
-      return string.Join(separator, values.Select(v => v.ToString()));
+      return string.Join(separator, values.Select(v => v.ToDescription()));
     }
   }
 }

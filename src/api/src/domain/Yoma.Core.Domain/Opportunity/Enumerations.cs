@@ -1,8 +1,11 @@
+using System.ComponentModel;
+
 namespace Yoma.Core.Domain.Opportunity
 {
   public enum Status
   {
     Active, //flagged as expired provided ended (notified)
+    [Description("Archived")]
     Deleted,
     Expired, //flagged as deleted if expired and not modified for x days
     Inactive, //customer request: exclude Inactive from auto-deletion. Only Expired opportunities will be auto-deleted. Inactive will remain Inactive indefinitely until manually handled; flagged as deleted if inactive and not modified for x days

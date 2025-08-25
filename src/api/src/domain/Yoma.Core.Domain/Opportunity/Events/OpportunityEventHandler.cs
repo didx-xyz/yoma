@@ -1,6 +1,7 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.PartnerSharing.Interfaces;
 using Yoma.Core.Domain.PartnerSharing.Services;
 
@@ -33,14 +34,14 @@ namespace Yoma.Core.Domain.Opportunity.Events
             //only scheduled for active opportunities
             if (!SharingService.Statuses_Opportunity_Creatable.Contains(notification.Entity.Status))
             {
-              _logger.LogInformation("Scheduling of partner sharing creation skipped for opportunity with id {id} and status {status}", notification.Entity.Id, notification.Entity.Status);
+              _logger.LogInformation("Scheduling of partner sharing creation skipped for opportunity with id {id} and status {status}", notification.Entity.Id, notification.Entity.Status.ToDescription());
               break;
             }
 
             //provide organization is active
             if (notification.Entity.OrganizationStatus != Entity.OrganizationStatus.Active)
             {
-              _logger.LogInformation("Scheduling of partner sharing creation skipped for opportunity with id {id} and status {status}: Organization status {orgStatus}", notification.Entity.Id, notification.Entity.Status, notification.Entity.OrganizationStatus);
+              _logger.LogInformation("Scheduling of partner sharing creation skipped for opportunity with id {id} and status {status}: Organization status {orgStatus}", notification.Entity.Id, notification.Entity.Status.ToDescription(), notification.Entity.OrganizationStatus);
               break;
             }
 
@@ -51,7 +52,7 @@ namespace Yoma.Core.Domain.Opportunity.Events
           case EventType.Update:
             if (!SharingService.Statuses_Opportunity_Updatable.Contains(notification.Entity.Status))
             {
-              _logger.LogInformation("Scheduling of partner sharing update skipped for opportunity with id {id} and status {status}", notification.Entity.Id, notification.Entity.Status);
+              _logger.LogInformation("Scheduling of partner sharing update skipped for opportunity with id {id} and status {status}", notification.Entity.Id, notification.Entity.Status.ToDescription());
               break;
             }
 
@@ -63,7 +64,7 @@ namespace Yoma.Core.Domain.Opportunity.Events
           case EventType.Delete:
             if (!SharingService.Statuses_Opportunity_CanDelete.Contains(notification.Entity.Status))
             {
-              _logger.LogInformation("Scheduling of partner sharing deletion skipped for opportunity with id {id} and status {status}", notification.Entity.Id, notification.Entity.Status);
+              _logger.LogInformation("Scheduling of partner sharing deletion skipped for opportunity with id {id} and status {status}", notification.Entity.Id, notification.Entity.Status.ToDescription());
               break;
             }
 
@@ -73,14 +74,14 @@ namespace Yoma.Core.Domain.Opportunity.Events
               case Status.Inactive:
               case Status.Expired:
                 if (notification.Entity.OrganizationStatus != Entity.OrganizationStatus.Deleted)
-                  throw new InvalidOperationException($"Event {notification.EventType}: Opportunity with status {notification.Entity.Status} must be associated with a deleted organization");
+                  throw new InvalidOperationException($"Event {notification.EventType}: Opportunity with status {notification.Entity.Status.ToDescription()} must be associated with a deleted organization");
                 break;
 
               case Status.Deleted:
                 break;
 
               default:
-                throw new InvalidOperationException($"{nameof(Status)} of '{notification.Entity.Status}' not supported");
+                throw new InvalidOperationException($"{nameof(Status)} of '{notification.Entity.Status.ToDescription()}' not supported");
             }
 
             await _sharingService.ScheduleDelete(PartnerSharing.EntityType.Opportunity, notification.Entity.Id);
