@@ -122,7 +122,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                       {
                         var reason = opportunity.OrganizationStatus != OrganizationStatus.Active
                           ? $"Associated organization is no longer '{OrganizationStatus.Active}'"
-                          : $"Opportunity status of '{SharingService.Statuses_Opportunity_Creatable.JoinNames()}' expected. Current status '{opportunity.Status}'";
+                          : $"Opportunity status of '{SharingService.Statuses_Opportunity_Creatable.JoinNames()}' expected. Current status '{opportunity.Status.ToDescription()}'";
 
                         _logger.LogInformation("Action '{action}': Aborting for '{entityType}' and item with id '{id}'. {reason}", action, item.EntityType, item.Id, reason);
 
@@ -156,7 +156,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
 
                       //scheduling failsafe post implicit adjustment
                       if (!SharingService.Statuses_Opportunity_Updatable.Contains(opportunity.Status))
-                        throw new InvalidOperationException($"Action '{action}': Opportunity status of '{SharingService.Statuses_Opportunity_Updatable.JoinNames()}' expected. Current status '{opportunity.Status}'");
+                        throw new InvalidOperationException($"Action '{action}': Opportunity status of '{SharingService.Statuses_Opportunity_Updatable.JoinNames()}' expected. Current status '{opportunity.Status.ToDescription()}'");
 
                       request.ExternalId = item.EntityExternalId;
                       await sharingProviderClient.UpdateOpportunity(request);
@@ -176,7 +176,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
 
                       //scheduling failsafe
                       if (!SharingService.Statuses_Opportunity_CanDelete.Contains(opportunity.Status))
-                        throw new InvalidOperationException($"Action '{action}': Opportunity status of '{SharingService.Statuses_Opportunity_CanDelete.JoinNames()}' expected. Current status '{opportunity.Status}'");
+                        throw new InvalidOperationException($"Action '{action}': Opportunity status of '{SharingService.Statuses_Opportunity_CanDelete.JoinNames()}' expected. Current status '{opportunity.Status.ToDescription()}'");
 
                       switch (opportunity.Status)
                       {
@@ -184,14 +184,14 @@ namespace Yoma.Core.Domain.PartnerSharing.Services
                         case Status.Inactive:
                         case Status.Expired:
                           if (opportunity.OrganizationStatus != OrganizationStatus.Deleted)
-                            throw new InvalidOperationException($"Processing action {action}: Opportunity with status {opportunity.Status} must be associated with a deleted organization");
+                            throw new InvalidOperationException($"Processing action {action}: Opportunity with status {opportunity.Status.ToDescription()} must be associated with a deleted organization");
                           break;
 
                         case Status.Deleted:
                           break;
 
                         default:
-                          throw new InvalidOperationException($"Opportunity status of '{opportunity.Status}' not supported");
+                          throw new InvalidOperationException($"Opportunity status of '{opportunity.Status.ToDescription()}' not supported");
                       }
 
                       await sharingProviderClient.DeleteOpportunity(item.EntityExternalId);
