@@ -6,7 +6,6 @@ import {
 } from "@tanstack/react-query";
 import axios from "axios";
 import { useAtomValue } from "jotai";
-import moment from "moment";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
@@ -16,19 +15,10 @@ import { useRouter } from "next/router";
 import iconZlto from "public/images/icon-zlto.svg";
 import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useMemo, useState, type ReactElement } from "react";
-import {
-  FaDownload,
-  FaEdit,
-  FaExternalLinkAlt,
-  FaExternalLinkSquareAlt,
-  FaLink,
-  FaPlusCircle,
-  FaUpload,
-} from "react-icons/fa";
-import { IoIosAdd, IoIosSettings, IoIosWarning } from "react-icons/io";
+import { FaDownload, FaPlusCircle, FaRocket, FaUpload } from "react-icons/fa";
+import { IoIosAdd, IoIosWarning } from "react-icons/io";
 import { toast } from "react-toastify";
 import {
-  OpportunityInfo,
   Status,
   type OpportunitySearchFilterAdmin,
   type OpportunitySearchResults,
@@ -41,6 +31,10 @@ import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import OpportunityExport from "~/components/Opportunity/Admin/OpportunityExport";
 import { OpportunityImport } from "~/components/Opportunity/Admin/OpportunityImport";
+import {
+  OpportunityActions,
+  OpportunityActionOptions,
+} from "~/components/Opportunity/OpportunityActions";
 import OpportunityStatus from "~/components/Opportunity/OpportunityStatus";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -386,105 +380,7 @@ const Opportunities: NextPageWithLayout<{
     navigator.clipboard.writeText(url);
     toast.success("URL copied to clipboard!", { autoClose: 2000 });
   }, []);
-
-  const downloadVerificationFiles = async (
-    e: React.MouseEvent<HTMLButtonElement>,
-    opportunityId: string,
-  ) => {
-    e.preventDefault();
-
-    try {
-      await downloadVerificationFilesAdmin({
-        opportunity: opportunityId,
-        verificationTypes: null,
-      });
-    } catch (error) {
-      console.error(error);
-      toast.error("Download failed. Please try again later.", {
-        autoClose: false,
-      });
-    }
-
-    toast.success(
-      "Your request is scheduled for processing. You will receive an email when the download is ready.",
-    );
-  };
   //#endregion Event Handlers
-
-  // Opportunity actions dropdown
-  const renderOpportunityActionsDropdown = (opportunity: OpportunityInfo) => (
-    <div className="dropdown dropdown-left">
-      <button type="button" title="Actions" className="cursor-pointer">
-        <IoIosSettings className="text-green hover:text-blue size-5" />
-      </button>
-      <ul className="menu dropdown-content rounded-box bg-base-100 z-50 w-64 gap-2 p-2 shadow">
-        <li>
-          <Link
-            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-            href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
-          >
-            <FaEdit className="text-green size-4" />
-            Edit Opportunity Details
-          </Link>
-        </li>
-        <li>
-          <button
-            type="button"
-            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-            title="Download completion files"
-            onClick={(e) => {
-              downloadVerificationFiles(e, opportunity.id);
-            }}
-          >
-            <FaDownload className="text-green size-4" />
-            Download Completion Files
-          </button>
-        </li>
-        {opportunity?.url && (
-          <li>
-            <button
-              type="button"
-              className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-              title="Copy URL to clipboard"
-              onClick={() => {
-                onClick_CopyToClipboard(opportunity.url!);
-              }}
-            >
-              <FaLink className="text-green size-4" />
-              Copy External Link
-            </button>
-          </li>
-        )}
-        <li>
-          <Link
-            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-            href={`/organisations/${id}/links?entities=${opportunity.id}`}
-          >
-            <FaExternalLinkSquareAlt className="text-green size-4" />
-            View Attendance Links
-          </Link>
-        </li>
-        <li>
-          <Link
-            title="Create Attendance Link"
-            className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-            href={`/organisations/${id}/links/create?name=${encodeURIComponent(
-              `Attendance-${moment().format("DDMMMYYYY")}`,
-            )}&description=&entityType=0&entityId=${opportunity.id}&usagesLimit=&dateEnd=${encodeURIComponent(
-              moment().format("DDMMMYYYY"),
-            )}&distributionList=&includeQRCode=&lockToDistributionList=false${`&returnUrl=${encodeURIComponent(
-              getSafeUrl(returnUrl?.toString(), router.asPath),
-            )}`}`}
-          >
-            <FaExternalLinkAlt className="text-green size-4" />
-            Create Attendance Link
-            <br />
-            (Quick Link)
-          </Link>
-        </li>
-      </ul>
-    </div>
-  );
 
   if (error) {
     if (error === 401) return <Unauthenticated />;
@@ -622,7 +518,7 @@ const Opportunities: NextPageWithLayout<{
                   : "hover:border-orange hover:text-gray"
               }`}
             >
-              Deleted
+              Archived
               {(totalCountDeleted ?? 0) > 0 && (
                 <div className="badge bg-warning my-auto ml-2 p-1 text-[12px] font-semibold text-white">
                   {totalCountDeleted}
@@ -683,40 +579,46 @@ const Opportunities: NextPageWithLayout<{
         {!isLoadingSearchResults && (
           <div className="md:shadow-custom rounded-lg md:bg-white md:p-4">
             {/* NO ROWS */}
-            {searchResults && searchResults.items?.length === 0 && !query && (
-              <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
-                <NoRowsMessage
-                  title={"You will find your active opportunities here"}
-                  description={
-                    "This is where you will find all the awesome opportunities you have shared"
-                  }
-                />
-                {currentOrganisationInactive ? (
-                  <span className="btn btn-primary bg-purple rounded-3xl px-16 brightness-75">
-                    Add opportunity (disabled)
-                  </span>
-                ) : (
-                  <Link
-                    href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
-                      getSafeUrl(returnUrl?.toString(), router.asPath),
-                    )}`}`}
-                    className="bg-theme btn btn-primary rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
-                    id="btnCreateOpportunity" // e2e
-                  >
-                    <IoIosAdd className="mr-1 h-5 w-5" />
-                    Add opportunity
-                  </Link>
-                )}
-              </div>
-            )}
-            {searchResults && searchResults.items?.length === 0 && query && (
-              <div className="flex flex-col place-items-center py-32">
-                <NoRowsMessage
-                  title={"No opportunities found"}
-                  description={"Please try refining your search query."}
-                />
-              </div>
-            )}
+            {searchResults &&
+              searchResults.items?.length === 0 &&
+              !query &&
+              !status && (
+                <div className="flex h-fit flex-col items-center rounded-lg bg-white pb-8 md:pb-16">
+                  <NoRowsMessage
+                    title={"Ready to share amazing opportunities?"}
+                    description={
+                      "Create your first opportunity and start making a positive impact in your community"
+                    }
+                    icon={<FaRocket className="text-warning size-6" />}
+                  />
+                  {currentOrganisationInactive ? (
+                    <span className="btn btn-primary bg-purple rounded-3xl px-16 brightness-75">
+                      Add opportunity (disabled)
+                    </span>
+                  ) : (
+                    <Link
+                      href={`/organisations/${id}/opportunities/create${`?returnUrl=${encodeURIComponent(
+                        getSafeUrl(returnUrl?.toString(), router.asPath),
+                      )}`}`}
+                      className="bg-theme btn btn-primary rounded-3xl border-0 px-16 brightness-105 hover:brightness-110"
+                      id="btnCreateOpportunity" // e2e
+                    >
+                      <IoIosAdd className="mr-1 h-5 w-5" />
+                      Add opportunity
+                    </Link>
+                  )}
+                </div>
+              )}
+            {searchResults &&
+              searchResults.items?.length === 0 &&
+              (query || status) && (
+                <div className="py-32x flex flex-col place-items-center">
+                  <NoRowsMessage
+                    title={"No opportunities found"}
+                    description={"Please try refining your search query."}
+                  />
+                </div>
+              )}
 
             {/* RESULTS */}
             {searchResults && searchResults.items?.length > 0 && (
@@ -740,7 +642,50 @@ const Opportunities: NextPageWithLayout<{
                           </Link>
                         </span>
 
-                        {renderOpportunityActionsDropdown(opportunity)}
+                        <OpportunityActions
+                          opportunity={opportunity}
+                          organizationId={id}
+                          onCopyToClipboard={onClick_CopyToClipboard}
+                          onDownloadCompletionFiles={async (
+                            opportunityId: string,
+                          ) => {
+                            try {
+                              await downloadVerificationFilesAdmin({
+                                opportunity: opportunityId,
+                                verificationTypes: null,
+                              });
+                              toast.success(
+                                "Your request is scheduled for processing. You will receive an email when the download is ready.",
+                              );
+                            } catch (error) {
+                              console.error(error);
+                              toast.error(
+                                "Download failed. Please try again later.",
+                                {
+                                  autoClose: false,
+                                },
+                              );
+                            }
+                          }}
+                          returnUrl={getSafeUrl(
+                            returnUrl?.toString(),
+                            router.asPath,
+                          )}
+                          actionOptions={[
+                            OpportunityActionOptions.EDIT_DETAILS,
+                            OpportunityActionOptions.DOWNLOAD_COMPLETION_FILES,
+                            OpportunityActionOptions.COPY_EXTERNAL_LINK,
+                            OpportunityActionOptions.VIEW_ATTENDANCE_LINKS,
+                            OpportunityActionOptions.CREATE_ATTENDANCE_LINK,
+                            OpportunityActionOptions.MAKE_ACTIVE,
+                            OpportunityActionOptions.MAKE_INACTIVE,
+                            OpportunityActionOptions.MAKE_VISIBLE,
+                            OpportunityActionOptions.MAKE_HIDDEN,
+                            OpportunityActionOptions.MARK_FEATURED,
+                            OpportunityActionOptions.UNMARK_FEATURED,
+                            OpportunityActionOptions.DELETE,
+                          ]}
+                        />
                       </div>
 
                       <div className="text-gray-dark flex flex-col gap-2">
@@ -1010,7 +955,50 @@ const Opportunities: NextPageWithLayout<{
                         <td className="border-gray-light border-b-2 whitespace-nowrap">
                           <div className="flex flex-row items-center justify-center gap-2">
                             {/* ACTIONS */}
-                            {renderOpportunityActionsDropdown(opportunity)}
+                            <OpportunityActions
+                              opportunity={opportunity}
+                              organizationId={id}
+                              onCopyToClipboard={onClick_CopyToClipboard}
+                              onDownloadCompletionFiles={async (
+                                opportunityId: string,
+                              ) => {
+                                try {
+                                  await downloadVerificationFilesAdmin({
+                                    opportunity: opportunityId,
+                                    verificationTypes: null,
+                                  });
+                                  toast.success(
+                                    "Your request is scheduled for processing. You will receive an email when the download is ready.",
+                                  );
+                                } catch (error) {
+                                  console.error(error);
+                                  toast.error(
+                                    "Download failed. Please try again later.",
+                                    {
+                                      autoClose: false,
+                                    },
+                                  );
+                                }
+                              }}
+                              returnUrl={getSafeUrl(
+                                returnUrl?.toString(),
+                                router.asPath,
+                              )}
+                              actionOptions={[
+                                OpportunityActionOptions.EDIT_DETAILS,
+                                OpportunityActionOptions.DOWNLOAD_COMPLETION_FILES,
+                                OpportunityActionOptions.COPY_EXTERNAL_LINK,
+                                OpportunityActionOptions.VIEW_ATTENDANCE_LINKS,
+                                OpportunityActionOptions.CREATE_ATTENDANCE_LINK,
+                                OpportunityActionOptions.MAKE_ACTIVE,
+                                OpportunityActionOptions.MAKE_INACTIVE,
+                                OpportunityActionOptions.MAKE_VISIBLE,
+                                OpportunityActionOptions.MAKE_HIDDEN,
+                                OpportunityActionOptions.MARK_FEATURED,
+                                OpportunityActionOptions.UNMARK_FEATURED,
+                                OpportunityActionOptions.DELETE,
+                              ]}
+                            />
                           </div>
                         </td>
                       </tr>

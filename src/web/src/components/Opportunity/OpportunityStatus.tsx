@@ -20,7 +20,7 @@ const OpportunityStatus: React.FC<{ status: string }> = ({ status }) => {
       case "Deleted":
         return (
           <span className="badge bg-yellow-tint w-20 text-red-400">
-            Deleted
+            Archived
           </span>
         );
       default:

@@ -100,7 +100,7 @@ const OrgAdminBadges: React.FC<BadgesProps> = ({ opportunity, isAdmin }) => {
         <div className="badge bg-yellow-tint text-yellow">Inactive</div>
       )}
       {opportunity?.status == "Deleted" && (
-        <div className="badge bg-green-light text-red-400">Deleted</div>
+        <div className="badge bg-green-light text-red-400">Archived</div>
       )}
 
       <div className="flex justify-between">
