@@ -33,6 +33,27 @@ export async function fetchClientEnv() {
   }
 }
 
+// Sanitize strings to prevent Cloudflare OWASP rule violations
+function sanitizeForFormData(value: string): string {
+  if (typeof value !== "string") return value;
+
+  return (
+    value
+      // Remove null characters that trigger "Invalid character in request (null character)"
+      .replace(/\0/g, "")
+      // Remove other control characters EXCEPT \r and \n (we'll handle those next)
+      // This prevents the regex from removing \r\n after we replace them with spaces
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, "")
+      // Replace CR/LF characters that trigger "HTTP Header Injection Attack via payload (CR/LF detected)"
+      .replace(/\r\n/g, " ")
+      .replace(/\r/g, " ")
+      .replace(/\n/g, " ")
+      // Normalize multiple spaces
+      .replace(/\s+/g, " ")
+      .trim()
+  );
+}
+
 function appendToFormData(
   formData: FormData,
   key: string,
@@ -45,7 +66,9 @@ function appendToFormData(
       appendToFormData(formData, arrayKey, item, useIndexer);
     });
   } else if (value instanceof File) {
-    formData.append(key, value, value.name);
+    // Sanitize filename to prevent Cloudflare OWASP rule violations
+    const sanitizedName = sanitizeForFormData(value.name);
+    formData.append(key, value, sanitizedName);
   } else if (typeof value === "object" && value !== null) {
     for (const subProperty in value) {
       if (value.hasOwnProperty(subProperty)) {
@@ -54,7 +77,10 @@ function appendToFormData(
       }
     }
   } else {
-    formData.append(key, value);
+    // Sanitize all form field values to prevent Cloudflare OWASP rule violations
+    const sanitizedValue =
+      typeof value === "string" ? sanitizeForFormData(value) : value;
+    formData.append(key, sanitizedValue);
   }
 }
 
