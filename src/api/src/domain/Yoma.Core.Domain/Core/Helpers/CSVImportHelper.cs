@@ -70,31 +70,34 @@ namespace Yoma.Core.Domain.Core.Helpers
       };
     }
 
+    // Validates that the CSV header includes all model properties (required + optional);
+    // optional fields may be blank but headers must exist — done for usability (single fixed template) and simpler, consistent validation
     public static void ValidateHeader<TModel>(CsvReader csv, List<CSVImportErrorRow> errors)
     {
       ArgumentNullException.ThrowIfNull(csv, nameof(csv));
       ArgumentNullException.ThrowIfNull(errors, nameof(errors));
 
+      var modelProps = _propsCache.GetOrAdd(typeof(TModel), t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
+      var modelHeaders = modelProps.Select(GetPropertyName).ToHashSet(StringComparer.InvariantCultureIgnoreCase);
+
       if (!csv.Read() || csv.Context?.Reader?.HeaderRecord?.Length == 0)
       {
-        AddError(errors, CSVImportErrorType.HeaderMissing, "The header row is missing", 1);
+        AddError(errors, CSVImportErrorType.HeaderMissing, $"Header row is missing or empty. Expected headers {string.Join(", ", modelHeaders)}", 1);
         return;
       }
 
       // Register header mapping before reading data rows
       csv.ReadHeader();
 
-      var header = (csv.Context?.Reader?.HeaderRecord) ?? throw new InvalidOperationException("CSV header is missing after reading the header row");
+      var header = (csv.Context?.Reader?.HeaderRecord) ?? throw new InvalidOperationException("Header is missing after reading the header row");
 
-      var modelProps = _propsCache.GetOrAdd(typeof(TModel), t => t.GetProperties(BindingFlags.Public | BindingFlags.Instance));
-      var modelHeaders = modelProps.Select(GetPropertyName).ToHashSet(StringComparer.InvariantCultureIgnoreCase);
-
-      // Heuristic: if none of the parsed "headers" match expected model headers,
-      // the header was probably deleted and the first data row was treated as header.
+      // Heuristic: no expected headers were recognized.
+      // This means the header row is invalid and the first data row
+      // was likely treated as the header instead.
       var recognizedCount = header.Count(h => h != null && modelHeaders.Contains(h));
       if (recognizedCount == 0)
       {
-        AddError(errors, CSVImportErrorType.HeaderMissing, "Header row appears to be missing — the first row does not look like a valid header and may instead be a record or incorrectly formatted", 1);
+        AddError(errors, CSVImportErrorType.HeaderMissing, $"Header row is invalid. Expected headers: {string.Join(", ", modelHeaders)}", 1);
         return;
       }
 
