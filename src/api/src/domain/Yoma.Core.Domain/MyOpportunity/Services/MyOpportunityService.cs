@@ -1444,7 +1444,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         reasons.Add("it has not been published");
 
       if (opportunity.Status != Status.Active)
-        reasons.Add($"its status is '{opportunity.Status}'");
+        reasons.Add($"its status is '{opportunity.Status.ToDescription()}'");
 
       if (opportunity.DateStart > DateTimeOffset.UtcNow)
         reasons.Add($"it has not yet started (start date: {opportunity.DateStart:yyyy-MM-dd})");

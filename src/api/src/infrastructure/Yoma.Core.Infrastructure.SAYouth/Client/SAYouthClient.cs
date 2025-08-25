@@ -119,7 +119,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Client
           break;
 
         default:
-          throw new InvalidOperationException($"Invalid / unsupported opportunity status '{request.Opportunity.Status}'");
+          throw new InvalidOperationException($"Invalid / unsupported opportunity status '{request.Opportunity.Status.ToDescription()}'");
       }
 
       if (action == null) return;

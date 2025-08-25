@@ -448,7 +448,7 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Update opportunity status (Active / Inactive / Deleted)")]
+    [SwaggerOperation(Summary = "Update opportunity status (Active / Inactive / Deleted [Archived])")]
     [HttpPatch("{id}/{status}")]
     [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}, {Constants.Role_OrganizationAdmin}")]
