@@ -26,4 +26,4 @@ appVersion: 3.x.x
 dependencies:
   - name: common
     version: 2.x.x
-    repository: oci://registry-1.docker.io/bitnamicharts
+    repository: oci://ghcr.io/didx-xyz/bitnami-oss-charts
