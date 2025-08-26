@@ -67,20 +67,21 @@ releases:
     labels:
       app: postgresql-keycloak
     namespace: {{ .Values.namespace }}
-    # https://github.com/bitnami/charts/tree/main/bitnami/postgresql
-    chart: oci://registry-1.docker.io/bitnamicharts/postgresql
+    # https://github.com/didx-xyz/bitnami-charts/tree/main/bitnami/postgresql
+    chart: oci://ghcr.io/didx-xyz/bitnami-oss-charts/postgresql
     version: 16.6.3
     installed: {{ .Values.postgresEnabled }}
     values:
       - global:
           security:
-            # Required to override image repositories (`bitnami` -> `bitnamilegacy`)
+            # Required to override image repositories (`docker.io/bitnami` -> `ghcr.io/didx-xyz/bitnami-oss`)
             # https://github.com/bitnami/charts/issues/35164
             # https://github.com/bitnami/containers/issues/84600
             allowInsecureImages: true
+          imageRegistry: ghcr.io
         fullnameOverride: postgres-keycloak
         image:
-          repository: bitnamilegacy/postgresql
+          repository: didx-xyz/bitnami-oss/postgresql
         auth:
           username: keycloak
           database: keycloak
@@ -91,10 +92,10 @@ releases:
             whenDeleted: Delete
         volumePermissions:
           image:
-            repository: bitnamilegacy/os-shell
+            repository: didx-xyz/bitnami-oss/os-shell
         metrics:
           image:
-            repository: bitnamilegacy/postgres-exporter
+            repository: didx-xyz/bitnami-oss/postgres-exporter
     secrets:
       - ./helm/postgresql-keycloak/conf/{{ .Environment.Name }}/secrets.yaml
 
@@ -102,20 +103,21 @@ releases:
     labels:
       app: postgresql
     namespace: {{ .Values.namespace }}
-    # https://github.com/bitnami/charts/tree/main/bitnami/postgresql
-    chart: oci://registry-1.docker.io/bitnamicharts/postgresql
+    # https://github.com/didx-xyz/bitnami-charts/tree/main/bitnami/postgresql
+    chart: oci://ghcr.io/didx-xyz/bitnami-oss-charts/postgresql
     version: 16.6.3
     installed: {{ .Values.postgresEnabled }}
     values:
       - global:
           security:
-            # Required to override image repositories (`bitnami` -> `bitnamilegacy`)
+            # Required to override image repositories (`docker.io/bitnami` -> `ghcr.io/didx-xyz/bitnami-oss`)
             # https://github.com/bitnami/charts/issues/35164
             # https://github.com/bitnami/containers/issues/84600
             allowInsecureImages: true
+          imageRegistry: ghcr.io
         fullnameOverride: postgres-yoma
         image:
-          repository: bitnamilegacy/postgresql
+          repository: didx-xyz/bitnami-oss/postgresql
         auth:
           username: yoma
           database: yoma-dev
@@ -126,10 +128,10 @@ releases:
             whenDeleted: Delete
         volumePermissions:
           image:
-            repository: bitnamilegacy/os-shell
+            repository: didx-xyz/bitnami-oss/os-shell
         metrics:
           image:
-            repository: bitnamilegacy/postgres-exporter
+            repository: didx-xyz/bitnami-oss/postgres-exporter
     secrets:
       - ./helm/postgresql-yoma/conf/{{ .Environment.Name }}/secrets.yaml
 
@@ -137,20 +139,21 @@ releases:
     labels:
       app: valkey
     namespace: {{ .Values.namespace }}
-    # https://github.com/bitnami/charts/tree/main/bitnami/valkey
-    chart: oci://registry-1.docker.io/bitnamicharts/valkey
+    # https://github.com/didx-xyz/bitnami-charts/tree/main/bitnami/valkey
+    chart: oci://ghcr.io/didx-xyz/bitnami-oss-charts/valkey
     version: 3.0.1
     installed: {{ .Values.valkeyEnabled }}
     values:
       - global:
           security:
-            # Required to override image repositories (`bitnami` -> `bitnamilegacy`)
+            # Required to override image repositories (`docker.io/bitnami` -> `ghcr.io/didx-xyz/bitnami-oss`)
             # https://github.com/bitnami/charts/issues/35164
             # https://github.com/bitnami/containers/issues/84600
             allowInsecureImages: true
+          imageRegistry: ghcr.io
         fullnameOverride: valkey
         image:
-          repository: bitnamilegacy/valkey
+          repository: didx-xyz/bitnami-oss/valkey
         architecture: standalone
         auth:
           enabled: false
@@ -165,16 +168,16 @@ releases:
           replicaCount: 0
         sentinel:
           image:
-            repository: bitnamilegacy/valkey-sentinel
+            repository: didx-xyz/bitnami-oss/valkey-sentinel
         metrics:
           image:
-            repository: bitnamilegacy/valkey-exporter
+            repository: didx-xyz/bitnami-oss/valkey-exporter
         volumePermissions:
           image:
-            repository: bitnamilegacy/os-shell
+            repository: didx-xyz/bitnami-oss/os-shell
         kubectl:
           image:
-            repository: bitnamilegacy/kubectl
+            repository: didx-xyz/bitnami-oss/kubectl
 
   - name: yoma-api
     labels:
