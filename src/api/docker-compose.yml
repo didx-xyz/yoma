@@ -63,8 +63,7 @@ services:
     user: root
     command: |
       sh -c 'curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-core-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-core-0.9.1-all.jar && \
-        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-http-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-http-0.9.1-all.jar && \
-        cp /local-providers/*.jar /opt/keycloak/providers/ && \
+        cp /local-providers/keycloak-phone-provider.jar /local-providers/keycloak-phone-provider.resources.jar /local-providers/keycloak-sms-provider-dummy.jar /local-providers/email-required-authenticator.jar /opt/keycloak/providers/ && \
         chown -R 1000:1000 /opt/keycloak/providers'
     volumes:
       - keycloak:/opt/keycloak/providers
@@ -127,6 +126,7 @@ services:
       KC_SPI_PHONE_DEFAULT_YOMA_DEFAULT_NUMBER_REGEX: ^\\+?\\d+$
     ports:
       - 0.0.0.0:8080:8080
+      - 0.0.0.0:9090:9000
     command:
       - start-dev
       - --db=postgres
@@ -144,7 +144,7 @@ services:
     image: curlimages/curl
     container_name: keycloak-health
     restart: "no"
-    command: /bin/sh -c "until curl -fsS http://keycloak:8080/health/ready; do sleep 5; done"
+    command: /bin/sh -c "until curl -fsS http://keycloak:9000/health/ready; do sleep 5; done"
     depends_on:
       keycloak:
         condition: service_started
