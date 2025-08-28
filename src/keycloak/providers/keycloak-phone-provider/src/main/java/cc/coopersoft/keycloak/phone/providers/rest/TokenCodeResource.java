@@ -1,7 +1,5 @@
 package cc.coopersoft.keycloak.phone.providers.rest;
 
-import org.jboss.logging.Logger;
-import org.jboss.resteasy.annotations.cache.NoCache;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.services.validation.Validation;
 
@@ -16,9 +14,11 @@ import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import org.jboss.resteasy.annotations.cache.NoCache;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON;
 import static jakarta.ws.rs.core.MediaType.APPLICATION_JSON_TYPE;
 import jakarta.ws.rs.core.Response;
+import org.jboss.logging.Logger;
 
 public class TokenCodeResource {
 

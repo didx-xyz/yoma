@@ -29,6 +29,9 @@ import org.keycloak.userprofile.UserProfile;
 import org.keycloak.userprofile.UserProfileContext;
 import org.keycloak.userprofile.UserProfileProvider;
 import org.keycloak.userprofile.ValidationException;
+import org.keycloak.userprofile.UserProfile;
+import org.keycloak.userprofile.Attributes;
+
 
 import cc.coopersoft.keycloak.phone.Utils;
 import static cc.coopersoft.keycloak.phone.authentication.forms.SupportPhonePages.FIELD_PHONE_NUMBER;
@@ -219,10 +222,10 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
 
         // Get user profile provider and create user profile
         UserProfileProvider profileProvider = session.getProvider(UserProfileProvider.class);
-        UserProfile profile = profileProvider.create(UserProfileContext.REGISTRATION_USER_CREATION, formData);
+        UserProfile profile = profileProvider.create(UserProfileContext.REGISTRATION, formData);
 
         // Retrieve other attributes from the profile
-        String emailFromProfile = profile.getAttributes().getFirstValue(UserModel.EMAIL);
+        String emailFromProfile = profile.getAttributes().getFirst(UserModel.EMAIL);
 
         // Set event details
         context.getEvent().detail(Details.EMAIL, emailFromProfile);
@@ -279,7 +282,7 @@ public class RegistrationPhoneUserCreation implements FormActionFactory, FormAct
 
         // Create the user profile and set the user
         UserProfileProvider profileProvider = session.getProvider(UserProfileProvider.class);
-        UserProfile profile = profileProvider.create(UserProfileContext.REGISTRATION_USER_CREATION, formData);
+        UserProfile profile = profileProvider.create(UserProfileContext.REGISTRATION, formData);
         UserModel user = profile.create();
 
         user.setEnabled(true);
