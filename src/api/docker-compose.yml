@@ -12,7 +12,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres"]
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -31,12 +31,13 @@ services:
     ports:
       - 6379:6379
     healthcheck:
-      test: ["CMD", "valkey-cli", "ping"]
+      test: [ "CMD", "valkey-cli", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 3
 
-  postgres-init: # Initialise the local postgresql server by populating a test user and organisation(s) for local dev
+  postgres-init:
+    # Initialise the local postgresql server by populating a test user and organisation(s) for local dev
     image: postgres:17-alpine
     container_name: postgres-init
     depends_on:
@@ -55,13 +56,14 @@ services:
     command: >
       bash -c "PGPASSWORD=$$POSTGRES_PASSWORD psql -h $$PGHOST -U $$POSTGRES_USER -d $$POSTGRES_DB -f /post.sql"
 
-  keycloak-init: # Initialise the local Keycloak server by adding the bcrypt & webhook provider
+  keycloak-init:
+    # Initialise the local Keycloak server by adding the bcrypt & webhook provider
     image: curlimages/curl
     container_name: keycloak-init
     user: root
     command: |
-      sh -c 'curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.3.0/keycloak-webhook-0.3.0-all.jar \
-        -o /opt/keycloak/providers/keycloak-webhook-0.3.0.jar && \
+      sh -c 'curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-core-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-core-0.9.1-all.jar && \
+        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-http-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-http-0.9.1-all.jar && \
         cp /local-providers/*.jar /opt/keycloak/providers/ && \
         chown -R 1000:1000 /opt/keycloak/providers'
     volumes:
@@ -80,14 +82,15 @@ services:
     volumes:
       - keycloak-pg:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "keycloak"]
+      test: [ "CMD", "pg_isready", "-U", "keycloak" ]
       interval: 10s
       timeout: 5s
       retries: 3
 
-  keycloak: # Local Keycloak server
+  keycloak:
+    # Local Keycloak server
     # https://github.com/adorsys/keycloak-config-cli/pull/928
-    image: quay.io/keycloak/keycloak:22.0.1
+    image: quay.io/keycloak/keycloak:26.3.2
     container_name: keycloak
     environment:
       WEBHOOK_EVENTS_TAKEN: "LOGIN,REGISTER,UPDATE_PROFILE"
@@ -127,7 +130,7 @@ services:
     command:
       - start-dev
       - --db=postgres
-      - --features=declarative-user-profile
+      - --features=declarative-ui
     depends_on:
       keycloak-init:
         condition: service_completed_successfully
@@ -136,7 +139,8 @@ services:
     volumes:
       - keycloak:/opt/keycloak/providers
 
-  keycloak-health: # Wait for Keycloak to be ready before running keycloak-config service
+  keycloak-health:
+    # Wait for Keycloak to be ready before running keycloak-config service
     image: curlimages/curl
     container_name: keycloak-health
     restart: "no"
@@ -145,8 +149,9 @@ services:
       keycloak:
         condition: service_started
 
-  keycloak-config: # Import Keycloak configuration
-    image: adorsys/keycloak-config-cli:5.8.0-22.0.0
+  keycloak-config:
+    # Import Keycloak configuration
+    image: adorsys/keycloak-config-cli:6.4.0-26.1.0
     container_name: keycloak-config
     environment:
       KEYCLOAK_URL: "http://keycloak:8080/"
@@ -246,7 +251,8 @@ services:
       yoma-api-health:
         condition: service_completed_successfully
 
-  yoma-api: # Local Yoma API server
+  yoma-api:
+    # Local Yoma API server
     # platform: linux/amd64 # Until we get multi-arch docker images
     image: ${REGISTRY:-local}/yoma-api:${API_TAG:-latest}
     container_name: yoma-api
@@ -282,17 +288,16 @@ services:
     container_name: yoma-api-health
     restart: "no"
     command: >
-      /bin/sh -c "
-      until curl -fsS 'http://yoma-api:5000/api/v3/lookup/skill?PageNumber=1&PageSize=10' | grep '\"totalCount\":\s*[1-9][0-9]*' > /dev/null; do
+      /bin/sh -c " until curl -fsS 'http://yoma-api:5000/api/v3/lookup/skill?PageNumber=1&PageSize=10' | grep '\"totalCount\":\s*[1-9][0-9]*' > /dev/null; do
         echo 'API data not populated yet.';
         sleep 5;
-      done;
-      echo 'API data populated. Health check passed.'"
+      done; echo 'API data populated. Health check passed.'"
     depends_on:
       yoma-api:
         condition: service_started
 
-  test-harness-health: # Wait for sqlserver-init to be finished.
+  test-harness-health:
+    # Wait for sqlserver-init to be finished.
     image: curlimages/curl
     container_name: test-harness-health
     restart: "no"

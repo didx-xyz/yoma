@@ -14,6 +14,7 @@ import org.keycloak.util.JsonSerialization;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Optional;
+import jakarta.validation.constraints.NotNull;
 
 public class PhoneOtpCredentialModel extends CredentialModel {
 
