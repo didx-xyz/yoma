@@ -52,12 +52,18 @@ const CLIENT_WEB = "yoma-web";
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
+  debug: process.env.NODE_ENV === "development",
   logger: {
     error(code, metadata) {
-      console.error(code, metadata);
+      console.error("NextAuth Error:", code, metadata);
     },
     warn(code) {
-      console.warn(code);
+      console.warn("NextAuth Warning:", code);
+    },
+    debug(code, metadata) {
+      if (process.env.NODE_ENV === "development") {
+        console.debug("NextAuth Debug:", code, metadata);
+      }
     },
   },
   events: {
@@ -164,7 +170,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
       },
     },
     callbackUrl: {
@@ -172,7 +178,7 @@ export const authOptions: NextAuthOptions = {
       options: {
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
       },
     },
     csrfToken: {
@@ -181,7 +187,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
       },
     },
     pkceCodeVerifier: {
@@ -190,7 +196,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
         maxAge: COOKIES_LIFE_TIME,
       },
     },
@@ -200,7 +206,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
         maxAge: COOKIES_LIFE_TIME,
       },
     },
@@ -210,7 +216,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
       },
     },
   },

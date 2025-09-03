@@ -1757,7 +1757,7 @@ emailTheme: phone
 eventsEnabled: true
 eventsListeners:
   - jboss-logging
-  - listener-webhook
+  - webhook-http
 enabledEventTypes:
   - SEND_RESET_PASSWORD
   - UPDATE_CONSENT_ERROR

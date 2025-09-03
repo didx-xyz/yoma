@@ -12,7 +12,7 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=postgres
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -31,7 +31,7 @@ services:
     ports:
       - 6379:6379
     healthcheck:
-      test: [ "CMD", "valkey-cli", "ping" ]
+      test: ["CMD", "valkey-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -63,6 +63,9 @@ services:
     user: root
     command: |
       sh -c 'curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-core-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-core-0.9.1-all.jar && \
+        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-http-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-http-0.9.1-all.jar && \
+        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-amqp-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-amqp-0.9.1-all.jar && \
+        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-syslog-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-syslog-0.9.1-all.jar && \
         cp /local-providers/keycloak-phone-provider.jar /local-providers/keycloak-phone-provider.resources.jar /local-providers/keycloak-sms-provider-dummy.jar /local-providers/email-required-authenticator.jar /opt/keycloak/providers/ && \
         chown -R 1000:1000 /opt/keycloak/providers'
     volumes:
@@ -81,7 +84,7 @@ services:
     volumes:
       - keycloak-pg:/var/lib/postgresql/data
     healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "keycloak" ]
+      test: ["CMD", "pg_isready", "-U", "keycloak"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -93,7 +96,7 @@ services:
     container_name: keycloak
     environment:
       WEBHOOK_EVENTS_TAKEN: "LOGIN,REGISTER,UPDATE_PROFILE"
-      WEBHOOK_HTTP_BASE_PATH: "http://yoma-api:5000/api/v3/keycloak"
+      WEBHOOK_HTTP_BASE_PATH: "http://yoma-api:5000/api/v3/keycloak/webhook"
       WEBHOOK_HTTP_AUTH_USERNAME: whAdmin
       WEBHOOK_HTTP_AUTH_PASSWORD: password
       KC_DB_URL: jdbc:postgresql://keycloak-pg/keycloak
