@@ -60,9 +60,9 @@ export const authOptions: NextAuthOptions = {
     warn(code) {
       console.warn("NextAuth Warning:", code);
     },
-    debug(code, metadata) {
-      // Remove debug logging to reduce session size
-    },
+    // Remove debug logging to reduce session size
+    // debug(code, metadata) {
+    // },
   },
   events: {
     async signOut({ token }) {
