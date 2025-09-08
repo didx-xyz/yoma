@@ -74,7 +74,7 @@ jobs:
     #   ${{ matrix.project }}-changes: ${{ steps.filter.outputs.changes }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3
         id: filter
         with:
@@ -83,7 +83,7 @@ jobs:
             changes:
               - '${{ matrix.dir }}/**'
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         with:
           node-version: 20
@@ -98,7 +98,7 @@ jobs:
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
         working-directory: ${{ matrix.dir }}
 
-      - uses: actions/setup-dotnet@v4
+      - uses: actions/setup-dotnet@v5
         if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
         with:
           dotnet-version: 9.x
@@ -142,7 +142,7 @@ jobs:
               NEXT_PUBLIC_ENVIRONMENT=production
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
@@ -213,7 +213,7 @@ jobs:
               NEXT_PUBLIC_ENVIRONMENT=production
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
@@ -290,7 +290,7 @@ jobs:
       cancel-in-progress: true
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
@@ -362,7 +362,7 @@ jobs:
           API_TAG: ${{ steps.filter.outputs.api == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
           YOUTH_TAG: ${{ steps.filter.outputs.web == 'true' && needs.docker-push.outputs.image_version || 'latest' }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: steps.should-run.outputs.run == 'true'
         with:
           node-version: 20
@@ -429,7 +429,7 @@ jobs:
     if: github.triggering_actor != 'dependabot[bot]'
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - uses: dorny/paths-filter@v3 # https://github.com/actions/runner/pull/2477
         id: filter
         with:
@@ -461,7 +461,7 @@ jobs:
       - name: SOPS Binary Installer
         if: steps.should-run.outputs.run == 'true'
         uses: mdgreenwald/mozilla-sops-action@v1.6.0
-      - uses: aws-actions/configure-aws-credentials@v4
+      - uses: aws-actions/configure-aws-credentials@v5
         if: steps.should-run.outputs.run == 'true'
         with:
           aws-region: ${{ secrets.AWS_REGION }}
@@ -469,7 +469,7 @@ jobs:
           role-session-name: github-cicd
       - run: aws eks update-kubeconfig --name ${{ secrets.CLUSTER }}
         if: steps.should-run.outputs.run == 'true'
-      - uses: tailscale/github-action@main
+      - uses: tailscale/github-action@v3
         if: steps.should-run.outputs.run == 'true'
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
