@@ -3,10 +3,10 @@
     <#if section = "header">
         ${msg("updatePhoneNumber")}
     <#elseif section = "form">
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css">
-      <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-      <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
+      <link rel="stylesheet" href="${url.resourcesPath}/css/intlTelInput.css">
+      <script src="${url.resourcesPath}/js/vue.min.js"></script>
+      <script src="${url.resourcesPath}/js/axios.min.js"></script>
+      <script src="${url.resourcesPath}/js/intlTelInput.min.js"></script>
       <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
       <script src="${url.resourcesPath}/js/otp-input.directive.js"></script>
 

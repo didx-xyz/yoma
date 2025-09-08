@@ -8,7 +8,7 @@ accessTokenLifespan: 300
 accessTokenLifespanForImplicitFlow: 900
 ssoSessionIdleTimeout: 1800
 ssoSessionMaxLifespan: 36000
-ssoSessionIdleTimeoutRememberMe: 2592000
+ssoSessionIdleTimeoutRememberMe: 2592000 # 30 days
 ssoSessionMaxLifespanRememberMe: 0
 offlineSessionIdleTimeout: 2592000
 offlineSessionMaxLifespanEnabled: false
@@ -34,16 +34,14 @@ loginWithEmailAllowed: true
 duplicateEmailsAllowed: false
 resetPasswordAllowed: true
 editUsernameAllowed: true
-bruteForceProtected: false
+bruteForceProtected: true
 permanentLockout: false
-maxTemporaryLockouts: 0
-bruteForceStrategy: MULTIPLE
-maxFailureWaitSeconds: 0
-minimumQuickLoginWaitSeconds: 0
-waitIncrementSeconds: 0
-quickLoginCheckMilliSeconds: 0
-maxDeltaTimeSeconds: 0
-failureFactor: 0
+maxFailureWaitSeconds: 900
+minimumQuickLoginWaitSeconds: 60
+waitIncrementSeconds: 60
+quickLoginCheckMilliSeconds: 1000
+maxDeltaTimeSeconds: 43200
+failureFactor: 30
 roles:
   realm:
     - id: 25be88e1-2f97-4ea3-b936-a19a94e45a65
@@ -364,10 +362,9 @@ otpPolicyLookAheadWindow: 1
 otpPolicyPeriod: 30
 otpPolicyCodeReusable: false
 otpSupportedApplications:
-  - totpAppFreeOTPName
-  - totpAppGoogleName
   - totpAppMicrosoftAuthenticatorName
-localizationTexts: {}
+  - totpAppGoogleName
+  - totpAppFreeOTPName
 webAuthnPolicyRpEntityName: keycloak
 webAuthnPolicySignatureAlgorithms:
   - ES256
@@ -426,7 +423,6 @@ clients:
     frontchannelLogout: false
     protocol: openid-connect
     attributes:
-      realm_client: "false"
       post.logout.redirect.uris: +
     authenticationFlowBindingOverrides: {}
     fullScopeAllowed: false
@@ -434,9 +430,8 @@ clients:
     defaultClientScopes:
       - web-origins
       - acr
-      - roles
       - profile
-      - basic
+      - roles
       - email
     optionalClientScopes:
       - address
@@ -466,7 +461,6 @@ clients:
     frontchannelLogout: false
     protocol: openid-connect
     attributes:
-      realm_client: "false"
       post.logout.redirect.uris: +
       pkce.code.challenge.method: S256
     authenticationFlowBindingOverrides: {}
@@ -484,14 +478,13 @@ clients:
       - acr
       - roles
       - profile
-      - basic
       - email
     optionalClientScopes:
       - address
       - phone
       - offline_access
       - microprofile-jwt
-  - id: fcb3a033-88a8-480d-8236-33f3a8d43eb3
+  - id: 52aa93b5-d52f-41e2-b79c-a6282b8702dd
     clientId: admin-cli
     name: ${client_admin-cli}
     surrogateAuthRequired: false
@@ -510,18 +503,15 @@ clients:
     publicClient: true
     frontchannelLogout: false
     protocol: openid-connect
-    attributes:
-      realm_client: "false"
-      client.use.lightweight.access.token.enabled: "true"
+    attributes: {}
     authenticationFlowBindingOverrides: {}
-    fullScopeAllowed: true
+    fullScopeAllowed: false
     nodeReRegistrationTimeout: 0
     defaultClientScopes:
       - web-origins
       - acr
       - roles
       - profile
-      - basic
       - email
     optionalClientScopes:
       - address
@@ -532,19 +522,19 @@ clients:
     clientId: atingi
     name: atingi
     description: Atingi SSO Partner (private client)
-    rootUrl: https://preprod.atingi.org
-    adminUrl: https://preprod.atingi.org
-    baseUrl: https://preprod.atingi.org
+    rootUrl: $(env:CLIENT_ATINGI_URL)
+    adminUrl: $(env:CLIENT_ATINGI_URL)
+    baseUrl: $(env:CLIENT_ATINGI_URL)
     surrogateAuthRequired: false
-    enabled: true
+    enabled: $(env:CLIENT_ATINGI_ENABLED)
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
-    secret: superSecretAtingiClientSecret
+    secret: $(env:CLIENT_ATINGI_SECRET)
     redirectUris:
-      - https://keycloak-preprod.enovationaws.com/realms/master/broker/yoma-prod/endpoint
       - /*
+      - $(env:CLIENT_ATINGI_URL_REDIRECT)
     webOrigins:
-      - https://preprod.atingi.org
+      - $(env:CLIENT_ATINGI_URL)
     notBefore: 0
     bearerOnly: false
     consentRequired: false
@@ -556,11 +546,10 @@ clients:
     frontchannelLogout: true
     protocol: openid-connect
     attributes:
-      realm_client: "false"
+      post.logout.redirect.uris: $(env:CLIENT_ATINGI_URL)/*##$(env:CLIENT_ATINGI_URL_POST_LOGOUT_REDIRECT)/*
       oidc.ciba.grant.enabled: "false"
-      backchannel.logout.session.required: "true"
-      post.logout.redirect.uris: https://preprod.atingi.org/*##https://keycloak-preprod.enovationaws.com/realms/master/broker/yoma-prod/endpoint/*
       oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
       backchannel.logout.revoke.offline.tokens: "false"
       use.refresh.tokens: "true"
     authenticationFlowBindingOverrides: {}
@@ -573,7 +562,6 @@ clients:
       - profile
       - roles
       - yoma-api
-      - basic
       - email
       - audience_scope
     optionalClientScopes:
@@ -615,242 +603,6 @@ clients:
       - phone
       - offline_access
       - microprofile-jwt
-  - id: 01ad9bb0-a756-434d-940f-b9ffe3f37c9e
-    clientId: goodwall
-    name: goodwall
-    description: Goodwall SSO Partner (private client)
-    rootUrl: https://www.goodwall.io
-    adminUrl: https://www.goodwall.io
-    baseUrl: https://www.goodwall.io
-    surrogateAuthRequired: false
-    enabled: true
-    alwaysDisplayInConsole: false
-    clientAuthenticatorType: client-secret
-    secret: superSecretAtingiClientSecret
-    redirectUris:
-      - goodwallauth://yomaredirect
-      - /*
-    webOrigins:
-      - https://www.goodwall.io
-    notBefore: 0
-    bearerOnly: false
-    consentRequired: false
-    standardFlowEnabled: true
-    implicitFlowEnabled: false
-    directAccessGrantsEnabled: false
-    serviceAccountsEnabled: false
-    publicClient: false
-    frontchannelLogout: true
-    protocol: openid-connect
-    attributes:
-      realm_client: "false"
-      oidc.ciba.grant.enabled: "false"
-      backchannel.logout.session.required: "true"
-      post.logout.redirect.uris: https://www.goodwall.io/*
-      oauth2.device.authorization.grant.enabled: "false"
-      backchannel.logout.revoke.offline.tokens: "false"
-      use.refresh.tokens: "true"
-    authenticationFlowBindingOverrides: {}
-    fullScopeAllowed: true
-    nodeReRegistrationTimeout: -1
-    defaultClientScopes:
-      - web-origins
-      - acr
-      - offline_access
-      - profile
-      - roles
-      - yoma-api
-      - basic
-      - email
-      - audience_scope
-    optionalClientScopes:
-      - address
-      - phone
-      - microprofile-jwt
-  - id: 42e6fb2b-7f5a-4af4-8f1a-272c437fd025
-    clientId: iiasa
-    name: iiasa
-    description: IIASA SSO Partner (private client)
-    rootUrl: https://localhost:44345
-    adminUrl: https://localhost:44345
-    baseUrl: https://localhost:44345
-    surrogateAuthRequired: false
-    enabled: true
-    alwaysDisplayInConsole: false
-    clientAuthenticatorType: client-secret
-    secret: superSecretIIASAClientSecret
-    redirectUris:
-      - https://localhost:44345/signin-yoma-oidc
-      - /*
-    webOrigins:
-      - https://localhost:44345
-    notBefore: 0
-    bearerOnly: false
-    consentRequired: false
-    standardFlowEnabled: true
-    implicitFlowEnabled: false
-    directAccessGrantsEnabled: false
-    serviceAccountsEnabled: false
-    publicClient: false
-    frontchannelLogout: true
-    protocol: openid-connect
-    attributes:
-      realm_client: "false"
-      oidc.ciba.grant.enabled: "false"
-      backchannel.logout.session.required: "true"
-      post.logout.redirect.uris: https://localhost:44345/*
-      oauth2.device.authorization.grant.enabled: "false"
-      backchannel.logout.revoke.offline.tokens: "false"
-      use.refresh.tokens: "true"
-    authenticationFlowBindingOverrides: {}
-    fullScopeAllowed: true
-    nodeReRegistrationTimeout: -1
-    defaultClientScopes:
-      - web-origins
-      - acr
-      - offline_access
-      - profile
-      - roles
-      - yoma-api
-      - basic
-      - email
-      - audience_scope
-    optionalClientScopes:
-      - address
-      - phone
-      - microprofile-jwt
-  - id: ff74b115-0fdb-4a94-9e05-7459601ae7ee
-    clientId: maza-app
-    name: maza-app
-    description: Maza App client for API based user onboarding (private client)
-    surrogateAuthRequired: false
-    enabled: true
-    alwaysDisplayInConsole: false
-    clientAuthenticatorType: client-secret
-    secret: superSecretMazaAppClientSecret
-    redirectUris:
-      - /*
-    webOrigins:
-      - /*
-    notBefore: 0
-    bearerOnly: false
-    consentRequired: false
-    standardFlowEnabled: true
-    implicitFlowEnabled: false
-    directAccessGrantsEnabled: false
-    serviceAccountsEnabled: true
-    publicClient: false
-    frontchannelLogout: true
-    protocol: openid-connect
-    attributes:
-      realm_client: "false"
-      oidc.ciba.grant.enabled: "false"
-      backchannel.logout.session.required: "true"
-      oauth2.device.authorization.grant.enabled: "false"
-      backchannel.logout.revoke.offline.tokens: "false"
-    authenticationFlowBindingOverrides: {}
-    fullScopeAllowed: true
-    nodeReRegistrationTimeout: -1
-    protocolMappers:
-      - id: c2eea262-e566-4d1d-af42-d91ec3067d01
-        name: Client ID
-        protocol: openid-connect
-        protocolMapper: oidc-usersessionmodel-note-mapper
-        consentRequired: false
-        config:
-          user.session.note: client_id
-          id.token.claim: "true"
-          access.token.claim: "true"
-          claim.name: client_id
-          jsonType.label: String
-      - id: b6209d89-f832-424d-a6d1-f3a5ffdb6fc5
-        name: Client IP Address
-        protocol: openid-connect
-        protocolMapper: oidc-usersessionmodel-note-mapper
-        consentRequired: false
-        config:
-          user.session.note: clientAddress
-          id.token.claim: "true"
-          access.token.claim: "true"
-          claim.name: clientAddress
-          jsonType.label: String
-      - id: 93b070c3-edba-461c-9d09-d7bd3cd6e1cc
-        name: Client Host
-        protocol: openid-connect
-        protocolMapper: oidc-usersessionmodel-note-mapper
-        consentRequired: false
-        config:
-          user.session.note: clientHost
-          id.token.claim: "true"
-          access.token.claim: "true"
-          claim.name: clientHost
-          jsonType.label: String
-    defaultClientScopes:
-      - web-origins
-      - acr
-      - roles
-      - offline_access
-      - profile
-      - yoma-api
-      - basic
-      - audience_scope
-      - email
-    optionalClientScopes:
-      - address
-      - phone
-      - microprofile-jwt
-  - id: 4369c21f-5fee-41e7-82ec-a70b9e3a69a8
-    clientId: mini-sass
-    name: mini-sass
-    description: miniSASS SSO Partner (private client)
-    rootUrl: http://localhost:5000
-    adminUrl: http://localhost:5000
-    baseUrl: http://localhost:5000
-    surrogateAuthRequired: false
-    enabled: true
-    alwaysDisplayInConsole: false
-    clientAuthenticatorType: client-secret
-    secret: superSecretMiniSassClientSecret
-    redirectUris:
-      - /*
-      - http://localhost:5000/authentication/api/yoma/callback
-    webOrigins:
-      - http://localhost:5000
-    notBefore: 0
-    bearerOnly: false
-    consentRequired: false
-    standardFlowEnabled: true
-    implicitFlowEnabled: false
-    directAccessGrantsEnabled: false
-    serviceAccountsEnabled: false
-    publicClient: false
-    frontchannelLogout: true
-    protocol: openid-connect
-    attributes:
-      realm_client: "false"
-      oidc.ciba.grant.enabled: "false"
-      backchannel.logout.session.required: "true"
-      post.logout.redirect.uris: http://localhost:5000/*
-      oauth2.device.authorization.grant.enabled: "false"
-      backchannel.logout.revoke.offline.tokens: "false"
-      use.refresh.tokens: "true"
-    authenticationFlowBindingOverrides: {}
-    fullScopeAllowed: true
-    nodeReRegistrationTimeout: -1
-    defaultClientScopes:
-      - web-origins
-      - acr
-      - offline_access
-      - profile
-      - roles
-      - yoma-api
-      - basic
-      - email
-      - audience_scope
-    optionalClientScopes:
-      - address
-      - phone
-      - microprofile-jwt
   - id: 8fb0b64b-d141-41be-90a2-2bc5298eb53b
     clientId: realm-management
     name: ${client_realm-management}
@@ -870,23 +622,22 @@ clients:
     publicClient: false
     frontchannelLogout: false
     protocol: openid-connect
-    attributes:
-      realm_client: "true"
+    attributes: {}
     authenticationFlowBindingOverrides: {}
     fullScopeAllowed: false
     nodeReRegistrationTimeout: 0
     defaultClientScopes:
       - web-origins
       - acr
-      - roles
       - profile
+      - roles
       - email
     optionalClientScopes:
       - address
       - phone
       - offline_access
       - microprofile-jwt
-  - id: a42fe7c1-9fac-4de9-a5a3-8a28148fb69f
+  - id: 206f5a78-ba34-4a15-88a2-048298bc6b40
     clientId: security-admin-console
     name: ${client_security-admin-console}
     rootUrl: ${authAdminUrl}
@@ -910,47 +661,144 @@ clients:
     frontchannelLogout: false
     protocol: openid-connect
     attributes:
-      realm_client: "false"
-      client.use.lightweight.access.token.enabled: "true"
       post.logout.redirect.uris: +
       pkce.code.challenge.method: S256
     authenticationFlowBindingOverrides: {}
-    fullScopeAllowed: true
+    fullScopeAllowed: false
     nodeReRegistrationTimeout: 0
     protocolMappers:
-      - id: 62e108d6-d2ca-42f4-8fe9-acbb7d3497f6
+      - id: e6cfd124-39d4-4394-b240-a7fdd180367c
         name: locale
         protocol: openid-connect
         protocolMapper: oidc-usermodel-attribute-mapper
         consentRequired: false
         config:
+          userinfo.token.claim: "true"
           user.attribute: locale
           id.token.claim: "true"
           access.token.claim: "true"
           claim.name: locale
           jsonType.label: String
-          userinfo.token.claim: "true"
     defaultClientScopes:
       - web-origins
       - acr
-      - roles
       - profile
-      - basic
+      - roles
       - email
     optionalClientScopes:
       - address
       - phone
       - offline_access
       - microprofile-jwt
-  - id: 259d0a20-1c74-4c0e-8797-3df0fb628113
-    clientId: unicef-kenya
-    name: unicef-kenya
-    description: UNICEF Kenya SMS client for API based user onboarding (private client)
+  - id: 01ad9bb0-a756-434d-940f-b9ffe3f37c9e
+    clientId: goodwall
+    name: goodwall
+    description: Goodwall SSO Partner (private client)
+    rootUrl: $(env:CLIENT_GOODWALL_URL)
+    adminUrl: $(env:CLIENT_GOODWALL_URL)
+    baseUrl: $(env:CLIENT_GOODWALL_URL)
     surrogateAuthRequired: false
-    enabled: true
+    enabled: $(env:CLIENT_GOODWALL_ENABLED)
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
-    secret: superSecretUnicefKenyaClientSecret
+    secret: $(env:CLIENT_GOODWALL_SECRET)
+    redirectUris:
+      - /*
+      - $(env:CLIENT_GOODWALL_URL_REDIRECT)
+    webOrigins:
+      - $(env:CLIENT_GOODWALL_URL)
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    publicClient: false
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      post.logout.redirect.uris: $(env:CLIENT_GOODWALL_URL)/*
+      oidc.ciba.grant.enabled: "false"
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      backchannel.logout.revoke.offline.tokens: "false"
+      use.refresh.tokens: "true"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: true
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - offline_access
+      - profile
+      - roles
+      - yoma-api
+      - email
+      - audience_scope
+    optionalClientScopes:
+      - address
+      - phone
+      - microprofile-jwt
+  - id: 42e6fb2b-7f5a-4af4-8f1a-272c437fd025
+    clientId: iiasa
+    name: iiasa
+    description: IIASA SSO Partner (private client)
+    rootUrl: $(env:CLIENT_IIASA_URL)
+    adminUrl: $(env:CLIENT_IIASA_URL)
+    baseUrl: $(env:CLIENT_IIASA_URL)
+    surrogateAuthRequired: false
+    enabled: $(env:CLIENT_IIASA_ENABLED)
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_IIASA_SECRET)
+    redirectUris:
+      - /*
+      - $(env:CLIENT_IIASA_URL_REDIRECT)
+    webOrigins:
+      - $(env:CLIENT_IIASA_URL)
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    publicClient: false
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      post.logout.redirect.uris: $(env:CLIENT_IIASA_URL)/*
+      oidc.ciba.grant.enabled: "false"
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      backchannel.logout.revoke.offline.tokens: "false"
+      use.refresh.tokens: "true"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: true
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - offline_access
+      - profile
+      - roles
+      - yoma-api
+      - email
+      - audience_scope
+    optionalClientScopes:
+      - address
+      - phone
+      - microprofile-jwt
+  - id: ff74b115-0fdb-4a94-9e05-7459601ae7ee
+    clientId: maza-app
+    name: maza-app
+    description: Maza App client for API based user onboarding (private client)
+    surrogateAuthRequired: false
+    enabled: $(env:CLIENT_MAZA_APP_ENABLED)
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_MAZA_APP_SECRET)
     redirectUris:
       - /*
     webOrigins:
@@ -966,44 +814,46 @@ clients:
     frontchannelLogout: true
     protocol: openid-connect
     attributes:
-      realm_client: "false"
       oidc.ciba.grant.enabled: "false"
-      backchannel.logout.session.required: "true"
       oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
       backchannel.logout.revoke.offline.tokens: "false"
     authenticationFlowBindingOverrides: {}
     fullScopeAllowed: true
     nodeReRegistrationTimeout: -1
     protocolMappers:
-      - id: 7b75efda-76a7-4505-9ec7-fe566b6dd17f
+      - id: c2eea262-e566-4d1d-af42-d91ec3067d01
+        name: Client ID
+        protocol: openid-connect
+        protocolMapper: oidc-usersessionmodel-note-mapper
+        consentRequired: false
+        config:
+          user.session.note: clientId
+          userinfo.token.claim: "true"
+          id.token.claim: "true"
+          access.token.claim: "true"
+          claim.name: clientId
+          jsonType.label: String
+      - id: b6209d89-f832-424d-a6d1-f3a5ffdb6fc5
         name: Client IP Address
         protocol: openid-connect
         protocolMapper: oidc-usersessionmodel-note-mapper
         consentRequired: false
         config:
           user.session.note: clientAddress
+          userinfo.token.claim: "true"
           id.token.claim: "true"
           access.token.claim: "true"
           claim.name: clientAddress
           jsonType.label: String
-      - id: 597d0478-479d-40b0-a852-b51fe2a369e0
-        name: Client ID
-        protocol: openid-connect
-        protocolMapper: oidc-usersessionmodel-note-mapper
-        consentRequired: false
-        config:
-          user.session.note: client_id
-          id.token.claim: "true"
-          access.token.claim: "true"
-          claim.name: client_id
-          jsonType.label: String
-      - id: 96728308-7ffb-44af-be30-c69446c888ab
+      - id: 93b070c3-edba-461c-9d09-d7bd3cd6e1cc
         name: Client Host
         protocol: openid-connect
         protocolMapper: oidc-usersessionmodel-note-mapper
         consentRequired: false
         config:
           user.session.note: clientHost
+          userinfo.token.claim: "true"
           id.token.claim: "true"
           access.token.claim: "true"
           claim.name: clientHost
@@ -1015,9 +865,102 @@ clients:
       - offline_access
       - profile
       - yoma-api
-      - basic
       - audience_scope
       - email
+    optionalClientScopes:
+      - address
+      - phone
+      - microprofile-jwt
+  - id: 259d0a20-1c74-4c0e-8797-3df0fb628113
+    clientId: unicef-kenya
+    name: unicef-kenya
+    description: UNICEF Kenya SMS client for API based user onboarding (private client)
+    surrogateAuthRequired: false
+    enabled: $(env:CLIENT_UNICEF_KENYA_ENABLED)
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_UNICEF_KENYA_SECRET)
+    redirectUris:
+      - /*
+    webOrigins:
+      - /*
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: true
+    publicClient: false
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      oidc.ciba.grant.enabled: "false"
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      backchannel.logout.revoke.offline.tokens: "false"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: true
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - roles
+      - offline_access
+      - profile
+      - yoma-api
+      - audience_scope
+      - email
+    optionalClientScopes:
+      - address
+      - phone
+      - microprofile-jwt
+  - id: 4369c21f-5fee-41e7-82ec-a70b9e3a69a8
+    clientId: mini-sass
+    name: mini-sass
+    description: miniSASS SSO Partner (private client)
+    rootUrl: $(env:CLIENT_MINI_SASS_URL)
+    adminUrl: $(env:CLIENT_MINI_SASS_URL)
+    baseUrl: $(env:CLIENT_MINI_SASS_URL)
+    surrogateAuthRequired: false
+    enabled: $(env:CLIENT_MINI_SASS_ENABLED)
+    alwaysDisplayInConsole: false
+    clientAuthenticatorType: client-secret
+    secret: $(env:CLIENT_MINI_SASS_SECRET)
+    redirectUris:
+      - /*
+      - $(env:CLIENT_MINI_SASS_URL_REDIRECT)
+    webOrigins:
+      - $(env:CLIENT_MINI_SASS_URL)
+    notBefore: 0
+    bearerOnly: false
+    consentRequired: false
+    standardFlowEnabled: true
+    implicitFlowEnabled: false
+    directAccessGrantsEnabled: false
+    serviceAccountsEnabled: false
+    publicClient: false
+    frontchannelLogout: true
+    protocol: openid-connect
+    attributes:
+      oidc.ciba.grant.enabled: "false"
+      post.logout.redirect.uris: $(env:CLIENT_MINI_SASS_URL)/*
+      oauth2.device.authorization.grant.enabled: "false"
+      backchannel.logout.session.required: "true"
+      backchannel.logout.revoke.offline.tokens: "false"
+      use.refresh.tokens: "true"
+    authenticationFlowBindingOverrides: {}
+    fullScopeAllowed: true
+    nodeReRegistrationTimeout: -1
+    defaultClientScopes:
+      - web-origins
+      - acr
+      - offline_access
+      - profile
+      - roles
+      - yoma-api
+      - email
+      - audience_scope
     optionalClientScopes:
       - address
       - phone
@@ -1026,18 +969,18 @@ clients:
     clientId: yoma-api
     name: yoma-api
     description: Yoma Core Api (private client)
-    rootUrl: http://localhost:5000
+    rootUrl: $(env:CLIENT_YOMA_API_URL)
     adminUrl: ""
-    baseUrl: http://localhost:5000
+    baseUrl: $(env:CLIENT_YOMA_API_URL)
     surrogateAuthRequired: false
     enabled: true
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
-    secret: superSecretYomaApiClientSecret
+    secret: $(env:CLIENT_YOMA_API_SECRET)
     redirectUris:
       - /*
     webOrigins:
-      - http://localhost:5000
+      - $(env:CLIENT_YOMA_API_URL)
     notBefore: 0
     bearerOnly: false
     consentRequired: false
@@ -1049,51 +992,16 @@ clients:
     frontchannelLogout: true
     protocol: openid-connect
     attributes:
-      realm_client: "false"
       oidc.ciba.grant.enabled: "false"
       client.secret.creation.time: "1690972589"
       backchannel.logout.session.required: "true"
-      post.logout.redirect.uris: http://localhost:5000/*
+      post.logout.redirect.uris: $(env:CLIENT_YOMA_API_URL)/*
       display.on.consent.screen: "false"
       oauth2.device.authorization.grant.enabled: "false"
       backchannel.logout.revoke.offline.tokens: "false"
     authenticationFlowBindingOverrides: {}
     fullScopeAllowed: true
     nodeReRegistrationTimeout: -1
-    protocolMappers:
-      - id: 4e7464dd-fbd5-4593-9ceb-b2fd56ad6706
-        name: Client ID
-        protocol: openid-connect
-        protocolMapper: oidc-usersessionmodel-note-mapper
-        consentRequired: false
-        config:
-          user.session.note: client_id
-          id.token.claim: "true"
-          access.token.claim: "true"
-          claim.name: client_id
-          jsonType.label: String
-      - id: 919aa45e-0c5d-456c-9d51-4312fd9be917
-        name: Client IP Address
-        protocol: openid-connect
-        protocolMapper: oidc-usersessionmodel-note-mapper
-        consentRequired: false
-        config:
-          user.session.note: clientAddress
-          id.token.claim: "true"
-          access.token.claim: "true"
-          claim.name: clientAddress
-          jsonType.label: String
-      - id: ce742c57-7433-43ab-a7f7-2fbb294f1e62
-        name: Client Host
-        protocol: openid-connect
-        protocolMapper: oidc-usersessionmodel-note-mapper
-        consentRequired: false
-        config:
-          user.session.note: clientHost
-          id.token.claim: "true"
-          access.token.claim: "true"
-          claim.name: clientHost
-          jsonType.label: String
     defaultClientScopes:
       - web-origins
       - acr
@@ -1101,7 +1009,6 @@ clients:
       - profile
       - roles
       - yoma-api
-      - basic
       - email
       - audience_scope
     optionalClientScopes:
@@ -1112,20 +1019,19 @@ clients:
     clientId: yoma-web
     name: yoma-web
     description: Yoma Web Portal (public client)
-    rootUrl: http://localhost:3000
+    rootUrl: $(env:CLIENT_YOMA_WEB_URL)
     adminUrl: ""
-    baseUrl: http://localhost:3000
+    baseUrl: $(env:CLIENT_YOMA_WEB_URL)
     surrogateAuthRequired: false
     enabled: true
     alwaysDisplayInConsole: false
     clientAuthenticatorType: client-secret
-    secret: superSecretYomaWebClientSecret
     redirectUris:
       - /*
       - https://yoma-six.vercel.app/*
       - https://yoma-six.vercel.app
     webOrigins:
-      - http://localhost:3000
+      - $(env:CLIENT_YOMA_WEB_URL)
       - https://yoma-six.vercel.app
     notBefore: 0
     bearerOnly: false
@@ -1135,21 +1041,21 @@ clients:
     directAccessGrantsEnabled: true
     serviceAccountsEnabled: false
     publicClient: false
+    secret: $(env:CLIENT_YOMA_WEB_SECRET)
     frontchannelLogout: true
     protocol: openid-connect
     attributes:
       client.secret.creation.time: "1683780708"
-      post.logout.redirect.uris: http://localhost:3000/*##https://yoma-six.vercel.app/*
+      post.logout.redirect.uris: $(env:CLIENT_YOMA_WEB_URL)/*##https://yoma-six.vercel.app/*
       oauth2.device.authorization.grant.enabled: "false"
       access.token.signed.response.alg: RS256
       backchannel.logout.revoke.offline.tokens: "false"
       use.refresh.tokens: "true"
-      realm_client: "false"
       oidc.ciba.grant.enabled: "false"
       id.token.signed.response.alg: RS256
       backchannel.logout.session.required: "true"
       client_credentials.use_refresh_token: "false"
-      acr.loa.map: '{}'
+      acr.loa.map: "{}"
       require.pushed.authorization.requests: "false"
       tls.client.certificate.bound.access.tokens: "false"
       display.on.consent.screen: "false"
@@ -1165,11 +1071,11 @@ clients:
         consentRequired: false
         config:
           user.session.note: clientId
+          userinfo.token.claim: "true"
           id.token.claim: "true"
           access.token.claim: "true"
           claim.name: clientId
           jsonType.label: String
-          userinfo.token.claim: "true"
       - id: 3d8d5e8b-bca1-40f3-be71-43a4d944f70c
         name: Client Host
         protocol: openid-connect
@@ -1177,11 +1083,11 @@ clients:
         consentRequired: false
         config:
           user.session.note: clientHost
+          userinfo.token.claim: "true"
           id.token.claim: "true"
           access.token.claim: "true"
           claim.name: clientHost
           jsonType.label: String
-          userinfo.token.claim: "true"
       - id: cb4d2a11-a1ff-41ed-ac42-577c77fee923
         name: Client IP Address
         protocol: openid-connect
@@ -1189,11 +1095,11 @@ clients:
         consentRequired: false
         config:
           user.session.note: clientAddress
+          userinfo.token.claim: "true"
           id.token.claim: "true"
           access.token.claim: "true"
           claim.name: clientAddress
           jsonType.label: String
-          userinfo.token.claim: "true"
     defaultClientScopes:
       - web-origins
       - acr
@@ -1201,7 +1107,6 @@ clients:
       - profile
       - roles
       - yoma-api
-      - basic
       - email
       - audience_scope
     optionalClientScopes:
@@ -1420,7 +1325,6 @@ clientScopes:
           included.client.audience: yoma-api
           id.token.claim: "true"
           access.token.claim: "true"
-          userinfo.token.claim: "true"
   - id: 0f08cea0-1ab2-45af-b5fe-dbd79f00a79a
     name: address
     description: 'OpenID Connect built-in scope: address'
@@ -1730,7 +1634,6 @@ defaultDefaultClientScopes:
   - offline_access
   - audience_scope
   - yoma-api
-  - basic
 defaultOptionalClientScopes:
   - address
   - phone
@@ -1742,14 +1645,14 @@ smtpServer:
   auth: "true"
   envelopeFrom: ""
   ssl: "false"
-  password: superSecretSmtpPassword
-  verifyLinkExpiration: "86400"
+  password: $(env:SMTP_PASSWORD)
   port: "587"
   host: smtp.sendgrid.net
   replyTo: ""
   from: no-reply@yoma.world
   fromDisplayName: Yoma
   user: apikey
+  verifyLinkExpiration: 86400
 loginTheme: phone
 accountTheme: ""
 adminTheme: ""
@@ -1842,127 +1745,113 @@ enabledEventTypes:
 adminEventsEnabled: true
 adminEventsDetailsEnabled: false
 identityProviders:
-  - alias: facebook
-    internalId: fa013666-a1f9-4673-ab3d-f184bc3ce174
-    providerId: facebook
-    enabled: true
-    updateProfileFirstLoginMode: on
-    trustEmail: true
-    storeToken: true
-    addReadTokenRoleOnCreate: false
-    authenticateByDefault: false
-    linkOnly: false
-    hideOnLogin: false
-    firstBrokerLoginFlowAlias: auto-link-facebook
-    config:
-      userInfoUrl: https://graph.facebook.com/me?fields=id,name,email,first_name,last_name,picture
-      clientId: superSecretClientId
-      tokenUrl: https://graph.facebook.com/v10.0/oauth/access_token
-      authorizationUrl: https://www.facebook.com/dialog/oauth
-      syncMode: LEGACY
-      clientSecret: superSecretClientSecret
-      defaultScope: email public_profile
   - alias: google
-    internalId: c9fdf604-6ec4-40fe-a133-26a8110b312b
     providerId: google
     enabled: true
-    updateProfileFirstLoginMode: on
     trustEmail: true
     storeToken: true
     addReadTokenRoleOnCreate: false
-    authenticateByDefault: false
     linkOnly: false
-    hideOnLogin: false
-    firstBrokerLoginFlowAlias: auto-link-social
+    authenticateByDefault: false
+    firstBrokerLoginFlowAlias: auto-link-social # auto-link social accounts
     config:
-      syncMode: LEGACY
-      defaultScopes: openid email profile
-      clientSecret: superSecretClientSecret
-      clientId: superSecretClientId
-      issuer: https://accounts.google.com
+      clientId: $(env:GOOGLE_CLIENT_ID)
+      clientSecret: $(env:GOOGLE_CLIENT_SECRET)
+      issuer: "https://accounts.google.com"
+      defaultScopes: "openid email profile"
+      guiOrder: 1
+  - alias: facebook
+    providerId: facebook
+    enabled: true
+    trustEmail: true
+    storeToken: true
+    addReadTokenRoleOnCreate: false
+    linkOnly: false
+    authenticateByDefault: false
+    firstBrokerLoginFlowAlias: auto-link-facebook
+    config:
+      clientId: $(env:FACEBOOK_CLIENT_ID)
+      clientSecret: $(env:FACEBOOK_CLIENT_SECRET)
+      authorizationUrl: "https://www.facebook.com/dialog/oauth"
+      tokenUrl: "https://graph.facebook.com/v10.0/oauth/access_token"
+      userInfoUrl: "https://graph.facebook.com/me?fields=id,name,email,first_name,last_name,picture"
+      defaultScope: "email public_profile"
+      guiOrder: 2
 identityProviderMappers:
-  - id: 6d24541d-d1f9-43d7-a5d1-e40f4dd26758
-    name: email
+  #––– Google mappers –––
+  - name: email
     identityProviderAlias: google
     identityProviderMapper: google-user-attribute-mapper
     config:
       syncMode: INHERIT
       userAttribute: email
       jsonField: email
-  - id: e1bfff75-865e-4132-ac10-1e901f73c74f
-    name: firstName
+  - name: firstName
     identityProviderAlias: google
     identityProviderMapper: google-user-attribute-mapper
     config:
       syncMode: INHERIT
       userAttribute: firstName
       jsonField: given_name
-  - id: 2b20cffd-5402-45e7-ad57-6405030a4e60
-    name: lastName
+  - name: lastName
     identityProviderAlias: google
     identityProviderMapper: google-user-attribute-mapper
     config:
       syncMode: INHERIT
       userAttribute: lastName
       jsonField: family_name
-  - id: 5dac57a1-57cd-4c35-9c6f-b69c8794dd5b
-    name: picture
+  - name: picture
     identityProviderAlias: google
     identityProviderMapper: google-user-attribute-mapper
     config:
       syncMode: INHERIT
       userAttribute: picture
       jsonField: picture
-  - id: fa03ef4d-7fb2-4bd6-8a27-bc21935aa5c9
-    name: phoneNumber
+  - name: phoneNumber
     identityProviderAlias: google
     identityProviderMapper: google-user-attribute-mapper
     config:
       syncMode: INHERIT
       userAttribute: phoneNumber
       jsonField: phone_number
-  - id: 252990d2-b4b3-4003-90f6-9e47ee48e531
-    name: firstName
+
+  #––– Facebook mappers –––
+  - name: firstName
     identityProviderAlias: facebook
     identityProviderMapper: facebook-user-attribute-mapper
     config:
       syncMode: INHERIT
       userAttribute: firstName
       jsonField: first_name
-  - id: 3e0f87a3-3e5c-4978-9e38-be7b06bc0b47
-    name: email
+  - name: email
     identityProviderAlias: facebook
     identityProviderMapper: facebook-user-attribute-mapper
     config:
       syncMode: INHERIT
       userAttribute: email
       jsonField: email
-  - id: 267e5e53-d320-475a-898e-85be56d048e9
-    name: username
+  - name: username
     identityProviderAlias: facebook
     identityProviderMapper: facebook-user-attribute-mapper
     config:
       syncMode: INHERIT
       userAttribute: username
       jsonField: email
-  - id: 6b63658e-f1fa-436a-82f0-e236cd0da22a
-    name: lastName
+  - name: lastName
     identityProviderAlias: facebook
     identityProviderMapper: facebook-user-attribute-mapper
     config:
       syncMode: INHERIT
       userAttribute: lastName
       jsonField: last_name
-  - id: ceedab4a-e01e-458a-bd9a-d9b6ae0a0760
-    name: picture
+  - name: picture
     identityProviderAlias: facebook
     identityProviderMapper: facebook-user-attribute-mapper
     config:
       syncMode: INHERIT
       userAttribute: picture
       jsonField: picture.data.url
-  - id: 0789cbd3-3b2f-4ba7-ac1d-3a980de3bec1
-    name: phoneNumber
+  - name: phoneNumber
     identityProviderAlias: facebook
     identityProviderMapper: facebook-user-attribute-mapper
     config:
@@ -1987,7 +1876,6 @@ components:
       config:
         allowed-protocol-mapper-types:
           - saml-user-attribute-mapper
-          - oidc-address-mapper
           - oidc-sha256-pairwise-sub-mapper
           - oidc-usermodel-property-mapper
           - oidc-full-name-mapper
@@ -2100,7 +1988,7 @@ components:
       subComponents: {}
       config:
         privateKey:
-          - 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
+          - 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
         keyUse:
           - SIG
         certificate:
@@ -2816,40 +2704,8 @@ directGrantFlow: direct grant
 resetCredentialsFlow: Reset credentials with phone
 clientAuthenticationFlow: clients
 dockerAuthenticationFlow: docker auth
-firstBrokerLoginFlow: first broker login
-attributes:
-  cibaBackchannelTokenDeliveryMode: poll
-  de.adorsys.keycloak.config.state-default-roles-client-yoma-web-0: '[]'
-  de.adorsys.keycloak.config.import-checksum-default: 0cdeade48861fb0654edb35ae6e1678cbc5fbcf5713b17aefcc836346e30d752
-  de.adorsys.keycloak.config.state-default-roles-client-yoma-api-0: '[]'
-  clientOfflineSessionIdleTimeout: "0"
-  de.adorsys.keycloak.config.state-default-roles-client-realm-management-0: '["create-client","view-clients","view-identity-providers","manage-clients","query-realms","view-authorization","realm-admin","query-groups","view-events","impersonation","manage-authorization","manage-identity-providers","view-realm","manage-users","'
-  de.adorsys.keycloak.config.state-default-roles-client-realm-management-1: view-users","manage-realm","query-users","manage-events","query-clients"]
-  cibaExpiresIn: "120"
-  de.adorsys.keycloak.config.state-default-roles-client-admin-cli-0: '[]'
-  de.adorsys.keycloak.config.state-default-roles-client-security-admin-console-0: '[]'
-  de.adorsys.keycloak.config.state-default-components-1: es-generated"]
-  de.adorsys.keycloak.config.state-default-roles-client-atingi-0: '[]'
-  de.adorsys.keycloak.config.state-default-components-0: '["Allowed Protocol Mapper Types","Consent Required","Allowed Protocol Mapper Types","Trusted Hosts","Max Clients Limit","Allowed Client Scopes","Allowed Client Scopes","Full Scope Disabled",null,"hmac-generated","rsa-enc-generated","rsa-generated","a'
-  cibaAuthRequestedUserHint: login_hint
-  de.adorsys.keycloak.config.state-default-roles-client-broker-0: '["read-token"]'
-  oauth2DevicePollingInterval: "5"
-  clientOfflineSessionMaxLifespan: "0"
-  clientSessionIdleTimeout: "0"
-  de.adorsys.keycloak.config.state-default-roles-realm-0: '["default-roles-yoma","Admin","OrganisationAdmin","uma_authorization","User","offline_access"]'
-  cibaInterval: "5"
-  realmReusableOtpCode: "false"
-  oauth2DeviceCodeLifespan: "600"
-  de.adorsys.keycloak.config.state-default-required-actions-0: '["CONFIGURE_TOTP","TERMS_AND_CONDITIONS","UPDATE_PASSWORD","UPDATE_PROFILE","VERIFY_EMAIL","UPDATE_PHONE_NUMBER","delete_account","webauthn-register","webauthn-register-passwordless","update_user_locale"]'
-  parRequestUriLifespan: "60"
-  clientSessionMaxLifespan: "0"
-  de.adorsys.keycloak.config.state-default-clients-0: '["account","account-console","admin-cli","atingi","goodwall","iiasa","maza-app","unicef-kenya","mini-sass","broker","realm-management","security-admin-console","yoma-api","yoma-web"]'
-  de.adorsys.keycloak.config.state-default-roles-client-account-0: '["view-profile","manage-account-links","manage-account","view-groups","manage-consent","delete-account","view-applications","view-consent"]'
 keycloakVersion: 26.3.2
 userManagedAccessAllowed: false
-organizationsEnabled: false
-verifiableCredentialsEnabled: false
-adminPermissionsEnabled: false
 clientProfiles:
   profiles: []
 clientPolicies:

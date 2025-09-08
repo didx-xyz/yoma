@@ -58,18 +58,39 @@ services:
 
   keycloak-init:
     # Initialise the local Keycloak server by adding the bcrypt & webhook provider
-    image: curlimages/curl
+    image: openjdk:17-jdk-alpine
     container_name: keycloak-init
     user: root
     command: |
-      sh -c 'curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-core-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-core-0.9.1-all.jar && \
-        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-http-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-http-0.9.1-all.jar && \
-        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-amqp-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-amqp-0.9.1-all.jar && \
-        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-syslog-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-syslog-0.9.1-all.jar && \
-        cp /local-providers/keycloak-phone-provider.jar /local-providers/keycloak-phone-provider.resources.jar /local-providers/keycloak-sms-provider-dummy.jar /local-providers/email-required-authenticator.jar /opt/keycloak/providers/ && \
-        chown -R 1000:1000 /opt/keycloak/providers'
+      sh -c '
+        # Install curl and unzip
+        apk add --no-cache curl unzip &&
+
+        # Download webhook providers
+        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-core-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-core-0.9.1-all.jar &&
+        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-http-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-http-0.9.1-all.jar &&
+        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-amqp-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-amqp-0.9.1-all.jar &&
+        curl -L https://github.com/vymalo/keycloak-webhook/releases/download/v0.9.1/keycloak-webhook-provider-syslog-0.9.1-all.jar -o /opt/keycloak/providers/keycloak-webhook-provider-syslog-0.9.1-all.jar &&
+
+        # Copy phone provider JARs
+        cp /local-providers/keycloak-phone-provider.jar /local-providers/keycloak-phone-provider.resources.jar /local-providers/keycloak-sms-provider-dummy.jar /local-providers/email-required-authenticator.jar /opt/keycloak/providers/ &&
+
+        # Extract theme resources from the resources JAR
+        mkdir -p /tmp/theme-extract &&
+        cd /tmp/theme-extract &&
+        unzip -o -q /local-providers/keycloak-phone-provider.resources.jar &&
+
+        # Copy theme files to the themes directory
+        if [ -d "theme" ]; then
+          cp -r theme/* /opt/keycloak/themes/
+        fi &&
+
+        # Set proper ownership
+        chown -R 1000:1000 /opt/keycloak/providers /opt/keycloak/themes
+      '
     volumes:
       - keycloak:/opt/keycloak/providers
+      - keycloak-themes:/opt/keycloak/themes
       - ../keycloak/providers/jars:/local-providers # our custom JAR folder, mounted in a separate directory and copied to container
 
   keycloak-pg:
@@ -141,6 +162,7 @@ services:
         condition: service_healthy
     volumes:
       - keycloak:/opt/keycloak/providers
+      - keycloak-themes:/opt/keycloak/themes
 
   keycloak-health:
     # Wait for Keycloak to be ready before running keycloak-config service
@@ -315,4 +337,5 @@ volumes:
   postgres:
   yoma:
   keycloak:
+  keycloak-themes:
   keycloak-pg:

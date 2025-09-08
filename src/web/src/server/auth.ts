@@ -52,7 +52,7 @@ const CLIENT_WEB = "yoma-web";
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
-  debug: process.env.NODE_ENV === "development",
+  debug: false, // Disable debug to reduce cookie size
   logger: {
     error(code, metadata) {
       console.error("NextAuth Error:", code, metadata);
@@ -61,9 +61,7 @@ export const authOptions: NextAuthOptions = {
       console.warn("NextAuth Warning:", code);
     },
     debug(code, metadata) {
-      if (process.env.NODE_ENV === "development") {
-        console.debug("NextAuth Debug:", code, metadata);
-      }
+      // Remove debug logging to reduce session size
     },
   },
   events: {
@@ -130,10 +128,17 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token) {
-        session.user = token.user;
+        // Only include essential user data to reduce cookie size
+        session.user = {
+          id: token.user.id,
+          name: token.user.name,
+          email: token.user.email,
+          image: token.user.image ?? null,
+          roles: token.user.roles,
+          adminsOf: token.user.adminsOf,
+        };
         session.accessToken = token.accessToken;
         session.error = token.error;
-        session.expires = new Date(token.accessTokenExpires).toISOString();
       }
 
       return session;

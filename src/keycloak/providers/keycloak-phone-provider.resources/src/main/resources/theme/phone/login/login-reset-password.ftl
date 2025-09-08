@@ -4,10 +4,10 @@
         ${msg("emailForgotTitle")}
     <#elseif section = "form">
         <#if supportPhone??>
-          <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/css/intlTelInput.css">
-          <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
-          <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
-          <script src="https://cdn.jsdelivr.net/npm/intl-tel-input@24.6.0/build/js/intlTelInput.min.js"></script>
+          <link rel="stylesheet" href="${url.resourcesPath}/css/intlTelInput.css">
+          <script src="${url.resourcesPath}/js/vue.min.js"></script>
+          <script src="${url.resourcesPath}/js/axios.min.js"></script>
+          <script src="${url.resourcesPath}/js/intlTelInput.min.js"></script>
           <script src="${url.resourcesPath}/js/intlTelInputDirective.js"></script>
           <script src="${url.resourcesPath}/js/otp-input.directive.js"></script>
 
@@ -161,7 +161,7 @@
 
                     <div id="kc-form-options" class="${properties.kcFormOptionsClass!}">
                         <div class="${properties.kcFormOptionsWrapperClass!}">
-                            <span><a href="${url.loginUrl}">${msg("goBack")} ${kcSanitize(msg("doLogIn"))?no_esc}</span>
+                            <span><a href="${url.loginUrl}">${msg("goBack")} ${kcSanitize(msg("doLogin"))?no_esc}</span>
                         </div>
                     </div>
                 </form>

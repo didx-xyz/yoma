@@ -22,7 +22,7 @@ public class DummySmsSenderService extends FullSmsSenderAbstractService {
 
         // simulate a failure
         if (new Random().nextInt(10) % 5 == 0) {
-            throw new MessageSendException(500, "MSG0042", "Insufficient credits to send message");
+            throw new MessageSendException("Insufficient credits to send message", new Throwable("MSG0042"));
         }
     }
 
