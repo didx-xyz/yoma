@@ -52,7 +52,7 @@ releases:
       app: keycloak
     namespace: {{ .Values.namespace }}
     chart: ./helm/keycloak
-    version: 0.3.2
+    version: 0.4.0
     values:
       - ./helm/keycloak/conf/{{ .Environment.Name }}/values.yaml
       - keycloak:

@@ -60,7 +60,7 @@ postInstallHook:
   ref: master
 
   image:
-    repository: curlimages/curl
+    repository: docker.io/curlimages/curl
     pullPolicy: IfNotPresent
     # Overrides the image tag whose default is the chart appVersion.
     tag: latest
@@ -170,15 +170,20 @@ keycloak:
   replicas: 1
 
   image:
-    tag: 22.0.1
+    tag: 26.3.3
 
   ingressDomain: yoma.world
+
+  proxy:
+    enabled: true
+    mode: x-forwarded
+    http:
+      enabled: true
 
   command:
     - /opt/keycloak/bin/kc.sh
     - start
-    - --features=preview,declarative-user-profile
-    - --http-enabled=true
+    - --features=declarative-ui
     - --http-port=8080
     - --hostname-strict=false
     - --spi-events-listener-jboss-logging-success-level=info # log login/out events
@@ -186,30 +191,27 @@ keycloak:
 
   serviceAccount:
     create: true
-    # This creates a ClusterRole and ClusterRolebinding which is not needed
-    allowReadPods: false
-
-  # This creates a Role and Rolebinding which makes the above ClusterRole and ClusterRolebinding redundant
-  rbac:
-    create: true
-    rules:
-      - apiGroups:
-          - ""
-        resources:
-          - pods
-        verbs:
-          - get
-          - list
 
   podSecurityContext:
     runAsUser: 1000
     fsGroup: 1000
+    fsGroupChangePolicy: Always
+    sysctls: []
+    supplementalGroups: []
   securityContext:
     runAsUser: 1000
     runAsNonRoot: true
+    seLinuxOptions: {}
+    privileged: false
+    readOnlyRootFilesystem: true
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    seccompProfile:
+      type: RuntimeDefault
 
   webhook:
-    version: 0.3.0
+    version: 0.9.1
   providers:
     ref: develop
   extraInitContainers: |-
@@ -223,8 +225,17 @@ keycloak:
         - |-
           cd /providers
           wget -q \
-            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-{{ .Values.webhook.version }}-all.jar \
-              -O /providers/keycloak-webhook-{{ .Values.webhook.version }}.jar
+            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-provider-core-{{ .Values.webhook.version }}-all.jar
+              -O /providers/keycloak-webhook-provider-core-{{ .Values.webhook.version }}-all.jar
+          wget -q \
+            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-provider-http-{{ .Values.webhook.version }}-all.jar
+              -O /providers/keycloak-webhook-provider-http-{{ .Values.webhook.version }}-all.jar
+          wget -q \
+            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-provider-amqp-{{ .Values.webhook.version }}-all.jar
+              -O /providers/keycloak-webhook-provider-amqp-{{ .Values.webhook.version }}-all.jar
+          wget -q \
+            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-provider-syslog-{{ .Values.webhook.version }}-all.jar
+              -O /providers/keycloak-webhook-provider-syslog-{{ .Values.webhook.version }}-all.jar
           wget -qO - \
             --header="Accept:application/vnd.github.v3.raw" \
             https://api.github.com/repos/didx-xyz/yoma/tarball/{{ .Values.providers.ref }} | tar xz
@@ -369,7 +380,7 @@ keycloak:
     admission.datadoghq.com/enabled: "false" # disabled by default (for now)
   podAnnotations:
     # gcr.io/datadoghq/dd-lib-java-init
-    admission.datadoghq.com/java-lib.version: v1.49.0
+    admission.datadoghq.com/java-lib.version: v1.53.0
     ad.datadoghq.com/keycloak.logs: '[{ "service": "keycloak", "source": "jboss_wildfly" }]'
 
   lifecycleHooks: |
@@ -456,11 +467,12 @@ keycloak:
             periodSeconds: 300
 
 config-cli:
+  # https://github.com/adorsys/keycloak-config-cli
   fullnameOverride: keycloak-config-cli
   enabled: false
 
   image:
-    tag: 5.8.0-22.0.0
+    tag: 6.4.0-26.1.0
 
   env:
     KEYCLOAK_URL: https://keycloak.example.com/auth
