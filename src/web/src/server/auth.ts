@@ -52,13 +52,17 @@ const CLIENT_WEB = "yoma-web";
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
+  debug: false, // Disable debug to reduce cookie size
   logger: {
     error(code, metadata) {
-      console.error(code, metadata);
+      console.error("NextAuth Error:", code, metadata);
     },
     warn(code) {
-      console.warn(code);
+      console.warn("NextAuth Warning:", code);
     },
+    // Remove debug logging to reduce session size
+    // debug(code, metadata) {
+    // },
   },
   events: {
     async signOut({ token }) {
@@ -124,10 +128,17 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       if (token) {
-        session.user = token.user;
+        // Only include essential user data to reduce cookie size
+        session.user = {
+          id: token.user.id,
+          name: token.user.name,
+          email: token.user.email,
+          image: token.user.image ?? null,
+          roles: token.user.roles,
+          adminsOf: token.user.adminsOf,
+        };
         session.accessToken = token.accessToken;
         session.error = token.error;
-        session.expires = new Date(token.accessTokenExpires).toISOString();
       }
 
       return session;
@@ -164,7 +175,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
       },
     },
     callbackUrl: {
@@ -172,7 +183,7 @@ export const authOptions: NextAuthOptions = {
       options: {
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
       },
     },
     csrfToken: {
@@ -181,7 +192,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
       },
     },
     pkceCodeVerifier: {
@@ -190,7 +201,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
         maxAge: COOKIES_LIFE_TIME,
       },
     },
@@ -200,7 +211,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
         maxAge: COOKIES_LIFE_TIME,
       },
     },
@@ -210,7 +221,7 @@ export const authOptions: NextAuthOptions = {
         httpOnly: true,
         sameSite: "lax",
         path: "/",
-        secure: true,
+        secure: process.env.NODE_ENV === "production",
       },
     },
   },

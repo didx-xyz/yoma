@@ -1,8 +1,173 @@
-/* General Layout */
-body {
-  padding: 0;
+/* CSS Reset and Base Styles for Keycloak v26 PatternFly v4 compliance */
+* {
+  box-sizing: border-box;
+}
+
+/* General form control overrides for PatternFly v4 compatibility */
+.form-control,
+.pf-c-form-control {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #495057;
+  background-color: #fff;
+  background-clip: padding-box;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus,
+.pf-c-form-control:focus {
+  color: #495057;
+  background-color: #fff;
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+/* Form group styles */
+.form-group,
+.pf-c-form__group {
+  margin-bottom: 1rem;
+}
+
+/* Label styles for PatternFly v4 */
+.control-label,
+.pf-c-form__label {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #212529;
+}
+
+/* Alert styles for error messages */
+.alert,
+.pf-c-alert {
+  position: relative;
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.25rem;
+}
+
+.alert-error,
+.pf-c-alert.pf-m-danger {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+
+/* Override PatternFly form styles for consistent look */
+.pf-c-form__label {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-weight: 600;
+  color: #333333;
+}
+
+.pf-c-form-control {
+  display: block;
+  width: 100%;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #151515;
+  background-color: #fff;
+  background-image: none;
+  border: 2px solid #e6e8eb;
+  border-radius: 5px;
+  height: 48px;
+  padding: 0 16px;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.pf-c-form-control:focus {
+  border-color: #06c;
+  outline: 0;
+  box-shadow: 0 0 0 0.125rem rgba(0, 102, 204, 0.25);
+}
+
+/* Updated PatternFly button styles for consistent design */
+.pf-c-button {
+  display: inline-block;
+  font-weight: 500;
+  text-align: center;
+  white-space: nowrap;
+  vertical-align: middle;
+  user-select: none;
+  border: 1px solid transparent;
+  padding: 0.375rem 1rem;
+  font-size: 16px;
+  line-height: 1.5;
+  border-radius: 8px;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out,
+    box-shadow 0.15s ease-in-out;
+  cursor: pointer;
+  text-decoration: none;
+  min-height: 48px;
+}
+
+.pf-c-button.pf-m-primary {
+  color: #fff;
+  background-color: #461d4d;
+  border-color: #461d4d;
+}
+
+.pf-c-button.pf-m-primary:hover {
+  color: #fff;
+  background-color: #5a2560;
+  border-color: #5a2560;
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.pf-c-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Form groups */
+.form-group {
+  margin-bottom: 1rem;
+}
+
+/* PatternFly v4 compatible card styles for Keycloak v26 */
+.card-pf,
+.pf-c-card {
+  background-color: #fff;
+  border: 1px solid #d1d1d1;
+  border-radius: 25px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  max-width: 500px;
   margin: 0 auto;
-  width: 96%;
+}
+
+/* Login page card overrides for v26 */
+.login-pf-page .card-pf,
+.login-pf-page .pf-c-card {
+  padding: 30px 40px 40px 40px;
+  background-color: white;
+  border-radius: 25px;
+  border: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
+}
+
+/* Fixed login page layout to match original design */
+.login-pf-page {
+  background-color: rgb(249, 171, 63);
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.login-pf-header {
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
 .kc-locale-wrapper {
@@ -15,16 +180,34 @@ body {
   right: 20px;
 }
 
+/* Fixed logo positioning and header layout - v26 compatible */
 .login-pf-page .login-pf-page-header::before {
   content: "";
   display: inline-block;
-  background-image: url("https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png");
+  background-image: url("../img/yoma.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  background-position: center;
   width: 100px;
-  height: 42px;
+  height: 52px;
   margin-right: 10px;
   margin-left: -10px;
   margin-top: -10px;
   overflow: hidden;
+  float: left;
+}
+
+/* Alternative logo approach for v26 theme best practices */
+.kc-logo-text::before {
+  content: "";
+  display: inline-block;
+  background-image: url("../img/yoma.png");
+  background-size: contain;
+  background-repeat: no-repeat;
+  width: 100px;
+  height: 42px;
+  margin-right: 10px;
+  float: left;
 }
 
 #kc-current-locale-link {
@@ -33,14 +216,56 @@ body {
   padding: 10px 25px;
   background-color: white;
   border-radius: 5px;
+  border: 0px;
 }
 
 #kc-current-locale-link::after {
   display: none;
 }
 
-.pf-c-dropdown__menu {
+/* Dropdown styles for language selector */
+.pf-c-dropdown__menu,
+#kc-locale ul {
+  display: none;
+  position: absolute;
+  background-color: white;
+  min-width: 160px;
+  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
   right: 0;
+  border-radius: 5px;
+  border: 1px solid #e6e8eb;
+  padding: 8px 0;
+  margin-top: 0px;
+  top: 100%;
+}
+
+#kc-locale:hover ul,
+#kc-locale:hover .pf-c-dropdown__menu,
+#kc-locale ul:hover,
+#kc-locale .pf-c-dropdown__menu:hover,
+#kc-locale.show ul,
+#kc-locale.show .pf-c-dropdown__menu {
+  display: block;
+}
+
+#kc-locale ul li {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+#kc-locale ul li a {
+  color: #333;
+  padding: 8px 16px;
+  text-decoration: none;
+  display: block;
+  font-size: 14px;
+}
+
+#kc-locale ul li a:hover {
+  background-color: #f1f1f1;
+  color: #461d4d;
 }
 
 #kc-header-wrapper {
@@ -148,31 +373,46 @@ h1,
   margin-top: 1rem;
 }
 
+/* Fixed header layout and text positioning */
 .login-pf-page .login-pf-page-header {
   margin-bottom: 20px;
   text-align: left;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   position: relative;
-  overflow: hidden;
+  overflow: visible;
+  width: 100%;
+  justify-content: flex-start;
 }
 
 .login-pf-page .login-pf-page-header::after {
   margin-left: 10px;
   overflow: hidden;
+  content: "";
+  flex-grow: 1;
 }
 
+/* Fixed card styling and positioning */
 .login-pf-page .card-pf {
-  padding: 20px 30px 30px 30px;
+  padding: 30px 40px 40px 40px;
   background-color: white;
   border-radius: 25px;
   border: none;
-  box-shadow: none;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 500px;
 }
 
 .card-pf {
   display: flex;
   flex-direction: column;
+  max-width: 500px;
+  margin: 0 auto;
+  background-color: #fff;
+  border: 1px solid #d1d1d1;
+  border-radius: 25px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
 }
 
 #kc-info {
@@ -191,6 +431,7 @@ h1,
   height: fit-content;
 }
 
+/* Fixed PatternFly overrides to maintain original design */
 .pf-c-button.pf-m-primary {
   font-size: 16px;
   background-color: #461d4d;
@@ -200,6 +441,13 @@ h1,
   height: 48px;
   margin: 0 auto;
   display: block;
+  border: none;
+  font-weight: 500;
+}
+
+.pf-c-button.pf-m-primary:hover {
+  background-color: #5a2560;
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .pf-c-button:disabled {
@@ -256,17 +504,13 @@ p {
   margin: 0;
 }
 
-.pf-c-button.pf-m-primary:hover {
-  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2);
-}
-
 .login-pf-page .login-pf-settings {
   justify-content: center;
 }
 
-/* #kc-form-buttons {
-  margin-top: 0;
-} */
+#kc-form-buttons {
+  margin-top: 20px;
+}
 
 #kc-form-options {
   margin: 10px auto 20px;
@@ -282,6 +526,8 @@ p {
   display: block;
   border: 2px solid #e6e8eb;
   padding: 0 16px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .pf-c-form-control:not(textarea)::placeholder {
@@ -519,12 +765,16 @@ input#code {
   font-size: 1.2rem;
 }
 
-/* Media Queries */
+/* Media Queries - Fixed for responsive design */
 @media screen and (max-width: 767px) {
   body {
     padding: 0;
-    margin: 0 auto;
-    width: 96%;
+    margin: 0;
+    width: 100%;
+  }
+
+  .login-pf-page {
+    padding: 10px;
   }
 
   h1,
@@ -532,12 +782,15 @@ input#code {
     font-size: 22px;
   }
 
-  .card-pf {
-    margin: 30px 10px;
-    padding: 25px 0;
-    border-radius: 0;
+  .card-pf,
+  .login-pf-page .card-pf {
+    margin: 20px 10px;
+    padding: 25px 20px;
+    border-radius: 15px;
     display: flex;
     flex-direction: column;
+    max-width: none;
+    width: calc(100% - 20px);
   }
 
   #terms-prefix {
@@ -551,12 +804,18 @@ input#code {
 
 /* alerts */
 .pf-c-alert__title {
-  /* display: flex; */
   align-self: center;
-  /* justify-content: flex-start; */
+  font-size: 13px;
 }
 
 /* social providers */
+.kc-social-section {
+  text-align: center;
+}
+.kc-social-provider-logo {
+  float: left;
+}
+
 .social-provider-btn {
   display: flex;
   align-items: center;

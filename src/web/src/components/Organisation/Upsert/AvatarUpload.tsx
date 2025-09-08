@@ -99,7 +99,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         onRequestClose={() => {
           setCropModalVisible(false);
         }}
-        className={`md:max-h-[650px] md:w-[600px]`}
+        className={`md:max-h-[680px] md:w-[700px]`}
       >
         <div className="flex h-full flex-col gap-2 overflow-y-auto">
           <div className="bg-theme flex flex-row items-center p-4 shadow-lg">

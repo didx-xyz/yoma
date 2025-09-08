@@ -4,7 +4,7 @@
       <h1>${msg("updatePasswordTitle")}</h1>
     <#elseif section = "form">
       <link rel="stylesheet" type="text/css" href="${url.resourcesPath}/css/passwordIndicator.css">
-      <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+      <script src="${url.resourcesPath}/js/vue.min.js"></script>
       <script src="${url.resourcesPath}/js/passwordEnhancementsDirective.js"></script>
 
       <div id="vue-app">

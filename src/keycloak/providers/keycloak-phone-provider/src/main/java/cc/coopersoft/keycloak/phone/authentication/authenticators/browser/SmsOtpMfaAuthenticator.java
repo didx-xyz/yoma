@@ -4,13 +4,14 @@ import java.net.URI;
 import java.util.Optional;
 
 import org.jboss.logging.Logger;
-import org.jboss.resteasy.spi.HttpResponse;
 import org.keycloak.authentication.AuthenticationFlowContext;
 import org.keycloak.authentication.AuthenticationFlowError;
 import org.keycloak.authentication.Authenticator;
 import org.keycloak.authentication.CredentialValidator;
-import org.keycloak.common.util.ServerCookie;
 import org.keycloak.credential.CredentialProvider;
+import org.keycloak.http.HttpRequest;
+import org.keycloak.http.HttpResponse;
+import jakarta.ws.rs.core.NewCookie;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserCredentialModel;
@@ -93,11 +94,16 @@ public class SmsOtpMfaAuthenticator implements Authenticator, CredentialValidato
     }
 
     public void addCookie(AuthenticationFlowContext context, String name, String value, String path, String domain, String comment, int maxAge, boolean secure, boolean httpOnly) {
-        HttpResponse response = context.getSession().getContext().getContextObject(HttpResponse.class);
-        StringBuilder cookieBuf = new StringBuilder();
-        ServerCookie.appendCookieValue(cookieBuf, 1, name, value, path, domain, comment, maxAge, secure, httpOnly, null);
-        String cookie = cookieBuf.toString();
-        response.getOutputHeaders().add(HttpHeaders.SET_COOKIE, cookie);
+        HttpResponse response = context.getSession().getContext().getHttpResponse();
+        response.addHeader(HttpHeaders.SET_COOKIE, new NewCookie.Builder(name)
+                .value(value)
+                .path(path)
+                .domain(domain)
+                .comment(comment)
+                .maxAge(maxAge)
+                .secure(secure)
+                .httpOnly(httpOnly)
+                .build().toString());
     }
 
     @Override
