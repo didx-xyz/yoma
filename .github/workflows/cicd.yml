@@ -456,8 +456,6 @@ jobs:
           else
             echo run=false >> $GITHUB_OUTPUT
           fi
-      - uses: unfor19/install-aws-cli-action@v1
-        if: steps.should-run.outputs.run == 'true'
       - name: SOPS Binary Installer
         if: steps.should-run.outputs.run == 'true'
         uses: mdgreenwald/mozilla-sops-action@v1.6.0
