@@ -410,8 +410,8 @@ jobs:
 
     env:
       TAILSCALE_VERSION: latest
-      HELMFILE_VERSION: v1.1.2
-      HELM_VERSION: v3.18.4
+      HELMFILE_VERSION: v1.1.6
+      HELM_VERSION: v3.18.6
       TAG: ${{ needs.docker-push.outputs.image_version }}
 
     concurrency:
