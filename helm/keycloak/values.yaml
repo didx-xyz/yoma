@@ -176,7 +176,7 @@ keycloak:
 
   proxy:
     enabled: true
-    mode: x-forwarded
+    mode: xforwarded
     http:
       enabled: true
 
@@ -203,7 +203,7 @@ keycloak:
     runAsNonRoot: true
     seLinuxOptions: {}
     privileged: false
-    readOnlyRootFilesystem: true
+    readOnlyRootFilesystem: false
     allowPrivilegeEscalation: false
     capabilities:
       drop: ["ALL"]
@@ -211,6 +211,7 @@ keycloak:
       type: RuntimeDefault
 
   webhook:
+    # https://github.com/vymalo/keycloak-webhook
     version: 0.9.1
   providers:
     ref: develop
@@ -244,13 +245,18 @@ keycloak:
       volumeMounts:
         - name: providers
           mountPath: /providers
+  cache:
+    stack: custom
   extraEnv: |-
+    - name: KC_CACHE
+      value: ispn
+    - name: KC_CACHE_STACK
+      value: jdbc-ping
     - name: JAVA_OPTS_APPEND
       value: >-
         -XX:+UseContainerSupport
         -XX:MaxRAMPercentage=75.0
         -Xmx{{ .Values.resources.limits.memory | lower | replace "mi" "" }}m
-        -Djgroups.dns.query={{ include "keycloak.fullname" . }}-headless
         -Djava.awt.headless=true
         -Dkeycloak.profile.feature.upload_scripts=enabled
     - name: KC_DB_URL_HOST
