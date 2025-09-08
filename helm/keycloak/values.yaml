@@ -225,16 +225,16 @@ keycloak:
         - |-
           cd /providers
           wget -q \
-            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-provider-core-{{ .Values.webhook.version }}-all.jar
+            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-provider-core-{{ .Values.webhook.version }}-all.jar \
               -O /providers/keycloak-webhook-provider-core-{{ .Values.webhook.version }}-all.jar
           wget -q \
-            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-provider-http-{{ .Values.webhook.version }}-all.jar
+            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-provider-http-{{ .Values.webhook.version }}-all.jar \
               -O /providers/keycloak-webhook-provider-http-{{ .Values.webhook.version }}-all.jar
           wget -q \
-            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-provider-amqp-{{ .Values.webhook.version }}-all.jar
+            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-provider-amqp-{{ .Values.webhook.version }}-all.jar \
               -O /providers/keycloak-webhook-provider-amqp-{{ .Values.webhook.version }}-all.jar
           wget -q \
-            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-provider-syslog-{{ .Values.webhook.version }}-all.jar
+            https://github.com/vymalo/keycloak-webhook/releases/download/v{{ .Values.webhook.version }}/keycloak-webhook-provider-syslog-{{ .Values.webhook.version }}-all.jar \
               -O /providers/keycloak-webhook-provider-syslog-{{ .Values.webhook.version }}-all.jar
           wget -qO - \
             --header="Accept:application/vnd.github.v3.raw" \
