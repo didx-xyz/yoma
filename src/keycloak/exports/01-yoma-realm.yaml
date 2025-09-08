@@ -2704,7 +2704,7 @@ directGrantFlow: direct grant
 resetCredentialsFlow: Reset credentials with phone
 clientAuthenticationFlow: clients
 dockerAuthenticationFlow: docker auth
-keycloakVersion: 26.3.2
+keycloakVersion: 26.3.3
 userManagedAccessAllowed: false
 clientProfiles:
   profiles: []

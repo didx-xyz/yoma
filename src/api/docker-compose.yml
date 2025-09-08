@@ -113,7 +113,7 @@ services:
   keycloak:
     # Local Keycloak server
     # https://github.com/adorsys/keycloak-config-cli/pull/928
-    image: quay.io/keycloak/keycloak:26.3.2
+    image: quay.io/keycloak/keycloak:26.3.3
     container_name: keycloak
     environment:
       WEBHOOK_EVENTS_TAKEN: "LOGIN,REGISTER,UPDATE_PROFILE"
