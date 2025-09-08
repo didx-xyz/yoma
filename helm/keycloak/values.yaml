@@ -295,6 +295,8 @@ keycloak:
       value: sslmode=prefer
     - name: KC_LOG_CONSOLE_OUTPUT
       value: json
+    - name: KC_LOG_CONSOLE_JSON_FORMAT
+      value: ecs
     - name: KC_SPI_PHONE_DEFAULT_SERVICE
       value: twilio
     - name: KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_ACCOUNT
@@ -381,7 +383,7 @@ keycloak:
     admission.datadoghq.com/java-lib.version: v1.53.0
     ad.datadoghq.com/keycloak.logs: '[{ "service": "keycloak", "source": "jboss_wildfly" }]'
 
-  lifecycleHooks: |
+  lifecycleHooks: |-
     preStop:
       exec:
         command:
