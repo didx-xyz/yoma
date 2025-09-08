@@ -282,7 +282,7 @@ keycloak:
           name: {{ include "keycloak.fullname" . }}-admin
           key: password
     - name: WEBHOOK_HTTP_BASE_PATH
-      value: http://yoma-api:5000/api/v3/keycloak
+      value: http://yoma-api:5000/api/v3/keycloak/webhook
     - name: WEBHOOK_EVENTS_TAKEN
       value: LOGIN,REGISTER,UPDATE_PROFILE
     - name: DD_LOGS_INJECTION
