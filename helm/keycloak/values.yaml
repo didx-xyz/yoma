@@ -171,7 +171,7 @@ keycloak:
   command:
     - /opt/keycloak/bin/kc.sh
     - start
-    - --features=declarative-ui
+    - --features=preview,declarative-ui
     - --http-port=8080
     - --hostname-strict=false
     - --spi-events-listener-jboss-logging-success-level=info # log login/out events

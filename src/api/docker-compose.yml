@@ -154,7 +154,7 @@ services:
     command:
       - start-dev
       - --db=postgres
-      - --features=declarative-ui
+      - --features=preview,declarative-ui
     depends_on:
       keycloak-init:
         condition: service_completed_successfully
