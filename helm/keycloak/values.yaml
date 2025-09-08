@@ -247,10 +247,6 @@ keycloak:
       value: ispn
     - name: KC_CACHE_STACK
       value: jdbc-ping
-    - name: KC_HOSTNAME
-      value: https://{{ .Values.ingressDomain }}{{ .Values.http.relativePath }}
-    - name: KC_HOSTNAME_ADMIN
-      value: https://auth.{{ .Values.ingressDomain }}{{ .Values.http.relativePath }}
     - name: KC_DB_URL_HOST
       valueFrom:
         secretKeyRef:
