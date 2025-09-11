@@ -41,13 +41,13 @@
     <PackageReference Include="Hangfire.Core" Version="1.8.21" />
     <PackageReference Include="libphonenumber-csharp" Version="9.0.13" />
     <PackageReference Include="MediatR" Version="13.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.8" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.8" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.9" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.9" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="NSwag.Annotations" Version="14.5.0" />
     <PackageReference Include="QRCoder" Version="1.6.0" />
     <PackageReference Include="Sentry.AspNetCore" Version="5.14.1" />
-    <PackageReference Include="StackExchange.Redis" Version="2.9.11" />
+    <PackageReference Include="StackExchange.Redis" Version="2.9.17" />
   </ItemGroup>
 
 </Project>
