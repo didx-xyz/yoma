@@ -157,7 +157,16 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
 
         logger.info(String.format("User %s correctly answered the %s code", user.getId(), tokenCodeType.label));
 
-        tokenValidated(user, phoneNumber, tokenCode.getId(), TokenCodeType.OTP.equals(tokenCodeType));
+        // For authentication flows (login with phone OTP) and reset flows (password reset),
+        // don't update user phone number or remove required actions
+        // This preserves any existing required actions like UPDATE_PHONE_NUMBER
+        if (TokenCodeType.AUTH.equals(tokenCodeType) || TokenCodeType.RESET.equals(tokenCodeType)) {
+            // Just validate the process without updating user attributes or removing required actions
+            validateProcess(tokenCode.getId(), user);
+        } else {
+            // For other flows (like phone verification), proceed with normal tokenValidated logic
+            tokenValidated(user, phoneNumber, tokenCode.getId(), TokenCodeType.OTP.equals(tokenCodeType));
+        }
 
         if (TokenCodeType.OTP.equals(tokenCodeType)) {
             updateUserOTPCredential(user, phoneNumber, tokenCode.getCode());
