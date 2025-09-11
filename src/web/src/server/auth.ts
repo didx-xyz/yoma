@@ -130,12 +130,12 @@ export const authOptions: NextAuthOptions = {
       if (token) {
         // Only include essential user data to reduce cookie size
         session.user = {
-          id: token.user.id,
-          name: token.user.name,
-          email: token.user.email,
+          id: token.user.id ?? null,
+          name: token.user.name ?? null,
+          email: token.user.email ?? null,
           image: token.user.image ?? null,
-          roles: token.user.roles,
-          adminsOf: token.user.adminsOf,
+          roles: token.user.roles ?? [],
+          adminsOf: token.user.adminsOf ?? [],
         };
         session.accessToken = token.accessToken;
         session.error = token.error;
