@@ -50,7 +50,7 @@ namespace Yoma.Core.Api
     private const string ConnectionStrings_RedisConnection = "RedisConnection";
     private const string Swagger_JsonUrl = $"/swagger/{Constants.Api_Version}/swagger.json";
 
-    private static readonly string[] ExposedHeaders = ["Content-Disposition"];
+    private static readonly string[] ExposedHeaders = ["Content-Disposition", "Location", "Tus-Resumable", "Upload-Offset", "Upload-Length", "Upload-Metadata"];
     #endregion
 
     #region Constructors
@@ -181,10 +181,10 @@ namespace Yoma.Core.Api
       #region System
       app.UseMiddleware<ExceptionResponseMiddleware>();
       app.UseMiddleware<ExceptionLogMiddleware>();
-      app.UseCors();
       if (_appSettings.HttpsRedirectionEnabledEnvironmentsAsEnum.HasFlag(_environment)) app.UseHttpsRedirection();
       app.UseStaticFiles();
       app.UseRouting();
+      app.UseCors();
       app.UseAuthentication();
       app.UseAuthorization();
 
@@ -216,28 +216,20 @@ namespace Yoma.Core.Api
         {
           Predicate = (check) => check.Tags.Contains("live")
         }).AllowAnonymous();
+
+        endpoints.MapTusEndpoints(_configuration, _environment, Constants.Authorization_Policy);
       });
 
       //enabling sentry tracing causes endless information logs about 'Sentry trace header is null'
       //if (_environment != Domain.Core.Environment.Local) app.UseSentryTracing();
       #endregion
 
-      #region 3rd Party
-      app.UseSSIProvider();
-      #endregion
-
-      #region System
-      app.UseEndpoints(endpoints =>
-      {
-        endpoints.MapControllers();
-        endpoints.MapHangfireDashboard();
-      });
-      #endregion System
-
       #region 3rd Partry
+      app.UseSSIProvider();
+
       //migrations applied as part of ConfigureHangfire to ensure db exist prior to executing Hangfire migrations
       _configuration.Configure_RecurringJobs(_appSettings, _environment);
-      #endregion 3rd Party
+      #endregion 3rd Partry
     }
     #endregion
 

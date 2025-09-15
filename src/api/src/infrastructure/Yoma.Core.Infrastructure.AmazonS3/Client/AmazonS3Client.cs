@@ -36,6 +36,10 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
     #endregion
 
     #region Public Members
+    public IAmazonS3 NativeClient => _client;
+
+    public AWSS3OptionsBucket AWSS3OptionsBucket => _optionsBucket;
+
     public async Task Create(string filename, string contentType, byte[] file)
     {
       if (string.IsNullOrWhiteSpace(filename))
