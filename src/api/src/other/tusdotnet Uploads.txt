@@ -31,7 +31,7 @@ Location: /api/v3/uploads/af98f117ef2e43f6869bf4d459a5fe57
 
 The `Location` header contains the **upload URL**.
 
-* The **file ID** is the last part of the URL:
+* The **upload ID** is the last part of the URL:
 
   ```
   af98f117ef2e43f6869bf4d459a5fe57
@@ -91,7 +91,7 @@ When `Upload-Offset == Upload-Length`, the file is fully uploaded.
 
 ### 4. Commit with Payload
 
-After successful upload, the UI should send the **file ID** with its payload (instead of an `IFormFile`).
+After successful upload, the UI should send the **upload ID** with its payload (instead of an `IFormFile`).
 Example payload (pseudo-JSON):
 
 ```json
@@ -109,7 +109,7 @@ Your API will then handle moving the file from the temporary uploads bucket/pref
 
 * UI doesn’t need to handle S3 directly.
 * Just use the tus endpoint.
-* Always keep track of the `Location` → extract the file ID → include it in your payload.
+* Always keep track of the `Location` → extract the upload ID → include it in your payload.
 
 ---
 

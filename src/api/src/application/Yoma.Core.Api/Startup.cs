@@ -123,6 +123,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_DomainServices();
 
       services.ConfigureServices_InfrastructureBlobProvider();
+      services.AddResumableUploadStore(_environment);
       services.ConfigureServices_InfrastructureSSIProvider(_configuration, _configuration.Configuration_ConnectionString(), _appSettings);
       services.ConfigureServices_InfrastructureShortLinkProvider();
       services.ConfigureServices_InfrastructureDatabase(_configuration, _appSettings);
@@ -217,7 +218,7 @@ namespace Yoma.Core.Api
           Predicate = (check) => check.Tags.Contains("live")
         }).AllowAnonymous();
 
-        endpoints.MapTusEndpoints(_configuration, _environment, Constants.Authorization_Policy);
+        endpoints.MapResumableUploadEndpoints(_configuration, Constants.Authorization_Policy);
       });
 
       //enabling sentry tracing causes endless information logs about 'Sentry trace header is null'

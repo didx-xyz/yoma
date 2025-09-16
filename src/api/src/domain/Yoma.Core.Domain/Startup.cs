@@ -51,6 +51,8 @@ using Yoma.Core.Domain.Core.Interfaces.Lookups;
 using Yoma.Core.Domain.Core.Services.Lookups;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.BlobProvider.Interfaces;
+using Yoma.Core.Domain.BlobProvider.Services;
 
 namespace Yoma.Core.Domain
 {
@@ -65,18 +67,22 @@ namespace Yoma.Core.Domain
       // add MediatR and register all handlers in the assembly
       services.AddMediatR(cfg => cfg.RegisterServicesFromAssembly(Assembly.GetExecutingAssembly()));
 
-      #region ActionLink
+      #region Action Link
       #region Lookups
       services.AddScoped<ILinkStatusService, LinkStatusService>();
       #endregion Lookups
 
       services.AddScoped<ILinkService, LinkService>();
       services.AddScoped<ILinkServiceBackgroundService, LinkServiceBackgroundService>();
-      #endregion ActionLink
+      #endregion Action Link
 
       #region Analytics
       services.AddScoped<IAnalyticsService, AnalyticsService>();
       #endregion Analytics
+
+      #region Blob Provider
+      services.AddScoped<IResumableUploadStoreBackgroundService, ResumableUploadStoreBackgroundService>();
+      #endregion Blob Provider
 
       #region Core
       #region Lookups
@@ -135,11 +141,11 @@ namespace Yoma.Core.Domain
       services.AddScoped<IMyOpportunityBackgroundService, MyOpportunityBackgroundService>();
       #endregion My Opportunity
 
-      #region EmailProvider
+      #region Email Provider
       services.AddScoped<INotificationDeliveryService, NotificationDeliveryService>();
       services.AddScoped<INotificationPreferenceFilterService, NotificationPreferenceFilterService>();
       services.AddScoped<INotificationURLFactory, NotificationURLFactory>();
-      #endregion EmailProvider
+      #endregion Email Provider
 
       #region Opportunity
       #region Lookups
@@ -155,7 +161,7 @@ namespace Yoma.Core.Domain
       services.AddScoped<IOpportunityInfoService, OpportunityInfoService>();
       #endregion Opportunity
 
-      #region PartnerSharing
+      #region Partner Sharing
       #region Lookups
       services.AddScoped<IPartnerService, PartnerService>();
       services.AddScoped<IProcessingStatusService, ProcessingStatusService>();
@@ -165,7 +171,7 @@ namespace Yoma.Core.Domain
       services.AddScoped<ISharingBackgroundService, SharingBackgroundService>();
       services.AddScoped<ISharingInfoService, SharingInfoService>();
       services.AddScoped<ISharingService, SharingService>();
-      #endregion PartnerSharing
+      #endregion Partner Sharing
 
       #region Reward
       #region Lookups
@@ -262,6 +268,10 @@ namespace Yoma.Core.Domain
         s => s.ProcessSchedule(), options.DownloadScheduleProcessingSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
       RecurringJob.AddOrUpdate<IDownloadBackgroundService>($"Download Schedule Deletion ({DownloadScheduleStatus.Processed} for more than {appSettings.DownloadScheduleLinkExpirationHours} hours)",
         s => s.ProcessDeletion(), options.DownloadScheduleDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+      //blob provider (resumable upload store)
+      RecurringJob.AddOrUpdate<IResumableUploadStoreBackgroundService>("Resumable Upload Store Deletion (Cleanup)",
+        s => s.ProcessDeletion(), options.ResumableUploadStoreDeletionSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       //seeding of test data
       if (!appSettings.TestDataSeedingEnvironmentsAsEnum.HasFlag(environment)) return;
