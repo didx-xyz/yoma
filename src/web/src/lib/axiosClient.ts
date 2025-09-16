@@ -15,6 +15,25 @@ let apiBaseUrl = "";
 let slowNetworkMessageDismissed = false;
 let slowNetworkAbortDismissed = false;
 
+// Flag to prevent multiple refresh attempts
+let isRefreshing = false;
+let failedQueue: Array<{
+  resolve: (value: any) => void;
+  reject: (error: any) => void;
+}> = [];
+
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token);
+    }
+  });
+
+  failedQueue = [];
+};
+
 // Axios instance for client-side requests
 const ApiClient = async () => {
   if (!apiBaseUrl) {
@@ -89,12 +108,59 @@ const ApiClient = async () => {
 
       return response;
     },
-    (error) => {
+    async (error) => {
       NProgress.done();
 
       // Clear the timeout when the request fails
-      if (error.config.timeoutId) {
+      if (error.config?.timeoutId) {
         clearTimeout(error.config.timeoutId);
+      }
+
+      const originalRequest = error.config;
+
+      // Handle 401 errors by attempting to refresh the session
+      if (error.response?.status === 401 && !originalRequest._retry) {
+        if (isRefreshing) {
+          // If already refreshing, queue this request
+          return new Promise((resolve, reject) => {
+            failedQueue.push({ resolve, reject });
+          })
+            .then(() => {
+              // Retry the original request with potentially new token
+              return instance(originalRequest);
+            })
+            .catch((err) => {
+              return Promise.reject(err);
+            });
+        }
+
+        originalRequest._retry = true;
+        isRefreshing = true;
+
+        try {
+          // Force a session refresh
+          const newSession = await getSession();
+
+          if (newSession?.accessToken) {
+            // Update the Authorization header for the original request
+            originalRequest.headers.Authorization = `Bearer ${newSession.accessToken}`;
+            lastSession = newSession;
+
+            processQueue(null, newSession.accessToken);
+
+            // Retry the original request
+            return instance(originalRequest);
+          } else {
+            // No valid session, let the error through
+            processQueue(error, null);
+            return Promise.reject(error);
+          }
+        } catch (refreshError) {
+          processQueue(refreshError, null);
+          return Promise.reject(error);
+        } finally {
+          isRefreshing = false;
+        }
       }
 
       if (
