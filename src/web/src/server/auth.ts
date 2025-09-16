@@ -89,14 +89,26 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account, trigger, session }) {
+      const now = Date.now();
+      const isExpired =
+        token.accessTokenExpires && now >= token.accessTokenExpires;
+
       // called when the user profile is updated (update function from settings.tsx)
       // also used to force a refresh of token (/organisation/register/index.tsx)
       if (trigger === "update") {
-        token.user = session.user;
-        return refreshAccessToken(token);
-      }
+        // Only update token.user if session.user exists, otherwise keep existing
+        if (session?.user) {
+          token.user = session.user;
+        }
 
-      // Initial log in
+        // If token is expired or we're forcing a refresh, refresh it
+        if (isExpired || session?.forceRefresh) {
+          return refreshAccessToken(token);
+        }
+
+        // Otherwise return current token
+        return token;
+      } // Initial log in
       if (account && user) {
         // get roles from access_token
         const { realm_access } = decode(account.access_token);
@@ -104,26 +116,28 @@ export const authOptions: NextAuthOptions = {
         // get user profile from yoma-api
         const userProfile = await getYomaUserProfile(account.access_token!);
 
-        return {
+        const newToken = {
           idToken: account.id_token, // needed for signout event (id_token_hint)
-          accessToken: account.accessToken,
-          accessTokenExpires: account.expires_at,
+          accessToken: account.access_token,
+          accessTokenExpires: Date.now() + Number(account.expires_in) * 1000,
           refreshToken: account.refresh_token,
           user: {
             ...user,
-            roles: realm_access.roles,
+            roles: realm_access?.roles ?? [],
             adminsOf: userProfile?.adminsOf.map((org) => org.id) ?? [],
           },
           provider: account.provider, //NB: used to determine which client id & secret to use when refreshing token
         };
+
+        return newToken;
       }
 
       // Return previous token if the access token has not expired yet
-      if (Date.now() < token.accessTokenExpires) {
+      if (token.accessTokenExpires && Date.now() < token.accessTokenExpires) {
         return token;
       }
 
-      // Access token has expired or trigger is update, try to update it
+      // Access token has expired, try to update it
       return refreshAccessToken(token);
     },
     async session({ session, token }) {
@@ -228,7 +242,12 @@ export const authOptions: NextAuthOptions = {
 };
 
 const decode = function (token: any) {
-  return JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
+  try {
+    return JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
+  } catch (error) {
+    console.error("Error decoding token:", error);
+    return {};
+  }
 };
 
 /**
@@ -238,7 +257,7 @@ const decode = function (token: any) {
  */
 async function refreshAccessToken(token: any) {
   try {
-    const url = process.env.KEYCLOAK_ISSUER + "/protocol/openid-connect/token?";
+    const url = process.env.KEYCLOAK_ISSUER + "/protocol/openid-connect/token";
 
     const response = await fetch(url, {
       headers: {
@@ -256,28 +275,48 @@ async function refreshAccessToken(token: any) {
     const refreshedTokens = await response.json();
 
     if (!response.ok) {
+      console.error("❌ Refresh token request failed:", {
+        status: response.status,
+        statusText: response.statusText,
+        error: refreshedTokens,
+        url: url,
+      });
       throw refreshedTokens;
     }
 
     // get roles from access_token
-    const { realm_access } = decode(refreshedTokens.access_token);
+    const decodedToken = decode(refreshedTokens.access_token);
+    const realm_access = decodedToken?.realm_access;
 
     // get user profile from yoma-api
     const userProfile = await getYomaUserProfile(refreshedTokens.access_token!);
 
-    return {
+    const newToken = {
       ...token,
       accessToken: refreshedTokens.access_token,
       accessTokenExpires: Date.now() + refreshedTokens.expires_in * 1000,
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
       user: {
         ...token.user,
-        roles: realm_access.roles,
-        adminsOf: userProfile?.adminsOf.map((org) => org.id) ?? [],
+        roles: realm_access?.roles ?? token.user?.roles ?? [],
+        adminsOf:
+          userProfile?.adminsOf.map((org) => org.id) ??
+          token.user?.adminsOf ??
+          [],
       },
     };
+
+    return newToken;
   } catch (error) {
-    console.log(error);
+    console.error("❌ Error refreshing access token:", error);
+    console.error("❌ Token details:", {
+      hasRefreshToken: !!token.refreshToken,
+      refreshTokenPreview: token.refreshToken
+        ? token.refreshToken.substring(0, 20) + "..."
+        : "none",
+      keycloakIssuer: process.env.KEYCLOAK_ISSUER,
+      clientId: process.env.KEYCLOAK_CLIENT_ID,
+    });
 
     return {
       ...token,
