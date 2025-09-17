@@ -554,6 +554,8 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Client
           catch (Aries.CloudAPI.DotnetSDK.AspCore.Clients.Exceptions.HttpClientException ex)
           {
             if (ex.StatusCode != System.Net.HttpStatusCode.NotFound) throw;
+
+            await _connectionRepository.Delete(result);
           }
         }
 
