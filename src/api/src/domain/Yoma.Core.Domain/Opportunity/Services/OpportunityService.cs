@@ -1042,7 +1042,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       if (file == null || file.Length == 0)
         throw new ArgumentNullException(nameof(file));
 
-      new FileValidator(FileType.CSV).Validate(file);
+      FileValidator.Validate(FileType.CSV, file);
 
       var organization = _organizationService.GetById(organizationId, false, false, ensureOrganizationAuthorization);
 

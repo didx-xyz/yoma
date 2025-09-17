@@ -1092,7 +1092,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       await _myOpportunityRequestValidatorVerifyImportCsv.ValidateAndThrowAsync(request);
 
-      new FileValidator(FileType.CSV).Validate(request.File);
+      FileValidator.Validate(FileType.CSV, request.File);
 
       var organization = _organizationService.GetById(request.OrganizationId, false, false, ensureOrganizationAuthorization);
 

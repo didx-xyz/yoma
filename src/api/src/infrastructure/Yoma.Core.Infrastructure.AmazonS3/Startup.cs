@@ -4,6 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net;
+using System.Text;
 using tusdotnet;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
@@ -11,6 +13,7 @@ using tusdotnet.Models.Expiration;
 using tusdotnet.Stores.S3;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
+using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Infrastructure.AmazonS3.Client;
 using Yoma.Core.Infrastructure.AmazonS3.Models;
 using Yoma.Core.Infrastructure.AmazonS3.Services;
@@ -84,7 +87,50 @@ namespace Yoma.Core.Infrastructure.AmazonS3
               : MetadataParsingStrategy.Original,
             Expiration = new SlidingExpiration(TimeSpan.FromMinutes(options.Tus.ExpirationMinutes)),
             UsePipelinesIfAvailable = options.Tus.UsePipelinesIfAvailable,
-            Events = new Events()
+            Events = new Events
+            {
+              OnBeforeCreateAsync = ctx =>
+              {
+                if (ctx.UploadLengthIsDeferred)
+                {
+                  ctx.FailRequest(HttpStatusCode.BadRequest,
+                    "Upload-Defer-Length is not supported. Upload-Length is required when the upload is created");
+                  return Task.CompletedTask;
+                }
+
+                if (ctx.UploadLength <= 0)
+                {
+                  ctx.FailRequest(HttpStatusCode.BadRequest,
+                    "Upload-Length is required and must be greater than zero");
+                  return Task.CompletedTask;
+                }
+
+                if (ctx.Metadata == null || !ctx.Metadata.TryGetValue("filename", out var meta))
+                {
+                  ctx.FailRequest(HttpStatusCode.BadRequest, "Missing 'filename' in TUS metadata");
+                  return Task.CompletedTask;
+                }
+
+                var fileName = meta.GetString(Encoding.UTF8)?.Trim();
+                if (string.IsNullOrWhiteSpace(fileName))
+                {
+                  ctx.FailRequest(HttpStatusCode.BadRequest, "Invalid 'filename' value in TUS metadata");
+                  return Task.CompletedTask;
+                }
+
+                try
+                {
+                  FileValidator.Validate(fileName, ctx.UploadLength);
+                }
+                catch (Exception ex)
+                {
+                  ctx.FailRequest(HttpStatusCode.BadRequest, ex.Message);
+                  return Task.CompletedTask;
+                }
+
+                return Task.CompletedTask;
+              }
+            }
           };
 
           return Task.FromResult(cfg);

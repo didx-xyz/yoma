@@ -49,7 +49,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       ArgumentNullException.ThrowIfNull(file, nameof(file));
 
-      new FileValidator(result.FileType).Validate(file);
+      FileValidator.Validate(result.FileType, file);
 
       var client = _blobProviderClientFactory.CreateClient(result.StorageType);
 
@@ -62,7 +62,7 @@ namespace Yoma.Core.Domain.Core.Services
     {
       ArgumentNullException.ThrowIfNull(file, nameof(file));
 
-      new FileValidator(type).Validate(file);
+      FileValidator.Validate(type, file);
 
       var id = Guid.NewGuid();
       var key = $"{_environmentProvider.Environment}/{type}/{id}{file.GetExtension()}";
