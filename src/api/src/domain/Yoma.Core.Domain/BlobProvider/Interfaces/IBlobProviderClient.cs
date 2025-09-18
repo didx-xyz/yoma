@@ -4,6 +4,8 @@ namespace Yoma.Core.Domain.BlobProvider.Interfaces
   {
     Task Create(string filename, string contentType, byte[] file);
 
+    Task Create(string filename, string contentType, string sourceBucket, string sourceFilename);
+
     Task CreateFromFile(string filename, string contentType, string sourceFilePath);
 
     Task<(string ContentType, byte[] Data)> Download(string filename);

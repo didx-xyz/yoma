@@ -38,7 +38,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           { "A2623732-9934-4B87-80BE-B93C0190D523", "User", "Admin_Email_ActionLink_Verify_Approval", "New magic links", "Get notified about new magic link requests", "Notifications", "Admin", 12, $"[\"{Constants.Role_Admin}\"]", "true", "Boolean", true, true },
 
           // Privacy
-          { "F3E6E3B1-0B3F-4B92-8C21-9E87A2D6A28F", "User", "User_Share_Email_With_Partners", "Share my email", "Recommended to share email, only with partners that you have completed opportunities with", "Privacy", null, 13, $"[\"{Constants.Role_User}\"]", "false", "Boolean", true, true },
+          { "F3E6E3B1-0B3F-4B92-8C21-9E87A2D6A28F", "User", "User_Share_Email_With_Partners", "Share my email", "Recommended to share email, only with partners that you have completed opportunities with", "Privacy", null, 13, $"[\"{Constants.Role_User}\"]", "true", "Boolean", true, true },
         },
         schema: "Entity");
       #endregion Lookups

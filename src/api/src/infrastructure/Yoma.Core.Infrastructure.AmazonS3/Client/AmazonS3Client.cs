@@ -65,11 +65,49 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Client
 
       try
       {
-        await _client.PutObjectAsync(request); //override an object with the same key(filename)
+        await _client.PutObjectAsync(request); // override if exists
       }
       catch (AmazonS3Exception ex)
       {
         throw new HttpClientException(ex.StatusCode, $"Failed to upload object with filename '{filename}': {ex.Message}");
+      }
+    }
+
+    public async Task Create(string filename, string contentType, string sourceBucket, string sourceFilename)
+    {
+      if (string.IsNullOrWhiteSpace(filename))
+        throw new ArgumentNullException(nameof(filename));
+      filename = filename.Trim().ToLower();
+
+      if (string.IsNullOrWhiteSpace(contentType))
+        throw new ArgumentNullException(nameof(contentType));
+      contentType = contentType.Trim();
+
+      if (string.IsNullOrWhiteSpace(sourceBucket))
+        throw new ArgumentNullException(nameof(sourceBucket));
+      sourceBucket = sourceBucket.Trim();
+
+      if (string.IsNullOrWhiteSpace(sourceFilename))
+        throw new ArgumentNullException(nameof(sourceFilename));
+      sourceFilename = sourceFilename.Trim().ToLower();
+
+      try
+      {
+        var copy = new CopyObjectRequest
+        {
+          SourceBucket = sourceBucket,
+          SourceKey = sourceFilename,
+          DestinationBucket = _optionsBucket.BucketName,
+          DestinationKey = filename,
+          MetadataDirective = S3MetadataDirective.REPLACE,
+          ContentType = contentType
+        };
+
+        await _client.CopyObjectAsync(copy); // override if exists
+      }
+      catch (AmazonS3Exception ex)
+      {
+        throw new HttpClientException(ex.StatusCode, $"Failed to copy object to '{filename}' from 's3://{sourceBucket}/{sourceFilename}': {ex.Message}");
       }
     }
 

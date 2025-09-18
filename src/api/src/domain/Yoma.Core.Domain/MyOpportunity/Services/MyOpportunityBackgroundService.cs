@@ -341,7 +341,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           _logger.LogError(ex, "Pending verification seeding validation failed. Seeding skipped / no longer seed-able for item with id '{id}': {errorMessage}", item.Id, ex.Message);
         }
       }
-      #endregion
     }
+    #endregion
   }
 }
