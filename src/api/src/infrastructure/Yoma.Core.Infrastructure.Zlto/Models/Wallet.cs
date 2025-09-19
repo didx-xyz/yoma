@@ -44,32 +44,28 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
 
   public class WalletAccountInfo
   {
-    [JsonProperty("owner_id")]
-    public string OwnerId { get; set; }
-
-    [JsonProperty("owner_name")]
-    public string OwnerName { get; set; }
+    [JsonProperty("external_account_id")]
+    public string ExternalAccountId { get; set; }
 
     [JsonProperty("wallet_id")]
     public string WalletId { get; set; }
 
-    [JsonProperty("user_password")]
-    public string UserPassword { get; set; }
-
-    [JsonProperty("date_created")]
-    public DateTime DateCreated { get; set; }
-
-    [JsonProperty("external_account_id")]
-    public string ExternalAccountId { get; set; }
+    [JsonProperty("owner_id")]
+    public string OwnerId { get; set; }
 
     [JsonProperty("owner_origin")]
     public string OwnerOrigin { get; set; }
 
+    [JsonProperty("owner_name")]
+    public string OwnerName { get; set; }
+
     [JsonProperty("user_name")]
     public string Username { get; set; }
 
-    [JsonProperty("last_updated")]
-    public DateTime LastUpdated { get; set; }
+    [JsonProperty("date_created")]
+    public DateTimeOffset DateCreated { get; set; }
+
+    public DateTimeOffset LastUpdated => DateCreated;
   }
 
   public class WalletResponse
@@ -103,10 +99,10 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public WalletLocation LocationDetails { get; set; }
 
     [JsonProperty("last_updated")]
-    public DateTimeOffset LastUpdated { get; set; }
+    public DateTime LastUpdated { get; set; }
 
     [JsonProperty("date_created")]
-    public DateTimeOffset DateCreated { get; set; }
+    public DateTime DateCreated { get; set; }
   }
 
   public class WalletLocation
@@ -127,7 +123,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Models
     public int Status { get; set; }
 
     [JsonProperty("date_created")]
-    public DateTimeOffset DateCreated { get; set; }
+    public DateTime DateCreated { get; set; }
   }
 
   public class WalletResponseSearchVouchers
