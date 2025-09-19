@@ -21,8 +21,6 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import {
   Controller,
   useFieldArray,
@@ -108,7 +106,8 @@ import {
   debounce,
   getSafeUrl,
   getThemeFromRole,
-  normalizeDate,
+  dateInputToUTC,
+  utcToDateInput,
 } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
@@ -506,10 +505,8 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       if (val == null) return;
       // ensure dateEnd is not before dateStart
       if (val.dateEnd && val.dateStart) {
-        if (
-          normalizeDate(new Date(val.dateEnd)) <
-          normalizeDate(new Date(val.dateStart))
-        ) {
+        // Since both dates are strings in YYYY-MM-DD format, we can compare them directly
+        if (val.dateEnd < val.dateStart) {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message: "End date must be after start date.",
@@ -2221,13 +2218,19 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               render={({
                                 field: { onChange, onBlur, value },
                               }) => (
-                                <DatePicker
+                                <input
+                                  type="date"
                                   className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
-                                  wrapperClassName="w-full"
-                                  onBlur={onBlur} // mark the field as touched
-                                  onChange={(date) => onChange(date)}
-                                  selected={value ? new Date(value) : null}
-                                  placeholderText="Select start date..."
+                                  onBlur={(e) => {
+                                    onBlur(); // mark the field as touched
+                                    // Only validate and convert when user finishes editing
+                                    if (e.target.value) {
+                                      onChange(dateInputToUTC(e.target.value));
+                                    } else {
+                                      onChange("");
+                                    }
+                                  }}
+                                  defaultValue={utcToDateInput(value || "")}
                                   id="input_dateStart" // e2e
                                 />
                               )}
@@ -2247,13 +2250,19 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                               render={({
                                 field: { onChange, onBlur, value },
                               }) => (
-                                <DatePicker
+                                <input
+                                  type="date"
                                   className="input border-gray focus:border-gray w-full rounded-md focus:outline-none"
-                                  wrapperClassName="w-full"
-                                  onBlur={onBlur} // mark the field as touched
-                                  onChange={(date) => onChange(date)}
-                                  selected={value ? new Date(value) : null}
-                                  placeholderText="Select end date..."
+                                  onBlur={(e) => {
+                                    onBlur(); // mark the field as touched
+                                    // Only validate and convert when user finishes editing
+                                    if (e.target.value) {
+                                      onChange(dateInputToUTC(e.target.value));
+                                    } else {
+                                      onChange("");
+                                    }
+                                  }}
+                                  defaultValue={utcToDateInput(value || "")}
                                   id="input_dateEnd" // e2e
                                 />
                               )}

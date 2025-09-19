@@ -1,7 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import { IoMdClose, IoMdOptions } from "react-icons/io";
 import Async from "react-select/async";
@@ -15,7 +13,12 @@ import {
 } from "~/api/services/opportunities";
 import { getOrganisations } from "~/api/services/organisations";
 import { PAGE_SIZE_MEDIUM } from "~/lib/constants";
-import { debounce, toISOStringForTimezone } from "~/lib/utils";
+import {
+  debounce,
+  dateInputToUTC,
+  dateInputToUTCEndOfDay,
+  utcToDateInput,
+} from "~/lib/utils";
 import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/dashboard";
 
 // Update the schema so that countries and categories are arrays of option objects
@@ -375,12 +378,18 @@ export const DashboardFilterVertical: React.FC<{
                 control={form.control}
                 name="startDate"
                 render={({ field: { onChange, value } }) => (
-                  <DatePicker
+                  <input
+                    type="date"
                     className="input focus:border-gray h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:outline-none"
-                    onChange={(date) => onChange(toISOStringForTimezone(date))}
-                    selected={value ? new Date(value) : null}
-                    placeholderText="Start Date"
-                    portalId="startDate"
+                    onBlur={(e) => {
+                      // Only validate and convert when user finishes editing
+                      if (e.target.value) {
+                        onChange(dateInputToUTC(e.target.value));
+                      } else {
+                        onChange("");
+                      }
+                    }}
+                    defaultValue={utcToDateInput(value || "")}
                   />
                 )}
               />
@@ -407,15 +416,18 @@ export const DashboardFilterVertical: React.FC<{
                 control={form.control}
                 name="endDate"
                 render={({ field: { onChange, value } }) => (
-                  <DatePicker
+                  <input
+                    type="date"
                     className="input focus:border-gray h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:outline-none"
-                    onChange={(date) => {
-                      if (date) date.setHours(23, 59, 59, 999);
-                      onChange(toISOStringForTimezone(date));
+                    onBlur={(e) => {
+                      // Only validate and convert when user finishes editing
+                      if (e.target.value) {
+                        onChange(dateInputToUTCEndOfDay(e.target.value));
+                      } else {
+                        onChange("");
+                      }
                     }}
-                    selected={value ? new Date(value) : null}
-                    placeholderText="End Date"
-                    portalId="endDate"
+                    defaultValue={utcToDateInput(value || "")}
                   />
                 )}
               />

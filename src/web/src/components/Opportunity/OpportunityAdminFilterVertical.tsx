@@ -1,7 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
 import Select from "react-select";
@@ -14,7 +12,7 @@ import {
   type OpportunityType,
 } from "~/api/models/opportunity";
 import type { OrganizationInfo } from "~/api/models/organisation";
-import { toISOStringForTimezone } from "~/lib/utils";
+import { dateInputToUTC, utcToDateInput } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
 
 export const OpportunityAdminFilterVertical: React.FC<{
@@ -469,14 +467,19 @@ export const OpportunityAdminFilterVertical: React.FC<{
                         control={form.control}
                         name="startDate"
                         render={({ field: { onChange, value } }) => (
-                          <DatePicker
+                          <input
+                            type="date"
                             className="input input-sm border-gray focus:border-gray w-full rounded-md focus:outline-none"
-                            onChange={(date) => {
-                              onChange(toISOStringForTimezone(date));
+                            onBlur={(e) => {
+                              // Only validate and convert when user finishes editing
+                              if (e.target.value) {
+                                onChange(dateInputToUTC(e.target.value));
+                              } else {
+                                onChange("");
+                              }
                               void handleSubmit(onSubmitHandler)();
                             }}
-                            selected={value ? new Date(value) : null}
-                            placeholderText="Start Date"
+                            defaultValue={utcToDateInput(value || "")}
                           />
                         )}
                       />
@@ -500,19 +503,22 @@ export const OpportunityAdminFilterVertical: React.FC<{
                         control={form.control}
                         name="endDate"
                         render={({ field: { onChange, value } }) => (
-                          <DatePicker
-                            className="input input-sm border-gray focus:border-gray z-50 w-full rounded-md focus:outline-none"
-                            onChange={(date) => {
-                              onChange(toISOStringForTimezone(date));
+                          <input
+                            type="date"
+                            className="input input-sm border-gray focus:border-gray w-full rounded-md focus:outline-none"
+                            onBlur={(e) => {
+                              // Only validate and convert when user finishes editing
+                              if (e.target.value) {
+                                onChange(dateInputToUTC(e.target.value));
+                              } else {
+                                onChange("");
+                              }
                               void handleSubmit(onSubmitHandler)();
                             }}
-                            selected={value ? new Date(value) : null}
-                            placeholderText="End Date"
-                            popperPlacement="top-end"
+                            defaultValue={utcToDateInput(value || "")}
                           />
                         )}
-                      />
-
+                      />{" "}
                       {formState.errors.endDate && (
                         <label className="label">
                           <span className="label-text-alt px-4 text-base text-red-500 italic">

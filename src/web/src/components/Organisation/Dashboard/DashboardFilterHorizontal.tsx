@@ -1,7 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import Select, { components, type ValueContainerProps } from "react-select";
 import Async from "react-select/async";
@@ -16,7 +14,12 @@ import { searchCriteriaOpportunities } from "~/api/services/opportunities";
 import { getOrganisations } from "~/api/services/organisations";
 import FilterBadges from "~/components/FilterBadges";
 import { PAGE_SIZE_MEDIUM, ROLE_ADMIN } from "~/lib/constants";
-import { debounce, toISOStringForTimezone } from "~/lib/utils";
+import {
+  debounce,
+  dateInputToUTC,
+  dateInputToUTCEndOfDay,
+  utcToDateInput,
+} from "~/lib/utils";
 import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/dashboard";
 import type { User } from "~/server/auth";
 
@@ -267,15 +270,19 @@ export const DashboardFilterHorizontal: React.FC<{
                   control={form.control}
                   name="startDate"
                   render={({ field: { onChange, value } }) => (
-                    <DatePicker
+                    <input
+                      type="date"
                       className="input focus:border-gray h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:outline-none md:w-32"
-                      onChange={(date) => {
-                        onChange(toISOStringForTimezone(date));
+                      onBlur={(e) => {
+                        // Only validate and convert when user finishes editing
+                        if (e.target.value) {
+                          onChange(dateInputToUTC(e.target.value));
+                        } else {
+                          onChange("");
+                        }
                         void handleSubmit(onSubmitHandler)();
                       }}
-                      selected={value ? new Date(value) : null}
-                      placeholderText="Start Date"
-                      portalId="startDate"
+                      defaultValue={utcToDateInput(value || "")}
                     />
                   )}
                 />
@@ -295,17 +302,19 @@ export const DashboardFilterHorizontal: React.FC<{
                   control={form.control}
                   name="endDate"
                   render={({ field: { onChange, value } }) => (
-                    <DatePicker
+                    <input
+                      type="date"
                       className="input focus:border-gray h-10 w-full rounded border-none !text-xs placeholder:text-xs placeholder:text-[#828181] focus:outline-none md:w-32"
-                      onChange={(date) => {
-                        // change time to 1 second to midnight
-                        if (date) date.setHours(23, 59, 59, 999);
-                        onChange(toISOStringForTimezone(date));
+                      onBlur={(e) => {
+                        // Only validate and convert when user finishes editing
+                        if (e.target.value) {
+                          onChange(dateInputToUTCEndOfDay(e.target.value));
+                        } else {
+                          onChange("");
+                        }
                         void handleSubmit(onSubmitHandler)();
                       }}
-                      selected={value ? new Date(value) : null}
-                      placeholderText="End Date"
-                      portalId="endDate"
+                      defaultValue={utcToDateInput(value || "")}
                     />
                   )}
                 />
@@ -441,9 +450,7 @@ export const DashboardFilterHorizontal: React.FC<{
           ]}
           resolveValue={(key, value) => {
             if (key === "startDate" || key === "endDate")
-              return value
-                ? toISOStringForTimezone(new Date(value)).split("T")[0]
-                : "";
+              return value ? utcToDateInput(value) : "";
             else if (key === "opportunities") {
               // HACK: resolve opportunity ids to titles
               const lookup = lookups_selectedOpportunities?.items.find(

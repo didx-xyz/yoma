@@ -2,6 +2,7 @@ import {
   QueryClient,
   QueryClientProvider,
   HydrationBoundary,
+  type DehydratedState,
 } from "@tanstack/react-query";
 import { Provider } from "jotai";
 import type { NextPage } from "next";
@@ -52,7 +53,10 @@ type AppPropsWithLayout<P> = AppProps<P> & {
 const MyApp = ({
   Component,
   pageProps,
-}: AppPropsWithLayout<{ session: Session; dehydratedState: object }>) => {
+}: AppPropsWithLayout<{
+  session: Session;
+  dehydratedState?: DehydratedState;
+}>) => {
   // see https://flaviocopes.com/nextjs-refresh-state-navigation/
   // when the state of a component is not refreshed when navigating between pages
   const router = useRouter();
@@ -78,7 +82,7 @@ const MyApp = ({
       <SessionProvider session={pageProps.session}>
         <ThemeProvider enableSystem={false} forcedTheme={theme}>
           <QueryClientProvider client={queryClient}>
-            <HydrationBoundary state={pageProps.dehydratedState}>
+            <HydrationBoundary state={pageProps.dehydratedState ?? null}>
               <div id="mainContent" className={`${nunito.className}`}>
                 <ConfirmationModalContextProvider>
                   <Global />

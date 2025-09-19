@@ -92,7 +92,7 @@ import {
   THEME_BLUE,
   THEME_GREEN,
 } from "~/lib/constants";
-import { getTimeOfDayAndEmoji, toISOStringForTimezone } from "~/lib/utils";
+import { getTimeOfDayAndEmoji, utcToDateInput } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
 
@@ -1076,9 +1076,7 @@ const OrganisationDashboard: NextPageWithLayout<{
               ]}
               resolveValue={(key, value) => {
                 if (key === "startDate" || key === "endDate")
-                  return value
-                    ? toISOStringForTimezone(new Date(value)).split("T")[0]
-                    : "";
+                  return value ? utcToDateInput(value) : "";
                 else if (key === "opportunities") {
                   // HACK: resolve opportunity ids to titles
                   const lookup = lookups_selectedOpportunities?.items.find(

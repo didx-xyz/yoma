@@ -19,10 +19,8 @@ export enum LinkFilterOptions {
   ENTITIES = "entities",
 }
 
-const ValueContainer = ({
-  children,
-  ...props
-}: ValueContainerProps<SelectOption>) => {
+const ValueContainer = (props: ValueContainerProps<SelectOption, boolean>) => {
+  const { children } = props;
   let [values, input] = children as any[];
   if (Array.isArray(values)) {
     if (
@@ -45,11 +43,13 @@ const ValueContainer = ({
       values = `${values.length} ${pluralize(placeholder, values.length)}`;
     }
   }
+
+  const OriginalValueContainer = components.ValueContainer;
   return (
-    <components.ValueContainer {...props}>
+    <OriginalValueContainer {...props}>
       {values}
       {input}
-    </components.ValueContainer>
+    </OriginalValueContainer>
   );
 };
 

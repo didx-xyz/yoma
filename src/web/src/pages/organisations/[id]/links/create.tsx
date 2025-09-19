@@ -16,8 +16,6 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { IoMdArrowRoundBack, IoMdClose, IoMdWarning } from "react-icons/io";
@@ -61,7 +59,13 @@ import {
 } from "~/lib/constants";
 import { trackGAEvent } from "~/lib/google-analytics";
 import { config } from "~/lib/react-query-config";
-import { debounce, getSafeUrl, getThemeFromRole } from "~/lib/utils";
+import {
+  debounce,
+  getSafeUrl,
+  getThemeFromRole,
+  dateInputToUTC,
+  utcToDateInput,
+} from "~/lib/utils";
 import {
   normalizeAndValidateEmail,
   normalizeAndValidatePhoneNumber,
@@ -1158,11 +1162,18 @@ const LinkDetails: NextPageWithLayout<{
                             control={controlStep2}
                             name="dateEnd"
                             render={({ field: { onChange, value } }) => (
-                              <DatePicker
+                              <input
+                                type="date"
                                 className="input border-gray focus:border-gray rounded-md focus:outline-none"
-                                onChange={(date) => onChange(date)}
-                                selected={value ? new Date(value) : null}
-                                placeholderText="Select End Date"
+                                onBlur={(e) => {
+                                  // Only validate and convert when user finishes editing
+                                  if (e.target.value) {
+                                    onChange(dateInputToUTC(e.target.value));
+                                  } else {
+                                    onChange("");
+                                  }
+                                }}
+                                defaultValue={utcToDateInput(value || "")}
                                 id="input_dateEnd" // e2e
                               />
                             )}
