@@ -526,6 +526,8 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
 
       if (string.IsNullOrWhiteSpace(response.WalletId))
         throw new InvalidOperationException($"WalletId is null or empty after deserialization. Payload: {responseRaw}");
+
+      return response;
     }
 
     private async Task<WalletResponse?> GetWalletByUsername(string username)
