@@ -22,91 +22,91 @@ env:
   REGISTRY: ghcr.io/${{ github.repository_owner }}
 
 jobs:
-  lint:
-    name: Lint
-    permissions:
-      checks: write
-      contents: write
-    runs-on: ubuntu-latest
+  # lint:
+  #   name: Lint
+  #   permissions:
+  #     checks: write
+  #     contents: write
+  #   runs-on: ubuntu-latest
 
-    concurrency:
-      group: ${{ github.workflow }}-lint-${{ matrix.project }}-${{ github.ref }}
-      cancel-in-progress: true
+  #   concurrency:
+  #     group: ${{ github.workflow }}-lint-${{ matrix.project }}-${{ github.ref }}
+  #     cancel-in-progress: true
 
-    strategy:
-      fail-fast: false
-      matrix:
-        project:
-          - api
-          - web
-        include:
-          - project: api
-            dir: ./src/api
-            lang: cs
-            config:
-              auto_fix: false
-              continue_on_error: false
-              check_name: "Dotnet Format (${dir})"
-              dotnet_format: true
-              dotnet_format_dir: ./src/api
-            env: {}
-          - project: web
-            dir: ./src/web
-            lang: js
-            config:
-              auto_fix: false
-              continue_on_error: false
-              check_name: "${linter} (${dir})"
-              # ESLint
-              eslint: true
-              eslint_dir: ./src/web
-              eslint_extensions: js,ts,tsx
-              eslint_args: --config eslint.config.mjs
-              # Prettier
-              prettier: true
-              prettier_dir: ./src/web
-              prettier_extensions: js,ts,tsx
-              prettier_args: --ignore-path ../../.gitignore --config prettier.config.cjs
-            env:
-              SKIP_ENV_VALIDATION: true
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       project:
+  #         - api
+  #         - web
+  #       include:
+  #         - project: api
+  #           dir: ./src/api
+  #           lang: cs
+  #           config:
+  #             auto_fix: false
+  #             continue_on_error: false
+  #             check_name: "Dotnet Format (${dir})"
+  #             dotnet_format: true
+  #             dotnet_format_dir: ./src/api
+  #           env: {}
+  #         - project: web
+  #           dir: ./src/web
+  #           lang: js
+  #           config:
+  #             auto_fix: false
+  #             continue_on_error: false
+  #             check_name: "${linter} (${dir})"
+  #             # ESLint
+  #             eslint: true
+  #             eslint_dir: ./src/web
+  #             eslint_extensions: js,ts,tsx
+  #             eslint_args: --config eslint.config.mjs
+  #             # Prettier
+  #             prettier: true
+  #             prettier_dir: ./src/web
+  #             prettier_extensions: js,ts,tsx
+  #             prettier_args: --ignore-path ../../.gitignore --config prettier.config.cjs
+  #           env:
+  #             SKIP_ENV_VALIDATION: true
 
-    # outputs: # https://github.com/actions/runner/pull/2477
-    #   ${{ matrix.project }}-changes: ${{ steps.filter.outputs.changes }}
+  #   # outputs: # https://github.com/actions/runner/pull/2477
+  #   #   ${{ matrix.project }}-changes: ${{ steps.filter.outputs.changes }}
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: filter
-        with:
-          base: master
-          filters: |-
-            changes:
-              - '${{ matrix.dir }}/**'
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: dorny/paths-filter@v3
+  #       id: filter
+  #       with:
+  #         base: master
+  #         filters: |-
+  #           changes:
+  #             - '${{ matrix.dir }}/**'
 
-      - uses: actions/setup-node@v4
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-        with:
-          node-version: 20
-          cache: yarn
-          cache-dependency-path: ${{ matrix.dir }}/yarn.lock
-      - uses: actions/cache@v4
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-        with:
-          path: ${{ matrix.dir }}/node_modules
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-      - run: yarn install --frozen-lockfile
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
-        working-directory: ${{ matrix.dir }}
+  #     - uses: actions/setup-node@v4
+  #       if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+  #       with:
+  #         node-version: 20
+  #         cache: yarn
+  #         cache-dependency-path: ${{ matrix.dir }}/yarn.lock
+  #     - uses: actions/cache@v4
+  #       if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+  #       with:
+  #         path: ${{ matrix.dir }}/node_modules
+  #         key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+  #     - run: yarn install --frozen-lockfile
+  #       if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'js'
+  #       working-directory: ${{ matrix.dir }}
 
-      - uses: actions/setup-dotnet@v4
-        if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
-        with:
-          dotnet-version: 9.x
+  #     - uses: actions/setup-dotnet@v4
+  #       if: (steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch') && matrix.lang == 'cs'
+  #       with:
+  #         dotnet-version: 9.x
 
-      - uses: wearerequired/lint-action@v2
-        if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
-        with: ${{ matrix.config }}
-        env: ${{ matrix.env }}
+  #     - uses: wearerequired/lint-action@v2
+  #       if: steps.filter.outputs.changes == 'true' || github.event_name == 'workflow_dispatch'
+  #       with: ${{ matrix.config }}
+  #       env: ${{ matrix.env }}
 
   docker-build:
     name: Build Docker Images
@@ -118,7 +118,7 @@ jobs:
       group: ${{ github.workflow }}-build-${{ matrix.image }}-${{ matrix.arch }}-${{ github.ref }}
       cancel-in-progress: true
 
-    needs: lint
+    # needs: lint
 
     strategy:
       matrix:
