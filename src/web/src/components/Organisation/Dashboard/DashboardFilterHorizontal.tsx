@@ -248,7 +248,7 @@ export const DashboardFilterHorizontal: React.FC<{
                       value={defaultOrganisationOptions}
                       placeholder="Organisation"
                       components={{
-                        ValueContainer: ValueContainer as any,
+                        ValueContainer,
                       }}
                     />
                   )}
@@ -361,7 +361,7 @@ export const DashboardFilterHorizontal: React.FC<{
                     value={defaultOpportunityOptions}
                     placeholder="Opportunity"
                     components={{
-                      ValueContainer: ValueContainer as any,
+                      ValueContainer,
                     }}
                   />
                 )}
@@ -418,7 +418,7 @@ export const DashboardFilterHorizontal: React.FC<{
                     }
                     placeholder="Category"
                     components={{
-                      ValueContainer: ValueContainer as any,
+                      ValueContainer,
                     }}
                   />
                 )}

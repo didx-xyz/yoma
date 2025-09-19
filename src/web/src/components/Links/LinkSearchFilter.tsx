@@ -235,7 +235,7 @@ export const LinkSearchFilters: React.FC<{
                     value={defaultOrganisationOptions}
                     placeholder="Organisation"
                     components={{
-                      ValueContainer: ValueContainer as any,
+                      ValueContainer,
                     }}
                   />
                 )}
@@ -274,7 +274,7 @@ export const LinkSearchFilters: React.FC<{
                     value={defaultOpportunityOptions}
                     placeholder="Opportunity"
                     components={{
-                      ValueContainer: ValueContainer as any,
+                      ValueContainer,
                     }}
                   />
                 )}

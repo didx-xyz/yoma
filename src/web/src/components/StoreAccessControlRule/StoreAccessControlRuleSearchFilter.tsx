@@ -176,7 +176,7 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
                     }
                     placeholder="Organisation"
                     components={{
-                      ValueContainer: ValueContainer as any,
+                      ValueContainer,
                     }}
                   />
                 )}
@@ -222,7 +222,7 @@ export const StoreAccessControlRuleSearchFilters: React.FC<{
                     }
                     placeholder="Store"
                     components={{
-                      ValueContainer: ValueContainer as any,
+                      ValueContainer,
                     }}
                     isDisabled={
                       !searchFilter?.organizations?.[0] ||

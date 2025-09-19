@@ -128,7 +128,7 @@ export const EngagementRowFilter: React.FC<{
                       .map((c) => ({ value: c.name, label: c.name }))}
                     placeholder="Country"
                     components={{
-                      ValueContainer: ValueContainer as any,
+                      ValueContainer,
                     }}
                   />
                 )}
