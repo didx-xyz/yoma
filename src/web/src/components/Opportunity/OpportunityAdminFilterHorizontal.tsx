@@ -224,7 +224,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                             .map((c) => ({ value: c.name, label: c.name }))}
                           placeholder="Type"
                           components={{
-                            ValueContainer,
+                            ValueContainer: ValueContainer as any,
                           }}
                         />
                       )}
@@ -274,7 +274,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                             .map((c) => ({ value: c.name, label: c.name }))}
                           placeholder="Country"
                           components={{
-                            ValueContainer,
+                            ValueContainer: ValueContainer as any,
                           }}
                         />
                       )}
@@ -323,7 +323,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                             .map((c) => ({ value: c.name, label: c.name }))}
                           placeholder="Language"
                           components={{
-                            ValueContainer,
+                            ValueContainer: ValueContainer as any,
                           }}
                         />
                       )}
@@ -373,7 +373,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                             .map((c) => ({ value: c.name, label: c.name }))}
                           placeholder="Organisation"
                           components={{
-                            ValueContainer,
+                            ValueContainer: ValueContainer as any,
                           }}
                         />
                       )}
@@ -419,7 +419,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                           )}
                           placeholder="Status"
                           components={{
-                            ValueContainer,
+                            ValueContainer: ValueContainer as any,
                           }}
                         />
                       )}
@@ -463,7 +463,7 @@ export const OpportunityAdminFilterHorizontal: React.FC<{
                           )}
                           placeholder="Status"
                           components={{
-                            ValueContainer,
+                            ValueContainer: ValueContainer as any,
                           }}
                         />
                       )}
