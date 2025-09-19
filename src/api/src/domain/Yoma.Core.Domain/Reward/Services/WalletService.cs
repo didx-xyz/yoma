@@ -193,6 +193,9 @@ namespace Yoma.Core.Domain.Reward.Services
           if (wallet.Balance != balance)
             throw new InvalidOperationException($"Initial wallet balance mismatch detected for user with id '{userId}': Calculated '{balance:0.00}' vs. Processed '{wallet.Balance:0.00}'");
 
+          if (string.IsNullOrEmpty(wallet.Id))
+            throw new InvalidOperationException($"Wallet id expected with wallet creation status of '{WalletCreationStatus.Created}' for user with id '{userId}'");
+
           rewardTransactions.ForEach(o => o.Status = RewardTransactionStatus.ProcessedInitialBalance);
 
           await _rewardService.UpdateTransactions(rewardTransactions);

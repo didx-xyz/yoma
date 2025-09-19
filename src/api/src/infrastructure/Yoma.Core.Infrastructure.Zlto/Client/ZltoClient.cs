@@ -2,6 +2,7 @@ using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Net;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
@@ -503,18 +504,30 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
           .EnsureSuccessStatusCodeAsync()
           .ReceiveString(); //.ReceiveJson<WalletResponseCreate>() >> .ReceiveJson<WalletAccountInfo>()
 
-      try
+      var jObj = JObject.Parse(responseRaw);
+
+      WalletAccountInfo response;
+      if (jObj.ContainsKey("account_info"))
       {
-        var accountInfo = JsonConvert.DeserializeObject<WalletAccountInfo>(responseRaw);
-        if (accountInfo != null) return accountInfo;
+        // Old shape (wrapped)
+        var wrapped = JsonConvert.DeserializeObject<WalletResponseCreate>(responseRaw);
+        if (wrapped?.AccountInfo == null)
+          throw new InvalidOperationException(
+              $"Failed to deserialize wallet response into WalletResponseCreate (wrapped). Payload: {responseRaw}");
+        response = wrapped.AccountInfo;
       }
-      catch (JsonException) { }
+      else
+      {
+        // New shape (flat)
+        var flat = JsonConvert.DeserializeObject<WalletAccountInfo>(responseRaw) ?? throw new InvalidOperationException(
+              $"Failed to deserialize wallet response into WalletAccountInfo (flat). Payload: {responseRaw}");
+        response = flat;
+      }
 
-      var response = JsonConvert.DeserializeObject<WalletResponseCreate>(responseRaw);
-      if (response?.AccountInfo == null)
-        throw new InvalidOperationException($"Failed to deserialize wallet response into either WalletAccountInfo or WalletResponseCreate. Payload: {responseRaw}");
+      if (string.IsNullOrWhiteSpace(response.WalletId))
+        throw new InvalidOperationException($"WalletId is null or empty after deserialization. Payload: {responseRaw}");
 
-      return response.AccountInfo;
+      return response;
     }
 
     private async Task<WalletResponse?> GetWalletByUsername(string username)
