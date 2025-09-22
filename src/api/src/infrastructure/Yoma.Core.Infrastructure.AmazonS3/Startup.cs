@@ -136,7 +136,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
           return Task.FromResult(cfg);
         });
 
-      //builder.RequireAuthorization(authPolicy);
+      builder.RequireAuthorization(authPolicy);
       return builder;
     }
   }
