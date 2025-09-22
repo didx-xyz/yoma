@@ -8,11 +8,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
   {
     public IFormFile? Certificate { get; set; }
 
+    public string? CertificateUploadId { get; set; }
+
     public IFormFile? VoiceNote { get; set; }
+
+    public string? VoiceNoteUploadId { get; set; }
 
     public IFormFile? Picture { get; set; }
 
+    public string? PictureUploadId { get; set; }
+
     public IFormFile? Video { get; set; }
+
+    public string? VideoUploadId { get; set; }
 
     public Geometry? Geometry { get; set; }
 

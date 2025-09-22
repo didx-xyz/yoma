@@ -1092,7 +1092,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       await _myOpportunityRequestValidatorVerifyImportCsv.ValidateAndThrowAsync(request);
 
-      new FileValidator(FileType.CSV).Validate(request.File);
+      FileValidator.Validate(FileType.CSV, request.File);
 
       var organization = _organizationService.GetById(request.OrganizationId, false, false, ensureOrganizationAuthorization);
 
@@ -1764,31 +1764,23 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         switch (verificationType.Type)
         {
           case VerificationType.FileUpload:
-            if (request.Certificate == null)
-              throw new ValidationException($"Verification type '{verificationType.Type}': Certificate required");
-
-            blobObject = await _blobService.Create(request.Certificate, FileType.Certificates, StorageType.Private);
+            ValidateFileUploadSource(verificationType.Type, request.Certificate, request.CertificateUploadId);
+            blobObject = await _blobService.Create(FileType.Certificates, StorageType.Private, request.Certificate, request.CertificateUploadId);
             break;
 
           case VerificationType.Picture:
-            if (request.Picture == null)
-              throw new ValidationException($"Verification type '{verificationType.Type}': Picture required");
-
-            blobObject = await _blobService.Create(request.Picture, FileType.Photos, StorageType.Private);
+            ValidateFileUploadSource(verificationType.Type, request.Picture, request.PictureUploadId);
+            blobObject = await _blobService.Create(FileType.Photos, StorageType.Private, request.Picture, request.PictureUploadId);
             break;
 
           case VerificationType.VoiceNote:
-            if (request.VoiceNote == null)
-              throw new ValidationException($"Verification type '{verificationType.Type}': Voice note required");
-
-            blobObject = await _blobService.Create(request.VoiceNote, FileType.VoiceNotes, StorageType.Private);
+            ValidateFileUploadSource(verificationType.Type, request.VoiceNote, request.VoiceNoteUploadId);
+            blobObject = await _blobService.Create(FileType.VoiceNotes, StorageType.Private, request.VoiceNote, request.VoiceNoteUploadId);
             break;
 
           case VerificationType.Video:
-            if (request.Video == null)
-              throw new ValidationException($"Verification type '{verificationType.Type}': Video required");
-
-            blobObject = await _blobService.Create(request.Video, FileType.Videos, StorageType.Private);
+            ValidateFileUploadSource(verificationType.Type, request.Video, request.VideoUploadId);
+            blobObject = await _blobService.Create(FileType.Videos, StorageType.Private, request.Video, request.VideoUploadId);
             break;
 
           case VerificationType.Location:
@@ -1814,6 +1806,19 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
         await _myOpportunityVerificationRepository.Create(itemType);
       }
+    }
+
+    private static void ValidateFileUploadSource(VerificationType verificationType, IFormFile? file, string? uploadId)
+    {
+      if (file != null && !string.IsNullOrEmpty(uploadId))
+        throw new ValidationException(
+          $"Verification type '{verificationType}': Both the file and pre-uploaded ID were provided");
+
+      if (file != null) return;
+      if (!string.IsNullOrEmpty(uploadId)) return;
+
+      throw new ValidationException(
+        $"Verification type '{verificationType}': Required. Either upload the file or specify the pre-uploaded ID");
     }
     #endregion
   }

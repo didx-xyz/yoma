@@ -1,0 +1,116 @@
+# 📄 How to Use tusdotnet Uploads from the UI
+
+Tus gives us resumable, chunked uploads backed by S3.
+The flow is always **create → upload → verify → commit**.
+
+---
+
+### 1. Create an Upload
+
+Send a `POST` to the uploads endpoint with metadata (like filename) and file length.
+
+```bash
+curl -i -X POST http://localhost:5000/api/v3/uploads \
+  -H "Tus-Resumable: 1.0.0" \
+  -H "Upload-Length: 11" \
+  -H "Upload-Metadata: filename bXlmaWxlLnR4dA==" \
+  -H "Authorization: Bearer <YOUR_JWT>"
+```
+
+* `Upload-Length`: size of the file in bytes.
+* `Upload-Metadata`: base64-encoded key/value pairs.
+
+  * Example: `filename bXlmaWxlLnR4dA==` → `filename=myfile.txt`.
+
+👉 Response:
+
+```
+HTTP/1.1 201 Created
+Location: /api/v3/uploads/af98f117ef2e43f6869bf4d459a5fe57
+```
+
+The `Location` header contains the **upload URL**.
+
+* The **upload ID** is the last part of the URL:
+
+  ```
+  af98f117ef2e43f6869bf4d459a5fe57
+  ```
+
+This ID must later be sent with your payload when committing.
+
+---
+
+### 2. Upload File Data (in chunks)
+
+Use `PATCH` to stream data. For small files, send all in one go:
+
+```bash
+curl -i -X PATCH http://localhost:5000/api/v3/uploads/af98f117ef2e43f6869bf4d459a5fe57 \
+  -H "Tus-Resumable: 1.0.0" \
+  -H "Upload-Offset: 0" \
+  -H "Content-Type: application/offset+octet-stream" \
+  -H "Authorization: Bearer <YOUR_JWT>" \
+  --data-binary "hello world"
+```
+
+👉 Response:
+
+```
+HTTP/1.1 204 No Content
+Upload-Offset: 11
+```
+
+* `Upload-Offset` must equal `Upload-Length` once complete.
+
+For larger files, the client should split data and call `PATCH` multiple times, updating `Upload-Offset`.
+
+---
+
+### 3. Verify Upload Status
+
+You can always check status with `HEAD`:
+
+```bash
+curl -i -X HEAD http://localhost:5000/api/v3/uploads/af98f117ef2e43f6869bf4d459a5fe57 \
+  -H "Tus-Resumable: 1.0.0" \
+  -H "Authorization: Bearer <YOUR_JWT>"
+```
+
+👉 Response shows:
+
+```
+Upload-Offset: 11
+Upload-Length: 11
+Upload-Metadata: filename bXlmaWxlLnR4dA==
+```
+
+When `Upload-Offset == Upload-Length`, the file is fully uploaded.
+
+---
+
+### 4. Commit with Payload
+
+After successful upload, the UI should send the **upload ID** with its payload (instead of an `IFormFile`).
+Example payload (pseudo-JSON):
+
+```json
+{
+  "title": "Example entity",
+  "fileId": "af98f117ef2e43f6869bf4d459a5fe57"
+}
+```
+
+Your API will then handle moving the file from the temporary uploads bucket/prefix into permanent storage and link it in the DB.
+
+---
+
+✅ That’s the full tus flow.
+
+* UI doesn’t need to handle S3 directly.
+* Just use the tus endpoint.
+* Always keep track of the `Location` → extract the upload ID → include it in your payload.
+
+---
+
+Use [tus-js-client](https://github.com/tus/tus-js-client))

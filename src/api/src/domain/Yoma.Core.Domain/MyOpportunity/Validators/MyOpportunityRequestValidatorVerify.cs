@@ -18,6 +18,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Validators
       RuleFor(x => x.Certificate).Must(file => file == null || file.Length > 0).WithMessage("{PropertyName} is optional, but if specified, cannot be empty.");
       RuleFor(x => x.VoiceNote).Must(file => file == null || file.Length > 0).WithMessage("{PropertyName} is optional, but if specified, cannot be empty.");
       RuleFor(x => x.Picture).Must(file => file == null || file.Length > 0).WithMessage("{PropertyName} is optional, but if specified, cannot be empty.");
+      RuleFor(x => x.Video).Must(file => file == null || file.Length > 0).WithMessage("{PropertyName} is optional, but if specified, cannot be empty.");
       RuleFor(x => x.Geometry)
           .Must(x => x == null || (x.Coordinates != null && x.Coordinates.Count > 0))
           .WithMessage("Geometry is optional, but if specified, coordinates must contain at least one coordinate set.")
