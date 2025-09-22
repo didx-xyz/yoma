@@ -18,6 +18,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
     private readonly AWSS3Options _options;
     private readonly TusS3Store _tusStore;
     private static readonly FileExtensionContentTypeProvider _fileExtensionContentTypeProvider = new();
+    private const string DefaultContentType = "application/octet-stream";
     #endregion
 
     #region Constructor
@@ -99,9 +100,11 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       if (string.IsNullOrWhiteSpace(extension))
         throw new InvalidOperationException($"Resumable upload '{uploadId}' has no valid file extension");
 
-      // Do not check Expires for completed uploads.
-      // Expiration only applies to incomplete uploads (cleaned by Yoma job).
-      // Completed uploads are removed by S3 lifecycle rules after 1 day.
+      // Skip expiration check for completed uploads.
+      // In tus, Expires only applies to incomplete uploads (cleaned by Yoma job).
+      // Completed uploads remain until S3 lifecycle (1 day) deletes them.
+      // If they’re gone, the file existence check will reject the request,
+      // meaning they are implicitly expired if not submitted in time.
 
       // Determine ContentType: prefer metadata, otherwise guess from extension
       string? contentType = null;
@@ -111,7 +114,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       if (string.IsNullOrWhiteSpace(contentType))
       {
         if (!_fileExtensionContentTypeProvider.TryGetContentType(fileName, out contentType))
-          contentType = "application/octet-stream";
+          contentType = DefaultContentType;
       }
 
       if (!_options.Buckets.TryGetValue(StorageType.Private, out var optionsBucket) || optionsBucket == null)
