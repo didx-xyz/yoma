@@ -84,7 +84,7 @@ export const LineChartOverview: React.FC<{
             </div>
             <div className="text-sm font-semibold">{name}</div>
           </div>
-          {data.count[index] != null && (
+          {data?.count?.[index] != null && (
             <div>
               <div
                 className={`text-xl font-semibold ${
@@ -92,14 +92,14 @@ export const LineChartOverview: React.FC<{
                 } md:text-3xl`}
                 style={{
                   color:
-                    showChart && data.count[index] > 0
+                    showChart && (data?.count?.[index] ?? 0) > 0
                       ? CHART_COLORS[index % CHART_COLORS.length]
                       : "#000",
                 }}
               >
-                {data.count[index]?.toLocaleString()}
+                {data?.count?.[index]?.toLocaleString()}
               </div>
-              {showChart && data.count[index] > 0 && (
+              {showChart && (data?.count?.[index] ?? 0) > 0 && (
                 <svg height="4" width="40" className="my-1">
                   <line
                     x1="0"

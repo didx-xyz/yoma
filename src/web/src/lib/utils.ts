@@ -107,46 +107,56 @@ export function objectToFormData(
   return formData;
 }
 
-// formats a date in the local timezone as string
-export function toISOStringForTimezone(date: Date | null) {
-  if (!date) return "";
-  return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-    .toISOString()
-    .slice(0, -1);
+// Convert HTML date input value (YYYY-MM-DD) to UTC timestamp for API
+export function dateInputToUTC(dateString: string): string {
+  if (!dateString) return "";
+  // Parse the date components and create directly in UTC to avoid timezone shifts
+  const parts = dateString.split("-");
+  if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) return "";
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return "";
+  const utcDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0));
+  return utcDate.toISOString();
 }
 
-export function toUTCDate(date: Date | null) {
-  if (!date) return "";
-  return new Date(
-    Date.UTC(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate(),
-      0,
-      0,
-      0,
-    ),
-  ).toISOString();
+// Convert HTML date input value (YYYY-MM-DD) to UTC timestamp for API with end of day time
+export function dateInputToUTCEndOfDay(dateString: string): string {
+  if (!dateString) return "";
+  // Parse the date components and create directly in UTC to avoid timezone shifts
+  const parts = dateString.split("-");
+  if (parts.length !== 3 || !parts[0] || !parts[1] || !parts[2]) return "";
+  const year = parseInt(parts[0], 10);
+  const month = parseInt(parts[1], 10);
+  const day = parseInt(parts[2], 10);
+  if (isNaN(year) || isNaN(month) || isNaN(day)) return "";
+  const utcDate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+  return utcDate.toISOString();
 }
 
-export function toUTCDateTime(date: Date | null) {
-  if (!date) return "";
-  return new Date(
-    Date.UTC(
-      date.getUTCFullYear(),
-      date.getUTCMonth(),
-      date.getUTCDate(),
-      date.getUTCHours(),
-      date.getUTCMinutes(),
-      date.getUTCSeconds(),
-    ),
-  ).toISOString();
-}
+// Convert UTC date from API to HTML date input format (YYYY-MM-DD) in local timezone
+export function utcToDateInput(
+  utcDateString: string | null | undefined,
+): string {
+  if (
+    !utcDateString ||
+    typeof utcDateString !== "string" ||
+    utcDateString.trim() === ""
+  )
+    return "";
 
-export function normalizeDate(date: Date) {
-  const normalized = new Date(date);
-  normalized.setHours(0, 0, 0, 0);
-  return normalized;
+  const utcDate = new Date(utcDateString);
+
+  // Check if the date is valid
+  if (isNaN(utcDate.getTime())) return "";
+
+  // For date inputs, we want to preserve the date part regardless of timezone
+  // Use the UTC date methods to extract the date components
+  const year = utcDate.getUTCFullYear();
+  const month = String(utcDate.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(utcDate.getUTCDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 /**

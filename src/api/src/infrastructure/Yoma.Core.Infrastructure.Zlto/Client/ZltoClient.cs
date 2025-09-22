@@ -1,6 +1,8 @@
 using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Caching.Memory;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using System.Net;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
@@ -491,14 +493,41 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
         //UserPassword: used with external wallet activation; with Yoma wallets are internal
       };
 
-      var response = await _options.Wallet.BaseUrl
+      // TODO [2025-09-18]: Remove legacy WalletResponseCreate fallback once all environments
+      // consistently return the flattened WalletAccountInfo (ZLTO confirmed final contract).
+      // Temporary dual-shape handling for create_account_for_external_partner.
+      // We're hotfix-ing this earlier today, ZLTO release goes live EOD.
+      var responseRaw = await _options.Wallet.BaseUrl
           .AppendPathSegment("create_account_for_external_partner")
           .WithAuthHeaders(await GetAuthHeaders())
           .PostJsonAsync(requestAccount)
           .EnsureSuccessStatusCodeAsync()
-          .ReceiveJson<WalletResponseCreate>();
+          .ReceiveString(); //.ReceiveJson<WalletResponseCreate>() >> .ReceiveJson<WalletAccountInfo>()
 
-      return response.AccountInfo;
+      var jObj = JObject.Parse(responseRaw);
+
+      WalletAccountInfo response;
+      if (jObj.ContainsKey("account_info"))
+      {
+        // Old shape (wrapped)
+        var wrapped = JsonConvert.DeserializeObject<WalletResponseCreate>(responseRaw);
+        if (wrapped?.AccountInfo == null)
+          throw new InvalidOperationException(
+              $"Failed to deserialize wallet response into WalletResponseCreate (wrapped). Payload: {responseRaw}");
+        response = wrapped.AccountInfo;
+      }
+      else
+      {
+        // New shape (flat)
+        var flat = JsonConvert.DeserializeObject<WalletAccountInfo>(responseRaw) ?? throw new InvalidOperationException(
+              $"Failed to deserialize wallet response into WalletAccountInfo (flat). Payload: {responseRaw}");
+        response = flat;
+      }
+
+      if (string.IsNullOrWhiteSpace(response.WalletId))
+        throw new InvalidOperationException($"WalletId is null or empty after deserialization. Payload: {responseRaw}");
+
+      return response;
     }
 
     private async Task<WalletResponse?> GetWalletByUsername(string username)
