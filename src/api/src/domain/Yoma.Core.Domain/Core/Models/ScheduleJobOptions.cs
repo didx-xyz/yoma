@@ -112,7 +112,7 @@ namespace Yoma.Core.Domain.Core.Models
 
     public string ResumableUploadStoreDeletionSchedule { get; set; }
 
-    public int ResumableUploadStoreBatchSize { get; set; }
+    public int ResumableUploadStoreDeletionBatchSize { get; set; }
 
     //resumable upload deletion interval based on app setting 'DownloadScheduleLinkExpirationHours'
   }

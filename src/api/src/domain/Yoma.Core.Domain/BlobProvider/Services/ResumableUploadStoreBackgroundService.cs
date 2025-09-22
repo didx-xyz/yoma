@@ -48,7 +48,7 @@ namespace Yoma.Core.Domain.BlobProvider.Services
         var itemIdsToSkip = new List<string>();
         while (executeUntil > DateTimeOffset.UtcNow)
         {
-          var uploadIds = await _resumableUploadStore.ListPendingDeletion(_scheduleJobOptions.ResumableUploadStoreBatchSize, itemIdsToSkip);
+          var uploadIds = await _resumableUploadStore.ListPendingDeletion(_scheduleJobOptions.ResumableUploadStoreDeletionBatchSize, itemIdsToSkip);
           if (uploadIds.Count == 0) break;
 
           foreach (var uploadId in uploadIds)
