@@ -99,6 +99,10 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       if (string.IsNullOrWhiteSpace(extension))
         throw new InvalidOperationException($"Resumable upload '{uploadId}' has no valid file extension");
 
+      // Do not check Expires for completed uploads.
+      // Expiration only applies to incomplete uploads (cleaned by Yoma job).
+      // Completed uploads are removed by S3 lifecycle rules after 1 day.
+
       // Determine ContentType: prefer metadata, otherwise guess from extension
       string? contentType = null;
       if (metadata.TryGetValue("contentType", out var ctMeta))
