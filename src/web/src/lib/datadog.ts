@@ -66,15 +66,15 @@ export const initializeDatadog = async () => {
       trackResources: true,
       trackLongTasks: true,
       defaultPrivacyLevel: "mask-user-input",
-      // Specify URLs to propagate trace headers for connection between RUM and backend trace
-      allowedTracingUrls: env.NEXT_PUBLIC_API_BASE_URL
-        ? [
-            {
-              match: `${env.NEXT_PUBLIC_API_BASE_URL}/`,
-              propagatorTypes: ["tracecontext"],
-            },
-          ]
-        : [],
+      // Temporarily disable tracing to debug CORS header issues
+      // allowedTracingUrls: env.NEXT_PUBLIC_API_BASE_URL
+      //   ? [
+      //       {
+      //         match: `${env.NEXT_PUBLIC_API_BASE_URL}/`,
+      //         propagatorTypes: ["tracecontext"],
+      //       },
+      //     ]
+      //   : [],
     });
 
     console.log("DataDog RUM initialized successfully");
