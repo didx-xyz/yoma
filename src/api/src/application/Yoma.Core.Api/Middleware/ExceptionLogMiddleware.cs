@@ -19,9 +19,9 @@ namespace Yoma.Core.Api.Middleware
       }
       catch (Exception ex)
       {
-        var exType = ex is AggregateException ae ? ae.GetBaseException().GetType().Name : ex.GetType().Name;
-
-        _logger.LogError(ex, "{ExceptionType}: {ErrorMessage}", exType, ex.Message);
+        var exNormalized = ex is AggregateException agg ? agg.Flatten() : ex;
+        var typeName = exNormalized.GetType().Name;
+        _logger.LogError(ex, "{ExceptionType}: {ErrorMessage}", typeName, exNormalized.Message);
         throw;
       }
     }
