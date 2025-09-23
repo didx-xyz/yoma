@@ -145,6 +145,12 @@ namespace Yoma.Core.Domain.Core.Models
     public AppSettingsSSIParallelism SSIParallelism { get; set; }
 
     public int CSVImportMaxProbeErrorCount { get; set; }
+
+    public int IdempotencyKeyExpirationInSeconds { get; set; }
+
+    public int DistributedLockRetryDelayInMilliseconds { get; set; }
+
+    public int DistributedLockKeycloakEventDurationInSeconds { get; set; }
     #endregion
 
     #region Private Members
