@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
@@ -33,7 +34,7 @@ namespace Yoma.Core.Domain.Core.Services
     #endregion
 
     #region Public Members
-    public async Task<bool> TryCreateAsync(string key)
+    public async Task<bool> TryCreateAsync(string key, [CallerMemberName] string processName = "Unknown")
     {
       ArgumentException.ThrowIfNullOrWhiteSpace(key);
       key = key.Trim();
@@ -48,11 +49,11 @@ namespace Yoma.Core.Domain.Core.Services
       var created = await db.StringSetAsync(redisKey, value, ttl, When.NotExists);
 
       if (created)
-        _logger.LogInformation("Idempotency key created by {hostName} at {timestamp}: {key} (ttl={ttlSeconds}s)",
-          System.Environment.MachineName, DateTimeOffset.UtcNow, redisKey, ttlSeconds);
+        _logger.LogInformation("Idempotency key created by {hostName} at {timestamp} for process {process}: {key} (ttl={ttlSeconds}s)",
+          System.Environment.MachineName, DateTimeOffset.UtcNow, redisKey, processName, ttlSeconds);
       else
-        _logger.LogInformation("Duplicate idempotency key detected by {hostName} at {timestamp}: {key}",
-          System.Environment.MachineName, DateTimeOffset.UtcNow, redisKey);
+        _logger.LogInformation("Duplicate idempotency key detected by {hostName} at {timestamp} for process {process}: {key}",
+          System.Environment.MachineName, DateTimeOffset.UtcNow, processName, redisKey);
 
       return created;
     }

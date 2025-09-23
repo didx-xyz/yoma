@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace Yoma.Core.Domain.Core.Interfaces
 {
   /// <summary>
@@ -12,6 +14,6 @@ namespace Yoma.Core.Domain.Core.Interfaces
     /// Returns true if this is the first observation (key created).
     /// Returns false if the key already existed (duplicate).
     /// </summary>
-    Task<bool> TryCreateAsync(string key);
+    Task<bool> TryCreateAsync(string key, [CallerMemberName] string processName = "Unknown");
   }
 }
