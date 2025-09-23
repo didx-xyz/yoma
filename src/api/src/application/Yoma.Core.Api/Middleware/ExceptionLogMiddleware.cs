@@ -19,7 +19,9 @@ namespace Yoma.Core.Api.Middleware
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "An internal server error occurred: {errorMessage}", ex.Message);
+        var exNormalized = ex is AggregateException agg ? agg.Flatten() : ex;
+        var typeName = exNormalized.GetType().Name;
+        _logger.LogError(ex, "{ExceptionType}: {ErrorMessage}", typeName, exNormalized.Message);
         throw;
       }
     }
