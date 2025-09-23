@@ -35,7 +35,7 @@ export const initializeDatadog = async () => {
     datadogRum.init({
       applicationId: env.NEXT_PUBLIC_DD_RUM_APP_ID,
       clientToken: env.NEXT_PUBLIC_DD_RUM_TOKEN,
-      site: "datadoghq.com",
+      site: "datadoghq.eu",
       service: "yoma-web",
       env: env.NEXT_PUBLIC_ENVIRONMENT,
       // Specify a version number to identify the deployed version of your application in Datadog
