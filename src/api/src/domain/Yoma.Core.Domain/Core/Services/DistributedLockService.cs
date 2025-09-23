@@ -22,7 +22,7 @@ namespace Yoma.Core.Domain.Core.Services
     public DistributedLockService(ILogger<DistributedLockService> logger, IOptions<AppSettings> appSettings, IConnectionMultiplexer connectionMultiplexer)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-      _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings)); 
+      _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
       _connectionMultiplexer = connectionMultiplexer ?? throw new ArgumentNullException(nameof(connectionMultiplexer));
     }
     #endregion
