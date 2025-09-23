@@ -13,12 +13,13 @@ import type { AppProps } from "next/app";
 import { Nunito } from "next/font/google";
 import { useRouter } from "next/router";
 import type { ReactElement, ReactNode } from "react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ToastContainer } from "react-toastify";
 import { Navbar } from "~/components/NavBar/Navbar";
 import { Global } from "~/components/Global";
 import ConfirmationModalContextProvider from "~/context/modalConfirmationContext";
 import { config } from "~/lib/react-query-config";
+import { initializeDatadog } from "~/lib/datadog";
 import "~/styles/globals.css";
 import "~/styles/FileUpload.css";
 import { THEME_PURPLE } from "~/lib/constants";
@@ -64,6 +65,11 @@ const MyApp = ({
   // This ensures that data is not shared
   // between different users and requests
   const [queryClient] = useState(() => new QueryClient(config));
+
+  // Initialize DataDog RUM
+  useEffect(() => {
+    initializeDatadog();
+  }, []);
 
   const component = <Component {...pageProps} key={router.asPath} />;
 

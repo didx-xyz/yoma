@@ -14,16 +14,12 @@ Yoma Web is a modern, responsive frontend application built with NextJS 15 & Rea
 
    ```bash
    yarn install
-   # or
-   npm install
    ```
 
 2. Start the development server:
 
    ```bash
    yarn dev
-   # or
-   npm run dev
    ```
 
 3. 🎉 Open [http://localhost:3000](http://localhost:3000) in your browser to see the application!
