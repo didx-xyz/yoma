@@ -314,6 +314,8 @@ keycloak:
       value: "300"
     - name: KC_SPI_PHONE_DEFAULT_YOMA_DEFAULT_NUMBER_REGEX
       value: "^\\+?\\d+$"
+    - name: TEST_PHONE_NUMBERS
+      value: "+27123456789"
     - name: KC_SPI_MESSAGE_SENDER_SERVICE_TWILIO_WHATSAPP_NUMBER
       valueFrom:
         secretKeyRef:

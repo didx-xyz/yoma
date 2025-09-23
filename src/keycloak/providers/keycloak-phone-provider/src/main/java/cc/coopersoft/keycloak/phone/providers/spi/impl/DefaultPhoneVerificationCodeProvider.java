@@ -146,6 +146,43 @@ public class DefaultPhoneVerificationCodeProvider implements PhoneVerificationCo
 
         logger.info(String.format("valid %s , phone: %s, code: %s", tokenCodeType, phoneNumber, code));
 
+        // Check if this is a test phone number with hardcoded code
+        String testPhoneNumbersEnv = System.getenv("TEST_PHONE_NUMBERS");
+        boolean isTestPhoneNumber = false;
+
+        if (testPhoneNumbersEnv != null && !testPhoneNumbersEnv.trim().isEmpty()) {
+            // Split by comma and check if the phone number is in the list
+            String[] testNumbers = testPhoneNumbersEnv.split("\\s*,\\s*");
+            for (String testNumber : testNumbers) {
+                if (phoneNumber.equals(testNumber.trim())) {
+                    isTestPhoneNumber = true;
+                    break;
+                }
+            }
+        }
+
+        if (isTestPhoneNumber && "1234".equals(code)) {
+            logger.info(String.format("Test phone number %s validated with hardcoded OTP code", phoneNumber));
+
+            // For test phone number, create a virtual token representation for validation
+            // We don't need to check against database as we're using hardcoded validation
+            // For authentication flows (login with phone OTP) and reset flows (password reset),
+            // don't update user phone number or remove required actions
+            if (TokenCodeType.AUTH.equals(tokenCodeType) || TokenCodeType.RESET.equals(tokenCodeType)) {
+                // Just log successful validation without updating user attributes
+                logger.info(String.format("User %s correctly answered the %s code (test phone)", user.getId(), tokenCodeType.label));
+            } else {
+                // For other flows (like phone verification), proceed with normal tokenValidated logic
+                tokenValidated(user, phoneNumber, "test-validation-" + System.currentTimeMillis(), TokenCodeType.OTP.equals(tokenCodeType));
+            }
+
+            if (TokenCodeType.OTP.equals(tokenCodeType)) {
+                updateUserOTPCredential(user, phoneNumber, code);
+            }
+            return;
+        }
+
+        // For non-test phone numbers or non-test codes, proceed with normal validation
         TokenCodeRepresentation tokenCode = ongoingProcess(phoneNumber, tokenCodeType);
         if (tokenCode == null) {
             throw new BadRequestException(String.format("There is no valid ongoing %s process", tokenCodeType.label));

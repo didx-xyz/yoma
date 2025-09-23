@@ -1,7 +1,10 @@
 package cc.coopersoft.keycloak.phone.providers.spi.impl;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 
 import org.jboss.logging.Logger;
 import org.keycloak.Config.Scope;
@@ -26,6 +29,7 @@ public class DefaultPhoneProvider implements PhoneProvider {
     private final int tokenExpiresIn;
     private final int targetHourMaximum;
     private final int sourceHourMaximum;
+    private final Set<String> testPhoneNumbers;
 
     private final Scope config;
 
@@ -52,6 +56,16 @@ public class DefaultPhoneProvider implements PhoneProvider {
         this.tokenExpiresIn = config.getInt("tokenExpiresIn", 60);
         this.targetHourMaximum = config.getInt("targetHourMaximum", 3);
         this.sourceHourMaximum = config.getInt("sourceHourMaximum", 10);
+
+        // Read test phone numbers from environment variable or config
+        // Format: "+27123456789,+27987654321,+1234567890" (comma-separated)
+        String testPhoneNumbersEnv = System.getenv("TEST_PHONE_NUMBERS");
+        if (testPhoneNumbersEnv != null && !testPhoneNumbersEnv.trim().isEmpty()) {
+            this.testPhoneNumbers = new HashSet<>(Arrays.asList(testPhoneNumbersEnv.split("\\s*,\\s*")));
+            logger.info("Test phone numbers configured: " + this.testPhoneNumbers);
+        } else {
+            this.testPhoneNumbers = new HashSet<>();
+        }
     }
 
     @Override
@@ -137,16 +151,34 @@ public class DefaultPhoneProvider implements PhoneProvider {
             throw new BadRequestException(String.format("ALREADY_SENT Expiry: %d", expiryTime));
         }
 
-        TokenCodeRepresentation token = TokenCodeRepresentation.forPhoneNumber(phoneNumber);
-        logger.debug(String.format("Generated new token code for %s with expiry of %d seconds", phoneNumber, tokenExpiresIn));
+        // Check if this is a test phone number
+        boolean isTestPhoneNumber = testPhoneNumbers.contains(phoneNumber);
+
+        TokenCodeRepresentation token;
+        if (isTestPhoneNumber) {
+            // For test phone number, use hardcoded code '1234'
+            token = TokenCodeRepresentation.forTestPhoneNumber(phoneNumber);
+            logger.info(String.format("Using test OTP code '1234' for test phone number: %s", phoneNumber));
+        } else {
+            // For normal phone numbers, generate random code
+            token = TokenCodeRepresentation.forPhoneNumber(phoneNumber);
+            logger.debug(String.format("Generated new token code for %s with expiry of %d seconds", phoneNumber, tokenExpiresIn));
+        }
 
         try {
-            logger.debug(String.format("Using message service: %s to send %s code", service, type.label));
-            session.getProvider(MessageSenderService.class, service).sendSmsMessage(type, phoneNumber, token.getCode(), tokenExpiresIn, kind);
-            getTokenCodeService().persistCode(token, type, tokenExpiresIn);
+            if (!isTestPhoneNumber) {
+                // Only send SMS for non-test phone numbers
+                logger.debug(String.format("Using message service: %s to send %s code", service, type.label));
+                session.getProvider(MessageSenderService.class, service).sendSmsMessage(type, phoneNumber, token.getCode(), tokenExpiresIn, kind);
+                logger.info(String.format("Successfully sent %s code to %s using service: %s (expires in %d seconds)",
+                        type.label, phoneNumber, service, tokenExpiresIn));
+            } else {
+                // Skip SMS sending for test phone number
+                logger.info(String.format("Skipped SMS sending for test phone number: %s, OTP code: %s (expires in %d seconds)",
+                        phoneNumber, token.getCode(), tokenExpiresIn));
+            }
 
-            logger.info(String.format("Successfully sent %s code to %s using service: %s (expires in %d seconds)",
-                    type.label, phoneNumber, service, tokenExpiresIn));
+            getTokenCodeService().persistCode(token, type, tokenExpiresIn);
 
         } catch (MessageSendException e) {
             logger.error(String.format("Failed to send %s code to %s: %s", type.label, phoneNumber, e.getMessage()), e);
