@@ -11,15 +11,9 @@ declare global {
 }
 
 export const initializeDatadog = async () => {
-  // Only initialize in the browser
-  if (typeof window === "undefined") {
-    return;
-  }
-
-  // Check if already initialized to prevent multiple initializations
-  if (window.DD_RUM && window.DD_RUM.getInitConfiguration()) {
-    return;
-  }
+  // Temporarily disabled for debugging CORS issues
+  console.log("DataDog initialization temporarily disabled for debugging");
+  return;
 
   try {
     const env = await fetchClientEnv();
