@@ -68,7 +68,15 @@ const MyApp = ({
 
   // Initialize DataDog RUM
   useEffect(() => {
-    initializeDatadog();
+    const initDatadog = async () => {
+      try {
+        await initializeDatadog();
+      } catch (error) {
+        console.error("Failed to initialize DataDog:", error);
+      }
+    };
+
+    initDatadog();
   }, []);
 
   const component = <Component {...pageProps} key={router.asPath} />;
