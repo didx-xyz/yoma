@@ -148,6 +148,9 @@ services:
       KC_SPI_PHONE_DEFAULT_TOKEN_EXPIRES_IN: 300 # sms expires, 5 mins
       # Notice: will match after canonicalize number. eg: INTERNATIONAL: +41 44 668 18 00 , NATIONAL: 044 668 18 00 , E164: +41446681800
       KC_SPI_PHONE_DEFAULT_YOMA_DEFAULT_NUMBER_REGEX: ^\\+?\\d+$
+      # Test phone numbers for synthetic tests - accepts hardcoded OTP '1234' and skips SMS
+      # Format: comma-separated list of phone numbers
+      TEST_PHONE_NUMBERS: "+27123456789"
     ports:
       - 0.0.0.0:8080:8080
       - 0.0.0.0:9090:9000

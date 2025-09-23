@@ -97,6 +97,16 @@ public class TokenCodeRepresentation {
         return tokenCode;
     }
 
+    // Static method to generate TokenCodeRepresentation for test phone number with hardcoded code
+    public static TokenCodeRepresentation forTestPhoneNumber(String phoneNumber) {
+        TokenCodeRepresentation tokenCode = new TokenCodeRepresentation();
+        tokenCode.id = KeycloakModelUtils.generateId();
+        tokenCode.phoneNumber = phoneNumber;
+        tokenCode.code = "1234"; // Hardcoded test code
+        tokenCode.confirmed = false;
+        return tokenCode;
+    }
+
     // Method to generate token code
     private static String generateTokenCode() {
         SecureRandom secureRandom = new SecureRandom();
