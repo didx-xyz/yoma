@@ -12,6 +12,7 @@
     "analyze": "cross-env ANALYZE=true next build"
   },
   "dependencies": {
+    "@datadog/browser-rum": "^6.21.0",
     "@fontsource/open-sans": "^5.2.7",
     "@googlemaps/js-api-loader": "^1.16.10",
     "@hookform/resolvers": "^3.10.0",
