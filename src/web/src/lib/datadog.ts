@@ -12,11 +12,33 @@ declare global {
 
 export const initializeDatadog = async () => {
   // Temporarily disabled for debugging CORS issues
-  console.log("DataDog initialization temporarily disabled for debugging");
-  return;
+  //   console.log("DataDog initialization temporarily disabled for debugging");
+  //   return;
+
+  // Only initialize in the browser
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  // Check if already initialized to prevent multiple initializations
+  if (window.DD_RUM && window.DD_RUM.getInitConfiguration()) {
+    return;
+  }
 
   try {
     const env = await fetchClientEnv();
+
+    //log the env variables for debugging
+    console.log("Client Environment Variables:", {
+      NEXT_PUBLIC_DD_RUM_APP_ID: env.NEXT_PUBLIC_DD_RUM_APP_ID,
+      NEXT_PUBLIC_DD_RUM_TOKEN: env.NEXT_PUBLIC_DD_RUM_TOKEN,
+      NEXT_PUBLIC_ENVIRONMENT: env.NEXT_PUBLIC_ENVIRONMENT,
+      NEXT_PUBLIC_DD_RUM_SESSION_SAMPLE_RATE:
+        env.NEXT_PUBLIC_DD_RUM_SESSION_SAMPLE_RATE,
+      NEXT_PUBLIC_DD_RUM_SESSION_REPLAY_SAMPLE_RATE:
+        env.NEXT_PUBLIC_DD_RUM_SESSION_REPLAY_SAMPLE_RATE,
+      NEXT_PUBLIC_API_BASE_URL: env.NEXT_PUBLIC_API_BASE_URL,
+    });
 
     // Only initialize if we have the required environment variables
     if (!env.NEXT_PUBLIC_DD_RUM_APP_ID || !env.NEXT_PUBLIC_DD_RUM_TOKEN) {
