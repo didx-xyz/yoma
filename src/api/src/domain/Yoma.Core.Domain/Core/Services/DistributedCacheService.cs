@@ -8,6 +8,7 @@ namespace Yoma.Core.Domain.Core.Services
   {
     #region Class Variables
     private readonly IDatabase _database;
+    private const string CacheIdentifier_Prefix = "yoma.core.api:cache";
     #endregion
 
     #region Constructor
@@ -21,7 +22,7 @@ namespace Yoma.Core.Domain.Core.Services
     public T GetOrCreate<T>(string key, Func<T> valueProvider, TimeSpan? slidingExpiration = null, TimeSpan? absoluteExpirationRelativeToNow = null)
       where T : class
     {
-      return GetOrCreateInternalAsync(key, () => Task.FromResult(valueProvider()), slidingExpiration, absoluteExpirationRelativeToNow).Result;
+      return GetOrCreateInternalAsync(key, () => Task.FromResult(valueProvider()), slidingExpiration, absoluteExpirationRelativeToNow).GetAwaiter().GetResult();
     }
 
     public async Task<T> GetOrCreateAsync<T>(string key, Func<Task<T>> valueProvider, TimeSpan? slidingExpiration = null, TimeSpan? absoluteExpirationRelativeToNow = null)
@@ -32,7 +33,7 @@ namespace Yoma.Core.Domain.Core.Services
 
     public void Remove(string key)
     {
-      RemoveInternalAsync(key).Wait();
+      RemoveInternalAsync(key).GetAwaiter().GetResult();
     }
 
     public async Task RemoveAsync(string key)
@@ -53,30 +54,36 @@ namespace Yoma.Core.Domain.Core.Services
       if (slidingExpiration.HasValue && absoluteExpirationRelativeToNow.HasValue && slidingExpiration > absoluteExpirationRelativeToNow)
         throw new InvalidOperationException("'Sliding Expiration' cannot be longer than 'Absolute Expiration Relative to Now'");
 
-      var redisValueWithExpiry = await _database.StringGetWithExpiryAsync(key);
+      var redisKey = $"{CacheIdentifier_Prefix}:{key}";
+      var redisValueWithExpiry = await _database.StringGetWithExpiryAsync(redisKey);
 
       if (redisValueWithExpiry.Value.HasValue)
       {
         var cachedValue = JsonConvert.DeserializeObject<T>(redisValueWithExpiry.Value!)
-            ?? throw new InvalidOperationException($"Failed to deserialize value for key '{key}'");
+            ?? throw new InvalidOperationException($"Failed to deserialize value for key '{redisKey}'");
 
         if (slidingExpiration.HasValue && redisValueWithExpiry.Expiry.HasValue)
         {
-          var newExpiration = slidingExpiration.Value < redisValueWithExpiry.Expiry.Value
-              ? slidingExpiration.Value
-              : redisValueWithExpiry.Expiry.Value;
+          // If caller provided an absolute cap, don't exceed the remaining TTL (cap).
+          // If not, reset to sliding to truly "slide" the expiration window.
+          var newExpiration =
+            absoluteExpirationRelativeToNow.HasValue
+              ? (slidingExpiration.Value < redisValueWithExpiry.Expiry.Value
+                  ? slidingExpiration.Value
+                  : redisValueWithExpiry.Expiry.Value)
+              : slidingExpiration.Value;
 
-          await _database.KeyExpireAsync(key, newExpiration);
+          await _database.KeyExpireAsync(redisKey, newExpiration);
         }
 
         return cachedValue;
       }
 
-      var value = await valueProvider();
+      var value = await valueProvider() ?? throw new InvalidOperationException($"Value provider returned null for key '{redisKey}'");
       var serializedValue = JsonConvert.SerializeObject(value);
       var expiration = absoluteExpirationRelativeToNow ?? slidingExpiration;
 
-      await _database.StringSetAsync(key, serializedValue, expiration);
+      await _database.StringSetAsync(redisKey, serializedValue, expiration);
 
       return value;
     }
@@ -86,7 +93,9 @@ namespace Yoma.Core.Domain.Core.Services
       ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
       key = key.Trim();
 
-      await _database.KeyDeleteAsync(key);
+      var redisKey = $"{CacheIdentifier_Prefix}:{key}";
+
+      await _database.KeyDeleteAsync(redisKey);
     }
   }
   #endregion

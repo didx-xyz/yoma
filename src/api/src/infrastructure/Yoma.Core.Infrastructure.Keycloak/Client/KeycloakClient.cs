@@ -321,15 +321,18 @@ namespace Yoma.Core.Infrastructure.Keycloak.Client
       using var userApi = FS.Keycloak.RestApiClient.ClientFactory.ApiClientFactory.Create<UsersApi>(_httpClient);
 
       var userRepresentation = await userApi.GetUsersByUserIdAsync(_keycloakAuthenticationOptions.Realm, id.ToString());
-      _logger.LogInformation("Fetched user representation for user ID: {id} - RequiredActions: {actions}", id, string.Join(", ", userRepresentation.RequiredActions ?? Enumerable.Empty<string>()));
 
-      if (!string.IsNullOrEmpty(userRepresentation.Email))
+      var actions = userRepresentation?.RequiredActions;
+      var actionsText = (actions != null && actions.Count > 0) ? string.Join(", ", actions) : "none";
+      _logger.LogInformation("Fetched user representation for user ID: {id} - RequiredActions: {actions}", id, actionsText);
+
+      if (!string.IsNullOrEmpty(userRepresentation?.Email))
       {
         _logger.LogInformation("No action required for user ID: {id} because email is not empty.", id);
         return;
       }
 
-      if (userRepresentation.RequiredActions == null || !userRepresentation.RequiredActions.Contains("VERIFY_EMAIL"))
+      if (userRepresentation?.RequiredActions == null || !userRepresentation.RequiredActions.Contains("VERIFY_EMAIL"))
       {
         _logger.LogInformation("No action required for user ID: {id} because 'VERIFY_EMAIL' is not present in RequiredActions.", id);
         return;

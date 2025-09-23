@@ -89,8 +89,9 @@ namespace Yoma.Core.Domain
       services.AddScoped<IDownloadScheduleStatusService, DownloadScheduleStatusService>();
       #endregion
       services.AddScoped<IBlobService, BlobService>();
-      services.AddScoped<IDistributedCacheService, DistributedCacheService>();
-      services.AddScoped<IDistributedLockService, DistributedLockService>();
+      services.AddSingleton<IDistributedCacheService, DistributedCacheService>();
+      services.AddSingleton<IDistributedLockService, DistributedLockService>();
+      services.AddSingleton<IIdempotencyService, IdempotencyService>();
       services.AddScoped<IDownloadService, DownloadService>();
       services.AddScoped<IDownloadBackgroundService, DownloadBackgroundService>();
       #endregion Core
