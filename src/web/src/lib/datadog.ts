@@ -38,8 +38,6 @@ export const initializeDatadog = async () => {
       site: "datadoghq.eu",
       service: "yoma-web",
       env: env.NEXT_PUBLIC_ENVIRONMENT,
-      // Specify a version number to identify the deployed version of your application in Datadog
-      // version: "1.0.0",
       sessionSampleRate: env.NEXT_PUBLIC_DD_RUM_SESSION_SAMPLE_RATE
         ? parseInt(env.NEXT_PUBLIC_DD_RUM_SESSION_SAMPLE_RATE, 10)
         : 100,
@@ -50,15 +48,14 @@ export const initializeDatadog = async () => {
       trackResources: true,
       trackLongTasks: true,
       defaultPrivacyLevel: "mask-user-input",
-      // Temporarily disable tracing to debug CORS header issues
-      // allowedTracingUrls: env.NEXT_PUBLIC_API_BASE_URL
-      //   ? [
-      //       {
-      //         match: `${env.NEXT_PUBLIC_API_BASE_URL}/`,
-      //         propagatorTypes: ["tracecontext"],
-      //       },
-      //     ]
-      //   : [],
+      allowedTracingUrls: env.NEXT_PUBLIC_API_BASE_URL
+        ? [
+            {
+              match: `${env.NEXT_PUBLIC_API_BASE_URL}/`,
+              propagatorTypes: ["tracecontext"],
+            },
+          ]
+        : [],
     });
 
     console.log("DataDog RUM initialized successfully");
