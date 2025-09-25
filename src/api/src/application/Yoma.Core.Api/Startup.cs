@@ -103,7 +103,7 @@ namespace Yoma.Core.Api
 
       services.AddMvc(options =>
       {
-        options.Filters.Add(typeof(ReformatValidationProblemAttribute));
+        options.Filters.Add<ReformatValidationProblemAttribute>();
       });
 
       services.AddHttpContextAccessor();
@@ -217,6 +217,8 @@ namespace Yoma.Core.Api
         {
           Predicate = (check) => check.Tags.Contains("live")
         }).AllowAnonymous();
+
+        endpoints.MapRewardProviderHealthEndpoints(Constants.Api_Version);
 
         endpoints.MapResumableUploadEndpoints(_configuration, Constants.Authorization_Policy);
       });

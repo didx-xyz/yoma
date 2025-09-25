@@ -69,9 +69,19 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
     {
       ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(batchSize, 0, nameof(batchSize));
 
-      var results = await _tusStore.GetExpiredFilesAsync(CancellationToken.None);
+      IEnumerable<string> results;
+      try
+      {
+        results = await _tusStore.GetExpiredFilesAsync(CancellationToken.None);
+      }
+      catch (NullReferenceException)
+      {
+        // Happens when no folder/prefix exists in S3 yet. Treat as "no expired uploads".
+        results = [];
+      }
 
-      if (uploadIdsToSkip.Count > 0) results = results.Where(id => !uploadIdsToSkip.Contains(id));
+      if (uploadIdsToSkip.Count > 0)
+        results = results.Where(id => !uploadIdsToSkip.Contains(id)).ToArray();
 
       return [.. results.Take(batchSize)];
     }
