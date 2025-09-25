@@ -56,38 +56,35 @@ namespace Yoma.Core.Domain.Core.Services
 
       var redisKey = $"{LockIdentifier_Prefix}:{key}";
       var db = _connectionMultiplexer.GetDatabase();
-      await db.KeyDeleteAsync(redisKey);
 
-      _logger.LogInformation("Lock '{lockKey}' released by {hostName} at {timestamp} for process '{process}'",
-        redisKey, System.Environment.MachineName, DateTimeOffset.UtcNow, processName);
+      try
+      {
+        await db.KeyDeleteAsync(redisKey);
+
+        _logger.LogInformation("Lock '{lockKey}' released by {hostName} at {timestamp} for process '{process}'",
+          redisKey, System.Environment.MachineName, DateTimeOffset.UtcNow, processName);
+      }
+      catch (Exception ex)
+      {
+        // Swallow to avoid masking upstream exceptions; log for observability.
+        _logger.LogWarning(ex, "Failed to release lock '{lockKey}' by {hostName} at {timestamp} for process '{process}'. Proceeding",
+          redisKey, System.Environment.MachineName, DateTimeOffset.UtcNow, processName);
+      }
     }
 
     public async Task RunWithLockAsync(string key, TimeSpan lockDuration, Func<Task> action, [CallerMemberName] string processName = "Unknown")
     {
-      ArgumentException.ThrowIfNullOrWhiteSpace(key);
-      key = key.Trim();
-
-      ArgumentNullException.ThrowIfNull(action);
-      ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(lockDuration, TimeSpan.Zero, nameof(lockDuration));
-
-      var retryDelay = TimeSpan.FromMilliseconds(_appSettings.DistributedLockRetryDelayInMilliseconds);
-
-      while (!await TryAcquireLockAsync(key, lockDuration, processName))
-      {
-        await Task.Delay(retryDelay);
-      }
-
-      try
-      {
-        await action();
-      }
-      finally
-      {
-        await ReleaseLockAsync(key, processName);
-      }
+      await RunWithLockCoreAsync(key, lockDuration, async () => { await action(); return true; }, processName);
     }
 
     public async Task<T> RunWithLockAsync<T>(string key, TimeSpan lockDuration, Func<Task<T>> action, [CallerMemberName] string processName = "Unknown")
+    {
+      return await RunWithLockCoreAsync(key, lockDuration, action, processName);
+    }
+    #endregion
+
+    #region Private Members
+    private async Task<T> RunWithLockCoreAsync<T>(string key, TimeSpan lockDuration, Func<Task<T>> action, string processName)
     {
       ArgumentException.ThrowIfNullOrWhiteSpace(key);
       key = key.Trim();
@@ -95,10 +92,20 @@ namespace Yoma.Core.Domain.Core.Services
       ArgumentNullException.ThrowIfNull(action);
       ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(lockDuration, TimeSpan.Zero, nameof(lockDuration));
 
-      var retryDelay = TimeSpan.FromMilliseconds(_appSettings.DistributedLockRetryDelayInMilliseconds);
+      if (_appSettings.DistributedLockRetryDelayInMilliseconds <= 0)
+        throw new InvalidOperationException($"{nameof(AppSettings)}:{nameof(_appSettings.DistributedLockRetryDelayInMilliseconds)} must be greater than zero.");
 
-      while (!await TryAcquireLockAsync(key, lockDuration, processName))
+      var retryDelay = TimeSpan.FromMilliseconds(_appSettings.DistributedLockRetryDelayInMilliseconds);
+      var acquireBudget = lockDuration * 2;
+      var acquireDeadline = DateTimeOffset.UtcNow + acquireBudget;
+
+      var acquired = false;
+
+      while (!(acquired = await TryAcquireLockAsync(key, lockDuration, processName)))
       {
+        if (DateTimeOffset.UtcNow >= acquireDeadline)
+          throw new TimeoutException($"Could not acquire distributed lock '{key}' within {acquireBudget}.");
+
         await Task.Delay(retryDelay);
       }
 
@@ -108,7 +115,8 @@ namespace Yoma.Core.Domain.Core.Services
       }
       finally
       {
-        await ReleaseLockAsync(key, processName);
+        if (acquired)
+          await ReleaseLockAsync(key, processName);
       }
     }
     #endregion

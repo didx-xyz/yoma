@@ -21,7 +21,7 @@ namespace Yoma.Core.Api.Middleware
       {
         var exNormalized = ex is AggregateException agg ? agg.Flatten() : ex;
         var typeName = exNormalized.GetType().Name;
-        _logger.LogError(ex, "{ExceptionType}: {ErrorMessage}", typeName, exNormalized.Message);
+        _logger.LogError(ex, "An {exceptionType} occurred: {errorMessage}", typeName, exNormalized.Message);
         throw;
       }
     }
