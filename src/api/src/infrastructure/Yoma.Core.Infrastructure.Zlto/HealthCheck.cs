@@ -40,7 +40,7 @@ namespace Yoma.Core.Infrastructure.Zlto
       {
         try
         {
-          await e.Url.GetAsync(cancellationToken: cancellationToken).EnsureSuccessStatusCodeAsync(); 
+          await e.Url.GetAsync(cancellationToken: cancellationToken).EnsureSuccessStatusCodeAsync();
           return (e.Name, Failure: (string?)null);
         }
         catch (HttpClientException ex)
