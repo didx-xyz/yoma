@@ -10,4 +10,8 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.9" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Yoma.Core.Infrastructure.Zlto\Yoma.Core.Infrastructure.Zlto.csproj" />
+  </ItemGroup>
+
 </Project>

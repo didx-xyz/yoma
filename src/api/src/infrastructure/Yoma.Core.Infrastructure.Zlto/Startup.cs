@@ -33,12 +33,9 @@ namespace Yoma.Core.Infrastructure.Zlto
     {
       services.AddScoped<IMarketplaceProviderClientFactory, ZltoClientFactory>();
       services.AddScoped<IRewardProviderClientFactory, ZltoClientFactory>();
+      services.AddSingleton<HealthCheck>();
 
-      services.AddHealthChecks().Add(new HealthCheckRegistration(
-        name: "ZLTO External",
-        factory: sp => new HealthCheck(sp.GetRequiredService<IOptions<ZltoOptions>>().Value),
-        failureStatus: HealthStatus.Unhealthy,
-        tags: ["zlto"]));
+      services.AddHealthChecks().AddCheck<HealthCheck>(name: "ZLTO External", failureStatus: HealthStatus.Unhealthy, tags: ["zlto"]);
     }
   }
 }
