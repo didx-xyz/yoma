@@ -1,5 +1,6 @@
 using Flurl.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
+using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Infrastructure.Zlto.Models;
@@ -9,20 +10,21 @@ namespace Yoma.Core.Infrastructure.Zlto
   public sealed class HealthCheck : IHealthCheck
   {
     #region Class Variables
+    private readonly ZltoOptions _options;
     private readonly (string Name, string? Url)[] _endpoints;
     #endregion
 
     #region Constructor
-    public HealthCheck(ZltoOptions options)
+    public HealthCheck(IOptions<ZltoOptions> options)
     {
-      ArgumentNullException.ThrowIfNull(options, nameof(options));
+      _options = options.Value ?? throw new ArgumentNullException(nameof(options));
 
       _endpoints =
       [
-        (nameof(ZltoOptions.Partner), options.Partner?.BaseUrl?.TrimEnd('/')),
-        (nameof(ZltoOptions.Wallet), options.Wallet?.BaseUrl?.TrimEnd('/')),
-        (nameof(ZltoOptions.Store), options.Store?.BaseUrl?.TrimEnd('/')),
-        (nameof(ZltoOptions.Task), options.Task?.BaseUrl?.TrimEnd('/')),
+        (nameof(ZltoOptions.Partner), _options.Partner?.BaseUrl?.TrimEnd('/')),
+        (nameof(ZltoOptions.Wallet), _options.Wallet?.BaseUrl?.TrimEnd('/')),
+        (nameof(ZltoOptions.Store), _options.Store?.BaseUrl?.TrimEnd('/')),
+        (nameof(ZltoOptions.Task), _options.Task?.BaseUrl?.TrimEnd('/')),
       ];
 
       foreach (var (Name, Url) in _endpoints)
