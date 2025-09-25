@@ -81,7 +81,11 @@ ingress:
       nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
       # https://docs.datadoghq.com/tracing/other_telemetry/rum/?tab=datadog&site=eu#how-rum-resources-are-linked-to-traces
       # https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#enable-cors
-      nginx.ingress.kubernetes.io/cors-allow-headers: authorization, content-type, traceparent, tracestate, x-datadog-trace-id, x-datadog-parent-id, x-datadog-origin, x-datadog-sampling-priority
+      nginx.ingress.kubernetes.io/cors-allow-headers: >-
+        DNT, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since,
+        Cache-Control, Content-Type, Range, Authorization, traceparent,
+        tracestate, x-datadog-trace-id, x-datadog-parent-id, x-datadog-origin,
+        x-datadog-sampling-priority
     rules:
       - host: example.com
         paths:
@@ -98,7 +102,11 @@ ingress:
       nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
       # https://docs.datadoghq.com/tracing/other_telemetry/rum/?tab=datadog&site=eu#how-rum-resources-are-linked-to-traces
       # https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#enable-cors
-      nginx.ingress.kubernetes.io/cors-allow-headers: authorization, content-type, traceparent, tracestate, x-datadog-trace-id, x-datadog-parent-id, x-datadog-origin, x-datadog-sampling-priority
+      nginx.ingress.kubernetes.io/cors-allow-headers: >-
+        DNT, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since,
+        Cache-Control, Content-Type, Range, Authorization, traceparent,
+        tracestate, x-datadog-trace-id, x-datadog-parent-id, x-datadog-origin,
+        x-datadog-sampling-priority
     rules:
       - host: example.com
         paths:
