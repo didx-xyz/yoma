@@ -45,12 +45,8 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import {
-  GA_ACTION_ORGANISATION_UPATE,
-  GA_CATEGORY_ORGANISATION,
-  ROLE_ADMIN,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { ROLE_ADMIN } from "~/lib/constants";
+import { analytics } from "~/lib/analytics";
 import { config } from "~/lib/react-query-config";
 import {
   RoleView,
@@ -337,12 +333,11 @@ const OrganisationUpdate: NextPageWithLayout<{
           setUserProfile(userProfile);
         }
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_ORGANISATION,
-          GA_ACTION_ORGANISATION_UPATE,
-          `Organisation updated: ${model.name}`,
-        );
+        // 📊 ANALYTICS: track organization update
+        analytics.trackEvent("organization_updated", {
+          organizationId: model.id,
+          organizationName: model.name,
+        });
 
         toast("Your organisation has been updated", {
           type: "success",

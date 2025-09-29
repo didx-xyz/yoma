@@ -27,12 +27,8 @@ import { downloadVerificationFilesAdmin } from "~/api/services/myOpportunities";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import {
-  GA_ACTION_OPPORTUNITY_UPDATE,
-  GA_CATEGORY_OPPORTUNITY,
-  ROLE_ADMIN,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { ROLE_ADMIN } from "~/lib/constants";
+import { analytics } from "~/lib/analytics";
 import { getSafeUrl } from "~/lib/utils";
 
 export enum OpportunityActionOptions {
@@ -93,10 +89,20 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const isAdmin = user?.roles.includes(ROLE_ADMIN);
 
-  const defaultCopyToClipboard = useCallback((url: string) => {
-    navigator.clipboard.writeText(url);
-    toast.success("URL copied to clipboard!", { autoClose: 2000 });
-  }, []);
+  const defaultCopyToClipboard = useCallback(
+    (url: string) => {
+      navigator.clipboard.writeText(url);
+      toast.success("URL copied to clipboard!", { autoClose: 2000 });
+
+      // 📊 ANALYTICS: track external link copy
+      analytics.trackEvent("opportunity_external_link_copied", {
+        opportunityId: opportunity.id,
+        opportunityTitle: opportunity.title,
+        url: url,
+      });
+    },
+    [opportunity.id, opportunity.title],
+  );
 
   const defaultDownloadCompletionFiles = useCallback(
     async (opportunityId: string) => {
@@ -108,6 +114,12 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
         toast.success(
           "Your request is scheduled for processing. You will receive an email when the download is ready.",
         );
+
+        // 📊 ANALYTICS: track completion files download
+        analytics.trackEvent("opportunity_completion_files_downloaded", {
+          opportunityId: opportunity.id,
+          opportunityTitle: opportunity.title,
+        });
       } catch (error) {
         console.error(error);
         toast.error("Download failed. Please try again later.", {
@@ -115,7 +127,7 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
         });
       }
     },
-    [],
+    [opportunity.id, opportunity.title],
   );
 
   const handleStatusUpdate = useCallback(
@@ -170,12 +182,12 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
         // call api
         await updateOpportunityStatus(opportunity.id, status);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY,
-          GA_ACTION_OPPORTUNITY_UPDATE,
-          `Opportunity Status Changed to ${status} for Opportunity ID: ${opportunity.id}`,
-        );
+        // 📊 ANALYTICS: track opportunity status update
+        analytics.trackEvent("opportunity_status_updated", {
+          opportunityId: opportunity.id,
+          opportunityTitle: opportunity.title,
+          newStatus: status,
+        });
 
         // invalidate cache
         await queryClient.invalidateQueries({
@@ -198,7 +210,13 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
 
       return;
     },
-    [queryClient, modalContext, opportunity.id, organizationId],
+    [
+      queryClient,
+      modalContext,
+      opportunity.id,
+      opportunity.title,
+      organizationId,
+    ],
   );
 
   const handleHiddenUpdate = useCallback(
@@ -247,12 +265,12 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
         // call api
         await updateOpportunityHidden(opportunity.id, hidden);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY,
-          GA_ACTION_OPPORTUNITY_UPDATE,
-          `Opportunity Hidden Changed to ${hidden} for Opportunity ID: ${opportunity.id}`,
-        );
+        // 📊 ANALYTICS: track opportunity visibility update
+        analytics.trackEvent("opportunity_visibility_updated", {
+          opportunityId: opportunity.id,
+          opportunityTitle: opportunity.title,
+          hidden: hidden,
+        });
 
         // invalidate cache
         await queryClient.invalidateQueries({
@@ -275,7 +293,13 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
 
       return;
     },
-    [queryClient, modalContext, opportunity.id, organizationId],
+    [
+      queryClient,
+      modalContext,
+      opportunity.id,
+      opportunity.title,
+      organizationId,
+    ],
   );
 
   const handleFeaturedUpdate = useCallback(
@@ -286,12 +310,12 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
         // call api
         await updateFeatured(opportunity.id, featured);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY,
-          GA_ACTION_OPPORTUNITY_UPDATE,
-          `Opportunity Featured Changed to ${featured} for Opportunity ID: ${opportunity.id}`,
-        );
+        // 📊 ANALYTICS: track opportunity featured update
+        analytics.trackEvent("opportunity_featured_updated", {
+          opportunityId: opportunity.id,
+          opportunityTitle: opportunity.title,
+          featured: featured,
+        });
 
         // invalidate cache
         await queryClient.invalidateQueries({
@@ -315,7 +339,7 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
 
       return;
     },
-    [queryClient, opportunity.id],
+    [queryClient, opportunity.id, opportunity.title],
   );
 
   const handleCopyToClipboard = defaultCopyToClipboard;

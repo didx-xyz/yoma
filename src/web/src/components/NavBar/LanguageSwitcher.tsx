@@ -3,11 +3,7 @@ import { parseCookies, setCookie } from "nookies";
 import { IoMdGlobe } from "react-icons/io";
 import { useSetAtom } from "jotai";
 import { currentLanguageAtom } from "~/lib/store";
-import {
-  GA_ACTION_USER_LANGUAGE_CHANGE,
-  GA_CATEGORY_USER,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import analytics from "~/lib/analytics";
 
 // The following cookie name is important because it's Google-predefined for the translation engine purpose
 const COOKIE_NAME = "googtrans";
@@ -97,8 +93,8 @@ const LanguageSwitcher: React.FC<{
       domain: `.${cookieParent}`,
     });
 
-    // 📊 GOOGLE ANALYTICS: track event
-    trackGAEvent(GA_CATEGORY_USER, GA_ACTION_USER_LANGUAGE_CHANGE, lang);
+    // 📊 ANALYTICS: track language change
+    analytics.trackEvent("language_changed", { language: lang });
 
     window.location.reload();
   };

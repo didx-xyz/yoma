@@ -41,14 +41,8 @@ import {
   StoreAccessControlRuleSearchFilters,
 } from "~/components/StoreAccessControlRule/StoreAccessControlRuleSearchFilter";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import {
-  DATE_FORMAT_HUMAN,
-  GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE_STATUS,
-  GA_CATEGORY_STORE_ACCESS_CONTROL_RULE,
-  PAGE_SIZE,
-  THEME_BLUE,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { DATE_FORMAT_HUMAN, PAGE_SIZE, THEME_BLUE } from "~/lib/constants";
+import { analytics } from "~/lib/analytics";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
@@ -324,11 +318,11 @@ const Stores: NextPageWithLayout<{
         await updateStatusStoreAccessControlRule(id, status);
 
         // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_STORE_ACCESS_CONTROL_RULE,
-          GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE_STATUS,
-          `Status Changed to ${status} for Store Access Control Rule ID: ${id}`,
-        );
+        // 📊 ANALYTICS: track store access control rule status update
+        analytics.trackEvent("store_access_control_rule_status_updated", {
+          ruleId: id,
+          status: status,
+        });
 
         // invalidate cache
         // this will match all queries with the following prefixes ['Admin', 'Links', ...] (list data) & [''Admin', 'Links', 'TotalCount', ...] (tab counts)

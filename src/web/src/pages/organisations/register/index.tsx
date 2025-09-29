@@ -26,15 +26,13 @@ import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import {
-  GA_ACTION_ORGANISATION_REGISTER,
-  GA_CATEGORY_ORGANISATION,
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
   THEME_BLUE,
   THEME_GREEN,
   THEME_PURPLE,
 } from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import analytics from "~/lib/analytics";
 import { config } from "~/lib/react-query-config";
 import { userProfileAtom } from "~/lib/store";
 import type { OrganizationRequestViewModel } from "~/models/organisation";
@@ -264,12 +262,10 @@ const OrganisationCreate: NextPageWithLayout<{
         // last step
         await onSubmit(model);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_ORGANISATION,
-          GA_ACTION_ORGANISATION_REGISTER,
-          `Organisation registered: ${model.name}`,
-        );
+        // 📊 ANALYTICS: track organisation registration
+        analytics.trackEvent("organisation_registered", {
+          organisationName: model.name,
+        });
         return;
       }
     },

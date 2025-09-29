@@ -17,12 +17,8 @@ import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import SettingsForm from "~/components/Settings/SettingsForm";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import {
-  GA_ACTION_APP_SETTING_UPDATE,
-  GA_CATEGORY_USER,
-  SETTING_USER_SETTINGS_CONFIGURED,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { SETTING_USER_SETTINGS_CONFIGURED } from "~/lib/constants";
+import analytics from "~/lib/analytics";
 import { config } from "~/lib/react-query-config";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
@@ -77,12 +73,10 @@ const MySettings: NextPageWithLayout<{
       // call api
       await updateSettings(updatedSettings);
 
-      // 📊 GOOGLE ANALYTICS: track event
-      trackGAEvent(
-        GA_CATEGORY_USER,
-        GA_ACTION_APP_SETTING_UPDATE,
-        JSON.stringify(updatedSettings),
-      );
+      // 📊 ANALYTICS: track settings update
+      analytics.trackEvent("settings_updated", {
+        settingsKeys: Object.keys(updatedSettings.settings),
+      });
 
       // invalidate query
       queryClient.invalidateQueries({

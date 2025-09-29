@@ -61,14 +61,11 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
 import {
-  GA_ACTION_STORE_ACCESS_CONTROL_RULE_CREATE,
-  GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE,
-  GA_CATEGORY_STORE_ACCESS_CONTROL_RULE,
   PAGE_SIZE_MAXIMUM,
   PAGE_SIZE_MEDIUM,
   THEME_BLUE,
 } from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { analytics } from "~/lib/analytics";
 import { config } from "~/lib/react-query-config";
 import { debounce, getSafeUrl } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
@@ -536,16 +533,12 @@ const StoreRuleDetails: NextPageWithLayout<{
       if (step === 5) {
         await onSubmit(model);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_STORE_ACCESS_CONTROL_RULE,
-          ruleId == "create"
-            ? GA_ACTION_STORE_ACCESS_CONTROL_RULE_CREATE
-            : GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE,
-          `${
-            ruleId === "create" ? "Created" : "Updated"
-          } Store Access Control Rule: ${model.name}`,
-        );
+        // 📊 ANALYTICS: track store access control rule save
+        analytics.trackEvent("admin_store_access_control_rule_saved", {
+          ruleId: model.id,
+          ruleName: model.name,
+          action: ruleId === "create" ? "created" : "updated",
+        });
       }
       // move to next step
       else setStep(step);

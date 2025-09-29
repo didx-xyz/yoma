@@ -1,21 +1,12 @@
 import { signIn, signOut } from "next-auth/react";
 import { destroyCookie } from "nookies";
-import {
-  COOKIE_KEYCLOAK_SESSION,
-  GA_ACTION_USER_LOGIN_BEFORE,
-  GA_ACTION_USER_LOGOUT,
-  GA_CATEGORY_USER,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { COOKIE_KEYCLOAK_SESSION } from "~/lib/constants";
+import analytics from "~/lib/analytics";
 import { fetchClientEnv } from "~/lib/utils";
 
 export const handleUserSignIn = async (currentLanguage: string) => {
-  // 📊 GOOGLE ANALYTICS: track event
-  trackGAEvent(
-    GA_CATEGORY_USER,
-    GA_ACTION_USER_LOGIN_BEFORE,
-    "User Logging In. Redirected to External Authentication Provider",
-  );
+  // 📊 ANALYTICS: track login attempt
+  analytics.auth.loginAttempt("keycloak");
 
   // ensure signInAgain query string parameter is not present
   const currentUrl = new URL(window.location.href);
@@ -38,9 +29,18 @@ export const handleUserSignIn = async (currentLanguage: string) => {
   );
 };
 
-export const handleUserSignOut = (signInAgain?: boolean) => {
-  // 📊 GOOGLE ANALYTICS: track event
-  trackGAEvent(GA_CATEGORY_USER, GA_ACTION_USER_LOGOUT, "User logged out");
+export const handleUserSignOut = async (
+  signInAgain?: boolean,
+  skipKeycloakLogout?: boolean,
+) => {
+  console.log("handleUserSignOut called", {
+    signInAgain,
+    skipKeycloakLogout,
+    timestamp: new Date().toISOString(),
+  });
+
+  // 📊 ANALYTICS: track logout
+  analytics.auth.logout();
 
   // Construct the callbackUrl with the loginAgain query parameter
   let callbackUrl = `${window.location.origin}/`;
@@ -49,14 +49,48 @@ export const handleUserSignOut = (signInAgain?: boolean) => {
     callbackUrl += `?signInAgain=${signInAgain}`;
   }
 
-  // signout from keycloak
-  signOut({
-    callbackUrl: callbackUrl,
-  }).then(() => {
-    // delete the KEYCLOAK_SESSION cookie (prevents signing in again after signout)
+  // Skip Keycloak logout if session is already expired/invalid
+  if (skipKeycloakLogout) {
+    console.log("Skipping Keycloak logout - performing local cleanup only");
+
+    // Clean up local state when skipping Keycloak
     destroyCookie(null, COOKIE_KEYCLOAK_SESSION, {
       path: "/",
-      maxAge: 0, // expire the cookie immediately
+      maxAge: 0,
     });
-  });
+
+    // Redirect directly since we're not calling Keycloak
+    window.location.href = callbackUrl;
+    return;
+  }
+
+  try {
+    console.log("Calling NextAuth signOut...");
+
+    // 🔧 FIX: Call signOut FIRST, then clean up cookies
+    // This allows NextAuth to properly communicate with Keycloak for logout
+    await signOut({
+      callbackUrl: callbackUrl,
+    });
+
+    console.log("NextAuth signOut completed successfully");
+
+    // Only clean up after successful logout
+    destroyCookie(null, COOKIE_KEYCLOAK_SESSION, {
+      path: "/",
+      maxAge: 0,
+    });
+  } catch (error) {
+    console.warn("Logout failed, cleaning up local state anyway:", error);
+
+    // Clean up local state even if Keycloak logout failed
+    destroyCookie(null, COOKIE_KEYCLOAK_SESSION, {
+      path: "/",
+      maxAge: 0,
+    });
+
+    // Manual redirect if signOut failed
+    window.location.href = callbackUrl;
+    return;
+  }
 };

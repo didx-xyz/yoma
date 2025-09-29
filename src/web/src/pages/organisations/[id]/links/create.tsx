@@ -52,12 +52,10 @@ import {
   DATE_FORMAT_HUMAN,
   DATE_FORMAT_SYSTEM,
   DELIMETER_PASTE_MULTI,
-  GA_ACTION_OPPORTUNITY_LINK_CREATE,
-  GA_CATEGORY_OPPORTUNITY_LINK,
   MAX_INT32,
   PAGE_SIZE_MEDIUM,
 } from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { analytics } from "~/lib/analytics";
 import { config } from "~/lib/react-query-config";
 import {
   debounce,
@@ -563,12 +561,11 @@ const LinkDetails: NextPageWithLayout<{
       if (step === 4) {
         await onSubmit(model);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY_LINK,
-          GA_ACTION_OPPORTUNITY_LINK_CREATE,
-          `Created Link: ${model.name}`,
-        );
+        // 📊 ANALYTICS: track opportunity link creation
+        analytics.trackEvent("opportunity_link_created", {
+          linkName: model.name,
+          organizationId: id,
+        });
       }
       // move to next step
       else setStep(step);
@@ -593,6 +590,7 @@ const LinkDetails: NextPageWithLayout<{
       resetStep1,
       resetStep2,
       resetStep3,
+      id,
     ],
   );
 

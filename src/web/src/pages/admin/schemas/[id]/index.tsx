@@ -47,15 +47,10 @@ import {
 } from "~/api/models/credential";
 import { SchemaAttributesEdit } from "~/components/Schema/SchemaAttributesEdit";
 import type { SelectOption } from "~/api/models/lookups";
-import {
-  GA_ACTION_ADMIN_SCHEMA_CREATE,
-  GA_CATEGORY_SCHEMA,
-  ROLE_ADMIN,
-  THEME_BLUE,
-} from "~/lib/constants";
+import { ROLE_ADMIN, THEME_BLUE } from "~/lib/constants";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { analytics } from "~/lib/analytics";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 
@@ -174,12 +169,11 @@ const SchemaCreateEdit: NextPageWithLayout<{
         if (id === "create") await createSchema(data);
         else await updateSchema(data);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_SCHEMA,
-          GA_ACTION_ADMIN_SCHEMA_CREATE,
-          `Schema '${data.name}' ${id == "create" ? "created" : "updated"}.`,
-        );
+        // 📊 ANALYTICS: track schema creation/update
+        analytics.trackEvent("admin_schema_saved", {
+          schemaName: data.name,
+          action: id == "create" ? "created" : "updated",
+        });
 
         toast(`Schema ${id == "create" ? "created" : "updated"}.`, {
           type: "success",

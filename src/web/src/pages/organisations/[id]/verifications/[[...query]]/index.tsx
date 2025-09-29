@@ -64,13 +64,8 @@ import { Loading } from "~/components/Status/Loading";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import {
-  DATE_FORMAT_HUMAN,
-  GA_ACTION_OPPORTUNITY_COMPLETION_VERIFY,
-  GA_CATEGORY_OPPORTUNITY,
-  PAGE_SIZE,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { DATE_FORMAT_HUMAN, PAGE_SIZE } from "~/lib/constants";
+import { analytics } from "~/lib/analytics";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
@@ -480,14 +475,12 @@ const OpportunityVerifications: NextPageWithLayout<{
         // show the results in modal
         setVerificationResponse(result);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY,
-          GA_ACTION_OPPORTUNITY_COMPLETION_VERIFY,
-          `${tempSelectedRows?.length ?? 0} Opportunity Completions ${
-            approved ? "approved" : "rejected"
-          }`,
-        );
+        // 📊 ANALYTICS: track opportunity completion verification
+        analytics.trackEvent("opportunity_completions_verified", {
+          organizationId: id,
+          verificationCount: tempSelectedRows?.length ?? 0,
+          verificationResult: approved ? "approved" : "rejected",
+        });
 
         // invalidate queries
         await queryClient.invalidateQueries({

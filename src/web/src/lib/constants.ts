@@ -89,56 +89,6 @@ export const THEME_ORANGE = "orange";
 
 export const MAXINT32 = 2147483647;
 
-// google analytics categories, actions and labels
-export const GA_CATEGORY_USER = "User";
-export const GA_CATEGORY_ORGANISATION = "Organisation";
-export const GA_CATEGORY_OPPORTUNITY = "Opportunity";
-export const GA_CATEGORY_SCHEMA = "Schema";
-export const GA_CATEGORY_OPPORTUNITY_LINK = "Opportunity Link";
-export const GA_CATEGORY_STORE_ACCESS_CONTROL_RULE =
-  "Store Access Control Rule";
-
-export const GA_ACTION_USER_YOIDONBOARDINGCONFIRMED =
-  "YoID Onboarding Confirmed";
-export const GA_ACTION_USER_LANGUAGE_CHANGE = "Changed Language";
-
-export const GA_ACTION_ORGANISATION_REGISTER =
-  "Submitted Organisation Registeration Form";
-export const GA_ACTION_ORGANISATION_UPATE = "Updated Organisation Details";
-export const GA_ACTION_ORGANISATION_VERIFY = "Verified Organisation";
-
-export const GA_ACTION_OPPORTUNITY_CREATE = "Created Opportunity";
-export const GA_ACTION_OPPORTUNITY_UPDATE = "Updated Opportunity";
-export const GA_ACTION_OPPORTUNITY_DELETE = "Deleted Opportunity";
-export const GA_ACTION_OPPORTUNITY_FOLLOWEXTERNAL =
-  "External Opportunity Link Followed";
-export const GA_ACTION_OPPORTUNITY_COMPLETED = "Opportunity Completed";
-export const GA_ACTION_OPPORTUNITY_CANCELED = "Opportunity Cancled";
-export const GA_ACTION_OPPORTUNITY_COMPLETION_VERIFY =
-  "Opportunity Verification";
-
-export const GA_ACTION_MARKETPLACE_ITEM_BUY = "Marketplace Item Purchased";
-
-export const GA_ACTION_ADMIN_SCHEMA_CREATE = "Created Schema";
-export const GA_ACTION_ADMIN_SCHEMA_UPDATE = "Created Schema";
-
-export const GA_ACTION_USER_LOGIN_BEFORE = "User Logging In";
-export const GA_ACTION_USER_LOGIN_AFTER = "User Logged In";
-export const GA_ACTION_USER_LOGOUT = "User Logged Out";
-export const GA_ACTION_USER_PROFILE_UPDATE = "User Updated Profile";
-export const GA_ACTION_APP_SETTING_UPDATE = "User Updated App Settings";
-
-export const GA_ACTION_OPPORTUNITY_LINK_CREATE = "Created Opportunity Link";
-export const GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS =
-  "Updated Status for Opportunity Link";
-
-export const GA_ACTION_STORE_ACCESS_CONTROL_RULE_CREATE =
-  "Created Store Access Control Rule";
-export const GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE =
-  "Updated Store Access Control Rule";
-export const GA_ACTION_STORE_ACCESS_CONTROL_RULE_UPDATE_STATUS =
-  "Updated Status for Store Access Control Rule";
-
 // colors for green, organge, blue, purple, red, pink, teal, indigo, cyan
 export const CHART_COLORS = [
   "#387F6A",

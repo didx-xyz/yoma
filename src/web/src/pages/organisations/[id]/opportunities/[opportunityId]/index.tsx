@@ -93,14 +93,11 @@ import {
   ACCEPTED_DOC_TYPES_LABEL,
   ACCEPTED_IMAGE_TYPES_LABEL,
   DATE_FORMAT_SYSTEM,
-  GA_ACTION_OPPORTUNITY_CREATE,
-  GA_ACTION_OPPORTUNITY_UPDATE,
-  GA_CATEGORY_OPPORTUNITY,
   MAX_FILE_SIZE_LABEL,
   PAGE_SIZE_MEDIUM,
   REGEX_URL_VALIDATION,
 } from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { analytics } from "~/lib/analytics";
 import { config } from "~/lib/react-query-config";
 import {
   debounce,
@@ -1241,23 +1238,23 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         if (opportunity) {
           await updateOpportunity(data);
 
-          // 📊 GOOGLE ANALYTICS: track event
-          trackGAEvent(
-            GA_CATEGORY_OPPORTUNITY,
-            GA_ACTION_OPPORTUNITY_UPDATE,
-            `Updated Opportunity: ${data.title}`,
-          );
+          // 📊 ANALYTICS: track opportunity update
+          analytics.trackEvent("opportunity_updated", {
+            opportunityId: data.id || "",
+            opportunityTitle: data.title || "Unknown Opportunity",
+            organizationId: id,
+          });
 
           message = "Opportunity updated";
         } else {
           createdOpportunity = await createOpportunity(data);
 
-          // 📊 GOOGLE ANALYTICS: track event
-          trackGAEvent(
-            GA_CATEGORY_OPPORTUNITY,
-            GA_ACTION_OPPORTUNITY_CREATE,
-            `Created Opportunity: ${data.title}`,
-          );
+          // 📊 ANALYTICS: track opportunity creation
+          analytics.trackEvent("opportunity_created", {
+            opportunityId: createdOpportunity.id,
+            opportunityTitle: data.title,
+            organizationId: id,
+          });
 
           message = "Opportunity created";
         }
@@ -1382,12 +1379,12 @@ const OpportunityAdminDetails: NextPageWithLayout<{
         // call api
         await updateOpportunityStatus(opportunityId, status);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY,
-          GA_ACTION_OPPORTUNITY_UPDATE,
-          `Opportunity Status Changed to ${status} for Opportunity ID: ${opportunityId}`,
-        );
+        // 📊 ANALYTICS: track opportunity status change
+        analytics.trackEvent("opportunity_status_changed", {
+          opportunityId: opportunityId,
+          status: status,
+          organizationId: id,
+        });
 
         // invalidate queries
         await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
@@ -1409,7 +1406,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
       return;
     },
-    [opportunityId, queryClient],
+    [opportunityId, queryClient, id],
   );
 
   // load data asynchronously for the skills dropdown
