@@ -8,11 +8,7 @@ import {
 } from "~/api/services/organisations";
 import Suspense from "~/components/Common/Suspense";
 import SettingsForm from "~/components/Settings/SettingsForm";
-import {
-  GA_ACTION_APP_SETTING_UPDATE,
-  GA_CATEGORY_USER,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import analytics from "~/lib/analytics";
 
 export interface InputProps {
   organisation: Organization;
@@ -37,12 +33,11 @@ export const OrgSettingsEdit: React.FC<InputProps> = ({ organisation }) => {
       // call api
       await updateOrganisationSettings(organisation.id, updatedSettings);
 
-      // 📊 GOOGLE ANALYTICS: track event
-      trackGAEvent(
-        GA_CATEGORY_USER,
-        GA_ACTION_APP_SETTING_UPDATE,
-        JSON.stringify(updatedSettings),
-      );
+      // 📊 ANALYTICS: track organisation settings update
+      analytics.trackEvent("organisation_settings_updated", {
+        organisationId: organisation.id,
+        settingsKeys: Object.keys(updatedSettings.settings || {}),
+      });
 
       // invalidate query
       queryClient.invalidateQueries({

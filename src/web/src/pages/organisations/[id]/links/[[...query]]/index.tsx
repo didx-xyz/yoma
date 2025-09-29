@@ -17,7 +17,6 @@ import {
 } from "react-icons/io";
 import { IoShareSocialOutline } from "react-icons/io5";
 import Moment from "react-moment";
-import { toast } from "react-toastify";
 import {
   LinkAction,
   LinkEntityType,
@@ -30,11 +29,11 @@ import { getLinkById, searchLinks } from "~/api/services/actionLinks";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import CustomModal from "~/components/Common/CustomModal";
 import MainLayout from "~/components/Layout/Main";
+import { LinkActionOptions, LinkActions } from "~/components/Links/LinkActions";
 import {
   LinkFilterOptions,
   LinkSearchFilters,
 } from "~/components/Links/LinkSearchFilter";
-import { LinkActionOptions, LinkActions } from "~/components/Links/LinkActions";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
@@ -369,11 +368,6 @@ const Links: NextPageWithLayout<{
     [searchFilter, redirectWithSearchFilterParams],
   );
 
-  const onClick_CopyToClipboard = useCallback((url: string) => {
-    navigator.clipboard.writeText(url);
-    toast.success("URL copied to clipboard!", { autoClose: 2000 });
-  }, []);
-
   const onClick_GenerateQRCode = useCallback(
     (item: LinkInfo) => {
       // fetch the QR code
@@ -693,7 +687,6 @@ const Links: NextPageWithLayout<{
 
                       <LinkActions
                         link={item}
-                        onCopyToClipboard={onClick_CopyToClipboard}
                         onGenerateQRCode={onClick_GenerateQRCode}
                         returnUrl={returnUrl?.toString()}
                         organizationId={id}
@@ -955,7 +948,6 @@ const Links: NextPageWithLayout<{
                           {/* ACTIONS */}
                           <LinkActions
                             link={item}
-                            onCopyToClipboard={onClick_CopyToClipboard}
                             onGenerateQRCode={onClick_GenerateQRCode}
                             returnUrl={returnUrl?.toString()}
                             organizationId={id}

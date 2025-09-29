@@ -2,6 +2,7 @@ import { useAtomValue } from "jotai";
 import React, { useCallback, useState } from "react";
 import { IoMdFingerPrint } from "react-icons/io";
 import { handleUserSignIn } from "~/lib/authUtils";
+import analytics from "~/lib/analytics";
 import { currentLanguageAtom } from "~/lib/store";
 import { LoadingInline } from "./Status/LoadingInline";
 
@@ -14,6 +15,12 @@ export const SignInButton: React.FC<{
 
   const handleLogin = useCallback(async () => {
     setIsButtonLoading(true);
+
+    // 📊 ANALYTICS: track login button click
+    analytics.trackEvent("login_button_clicked", {
+      language: currentLanguage,
+      buttonLocation: "general", // can be customized per usage
+    });
 
     // log in with keycloak
     await handleUserSignIn(currentLanguage);

@@ -17,13 +17,11 @@ import {
 import { handleUserSignIn } from "~/lib/authUtils";
 import {
   COOKIE_KEYCLOAK_SESSION,
-  GA_ACTION_APP_SETTING_UPDATE,
-  GA_CATEGORY_USER,
   ROLE_ADMIN,
   ROLE_ORG_ADMIN,
   SETTING_USER_SETTINGS_CONFIGURED,
 } from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import analytics from "~/lib/analytics";
 import {
   RoleView,
   activeNavigationRoleViewAtom,
@@ -142,6 +140,15 @@ export const Global: React.FC = () => {
   //#endregion Functions
 
   //#region Event Handlers
+  // 🎯 ANALYTICS: Session Management
+  // Update analytics user context when session changes
+  useEffect(() => {
+    // Don't track user changes while session is still loading
+    if (sessionStatus === "loading") return;
+
+    analytics.setUser(session?.user || null);
+  }, [session, sessionStatus]);
+
   // 🔔 POST LOG-IN
   // get user profile after log in & perform post login checks
   useEffect(() => {
@@ -151,6 +158,26 @@ export const Global: React.FC = () => {
     // check error
     if (session?.error) {
       setLoginMessage("There was an error signing in. Please log in again.");
+
+      // 📊 ANALYTICS: Track session error with full details
+      analytics.trackError(
+        `Session error during login check: ${session.error}`,
+        {
+          errorType: "session_error",
+          errorCode: session.error,
+          sessionStatus: sessionStatus,
+          hasUserProfile: !!userProfile,
+          errorLocation: "post_login_check",
+        },
+      );
+
+      console.error("Session error during login check:", {
+        error: session.error,
+        sessionStatus,
+        hasUserProfile: !!userProfile,
+        timestamp: new Date().toISOString(),
+      });
+
       return;
     }
 
@@ -165,13 +192,6 @@ export const Global: React.FC = () => {
           // update atom
           setUserProfile(res);
 
-          // 📊 GOOGLE ANALYTICS: track event
-          // trackGAEvent(
-          //   GA_CATEGORY_USER,
-          //   GA_ACTION_USER_LOGIN_AFTER,
-          //   "User logged in",
-          // );
-
           postLoginChecks(res);
         })
         .catch((e) => {
@@ -179,11 +199,23 @@ export const Global: React.FC = () => {
             // show dialog to login again
             setLoginMessage("Your session has expired. Please log in again.");
             setLoginDialogVisible(true);
+
+            // Track authentication error
+            analytics.trackError("Session expired", {
+              errorType: "authentication",
+              statusCode: 401,
+            });
           } else {
             // show error toast
             toast.error(
               "Something went wrong logging in. Please try again later or contact us for help.",
             );
+
+            // Track login error
+            analytics.trackError(e, {
+              errorType: "login_error",
+              statusCode: e.response?.status,
+            });
           }
 
           console.error(e);
@@ -193,6 +225,8 @@ export const Global: React.FC = () => {
     // if it does, perform the sign-in action (SSO)
     // this will redirect to keycloak, automatically sign the user in and redirect back to the app
     else {
+      // User session clearing is automatically handled by analytics session management
+
       const cookies = parseCookies();
       const existingSessionCookieValue = cookies[COOKIE_KEYCLOAK_SESSION];
 
@@ -309,6 +343,29 @@ export const Global: React.FC = () => {
   // show login dialog if session error
   useEffect(() => {
     if (session?.error) {
+      // 📊 ANALYTICS: Track session error with comprehensive details
+      const errorContext = {
+        errorType: "session_validation_error",
+        errorCode: session.error,
+        sessionStatus: sessionStatus,
+        hasUserProfile: !!userProfile,
+        errorLocation: "session_validation_check",
+        userAgent:
+          typeof window !== "undefined" ? window.navigator.userAgent : null,
+        currentRoute: router.asPath,
+      };
+
+      analytics.trackError(
+        `Session validation error: ${session.error}`,
+        errorContext,
+      );
+
+      console.error("Session validation error:", {
+        error: session.error,
+        context: errorContext,
+        timestamp: new Date().toISOString(),
+      });
+
       // show dialog to login again
       if (session?.error === "RefreshAccessTokenError") {
         setLoginMessage("Your session has expired. Please log in again.");
@@ -320,7 +377,14 @@ export const Global: React.FC = () => {
 
       console.error("session error: ", session?.error);
     }
-  }, [session?.error, setLoginDialogVisible, setLoginMessage]);
+  }, [
+    session?.error,
+    sessionStatus,
+    userProfile,
+    router.asPath,
+    setLoginDialogVisible,
+    setLoginMessage,
+  ]);
 
   const handleSettingsSubmit = useCallback(
     async (updatedSettings: SettingsRequest) => {
@@ -328,26 +392,32 @@ export const Global: React.FC = () => {
       // this prevents the "please update your settings" popup from showing again (Global.tsx)
       updatedSettings.settings[SETTING_USER_SETTINGS_CONFIGURED] = true;
 
-      // call api
-      await updateSettings(updatedSettings);
+      try {
+        // call api
+        await updateSettings(updatedSettings);
 
-      // 📊 GOOGLE ANALYTICS: track event
-      trackGAEvent(
-        GA_CATEGORY_USER,
-        GA_ACTION_APP_SETTING_UPDATE,
-        JSON.stringify(updatedSettings),
-      );
+        // 📊 ANALYTICS: track user settings update
+        analytics.trackEvent("settings_updated", {
+          settingsKeys: Object.keys(updatedSettings.settings),
+        });
 
-      // invalidate query
-      queryClient.invalidateQueries({
-        queryKey: ["user", "settings"],
-      });
+        // invalidate query
+        queryClient.invalidateQueries({
+          queryKey: ["user", "settings"],
+        });
 
-      // hide popup
-      setSettingsDialogVisible(false);
+        // hide popup
+        setSettingsDialogVisible(false);
 
-      // perform login checks (again)
-      postLoginChecks(userProfile!, true);
+        // perform login checks (again)
+        postLoginChecks(userProfile!, true);
+      } catch (error) {
+        // Track settings update error
+        analytics.trackError(error as Error, {
+          errorType: "settings_update_error",
+        });
+        throw error;
+      }
     },
     [queryClient, userProfile, setSettingsDialogVisible, postLoginChecks],
   );

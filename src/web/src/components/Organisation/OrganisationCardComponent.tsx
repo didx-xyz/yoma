@@ -3,11 +3,7 @@ import {
   type OrganizationInfo,
   OrganizationStatus,
 } from "~/api/models/organisation";
-import {
-  GA_ACTION_OPPORTUNITY_UPDATE,
-  GA_CATEGORY_OPPORTUNITY,
-  ROLE_ADMIN,
-} from "~/lib/constants";
+import { ROLE_ADMIN } from "~/lib/constants";
 import { AvatarImage } from "../AvatarImage";
 import type { User } from "~/server/auth";
 import { IoIosSettings, IoMdWarning } from "react-icons/io";
@@ -16,7 +12,7 @@ import { useState, useCallback } from "react";
 import { FaPencilAlt, FaClock, FaTrash } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { patchOrganisationStatus } from "~/api/services/organisations";
-import { trackGAEvent } from "~/lib/google-analytics";
+import analytics from "~/lib/analytics";
 import { ApiErrors } from "../Status/ApiErrors";
 import { useRouter } from "next/router";
 import { Loading } from "../Status/Loading";
@@ -90,12 +86,12 @@ export const OrganisationCardComponent: React.FC<{
           comment: "",
         });
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY,
-          GA_ACTION_OPPORTUNITY_UPDATE,
-          `Organisation Status Changed to ${status} for Organisation ID: ${item.id}`,
-        );
+        // 📊 ANALYTICS: track organisation status update
+        analytics.trackEvent("organisation_status_updated", {
+          organisationId: item.id,
+          organisationName: item.name,
+          newStatus: status,
+        });
 
         toast.success("Organisation status updated");
 

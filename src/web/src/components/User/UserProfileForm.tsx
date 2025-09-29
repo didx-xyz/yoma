@@ -2,10 +2,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useCallback, useEffect, useState } from "react";
 import { type FieldValues, useForm } from "react-hook-form";
 import zod from "zod";
-import {
-  GA_ACTION_USER_PROFILE_UPDATE,
-  GA_CATEGORY_USER,
-} from "~/lib/constants";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   getCountries,
@@ -16,7 +12,7 @@ import type { AxiosError } from "axios";
 import { toast } from "react-toastify";
 import type { UserProfile, UserRequestProfile } from "~/api/models/user";
 import { patchPhoto, patchUser } from "~/api/services/user";
-import { trackGAEvent } from "~/lib/google-analytics";
+import analytics from "~/lib/analytics";
 import AvatarUpload from "../Organisation/Upsert/AvatarUpload";
 import { ApiErrors } from "../Status/ApiErrors";
 import { useSession } from "next-auth/react";
@@ -281,15 +277,42 @@ export const UserProfileForm: React.FC<{
           submissionData.dateOfBirth = existingDate.toISOString(); // Full UTC datetime with timezone
         }
 
+        // Track what's being updated
+        const isPhotoUpdate = logoFiles && logoFiles.length > 0;
+        const isProfileUpdate = filterOptions.some(
+          (option) => option !== UserProfileFilterOptions.LOGO,
+        );
+
         // update photo
-        if (logoFiles && logoFiles.length > 0) {
+        if (isPhotoUpdate) {
           await patchPhoto(logoFiles[0]);
+
+          // 📊 ANALYTICS: track photo update
+          analytics.trackEvent("profile_photo_updated", {
+            userId: userProfile?.id,
+          });
+
+          // Clear logo files after successful upload to prevent duplicate tracking
+          setLogoFiles([]);
         }
 
-        // update api
-        const userProfileResult = await patchUser(
-          submissionData as UserRequestProfile,
-        );
+        // update profile data (only if non-photo fields are included)
+        let userProfileResult = userProfile;
+        if (isProfileUpdate) {
+          userProfileResult = await patchUser(
+            submissionData as UserRequestProfile,
+          );
+
+          // 📊 ANALYTICS: track profile update - only fields that actually changed
+          analytics.trackEvent("profile_updated", {
+            userId: userProfile?.id,
+          });
+        }
+
+        // Ensure we have a valid userProfileResult
+        if (!userProfileResult) {
+          throw new Error("User profile result is required");
+        }
 
         // update session
         await update({
@@ -301,10 +324,6 @@ export const UserProfileForm: React.FC<{
             profile: data,
           },
         });
-        // eslint-enable
-
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(GA_CATEGORY_USER, GA_ACTION_USER_PROFILE_UPDATE, "");
 
         // check if sign-in again is required
         const emailUpdated =
@@ -324,17 +343,12 @@ export const UserProfileForm: React.FC<{
         await queryClient.invalidateQueries({
           queryKey: ["userProfile"],
         });
-        // (user countries on the oportunity search page)
+        // (user countries on the opportunity search page)
         if (formData.countryId != data.countryId) {
           await queryClient.invalidateQueries({
             queryKey: ["opportunities", "countries"],
           });
         }
-
-        // toast("Your profile has been updated", {
-        //   type: "success",
-        //   toastId: "patchUserProfile",
-        // });
 
         if (onSubmit) onSubmit(userProfileResult);
       } catch (error) {
@@ -362,6 +376,7 @@ export const UserProfileForm: React.FC<{
       queryClient,
       formData.countryId,
       userProfile,
+      filterOptions, // Added to dependencies
     ],
   );
 

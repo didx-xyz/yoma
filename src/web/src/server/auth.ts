@@ -66,24 +66,52 @@ export const authOptions: NextAuthOptions = {
   },
   events: {
     async signOut({ token }) {
-      // kill the session in keycloak
-      const url = new URL(
-        `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/logout`,
-      );
+      try {
+        console.log("🔒 SignOut event triggered");
+        console.log("Token details:", {
+          hasIdToken: !!token?.idToken,
+          hasRefreshToken: !!token?.refreshToken,
+          userId: token?.user?.id,
+        });
 
-      url.searchParams.set("id_token_hint", token.idToken!);
-      url.searchParams.set("client_id", process.env.KEYCLOAK_CLIENT_ID!);
-      url.searchParams.set(
-        "client_secret",
-        process.env.KEYCLOAK_CLIENT_SECRET!,
-      );
-      url.searchParams.set("refresh_token", token.refreshToken);
+        if (!token?.idToken || !token?.refreshToken) {
+          console.warn("⚠️ Missing required tokens for Keycloak logout");
+          return; // Skip Keycloak logout if tokens are missing
+        }
 
-      const response = await fetch(url.toString());
-      if (!response.ok) {
-        const message = `An error has occurred: ${response.status}`;
-        console.error(message);
-        throw new Error(message);
+        // kill the session in keycloak
+        const logoutUrl = `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/logout`;
+
+        console.log("🔗 Attempting Keycloak logout...");
+
+        const response = await fetch(logoutUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            client_id: process.env.KEYCLOAK_CLIENT_ID!,
+            client_secret: process.env.KEYCLOAK_CLIENT_SECRET!,
+            refresh_token: token.refreshToken,
+          }),
+        });
+
+        if (!response.ok) {
+          const responseText = await response.text();
+          console.error("❌ Keycloak logout failed:", {
+            status: response.status,
+            statusText: response.statusText,
+            response: responseText,
+            url: logoutUrl,
+          });
+          // Don't throw error - allow NextAuth logout to continue
+        } else {
+          console.log("✅ Keycloak logout successful");
+          console.log("📊 Response status:", response.status);
+        }
+      } catch (error) {
+        console.error("❌ Error during signOut event:", error);
+        // Don't throw error to prevent blocking the logout process
       }
     },
   },
@@ -110,6 +138,12 @@ export const authOptions: NextAuthOptions = {
         return token;
       } // Initial log in
       if (account && user) {
+        console.log("🔑 Initial login - User from profile mapping:", {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+        });
+
         // get roles from access_token
         const { realm_access } = decode(account.access_token);
 
@@ -129,6 +163,7 @@ export const authOptions: NextAuthOptions = {
           provider: account.provider, //NB: used to determine which client id & secret to use when refreshing token
         };
 
+        console.log("🎟️ New token created with user ID:", newToken.user.id);
         return newToken;
       }
 
@@ -166,17 +201,26 @@ export const authOptions: NextAuthOptions = {
       issuer: process.env.KEYCLOAK_ISSUER,
       id: CLIENT_WEB,
       name: "Yoma",
-    }),
+      // Map userName (preferred_username) to email field for backwards compatibility
+      profile(profile) {
+        console.log("👤 Keycloak profile received:", {
+          sub: profile.sub,
+          name: profile.name,
+          preferred_username: profile.preferred_username,
+          email: profile.email,
+        });
 
-    /**
-     * ...add more providers here.
-     *
-     * Most other providers require a bit more work than the Discord provider. For example, the
-     * GitHub provider requires you to add the `refresh_token_expires_in` field to the Account
-     * model. Refer to the NextAuth.js docs for the provider you want to use. Example:
-     *
-     * @see https://next-auth.js.org/providers/github
-     */
+        const mappedProfile = {
+          id: profile.sub,
+          name: profile.name ?? profile.preferred_username,
+          email: profile.preferred_username, // Map userName (email/phone) to email field
+          image: profile.picture,
+        };
+
+        console.log("🔄 Profile mapped to:", mappedProfile);
+        return mappedProfile;
+      },
+    }),
   ],
   secret: process.env.NEXTAUTH_SECRET,
 

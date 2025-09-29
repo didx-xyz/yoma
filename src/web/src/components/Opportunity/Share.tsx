@@ -17,6 +17,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { LoadingInline } from "../Status/LoadingInline";
 import { createLinkSharing } from "~/api/services/actionLinks";
 import type { LinkInfo } from "~/api/models/actionLinks";
+import analytics from "~/lib/analytics";
 
 interface SharePopupProps {
   opportunity: OpportunityInfo;
@@ -47,9 +48,21 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
   const onClick_CopyToClipboard = useCallback(() => {
     navigator.clipboard.writeText(linkInfo?.shortURL ?? linkInfo?.url ?? "");
     toast.success("URL copied to clipboard!", { autoClose: 2000 });
-  }, [linkInfo]);
+
+    // 📊 ANALYTICS: track "Copy Link" button click
+    analytics.trackEvent("opportunity_share_copy_link", {
+      opportunityId: opportunity.id,
+      opportunityTitle: opportunity.title,
+    });
+  }, [linkInfo, opportunity.id, opportunity.title]);
 
   const onClick_GenerateQRCode = useCallback(() => {
+    // 📊 ANALYTICS: track "Generate QR Code" button click
+    analytics.trackEvent("opportunity_share_generate_qr", {
+      opportunityId: opportunity.id,
+      opportunityTitle: opportunity.title,
+    });
+
     // fetch the QR code
     queryClient
       .fetchQuery({
@@ -80,7 +93,7 @@ const SharePopup: React.FC<SharePopupProps> = ({ opportunity, onClose }) => {
           100,
         );
       });
-  }, [opportunity.id, queryClient]);
+  }, [opportunity.id, queryClient, opportunity.title]);
 
   const onClick_MoreOptions = useCallback(() => {
     if (navigator.share) {

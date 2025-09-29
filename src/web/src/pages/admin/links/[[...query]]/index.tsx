@@ -9,7 +9,6 @@ import { useCallback, useState, type ReactElement } from "react";
 import { IoMdCalendar, IoMdClose, IoMdLock, IoMdPerson } from "react-icons/io";
 import { IoShareSocialOutline } from "react-icons/io5";
 import Moment from "react-moment";
-import { toast } from "react-toastify";
 import {
   LinkAction,
   LinkEntityType,
@@ -380,11 +379,6 @@ const Links: NextPageWithLayout<{
     [searchFilter, redirectWithSearchFilterParams],
   );
 
-  const onClick_CopyToClipboard = useCallback((url: string) => {
-    navigator.clipboard.writeText(url);
-    toast.success("URL copied to clipboard!", { autoClose: 2000 });
-  }, []);
-
   const onClick_GenerateQRCode = useCallback(
     (item: LinkInfo) => {
       // fetch the QR code
@@ -651,7 +645,6 @@ const Links: NextPageWithLayout<{
 
                       <LinkActions
                         link={item}
-                        onCopyToClipboard={onClick_CopyToClipboard}
                         onGenerateQRCode={onClick_GenerateQRCode}
                         returnUrl={returnUrl?.toString()}
                         actionOptions={[
@@ -950,7 +943,6 @@ const Links: NextPageWithLayout<{
                         <div className="flex flex-row items-center justify-center gap-2">
                           <LinkActions
                             link={item}
-                            onCopyToClipboard={onClick_CopyToClipboard}
                             onGenerateQRCode={onClick_GenerateQRCode}
                             returnUrl={returnUrl?.toString()}
                             actionOptions={[

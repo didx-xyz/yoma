@@ -1,5 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { type AxiosError } from "axios";
+import Image from "next/image";
 import { useRouter } from "next/router";
 import { useCallback, useState } from "react";
 import {
@@ -11,22 +12,20 @@ import {
   FaTrash,
 } from "react-icons/fa";
 import { IoIosSettings, IoMdWarning } from "react-icons/io";
+import { IoClose, IoShareSocialOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
 import { LinkInfo, LinkStatus } from "~/api/models/actionLinks";
 import {
   getLinkById,
-  updateLinkStatus,
   sendInstantVerifyReminders,
+  updateLinkStatus,
 } from "~/api/services/actionLinks";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
 import { useConfirmationModalContext } from "~/context/modalConfirmationContext";
-import {
-  GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
-  GA_CATEGORY_OPPORTUNITY_LINK,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { analytics } from "~/lib/analytics";
 import { getSafeUrl } from "~/lib/utils";
+import CustomModal from "../Common/CustomModal";
 
 export enum LinkActionOptions {
   ACTIVATE = "activate",
@@ -64,14 +63,36 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
   const queryClient = useQueryClient();
   const modalContext = useConfirmationModalContext();
   const [isLoading, setIsLoading] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
+  const [qrCodeImageData, setQRCodeImageData] = useState<
+    string | null | undefined
+  >(null);
 
-  const defaultCopyToClipboard = useCallback((url: string) => {
-    navigator.clipboard.writeText(url);
-    toast.success("URL copied to clipboard!", { autoClose: 2000 });
-  }, []);
+  const defaultCopyToClipboard = useCallback(
+    (url: string) => {
+      navigator.clipboard.writeText(url);
+      toast.success("URL copied to clipboard!", { autoClose: 2000 });
+
+      // 📊 ANALYTICS: track link copy
+      analytics.trackEvent("link_copied", {
+        linkId: link.id,
+        linkUrl: url,
+        linkName: link.name,
+        entityOrganizationId: link.entityOrganizationId,
+      });
+    },
+    [link.id, link.name, link.entityOrganizationId],
+  );
 
   const defaultGenerateQRCode = useCallback(
     (item: LinkInfo) => {
+      // 📊 ANALYTICS: track QR code generation
+      analytics.trackEvent("link_qr_code_generated", {
+        linkId: item.id,
+        linkName: item.name,
+        entityOrganizationId: item.entityOrganizationId,
+      });
+
       // fetch the QR code
       queryClient
         .fetchQuery({
@@ -85,8 +106,9 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
             item.id,
           ]);
 
-          // show the QR code - this would need to be handled by parent component
-          console.log("QR Code generated:", qrCode?.qrCodeBase64);
+          // show the QR code
+          setQRCodeImageData(qrCode?.qrCodeBase64);
+          setShowQRCode(true);
         });
     },
     [queryClient],
@@ -135,12 +157,12 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
         // call api
         await updateLinkStatus(item.id, status);
 
-        // 📊 GOOGLE ANALYTICS: track event
-        trackGAEvent(
-          GA_CATEGORY_OPPORTUNITY_LINK,
-          GA_ACTION_OPPORTUNITY_LINK_UPDATE_STATUS,
-          `Status Changed to ${status} for Opportunity Link ID: ${item.id}`,
-        );
+        // 📊 ANALYTICS: track link status update
+        analytics.trackEvent("link_status_updated", {
+          linkId: item.id,
+          status: status,
+          entityOrganizationId: item.entityOrganizationId,
+        });
 
         // invalidate cache based on context
         if (organizationId) {
@@ -212,6 +234,13 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
         // call api
         await sendInstantVerifyReminders(item.id);
 
+        // 📊 ANALYTICS: track reminder sent
+        analytics.trackEvent("link_reminders_sent", {
+          linkId: item.id,
+          linkName: item.name,
+          entityOrganizationId: item.entityOrganizationId,
+        });
+
         toast.success("Reminders sent successfully");
       } catch (error) {
         toast(<ApiErrors error={error as AxiosError} />, {
@@ -234,6 +263,62 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
   return (
     <>
       {isLoading && <Loading />}
+
+      {/* QR CODE DIALOG */}
+      <CustomModal
+        isOpen={showQRCode}
+        shouldCloseOnOverlayClick={false}
+        onRequestClose={() => {
+          setShowQRCode(false);
+          setQRCodeImageData(null);
+        }}
+        className={`md:max-h-[650px] md:w-[600px]`}
+      >
+        <div className="flex h-full flex-col gap-2 overflow-y-auto">
+          {/* HEADER WITH CLOSE BUTTON */}
+          <div className="bg-green flex flex-row p-4 shadow-lg">
+            <h1 className="grow"></h1>
+            <button
+              type="button"
+              className="btn btn-circle text-gray-dark hover:bg-gray"
+              onClick={() => {
+                setShowQRCode(false);
+                setQRCodeImageData(null);
+              }}
+            >
+              <IoClose className="h-6 w-6" />
+            </button>
+          </div>
+
+          {/* MAIN CONTENT */}
+          <div className="flex flex-col items-center justify-center gap-4 p-8">
+            <div className="border-green-dark -mt-16 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-lg">
+              <IoShareSocialOutline className="h-7 w-7" />
+            </div>
+
+            <h1 className="text-center text-lg font-semibold">QR Code</h1>
+            {showQRCode && qrCodeImageData && (
+              <div className="flex w-full flex-col items-center gap-4">
+                <div className="flex w-full flex-col items-center gap-4">
+                  <Image
+                    src={`data:image/png;base64,${qrCodeImageData}`}
+                    alt="QR Code"
+                    width={300}
+                    height={300}
+                    className="rounded-lg"
+                    priority
+                  />
+                </div>
+              </div>
+            )}
+            <p className="text-center text-sm text-gray-500">
+              Share this QR code with participants to allow them to access the
+              link.
+            </p>
+          </div>
+        </div>
+      </CustomModal>
+
       <div className="dropdown dropdown-left">
         <button type="button" title="Actions" className="cursor-pointer">
           <IoIosSettings className="text-green hover:text-blue size-5" />

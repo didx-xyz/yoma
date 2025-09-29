@@ -11,7 +11,7 @@ import iconSkills from "public/images/icon-skills.svg";
 import iconSuccess from "public/images/icon-success.png";
 import iconTopics from "public/images/icon-topics.svg";
 import iconUpload from "public/images/icon-upload.svg";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { FcKey } from "react-icons/fc";
 import {
@@ -45,13 +45,9 @@ import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
   DATE_FORMAT_HUMAN,
-  GA_ACTION_OPPORTUNITY_CANCELED,
-  GA_ACTION_OPPORTUNITY_COMPLETED,
-  GA_ACTION_OPPORTUNITY_FOLLOWEXTERNAL,
-  GA_CATEGORY_OPPORTUNITY,
   SETTING_USER_POPUP_LEAVINGYOMA,
 } from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import analytics from "~/lib/analytics";
 import { userProfileAtom } from "~/lib/store";
 import { type User } from "~/server/auth";
 import CustomModal from "../Common/CustomModal";
@@ -67,6 +63,7 @@ const OpportunityPublicDetails: React.FC<{
   preview: boolean;
 }> = ({ user, opportunityInfo, error, preview }) => {
   const queryClient = useQueryClient();
+  const hasTrackedView = useRef(false);
   const [loginDialogVisible, setLoginDialogVisible] = useState(false);
   const [gotoOpportunityDialogVisible, setGotoOpportunityDialogVisible] =
     useState(false);
@@ -122,10 +119,22 @@ const OpportunityPublicDetails: React.FC<{
     }
   }, [user]);
 
+  // 📊 ANALYTICS: track opportunity view (only once per component mount)
+  useEffect(() => {
+    if (!preview && opportunityInfo.id && !hasTrackedView.current) {
+      analytics.opportunity.viewed(opportunityInfo.id, opportunityInfo.title);
+      hasTrackedView.current = true;
+    }
+  }, [opportunityInfo.id, opportunityInfo.title, preview]);
+
   //#region Event Handlers
   const onUpdateSavedOpportunity = useCallback(() => {
     if (!user) {
       setLoginDialogVisible(true);
+      analytics.trackEvent("opportunity_save_login_required", {
+        opportunityId: opportunityInfo.id,
+        opportunityTitle: opportunityInfo.title,
+      });
       return;
     }
 
@@ -134,8 +143,19 @@ const OpportunityPublicDetails: React.FC<{
         .then(() => {
           setIsOppSaved(false);
           toast.success("Opportunity removed from saved");
+
+          // 📊 ANALYTICS: track opportunity unsaved
+          analytics.opportunity.unsaved(
+            opportunityInfo.id,
+            opportunityInfo.title,
+          );
         })
         .catch((error) => {
+          analytics.trackError(error as Error, {
+            errorType: "opportunity_unsave_error",
+            opportunityId: opportunityInfo.id,
+          });
+
           toast(<ApiErrors error={error as AxiosError} />, {
             type: "error",
             autoClose: false,
@@ -147,8 +167,19 @@ const OpportunityPublicDetails: React.FC<{
         .then(() => {
           setIsOppSaved(true);
           toast.success("Opportunity saved");
+
+          // 📊 ANALYTICS: track opportunity saved
+          analytics.opportunity.saved(
+            opportunityInfo.id,
+            opportunityInfo.title,
+          );
         })
         .catch((error) => {
+          analytics.trackError(error as Error, {
+            errorType: "opportunity_save_error",
+            opportunityId: opportunityInfo.id,
+          });
+
           toast(<ApiErrors error={error as AxiosError} />, {
             type: "error",
             autoClose: false,
@@ -156,7 +187,7 @@ const OpportunityPublicDetails: React.FC<{
           });
         });
     }
-  }, [opportunityInfo.id, user, isOppSaved]);
+  }, [opportunityInfo.id, opportunityInfo.title, user, isOppSaved]);
 
   const onProceedToOpportunity = useCallback(async () => {
     if (!opportunityInfo.url) return;
@@ -168,42 +199,53 @@ const OpportunityPublicDetails: React.FC<{
       await performActionNavigateExternalLink(opportunityInfo.id);
     }
 
-    // 📊 GOOGLE ANALYTICS: track event
-    trackGAEvent(
-      GA_CATEGORY_OPPORTUNITY,
-      GA_ACTION_OPPORTUNITY_FOLLOWEXTERNAL,
+    // 📊 ANALYTICS: track external link navigation
+    analytics.opportunity.externalLinkClicked(
+      opportunityInfo.id,
+      opportunityInfo.title,
       opportunityInfo.url,
     );
-  }, [opportunityInfo.id, opportunityInfo.url, user]);
+  }, [opportunityInfo.id, opportunityInfo.url, opportunityInfo.title, user]);
 
   const onGoToOpportunity = useCallback(async () => {
     const settingDontShowAgain = userProfile?.settings?.items.find(
       (x) => x.key === SETTING_USER_POPUP_LEAVINGYOMA,
     )?.value;
 
+    // 📊 ANALYTICS: track "Go to opportunity" button click
+    analytics.trackEvent("opportunity_go_to_clicked", {
+      opportunityId: opportunityInfo.id,
+      opportunityTitle: opportunityInfo.title,
+    });
+
     if (settingDontShowAgain) await onProceedToOpportunity();
     else setGotoOpportunityDialogVisible(true);
-  }, [userProfile, onProceedToOpportunity]);
+  }, [
+    userProfile,
+    onProceedToOpportunity,
+    opportunityInfo.id,
+    opportunityInfo.title,
+  ]);
 
   const onOpportunityCompleted = useCallback(async () => {
     setCompleteOpportunityDialogVisible(false);
     setCompleteOpportunitySuccessDialogVisible(true);
 
-    // 📊 GOOGLE ANALYTICS: track event
-    trackGAEvent(GA_CATEGORY_OPPORTUNITY, GA_ACTION_OPPORTUNITY_COMPLETED, "");
+    // 📊 ANALYTICS: track opportunity completion
+    analytics.opportunity.completed(opportunityInfo.id, opportunityInfo.title);
 
     // invalidate queries
     await queryClient.invalidateQueries({
       queryKey: ["verificationStatus", opportunityInfo.id],
     });
-  }, [opportunityInfo.id, queryClient]);
+  }, [opportunityInfo.id, opportunityInfo.title, queryClient]);
 
   const onOpportunityCancel = useCallback(async () => {
     // call api
     await performActionCancel(opportunityInfo.id);
 
-    // 📊 GOOGLE ANALYTICS: track event
-    trackGAEvent(GA_CATEGORY_OPPORTUNITY, GA_ACTION_OPPORTUNITY_CANCELED, "");
+    // 📊 ANALYTICS: track opportunity cancellation
+    analytics.opportunity.cancelled(opportunityInfo.id, opportunityInfo.title);
 
     // invalidate queries
     await queryClient.invalidateQueries({
@@ -214,11 +256,22 @@ const OpportunityPublicDetails: React.FC<{
     toast.success("Your application has been canceled");
 
     setCancelOpportunityDialogVisible(false);
-  }, [opportunityInfo.id, queryClient]);
+  }, [opportunityInfo.id, opportunityInfo.title, queryClient]);
 
   const onShareOpportunity = useCallback(() => {
     setShareOpportunityDialogVisible(true);
-  }, [setShareOpportunityDialogVisible]);
+
+    // 📊 ANALYTICS: track share dialog opened
+    analytics.opportunity.shared(
+      opportunityInfo.id,
+      opportunityInfo.title,
+      "dialog_opened",
+    );
+  }, [
+    setShareOpportunityDialogVisible,
+    opportunityInfo.id,
+    opportunityInfo.title,
+  ]);
 
   const onUpdateLeavingYomaSetting = useCallback(
     async (value: boolean) => {
@@ -226,6 +279,14 @@ const OpportunityPublicDetails: React.FC<{
         settings: {
           [SETTING_USER_POPUP_LEAVINGYOMA]: value,
         },
+      });
+
+      // 📊 ANALYTICS: track "Don't show again" checkbox interaction
+      analytics.trackEvent("opportunity_dont_show_again_toggled", {
+        opportunityId: opportunityInfo.id,
+        opportunityTitle: opportunityInfo.title,
+        dontShowAgain: value,
+        action: value ? "checked" : "unchecked",
       });
 
       // update this setting in the userprofile atom
@@ -248,7 +309,7 @@ const OpportunityPublicDetails: React.FC<{
         setUserProfile(userProfile);
       }
     },
-    [userProfile, setUserProfile],
+    [userProfile, setUserProfile, opportunityInfo.id, opportunityInfo.title],
   );
   //#endregion Event Handlers
 
@@ -640,11 +701,22 @@ const OpportunityPublicDetails: React.FC<{
                               <button
                                 type="button"
                                 className="btn btn-sm border-green text-green hover:bg-green-dark h-10 w-full rounded-full bg-white text-sm normal-case hover:text-white md:w-[280px]"
-                                onClick={() =>
-                                  user
-                                    ? setCompleteOpportunityDialogVisible(true)
-                                    : setLoginDialogVisible(true)
-                                }
+                                onClick={() => {
+                                  // 📊 ANALYTICS: track "Upload completion files" button click
+                                  analytics.trackEvent(
+                                    "opportunity_upload_files_clicked",
+                                    {
+                                      opportunityId: opportunityInfo.id,
+                                      opportunityTitle: opportunityInfo.title,
+                                    },
+                                  );
+
+                                  if (user) {
+                                    setCompleteOpportunityDialogVisible(true);
+                                  } else {
+                                    setLoginDialogVisible(true);
+                                  }
+                                }}
                               >
                                 <Image
                                   src={iconUpload}
@@ -666,9 +738,18 @@ const OpportunityPublicDetails: React.FC<{
                               <button
                                 type="button"
                                 className="btn btn-sm bg-gray-light text-gray-dark hover:bg-green-dark h-10 w-full rounded-full border-0 text-sm normal-case hover:text-white md:w-[250px]"
-                                onClick={() =>
-                                  setCancelOpportunityDialogVisible(true)
-                                }
+                                onClick={() => {
+                                  // 📊 ANALYTICS: track "Pending verification" button click
+                                  analytics.trackEvent(
+                                    "opportunity_pending_verification_clicked",
+                                    {
+                                      opportunityId: opportunityInfo.id,
+                                      opportunityTitle: opportunityInfo.title,
+                                    },
+                                  );
+
+                                  setCancelOpportunityDialogVisible(true);
+                                }}
                               >
                                 Pending verification
                                 <IoMdClose className="text-gray-dark mt-[2px] ml-1 h-4 w-4" />

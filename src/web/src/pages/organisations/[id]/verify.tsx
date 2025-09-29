@@ -42,11 +42,7 @@ import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import {
-  GA_ACTION_ORGANISATION_VERIFY,
-  GA_CATEGORY_ORGANISATION,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { analytics } from "~/lib/analytics";
 import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
@@ -157,12 +153,12 @@ const OrganisationDetails: NextPageWithLayout<{
       setModalVerifySingleVisible(false);
       console.log(message);
 
-      // 📊 GOOGLE ANALYTICS: track event
-      trackGAEvent(
-        GA_CATEGORY_ORGANISATION,
-        GA_ACTION_ORGANISATION_VERIFY,
-        message,
-      );
+      // 📊 ANALYTICS: track organization verification
+      analytics.trackEvent("organization_verified", {
+        organizationId: organisation?.id,
+        organizationName: organisation?.name,
+        verificationResult: message,
+      });
 
       // invalidate queries
       await queryClient.invalidateQueries({
@@ -188,7 +184,15 @@ const OrganisationDetails: NextPageWithLayout<{
     }
 
     setIsLoading(false);
-  }, [setIsLoading, id, queryClient, verifyActionApprove, verifyComments]);
+  }, [
+    setIsLoading,
+    id,
+    queryClient,
+    verifyActionApprove,
+    verifyComments,
+    organisation?.id,
+    organisation?.name,
+  ]);
 
   if (error) {
     if (error === 401) return <Unauthenticated />;

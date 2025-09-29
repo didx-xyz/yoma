@@ -47,13 +47,8 @@ import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { MarketplaceDown } from "~/components/Status/MarketplaceDown";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
-import {
-  COUNTRY_CODE_WW,
-  GA_ACTION_MARKETPLACE_ITEM_BUY,
-  GA_CATEGORY_OPPORTUNITY,
-  THEME_BLUE,
-} from "~/lib/constants";
-import { trackGAEvent } from "~/lib/google-analytics";
+import { COUNTRY_CODE_WW, THEME_BLUE } from "~/lib/constants";
+import analytics from "~/lib/analytics";
 import { userCountrySelectionAtom, userProfileAtom } from "~/lib/store";
 import { type NextPageWithLayout } from "~/pages/_app";
 
@@ -347,6 +342,14 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
       // check availability
       if (item.count <= 0) {
+        // 📊 ANALYTICS: track item unavailable
+        analytics.trackEvent("marketplace_item_unavailable", {
+          itemId: item.id,
+          itemName: item.name,
+          storeId: item.storeId,
+          amount: item.amount,
+        });
+
         // show confirm dialog
         await modalContext.showConfirmation(
           "",
@@ -374,6 +377,16 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
 
       // check price
       if (userProfile.zlto.available < item.amount) {
+        // 📊 ANALYTICS: track insufficient funds
+        analytics.trackEvent("marketplace_insufficient_funds", {
+          itemId: item.id,
+          itemName: item.name,
+          storeId: item.storeId,
+          itemAmount: item.amount,
+          userBalance: userProfile.zlto.available,
+          shortfall: item.amount - userProfile.zlto.available,
+        });
+
         // show confirm dialog
         await modalContext.showConfirmation(
           "",
@@ -400,6 +413,14 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       }
 
       setBuyDialogVisible(true);
+
+      // 📊 ANALYTICS: track marketplace item viewed
+      analytics.marketplace.itemViewed(
+        item.id,
+        item.name,
+        item.storeId ?? "Unknown",
+        item.amount,
+      );
     },
     [
       session,
@@ -420,11 +441,12 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
       // update api
       buyItem(item.storeId, item.id)
         .then(() => {
-          // 📊 GOOGLE ANALYTICS: track event
-          trackGAEvent(
-            GA_CATEGORY_OPPORTUNITY,
-            GA_ACTION_MARKETPLACE_ITEM_BUY,
-            `Marketplace Item Purchased. Store: ${item.storeId}, Item: ${item.name}`,
+          // 📊 ANALYTICS: track marketplace item purchase
+          analytics.marketplace.itemPurchased(
+            item.id,
+            item.name,
+            item.storeId ?? "Unknown",
+            item.amount,
           );
 
           // show confirmation dialog
