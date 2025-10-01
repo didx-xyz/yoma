@@ -1,3 +1,4 @@
+using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Options;
@@ -42,7 +43,8 @@ namespace Yoma.Core.Infrastructure.Zlto
       {
         try
         {
-          await e.Url.GetAsync(cancellationToken: cancellationToken).EnsureSuccessStatusCodeAsync();
+          var url = new Url(e.Url);
+          await url.WithAuthHeader(GetAuthHeaderApiKey()).GetAsync(cancellationToken: cancellationToken).EnsureSuccessStatusCodeAsync();
           return (e.Name, Failure: (string?)null);
         }
         catch (HttpClientException ex)
@@ -65,6 +67,13 @@ namespace Yoma.Core.Infrastructure.Zlto
       if (failures.Length == 0) return HealthCheckResult.Healthy($"{ZltoOptions.Section} endpoints: OK");
 
       return HealthCheckResult.Unhealthy($"{ZltoOptions.Section} endpoints failing: {string.Join(", ", failures)}");
+    }
+    #endregion
+
+    #region Private Members
+    private KeyValuePair<string, string> GetAuthHeaderApiKey()
+    {
+      return new KeyValuePair<string, string>(_options.ApiKeyHeaderName, _options.ApiKey);
     }
     #endregion
   }
