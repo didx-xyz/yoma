@@ -201,7 +201,7 @@
 
                     <!-- submit button -->
                     <input tabindex="0" class="${properties.kcButtonClass!} ${properties.kcButtonPrimaryClass!} ${properties.kcButtonBlockClass!} ${properties.kcButtonLargeClass!}"
-                      name="login" id="kc-login" type="submit" v-model="submitButtonText" v-bind:disabled="submitButtonText != submitButtonDefaultText" />
+                      name="login" id="kc-login" type="submit" v-model="submitButtonText" v-bind:disabled="isSubmitDisabled" />
                   </div>
                 </div>
 
@@ -233,6 +233,7 @@
                 el: '#vue-app',
                 data: {
                   username: '${login.username!}' ,
+                  password: '',
                   phoneNumber: '${attemptedPhoneNumber!}',
                   phoneActivated: <#if attemptedPhoneActivated??>true<#else>false</#if>,
                   messagePhoneNumberError: <#if messagesPerField.existsError('phoneNumber')>'${kcSanitize(messagesPerField.getFirstError('phoneNumber'))?no_esc}'<#else>''</#if>,
@@ -242,11 +243,15 @@
                   resetSendCodeButton: false,
                   codeSendStatus: <#if codeSendStatus??>'${codeSendStatus}'<#else>'NOT_SENT'</#if>,
                   codeExpiresIn: <#if codeExpiresIn??>${codeExpiresIn}<#else>0</#if>,
+                  isFormSubmitting: false,
                 },
                 mounted() {
                     if (this.codeExpiresIn > 0) {
                         this.countDownExpiresIn(this.codeExpiresIn);
                     }
+
+                    // Setup auto-fill detection
+                    this.setupAutoFillDetection();
                 },
                 computed: {
                   maskedPhoneNumber() {
@@ -257,6 +262,18 @@
                     const minutes = Math.floor(this.codeExpiresIn / 60);
                     const seconds = this.codeExpiresIn % 60;
                     return minutes + ':' + seconds.toString().padStart(2, '0');
+                  },
+                  isFormValid() {
+                    if (this.phoneActivated) {
+                      // Skip for phone (code input)
+                      return true;
+                    } else {
+                      // For username/password login, both fields must be filled (Cloudflare OWASP rule violation fix)
+                      return this.username.trim() !== '' && this.password.trim() !== '';
+                    }
+                  },
+                  isSubmitDisabled() {
+                    return !this.isFormValid || this.isFormSubmitting;
                   },
                   codeSendStatusAlertConfig() {
                     const configs = {
@@ -291,7 +308,56 @@
                     return config;
                   },
                 },
+                watch: {
+                  phoneActivated() {
+                    // Reset form submission state when switching between login methods
+                    this.isFormSubmitting = false;
+                    this.submitButtonText = this.submitButtonDefaultText;
+                  }
+                },
                 methods: {
+                  setupAutoFillDetection() {
+                    const usernameInput = document.querySelector('#username');
+                    const passwordInput = document.querySelector('#password');
+
+                    if (usernameInput) {
+                      // Check for auto-fill periodically
+                      const checkAutoFill = () => {
+                        if (usernameInput.value !== this.username) {
+                          this.username = usernameInput.value;
+                        }
+                      };
+
+                      // Multiple event listeners for comprehensive auto-fill detection
+                      usernameInput.addEventListener('input', (e) => this.username = e.target.value);
+                      usernameInput.addEventListener('change', checkAutoFill);
+                      usernameInput.addEventListener('blur', checkAutoFill);
+                      usernameInput.addEventListener('focus', checkAutoFill);
+
+                      // Check for auto-fill after a delay
+                      setTimeout(checkAutoFill, 100);
+                      setTimeout(checkAutoFill, 500);
+                      setTimeout(checkAutoFill, 1000);
+                    }
+
+                    if (passwordInput) {
+                      const checkPasswordAutoFill = () => {
+                        if (passwordInput.value !== this.password) {
+                          this.password = passwordInput.value;
+                        }
+                      };
+
+                      passwordInput.addEventListener('input', (e) => this.password = e.target.value);
+                      passwordInput.addEventListener('change', checkPasswordAutoFill);
+                      passwordInput.addEventListener('blur', checkPasswordAutoFill);
+                      passwordInput.addEventListener('focus', checkPasswordAutoFill);
+
+                      // Check for auto-fill after a delay
+                      setTimeout(checkPasswordAutoFill, 100);
+                      setTimeout(checkPasswordAutoFill, 500);
+                      setTimeout(checkPasswordAutoFill, 1000);
+                    }
+                  },
                   req(phoneNumber) {
                     const params = { params: { phoneNumber } };
                     axios.get(window.location.origin + this.KC_HTTP_RELATIVE_PATH + '/realms/${realm.name}/sms/authentication-code', params)
@@ -353,6 +419,12 @@
                   onSubmit(event) {
                     event.preventDefault(); // Prevent the default form submission
 
+                    if (!this.isFormValid) {
+                      return; // Don't submit if form is invalid
+                    }
+
+                    this.isFormSubmitting = true;
+
                     if (!this.phoneActivated) {
                       // ensure valid phone number is entered
                       const input = document.querySelector('#username');
@@ -384,6 +456,7 @@
                       // Validate phone number
                       if (!iti.isValidNumber()) {
                         this.messagePhoneNumberError = '${msg("invalidPhoneNumber")}';
+                        this.isFormSubmitting = false;
                         return;
                       }
 
