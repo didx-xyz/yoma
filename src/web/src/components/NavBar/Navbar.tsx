@@ -95,7 +95,7 @@ const navBarLinksAdmin: TabItem[] = [
   },
 ];
 
-export const Navbar: React.FC = () => {
+export const Navbar: React.FC<{ theme: string }> = (theme) => {
   const router = useRouter();
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
@@ -494,13 +494,23 @@ export const Navbar: React.FC = () => {
               tabIndex={isDrawerOpen ? -1 : 0}
               title="Home"
             >
-              <Image
-                src={logoPicLight}
-                alt="Logo"
-                width={85}
-                className="h-auto"
-                tabIndex={-1}
-              />
+              {theme.theme === "white" ? (
+                <Image
+                  src={logoPicDark}
+                  alt="Logo"
+                  width={85}
+                  className="h-auto"
+                  tabIndex={-1}
+                />
+              ) : (
+                <Image
+                  src={logoPicLight}
+                  alt="Logo"
+                  width={85}
+                  className="h-auto"
+                  tabIndex={-1}
+                />
+              )}
             </Link>
           </div>
 

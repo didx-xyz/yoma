@@ -86,6 +86,7 @@ export const THEME_BLUE = "blue";
 export const THEME_GREEN = "green";
 export const THEME_PURPLE = "purple";
 export const THEME_ORANGE = "orange";
+export const THEME_WHITE = "white";
 
 export const MAXINT32 = 2147483647;
 

@@ -1,7 +1,9 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import imageWoman from "public/images/home/bg-woman.webp";
+// import imageWoman from "public/images/home/bg-woman.webp";
+import imageWoman2 from "public/images/home/bg-woman2.png";
+import imageCardYOID from "public/images/home/card-yoid.png";
 import imageCardID from "public/images/home/card-id.png";
 import iconGreenCheck from "public/images/home/icon-check.png";
 import iconImpact from "public/images/home/icon-impact.png";
@@ -10,22 +12,43 @@ import iconBlueUpload from "public/images/home/icon-upload.png";
 import imageVodacom from "public/images/home/icon-vodacom.png";
 import iconOrangeZlto from "public/images/home/icon-zlto.png";
 import imageThrive from "public/images/home/image-thrive.png";
-import iconAccenture from "public/images/home/logo-accenture.png";
 import imageLogoAppStore from "public/images/home/logo-app-store.png";
-import imageLogoAtingi from "public/images/home/logo-atingi.png";
 import imageLogoCartedo from "public/images/home/logo-cartedo.png";
-import iconDidx from "public/images/home/logo-didx.png";
-import iconFoundationBotnar from "public/images/home/logo-foundation-botnar.png";
-import iconUnlimitedGeneration from "public/images/home/logo-generation-unlimited.png";
-import iconGiz from "public/images/home/logo-giz.png";
-import imageLogoGoodwall from "public/images/home/logo-goodwall.png";
-import iconIxo from "public/images/home/logo-ixo.png";
+// Partner logos
+import partnerGenU from "public/images/partners/01_gen-u-logo.png";
+import partnerUnicef from "public/images/partners/02_unicef-logo.png";
+import partnerAtingi from "public/images/partners/03_atingi-logo.png";
+import partnerLeap from "public/images/partners/04_leap-logo.png";
+import partnerHot from "public/images/partners/05_hot-logo.png";
+import partnerCodingNetwork from "public/images/partners/06_codingnetwork-logo.png";
+import partnerThinkCode from "public/images/partners/07_thinkcode-logo.png";
+import partnerYoma from "public/images/partners/08_yoma-logo.png";
+import partnerAtlas from "public/images/partners/09_atlas-logo.png";
+import partnerGeoversity from "public/images/partners/10_geoversity-logo.png";
+import partnerGoodwall from "public/images/partners/11_goodwall-logo.png";
+import partnerSkills from "public/images/partners/12_skills-logo.png";
+import partnerRlabs from "public/images/partners/13_rlabs-logo.png";
+import partnerSilulo from "public/images/partners/14_silulo-logo.png";
+import partnerDigify from "public/images/partners/15_digify-logo.png";
+import partnerEdc from "public/images/partners/16_edc-logo.png";
+import partnerMicrosoft from "public/images/partners/17_microsoft-logo.png";
+import partnerYes from "public/images/partners/18_yes-logo.png";
+import partnerWessa from "public/images/partners/19_wessa-logo.png";
+import partnerAfricaUnion from "public/images/partners/20_africaunion-logo.png";
+import imageDiamond from "public/images/home/diamond.svg";
+import imageGlobe from "public/images/home/globe.svg";
+import imageFile from "public/images/home/file.svg";
+import imageWallet from "public/images/home/wallet.svg";
+import imagePin from "public/images/home/pin.svg";
+import imageLock from "public/images/home/lock.svg";
+import imageHat from "public/images/home/hat.svg";
+import imagePlant from "public/images/home/plant.svg";
+import imageStamp1 from "public/images/stamp-1.png";
+import imageStamp2 from "public/images/stamp-2.png";
+import imageVideoYoutube from "public/images/home/video_youtube.png";
+import imageThumbnailWoman from "public/images/home/thumbnail-woman.png";
 import imageLogoPlayStore from "public/images/home/logo-play-store.png";
-import iconRlabs from "public/images/home/logo-rlabs.webp";
-import iconSap from "public/images/home/logo-sap.png";
 import imageLogoUCT from "public/images/home/logo-uct.png";
-import iconUmuzi from "public/images/home/logo-umuzi.png";
-import iconUnicef from "public/images/home/logo-unicef.png";
 import imageLogoWhatsapp from "public/images/home/logo-whatsapp.png";
 import imageLogoZltoBig from "public/images/home/logo-zlto.png";
 import imageLogoYoma from "public/images/logo-dark.webp";
@@ -40,7 +63,8 @@ import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import { RoundedImage } from "~/components/RoundedImage";
 import { HomeSearchInputLarge } from "~/components/Home/HomeSearchInputLarge";
-import { THEME_ORANGE } from "~/lib/constants";
+import { ScrollableContainer } from "~/components/Carousel";
+import { THEME_WHITE } from "~/lib/constants";
 import type { NextPageWithLayout } from "./_app";
 
 const Home: NextPageWithLayout = () => {
@@ -72,510 +96,604 @@ const Home: NextPageWithLayout = () => {
 
   return (
     <>
-      <PageBackground className="h-[360px] lg:h-[422px]" />
+      <PageBackground className="h-[458px] !bg-[#F7F5EB] md:h-[520px]" />
 
-      <div className="z-10 mt-8 flex flex-col items-center justify-center overflow-hidden px-4 pt-8 lg:mt-20">
-        <div className="grid grid-cols-1 gap-6 md:max-w-5xl lg:grid-cols-2">
-          {/* LEFT: HEADERS AND TEXT */}
-          <div className="flex min-h-80 max-w-md flex-col gap-2 overflow-hidden pt-8 text-white md:py-8">
-            <h6 className="text-sm tracking-widest uppercase">
-              Welcome to Yoma
-            </h6>
-            <h1 className="text-xl font-bold tracking-wide sm:text-xl md:text-2xl">
-              A world of opportunities
-            </h1>
-            <p className="text-md tracking-tight">
-              Yoma is your friendly platform of trusted partners, bringing you
-              the freshest opportunities to keep your skills sharp and stay in
-              the loop with what&apos;s happening in the working world.
-            </p>
-            <div className="my-2 flex w-full flex-row justify-start md:my-4">
-              <HomeSearchInputLarge
-                onSearch={onSearchInputSubmit}
-                maxWidth={0}
+      <div className="px-4x z-10 flex flex-col items-center justify-center">
+        <div className="flex w-full justify-center">
+          <div className="grid grid-cols-1 gap-0 px-6 md:max-w-5xl md:px-0 lg:grid-cols-2">
+            {/* LEFT: HEADERS AND TEXT */}
+            <div className="flex max-w-md flex-col gap-3 pt-24 text-center md:text-start lg:mt-20">
+              <h6 className="font-sans text-xs font-semibold tracking-widest text-[#020304] uppercase">
+                Welcome to Yoma
+              </h6>
+              <h1 className="text-3xl font-bold tracking-normal text-black md:text-4xl">
+                Building <span className="text-orange">futures</span>,{" "}
+                <br className="md:hidden" /> one{" "}
+                <span className="text-purple-dark">opportunity</span>{" "}
+                <br className="md:hidden" /> at a time.
+              </h1>
+              <p className="text-gray-dark font-sans text-sm tracking-normal md:text-base">
+                Yoma is your friendly platform of trusted partners, bringing you
+                the freshest opportunities to keep your skills sharp and stay in
+                the loop with what&apos;s happening in the working world.
+              </p>
+              <div className="my-2 flex w-full flex-row justify-start md:my-4">
+                <HomeSearchInputLarge
+                  onSearch={onSearchInputSubmit}
+                  maxWidth={0}
+                />
+              </div>
+            </div>
+
+            {/* RIGHT: WOMAN & CARDS IMAGES */}
+            <div className="relative hidden h-[636px] w-[680px] lg:flex">
+              <Image
+                src={imageWoman2}
+                alt="Woman smiling"
+                fill
+                sizes="100vw"
+                priority={true}
+                style={{
+                  objectFit: "cover",
+                  zIndex: 10,
+                }}
+                //className="absolute top-0 left-0"
               />
             </div>
-          </div>
-
-          {/* RIGHT: TWO CARDS AND WOMAN IMAGES */}
-          <div className="hidden h-96 lg:flex">
-            <div className="relative mr-[7.5rem] ml-auto">
-              <div className="z-0 mt-5 opacity-70">
-                <OpportunityCard
-                  title="Foundations of Food & Beverage Business"
-                  organisation="University of Cape Town"
-                  description="This self-paced course will introduce you to the world of Food and Beverage. You will learn about..."
-                  hours={4}
-                  ongoing={true}
-                  reward={11}
-                  students={1}
-                  image={imageLogoUCT}
-                />
-              </div>
-              <div className="absolute top-32 left-[7.5rem] z-10">
-                <OpportunityCard
-                  title="A Career in Tourism"
-                  organisation="Atingi"
-                  description="This self-paced course will help you explore tourism as an industry and see the job opportunities it can offer."
-                  hours={4}
-                  ongoing={true}
-                  reward={11}
-                  students={1}
-                  image={imageLogoAtingi}
-                />
-              </div>
-            </div>
-            <Image
-              src={imageWoman}
-              alt="Woman smiling"
-              width={345}
-              sizes="100vw"
-              priority={true}
-              style={{
-                zIndex: 0,
-              }}
-              className="absolute top-12 right-0 h-auto"
-            />
           </div>
         </div>
 
         {/* CENTER: OUR MISSION HEADER AND PARAGRAPH */}
-        <div className="flex flex-col items-center gap-2 md:mt-0">
-          <h2 className="text-2xl font-semibold tracking-wide text-black">
-            Our mission
+        <div className="md:max-w-5xlxxx mt-20 flex max-w-md flex-col items-center gap-2 text-center md:mt-0">
+          <h2 className="text-[18px] font-semibold tracking-normal text-black md:text-[27px]">
+            Yoma is a digital marketplace that
+            <br className="visible md:hidden" /> upskills and connects young
+            people​ to
+            <br /> opportunities to transform their
+            <br className="visible md:hidden" /> future and unlock their
+            potential.
           </h2>
-          <p className="text-gray-dark w-60 text-center lg:w-full">
-            We&apos;re here to help you grow, make a positive difference, and
-            thrive.
+          <p className="text-gray-dark font-sans text-sm tracking-tight md:text-base">
+            Yoma puts you first. With your Youth Identity (YoID),
+            <br className="visible md:hidden" /> you can easily move across
+            organisations and <br className="visible md:hidden" />
+            platforms, unlocking opportunities to learn, make an <br /> impact,
+            and earn along the way. No matter who
+            <br className="visible md:hidden" /> you are or where you&apos;re
+            from, Yoma is built to open
+            <br className="visible md:hidden" /> doors for every young person.
           </p>
         </div>
 
-        {/* ROW OF 3 IMAGES */}
-        <div className="my-10 mt-16 grid max-w-5xl grid-cols-1 gap-8 md:my-20 lg:grid-cols-3 lg:gap-4">
-          {/* CARTEDEO */}
-          <div className="mx-auto max-w-[380px] rounded-xl bg-white shadow-lg">
-            {/* GRADIENT CARD */}
-            <div className="-mt-4 flex flex-col items-center justify-center">
-              <div className="to-gray mx-4 w-56 scale-[0.95] rounded-lg bg-gradient-to-b from-white p-4 shadow-xl md:scale-100">
-                {/* CARTEDEO TITLE AND LOGO */}
-                <div className="flex items-center justify-between">
-                  <div className="w-full grow">
-                    <h2 className="notranslate text-gray-dark text-sm font-semibold">
-                      Cartedo
-                    </h2>
-                    <p className="font-bold text-black">Design Thinking</p>
-                  </div>
-                  <RoundedImage
-                    icon={imageLogoCartedo}
-                    alt="Cartedo logo"
-                    containerSize={49}
-                    imageSize={49}
-                  />
-                </div>
-
-                <span className="bg-green absolute -left-10 mt-4 inline-flex items-center rounded-md px-3 py-0.5 text-sm font-medium text-white">
-                  <IoMdCheckmark className="mr-2 h-4 w-4 text-white" />
-                  Verified
-                </span>
-
-                <p className="text-gray-dark mt-12 ml-16 text-xs">
-                  2024-03-12 07:14:49
-                </p>
-              </div>
-            </div>
-
-            {/* GROW */}
-            <div className="p-6">
-              <h3 className="font-semibold">Grow</h3>
-
-              <p className="text-gray-dark mt-2 leading-7">
-                Improve your skills through learning opportunities, and showcase
-                them on Yoma to pursue your dreams.
-              </p>
-            </div>
-          </div>
-
-          {/* IMPACT */}
-          <div className="mx-auto max-w-[380px] rounded-xl bg-white p-4 shadow-lg">
-            <div className="">
-              <div className="-mt-[2rem] flex items-center justify-center">
-                <Image
-                  src={iconImpact}
-                  alt="People sitting at table"
-                  width={130}
-                  sizes="100vw"
-                  className="h-auto drop-shadow-[0_16px_4px_rgba(0,0,0,0.16)]"
-                />
-              </div>
-            </div>
-
-            <div className="z-10 mt-[34px] p-2">
-              <h3 className="font-semibold">Impact</h3>
-              <p className="text-gray-dark mt-2 leading-7">
-                Make a difference in your community, and build your profile by
-                participating in our impact tasks.
-              </p>
-            </div>
-          </div>
-
-          {/* THRIVE */}
-          <div className="mx-auto max-w-[380px] rounded-xl bg-white p-4 shadow-lg">
-            <div className="">
-              <div className="-mt-[2rem] flex items-center justify-center">
-                <Image
-                  src={imageThrive}
-                  alt="People sitting at table"
-                  width={140}
-                  className="h-auto"
-                  sizes="100vw"
-                />
-              </div>
-            </div>
-
-            <div className="z-10 -mt-[4px] p-2">
-              <h3 className="font-semibold">Thrive</h3>
-              <p className="text-gray-dark mt-2 leading-7">
-                Track your progress on Yoma YoID and unlock new skills by
-                completing opportunities.
-              </p>
-            </div>
-          </div>
-        </div>
-
         {/* GREEN BACKGROUND */}
-        <div className="bg-green mt-10 flex h-[32rem] w-screen justify-center bg-[url('/images/world-map-transparent.png')] bg-fixed bg-[center_top_4rem] bg-no-repeat lg:h-96">
-          <div className="flex w-full flex-col md:max-w-lg lg:max-w-5xl">
-            {/* ID CARD & LOG IN BUTTON */}
-            <div className="flex flex-col items-center lg:flex-row lg:items-start">
-              {/* LEFT: ID CARD  */}
-              <div className="-my-6 mt-0 flex w-[448px] scale-75 flex-col items-center md:-my-0 md:-mt-14 md:scale-100 md:items-start lg:-ml-[45px]">
-                <Image
-                  src={stamp1}
-                  alt="Stamp1"
-                  width={135}
-                  sizes="100vw"
-                  priority={true}
-                  className="user-select-none pointer-events-none absolute z-0 h-auto rotate-[-6deg] md:top-32"
-                />
-                <Image
-                  src={stamp2}
-                  alt="Stamp2"
-                  width={135}
-                  sizes="100vw"
-                  priority={true}
-                  className="user-select-none pointer-events-none absolute right-0 -bottom-5 z-0 h-auto rotate-12 mix-blend-plus-lighter"
-                />
-                <Image
-                  src={imageCardID}
-                  alt="ID Card"
-                  width={420}
-                  className="z-10 h-auto"
-                  sizes="100vw"
-                  priority={true}
-                  quality={100}
-                />
-              </div>
+        <div className="bg-green absolute top-[780px] mt-10 flex h-[1860px] w-screen justify-center md:top-[820px] md:h-[980px]"></div>
 
-              {/* RIGHT: HEADERS AND TEXT */}
-              <div className="z-10 mt-4 flex flex-col gap-2 px-4 text-white md:max-w-lg lg:mt-[7.5rem] lg:-ml-8 lg:w-[648px] lg:px-0">
-                <h6 className="text-xs font-bold tracking-wider uppercase">
-                  Your Yo-ID
-                </h6>
-                <h1 className="text-3xl font-semibold tracking-wide">
-                  All connected with one secure profile
-                </h1>
-                <p>
-                  Yo-ID is your learning identity passport powered by Yoma, you
-                  can simply login with Yo-ID, and use one profile between all
-                  apps.
-                </p>
-              </div>
-            </div>
+        <div className="z-20 mt-36 flex flex-col items-center gap-2 px-3 text-center text-white md:max-w-5xl">
+          {/* CENTER: HEADERS AND TEXT */}
+          <h2 className="text-[26px] font-semibold tracking-normal">
+            Meet Yo-ID: Your Passport to Opportunities
+          </h2>
+          <p className="font-sans text-sm tracking-normal text-white md:text-base">
+            With your Yo-ID wallet, all your achievements are recorded. Think of
+            it as a backpack for your digital certificates, powered by the
+            latest technology, so you can carry your future with you wherever
+            you go.
+          </p>
+          <div className="relative mt-4 flex items-center justify-center overflow-hidden">
+            <Image
+              src={imageStamp1}
+              alt="Stamp 1"
+              width={217}
+              height={163}
+              className="absolute top-1/2 left-0 z-10 h-auto -translate-x-16 -translate-y-1/2"
+              sizes="100vw"
+            />
+            <Image
+              src={imageCardYOID}
+              alt="My YoID Card"
+              width={464}
+              height={216}
+              className="max-wxxx-[461px] w-fullxxx relative z-20 h-auto"
+              sizes="100vw"
+            />
+            <Image
+              src={imageStamp2}
+              alt="Stamp 2"
+              width={197}
+              height={198}
+              className="absolute top-1/2 right-0 z-10 h-auto translate-x-16 -translate-y-1/2"
+              sizes="100vw"
+            />
           </div>
         </div>
+
+        {/* ROW OF 4 CARDS */}
+        <div className="z-20 mt-6 max-w-screen px-4">
+          <ScrollableContainer className="scrollbar-hide flex gap-4 overflow-x-auto py-4 md:gap-20">
+            {/* CARD 1 */}
+            <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border-1 border-solid border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+              <Image
+                src={imageDiamond}
+                alt="Diamond"
+                width={56}
+                className="rounded-full bg-[#1C6B53] p-3"
+                sizes="100vw"
+              />
+
+              <h1 className="text-center text-[18px] font-semibold">
+                Showcase Your Skills
+                <br /> & Achievements
+              </h1>
+              <p className="-mt-4 text-center font-sans md:text-sm">
+                Every course you finish, challenge you take on, or project you
+                complete becomes a verified digital credential. It&apos;s secure
+                proof of your skills and achievements.
+              </p>
+            </div>
+
+            {/* CARD 2 */}
+            <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border-1 border-solid border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+              <Image
+                src={imageLock}
+                alt="Lock"
+                width={56}
+                className="rounded-full bg-[#1C6B53] p-3"
+                sizes="100vw"
+              />
+
+              <h1 className="text-center text-[18px] font-semibold">
+                Localised and Relevant
+              </h1>
+              <p className="-mt-4 text-center font-sans md:text-sm">
+                Yoma partners with local opportunity providers to make sure the
+                content is relevant to you. Currently the platform is available
+                in five languages with plans to expand.
+              </p>
+            </div>
+
+            {/* CARD 3 */}
+            <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border-1 border-solid border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+              <Image
+                src={imageHat}
+                alt="Hat"
+                width={56}
+                className="rounded-full bg-[#1C6B53] p-3"
+                sizes="100vw"
+              />
+
+              <h1 className="text-center text-[18px] font-semibold">
+                Boost Your Employability -<br /> 100% for free
+              </h1>
+              <p className="-mt-4 text-center font-sans md:text-sm">
+                Yoma is completely free and focused on helping you move forward
+                in your career. Verified skills and experiences on Yoma are
+                recognised by our partners, increasing your chances for
+                internships, opportunities, and jobs.
+              </p>
+            </div>
+
+            {/* CARD 4 */}
+            <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border-1 border-solid border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+              <Image
+                src={imagePlant}
+                alt="Plant"
+                width={56}
+                className="rounded-full bg-[#1C6B53] p-3"
+                sizes="100vw"
+              />
+
+              <h1 className="text-center text-[18px] font-semibold">
+                Earn While You Grow
+              </h1>
+              <p className="-mt-4 text-center font-sans md:text-sm">
+                As you learn, you get the chance to earn digital tokens that can
+                be cashed out or redeemed in the Yoma marketplace. Some options
+                on the marketplace include airtime, data and grocery vouchers.
+              </p>
+            </div>
+          </ScrollableContainer>
+        </div>
+
+        {/* PURPLE BACKGROUND */}
+        <div className="bg-purple absolute top-[2640px] flex h-[868px] w-screen justify-center md:top-[1760px] md:h-[690px]"></div>
+
+        {/* YOUTUBE VIDEO */}
+        <div className="z-20 mt-14 px-4">
+          <Image
+            src={imageVideoYoutube}
+            alt="YouTube Video"
+            width={601}
+            height={354}
+            className="relative z-20 h-auto"
+            sizes="100vw"
+          />
+        </div>
+
+        {/* CENTER: HEADERS AND TEXT */}
+        <div className="z-20 flex flex-col items-center gap-2 px-3 text-center text-white md:max-w-5xl">
+          <h2 className="text-[26px] font-semibold tracking-normal">
+            Connecting youth to opportunities
+          </h2>
+          <p className="font-sans text-sm tracking-normal text-white md:text-base">
+            ​​​​​​​Developed by UNICEF, Partners, and young Africans, Yoma has
+            evolved into a global force in youth skills development, community
+            engagement, and bridge to employment opportunities. 
+          </p>
+        </div>
+
+        {/* ROW OF 4 CARDS */}
+        <div className="z-20 mt-10 grid grid-cols-2 px-4 md:grid-cols-4 md:flex-row">
+          {/* CARD 1 */}
+          <div className="flex flex-col items-center gap-5 rounded-xl py-4 text-white">
+            <Image
+              src={imageGlobe}
+              alt="Globe"
+              width={56}
+              className="bg-orange rounded-full p-3"
+              sizes="100vw"
+            />
+
+            <p className="text-center font-sans md:text-sm">Active in</p>
+            <h1 className="-mt-5 text-center text-base font-semibold tracking-normal md:text-nowrap">
+              12 countries
+            </h1>
+          </div>
+
+          {/* CARD 2 */}
+          <div className="flex flex-col items-center gap-4 rounded-xl py-4 text-white">
+            <Image
+              src={imageFile}
+              alt="File"
+              width={56}
+              className="bg-orange rounded-full p-3"
+              sizes="100vw"
+            />
+
+            <h1 className="text-center text-base font-semibold tracking-normal md:text-nowrap">
+              More than 400 opportunities offered,
+            </h1>
+            <p className="-mt-4 text-center font-sans md:text-sm">
+              including learning courses, impact challenges.
+            </p>
+          </div>
+
+          {/* CARD 3 */}
+          <div className="flex flex-col items-center gap-4 rounded-xl py-4 text-white">
+            <Image
+              src={imageWallet}
+              alt="Wallet"
+              width={56}
+              className="bg-orange rounded-full p-3"
+              sizes="100vw"
+            />
+
+            <h1 className="text-center text-base font-semibold tracking-normal md:text-nowrap">
+              More than 255K YoIDs created
+            </h1>
+            <p className="-mt-4 text-center font-sans md:text-sm">
+              and 165k credentials verified.
+            </p>
+          </div>
+
+          {/* CARD 4 */}
+          <div className="flex flex-col items-center gap-4 rounded-xl py-4 text-white">
+            <Image
+              src={imagePin}
+              alt="Pin"
+              width={56}
+              className="bg-orange rounded-full p-3"
+              sizes="100vw"
+            />
+
+            <h1 className="text-center text-base font-semibold tracking-normal md:text-nowrap">
+              70 global
+            </h1>
+            <p className="-mt-4 text-center font-sans md:text-sm">
+              <strong>and local</strong> partners.
+            </p>
+          </div>
+        </div>
+
+        {/* BAIGE BACKGROUND */}
+        <div className="absolute top-[3480px] mt-10 flex h-[840px] w-screen justify-center bg-[#F7F5EB] md:top-[2400px] md:h-[607px]"></div>
 
         {/* ROW OF 3 CARDS */}
-        <div className="-mt-12 grid max-w-5xl grid-cols-1 gap-8 md:-mt-8 md:gap-4 lg:grid-cols-3">
-          {/* GOODWALL */}
-          <div className="flex h-[298px] max-w-[380px] flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:py-8">
-            <Image
-              src={imageLogoGoodwall}
-              alt="Logo Goodwall"
-              width={200}
-              className="h-auto"
-              sizes="100vw"
-            />
-
-            <h1 className="text-center text-base font-semibold">
-              Passionate about youth empowerment?
-            </h1>
-            <p className="text-gray-dark grow text-center lg:text-sm">
-              Collaborate with your community, find and complete opportunities,
-              win prizes!
-            </p>
-            <div className="flex flex-row gap-4">
-              <Link
-                href="https://apps.apple.com/us/app/goodwall-level-up-a-skill/id857868585"
-                target="_blank"
-              >
+        <div className="z-20 mt-6 max-w-screen px-4">
+          <ScrollableContainer className="scrollbar-hide flex gap-4 overflow-x-auto py-4 md:gap-20">
+            {/* WOMAN */}
+            <div className="flex h-[327px] w-[320px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
+              <div className="flex flex-row gap-6">
                 <Image
-                  src={imageLogoAppStore}
-                  alt="App Store"
-                  width={120}
-                  className="h-auto"
+                  src={imageThumbnailWoman}
+                  alt="Woman"
+                  className="w-full max-w-[90px] rounded-full"
                   sizes="100vw"
                 />
-              </Link>
-              <Link
-                href="https://play.google.com/store/apps/details?id=org.goodwall.app&hl=en&gl=US&pli=1"
-                target="_blank"
-              >
-                <Image
-                  src={imageLogoPlayStore}
-                  alt="Play Store"
-                  width={120}
-                  className="h-auto"
-                  sizes="100vw"
-                />
-              </Link>
-            </div>
-          </div>
 
-          {/* YOMA */}
-          <div className="flex h-[298px] max-w-[380px] flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:py-8">
-            <Image
-              src={imageLogoYoma}
-              alt="Logo Yoma"
-              width={100}
-              className="h-auto"
-              sizes="100vw"
-            />
-
-            <h1 className="text-center text-base font-semibold">
-              Looking for a more simple experience?
-            </h1>
-            <p className="text-gray-dark grow text-center lg:text-sm">
-              Less features, less data. Find and complete opportunities, and
-              redeem for reward on the marketplace.
-            </p>
-            <div className="flex flex-row gap-2">
-              {/* CONTINUE BUTTON */}
-              <Link
-                href="/opportunities"
-                className="btn bg-purple hover:bg-purple z-10 w-[220px] border-none text-white normal-case hover:text-white hover:brightness-110"
-              >
-                Continue
-              </Link>
-            </div>
-          </div>
-
-          {/* WHATSAPP */}
-          <div className="flex h-[298px] max-w-[380px] flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:py-8">
-            <Image
-              src={imageLogoWhatsapp}
-              alt="Logo Whatsapp"
-              width={150}
-              className="h-auto"
-              sizes="100vw"
-              style={{
-                zIndex: 1,
-              }}
-            />
-
-            <h1 className="-mt-2 text-center text-base font-semibold">
-              Want to just chat with Yoma?
-            </h1>
-            <div className="bg-orange mt-6 flex rounded-full px-6 py-2 text-xs font-semibold text-white uppercase">
-              Coming soon
-            </div>
-            <p className="text-gray-dark grow pt-6 text-center lg:text-sm">
-              Our AI chatbot will let you into the system with almost no data!
-            </p>
-          </div>
-        </div>
-
-        {/* HOW DO I EARN REWARDS? */}
-        <div className="mt-16 flex w-full max-w-5xl flex-col items-center gap-10 py-8 lg:flex-row lg:pb-12">
-          <div className="flex flex-col text-center md:max-w-lg md:pb-8 lg:max-w-[500px] lg:text-left">
-            <div className="flex flex-col gap-4">
-              <h2 className="text-2xl font-semibold text-black">
-                How do I earn rewards?
-              </h2>
-              <p className="text-gray-dark leading-6">
-                After you&apos;ve successfully completed opportunities with our
-                partners, return to Yoma, upload the necessary verification
-                documents for the opportunity, and get ready to enjoy some
-                well-deserved rewards!
-              </p>
-              <div className="flex flex-row"></div>
-            </div>
-
-            <div className="flex flex-col items-center justify-center gap-8 lg:flex-row">
-              <Image
-                src={imageLogoZltoBig}
-                alt="Logo Zlto"
-                width={134}
-                className="h-auto"
-                sizes="100vw"
-                style={{
-                  zIndex: 1,
-                }}
-              />
-              <p className="text-gray-dark -mt-4 leading-6 lg:-mt-0">
-                Zlto is Yoma&apos;s fantastic reward currency. Redeem your
-                hard-earned rewards in the Marketplace and experience the
-                incredible benefits that await you!
+                <h1 className="text-[18px] font-bold">
+                  Closing The Digital Skills Gap: How we are empowering youth
+                  worldwide
+                </h1>
+              </div>
+              <p className="text-gray-dark text-sm">
+                As digital technology rapidly transforms the workforce, a global
+                digital skills gap is leaving many young people behind,
+                especially girls and young women. UNICEF and committed private
+                sector partners are equipping the next generation with essential
+                digital, entrepreneurial and AI skills.. <br />
+                Read more.
               </p>
             </div>
 
-            {/* MARKETPLACE BUTTON */}
-            <div className="flex items-center justify-center">
-              <Link
-                href="/marketplace"
-                className="btn bg-green hover:bg-green mt-8 w-[260px] rounded-xl border-none text-white normal-case hover:text-white hover:brightness-110 lg:mr-auto"
-              >
-                Visit Marketplace
-              </Link>
+            {/* WOMAN */}
+            <div className="flex h-[327px] w-[320px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
+              <div className="flex flex-row gap-6">
+                <Image
+                  src={imageThumbnailWoman}
+                  alt="Woman"
+                  className="w-full max-w-[90px] rounded-full"
+                  sizes="100vw"
+                />
+
+                <h1 className="text-[18px] font-bold">
+                  Closing The Digital Skills Gap: How we are empowering youth
+                  worldwide
+                </h1>
+              </div>
+              <p className="text-gray-dark text-sm">
+                As digital technology rapidly transforms the workforce, a global
+                digital skills gap is leaving many young people behind,
+                especially girls and young women. UNICEF and committed private
+                sector partners are equipping the next generation with essential
+                digital, entrepreneurial and AI skills.. <br />
+                Read more.
+              </p>
             </div>
-          </div>
-          <div className="flex flex-col items-center justify-center lg:mr-12 lg:ml-auto">
-            <div className="flex flex-col md:gap-3">
-              <div className="flex flex-row">
+
+            {/* UNICEF */}
+            <div className="flex h-[327px] w-[320px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
+              <div className="flex flex-row gap-6">
                 <Image
-                  src={iconGreenCheck}
-                  alt="Green Check"
-                  width={70}
-                  className="h-auto"
+                  src={imageThumbnailWoman}
+                  alt="Woman"
+                  className="w-full max-w-[90px] rounded-full"
                   sizes="100vw"
                 />
-                <p className="mt-3 font-bold text-black">
-                  Complete Opportunities
-                </p>
+
+                <h1 className="text-[18px] font-bold">
+                  Closing The Digital Skills Gap: How we are empowering youth
+                  worldwide
+                </h1>
               </div>
-              <div className="flex flex-row">
-                <Image
-                  src={iconBlueUpload}
-                  alt="Green Check"
-                  width={70}
-                  className="h-auto"
-                  sizes="100vw"
-                />
-                <p className="mt-3 font-bold text-black">
-                  Upload Proof of Completion
-                </p>
-              </div>
-              <div className="flex flex-row">
-                <Image
-                  src={iconOrangeZlto}
-                  alt="Green Check"
-                  width={70}
-                  className="h-auto"
-                  sizes="100vw"
-                />
-                <p className="mt-3 font-bold text-black">Earn your Rewards</p>
-              </div>
+              <p className="text-gray-dark text-sm">
+                As digital technology rapidly transforms the workforce, a global
+                digital skills gap is leaving many young people behind,
+                especially girls and young women. UNICEF and committed private
+                sector partners are equipping the next generation with essential
+                digital, entrepreneurial and AI skills.. <br />
+                Read more.
+              </p>
             </div>
-          </div>
+          </ScrollableContainer>
         </div>
 
-        {/* GRAY BACKGROUND */}
-        <div className="bg-gray mt-10 flex w-screen justify-center bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat md:h-[560px] lg:mt-8 lg:h-[420px]">
-          <div className="flex w-full flex-col md:max-w-lg lg:max-w-5xl lg:flex-row">
-            <div className="flex flex-col items-center justify-center md:items-start lg:w-full">
-              <div className="relative -mt-14 mr-auto flex scale-[0.75] flex-col md:scale-100 lg:-mt-80">
-                <MarketplaceCard
-                  title="R100 airtime"
-                  organisation="Mtn"
-                  zlto={11}
-                  image={imageMtn}
-                />
+        <button
+          type="button"
+          className="btn btn-rounded bg-green hover:bg-green/90 z-20 mt-10 w-full max-w-[300px] text-base text-white normal-case"
+        >
+          Read more stories
+        </button>
 
-                <div className="absolute top-32 left-24 -z-10">
-                  <MarketplaceCard
-                    title="R50 airtime"
-                    organisation="Vodacom"
-                    zlto={11}
-                    image={imageVodacom}
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="mt-20 flex flex-col items-center justify-center px-6 py-8 md:mt-32 lg:-mt-10 lg:ml-[11.5rem] lg:w-full lg:py-0">
-              <div className="flex flex-col items-center gap-4 lg:items-start">
-                <h2 className="text-2xl font-semibold text-black">
-                  Yoma Marketplace
-                </h2>
-                <p className="text-gray-dark text-center lg:text-left">
-                  Unlock the power of your Zlto rewards in the Yoma marketplace!
-                  Treat yourself to selected products like airtime and data.
-                </p>
-              </div>
-
-              {/* MARKETPLACE BUTTON */}
-              <Link
-                href="/marketplace"
-                className="btn bg-purple hover:bg-purple mt-8 w-[260px] rounded-xl border-none text-white normal-case hover:text-white hover:brightness-110 lg:mr-auto"
-              >
-                Start shopping
-              </Link>
-            </div>
-          </div>
-        </div>
-
-        {/* WHITE BACKGROUND */}
-        <div className="mt-0 flex w-screen justify-center bg-white bg-[url('/images/world-map.webp')] bg-fixed bg-[center_top_4rem] bg-no-repeat lg:-mt-10 lg:h-80">
-          {/* OUR PARTNERS */}
+        {/* PARTNERS */}
+        <div className="z-20 mt-0 flex justify-center md:mt-6 md:h-60">
           <div className="my-8 flex flex-col items-center justify-center gap-4 lg:my-0">
-            <h2 className="text-2xl font-semibold text-black">Our partners</h2>
+            <h2 className="text-2xl font-semibold text-black">
+              Our opportunity partners
+            </h2>
+
             {/* PARTNER LOGOS */}
-            <div className="my-4 ml-6 grid grid-cols-2 place-items-center items-center justify-center gap-4 overflow-hidden lg:my-0 lg:ml-0 lg:flex lg:flex-row">
+            <ScrollableContainer className="scrollbar-hide flex w-screen gap-14 overflow-x-scroll px-4 py-4 md:gap-20">
               <Image
-                src={iconUnicef}
+                src={partnerGenU}
+                alt="Generation Unlimited"
+                width={75}
+                height={75}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+              <Image
+                src={partnerUnicef}
                 alt="UNICEF"
-                width={126}
-                className="h-auto"
+                width={101}
+                height={57}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
               />
-              <Image src={iconDidx} alt="DIDX" width={70} className="h-auto" />
               <Image
-                src={iconUnlimitedGeneration}
-                alt="Unlimited Generation"
-                width={112}
-                className="h-auto"
+                src={partnerAtingi}
+                alt="Atingi"
+                width={73}
+                height={73}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
               />
-              <Image src={iconGiz} alt="GIZ" width={47} className="h-auto" />
               <Image
-                src={imageLogoGoodwall}
+                src={partnerLeap}
+                alt="LEAP"
+                width={92}
+                height={92}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+              <Image
+                src={partnerHot}
+                alt="HOT"
+                width={104}
+                height={63}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+              <Image
+                src={partnerCodingNetwork}
+                alt="Coding Network"
+                width={105}
+                height={61}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+              <Image
+                src={partnerThinkCode}
+                alt="Think Code"
+                width={75}
+                height={71}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+              <Image
+                src={partnerYoma}
+                alt="Yoma"
+                width={104}
+                height={47}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+              <Image
+                src={partnerAtlas}
+                alt="Atlas"
+                width={128}
+                height={55}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+              <Image
+                src={partnerGeoversity}
+                alt="Geoversity"
+                width={201}
+                height={75}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+              <Image
+                src={partnerGoodwall}
                 alt="Goodwall"
-                width={160}
-                className="h-auto"
+                width={140}
+                height={27}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
               />
               <Image
-                src={iconRlabs}
+                src={partnerSkills}
+                alt="Skills"
+                width={114}
+                height={57}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+              <Image
+                src={partnerRlabs}
                 alt="RLabs"
-                width={50}
-                className="h-auto"
+                width={85}
+                height={49}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
               />
               <Image
-                src={iconFoundationBotnar}
-                alt="Foundation Botnar"
-                width={95}
-                className="h-auto"
+                src={partnerSilulo}
+                alt="Silulo"
+                width={110}
+                height={39}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
               />
               <Image
-                src={iconUmuzi}
-                alt="Umuzi"
-                width={67}
-                className="h-auto"
+                src={partnerDigify}
+                alt="Digify"
+                width={93}
+                height={47}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
               />
               <Image
-                src={iconAccenture}
-                alt="Accenture"
-                width={135}
-                className="h-auto"
+                src={partnerEdc}
+                alt="EDC"
+                width={149}
+                height={23}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
               />
-              <Image src={iconSap} alt="SAP" width={68} className="h-auto" />
-              <Image src={iconIxo} alt="IXO" width={70} className="h-auto" />
-            </div>
+              <Image
+                src={partnerMicrosoft}
+                alt="Microsoft"
+                width={158}
+                height={35}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+              <Image
+                src={partnerYes}
+                alt="YES"
+                width={70}
+                height={71}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+              <Image
+                src={partnerWessa}
+                alt="WESSA"
+                width={92}
+                height={77}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+              <Image
+                src={partnerAfricaUnion}
+                alt="Africa Union"
+                width={140}
+                height={53}
+                className="pointer-events-none flex-shrink-0 object-contain select-none"
+                draggable={false}
+                quality={100}
+                unoptimized={true}
+              />
+            </ScrollableContainer>
 
             {/* SIGN UP AS PARTNER BUTTON */}
             {/* <Link
@@ -586,47 +704,6 @@ const Home: NextPageWithLayout = () => {
             </Link> */}
           </div>
         </div>
-
-        {/* PURPLE BACKGROUND */}
-        {/* <div className="flex w-screen items-center justify-center bg-purple md:h-80">
-          <div className="flex flex-col gap-10 p-8 md:max-w-lg lg:max-w-5xl lg:flex-row">
-            <div className="-mb-4 flex flex-col md:-mb-0 md:w-[510px]">
-              <div className="flex flex-col gap-4">
-                <h1 className="text-left font-semibold text-white lg:text-4xl">
-                  Join the Yoma community
-                </h1>
-              </div>
-            </div>
-
-            <div className="flex flex-col items-center justify-center">
-              <div className="flex flex-col gap-8 md:gap-4">
-                <p className="text-sm leading-6 text-white">
-                  Yoma connects young people to a global community, creating a
-                  network of like-minded, talented individuals. Visit our
-                  Facebook community page to be part of this exciting journey.
-                  Sign up to our newsletter and get Yoma’s latest updates
-                  delivered to your inbox:
-                </p>
-
-                <div className="flex flex-col gap-8 md:flex-row md:gap-4">
-                  <input
-                    type="email"
-                    placeholder={"Your email..."}
-                    className="input-md min-w-[250px] rounded-md bg-[#653A72] py-5 text-sm text-white placeholder-white focus:outline-0 md:w-[250px] md:!pl-8"
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-
-                  <button
-                    className="btn rounded-md border-none bg-green normal-case text-white hover:bg-green hover:text-white hover:brightness-110 md:w-[140px]"
-                    onClick={onSubscribe}
-                  >
-                    Submit
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div> */}
       </div>
     </>
   );
@@ -637,7 +714,7 @@ Home.getLayout = function getLayout(page: ReactElement) {
 };
 
 Home.theme = function getTheme() {
-  return THEME_ORANGE;
+  return THEME_WHITE;
 };
 
 export default Home;

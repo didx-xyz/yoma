@@ -12,8 +12,8 @@ export const HomeSearchInputLarge: React.FC<{
   onSearch,
   openFilter,
   maxWidth = 0, // The default maxWidth is set to 0, which means it will be auto
-  inputClassName,
-  buttonClassName,
+  inputClassName = "",
+  buttonClassName = "",
 }) => {
   const [searchInputValue, setSearchInputValue] = useState(defaultValue);
   const [placeholderIndex, setPlaceholderIndex] = useState(0);
@@ -64,15 +64,15 @@ export const HomeSearchInputLarge: React.FC<{
 
   return (
     <form onSubmit={handleSubmit} className="flex w-full grow">
-      <div className="join w-full overflow-hidden rounded-l-full rounded-r-full border-none bg-white/10 shadow-lg lg:my-0">
+      <div className="join w-full rounded-l-full rounded-r-full bg-white/10 lg:my-0">
         <input
           type="search"
           placeholder={currentPlaceholder}
-          className={`${inputClassName} input-lg w-full rounded-tl-3xl rounded-bl-3xl border-none bg-transparent px-8 text-white placeholder-white duration-500 placeholder:text-[14px] placeholder:font-bold placeholder:!transition-opacity focus:outline-none md:placeholder:text-[16px] lg:w-full ${
+          className={`${inputClassName} input-lg placeholder-gray-dark w-full rounded-tl-4xl rounded-bl-4xl border-none bg-white px-5 text-black shadow-md duration-500 placeholder:text-[14px] placeholder:transition-opacity focus:outline-none md:placeholder:text-[16px] lg:w-full ${
             openFilter
               ? "rounded-tl-none rounded-bl-none"
-              : "rounded-tl-3xl rounded-bl-3xl"
-          } ${fade ? "opacity-100" : "opacity-0"}`}
+              : "rounded-tl-4xl rounded-bl-4xl"
+          } ${fade ? "placeholder:opacity-100" : "placeholder:opacity-0"}`}
           style={{ maxWidth: maxWidthStyle }}
           value={searchInputValue ?? ""}
           onFocus={() => setIsInputActive(true)}
@@ -92,7 +92,7 @@ export const HomeSearchInputLarge: React.FC<{
           maxLength={50}
         />
         <button
-          className={`${buttonClassName} join-item border-green bg-green hover:bg-purple inline-flex items-center justify-center rounded-r-full border p-4 text-white disabled:brightness-75`}
+          className={`${buttonClassName} join-item border-green bg-green hover:bg-purple inline-flex cursor-pointer items-center justify-center rounded-r-full border px-5 py-3 text-white disabled:cursor-not-allowed disabled:brightness-75`}
           type="submit"
           disabled={
             searchInputValue === null ||
@@ -103,7 +103,7 @@ export const HomeSearchInputLarge: React.FC<{
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-7 w-7"
+            className="h-5 w-5"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"

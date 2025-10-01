@@ -4,9 +4,23 @@
 /* TailwindCSS overrides */
 @theme {
   /* Font sizes */
-  --text-xs: 0.775rem;
-  --text-sm: 0.9rem;
-  --text-base: 1.1rem;
+  --text-xs: 12px;
+  --text-sm: 14px;
+  --text-base: 16px;
+  --text-lg: 20px;
+  --text-xl: 24px;
+  --text-2xl: 30px;
+  --text-3xl: 36px;
+  --text-4xl: 42px;
+  --text-5xl: 52px;
+  --text-6xl: 68px;
+  --text-7xl: 84px;
+  --text-8xl: 100px;
+  --text-9xl: 116px;
+
+  /* --text-xs: 0.775rem;
+  --text-sm:  0.9rem ;
+  --text-base: 1.1rem ;
   --text-lg: 1.25rem;
   --text-xl: 1.5rem;
   --text-2xl: 1.875rem;
@@ -16,7 +30,7 @@
   --text-6xl: 4.25rem;
   --text-7xl: 5.25rem;
   --text-8xl: 6.25rem;
-  --text-9xl: 7.25rem;
+  --text-9xl: 7.25rem; */
 
   /* Line height */
   --line-height-xs: 1rem;
@@ -424,18 +438,27 @@ html:has(body.content-overflow-y) {
 /* Theme Overrides */
 :root .bg-theme {
   background-color: var(--color-purple);
+  color: var(--color-white);
 }
 [data-theme="purple"] .bg-theme {
   background-color: var(--color-purple);
+  color: var(--color-white);
 }
 [data-theme="green"] .bg-theme {
   background-color: var(--color-green);
+  color: var(--color-white);
 }
 [data-theme="blue"] .bg-theme {
   background-color: var(--color-blue);
+  color: var(--color-white);
 }
 [data-theme="orange"] .bg-theme {
   background-color: var(--color-orange);
+  color: var(--color-white);
+}
+[data-theme="white"] .bg-theme {
+  background-color: var(--color-white);
+  color: var(--color-black);
 }
 
 /* Miscellaneous Styles */

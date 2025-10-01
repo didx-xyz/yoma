@@ -42,8 +42,8 @@ export const SignInButton: React.FC<{
           classNameLabel="hidden"
         />
       )}
-      {!isButtonLoading && <IoMdFingerPrint className="h-6 w-6 text-white" />}
-      <p className="text-white uppercase">Login</p>
+      {!isButtonLoading && <IoMdFingerPrint className="h-6 w-6" />}
+      <p className="uppercase">Login</p>
     </button>
   );
 };
