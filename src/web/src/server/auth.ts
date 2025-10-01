@@ -67,22 +67,22 @@ export const authOptions: NextAuthOptions = {
   events: {
     async signOut({ token }) {
       try {
-        console.log("🔒 SignOut event triggered");
-        console.log("Token details:", {
-          hasIdToken: !!token?.idToken,
-          hasRefreshToken: !!token?.refreshToken,
-          userId: token?.user?.id,
-        });
+        //console.log("🔒 SignOut event triggered");
+        // console.log("Token details:", {
+        //   hasIdToken: !!token?.idToken,
+        //   hasRefreshToken: !!token?.refreshToken,
+        //   userId: token?.user?.id,
+        // });
 
         if (!token?.idToken || !token?.refreshToken) {
-          console.warn("⚠️ Missing required tokens for Keycloak logout");
+          //console.warn("⚠️ Missing required tokens for Keycloak logout");
           return; // Skip Keycloak logout if tokens are missing
         }
 
         // kill the session in keycloak
         const logoutUrl = `${process.env.KEYCLOAK_ISSUER}/protocol/openid-connect/logout`;
 
-        console.log("🔗 Attempting Keycloak logout...");
+        //console.log("🔗 Attempting Keycloak logout...");
 
         const response = await fetch(logoutUrl, {
           method: "POST",
@@ -106,8 +106,8 @@ export const authOptions: NextAuthOptions = {
           });
           // Don't throw error - allow NextAuth logout to continue
         } else {
-          console.log("✅ Keycloak logout successful");
-          console.log("📊 Response status:", response.status);
+          //   console.log("✅ Keycloak logout successful");
+          //   console.log("📊 Response status:", response.status);
         }
       } catch (error) {
         console.error("❌ Error during signOut event:", error);
@@ -138,11 +138,11 @@ export const authOptions: NextAuthOptions = {
         return token;
       } // Initial log in
       if (account && user) {
-        console.log("🔑 Initial login - User from profile mapping:", {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-        });
+        // console.log("🔑 Initial login - User from profile mapping:", {
+        //   id: user.id,
+        //   name: user.name,
+        //   email: user.email,
+        // });
 
         // get roles from access_token
         const { realm_access } = decode(account.access_token);
@@ -163,7 +163,7 @@ export const authOptions: NextAuthOptions = {
           provider: account.provider, //NB: used to determine which client id & secret to use when refreshing token
         };
 
-        console.log("🎟️ New token created with user ID:", newToken.user.id);
+        //console.log("🎟️ New token created with user ID:", newToken.user.id);
         return newToken;
       }
 
@@ -203,12 +203,12 @@ export const authOptions: NextAuthOptions = {
       name: "Yoma",
       // Map userName (preferred_username) to email field for backwards compatibility
       profile(profile) {
-        console.log("👤 Keycloak profile received:", {
-          sub: profile.sub,
-          name: profile.name,
-          preferred_username: profile.preferred_username,
-          email: profile.email,
-        });
+        // console.log("👤 Keycloak profile received:", {
+        //   sub: profile.sub,
+        //   name: profile.name,
+        //   preferred_username: profile.preferred_username,
+        //   email: profile.email,
+        // });
 
         const mappedProfile = {
           id: profile.sub,
@@ -217,7 +217,7 @@ export const authOptions: NextAuthOptions = {
           image: profile.picture,
         };
 
-        console.log("🔄 Profile mapped to:", mappedProfile);
+        // console.log("🔄 Profile mapped to:", mappedProfile);
         return mappedProfile;
       },
     }),
