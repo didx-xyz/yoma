@@ -53,6 +53,8 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
 using Yoma.Core.Domain.BlobProvider.Services;
+using Yoma.Core.Domain.NewsFeedProvider.Interfaces;
+using Yoma.Core.Domain.NewsFeedProvider.Services;
 
 namespace Yoma.Core.Domain
 {
@@ -141,6 +143,10 @@ namespace Yoma.Core.Domain
       services.AddScoped<IMyOpportunityService, MyOpportunityService>();
       services.AddScoped<IMyOpportunityBackgroundService, MyOpportunityBackgroundService>();
       #endregion My Opportunity
+
+      #region News Feed Provider
+      services.AddScoped<INewsFeedService, NewsFeedService>();
+      #endregion News Feed Provider
 
       #region Email Provider
       services.AddScoped<INotificationDeliveryService, NotificationDeliveryService>();
