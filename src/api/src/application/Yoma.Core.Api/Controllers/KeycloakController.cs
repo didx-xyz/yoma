@@ -326,7 +326,7 @@ namespace Yoma.Core.Api.Controllers
               _logger.LogError(ex, "Failed to remove the 'VERIFY_EMAIL' action for the newly registered user with username '{username}' when no email is provided: {errorMessage}", userRequest.Username, ex.Message);
             }
 
-            await CreateWalletOrScheduleCreation(userRequest);
+            await ScheduleWalletCreation(userRequest);
             await TrackLogin(payload, userRequest);
 
             break;
@@ -365,17 +365,19 @@ namespace Yoma.Core.Api.Controllers
       }
     }
 
-    private async Task CreateWalletOrScheduleCreation(UserRequest userRequest)
+    private async Task ScheduleWalletCreation(UserRequest userRequest)
     {
       try
       {
-        _logger.LogInformation("Creating or scheduling creation (create or update username) of rewards wallet for user with username '{username}'", userRequest.Username);
-        await _walletService.CreateWalletOrScheduleCreation(userRequest.Id);
-        _logger.LogInformation("Rewards wallet created or creation scheduled (create or update username) for user with username '{username}'", userRequest.Username);
+        _logger.LogInformation("Scheduling rewards wallet creation (or username update) for user '{username}'", userRequest.Username);
+
+        await _walletService.ScheduleWalletCreation(userRequest.Id);
+
+        _logger.LogInformation("Rewards wallet creation scheduled (or username update) for user '{username}'", userRequest.Username);
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to create or schedule creation (create or update username) of rewards wallet for user with username '{username}': {errorMessage}", userRequest.Username, ex.Message);
+        _logger.LogError(ex, "Failed to schedule rewards wallet creation (or username update) for user '{username}': {errorMessage}", userRequest.Username, ex.Message);
       }
     }
   }

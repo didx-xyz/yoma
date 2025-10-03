@@ -16,6 +16,8 @@ namespace Yoma.Core.Domain.Reward.Interfaces
 
     Task CreateWalletOrScheduleCreation(Guid? userId);
 
+    Task ScheduleWalletCreation(Guid? userId);
+
     List<WalletCreation> ListPendingCreationSchedule(int batchSize, List<Guid> idsToSkip);
 
     Task UpdateScheduleCreation(WalletCreation item, WalletCreationStatus retryStatusOnFailure);

@@ -209,6 +209,16 @@ namespace Yoma.Core.Domain.Reward.Services
       return (username, wallet);
     }
 
+    /// <summary>
+    /// Attempts to create a wallet immediately for the specified user.  
+    /// If the wallet already exists:
+    ///   - If not yet created, does nothing further (already pending/in progress).  
+    ///   - If created, checks if the username has changed and updates it inline,  
+    ///     scheduling a username update only if the inline update fails.  
+    /// If the wallet does not exist:
+    ///   - Attempts inline creation, setting Username, WalletId, Balance, and marking as Created.  
+    ///   - On failure, schedules creation by inserting a Pending record.  
+    /// </summary>
     public async Task CreateWalletOrScheduleCreation(Guid? userId)
     {
       if (!userId.HasValue || userId.Value == Guid.Empty)
@@ -283,6 +293,63 @@ namespace Yoma.Core.Domain.Reward.Services
 
         scope.Complete();
       });
+    }
+
+    /// <summary>
+    /// Schedules wallet creation or username update for the specified user.  
+    /// If the wallet already exists:
+    ///   - If not yet created, does nothing further (already pending/in progress).  
+    ///   - If created, checks if the username has changed and schedules a username update (no inline update).  
+    /// If the wallet does not exist:
+    ///   - Schedules creation by inserting a Pending record (no inline creation attempted).  
+    /// This method never creates or updates a wallet inline; it only schedules work for the background job.  
+    /// </summary>
+    public async Task ScheduleWalletCreation(Guid? userId)
+    {
+      if (!userId.HasValue || userId.Value == Guid.Empty)
+        throw new ArgumentNullException(nameof(userId));
+
+      var existingItem = _walletCreationRepository.Query().SingleOrDefault(o => o.UserId == userId.Value);
+      if (existingItem != null)
+      {
+        _logger.LogInformation("Wallet creation skipped: Already '{status}' for user with id '{userId}'", existingItem.Status, userId.Value);
+
+        if (existingItem.Status != WalletCreationStatus.Created)
+        {
+          _logger.LogInformation("Wallet username update skipped: Current status '{status}' for user with id '{userId}'", existingItem.Status, userId.Value);
+          return;
+        }
+
+        var user = _userService.GetById(userId.Value, false, false);
+
+        if (string.IsNullOrEmpty(existingItem.Username))
+          throw new InvalidOperationException($"Created Wallet: Wallet username expected for user with id {userId.Value}");
+
+        var username = ParseWalletUsername(user);
+
+        if (string.Equals(existingItem.Username, username, StringComparison.InvariantCultureIgnoreCase))
+        {
+          _logger.LogInformation("Wallet username update skipped: Username is already up to date for user with id '{userId}'", userId.Value);
+          return;
+        }
+
+        //schedule username update for delayed execution
+        existingItem.StatusId = _walletCreationStatusService.GetByName(WalletCreationStatus.PendingUsernameUpdate.ToString()).Id;
+        existingItem.Status = WalletCreationStatus.PendingUsernameUpdate;
+
+        await _walletCreationRepository.Update(existingItem);
+        return;
+      }
+
+      //schedule creation for delayed execution
+      var item = new WalletCreation
+      {
+        UserId = userId.Value,
+        StatusId = _walletCreationStatusService.GetByName(WalletCreationStatus.Pending.ToString()).Id,
+        Status = WalletCreationStatus.Pending
+      };
+
+      await _walletCreationRepository.Create(item);
     }
 
     public async Task<string> UpdateWalletUsername(Guid userId)
