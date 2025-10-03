@@ -184,7 +184,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       var (walletStatus, walletBalance) = await _walletService.GetWalletStatusAndBalance(user.Id);
 
       if (walletStatus != Reward.WalletCreationStatus.Created)
-        throw new ValidationException($"The wallet creation for the user with username '{user.Username}' is currently pending. Please try again later or contact technical support for assistance");
+        throw new ValidationException("The wallet creation is currently pending. It will be available within 24 hours, please try again later");
 
       if (string.IsNullOrEmpty(walletBalance.WalletId))
         throw new InvalidOperationException($"Wallet id expected with status '{walletStatus}'");
