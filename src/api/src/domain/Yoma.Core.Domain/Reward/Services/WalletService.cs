@@ -146,7 +146,7 @@ namespace Yoma.Core.Domain.Reward.Services
       var item = _walletCreationRepository.Query().SingleOrDefault(o => o.UserId == user.Id) ?? throw new ValidationException($"Wallet creation for the user with username '{user.Username}' hasn't been scheduled. Kindly log out and log back in");
 
       if (item.Status != WalletCreationStatus.Created)
-        throw new ValidationException("The wallet creation is currently pending. It will be available within 24 hours, please try again later");
+        throw new ValidationException("Your wallet creation is currently pending. It will be available within 24 hours, please try again later");
 
       if (string.IsNullOrEmpty(item.WalletId))
         throw new DataInconsistencyException($"Wallet id expected with wallet creation status of 'Created' for item with id '{item.Id}'");
