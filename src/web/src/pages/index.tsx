@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 import { useRouter } from "next/router";
 import imageWoman2 from "public/images/home/bg-woman.png";
 import imageCardYOID from "public/images/home/card-yoid.png";
@@ -282,15 +281,16 @@ const Home: NextPageWithLayout = () => {
           <section className="relative z-10 w-full py-16">
             <div className="-mt-40 flex flex-col items-center justify-center px-4">
               {/* YOUTUBE VIDEO */}
-              <div className="flex justify-center">
-                <Image
-                  src={imageVideoYoutube}
-                  alt="YouTube Video"
-                  width={601}
-                  height={354}
-                  className="h-auto max-w-full"
-                  sizes="100vw"
-                />
+              <div className="flex w-full justify-center">
+                <div className="relative aspect-video w-full max-w-[601px]">
+                  <iframe
+                    className="h-full w-full rounded-lg"
+                    src="https://www.youtube.com/embed/77vgI4VE8HY?rel=0&modestbranding=1"
+                    title="YouTube Video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
               </div>
 
               {/* CENTER: HEADERS AND TEXT */}

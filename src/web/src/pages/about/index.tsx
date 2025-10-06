@@ -91,15 +91,16 @@ const About: NextPageWithLayout<{
           <section className="relative z-10 -mt-10 w-full">
             <div className="-mt-8 flex flex-col items-center justify-center px-4 md:-mt-16">
               {/* YOUTUBE VIDEO */}
-              <div className="flex justify-center">
-                <Image
-                  src={imageVideoYoutube2}
-                  alt="YouTube Video"
-                  width={601}
-                  height={354}
-                  className="h-auto max-w-full"
-                  sizes="100vw"
-                />
+              <div className="flex w-full justify-center">
+                <div className="relative aspect-video w-full max-w-[601px]">
+                  <iframe
+                    className="h-full w-full rounded-lg"
+                    src="https://www.youtube.com/embed/WjTpSPYIZvE?rel=0&modestbranding=1"
+                    title="YouTube Video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  />
+                </div>
               </div>
 
               {/* CENTER: HEADERS AND TEXT */}
@@ -393,7 +394,6 @@ const About: NextPageWithLayout<{
           <section className="z-10 w-full pt-8 pb-8">
             <div className="flex flex-col items-center justify-center">
               {/* CONTACT US */}
-              {/* CARD 1 */}
               <div className="flex w-full max-w-5xl flex-col gap-8 px-6 text-white md:flex-row">
                 <div className="flex w-full flex-col gap-4">
                   <div className="flex flex-row items-center gap-4">
