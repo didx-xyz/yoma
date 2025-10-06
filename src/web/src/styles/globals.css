@@ -18,20 +18,6 @@
   --text-8xl: 100px;
   --text-9xl: 116px;
 
-  /* --text-xs: 0.775rem;
-  --text-sm:  0.9rem ;
-  --text-base: 1.1rem ;
-  --text-lg: 1.25rem;
-  --text-xl: 1.5rem;
-  --text-2xl: 1.875rem;
-  --text-3xl: 2.25rem;
-  --text-4xl: 2.625rem;
-  --text-5xl: 3.25rem;
-  --text-6xl: 4.25rem;
-  --text-7xl: 5.25rem;
-  --text-8xl: 6.25rem;
-  --text-9xl: 7.25rem; */
-
   /* Line height */
   --line-height-xs: 1rem;
   --line-height-sm: 1.25rem;
@@ -346,6 +332,7 @@
   --color-yellow: var(--color-yellow);
   --color-yellow-light: var(--color-yellow-light);
   --color-yellow-tint: var(--color-yellow-tint);
+  --color-beige: var(--color-beige);
 
   /* Gray variants */
   --color-gray: var(--color-gray);
@@ -460,7 +447,8 @@ html:has(body.content-overflow-y) {
   background-color: var(--color-white);
   color: var(--color-black);
 }
-[data-theme="white"] .drawer-side #btnSignIn {
+[data-theme="white"] .drawer-side #btnSignIn,
+[data-theme="white"] .drawer-side #btnSignOut {
   background-color: var(--color-purple);
   color: var(--color-white);
 }

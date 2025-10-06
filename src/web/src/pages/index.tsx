@@ -3,17 +3,17 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import imageWoman2 from "public/images/home/bg-woman.png";
 import imageCardYOID from "public/images/home/card-yoid.png";
-import imageDiamond from "public/images/home/diamond.svg";
-import imageFile from "public/images/home/file.svg";
-import imageGlobe from "public/images/home/globe.svg";
-import imageHat from "public/images/home/hat.svg";
-import imageLock from "public/images/home/lock.svg";
-import imagePin from "public/images/home/pin.svg";
-import imagePlant from "public/images/home/plant.svg";
+import imageDiamond from "public/images/home/icon_diamond.svg";
+import imageFile from "public/images/home/icon_file.svg";
+import imageGlobe from "public/images/home/icon_globe.svg";
+import imageHat from "public/images/home/icon_hat.svg";
+import imageLock from "public/images/home/icon_lock.svg";
+import imagePin from "public/images/home/icon_pin.svg";
+import imagePlant from "public/images/home/icon_plant.svg";
 import imageStencilPurple from "public/images/home/stencil-purple.png";
 import imageThumbnailWoman from "public/images/home/thumbnail-woman.png";
 import imageVideoYoutube from "public/images/home/video_youtube.png";
-import imageWallet from "public/images/home/wallet.svg";
+import imageWallet from "public/images/home/icon_wallet.svg";
 import imageStamp1 from "public/images/stamp-1.png";
 import imageStamp2 from "public/images/stamp-2.png";
 import { type ReactElement, useCallback } from "react";
@@ -24,6 +24,7 @@ import PartnerLogos from "~/components/Home/PartnerLogos";
 import MainLayout from "~/components/Layout/Main";
 import { THEME_WHITE } from "~/lib/constants";
 import type { NextPageWithLayout } from "./_app";
+import Head from "next/head";
 
 const Home: NextPageWithLayout = () => {
   const router = useRouter();
@@ -53,427 +54,434 @@ const Home: NextPageWithLayout = () => {
   );
 
   return (
-    <div className="relative right-0 left-0 flex w-screen flex-col overflow-x-hidden">
-      {/* HERO SECTION WITH FULL WIDTH BEIGE BACKGROUND */}
-      <div className="w-full bg-[#F7F5EB]">
-        <div className="relative z-10 flex flex-col items-center justify-center px-4">
-          <div className="flex w-full justify-center">
-            <div className="flex max-w-7xl flex-row px-6 md:px-0">
-              {/* LEFT: HEADERS AND TEXT */}
-              <div className="relative flex max-w-md flex-col gap-3 py-14 pt-24 text-center md:mt-20 md:text-start">
-                {/* PURPLE STENCIL */}
-                <div className="absolute top-16 right-0 z-10 hidden lg:block">
+    <>
+      <Head>
+        <title>Yoma | Home</title>
+      </Head>
+
+      <div className="relative right-0 left-0 flex w-screen flex-col overflow-x-hidden">
+        {/* HERO SECTION WITH FULL WIDTH BEIGE BACKGROUND */}
+        <div className="bg-beige w-full">
+          <div className="relative z-10 flex flex-col items-center justify-center px-4">
+            <div className="flex w-full justify-center">
+              <div className="flex max-w-7xl flex-row px-6 md:px-0">
+                {/* LEFT: HEADERS AND TEXT */}
+                <div className="relative flex max-w-md flex-col gap-3 py-14 pt-24 text-center md:mt-20 md:text-start">
+                  {/* PURPLE STENCIL */}
+                  <div className="absolute top-16 right-0 z-10 hidden lg:block">
+                    <Image
+                      src={imageStencilPurple}
+                      alt="Stencil Purple"
+                      sizes="100vw"
+                      priority={true}
+                      style={{
+                        objectFit: "cover",
+                      }}
+                    />
+                  </div>
+
+                  <h6 className="font-sans text-xs font-semibold tracking-widest text-[#020304] uppercase">
+                    Welcome to Yoma
+                  </h6>
+                  <h1 className="text-3xl font-bold tracking-normal text-black md:text-4xl">
+                    Building <span className="text-orange">futures</span>,{" "}
+                    <br className="md:hidden" /> one{" "}
+                    <span className="text-purple-dark">opportunity</span>{" "}
+                    <br className="md:hidden" /> at a time.
+                  </h1>
+                  <p className="text-gray-dark font-sans text-sm tracking-normal md:text-base">
+                    Yoma is your friendly platform of trusted partners, bringing
+                    you the freshest opportunities to keep your skills sharp and
+                    stay in the loop with what&apos;s happening in the working
+                    world.
+                  </p>
+                  <div className="my-2 flex w-full flex-row justify-start md:my-4">
+                    <HomeSearchInputLarge
+                      onSearch={onSearchInputSubmit}
+                      maxWidth={0}
+                    />
+                  </div>
+                </div>
+
+                {/* RIGHT: WOMAN & CARDS IMAGES */}
+                <div className="relative z-20 hidden lg:flex">
                   <Image
-                    src={imageStencilPurple}
-                    alt="Stencil Purple"
+                    src={imageWoman2}
+                    alt="Woman smiling"
                     sizes="100vw"
                     priority={true}
                     style={{
                       objectFit: "cover",
+                      zIndex: 20,
                     }}
                   />
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
-                <h6 className="font-sans text-xs font-semibold tracking-widest text-[#020304] uppercase">
-                  Welcome to Yoma
-                </h6>
-                <h1 className="text-3xl font-bold tracking-normal text-black md:text-4xl">
-                  Building <span className="text-orange">futures</span>,{" "}
-                  <br className="md:hidden" /> one{" "}
-                  <span className="text-purple-dark">opportunity</span>{" "}
-                  <br className="md:hidden" /> at a time.
-                </h1>
-                <p className="text-gray-dark font-sans text-sm tracking-normal md:text-base">
-                  Yoma is your friendly platform of trusted partners, bringing
-                  you the freshest opportunities to keep your skills sharp and
-                  stay in the loop with what&apos;s happening in the working
-                  world.
+        {/* HERO SECTION WITH FULL WIDTH WHITE BACKGROUND */}
+        <div className="w-full bg-white">
+          <div className="relative z-10 flex flex-col items-center justify-center px-4">
+            {/* CENTER: HEADER AND PARAGRAPH */}
+            <div className="my-14 flex max-w-md flex-col items-center gap-2 px-6 text-center lg:max-w-5xl">
+              <h2 className="text-[18px] font-semibold tracking-normal text-black md:text-[27px]">
+                Yoma is a digital marketplace that upskills and connects young
+                people​ to opportunities to transform their future and unlock
+                their potential.
+              </h2>
+              <p className="text-gray-dark font-sans text-sm tracking-tight md:text-base">
+                Yoma puts you first. With your Youth Identity (YoID), you can
+                easily move across organisations and platforms, unlocking
+                opportunities to learn, make an impact, and earn along the way.
+                No matter who you are or where you&apos;re from, Yoma is built
+                to open doors for every young person.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* GREEN SECTION - YO-ID WITH FULL WIDTH BACKGROUND */}
+        <div className="bg-green w-full">
+          <section className="relative z-10 w-full pt-16 pb-32">
+            <div className="flex flex-col items-center justify-center px-4">
+              <div className="flex max-w-md flex-col items-center gap-2 text-center text-white lg:max-w-5xl">
+                {/* CENTER: HEADERS AND TEXT */}
+                <h2 className="text-[26px] font-semibold tracking-normal">
+                  Meet Yo-ID: Your Passport to Opportunities
+                </h2>
+                <p className="z-20 px-3 font-sans text-sm tracking-normal text-white md:text-base">
+                  With your Yo-ID wallet, all your achievements are recorded.
+                  Think of it as a backpack for your digital certificates,
+                  powered by the latest technology, so you can carry your future
+                  with you wherever you go.
                 </p>
-                <div className="my-2 flex w-full flex-row justify-start md:my-4">
-                  <HomeSearchInputLarge
-                    onSearch={onSearchInputSubmit}
-                    maxWidth={0}
+                <div className="relative -mt-2 flex items-center justify-center">
+                  <Image
+                    src={imageStamp1}
+                    alt="Stamp 1"
+                    width={217}
+                    height={163}
+                    className="absolute top-32 -left-10 z-10 h-auto -translate-y-1/4"
+                    sizes="100vw"
+                  />
+                  <Image
+                    src={imageCardYOID}
+                    alt="My YoID Card"
+                    width={464}
+                    height={216}
+                    className="relative z-20 h-auto"
+                    sizes="100vw"
+                  />
+                  <Image
+                    src={imageStamp2}
+                    alt="Stamp 2"
+                    width={197}
+                    height={198}
+                    className="absolute top-16 -right-14 z-10 h-auto -translate-y-1/2"
+                    sizes="100vw"
                   />
                 </div>
               </div>
 
-              {/* RIGHT: WOMAN & CARDS IMAGES */}
-              <div className="relative z-20 hidden lg:flex">
-                <Image
-                  src={imageWoman2}
-                  alt="Woman smiling"
-                  sizes="100vw"
-                  priority={true}
-                  style={{
-                    objectFit: "cover",
-                    zIndex: 20,
-                  }}
-                />
+              {/* ROW OF 4 CARDS */}
+              <div className="z-20 mt-6 w-full max-w-7xl">
+                <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 md:gap-8">
+                  {/* CARD 1 */}
+                  <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+                    <Image
+                      src={imageDiamond}
+                      alt="Diamond"
+                      width={56}
+                      className="rounded-full bg-[#1C6B53] p-3"
+                      sizes="100vw"
+                    />
+
+                    <h1 className="text-center text-[18px] font-semibold">
+                      Showcase Your Skills
+                      <br /> &amp; Achievements
+                    </h1>
+                    <p className="-mt-4 text-center font-sans md:text-sm">
+                      Every course you finish, challenge you take on, or project
+                      you complete becomes a verified digital credential.
+                      It&apos;s secure proof of your skills and achievements.
+                    </p>
+                  </div>
+
+                  {/* CARD 2 */}
+                  <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+                    <Image
+                      src={imageLock}
+                      alt="Lock"
+                      width={56}
+                      className="rounded-full bg-[#1C6B53] p-3"
+                      sizes="100vw"
+                    />
+
+                    <h1 className="text-center text-[18px] font-semibold">
+                      Localised and Relevant
+                    </h1>
+                    <p className="-mt-4 text-center font-sans md:text-sm">
+                      Yoma partners with local opportunity providers to make
+                      sure the content is relevant to you. Currently the
+                      platform is available in five languages with plans to
+                      expand.
+                    </p>
+                  </div>
+
+                  {/* CARD 3 */}
+                  <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+                    <Image
+                      src={imageHat}
+                      alt="Hat"
+                      width={56}
+                      className="rounded-full bg-[#1C6B53] p-3"
+                      sizes="100vw"
+                    />
+
+                    <h1 className="text-center text-[18px] font-semibold">
+                      Boost Your Employability -<br /> 100% for free
+                    </h1>
+                    <p className="-mt-4 text-center font-sans md:text-sm">
+                      Yoma is completely free and focused on helping you move
+                      forward in your career. Verified skills and experiences on
+                      Yoma are recognised by our partners, increasing your
+                      chances for internships, opportunities, and jobs.
+                    </p>
+                  </div>
+
+                  {/* CARD 4 */}
+                  <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+                    <Image
+                      src={imagePlant}
+                      alt="Plant"
+                      width={56}
+                      className="rounded-full bg-[#1C6B53] p-3"
+                      sizes="100vw"
+                    />
+
+                    <h1 className="text-center text-[18px] font-semibold">
+                      Earn While You Grow
+                    </h1>
+                    <p className="-mt-4 text-center font-sans md:text-sm">
+                      As you learn, you get the chance to earn digital tokens
+                      that can be cashed out or redeemed in the Yoma
+                      marketplace. Some options on the marketplace include
+                      airtime, data and grocery vouchers.
+                    </p>
+                  </div>
+                </ScrollableContainer>
               </div>
             </div>
-          </div>
+          </section>
         </div>
-      </div>
 
-      {/* HERO SECTION WITH FULL WIDTH WHITE BACKGROUND */}
-      <div className="w-full bg-white">
-        <div className="relative z-10 flex flex-col items-center justify-center px-4">
-          {/* CENTER: HEADER AND PARAGRAPH */}
-          <div className="my-14 flex max-w-md flex-col items-center gap-2 px-6 text-center lg:max-w-5xl">
-            <h2 className="text-[18px] font-semibold tracking-normal text-black md:text-[27px]">
-              Yoma is a digital marketplace that upskills and connects young
-              people​ to opportunities to transform their future and unlock
-              their potential.
-            </h2>
-            <p className="text-gray-dark font-sans text-sm tracking-tight md:text-base">
-              Yoma puts you first. With your Youth Identity (YoID), you can
-              easily move across organisations and platforms, unlocking
-              opportunities to learn, make an impact, and earn along the way. No
-              matter who you are or where you&apos;re from, Yoma is built to
-              open doors for every young person.
-            </p>
-          </div>
-        </div>
-      </div>
+        {/* PURPLE SECTION - VIDEO & STATS WITH FULL WIDTH BACKGROUND */}
+        <div className="bg-purple w-full">
+          <section className="relative z-10 w-full py-16">
+            <div className="-mt-40 flex flex-col items-center justify-center px-4">
+              {/* YOUTUBE VIDEO */}
+              <div className="flex justify-center">
+                <Image
+                  src={imageVideoYoutube}
+                  alt="YouTube Video"
+                  width={601}
+                  height={354}
+                  className="h-auto max-w-full"
+                  sizes="100vw"
+                />
+              </div>
 
-      {/* GREEN SECTION - YO-ID WITH FULL WIDTH BACKGROUND */}
-      <div className="bg-green w-full">
-        <section className="relative z-10 w-full pt-16 pb-32">
-          <div className="flex flex-col items-center justify-center px-4">
-            <div className="flex max-w-md flex-col items-center gap-2 text-center text-white lg:max-w-5xl">
               {/* CENTER: HEADERS AND TEXT */}
-              <h2 className="text-[26px] font-semibold tracking-normal">
-                Meet Yo-ID: Your Passport to Opportunities
-              </h2>
-              <p className="z-20 px-3 font-sans text-sm tracking-normal text-white md:text-base">
-                With your Yo-ID wallet, all your achievements are recorded.
-                Think of it as a backpack for your digital certificates, powered
-                by the latest technology, so you can carry your future with you
-                wherever you go.
-              </p>
-              <div className="relative -mt-2 flex items-center justify-center">
-                <Image
-                  src={imageStamp1}
-                  alt="Stamp 1"
-                  width={217}
-                  height={163}
-                  className="absolute top-32 -left-10 z-10 h-auto -translate-y-1/4"
-                  sizes="100vw"
-                />
-                <Image
-                  src={imageCardYOID}
-                  alt="My YoID Card"
-                  width={464}
-                  height={216}
-                  className="relative z-20 h-auto"
-                  sizes="100vw"
-                />
-                <Image
-                  src={imageStamp2}
-                  alt="Stamp 2"
-                  width={197}
-                  height={198}
-                  className="absolute top-16 -right-14 z-10 h-auto -translate-y-1/2"
-                  sizes="100vw"
-                />
+              <div className="mt-10 flex flex-col items-center gap-2 px-3 text-center text-white md:max-w-5xl">
+                <h2 className="text-[26px] font-semibold tracking-normal">
+                  Connecting youth to opportunities
+                </h2>
+                <p className="font-sans text-sm tracking-normal text-white md:text-base">
+                  ​​​​​​​Developed by UNICEF, Partners, and young Africans, Yoma
+                  has evolved into a global force in youth skills development,
+                  community engagement, and bridge to employment opportunities.
+                </p>
               </div>
-            </div>
 
-            {/* ROW OF 4 CARDS */}
-            <div className="z-20 mt-6 w-full max-w-7xl">
-              <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 md:gap-8">
+              {/* ROW OF 4 CARDS */}
+              <div className="my-10 grid grid-cols-2 gap-4 px-4 md:grid-cols-4">
                 {/* CARD 1 */}
-                <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+                <div className="flex flex-col items-center gap-5 rounded-xl py-4 text-white">
                   <Image
-                    src={imageDiamond}
-                    alt="Diamond"
+                    src={imageGlobe}
+                    alt="Globe"
                     width={56}
-                    className="rounded-full bg-[#1C6B53] p-3"
+                    className="bg-orange rounded-full p-3"
                     sizes="100vw"
                   />
 
-                  <h1 className="text-center text-[18px] font-semibold">
-                    Showcase Your Skills
-                    <br /> & Achievements
+                  <p className="text-center font-sans md:text-sm">Active in</p>
+                  <h1 className="-mt-5 text-center text-base font-semibold tracking-normal">
+                    12 countries
                   </h1>
-                  <p className="-mt-4 text-center font-sans md:text-sm">
-                    Every course you finish, challenge you take on, or project
-                    you complete becomes a verified digital credential.
-                    It&apos;s secure proof of your skills and achievements.
-                  </p>
                 </div>
 
                 {/* CARD 2 */}
-                <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+                <div className="flex flex-col items-center gap-4 rounded-xl py-4 text-white">
                   <Image
-                    src={imageLock}
-                    alt="Lock"
+                    src={imageFile}
+                    alt="File"
                     width={56}
-                    className="rounded-full bg-[#1C6B53] p-3"
+                    className="bg-orange rounded-full p-3"
                     sizes="100vw"
                   />
 
-                  <h1 className="text-center text-[18px] font-semibold">
-                    Localised and Relevant
+                  <h1 className="text-center text-base font-semibold tracking-normal">
+                    More than 400 opportunities offered,
                   </h1>
                   <p className="-mt-4 text-center font-sans md:text-sm">
-                    Yoma partners with local opportunity providers to make sure
-                    the content is relevant to you. Currently the platform is
-                    available in five languages with plans to expand.
+                    including learning courses, impact challenges.
                   </p>
                 </div>
 
                 {/* CARD 3 */}
-                <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+                <div className="flex flex-col items-center gap-4 rounded-xl py-4 text-white">
                   <Image
-                    src={imageHat}
-                    alt="Hat"
+                    src={imageWallet}
+                    alt="Wallet"
                     width={56}
-                    className="rounded-full bg-[#1C6B53] p-3"
+                    className="bg-orange rounded-full p-3"
                     sizes="100vw"
                   />
 
-                  <h1 className="text-center text-[18px] font-semibold">
-                    Boost Your Employability -<br /> 100% for free
+                  <h1 className="text-center text-base font-semibold tracking-normal">
+                    More than 255K YoIDs created
                   </h1>
                   <p className="-mt-4 text-center font-sans md:text-sm">
-                    Yoma is completely free and focused on helping you move
-                    forward in your career. Verified skills and experiences on
-                    Yoma are recognised by our partners, increasing your chances
-                    for internships, opportunities, and jobs.
+                    and 165k credentials verified.
                   </p>
                 </div>
 
                 {/* CARD 4 */}
-                <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+                <div className="flex flex-col items-center gap-4 rounded-xl py-4 text-white">
                   <Image
-                    src={imagePlant}
-                    alt="Plant"
+                    src={imagePin}
+                    alt="Pin"
                     width={56}
-                    className="rounded-full bg-[#1C6B53] p-3"
+                    className="bg-orange rounded-full p-3"
                     sizes="100vw"
                   />
 
-                  <h1 className="text-center text-[18px] font-semibold">
-                    Earn While You Grow
+                  <h1 className="text-center text-base font-semibold tracking-normal">
+                    70 global
                   </h1>
                   <p className="-mt-4 text-center font-sans md:text-sm">
-                    As you learn, you get the chance to earn digital tokens that
-                    can be cashed out or redeemed in the Yoma marketplace. Some
-                    options on the marketplace include airtime, data and grocery
-                    vouchers.
+                    <strong>and local</strong> partners.
                   </p>
                 </div>
-              </ScrollableContainer>
-            </div>
-          </div>
-        </section>
-      </div>
-
-      {/* PURPLE SECTION - VIDEO & STATS WITH FULL WIDTH BACKGROUND */}
-      <div className="bg-purple w-full">
-        <section className="relative z-10 w-full py-16">
-          <div className="-mt-40 flex flex-col items-center justify-center px-4">
-            {/* YOUTUBE VIDEO */}
-            <div className="flex justify-center">
-              <Image
-                src={imageVideoYoutube}
-                alt="YouTube Video"
-                width={601}
-                height={354}
-                className="h-auto max-w-full"
-                sizes="100vw"
-              />
-            </div>
-
-            {/* CENTER: HEADERS AND TEXT */}
-            <div className="flex flex-col items-center gap-2 px-3 text-center text-white md:max-w-5xl">
-              <h2 className="text-[26px] font-semibold tracking-normal">
-                Connecting youth to opportunities
-              </h2>
-              <p className="font-sans text-sm tracking-normal text-white md:text-base">
-                ​​​​​​​Developed by UNICEF, Partners, and young Africans, Yoma
-                has evolved into a global force in youth skills development,
-                community engagement, and bridge to employment opportunities.
-              </p>
-            </div>
-
-            {/* ROW OF 4 CARDS */}
-            <div className="my-10 grid grid-cols-2 gap-4 px-4 md:grid-cols-4">
-              {/* CARD 1 */}
-              <div className="flex flex-col items-center gap-5 rounded-xl py-4 text-white">
-                <Image
-                  src={imageGlobe}
-                  alt="Globe"
-                  width={56}
-                  className="bg-orange rounded-full p-3"
-                  sizes="100vw"
-                />
-
-                <p className="text-center font-sans md:text-sm">Active in</p>
-                <h1 className="-mt-5 text-center text-base font-semibold tracking-normal">
-                  12 countries
-                </h1>
-              </div>
-
-              {/* CARD 2 */}
-              <div className="flex flex-col items-center gap-4 rounded-xl py-4 text-white">
-                <Image
-                  src={imageFile}
-                  alt="File"
-                  width={56}
-                  className="bg-orange rounded-full p-3"
-                  sizes="100vw"
-                />
-
-                <h1 className="text-center text-base font-semibold tracking-normal">
-                  More than 400 opportunities offered,
-                </h1>
-                <p className="-mt-4 text-center font-sans md:text-sm">
-                  including learning courses, impact challenges.
-                </p>
-              </div>
-
-              {/* CARD 3 */}
-              <div className="flex flex-col items-center gap-4 rounded-xl py-4 text-white">
-                <Image
-                  src={imageWallet}
-                  alt="Wallet"
-                  width={56}
-                  className="bg-orange rounded-full p-3"
-                  sizes="100vw"
-                />
-
-                <h1 className="text-center text-base font-semibold tracking-normal">
-                  More than 255K YoIDs created
-                </h1>
-                <p className="-mt-4 text-center font-sans md:text-sm">
-                  and 165k credentials verified.
-                </p>
-              </div>
-
-              {/* CARD 4 */}
-              <div className="flex flex-col items-center gap-4 rounded-xl py-4 text-white">
-                <Image
-                  src={imagePin}
-                  alt="Pin"
-                  width={56}
-                  className="bg-orange rounded-full p-3"
-                  sizes="100vw"
-                />
-
-                <h1 className="text-center text-base font-semibold tracking-normal">
-                  70 global
-                </h1>
-                <p className="-mt-4 text-center font-sans md:text-sm">
-                  <strong>and local</strong> partners.
-                </p>
               </div>
             </div>
-          </div>
-        </section>
-      </div>
+          </section>
+        </div>
 
-      {/* BEIGE SECTION - STORIES & PARTNERS WITH FULL WIDTH BACKGROUND */}
-      <div className="w-full bg-[#F7F5EB]">
-        <section className="relative z-10 w-full pt-16 pb-8">
-          <div className="-mt-36 flex flex-col items-center justify-center px-4">
-            {/* ROW OF 3 CARDS */}
-            <div className="w-full max-w-7xl">
-              <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 md:gap-8 lg:gap-20">
-                {/* WOMAN */}
-                <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
-                  <div className="flex flex-row gap-6">
-                    <Image
-                      src={imageThumbnailWoman}
-                      alt="Woman"
-                      className="w-full max-w-[90px] rounded-full"
-                      sizes="100vw"
-                    />
+        {/* BEIGE SECTION - NEWS & PARTNERS */}
+        <div className="bg-beige w-full">
+          <section className="relative z-10 w-full pt-16 pb-8">
+            <div className="-mt-36 flex flex-col items-center justify-center px-4">
+              {/* ROW OF 3 CARDS */}
+              <div className="w-full max-w-7xl">
+                <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 md:gap-8 lg:gap-20">
+                  {/* WOMAN */}
+                  <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
+                    <div className="flex flex-row gap-6">
+                      <Image
+                        src={imageThumbnailWoman}
+                        alt="Woman"
+                        className="w-full max-w-[90px] rounded-full"
+                        sizes="100vw"
+                      />
 
-                    <h1 className="text-[18px] font-bold">
-                      Closing The Digital Skills Gap: How we are empowering
-                      youth worldwide
-                    </h1>
+                      <h1 className="text-[18px] font-bold">
+                        Closing The Digital Skills Gap: How we are empowering
+                        youth worldwide
+                      </h1>
+                    </div>
+                    <p className="text-gray-dark text-sm">
+                      As digital technology rapidly transforms the workforce, a
+                      global digital skills gap is leaving many young people
+                      behind, especially girls and young women. UNICEF and
+                      committed private sector partners are equipping the next
+                      generation with essential digital, entrepreneurial and AI
+                      skills.. <br />
+                      Read more.
+                    </p>
                   </div>
-                  <p className="text-gray-dark text-sm">
-                    As digital technology rapidly transforms the workforce, a
-                    global digital skills gap is leaving many young people
-                    behind, especially girls and young women. UNICEF and
-                    committed private sector partners are equipping the next
-                    generation with essential digital, entrepreneurial and AI
-                    skills.. <br />
-                    Read more.
-                  </p>
-                </div>
 
-                {/* WOMAN */}
-                <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
-                  <div className="flex flex-row gap-6">
-                    <Image
-                      src={imageThumbnailWoman}
-                      alt="Woman"
-                      className="w-full max-w-[90px] rounded-full"
-                      sizes="100vw"
-                    />
+                  {/* WOMAN */}
+                  <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
+                    <div className="flex flex-row gap-6">
+                      <Image
+                        src={imageThumbnailWoman}
+                        alt="Woman"
+                        className="w-full max-w-[90px] rounded-full"
+                        sizes="100vw"
+                      />
 
-                    <h1 className="text-[18px] font-bold">
-                      Closing The Digital Skills Gap: How we are empowering
-                      youth worldwide
-                    </h1>
+                      <h1 className="text-[18px] font-bold">
+                        Closing The Digital Skills Gap: How we are empowering
+                        youth worldwide
+                      </h1>
+                    </div>
+                    <p className="text-gray-dark text-sm">
+                      As digital technology rapidly transforms the workforce, a
+                      global digital skills gap is leaving many young people
+                      behind, especially girls and young women. UNICEF and
+                      committed private sector partners are equipping the next
+                      generation with essential digital, entrepreneurial and AI
+                      skills.. <br />
+                      Read more.
+                    </p>
                   </div>
-                  <p className="text-gray-dark text-sm">
-                    As digital technology rapidly transforms the workforce, a
-                    global digital skills gap is leaving many young people
-                    behind, especially girls and young women. UNICEF and
-                    committed private sector partners are equipping the next
-                    generation with essential digital, entrepreneurial and AI
-                    skills.. <br />
-                    Read more.
-                  </p>
-                </div>
 
-                {/* UNICEF */}
-                <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
-                  <div className="flex flex-row gap-6">
-                    <Image
-                      src={imageThumbnailWoman}
-                      alt="Woman"
-                      className="w-full max-w-[90px] rounded-full"
-                      sizes="100vw"
-                    />
+                  {/* UNICEF */}
+                  <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
+                    <div className="flex flex-row gap-6">
+                      <Image
+                        src={imageThumbnailWoman}
+                        alt="Woman"
+                        className="w-full max-w-[90px] rounded-full"
+                        sizes="100vw"
+                      />
 
-                    <h1 className="text-[18px] font-bold">
-                      Closing The Digital Skills Gap: How we are empowering
-                      youth worldwide
-                    </h1>
+                      <h1 className="text-[18px] font-bold">
+                        Closing The Digital Skills Gap: How we are empowering
+                        youth worldwide
+                      </h1>
+                    </div>
+                    <p className="text-gray-dark text-sm">
+                      As digital technology rapidly transforms the workforce, a
+                      global digital skills gap is leaving many young people
+                      behind, especially girls and young women. UNICEF and
+                      committed private sector partners are equipping the next
+                      generation with essential digital, entrepreneurial and AI
+                      skills.. <br />
+                      Read more.
+                    </p>
                   </div>
-                  <p className="text-gray-dark text-sm">
-                    As digital technology rapidly transforms the workforce, a
-                    global digital skills gap is leaving many young people
-                    behind, especially girls and young women. UNICEF and
-                    committed private sector partners are equipping the next
-                    generation with essential digital, entrepreneurial and AI
-                    skills.. <br />
-                    Read more.
-                  </p>
-                </div>
-              </ScrollableContainer>
+                </ScrollableContainer>
+              </div>
+
+              <button
+                type="button"
+                className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-base text-white normal-case"
+              >
+                Read more stories
+              </button>
+
+              {/* PARTNERS */}
+              <PartnerLogos />
             </div>
-
-            <button
-              type="button"
-              className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-base text-white normal-case"
-            >
-              Read more stories
-            </button>
-
-            {/* PARTNERS */}
-            <PartnerLogos />
-          </div>
-        </section>
+          </section>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

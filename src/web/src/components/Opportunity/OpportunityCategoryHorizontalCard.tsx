@@ -23,7 +23,7 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
   return (
     <button
       onClick={handleClick}
-      className={`group border-gray flex aspect-square cursor-pointer flex-col items-center rounded-lg px-1 py-2 duration-0 select-none`}
+      className={`group border-gray flex aspect-square cursor-pointer flex-col items-center rounded-lg bg-white px-1 py-2 duration-0 select-none`}
     >
       <div className="flex flex-col gap-2 md:gap-1">
         <div className="flex items-center justify-center">
@@ -40,7 +40,7 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
               {data.name}
             </h1>
 
-            <h6 className="text-orange text-center text-[9px] leading-tight font-bold md:text-[10px]">
+            <h6 className="text-center text-[10px] font-bold text-[#545859]">
               <strong>{data.count}</strong> available
             </h6>
 
