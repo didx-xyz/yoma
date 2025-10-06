@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+     xmlns:atom="http://www.w3.org/2005/Atom"
+     xmlns:media="http://search.yahoo.com/mrss/">
+  <channel>
+    <title>About Yoma</title>
+    <link>https://substack.local/about</link>
+    <description>Stories, mission updates, and leadership insights from the Yoma team</description>
+    <language>en</language>
+    <lastBuildDate>Mon, 06 Oct 2025 09:30:00 GMT</lastBuildDate>
+
+    <item>
+      <title>Our Mission to Empower Youth</title>
+      <link>https://substack.local/p/our-mission-to-empower-youth</link>
+      <guid isPermaLink="true">https://substack.local/p/our-mission-to-empower-youth</guid>
+      <pubDate>Mon, 06 Oct 2025 08:30:00 GMT</pubDate>
+      <description>
+        <![CDATA[
+        <p>At Yoma, our mission is to empower young people to gain real-world skills, 
+        access learning opportunities, and earn rewards that unlock their full potential.</p>
+        <p>We’re driven by the belief that every young person deserves a chance to succeed.</p>
+      ]]>
+      </description>
+      <media:thumbnail url="https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png" />
+    </item>
+
+    <item>
+      <title>Meet the Team Behind Yoma</title>
+      <link>https://substack.local/p/meet-the-team-behind-yoma</link>
+      <guid isPermaLink="true">https://substack.local/p/meet-the-team-behind-yoma</guid>
+      <pubDate>Wed, 01 Oct 2025 11:15:00 GMT</pubDate>
+      <description>
+        <![CDATA[
+        <p>From developers and designers to youth engagement specialists — 
+        our team is passionate about creating technology that drives social change.</p>
+        <p>Learn more about the people making Yoma possible.</p>
+      ]]>
+      </description>
+      <media:thumbnail url="https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png" />
+    </item>
+
+    <item>
+      <title>Building Partnerships that Matter</title>
+      <link>https://substack.local/p/building-partnerships-that-matter</link>
+      <guid isPermaLink="true">https://substack.local/p/building-partnerships-that-matter</guid>
+      <pubDate>Fri, 26 Sep 2025 09:45:00 GMT</pubDate>
+      <description>
+        <![CDATA[
+        <p>Collaboration is at the heart of everything we do. 
+        Discover how Yoma works with governments, organizations, and private partners to create opportunities for youth.</p>
+      ]]>
+      </description>
+      <media:thumbnail url="https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png" />
+    </item>
+
+    <item>
+      <title>Yoma’s Journey So Far</title>
+      <link>https://substack.local/p/yomas-journey-so-far</link>
+      <guid isPermaLink="true">https://substack.local/p/yomas-journey-so-far</guid>
+      <pubDate>Tue, 23 Sep 2025 10:00:00 GMT</pubDate>
+      <description>
+        <![CDATA[
+        <p>From pilot projects to international collaborations, 
+        Yoma has grown into a platform that empowers thousands of young people across the globe.</p>
+      ]]>
+      </description>
+      <media:thumbnail url="https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png" />
+    </item>
+
+    <item>
+      <title>Our Vision for the Future</title>
+      <link>https://substack.local/p/our-vision-for-the-future</link>
+      <guid isPermaLink="true">https://substack.local/p/our-vision-for-the-future</guid>
+      <pubDate>Fri, 19 Sep 2025 12:00:00 GMT</pubDate>
+      <description>
+        <![CDATA[
+        <p>We believe in a future where young people have equal access to learning, 
+        earning, and growth opportunities—no matter where they come from.</p>
+        <p>Read how Yoma is shaping that future.</p>
+      ]]>
+      </description>
+      <media:thumbnail url="https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png" />
+    </item>
+  </channel>
+</rss>

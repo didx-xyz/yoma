@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Yoma.Core.Infrastructure.Database.ActionLink.Entities;
 using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
@@ -225,6 +226,18 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .OnDelete(DeleteBehavior.NoAction);
 
       builder.Entity<Organization>()
+          .HasOne(o => o.ModifiedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.ModifiedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Link>()
+          .HasOne(o => o.CreatedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.CreatedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Link>()
           .HasOne(o => o.ModifiedByUser)
           .WithMany()
           .HasForeignKey(o => o.ModifiedByUserId)

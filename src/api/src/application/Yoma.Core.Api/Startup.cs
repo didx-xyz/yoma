@@ -26,6 +26,7 @@ using Yoma.Core.Infrastructure.Database;
 using Yoma.Core.Infrastructure.Emsi;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.SendGrid;
+using Yoma.Core.Infrastructure.Substack;
 using Yoma.Core.Infrastructure.Twilio;
 using Yoma.Core.Infrastructure.Zlto;
 using Yoma.Core.Infrastructure.SAYouth;
@@ -130,6 +131,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_InfrastructureLaborMarketProvider();
       services.ConfigureServices_InfrastructureIdentityProvider();
       services.ConfigureServices_InfrastructureSharingProvider();
+      services.ConfigureServices_InfrastructureNewsFeedProvider(_configuration, _configuration.Configuration_ConnectionString(), _appSettings);
       services.ConfigureServices_InfrastructureEmailProvider(_configuration);
       services.ConfigureServices_InfrastructureMessageProvider(_configuration);
       services.ConfigureServices_InfrastructureRewardProvider();
@@ -298,6 +300,7 @@ namespace Yoma.Core.Api
         var scopeFactory = serviceProvider.GetService<IServiceScopeFactory>() ?? throw new InvalidOperationException($"Failed to retrieve service '{nameof(IServiceScopeFactory)}'");
         serviceProvider.Configure_InfrastructureDatabase();
         serviceProvider.Configure_InfrastructureDatabaseSSIProvider();
+        serviceProvider.Configure_InfrastructureDatabaseNewsFeedProvider(); 
         config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
              .UseActivator(new HangfireActivator(scopeFactory))
              .UseSimpleAssemblyNameTypeSerializer()
