@@ -319,7 +319,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
         {
           ExternalId = externalId!,
           Title = title,
-          Description = description, 
+          Description = description,
           URL = url!,
           ThumbnailURL = thumbnailUrl,
           PublishedDate = published

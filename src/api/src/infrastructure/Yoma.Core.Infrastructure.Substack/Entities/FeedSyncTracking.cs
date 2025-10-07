@@ -10,8 +10,8 @@ namespace Yoma.Core.Infrastructure.Substack.Entities
   public class FeedSyncTracking : BaseEntity<Guid>
   {
     [Required]
-    [Column(TypeName = "varchar(50)")]              
-    public string FeedType { get; set; }            
+    [Column(TypeName = "varchar(50)")]
+    public string FeedType { get; set; }
 
     [Column(TypeName = "varchar(512)")]
     public string? ETag { get; set; }

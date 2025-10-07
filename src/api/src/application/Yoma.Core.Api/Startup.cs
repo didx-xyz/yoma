@@ -302,7 +302,7 @@ namespace Yoma.Core.Api
         var scopeFactory = serviceProvider.GetService<IServiceScopeFactory>() ?? throw new InvalidOperationException($"Failed to retrieve service '{nameof(IServiceScopeFactory)}'");
         serviceProvider.Configure_InfrastructureDatabase();
         serviceProvider.Configure_InfrastructureDatabaseSSIProvider();
-        serviceProvider.Configure_InfrastructureDatabaseNewsFeedProvider(); 
+        serviceProvider.Configure_InfrastructureDatabaseNewsFeedProvider();
         config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
              .UseActivator(new HangfireActivator(scopeFactory))
              .UseSimpleAssemblyNameTypeSerializer()

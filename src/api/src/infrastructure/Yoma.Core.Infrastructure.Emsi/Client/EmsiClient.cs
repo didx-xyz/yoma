@@ -108,7 +108,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
       var jsonContent = string.Empty;
       using (var reader = new StreamReader(resourceStream, Encoding.UTF8))
         jsonContent = reader.ReadToEnd();
-   
+
       var result = JsonConvert.DeserializeObject<List<Domain.LaborMarketProvider.Models.Skill>>(jsonContent);
       if (result == null || result.Count == 0)
         throw new InvalidOperationException($"Embedded resource '{resourceName}' could not be deserialized or contains no data");

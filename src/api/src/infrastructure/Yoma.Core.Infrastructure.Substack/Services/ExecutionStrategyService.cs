@@ -3,7 +3,7 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Substack.Context;
 
 namespace Yoma.Core.Infrastructure.Substack.Services
-{ 
+{
   public class ExecutionStrategyService : IExecutionStrategyService
   {
     #region Class Variables

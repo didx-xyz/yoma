@@ -132,7 +132,7 @@ namespace Yoma.Core.Infrastructure.Substack.Repositories
       foreach (var item in items)
       {
         var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(NewsArticle)} with id '{item.Id}' does not exist");
-      
+
         item.DateModified = DateTimeOffset.UtcNow;
 
         entity.Title = item.Title;
