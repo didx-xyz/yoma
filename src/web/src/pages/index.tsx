@@ -23,8 +23,39 @@ import MainLayout from "~/components/Layout/Main";
 import { THEME_WHITE } from "~/lib/constants";
 import type { NextPageWithLayout } from "./_app";
 import Head from "next/head";
+import { searchNewsArticles } from "~/api/services/newsfeed";
+import { FeedType, NewsArticleSearchResults } from "~/api/models/newsfeed";
+import { GetStaticProps } from "next/types";
+import Link from "next/link";
+import { NewsArticleCard } from "~/components/News/NewsArticleCard";
 
-const Home: NextPageWithLayout = () => {
+export const getStaticProps: GetStaticProps = async (context) => {
+  const lookups_NewsArticles = await searchNewsArticles(
+    {
+      feedType: FeedType.General,
+      startDate: null,
+      endDate: null,
+      valueContains: null,
+      pageNumber: 1,
+      pageSize: 3,
+    },
+    context,
+  );
+  return {
+    props: {
+      lookups_NewsArticles,
+    },
+
+    // Next.js will attempt to re-generate the page:
+    // - When a request comes in
+    // - At most once every 300 seconds
+    revalidate: 300,
+  };
+};
+
+const Home: NextPageWithLayout<{
+  lookups_NewsArticles: NewsArticleSearchResults;
+}> = ({ lookups_NewsArticles }) => {
   const router = useRouter();
 
   const onSearchInputSubmit = useCallback(
@@ -384,95 +415,28 @@ const Home: NextPageWithLayout = () => {
         <div className="bg-beige w-full">
           <section className="relative z-10 w-full pt-16 pb-8">
             <div className="-mt-36 flex flex-col items-center justify-center px-4">
-              {/* ROW OF 3 CARDS */}
-              <div className="w-full max-w-7xl">
-                <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 md:gap-8 lg:gap-20">
-                  {/* WOMAN */}
-                  <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
-                    <div className="flex flex-row gap-6">
-                      <Image
-                        src={imageThumbnailWoman}
-                        alt="Woman"
-                        className="w-full max-w-[90px] rounded-full"
-                        sizes="100vw"
-                      />
-
-                      <h1 className="text-[18px] font-bold">
-                        Closing The Digital Skills Gap: How we are empowering
-                        youth worldwide
-                      </h1>
+              {/* NEWS ARTICLES - Only render if articles exist */}
+              {lookups_NewsArticles?.items &&
+                lookups_NewsArticles.items.length > 0 && (
+                  <>
+                    <div className="w-full max-w-7xl">
+                      <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 md:gap-8 lg:gap-16">
+                        {lookups_NewsArticles.items.map((article, index) => (
+                          <NewsArticleCard key={index} data={article} />
+                        ))}
+                      </ScrollableContainer>
                     </div>
-                    <p className="text-gray-dark text-sm">
-                      As digital technology rapidly transforms the workforce, a
-                      global digital skills gap is leaving many young people
-                      behind, especially girls and young women. UNICEF and
-                      committed private sector partners are equipping the next
-                      generation with essential digital, entrepreneurial and AI
-                      skills.. <br />
-                      Read more.
-                    </p>
-                  </div>
 
-                  {/* WOMAN */}
-                  <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
-                    <div className="flex flex-row gap-6">
-                      <Image
-                        src={imageThumbnailWoman}
-                        alt="Woman"
-                        className="w-full max-w-[90px] rounded-full"
-                        sizes="100vw"
-                      />
-
-                      <h1 className="text-[18px] font-bold">
-                        Closing The Digital Skills Gap: How we are empowering
-                        youth worldwide
-                      </h1>
-                    </div>
-                    <p className="text-gray-dark text-sm">
-                      As digital technology rapidly transforms the workforce, a
-                      global digital skills gap is leaving many young people
-                      behind, especially girls and young women. UNICEF and
-                      committed private sector partners are equipping the next
-                      generation with essential digital, entrepreneurial and AI
-                      skills.. <br />
-                      Read more.
-                    </p>
-                  </div>
-
-                  {/* UNICEF */}
-                  <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
-                    <div className="flex flex-row gap-6">
-                      <Image
-                        src={imageThumbnailWoman}
-                        alt="Woman"
-                        className="w-full max-w-[90px] rounded-full"
-                        sizes="100vw"
-                      />
-
-                      <h1 className="text-[18px] font-bold">
-                        Closing The Digital Skills Gap: How we are empowering
-                        youth worldwide
-                      </h1>
-                    </div>
-                    <p className="text-gray-dark text-sm">
-                      As digital technology rapidly transforms the workforce, a
-                      global digital skills gap is leaving many young people
-                      behind, especially girls and young women. UNICEF and
-                      committed private sector partners are equipping the next
-                      generation with essential digital, entrepreneurial and AI
-                      skills.. <br />
-                      Read more.
-                    </p>
-                  </div>
-                </ScrollableContainer>
-              </div>
-
-              <button
-                type="button"
-                className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-base text-white normal-case"
-              >
-                Read more stories
-              </button>
+                    <Link
+                      href="https://yomaonline.substack.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-base text-white normal-case"
+                    >
+                      Read more stories
+                    </Link>
+                  </>
+                )}
 
               {/* PARTNERS */}
               <PartnerLogos />

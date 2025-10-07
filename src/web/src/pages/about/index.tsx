@@ -19,15 +19,33 @@ import { GetStaticProps } from "next";
 import { OpportunityCategory, PublishedState } from "~/api/models/opportunity";
 import { getOpportunityCategories } from "~/api/services/opportunities";
 import router from "next/router";
+import { searchNewsArticles } from "~/api/services/newsfeed";
+import { FeedType, NewsArticleSearchResults } from "~/api/models/newsfeed";
+import { NewsArticleCard } from "~/components/News/NewsArticleCard";
+import Link from "next/link";
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const lookups_categories = await getOpportunityCategories(
     [PublishedState.Active, PublishedState.NotStarted],
     context,
   );
+
+  const lookups_NewsArticles = await searchNewsArticles(
+    {
+      feedType: FeedType.AboutUs,
+      startDate: null,
+      endDate: null,
+      valueContains: null,
+      pageNumber: 1,
+      pageSize: 3,
+    },
+    context,
+  );
+
   return {
     props: {
       lookups_categories,
+      lookups_NewsArticles,
     },
 
     // Next.js will attempt to re-generate the page:
@@ -39,7 +57,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
 const About: NextPageWithLayout<{
   lookups_categories: OpportunityCategory[];
-}> = ({ lookups_categories }) => {
+  lookups_NewsArticles: NewsArticleSearchResults;
+}> = ({ lookups_categories, lookups_NewsArticles }) => {
   const onClickCategoryFilter = useCallback((cat: OpportunityCategory) => {
     void router.push(
       `/opportunities?categories=${encodeURIComponent(cat.name)}`,
@@ -286,87 +305,27 @@ const About: NextPageWithLayout<{
           <section className="z-10 w-full py-8">
             <div className="flex flex-col items-center justify-center px-4">
               {/* NEWS */}
-              <div className="w-full max-w-7xl">
-                <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 md:gap-8 lg:gap-20">
-                  {/* WOMAN */}
-                  <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
-                    <div className="flex flex-row gap-6">
-                      <Image
-                        src={imageThumbnailWoman}
-                        alt="Woman"
-                        className="w-full max-w-[90px] rounded-full"
-                        sizes="100vw"
-                      />
-
-                      <h1 className="text-[18px] font-bold">
-                        Closing The Digital Skills Gap: How we are empowering
-                        youth worldwide
-                      </h1>
+              {lookups_NewsArticles?.items &&
+                lookups_NewsArticles.items.length > 0 && (
+                  <>
+                    <div className="w-full max-w-7xl">
+                      <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 md:gap-8 lg:gap-16">
+                        {lookups_NewsArticles.items.map((article, index) => (
+                          <NewsArticleCard key={index} data={article} />
+                        ))}
+                      </ScrollableContainer>
                     </div>
-                    <p className="text-gray-dark text-sm">
-                      As digital technology rapidly transforms the workforce, a
-                      global digital skills gap is leaving many young people
-                      behind, especially girls and young women. UNICEF and
-                      committed private sector partners are equipping the next
-                      generation with essential digital, entrepreneurial and AI
-                      skills.. <br />
-                      Read more.
-                    </p>
-                  </div>
 
-                  {/* WOMAN */}
-                  <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
-                    <div className="flex flex-row gap-6">
-                      <Image
-                        src={imageThumbnailWoman}
-                        alt="Woman"
-                        className="w-full max-w-[90px] rounded-full"
-                        sizes="100vw"
-                      />
-
-                      <h1 className="text-[18px] font-bold">
-                        Closing The Digital Skills Gap: How we are empowering
-                        youth worldwide
-                      </h1>
-                    </div>
-                    <p className="text-gray-dark text-sm">
-                      As digital technology rapidly transforms the workforce, a
-                      global digital skills gap is leaving many young people
-                      behind, especially girls and young women. UNICEF and
-                      committed private sector partners are equipping the next
-                      generation with essential digital, entrepreneurial and AI
-                      skills.. <br />
-                      Read more.
-                    </p>
-                  </div>
-
-                  {/* UNICEF */}
-                  <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col items-center gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
-                    <div className="flex flex-row gap-6">
-                      <Image
-                        src={imageThumbnailWoman}
-                        alt="Woman"
-                        className="w-full max-w-[90px] rounded-full"
-                        sizes="100vw"
-                      />
-
-                      <h1 className="text-[18px] font-bold">
-                        Closing The Digital Skills Gap: How we are empowering
-                        youth worldwide
-                      </h1>
-                    </div>
-                    <p className="text-gray-dark text-sm">
-                      As digital technology rapidly transforms the workforce, a
-                      global digital skills gap is leaving many young people
-                      behind, especially girls and young women. UNICEF and
-                      committed private sector partners are equipping the next
-                      generation with essential digital, entrepreneurial and AI
-                      skills.. <br />
-                      Read more.
-                    </p>
-                  </div>
-                </ScrollableContainer>
-              </div>
+                    <Link
+                      href="https://yomastories.substack.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-base text-white normal-case"
+                    >
+                      Read more news
+                    </Link>
+                  </>
+                )}
 
               {/* CENTER: HEADER AND CATEGORIES */}
               <div className="mt-8 flex flex-col items-center gap-2 px-6 text-center text-sm">
