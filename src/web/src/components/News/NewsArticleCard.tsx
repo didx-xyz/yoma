@@ -8,8 +8,14 @@ interface NewsArticleCardProps {
 }
 
 export const NewsArticleCard: React.FC<NewsArticleCardProps> = ({ data }) => {
-  // Strip HTML tags from description
-  const cleanDescription = data.description.replace(/<[^>]*>/g, "");
+  // Strip HTML tags and sanitize description
+  const cleanDescription = data.description
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "") // Remove script tags
+    .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "") // Remove iframe tags
+    .replace(/javascript:/gi, "") // Remove javascript: protocol
+    .replace(/on\w+\s*=\s*["'][^"']*["']/gi, "") // Remove inline event handlers
+    .replace(/<[^>]*>/g, "") // Remove all remaining HTML tags
+    .trim();
 
   return (
     <div className="flex h-[300px] w-[340px] flex-shrink-0 flex-col gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
@@ -17,9 +23,9 @@ export const NewsArticleCard: React.FC<NewsArticleCardProps> = ({ data }) => {
         <Image
           src={data.thumbnailURL || imageThumbnailWoman}
           alt={data.title || "News article"}
-          className="object-coverx max-h-[90px] w-full max-w-[90px] rounded-full"
-          width={90}
-          height={90}
+          className="w-[80px] rounded-full object-contain"
+          width={80}
+          height={80}
           sizes="100vw"
         />
 
@@ -27,7 +33,7 @@ export const NewsArticleCard: React.FC<NewsArticleCardProps> = ({ data }) => {
           href={data.url || "#"}
           target="_blank"
           rel="noopener noreferrer"
-          className="hover:text-green line-clamp-3 text-[18px] font-bold transition-colors"
+          className="hover:text-green line-clamp-2 text-[18px] font-bold transition-colors"
         >
           {data.title}
         </Link>
