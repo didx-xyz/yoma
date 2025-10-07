@@ -28,6 +28,21 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Public Members
+    [SwaggerOperation(Summary = "List available news feeds",
+      Description = "Returns all configured news feeds (e.g., News, Stories)")]
+    [HttpGet("feeds")]
+    [ProducesResponseType(typeof(IEnumerable<NewsFeed>), (int)HttpStatusCode.OK)]
+    public ActionResult<IEnumerable<NewsFeed>> ListFeeds()
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(ListFeeds));
+
+      var feeds = _newsFeedService.ListFeeds();
+
+      _logger.LogInformation("Request {requestName} handled", nameof(ListFeeds));
+
+      return Ok(feeds);
+    }
+
     [SwaggerOperation(Summary = "Search for news articles",
       Description = "Returns a paged list of news articles (newest first) based on the supplied filter")]
     [HttpPost("article/search")]

@@ -16,7 +16,7 @@ namespace Yoma.Core.Infrastructure.Substack.Repositories
       return _context.FeedSyncTracking.Select(entity => new FeedSyncTracking
       {
         Id = entity.Id,
-        FeedType = Enum.Parse<Domain.NewsFeedProvider.FeedType>(entity.FeedType),
+        FeedType = entity.FeedType,
         ETag = entity.ETag,
         FeedLastModified = entity.FeedLastModified,
         DateCreated = entity.DateCreated,
@@ -32,7 +32,7 @@ namespace Yoma.Core.Infrastructure.Substack.Repositories
       var entity = new Entities.FeedSyncTracking
       {
         Id = item.Id,
-        FeedType = item.FeedType.ToString(),
+        FeedType = item.FeedType,
         ETag = item.ETag,
         FeedLastModified = item.FeedLastModified,
         DateCreated = item.DateCreated,

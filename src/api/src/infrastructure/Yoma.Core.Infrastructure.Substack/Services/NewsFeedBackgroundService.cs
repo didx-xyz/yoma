@@ -128,17 +128,17 @@ namespace Yoma.Core.Infrastructure.Substack.Services
       client.Timeout = TimeSpan.FromSeconds(_options.RequestTimeoutSeconds);
       client.DefaultRequestHeaders.UserAgent.ParseAdd(_options.UserAgent);
 
-      foreach (var (feedType, feedUrl) in _options.Feeds)
+      foreach (var (feedType, feed) in _options.Feeds)
       {
         try
         {
           _logger.LogInformation("HTTP sync start: {FeedType}", feedType);
 
-          var tracking = _feedSyncTrackingRepository.Query().SingleOrDefault(t => t.FeedType == feedType);
+          var tracking = _feedSyncTrackingRepository.Query().SingleOrDefault(t => t.FeedType == feedType.ToString());
           var isNewTracking = tracking is null;
-          tracking ??= new FeedSyncTracking { FeedType = feedType };
+          tracking ??= new FeedSyncTracking { FeedType = feedType.ToString() };
 
-          using var req = new HttpRequestMessage(HttpMethod.Get, feedUrl);
+          using var req = new HttpRequestMessage(HttpMethod.Get, feed.FeedURL);
 
           // Conditional headers only if we have state
           if (!isNewTracking)
@@ -286,24 +286,24 @@ namespace Yoma.Core.Infrastructure.Substack.Services
       foreach (var x in items)
       {
         var guid = x.Element("guid")?.Value?.Trim();
-        var link = x.Element("link")?.Value?.Trim();
+        var url = x.Element("link")?.Value?.Trim();
 
         // Skip malformed items: must have a navigable link
-        if (string.IsNullOrWhiteSpace(link))
+        if (string.IsNullOrWhiteSpace(url))
           continue;
 
         // Prefer GUID for stable deduplication; fallback to link
-        var externalId = !string.IsNullOrWhiteSpace(guid) ? guid : link;
+        var externalId = !string.IsNullOrWhiteSpace(guid) ? guid : url;
 
         var title = x.Element("title")?.Value?.Trim() ?? string.Empty;
 
-        // Body HTML: prefer <content:encoded>, else <description>
-        var html = (string?)x.Element(XNamespace.Get(XNamespace_Content) + "encoded")
-                  ?? (string?)x.Element("description")
+        // Body HTML: prefer <description> (short summary), fallback to <content:encoded>
+        var description = (string?)x.Element("description")
+                  ?? (string?)x.Element(XNamespace.Get(XNamespace_Content) + "encoded")
                   ?? string.Empty;
 
         // Image: prefer <enclosure>, fallback to <media:thumbnail> for legacy feeds
-        var thumb = (string?)x.Element("enclosure")?.Attribute("url")?.Value?.Trim()
+        var thumbnailUrl = (string?)x.Element("enclosure")?.Attribute("url")?.Value?.Trim()
                     ?? (string?)x.Element(XNamespace.Get("http://search.yahoo.com/mrss/") + "thumbnail")?.Attribute("url")?.Value?.Trim();
 
         // Published date: <pubDate>, <dc:date>, fallback to now
@@ -319,9 +319,9 @@ namespace Yoma.Core.Infrastructure.Substack.Services
         {
           ExternalId = externalId!,
           Title = title,
-          Description = html, 
-          URL = link!,
-          ThumbnailURL = thumb,
+          Description = description, 
+          URL = url!,
+          ThumbnailURL = thumbnailUrl,
           PublishedDate = published
         });
       }

@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.NewsFeedProvider.Models
 {
   public class NewsArticleSearchFilter : PaginationFilter
   {
-    public FeedType FeedType { get; set; }
+    public FeedType? FeedType { get; set; }
 
     public DateTimeOffset? StartDate { get; set; }
 

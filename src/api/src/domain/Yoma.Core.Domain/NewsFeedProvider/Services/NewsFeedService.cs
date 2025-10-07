@@ -18,11 +18,16 @@ namespace Yoma.Core.Domain.NewsFeedProvider.Services
       NewsArticleSearchFilterValidator newsArticleSearchFilterValidator)
     {
       _newsFeedProviderClient = newsFeedProviderClientFactory.CreateClient();
-      _newsArticleSearchFilterValidator = newsArticleSearchFilterValidator ?? throw new ArgumentNullException(nameof(newsArticleSearchFilterValidator));  
+      _newsArticleSearchFilterValidator = newsArticleSearchFilterValidator ?? throw new ArgumentNullException(nameof(newsArticleSearchFilterValidator));
     }
     #endregion
 
     #region Public Members
+    public List<NewsFeed> ListFeeds()
+    {
+      return _newsFeedProviderClient.ListFeeds();
+    }
+
     public NewsArticleSearchResults Search(NewsArticleSearchFilter filter)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
