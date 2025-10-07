@@ -4,6 +4,7 @@ import ApiServer from "~/lib/axiosServer";
 import {
   NewsArticleSearchFilter,
   NewsArticleSearchResults,
+  NewsFeed,
 } from "../models/newsfeed";
 
 export const searchNewsArticles = async (
@@ -16,6 +17,16 @@ export const searchNewsArticles = async (
     `/newsfeed/article/search`,
     filter,
   );
+
+  return data;
+};
+
+export const listNewsFeeds = async (
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<NewsFeed[]> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+
+  const { data } = await instance.get<NewsFeed[]>(`/newsfeed/feeds`);
 
   return data;
 };

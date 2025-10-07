@@ -12,7 +12,7 @@ export const NewsArticleCard: React.FC<NewsArticleCardProps> = ({ data }) => {
   const cleanDescription = data.description.replace(/<[^>]*>/g, "");
 
   return (
-    <div className="flex h-[327px] w-[340px] flex-shrink-0 flex-col gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
+    <div className="flex h-[300px] w-[340px] flex-shrink-0 flex-col gap-4 rounded-xl bg-white p-6 shadow-lg md:w-[380px] md:py-8">
       <div className="flex flex-row gap-6">
         <Image
           src={data.thumbnailURL || imageThumbnailWoman}
@@ -32,12 +32,12 @@ export const NewsArticleCard: React.FC<NewsArticleCardProps> = ({ data }) => {
           {data.title}
         </Link>
       </div>
-      <p className="text-gray-dark line-clamp-5 text-sm">{cleanDescription}</p>
+      <p className="text-gray-dark line-clamp-6 text-sm">{cleanDescription}</p>
       <Link
         href={data.url || "#"}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-green mt-autox t text-sm font-semibold hover:underline"
+        className="text-green font-semiboldx text-sm font-bold hover:underline"
       >
         Read more...
       </Link>

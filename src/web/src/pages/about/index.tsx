@@ -1,28 +1,31 @@
+import { GetStaticProps } from "next";
+import Head from "next/head";
 import Image from "next/image";
-import imagePlant from "public/images/home/icon_plant.svg";
-import imageStats from "public/images/home/icon_stats.svg";
-import imagePeople from "public/images/home/icon_people.svg";
+import Link from "next/link";
+import router from "next/router";
+import imageAboutInfo from "public/images/home/about_info.png";
 import imageExclaimation from "public/images/home/icon_exclaimation.svg";
 import imageLink from "public/images/home/icon_link.svg";
-import imageThumbnailWoman from "public/images/home/thumbnail-woman.png";
-import imageAboutInfo from "public/images/home/about_info.png";
+import imagePeople from "public/images/home/icon_people.svg";
+import imagePlant from "public/images/home/icon_plant.svg";
+import imageStats from "public/images/home/icon_stats.svg";
 import { useCallback, type ReactElement } from "react";
 import "react-datepicker/dist/react-datepicker.css";
+import {
+  FeedType,
+  NewsArticleSearchResults,
+  NewsFeed,
+} from "~/api/models/newsfeed";
+import { OpportunityCategory, PublishedState } from "~/api/models/opportunity";
+import { listNewsFeeds, searchNewsArticles } from "~/api/services/newsfeed";
+import { getOpportunityCategories } from "~/api/services/opportunities";
 import { ScrollableContainer } from "~/components/Carousel";
 import PartnerLogos from "~/components/Home/PartnerLogos";
 import MainLayout from "~/components/Layout/Main";
-import { type NextPageWithLayout } from "../_app";
-import { THEME_WHITE } from "~/lib/constants";
-import Head from "next/head";
-import OpportunityCategoriesHorizontalFilter from "~/components/Opportunity/OpportunityCategoriesHorizontalFilter";
-import { GetStaticProps } from "next";
-import { OpportunityCategory, PublishedState } from "~/api/models/opportunity";
-import { getOpportunityCategories } from "~/api/services/opportunities";
-import router from "next/router";
-import { searchNewsArticles } from "~/api/services/newsfeed";
-import { FeedType, NewsArticleSearchResults } from "~/api/models/newsfeed";
 import { NewsArticleCard } from "~/components/News/NewsArticleCard";
-import Link from "next/link";
+import OpportunityCategoriesHorizontalFilter from "~/components/Opportunity/OpportunityCategoriesHorizontalFilter";
+import { PAGE_SIZE_MINIMUM, THEME_WHITE } from "~/lib/constants";
+import { type NextPageWithLayout } from "../_app";
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const lookups_categories = await getOpportunityCategories(
@@ -32,20 +35,25 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
   const lookups_NewsArticles = await searchNewsArticles(
     {
-      feedType: FeedType.AboutUs,
+      feedType: FeedType.News,
       startDate: null,
       endDate: null,
       valueContains: null,
       pageNumber: 1,
-      pageSize: 3,
+      pageSize: PAGE_SIZE_MINIMUM,
     },
     context,
+  );
+
+  const lookup_NewsFeed = (await listNewsFeeds(context)).find(
+    (feed) => feed.type === "News",
   );
 
   return {
     props: {
       lookups_categories,
       lookups_NewsArticles,
+      lookup_NewsFeed,
     },
 
     // Next.js will attempt to re-generate the page:
@@ -58,7 +66,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
 const About: NextPageWithLayout<{
   lookups_categories: OpportunityCategory[];
   lookups_NewsArticles: NewsArticleSearchResults;
-}> = ({ lookups_categories, lookups_NewsArticles }) => {
+  lookup_NewsFeed: NewsFeed;
+}> = ({ lookups_categories, lookups_NewsArticles, lookup_NewsFeed }) => {
   const onClickCategoryFilter = useCallback((cat: OpportunityCategory) => {
     void router.push(
       `/opportunities?categories=${encodeURIComponent(cat.name)}`,
@@ -309,21 +318,26 @@ const About: NextPageWithLayout<{
                 lookups_NewsArticles.items.length > 0 && (
                   <>
                     <div className="w-full max-w-7xl">
-                      <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 md:gap-8 lg:gap-16">
+                      <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 xl:gap-8">
                         {lookups_NewsArticles.items.map((article, index) => (
                           <NewsArticleCard key={index} data={article} />
                         ))}
                       </ScrollableContainer>
                     </div>
 
-                    <Link
-                      href="https://yomastories.substack.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-base text-white normal-case"
-                    >
-                      Read more news
-                    </Link>
+                    {lookup_NewsFeed && (
+                      <Link
+                        href={lookup_NewsFeed.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-base text-white normal-case"
+                      >
+                        Read more{" "}
+                        <span className="lowercase">
+                          {lookup_NewsFeed.type}
+                        </span>
+                      </Link>
+                    )}
                   </>
                 )}
 

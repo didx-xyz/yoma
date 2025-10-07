@@ -1,5 +1,8 @@
+import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/router";
+import { GetStaticProps } from "next/types";
 import imageWoman2 from "public/images/home/bg-woman.png";
 import imageCardYOID from "public/images/home/card-yoid.png";
 import imageDiamond from "public/images/home/icon_diamond.svg";
@@ -9,41 +12,47 @@ import imageHat from "public/images/home/icon_hat.svg";
 import imageLock from "public/images/home/icon_lock.svg";
 import imagePin from "public/images/home/icon_pin.svg";
 import imagePlant from "public/images/home/icon_plant.svg";
-import imageStencilPurple from "public/images/home/stencil-purple.png";
-import imageThumbnailWoman from "public/images/home/thumbnail-woman.png";
 import imageWallet from "public/images/home/icon_wallet.svg";
+import imageStencilPurple from "public/images/home/stencil-purple.png";
 import imageStamp1 from "public/images/stamp-1.png";
 import imageStamp2 from "public/images/stamp-2.png";
 import { type ReactElement, useCallback } from "react";
 import "react-datepicker/dist/react-datepicker.css";
+import {
+  FeedType,
+  NewsArticleSearchResults,
+  NewsFeed,
+} from "~/api/models/newsfeed";
+import { listNewsFeeds, searchNewsArticles } from "~/api/services/newsfeed";
 import { ScrollableContainer } from "~/components/Carousel";
 import { HomeSearchInputLarge } from "~/components/Home/HomeSearchInputLarge";
 import PartnerLogos from "~/components/Home/PartnerLogos";
 import MainLayout from "~/components/Layout/Main";
-import { THEME_WHITE } from "~/lib/constants";
-import type { NextPageWithLayout } from "./_app";
-import Head from "next/head";
-import { searchNewsArticles } from "~/api/services/newsfeed";
-import { FeedType, NewsArticleSearchResults } from "~/api/models/newsfeed";
-import { GetStaticProps } from "next/types";
-import Link from "next/link";
 import { NewsArticleCard } from "~/components/News/NewsArticleCard";
+import { PAGE_SIZE_MINIMUM, THEME_WHITE } from "~/lib/constants";
+import type { NextPageWithLayout } from "./_app";
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const lookups_NewsArticles = await searchNewsArticles(
     {
-      feedType: FeedType.General,
+      feedType: FeedType.Stories,
       startDate: null,
       endDate: null,
       valueContains: null,
       pageNumber: 1,
-      pageSize: 3,
+      pageSize: PAGE_SIZE_MINIMUM,
     },
     context,
   );
+
+  const lookup_NewsFeed = (await listNewsFeeds(context)).find(
+    (feed) => feed.type === "Stories",
+  );
+
   return {
     props: {
       lookups_NewsArticles,
+      lookup_NewsFeed,
     },
 
     // Next.js will attempt to re-generate the page:
@@ -55,7 +64,8 @@ export const getStaticProps: GetStaticProps = async (context) => {
 
 const Home: NextPageWithLayout<{
   lookups_NewsArticles: NewsArticleSearchResults;
-}> = ({ lookups_NewsArticles }) => {
+  lookup_NewsFeed: NewsFeed;
+}> = ({ lookups_NewsArticles, lookup_NewsFeed }) => {
   const router = useRouter();
 
   const onSearchInputSubmit = useCallback(
@@ -415,26 +425,31 @@ const Home: NextPageWithLayout<{
         <div className="bg-beige w-full">
           <section className="relative z-10 w-full pt-16 pb-8">
             <div className="-mt-36 flex flex-col items-center justify-center px-4">
-              {/* NEWS ARTICLES - Only render if articles exist */}
+              {/* NEWS */}
               {lookups_NewsArticles?.items &&
                 lookups_NewsArticles.items.length > 0 && (
                   <>
                     <div className="w-full max-w-7xl">
-                      <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 md:gap-8 lg:gap-16">
+                      <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 xl:gap-8">
                         {lookups_NewsArticles.items.map((article, index) => (
                           <NewsArticleCard key={index} data={article} />
                         ))}
                       </ScrollableContainer>
                     </div>
 
-                    <Link
-                      href="https://yomaonline.substack.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-base text-white normal-case"
-                    >
-                      Read more stories
-                    </Link>
+                    {lookup_NewsFeed && (
+                      <Link
+                        href={lookup_NewsFeed.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-base text-white normal-case"
+                      >
+                        Read more{" "}
+                        <span className="lowercase">
+                          {lookup_NewsFeed.type}
+                        </span>
+                      </Link>
+                    )}
                   </>
                 )}
 
