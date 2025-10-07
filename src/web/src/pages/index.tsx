@@ -1,8 +1,9 @@
+import type { GetStaticProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
-import { GetStaticProps } from "next/types";
+import { env } from "process";
 import imageWoman2 from "public/images/home/bg-woman.png";
 import imageCardYOID from "public/images/home/card-yoid.png";
 import imageDiamond from "public/images/home/icon_diamond.svg";
@@ -32,7 +33,25 @@ import { NewsArticleCard } from "~/components/News/NewsArticleCard";
 import { PAGE_SIZE_MINIMUM, THEME_WHITE } from "~/lib/constants";
 import type { NextPageWithLayout } from "./_app";
 
+// 👇 SSG
+// This page undergoes static generation at run time on the server-side.
+// The build-time SSG has been disabled due to missing API url configuration in the CI pipeline (see getStaticPaths below).
 export const getStaticProps: GetStaticProps = async (context) => {
+  // disable build-time SSG in CI environment
+  if (env.CI) {
+    return {
+      props: {
+        lookups_NewsArticles: null,
+        lookup_NewsFeed: null,
+      },
+
+      // Next.js will attempt to re-generate the page:
+      // - When a request comes in
+      // - At most once every 300 seconds
+      revalidate: 300,
+    };
+  }
+
   const lookups_NewsArticles = await searchNewsArticles(
     {
       feedType: FeedType.Stories,

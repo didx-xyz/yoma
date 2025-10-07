@@ -3,6 +3,7 @@ import Head from "next/head";
 import Image from "next/image";
 import Link from "next/link";
 import router from "next/router";
+import { env } from "process";
 import imageAboutInfo from "public/images/home/about_info.png";
 import imageExclaimation from "public/images/home/icon_exclaimation.svg";
 import imageLink from "public/images/home/icon_link.svg";
@@ -27,7 +28,26 @@ import OpportunityCategoriesHorizontalFilter from "~/components/Opportunity/Oppo
 import { PAGE_SIZE_MINIMUM, THEME_WHITE } from "~/lib/constants";
 import { type NextPageWithLayout } from "../_app";
 
+// 👇 SSG
+// This page undergoes static generation at run time on the server-side.
+// The build-time SSG has been disabled due to missing API url configuration in the CI pipeline (see getStaticPaths below).
 export const getStaticProps: GetStaticProps = async (context) => {
+  // disable build-time SSG in CI environment
+  if (env.CI) {
+    return {
+      props: {
+        lookups_categories: null,
+        lookups_NewsArticles: null,
+        lookup_NewsFeed: null,
+      },
+
+      // Next.js will attempt to re-generate the page:
+      // - When a request comes in
+      // - At most once every 300 seconds
+      revalidate: 300,
+    };
+  }
+
   const lookups_categories = await getOpportunityCategories(
     [PublishedState.Active, PublishedState.NotStarted],
     context,
