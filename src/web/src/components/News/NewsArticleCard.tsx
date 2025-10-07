@@ -12,7 +12,7 @@ export const NewsArticleCard: React.FC<NewsArticleCardProps> = ({ data }) => {
   const cleanDescription = data.description
     .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, "") // Remove script tags
     .replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, "") // Remove iframe tags
-    .replace(/javascript:/gi, "") // Remove javascript: protocol
+    .replace(/(?:javascript:|data:|vbscript:)/gi, "") // Remove dangerous URL schemes
     .replace(/on\w+\s*=\s*["'][^"']*["']/gi, "") // Remove inline event handlers
     .replace(/<[^>]*>/g, "") // Remove all remaining HTML tags
     .trim();
