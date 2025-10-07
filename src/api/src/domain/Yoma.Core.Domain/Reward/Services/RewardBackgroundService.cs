@@ -123,7 +123,7 @@ namespace Yoma.Core.Domain.Reward.Services
             }
             catch (Exception ex)
             {
-              _logger.LogError(ex, "Failed to proceess reward wallet creation for item with id '{id}': {errorMessage}", item.Id, ex.Message);
+              _logger.LogError(ex, "Failed to process reward wallet creation for item with id '{id}': {errorMessage}", item.Id, ex.Message);
 
               item.Status = WalletCreationStatus.Error;
               item.ErrorReason = ex.Message;
