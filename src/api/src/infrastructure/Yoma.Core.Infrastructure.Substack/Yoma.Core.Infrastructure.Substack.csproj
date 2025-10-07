@@ -7,13 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="yoma-news-aboutus.xml" />
-    <None Remove="yoma-news-general.xml" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="yoma-news-aboutus.xml" />
-    <EmbeddedResource Include="yoma-news-general.xml" />
+    <EmbeddedResource Include="yoma-news.xml" />
+    <EmbeddedResource Include="yoma-stories.xml" />
   </ItemGroup>
 
   <ItemGroup>

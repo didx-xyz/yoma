@@ -100,7 +100,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
     {
       var assembly = typeof(EmsiClient).Assembly;
       var assemblyName = assembly.GetName().Name;
-      var resourceName = $"{assemblyName}.Emsi.payload_local_skills.json";
+      var resourceName = $"{assemblyName}.payload_local_skills.json";
 
       using var resourceStream = assembly.GetManifestResourceStream(resourceName)
           ?? throw new InvalidOperationException($"Embedded resource '{resourceName}' not found. Ensure Build Action = Embedded Resource");

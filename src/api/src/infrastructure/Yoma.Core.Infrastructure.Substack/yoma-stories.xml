@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:content="http://purl.org/rss/1.0/modules/content/"
+     xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title><![CDATA[ YOMA Stories ]]></title>
+    <description><![CDATA[ Success stories and mission updates from the YOMA team ]]></description>
+    <link>https://yomastories.substack.com</link>
+
+    <image>
+      <url>https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png</url>
+      <title>YOMA Stories</title>
+      <link>https://yomastories.substack.com</link>
+    </image>
+
+    <generator>Substack</generator>
+    <lastBuildDate>Mon, 06 Oct 2025 09:30:00 GMT</lastBuildDate>
+    <atom:link href="https://yomastories.substack.com/feed" rel="self" type="application/rss+xml"/>
+
+    <!-- Item 1 -->
+    <item>
+      <title><![CDATA[ Our Mission to Empower Youth ]]></title>
+      <description>
+        <![CDATA[
+        <p>At YOMA, our mission is to empower young people to gain real-world skills, 
+        access learning opportunities, and earn rewards that unlock their full potential.</p>
+        <p>We’re driven by the belief that every young person deserves a chance to succeed.</p>
+      ]]>
+      </description>
+      <link>https://yomastories.substack.com/p/our-mission-to-empower-youth</link>
+      <guid isPermaLink="false">https://yomastories.substack.com/p/our-mission-to-empower-youth</guid>
+      <dc:creator><![CDATA[ YOMA Updates ]]></dc:creator>
+      <pubDate>Mon, 06 Oct 2025 08:30:00 GMT</pubDate>
+      <enclosure url="https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png" length="0" type="image/png"/>
+      <content:encoded>
+        <![CDATA[
+        <p>At YOMA, our mission is to empower young people to gain real-world skills, 
+        access learning opportunities, and earn rewards that unlock their full potential.</p>
+        <p>We’re driven by the belief that every young person deserves a chance to succeed.</p>
+      ]]>
+      </content:encoded>
+    </item>
+
+    <!-- Item 2 -->
+    <item>
+      <title><![CDATA[ Meet the Team Behind YOMA ]]></title>
+      <description>
+        <![CDATA[
+        <p>From developers and designers to youth engagement specialists — 
+        our team is passionate about creating technology that drives social change.</p>
+        <p>Learn more about the people making YOMA possible.</p>
+      ]]>
+      </description>
+      <link>https://yomastories.substack.com/p/meet-the-team-behind-yoma</link>
+      <guid isPermaLink="false">https://yomastories.substack.com/p/meet-the-team-behind-yoma</guid>
+      <dc:creator><![CDATA[ YOMA Updates ]]></dc:creator>
+      <pubDate>Wed, 01 Oct 2025 11:15:00 GMT</pubDate>
+      <enclosure url="https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png" length="0" type="image/png"/>
+      <content:encoded>
+        <![CDATA[
+        <p>From developers and designers to youth engagement specialists — 
+        our team is passionate about creating technology that drives social change.</p>
+        <p>Learn more about the people making YOMA possible.</p>
+      ]]>
+      </content:encoded>
+    </item>
+
+    <!-- Item 3 -->
+    <item>
+      <title><![CDATA[ Building Partnerships that Matter ]]></title>
+      <description>
+        <![CDATA[
+        <p>Collaboration is at the heart of everything we do. 
+        Discover how YOMA works with governments, organizations, and private partners to create opportunities for youth.</p>
+      ]]>
+      </description>
+      <link>https://yomastories.substack.com/p/building-partnerships-that-matter</link>
+      <guid isPermaLink="false">https://yomastories.substack.com/p/building-partnerships-that-matter</guid>
+      <dc:creator><![CDATA[ YOMA Updates ]]></dc:creator>
+      <pubDate>Fri, 26 Sep 2025 09:45:00 GMT</pubDate>
+      <enclosure url="https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png" length="0" type="image/png"/>
+      <content:encoded>
+        <![CDATA[
+        <p>Collaboration is at the heart of everything we do. 
+        Discover how YOMA works with governments, organizations, and private partners to create opportunities for youth.</p>
+      ]]>
+      </content:encoded>
+    </item>
+
+    <!-- Item 4 -->
+    <item>
+      <title><![CDATA[ YOMA’s Journey So Far ]]></title>
+      <description>
+        <![CDATA[
+        <p>From pilot projects to international collaborations, 
+        YOMA has grown into a platform that empowers thousands of young people across the globe.</p>
+      ]]>
+      </description>
+      <link>https://yomastories.substack.com/p/yomas-journey-so-far</link>
+      <guid isPermaLink="false">https://yomastories.substack.com/p/yomas-journey-so-far</guid>
+      <dc:creator><![CDATA[ YOMA Updates ]]></dc:creator>
+      <pubDate>Tue, 23 Sep 2025 10:00:00 GMT</pubDate>
+      <enclosure url="https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png" length="0" type="image/png"/>
+      <content:encoded>
+        <![CDATA[
+        <p>From pilot projects to international collaborations, 
+        YOMA has grown into a platform that empowers thousands of young people across the globe.</p>
+      ]]>
+      </content:encoded>
+    </item>
+
+    <!-- Item 5 -->
+    <item>
+      <title><![CDATA[ Our Vision for the Future ]]></title>
+      <description>
+        <![CDATA[
+        <p>We believe in a future where young people have equal access to learning, 
+        earning, and growth opportunities—no matter where they come from.</p>
+        <p>Read how YOMA is shaping that future.</p>
+      ]]>
+      </description>
+      <link>https://yomastories.substack.com/p/our-vision-for-the-future</link>
+      <guid isPermaLink="false">https://yomastories.substack.com/p/our-vision-for-the-future</guid>
+      <dc:creator><![CDATA[ YOMA Updates ]]></dc:creator>
+      <pubDate>Fri, 19 Sep 2025 12:00:00 GMT</pubDate>
+      <enclosure url="https://yoma-v3-public-storage.s3.eu-west-1.amazonaws.com/shared-resources/yoma.png" length="0" type="image/png"/>
+      <content:encoded>
+        <![CDATA[
+        <p>We believe in a future where young people have equal access to learning, 
+        earning, and growth opportunities—no matter where they come from.</p>
+        <p>Read how YOMA is shaping that future.</p>
+      ]]>
+      </content:encoded>
+    </item>
+
+  </channel>
+</rss>

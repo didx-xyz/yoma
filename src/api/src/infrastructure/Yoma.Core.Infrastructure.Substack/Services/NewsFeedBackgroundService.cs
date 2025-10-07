@@ -25,7 +25,6 @@ namespace Yoma.Core.Infrastructure.Substack.Services
     private readonly IDistributedLockService _distributedLockService;
     private readonly IExecutionStrategyService _executionStrategyService;
 
-    private const string XNamespace_Media = "http://search.yahoo.com/mrss/";
     private const string XNamespace_Content = "http://purl.org/rss/1.0/modules/content/";
     private const string XNamespace_Dc = "http://purl.org/dc/elements/1.1/";
     #endregion
@@ -303,9 +302,9 @@ namespace Yoma.Core.Infrastructure.Substack.Services
                   ?? (string?)x.Element("description")
                   ?? string.Empty;
 
-        // Media: <media:thumbnail> or <media:content>
-        var thumb = (string?)x.Element(XNamespace.Get(XNamespace_Media) + "thumbnail")?.Attribute("url")?.Value?.Trim()
-                    ?? (string?)x.Element(XNamespace.Get(XNamespace_Media) + "content")?.Attribute("url")?.Value?.Trim();
+        // Image: prefer <enclosure>, fallback to <media:thumbnail> for legacy feeds
+        var thumb = (string?)x.Element("enclosure")?.Attribute("url")?.Value?.Trim()
+                    ?? (string?)x.Element(XNamespace.Get("http://search.yahoo.com/mrss/") + "thumbnail")?.Attribute("url")?.Value?.Trim();
 
         // Published date: <pubDate>, <dc:date>, fallback to now
         var pubRaw = x.Element("pubDate")?.Value?.Trim();
@@ -337,8 +336,8 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
       var fileName = feedType switch
       {
-        FeedType.General => "yoma-news-general.xml",
-        FeedType.AboutUs => "yoma-news-aboutus.xml",
+        FeedType.News => "yoma-news.xml",
+        FeedType.Stories => "yoma-stories.xml",
         _ => throw new InvalidOperationException($"Unsupported feed type '{feedType}'"),
       };
 
