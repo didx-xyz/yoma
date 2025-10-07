@@ -1,14 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 {
   [Table("OpportunityCountries", Schema = "Opportunity")]
   [Index(nameof(OpportunityId), nameof(CountryId), IsUnique = true)]
-  public class OpportunityCountry : BaseEntity<Guid>
+  public class OpportunityCountry : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [ForeignKey("OpportunityId")]

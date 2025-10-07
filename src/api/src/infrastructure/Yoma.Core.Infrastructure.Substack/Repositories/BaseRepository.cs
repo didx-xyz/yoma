@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using Yoma.Core.Infrastructure.Shared.Entities;
 using Yoma.Core.Infrastructure.Substack.Context;
-using Yoma.Core.Infrastructure.Substack.Entities;
 
 namespace Yoma.Core.Infrastructure.Substack.Repositories
 {

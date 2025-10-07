@@ -1,13 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
 {
   [Table("OpportunityVerificationTypes", Schema = "Opportunity")]
   [Index(nameof(OpportunityId), nameof(VerificationTypeId), IsUnique = true)]
-  public class OpportunityVerificationType : BaseEntity<Guid>
+  public class OpportunityVerificationType : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [ForeignKey("OpportunityId")]

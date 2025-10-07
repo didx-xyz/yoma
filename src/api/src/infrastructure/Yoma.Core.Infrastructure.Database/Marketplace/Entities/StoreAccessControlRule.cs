@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups;
 
@@ -9,7 +8,7 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
 {
   [Table("StoreAccessControlRule", Schema = "Marketplace")]
   [Index(nameof(Name), nameof(OrganizationId), nameof(StoreId), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
-  public class StoreAccessControlRule : BaseEntity<Guid>
+  public class StoreAccessControlRule : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)

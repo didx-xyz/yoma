@@ -6,6 +6,10 @@ namespace Yoma.Core.Domain.NewsFeedProvider.Models
   {
     public FeedType FeedType { get; set; }
 
+    public DateTimeOffset? StartDate { get; set; }
+
+    public DateTimeOffset? EndDate { get; set; }
+
     public string? ValueContains { get; set; }
   }
 }

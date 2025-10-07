@@ -1,13 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
   [Table("UserSkillOrganizations", Schema = "Entity")]
   [Index(nameof(UserSkillId), nameof(OrganizationId), IsUnique = true)]
-  public class UserSkillOrganization : BaseEntity<Guid>
+  public class UserSkillOrganization : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [ForeignKey("UserSkillId")]

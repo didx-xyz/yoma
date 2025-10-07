@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.NewsFeedProvider.Interfaces.Provider;
 using Yoma.Core.Domain.NewsFeedProvider.Models;
@@ -7,11 +8,11 @@ namespace Yoma.Core.Infrastructure.Substack.Client
   public class SubstackClient : INewsFeedProviderClient
   {
     #region Class Variables
-    private readonly IRepositoryValueContains<NewsArticle> _newsArticleRepository;
+    private readonly IRepositoryBatchedValueContains<NewsArticle> _newsArticleRepository;
     #endregion
 
     #region Constructor
-    public SubstackClient(IRepositoryValueContains<NewsArticle> newsArticleRepository)
+    public SubstackClient(IRepositoryBatchedValueContains<NewsArticle> newsArticleRepository)
     {
       _newsArticleRepository = newsArticleRepository ?? throw new ArgumentNullException(nameof(newsArticleRepository));
     }
@@ -25,6 +26,18 @@ namespace Yoma.Core.Infrastructure.Substack.Client
       var query = _newsArticleRepository.Query();
 
       query = query.Where(o => o.FeedType == filter.FeedType.ToString());
+
+      if (filter.StartDate.HasValue)
+      {
+        filter.StartDate = filter.StartDate.Value.RemoveTime();
+        query = query.Where(o => o.PublishedDate >= filter.StartDate.Value);
+      }
+
+      if (filter.EndDate.HasValue)
+      {
+        filter.EndDate = filter.EndDate.Value.ToEndOfDay();
+        query = query.Where(o => o.PublishedDate <= filter.EndDate.Value);
+      }
 
       if (!string.IsNullOrWhiteSpace(filter.ValueContains))
         query = _newsArticleRepository.Contains(query, filter.ValueContains);

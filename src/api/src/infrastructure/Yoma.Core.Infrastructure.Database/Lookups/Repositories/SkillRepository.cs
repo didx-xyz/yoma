@@ -122,9 +122,6 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
       foreach (var item in items)
       {
         var entity = entities.SingleOrDefault(o => o.Id == item.Id) ?? throw new InvalidOperationException($"{nameof(Skill)} with id '{item.Id}' does not exist");
-        var updated = !entity.Name.Equals(item.Name, StringComparison.InvariantCultureIgnoreCase);
-        if (!updated) updated = !string.Equals(entity.InfoURL, item.InfoURL, StringComparison.CurrentCultureIgnoreCase);
-        if (!updated) continue;
 
         item.DateModified = DateTimeOffset.UtcNow;
 
@@ -140,6 +137,11 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
     }
 
     public Task Delete(Domain.Lookups.Models.Skill item)
+    {
+      throw new NotImplementedException();
+    }
+
+    public Task Delete(List<Domain.Lookups.Models.Skill> items)
     {
       throw new NotImplementedException();
     }

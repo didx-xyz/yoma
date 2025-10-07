@@ -144,6 +144,12 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Repositories
     {
       throw new NotImplementedException();
     }
+
+    public Task Delete(List<ProcessingLog> items)
+    {
+      throw new NotImplementedException();
+    }
+
     #endregion
   }
 }

@@ -252,6 +252,19 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories
       _context.MyOpportunity.Remove(entity);
       await _context.SaveChangesAsync();
     }
+
+    public async Task Delete(List<Domain.MyOpportunity.Models.MyOpportunity> items)
+    {
+      var ids = items.Select(i => i.Id).ToList();
+      var entities = _context.MyOpportunity.Where(o => ids.Contains(o.Id)).ToList();
+
+      if (entities.Count != items.Count)
+        throw new ArgumentOutOfRangeException(nameof(items), $"{nameof(MyOpportunity)}'s with id's {string.Join(", ", ids.Except(entities.Select(e => e.Id)))} do not exist");
+
+      _context.MyOpportunity.RemoveRange(entities);
+
+      await _context.SaveChangesAsync();
+    }
     #endregion
   }
 }

@@ -1,13 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
 {
   [Table("SchemaEntityType", Schema = "SSI")]
   [Index(nameof(SSISchemaEntityId), nameof(SSISchemaTypeId), IsUnique = true)]
-  public class SSISchemaEntityType : BaseEntity<Guid>
+  public class SSISchemaEntityType : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [ForeignKey("SSISchemaEntityId")]

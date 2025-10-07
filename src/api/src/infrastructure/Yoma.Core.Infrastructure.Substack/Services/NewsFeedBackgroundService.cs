@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using System.Transactions;
 using System.Xml.Linq;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -19,7 +20,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
     private readonly AppSettings _appSettings;
     private readonly ScheduleJobOptions _scheduleJobOptions;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly IRepositoryValueContains<NewsArticle> _newsArticleRepository;
+    private readonly IRepositoryBatchedValueContains<NewsArticle> _newsArticleRepository;
     private readonly IRepository<FeedSyncTracking> _feedSyncTrackingRepository;
     private readonly IDistributedLockService _distributedLockService;
     private readonly IExecutionStrategyService _executionStrategyService;
@@ -33,20 +34,20 @@ namespace Yoma.Core.Infrastructure.Substack.Services
     public NewsFeedBackgroundService(
       ILogger<NewsFeedBackgroundService> logger,
       IEnvironmentProvider environmentProvider,
-      SubstackOptions options,
-      AppSettings appSettings,
-      ScheduleJobOptions scheduleJobOptions,
+      IOptions<SubstackOptions> options,
+      IOptions<AppSettings> appSettings,
+      IOptions<ScheduleJobOptions> scheduleJobOptions,
       IHttpClientFactory httpClientFactory,
-      IRepositoryValueContains<NewsArticle> newsArticleRepository,
+      IRepositoryBatchedValueContains<NewsArticle> newsArticleRepository,
       IRepository<FeedSyncTracking> feedSyncTrackingRepository,
       IDistributedLockService distributedLockService,
       IExecutionStrategyService executionStrategyService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
-      _options = options ?? throw new ArgumentNullException(nameof(options));
-      _appSettings = appSettings ?? throw new ArgumentNullException(nameof(appSettings));
-      _scheduleJobOptions = scheduleJobOptions ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
+      _options = options.Value ?? throw new ArgumentNullException(nameof(options));
+      _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _scheduleJobOptions = scheduleJobOptions.Value ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
       _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
       _newsArticleRepository = newsArticleRepository ?? throw new ArgumentNullException(nameof(newsArticleRepository));
       _feedSyncTrackingRepository = feedSyncTrackingRepository ?? throw new ArgumentNullException(nameof(feedSyncTrackingRepository));
@@ -134,7 +135,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
         {
           _logger.LogInformation("HTTP sync start: {FeedType}", feedType);
 
-          var tracking = _feedSyncTrackingRepository.Query().FirstOrDefault(t => t.FeedType == feedType);
+          var tracking = _feedSyncTrackingRepository.Query().SingleOrDefault(t => t.FeedType == feedType);
           var isNewTracking = tracking is null;
           tracking ??= new FeedSyncTracking { FeedType = feedType };
 
@@ -143,7 +144,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
           // Conditional headers only if we have state
           if (!isNewTracking)
           {
-            if (!string.IsNullOrEmpty(tracking!.ETag))
+            if (!string.IsNullOrEmpty(tracking.ETag))
               req.Headers.TryAddWithoutValidation("If-None-Match", tracking.ETag);
 
             if (tracking.FeedLastModified.HasValue)
@@ -192,8 +193,6 @@ namespace Yoma.Core.Infrastructure.Substack.Services
       }
     }
 
-    //TODO: Batching
-    //TODO: Move common infra concerns to shared infra project i.e.base entity etc if possible
     private async Task ProcessNewsArticles(FeedType feedType, List<NewsArticleRaw> articles, DateTimeOffset now)
     {
       // Retention: -1 means "keep forever" (no cutoff, no deletions)
@@ -217,12 +216,15 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
       var itemsExisting = existingQuery.ToList().ToDictionary(a => a.ExternalId, StringComparer.Ordinal);
 
-      // Upserts
+      // Build batched creates/updates (repo is dumb; change detection here)
+      var itemsToCreate = new List<NewsArticle>();
+      var itemsToUpdate = new List<NewsArticle>();
+
       foreach (var item in itemsNormalizedRaw)
       {
         if (!itemsExisting.TryGetValue(item.ExternalId, out var itemExisting))
         {
-          await _newsArticleRepository.Create(new NewsArticle
+          itemsToCreate.Add(new NewsArticle
           {
             FeedType = feedType.ToString(),
             ExternalId = item.ExternalId,
@@ -252,29 +254,28 @@ namespace Yoma.Core.Infrastructure.Substack.Services
         if (itemExisting.PublishedDate != item.PublishedDate)
         { itemExisting.PublishedDate = item.PublishedDate; changed = true; }
 
-        if (changed)
-          await _newsArticleRepository.Update(itemExisting);
+        if (changed) itemsToUpdate.Add(itemExisting);
       }
 
-      // Deletions only if retention is enabled
+      // Batch persist
+      if (itemsToCreate.Count > 0)
+        await _newsArticleRepository.Create(itemsToCreate);
+
+      if (itemsToUpdate.Count > 0)
+        await _newsArticleRepository.Update(itemsToUpdate);
+
+      // Deletions: ONLY retention purge (do NOT delete "missing from this batch" due to conditional fetch)
       if (retentionEnabled)
       {
-        var currentIds = new HashSet<string>(itemsNormalizedRaw.Select(n => n.ExternalId), StringComparer.Ordinal);
+        if (!cutoffUtc.HasValue)
+          throw new InvalidOperationException("Cutoff must have a value if retention is enabled");
 
-        // Remove existing items (within window) that are no longer present
-        var itemsToDelete = itemsExisting.Values.Where(e => !currentIds.Contains(e.ExternalId)).ToList();
-        foreach (var item in itemsToDelete)
-          await _newsArticleRepository.Delete(item);
-
-        if (!cutoffUtc.HasValue) throw new InvalidOperationException("Cutoff must have a value if retention is enabled");
-
-        // Defensive purge older than cutoff
         var itemsStale = _newsArticleRepository.Query()
           .Where(a => a.FeedType == feedType.ToString() && a.PublishedDate < cutoffUtc.Value)
           .ToList();
 
-        foreach (var item in itemsStale)
-          await _newsArticleRepository.Delete(item);
+        if (itemsStale.Count > 0)
+          await _newsArticleRepository.Delete(itemsStale);
       }
     }
 
@@ -319,7 +320,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
         {
           ExternalId = externalId!,
           Title = title,
-          Description = html,     // RAW HTML preserved
+          Description = html, 
           URL = link!,
           ThumbnailURL = thumb,
           PublishedDate = published

@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups;
 
@@ -10,7 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
   [Table("Transaction", Schema = "Reward")]
   //unique index declared in OnModelCreating to cater for nullability constraints
   [Index(nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
-  public class RewardTransaction : BaseEntity<Guid>
+  public class RewardTransaction : Shared.Entities.BaseEntity<Guid>
   {
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }

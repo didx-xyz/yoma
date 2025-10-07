@@ -1,13 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups
 {
   [Table("MyOpportunityVerificationStatus", Schema = "Opportunity")]
   [Index(nameof(Name), IsUnique = true)]
-  public class MyOpportunityVerificationStatus : BaseEntity<Guid>
+  public class MyOpportunityVerificationStatus : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(125)")]

@@ -1,13 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Entities
 {
   [Table("UserLoginHistory", Schema = "Entity")]
   [Index(nameof(UserId), nameof(ClientId), nameof(IdentityProvider), nameof(DateCreated))]
-  public class UserLoginHistory : BaseEntity<Guid>
+  public class UserLoginHistory : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [ForeignKey("UserId")]

@@ -4,7 +4,7 @@ namespace Yoma.Core.Infrastructure.Substack.Models
 {
   public class SubstackOptions
   {
-    public const string SectionName = "Substack";
+    public const string Section = "Substack";
 
     public string PollSchedule { get; init; }
 

@@ -8,7 +8,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
 {
   [Table("Schedule", Schema = "Download")]
   [Index(nameof(UserId), nameof(Type), nameof(FilterHash), nameof(StatusId), nameof(FileId), nameof(DateCreated), nameof(DateModified))]
-  public class DownloadSchedule : BaseEntity<Guid>
+  public class DownloadSchedule : Shared.Entities.BaseEntity<Guid>
   {
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }

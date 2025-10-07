@@ -144,6 +144,11 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
     {
       throw new NotImplementedException();
     }
+
+    public Task Delete(List<DownloadSchedule> items)
+    {
+      throw new NotImplementedException();
+    }
     #endregion
   }
 }

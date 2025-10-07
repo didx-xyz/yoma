@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups;
 
@@ -9,7 +8,7 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
 {
   [Table("TransactionLog", Schema = "Marketplace")]
   [Index(nameof(UserId), nameof(ItemCategoryId), nameof(ItemId), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
-  public class TransactionLog : BaseEntity<Guid>
+  public class TransactionLog : Shared.Entities.BaseEntity<Guid>
   {
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }

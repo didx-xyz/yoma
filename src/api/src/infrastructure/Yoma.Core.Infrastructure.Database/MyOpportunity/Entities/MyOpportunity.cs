@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.MyOpportunity.Entities.Lookups;
@@ -12,7 +11,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
   [Index(nameof(UserId), nameof(OpportunityId), nameof(ActionId), IsUnique = true)]
   [Index(nameof(VerificationStatusId), nameof(DateStart), nameof(DateEnd), nameof(DateCompleted), nameof(ZltoReward), nameof(YomaReward),
     nameof(Recommendable), nameof(StarRating), nameof(DateCreated), nameof(DateModified))]
-  public class MyOpportunity : BaseEntity<Guid>
+  public class MyOpportunity : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [ForeignKey("UserId")]

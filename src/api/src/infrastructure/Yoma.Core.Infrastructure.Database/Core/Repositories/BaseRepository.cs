@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Infrastructure.Database.Context;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
+using Yoma.Core.Infrastructure.Shared.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Core.Repositories
 {

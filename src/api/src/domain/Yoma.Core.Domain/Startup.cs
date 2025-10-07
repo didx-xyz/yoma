@@ -217,6 +217,8 @@ namespace Yoma.Core.Domain
       var options = configuration.GetSection(ScheduleJobOptions.Section).Get<ScheduleJobOptions>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{ScheduleJobOptions.Section}'");
 
       var scheduledJobs = JobStorage.Current.GetMonitoringApi().ScheduledJobs(0, int.MaxValue);
+      scheduledJobs.ForEach(o => BackgroundJob.Delete(o.Key));
+
       foreach (var job in scheduledJobs) BackgroundJob.Delete(job.Key);
 
       //skills

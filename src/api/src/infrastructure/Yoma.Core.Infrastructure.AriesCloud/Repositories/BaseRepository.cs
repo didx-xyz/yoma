@@ -1,6 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Infrastructure.AriesCloud.Context;
-using Yoma.Core.Infrastructure.AriesCloud.Entities;
+using Yoma.Core.Infrastructure.Shared.Entities;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
 {

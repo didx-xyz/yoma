@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups;
 
@@ -10,7 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
   [Table("TenantCreation", Schema = "SSI")]
   //unique index declared in OnModelCreating to cater for nullability constraints
   [Index(nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
-  public class SSITenantCreation : BaseEntity<Guid>
+  public class SSITenantCreation : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(25)")]

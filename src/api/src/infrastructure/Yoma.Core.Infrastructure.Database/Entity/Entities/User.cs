@@ -12,7 +12,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
   [Index(nameof(ExternalId), IsUnique = true)]
   [Index(nameof(FirstName), nameof(Surname), nameof(DisplayName), nameof(EmailConfirmed), nameof(PhoneNumberConfirmed), nameof(DateOfBirth), nameof(DateLastLogin),
     nameof(YoIDOnboarded), nameof(DateYoIDOnboarded), nameof(DateCreated), nameof(DateModified))]
-  public class User : BaseEntity<Guid>
+  public class User : Shared.Entities.BaseEntity<Guid>
   {
     [Column(TypeName = "varchar(320)")]
     public string? Email { get; set; }

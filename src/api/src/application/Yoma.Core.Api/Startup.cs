@@ -86,6 +86,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_EmailProvider(_configuration);
       services.ConfigureServices_MessageProvider(_configuration);
       services.ConfigureServices_RewardProvider(_configuration);
+      services.ConfigureServices_NewsFeedProvider(_configuration);
       services.ConfigureServices_SharingProvider(_configuration);
       #endregion Configuration
 
@@ -235,6 +236,7 @@ namespace Yoma.Core.Api
 
       //migrations applied as part of ConfigureHangfire to ensure db exist prior to executing Hangfire migrations
       _configuration.Configure_RecurringJobs(_appSettings, _environment);
+      _configuration.Configure_RecurringJobsNewsFeedProvider();
       #endregion 3rd Partry
     }
     #endregion

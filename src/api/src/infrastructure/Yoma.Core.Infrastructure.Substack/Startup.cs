@@ -1,3 +1,4 @@
+using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
@@ -9,6 +10,7 @@ using Yoma.Core.Domain.NewsFeedProvider.Models;
 using Yoma.Core.Infrastructure.Substack.Client;
 using Yoma.Core.Infrastructure.Substack.Context;
 using Yoma.Core.Infrastructure.Substack.Interfaces;
+using Yoma.Core.Infrastructure.Substack.Models;
 using Yoma.Core.Infrastructure.Substack.Repositories;
 using Yoma.Core.Infrastructure.Substack.Services;
 
@@ -16,6 +18,11 @@ namespace Yoma.Core.Infrastructure.Substack
 {
   public static class Startup
   {
+    public static void ConfigureServices_NewsFeedProvider(this IServiceCollection services, IConfiguration configuration)
+    {
+      services.Configure<SubstackOptions>(options => configuration.GetSection(SubstackOptions.Section).Bind(options));
+    }
+
     public static void ConfigureServices_InfrastructureNewsFeedProvider(this IServiceCollection services,
       IConfiguration configuration,
       string nameOrConnectionString,
@@ -42,8 +49,8 @@ namespace Yoma.Core.Infrastructure.Substack
       }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
       // repositories
-      services.AddScoped<IRepositoryValueContains<NewsArticle>, NewsArticleRepository>();
-      services.AddScoped<IRepository<Models.FeedSyncTracking>, FeedSyncTrackingRepository>();
+      services.AddScoped<IRepositoryBatchedValueContains<NewsArticle>, NewsArticleRepository>();
+      services.AddScoped<IRepository<FeedSyncTracking>, FeedSyncTrackingRepository>();
 
       //client
       services.AddScoped<INewsFeedProviderClientFactory, SubstackClientFactory>();
@@ -58,6 +65,21 @@ namespace Yoma.Core.Infrastructure.Substack
       using var scope = serviceProvider.CreateScope();
       var dbContext = scope.ServiceProvider.GetRequiredService<SubstackDbContext>();
       dbContext.Database.Migrate();
+    }
+
+    public static void Configure_RecurringJobsNewsFeedProvider(this IConfiguration configuration)
+    {
+      var options = configuration.GetSection(SubstackOptions.Section).Get<SubstackOptions>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{SubstackOptions.Section}'");
+
+      var scheduledJobs = JobStorage.Current.GetMonitoringApi().ScheduledJobs(0, int.MaxValue)
+        .Where(j => j.Value.Job.Type == typeof(INewsFeedBackgroundService))
+        .ToList();
+
+      scheduledJobs.ForEach(o => BackgroundJob.Delete(o.Key));
+
+      //news feed synchronization
+      BackgroundJob.Enqueue<INewsFeedBackgroundService>(s => s.RefreshFeeds(true)); //execute on startup
+      RecurringJob.AddOrUpdate<INewsFeedBackgroundService>("News Feed Synchronization", s => s.RefreshFeeds(false), options.PollSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
     }
   }
 }

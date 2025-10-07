@@ -7,11 +7,11 @@ namespace Yoma.Core.Infrastructure.Substack.Client
   public class SubstackClientFactory : INewsFeedProviderClientFactory
   {
     #region Class Variables
-    private readonly IRepositoryValueContains<NewsArticle> _newsArticleRepository;
+    private readonly IRepositoryBatchedValueContains<NewsArticle> _newsArticleRepository;
     #endregion
 
     #region Constructor
-    public SubstackClientFactory(IRepositoryValueContains<NewsArticle> newsArticleRepository)
+    public SubstackClientFactory(IRepositoryBatchedValueContains<NewsArticle> newsArticleRepository)
     {
       _newsArticleRepository = newsArticleRepository ?? throw new ArgumentNullException(nameof(newsArticleRepository));
     }

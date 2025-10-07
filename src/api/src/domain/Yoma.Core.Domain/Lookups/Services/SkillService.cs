@@ -129,16 +129,27 @@ namespace Yoma.Core.Domain.Lookups.Services
         do
         {
           var incomingBatch = incomingResults.Skip(pageIndex * batchSize).Take(batchSize).ToList();
-          var incomingBatchIds = incomingBatch.Select(o => o.Id).ToList();
-          var existingItems = _skillRepository.Query().Where(o => incomingBatchIds.Contains(o.ExternalId)).ToList();
+          var incomingBatchExternalIds = incomingBatch.Select(o => o.Id).ToList();
+
+          var existingItems = _skillRepository.Query().Where(o => incomingBatchExternalIds.Contains(o.ExternalId)).ToList();
+          var existingByExternalId = existingItems.ToDictionary(o => o.ExternalId, StringComparer.Ordinal);
+
           var newItems = new List<Skill>();
+          var updatedItems = new List<Skill>();
+
           foreach (var item in incomingBatch)
           {
-            var existItem = existingItems.SingleOrDefault(o => o.ExternalId == item.Id);
-            if (existItem != null)
+            if (existingByExternalId.TryGetValue(item.Id, out var existItem))
             {
-              existItem.Name = item.Name;
-              existItem.InfoURL = item.InfoURL;
+              var changed = false;
+
+              if (!string.Equals(existItem.Name, item.Name, StringComparison.InvariantCultureIgnoreCase))
+              { existItem.Name = item.Name; changed = true; }
+
+              if (!string.Equals(existItem.InfoURL, item.InfoURL, StringComparison.Ordinal))
+              { existItem.InfoURL = item.InfoURL; changed = true; }
+
+              if (changed) updatedItems.Add(existItem);
             }
             else
             {
@@ -152,7 +163,7 @@ namespace Yoma.Core.Domain.Lookups.Services
           }
 
           if (newItems.Count != 0) await _skillRepository.Create(newItems);
-          if (existingItems.Count != 0) await _skillRepository.Update(existingItems);
+          if (updatedItems.Count != 0) await _skillRepository.Update(updatedItems);
 
           pageIndex++;
         }

@@ -305,6 +305,11 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
     {
       throw new NotImplementedException();
     }
+
+    public Task Delete(List<Domain.Entity.Models.Organization> items)
+    {
+      throw new NotImplementedException();
+    }
     #endregion
   }
 }

@@ -14,7 +14,7 @@ namespace Yoma.Core.Infrastructure.Substack.Context
     #region Public Members
     public DbSet<FeedSyncTracking> FeedSyncTracking { get; set; }
 
-    public DbSet<Entities.NewsArticle> NewsArticle { get; set; }
+    public DbSet<NewsArticle> NewsArticle { get; set; }
     #endregion
 
     #region Protected Members
@@ -33,7 +33,7 @@ namespace Yoma.Core.Infrastructure.Substack.Context
         }
       }
 
-      builder.Entity<Entities.NewsArticle>()
+      builder.Entity<NewsArticle>()
       .HasIndex(o => new { o.Description })
       .HasMethod("GIN")
       .IsTsVectorExpressionIndex("english");
