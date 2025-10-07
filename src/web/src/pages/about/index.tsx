@@ -4,9 +4,7 @@ import imageStats from "public/images/home/icon_stats.svg";
 import imagePeople from "public/images/home/icon_people.svg";
 import imageExclaimation from "public/images/home/icon_exclaimation.svg";
 import imageLink from "public/images/home/icon_link.svg";
-import imageMessage from "public/images/home/icon_message.svg";
 import imageThumbnailWoman from "public/images/home/thumbnail-woman.png";
-import imageVideoYoutube2 from "public/images/home/video_youtube2.png";
 import imageAboutInfo from "public/images/home/about_info.png";
 import { useCallback, type ReactElement } from "react";
 import "react-datepicker/dist/react-datepicker.css";
@@ -21,7 +19,6 @@ import { GetStaticProps } from "next";
 import { OpportunityCategory, PublishedState } from "~/api/models/opportunity";
 import { getOpportunityCategories } from "~/api/services/opportunities";
 import router from "next/router";
-import { toast } from "react-toastify";
 
 export const getStaticProps: GetStaticProps = async (context) => {
   const lookups_categories = await getOpportunityCategories(
@@ -390,10 +387,10 @@ const About: NextPageWithLayout<{
         </div>
 
         {/* PURPLE SECTION - CONTACT US */}
-        <div className="bg-purple w-full">
+        {/* <div className="bg-purple w-full">
           <section className="z-10 w-full pt-8 pb-8">
             <div className="flex flex-col items-center justify-center">
-              {/* CONTACT US */}
+
               <div className="flex w-full max-w-5xl flex-col gap-8 px-6 text-white md:flex-row">
                 <div className="flex w-full flex-col gap-4">
                   <div className="flex flex-row items-center gap-4">
@@ -475,10 +472,10 @@ const About: NextPageWithLayout<{
               </div>
             </div>
           </section>
-        </div>
+        </div> */}
 
-        {/* WHITE SECTION - PARTNERS */}
-        <div className="w-full bg-white">
+        {/* BEIGE SECTION - PARTNERS */}
+        <div className="bg-beige w-full">
           <section className="pt-8x z-10 w-full pb-8">
             <div className="flex flex-col items-center justify-center px-4">
               {/* PARTNERS */}

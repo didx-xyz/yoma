@@ -41,7 +41,6 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
     return () => {
       window.removeEventListener("resize", handleResize);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showShadows]);
 
   // Separate effect to update shadows when children change
@@ -49,7 +48,6 @@ const ScrollableContainer: React.FC<ScrollableContainerProps> = ({
     if (!showShadows) return;
     const timeoutId = setTimeout(updateShadows, 100);
     return () => clearTimeout(timeoutId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [children, showShadows]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {

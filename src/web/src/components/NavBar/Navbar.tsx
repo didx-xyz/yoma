@@ -25,6 +25,7 @@ import { UserMenu } from "./UserMenu";
 import { ROLE_ADMIN } from "~/lib/constants";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
 import ScrollableContainer from "../Carousel/ScrollableContainer";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 const navBarLinksUser: TabItem[] = [
   {
@@ -113,6 +114,9 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
+
+  // 👇 prevent scrolling on the page when the menu is open
+  useDisableBodyScroll(isDrawerOpen);
 
   // open/close drawer
   const onToggle = () => {

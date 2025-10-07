@@ -11,7 +11,6 @@ import imagePin from "public/images/home/icon_pin.svg";
 import imagePlant from "public/images/home/icon_plant.svg";
 import imageStencilPurple from "public/images/home/stencil-purple.png";
 import imageThumbnailWoman from "public/images/home/thumbnail-woman.png";
-import imageVideoYoutube from "public/images/home/video_youtube.png";
 import imageWallet from "public/images/home/icon_wallet.svg";
 import imageStamp1 from "public/images/stamp-1.png";
 import imageStamp2 from "public/images/stamp-2.png";
@@ -103,7 +102,7 @@ const Home: NextPageWithLayout = () => {
                 </div>
 
                 {/* RIGHT: WOMAN & CARDS IMAGES */}
-                <div className="relative z-20 hidden lg:flex">
+                <div className="relative z-20 -mr-8 hidden lg:flex">
                   <Image
                     src={imageWoman2}
                     alt="Woman smiling"

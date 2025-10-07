@@ -38,6 +38,7 @@ import { SignOutButton } from "../SignOutButton";
 import { LoadingInline } from "../Status/LoadingInline";
 import NoRowsMessage from "../NoRowsMessage";
 import { fetchClientEnv } from "~/lib/utils";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 export const UserMenu: React.FC = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
@@ -50,6 +51,9 @@ export const UserMenu: React.FC = () => {
   const [isCollapsedPassport, setCollapsedPassport] = useState(true);
   const toggleCollapsePassport = () =>
     setCollapsedPassport(!isCollapsedPassport);
+
+  // 👇 prevent scrolling on the page when the menu is open
+  useDisableBodyScroll(isDrawerOpen);
 
   // Fetch passport_enabled from client environment
   const [passport_enabled, setPassportEnabled] = useState<boolean>(false);
@@ -151,7 +155,7 @@ export const UserMenu: React.FC = () => {
             {(activeRoleView == RoleView.User ||
               activeRoleView == RoleView.Admin) && (
               <>
-                <div className="rounded-full hover:outline hover:outline-2 hover:outline-white">
+                <div className="rounded-full hover:outline hover:outline-white">
                   <AvatarImage
                     icon={userProfile?.photoURL ?? null}
                     alt="User Logo"
@@ -164,7 +168,7 @@ export const UserMenu: React.FC = () => {
             {/* ORG ADMIN, SHOW COMPANY LOGO */}
             {activeRoleView == RoleView.OrgAdmin && (
               <>
-                <div className="rounded-full hover:outline hover:outline-2 hover:outline-white">
+                <div className="rounded-full hover:outline hover:outline-white">
                   <AvatarImage
                     icon={currentOrganisationLogo ?? null}
                     alt="Org Logo"
