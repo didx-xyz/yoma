@@ -1,3 +1,5 @@
+using Flurl.Http;
+using Flurl.Http.Newtonsoft;
 using Hangfire;
 using Hangfire.Dashboard.BasicAuthorization;
 using Hangfire.PostgreSql;
@@ -5,10 +7,13 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json.Converters;
 using StackExchange.Redis;
+using System.Net.Mime;
+using tusdotnet.Helpers;
 using Yoma.Core.Api.Common;
 using Yoma.Core.Api.Middleware;
 using Yoma.Core.Domain;
@@ -19,23 +24,19 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Services;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
+using Yoma.Core.Domain.PartnerSharing;
+using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
 using Yoma.Core.Infrastructure.AmazonS3;
 using Yoma.Core.Infrastructure.AriesCloud;
 using Yoma.Core.Infrastructure.Bitly;
 using Yoma.Core.Infrastructure.Database;
 using Yoma.Core.Infrastructure.Emsi;
 using Yoma.Core.Infrastructure.Keycloak;
+using Yoma.Core.Infrastructure.SAYouth;
 using Yoma.Core.Infrastructure.SendGrid;
 using Yoma.Core.Infrastructure.Substack;
 using Yoma.Core.Infrastructure.Twilio;
 using Yoma.Core.Infrastructure.Zlto;
-using Yoma.Core.Infrastructure.SAYouth;
-using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
-using Yoma.Core.Domain.PartnerSharing;
-using Microsoft.AspNetCore.Mvc;
-using System.Net.Mime;
-using Flurl.Http;
-using Flurl.Http.Newtonsoft;
 
 namespace Yoma.Core.Api
 {
@@ -51,7 +52,7 @@ namespace Yoma.Core.Api
     private const string ConnectionStrings_RedisConnection = "RedisConnection";
     private const string Swagger_JsonUrl = $"/swagger/{Constants.Api_Version}/swagger.json";
 
-    private static readonly string[] ExposedHeaders = ["Content-Disposition", "Location", "Tus-Resumable", "Upload-Offset", "Upload-Length", "Upload-Metadata"];
+    private static readonly string[] ExposedHeaders = [.. CorsHelper.GetExposedHeaders().Append("Content-Disposition").Distinct()];
     #endregion
 
     #region Constructors
