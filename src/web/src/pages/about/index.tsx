@@ -372,13 +372,11 @@ const About: NextPageWithLayout<{
           </section>
 
           {/* FILTER: CATEGORIES */}
-          {lookups_categories && lookups_categories.length > 0 && (
-            <OpportunityCategoriesHorizontalFilter
-              lookups_categories={lookups_categories}
-              selected_categories={undefined}
-              onClick={onClickCategoryFilter}
-            />
-          )}
+          <OpportunityCategoriesHorizontalFilter
+            lookups_categories={lookups_categories}
+            selected_categories={undefined}
+            onClick={onClickCategoryFilter}
+          />
         </div>
 
         {/* PURPLE SECTION - CONTACT US */}
