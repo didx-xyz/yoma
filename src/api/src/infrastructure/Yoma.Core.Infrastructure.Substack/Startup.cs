@@ -1,8 +1,12 @@
 using Hangfire;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.NewsFeedProvider.Interfaces.Provider;
@@ -18,6 +22,16 @@ namespace Yoma.Core.Infrastructure.Substack
 {
   public static class Startup
   {
+    public static IEndpointRouteBuilder MapNewsFeedProviderHealthEndpoints(this IEndpointRouteBuilder endpoints, string apiVersion)
+    {
+      endpoints.MapHealthChecks($"/api/{apiVersion}/health/ready/substack", new HealthCheckOptions
+      {
+        Predicate = check => check.Tags.Contains("substack")
+      }).AllowAnonymous();
+
+      return endpoints;
+    }
+
     public static void ConfigureServices_NewsFeedProvider(this IServiceCollection services, IConfiguration configuration)
     {
       services.Configure<SubstackOptions>(options => configuration.GetSection(SubstackOptions.Section).Bind(options));
@@ -58,6 +72,10 @@ namespace Yoma.Core.Infrastructure.Substack
       //service
       services.AddScoped<IExecutionStrategyService, ExecutionStrategyService>();
       services.AddScoped<INewsFeedBackgroundService, NewsFeedBackgroundService>();
+
+      //health check
+      services.AddSingleton<HealthCheck>();
+      services.AddHealthChecks().AddCheck<HealthCheck>(name: "Substack External", failureStatus: HealthStatus.Unhealthy, tags: ["substack"]);
     }
 
     public static void Configure_InfrastructureDatabaseNewsFeedProvider(this IServiceProvider serviceProvider)

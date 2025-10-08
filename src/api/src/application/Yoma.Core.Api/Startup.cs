@@ -223,6 +223,7 @@ namespace Yoma.Core.Api
 
         endpoints.MapRewardProviderHealthEndpoints(Constants.Api_Version);
         endpoints.MapSharingProviderHealthEndpoints(Constants.Api_Version);
+        endpoints.MapNewsFeedProviderHealthEndpoints(Constants.Api_Version);
 
         endpoints.MapResumableUploadEndpoints(_configuration, Constants.Authorization_Policy);
       });
