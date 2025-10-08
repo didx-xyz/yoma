@@ -45,7 +45,7 @@ namespace Yoma.Core.Infrastructure.Zlto
         {
           var url = new Url(e.Url);
           await url.WithAuthHeader(GetAuthHeaderApiKey()).GetAsync(cancellationToken: cancellationToken).EnsureSuccessStatusCodeAsync();
-          return (e.Name, Failure: (string?)null);
+          return (e.Name, Failure: default(string?));
         }
         catch (HttpClientException ex)
         {

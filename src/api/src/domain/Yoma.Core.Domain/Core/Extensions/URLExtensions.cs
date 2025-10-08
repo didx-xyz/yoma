@@ -43,13 +43,17 @@ namespace Yoma.Core.Domain.Core.Extensions
         var queryBuilder = new StringBuilder();
         foreach (var kvp in qp)
         {
-          if (IsTrackingParam(kvp.Key)) continue;
+          var key = kvp.Key ?? string.Empty;
+          if (IsTrackingParam(key)) continue;
+
           foreach (var val in kvp.Value)
           {
+            var safeVal = val ?? string.Empty;
+
             queryBuilder.Append(queryBuilder.Length == 0 ? '?' : '&');
-            queryBuilder.Append(Uri.EscapeDataString(kvp.Key));
+            queryBuilder.Append(Uri.EscapeDataString(key));
             queryBuilder.Append('=');
-            queryBuilder.Append(Uri.EscapeDataString(val));
+            queryBuilder.Append(Uri.EscapeDataString(safeVal));
           }
         }
 
@@ -68,16 +72,21 @@ namespace Yoma.Core.Domain.Core.Extensions
     #endregion
 
     #region Private Members
-    private static bool IsTrackingParam(string key) =>
-      key.Equals("utm_source", StringComparison.OrdinalIgnoreCase) ||
-      key.Equals("utm_medium", StringComparison.OrdinalIgnoreCase) ||
-      key.Equals("utm_campaign", StringComparison.OrdinalIgnoreCase) ||
-      key.Equals("utm_term", StringComparison.OrdinalIgnoreCase) ||
-      key.Equals("utm_content", StringComparison.OrdinalIgnoreCase) ||
-      key.Equals("utm_id", StringComparison.OrdinalIgnoreCase) ||
-      key.Equals("mc_cid", StringComparison.OrdinalIgnoreCase) ||
-      key.Equals("mc_eid", StringComparison.OrdinalIgnoreCase);
+    private static bool IsTrackingParam(string? key)
+    {
+      if (string.IsNullOrEmpty(key)) return false;
+
+      return
+        key.Equals("utm_source", StringComparison.OrdinalIgnoreCase) ||
+        key.Equals("utm_medium", StringComparison.OrdinalIgnoreCase) ||
+        key.Equals("utm_campaign", StringComparison.OrdinalIgnoreCase) ||
+        key.Equals("utm_term", StringComparison.OrdinalIgnoreCase) ||
+        key.Equals("utm_content", StringComparison.OrdinalIgnoreCase) ||
+        key.Equals("utm_id", StringComparison.OrdinalIgnoreCase) ||
+        key.Equals("mc_cid", StringComparison.OrdinalIgnoreCase) ||
+        key.Equals("mc_eid", StringComparison.OrdinalIgnoreCase);
+    }
+    #endregion
   }
-  #endregion
 }
 
