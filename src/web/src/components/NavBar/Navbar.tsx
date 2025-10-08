@@ -24,6 +24,8 @@ import { LanguageSwitcher } from "./LanguageSwitcher";
 import { UserMenu } from "./UserMenu";
 import { ROLE_ADMIN } from "~/lib/constants";
 import { FaChevronUp, FaChevronDown } from "react-icons/fa";
+import ScrollableContainer from "../Carousel/ScrollableContainer";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 const navBarLinksUser: TabItem[] = [
   {
@@ -33,6 +35,14 @@ const navBarLinksUser: TabItem[] = [
     badgeCount: null,
     selected: false,
     iconImage: "🏠",
+  },
+  {
+    title: "About Us",
+    description: "About Us",
+    url: "/about",
+    badgeCount: null,
+    selected: false,
+    iconImage: "ℹ️",
   },
   {
     title: "Opportunities",
@@ -95,7 +105,7 @@ const navBarLinksAdmin: TabItem[] = [
   },
 ];
 
-export const Navbar: React.FC = () => {
+export const Navbar: React.FC<{ theme: string }> = (theme) => {
   const router = useRouter();
   const activeRoleView = useAtomValue(activeNavigationRoleViewAtom);
   const currentOrganisationId = useAtomValue(currentOrganisationIdAtom);
@@ -104,6 +114,9 @@ export const Navbar: React.FC = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const isAdmin = session?.user?.roles.includes(ROLE_ADMIN);
+
+  // 👇 prevent scrolling on the page when the menu is open
+  useDisableBodyScroll(isDrawerOpen);
 
   // open/close drawer
   const onToggle = () => {
@@ -123,10 +136,12 @@ export const Navbar: React.FC = () => {
   };
 
   const currentNavbarLinks = useMemo<TabItem[]>(() => {
+    let links: TabItem[] = [];
+
     if (activeRoleView == RoleView.Admin) {
-      return navBarLinksAdmin;
+      links = navBarLinksAdmin;
     } else if (activeRoleView == RoleView.OrgAdmin && currentOrganisationId) {
-      return [
+      links = [
         {
           title: "Home",
           description: "Home",
@@ -177,9 +192,17 @@ export const Navbar: React.FC = () => {
         },
       ];
     } else {
-      return navBarLinksUser;
+      links = navBarLinksUser;
     }
-  }, [activeRoleView, currentOrganisationId]);
+
+    // Set selected property based on current route
+    return links.map((link) => ({
+      ...link,
+      selected:
+        router.pathname === link.url ||
+        (link.url !== "/" && router.pathname.startsWith(link.url!)),
+    }));
+  }, [activeRoleView, currentOrganisationId, router.pathname]);
 
   const renderOrganisationMenuItem = (organisation: OrganizationInfo) => {
     if (organisation.status == "Deleted") return null;
@@ -265,7 +288,7 @@ export const Navbar: React.FC = () => {
   return (
     <div className="fixed top-0 right-0 left-0 z-40">
       <div className={`bg-theme navbar z-40`}>
-        <div className="flex w-full justify-between md:flex md:justify-between">
+        <div className="flex w-full items-center gap-2">
           {/* hover menu */}
           <div
             className="absolute top-1/5 left-0 h-[100vh] w-[2px] bg-transparent"
@@ -274,7 +297,7 @@ export const Navbar: React.FC = () => {
           ></div>
 
           {/* LEFT MENU */}
-          <div className="flex items-center justify-start gap-1">
+          <div className="flex flex-shrink-0 items-center justify-start gap-1">
             {/* LEFT DRAWER */}
             <div
               className={`drawer ${isHovered || isDrawerOpen ? "open" : ""}`}
@@ -494,43 +517,65 @@ export const Navbar: React.FC = () => {
               tabIndex={isDrawerOpen ? -1 : 0}
               title="Home"
             >
-              <Image
-                src={logoPicLight}
-                alt="Logo"
-                width={85}
-                className="h-auto"
-                tabIndex={-1}
-              />
+              {theme.theme === "white" ? (
+                <Image
+                  src={logoPicDark}
+                  alt="Logo"
+                  width={85}
+                  className="h-auto"
+                  tabIndex={-1}
+                />
+              ) : (
+                <Image
+                  src={logoPicLight}
+                  alt="Logo"
+                  width={85}
+                  className="h-auto"
+                  tabIndex={-1}
+                />
+              )}
             </Link>
           </div>
 
           {/* CENTER MENU (DESKTOP) */}
-          {/* <ul className="mx-auto hidden w-fit items-center justify-center lg:flex">
-          {currentNavbarLinks.map((link, index) => (
-            <li
-              key={index}
-              tabIndex={index}
-              className="bg-theme group btn !rounded-md border-none p-2 px-4 text-base text-white shadow-none duration-0 hover:brightness-95"
+          <div className="invisible min-w-0 flex-1 lg:visible">
+            <ScrollableContainer
+              className="flex h-full items-center overflow-x-auto overflow-y-visible"
+              showShadows={true}
             >
-              <Link
-                href={link.url!}
-                tabIndex={index}
-                id={`lnkNavbarMenu_${link.title}`}
-              >
-                <span className="mr-2">{link.iconImage}</span>
-                <span>{link.title}</span>
-                <span className="block h-0.5 max-w-0 bg-gray-light transition-all duration-500 group-hover:max-w-full"></span>
-              </Link>
-            </li>
-          ))}
-        </ul> */}
+              <ul className="mx-auto flex w-max items-center gap-2 object-contain lg:gap-4 xl:gap-8">
+                {currentNavbarLinks.map((link, index) => (
+                  <li key={index} className="relative flex-shrink-0">
+                    {/* {link.selected && (
+                        <div className="bg-green absolute top-0 right-0 left-0 h-1"></div>
+                      )} */}
+                    <Link
+                      href={link.url!}
+                      tabIndex={index}
+                      id={`lnkNavbarMenu_${link.title}`}
+                      className="bg-theme group btn flex-shrink-0 !rounded-md border-none p-2 px-4 text-base text-white shadow-none duration-0 hover:brightness-95"
+                      draggable={false}
+                    >
+                      {/* ICON */}
+                      {/* <span className="mr-2">{link.iconImage}</span> */}
+                      <span className={link.selected ? "font-bold" : ""}>
+                        {link.title}
+                      </span>
+                      {/* HOVER EFFECT */}
+                      {/* <span className="bg-gray-light block h-0.5 max-w-0 transition-all duration-500 group-hover:max-w-full"></span> */}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </ScrollableContainer>
+          </div>
 
           {/* RIGHT MENU */}
-          <div className="flex items-center justify-end gap-2 md:gap-4">
+          <div className="flex flex-shrink-0 items-center justify-end gap-2 md:gap-4">
             <LanguageSwitcher
               className="bg-theme hover:brightness-95 md:px-3"
-              classNameIcon="text-white"
-              classNameSelect="text-white mobile-select"
+              classNameIcon=""
+              classNameSelect="mobile-select"
               tabIndex={isDrawerOpen ? -1 : 0}
             />
             {!session && <SignInButton tabIndex={isDrawerOpen ? -1 : 0} />}

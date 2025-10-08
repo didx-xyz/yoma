@@ -1,14 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
 {
   [Table("UsageLog", Schema = "ActionLink")]
   [Index(nameof(LinkId), nameof(UserId), IsUnique = true)]
   [Index(nameof(UsernameClaimed), nameof(DateCreated))]
-  public class LinkUsageLog : BaseEntity<Guid>
+  public class LinkUsageLog : Shared.Entities.BaseEntity<Guid>
   {
     [ForeignKey("LinkId")]
     public Guid LinkId { get; set; }

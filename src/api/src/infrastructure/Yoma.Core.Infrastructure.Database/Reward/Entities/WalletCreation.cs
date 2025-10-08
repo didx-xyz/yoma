@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups;
 
@@ -11,7 +10,7 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
   [Index(nameof(UserId), IsUnique = true)]
   [Index(nameof(Username), IsUnique = true)]
   [Index(nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
-  public class WalletCreation : BaseEntity<Guid>
+  public class WalletCreation : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [ForeignKey("StatusId")]

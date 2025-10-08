@@ -53,6 +53,8 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
 using Yoma.Core.Domain.BlobProvider.Services;
+using Yoma.Core.Domain.NewsFeedProvider.Interfaces;
+using Yoma.Core.Domain.NewsFeedProvider.Services;
 
 namespace Yoma.Core.Domain
 {
@@ -142,6 +144,10 @@ namespace Yoma.Core.Domain
       services.AddScoped<IMyOpportunityBackgroundService, MyOpportunityBackgroundService>();
       #endregion My Opportunity
 
+      #region News Feed Provider
+      services.AddScoped<INewsFeedService, NewsFeedService>();
+      #endregion News Feed Provider
+
       #region Email Provider
       services.AddScoped<INotificationDeliveryService, NotificationDeliveryService>();
       services.AddScoped<INotificationPreferenceFilterService, NotificationPreferenceFilterService>();
@@ -211,6 +217,8 @@ namespace Yoma.Core.Domain
       var options = configuration.GetSection(ScheduleJobOptions.Section).Get<ScheduleJobOptions>() ?? throw new InvalidOperationException($"Failed to retrieve configuration section '{ScheduleJobOptions.Section}'");
 
       var scheduledJobs = JobStorage.Current.GetMonitoringApi().ScheduledJobs(0, int.MaxValue);
+      scheduledJobs.ForEach(o => BackgroundJob.Delete(o.Key));
+
       foreach (var job in scheduledJobs) BackgroundJob.Delete(job.Key);
 
       //skills

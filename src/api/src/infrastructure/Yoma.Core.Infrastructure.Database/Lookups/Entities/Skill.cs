@@ -1,14 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Entities
 {
   [Table("Skill", Schema = "Lookup")]
   [Index(nameof(Name), IsUnique = true)]
   [Index(nameof(ExternalId), IsUnique = true)]
-  public class Skill : BaseEntity<Guid>
+  public class Skill : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(255)")]

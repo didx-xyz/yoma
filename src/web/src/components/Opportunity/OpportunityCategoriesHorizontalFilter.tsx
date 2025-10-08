@@ -9,9 +9,9 @@ const OpportunityCategoriesHorizontalFilter: React.FC<{
   onClick?: (item: OpportunityCategory) => void;
 }> = ({ lookups_categories, selected_categories, onClick }) => {
   return (
-    <div className="relative flex justify-center">
+    <div className="relative ml-2 flex justify-center">
       <CustomSlider>
-        {lookups_categories.map((category) => (
+        {lookups_categories?.map((category) => (
           <OpportunityCategoryHorizontalCard
             key={category.id}
             data={category}

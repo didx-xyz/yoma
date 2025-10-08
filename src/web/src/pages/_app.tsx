@@ -100,7 +100,7 @@ const MyApp = ({
               <div id="mainContent" className={`${nunito.className}`}>
                 <ConfirmationModalContextProvider>
                   <Global />
-                  <Navbar />
+                  <Navbar theme={theme} />
                   {getLayout(component)}
                   <ToastContainer theme="colored" closeOnClick={true} />
                   <GoogleAnalytics />

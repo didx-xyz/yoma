@@ -1,13 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
 {
   [Table("StoreAccessControlRuleOpportunity", Schema = "Marketplace")]
   [Index(nameof(StoreAccessControlRuleId), nameof(OpportunityId), IsUnique = true)]
-  public class StoreAccessControlRuleOpportunity : BaseEntity<Guid>
+  public class StoreAccessControlRuleOpportunity : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [ForeignKey("StoreAccessControlRuleId")]

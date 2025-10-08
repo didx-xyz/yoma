@@ -1,14 +1,13 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Entities
 {
   [Table("Language", Schema = "Lookup")]
   [Index(nameof(Name), IsUnique = true)]
   [Index(nameof(CodeAlpha2), IsUnique = true)]
-  public class Language : BaseEntity<Guid>
+  public class Language : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(125)")]

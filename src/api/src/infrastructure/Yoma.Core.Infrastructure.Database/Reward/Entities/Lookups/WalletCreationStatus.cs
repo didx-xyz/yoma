@@ -1,13 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups
 {
   [Table("WalletCreationStatus", Schema = "Reward")]
   [Index(nameof(Name), IsUnique = true)]
-  public class WalletCreationStatus : BaseEntity<Guid>
+  public class WalletCreationStatus : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(50)")]

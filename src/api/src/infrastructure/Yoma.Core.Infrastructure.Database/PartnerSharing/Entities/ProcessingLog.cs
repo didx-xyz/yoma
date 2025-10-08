@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.PartnerSharing.Entities.Lookups;
 
 namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Entities
@@ -9,7 +8,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Entities
   [Table("ProcessingLog", Schema = "PartnerSharing")]
   //entity per partner can be created or deleted once and updated multiple times; no unique index; handled by service
   [Index(nameof(EntityType), nameof(OpportunityId), nameof(PartnerId), nameof(Action), nameof(StatusId), nameof(EntityExternalId), nameof(DateCreated), nameof(DateModified))]
-  public class ProcessingLog : BaseEntity<Guid>
+  public class ProcessingLog : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(25)")]

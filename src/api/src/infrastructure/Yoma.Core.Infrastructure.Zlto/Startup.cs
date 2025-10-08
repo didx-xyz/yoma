@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
-using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Marketplace.Interfaces.Provider;
 using Yoma.Core.Domain.Reward.Interfaces.Provider;
 using Yoma.Core.Infrastructure.Zlto.Client;

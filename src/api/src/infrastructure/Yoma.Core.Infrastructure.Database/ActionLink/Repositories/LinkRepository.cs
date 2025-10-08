@@ -202,6 +202,11 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
     {
       throw new NotImplementedException();
     }
+
+    public Task Delete(List<Link> items)
+    {
+      throw new NotImplementedException();
+    }
     #endregion
   }
 }

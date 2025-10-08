@@ -102,6 +102,7 @@ const LanguageSwitcher: React.FC<{
   return (
     <>
       <div
+        //id="languageSwitcher"
         className={`notranslate flex flex-row gap-2 rounded-md px-1 py-3 ${className}`}
       >
         <IoMdGlobe className={`h-6 w-6 ${classNameIcon}`} />
@@ -123,23 +124,6 @@ const LanguageSwitcher: React.FC<{
           ))}
         </select>
       </div>
-
-      <style jsx>{`
-        @media (max-width: 768px) {
-          .mobile-select {
-            appearance: none;
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%23ffffff'%3E%3Cpath d='M5.293 7.293a1 1 0 0 1 1.414 0L10 10.586l3.293-3.293a1 1 0 1 1 1.414 1.414l-4 4a1 1 0 0 1-1.414 0l-4-4a1 1 0 0 1 0-1.414z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 0.5rem center;
-            background-size: 1.7rem;
-            padding-right: 2rem;
-            text-indent: -9999px;
-            width: 1.5rem;
-          }
-        }
-      `}</style>
     </>
   );
 };

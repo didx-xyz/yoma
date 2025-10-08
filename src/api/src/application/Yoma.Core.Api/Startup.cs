@@ -26,6 +26,7 @@ using Yoma.Core.Infrastructure.Database;
 using Yoma.Core.Infrastructure.Emsi;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.SendGrid;
+using Yoma.Core.Infrastructure.Substack;
 using Yoma.Core.Infrastructure.Twilio;
 using Yoma.Core.Infrastructure.Zlto;
 using Yoma.Core.Infrastructure.SAYouth;
@@ -85,6 +86,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_EmailProvider(_configuration);
       services.ConfigureServices_MessageProvider(_configuration);
       services.ConfigureServices_RewardProvider(_configuration);
+      services.ConfigureServices_NewsFeedProvider(_configuration);
       services.ConfigureServices_SharingProvider(_configuration);
       #endregion Configuration
 
@@ -130,6 +132,7 @@ namespace Yoma.Core.Api
       services.ConfigureServices_InfrastructureLaborMarketProvider();
       services.ConfigureServices_InfrastructureIdentityProvider();
       services.ConfigureServices_InfrastructureSharingProvider();
+      services.ConfigureServices_InfrastructureNewsFeedProvider(_configuration, _configuration.Configuration_ConnectionString(), _appSettings);
       services.ConfigureServices_InfrastructureEmailProvider(_configuration);
       services.ConfigureServices_InfrastructureMessageProvider(_configuration);
       services.ConfigureServices_InfrastructureRewardProvider();
@@ -233,6 +236,7 @@ namespace Yoma.Core.Api
 
       //migrations applied as part of ConfigureHangfire to ensure db exist prior to executing Hangfire migrations
       _configuration.Configure_RecurringJobs(_appSettings, _environment);
+      _configuration.Configure_RecurringJobsNewsFeedProvider();
       #endregion 3rd Partry
     }
     #endregion
@@ -298,6 +302,7 @@ namespace Yoma.Core.Api
         var scopeFactory = serviceProvider.GetService<IServiceScopeFactory>() ?? throw new InvalidOperationException($"Failed to retrieve service '{nameof(IServiceScopeFactory)}'");
         serviceProvider.Configure_InfrastructureDatabase();
         serviceProvider.Configure_InfrastructureDatabaseSSIProvider();
+        serviceProvider.Configure_InfrastructureDatabaseNewsFeedProvider();
         config.SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
              .UseActivator(new HangfireActivator(scopeFactory))
              .UseSimpleAssemblyNameTypeSerializer()

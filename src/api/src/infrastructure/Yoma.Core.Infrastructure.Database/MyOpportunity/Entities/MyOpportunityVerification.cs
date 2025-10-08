@@ -8,7 +8,7 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
   [Table("MyOpportunityVerifications", Schema = "Opportunity")]
   [Index(nameof(MyOpportunityId), nameof(VerificationTypeId), IsUnique = true)]
 
-  public class MyOpportunityVerification : BaseEntity<Guid>
+  public class MyOpportunityVerification : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [ForeignKey("MyOpportunityId")]

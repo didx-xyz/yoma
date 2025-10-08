@@ -1,13 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups
 {
   [Table("SettingsDefinition", Schema = "Entity")]
   [Index(nameof(EntityType), nameof(Key), IsUnique = true)]
-  public class SettingsDefinition : BaseEntity<Guid>
+  public class SettingsDefinition : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(25)")]

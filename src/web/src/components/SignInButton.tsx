@@ -29,7 +29,7 @@ export const SignInButton: React.FC<{
   return (
     <button
       type="button"
-      className={`bg-theme btn gap-2 border-0 border-none px-4 shadow-lg transition-all duration-300 ease-in-out hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95 ${className}`}
+      className={`bg-theme btn transition-allx duration-300x ease-in-outx gap-2 border-0 border-none px-4 shadow-lg hover:brightness-95 disabled:animate-pulse disabled:!cursor-wait disabled:brightness-95 ${className}`}
       onClick={handleLogin}
       disabled={isButtonLoading}
       id="btnSignIn"
@@ -37,13 +37,10 @@ export const SignInButton: React.FC<{
       title="Login"
     >
       {isButtonLoading && (
-        <LoadingInline
-          classNameSpinner="border-white h-6 w-6"
-          classNameLabel="hidden"
-        />
+        <LoadingInline classNameSpinner="  h-6 w-6" classNameLabel="hidden" />
       )}
-      {!isButtonLoading && <IoMdFingerPrint className="h-6 w-6 text-white" />}
-      <p className="text-white uppercase">Login</p>
+      {!isButtonLoading && <IoMdFingerPrint className="h-6 w-6" />}
+      <p className="uppercase">Login</p>
     </button>
   );
 };

@@ -143,6 +143,11 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Repositories
     {
       throw new NotImplementedException();
     }
+
+    public Task Delete(List<RewardTransaction> items)
+    {
+      throw new NotImplementedException();
+    }
     #endregion
   }
 }

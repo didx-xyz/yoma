@@ -10,7 +10,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
   [Index(nameof(Name), IsUnique = true)]
   [Index(nameof(NameHashValue), IsUnique = true)]
   [Index(nameof(StatusId), nameof(DateStatusModified), nameof(DateCreated), nameof(CreatedByUserId), nameof(DateModified), nameof(ModifiedByUserId))]
-  public class Organization : BaseEntity<Guid>
+  public class Organization : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)

@@ -6,7 +6,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities.Lookups
 {
   [Table("ScheduleStatus", Schema = "Download")]
   [Index(nameof(Name), IsUnique = true)]
-  public class DownloadScheduleStatus : BaseEntity<Guid>
+  public class DownloadScheduleStatus : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(30)")]

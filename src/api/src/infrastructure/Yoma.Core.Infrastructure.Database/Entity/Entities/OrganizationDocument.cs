@@ -8,7 +8,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
   [Table("OrganizationDocuments", Schema = "Entity")]
   [Index(nameof(FileId), IsUnique = true)]
   [Index(nameof(OrganizationId), nameof(Type), nameof(DateCreated))]
-  public class OrganizationDocument : BaseEntity<Guid>
+  public class OrganizationDocument : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [ForeignKey("OrganizationId")]

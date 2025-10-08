@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
@@ -10,7 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
   [Index(nameof(URL), IsUnique = true)]
   [Index(nameof(ShortURL), IsUnique = true)]
   [Index(nameof(Name), nameof(EntityType), nameof(Action), nameof(StatusId), nameof(OpportunityId), nameof(DateEnd), nameof(DateCreated))]
-  public class Link : BaseEntity<Guid>
+  public class Link : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)

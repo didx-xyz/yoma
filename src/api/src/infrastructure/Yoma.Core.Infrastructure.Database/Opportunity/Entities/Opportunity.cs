@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups;
@@ -14,7 +13,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
   [Index(nameof(TypeId), nameof(OrganizationId), nameof(ZltoReward), nameof(DifficultyId), nameof(CommitmentIntervalId), nameof(CommitmentIntervalCount), nameof(StatusId), nameof(Keywords),
     nameof(DateStart), nameof(DateEnd), nameof(CredentialIssuanceEnabled), nameof(Featured), nameof(EngagementTypeId), nameof(ShareWithPartners), nameof(Hidden),
     nameof(DateCreated), nameof(CreatedByUserId), nameof(DateModified), nameof(ModifiedByUserId))]
-  public class Opportunity : BaseEntity<Guid>
+  public class Opportunity : Shared.Entities.BaseEntity<Guid>
   {
     //support specials characters like emojis  
     [Required]

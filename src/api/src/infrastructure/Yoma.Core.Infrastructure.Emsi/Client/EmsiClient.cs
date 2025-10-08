@@ -2,7 +2,6 @@ using Flurl;
 using Flurl.Http;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
-using System.Reflection;
 using System.Text;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -47,7 +46,7 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
       if (!_appSettings.LaborMarketProviderAsSourceEnabledEnvironmentsAsEnum.HasFlag(_environmentProvider.Environment))
       {
         _logger.LogInformation("Used local embedded EMSI skills payload for environment '{environment}'", _environmentProvider.Environment);
-        return ParsePayloadLocalSkills();
+        return ParseLocalSkills();
       }
 
       var resp = await _options.BaseUrl
@@ -97,22 +96,22 @@ namespace Yoma.Core.Infrastructure.Emsi.Client
       return new KeyValuePair<string, string>(Header_Authorization, $"{Header_Authorization_Value_Prefix} {_accessToken.Access_token}");
     }
 
-    private static List<Domain.LaborMarketProvider.Models.Skill> ParsePayloadLocalSkills()
+    private static List<Domain.LaborMarketProvider.Models.Skill> ParseLocalSkills()
     {
-      var resourcePath = "Yoma.Core.Infrastructure.Emsi.payload_local_skills.json";
-      var assembly = Assembly.GetExecutingAssembly();
-      using var resourceStream = assembly.GetManifestResourceStream(resourcePath)
-          ?? throw new InvalidOperationException($"Embedded resource '{resourcePath}' not found");
+      var assembly = typeof(EmsiClient).Assembly;
+      var assemblyName = assembly.GetName().Name;
+      var resourceName = $"{assemblyName}.payload_local_skills.json";
 
-      string jsonContent;
+      using var resourceStream = assembly.GetManifestResourceStream(resourceName)
+          ?? throw new InvalidOperationException($"Embedded resource '{resourceName}' not found. Ensure Build Action = Embedded Resource");
+
+      var jsonContent = string.Empty;
       using (var reader = new StreamReader(resourceStream, Encoding.UTF8))
-      {
         jsonContent = reader.ReadToEnd();
-      }
 
       var result = JsonConvert.DeserializeObject<List<Domain.LaborMarketProvider.Models.Skill>>(jsonContent);
       if (result == null || result.Count == 0)
-        throw new InvalidOperationException($"Embedded resource '{resourcePath}' could not be deserialized or contains no data");
+        throw new InvalidOperationException($"Embedded resource '{resourceName}' could not be deserialized or contains no data");
 
       result.ForEach(o => o.Id = HashHelper.ComputeSHA256Hash(o.Name));
 

@@ -356,6 +356,11 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
     {
       throw new NotImplementedException();
     }
+
+    public Task Delete(List<Domain.Opportunity.Models.Opportunity> items)
+    {
+      throw new NotImplementedException();
+    }
     #endregion
   }
 }

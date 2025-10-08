@@ -197,6 +197,11 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
     {
       throw new NotImplementedException();
     }
+
+    public Task Delete(List<StoreAccessControlRule> items)
+    {
+      throw new NotImplementedException();
+    }
     #endregion
   }
 }

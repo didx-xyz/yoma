@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Infrastructure.Database.Core.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Entities
 {
@@ -10,7 +9,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Entities
   [Index(nameof(CodeAlpha2), IsUnique = true)]
   [Index(nameof(CodeAlpha3), IsUnique = true)]
   [Index(nameof(CodeNumeric), IsUnique = true)]
-  public class Country : BaseEntity<Guid>
+  public class Country : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(125)")]

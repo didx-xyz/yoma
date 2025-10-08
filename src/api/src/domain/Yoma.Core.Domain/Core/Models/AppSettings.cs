@@ -107,6 +107,10 @@ namespace Yoma.Core.Domain.Core.Models
 
     public Environment SSIEnabledEnvironmentsAsEnum => ParseEnvironmentInput(SSIEnabledEnvironments);
 
+    public string NewsFeedProviderAsSourceEnabledEnvironments { get; set; }
+
+    public Environment NewsFeedProviderAsSourceEnabledEnvironmentsAsEnum => ParseEnvironmentInput(NewsFeedProviderAsSourceEnabledEnvironments);
+
     /// <summary>
     /// -1: Represents infinite retries. Never transitions to an error state.
     /// 0: Represents no retries. Immediately transitions to an error state.
