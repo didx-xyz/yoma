@@ -1,7 +1,10 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Net.Http.Headers;
 using System.Transactions;
 using System.Xml.Linq;
+using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.NewsFeedProvider;
@@ -25,8 +28,9 @@ namespace Yoma.Core.Infrastructure.Substack.Services
     private readonly IDistributedLockService _distributedLockService;
     private readonly IExecutionStrategyService _executionStrategyService;
 
-    private const string XNamespace_Content = "http://purl.org/rss/1.0/modules/content/";
-    private const string XNamespace_Dc = "http://purl.org/dc/elements/1.1/";
+    private static readonly XNamespace XNamespace_MediaNs = "http://search.yahoo.com/mrss/";
+    private static readonly XNamespace XNamespace_Content = "http://purl.org/rss/1.0/modules/content/";
+    private static readonly XNamespace XNamespace_Dc = "http://purl.org/dc/elements/1.1/";
     #endregion
 
     #region Constructor
@@ -140,17 +144,26 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
           using var req = new HttpRequestMessage(HttpMethod.Get, feed.FeedURL);
 
-          // Conditional headers only if we have state
-          if (!isNewTracking)
-          {
-            if (!string.IsNullOrEmpty(tracking.ETag))
-              req.Headers.TryAddWithoutValidation("If-None-Match", tracking.ETag);
+          using var resp = await HttpHelper.SendWithRetryAsync(
+            client,
+            requestFactory: () =>
+            {
+              var req = new HttpRequestMessage(HttpMethod.Get, feed.FeedURL);
 
-            if (tracking.FeedLastModified.HasValue)
-              req.Headers.TryAddWithoutValidation("If-Modified-Since", tracking.FeedLastModified.Value.UtcDateTime.ToString("R"));
-          }
+              // Conditional headers only if we have state
+              if (!isNewTracking)
+              {
+                if (!string.IsNullOrEmpty(tracking.ETag) && EntityTagHeaderValue.TryParse(tracking.ETag, out var etag))
+                  req.Headers.IfNoneMatch.Add(etag);
 
-          using var resp = await client.SendAsync(req, HttpCompletionOption.ResponseHeadersRead);
+                if (tracking.FeedLastModified.HasValue)
+                  req.Headers.IfModifiedSince = tracking.FeedLastModified.Value.UtcDateTime;
+              }
+
+              return req;
+            },
+            logger: _logger
+          );
 
           if (resp.StatusCode == System.Net.HttpStatusCode.NotModified)
           {
@@ -161,7 +174,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
           resp.EnsureSuccessStatusCode();
 
           await using var stream = await resp.Content.ReadAsStreamAsync();
-          var doc = XDocument.Load(stream);
+          var doc = XMLHelper.Load(stream);
 
           var articles = ParseNewsArticles(doc, now);
 
@@ -172,7 +185,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
             await ProcessNewsArticles(feedType, articles, now);
 
             // Update feed state tracking
-            tracking.ETag = resp.Headers.ETag?.Tag.Trim();
+            tracking.ETag = resp.Headers.ETag?.ToString();
             tracking.FeedLastModified = resp.Content.Headers.LastModified;
 
             if (isNewTracking)
@@ -264,6 +277,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
         await _newsArticleRepository.Update(itemsToUpdate);
 
       // Deletions: ONLY retention purge (do NOT delete "missing from this batch" due to conditional fetch)
+      var deletedCount = default(int);
       if (retentionEnabled)
       {
         if (!cutoffUtc.HasValue)
@@ -274,8 +288,14 @@ namespace Yoma.Core.Infrastructure.Substack.Services
           .ToList();
 
         if (itemsStale.Count > 0)
+        {
           await _newsArticleRepository.Delete(itemsStale);
+          deletedCount = itemsStale.Count;
+        }
       }
+
+      _logger.LogInformation("Feed {FeedType} sync summary: Created={Created}, Updated={Updated}, Deleted={Deleted}",
+        feedType, itemsToCreate.Count, itemsToUpdate.Count, deletedCount);
     }
 
     private static List<NewsArticleRaw> ParseNewsArticles(XDocument doc, DateTimeOffset now)
@@ -286,31 +306,44 @@ namespace Yoma.Core.Infrastructure.Substack.Services
       foreach (var x in items)
       {
         var guid = x.Element("guid")?.Value?.Trim();
-        var url = x.Element("link")?.Value?.Trim();
+        var urlRaw = x.Element("link")?.Value?.Trim();
 
         // Skip malformed items: must have a navigable link
-        if (string.IsNullOrWhiteSpace(url))
-          continue;
+        if (string.IsNullOrWhiteSpace(urlRaw)) continue;
 
         // Prefer GUID for stable deduplication; fallback to link
-        var externalId = !string.IsNullOrWhiteSpace(guid) ? guid : url;
+        var externalId = !string.IsNullOrWhiteSpace(guid) ? guid : urlRaw.NormalizeForDedup();
 
         var title = x.Element("title")?.Value?.Trim() ?? string.Empty;
 
         // Body HTML: prefer <description> (short summary), fallback to <content:encoded>
         var description = (string?)x.Element("description")
-                  ?? (string?)x.Element(XNamespace.Get(XNamespace_Content) + "encoded")
+                  ?? (string?)x.Element(XNamespace_Content + "encoded")
                   ?? string.Empty;
 
-        // Image: prefer <enclosure>, fallback to <media:thumbnail> for legacy feeds
-        var thumbnailUrl = (string?)x.Element("enclosure")?.Attribute("url")?.Value?.Trim()
-                    ?? (string?)x.Element(XNamespace.Get("http://search.yahoo.com/mrss/") + "thumbnail")?.Attribute("url")?.Value?.Trim();
+        // Image: prefer <enclosure>, then <media:thumbnail>, then <media:content>
+        var thumbnailUrl =
+            x.Element("enclosure")?.Attribute("url")?.Value?.Trim()
+            ?? x.Element(XNamespace_MediaNs + "thumbnail")?.Attribute("url")?.Value?.Trim()
+            ?? x.Element(XNamespace_MediaNs + "content")?.Attribute("url")?.Value?.Trim();
+
+        // Light sanity check: keep only http(s); allow CDN links with no extension
+        if (!string.IsNullOrEmpty(thumbnailUrl))
+        {
+          var lower = thumbnailUrl.ToLowerInvariant();
+          var isHttp = lower.StartsWith("http://") || lower.StartsWith("https://");
+
+          if (!isHttp)
+          {
+            thumbnailUrl = null;
+          }
+        }
 
         // Published date: <pubDate>, <dc:date>, fallback to now
         var pubRaw = x.Element("pubDate")?.Value?.Trim();
         if (!DateTimeOffset.TryParse(pubRaw, out var published))
         {
-          var dcRaw = x.Element(XNamespace.Get(XNamespace_Dc) + "date")?.Value?.Trim();
+          var dcRaw = x.Element(XNamespace_Dc + "date")?.Value?.Trim();
           if (!DateTimeOffset.TryParse(dcRaw, out published))
             published = now;
         }
@@ -320,7 +353,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
           ExternalId = externalId!,
           Title = title,
           Description = description,
-          URL = url!,
+          URL = urlRaw!,
           ThumbnailURL = thumbnailUrl,
           PublishedDate = published
         });
@@ -346,7 +379,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
       using var resourceStream = assembly.GetManifestResourceStream(resourceName)
             ?? throw new InvalidOperationException($"Embedded resource '{resourceName}' not found. Ensure Build Action = Embedded Resource");
 
-      return XDocument.Load(resourceStream);
+      return XMLHelper.Load(resourceStream);
     }
     #endregion
   }

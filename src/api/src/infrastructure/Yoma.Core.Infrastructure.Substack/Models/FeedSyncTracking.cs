@@ -1,5 +1,3 @@
-using Yoma.Core.Domain.NewsFeedProvider;
-
 namespace Yoma.Core.Infrastructure.Substack.Models
 {
   public class FeedSyncTracking
