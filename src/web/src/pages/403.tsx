@@ -1,9 +1,6 @@
 import { type ReactElement } from "react";
 import MainLayout from "~/components/Layout/Main";
 import { type NextPageWithLayout } from "./_app";
-import Image from "next/image";
-import IconRingBuoy from "/public/images/icon-ring-buoy.svg";
-import Link from "next/link";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 
 const Status403: NextPageWithLayout = () => {

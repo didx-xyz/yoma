@@ -1,7 +1,6 @@
 import Head from "next/head";
 import IconRingBuoy from "/public/images/icon-ring-buoy.svg";
 import Image from "next/image";
-import { SignInButton } from "../SignInButton";
 import Link from "next/link";
 
 export const NotFound = () => (
@@ -10,7 +9,7 @@ export const NotFound = () => (
       <title>Yoma | Not found</title>
     </Head>
 
-    <div className="container flex flex-col items-center justify-start gap-12 md:mt-44 md:px-4">
+    <div className="container mt-20 mb-10 flex flex-col items-center justify-start gap-12 px-4 md:mt-44">
       <div className="bg-theme absolute top-0 z-2 h-[256px] w-full"></div>
       <div className="z-10 flex h-full w-full max-w-md flex-col place-items-center justify-center gap-8 rounded-xl bg-white p-4 md:h-fit md:max-w-2xl md:p-16">
         <Image
@@ -22,10 +21,13 @@ export const NotFound = () => (
           className="shadow-custom mt-2 h-auto rounded-full p-4"
         />
 
-        <h2 className="-mb-6 font-bold">Oops!</h2>
+        <h2 className="-mb-6 font-bold">Page Not Found</h2>
+
         <p className="text-gray-dark text-center">
-          We can&apos;t seem to find the page you are looking for.
+          The page you're looking for doesn't exist.
+          <br /> Let's get you back home.
         </p>
+
         <Link
           href="/"
           className="btn btn-success mt-2 mb-4 rounded-3xl px-8 text-white"
