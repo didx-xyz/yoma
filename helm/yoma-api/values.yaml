@@ -85,7 +85,11 @@ ingress:
         DNT, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since,
         Cache-Control, Content-Type, Range, Authorization, traceparent,
         tracestate, x-datadog-trace-id, x-datadog-parent-id, x-datadog-origin,
-        x-datadog-sampling-priority
+        x-datadog-sampling-priority, Tus-Resumable, Upload-Length, Upload-Offset,
+        Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Defer-Length
+      # Use configuration-snippet to force expose headers (cors-expose-headers annotation not working)
+      nginx.ingress.kubernetes.io/configuration-snippet: |
+        more_set_headers "Access-Control-Expose-Headers: Location, Content-Disposition, Tus-Resumable, Tus-Version, Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length, Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires";
     rules:
       - host: example.com
         paths:
@@ -106,7 +110,11 @@ ingress:
         DNT, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since,
         Cache-Control, Content-Type, Range, Authorization, traceparent,
         tracestate, x-datadog-trace-id, x-datadog-parent-id, x-datadog-origin,
-        x-datadog-sampling-priority
+        x-datadog-sampling-priority, Tus-Resumable, Upload-Length, Upload-Offset,
+        Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Defer-Length
+      # Use configuration-snippet to force expose headers (cors-expose-headers annotation not working)
+      nginx.ingress.kubernetes.io/configuration-snippet: |
+        more_set_headers "Access-Control-Expose-Headers: Location, Content-Disposition, Tus-Resumable, Tus-Version, Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length, Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires";
     rules:
       - host: example.com
         paths:
