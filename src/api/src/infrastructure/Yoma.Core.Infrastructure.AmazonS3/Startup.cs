@@ -56,7 +56,9 @@ namespace Yoma.Core.Infrastructure.AmazonS3
         {
           BucketName = wrapper.AWSS3OptionsBucket.BucketName,
           FileObjectPrefix = filePrefix,
-          UploadInfoObjectPrefix = infoPrefix
+          UploadInfoObjectPrefix = infoPrefix,
+          MinPartSizeInBytes = 5 * TusS3Defines.MegaByte, // AWS minimum
+          PreferredPartSizeInBytes = 5 * TusS3Defines.MegaByte  // buffer 1MB PATCHes to 5MB parts
         };
 
         return new TusS3Store(logger, storeCfg, s3Client: wrapper.NativeClient);
