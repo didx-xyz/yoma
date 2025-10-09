@@ -74,11 +74,6 @@ ingress:
     enabled: false
     className: nginx-internal
     annotations:
-      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
-      nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 128k
-      nginx.ingress.kubernetes.io/proxy-buffering: "on"
-      nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
-      nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
       # TUS resumable uploads configuration
       # https://github.com/tusdotnet/tusdotnet/wiki/Configure-other-reverse-proxies
       nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
@@ -98,6 +93,7 @@ ingress:
         Location, Content-Disposition, Content-Length, Tus-Resumable, Tus-Version,
         Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length,
         Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires
+      nginx.ingress.kubernetes.io/proxy-buffering: "off"
     rules:
       - host: example.com
         paths:
@@ -107,11 +103,6 @@ ingress:
     enabled: false
     className: nginx-external
     annotations:
-      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
-      nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 128k
-      nginx.ingress.kubernetes.io/proxy-buffering: "on"
-      nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
-      nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
       # TUS resumable uploads configuration
       # https://github.com/tusdotnet/tusdotnet/wiki/Configure-other-reverse-proxies
       nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
@@ -131,6 +122,7 @@ ingress:
         Location, Content-Disposition, Content-Length, Tus-Resumable, Tus-Version,
         Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length,
         Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires
+      nginx.ingress.kubernetes.io/proxy-buffering: "off"
     rules:
       - host: example.com
         paths:
