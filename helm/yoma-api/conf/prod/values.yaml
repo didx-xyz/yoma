@@ -12,7 +12,6 @@ ingress:
     className: nginx-internal
     annotations:
       nginx.ingress.kubernetes.io/enable-cors: "true"
-      nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Disposition,Content-Length"
       nginx.ingress.kubernetes.io/cors-allow-origin: "https://yoma.world"
     rules:
       - host: api.yoma.world
@@ -21,7 +20,6 @@ ingress:
     className: nginx-external
     annotations:
       nginx.ingress.kubernetes.io/enable-cors: "true"
-      nginx.ingress.kubernetes.io/cors-expose-headers: "Content-Disposition,Content-Length"
       nginx.ingress.kubernetes.io/cors-allow-origin: "https://yoma.world"
       nginx.ingress.kubernetes.io/server-snippet: |
         large_client_header_buffers 8 128k;

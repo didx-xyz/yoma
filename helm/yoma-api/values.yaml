@@ -87,9 +87,10 @@ ingress:
         tracestate, x-datadog-trace-id, x-datadog-parent-id, x-datadog-origin,
         x-datadog-sampling-priority, Tus-Resumable, Upload-Length, Upload-Offset,
         Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Defer-Length
-      # Use configuration-snippet to force expose headers (cors-expose-headers annotation not working)
-      nginx.ingress.kubernetes.io/configuration-snippet: |
-        more_set_headers "Access-Control-Expose-Headers: Location, Content-Disposition, Tus-Resumable, Tus-Version, Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length, Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires";
+      nginx.ingress.kubernetes.io/cors-expose-headers: >-
+        Location, Content-Disposition, Content-Length, Tus-Resumable, Tus-Version,
+        Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length,
+        Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires
     rules:
       - host: example.com
         paths:
@@ -112,9 +113,10 @@ ingress:
         tracestate, x-datadog-trace-id, x-datadog-parent-id, x-datadog-origin,
         x-datadog-sampling-priority, Tus-Resumable, Upload-Length, Upload-Offset,
         Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Defer-Length
-      # Use configuration-snippet to force expose headers (cors-expose-headers annotation not working)
-      nginx.ingress.kubernetes.io/configuration-snippet: |
-        more_set_headers "Access-Control-Expose-Headers: Location, Content-Disposition, Tus-Resumable, Tus-Version, Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length, Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires";
+      nginx.ingress.kubernetes.io/cors-expose-headers: >-
+        Location, Content-Disposition, Content-Length, Tus-Resumable, Tus-Version,
+        Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length,
+        Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires
     rules:
       - host: example.com
         paths:
