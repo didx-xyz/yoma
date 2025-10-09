@@ -9,8 +9,9 @@ export const Unauthenticated: React.FC = () => {
       <Head>
         <title>Yoma | Unauthenticated</title>
       </Head>
-      <div className="container mt-10 flex flex-col items-center justify-center gap-12 px-4 py-16">
-        <div className="flex w-full max-w-md flex-col place-items-center justify-center gap-4 rounded-xl bg-white p-4 py-8 text-center">
+      <div className="container flex flex-col items-center justify-start gap-12 md:mt-44 md:px-4">
+        <div className="bg-theme absolute top-0 z-2 h-[256px] w-full"></div>
+        <div className="z-10 flex h-full w-full max-w-md flex-col place-items-center justify-center gap-8 rounded-xl bg-white p-4 md:h-fit md:max-w-2xl md:p-16">
           <Image
             src={IconRingBuoy}
             alt="Icon Ring Buoy"
@@ -19,8 +20,11 @@ export const Unauthenticated: React.FC = () => {
             priority={true}
             className="shadow-custom mt-2 h-auto rounded-full p-4"
           />
+
           <h4>401 - Unauthenticated</h4>
-          <p className="p-4 text-sm">You don’t have access to this page.</p>
+          <p className="p-4 text-sm">
+            You don&apos;t have access to this page.
+          </p>
           <Link className="btn btn-primary px-12" href="/">
             Go back
           </Link>
