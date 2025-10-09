@@ -79,6 +79,12 @@ ingress:
       nginx.ingress.kubernetes.io/proxy-buffering: "on"
       nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
       nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
+      # TUS resumable uploads configuration
+      # https://github.com/tusdotnet/tusdotnet/wiki/Configure-other-reverse-proxies
+      nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+      nginx.ingress.kubernetes.io/proxy-body-size: 64m
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
       # https://docs.datadoghq.com/tracing/other_telemetry/rum/?tab=datadog&site=eu#how-rum-resources-are-linked-to-traces
       # https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#enable-cors
       nginx.ingress.kubernetes.io/cors-allow-headers: >-
@@ -105,6 +111,12 @@ ingress:
       nginx.ingress.kubernetes.io/proxy-buffering: "on"
       nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
       nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
+      # TUS resumable uploads configuration
+      # https://github.com/tusdotnet/tusdotnet/wiki/Configure-other-reverse-proxies
+      nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+      nginx.ingress.kubernetes.io/proxy-body-size: 64m
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
       # https://docs.datadoghq.com/tracing/other_telemetry/rum/?tab=datadog&site=eu#how-rum-resources-are-linked-to-traces
       # https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#enable-cors
       nginx.ingress.kubernetes.io/cors-allow-headers: >-
