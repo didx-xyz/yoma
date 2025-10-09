@@ -22,13 +22,16 @@ export const InternalServerError: React.FC = () => {
             className="shadow-custom mt-2 h-auto rounded-full p-4"
           />
 
-          <h4>Error</h4>
-          <p className="text-center text-gray-500">
+          <h2 className="-mb-6 font-bold">Error</h2>
+          <p className="text-gray-dark text-center">
             We are unable to show this page right now.
           </p>
-          <p className="text-center text-gray-500">Please try again later.</p>
-          <Link className="btn btn-primary px-12" href="/">
-            Go back
+          <p className="text-gray-dark text-center">Please try again later.</p>
+          <Link
+            href="/"
+            className="btn btn-success mt-2 mb-4 rounded-3xl px-8 text-white"
+          >
+            Take me home
           </Link>
         </div>
       </div>

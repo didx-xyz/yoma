@@ -2,6 +2,7 @@ import Head from "next/head";
 import Image from "next/image";
 import IconRingBuoy from "/public/images/icon-ring-buoy.svg";
 import Link from "next/link";
+import { SignInButton } from "../SignInButton";
 
 export const Unauthenticated: React.FC = () => {
   return (
@@ -21,13 +22,15 @@ export const Unauthenticated: React.FC = () => {
             className="shadow-custom mt-2 h-auto rounded-full p-4"
           />
 
-          <h4>401 - Unauthenticated</h4>
-          <p className="p-4 text-sm">
-            You don&apos;t have access to this page.
+          <h2 className="-mb-6 font-bold">401 - Unauthenticated</h2>
+          <p className="text-gray-dark text-center">
+            Please log in to view this page.
           </p>
-          <Link className="btn btn-primary px-12" href="/">
+          <SignInButton className="btn bg-purple hover:bg-purple-light disabled:bg-purple-light rounded-full text-white normal-case disabled:border-0 md:w-[150px]" />
+
+          {/* <Link className="btn btn-primary px-12" href="/">
             Go back
-          </Link>
+          </Link> */}
         </div>
       </div>
     </>
