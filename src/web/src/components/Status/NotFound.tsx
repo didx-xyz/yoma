@@ -24,8 +24,8 @@ export const NotFound = () => (
         <h2 className="-mb-6 font-bold">Page Not Found</h2>
 
         <p className="text-gray-dark text-center">
-          The page you're looking for doesn't exist.
-          <br /> Let's get you back home.
+          The page you&apos;re looking for doesn&apos;t exist.
+          <br /> Let&apos;s get you back home.
         </p>
 
         <Link

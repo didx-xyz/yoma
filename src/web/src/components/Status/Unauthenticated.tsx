@@ -1,7 +1,6 @@
 import Head from "next/head";
 import Image from "next/image";
 import IconRingBuoy from "/public/images/icon-ring-buoy.svg";
-import Link from "next/link";
 import { SignInButton } from "../SignInButton";
 
 export const Unauthenticated: React.FC = () => {
