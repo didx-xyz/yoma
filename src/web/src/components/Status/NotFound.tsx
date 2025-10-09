@@ -1,12 +1,12 @@
 import Head from "next/head";
-import Link from "next/link";
 import IconRingBuoy from "/public/images/icon-ring-buoy.svg";
 import Image from "next/image";
+import Link from "next/link";
 
-export const Unauthorized = () => (
+export const NotFound = () => (
   <>
     <Head>
-      <title>Yoma | Access Restricted</title>
+      <title>Yoma | Not found</title>
     </Head>
 
     <div className="container mt-20 mb-10 flex flex-col items-center justify-start gap-12 px-4 md:mt-44">
@@ -21,18 +21,11 @@ export const Unauthorized = () => (
           className="shadow-custom mt-2 h-auto rounded-full p-4"
         />
 
-        <h2 className="-mb-6 font-bold">Access Restricted</h2>
+        <h2 className="-mb-6 font-bold">Page Not Found</h2>
 
         <p className="text-gray-dark text-center">
-          This area requires special permissions. If you believe you should have
-          access, please reach out to our{" "}
-          <a
-            className="linkx text-green font-bold"
-            href="mailto:help@yoma.world"
-          >
-            support team
-          </a>{" "}
-          - we&apos;re here to help!
+          The page you&apos;re looking for doesn&apos;t exist.
+          <br /> Let&apos;s get you back home.
         </p>
 
         <Link
