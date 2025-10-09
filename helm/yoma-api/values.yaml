@@ -83,8 +83,9 @@ ingress:
       # https://github.com/tusdotnet/tusdotnet/wiki/Configure-other-reverse-proxies
       nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
       nginx.ingress.kubernetes.io/proxy-body-size: 64m
-      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-      nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+      # Timeouts optimized for 5MB chunks over slow connections (256 Kbps = ~3min per chunk)
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
       # https://docs.datadoghq.com/tracing/other_telemetry/rum/?tab=datadog&site=eu#how-rum-resources-are-linked-to-traces
       # https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#enable-cors
       nginx.ingress.kubernetes.io/cors-allow-headers: >-
@@ -115,8 +116,9 @@ ingress:
       # https://github.com/tusdotnet/tusdotnet/wiki/Configure-other-reverse-proxies
       nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
       nginx.ingress.kubernetes.io/proxy-body-size: 64m
-      nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-      nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
+      # Timeouts optimized for 5MB chunks over slow connections (256 Kbps = ~3min per chunk)
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
       # https://docs.datadoghq.com/tracing/other_telemetry/rum/?tab=datadog&site=eu#how-rum-resources-are-linked-to-traces
       # https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#enable-cors
       nginx.ingress.kubernetes.io/cors-allow-headers: >-
