@@ -29,8 +29,9 @@ import {
   DATE_FORMAT_SYSTEM,
   MAX_FILE_SIZE,
   MAX_FILE_SIZE_LABEL,
+  MAX_RETRIES,
+  RETRY_DELAY,
 } from "~/lib/constants";
-import { analytics } from "~/lib/analytics";
 import FormMessage, { FormMessageType } from "../Common/FormMessage";
 import { ApiErrors } from "../Status/ApiErrors";
 import { Loading } from "../Status/Loading";
@@ -54,6 +55,7 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const { data: session } = useSession();
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   /* DEPRECATED: The opportunity completion UI no longer requires these fields */
   //   const { data: timeIntervalsData } = useQuery({
@@ -64,14 +66,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   const schema = z
     .object({
       certificate: z.any(),
-      certificateUploadId: z.string().optional(),
       picture: z.any(),
-      pictureUploadId: z.string().optional(),
       voiceNote: z.any(),
-      voiceNoteUploadId: z.string().optional(),
       geometry: z.any(),
       video: z.any(),
-      videoUploadId: z.string().optional(),
       dateStart: z.union([z.string(), z.null()]).optional(),
 
       // DEPRECATED: The opportunity completion UI no longer displays or requires the
@@ -156,14 +154,14 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       if (
         opportunityInfo?.verificationTypes?.find((x) => x.type == "FileUpload")
       ) {
-        if (!values.certificate && !values.certificateUploadId) {
+        if (!values.certificate) {
           ctx.addIssue({
             message: "Please upload a certificate.",
             code: z.ZodIssueCode.custom,
             path: ["certificate"],
             fatal: true,
           });
-        } else if (values.certificate && !values.certificateUploadId) {
+        } else {
           const fileType = values.certificate.type;
           if (
             fileType &&
@@ -197,14 +195,14 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       if (
         opportunityInfo?.verificationTypes?.find((x) => x.type == "Picture")
       ) {
-        if (!values.picture && !values.pictureUploadId) {
+        if (!values.picture) {
           ctx.addIssue({
             message: "Please upload a picture.",
             code: z.ZodIssueCode.custom,
             path: ["picture"],
             fatal: true,
           });
-        } else if (values.picture && !values.pictureUploadId) {
+        } else {
           const fileType = values.picture.type;
           if (fileType && !ACCEPTED_IMAGE_TYPES.includes(fileType)) {
             ctx.addIssue({
@@ -231,14 +229,14 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       if (
         opportunityInfo?.verificationTypes?.find((x) => x.type == "VoiceNote")
       ) {
-        if (!values.voiceNote && !values.voiceNoteUploadId) {
+        if (!values.voiceNote) {
           ctx.addIssue({
             message: "Please upload a voice note.",
             code: z.ZodIssueCode.custom,
             path: ["voiceNote"],
             fatal: true,
           });
-        } else if (values.voiceNote && !values.voiceNoteUploadId) {
+        } else {
           const fileType = values.voiceNote.type;
           if (fileType && !ACCEPTED_AUDIO_TYPES.includes(fileType)) {
             ctx.addIssue({
@@ -346,14 +344,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
       }
 
       const request: MyOpportunityRequestVerify = {
-        certificate: data.certificateUploadId ? undefined : data.certificate,
-        certificateUploadId: data.certificateUploadId || undefined,
-        picture: data.pictureUploadId ? undefined : data.picture,
-        pictureUploadId: data.pictureUploadId || undefined,
-        voiceNote: data.voiceNoteUploadId ? undefined : data.voiceNote,
-        voiceNoteUploadId: data.voiceNoteUploadId || undefined,
-        video: data.videoUploadId ? undefined : data.video,
-        videoUploadId: data.videoUploadId || undefined,
+        certificate: data.certificate,
+        picture: data.picture,
+        voiceNote: data.voiceNote,
+        video: data.video,
         geometry: data.geometry,
         dateStart: data.dateStart || null,
         dateEnd: null,
@@ -389,14 +383,71 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
 
       setIsLoading(true);
 
-      performActionSendForVerificationManual(opportunityInfo.id, request)
-        .then(() => {
-          // Track opportunity completion
-          analytics.opportunity.completed(
-            opportunityInfo.id,
-            opportunityInfo.title,
-          );
+      const uploadWithRetry = async (
+        opportunityId: string,
+        request: MyOpportunityRequestVerify,
+        retryCount = 0,
+      ): Promise<void> => {
+        // Helper function to determine if we should retry
+        const shouldRetry = (error: any, retryCount: number): boolean => {
+          // Don't retry if max attempts reached
+          if (retryCount >= MAX_RETRIES) return false;
 
+          // Retry for these specific network-related errors
+          const retryableErrors = [
+            "NetworkError",
+            "TimeoutError",
+            "AbortError",
+          ];
+
+          const retryableMessages = [
+            "network",
+            "timeout",
+            "connection",
+            "fetch",
+          ];
+
+          const isRetryableError =
+            retryableErrors.includes(error.name) ||
+            retryableMessages.some((msg) =>
+              error.message?.toLowerCase().includes(msg),
+            ) ||
+            error.code === "NETWORK_ERROR" ||
+            error.code === "TIMEOUT";
+
+          return isRetryableError;
+        };
+
+        try {
+          await performActionSendForVerificationManual(opportunityId, request);
+        } catch (error: any) {
+          if (shouldRetry(error, retryCount)) {
+            console.log(
+              `Upload failed due to network issue, retrying... (${retryCount + 1}/${MAX_RETRIES})`,
+              {
+                errorName: error.name,
+                errorMessage: error.message,
+                isOnline: isOnline,
+              },
+            );
+
+            // Wait before retrying with exponential backoff
+            await new Promise((resolve) =>
+              setTimeout(resolve, RETRY_DELAY * Math.pow(2, retryCount)),
+            );
+
+            return uploadWithRetry(opportunityId, request, retryCount + 1);
+          }
+
+          // Don't retry for non-network errors or when offline
+          throw error;
+        }
+      };
+
+      // Replace the existing upload call:
+      // performActionSendForVerificationManual(opportunityInfo.id, request)
+      uploadWithRetry(opportunityInfo.id, request)
+        .then(() => {
           setIsLoading(false);
           if (onSave) {
             onSave();
@@ -404,15 +455,46 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
         })
         .catch((error: any) => {
           setIsLoading(false);
-          toast(<ApiErrors error={error} />, {
-            type: "error",
-            toastId: "opportunityCompleteError",
-            autoClose: false,
-            icon: false,
-          });
+
+          // Enhanced error messaging for slow connections
+          let errorMessage = "Upload failed. ";
+          if (!isOnline) {
+            errorMessage +=
+              "You appear to be offline. Please check your internet connection.";
+          } else if (
+            error.name === "NetworkError" ||
+            error.message?.includes("network")
+          ) {
+            errorMessage +=
+              "Please check your internet connection and try again.";
+          } else if (error.code === "TIMEOUT") {
+            errorMessage +=
+              "Upload took too long. Please try again with a better connection.";
+          } else if (error.response?.status >= 500) {
+            errorMessage +=
+              "Server error occurred. Please try again in a few moments.";
+          } else {
+            errorMessage += "Please try again later.";
+          }
+
+          toast(
+            <div>
+              <ApiErrors error={error} />
+              <p className="mt-2 text-sm">{errorMessage}</p>
+              {!isOnline && (
+                <p className="mt-1 text-xs text-orange-600">Network: Offline</p>
+              )}
+            </div>,
+            {
+              type: "error",
+              toastId: "opportunityCompleteError",
+              autoClose: false,
+              icon: false,
+            },
+          );
         });
     },
-    [onSave, opportunityInfo, session /*, timeIntervalsData*/],
+    [onSave, opportunityInfo, session, isOnline /*, timeIntervalsData*/],
   );
 
   const {
@@ -494,6 +576,19 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
   useEffect(() => {
     trigger();
   }, [watchIntervalId, watchIntervalCount, trigger]);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, []);
 
   return (
     <>
@@ -728,50 +823,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         )?.description
                       }
                       iconAlt={<FcGraduationCap className="size-10" />}
-                      inlineUpload={true}
                       onUploadComplete={(files) => {
-                        if (files && files.length > 0 && files[0]) {
-                          const fileData = files[0];
-                          if (fileData.uploadId) {
-                            // TUS upload complete, set upload ID
-                            setValue("certificateUploadId", fileData.uploadId, {
-                              shouldValidate: true,
-                            });
-                            setValue("certificate", undefined, {
-                              shouldValidate: true,
-                            });
-
-                            // Track file upload completion
-                            analytics.trackEvent(
-                              "opportunity_completion_file_uploaded",
-                              {
-                                opportunityId: opportunityInfo?.id,
-                                opportunityTitle: opportunityInfo?.title,
-                                fileType: "certificate",
-                                uploadId: fileData.uploadId,
-                                fileName: fileData.file?.name,
-                                fileSize: fileData.file?.size,
-                              },
-                            );
-                          } else {
-                            // Legacy mode or upload in progress
-                            setValue("certificate", fileData.file, {
-                              shouldValidate: true,
-                            });
-                            // Clear upload ID when file changes
-                            setValue("certificateUploadId", undefined, {
-                              shouldValidate: true,
-                            });
-                          }
-                        } else {
-                          // File removed, clear both fields
-                          setValue("certificate", undefined, {
-                            shouldValidate: true,
-                          });
-                          setValue("certificateUploadId", undefined, {
-                            shouldValidate: true,
-                          });
-                        }
+                        setValue("certificate", files[0], {
+                          shouldValidate: true,
+                        });
                       }}
                     >
                       <>
@@ -799,50 +854,8 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         )?.description
                       }
                       iconAlt={<FcCompactCamera className="size-10" />}
-                      inlineUpload={true}
                       onUploadComplete={(files) => {
-                        if (files && files.length > 0 && files[0]) {
-                          const fileData = files[0];
-                          if (fileData.uploadId) {
-                            // TUS upload complete, set upload ID
-                            setValue("pictureUploadId", fileData.uploadId, {
-                              shouldValidate: true,
-                            });
-                            setValue("picture", undefined, {
-                              shouldValidate: true,
-                            });
-
-                            // Track file upload completion
-                            analytics.trackEvent(
-                              "opportunity_completion_file_uploaded",
-                              {
-                                opportunityId: opportunityInfo?.id,
-                                opportunityTitle: opportunityInfo?.title,
-                                fileType: "picture",
-                                uploadId: fileData.uploadId,
-                                fileName: fileData.file?.name,
-                                fileSize: fileData.file?.size,
-                              },
-                            );
-                          } else {
-                            // Legacy mode or upload in progress
-                            setValue("picture", fileData.file, {
-                              shouldValidate: true,
-                            });
-                            // Clear upload ID when file changes
-                            setValue("pictureUploadId", undefined, {
-                              shouldValidate: true,
-                            });
-                          }
-                        } else {
-                          // File removed, clear both fields
-                          setValue("picture", undefined, {
-                            shouldValidate: true,
-                          });
-                          setValue("pictureUploadId", undefined, {
-                            shouldValidate: true,
-                          });
-                        }
+                        setValue("picture", files[0], { shouldValidate: true });
                       }}
                     >
                       <>
@@ -870,50 +883,10 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
                         )?.description
                       }
                       iconAlt={<FcComments className="size-10" />}
-                      inlineUpload={true}
                       onUploadComplete={(files) => {
-                        if (files && files.length > 0 && files[0]) {
-                          const fileData = files[0];
-                          if (fileData.uploadId) {
-                            // TUS upload complete, set upload ID
-                            setValue("voiceNoteUploadId", fileData.uploadId, {
-                              shouldValidate: true,
-                            });
-                            setValue("voiceNote", undefined, {
-                              shouldValidate: true,
-                            });
-
-                            // Track file upload completion
-                            analytics.trackEvent(
-                              "opportunity_completion_file_uploaded",
-                              {
-                                opportunityId: opportunityInfo?.id,
-                                opportunityTitle: opportunityInfo?.title,
-                                fileType: "voiceNote",
-                                uploadId: fileData.uploadId,
-                                fileName: fileData.file?.name,
-                                fileSize: fileData.file?.size,
-                              },
-                            );
-                          } else {
-                            // Legacy mode or upload in progress
-                            setValue("voiceNote", fileData.file, {
-                              shouldValidate: true,
-                            });
-                            // Clear upload ID when file changes
-                            setValue("voiceNoteUploadId", undefined, {
-                              shouldValidate: true,
-                            });
-                          }
-                        } else {
-                          // File removed, clear both fields
-                          setValue("voiceNote", undefined, {
-                            shouldValidate: true,
-                          });
-                          setValue("voiceNoteUploadId", undefined, {
-                            shouldValidate: true,
-                          });
-                        }
+                        setValue("voiceNote", files[0], {
+                          shouldValidate: true,
+                        });
                       }}
                     >
                       <>
@@ -1108,6 +1081,13 @@ export const OpportunityCompletionEdit: React.FC<InputProps> = ({
               {!isValid && (
                 <FormMessage messageType={FormMessageType.Warning}>
                   Please supply the required information above.
+                </FormMessage>
+              )}
+
+              {!isOnline && (
+                <FormMessage messageType={FormMessageType.Error}>
+                  You appear to be offline. Please check your internet
+                  connection before submitting.
                 </FormMessage>
               )}
 

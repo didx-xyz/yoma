@@ -63,10 +63,6 @@ const config = {
         protocol: "https",
         hostname: "s3-eu-west-1.amazonaws.com",
       },
-      {
-        protocol: "https",
-        hostname: "substack-post-media.s3.amazonaws.com",
-      },
     ],
   },
 

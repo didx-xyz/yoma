@@ -169,11 +169,6 @@ const ApiClient = async () => {
         clearTimeout(error.config.timeoutId);
       }
 
-      // Don't track or log user-cancelled requests
-      if (error.code === "ERR_CANCELED" || error.name === "CanceledError") {
-        return Promise.reject(error);
-      }
-
       // 📊 ANALYTICS: Track API errors
       const requestStartTime = error.config?.requestStartTime;
       const responseTime = requestStartTime

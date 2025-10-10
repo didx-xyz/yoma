@@ -7,14 +7,10 @@ import type {
 import type { VerificationType } from "./opportunity";
 
 export interface MyOpportunityRequestVerify {
-  certificate?: FormFile | null;
-  certificateUploadId?: string | null;
-  voiceNote?: FormFile | null;
-  voiceNoteUploadId?: string | null;
-  picture?: FormFile | null;
-  pictureUploadId?: string | null;
-  video?: FormFile | null;
-  videoUploadId?: string | null;
+  certificate: FormFile | null;
+  voiceNote: FormFile | null;
+  picture: FormFile | null;
+  video: FormFile | null;
   geometry: Geometry | null;
   dateStart: string | null;
   dateEnd: string | null;
