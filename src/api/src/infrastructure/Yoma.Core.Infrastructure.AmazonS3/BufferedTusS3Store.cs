@@ -113,16 +113,17 @@ namespace Yoma.Core.Infrastructure.AmazonS3
       await _cache.SetAsync(CommittedKey(fileId), new CommittedOffset { Value = 0 }, _bufTtl);
       await _cache.SetAsync(ETagsKey(fileId), new PartETags(), _bufTtl);
 
-      // Also store in S3 for expiration tracking
+      // Also store in S3 for expiration tracking - use Newtonsoft.Json for consistency
       await _s3Client.PutObjectAsync(new PutObjectRequest
       {
         BucketName = _bucketName,
         Key = S3MetadataKey(fileId),
-        ContentBody = System.Text.Json.JsonSerializer.Serialize(uploadMeta),
+        ContentBody = Newtonsoft.Json.JsonConvert.SerializeObject(uploadMeta),
         ContentType = "application/json",
         Metadata =
         {
           ["tus-upload-length"] = uploadLength.ToString(),
+          ["tus-upload-offset"] = "0",
           ["tus-expires"] = uploadMeta.Expires.ToString("O")
         }
       }, ct);
@@ -146,6 +147,66 @@ namespace Yoma.Core.Infrastructure.AmazonS3
     public async Task<ITusFile?> GetFileAsync(string fileId, CancellationToken ct)
     {
       var meta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));
+      
+      // If not in cache, try to load from S3 (for completed uploads where cache may have expired)
+      if (meta == null)
+      {
+        try
+        {
+          var s3Response = await _s3Client.GetObjectAsync(new GetObjectRequest
+          {
+            BucketName = _bucketName,
+            Key = S3MetadataKey(fileId)
+          }, ct);
+
+          using var reader = new StreamReader(s3Response.ResponseStream);
+          var json = await reader.ReadToEndAsync(ct);
+          
+          // Deserialize using Newtonsoft.Json (used throughout the solution)
+          var s3Metadata = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+          
+          if (s3Metadata != null)
+          {
+            meta = new UploadMetadata
+            {
+              UploadLength = Convert.ToInt64(s3Metadata["UploadLength"]),
+              Expires = DateTimeOffset.Parse(s3Metadata["Expires"].ToString()!)
+            };
+            
+            // Metadata can be a string (TUS format) or object - decode if string
+            if (s3Metadata.TryGetValue("Metadata", out var metadataValue))
+            {
+              if (metadataValue is string metadataString)
+              {
+                // TUS format: "filename dHVzX3Rlc3Quempw" - decode it
+                meta.Metadata = ParseMetadata(metadataString);
+              }
+              else if (metadataValue is Newtonsoft.Json.Linq.JObject metadataObj)
+              {
+                // Already a dictionary
+                meta.Metadata = metadataObj.ToObject<Dictionary<string, string>>() ?? [];
+              }
+            }
+            
+            // Restore to cache for future requests
+            await _cache.SetAsync(MetadataKey(fileId), meta, _bufTtl);
+            
+            _logger.LogDebug("Restored metadata from S3 to cache for fileId={FileId}", fileId);
+          }
+        }
+        catch (AmazonS3Exception ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+          // File doesn't exist in S3 either
+          _logger.LogDebug("Metadata not found in S3 for fileId={FileId}", fileId);
+          return null;
+        }
+        catch (Exception ex)
+        {
+          _logger.LogError(ex, "Failed to load metadata from S3 for fileId={FileId}: {errorMessage}", fileId, ex.Message);
+          return null;
+        }
+      }
+
       if (meta == null) return null;
 
       return new TusS3File(fileId, meta.Metadata, _s3Client, _bucketName, S3FileKey(fileId));
@@ -252,6 +313,17 @@ namespace Yoma.Core.Infrastructure.AmazonS3
     public async Task<long?> GetUploadLengthAsync(string fileId, CancellationToken ct)
     {
       var meta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));
+      
+      // Fallback to S3 if not in cache
+      if (meta == null)
+      {
+        var file = await GetFileAsync(fileId, ct);
+        if (file == null) return null;
+        
+        // GetFileAsync restores metadata to cache, so try again
+        meta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));
+      }
+      
       return meta?.UploadLength;
     }
 
@@ -259,6 +331,44 @@ namespace Yoma.Core.Infrastructure.AmazonS3
     {
       var committedObj = await _cache.GetAsync<CommittedOffset>(CommittedKey(fileId));
       var committed = committedObj?.Value ?? 0;
+
+      // If not in cache, check S3 metadata JSON body for completed uploads
+      if (committed == 0)
+      {
+        try
+        {
+          // First try the S3 object metadata headers (faster)
+          var headResponse = await _s3Client.GetObjectMetadataAsync(_bucketName, S3MetadataKey(fileId), ct);
+          if (headResponse.Metadata["x-amz-meta-tus-upload-offset"] is string offsetStr &&
+              long.TryParse(offsetStr, out var s3Offset))
+          {
+            committed = s3Offset;
+          }
+          else
+          {
+            // Headers not found, read the JSON body to get UploadOffset
+            var s3Response = await _s3Client.GetObjectAsync(new GetObjectRequest
+            {
+              BucketName = _bucketName,
+              Key = S3MetadataKey(fileId)
+            }, ct);
+
+            using var reader = new StreamReader(s3Response.ResponseStream);
+            var json = await reader.ReadToEndAsync(ct);
+            var s3Metadata = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
+
+            if (s3Metadata != null && s3Metadata.TryGetValue("UploadOffset", out var offsetValue))
+            {
+              committed = Convert.ToInt64(offsetValue);
+              _logger.LogDebug("Retrieved upload offset from S3 JSON body for fileId={FileId}: {Offset}", fileId, committed);
+            }
+          }
+        }
+        catch (AmazonS3Exception)
+        {
+          // S3 metadata not found, continue with cache value (0)
+        }
+      }
 
       var buf = await _cache.GetAsync<byte[]>(BufferKey(fileId)) ?? [];
       var buffered = buf.LongLength;
@@ -340,6 +450,10 @@ namespace Yoma.Core.Infrastructure.AmazonS3
               Buffer.BlockCopy(allData, processed, finalData, 0, remaining);
 
               committed = await FlushFinalAsync(fileId, finalData, remaining, meta, committed, ct);
+              
+              // IMPORTANT: Update S3 metadata BEFORE cleanup, while cache still has the data
+              await UpdateS3MetadataOnCompletion(fileId, committed, ct);
+              
               await CleanupAsync(fileId);
 
               _logger.LogInformation("Upload complete: fileId={FileId}, totalSize={TotalSize}",
@@ -506,6 +620,46 @@ namespace Yoma.Core.Infrastructure.AmazonS3
       return newCommitted;
     }
 
+    private async Task UpdateS3MetadataOnCompletion(string fileId, long committedSize, CancellationToken ct)
+    {
+      // Re-read the full metadata from cache to get all fields
+      var fullMeta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));
+      if (fullMeta == null)
+      {
+        _logger.LogError("Metadata not found in cache when updating S3 for fileId={FileId}", fileId);
+        return;
+      }
+
+      // Create a complete metadata object including the upload offset
+      // This ensures both UploadOffset AND all metadata fields (including contentType via Metadata dictionary) are preserved
+      var completeMetadata = new
+      {
+        fullMeta.UploadLength,
+        fullMeta.Metadata,  // This contains filename, contentType, etc.
+        fullMeta.Expires,
+        fullMeta.MultipartUploadId,
+        UploadOffset = committedSize  // CRITICAL: Add the upload offset to the JSON body
+      };
+
+      // Update the S3 metadata JSON file to mark upload as complete
+      await _s3Client.PutObjectAsync(new PutObjectRequest
+      {
+        BucketName = _bucketName,
+        Key = S3MetadataKey(fileId),
+        ContentBody = Newtonsoft.Json.JsonConvert.SerializeObject(completeMetadata),
+        ContentType = "application/json",
+        Metadata =
+        {
+          ["tus-upload-length"] = fullMeta.UploadLength.ToString(),
+          ["tus-upload-offset"] = committedSize.ToString(),  // CRITICAL: Also in S3 object metadata headers
+          ["tus-expires"] = fullMeta.Expires.ToString("O")
+        }
+      }, ct);
+
+      _logger.LogInformation("Updated S3 metadata for completed upload: fileId={FileId}, offset={Offset}, metadata keys: {MetadataKeys}", 
+        fileId, committedSize, string.Join(", ", fullMeta.Metadata.Keys));
+    }
+
     private async Task CleanupAsync(string fileId)
     {
       try
@@ -544,33 +698,29 @@ namespace Yoma.Core.Infrastructure.AmazonS3
     #endregion
   }
 
-  // Simple ITusFile implementation that doesn't rely on tusdotnet's Metadata type
+  // Simple ITusFile implementation 
   internal class TusS3File(string fileId, Dictionary<string, string> rawMetadata, IAmazonS3 s3Client, string bucketName, string key) : ITusFile
   {
     public string Id => fileId;
 
     public Task<Dictionary<string, Metadata>> GetMetadataAsync(CancellationToken cancellationToken)
     {
-      // Create Metadata objects using the internal tusdotnet API
-      // Metadata is essentially IReadOnlyDictionary<string, ReadOnlyMemory<byte>>
-      var result = new Dictionary<string, Metadata>();
-
-      foreach (var kv in rawMetadata)
+      // The rawMetadata already has decoded string values like {"filename": "tus_test.zip"}
+      // We need to convert these to tusdotnet's Metadata type
+      // Build the metadata string in TUS format: "key1 base64value1,key2 base64value2"
+      
+      var metadataStrings = rawMetadata.Select(kv =>
       {
-        var bytes = Encoding.UTF8.GetBytes(kv.Value);
-        var memory = new ReadOnlyMemory<byte>(bytes);
-
-        // Use reflection to create Metadata since constructors aren't public
-        var metadataType = typeof(Metadata);
-        var internalDict = new Dictionary<string, ReadOnlyMemory<byte>> { { string.Empty, memory } };
-
-        // Metadata has an internal constructor that takes IReadOnlyDictionary
-        var constructor = metadataType.GetConstructors(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)[0];
-        var metadata = (Metadata)constructor.Invoke([internalDict]);
-
-        result[kv.Key] = metadata;
-      }
-
+        var valueBytes = Encoding.UTF8.GetBytes(kv.Value);
+        var base64Value = Convert.ToBase64String(valueBytes);
+        return $"{kv.Key} {base64Value}";
+      });
+      
+      var combinedMetadata = string.Join(",", metadataStrings);
+      
+      // Use Metadata.Parse to create the dictionary properly
+      var result = Metadata.Parse(combinedMetadata);
+      
       return Task.FromResult(result);
     }
 
