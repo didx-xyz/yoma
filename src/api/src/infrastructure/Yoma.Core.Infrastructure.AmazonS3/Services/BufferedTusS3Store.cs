@@ -196,7 +196,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
 
       return new TusS3File(fileId, meta.Metadata, _s3Client, _bucketName, S3FileKey(fileId));
     }
-    
+
     public async Task<IEnumerable<string>> GetExpiredFilesAsync(CancellationToken ct)
     {
       var now = DateTimeOffset.UtcNow;
@@ -284,7 +284,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       var meta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));
       return meta?.Expires;
     }
-    
+
     public async Task<bool> FileExistAsync(string fileId, CancellationToken ct)
     {
       var meta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));

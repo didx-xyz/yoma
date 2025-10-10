@@ -4,6 +4,6 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Models
 {
   internal class PartETags
   {
-    public List<PartETag> Tags  { get; set; } = [];
+    public List<PartETag> Tags { get; set; } = [];
   }
 }
