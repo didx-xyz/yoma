@@ -11,22 +11,22 @@ using Microsoft.Extensions.Logging;
 using System.Buffers;
 using System.Text;
 using tusdotnet.Interfaces;
-using tusdotnet.Models;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Amazon.S3;
 using Amazon.S3.Model;
+using Yoma.Core.Infrastructure.AmazonS3.Models;
 
-namespace Yoma.Core.Infrastructure.AmazonS3
+namespace Yoma.Core.Infrastructure.AmazonS3.Services
 {
-  public sealed class BufferedTusS3Store :
+  public sealed partial class BufferedTusS3Store :
       ITusStore,
       ITusCreationStore,
       ITusReadableStore,
       ITusTerminationStore,
       ITusExpirationStore
   {
-    #region Vars
+    #region Class Variables
     private readonly ILogger<BufferedTusS3Store> _logger;
     private readonly IDistributedCacheService _cache;
     private readonly IDistributedLockService _distLock;
@@ -40,19 +40,16 @@ namespace Yoma.Core.Infrastructure.AmazonS3
 
     private const int DefaultReadEnvelope = 1 * 1024 * 1024; // 1 MB
 
-    // Cache helper classes
-    private class UploadMetadata
-    {
-      public long UploadLength { get; set; }
-      public Dictionary<string, string> Metadata { get; set; } = [];
-      public DateTimeOffset Expires { get; set; }
-      public string? MultipartUploadId { get; set; } // S3 multipart upload ID
-    }
-    private class CommittedOffset { public long Value { get; set; } }
-    private class PartETags { public List<PartETag> Tags { get; set; } = []; }
+    private static string MetadataKey(string fileId) => CacheHelper.GenerateKey<BufferedTusS3Store>(fileId, "meta");
+    private static string BufferKey(string fileId) => CacheHelper.GenerateKey<BufferedTusS3Store>(fileId, "buf");
+    private static string CommittedKey(string fileId) => CacheHelper.GenerateKey<BufferedTusS3Store>(fileId, "committed");
+    private static string ETagsKey(string fileId) => CacheHelper.GenerateKey<BufferedTusS3Store>(fileId, "etags");
+    private static string LockKey(string fileId) => CacheHelper.GenerateKey<BufferedTusS3Store>(fileId, "lock");
+    private string S3FileKey(string fileId) => $"{_filePrefix}{fileId}";
+    private string S3MetadataKey(string fileId) => $"{_metadataPrefix}{fileId}";
     #endregion
 
-    #region Ctor
+    #region Constructor
     public BufferedTusS3Store(
         ILogger<BufferedTusS3Store> logger,
         IDistributedCacheService cache,
@@ -84,17 +81,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
     }
     #endregion
 
-    #region Cache Keys
-    private static string MetadataKey(string fileId) => CacheHelper.GenerateKey<BufferedTusS3Store>(fileId, "meta");
-    private static string BufferKey(string fileId) => CacheHelper.GenerateKey<BufferedTusS3Store>(fileId, "buf");
-    private static string CommittedKey(string fileId) => CacheHelper.GenerateKey<BufferedTusS3Store>(fileId, "committed");
-    private static string ETagsKey(string fileId) => CacheHelper.GenerateKey<BufferedTusS3Store>(fileId, "etags");
-    private static string LockKey(string fileId) => CacheHelper.GenerateKey<BufferedTusS3Store>(fileId, "lock");
-    private string S3FileKey(string fileId) => $"{_filePrefix}{fileId}";
-    private string S3MetadataKey(string fileId) => $"{_metadataPrefix}{fileId}";
-    #endregion
-
-    #region ITusCreationStore
+    #region Public Members
     public async Task<string> CreateFileAsync(long uploadLength, string metadata, CancellationToken ct)
     {
       var fileId = Guid.NewGuid().ToString("N");
@@ -141,9 +128,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
 
       return string.Join(",", meta.Metadata.Select(kv => $"{kv.Key} {Convert.ToBase64String(Encoding.UTF8.GetBytes(kv.Value))}"));
     }
-    #endregion
 
-    #region ITusReadableStore
     public async Task<ITusFile?> GetFileAsync(string fileId, CancellationToken ct)
     {
       var meta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));
@@ -211,9 +196,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
 
       return new TusS3File(fileId, meta.Metadata, _s3Client, _bucketName, S3FileKey(fileId));
     }
-    #endregion
 
-    #region ITusExpirationStore
     public async Task<IEnumerable<string>> GetExpiredFilesAsync(CancellationToken ct)
     {
       var now = DateTimeOffset.UtcNow;
@@ -301,9 +284,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
       var meta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));
       return meta?.Expires;
     }
-    #endregion
 
-    #region Core Methods
     public async Task<bool> FileExistAsync(string fileId, CancellationToken ct)
     {
       var meta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));
@@ -513,7 +494,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
     }
     #endregion
 
-    #region Private Helpers
+    #region Private Members
     private async Task FlushPartAsync(string fileId, byte[] data, int size, UploadMetadata meta, long currentCommitted, CancellationToken ct, int offset = 0)
     {
       // Initiate multipart upload if needed
@@ -696,38 +677,5 @@ namespace Yoma.Core.Infrastructure.AmazonS3
       return result;
     }
     #endregion
-  }
-
-  // Simple ITusFile implementation 
-  internal class TusS3File(string fileId, Dictionary<string, string> rawMetadata, IAmazonS3 s3Client, string bucketName, string key) : ITusFile
-  {
-    public string Id => fileId;
-
-    public Task<Dictionary<string, Metadata>> GetMetadataAsync(CancellationToken cancellationToken)
-    {
-      // The rawMetadata already has decoded string values like {"filename": "tus_test.zip"}
-      // We need to convert these to tusdotnet's Metadata type
-      // Build the metadata string in TUS format: "key1 base64value1,key2 base64value2"
-
-      var metadataStrings = rawMetadata.Select(kv =>
-      {
-        var valueBytes = Encoding.UTF8.GetBytes(kv.Value);
-        var base64Value = Convert.ToBase64String(valueBytes);
-        return $"{kv.Key} {base64Value}";
-      });
-
-      var combinedMetadata = string.Join(",", metadataStrings);
-
-      // Use Metadata.Parse to create the dictionary properly
-      var result = Metadata.Parse(combinedMetadata);
-
-      return Task.FromResult(result);
-    }
-
-    public async Task<Stream> GetContentAsync(CancellationToken cancellationToken)
-    {
-      var response = await s3Client.GetObjectAsync(bucketName, key, cancellationToken);
-      return response.ResponseStream;
-    }
   }
 }
