@@ -81,8 +81,8 @@ ingress:
       # Timeouts optimized for 5MB chunks over slow connections (256 Kbps = ~3min per chunk)
       nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
       nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-      # CORS configuration: Let backend handle exposed headers, NGINX handles preflight
       # https://docs.datadoghq.com/tracing/other_telemetry/rum/?tab=datadog&site=eu#how-rum-resources-are-linked-to-traces
+      # https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#enable-cors
       nginx.ingress.kubernetes.io/enable-cors: "true"
       nginx.ingress.kubernetes.io/cors-allow-headers: >-
         DNT, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since,
@@ -90,11 +90,10 @@ ingress:
         tracestate, x-datadog-trace-id, x-datadog-parent-id, x-datadog-origin,
         x-datadog-sampling-priority, Tus-Resumable, Upload-Length, Upload-Offset,
         Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Defer-Length
-      # CRITICAL: Use configuration-snippet to preserve backend's Access-Control-Expose-Headers
-      # This allows tusdotnet's CORS headers to pass through while NGINX handles preflight
-      nginx.ingress.kubernetes.io/configuration-snippet: |
-        # Only add CORS headers if backend didn't set them (for preflight requests)
-        more_set_headers -s 204 "Access-Control-Expose-Headers: Location, Content-Disposition, Content-Length, Tus-Resumable, Tus-Version, Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length, Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires";
+      nginx.ingress.kubernetes.io/cors-expose-headers: >-
+        Location, Content-Disposition, Content-Length, Tus-Resumable, Tus-Version,
+        Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length,
+        Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires
       nginx.ingress.kubernetes.io/proxy-buffering: "off"
     rules:
       - host: example.com
@@ -112,8 +111,8 @@ ingress:
       # Timeouts optimized for 5MB chunks over slow connections (256 Kbps = ~3min per chunk)
       nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
       nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
-      # CORS configuration: Let backend handle exposed headers, NGINX handles preflight
       # https://docs.datadoghq.com/tracing/other_telemetry/rum/?tab=datadog&site=eu#how-rum-resources-are-linked-to-traces
+      # https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#enable-cors
       nginx.ingress.kubernetes.io/enable-cors: "true"
       nginx.ingress.kubernetes.io/cors-allow-headers: >-
         DNT, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since,
@@ -121,11 +120,10 @@ ingress:
         tracestate, x-datadog-trace-id, x-datadog-parent-id, x-datadog-origin,
         x-datadog-sampling-priority, Tus-Resumable, Upload-Length, Upload-Offset,
         Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Defer-Length
-      # CRITICAL: Use configuration-snippet to preserve backend's Access-Control-Expose-Headers
-      # This allows tusdotnet's CORS headers to pass through while NGINX handles preflight
-      nginx.ingress.kubernetes.io/configuration-snippet: |
-        # Only add CORS headers if backend didn't set them (for preflight requests)
-        more_set_headers -s 204 "Access-Control-Expose-Headers: Location, Content-Disposition, Content-Length, Tus-Resumable, Tus-Version, Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length, Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires";
+      nginx.ingress.kubernetes.io/cors-expose-headers: >-
+        Location, Content-Disposition, Content-Length, Tus-Resumable, Tus-Version,
+        Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length,
+        Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires
       nginx.ingress.kubernetes.io/proxy-buffering: "off"
     rules:
       - host: example.com
