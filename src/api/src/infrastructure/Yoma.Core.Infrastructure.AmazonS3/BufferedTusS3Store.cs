@@ -147,7 +147,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
     public async Task<ITusFile?> GetFileAsync(string fileId, CancellationToken ct)
     {
       var meta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));
-      
+
       // If not in cache, try to load from S3 (for completed uploads where cache may have expired)
       if (meta == null)
       {
@@ -161,10 +161,10 @@ namespace Yoma.Core.Infrastructure.AmazonS3
 
           using var reader = new StreamReader(s3Response.ResponseStream);
           var json = await reader.ReadToEndAsync(ct);
-          
+
           // Deserialize using Newtonsoft.Json (used throughout the solution)
           var s3Metadata = Newtonsoft.Json.JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
-          
+
           if (s3Metadata != null)
           {
             meta = new UploadMetadata
@@ -172,7 +172,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
               UploadLength = Convert.ToInt64(s3Metadata["UploadLength"]),
               Expires = DateTimeOffset.Parse(s3Metadata["Expires"].ToString()!)
             };
-            
+
             // Metadata can be a string (TUS format) or object - decode if string
             if (s3Metadata.TryGetValue("Metadata", out var metadataValue))
             {
@@ -187,10 +187,10 @@ namespace Yoma.Core.Infrastructure.AmazonS3
                 meta.Metadata = metadataObj.ToObject<Dictionary<string, string>>() ?? [];
               }
             }
-            
+
             // Restore to cache for future requests
             await _cache.SetAsync(MetadataKey(fileId), meta, _bufTtl);
-            
+
             _logger.LogDebug("Restored metadata from S3 to cache for fileId={FileId}", fileId);
           }
         }
@@ -313,17 +313,17 @@ namespace Yoma.Core.Infrastructure.AmazonS3
     public async Task<long?> GetUploadLengthAsync(string fileId, CancellationToken ct)
     {
       var meta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));
-      
+
       // Fallback to S3 if not in cache
       if (meta == null)
       {
         var file = await GetFileAsync(fileId, ct);
         if (file == null) return null;
-        
+
         // GetFileAsync restores metadata to cache, so try again
         meta = await _cache.GetAsync<UploadMetadata>(MetadataKey(fileId));
       }
-      
+
       return meta?.UploadLength;
     }
 
@@ -450,10 +450,10 @@ namespace Yoma.Core.Infrastructure.AmazonS3
               Buffer.BlockCopy(allData, processed, finalData, 0, remaining);
 
               committed = await FlushFinalAsync(fileId, finalData, remaining, meta, committed, ct);
-              
+
               // IMPORTANT: Update S3 metadata BEFORE cleanup, while cache still has the data
               await UpdateS3MetadataOnCompletion(fileId, committed, ct);
-              
+
               await CleanupAsync(fileId);
 
               _logger.LogInformation("Upload complete: fileId={FileId}, totalSize={TotalSize}",
@@ -656,7 +656,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
         }
       }, ct);
 
-      _logger.LogInformation("Updated S3 metadata for completed upload: fileId={FileId}, offset={Offset}, metadata keys: {MetadataKeys}", 
+      _logger.LogInformation("Updated S3 metadata for completed upload: fileId={FileId}, offset={Offset}, metadata keys: {MetadataKeys}",
         fileId, committedSize, string.Join(", ", fullMeta.Metadata.Keys));
     }
 
@@ -708,19 +708,19 @@ namespace Yoma.Core.Infrastructure.AmazonS3
       // The rawMetadata already has decoded string values like {"filename": "tus_test.zip"}
       // We need to convert these to tusdotnet's Metadata type
       // Build the metadata string in TUS format: "key1 base64value1,key2 base64value2"
-      
+
       var metadataStrings = rawMetadata.Select(kv =>
       {
         var valueBytes = Encoding.UTF8.GetBytes(kv.Value);
         var base64Value = Convert.ToBase64String(valueBytes);
         return $"{kv.Key} {base64Value}";
       });
-      
+
       var combinedMetadata = string.Join(",", metadataStrings);
-      
+
       // Use Metadata.Parse to create the dictionary properly
       var result = Metadata.Parse(combinedMetadata);
-      
+
       return Task.FromResult(result);
     }
 
