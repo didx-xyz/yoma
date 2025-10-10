@@ -117,8 +117,15 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
 
       // Determine ContentType: prefer metadata, otherwise guess from extension
       string? contentType = null;
-      if (metadata.TryGetValue("contentType", out var ctMeta))
+      if (metadata.TryGetValue("contentType", out var ctMeta) ||
+          metadata.TryGetValue("filetype", out ctMeta))  
         contentType = ctMeta.GetString(Encoding.UTF8)?.Trim();
+
+      if (string.IsNullOrWhiteSpace(contentType))
+      {
+        if (!_fileExtensionContentTypeProvider.TryGetContentType(fileName, out contentType))
+          contentType = DefaultContentType;
+      }
 
       if (string.IsNullOrWhiteSpace(contentType))
       {
