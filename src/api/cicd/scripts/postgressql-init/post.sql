@@ -394,18 +394,27 @@ CROSS JOIN (
 ) AS R;
 
 -- Verification types
-INSERT INTO "Opportunity"."OpportunityVerificationTypes"("Id", "OpportunityId", "VerificationTypeId", "Description", "DateCreated", "DateModified")
+INSERT INTO "Opportunity"."OpportunityVerificationTypes"
+(
+    "Id",
+    "OpportunityId",
+    "VerificationTypeId",
+    "Description",
+    "DateCreated",
+    "DateModified"
+)
 SELECT
     gen_random_uuid(),
-    O."Id" AS "OpportunityId",
-    R."VerificationTypeId",
+    O."Id",
+    R."Id",
     NULL,
     (CURRENT_TIMESTAMP AT TIME ZONE 'UTC'),
     (CURRENT_TIMESTAMP AT TIME ZONE 'UTC')
 FROM "Opportunity"."Opportunity" O
 CROSS JOIN (
-    SELECT "Id" AS "VerificationTypeId"
+    SELECT "Id"
     FROM "Opportunity"."OpportunityVerificationType"
+    WHERE "Name" <> 'Video'
     ORDER BY RANDOM()
     LIMIT 10
 ) AS R
