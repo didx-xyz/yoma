@@ -31,6 +31,34 @@ namespace Yoma.Core.Domain.Core.Services
       return await GetOrCreateInternalAsync(key, valueProvider, slidingExpiration, absoluteExpirationRelativeToNow);
     }
 
+    public async Task<T?> GetAsync<T>(string key) where T : class
+    {
+      ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
+      key = key.Trim();
+
+      var redisKey = $"{CacheIdentifier_Prefix}:{key}";
+      var value = await _database.StringGetAsync(redisKey);
+      if (!value.HasValue) return null;
+
+      var obj = JsonConvert.DeserializeObject<T>(value!);
+      return obj ?? throw new InvalidOperationException($"Failed to deserialize value for key '{redisKey}'");
+    }
+
+    public async Task SetAsync<T>(string key, T value, TimeSpan? absoluteExpirationRelativeToNow = null) where T : class
+    {
+      ArgumentException.ThrowIfNullOrWhiteSpace(key, nameof(key));
+      key = key.Trim();
+      ArgumentNullException.ThrowIfNull(value, nameof(value));
+
+      if (absoluteExpirationRelativeToNow.HasValue && absoluteExpirationRelativeToNow <= TimeSpan.Zero)
+        throw new ArgumentOutOfRangeException(nameof(absoluteExpirationRelativeToNow), "TTL must be positive");
+
+      var redisKey = $"{CacheIdentifier_Prefix}:{key}";
+      var payload = JsonConvert.SerializeObject(value);
+
+      await _database.StringSetAsync(redisKey, payload, absoluteExpirationRelativeToNow);
+    }
+
     public void Remove(string key)
     {
       RemoveInternalAsync(key).GetAwaiter().GetResult();

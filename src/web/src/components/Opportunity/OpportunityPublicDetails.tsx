@@ -41,6 +41,7 @@ import Share from "~/components/Opportunity/Share";
 import { SignInButton } from "~/components/SignInButton";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
+import { Loading } from "~/components/Status/Loading";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import {
@@ -80,6 +81,7 @@ const OpportunityPublicDetails: React.FC<{
   const [shareOpportunityDialogVisible, setShareOpportunityDialogVisible] =
     useState(false);
   const [isOppSaved, setIsOppSaved] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const userProfile = useAtomValue(userProfileAtom);
   const setUserProfile = useSetAtom(userProfileAtom);
 
@@ -241,21 +243,30 @@ const OpportunityPublicDetails: React.FC<{
   }, [opportunityInfo.id, opportunityInfo.title, queryClient]);
 
   const onOpportunityCancel = useCallback(async () => {
-    // call api
-    await performActionCancel(opportunityInfo.id);
+    setIsLoading(true);
 
-    // 📊 ANALYTICS: track opportunity cancellation
-    analytics.opportunity.cancelled(opportunityInfo.id, opportunityInfo.title);
+    try {
+      // call api
+      await performActionCancel(opportunityInfo.id);
 
-    // invalidate queries
-    await queryClient.invalidateQueries({
-      queryKey: ["verificationStatus", opportunityInfo.id],
-    });
+      // 📊 ANALYTICS: track opportunity cancellation
+      analytics.opportunity.cancelled(
+        opportunityInfo.id,
+        opportunityInfo.title,
+      );
 
-    // toast
-    toast.success("Your application has been canceled");
+      // invalidate queries
+      await queryClient.invalidateQueries({
+        queryKey: ["verificationStatus", opportunityInfo.id],
+      });
 
-    setCancelOpportunityDialogVisible(false);
+      // toast
+      toast.success("Your application has been canceled");
+
+      setCancelOpportunityDialogVisible(false);
+    } finally {
+      setIsLoading(false);
+    }
   }, [opportunityInfo.id, opportunityInfo.title, queryClient]);
 
   const onShareOpportunity = useCallback(() => {
@@ -513,7 +524,8 @@ const OpportunityPublicDetails: React.FC<{
                 <div className="rounded-lg p-4 text-center md:w-[450px]">
                   <strong>{opportunityInfo.organizationName}</strong> is busy
                   reviewing your submission. Once approved, the opportunity will
-                  be automatically added to your CV. This may take between{" "}
+                  be automatically added to your CV. This may take between
+                  <br />
                   <span className="text-blue decoration-blue font-bold underline decoration-2">
                     3-4 business days
                   </span>
@@ -543,6 +555,8 @@ const OpportunityPublicDetails: React.FC<{
             }}
             className={`md:max-h-[450px] md:w-[600px]`}
           >
+            {isLoading && <Loading />}
+
             <div className="flex flex-col gap-2">
               <div className="bg-green flex flex-row p-4 shadow-lg">
                 <h1 className="grow"></h1>
@@ -577,6 +591,7 @@ const OpportunityPublicDetails: React.FC<{
                     type="button"
                     className="btn border-purple text-purple rounded-full bg-white normal-case md:w-[200px]"
                     onClick={onOpportunityCancel}
+                    disabled={isLoading}
                   >
                     Cancel submission & Delete all files
                   </button>

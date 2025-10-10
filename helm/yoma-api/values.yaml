@@ -74,18 +74,27 @@ ingress:
     enabled: false
     className: nginx-internal
     annotations:
-      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
-      nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 128k
-      nginx.ingress.kubernetes.io/proxy-buffering: "on"
-      nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
-      nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
+      # TUS resumable uploads configuration
+      # https://github.com/tusdotnet/tusdotnet/wiki/Configure-other-reverse-proxies
+      nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+      nginx.ingress.kubernetes.io/proxy-body-size: 64m
+      # Timeouts optimized for 5MB chunks over slow connections (256 Kbps = ~3min per chunk)
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
       # https://docs.datadoghq.com/tracing/other_telemetry/rum/?tab=datadog&site=eu#how-rum-resources-are-linked-to-traces
       # https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#enable-cors
+      nginx.ingress.kubernetes.io/enable-cors: "true"
       nginx.ingress.kubernetes.io/cors-allow-headers: >-
         DNT, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since,
         Cache-Control, Content-Type, Range, Authorization, traceparent,
         tracestate, x-datadog-trace-id, x-datadog-parent-id, x-datadog-origin,
-        x-datadog-sampling-priority
+        x-datadog-sampling-priority, Tus-Resumable, Upload-Length, Upload-Offset,
+        Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Defer-Length
+      nginx.ingress.kubernetes.io/cors-expose-headers: >-
+        Location, Content-Disposition, Content-Length, Tus-Resumable, Tus-Version,
+        Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length,
+        Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires
+      nginx.ingress.kubernetes.io/proxy-buffering: "off"
     rules:
       - host: example.com
         paths:
@@ -95,18 +104,27 @@ ingress:
     enabled: false
     className: nginx-external
     annotations:
-      nginx.ingress.kubernetes.io/proxy-buffer-size: 128k
-      nginx.ingress.kubernetes.io/proxy-busy-buffers-size: 128k
-      nginx.ingress.kubernetes.io/proxy-buffering: "on"
-      nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
-      nginx.ingress.kubernetes.io/server-snippet: large_client_header_buffers 8 128k;
+      # TUS resumable uploads configuration
+      # https://github.com/tusdotnet/tusdotnet/wiki/Configure-other-reverse-proxies
+      nginx.ingress.kubernetes.io/proxy-request-buffering: "off"
+      nginx.ingress.kubernetes.io/proxy-body-size: 64m
+      # Timeouts optimized for 5MB chunks over slow connections (256 Kbps = ~3min per chunk)
+      nginx.ingress.kubernetes.io/proxy-read-timeout: "300"
+      nginx.ingress.kubernetes.io/proxy-send-timeout: "300"
       # https://docs.datadoghq.com/tracing/other_telemetry/rum/?tab=datadog&site=eu#how-rum-resources-are-linked-to-traces
       # https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/annotations/#enable-cors
+      nginx.ingress.kubernetes.io/enable-cors: "true"
       nginx.ingress.kubernetes.io/cors-allow-headers: >-
         DNT, Keep-Alive, User-Agent, X-Requested-With, If-Modified-Since,
         Cache-Control, Content-Type, Range, Authorization, traceparent,
         tracestate, x-datadog-trace-id, x-datadog-parent-id, x-datadog-origin,
-        x-datadog-sampling-priority
+        x-datadog-sampling-priority, Tus-Resumable, Upload-Length, Upload-Offset,
+        Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Defer-Length
+      nginx.ingress.kubernetes.io/cors-expose-headers: >-
+        Location, Content-Disposition, Content-Length, Tus-Resumable, Tus-Version,
+        Tus-Extension, Tus-Max-Size, Tus-Checksum-Algorithm, Upload-Length,
+        Upload-Offset, Upload-Metadata, Upload-Checksum, Upload-Concat, Upload-Expires
+      nginx.ingress.kubernetes.io/proxy-buffering: "off"
     rules:
       - host: example.com
         paths:
