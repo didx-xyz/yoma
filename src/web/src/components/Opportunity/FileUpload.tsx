@@ -2,8 +2,6 @@ import { type ReactElement, useRef, useState } from "react";
 import Image from "next/image";
 import { IoMdClose } from "react-icons/io";
 import iconUpload from "public/images/icon-upload.svg";
-import { uploadFileWithTus } from "~/api/services/uploads";
-import { toast } from "react-toastify";
 
 const formatFileSize = (bytes: number, decimals = 1): string => {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
@@ -18,14 +16,6 @@ const formatFileSize = (bytes: number, decimals = 1): string => {
   return `${size} ${sizes[i]}`;
 };
 
-export interface FileUploadData {
-  file: File;
-  uploadId?: string;
-  progress?: number;
-  isUploading?: boolean;
-  abortController?: AbortController; // For cancelling uploads
-}
-
 export interface InputProps {
   [id: string]: any;
   files: any[] | undefined;
@@ -37,9 +27,6 @@ export interface InputProps {
   iconAlt?: ReactElement | undefined;
   children?: ReactElement | undefined;
   onUploadComplete?: (data: any[]) => void;
-  inlineUpload?: boolean; // New prop to enable TUS uploads
-  onUploadProgress?: (fileIndex: number, progress: number) => void;
-  onUploadError?: (fileIndex: number, error: Error) => void;
 }
 
 export const FileUpload: React.FC<InputProps> = ({
@@ -53,18 +40,8 @@ export const FileUpload: React.FC<InputProps> = ({
   iconAlt,
   children,
   onUploadComplete,
-  inlineUpload = false,
-  onUploadProgress,
-  onUploadError,
 }) => {
-  const [data, setFiles] = useState<FileUploadData[]>(
-    files?.map((file) => ({
-      file,
-      progress: 100,
-      isUploading: false,
-      uploadId: undefined,
-    })) ?? [],
-  );
+  const [data, setFiles] = useState<any[]>(files ?? []);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // reset the native input so selecting the same file again triggers onChange
@@ -72,131 +49,12 @@ export const FileUpload: React.FC<InputProps> = ({
     if (inputRef.current) inputRef.current.value = "";
   };
 
-  const handleTusUpload = async (file: File, index: number) => {
-    // Create AbortController for this upload
-    const abortController = new AbortController();
-
-    try {
-      // Update the file state to show uploading and store abort controller
-      setFiles((prevFiles) =>
-        prevFiles.map((f, i) =>
-          i === index
-            ? { ...f, isUploading: true, progress: 0, abortController }
-            : f,
-        ),
-      );
-
-      const fileId = await uploadFileWithTus({
-        file,
-        signal: abortController.signal, // Pass abort signal
-        onProgress: (bytesUploaded, bytesTotal) => {
-          const progress = Math.round((bytesUploaded / bytesTotal) * 100);
-
-          // Update progress in state
-          setFiles((prevFiles) =>
-            prevFiles.map((f, i) => (i === index ? { ...f, progress } : f)),
-          );
-
-          if (onUploadProgress) {
-            onUploadProgress(index, progress);
-          }
-        },
-        onError: (error) => {
-          // Check if this was a user-initiated cancellation
-          if (error.name === "AbortError" || error.name === "CanceledError") {
-            console.log(`Upload cancelled for ${file.name}`);
-          } else {
-            console.error(`Upload failed for ${file.name}:`, error);
-            toast.error(`Upload failed for ${file.name}: ${error.message}`);
-          }
-
-          if (onUploadError) {
-            onUploadError(index, error);
-          }
-
-          // Remove the failed file from the list
-          setFiles((prevFiles) => prevFiles.filter((_, i) => i !== index));
-
-          // Trigger onUploadComplete with updated file list
-          const updatedFiles = data.filter((_, i) => i !== index);
-          if (onUploadComplete) {
-            onUploadComplete(updatedFiles);
-          }
-        },
-      });
-
-      // Update the file with upload ID and mark as complete
-      setFiles((prevFiles) => {
-        const updatedFiles = prevFiles.map((f, i) =>
-          i === index
-            ? {
-                ...f,
-                uploadId: fileId,
-                isUploading: false,
-                progress: 100,
-                abortController: undefined, // Clear abort controller
-              }
-            : f,
-        );
-
-        // Trigger onUploadComplete callback with updated files
-        if (onUploadComplete) {
-          onUploadComplete(updatedFiles);
-        }
-
-        return updatedFiles;
-      });
-    } catch (error) {
-      // Check if this was a cancellation - if so, it's already handled by onError callback
-      const err = error as Error;
-      if (err.name === "AbortError" || err.name === "CanceledError") {
-        console.log("Upload was cancelled by user");
-        return; // Exit gracefully, onError already handled UI updates
-      }
-
-      // Log other unexpected errors
-      console.error("TUS upload error:", error);
-    }
-  };
-
-  const onFileInputChange = async (
-    event: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    if (event.target.files && event.target.files[0]) {
+  const onFileInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files) {
       const picked = event.target.files[0];
-
-      if (inlineUpload) {
-        // Inline upload mode: upload immediately using TUS
-        const newFile: FileUploadData = {
-          file: picked,
-          progress: 0,
-          isUploading: true,
-          uploadId: undefined,
-        };
-
-        const newFiles = allowMultiple ? [...data, newFile] : [newFile];
-        setFiles(newFiles);
-
-        // Start the TUS upload
-        const fileIndex = allowMultiple ? data.length : 0;
-        await handleTusUpload(picked, fileIndex);
-      } else {
-        // Legacy mode: just store the file locally
-        const newFile: FileUploadData = {
-          file: picked,
-          progress: 100,
-          isUploading: false,
-          uploadId: undefined,
-        };
-
-        const result = allowMultiple ? [...data, newFile] : [newFile];
-        setFiles(result);
-
-        if (onUploadComplete) {
-          onUploadComplete(result);
-        }
-      }
-
+      const result = allowMultiple ? [...data, picked] : [picked];
+      setFiles(result);
+      if (onUploadComplete) onUploadComplete(result);
       // allow re-selecting the same file after this selection
       resetNativeInput();
     }
@@ -259,70 +117,35 @@ export const FileUpload: React.FC<InputProps> = ({
               onChange={onFileInputChange}
             />
 
-            {/* render each file with remove button and progress */}
+            {/* render each file with remove button */}
             {data && data.length > 0 && (
-              <div className="flex flex-col gap-2">
-                {data.map((fileData, index) => (
+              <div className="flex flex-col">
+                {data.map((file, index) => (
                   <div
                     key={`OpportunityFileUpload_${id}_${index}`}
-                    className="flex flex-col gap-1"
+                    className="flex flex-row items-center justify-between"
                   >
-                    <div className="flex flex-row items-center justify-between">
-                      <div className="flex grow flex-col">
-                        <div className="text-xs font-bold">
-                          {fileData.file.name}
-                          {fileData.isUploading && (
-                            <span className="text-gray-dark ml-2">
-                              Uploading...
-                            </span>
-                          )}
-                        </div>
-                        <div className="text-gray-dark text-xs italic">
-                          {formatFileSize(fileData.file.size)}
-                        </div>
+                    <div className="flex grow flex-col">
+                      <div className="text-xs font-bold">{file.name}</div>
+                      <div className="text-gray-dark text-xs italic">
+                        {formatFileSize(file.size)}
                       </div>
-                      <button
-                        type="button"
-                        className="btn btn-sm text-gray-dark hover:bg-gray !rounded-full border-none shadow-md"
-                        onClick={() => {
-                          // Cancel upload if in progress
-                          if (
-                            fileData.isUploading &&
-                            fileData.abortController
-                          ) {
-                            // Abort doesn't throw synchronously, it signals the ongoing request
-                            fileData.abortController.abort();
-                            return;
-                          }
-
-                          // File is not uploading, so we can safely remove it
-                          const newData = data.filter((_, i) => i !== index);
-                          setFiles(newData);
-                          if (onUploadComplete) {
-                            onUploadComplete(newData);
-                          }
-                          // ensure selecting the same file again fires onChange
-                          resetNativeInput();
-                        }}
-                        title={
-                          fileData.isUploading ? "Cancel upload" : "Remove file"
-                        }
-                      >
-                        <IoMdClose className="h-6 w-6" />
-                      </button>
                     </div>
-
-                    {/* Progress bar for inline uploads */}
-                    {inlineUpload &&
-                      fileData.progress !== undefined &&
-                      fileData.progress < 100 && (
-                        <div className="h-2 w-full rounded-full bg-gray-200">
-                          <div
-                            className="bg-green h-2 rounded-full transition-all duration-300"
-                            style={{ width: `${fileData.progress}%` }}
-                          />
-                        </div>
-                      )}
+                    <button
+                      type="button"
+                      className="btn btn-sm text-gray-dark hover:bg-gray !rounded-full border-none shadow-md"
+                      onClick={() => {
+                        const newData = data.filter((_, i) => i !== index);
+                        setFiles(newData);
+                        if (onUploadComplete) {
+                          onUploadComplete(newData);
+                        }
+                        // ensure selecting the same file again fires onChange
+                        resetNativeInput();
+                      }}
+                    >
+                      <IoMdClose className="h-6 w-6" />
+                    </button>
                   </div>
                 ))}
               </div>
