@@ -12,6 +12,8 @@ export const MAX_FILE_SIZE = 10000000;
 export const MAX_FILE_SIZE_LABEL = "10MB";
 export const MAX_FILE_VIDEO_SIZE = 100000000;
 export const MAX_FILE_VIDEO_SIZE_LABEL = "100MB";
+export const TUS_CHUNK_SIZE = 5 * 1024 * 1024; // 5MB chunks for TUS uploads
+export const TUS_CHUNK_SIZE_LABEL = "5MB";
 export const ACCEPTED_IMAGE_TYPES = [
   "image/jpeg",
   "image/jpg",
@@ -141,7 +143,3 @@ export const PLURAL_MAPPING: Record<string, string> = {
   categories: "Categories",
   countries: "Countries",
 };
-
-// Retry logic
-export const MAX_RETRIES = 5;
-export const RETRY_DELAY = 1000; // 1 second
