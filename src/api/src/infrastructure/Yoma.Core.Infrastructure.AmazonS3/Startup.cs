@@ -10,9 +10,9 @@ using tusdotnet;
 using tusdotnet.Models;
 using tusdotnet.Models.Configuration;
 using tusdotnet.Models.Expiration;
-using tusdotnet.Stores.S3;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
+using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Validators;
 using Yoma.Core.Infrastructure.AmazonS3.Client;
 using Yoma.Core.Infrastructure.AmazonS3.Models;
@@ -38,7 +38,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
     {
       services.AddSingleton(sp =>
       {
-        var logger = sp.GetRequiredService<ILogger<TusS3Store>>();
+        var logger = sp.GetRequiredService<ILogger<BufferedTusS3Store>>();
         var opts = sp.GetRequiredService<IOptions<AWSS3Options>>().Value ?? throw new InvalidOperationException($"Missing {AWSS3Options.Section}");
 
         using var scope = sp.CreateScope();
@@ -50,19 +50,18 @@ namespace Yoma.Core.Infrastructure.AmazonS3
 
         var root = $"{environment}/{opts.Tus.KeyPrefix}".ToLower();
         var filePrefix = $"{root}/files/";
-        var infoPrefix = $"{root}/upload-info/";
+        var metadataPrefix = $"{root}/upload-info/";
 
-        var storeCfg = new TusS3StoreConfiguration
-        {
-          BucketName = wrapper.AWSS3OptionsBucket.BucketName,
-          FileObjectPrefix = filePrefix,
-          UploadInfoObjectPrefix = infoPrefix,
-          MinPartSizeInBytes = 5 * TusS3Defines.MegaByte,   // AWS minimum = 5 MB
-          PreferredPartSizeInBytes = 5 * TusS3Defines.MegaByte,   // buffer 1 MB TUS chunks until 5 MB
-          MaxPartSizeInBytes = 5 * TusS3Defines.MegaByte,   // optional: enforce small ceiling to confirm it takes effect
-        };
-
-        return new TusS3Store(logger, storeCfg, s3Client: wrapper.NativeClient);
+        return new BufferedTusS3Store(
+          logger,
+          sp.GetRequiredService<IDistributedCacheService>(),
+          sp.GetRequiredService<IDistributedLockService>(),
+          wrapper.NativeClient,
+          wrapper.AWSS3OptionsBucket.BucketName,
+          filePrefix,
+          metadataPrefix,
+          5 * 1024 * 1024, // 5 MB min part size
+          opts.Tus.ExpirationMinutes);
       });
 
       services.AddScoped<IResumableUploadStore, TusResumableUploadStoreService>();
@@ -80,7 +79,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3
         options.Tus.UrlPath,
         httpContext =>
         {
-          var tusStore = httpContext.RequestServices.GetRequiredService<TusS3Store>();
+          var tusStore = httpContext.RequestServices.GetRequiredService<BufferedTusS3Store>();
 
           var cfg = new DefaultTusConfiguration
           {

@@ -12,7 +12,6 @@ namespace Yoma.Core.Domain.Core.Helpers
       TimeSpan? delay = null,
       Action<int>? onRetry = null,
       ILogger? logger = null)
-      where T : class
     {
       ArgumentNullException.ThrowIfNull(action);
       ArgumentNullException.ThrowIfNull(exitCondition);
@@ -29,7 +28,7 @@ namespace Yoma.Core.Domain.Core.Helpers
 
       while (true)
       {
-        T? result = null;
+        T? result = default;
 
         try
         {
@@ -72,7 +71,6 @@ namespace Yoma.Core.Domain.Core.Helpers
        TimeSpan? delay = null,
        Action<int>? onRetry = null,
        ILogger? logger = null)
-       where T : class
     {
       ArgumentNullException.ThrowIfNull(action);
       ArgumentNullException.ThrowIfNull(exitCondition);
@@ -89,7 +87,7 @@ namespace Yoma.Core.Domain.Core.Helpers
 
       while (true)
       {
-        T? result = null;
+        T? result = default;
 
         try
         {

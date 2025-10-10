@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.Options;
 using System.Text;
-using tusdotnet.Stores.S3;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
 using Yoma.Core.Domain.BlobProvider.Models;
@@ -16,13 +15,13 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
     #region Class Variables
     private readonly IEnvironmentProvider _environmentProvider;
     private readonly AWSS3Options _options;
-    private readonly TusS3Store _tusStore;
+    private readonly BufferedTusS3Store _tusStore;
     private static readonly FileExtensionContentTypeProvider _fileExtensionContentTypeProvider = new();
     private const string DefaultContentType = "application/octet-stream";
     #endregion
 
     #region Constructor
-    public TusResumableUploadStoreService(IEnvironmentProvider environmentProvider, IOptions<AWSS3Options> options, TusS3Store tusStore)
+    public TusResumableUploadStoreService(IEnvironmentProvider environmentProvider, IOptions<AWSS3Options> options, BufferedTusS3Store tusStore)
     {
       _environmentProvider = environmentProvider ?? throw new ArgumentNullException(nameof(environmentProvider));
       _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
@@ -81,7 +80,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       }
 
       if (uploadIdsToSkip.Count > 0)
-        results = results.Where(id => !uploadIdsToSkip.Contains(id)).ToArray();
+        results = [.. results.Where(id => !uploadIdsToSkip.Contains(id))];
 
       return [.. results.Take(batchSize)];
     }
