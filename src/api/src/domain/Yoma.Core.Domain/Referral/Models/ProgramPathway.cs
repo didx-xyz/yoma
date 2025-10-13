@@ -1,10 +1,10 @@
 namespace Yoma.Core.Domain.Referral.Models
 {
   /// <summary>
-  /// Admin-defined engagement “checklist” for a program (Phase 1: one per program).
+  /// Admin-defined engagement “checklist” for a program.
   /// The checklist is made up of Steps, each containing one or more Tasks.
   /// </summary>
-  public class ReferralPathway
+  public class ProgramPathway
   {
     public Guid Id { get; set; }
 
@@ -18,6 +18,6 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public DateTimeOffset DateModified { get; set; }
 
-    public List<ReferralPathwayStep>? Steps { get; set; }
+    public List<ProgramPathwayStep>? Steps { get; set; }
   }
 }

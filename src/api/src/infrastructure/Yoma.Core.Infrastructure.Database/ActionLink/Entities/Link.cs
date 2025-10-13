@@ -15,7 +15,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
     [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)
     public string Name { get; set; }
 
-    [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(MAX)
+    [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(500)
     public string? Description { get; set; }
 
     [Required]

@@ -12,7 +12,7 @@ namespace Yoma.Core.Domain.Referral.Models
   /// • Pool behavior: Program-level ZLTO pool covers both referee and referrer; on completion, pay from the remaining pool
   ///   with referee priority and allow partial payouts (referee first, then referrer). If the pool is empty, pay 0.
   /// </summary>
-  public class ReferralProgram
+  public class Program
   {
     public Guid Id { get; set; }
 
@@ -89,7 +89,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public ProgramStatus Status { get; set; }
 
-    public bool? IsDefault { get; set; }
+    public bool IsDefault { get; set; }
 
     public DateTimeOffset DateStart { get; set; }
 
@@ -97,8 +97,12 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public DateTimeOffset DateCreated { get; set; }
 
+    public Guid CreatedByUserId { get; set; }
+
     public DateTimeOffset DateModified { get; set; }
 
-    public List<ReferralPathway>? Pathways { get; set; }
+    public Guid ModifiedByUserId { get; set; }
+
+    public ProgramPathway? Pathway { get; set; }
   }
 }

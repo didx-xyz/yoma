@@ -1,17 +1,15 @@
-using Yoma.Core.Domain.Referral.Models.Lookups;
-
 namespace Yoma.Core.Domain.Referral.Interfaces.Lookups
 {
   public interface IReferralProgramStatusService
   {
-    ReferralProgramStatus GetByName(string name);
+    Models.Lookups.ProgramStatus GetByName(string name);
 
-    ReferralProgramStatus? GetByNameOrNull(string name);
+    Models.Lookups.ProgramStatus? GetByNameOrNull(string name);
 
-    ReferralProgramStatus GetById(Guid id);
+    Models.Lookups.ProgramStatus GetById(Guid id);
 
-    ReferralProgramStatus? GetByIdOrNull(Guid id);
+    Models.Lookups.ProgramStatus? GetByIdOrNull(Guid id);
 
-    List<ReferralProgramStatus> List();
+    List<Models.Lookups.ProgramStatus> List();
   }
 }

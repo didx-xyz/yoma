@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Referral.Models
 {
-  public class ReferralProgramRequestCreate
+  public class ProgramRequestCreate
   {
   }
 }

@@ -25,6 +25,8 @@ using Yoma.Core.Infrastructure.Database.Marketplace.Repositories;
 using Yoma.Core.Infrastructure.Database.Marketplace.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.MyOpportunity.Repositories;
 using Yoma.Core.Infrastructure.Database.Opportunity.Repositories;
+using Yoma.Core.Infrastructure.Database.Referral.Repositories;
+using Yoma.Core.Infrastructure.Database.Referral.Repositories.Lookups;
 using Yoma.Core.Infrastructure.Database.Reward.Repositories;
 using Yoma.Core.Infrastructure.Database.Reward.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories;
@@ -165,6 +167,16 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepositoryBatched<Domain.PartnerSharing.Models.ProcessingLog>, PartnerSharing.Repositories.ProcessingLogRepository>();
       #endregion PartnerSharing
 
+      #region Referral
+      #region Lookups
+      services.AddScoped<IRepository<Domain.Referral.Models.Lookups.ProgramStatus>, ProgramStatusRepository>();
+      #endregion Lookups
+
+      #endregion Referral
+      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Referral.Models.Program>, ProgramRepository>();
+      services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathway>, ProgramPathwayRepository>();
+      services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathwayStep> ,ProgramPathwayStepRepository>();
+      services.AddScoped<IRepository<Domain.Referral.Models.ProgramPathwayTask>, ProgramPathwayTaskRepository>();
       #region Reward
       #region Lookups
       services.AddScoped<IRepository<Domain.Reward.Models.Lookups.RewardTransactionStatus>, RewardTransactionStatusRepository>();

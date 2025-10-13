@@ -50,6 +50,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           ]
       );
       #endregion Lookups
+
       #region User
       // replace Organization_Admin_Notification_ActionLink_Verify_Approval key with the new Organization_Admin_Notification_ActionLink_Verify_Activated key
       migrationBuilder.Sql(
