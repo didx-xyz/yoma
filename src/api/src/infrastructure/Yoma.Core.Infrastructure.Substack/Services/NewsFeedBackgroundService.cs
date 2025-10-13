@@ -142,13 +142,20 @@ namespace Yoma.Core.Infrastructure.Substack.Services
           var isNewTracking = tracking is null;
           tracking ??= new FeedSyncTracking { FeedType = feedType.ToString() };
 
-          using var req = new HttpRequestMessage(HttpMethod.Get, feed.FeedURL);
+          // Always bypass CDN cache with a cache-buster on the query string
+          var freshUrl = Microsoft.AspNetCore.WebUtilities.QueryHelpers.AddQueryString(feed.FeedURL, "cb", now.ToString("yyyyMMddHHmmss"));
 
           using var resp = await HttpHelper.SendWithRetryAsync(
             client,
             requestFactory: () =>
             {
-              var req = new HttpRequestMessage(HttpMethod.Get, feed.FeedURL);
+              var req = new HttpRequestMessage(HttpMethod.Get, freshUrl);
+
+              // Strong hints to revalidate/ignore cached variants
+              req.Headers.TryAddWithoutValidation("Accept", "application/rss+xml, application/xml;q=0.9, text/xml;q=0.8, */*;q=0.5");
+              req.Headers.TryAddWithoutValidation("Accept-Language", "en");
+              req.Headers.TryAddWithoutValidation("Cache-Control", "no-cache");
+              req.Headers.TryAddWithoutValidation("Pragma", "no-cache");
 
               // Conditional headers only if we have state
               if (!isNewTracking)
@@ -326,6 +333,11 @@ namespace Yoma.Core.Infrastructure.Substack.Services
             x.Element("enclosure")?.Attribute("url")?.Value?.Trim()
             ?? x.Element(XNamespace_MediaNs + "thumbnail")?.Attribute("url")?.Value?.Trim()
             ?? x.Element(XNamespace_MediaNs + "content")?.Attribute("url")?.Value?.Trim();
+
+        // Prefer decoded tail absolute URL if present (generic proxy unwrap)
+        thumbnailUrl = thumbnailUrl
+          ?.PreferDecodedTailAbsoluteUrl()
+          ?.EnsureHttpsScheme();
 
         // Light sanity check: keep only http(s); allow CDN links with no extension
         if (!string.IsNullOrEmpty(thumbnailUrl))

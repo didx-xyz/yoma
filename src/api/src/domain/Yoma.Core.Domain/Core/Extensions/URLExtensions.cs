@@ -69,6 +69,46 @@ namespace Yoma.Core.Domain.Core.Extensions
         return url;
       }
     }
+
+    /// <summary>
+    /// If the last path segment is a percent-encoded absolute URL (http/https),
+    /// return that decoded URL; otherwise return the original.
+    /// Works for any proxy pattern that stuffs the upstream URL in the tail segment.
+    /// </summary>
+    public static string? PreferDecodedTailAbsoluteUrl(this string? url)
+    {
+      if (string.IsNullOrWhiteSpace(url)) return url;
+
+      try
+      {
+        var uri = new Uri(url, UriKind.Absolute);
+
+        // grab last path segment
+        var segments = uri.Segments;
+        if (segments == null || segments.Length == 0) return url;
+
+        var last = segments[^1];
+        // Uri.Segments entries may include a trailing slash; trim it
+        last = last.TrimEnd('/');
+
+        if (string.IsNullOrEmpty(last)) return url;
+
+        var decoded = Uri.UnescapeDataString(last);
+
+        // if the decoded tail is an absolute http(s) URL, prefer it
+        if (decoded.StartsWith("http://", StringComparison.OrdinalIgnoreCase) ||
+            decoded.StartsWith("https://", StringComparison.OrdinalIgnoreCase))
+        {
+          return decoded;
+        }
+
+        return url;
+      }
+      catch
+      {
+        return url;
+      }
+    }
     #endregion
 
     #region Private Members
