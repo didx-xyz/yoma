@@ -55,6 +55,7 @@ namespace Yoma.Core.Infrastructure.Substack.Repositories
 
       entity.ETag = item.ETag;
       entity.FeedLastModified = item.FeedLastModified;
+      entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();
 

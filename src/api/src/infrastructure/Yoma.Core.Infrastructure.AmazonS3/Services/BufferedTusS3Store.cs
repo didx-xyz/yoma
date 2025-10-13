@@ -213,6 +213,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       do
       {
         response = await _s3Client.ListObjectsV2Async(request, ct);
+        if (response.S3Objects == null || response.S3Objects.Count == 0) break;
 
         foreach (var obj in response.S3Objects)
         {
