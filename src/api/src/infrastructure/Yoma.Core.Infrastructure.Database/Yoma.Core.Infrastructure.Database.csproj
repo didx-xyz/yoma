@@ -24,4 +24,8 @@
     <ProjectReference Include="..\Yoma.Core.Infrastructure.Shared\Yoma.Core.Infrastructure.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Referral\Repositories\Lookups\" />
+  </ItemGroup>
+
 </Project>

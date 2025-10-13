@@ -9,11 +9,15 @@ using Yoma.Core.Domain.ActionLink.Services;
 using Yoma.Core.Domain.ActionLink.Services.Lookups;
 using Yoma.Core.Domain.Analytics.Interfaces;
 using Yoma.Core.Domain.Analytics.Services;
+using Yoma.Core.Domain.BlobProvider.Interfaces;
+using Yoma.Core.Domain.BlobProvider.Services;
+using Yoma.Core.Domain.Core;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Core.Interfaces.Lookups;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Core.Services;
-using Yoma.Core.Domain.Notification.Interfaces;
-using Yoma.Core.Domain.Notification.Services;
+using Yoma.Core.Domain.Core.Services.Lookups;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Services;
@@ -27,6 +31,10 @@ using Yoma.Core.Domain.Marketplace.Services.Lookups;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Services;
 using Yoma.Core.Domain.MyOpportunity.Services.Lookups;
+using Yoma.Core.Domain.NewsFeedProvider.Interfaces;
+using Yoma.Core.Domain.NewsFeedProvider.Services;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Services;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
@@ -39,6 +47,10 @@ using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
 using Yoma.Core.Domain.PartnerSharing.Services;
 using Yoma.Core.Domain.PartnerSharing.Services.Lookups;
 using Yoma.Core.Domain.PartnerSharing.Services.Provider;
+using Yoma.Core.Domain.Referral.Interfaces;
+using Yoma.Core.Domain.Referral.Interfaces.Lookups;
+using Yoma.Core.Domain.Referral.Services;
+using Yoma.Core.Domain.Referral.Services.Lookups;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces.Lookups;
 using Yoma.Core.Domain.Reward.Services;
@@ -47,14 +59,6 @@ using Yoma.Core.Domain.SSI.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces.Lookups;
 using Yoma.Core.Domain.SSI.Services;
 using Yoma.Core.Domain.SSI.Services.Lookups;
-using Yoma.Core.Domain.Core.Interfaces.Lookups;
-using Yoma.Core.Domain.Core.Services.Lookups;
-using Yoma.Core.Domain.Core;
-using Yoma.Core.Domain.Core.Extensions;
-using Yoma.Core.Domain.BlobProvider.Interfaces;
-using Yoma.Core.Domain.BlobProvider.Services;
-using Yoma.Core.Domain.NewsFeedProvider.Interfaces;
-using Yoma.Core.Domain.NewsFeedProvider.Services;
 
 namespace Yoma.Core.Domain
 {
@@ -180,6 +184,13 @@ namespace Yoma.Core.Domain
       services.AddScoped<ISharingService, SharingService>();
       #endregion Partner Sharing
 
+      #region Referral
+      #region Lookups
+      services.AddScoped<IReferralProgramStatusService, ReferralProgramStatusService>();
+      #endregion Lookups
+
+      #endregion
+      services.AddScoped<IReferralProgramService, ReferralProgramService>();
       #region Reward
       #region Lookups
       services.AddScoped<IRewardTransactionStatusService, RewardTransactionStatusService>();

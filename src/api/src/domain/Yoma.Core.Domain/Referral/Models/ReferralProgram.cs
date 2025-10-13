@@ -1,18 +1,16 @@
 namespace Yoma.Core.Domain.Referral.Models
 {
   /// <summary>
-  /// PHASE 1 (now)
-  ///   • Single, platform-wide “Default Program”.
-  /// FUTURE (not in this phase)
-  ///   • Multiple programs with states (Active/Inactive/Expired/Archived).
-  ///   • Program start/end windows and state transitions.
+  /// Referral program configuration (platform-wide; supports multiple programs; exactly one may be the default).
   /// NOTES
-  ///   • Programs are Yoma-wide (no per-organization programs in Phase 1).
-  ///   • RefereeLimit: when a referee tries to claim a link, we compare the referrer’s completed referrals to the limit.
-  ///       - If the completed count has reached the limit, new claims are blocked.
-  ///       - Claims that are already pending may still complete, but no rewards are awarded.
-  ///   • Rewards are determined at completion time (not at claim), using the program’s then-current values.
-  ///   • Referrer blocking (future): block at user level; optionally cancel pending claimed links; blocked referrers cannot create new links.
+  /// • Scope: Programs are Yoma-wide (no per-organization programs).
+  /// • Claims & caps:
+  ///    – Per-referrer completion cap and program-wide completion cap are enforced at claim time:
+  ///      if a cap is reached, NEW claims are blocked.
+  ///    – Claims created before a cap was reached may still complete, but no rewards are paid once a cap is reached.
+  /// • Rewards timing: Rewards are determined at completion time (not at claim) using the program’s then-current values.
+  /// • Pool behavior: Program-level ZLTO pool covers both referee and referrer; on completion, pay from the remaining pool
+  ///   with referee priority and allow partial payouts (referee first, then referrer). If the pool is empty, pay 0.
   /// </summary>
   public class ReferralProgram
   {
@@ -24,31 +22,51 @@ namespace Yoma.Core.Domain.Referral.Models
 
     /// <summary>
     /// Days allowed for a referee to finish required steps after claim/registration.
-    /// null = no program-level window (system default or unlimited).
+    /// null = no program-level window
     /// </summary>
     public int? CompletionWindowInDays { get; set; }
 
     /// <summary>
-    /// Max number of successfully completed referrals per referrer for THIS program (across all their links).
-    /// null = no program-level cap (a system default may apply).
-    /// Future: consider a global cap per referrer across programs.
-    /// </summary>
-    public int? RefereeLimit { get; set; }
+    /// Per-referrer completion cap for THIS program (across all their links).
+    /// Checked at claim: if the referrer’s completed count ≥ this value, block NEW claims.
+    /// Claims made earlier may still complete, but no rewards are paid once the cap is reached.
+    /// null = no per-referrer cap.
+    public int? CompletionLimitReferee { get; set; }
 
+    /// <summary>
+    /// Program-wide completion cap (all users/links) for THIS program.
+    /// Checked at claim: if the program’s completed count ≥ this value, block NEW claims for everyone.
+    /// Claims made earlier may still complete, but no rewards are paid once the cap is reached.
+    /// null = no program-wide completion cap.
+    /// </summary>
+    public int? CompletionLimit { get; set; }
+
+    public int? CompletionTotal { get; set; }
+
+    /// <summary>
+    /// ZLTO amount for the referrer, read at completion time (not at claim).
+    /// null = no program override (system default or 0).
+    /// </summary>
     public decimal? ZltoRewardReferrer { get; set; }
 
+    /// <summary>
+    /// ZLTO amount for the referee, read at completion time (not at claim).
+    /// null = no program override (system default or 0).
+    /// </summary>
     public decimal? ZltoRewardReferee { get; set; }
 
     /// <summary>
-    /// Program-level ZLTO pool across ALL links and users for THIS program.
-    /// On completion, allocate from the remaining pool with REFEREE PRIORITY and allow PARTIAL payouts:
-    ///   1) Pay referee up to their configured amount (partial if needed), then
-    ///   2) Pay referrer from any leftover (partial if needed).
-    /// If the pool is empty, no payouts are made (completion still counts for status/analytics).
-    /// null = no program-level pool (no budget enforcement in this phase).
-    /// Future: global pool across programs.
+    /// Program-level ZLTO pool for THIS program (covers both referee and referrer).
+    /// On completion, pay from the remaining pool with referee priority and allow partial payouts:
+    ///   1) Pay referee up to their amount (partial if needed),
+    ///   2) Then pay referrer from what’s left (partial if needed).
+    /// If the pool is empty, pay 0. null = no pool enforcement.
     /// </summary>
     public decimal? ZltoRewardPool { get; set; }
+
+    public decimal? ZltoRewardCumulative { get; set; }
+
+    public decimal? ZltoRewardBalance { get; set; }
 
     /// <summary>
     /// Toggle: proof of personhood required to qualify (phone OTP or social sign-in).
@@ -57,19 +75,21 @@ namespace Yoma.Core.Domain.Referral.Models
     public bool ProofOfPersonhoodRequired { get; set; }
 
     /// <summary>
-    /// Toggle: completing the configured ReferralPathway (steps/tasks) is required to qualify as a referee.
-    /// Phase 1: a single pathway; tasks are opportunity completions (future: multiple pathways/policies).
+    /// Toggle: proof of personhood required to qualify (phone OTP or social sign-in).
     /// </summary>
     public bool PathwaysRequired { get; set; }
 
     /// <summary>
-    /// Controls whether a referrer may hold multiple active links concurrently (otherwise only one active link at a time).
+    /// Determines whether a referrer may hold multiple active links concurrently
+    /// (otherwise only one active link at a time).
     /// </summary>
     public bool MultipleLinksAllowed { get; set; }
 
     public Guid StatusId { get; set; }
 
     public ProgramStatus Status { get; set; }
+
+    public bool? IsDefault { get; set; }
 
     public DateTimeOffset DateStart { get; set; }
 
