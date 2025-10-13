@@ -334,6 +334,11 @@ namespace Yoma.Core.Infrastructure.Substack.Services
             ?? x.Element(XNamespace_MediaNs + "thumbnail")?.Attribute("url")?.Value?.Trim()
             ?? x.Element(XNamespace_MediaNs + "content")?.Attribute("url")?.Value?.Trim();
 
+        // Prefer decoded tail absolute URL if present (generic proxy unwrap)
+        thumbnailUrl = thumbnailUrl
+          ?.PreferDecodedTailAbsoluteUrl()
+          ?.EnsureHttpsScheme();
+
         // Light sanity check: keep only http(s); allow CDN links with no extension
         if (!string.IsNullOrEmpty(thumbnailUrl))
         {
