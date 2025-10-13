@@ -9,11 +9,11 @@ namespace Yoma.Core.Domain.Referral.Models
   ///   • All = all tasks in the step must be completed (task order optional).
   ///   • Any = any one task in the step completes the step (task order ignored).
   /// </summary>
-  public class ReferralPathwayStep
+  public class ProgramPathwayStep
   {
     public Guid Id { get; set; }
 
-    public Guid ProgramId { get; set; }
+    public Guid PathwayId { get; set; }
 
     public string Name { get; set; }
 
@@ -32,9 +32,9 @@ namespace Yoma.Core.Domain.Referral.Models
     /// • 1..n  = ordered step (lower numbers must be completed before higher ones)
     /// Only meaningful if there is more than one ordered step.
     /// </summary>
-    public short? Order { get; set; }
+    public byte? Order { get; set; }
 
-    public List<ReferralPathwayTask>? Tasks { get; set; }
+    public List<ProgramPathwayTask>? Tasks { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
 

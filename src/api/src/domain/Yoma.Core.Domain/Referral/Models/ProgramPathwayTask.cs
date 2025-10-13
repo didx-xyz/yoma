@@ -4,15 +4,17 @@ namespace Yoma.Core.Domain.Referral.Models
   /// A concrete Task the referee must complete.
   /// Phase 1 supports EntityType = Opportunity (complete a specific opportunity).
   /// </summary>
-  public class ReferralPathwayTask
+  public class ProgramPathwayTask
   {
     public Guid Id { get; set; }
 
     public Guid StepId { get; set; }
 
-    public PathwayTaskEntityType EntityType { get; set; }
+    public string EntityType { get; set; }
 
     public Guid? OpportunityId { get; set; }
+
+    public Opportunity.Models.OpportunityItem? Opportunity { get; set; }
 
     /// <summary>
     /// Optional task order within the step:
@@ -20,7 +22,7 @@ namespace Yoma.Core.Domain.Referral.Models
     ///   • 1..n = do in sequence (only applies when the parent step Rule = All).
     /// When the parent step Rule = Any, task ordering is ignored (leave null).
     /// </summary>
-    public short? Order { get; set; }
+    public byte? Order { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
 

@@ -119,7 +119,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
                 Type = Enum.Parse<VerificationType>(o.VerificationType.Name, true),
                 DisplayName = o.VerificationType.DisplayName,
                 Description = o.Description ?? o.VerificationType.Description
-              }).OrderBy(o => o.DisplayName).ToList() : null,
+              }).OrderBy(o => o.DisplayName).ToList() : null
       }).AsSplitQuery();
     }
 

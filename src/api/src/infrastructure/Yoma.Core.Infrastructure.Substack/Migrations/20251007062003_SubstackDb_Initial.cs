@@ -70,14 +70,14 @@ namespace Yoma.Core.Infrastructure.Substack.Migrations
           name: "IX_NewsArticle_FeedType_ExternalId",
           schema: "Substack",
           table: "NewsArticle",
-          columns: new[] { "FeedType", "ExternalId" },
+          columns: ["FeedType", "ExternalId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_NewsArticle_Title_PublishedDate_DateCreated_DateModified",
           schema: "Substack",
           table: "NewsArticle",
-          columns: new[] { "Title", "PublishedDate", "DateCreated", "DateModified" });
+          columns: ["Title", "PublishedDate", "DateCreated", "DateModified"]);
     }
 
     /// <inheritdoc />

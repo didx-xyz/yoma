@@ -6,7 +6,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups
 {
   [Table("ProgramStatus", Schema = "Referral")]
   [Index(nameof(Name), IsUnique = true)]
-  public class OpportunityStatus : Shared.Entities.BaseEntity<Guid>
+  public class ProgramStatus : Shared.Entities.BaseEntity<Guid>
   {
     [Required]
     [Column(TypeName = "varchar(20)")]

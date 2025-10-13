@@ -18,16 +18,16 @@ namespace Yoma.Core.Api.Controllers
   {
     #region Class Variables
     private readonly ILogger<ReferralController> _logger;
-    private readonly IReferralProgramService _referralProgramService;
+    private readonly IProgramService _programService;
     #endregion
 
     #region Constructor
     public ReferralController(
       ILogger<ReferralController> logger,
-      IReferralProgramService referralProgramService)
+      IProgramService programService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-      _referralProgramService = referralProgramService ?? throw new ArgumentNullException(nameof(referralProgramService));
+      _programService = programService ?? throw new ArgumentNullException(nameof(programService));
     }
     #endregion
 
@@ -36,11 +36,11 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Get the referral program by id")]
     [HttpGet("program/{id}")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public ActionResult<ReferralProgram> GetById([FromRoute] Guid id)
+    public ActionResult<Domain.Referral.Models.Program> GetById([FromRoute] Guid id)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
-      var result = _referralProgramService.GetById(id, true, true);
+      var result = _programService.GetById(id, true, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(GetById));
 
@@ -50,11 +50,11 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Search for referral programs based on the supplied filter")]
     [HttpPost("program/search")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public ActionResult<ReferralProgramSearchResults> Search([FromBody] ReferralProgramSearchFilter filter)
+    public ActionResult<ProgramSearchResults> Search([FromBody] ProgramSearchFilter filter)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(Search));
 
-      var result = _referralProgramService.Search(filter);
+      var result = _programService.Search(filter);
 
       _logger.LogInformation("Request {requestName} handled", nameof(Search));
 
@@ -65,11 +65,11 @@ namespace Yoma.Core.Api.Controllers
     [HttpPost("program/create")]
     [ProducesResponseType(typeof(Opportunity), (int)HttpStatusCode.OK)]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<ReferralProgram>> Create([FromBody] ReferralProgramRequestCreate request)
+    public async Task<ActionResult<Domain.Referral.Models.Program>> Create([FromBody] ProgramRequestCreate request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(Create));
 
-      var result = await _referralProgramService.Create(request);
+      var result = await _programService.Create(request);
 
       _logger.LogInformation("Request {requestName} handled", nameof(Create));
 
@@ -79,11 +79,11 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Update the specified referral program")]
     [HttpPatch("program/update")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<ReferralProgram>> Update([FromBody] ReferralProgramRequestUpdate request)
+    public async Task<ActionResult<Domain.Referral.Models.Program>> Update([FromBody] ProgramRequestUpdate request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(Update));
 
-      var result = await _referralProgramService.Update(request);
+      var result = await _programService.Update(request);
 
       _logger.LogInformation("Request {requestName} handled", nameof(Update));
 
@@ -93,11 +93,11 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Update referral program status (Active / Inactive / Deleted [Archived])")]
     [HttpPatch("program/{id}/{status}")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<ReferralProgram>> UpdateStatus([FromRoute] Guid id, [FromRoute] ProgramStatus status)
+    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateStatus([FromRoute] Guid id, [FromRoute] ProgramStatus status)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateStatus));
 
-      var result = await _referralProgramService.UpdateStatus(id, status);
+      var result = await _programService.UpdateStatus(id, status);
 
       _logger.LogInformation("Request {requestName} handled", nameof(UpdateStatus));
 

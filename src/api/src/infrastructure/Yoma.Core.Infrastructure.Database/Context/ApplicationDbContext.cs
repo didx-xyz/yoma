@@ -5,6 +5,8 @@ using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Database.Lookups.Entities;
 using Yoma.Core.Infrastructure.Database.Marketplace.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.Opportunity.Entities;
+using Yoma.Core.Infrastructure.Database.Referral.Entities;
+using Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups;
 using Yoma.Core.Infrastructure.Database.SSI.Entities;
 using Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups;
@@ -144,6 +146,20 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<PartnerSharing.Entities.ProcessingLog> PartnerSharingProcessingLog { get; set; }
     #endregion PartnerSharing
 
+    #region Referral
+    #region Lookups
+    public DbSet<ProgramStatus> ReferralProgramStatus { get; set; }
+    #endregion Lookups
+
+    public DbSet<ProgramPathway> ReferralProgramPathway { get; set; }
+
+    public DbSet<ProgramPathwayStep> ReferralProgramPathwayStep { get; set; }
+
+    public DbSet<ProgramPathwayTask> ReferralProgramPathwayTask { get; set; }
+
+    public DbSet<Program> ReferralProgram { get; set; }
+    #endregion Referral
+
     #region Reward
     #region Lookups
     public DbSet<RewardTransactionStatus> RewardTransactionStatus { get; set; }
@@ -202,6 +218,35 @@ namespace Yoma.Core.Infrastructure.Database.Context
         }
       }
 
+      #region ActionLink
+      builder.Entity<Link>()
+          .HasOne(o => o.CreatedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.CreatedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Link>()
+          .HasOne(o => o.ModifiedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.ModifiedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+      #endregion
+
+      #region Entity
+      builder.Entity<Organization>()
+          .HasOne(o => o.CreatedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.CreatedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Organization>()
+          .HasOne(o => o.ModifiedByUser)
+          .WithMany()
+          .HasForeignKey(o => o.ModifiedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+      #endregion
+
+      #region Opportunity
       builder.Entity<Opportunity.Entities.Opportunity>()
           .HasIndex(o => new { o.Description })
           .HasMethod("GIN")
@@ -218,31 +263,35 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .WithMany()
           .HasForeignKey(o => o.ModifiedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
+      #endregion Opportunity
 
-      builder.Entity<Organization>()
+      #region Referral
+      builder.Entity<Program>()
           .HasOne(o => o.CreatedByUser)
           .WithMany()
           .HasForeignKey(o => o.CreatedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
 
-      builder.Entity<Organization>()
+      builder.Entity<Program>()
           .HasOne(o => o.ModifiedByUser)
           .WithMany()
           .HasForeignKey(o => o.ModifiedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
 
-      builder.Entity<Link>()
-          .HasOne(o => o.CreatedByUser)
-          .WithMany()
-          .HasForeignKey(o => o.CreatedByUserId)
-          .OnDelete(DeleteBehavior.NoAction);
+      builder.Entity<ProgramPathwayTask>()
+          .HasIndex(e => new { e.StepId, e.EntityType, e.OpportunityId })
+          .IsUnique()
+          .HasFilter(null);
+      #endregion
 
-      builder.Entity<Link>()
-          .HasOne(o => o.ModifiedByUser)
-          .WithMany()
-          .HasForeignKey(o => o.ModifiedByUserId)
-          .OnDelete(DeleteBehavior.NoAction);
+      #region Reward
+      builder.Entity<Reward.Entities.RewardTransaction>()
+          .HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId })
+          .IsUnique()
+          .HasFilter(null);
+      #endregion Reward
 
+      #region SSI
       builder.Entity<SSITenantCreation>()
           .HasIndex(e => new { e.EntityType, e.UserId, e.OrganizationId })
           .IsUnique()
@@ -252,11 +301,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasIndex(e => new { e.SchemaName, e.UserId, e.OrganizationId, e.MyOpportunityId })
           .IsUnique()
           .HasFilter(null);
-
-      builder.Entity<Reward.Entities.RewardTransaction>()
-        .HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId })
-        .IsUnique()
-        .HasFilter(null);
+      #endregion
     }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
