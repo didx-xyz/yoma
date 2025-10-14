@@ -18,4 +18,26 @@ namespace Yoma.Core.Domain.Referral
   {
     Opportunity = 1
   }
+
+  public enum ProofOfPersonhoodMethod
+  {
+    OTP,
+    SocialLogin
+  }
+
+  public enum LinkStatus
+  {
+    Active,
+    Cancelled,
+    LimitReached,
+    Deleted
+  }
+
+  public enum LinkClaimStatus
+  {
+    Unclaimed,
+    Pending,
+    Completed,
+    Expired
+  }
 }

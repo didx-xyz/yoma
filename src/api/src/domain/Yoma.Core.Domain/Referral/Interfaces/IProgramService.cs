@@ -12,6 +12,8 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     ProgramSearchResults Search(ProgramSearchFilter filter);
 
+    ProgramSearchResults Search(ProgramSearchFilterAdmin filter);
+
     Task<Program> Create(ProgramRequestCreate request);
 
     Task<Program> Update(ProgramRequestUpdate request);

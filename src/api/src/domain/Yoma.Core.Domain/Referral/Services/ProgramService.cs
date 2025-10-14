@@ -25,6 +25,11 @@ namespace Yoma.Core.Domain.Referral.Services
       throw new NotImplementedException();
     }
 
+    public ProgramSearchResults Search(ProgramSearchFilterAdmin filter)
+    {
+      throw new NotImplementedException();
+    }
+
     public Task<Program> Create(ProgramRequestCreate request)
     {
       throw new NotImplementedException();

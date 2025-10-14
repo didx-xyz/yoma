@@ -10,9 +10,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public Guid StepId { get; set; }
 
-    public string EntityType { get; set; }
-
-    public Guid? OpportunityId { get; set; }
+    public PathwayTaskEntityType EntityType { get; set; }
 
     public Opportunity.Models.OpportunityItem? Opportunity { get; set; }
 

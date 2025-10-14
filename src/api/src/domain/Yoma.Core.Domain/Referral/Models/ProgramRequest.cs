@@ -1,0 +1,49 @@
+using Microsoft.AspNetCore.Http;
+
+namespace Yoma.Core.Domain.Referral.Models
+{
+  public abstract class ProgramRequestBase
+  {
+    public string Name { get; set; }
+
+    public string? Description { get; set; }
+
+    public IFormFile? Image { get; set; }
+
+    public int? CompletionWindowInDays { get; set; }
+
+    public int? CompletionLimitReferee { get; set; }
+
+    public int? CompletionLimit { get; set; }
+
+    public decimal? ZltoRewardReferrer { get; set; }
+
+    public decimal? ZltoRewardReferee { get; set; }
+
+    public decimal? ZltoRewardPool { get; set; }
+
+    public bool ProofOfPersonhoodRequired { get; set; }
+
+    public bool PathwaysRequired { get; set; }
+
+    public bool MultipleLinksAllowed { get; set; }
+
+    public bool IsDefault { get; set; }
+
+    public DateTimeOffset DateStart { get; set; }
+
+    public DateTimeOffset? DateEnd { get; set; }
+  }
+
+  public class ProgramRequestCreate : ProgramRequestBase
+  {
+    public ProgramPathwayRequestCreate? Pathway { get; set; }
+  }
+
+  public class ProgramRequestUpdate : ProgramRequestBase
+  {
+    public Guid Id { get; set; }
+
+    public ProgramPathwayRequestUpdate? Pathway { get; set; }
+  }
+}
