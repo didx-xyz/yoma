@@ -70,8 +70,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
             {
               Id = task.Id,
               StepId = task.StepId,
-              EntityType = task.EntityType,
-              OpportunityId = task.OpportunityId,
+              EntityType = Enum.Parse<PathwayTaskEntityType>(task.EntityType, true),
               Opportunity = task.Opportunity == null ? null : new Domain.Opportunity.Models.OpportunityItem
               {
                 Id = task.Opportunity.Id,

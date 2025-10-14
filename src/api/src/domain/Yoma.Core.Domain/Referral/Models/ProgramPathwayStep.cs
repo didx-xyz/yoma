@@ -34,7 +34,7 @@ namespace Yoma.Core.Domain.Referral.Models
     /// </summary>
     public byte? Order { get; set; }
 
-    public List<ProgramPathwayTask> Tasks { get; set; }
+    public List<ProgramPathwayTask>? Tasks { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
 

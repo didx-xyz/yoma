@@ -31,12 +31,11 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         Order = entity.Order,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified,
-        Tasks = entity.Tasks.Select(task => new ProgramPathwayTask
+        Tasks = includeChildItems ? entity.Tasks.Select(task => new ProgramPathwayTask
         {
           Id = task.Id,
           StepId = task.StepId,
-          EntityType = task.EntityType,
-          OpportunityId = task.OpportunityId,
+          EntityType = Enum.Parse<PathwayTaskEntityType>(task.EntityType, true),
           Opportunity = task.Opportunity == null ? null : new Domain.Opportunity.Models.OpportunityItem
           {
             Id = task.Opportunity.Id,
@@ -45,7 +44,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           Order = task.Order,
           DateCreated = task.DateCreated,
           DateModified = task.DateModified
-        }).OrderBy(t => t.Order == null).ThenBy(t => t.Order).ThenBy(t => t.Opportunity == null ? null : t.Opportunity.Title).ToList()
+        }).OrderBy(t => t.Order == null).ThenBy(t => t.Order).ThenBy(t => t.Opportunity == null ? null : t.Opportunity.Title).ToList() : null
       }).AsSplitQuery();
     }
 
