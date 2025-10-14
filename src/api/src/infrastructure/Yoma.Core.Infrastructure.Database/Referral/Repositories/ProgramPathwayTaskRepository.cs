@@ -1,4 +1,5 @@
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
@@ -18,8 +19,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       {
         Id = entity.Id,
         StepId = entity.StepId,
-        EntityType = entity.EntityType,
-        OpportunityId = entity.OpportunityId,
+        EntityType = Enum.Parse<PathwayTaskEntityType>(entity.EntityType, true),
         Opportunity = entity.Opportunity == null ? null : new Domain.Opportunity.Models.OpportunityItem
         {
           Id = entity.Opportunity.Id,
@@ -40,8 +40,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       {
         Id = item.Id,
         StepId = item.StepId,
-        EntityType = item.EntityType,
-        OpportunityId = item.OpportunityId,
+        EntityType = item.EntityType.ToString(),
+        OpportunityId = item.Opportunity?.Id,
         Order = item.Order,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
@@ -60,8 +60,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
       item.DateModified = DateTimeOffset.UtcNow;
 
-      entity.EntityType = item.EntityType;
-      entity.OpportunityId = item.OpportunityId;
+      entity.EntityType = item.EntityType.ToString();
+      entity.OpportunityId = item.Opportunity?.Id;
       entity.Order = item.Order;
       entity.DateModified = item.DateModified;
 

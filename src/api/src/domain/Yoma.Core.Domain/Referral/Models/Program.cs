@@ -1,3 +1,6 @@
+using Newtonsoft.Json;
+using Yoma.Core.Domain.BlobProvider;
+
 namespace Yoma.Core.Domain.Referral.Models
 {
   /// <summary>
@@ -20,6 +23,16 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string? Description { get; set; }
 
+    public Guid? ImageId { get; set; }
+
+    [JsonIgnore]
+    public StorageType? ImageStorageType { get; set; }
+
+    [JsonIgnore]
+    public string? ImageKey { get; set; }
+
+    public string? ImageURL { get; set; }
+
     /// <summary>
     /// Days allowed for a referee to finish required steps after claim/registration.
     /// null = no program-level window
@@ -31,6 +44,7 @@ namespace Yoma.Core.Domain.Referral.Models
     /// Checked at claim: if the referrer’s completed count ≥ this value, block NEW claims.
     /// Claims made earlier may still complete, but no rewards are paid once the cap is reached.
     /// null = no per-referrer cap.
+    /// </summary>
     public int? CompletionLimitReferee { get; set; }
 
     /// <summary>
