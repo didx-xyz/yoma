@@ -5,13 +5,41 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
   /// <inheritdoc />
-  public partial class ApplicationDb_Referral_Admin : Migration
+  public partial class ApplicationDb_Referral : Migration
   {
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
       migrationBuilder.EnsureSchema(
           name: "Referral");
+
+      migrationBuilder.CreateTable(
+          name: "LinkEngagementStatus",
+          schema: "Referral",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            Name = table.Column<string>(type: "varchar(20)", nullable: false),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_LinkEngagementStatus", x => x.Id);
+          });
+
+      migrationBuilder.CreateTable(
+          name: "LinkStatus",
+          schema: "Referral",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            Name = table.Column<string>(type: "varchar(20)", nullable: false),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_LinkStatus", x => x.Id);
+          });
 
       migrationBuilder.CreateTable(
           name: "ProgramStatus",
@@ -47,6 +75,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             Id = table.Column<Guid>(type: "uuid", nullable: false),
             Name = table.Column<string>(type: "varchar(255)", nullable: false),
             Description = table.Column<string>(type: "varchar(500)", nullable: true),
+            ImageId = table.Column<Guid>(type: "uuid", nullable: true),
             CompletionWindowInDays = table.Column<int>(type: "integer", nullable: true),
             CompletionLimitReferee = table.Column<int>(type: "integer", nullable: true),
             CompletionLimit = table.Column<int>(type: "integer", nullable: true),
@@ -71,6 +100,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           {
             table.PrimaryKey("PK_Program", x => x.Id);
             table.ForeignKey(
+                      name: "FK_Program_Blob_ImageId",
+                      column: x => x.ImageId,
+                      principalSchema: "Object",
+                      principalTable: "Blob",
+                      principalColumn: "Id");
+            table.ForeignKey(
                       name: "FK_Program_ProgramStatus_StatusId",
                       column: x => x.StatusId,
                       principalTable: "ProgramStatus",
@@ -88,6 +123,49 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       principalSchema: "Entity",
                       principalTable: "User",
                       principalColumn: "Id");
+          });
+
+      migrationBuilder.CreateTable(
+          name: "Link",
+          schema: "Referral",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            Name = table.Column<string>(type: "varchar(255)", nullable: false),
+            Description = table.Column<string>(type: "varchar(500)", nullable: true),
+            ProgramId = table.Column<Guid>(type: "uuid", nullable: false),
+            UserId = table.Column<Guid>(type: "uuid", nullable: false),
+            StatusId = table.Column<Guid>(type: "uuid", nullable: false),
+            URL = table.Column<string>(type: "varchar(2048)", nullable: false),
+            ShortURL = table.Column<string>(type: "varchar(2048)", nullable: false),
+            CompletionTotal = table.Column<int>(type: "integer", nullable: true),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+            DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_Link", x => x.Id);
+            table.ForeignKey(
+                      name: "FK_Link_LinkStatus_StatusId",
+                      column: x => x.StatusId,
+                      principalSchema: "Referral",
+                      principalTable: "LinkStatus",
+                      principalColumn: "Id",
+                      onDelete: ReferentialAction.Cascade);
+            table.ForeignKey(
+                      name: "FK_Link_Program_ProgramId",
+                      column: x => x.ProgramId,
+                      principalSchema: "Referral",
+                      principalTable: "Program",
+                      principalColumn: "Id",
+                      onDelete: ReferentialAction.Cascade);
+            table.ForeignKey(
+                      name: "FK_Link_User_UserId",
+                      column: x => x.UserId,
+                      principalSchema: "Entity",
+                      principalTable: "User",
+                      principalColumn: "Id",
+                      onDelete: ReferentialAction.Cascade);
           });
 
       migrationBuilder.CreateTable(
@@ -110,6 +188,52 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       column: x => x.ProgramId,
                       principalSchema: "Referral",
                       principalTable: "Program",
+                      principalColumn: "Id",
+                      onDelete: ReferentialAction.Cascade);
+          });
+
+      migrationBuilder.CreateTable(
+          name: "LinkUsage",
+          schema: "Referral",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            ProgramId = table.Column<Guid>(type: "uuid", nullable: false),
+            LinkId = table.Column<Guid>(type: "uuid", nullable: false),
+            UserId = table.Column<Guid>(type: "uuid", nullable: false),
+            StatusId = table.Column<Guid>(type: "uuid", nullable: false),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+            DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_LinkUsage", x => x.Id);
+            table.ForeignKey(
+                      name: "FK_LinkUsage_LinkEngagementStatus_StatusId",
+                      column: x => x.StatusId,
+                      principalSchema: "Referral",
+                      principalTable: "LinkEngagementStatus",
+                      principalColumn: "Id",
+                      onDelete: ReferentialAction.Cascade);
+            table.ForeignKey(
+                      name: "FK_LinkUsage_Link_LinkId",
+                      column: x => x.LinkId,
+                      principalSchema: "Referral",
+                      principalTable: "Link",
+                      principalColumn: "Id",
+                      onDelete: ReferentialAction.Cascade);
+            table.ForeignKey(
+                      name: "FK_LinkUsage_Program_ProgramId",
+                      column: x => x.ProgramId,
+                      principalSchema: "Referral",
+                      principalTable: "Program",
+                      principalColumn: "Id",
+                      onDelete: ReferentialAction.Cascade);
+            table.ForeignKey(
+                      name: "FK_LinkUsage_User_UserId",
+                      column: x => x.UserId,
+                      principalSchema: "Entity",
+                      principalTable: "User",
                       principalColumn: "Id",
                       onDelete: ReferentialAction.Cascade);
           });
@@ -172,6 +296,84 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           });
 
       migrationBuilder.CreateIndex(
+          name: "IX_Link_Name_UserId",
+          schema: "Referral",
+          table: "Link",
+          columns: new[] { "Name", "UserId" },
+          unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Link_ProgramId",
+          schema: "Referral",
+          table: "Link",
+          column: "ProgramId");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Link_ShortURL1",
+          schema: "Referral",
+          table: "Link",
+          column: "ShortURL",
+          unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Link_StatusId1",
+          schema: "Referral",
+          table: "Link",
+          column: "StatusId");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Link_URL1",
+          schema: "Referral",
+          table: "Link",
+          column: "URL",
+          unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Link_UserId_ProgramId_StatusId_DateCreated_DateModified",
+          schema: "Referral",
+          table: "Link",
+          columns: new[] { "UserId", "ProgramId", "StatusId", "DateCreated", "DateModified" });
+
+      migrationBuilder.CreateIndex(
+          name: "IX_LinkEngagementStatus_Name",
+          schema: "Referral",
+          table: "LinkEngagementStatus",
+          column: "Name",
+          unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_LinkStatus_Name",
+          schema: "Referral",
+          table: "LinkStatus",
+          column: "Name",
+          unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_LinkUsage_LinkId_StatusId_DateCreated_DateModified",
+          schema: "Referral",
+          table: "LinkUsage",
+          columns: new[] { "LinkId", "StatusId", "DateCreated", "DateModified" });
+
+      migrationBuilder.CreateIndex(
+          name: "IX_LinkUsage_ProgramId",
+          schema: "Referral",
+          table: "LinkUsage",
+          column: "ProgramId");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_LinkUsage_StatusId",
+          schema: "Referral",
+          table: "LinkUsage",
+          column: "StatusId");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_LinkUsage_UserId_ProgramId",
+          schema: "Referral",
+          table: "LinkUsage",
+          columns: new[] { "UserId", "ProgramId" },
+          unique: true);
+
+      migrationBuilder.CreateIndex(
           name: "IX_Program_CreatedByUserId",
           schema: "Referral",
           table: "Program",
@@ -181,7 +383,21 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Program_Description_StatusId_IsDefault_DateStart_DateEnd_Da~",
           schema: "Referral",
           table: "Program",
-          columns: ["Description", "StatusId", "IsDefault", "DateStart", "DateEnd", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId"]);
+          columns: new[] { "Description", "StatusId", "IsDefault", "DateStart", "DateEnd", "DateCreated", "DateModified" });
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Program_ImageId",
+          schema: "Referral",
+          table: "Program",
+          column: "ImageId");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Program_IsDefault",
+          schema: "Referral",
+          table: "Program",
+          column: "IsDefault",
+          unique: true,
+          filter: "IsDefault = true");
 
       migrationBuilder.CreateIndex(
           name: "IX_Program_ModifiedByUserId",
@@ -203,12 +419,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           column: "StatusId");
 
       migrationBuilder.CreateIndex(
-          name: "IX_ProgramPathway_Description_DateCreated_DateModified",
-          schema: "Referral",
-          table: "ProgramPathway",
-          columns: ["Description", "DateCreated", "DateModified"]);
-
-      migrationBuilder.CreateIndex(
           name: "IX_ProgramPathway_ProgramId",
           schema: "Referral",
           table: "ProgramPathway",
@@ -216,24 +426,30 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           unique: true);
 
       migrationBuilder.CreateIndex(
+          name: "IX_ProgramPathway_ProgramId_DateCreated_DateModified",
+          schema: "Referral",
+          table: "ProgramPathway",
+          columns: new[] { "ProgramId", "DateCreated", "DateModified" });
+
+      migrationBuilder.CreateIndex(
           name: "IX_ProgramPathway_ProgramId_Name",
           schema: "Referral",
           table: "ProgramPathway",
-          columns: ["ProgramId", "Name"],
+          columns: new[] { "ProgramId", "Name" },
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayStep_PathwayId_Name",
           schema: "Referral",
           table: "ProgramPathwayStep",
-          columns: ["PathwayId", "Name"],
+          columns: new[] { "PathwayId", "Name" },
           unique: true);
 
       migrationBuilder.CreateIndex(
-          name: "IX_ProgramPathwayStep_Rule_Order_DateCreated_DateModified",
+          name: "IX_ProgramPathwayStep_PathwayId_Order_DateCreated_DateModified",
           schema: "Referral",
           table: "ProgramPathwayStep",
-          columns: ["Rule", "Order", "DateCreated", "DateModified"]);
+          columns: new[] { "PathwayId", "Order", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayTask_OpportunityId",
@@ -242,17 +458,17 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           column: "OpportunityId");
 
       migrationBuilder.CreateIndex(
-          name: "IX_ProgramPathwayTask_Order_DateCreated_DateModified",
-          schema: "Referral",
-          table: "ProgramPathwayTask",
-          columns: ["Order", "DateCreated", "DateModified"]);
-
-      migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayTask_StepId_EntityType_OpportunityId",
           schema: "Referral",
           table: "ProgramPathwayTask",
-          columns: ["StepId", "EntityType", "OpportunityId"],
+          columns: new[] { "StepId", "EntityType", "OpportunityId" },
           unique: true);
+
+      migrationBuilder.CreateIndex(
+          name: "IX_ProgramPathwayTask_StepId_Order_DateCreated_DateModified",
+          schema: "Referral",
+          table: "ProgramPathwayTask",
+          columns: new[] { "StepId", "Order", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramStatus_Name",
@@ -261,12 +477,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           column: "Name",
           unique: true);
 
-      ApplicationDb_Referral_Admin_Seeding.Seed(migrationBuilder);
+      ApplicationDb_Referral_Seeding.Seed(migrationBuilder);
     }
 
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+      migrationBuilder.DropTable(
+          name: "LinkUsage",
+          schema: "Referral");
+
       migrationBuilder.DropTable(
           name: "ProgramPathwayTask",
           schema: "Referral");
@@ -276,7 +496,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           schema: "Referral");
 
       migrationBuilder.DropTable(
+          name: "LinkEngagementStatus",
+          schema: "Referral");
+
+      migrationBuilder.DropTable(
+          name: "Link",
+          schema: "Referral");
+
+      migrationBuilder.DropTable(
           name: "ProgramPathwayStep",
+          schema: "Referral");
+
+      migrationBuilder.DropTable(
+          name: "LinkStatus",
           schema: "Referral");
 
       migrationBuilder.DropTable(

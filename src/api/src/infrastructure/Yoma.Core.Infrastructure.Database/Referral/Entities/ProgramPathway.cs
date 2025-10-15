@@ -7,7 +7,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 {
   [Table("ProgramPathway", Schema = "Referral")]
   [Index(nameof(ProgramId), nameof(Name), IsUnique = true)]
-  [Index(nameof(Description), nameof(DateCreated), nameof(DateModified))]
+  [Index(nameof(ProgramId), nameof(DateCreated), nameof(DateModified))]
   public class ProgramPathway : BaseEntity<Guid>
   {
     [Required]

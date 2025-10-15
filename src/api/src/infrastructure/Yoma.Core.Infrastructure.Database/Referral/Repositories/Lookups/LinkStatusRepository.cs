@@ -5,33 +5,33 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.Referral.Repositories.Lookups
 {
-  public class ProgramStatusRepository : BaseRepository<Entities.Lookups.ProgramStatus, Guid>, IRepository<ProgramStatus>
+  public class LinkStatusRepository : BaseRepository<Entities.Lookups.LinkStatus, Guid>, IRepository<LinkStatus>
   {
     #region Constructor
-    public ProgramStatusRepository(ApplicationDbContext context) : base(context) { }
+    public LinkStatusRepository(ApplicationDbContext context) : base(context) { }
     #endregion
 
     #region Public Members
-    public IQueryable<ProgramStatus> Query()
+    public IQueryable<LinkStatus> Query()
     {
-      return _context.ReferralProgramStatus.Select(entity => new ProgramStatus
+      return _context.ReferralLinkStatus.Select(entity => new LinkStatus
       {
         Id = entity.Id,
         Name = entity.Name
       });
     }
 
-    public Task<ProgramStatus> Create(ProgramStatus item)
+    public Task<LinkStatus> Create(LinkStatus item)
     {
       throw new NotImplementedException();
     }
 
-    public Task<ProgramStatus> Update(ProgramStatus item)
+    public Task<LinkStatus> Update(LinkStatus item)
     {
       throw new NotImplementedException();
     }
 
-    public Task Delete(ProgramStatus item)
+    public Task Delete(LinkStatus item)
     {
       throw new NotImplementedException();
     }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral;
@@ -28,6 +29,9 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         Id = entity.Id,
         Name = entity.Name,
         Description = entity.Description,
+        ImageId = entity.ImageId,
+        ImageStorageType = entity.Image == null ? null : Enum.Parse<StorageType>(entity.Image.StorageType, true),
+        ImageKey = entity.Image == null ? null : entity.Image.Key,
         CompletionWindowInDays = entity.CompletionWindowInDays,
         CompletionLimitReferee = entity.CompletionLimitReferee,
         CompletionLimit = entity.CompletionLimit,
@@ -109,6 +113,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         Id = item.Id,
         Name = item.Name,
         Description = item.Description,
+        ImageId = item.ImageId,
         CompletionWindowInDays = item.CompletionWindowInDays,
         CompletionLimitReferee = item.CompletionLimitReferee,
         CompletionLimit = item.CompletionLimit,

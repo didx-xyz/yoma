@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Yoma.Core.Domain.Referral.Models.Lookups;
+using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Shared.Entities;
 
@@ -10,7 +11,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
   [Table("Program", Schema = "Referral")] 
   [Index(nameof(Name), IsUnique = true)]
   [Index(nameof(Description), nameof(StatusId), nameof(IsDefault), nameof(DateStart), nameof(DateEnd),
-    nameof(DateCreated), nameof(CreatedByUserId), nameof(DateModified), nameof(ModifiedByUserId))]
+    nameof(DateCreated), nameof(DateModified))]
   public class Program : BaseEntity<Guid>
   {
     [Required]
@@ -19,6 +20,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 
     [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(500)
     public string? Description { get; set; }
+
+    [ForeignKey(nameof(ImageId))]
+    public Guid? ImageId { get; set; }
+    public BlobObject? Image { get; set; }
 
     public int? CompletionWindowInDays { get; set; }
 

@@ -27,7 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
     public DbSet<ActionLink.Entities.Lookups.LinkStatus> LinkStatus { get; set; }
     #endregion Lookups
 
-    public DbSet<Link> Link { get; set; }
+    public DbSet<ActionLink.Entities.Link> Link { get; set; }
 
     public DbSet<LinkUsageLog> LinkUsageLog { get; set; }
     #endregion ActionLink
@@ -148,16 +148,24 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
     #region Referral
     #region Lookups
+    public DbSet<LinkStatus> ReferralLinkStatus { get; set; }
+
+    public DbSet<LinkUsageStatus> ReferralLinkUsageStatus { get; set; }
+
     public DbSet<ProgramStatus> ReferralProgramStatus { get; set; }
     #endregion Lookups
+
+    public DbSet<Referral.Entities.Link> ReferralLink { get; set; }
+
+    public DbSet<LinkUsage> ReferralLinkUsage { get; set; }
+
+    public DbSet<Program> ReferralProgram { get; set; }
 
     public DbSet<ProgramPathway> ReferralProgramPathway { get; set; }
 
     public DbSet<ProgramPathwayStep> ReferralProgramPathwayStep { get; set; }
 
     public DbSet<ProgramPathwayTask> ReferralProgramPathwayTask { get; set; }
-
-    public DbSet<Program> ReferralProgram { get; set; }
     #endregion Referral
 
     #region Reward
@@ -219,13 +227,13 @@ namespace Yoma.Core.Infrastructure.Database.Context
       }
 
       #region ActionLink
-      builder.Entity<Link>()
+      builder.Entity<ActionLink.Entities.Link>()
           .HasOne(o => o.CreatedByUser)
           .WithMany()
           .HasForeignKey(o => o.CreatedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
 
-      builder.Entity<Link>()
+      builder.Entity<ActionLink.Entities.Link>()
           .HasOne(o => o.ModifiedByUser)
           .WithMany()
           .HasForeignKey(o => o.ModifiedByUserId)
@@ -277,6 +285,11 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .WithMany()
           .HasForeignKey(o => o.ModifiedByUserId)
           .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Program>()
+          .HasIndex(o => o.IsDefault)
+          .IsUnique()
+          .HasFilter($"{nameof(Program.IsDefault)} = true");
 
       builder.Entity<ProgramPathwayTask>()
           .HasIndex(e => new { e.StepId, e.EntityType, e.OpportunityId })

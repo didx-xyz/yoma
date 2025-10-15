@@ -4,9 +4,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System.Reflection;
 using Yoma.Core.Domain.ActionLink.Interfaces;
-using Yoma.Core.Domain.ActionLink.Interfaces.Lookups;
 using Yoma.Core.Domain.ActionLink.Services;
-using Yoma.Core.Domain.ActionLink.Services.Lookups;
 using Yoma.Core.Domain.Analytics.Interfaces;
 using Yoma.Core.Domain.Analytics.Services;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
@@ -75,10 +73,10 @@ namespace Yoma.Core.Domain
 
       #region Action Link
       #region Lookups
-      services.AddScoped<ILinkStatusService, LinkStatusService>();
+      services.AddScoped<ActionLink.Interfaces.Lookups.ILinkStatusService, ActionLink.Services.Lookups.LinkStatusService>();
       #endregion Lookups
 
-      services.AddScoped<ILinkService, LinkService>();
+      services.AddScoped<ActionLink.Interfaces.ILinkService, ActionLink.Services.LinkService>();
       services.AddScoped<ILinkServiceBackgroundService, LinkServiceBackgroundService>();
       #endregion Action Link
 
@@ -186,10 +184,14 @@ namespace Yoma.Core.Domain
 
       #region Referral
       #region Lookups
-      services.AddScoped<IReferralProgramStatusService, ProgramStatusService>();
+      services.AddScoped<Referral.Interfaces.Lookups.ILinkStatusService, Referral.Services.Lookups.LinkStatusService>();
+      services.AddScoped<ILinkUsageStatusService, LinkUsageStatusService>();
+      services.AddScoped<IProgramStatusService, ProgramStatusService>();
       #endregion Lookups
-      
+
+      services.AddScoped<Referral.Interfaces.ILinkService, Referral.Services.LinkService>();
       services.AddScoped<IProgramService, ProgramService>();
+      services.AddScoped<IReferralService, ReferralService>();
       #endregion Referral
 
       #region Reward

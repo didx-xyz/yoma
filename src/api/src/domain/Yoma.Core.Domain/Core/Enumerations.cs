@@ -27,7 +27,7 @@ namespace Yoma.Core.Domain.Core
 
   public enum FileType
   {
-    Photos, //logo and profile photo
+    Photos, //general image storage: organization logos, referral program thumbnails, user profile photos, and opportunity completion photos
     Certificates,
     Documents,
     VoiceNotes,

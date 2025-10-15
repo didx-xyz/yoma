@@ -6,7 +6,6 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Interfaces;
-using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
 
 namespace Yoma.Core.Api.Controllers
@@ -24,8 +23,7 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Constructor
-    public ReferralController(
-      ILogger<ReferralController> logger,
+    public ReferralController(ILogger<ReferralController> logger,
       IReferralService referralService,
       IProgramService programService)
     {
@@ -94,7 +92,7 @@ namespace Yoma.Core.Api.Controllers
       return StatusCode((int)HttpStatusCode.OK, result);
     }
 
-    [SwaggerOperation(Summary = "Update referral program status (Active / Inactive / Deleted [Archived])")]
+    [SwaggerOperation(Summary = "Update referral program status (Active / Inactive / Deleted)")]
     [HttpPatch("program/{id}/{status}")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateStatus([FromRoute] Guid id, [FromRoute] ProgramStatus status)

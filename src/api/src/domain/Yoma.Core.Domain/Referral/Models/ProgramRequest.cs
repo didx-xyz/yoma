@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Http;
+using System.ComponentModel.DataAnnotations;
 
 namespace Yoma.Core.Domain.Referral.Models
 {
   public abstract class ProgramRequestBase
   {
+    [Required]
     public string Name { get; set; }
 
     public string? Description { get; set; }
@@ -22,14 +24,19 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public decimal? ZltoRewardPool { get; set; }
 
+    [Required]
     public bool ProofOfPersonhoodRequired { get; set; }
 
+    [Required]
     public bool PathwaysRequired { get; set; }
 
+    [Required]
     public bool MultipleLinksAllowed { get; set; }
 
+    [Required]
     public bool IsDefault { get; set; }
 
+    [Required]
     public DateTimeOffset DateStart { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }
@@ -42,6 +49,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
   public class ProgramRequestUpdate : ProgramRequestBase
   {
+    [Required]
     public Guid Id { get; set; }
 
     public ProgramPathwayRequestUpdate? Pathway { get; set; }
