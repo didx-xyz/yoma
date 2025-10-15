@@ -1,13 +1,6 @@
 namespace Yoma.Core.Domain.Referral.Models
 {
-  /// <summary>
-  /// Represents a referral link created by a referrer for a specific referral program.
-  /// The link acts as the parent entity for all referee engagements (claims).
-  /// Whether multiple active links can exist per program for a given referrer
-  /// is determined by the program configuration (MultipleLinksAllowed).
-  /// The link's Id serves as the unique referral code embedded in both the full and shortened URLs.
-  /// </summary>
-  public class Link
+  public class ReferralLinkInfo
   {
     public Guid Id { get; set; }
 
@@ -27,7 +20,11 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string ShortURL { get; set; }
 
+    public int? PendingTotal { get; set; }
+
     public int? CompletionTotal { get; set; }
+
+    public int? ExpiredTotal { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
 
