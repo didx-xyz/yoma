@@ -5,16 +5,16 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 {
-  public class LinkUsageRepository : BaseRepository<Entities.LinkUsage, Guid>, IRepositoryBatched<LinkUsage>
+  public class LinkUsageRepository : BaseRepository<Entities.LinkUsage, Guid>, IRepositoryBatched<ReferralLinkUsage>
   {
     #region Constructor
     public LinkUsageRepository(ApplicationDbContext context) : base(context) { }
     #endregion
 
     #region Public Members
-    public IQueryable<LinkUsage> Query()
+    public IQueryable<ReferralLinkUsage> Query()
     {
-      return _context.ReferralLinkUsage.Select(entity => new LinkUsage
+      return _context.ReferralLinkUsage.Select(entity => new ReferralLinkUsage
       {
         Id = entity.Id,
         ProgramId = entity.ProgramId,
@@ -27,7 +27,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       });
     }
 
-    public async Task<LinkUsage> Create(LinkUsage item)
+    public async Task<ReferralLinkUsage> Create(ReferralLinkUsage item)
     {
       item.DateCreated = DateTimeOffset.UtcNow;
       item.DateModified = DateTimeOffset.UtcNow;
@@ -50,7 +50,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       return item;
     }
 
-    public async Task<List<LinkUsage>> Create(List<LinkUsage> items)
+    public async Task<List<ReferralLinkUsage>> Create(List<ReferralLinkUsage> items)
     {
       if (items == null || items.Count == 0)
         throw new ArgumentNullException(nameof(items));
@@ -81,7 +81,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       return items;
     }
 
-    public async Task<LinkUsage> Update(LinkUsage item)
+    public async Task<ReferralLinkUsage> Update(ReferralLinkUsage item)
     {
       var entity = _context.ReferralLinkUsage.Where(o => o.Id == item.Id).SingleOrDefault()
           ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.LinkUsage)} with id '{item.Id}' does not exist");
@@ -96,7 +96,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       return item;
     }
 
-    public async Task<List<LinkUsage>> Update(List<LinkUsage> items)
+    public async Task<List<ReferralLinkUsage>> Update(List<ReferralLinkUsage> items)
     {
       if (items == null || items.Count == 0)
         throw new ArgumentNullException(nameof(items));
@@ -121,12 +121,12 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
     }
 
 
-    public Task Delete(LinkUsage item)
+    public Task Delete(ReferralLinkUsage item)
     {
       throw new NotImplementedException();
     }
 
-    public Task Delete(List<LinkUsage> items)
+    public Task Delete(List<ReferralLinkUsage> items)
     {
       throw new NotImplementedException();
     }

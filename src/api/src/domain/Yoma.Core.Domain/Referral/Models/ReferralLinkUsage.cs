@@ -6,7 +6,7 @@ namespace Yoma.Core.Domain.Referral.Models
   /// Only one engagement is allowed per referee per program.
   /// Tracks the referee user's progress and current claim status.
   /// </summary>
-  public class LinkUsage
+  public class ReferralLinkUsage
   {
     public Guid Id { get; set; }
 
