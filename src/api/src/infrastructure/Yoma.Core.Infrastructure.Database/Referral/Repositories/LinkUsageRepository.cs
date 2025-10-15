@@ -21,7 +21,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         LinkId = entity.LinkId,
         UserId = entity.UserId,
         StatusId = entity.StatusId,
-        Status = Enum.Parse<Domain.Referral.LinkUsageStatus>(entity.Status.Name, true),
+        Status = Enum.Parse<Domain.Referral.ReferralLinkUsageStatus>(entity.Status.Name, true),
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
       });

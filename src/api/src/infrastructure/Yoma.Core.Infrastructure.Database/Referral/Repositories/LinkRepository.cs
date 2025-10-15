@@ -25,7 +25,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         ProgramId = entity.ProgramId,
         UserId = entity.UserId,
         StatusId = entity.StatusId,
-        Status = Enum.Parse<Domain.Referral.LinkStatus>(entity.Status.Name, true),
+        Status = Enum.Parse<Domain.Referral.ReferralLinkStatus>(entity.Status.Name, true),
         URL = entity.URL,
         ShortURL = entity.ShortURL,
         CompletionTotal = entity.CompletionTotal,

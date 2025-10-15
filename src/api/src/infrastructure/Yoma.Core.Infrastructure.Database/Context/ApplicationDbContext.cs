@@ -289,7 +289,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
       builder.Entity<Program>()
           .HasIndex(o => o.IsDefault)
           .IsUnique()
-          .HasFilter($"{nameof(Program.IsDefault)} = true");
+          .HasFilter($"\"{nameof(Program.IsDefault)}\" = true");
 
       builder.Entity<ProgramPathwayTask>()
           .HasIndex(e => new { e.StepId, e.EntityType, e.OpportunityId })

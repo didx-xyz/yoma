@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups
 {
-  [Table("LinkEngagementStatus", Schema = "Referral")]
+  [Table("LinkUsageStatus", Schema = "Referral")]
   [Index(nameof(Name), IsUnique = true)]
   public class LinkUsageStatus : Shared.Entities.BaseEntity<Guid>
   {
