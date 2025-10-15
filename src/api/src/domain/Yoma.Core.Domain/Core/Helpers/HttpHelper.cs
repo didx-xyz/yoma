@@ -27,9 +27,9 @@ namespace Yoma.Core.Domain.Core.Helpers
       int maxAttempts = 2,
       TimeSpan? initialDelay = null)
     {
-      if (client is null) throw new ArgumentNullException(nameof(client));
-      if (requestFactory is null) throw new ArgumentNullException(nameof(requestFactory));
-      if (maxAttempts < 1) throw new ArgumentOutOfRangeException(nameof(maxAttempts));
+      ArgumentNullException.ThrowIfNull(client, nameof(client));
+      ArgumentNullException.ThrowIfNull(requestFactory, nameof(requestFactory));
+      ArgumentOutOfRangeException.ThrowIfLessThan(maxAttempts, 1, nameof(maxAttempts));
 
       var delay = initialDelay ?? TimeSpan.FromSeconds(3);
       var attempt = 0;

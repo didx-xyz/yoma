@@ -1802,6 +1802,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<Guid>("UserId")
                       .HasColumnType("uuid");
 
+            b.Property<decimal?>("ZltoRewardCumulative")
+                      .HasColumnType("decimal(12,2)");
+
             b.HasKey("Id");
 
             b.HasIndex("ProgramId");
@@ -1978,7 +1981,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .IsRequired()
                       .HasColumnType("varchar(255)");
 
-            b.Property<bool>("PathwaysRequired")
+            b.Property<bool>("PathwayRequired")
                       .HasColumnType("boolean");
 
             b.Property<bool>("ProofOfPersonhoodRequired")

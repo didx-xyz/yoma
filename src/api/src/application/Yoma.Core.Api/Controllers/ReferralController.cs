@@ -101,7 +101,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Update referral program status (Active / Inactive / Deleted)")]
     [HttpPatch("program/{id}/{status}")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] ProgramStatus status)
+    public async Task<ActionResult<ProgramInfo>> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] ProgramStatus status)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramStatus));
 

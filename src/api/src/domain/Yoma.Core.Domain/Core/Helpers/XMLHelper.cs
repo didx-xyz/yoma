@@ -29,7 +29,7 @@ namespace Yoma.Core.Domain.Core.Helpers
     /// <summary>Load an XDocument from a stream using secure settings.</summary>
     public static XDocument Load(Stream stream, LoadOptions options = LoadOptions.None)
     {
-      if (stream is null) throw new ArgumentNullException(nameof(stream));
+      ArgumentNullException.ThrowIfNull(stream, nameof(stream));
       using var reader = XmlReader.Create(stream, CreateSecureSettings());
       return XDocument.Load(reader, options);
     }
@@ -37,7 +37,7 @@ namespace Yoma.Core.Domain.Core.Helpers
     /// <summary>Load an XDocument from a TextReader using secure settings.</summary>
     public static XDocument Load(TextReader textReader, LoadOptions options = LoadOptions.None)
     {
-      if (textReader is null) throw new ArgumentNullException(nameof(textReader));
+      ArgumentNullException.ThrowIfNull(textReader, nameof(textReader));
       using var reader = XmlReader.Create(textReader, CreateSecureSettings());
       return XDocument.Load(reader, options);
     }
@@ -45,7 +45,7 @@ namespace Yoma.Core.Domain.Core.Helpers
     /// <summary>Load an XDocument from a string using secure settings.</summary>
     public static XDocument Load(string xml, LoadOptions options = LoadOptions.None)
     {
-      if (xml is null) throw new ArgumentNullException(nameof(xml));
+      ArgumentNullException.ThrowIfNull(xml, nameof(xml));
       using var sr = new StringReader(xml);
       return Load(sr, options);
     }

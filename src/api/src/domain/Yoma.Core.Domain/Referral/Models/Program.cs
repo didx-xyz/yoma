@@ -89,9 +89,9 @@ namespace Yoma.Core.Domain.Referral.Models
     public bool ProofOfPersonhoodRequired { get; set; }
 
     /// <summary>
-    /// Toggle: proof of personhood required to qualify (phone OTP or social sign-in).
+    /// Toggle: pathway required to qualify.
     /// </summary>
-    public bool PathwaysRequired { get; set; }
+    public bool PathwayRequired { get; set; }
 
     /// <summary>
     /// Determines whether a referrer may hold multiple active links concurrently

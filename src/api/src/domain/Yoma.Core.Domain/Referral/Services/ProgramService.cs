@@ -40,7 +40,7 @@ namespace Yoma.Core.Domain.Referral.Services
       throw new NotImplementedException();
     }
 
-    public Task<Program> UpdateStatus(Guid id, ProgramStatus status)
+    public Task<ProgramInfo> UpdateStatus(Guid id, ProgramStatus status)
     {
       throw new NotImplementedException();
     }

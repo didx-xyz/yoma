@@ -14,13 +14,29 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int? CompletionLimitReferee { get; set; }
 
+    public int? CompletionLimit { get; set; }
+
+    public int? CompletionTotal { get; set; }
+
+    public int? CompletionBalance { get; set; }
+
     public decimal? ZltoRewardReferrer { get; set; }
 
     public decimal? ZltoRewardReferee { get; set; }
 
+    public decimal? ZltoRewardPool { get; set; }
+
+    public decimal? ZltoRewardCumulative { get; set; }
+
+    public decimal? ZltoRewardBalance { get; set; }
+
     public bool ProofOfPersonhoodRequired { get; set; }
 
-    public bool PathwaysRequired { get; set; }
+    public bool PathwayRequired { get; set; }
+
+    public ProgramStatus Status { get; set; }
+
+    public bool IsDefault { get; set; }
 
     public DateTimeOffset DateStart { get; set; }
 

@@ -28,7 +28,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public bool ProofOfPersonhoodRequired { get; set; }
 
     [Required]
-    public bool PathwaysRequired { get; set; }
+    public bool PathwayRequired { get; set; }
 
     [Required]
     public bool MultipleLinksAllowed { get; set; }

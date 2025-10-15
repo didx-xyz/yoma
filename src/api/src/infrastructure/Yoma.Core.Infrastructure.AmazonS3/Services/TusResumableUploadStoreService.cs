@@ -81,7 +81,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
       }
 
       if (uploadIdsToSkip.Count > 0)
-        results = results.Where(id => !uploadIdsToSkip.Contains(id)).ToArray();
+        results = [.. results.Where(id => !uploadIdsToSkip.Contains(id))];
 
       return [.. results.Take(batchSize)];
     }

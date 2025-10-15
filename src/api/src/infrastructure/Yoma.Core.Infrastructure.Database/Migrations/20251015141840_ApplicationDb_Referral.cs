@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -73,7 +74,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             ZltoRewardPool = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
             ZltoRewardCumulative = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
             ProofOfPersonhoodRequired = table.Column<bool>(type: "boolean", nullable: false),
-            PathwaysRequired = table.Column<bool>(type: "boolean", nullable: false),
+            PathwayRequired = table.Column<bool>(type: "boolean", nullable: false),
             MultipleLinksAllowed = table.Column<bool>(type: "boolean", nullable: false),
             StatusId = table.Column<Guid>(type: "uuid", nullable: false),
             IsDefault = table.Column<bool>(type: "boolean", nullable: false),
@@ -128,6 +129,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             URL = table.Column<string>(type: "varchar(2048)", nullable: false),
             ShortURL = table.Column<string>(type: "varchar(2048)", nullable: false),
             CompletionTotal = table.Column<int>(type: "integer", nullable: true),
+            ZltoRewardCumulative = table.Column<decimal>(type: "numeric(12,2)", nullable: true),
             DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
             DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
           },
