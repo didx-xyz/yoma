@@ -9,9 +9,5 @@ namespace Yoma.Core.Domain.Referral.Models
     public Opportunity.Models.OpportunityItem? Opportunity { get; set; }
 
     public byte? Order { get; set; }
-
-    #region Referee Status
-    public bool? Completed { get; set; }
-    #endregion
   }
 }

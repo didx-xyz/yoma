@@ -11,11 +11,5 @@ namespace Yoma.Core.Domain.Referral.Models
     public List<ProgramPathwayStepInfo> Steps { get; set; }
 
     public int StepsTotal => Steps.Count;
-
-    #region Referee Status
-    public int? StepsCompleted { get; set; }
-
-    public decimal? PercentComplete => StepsCompleted.HasValue ? Math.Round((decimal)StepsCompleted.Value / StepsTotal * 100, 2) : null;
-    #endregion
   }
 }
