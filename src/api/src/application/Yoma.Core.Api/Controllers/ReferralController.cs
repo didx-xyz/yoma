@@ -200,7 +200,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Create a new referral link (Authenticated User)")]
     [HttpPost("link/create")]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public async Task<ActionResult<ReferralLinkInfo>> CreateLink([FromForm] ReferralLinkRequestCreate request)
+    public async Task<ActionResult<ReferralLinkInfo>> CreateLink([FromBody] ReferralLinkRequestCreate request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(CreateLink));
 
@@ -214,7 +214,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Update my referral link (Authenticated User)")]
     [HttpPatch("link/update")]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public async Task<ActionResult<ReferralLinkInfo>> UpdateLink([FromForm] ReferralLinkRequestUpdate request)
+    public async Task<ActionResult<ReferralLinkInfo>> UpdateLink([FromBody] ReferralLinkRequestUpdate request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateLink));
 
