@@ -17,12 +17,5 @@ namespace Yoma.Core.Domain.Referral.Models
     public List<ProgramPathwayTaskInfo> Tasks { get; set; }
 
     public int TasksTotal => Tasks.Count;
-
-    #region Referee Status
-    public int? TasksCompleted { get; set; }
-
-    public decimal? PercentComplete => TasksCompleted.HasValue ? Math.Round((decimal)TasksCompleted.Value / TasksTotal * 100, 2) : null;
-
-    #endregion
   }
 }

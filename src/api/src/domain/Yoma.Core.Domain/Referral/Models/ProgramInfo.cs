@@ -27,19 +27,5 @@ namespace Yoma.Core.Domain.Referral.Models
     public DateTimeOffset? DateEnd { get; set; }
 
     public ProgramPathwayInfo? Pathway { get; set; }
-
-    #region Referee Status
-    public ReferralLinkUsageStatus? LinkUsageStatus { get; set; }
-
-    public DateTimeOffset? DateClaimed { get; set; }
-
-    public DateTimeOffset? DateCompleted { get; set; }
-
-    public bool? ProofOfPersonhoodCompleted { get; set; }
-
-    public ProofOfPersonhoodMethod? ProofOfPersonhoodMethod { get; set; }
-
-    public bool? PathwaysCompleted { get; set; }
-    #endregion
   }
 }

@@ -184,13 +184,14 @@ namespace Yoma.Core.Domain
 
       #region Referral
       #region Lookups
-      services.AddScoped<Referral.Interfaces.Lookups.ILinkStatusService, Referral.Services.Lookups.LinkStatusService>();
+      services.AddScoped<ILinkStatusService, LinkStatusService>();
       services.AddScoped<ILinkUsageStatusService, LinkUsageStatusService>();
       services.AddScoped<IProgramStatusService, ProgramStatusService>();
       #endregion Lookups
 
       services.AddScoped<Referral.Interfaces.ILinkService, Referral.Services.LinkService>();
       services.AddScoped<IProgramService, ProgramService>();
+      services.AddScoped<IProgramInfoService, ProgramInfoService>();
       services.AddScoped<IReferralService, ReferralService>();
       #endregion Referral
 

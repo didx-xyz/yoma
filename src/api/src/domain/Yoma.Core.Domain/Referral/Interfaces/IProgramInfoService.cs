@@ -2,8 +2,8 @@ using Yoma.Core.Domain.Referral.Models;
 
 namespace Yoma.Core.Domain.Referral.Interfaces
 {
-  public interface IReferralService
+  public interface IProgramInfoService
   {
-    ReferralStatusResponse GetStatus();
+    ProgramInfo GetById(Guid id);
   }
 }

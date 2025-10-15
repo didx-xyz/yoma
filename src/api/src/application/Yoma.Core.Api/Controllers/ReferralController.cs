@@ -20,16 +20,19 @@ namespace Yoma.Core.Api.Controllers
     private readonly ILogger<ReferralController> _logger;
     private readonly IReferralService _referralService;
     private readonly IProgramService _programService;
+    private readonly IProgramInfoService _programInfoService;
     #endregion
 
     #region Constructor
     public ReferralController(ILogger<ReferralController> logger,
       IReferralService referralService,
-      IProgramService programService)
+      IProgramService programService,
+      IProgramInfoService programInfoService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-      _programService = programService ?? throw new ArgumentNullException(nameof(programService));
       _referralService = referralService ?? throw new ArgumentNullException(nameof(referralService));
+      _programService = programService ?? throw new ArgumentNullException(nameof(programService));
+      _programInfoService = programInfoService ?? throw new ArgumentNullException(nameof(programInfoService));
     }
     #endregion
 
@@ -137,15 +140,14 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Get an active referral program by Id and optionally include the user's completion status (Authenticated User)",
-      Description = "Returns the referral program detail. If includeStatus=true, includes the authenticated user's completion status as referee")]
+    [SwaggerOperation(Summary = "Get an active referral program by Id (Authenticated User)")]
     [HttpGet("program/{id}/info")]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ProgramInfo> GetById([FromRoute] Guid id, [FromQuery] bool includeStatus = false)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(GetById));
 
-      var result = _referralService.GetProgramAndStatusById(id, includeStatus);
+      var result = _programInfoService.GetById(id);
       if (result is null) return NotFound();
 
       _logger.LogInformation("Request {requestName} handled", nameof(GetById));
