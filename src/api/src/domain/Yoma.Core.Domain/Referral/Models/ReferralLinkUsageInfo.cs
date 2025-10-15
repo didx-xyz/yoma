@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string? UserEmail { get; set; }
 
-    public string? UserPhoneNumer { get; set; }
+    public string? UserPhoneNumber{ get; set; }
 
     public Guid StatusId { get; set; }
 
@@ -34,7 +34,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public ProofOfPersonhoodMethod? ProofOfPersonhoodMethod { get; set; }
 
-    public bool? PathwaysCompleted { get; set; }
+    public bool? PathwayCompleted { get; set; }
 
     public decimal? PercentComplete { get; set; }
 

@@ -9,10 +9,5 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       throw new NotImplementedException();
     }
-
-    public ProgramInfo GetProgramAndStatusById(Guid id, bool includeStatus)
-    {
-      throw new NotImplementedException();
-    }
   }
 }

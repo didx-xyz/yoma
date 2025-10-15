@@ -18,6 +18,6 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     Task<Program> Update(ProgramRequestUpdate request);
 
-    Task<Program> UpdateStatus(Guid id, ProgramStatus status);
+    Task<ProgramInfo> UpdateStatus(Guid id, ProgramStatus status);
   }
 }

@@ -29,6 +29,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int? CompletionTotal { get; set; }
 
+    public decimal? ZltoRewardCumulative { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
 
     public DateTimeOffset DateModified { get; set; }

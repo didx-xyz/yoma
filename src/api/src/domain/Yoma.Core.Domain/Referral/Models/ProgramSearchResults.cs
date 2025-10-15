@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.Referral.Models
   {
     public int? TotalCount { get; set; }
 
-    public List<ProgramItem> Items { get; set; }
+    public List<ProgramInfo> Items { get; set; }
   }
 }

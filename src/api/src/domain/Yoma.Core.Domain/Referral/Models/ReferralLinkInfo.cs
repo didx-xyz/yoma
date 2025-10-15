@@ -10,7 +10,15 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public Guid ProgramId { get; set; }
 
+    public string ProgramName { get; set; }
+
     public Guid UserId { get; set; }
+
+    public string UserDisplayName { get; set; }
+
+    public string? UserEmail { get; set; }
+
+    public string? UserPhoneNumber { get; set; }
 
     public Guid StatusId { get; set; }
 
@@ -26,8 +34,6 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int? ExpiredTotal { get; set; }
 
-    public DateTimeOffset DateCreated { get; set; }
-
-    public DateTimeOffset DateModified { get; set; }
+    public decimal? ZltoRewardCumulative { get; set; }
   }
 }

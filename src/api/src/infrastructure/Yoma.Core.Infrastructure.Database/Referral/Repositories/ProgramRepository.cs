@@ -41,7 +41,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         ZltoRewardPool = entity.ZltoRewardPool,
         ZltoRewardCumulative = entity.ZltoRewardCumulative,
         ProofOfPersonhoodRequired = entity.ProofOfPersonhoodRequired,
-        PathwaysRequired = entity.PathwaysRequired,
+        PathwayRequired = entity.PathwayRequired,
         MultipleLinksAllowed = entity.MultipleLinksAllowed,
         StatusId = entity.StatusId,
         Status = Enum.Parse<ProgramStatus>(entity.Status.Name, true),
@@ -123,7 +123,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         ZltoRewardPool = item.ZltoRewardPool,
         ZltoRewardCumulative = item.ZltoRewardCumulative,
         ProofOfPersonhoodRequired = item.ProofOfPersonhoodRequired,
-        PathwaysRequired = item.PathwaysRequired,
+        PathwayRequired = item.PathwayRequired,
         MultipleLinksAllowed = item.MultipleLinksAllowed,
         StatusId = item.StatusId,
         IsDefault = item.IsDefault,
@@ -162,7 +162,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           ZltoRewardPool = item.ZltoRewardPool,
           ZltoRewardCumulative = item.ZltoRewardCumulative,
           ProofOfPersonhoodRequired = item.ProofOfPersonhoodRequired,
-          PathwaysRequired = item.PathwaysRequired,
+          PathwayRequired = item.PathwayRequired,
           MultipleLinksAllowed = item.MultipleLinksAllowed,
           StatusId = item.StatusId,
           IsDefault = item.IsDefault,
@@ -206,7 +206,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       entity.ZltoRewardPool = item.ZltoRewardPool;
       entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
       entity.ProofOfPersonhoodRequired = item.ProofOfPersonhoodRequired;
-      entity.PathwaysRequired = item.PathwaysRequired;
+      entity.PathwayRequired = item.PathwayRequired;
       entity.MultipleLinksAllowed = item.MultipleLinksAllowed;
       entity.StatusId = item.StatusId;
       entity.IsDefault = item.IsDefault;
@@ -245,7 +245,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         entity.ZltoRewardPool = item.ZltoRewardPool;
         entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
         entity.ProofOfPersonhoodRequired = item.ProofOfPersonhoodRequired;
-        entity.PathwaysRequired = item.PathwaysRequired;
+        entity.PathwayRequired = item.PathwayRequired;
         entity.MultipleLinksAllowed = item.MultipleLinksAllowed;
         entity.StatusId = item.StatusId;
         entity.IsDefault = item.IsDefault;

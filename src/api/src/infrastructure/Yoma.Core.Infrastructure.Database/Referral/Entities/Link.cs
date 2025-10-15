@@ -46,6 +46,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 
     public int? CompletionTotal { get; set; }
 
+
+    [Column(TypeName = "decimal(12,2)")]
+    public decimal? ZltoRewardCumulative { get; set; }
+
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 

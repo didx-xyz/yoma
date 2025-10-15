@@ -29,6 +29,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         URL = entity.URL,
         ShortURL = entity.ShortURL,
         CompletionTotal = entity.CompletionTotal,
+        ZltoRewardCumulative = entity.ZltoRewardCumulative,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
       });
@@ -64,6 +65,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         URL = item.URL,
         ShortURL = item.ShortURL,
         CompletionTotal = item.CompletionTotal,
+        ZltoRewardCumulative = item.ZltoRewardCumulative,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };
@@ -92,6 +94,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           URL = item.URL,
           ShortURL = item.ShortURL,
           CompletionTotal = item.CompletionTotal,
+          ZltoRewardCumulative = item.ZltoRewardCumulative,
           DateCreated = DateTimeOffset.Now,
           DateModified = DateTimeOffset.Now
         });
@@ -121,6 +124,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       entity.Description = item.Description;
       entity.StatusId = item.StatusId;
       entity.CompletionTotal = item.CompletionTotal;
+      entity.ZltoRewardCumulative = item.ZltoRewardCumulative;  
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();
@@ -146,6 +150,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         entity.Description = item.Description;
         entity.StatusId = item.StatusId;
         entity.CompletionTotal = item.CompletionTotal;
+        entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
         entity.DateModified = item.DateModified;
       }
 
@@ -154,7 +159,6 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
       return items;
     }
-
 
     public Task Delete(ReferralLink item)
     {

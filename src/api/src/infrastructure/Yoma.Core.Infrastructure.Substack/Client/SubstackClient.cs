@@ -25,12 +25,12 @@ namespace Yoma.Core.Infrastructure.Substack.Client
     #region Public Members
     public List<NewsFeed> ListFeeds()
     {
-      return _options.Feeds.Select(kvp => new NewsFeed
+      return [.. _options.Feeds.Select(kvp => new NewsFeed
       {
         Type = kvp.Key,
         Title = kvp.Value.Title,
         URL = kvp.Value.URL
-      }).ToList();
+      })];
     }
 
     public NewsArticleSearchResults Search(NewsArticleSearchFilter filter)
