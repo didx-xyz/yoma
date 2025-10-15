@@ -190,6 +190,7 @@ namespace Yoma.Core.Domain
       #endregion Lookups
 
       services.AddScoped<Referral.Interfaces.ILinkService, Referral.Services.LinkService>();
+      services.AddScoped<ILinkUsageService, LinkUsageService>();
       services.AddScoped<IProgramService, ProgramService>();
       services.AddScoped<IProgramInfoService, ProgramInfoService>();
       services.AddScoped<IReferralService, ReferralService>();
