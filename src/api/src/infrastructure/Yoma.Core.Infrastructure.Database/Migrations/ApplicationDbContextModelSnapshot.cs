@@ -1778,6 +1778,148 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.ToTable("ProcessingLog", "PartnerSharing");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Link", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("CompletionTotal")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("DateModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<Guid>("ProgramId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ShortURL")
+                        .IsRequired()
+                        .HasColumnType("varchar(2048)");
+
+                    b.Property<Guid>("StatusId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("URL")
+                        .IsRequired()
+                        .HasColumnType("varchar(2048)");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProgramId");
+
+                    b.HasIndex("ShortURL")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Link_ShortURL1");
+
+                    b.HasIndex("StatusId")
+                        .HasDatabaseName("IX_Link_StatusId1");
+
+                    b.HasIndex("URL")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Link_URL1");
+
+                    b.HasIndex("Name", "UserId")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "ProgramId", "StatusId", "DateCreated", "DateModified");
+
+                    b.ToTable("Link", "Referral");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.LinkUsage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("DateModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("LinkId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ProgramId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("StatusId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProgramId");
+
+                    b.HasIndex("StatusId");
+
+                    b.HasIndex("UserId", "ProgramId")
+                        .IsUnique();
+
+                    b.HasIndex("LinkId", "StatusId", "DateCreated", "DateModified");
+
+                    b.ToTable("LinkUsage", "Referral");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.LinkStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("LinkStatus", "Referral");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.LinkUsageStatus", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("LinkEngagementStatus", "Referral");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.ProgramStatus", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1835,6 +1977,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("varchar(500)");
 
+                    b.Property<Guid?>("ImageId")
+                        .HasColumnType("uuid");
+
                     b.Property<bool>("IsDefault")
                         .HasColumnType("boolean");
 
@@ -1873,6 +2018,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("CreatedByUserId");
 
+                    b.HasIndex("ImageId");
+
+                    b.HasIndex("IsDefault")
+                        .IsUnique()
+                        .HasFilter("IsDefault = true");
+
                     b.HasIndex("ModifiedByUserId");
 
                     b.HasIndex("Name")
@@ -1880,7 +2031,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("StatusId");
 
-                    b.HasIndex("Description", "StatusId", "IsDefault", "DateStart", "DateEnd", "DateCreated", "CreatedByUserId", "DateModified", "ModifiedByUserId");
+                    b.HasIndex("Description", "StatusId", "IsDefault", "DateStart", "DateEnd", "DateCreated", "DateModified");
 
                     b.ToTable("Program", "Referral");
                 });
@@ -1915,7 +2066,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("ProgramId", "Name")
                         .IsUnique();
 
-                    b.HasIndex("Description", "DateCreated", "DateModified");
+                    b.HasIndex("ProgramId", "DateCreated", "DateModified");
 
                     b.ToTable("ProgramPathway", "Referral");
                 });
@@ -1954,7 +2105,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("PathwayId", "Name")
                         .IsUnique();
 
-                    b.HasIndex("Rule", "Order", "DateCreated", "DateModified");
+                    b.HasIndex("PathwayId", "Order", "DateCreated", "DateModified");
 
                     b.ToTable("ProgramPathwayStep", "Referral");
                 });
@@ -1988,10 +2139,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("OpportunityId");
 
-                    b.HasIndex("Order", "DateCreated", "DateModified");
-
                     b.HasIndex("StepId", "EntityType", "OpportunityId")
                         .IsUnique();
+
+                    b.HasIndex("StepId", "Order", "DateCreated", "DateModified");
 
                     b.ToTable("ProgramPathwayTask", "Referral");
                 });
@@ -2983,6 +3134,68 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("Status");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Link", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", "Program")
+                        .WithMany()
+                        .HasForeignKey("ProgramId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.LinkStatus", "Status")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Program");
+
+                    b.Navigation("Status");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.LinkUsage", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Link", "Link")
+                        .WithMany()
+                        .HasForeignKey("LinkId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", "Program")
+                        .WithMany()
+                        .HasForeignKey("ProgramId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.LinkUsageStatus", "Status")
+                        .WithMany()
+                        .HasForeignKey("StatusId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Link");
+
+                    b.Navigation("Program");
+
+                    b.Navigation("Status");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", b =>
                 {
                     b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "CreatedByUser")
@@ -2990,6 +3203,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .HasForeignKey("CreatedByUserId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Core.Entities.BlobObject", "Image")
+                        .WithMany()
+                        .HasForeignKey("ImageId");
 
                     b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "ModifiedByUser")
                         .WithMany()
@@ -3004,6 +3221,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("CreatedByUser");
+
+                    b.Navigation("Image");
 
                     b.Navigation("ModifiedByUser");
 
@@ -3227,8 +3446,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Program", b =>
                 {
-                    b.Navigation("Pathway")
-                        .IsRequired();
+                    b.Navigation("Pathway");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.ProgramPathway", b =>

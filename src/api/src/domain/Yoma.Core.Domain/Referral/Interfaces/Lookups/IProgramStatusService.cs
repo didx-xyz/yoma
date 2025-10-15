@@ -1,6 +1,6 @@
 namespace Yoma.Core.Domain.Referral.Interfaces.Lookups
 {
-  public interface IReferralProgramStatusService
+  public interface IProgramStatusService
   {
     Models.Lookups.ProgramStatus GetByName(string name);
 

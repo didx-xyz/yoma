@@ -1,11 +1,15 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Yoma.Core.Domain.Referral.Models
 {
   public abstract class ProgramPathwayStepRequestBase
   {
+    [Required]
     public string Name { get; set; }
 
     public string? Description { get; set; }
 
+    [Required]
     public PathwayStepRule Rule { get; set; }
 
     public byte? Order { get; set; }
@@ -13,13 +17,16 @@ namespace Yoma.Core.Domain.Referral.Models
 
   public class ProgramPathwayStepRequestCreate : ProgramPathwayStepRequestBase
   {
-    public List<ProgramPathwayTaskRequestCreate>? Tasks { get; set; }
+    [Required]
+    public List<ProgramPathwayTaskRequestCreate> Tasks { get; set; }
   }
 
   public class ProgramPathwayStepRequestUpdate : ProgramPathwayStepRequestBase
   {
+    [Required]
     public Guid Id { get; set; }
 
-    public List<ProgramPathwayTaskRequestUpdate>? Tasks { get; set; }
+    [Required]
+    public List<ProgramPathwayTaskRequestUpdate> Tasks { get; set; }
   }
 }

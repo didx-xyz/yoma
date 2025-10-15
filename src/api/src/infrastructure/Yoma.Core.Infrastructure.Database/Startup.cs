@@ -14,7 +14,6 @@ using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.SSI.Models;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.ActionLink.Repositories;
-using Yoma.Core.Infrastructure.Database.ActionLink.Repositories.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Database.Core.Repositories.Lookups;
@@ -78,9 +77,10 @@ namespace Yoma.Core.Infrastructure.Database
       // repositories
       #region ActionLink
       #region Lookups
-      services.AddScoped<IRepository<LinkStatus>, LinkStatusRepository>();
+      services.AddScoped<IRepository<LinkStatus>, ActionLink.Repositories.Lookups.LinkStatusRepository>();
       #endregion Lookups
-      services.AddScoped<IRepositoryBatchedValueContainsWithUnnested<Link>, LinkRepository>();
+
+      services.AddScoped<IRepositoryBatchedValueContainsWithUnnested<Link>, ActionLink.Repositories.LinkRepository>();
       services.AddScoped<IRepositoryValueContains<LinkUsageLog>, LinkUsageLogRepository>();
       #endregion ActionLink
 
@@ -169,14 +169,19 @@ namespace Yoma.Core.Infrastructure.Database
 
       #region Referral
       #region Lookups
+      services.AddScoped<IRepository<Domain.Referral.Models.Lookups.LinkStatus>, LinkStatusRepository>();
+      services.AddScoped<IRepository<Domain.Referral.Models.Lookups.LinkUsageStatus>, LinkUsageStatusRepository>();
       services.AddScoped<IRepository<Domain.Referral.Models.Lookups.ProgramStatus>, ProgramStatusRepository>();
       #endregion Lookups
 
-      #endregion Referral
-      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Referral.Models.Program>, ProgramRepository>();
+      services.AddScoped<IRepositoryBatchedValueContains<Domain.Referral.Models.Link>, Referral.Repositories.LinkRepository>();
+      services.AddScoped<IRepositoryBatched<Domain.Referral.Models.LinkUsage>, LinkUsageRepository>();
       services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathway>, ProgramPathwayRepository>();
       services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathwayStep> ,ProgramPathwayStepRepository>();
       services.AddScoped<IRepository<Domain.Referral.Models.ProgramPathwayTask>, ProgramPathwayTaskRepository>();
+      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Referral.Models.Program>, ProgramRepository>();
+      #endregion Referral
+
       #region Reward
       #region Lookups
       services.AddScoped<IRepository<Domain.Reward.Models.Lookups.RewardTransactionStatus>, RewardTransactionStatusRepository>();
