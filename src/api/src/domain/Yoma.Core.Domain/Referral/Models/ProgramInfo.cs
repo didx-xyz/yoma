@@ -29,7 +29,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public ProgramPathwayInfo? Pathway { get; set; }
 
     #region Referee Status
-    public LinkUsageStatus? LinkUsageStatus { get; set; }
+    public ReferralLinkUsageStatus? LinkUsageStatus { get; set; }
 
     public DateTimeOffset? DateClaimed { get; set; }
 

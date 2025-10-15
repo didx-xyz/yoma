@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public Guid StatusId { get; set; }
 
-    public LinkUsageStatus Status { get; set; }
+    public ReferralLinkUsageStatus Status { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
 

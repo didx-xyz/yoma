@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251015041953_ApplicationDb_Referral")]
+    [Migration("20251015052829_ApplicationDb_Referral")]
     partial class ApplicationDb_Referral
     {
         /// <inheritdoc />
@@ -45,21 +45,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         });
 
                     b.ToView("unnested_values", (string)null);
-                });
-
-            modelBuilder.Entity("Yoma.Core.Domain.Referral.Models.Lookups.ProgramStatus", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ProgramStatus");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.ActionLink.Entities.Link", b =>
@@ -1920,7 +1905,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("Name")
                         .IsUnique();
 
-                    b.ToTable("LinkEngagementStatus", "Referral");
+                    b.ToTable("LinkUsageStatus", "Referral");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.ProgramStatus", b =>
@@ -2025,7 +2010,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("IsDefault")
                         .IsUnique()
-                        .HasFilter("IsDefault = true");
+                        .HasFilter("\"IsDefault\" = true");
 
                     b.HasIndex("ModifiedByUserId");
 
@@ -3217,7 +3202,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("Yoma.Core.Domain.Referral.Models.Lookups.ProgramStatus", "Status")
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.ProgramStatus", "Status")
                         .WithMany()
                         .HasForeignKey("StatusId")
                         .OnDelete(DeleteBehavior.Cascade)

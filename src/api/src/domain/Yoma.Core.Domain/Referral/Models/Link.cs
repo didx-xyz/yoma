@@ -21,7 +21,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public Guid StatusId { get; set; }
 
-    public LinkStatus Status { get; set; }
+    public ReferralLinkStatus Status { get; set; }
 
     public string URL { get; set; }
 

@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
-using Yoma.Core.Domain.Referral.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Core.Entities;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
 using Yoma.Core.Infrastructure.Shared.Entities;
@@ -57,7 +56,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public ProgramStatus Status { get; set; }
+    public Lookups.ProgramStatus Status { get; set; }
 
     [Required]
     public bool IsDefault { get; set; }

@@ -25,7 +25,7 @@ namespace Yoma.Core.Domain.Referral
     SocialLogin
   }
 
-  public enum LinkStatus
+  public enum ReferralLinkStatus //suffixed to avoid swagger conflicts with ActionLink domain
   {
     Active,        // Default state when created by the referrer
     Cancelled,     // Cancelled by the referrer, a super admin when blocking a referrer, or automatically due to program inactivation or deletion; cannot be reactivated
@@ -33,7 +33,7 @@ namespace Yoma.Core.Domain.Referral
     Expired        // Automatically flagged when the parent program expires; cannot be reactivated
   }
 
-  public enum LinkUsageStatus
+  public enum ReferralLinkUsageStatus //suffixed to avoid swagger conflicts with ActionLink domain
   {
     Pending,     // Default state when the referral link is claimed by a referee
     Completed,   // All required tasks have been completed; terminal state
