@@ -20,6 +20,7 @@ namespace Yoma.Core.Api.Controllers
     private readonly IProgramService _programService;
     private readonly IProgramInfoService _programInfoService;
     private readonly ILinkService _linkService;
+    private readonly ILinkUsageService _linkUsageService;
     #endregion
 
     #region Constructor
@@ -27,13 +28,15 @@ namespace Yoma.Core.Api.Controllers
       IReferralService referralService,
       IProgramService programService,
       IProgramInfoService programInfoService,
-      ILinkService linkService)
+      ILinkService linkService,
+      ILinkUsageService linkUsageService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _referralService = referralService ?? throw new ArgumentNullException(nameof(referralService));
       _programService = programService ?? throw new ArgumentNullException(nameof(programService));
       _programInfoService = programInfoService ?? throw new ArgumentNullException(nameof(programInfoService));
       _linkService = linkService ?? throw new ArgumentNullException(nameof(linkService));
+      _linkUsageService= linkUsageService ?? throw new ArgumentNullException(nameof(linkUsageService));
     }
     #endregion
 
@@ -119,6 +122,20 @@ namespace Yoma.Core.Api.Controllers
       var result = _linkService.Search(filter);
 
       _logger.LogInformation("Request {requestName} handled", nameof(SearchLink));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Search link usages based on the supplied filter")]
+    [HttpPost("link/usage/search/admin")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public ActionResult<ReferralLinkUsageSearchResults> SearchLinkUsage([FromBody] ReferralLinkUsageSearchFilterAdmin filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchLinkUsage));
+
+      var result = _linkUsageService.Search(filter);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkUsage));
 
       return Ok(result);
     }
@@ -238,6 +255,62 @@ namespace Yoma.Core.Api.Controllers
       _logger.LogInformation("Request {requestName} handled", nameof(CancelLink));
 
       return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Get my usage for a link (Authenticated User)")]
+    [HttpGet("link/{id}/usage")]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public ActionResult<ReferralLinkUsageInfo> GetUsageByLinkAsReferee([FromRoute] Guid id)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetUsageByLinkAsReferee));
+
+      var result = _linkUsageService.GetByIdAsReferee(id);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetUsageByLinkAsReferee));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Search link usages as referrer based on the supplied filter (Authenticated User)")]
+    [HttpPost("link/usage/search/referrer")]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public ActionResult<ReferralLinkUsageSearchResults> SearchLinkUsageAsReferrer([FromBody] ReferralLinkUsageSearchFilter filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchLinkUsageAsReferrer));
+
+      var result = _linkUsageService.SearchAsReferrer(filter);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkUsageAsReferrer));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Search my link usages as referee based on the supplied filter (Authenticated User)")]
+    [HttpPost("link/usage/search/referee")]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public ActionResult<ReferralLinkUsageSearchResults> SearchLinkUsageAsReferee([FromBody] ReferralLinkUsageSearchFilter filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchLinkUsageAsReferee));
+
+      var result = _linkUsageService.SearchAsReferee(filter);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkUsageAsReferee));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Claim a referral link (Authenticated User)")]
+    [HttpPost("link/{id}/claim")]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public async Task<ActionResult> ClaimAsReferee([FromRoute] Guid id)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(ClaimAsReferee));
+
+      await _linkUsageService.ClaimAsReferee(id);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(ClaimAsReferee));
+
+      return Ok();
     }
     #endregion
     #endregion

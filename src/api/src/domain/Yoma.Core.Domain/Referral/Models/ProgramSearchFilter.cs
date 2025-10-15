@@ -5,6 +5,10 @@ namespace Yoma.Core.Domain.Referral.Models
   public abstract class ProgramSearchFilterBase : PaginationFilter
   {
     public string? ValueContains { get; set; }
+
+    public DateTimeOffset? DateStart { get; set; }
+
+    public DateTimeOffset? DateEnd { get; set; }
   }
 
   public class ProgramSearchFilter : ProgramSearchFilterBase

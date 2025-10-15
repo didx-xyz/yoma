@@ -9,6 +9,10 @@ namespace Yoma.Core.Domain.Referral.Models
     public string? ValueContains { get; set; }
 
     public List<ReferralLinkStatus>? Statuses { get; set; }
+
+    public DateTimeOffset? DateStart { get; set; }
+
+    public DateTimeOffset? DateEnd { get; set; }
   }
 
   public class ReferralLinkSearchFilterAdmin : ReferralLinkSearchFilter
