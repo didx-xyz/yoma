@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int? CompletionTotal { get; set; }
 
-    public int? CompletionBalance { get; set; }
+    public int? CompletionBalance => CompletionLimit.HasValue ? CompletionLimit - (CompletionTotal ?? default) : null;
 
     public decimal? ZltoRewardReferrer { get; set; }
 
@@ -28,7 +28,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public decimal? ZltoRewardCumulative { get; set; }
 
-    public decimal? ZltoRewardBalance { get; set; }
+    public decimal? ZltoRewardBalance => ZltoRewardPool.HasValue? ZltoRewardPool - (ZltoRewardCumulative ?? default) : null;
 
     public bool ProofOfPersonhoodRequired { get; set; }
 

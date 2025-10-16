@@ -36,7 +36,7 @@ namespace Yoma.Core.Api.Controllers
       _programService = programService ?? throw new ArgumentNullException(nameof(programService));
       _programInfoService = programInfoService ?? throw new ArgumentNullException(nameof(programInfoService));
       _linkService = linkService ?? throw new ArgumentNullException(nameof(linkService));
-      _linkUsageService= linkUsageService ?? throw new ArgumentNullException(nameof(linkUsageService));
+      _linkUsageService = linkUsageService ?? throw new ArgumentNullException(nameof(linkUsageService));
     }
     #endregion
 
@@ -98,7 +98,7 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Update referral program status (Active / Inactive / Deleted)")]
+    [SwaggerOperation(Summary = "Update the referral program status (Active / Inactive / Deleted)")]
     [HttpPatch("program/{id}/{status}")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<ProgramInfo>> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] ProgramStatus status)
@@ -108,6 +108,20 @@ namespace Yoma.Core.Api.Controllers
       var result = await _programService.UpdateStatus(id, status);
 
       _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgramStatus));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Set the specified referral program as the default")]
+    [HttpPatch("program/{id}/default")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<ActionResult<ProgramInfo>> SetProgramAsDefault([FromRoute] Guid id)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SetProgramAsDefault));
+
+      var result = await _programService.SetAsDefault(id);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SetProgramAsDefault));
 
       return Ok(result);
     }
