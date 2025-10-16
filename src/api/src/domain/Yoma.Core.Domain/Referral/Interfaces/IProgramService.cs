@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     Program? GetByIdOrNull(Guid id, bool includeChildItems, bool includeComputed);
 
-    Program? GetByNameOrNull(string title, bool includeChildItems, bool includeComputed);
+    Program? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed);
 
     ProgramSearchResults Search(ProgramSearchFilter filter);
 
@@ -19,5 +19,7 @@ namespace Yoma.Core.Domain.Referral.Interfaces
     Task<Program> Update(ProgramRequestUpdate request);
 
     Task<ProgramInfo> UpdateStatus(Guid id, ProgramStatus status);
+
+    Task<ProgramInfo> SetAsDefault(Guid id);
   }
 }
