@@ -11,11 +11,11 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
   {
     [Required]
     [Column(TypeName = "varchar(125)")]
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(255)")]
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
     [Required]
     public bool SupportMultiple { get; set; }

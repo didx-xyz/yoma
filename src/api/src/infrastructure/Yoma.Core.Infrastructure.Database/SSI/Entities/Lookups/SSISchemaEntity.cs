@@ -10,13 +10,13 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
   {
     [Required]
     [Column(TypeName = "varchar(255)")]
-    public string TypeName { get; set; }
+    public string TypeName { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 
-    public ICollection<SSISchemaEntityProperty> Properties { get; set; }
+    public ICollection<SSISchemaEntityProperty> Properties { get; set; } = null!;
 
-    public ICollection<SSISchemaEntityType> Types { get; set; }
+    public ICollection<SSISchemaEntityType> Types { get; set; } = null!;
   }
 }

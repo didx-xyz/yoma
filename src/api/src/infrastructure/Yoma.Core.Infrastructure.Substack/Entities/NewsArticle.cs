@@ -12,7 +12,7 @@ namespace Yoma.Core.Infrastructure.Substack.Entities
   {
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string FeedType { get; set; }
+    public string FeedType { get; set; } = null!;
 
     /// <summary>
     /// Unique identifier for the article — corresponds to the Substack RSS <guid> element.
@@ -20,19 +20,19 @@ namespace Yoma.Core.Infrastructure.Substack.Entities
     /// </summary>
     [Required]
     [Column(TypeName = "varchar(2048)")]
-    public string ExternalId { get; set; }
+    public string ExternalId { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(512)")]
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(2048)")]
-    public string URL { get; set; }
+    public string URL { get; set; } = null!;
 
     [Column(TypeName = "varchar(2048)")]
     public string? ThumbnailURL { get; set; }

@@ -13,11 +13,11 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     [Required]
     [ForeignKey("ProgramId")]
     public Guid ProgramId { get; set; }
-    public Program Program { get; set; }
+    public Program Program { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(500)
     public string? Description { get; set; }
@@ -28,6 +28,6 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     [Required]
     public DateTimeOffset DateModified { get; set; }
 
-    public ICollection<ProgramPathwayStep> Steps { get; set; }
+    public ICollection<ProgramPathwayStep> Steps { get; set; } = null!;
   }
 }

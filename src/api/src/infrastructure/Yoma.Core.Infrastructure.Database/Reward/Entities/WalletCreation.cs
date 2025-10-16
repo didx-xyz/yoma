@@ -15,11 +15,11 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public WalletCreationStatus Status { get; set; }
+    public WalletCreationStatus Status { get; set; } = null!;
 
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
 
     [Column(TypeName = "varchar(320)")]
     public string? Username { get; set; }

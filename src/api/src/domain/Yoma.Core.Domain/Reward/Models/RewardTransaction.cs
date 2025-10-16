@@ -10,7 +10,7 @@ namespace Yoma.Core.Domain.Reward.Models
 
     public RewardTransactionStatus Status { get; set; }
 
-    public string SourceEntityType { get; set; }
+    public string SourceEntityType { get; set; } = null!;
 
     public Guid? MyOpportunityId { get; set; }
 

@@ -4,9 +4,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 {
   public class OpportunitySearchCriteriaCommitmentIntervalOption
   {
-    public string Id { get; set; }
+    public string Id { get; set; } = null!;
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [JsonIgnore]
     public short Order { get; set; }

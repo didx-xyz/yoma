@@ -12,16 +12,16 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Required]
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
 
     [Required]
     [ForeignKey("SkillId")]
     public Guid SkillId { get; set; }
-    public Skill Skill { get; set; }
+    public Skill Skill { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 
-    public ICollection<UserSkillOrganization> Organizations { get; set; }
+    public ICollection<UserSkillOrganization> Organizations { get; set; } = null!;
   }
 }

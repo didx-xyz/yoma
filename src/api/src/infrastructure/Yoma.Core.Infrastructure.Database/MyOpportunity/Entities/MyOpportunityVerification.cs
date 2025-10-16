@@ -13,12 +13,12 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
     [Required]
     [ForeignKey("MyOpportunityId")]
     public Guid MyOpportunityId { get; set; }
-    public MyOpportunity MyOpportunity { get; set; }
+    public MyOpportunity MyOpportunity { get; set; } = null!;
 
     [Required]
     [ForeignKey("VerificationTypeId")]
     public Guid VerificationTypeId { get; set; }
-    public Opportunity.Entities.Lookups.OpportunityVerificationType VerificationType { get; set; }
+    public Opportunity.Entities.Lookups.OpportunityVerificationType VerificationType { get; set; } = null!;
 
     [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
     public string? GeometryProperties { get; set; }

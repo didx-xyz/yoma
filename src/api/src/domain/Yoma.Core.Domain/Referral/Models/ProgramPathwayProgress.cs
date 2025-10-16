@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Referral.Models
   {
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public bool Completed { get; set; }
 
@@ -16,14 +16,14 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public decimal PercentComplete { get; set; }
 
-    public List<ProgramPathwayStepProgress> Steps { get; set; }
+    public List<ProgramPathwayStepProgress> Steps { get; set; } = null!;
   }
 
   public class ProgramPathwayStepProgress
   {
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public PathwayStepRule Rule { get; set; }
 
@@ -39,7 +39,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public decimal PercentComplete { get; set; }
 
-    public List<ProgramPathwayTaskProgress> Tasks { get; set; }
+    public List<ProgramPathwayTaskProgress> Tasks { get; set; } = null!;
   }
 
   public class ProgramPathwayTaskProgress

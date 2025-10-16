@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 {
   public class MyOpportunityRequestVerifyImportCsv
   {
-    public IFormFile File { get; set; }
+    public IFormFile File { get; set; } = null!;
 
     public Guid OrganizationId { get; set; }
 

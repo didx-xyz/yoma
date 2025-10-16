@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Analytics.Models
   {
     public Guid Id { get; set; }
 
-    public string DisplayName { get; set; }
+    public string DisplayName { get; set; } = null!;
 
     public string? Country { get; set; }
 
@@ -20,14 +20,14 @@ namespace Yoma.Core.Domain.Analytics.Models
 
     public int OpporunityCount { get; set; }
 
-    public List<YouthInfoOpportunity> Opportunities { get; set; }
+    public List<YouthInfoOpportunity> Opportunities { get; set; } = null!;
   }
 
   public class YouthInfoOpportunity
   {
     public Guid Id { get; set; }
 
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
     public Status Status { get; set; }
 

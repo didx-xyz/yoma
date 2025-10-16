@@ -2,9 +2,9 @@ namespace Yoma.Core.Domain.Reward.Models
 {
   public class Wallet
   {
-    public string Id { get; set; }
+    public string Id { get; set; } = null!;
 
-    public string OwnerId { get; set; }
+    public string OwnerId { get; set; } = null!;
 
     public decimal Balance { get; set; }
 

@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Marketplace.Models
   {
     public bool ConditionPassed { get; set; }
 
-    public string Reason { get; set; }
+    public string Reason { get; set; } = null!;
 
     public List<StoreAccessControlRuleEvaluationItemReasonLink>? Links { get; set; }
   }

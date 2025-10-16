@@ -5,7 +5,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Models
   public class BitLinkRequestCreate
   {
     [JsonProperty("long_url")]
-    public string LongURL { get; set; }
+    public string LongURL { get; set; } = null!;
 
     [JsonProperty("domain", NullValueHandling = NullValueHandling.Ignore)]
     public string? Domain { get; set; }
@@ -14,7 +14,7 @@ namespace Yoma.Core.Infrastructure.Bitly.Models
     public string? GroupId { get; set; }
 
     [JsonProperty("title")]
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
     [JsonProperty("tags", NullValueHandling = NullValueHandling.Ignore)]
     public List<string>? Tags { get; set; }

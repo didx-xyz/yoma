@@ -10,23 +10,23 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups
   {
     [Required]
     [Column(TypeName = "varchar(25)")]
-    public string EntityType { get; set; }
+    public string EntityType { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(100)")]
-    public string Key { get; set; }
+    public string Key { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(100)")]
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(500)")]
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(100)")]
-    public string Group { get; set; }
+    public string Group { get; set; } = null!;
 
     [Column(TypeName = "varchar(100)")]
     public string? SubGroup { get; set; }
@@ -36,15 +36,15 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities.Lookups
 
     [Required] //nullable column results in an EF error: 22P02 invalid input syntax for type json
     [Column(TypeName = "jsonb")]
-    public string Roles { get; set; }
+    public string Roles { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string DefaultValue { get; set; }
+    public string DefaultValue { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string Type { get; set; }
+    public string Type { get; set; } = null!;
 
     [Required]
     public bool Enabled { get; set; }

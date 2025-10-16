@@ -14,11 +14,11 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
   {
     [Required]
     [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(128)")] //MS SQL: nvarchar(128)
-    public string NameHashValue { get; set; }
+    public string NameHashValue { get; set; } = null!;
 
     [Column(TypeName = "varchar(2048)")]
     public string? WebsiteURL { get; set; }
@@ -66,7 +66,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public Lookups.OrganizationStatus Status { get; set; }
+    public Lookups.OrganizationStatus Status { get; set; } = null!;
 
     [Column(TypeName = "varchar(500)")]
     public string? CommentApproval { get; set; }
@@ -104,7 +104,7 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Required]
     [ForeignKey("CreatedByUserId")]
     public Guid CreatedByUserId { get; set; }
-    public User CreatedByUser { get; set; }
+    public User CreatedByUser { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateModified { get; set; }
@@ -112,12 +112,12 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Required]
     [ForeignKey("ModifiedByUserId")]
     public Guid ModifiedByUserId { get; set; }
-    public User ModifiedByUser { get; set; }
+    public User ModifiedByUser { get; set; } = null!;
 
-    public ICollection<OrganizationProviderType> ProviderTypes { get; set; }
+    public ICollection<OrganizationProviderType> ProviderTypes { get; set; } = null!;
 
-    public ICollection<OrganizationDocument> Documents { get; set; }
+    public ICollection<OrganizationDocument> Documents { get; set; } = null!;
 
-    public ICollection<OrganizationUser> Administrators { get; set; }
+    public ICollection<OrganizationUser> Administrators { get; set; } = null!;
   }
 }

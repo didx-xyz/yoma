@@ -11,23 +11,23 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Entities
   {
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string SourceTenantId { get; set; }
+    public string SourceTenantId { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string TargetTenantId { get; set; }
+    public string TargetTenantId { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string SourceConnectionId { get; set; }
+    public string SourceConnectionId { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string TargetConnectionId { get; set; }
+    public string TargetConnectionId { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(25)")]
-    public string Protocol { get; set; }
+    public string Protocol { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

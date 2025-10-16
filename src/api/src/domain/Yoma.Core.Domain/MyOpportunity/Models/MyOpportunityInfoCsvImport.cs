@@ -30,7 +30,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
     public DateOnly? DateCompleted { get; set; }
 
     [Required]
-    public string OpportunityExternalId { get; set; }
+    public string OpportunityExternalId { get; set; } = null!;
 
     internal string? Username => !string.IsNullOrEmpty(Email) ? Email : PhoneNumber;
 

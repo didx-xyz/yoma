@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Models
   {
     public Guid Id { get; set; }
 
-    public string EntityType { get; set; }
+    public string EntityType { get; set; } = null!;
 
     public Guid? OpportunityId { get; set; }
 
@@ -12,7 +12,7 @@ namespace Yoma.Core.Domain.PartnerSharing.Models
 
     public Partner Partner { get; set; }
 
-    public string Action { get; set; }
+    public string Action { get; set; } = null!;
 
     public Guid StatusId { get; set; }
 

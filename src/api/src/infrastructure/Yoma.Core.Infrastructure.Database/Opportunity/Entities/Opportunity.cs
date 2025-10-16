@@ -18,22 +18,22 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     //support specials characters like emojis  
     [Required]
     [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
     //support specials characters like emojis  
     [Required]
     [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
     [Required]
     [ForeignKey("TypeId")]
     public Guid TypeId { get; set; }
-    public OpportunityType Type { get; set; }
+    public OpportunityType Type { get; set; } = null!;
 
     [Required]
     [ForeignKey("OrganizationId")]
     public Guid OrganizationId { get; set; }
-    public Organization Organization { get; set; }
+    public Organization Organization { get; set; } = null!;
 
     //support specials characters like emojis  
     [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(500)
@@ -73,12 +73,12 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Required]
     [ForeignKey("DifficultyId")]
     public Guid DifficultyId { get; set; }
-    public OpportunityDifficulty Difficulty { get; set; }
+    public OpportunityDifficulty Difficulty { get; set; } = null!;
 
     [Required]
     [ForeignKey("CommitmentIntervalId")]
     public Guid CommitmentIntervalId { get; set; }
-    public TimeInterval CommitmentInterval { get; set; }
+    public TimeInterval CommitmentInterval { get; set; } = null!;
 
     [Required]
     public short CommitmentIntervalCount { get; set; }
@@ -90,7 +90,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public OpportunityStatus Status { get; set; }
+    public OpportunityStatus Status { get; set; } = null!;
 
     [Column(TypeName = "varchar(500)")]
     public string? Keywords { get; set; }
@@ -125,7 +125,7 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Required]
     [ForeignKey("CreatedByUserId")]
     public Guid CreatedByUserId { get; set; }
-    public User CreatedByUser { get; set; }
+    public User CreatedByUser { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateModified { get; set; }
@@ -133,13 +133,13 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Required]
     [ForeignKey("ModifiedByUserId")]
     public Guid ModifiedByUserId { get; set; }
-    public User ModifiedByUser { get; set; }
+    public User ModifiedByUser { get; set; } = null!;
 
-    public ICollection<OpportunityCategory> Categories { get; set; }
+    public ICollection<OpportunityCategory> Categories { get; set; } = null!;
 
-    public ICollection<OpportunityCountry> Countries { get; set; }
+    public ICollection<OpportunityCountry> Countries { get; set; } = null!;
 
-    public ICollection<OpportunityLanguage> Languages { get; set; }
+    public ICollection<OpportunityLanguage> Languages { get; set; } = null!;
 
     public ICollection<OpportunitySkill>? Skills { get; set; }
 

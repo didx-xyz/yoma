@@ -4,8 +4,8 @@ namespace Yoma.Core.Domain.Analytics.Models
 {
   public class OrganizationOpportunitySkill
   {
-    public TimeIntervalSummary Items { get; set; }
+    public TimeIntervalSummary Items { get; set; } = null!;
 
-    public OpportunitySkillTopCompleted TopCompleted { get; set; }
+    public OpportunitySkillTopCompleted TopCompleted { get; set; } = null!;
   }
 }

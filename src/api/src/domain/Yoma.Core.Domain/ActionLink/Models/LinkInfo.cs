@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.ActionLink.Models
   {
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public string? Description { get; set; }
 
@@ -18,15 +18,15 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public Guid EntityId { get; set; }
 
-    public string EntityTitle { get; set; }
+    public string EntityTitle { get; set; } = null!;
 
     public Guid? EntityOrganizationId { get; set; }
 
     public string? EntityOrganizationName { get; set; }
 
-    public string URL { get; set; }
+    public string URL { get; set; } = null!;
 
-    public string ShortURL { get; set; }
+    public string ShortURL { get; set; } = null!;
 
     public string? QRCodeBase64 { get; set; }
 

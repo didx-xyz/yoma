@@ -8,15 +8,15 @@ namespace Yoma.Core.Domain.Reward.Models.Provider
 
     public RewardTransactionEntityType Type { get; set; }
 
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
     public string? Instructions { get; set; }
 
-    public string Username { get; set; }
+    public string Username { get; set; } = null!;
 
-    public string UserWalletId { get; set; }
+    public string UserWalletId { get; set; } = null!;
 
     public List<Skill>? Skills { get; set; }
 

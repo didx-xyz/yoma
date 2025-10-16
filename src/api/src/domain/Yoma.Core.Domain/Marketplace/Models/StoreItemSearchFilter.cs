@@ -4,8 +4,8 @@ namespace Yoma.Core.Domain.Marketplace.Models
 {
   public class StoreItemSearchFilter : PaginationFilter
   {
-    public string StoreId { get; set; }
+    public string StoreId { get; set; } = null!;
 
-    public string ItemCategoryId { get; set; }
+    public string ItemCategoryId { get; set; } = null!;
   }
 }

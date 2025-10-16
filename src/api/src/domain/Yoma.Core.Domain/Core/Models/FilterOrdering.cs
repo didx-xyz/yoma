@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Core.Models
 {
   public class FilterOrdering<TEntity>
   {
-    public Expression<Func<TEntity, object>> OrderBy { get; set; }
+    public Expression<Func<TEntity, object>> OrderBy { get; set; } = null!;
 
     public FilterSortOrder SortOrder { get; set; } = FilterSortOrder.Ascending;
   }

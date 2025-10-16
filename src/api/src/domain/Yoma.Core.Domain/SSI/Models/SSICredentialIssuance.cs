@@ -10,9 +10,9 @@ namespace Yoma.Core.Domain.SSI.Models
 
     public ArtifactType ArtifactType { get; set; }
 
-    public string SchemaName { get; set; }
+    public string SchemaName { get; set; } = null!;
 
-    public string SchemaVersion { get; set; }
+    public string SchemaVersion { get; set; } = null!;
 
     public Guid StatusId { get; set; }
 

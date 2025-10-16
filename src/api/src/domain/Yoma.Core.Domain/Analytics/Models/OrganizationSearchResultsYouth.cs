@@ -2,7 +2,7 @@ namespace Yoma.Core.Domain.Analytics.Models
 {
   public class OrganizationSearchResultsYouth
   {
-    public List<YouthInfo> Items { get; set; }
+    public List<YouthInfo> Items { get; set; } = null!;
 
     public int TotalCount { get; set; }
 

@@ -4,15 +4,15 @@ namespace Yoma.Core.Domain.Marketplace.Models
 {
   public class StoreAccessControlRuleRequestBase
   {
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public string? Description { get; set; }
 
     public Guid OrganizationId { get; set; }
 
-    public string StoreCountryCodeAlpha2 { get; set; }
+    public string StoreCountryCodeAlpha2 { get; set; } = null!;
 
-    public string StoreId { get; set; }
+    public string StoreId { get; set; } = null!;
 
     public List<string>? StoreItemCategories { get; set; }
 

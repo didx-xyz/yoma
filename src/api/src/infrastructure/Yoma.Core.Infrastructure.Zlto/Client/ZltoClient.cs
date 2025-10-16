@@ -23,7 +23,7 @@ namespace Yoma.Core.Infrastructure.Zlto.Client
     private readonly AppSettings _appSettings;
     private readonly ZltoOptions _options;
     private readonly IMemoryCache _memoryCache;
-    private static AuthResponse _accessToken;
+    private static AuthResponse _accessToken = null!;
 
     private const string Header_Authorization = "Authorization";
     private const string Header_Authorization_Value_Prefix = "Bearer";

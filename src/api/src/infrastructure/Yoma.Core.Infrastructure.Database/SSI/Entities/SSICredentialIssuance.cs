@@ -14,24 +14,24 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities
     [Required]
     [ForeignKey("SchemaTypeId")]
     public Guid SchemaTypeId { get; set; }
-    public SSISchemaType SchemaType { get; set; }
+    public SSISchemaType SchemaType { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(25)")]
-    public string ArtifactType { get; set; }
+    public string ArtifactType { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(125)")]
-    public string SchemaName { get; set; }
+    public string SchemaName { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(20)")]
-    public string SchemaVersion { get; set; }
+    public string SchemaVersion { get; set; } = null!;
 
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public SSICredentialIssuanceStatus Status { get; set; }
+    public SSICredentialIssuanceStatus Status { get; set; } = null!;
 
     [ForeignKey("UserId")]
     public Guid? UserId { get; set; }

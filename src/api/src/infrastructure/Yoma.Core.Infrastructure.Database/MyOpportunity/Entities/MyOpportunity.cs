@@ -16,17 +16,17 @@ namespace Yoma.Core.Infrastructure.Database.MyOpportunity.Entities
     [Required]
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
 
     [Required]
     [ForeignKey("OpportunityId")]
     public Guid OpportunityId { get; set; }
-    public Opportunity.Entities.Opportunity Opportunity { get; set; }
+    public Opportunity.Entities.Opportunity Opportunity { get; set; } = null!;
 
     [Required]
     [ForeignKey("ActionId")]
     public Guid ActionId { get; set; }
-    public MyOpportunityAction Action { get; set; }
+    public MyOpportunityAction Action { get; set; } = null!;
 
     [ForeignKey("VerificationStatusId")]
     public Guid? VerificationStatusId { get; set; }

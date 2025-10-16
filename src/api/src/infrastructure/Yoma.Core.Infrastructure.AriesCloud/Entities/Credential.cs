@@ -12,31 +12,31 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Entities
   {
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string ClientReferent { get; set; }
+    public string ClientReferent { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string SourceTenantId { get; set; }
+    public string SourceTenantId { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string TargetTenantId { get; set; }
+    public string TargetTenantId { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(125)")]
-    public string SchemaId { get; set; }
+    public string SchemaId { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(20)")]
-    public string ArtifactType { get; set; }
+    public string ArtifactType { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
-    public string Attributes { get; set; }
+    public string Attributes { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
-    public string SignedValue { get; set; }
+    public string SignedValue { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

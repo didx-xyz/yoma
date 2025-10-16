@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.Analytics.Models
 {
   public class OrganizationCumulative
   {
-    public TimeIntervalSummary Completions { get; set; }
+    public TimeIntervalSummary Completions { get; set; } = null!;
   }
 }

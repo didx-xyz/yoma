@@ -2,7 +2,7 @@ namespace Yoma.Core.Domain.Analytics.Models
 {
   public class OrganizationSearchResultsOpportunity
   {
-    public List<OpportunityInfoAnalytics> Items { get; set; }
+    public List<OpportunityInfoAnalytics> Items { get; set; } = null!;
 
     public int TotalCount { get; set; }
 

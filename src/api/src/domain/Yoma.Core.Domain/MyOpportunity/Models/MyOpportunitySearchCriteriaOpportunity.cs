@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
   {
     public Guid Id { get; set; }
 
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
   }
 }

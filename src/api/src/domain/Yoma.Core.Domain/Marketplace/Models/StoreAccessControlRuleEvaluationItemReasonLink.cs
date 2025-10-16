@@ -4,8 +4,8 @@ namespace Yoma.Core.Domain.Marketplace.Models
   {
     public bool RequirementMet { get; set; }
 
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
-    public string URL { get; set; }
+    public string URL { get; set; } = null!;
   }
 }

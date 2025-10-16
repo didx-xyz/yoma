@@ -12,7 +12,7 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
   {
     [Required]
     [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(MAX)
     public string? Description { get; set; }
@@ -20,16 +20,16 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
     [Required]
     [ForeignKey("OrganizationId")]
     public Guid OrganizationId { get; set; }
-    public Entity.Entities.Organization Organization { get; set; }
+    public Entity.Entities.Organization Organization { get; set; } = null!;
 
     [Required]
     [ForeignKey("StoreCountryId")]
     public Guid StoreCountryId { get; set; }
-    public Country StoreCountry { get; set; }
+    public Country StoreCountry { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string StoreId { get; set; }
+    public string StoreId { get; set; } = null!;
 
     [Column(TypeName = "text")] //MS SQL: nvarchar(MAX)
     public string? StoreItemCategories { get; set; }
@@ -48,7 +48,7 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public StoreAccessControlRuleStatus Status { get; set; }
+    public StoreAccessControlRuleStatus Status { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

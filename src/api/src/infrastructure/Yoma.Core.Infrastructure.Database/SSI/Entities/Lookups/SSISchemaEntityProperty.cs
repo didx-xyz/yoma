@@ -11,19 +11,19 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Entities.Lookups
     [Required]
     [ForeignKey("SSISchemaEntityId")]
     public Guid SSISchemaEntityId { get; set; }
-    public SSISchemaEntity SSISchemaEntity { get; set; }
+    public SSISchemaEntity SSISchemaEntity { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string NameDisplay { get; set; }
+    public string NameDisplay { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(125)")]
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
     [Required]
     public bool Required { get; set; }

@@ -12,7 +12,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Entities
   {
     [Required]
     [Column(TypeName = "varchar(25)")]
-    public string EntityType { get; set; }
+    public string EntityType { get; set; } = null!;
 
     [ForeignKey("OpportunityId")]
     public Guid? OpportunityId { get; set; }
@@ -21,16 +21,16 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Entities
     [Required]
     [ForeignKey("PartnerId")]
     public Guid PartnerId { get; set; }
-    public Partner Partner { get; set; }
+    public Partner Partner { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(25)")]
-    public string Action { get; set; }
+    public string Action { get; set; } = null!;
 
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public ProcessingStatus Status { get; set; }
+    public ProcessingStatus Status { get; set; } = null!;
 
     [Column(TypeName = "varchar(50)")]
     public string? EntityExternalId { get; set; }

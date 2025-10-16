@@ -5,16 +5,16 @@ namespace Yoma.Core.Infrastructure.Bitly.Models
   public class BitLinkResponse
   {
     [JsonProperty("link")]
-    public string Link { get; set; }
+    public string Link { get; set; } = null!;
 
     [JsonProperty("id")]
-    public string Id { get; set; }
+    public string Id { get; set; } = null!;
 
     [JsonProperty("long_url")]
-    public string LongURL { get; set; }
+    public string LongURL { get; set; } = null!;
 
     [JsonProperty("title")]
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
     [JsonProperty("archived")]
     public bool Archived { get; set; }
@@ -23,21 +23,21 @@ namespace Yoma.Core.Infrastructure.Bitly.Models
     public DateTime CreatedAt { get; set; }
 
     [JsonProperty("created_by")]
-    public string CreatedBy { get; set; }
+    public string CreatedBy { get; set; } = null!;
 
     [JsonProperty("client_id")]
-    public string ClientId { get; set; }
+    public string ClientId { get; set; } = null!;
 
     [JsonProperty("custom_bitlinks")]
-    public string[] CustomBitLinks { get; set; }
+    public string[] CustomBitLinks { get; set; } = null!;
 
     [JsonProperty("tags")]
-    public string[] Tags { get; set; }
+    public string[] Tags { get; set; } = null!;
 
     [JsonProperty("launchpad_ids")]
-    public string[] LaunchpadIds { get; set; }
+    public string[] LaunchpadIds { get; set; } = null!;
 
     [JsonProperty("campaign_ids")]
-    public string[] CampaignIds { get; set; }
+    public string[] CampaignIds { get; set; } = null!;
   }
 }

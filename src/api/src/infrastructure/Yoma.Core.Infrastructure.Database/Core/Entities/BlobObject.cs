@@ -11,23 +11,23 @@ namespace Yoma.Core.Infrastructure.Database.Core.Entities
   {
     [Required]
     [Column(TypeName = "varchar(25)")]
-    public string StorageType { get; set; }
+    public string StorageType { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(25)")]
-    public string FileType { get; set; }
+    public string FileType { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(125)")]
-    public string Key { get; set; }
+    public string Key { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(127)")]
-    public string ContentType { get; set; }
+    public string ContentType { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(255)")]
-    public string OriginalFileName { get; set; }
+    public string OriginalFileName { get; set; } = null!;
 
     [ForeignKey("ParentId")]
     public Guid? ParentId { get; set; }

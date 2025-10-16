@@ -10,7 +10,7 @@ namespace Yoma.Core.Infrastructure.Database.PartnerSharing.Entities.Lookups
   {
     [Required]
     [Column(TypeName = "varchar(20)")]
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

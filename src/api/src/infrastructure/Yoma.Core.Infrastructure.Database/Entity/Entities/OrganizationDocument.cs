@@ -13,16 +13,16 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Required]
     [ForeignKey("OrganizationId")]
     public Guid OrganizationId { get; set; }
-    public Organization Organization { get; set; }
+    public Organization Organization { get; set; } = null!;
 
     [Required]
     [ForeignKey("FileId")]
     public Guid FileId { get; set; }
-    public BlobObject File { get; set; }
+    public BlobObject File { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string Type { get; set; }
+    public string Type { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

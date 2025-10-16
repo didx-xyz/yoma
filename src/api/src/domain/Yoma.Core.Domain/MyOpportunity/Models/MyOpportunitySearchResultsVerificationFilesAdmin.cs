@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 {
   public class MyOpportunitySearchResultsVerificationFilesAdmin
   {
-    public string OpportunityTitle { get; set; }
+    public string OpportunityTitle { get; set; } = null!;
 
     public int? TotalCount { get; set; }
 

@@ -4,9 +4,9 @@ namespace Yoma.Core.Domain.Opportunity.Models
 {
   public abstract class OpportunityRequestBase
   {
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
     public Guid TypeId { get; set; }
 
@@ -57,13 +57,13 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [JsonIgnore]
     internal string? ExternalId { get; set; }
 
-    public List<Guid> Categories { get; set; }
+    public List<Guid> Categories { get; set; } = null!;
 
-    public List<Guid> Countries { get; set; }
+    public List<Guid> Countries { get; set; } = null!;
 
-    public List<Guid> Languages { get; set; }
+    public List<Guid> Languages { get; set; } = null!;
 
-    public List<Guid> Skills { get; set; }
+    public List<Guid> Skills { get; set; } = null!;
 
     public List<OpportunityRequestVerificationType>? VerificationTypes { get; set; }
   }

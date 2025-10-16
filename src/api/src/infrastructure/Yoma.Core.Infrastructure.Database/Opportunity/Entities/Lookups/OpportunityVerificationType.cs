@@ -10,15 +10,15 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities.Lookups
   {
     [Required]
     [Column(TypeName = "varchar(125)")]
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(125)")]
-    public string DisplayName { get; set; }
+    public string DisplayName { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(255)")]
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

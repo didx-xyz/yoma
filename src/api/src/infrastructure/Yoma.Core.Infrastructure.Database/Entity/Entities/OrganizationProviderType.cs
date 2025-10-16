@@ -11,12 +11,12 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Entities
     [Required]
     [ForeignKey("OrganizationId")]
     public Guid OrganizationId { get; set; }
-    public Organization Organization { get; set; }
+    public Organization Organization { get; set; } = null!;
 
     [Required]
     [ForeignKey("ProviderTypeId")]
     public Guid ProviderTypeId { get; set; }
-    public Lookups.OrganizationProviderType ProviderType { get; set; }
+    public Lookups.OrganizationProviderType ProviderType { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

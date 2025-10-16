@@ -7,7 +7,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Models
 
   public class MyOpportunityResponseVerifyStatusExternalUser
   {
-    public string Username { get; set; }
+    public string Username { get; set; } = null!;
 
     public string? Email { get; set; }
 

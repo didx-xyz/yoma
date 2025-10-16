@@ -2,7 +2,7 @@ namespace Yoma.Core.Domain.IdentityProvider.Models
 {
   public abstract class UserRequestBase
   {
-    public string Username { get; set; }
+    public string Username { get; set; } = null!;
 
     public string? Email { get; set; }
 

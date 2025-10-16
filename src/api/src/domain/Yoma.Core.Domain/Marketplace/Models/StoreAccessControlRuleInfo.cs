@@ -6,15 +6,15 @@ namespace Yoma.Core.Domain.Marketplace.Models
   {
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public string? Description { get; set; }
 
     public Guid OrganizationId { get; set; }
 
-    public string OrganizationName { get; set; }
+    public string OrganizationName { get; set; } = null!;
 
-    public StoreInfo Store { get; set; }
+    public StoreInfo Store { get; set; } = null!;
 
     public List<StoreItemCategoryInfo>? StoreItemCategories { get; set; }
 

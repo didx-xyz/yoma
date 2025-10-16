@@ -7,16 +7,16 @@ namespace Yoma.Core.Infrastructure.SAYouth.Models
   internal class OpportunitySkillingUpsertRequest
   {
     [JsonProperty("learning_opportunity_holder")]
-    public string Holder { get; set; }
+    public string Holder { get; set; } = null!;
 
     [JsonProperty("learning_opportunity_sponsoring_partner")]
     public string? SponsoringPartner { get; set; }
 
     [JsonProperty("learning_opportunity_title")]
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
     [JsonProperty("learning_opportunity_description")]
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
     [JsonProperty("learning_opportunity_has_certification")]
     [JsonConverter(typeof(StringEnumConverter))]
@@ -37,7 +37,7 @@ namespace Yoma.Core.Infrastructure.SAYouth.Models
     public Duration? Duration { get; set; }
 
     [JsonProperty("learning_opportunity_requirements")]
-    public string Requirements { get; set; }
+    public string Requirements { get; set; } = null!;
 
     [JsonProperty("learning_opportunity_face_to_face")]
     [JsonConverter(typeof(StringEnumConverter))]
