@@ -13,12 +13,14 @@ namespace Yoma.Core.Domain.Referral.Models
     public PathwayStepRule Rule { get; set; }
 
     public byte? Order { get; set; }
+
+    public List<ProgramPathwayTaskRequestBase> Tasks { get; set; }
   }
 
   public class ProgramPathwayStepRequestCreate : ProgramPathwayStepRequestBase
   {
     [Required]
-    public List<ProgramPathwayTaskRequestCreate> Tasks { get; set; }
+    public new List<ProgramPathwayTaskRequestCreate> Tasks { get; set; }
   }
 
   public class ProgramPathwayStepRequestUpdate : ProgramPathwayStepRequestBase
@@ -27,6 +29,6 @@ namespace Yoma.Core.Domain.Referral.Models
     public Guid Id { get; set; }
 
     [Required]
-    public List<ProgramPathwayTaskRequestUpdate> Tasks { get; set; }
+    public new List<ProgramPathwayTaskRequestUpdate> Tasks { get; set; }
   }
 }

@@ -40,11 +40,13 @@ namespace Yoma.Core.Domain.Referral.Models
     public DateTimeOffset DateStart { get; set; }
 
     public DateTimeOffset? DateEnd { get; set; }
+
+    public ProgramPathwayRequestBase? Pathway { get; set; }
   }
 
   public class ProgramRequestCreate : ProgramRequestBase
   {
-    public ProgramPathwayRequestCreate? Pathway { get; set; }
+    public new ProgramPathwayRequestCreate? Pathway { get; set; }
   }
 
   public class ProgramRequestUpdate : ProgramRequestBase
@@ -52,6 +54,6 @@ namespace Yoma.Core.Domain.Referral.Models
     [Required]
     public Guid Id { get; set; }
 
-    public ProgramPathwayRequestUpdate? Pathway { get; set; }
+    public new ProgramPathwayRequestUpdate? Pathway { get; set; }
   }
 }

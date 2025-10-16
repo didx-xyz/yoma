@@ -63,8 +63,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           LinkId = item.LinkId,
           UserId = item.UserId,
           StatusId = item.StatusId,
-          DateCreated = DateTimeOffset.Now,
-          DateModified = DateTimeOffset.Now
+          DateCreated = DateTimeOffset.UtcNow,
+          DateModified = DateTimeOffset.UtcNow
         });
 
       _context.ReferralLinkUsage.AddRange(entities);
