@@ -785,7 +785,7 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public async Task<Organization> UpdateLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization)
+    public async Task<Organization> UpdateLogo(Guid id, IFormFile file, bool ensureOrganizationAuthorization)
     {
       //determine if the current user context is a user role only. If no user context (system process), IsUserRoleOnly returns false.
       var userRoleOnly = HttpContextAccessorHelper.IsUserRoleOnly(_httpContextAccessor);
@@ -1137,7 +1137,8 @@ namespace Yoma.Core.Domain.Entity.Services
     private async Task<(Organization Organization, BlobObject ItemAdded)> UpdateLogo(
         Organization organization, IFormFile? file, OrganizationReapprovalAction reapprovalAction)
     {
-      ArgumentNullException.ThrowIfNull(file, nameof(file));
+      if (file == null || file.Length == 0)
+        throw new ValidationException("File is required");
 
       var currentLogoId = organization.LogoId;
 

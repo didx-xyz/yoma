@@ -24,10 +24,6 @@ namespace Yoma.Core.Domain.Referral.Validators
           .When(x => !string.IsNullOrWhiteSpace(x.Description))
           .WithMessage("The description cannot be longer than 500 characters.");
 
-      RuleFor(x => x.Image)
-          .Must(file => file == null || file.Length > 0)
-          .WithMessage("Image is optional, but if provided it cannot be empty.");
-
       RuleFor(x => x.CompletionWindowInDays)
           .GreaterThan(0)
           .When(x => x.CompletionWindowInDays.HasValue)
@@ -135,34 +131,34 @@ namespace Yoma.Core.Domain.Referral.Validators
       // ---------------------------------------
 
       // If PathwayRequired == false -> Pathway must be null
-      RuleFor(x => x.Pathway)
+      RuleFor(x => x.PathwayBase)
           .Null()
           .When(x => !x.PathwayRequired)
           .WithMessage("Remove the pathway — this program does not require one.");
 
       // If PathwayRequired == true -> Pathway must be provided
-      RuleFor(x => x.Pathway)
+      RuleFor(x => x.PathwayBase)
           .NotNull()
           .When(x => x.PathwayRequired)
           .WithMessage("Please add a pathway — this program requires one.");
 
       // If a Pathway object is present, validate shared base fields
-      When(x => x.Pathway != null, () =>
+      When(x => x.PathwayBase != null, () =>
       {
-        RuleFor(x => x.Pathway!.Name)
+        RuleFor(x => x.PathwayBase!.Name)
             .NotEmpty()
             .Length(1, 150)
             .WithMessage("Please enter a pathway name (maximum 150 characters).");
 
-        RuleFor(x => x.Pathway!.Description)
+        RuleFor(x => x.PathwayBase!.Description)
             .Length(1, 500)
-            .When(o => !string.IsNullOrWhiteSpace(o.Pathway!.Description))
+            .When(o => !string.IsNullOrWhiteSpace(o.PathwayBase!.Description))
             .WithMessage("The pathway description cannot be longer than 500 characters.");
 
         // ---------------------------------------
         // Steps (base) rules
         // ---------------------------------------
-        RuleFor(x => x.Pathway!.StepsBase)
+        RuleFor(x => x.PathwayBase!.StepsBase)
             .NotNull()
             .When(m => m.PathwayRequired)
             .WithMessage("Please add at least one step to the pathway.")
@@ -171,7 +167,7 @@ namespace Yoma.Core.Domain.Referral.Validators
             .WithMessage("Please add at least one step to the pathway.");
 
         // Validate each step
-        RuleForEach(x => x.Pathway!.StepsBase!)
+        RuleForEach(x => x.PathwayBase!.StepsBase!)
           .ChildRules(step =>
           {
             step.RuleFor(s => s.Name)
@@ -217,9 +213,9 @@ namespace Yoma.Core.Domain.Referral.Validators
           });
 
         // Step ordering rule (optional but if used → 1..N, no gaps/dupes, and in order)
-        RuleFor(x => x.Pathway!.StepsBase!)
+        RuleFor(x => x.PathwayBase!.StepsBase!)
           .Must(IsSequentialOrdered)
-          .When(m => m.PathwayRequired && m.Pathway!.StepsBase != null && m.Pathway!.StepsBase.Count > 0)
+          .When(m => m.PathwayRequired && m.PathwayBase!.StepsBase != null && m.PathwayBase!.StepsBase.Count > 0)
           .WithMessage("Step order must be 1, 2, 3... without gaps or duplicates, in the same order as listed.");
       });
     }

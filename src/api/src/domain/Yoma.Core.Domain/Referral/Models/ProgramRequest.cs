@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Http;
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
 namespace Yoma.Core.Domain.Referral.Models
@@ -9,8 +9,6 @@ namespace Yoma.Core.Domain.Referral.Models
     public string Name { get; set; } = null!;
 
     public string? Description { get; set; }
-
-    public IFormFile? Image { get; set; }
 
     public int? CompletionWindowInDays { get; set; }
 
@@ -41,12 +39,16 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public DateTimeOffset? DateEnd { get; set; }
 
-    public ProgramPathwayRequestBase? Pathway { get; set; }
+    public ProgramPathwayRequestBase? PathwayBase { get; set; }
   }
 
   public class ProgramRequestCreate : ProgramRequestBase
   {
-    public new ProgramPathwayRequestCreate? Pathway { get; set; }
+    public ProgramPathwayRequestCreate? Pathway
+    {
+      get => PathwayBase as ProgramPathwayRequestCreate;
+      set => PathwayBase = value;
+    }
   }
 
   public class ProgramRequestUpdate : ProgramRequestBase
@@ -54,6 +56,44 @@ namespace Yoma.Core.Domain.Referral.Models
     [Required]
     public Guid Id { get; set; }
 
-    public new ProgramPathwayRequestUpdate? Pathway { get; set; }
+    public ProgramPathwayRequestUpdate? Pathway
+    {
+      get => PathwayBase as ProgramPathwayRequestUpdate;
+      set => PathwayBase = value;
+    }
+  }
+
+  public abstract class ProgramPathwayRequestBase
+  {
+    [Required]
+    public string Name { get; set; } = null!;
+
+    public string? Description { get; set; }
+
+    [JsonIgnore]
+    public List<ProgramPathwayStepRequestBase> StepsBase { get; set; } = null!;
+  }
+
+  public class ProgramPathwayRequestCreate : ProgramPathwayRequestBase
+  {
+    [Required]
+    public List<ProgramPathwayStepRequestCreate> Steps
+    {
+      get => [.. StepsBase.Cast<ProgramPathwayStepRequestCreate>()];
+      set => StepsBase = [.. value.Cast<ProgramPathwayStepRequestBase>()];
+    }
+  }
+
+  public class ProgramPathwayRequestUpdate : ProgramPathwayRequestBase
+  {
+    [Required]
+    public Guid Id { get; set; }
+
+    [Required]
+    public List<ProgramPathwayStepRequestUpdate> Steps
+    {
+      get => [.. StepsBase.Cast<ProgramPathwayStepRequestUpdate>()];
+      set => StepsBase = [.. value.Cast<ProgramPathwayStepRequestBase>()];
+    }
   }
 }
