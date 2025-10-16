@@ -95,8 +95,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           ShortURL = item.ShortURL,
           CompletionTotal = item.CompletionTotal,
           ZltoRewardCumulative = item.ZltoRewardCumulative,
-          DateCreated = DateTimeOffset.Now,
-          DateModified = DateTimeOffset.Now
+          DateCreated = DateTimeOffset.UtcNow,
+          DateModified = DateTimeOffset.UtcNow
         });
 
       _context.ReferralLink.AddRange(entities);

@@ -168,9 +168,9 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           IsDefault = item.IsDefault,
           DateStart = item.DateStart,
           DateEnd = item.DateEnd,
-          DateCreated = DateTimeOffset.Now,
+          DateCreated = DateTimeOffset.UtcNow,
           CreatedByUserId = item.CreatedByUserId,
-          DateModified = DateTimeOffset.Now,
+          DateModified = DateTimeOffset.UtcNow,
           ModifiedByUserId = item.ModifiedByUserId
         });
 

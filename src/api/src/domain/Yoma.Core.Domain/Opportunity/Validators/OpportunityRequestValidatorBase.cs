@@ -8,7 +8,7 @@ using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Opportunity.Validators
 {
-  public class OpportunityRequestValidatorBase<TRequest> : AbstractValidator<TRequest>
+  public abstract class OpportunityRequestValidatorBase<TRequest> : AbstractValidator<TRequest>
         where TRequest : Models.OpportunityRequestBase
   {
     #region Class Variables
