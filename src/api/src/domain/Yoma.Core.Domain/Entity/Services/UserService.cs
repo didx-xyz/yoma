@@ -310,9 +310,12 @@ namespace Yoma.Core.Domain.Entity.Services
       return result;
     }
 
-    public async Task<User> UpsertPhoto(string username, IFormFile? file)
+    public async Task<User> UpsertPhoto(string username, IFormFile file)
     {
       var result = GetByUsername(username, true, true);
+
+      if (file == null || file.Length == 0)
+        throw new ValidationException("File is required");
 
       ArgumentNullException.ThrowIfNull(file, nameof(file));
 

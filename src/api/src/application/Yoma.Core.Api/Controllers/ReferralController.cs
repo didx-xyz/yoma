@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
+using System.ComponentModel.DataAnnotations;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Interfaces;
@@ -73,7 +74,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Create a new referral program")]
     [HttpPost("program/create")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> CreateProgram([FromForm] ProgramRequestCreate request)
+    public async Task<ActionResult<Domain.Referral.Models.Program>> CreateProgram([FromBody] ProgramRequestCreate request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(CreateProgram));
 
@@ -87,13 +88,27 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Update the specified referral program")]
     [HttpPatch("program/update")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgram([FromForm] ProgramRequestUpdate request)
+    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgram([FromBody] ProgramRequestUpdate request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgram));
 
       var result = await _programService.Update(request);
 
       _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgram));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Update the referral program image")]
+    [HttpPatch("program/{id}/image")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramImage([FromRoute] Guid id, [Required] IFormFile file)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramImage));
+
+      var result = await _programService.UpdateImage(id, file);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgramImage));
 
       return Ok(result);
     }

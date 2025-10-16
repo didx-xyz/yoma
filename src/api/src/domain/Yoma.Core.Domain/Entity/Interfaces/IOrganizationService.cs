@@ -33,7 +33,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
 
     Task<Organization> RemoveProviderTypes(Guid id, List<Guid> providerTypeIds, bool ensureOrganizationAuthorization);
 
-    Task<Organization> UpdateLogo(Guid id, IFormFile? file, bool ensureOrganizationAuthorization);
+    Task<Organization> UpdateLogo(Guid id, IFormFile file, bool ensureOrganizationAuthorization);
 
     Task<Organization> AddDocuments(Guid id, OrganizationDocumentType type, List<IFormFile> documents, bool ensureOrganizationAuthorization);
 

@@ -190,14 +190,6 @@ namespace Yoma.Core.Domain.Referral.Services
           //create the program
           result = await _programRepository.Create(result);
 
-          //insert image
-          if (request.Image != null)
-          {
-            var resultImage = await UpdateImage(result, request.Image);
-            result = resultImage.Program;
-            blobObjects.Add(resultImage.ItemAdded);
-          }
-
           //set as default
           if (request.IsDefault) await SetAsDefault(result);
 
@@ -224,6 +216,30 @@ namespace Yoma.Core.Domain.Referral.Services
       throw new NotImplementedException();
     }
 
+    public async Task<ProgramInfo> UpdateImage(Guid id, IFormFile file)
+    {
+      var result = GetById(id, false, false);
+
+      //TODO: ValidateUpdatable
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      (Program? Program, BlobObject? ItemAdded) resultImage = (null, null);
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        resultImage = await UpdateImage(result, file);
+        result.ModifiedByUserId = user.Id;
+        result = await _programRepository.Update(result);
+        scope.Complete();
+      });
+
+      if (resultImage.Program == null)
+        throw new InvalidOperationException($"{nameof(Models.Program)} expected");
+
+      return resultImage.Program.ToInfo();
+    }
+
     public Task<ProgramInfo> UpdateStatus(Guid id, ProgramStatus status)
     {
       throw new NotImplementedException();
@@ -232,6 +248,8 @@ namespace Yoma.Core.Domain.Referral.Services
     public async Task<ProgramInfo> SetAsDefault(Guid id)
     {
       var result = GetById(id, false, false);
+
+      //TODO: ValidateUpdatable 
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -259,7 +277,8 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Private Members
     private async Task<(Program Program, BlobObject ItemAdded)> UpdateImage(Program program, IFormFile? file)
     {
-      ArgumentNullException.ThrowIfNull(file, nameof(file));
+      if (file == null || file.Length == 0)
+        throw new ValidationException("File is required");
 
       var currentLogoId = program.ImageId;
 
