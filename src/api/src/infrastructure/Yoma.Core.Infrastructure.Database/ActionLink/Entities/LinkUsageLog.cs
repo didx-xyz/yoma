@@ -11,11 +11,11 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Entities
   {
     [ForeignKey("LinkId")]
     public Guid LinkId { get; set; }
-    public Link Link { get; set; }
+    public Link Link { get; set; } = null!;
 
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
-    public Entity.Entities.User User { get; set; }
+    public Entity.Entities.User User { get; set; } = null!;
 
     [Column(TypeName = "varchar(320)")]
     public string? UsernameClaimed { get; set; }

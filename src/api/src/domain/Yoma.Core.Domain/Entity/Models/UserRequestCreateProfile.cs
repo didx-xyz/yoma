@@ -2,9 +2,9 @@ namespace Yoma.Core.Domain.Entity.Models
 {
   public class UserRequestCreateProfile : UserRequestBase
   {
-    public string FirstName { get; set; }
+    public string FirstName { get; set; } = null!;
 
-    public string Surname { get; set; }
+    public string Surname { get; set; } = null!;
 
     public string? PhoneNumber { get; set; }
 

@@ -18,10 +18,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
   {
     #region Public Members
     [Required]
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
     [Required]
-    public string Type { get; set; }
+    public string Type { get; set; } = null!;
 
     public string? Engagement { get; set; }
 
@@ -33,10 +33,10 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public string? URL { get; set; }
 
     [Required]
-    public string Summary { get; set; }
+    public string Summary { get; set; } = null!;
 
     [Required]
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
     [Required]
     [TypeConverter(typeof(CsvDelimitedStringConverter))]
@@ -48,7 +48,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public List<string>? Countries { get; set; }
 
     [Required]
-    public string Difficulty { get; set; }
+    public string Difficulty { get; set; } = null!;
 
     [Required]
     [Name("EffortCount")]
@@ -56,7 +56,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
 
     [Required]
     [Name("EffortInterval")]
-    public string CommitmentInterval { get; set; }
+    public string CommitmentInterval { get; set; } = null!;
 
     [Required]
     public DateOnly DateStart { get; set; }
@@ -83,7 +83,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public bool Hidden { get; set; }
 
     [Required]
-    public string ExternalId { get; set; }
+    public string ExternalId { get; set; } = null!;
     #endregion
 
     #region Internal Members

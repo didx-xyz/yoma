@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.Referral.Models
   {
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public string? Description { get; set; }
 
@@ -23,9 +23,9 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public ReferralLinkStatus Status { get; set; }
 
-    public string URL { get; set; }
+    public string URL { get; set; } = null!;
 
-    public string ShortURL { get; set; }
+    public string ShortURL { get; set; } = null!;
 
     public int? CompletionTotal { get; set; }
 

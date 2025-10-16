@@ -11,12 +11,12 @@ namespace Yoma.Core.Infrastructure.Database.Opportunity.Entities
     [Required]
     [ForeignKey("OpportunityId")]
     public Guid OpportunityId { get; set; }
-    public Opportunity Opportunity { get; set; }
+    public Opportunity Opportunity { get; set; } = null!;
 
     [Required]
     [ForeignKey("CategoryId")]
     public Guid CategoryId { get; set; }
-    public Lookups.OpportunityCategory Category { get; set; }
+    public Lookups.OpportunityCategory Category { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

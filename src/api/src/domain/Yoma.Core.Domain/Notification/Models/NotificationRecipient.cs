@@ -2,7 +2,7 @@ namespace Yoma.Core.Domain.Notification.Models
 {
   public class NotificationRecipient
   {
-    public string Username { get; set; }
+    public string Username { get; set; } = null!;
 
     public string? PhoneNumber { get; set; }
 

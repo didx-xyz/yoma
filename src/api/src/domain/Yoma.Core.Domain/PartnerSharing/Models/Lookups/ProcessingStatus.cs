@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.PartnerSharing.Models.Lookups
   {
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
   }
 }

@@ -4,13 +4,13 @@ namespace Yoma.Core.Domain.ActionLink.Models
   {
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public string? Description { get; set; }
 
-    public string EntityType { get; set; }
+    public string EntityType { get; set; } = null!;
 
-    public string Action { get; set; }
+    public string Action { get; set; } = null!;
 
     public Guid StatusId { get; set; }
 
@@ -24,9 +24,9 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public string? OpportunityOrganizationName { get; set; }
 
-    public string URL { get; set; }
+    public string URL { get; set; } = null!;
 
-    public string ShortURL { get; set; }
+    public string ShortURL { get; set; } = null!;
 
     public int? UsagesLimit { get; set; }
 

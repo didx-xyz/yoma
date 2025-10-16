@@ -9,17 +9,17 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Ignore]
     public Guid Id { get; set; }
 
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
-    public string Description { get; set; }
+    public string Description { get; set; } = null!;
 
-    public string Type { get; set; }
+    public string Type { get; set; } = null!;
 
     [Ignore]
     public Guid OrganizationId { get; set; }
 
     [Name("Organization Name")]
-    public string OrganizationName { get; set; }
+    public string OrganizationName { get; set; } = null!;
 
     [Ignore]
     public string? OrganizationLogoURL { get; set; }
@@ -50,7 +50,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     [Name("Verification Method")]
     public VerificationMethod? VerificationMethod { get; set; }
 
-    public string Difficulty { get; set; }
+    public string Difficulty { get; set; } = null!;
 
     [Ignore]
     public Core.TimeIntervalOption CommitmentInterval { get; set; }
@@ -59,7 +59,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public short CommitmentIntervalCount { get; set; }
 
     [Name("Commitment Interval")]
-    public string CommitmentIntervalDescription { get; set; }
+    public string CommitmentIntervalDescription { get; set; } = null!;
 
     #region Engagement
     #region Verification Limits and Counts
@@ -130,7 +130,7 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public bool Published { get; set; }
 
     [Ignore]
-    public string YomaInfoURL { get; set; }
+    public string YomaInfoURL { get; set; } = null!;
 
     [Ignore]
     public List<Lookups.OpportunityCategory>? Categories { get; set; }

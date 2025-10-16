@@ -9,11 +9,11 @@ namespace Yoma.Core.Domain.Core.Models
 
     public Guid UserId { get; set; }
 
-    public string Type { get; set; }
+    public string Type { get; set; } = null!;
 
-    public string Filter { get; set; }
+    public string Filter { get; set; } = null!;
 
-    public string FilterHash { get; set; }
+    public string FilterHash { get; set; } = null!;
 
     public Guid StatusId { get; set; }
 

@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.Notification.Models
     public string? VerificationURL { get; set; }
 
     [JsonProperty("opportunities")]
-    public List<NotificationOpportunityVerificationItem> Opportunities { get; set; }
+    public List<NotificationOpportunityVerificationItem> Opportunities { get; set; } = null!;
 
     public override Dictionary<string, string> ContentVariables(MessageType messageType)
     {
@@ -52,7 +52,7 @@ namespace Yoma.Core.Domain.Notification.Models
   public class NotificationOpportunityVerificationItem
   {
     [JsonProperty("title")]
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
     [JsonProperty("dateStart")]
     public DateTimeOffset? DateStart { get; set; }
@@ -73,7 +73,7 @@ namespace Yoma.Core.Domain.Notification.Models
     public string? CommentFormatted => !string.IsNullOrEmpty(Comment) ? Comment : "No additional information";
 
     [JsonProperty("url")]
-    public string URL { get; set; }
+    public string URL { get; set; } = null!;
 
     [JsonProperty("zltoReward")]
     public decimal? ZltoReward { get; set; }

@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Entity.Models
   {
     public Guid Id { get; set; }
 
-    public string Username { get; set; }
+    public string Username { get; set; } = null!;
 
     public string? Email { get; set; }
 

@@ -162,7 +162,7 @@ namespace Yoma.Core.Domain.Referral.Validators
         // ---------------------------------------
         // Steps (base) rules
         // ---------------------------------------
-        RuleFor(x => x.Pathway!.Steps)
+        RuleFor(x => x.Pathway!.StepsBase)
             .NotNull()
             .When(m => m.PathwayRequired)
             .WithMessage("Please add at least one step to the pathway.")
@@ -171,7 +171,7 @@ namespace Yoma.Core.Domain.Referral.Validators
             .WithMessage("Please add at least one step to the pathway.");
 
         // Validate each step
-        RuleForEach(x => x.Pathway!.Steps!)
+        RuleForEach(x => x.Pathway!.StepsBase!)
           .ChildRules(step =>
           {
             step.RuleFor(s => s.Name)
@@ -190,18 +190,18 @@ namespace Yoma.Core.Domain.Referral.Validators
                 .WithMessage("Step rule must be either 'All' or 'Any'.");
 
             // Each step MUST have ≥ 1 task
-            step.RuleFor(s => s.Tasks)
+            step.RuleFor(s => s.TasksBase)
                 .NotNull().WithMessage("Please add at least one task to each step.")
                 .Must(t => t != null && t.Count > 0).WithMessage("Please add at least one task to each step.");
 
             // Task ordering rule (optional but if used → 1..N, no gaps/dupes, and in order)
-            step.RuleFor(s => s.Tasks!)
+            step.RuleFor(s => s.TasksBase!)
                 .Must(IsSequentialOrdered)
-                .When(s => s.Tasks != null && s.Tasks.Count > 0)
+                .When(s => s.TasksBase != null && s.TasksBase.Count > 0)
                 .WithMessage("Task order must be 1, 2, 3... without gaps or duplicates, in the same order as listed.");
 
             // Validate each task (EntityType enum is required by model; no specific value restriction)
-            step.RuleForEach(s => s.Tasks!)
+            step.RuleForEach(s => s.TasksBase!)
               .ChildRules(task =>
               {
                 task.RuleFor(t => t.EntityId)
@@ -217,9 +217,9 @@ namespace Yoma.Core.Domain.Referral.Validators
           });
 
         // Step ordering rule (optional but if used → 1..N, no gaps/dupes, and in order)
-        RuleFor(x => x.Pathway!.Steps!)
+        RuleFor(x => x.Pathway!.StepsBase!)
           .Must(IsSequentialOrdered)
-          .When(m => m.PathwayRequired && m.Pathway!.Steps != null && m.Pathway!.Steps.Count > 0)
+          .When(m => m.PathwayRequired && m.Pathway!.StepsBase != null && m.Pathway!.StepsBase.Count > 0)
           .WithMessage("Step order must be 1, 2, 3... without gaps or duplicates, in the same order as listed.");
       });
     }

@@ -12,20 +12,20 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
   {
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string ItemCategoryId { get; set; }
+    public string ItemCategoryId { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string ItemId { get; set; }
+    public string ItemId { get; set; } = null!;
 
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public TransactionStatus Status { get; set; }
+    public TransactionStatus Status { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "decimal(8,2)")]
@@ -33,7 +33,7 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
 
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string TransactionId { get; set; }
+    public string TransactionId { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

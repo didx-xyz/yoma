@@ -4,6 +4,6 @@ namespace Yoma.Core.Domain.Lookups.Models
   {
     public int? TotalCount { get; set; }
 
-    public List<Skill> Items { get; set; }
+    public List<Skill> Items { get; set; } = null!;
   }
 }

@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Notification.Models
     public string? URLOpportunitiesPublic { get; set; }
 
     [JsonProperty("opportunities")]
-    public List<NotificationOpportunityPublishedItem> Opportunities { get; set; }
+    public List<NotificationOpportunityPublishedItem> Opportunities { get; set; } = null!;
 
     public override Dictionary<string, string> ContentVariables(MessageType messageType)
     {
@@ -55,7 +55,7 @@ namespace Yoma.Core.Domain.Notification.Models
     public Guid Id { get; set; }
 
     [JsonProperty("title")]
-    public string Title { get; set; }
+    public string Title { get; set; } = null!;
 
     [JsonProperty("dateStart")]
     public DateTimeOffset? DateStart { get; set; }
@@ -70,7 +70,7 @@ namespace Yoma.Core.Domain.Notification.Models
     public string DateEndFormatted => DateEnd.HasValue ? DateEnd.Value.ToString("ddd, MMM dd, yyyy HH:mm") : "No end date";
 
     [JsonProperty("url")]
-    public string URL { get; set; }
+    public string URL { get; set; } = null!;
 
     [JsonProperty("zltoReward")]
     public decimal? ZltoReward { get; set; }

@@ -4,12 +4,12 @@ namespace Yoma.Core.Infrastructure.Emsi.Models
   {
     public const string Section = "Emsi";
 
-    public string BaseUrl { get; set; }
+    public string BaseUrl { get; set; } = null!;
 
-    public string AuthUrl { get; set; }
+    public string AuthUrl { get; set; } = null!;
 
-    public string ClientId { get; set; }
+    public string ClientId { get; set; } = null!;
 
-    public string ClientSecret { get; set; }
+    public string ClientSecret { get; set; } = null!;
   }
 }

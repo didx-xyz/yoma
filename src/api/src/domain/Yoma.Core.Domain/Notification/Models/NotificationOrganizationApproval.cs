@@ -5,7 +5,7 @@ namespace Yoma.Core.Domain.Notification.Models
   public class NotificationOrganizationApproval : NotificationBase
   {
     [JsonProperty("organizations")]
-    public List<NotificationOrganizationApprovalItem> Organizations { get; set; }
+    public List<NotificationOrganizationApprovalItem> Organizations { get; set; } = null!;
 
     public override List<NotificationBase> FlattenItems()
     {
@@ -24,7 +24,7 @@ namespace Yoma.Core.Domain.Notification.Models
   public class NotificationOrganizationApprovalItem
   {
     [JsonProperty("name")]
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [JsonProperty("comment")]
     public string? Comment { get; set; }
@@ -33,6 +33,6 @@ namespace Yoma.Core.Domain.Notification.Models
     public string? CommentFormatted => !string.IsNullOrEmpty(Comment) ? Comment : "No additional information";
 
     [JsonProperty("url")]
-    public string URL { get; set; }
+    public string URL { get; set; } = null!;
   }
 }

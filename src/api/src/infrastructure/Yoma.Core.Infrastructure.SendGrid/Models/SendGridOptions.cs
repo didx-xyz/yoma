@@ -4,19 +4,19 @@ namespace Yoma.Core.Infrastructure.SendGrid.Models
   {
     public const string Section = "SendGrid";
 
-    public string ApiKey { get; set; }
+    public string ApiKey { get; set; } = null!;
 
-    public SendGridEmailAddress From { get; set; }
+    public SendGridEmailAddress From { get; set; } = null!;
 
     public SendGridEmailAddress? ReplyTo { get; set; }
 
-    public Dictionary<string, string> Templates { get; set; }
+    public Dictionary<string, string> Templates { get; set; } = null!;
   }
 
   public class SendGridEmailAddress
   {
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
-    public string Email { get; set; }
+    public string Email { get; set; } = null!;
   }
 }

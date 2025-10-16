@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
 namespace Yoma.Core.Domain.Referral.Models
@@ -5,7 +6,7 @@ namespace Yoma.Core.Domain.Referral.Models
   public abstract class ProgramPathwayStepRequestBase
   {
     [Required]
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public string? Description { get; set; }
 
@@ -14,13 +15,19 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public byte? Order { get; set; }
 
-    public List<ProgramPathwayTaskRequestBase> Tasks { get; set; }
+    [JsonIgnore]
+    public List<ProgramPathwayTaskRequestBase> TasksBase { get; set; } = null!;
   }
 
   public class ProgramPathwayStepRequestCreate : ProgramPathwayStepRequestBase
   {
     [Required]
-    public new List<ProgramPathwayTaskRequestCreate> Tasks { get; set; }
+    public List<ProgramPathwayTaskRequestCreate> Tasks
+    {
+      get => [.. TasksBase.Cast<ProgramPathwayTaskRequestCreate>()];
+      set => TasksBase = [.. value.Cast<ProgramPathwayTaskRequestCreate>()];
+    }
+
   }
 
   public class ProgramPathwayStepRequestUpdate : ProgramPathwayStepRequestBase
@@ -29,6 +36,10 @@ namespace Yoma.Core.Domain.Referral.Models
     public Guid Id { get; set; }
 
     [Required]
-    public new List<ProgramPathwayTaskRequestUpdate> Tasks { get; set; }
+    public List<ProgramPathwayTaskRequestUpdate> Tasks
+    {
+      get => [.. TasksBase.Cast<ProgramPathwayTaskRequestUpdate>()];
+      set => TasksBase = [.. value.Cast<ProgramPathwayTaskRequestUpdate>()];
+    }
   }
 }

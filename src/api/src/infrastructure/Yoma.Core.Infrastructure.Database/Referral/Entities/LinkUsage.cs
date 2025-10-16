@@ -15,22 +15,22 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     [Required]
     [ForeignKey("ProgramId")]
     public Guid ProgramId { get; set; }
-    public Program Program { get; set; }
+    public Program Program { get; set; } = null!;
 
     [Required]
     [ForeignKey("LinkId")]
     public Guid LinkId { get; set; }
-    public Link Link { get; set; }
+    public Link Link { get; set; } = null!;
 
     [Required]
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
 
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public LinkUsageStatus Status { get; set; }
+    public LinkUsageStatus Status { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

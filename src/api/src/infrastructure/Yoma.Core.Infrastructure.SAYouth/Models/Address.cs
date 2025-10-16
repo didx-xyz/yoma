@@ -5,13 +5,13 @@ namespace Yoma.Core.Infrastructure.SAYouth.Models
   public class Address
   {
     [JsonProperty("address_name")]
-    public string AddressName { get; set; }
+    public string AddressName { get; set; } = null!;
 
     [JsonProperty("address_line_1")]
     public string? AddressLine1 { get; set; }
 
     [JsonProperty("suburb_name")]
-    public string SuburbName { get; set; }
+    public string SuburbName { get; set; } = null!;
 
     [JsonProperty("city_name")]
     public string? CityName { get; set; }

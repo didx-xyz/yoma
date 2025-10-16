@@ -18,18 +18,18 @@ namespace Yoma.Core.Domain.Entity.Models
     public StorageType FileStorageType { get; set; }
 
     [JsonIgnore]
-    public string FileKey { get; set; }
+    public string FileKey { get; set; } = null!;
 
     public OrganizationDocumentType Type { get; set; }
 
-    public string ContentType { get; set; }
+    public string ContentType { get; set; } = null!;
 
-    public string OriginalFileName { get; set; }
+    public string OriginalFileName { get; set; } = null!;
 
-    public string Url { get; set; }
+    public string Url { get; set; } = null!;
 
     [JsonIgnore]
-    public IFormFile File { get; set; }
+    public IFormFile File { get; set; } = null!;
 
     public DateTimeOffset DateCreated { get; set; }
   }

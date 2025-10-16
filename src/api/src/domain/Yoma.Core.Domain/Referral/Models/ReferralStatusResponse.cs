@@ -23,7 +23,7 @@ namespace Yoma.Core.Domain.Referral.Models
     /// </summary>
     public Guid DefaultProgramId { get; set; }
 
-    public string DefaultProgramName { get; set; }
+    public string DefaultProgramName { get; set; } = null!;
 
     public string? DefaultProgramImageUrl { get; set; }
   }

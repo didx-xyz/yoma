@@ -15,7 +15,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
   {
     [Required]
     [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(500)
     public string? Description { get; set; }
@@ -56,7 +56,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public Lookups.ProgramStatus Status { get; set; }
+    public Lookups.ProgramStatus Status { get; set; } = null!;
 
     [Required]
     public bool IsDefault { get; set; }
@@ -72,7 +72,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     [Required]
     [ForeignKey("CreatedByUserId")]
     public Guid CreatedByUserId { get; set; }
-    public User CreatedByUser { get; set; }
+    public User CreatedByUser { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateModified { get; set; }
@@ -80,7 +80,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     [Required]
     [ForeignKey("ModifiedByUserId")]
     public Guid ModifiedByUserId { get; set; }
-    public User ModifiedByUser { get; set; }
+    public User ModifiedByUser { get; set; } = null!;
 
     public ProgramPathway? Pathway { get; set; }
   }

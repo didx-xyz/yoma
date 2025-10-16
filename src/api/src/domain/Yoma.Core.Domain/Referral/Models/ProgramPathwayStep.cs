@@ -15,7 +15,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public Guid PathwayId { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     public string? Description { get; set; }
 

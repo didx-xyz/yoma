@@ -10,11 +10,11 @@ namespace Yoma.Core.Domain.Core.Models
 
     public FileType FileType { get; set; }
 
-    public string Key { get; set; }
+    public string Key { get; set; } = null!;
 
-    public string ContentType { get; set; }
+    public string ContentType { get; set; } = null!;
 
-    public string OriginalFileName { get; set; }
+    public string OriginalFileName { get; set; } = null!;
 
     public Guid? ParentId { get; set; }
 

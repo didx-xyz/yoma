@@ -11,7 +11,7 @@ namespace Yoma.Core.Infrastructure.Substack.Entities
   {
     [Required]
     [Column(TypeName = "varchar(50)")]
-    public string FeedType { get; set; }
+    public string FeedType { get; set; } = null!;
 
     [Column(TypeName = "varchar(512)")]
     public string? ETag { get; set; }

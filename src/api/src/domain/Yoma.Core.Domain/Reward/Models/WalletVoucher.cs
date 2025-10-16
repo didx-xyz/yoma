@@ -2,15 +2,15 @@ namespace Yoma.Core.Domain.Reward.Models
 {
   public class WalletVoucher
   {
-    public string Id { get; set; }
+    public string Id { get; set; } = null!;
 
-    public string Category { get; set; }
+    public string Category { get; set; } = null!;
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
-    public string Code { get; set; }
+    public string Code { get; set; } = null!;
 
-    public string Instructions { get; set; }
+    public string Instructions { get; set; } = null!;
 
     public decimal Amount { get; set; }
 

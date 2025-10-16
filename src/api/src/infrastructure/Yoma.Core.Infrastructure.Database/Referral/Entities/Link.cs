@@ -16,7 +16,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
   {
     [Required]
     [Column(TypeName = "varchar(255)")] //MS SQL: nvarchar(255)
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [Column(TypeName = "varchar(500)")] //MS SQL: nvarchar(500)
     public string? Description { get; set; }
@@ -24,25 +24,25 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     [Required]
     [ForeignKey("ProgramId")]
     public Guid ProgramId { get; set; }
-    public Program Program { get; set; }
+    public Program Program { get; set; } = null!;
 
     [Required]
     [ForeignKey("UserId")]
     public Guid UserId { get; set; }
-    public User User { get; set; }
+    public User User { get; set; } = null!;
 
     [Required]
     [ForeignKey("StatusId")]
     public Guid StatusId { get; set; }
-    public LinkStatus Status { get; set; }
+    public LinkStatus Status { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(2048)")]
-    public string URL { get; set; }
+    public string URL { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(2048)")]
-    public string ShortURL { get; set; }
+    public string ShortURL { get; set; } = null!;
 
     public int? CompletionTotal { get; set; }
 

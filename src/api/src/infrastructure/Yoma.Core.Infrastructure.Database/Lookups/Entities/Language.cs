@@ -11,11 +11,11 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Entities
   {
     [Required]
     [Column(TypeName = "varchar(125)")]
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(2)")]
-    public string CodeAlpha2 { get; set; }
+    public string CodeAlpha2 { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

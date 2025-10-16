@@ -6,15 +6,15 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public Guid ProgramId { get; set; }
 
-    public string ProgramName { get; set; }
+    public string ProgramName { get; set; } = null!;
 
     public Guid LinkId { get; set; }
 
-    public string LinkName { get; set; }
+    public string LinkName { get; set; } = null!;
 
     public Guid UserId { get; set; }
 
-    public string UserDisplayName { get; set; }
+    public string UserDisplayName { get; set; } = null!;
 
     public string? UserEmail { get; set; }
 

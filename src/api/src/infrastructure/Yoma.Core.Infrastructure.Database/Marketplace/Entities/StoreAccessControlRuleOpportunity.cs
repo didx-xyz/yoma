@@ -11,12 +11,12 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Entities
     [Required]
     [ForeignKey("StoreAccessControlRuleId")]
     public Guid StoreAccessControlRuleId { get; set; }
-    public StoreAccessControlRule StoreAccessControlRule { get; set; }
+    public StoreAccessControlRule StoreAccessControlRule { get; set; } = null!;
 
     [Required]
     [ForeignKey("OpportunityId")]
     public Guid OpportunityId { get; set; }
-    public Opportunity.Entities.Opportunity Opportunity { get; set; }
+    public Opportunity.Entities.Opportunity Opportunity { get; set; } = null!;
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

@@ -6,11 +6,11 @@ namespace Yoma.Core.Domain.PartnerSharing.Models
   {
     public string? ExternalId { get; set; }
 
-    public Opportunity.Models.Opportunity Opportunity { get; set; }
+    public Opportunity.Models.Opportunity Opportunity { get; set; } = null!;
 
-    public Organization Organization { get; set; }
+    public Organization Organization { get; set; } = null!;
 
-    public Organization OrganizationYoma { get; set; }
+    public Organization OrganizationYoma { get; set; } = null!;
 
     public bool ShareContactInfo { get; set; }
 

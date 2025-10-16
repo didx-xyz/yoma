@@ -6,10 +6,10 @@ namespace Yoma.Core.Domain.SSI.Models.Lookups
   {
     public Guid Id { get; set; }
 
-    public string Name { get; set; }
+    public string Name { get; set; } = null!;
 
     [JsonIgnore]
-    public string TypeName { get; set; }
+    public string TypeName { get; set; } = null!;
 
     public List<SSISchemaEntityProperty>? Properties { get; set; }
 

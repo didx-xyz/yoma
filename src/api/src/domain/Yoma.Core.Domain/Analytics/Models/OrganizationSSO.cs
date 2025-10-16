@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Analytics.Models
 {
   public class OrganizationSSO
   {
-    public string Legend { get; set; }
+    public string Legend { get; set; } = null!;
 
     public bool Enabled => !string.IsNullOrEmpty(ClientId);
 

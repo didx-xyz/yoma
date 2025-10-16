@@ -4,11 +4,11 @@ namespace Yoma.Core.Infrastructure.Twilio.Models
   {
     public const string Section = "Twilio";
 
-    public string AccountSid { get; set; }
+    public string AccountSid { get; set; } = null!;
 
-    public string AuthToken { get; set; }
+    public string AuthToken { get; set; } = null!;
 
-    public TwillioOptionsFrom From { get; set; }
+    public TwillioOptionsFrom From { get; set; } = null!;
 
     public Dictionary<string, string>? TemplatesWhatsApp { get; set; } // Key: NotificationType enum string value, Value: Twilio WhatsApp template id
 
