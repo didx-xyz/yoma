@@ -115,9 +115,7 @@ namespace Yoma.Core.Domain.Referral.Validators
 
       RuleFor(x => x.DateStart)
           .NotEmpty()
-          .WithMessage("Start Date is required.")
-          .GreaterThanOrEqualTo(_ => DateTimeOffset.UtcNow)
-          .WithMessage("Start Date cannot be in the past.");
+          .WithMessage("Start Date is required.");
 
       RuleFor(x => x.DateEnd)
           .GreaterThanOrEqualTo(m => m.DateStart)
@@ -176,7 +174,7 @@ namespace Yoma.Core.Domain.Referral.Validators
           {
             step.RuleFor(s => s.Id)
              .Must(id => id == null || id != Guid.Empty)
-             .WithMessage("If a step ID is specified, it cannot be empty.");
+             .WithMessage("If a step Id is specified, it cannot be empty.");
 
             step.RuleFor(s => s.Name)
                 .NotEmpty()
@@ -314,6 +312,45 @@ namespace Yoma.Core.Domain.Referral.Validators
     public ProgramRequestValidatorUpdate()
     {
       RuleFor(x => x.Id).NotEmpty(); //existence validated by service
+
+      // new pathway is being created during update -> steps & tasks must NOT specify Ids
+      When(x => x.Pathway != null && x.Pathway!.Id == null, () =>
+      {
+        RuleForEach(x => x.Pathway!.Steps!)
+          .ChildRules(step =>
+          {
+            step.RuleFor(s => s.Id)
+                .Must(id => id == null)
+                .WithMessage("When creating a new pathway, step Ids cannot be specified.");
+
+            step.RuleForEach(s => s.Tasks!)
+                .ChildRules(task =>
+                {
+                  task.RuleFor(t => t.Id)
+                      .Must(id => id == null)
+                      .WithMessage("When creating a new pathway, task Ids cannot be specified.");
+                });
+          });
+      });
+
+      // new step is being created during update -> that step's tasks must NOT specify Ids
+      When(x => x.Pathway != null, () =>
+      {
+        RuleForEach(x => x.Pathway!.Steps!)
+          .ChildRules(step =>
+          {
+            step.When(s => s.Id == null, () =>
+            {
+              step.RuleForEach(s => s.Tasks!)
+                  .ChildRules(task =>
+                  {
+                    task.RuleFor(t => t.Id)
+                        .Must(id => id == null)
+                        .WithMessage("When creating a new step, task Ids cannot be specified.");
+                  });
+            });
+          });
+      });
     }
     #endregion
   }
