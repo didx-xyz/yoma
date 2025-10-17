@@ -127,38 +127,42 @@ namespace Yoma.Core.Domain.Referral.Validators
       // Single default enforced by service
 
       // ---------------------------------------
-      // Pathway (base property) rules
+      // Pathway rules
       // ---------------------------------------
 
       // If PathwayRequired == false -> Pathway must be null
-      RuleFor(x => x.PathwayBase)
+      RuleFor(x => x.Pathway)
           .Null()
           .When(x => !x.PathwayRequired)
           .WithMessage("Remove the pathway — this program does not require one.");
 
       // If PathwayRequired == true -> Pathway must be provided
-      RuleFor(x => x.PathwayBase)
+      RuleFor(x => x.Pathway)
           .NotNull()
           .When(x => x.PathwayRequired)
           .WithMessage("Please add a pathway — this program requires one.");
 
       // If a Pathway object is present, validate shared base fields
-      When(x => x.PathwayBase != null, () =>
+      When(x => x.Pathway != null, () =>
       {
-        RuleFor(x => x.PathwayBase!.Name)
+        RuleFor(x => x.Pathway!.Id)
+            .Must(id => id == null || id != Guid.Empty)
+            .WithMessage("If a pathway ID is specified, it cannot be empty.");
+
+        RuleFor(x => x.Pathway!.Name)
             .NotEmpty()
             .Length(1, 150)
             .WithMessage("Please enter a pathway name (maximum 150 characters).");
 
-        RuleFor(x => x.PathwayBase!.Description)
+        RuleFor(x => x.Pathway!.Description)
             .Length(1, 500)
-            .When(o => !string.IsNullOrWhiteSpace(o.PathwayBase!.Description))
+            .When(o => !string.IsNullOrWhiteSpace(o.Pathway!.Description))
             .WithMessage("The pathway description cannot be longer than 500 characters.");
 
         // ---------------------------------------
-        // Steps (base) rules
+        // Steps rules
         // ---------------------------------------
-        RuleFor(x => x.PathwayBase!.StepsBase)
+        RuleFor(x => x.Pathway!.Steps)
             .NotNull()
             .When(m => m.PathwayRequired)
             .WithMessage("Please add at least one step to the pathway.")
@@ -167,9 +171,13 @@ namespace Yoma.Core.Domain.Referral.Validators
             .WithMessage("Please add at least one step to the pathway.");
 
         // Validate each step
-        RuleForEach(x => x.PathwayBase!.StepsBase!)
+        RuleForEach(x => x.Pathway!.Steps!)
           .ChildRules(step =>
           {
+            step.RuleFor(s => s.Id)
+             .Must(id => id == null || id != Guid.Empty)
+             .WithMessage("If a step ID is specified, it cannot be empty.");
+
             step.RuleFor(s => s.Name)
                 .NotEmpty()
                 .Length(1, 150)
@@ -186,20 +194,24 @@ namespace Yoma.Core.Domain.Referral.Validators
                 .WithMessage("Step rule must be either 'All' or 'Any'.");
 
             // Each step MUST have ≥ 1 task
-            step.RuleFor(s => s.TasksBase)
+            step.RuleFor(s => s.Tasks)
                 .NotNull().WithMessage("Please add at least one task to each step.")
                 .Must(t => t != null && t.Count > 0).WithMessage("Please add at least one task to each step.");
 
             // Task ordering rule (optional but if used → 1..N, no gaps/dupes, and in order)
-            step.RuleFor(s => s.TasksBase!)
+            step.RuleFor(s => s.Tasks!)
                 .Must(IsSequentialOrdered)
-                .When(s => s.TasksBase != null && s.TasksBase.Count > 0)
+                .When(s => s.Tasks != null && s.Tasks.Count > 0)
                 .WithMessage("Task order must be 1, 2, 3... without gaps or duplicates, in the same order as listed.");
 
             // Validate each task (EntityType enum is required by model; no specific value restriction)
-            step.RuleForEach(s => s.TasksBase!)
+            step.RuleForEach(s => s.Tasks!)
               .ChildRules(task =>
               {
+                task.RuleFor(t => t.Id)
+                 .Must(id => id == null || id != Guid.Empty)
+                 .WithMessage("If a task ID is specified, it cannot be empty.");
+
                 task.RuleFor(t => t.EntityId)
                     .NotEmpty()
                     .WithMessage("Each task must reference an entity.");
@@ -213,9 +225,9 @@ namespace Yoma.Core.Domain.Referral.Validators
           });
 
         // Step ordering rule (optional but if used → 1..N, no gaps/dupes, and in order)
-        RuleFor(x => x.PathwayBase!.StepsBase!)
+        RuleFor(x => x.Pathway!.Steps!)
           .Must(IsSequentialOrdered)
-          .When(m => m.PathwayRequired && m.PathwayBase!.StepsBase != null && m.PathwayBase!.StepsBase.Count > 0)
+          .When(m => m.PathwayRequired && m.Pathway!.Steps != null && m.Pathway!.Steps.Count > 0)
           .WithMessage("Step order must be 1, 2, 3... without gaps or duplicates, in the same order as listed.");
       });
     }
@@ -269,7 +281,29 @@ namespace Yoma.Core.Domain.Referral.Validators
     #region Constructor
     public ProgramRequestValidatorCreate()
     {
-      // Nothing extra: base covers pathway/steps/tasks and ordering (including required steps when PathwayRequired == true)
+      // Pathway and child entities must not include IDs during creation
+      When(x => x.Pathway != null, () =>
+      {
+        RuleFor(x => x.Pathway!.Id)
+          .Must(id => id == null)
+          .WithMessage("A new pathway cannot include an Id.");
+
+        RuleForEach(x => x.Pathway!.Steps!)
+          .ChildRules(step =>
+          {
+            step.RuleFor(s => s.Id)
+              .Must(id => id == null)
+              .WithMessage("New steps cannot include an Id.");
+
+            step.RuleForEach(s => s.Tasks!)
+              .ChildRules(task =>
+              {
+                task.RuleFor(t => t.Id)
+                  .Must(id => id == null)
+                  .WithMessage("New tasks cannot include an Id.");
+              });
+          });
+      });
     }
     #endregion
   }
@@ -280,37 +314,6 @@ namespace Yoma.Core.Domain.Referral.Validators
     public ProgramRequestValidatorUpdate()
     {
       RuleFor(x => x.Id).NotEmpty(); //existence validated by service
-
-      // Update-only: if a pathway is required and present → pathway Id is required
-      When(x => x.PathwayRequired && x.Pathway != null, () =>
-      {
-        RuleFor(x => (x.Pathway!).Id)
-          .NotEmpty()
-          .WithMessage("The pathway Id is required for updates.");
-
-        // If steps exist on update, require step IDs and (if tasks exist) task IDs
-        When(x => x.Pathway!.Steps != null && x.Pathway!.Steps.Count > 0, () =>
-        {
-          RuleForEach(x => x.Pathway!.Steps)
-            .ChildRules(step =>
-            {
-              step.RuleFor(s => s.Id) //existence validated by service
-                  .NotEmpty()
-                  .WithMessage("Each step must include its Id when updating.");
-
-              step.When(s => s.Tasks != null && s.Tasks.Count > 0, () =>
-              {
-                step.RuleForEach(s => s.Tasks!)
-                  .ChildRules(task =>
-                  {
-                    task.RuleFor(t => t.Id) //existence validated by service
-                        .NotEmpty()
-                        .WithMessage("Each task must include its Id when updating.");
-                  });
-              });
-            });
-        });
-      });
     }
     #endregion
   }

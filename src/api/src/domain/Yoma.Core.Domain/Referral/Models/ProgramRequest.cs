@@ -39,61 +39,59 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public DateTimeOffset? DateEnd { get; set; }
 
-    public ProgramPathwayRequestBase? PathwayBase { get; set; }
+    [JsonIgnore]
+    public ProgramPathwayRequestUpsert? Pathway { get; set; }
   }
 
-  public class ProgramRequestCreate : ProgramRequestBase
-  {
-    public ProgramPathwayRequestCreate? Pathway
-    {
-      get => PathwayBase as ProgramPathwayRequestCreate;
-      set => PathwayBase = value;
-    }
-  }
+  public class ProgramRequestCreate : ProgramRequestBase { }
 
   public class ProgramRequestUpdate : ProgramRequestBase
   {
     [Required]
     public Guid Id { get; set; }
-
-    public ProgramPathwayRequestUpdate? Pathway
-    {
-      get => PathwayBase as ProgramPathwayRequestUpdate;
-      set => PathwayBase = value;
-    }
   }
 
-  public abstract class ProgramPathwayRequestBase
+  public abstract class ProgramPathwayRequestUpsert
   {
+    public Guid? Id { get; set; }
+
     [Required]
     public string Name { get; set; } = null!;
 
     public string? Description { get; set; }
 
     [JsonIgnore]
-    public List<ProgramPathwayStepRequestBase> StepsBase { get; set; } = null!;
+    public List<ProgramPathwayStepRequestUpsert> Steps { get; set; } = null!;
   }
 
-  public class ProgramPathwayRequestCreate : ProgramPathwayRequestBase
+  public abstract class ProgramPathwayStepRequestUpsert
   {
+    public Guid? Id { get; set; }
+
     [Required]
-    public List<ProgramPathwayStepRequestCreate> Steps
-    {
-      get => [.. StepsBase.Cast<ProgramPathwayStepRequestCreate>()];
-      set => StepsBase = [.. value.Cast<ProgramPathwayStepRequestBase>()];
-    }
+    public string Name { get; set; } = null!;
+
+    public string? Description { get; set; }
+
+    [Required]
+    public PathwayStepRule Rule { get; set; }
+
+    public byte? Order { get; set; }
+
+    [JsonIgnore]
+    public List<ProgramPathwayTaskRequestUpsert> Tasks { get; set; } = null!;
   }
 
-  public class ProgramPathwayRequestUpdate : ProgramPathwayRequestBase
+  public abstract class ProgramPathwayTaskRequestUpsert
   {
-    [Required]
-    public Guid Id { get; set; }
+    public Guid? Id { get; set; }
 
     [Required]
-    public List<ProgramPathwayStepRequestUpdate> Steps
-    {
-      get => [.. StepsBase.Cast<ProgramPathwayStepRequestUpdate>()];
-      set => StepsBase = [.. value.Cast<ProgramPathwayStepRequestBase>()];
-    }
+    public PathwayTaskEntityType EntityType { get; set; }
+
+    [Required]
+    public Guid EntityId { get; set; }
+
+    public byte? Order { get; set; }
   }
 }
