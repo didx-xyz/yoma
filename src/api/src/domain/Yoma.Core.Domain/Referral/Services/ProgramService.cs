@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Sentry.Extensibility;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
@@ -180,33 +181,31 @@ namespace Yoma.Core.Domain.Referral.Services
         ModifiedByUserId = user.Id
       };
 
-      var blobObjects = new List<BlobObject>();
-      try
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+
+        //create the program
+        result = await _programRepository.Create(result);
+
+        //set as default
+        if (request.IsDefault) await SetAsDefault(result);
+
+        //pathway
+        if (request.Pathway != null)
         {
-          using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+          result.Pathway = new ProgramPathway
+          {
+            ProgramId = result.Id,
+            Name = request.Pathway.Name,
+            Description = request.Pathway.Description
+          };
 
-          //create the program
-          result = await _programRepository.Create(result);
+          result.Pathway = await _programPathwayRepository.Create(result.Pathway);
+        }
 
-          //set as default
-          if (request.IsDefault) await SetAsDefault(result);
-
-          //pathway
-          //TODO
-
-          scope.Complete();
-        });
-      }
-      catch
-      {
-        //rollback created blobs
-        if (blobObjects.Count != 0)
-          foreach (var blob in blobObjects)
-            await _blobService.Delete(blob);
-        throw;
-      }
+        scope.Complete();
+      });
 
       return result;
     }
@@ -293,6 +292,7 @@ namespace Yoma.Core.Domain.Referral.Services
           program.ImageStorageType = blobObject.StorageType;
           program.ImageKey = blobObject.Key;
           program = await _programRepository.Update(program);
+          //ModifiedByUserId: set by caller
 
           if (currentLogoId.HasValue)
             await _blobService.Archive(currentLogoId.Value, blobObject); //preserve / archive previous logo as they might be referenced in credentials
@@ -336,6 +336,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
         program.IsDefault = true;
         program = await _programRepository.Update(program);
+        //ModifiedByUserId: set by caller
 
         scope.Complete();
       });
