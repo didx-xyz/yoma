@@ -193,28 +193,48 @@ namespace Yoma.Core.Domain.Referral.Validators
 
             // Each step MUST have ≥ 1 task
             step.RuleFor(s => s.Tasks)
-                .NotNull().WithMessage("Please add at least one task to each step.")
-                .Must(t => t != null && t.Count > 0).WithMessage("Please add at least one task to each step.");
+                .NotEmpty()
+                .WithMessage("Please add at least one task to each step.");
 
-            // Task ordering rule (optional but if used → 1..N, no gaps/dupes, and in order)
+            // Forbid task ordering when Rule = Any
+            step.When(s => s.Rule == PathwayStepRule.Any, () =>
+            {
+              step.RuleForEach(s => s.Tasks!)
+                  .ChildRules(task =>
+                  {
+                    task.RuleFor(t => t.Order)
+                        .Must(o => o == null)
+                        .WithMessage("Task order cannot be specified when the step rule is 'Any'.");
+                  });
+            });
+
+            // Enforce sequential task order ONLY when Rule = All AND at least one order present AND 2+ tasks
             step.RuleFor(s => s.Tasks!)
                 .Must(IsSequentialOrdered)
-                .When(s => s.Tasks != null && s.Tasks.Count > 0)
-                .WithMessage("Task order must be 1, 2, 3... without gaps or duplicates, in the same order as listed.");
+                .When(s => s.Rule == PathwayStepRule.All
+                           && s.Tasks != null
+                           && s.Tasks.Count > 1
+                           && s.Tasks.Any(t => t.Order.HasValue))
+                .WithMessage("For steps with Rule = All, task order must be 1, 2, 3... without gaps or duplicates, in the same order as listed.");
 
-            // Validate each task (EntityType enum is required by model; no specific value restriction)
+            // If any task has an Order, require >1 tasks (ordering only meaningful with multiple tasks)
+            step.RuleFor(s => s.Tasks!)
+                .Must(ts => !ts.Any(t => t.Order.HasValue) || ts.Count > 1)
+                .WithMessage("Task order is only meaningful when the step contains more than one task.");
+
+            // Validate each task
             step.RuleForEach(s => s.Tasks!)
               .ChildRules(task =>
               {
                 task.RuleFor(t => t.Id)
-                 .Must(id => id == null || id != Guid.Empty)
-                 .WithMessage("If a task ID is specified, it cannot be empty.");
+                    .Must(id => id == null || id != Guid.Empty)
+                    .WithMessage("If a task ID is specified, it cannot be empty.");
 
                 task.RuleFor(t => t.EntityId)
                     .NotEmpty()
                     .WithMessage("Each task must reference an entity.");
 
-                // Optional order, but if provided must be ≥1 (the sequential rule above enforces exact sequence)
+                // Optional order, but if provided must be ≥ 1
                 task.RuleFor(t => t.Order)
                     .GreaterThanOrEqualTo((byte)1)
                     .When(t => t.Order.HasValue)
@@ -225,7 +245,10 @@ namespace Yoma.Core.Domain.Referral.Validators
         // Step ordering rule (optional but if used → 1..N, no gaps/dupes, and in order)
         RuleFor(x => x.Pathway!.Steps!)
           .Must(IsSequentialOrdered)
-          .When(m => m.PathwayRequired && m.Pathway!.Steps != null && m.Pathway!.Steps.Count > 0)
+          .When(m => m.PathwayRequired
+                     && m.Pathway!.Steps != null
+                     && m.Pathway!.Steps.Count > 1
+                     && m.Pathway!.Steps.Any(s => s.Order.HasValue))
           .WithMessage("Step order must be 1, 2, 3... without gaps or duplicates, in the same order as listed.");
       });
     }

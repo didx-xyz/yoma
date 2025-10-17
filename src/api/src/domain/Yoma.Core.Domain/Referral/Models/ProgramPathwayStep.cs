@@ -1,13 +1,18 @@
 namespace Yoma.Core.Domain.Referral.Models
 {
   /// <summary>
-  /// A Step groups one or more Tasks and declares how many must be done.
-  /// Steps can be:
-  ///   • Unordered (Order = null): can be done anytime, in parallel with other unordered / ordered steps.
-  ///   • Ordered  (Order = 1..n): must be completed in ascending order (1 before 2, etc.).
-  /// A Step is complete when its Rule is satisfied:
-  ///   • All = all tasks in the step must be completed (task order optional).
-  ///   • Any = any one task in the step completes the step (task order ignored).
+  /// A Step groups one or more Tasks and defines how many must be completed.
+  ///
+  /// Step ordering and completion rules:
+  ///
+  /// • Step Rule:
+  ///   - All → all tasks in the step must be completed (task order optional).
+  ///   - Any → any single task in the step completes the step (task order ignored).
+  ///
+  /// • Step order (relative to other steps):
+  ///   - null  → unordered; can be completed at any time.
+  ///   - 1..N  → ordered; lower numbers must be completed before higher ones.
+  ///     (Only meaningful when multiple ordered steps exist.)
   /// </summary>
   public class ProgramPathwayStep
   {
@@ -19,19 +24,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string? Description { get; set; }
 
-    /// <summary>
-    /// How this step is considered complete:
-    /// • All  = every task in this step must be completed
-    /// • Any  = any single task in this step is enough
-    /// </summary>
     public PathwayStepRule Rule { get; set; }
 
-    /// <summary>
-    /// Optional step order:
-    /// • null  = unordered step (can be done at any time)
-    /// • 1..n  = ordered step (lower numbers must be completed before higher ones)
-    /// Only meaningful if there is more than one ordered step.
-    /// </summary>
     public byte? Order { get; set; }
 
     public List<ProgramPathwayTask>? Tasks { get; set; }
