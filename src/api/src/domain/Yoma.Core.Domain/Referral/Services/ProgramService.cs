@@ -40,6 +40,11 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IRepositoryWithNavigation<ProgramPathway> _programPathwayRepository;
     private readonly IRepositoryWithNavigation<ProgramPathwayStep> _programPathwayStepRepository;
     private readonly IRepository<ProgramPathwayTask> _programPathwayTaskRepository;
+
+    private static readonly ProgramStatus[] Statuses_Updatable = [ProgramStatus.Active, ProgramStatus.Inactive];
+    private static readonly ProgramStatus[] Statuses_Activatable = [ProgramStatus.Inactive];
+    private static readonly ProgramStatus[] Statuses_CanDelete = [ProgramStatus.Active, ProgramStatus.Inactive];
+    private static readonly ProgramStatus[] Statuses_DeActivatable = [ProgramStatus.Active, ProgramStatus.Expired];
     #endregion
 
     #region Constrcutor
@@ -217,7 +222,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var result = GetById(request.Id, true, false);
 
-      //TODO: ValidateUpdatable
+      AssertUpdatable(result);
 
       var existingByName = GetByNameOrNull(request.Name, false, false);
       if (existingByName != null && result.Id != existingByName.Id)
@@ -290,7 +295,7 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       var result = GetById(id, false, false);
 
-      //TODO: ValidateUpdatable
+      AssertUpdatable(result);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -310,16 +315,59 @@ namespace Yoma.Core.Domain.Referral.Services
       return resultImage.Program.ToInfo();
     }
 
-    public Task<ProgramInfo> UpdateStatus(Guid id, ProgramStatus status)
+    public async Task<ProgramInfo> UpdateStatus(Guid id, ProgramStatus status)
     {
-      throw new NotImplementedException();
+      var result = GetById(id, false, false);
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      switch (status)
+      {
+        case ProgramStatus.Active:
+          if (result.Status == ProgramStatus.Active) return result.ToInfo();
+          if (!Statuses_Activatable.Contains(result.Status))
+            throw new ValidationException($"The {nameof(Program)} can not be activated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Activatable.JoinNames()}'");
+
+          //ensure DateEnd was updated for re-activation of previously expired program
+          if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
+            throw new ValidationException($"The {nameof(Program)} cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Program).ToLower()} before proceeding with activation");
+
+          break;
+
+        case ProgramStatus.Inactive:
+          if (result.Status == ProgramStatus.Inactive) return result.ToInfo();
+          if (!Statuses_DeActivatable.Contains(result.Status))
+            throw new ValidationException($"The {nameof(Program)} can not be deactivated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
+
+          break;
+
+        case ProgramStatus.Deleted:
+          if (result.Status == ProgramStatus.Deleted) return result.ToInfo();
+          if (!Statuses_CanDelete.Contains(result.Status))
+            throw new ValidationException($"The {nameof(Program)} can not be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
+
+          break;
+
+        default:
+          throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status.ToDescription()}' not supported");
+      }
+
+      var statusId = _programStatusService.GetByName(status.ToString()).Id;
+
+      result.StatusId = statusId;
+      result.Status = status;
+      result.ModifiedByUserId = user.Id;
+
+      result = await _programRepository.Update(result);
+
+      return result.ToInfo();
     }
 
     public async Task<ProgramInfo> SetAsDefault(Guid id)
     {
       var result = GetById(id, false, false);
 
-      //TODO: ValidateUpdatable 
+      AssertUpdatable(result);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -337,6 +385,12 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Private Members
+    private static void AssertUpdatable(Program program)
+    {
+      if (!Statuses_Updatable.Contains(program.Status))
+        throw new ValidationException($"The {nameof(Program)} can no longer be updated (current status '{program.Status.ToDescription()}'). Required state '{Statuses_Updatable.JoinNames()}'");
+    }
+
     private string? GetBlobObjectURL(StorageType? storageType, string? key)
     {
       if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;
@@ -413,12 +467,15 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private async Task<Program> UpsertProgramPathway(Program program, ProgramPathwayRequestUpsert request)
     {
+      //pathway name is implicitly unique per program — currently a program can only have one pathway
+
       var resultPathway = program.Pathway;
 
       if (resultPathway == null)
       {
+        //program has no pathway, but the request includes an existing pathway
         if (request.Id.HasValue)
-          throw new ValidationException($"Specified program pathway does not exist for program");
+          throw new ValidationException($"This program does not have a pathway, but a pathway was specified to update");
 
         resultPathway = new ProgramPathway
         {
@@ -431,8 +488,12 @@ namespace Yoma.Core.Domain.Referral.Services
       }
       else
       {
+        if (!request.Id.HasValue)
+          throw new ValidationException("The program has an existing pathway, but a new pathway was added");
+
+        //program has an existing pathway, but the request references a different one
         if (resultPathway.Id != request.Id)
-          throw new ValidationException($"Specified program pathway does not match existing pathway");
+          throw new ValidationException($"The specified pathway does not match the existing pathway for this program");
 
         resultPathway.Name = request.Name;
         resultPathway.Description = request.Description;
@@ -447,6 +508,10 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private async Task<ProgramPathway> UpsertProgramPathwaySteps(ProgramPathway pathway, List<ProgramPathwayStepRequestUpsert> requests)
     {
+      // No need to recheck for duplicate step names here —
+      // the validator already enforces unique names within the incoming request,
+      // and after delete, update, and insert operations, the persisted steps will exactly match the request set.
+
       pathway.Steps ??= [];
 
       var resultSteps = new List<ProgramPathwayStep>();
@@ -458,7 +523,7 @@ namespace Yoma.Core.Domain.Referral.Services
         if (resultStep == null)
         {
           if (request.Id.HasValue)
-            throw new ValidationException($"Specified pathway step does not exist for pathway {pathway.Id}");
+            throw new ValidationException($"The specified step '{request.Name}' does not match an existing step for pathway");
 
           resultStep = new ProgramPathwayStep
           {
@@ -496,6 +561,10 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private async Task<ProgramPathwayStep> UpsertProgramPathwayTasks(ProgramPathwayStep step, List<ProgramPathwayTaskRequestUpsert> requests)
     {
+      // No need to recheck for duplicate tasks here —
+      // the validator already enforces unique entity references within each step,
+      // and after delete, update, and insert operations, the persisted tasks will exactly match the request set.
+
       step.Tasks ??= [];
 
       var resultTasks = new List<ProgramPathwayTask>();
@@ -504,10 +573,22 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         var resultTask = request.Id.HasValue ? step.Tasks.SingleOrDefault(t => t.Id == request.Id) : null;
 
+        switch (request.EntityType)
+        {
+          case PathwayTaskEntityType.Opportunity:
+            var opporunity = _opportunityService.GetById(request.EntityId, false, true, false);
+            if (!opporunity.Published)
+              throw new ValidationException($"The specified opportunity is not published and cannot be assigned as a task");
+            break;
+
+          default:
+            throw new InvalidOperationException($"Entity type of '{request.EntityType}' is not supported");
+        }
+
         if (resultTask == null)
         {
           if (request.Id.HasValue)
-            throw new ValidationException($"Specified task does not exist for step {step.Id}");
+            throw new ValidationException($"The specified task for entity '{request.EntityType}: {request.EntityId}' does not match an existing task for step {step.Name}");
 
           resultTask = new ProgramPathwayTask
           {
@@ -550,7 +631,7 @@ namespace Yoma.Core.Domain.Referral.Services
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
           using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
-          blobObject = await _blobService.Create(FileType.Photos, StorageType.Public, file, null);
+          blobObject = await _blobService.Create(FileType.Photos, StorageType.Public, file, null); // public storage; images must remain permanently accessible (e.g., emails, shared links).
           program.ImageId = blobObject.Id;
           program.ImageStorageType = blobObject.StorageType;
           program.ImageKey = blobObject.Key;
@@ -558,7 +639,7 @@ namespace Yoma.Core.Domain.Referral.Services
           //ModifiedByUserId: set by caller
 
           if (currentLogoId.HasValue)
-            await _blobService.Archive(currentLogoId.Value, blobObject); //preserve / archive previous logo as they might be referenced in credentials
+            await _blobService.Archive(currentLogoId.Value, blobObject); //preserve / archive images; they may still appear in sent emails or other public communications
 
           scope.Complete();
         });

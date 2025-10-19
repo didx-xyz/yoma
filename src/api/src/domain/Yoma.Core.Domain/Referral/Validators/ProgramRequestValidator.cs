@@ -145,7 +145,7 @@ namespace Yoma.Core.Domain.Referral.Validators
       {
         RuleFor(x => x.Pathway!.Id)
             .Must(id => id == null || id != Guid.Empty)
-            .WithMessage("If a pathway ID is specified, it cannot be empty.");
+            .WithMessage("If a pathway Id is specified, it cannot be empty.");
 
         RuleFor(x => x.Pathway!.Name)
             .NotEmpty()
@@ -167,6 +167,16 @@ namespace Yoma.Core.Domain.Referral.Validators
             .Must(s => s != null && s.Count > 0)
             .When(m => m.PathwayRequired)
             .WithMessage("Please add at least one step to the pathway.");
+
+        // Ensure unique step names within the same pathway (case-insensitive)
+        RuleFor(x => x.Pathway!.Steps!)
+          .Must(steps =>
+          {
+            var normalizedNames = steps.Where(s => !string.IsNullOrEmpty(s.Name)).Select(s => s.Name.ToLowerInvariant()).ToList();
+            return normalizedNames.Distinct().Count() == normalizedNames.Count;
+          })
+          .When(m => m.Pathway!.Steps != null && m.Pathway!.Steps.Count > 1)
+          .WithMessage("Each step name must be unique within the pathway.");
 
         // Validate each step
         RuleForEach(x => x.Pathway!.Steps!)
@@ -222,13 +232,26 @@ namespace Yoma.Core.Domain.Referral.Validators
                 .Must(ts => !ts.Any(t => t.Order.HasValue) || ts.Count > 1)
                 .WithMessage("Task order is only meaningful when the step contains more than one task.");
 
+            // Ensure unique tasks per step by (EntityType, EntityId)
+            step.RuleFor(s => s.Tasks!)
+                .Must(tasks =>
+                {
+                  if (tasks == null || tasks.Count <= 1) return true;
+                  var keys = tasks
+                    .Where(t => t.EntityId != Guid.Empty) 
+                    .Select(t => (t.EntityType, t.EntityId))
+                    .ToList();
+                  return keys.Distinct().Count() == keys.Count;
+                })
+                .WithMessage("Each task in a step must reference a unique entity.");
+
             // Validate each task
             step.RuleForEach(s => s.Tasks!)
               .ChildRules(task =>
               {
                 task.RuleFor(t => t.Id)
                     .Must(id => id == null || id != Guid.Empty)
-                    .WithMessage("If a task ID is specified, it cannot be empty.");
+                    .WithMessage("If a task Id is specified, it cannot be empty.");
 
                 task.RuleFor(t => t.EntityId)
                     .NotEmpty()
@@ -302,7 +325,7 @@ namespace Yoma.Core.Domain.Referral.Validators
     #region Constructor
     public ProgramRequestValidatorCreate()
     {
-      // Pathway and child entities must not include IDs during creation
+      // Pathway and child entities must not include Ids during creation
       When(x => x.Pathway != null, () =>
       {
         RuleFor(x => x.Pathway!.Id)
