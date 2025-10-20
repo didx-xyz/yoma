@@ -179,17 +179,17 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
 
-      var result = new LinkSearchResult();
+      var results = new LinkSearchResult();
 
       //pagination
       if (filter.PaginationEnabled)
       {
-        result.TotalCount = query.Count();
+        results.TotalCount = query.Count();
         query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
       }
 
-      result.Items = [.. query.ToList().Select(o => o.ToLinkInfo(false))];
-      return result;
+      results.Items = [.. query.ToList().Select(o => o.ToLinkInfo(false))];
+      return results;
     }
 
     public async Task<LinkInfo> GetOrCreateShare(LinkRequestCreateShare request, bool publishedOrExpiredOnly, bool ensureOrganizationAuthorization)

@@ -1,6 +1,5 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
@@ -12,6 +11,7 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
+using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -22,7 +22,6 @@ namespace Yoma.Core.Domain.Referral.Services
   public class ProgramService : IProgramService
   {
     #region Class Variables
-    private readonly ILogger<ProgramService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     private readonly IProgramStatusService _programStatusService;
@@ -32,6 +31,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private readonly IExecutionStrategyService _executionStrategyService;
 
+    private readonly ProgramSearchFilterValidator _programSearchFilterValidator;
     private readonly ProgramRequestValidatorCreate _programRequestValidatorCreate;
     private readonly ProgramRequestValidatorUpdate _programRequestValidatorUpdate;
 
@@ -48,7 +48,6 @@ namespace Yoma.Core.Domain.Referral.Services
 
     #region Constrcutor
     public ProgramService(
-      ILogger<ProgramService> logger,
       IHttpContextAccessor httpContextAccessor,
 
       IProgramStatusService programStatusService,
@@ -58,6 +57,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       IExecutionStrategyService executionStrategyService,
 
+      ProgramSearchFilterValidator programSearchFilterValidator,
       ProgramRequestValidatorCreate programRequestValidatorCreate,
       ProgramRequestValidatorUpdate programRequestValidatorUpdate,
 
@@ -67,7 +67,6 @@ namespace Yoma.Core.Domain.Referral.Services
       IRepository<ProgramPathwayTask> programPathwayTaskRepository
     )
     {
-      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
       _programStatusService = programStatusService ?? throw new ArgumentNullException(nameof(programStatusService));
@@ -77,6 +76,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
 
+      _programSearchFilterValidator = programSearchFilterValidator ?? throw new ArgumentNullException(nameof(programSearchFilterValidator));
       _programRequestValidatorCreate = programRequestValidatorCreate ?? throw new ArgumentNullException(nameof(programRequestValidatorCreate));
       _programRequestValidatorUpdate = programRequestValidatorUpdate ?? throw new ArgumentNullException(nameof(programRequestValidatorUpdate));
 
@@ -143,7 +143,53 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public ProgramSearchResults Search(ProgramSearchFilterAdmin filter)
     {
-      throw new NotImplementedException();
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+
+      _programSearchFilterValidator.ValidateAndThrow(filter);
+
+      var query = _programRepository.Query(true);
+
+      //valueContains
+      if (!string.IsNullOrEmpty(filter.ValueContains))
+      {
+        filter.ValueContains = filter.ValueContains.Trim();
+        query = _programRepository.Contains(query, filter.ValueContains);
+      }
+
+      //date range
+      if (filter.DateStart.HasValue)
+      {
+        filter.DateStart = filter.DateStart.Value.RemoveTime();
+        query = query.Where(o => o.DateStart >= filter.DateStart.Value);
+      }
+
+      if (filter.DateEnd.HasValue)
+      {
+        filter.DateEnd = filter.DateEnd.Value.ToEndOfDay();
+        query = query.Where(o => o.DateEnd <= filter.DateEnd.Value);
+      }
+
+      //statuses
+      if (filter.Statuses != null && filter.Statuses.Count != 0)
+      {
+        filter.Statuses = [.. filter.Statuses.Distinct()];
+        var statusIds = filter.Statuses.Select(o => _programStatusService.GetByName(o.ToString()).Id).ToList();
+        query = query.Where(o => statusIds.Contains(o.StatusId));
+      }
+
+      query = query.OrderBy(o => o.Name).ThenBy(o => o.Id);
+
+      var results = new ProgramSearchResults();
+
+      if (filter.PaginationEnabled)
+      {
+        results.TotalCount = query.Count();
+        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+      }
+
+      results.Items = [.. query];
+
+      return results;
     }
 
     public async Task<Program> Create(ProgramRequestCreate request)
@@ -567,12 +613,26 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         var resultTask = request.Id.HasValue ? step.Tasks.SingleOrDefault(t => t.Id == request.Id) : null;
 
+        OpportunityItem? opportunityItem = null;
         switch (request.EntityType)
         {
           case PathwayTaskEntityType.Opportunity:
-            var opporunity = _opportunityService.GetById(request.EntityId, false, true, false);
-            if (!opporunity.Published)
+            var opportunity = _opportunityService.GetById(request.EntityId, false, true, false);
+            if (!opportunity.Published)
               throw new ValidationException($"The specified opportunity is not published and cannot be assigned as a task");
+
+            if (!opportunity.VerificationEnabled)
+              throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
+
+            if (!opportunity.VerificationMethod.HasValue) //support any verification method
+              throw new DataInconsistencyException($"Data inconsistency detected: The opportunity '{opportunity.Title}' has verification enabled, but no verification method is set");
+
+            opportunityItem = new OpportunityItem
+            {
+              Id = opportunity.Id,
+              Title = opportunity.Title
+            };
+
             break;
 
           default:
@@ -588,7 +648,7 @@ namespace Yoma.Core.Domain.Referral.Services
           {
             StepId = step.Id,
             EntityType = request.EntityType,
-            Opportunity = new Opportunity.Models.OpportunityItem { Id = request.EntityId },
+            Opportunity = opportunityItem,
             Order = request.Order
           };
 
@@ -598,7 +658,7 @@ namespace Yoma.Core.Domain.Referral.Services
         else
         {
           resultTask.EntityType = request.EntityType;
-          resultTask.Opportunity = new Opportunity.Models.OpportunityItem { Id = request.EntityId };
+          resultTask.Opportunity = opportunityItem;
           resultTask.Order = request.Order;
 
           resultTask = await _programPathwayTaskRepository.Update(resultTask);

@@ -206,31 +206,24 @@ namespace Yoma.Core.Domain.Referral.Validators
                 .NotEmpty()
                 .WithMessage("Please add at least one task to each step.");
 
-            // Forbid task ordering when Rule = Any
-            step.When(s => s.Rule == PathwayStepRule.Any, () =>
-            {
-              step.RuleForEach(s => s.Tasks!)
-                  .ChildRules(task =>
-                  {
-                    task.RuleFor(t => t.Order)
-                        .Must(o => o == null)
-                        .WithMessage("Task order cannot be specified when the step rule is 'Any'.");
-                  });
-            });
-
-            // Enforce sequential task order ONLY when Rule = All AND at least one order present AND 2+ tasks
+            // TASKS (inside a step)
+            // Mixed ordering allowed: some tasks may have an Order, others may not.
+            // If any task has an Order, the ordered subset must be 1..K (no gaps/dupes).
+            // Unordered tasks are allowed and can appear anywhere.
+            // - Task order is only meaningful if the step contains more than one task.
             step.RuleFor(s => s.Tasks!)
-                .Must(IsSequentialOrdered)
+                .Must(tasks => IsSequentialOrdered(tasks, t => t.Order))
                 .When(s => s.Rule == PathwayStepRule.All
-                           && s.Tasks != null
-                           && s.Tasks.Count > 1
-                           && s.Tasks.Any(t => t.Order.HasValue))
-                .WithMessage("For steps with Rule = All, task order must be 1, 2, 3... without gaps or duplicates, in the same order as listed.");
+                       && s.Tasks != null
+                       && s.Tasks.Count > 1)
+                .WithMessage("Task ordering: for steps with Rule = All, if any task has an Order, the ordered tasks must be 1..K with no gaps or duplicates. Unordered tasks are allowed.");
 
-            // If any task has an Order, require >1 tasks (ordering only meaningful with multiple tasks)
+            // TASKS (inside a step) — Rule = Any
+            // When Step Rule = Any, task order is not allowed (must be null).
             step.RuleFor(s => s.Tasks!)
-                .Must(ts => !ts.Any(t => t.Order.HasValue) || ts.Count > 1)
-                .WithMessage("Task order is only meaningful when the step contains more than one task.");
+                .Must(ts => ts == null || ts.All(t => !t.Order.HasValue))
+                .When(s => s.Rule == PathwayStepRule.Any)
+                .WithMessage("Task ordering: for steps with Rule = Any, tasks must not specify an Order.");
 
             // Ensure unique tasks per step by (EntityType, EntityId)
             step.RuleFor(s => s.Tasks!)
@@ -238,7 +231,7 @@ namespace Yoma.Core.Domain.Referral.Validators
                 {
                   if (tasks == null || tasks.Count <= 1) return true;
                   var keys = tasks
-                    .Where(t => t.EntityId != Guid.Empty) 
+                    .Where(t => t.EntityId != Guid.Empty)
                     .Select(t => (t.EntityType, t.EntityId))
                     .ToList();
                   return keys.Distinct().Count() == keys.Count;
@@ -265,57 +258,38 @@ namespace Yoma.Core.Domain.Referral.Validators
               });
           });
 
-        // Step ordering rule (optional but if used → 1..N, no gaps/dupes, and in order)
+        // STEPS (within a pathway)
+        // Mixed ordering allowed: some steps can have an Order, others may not.
+        // If any step has an Order, the ordered subset must be 1..K (no gaps/dupes).
+        // Unordered steps are allowed and can appear anywhere.
+        // - Step order is only meaningful if the pathway contains more than one step.
         RuleFor(x => x.Pathway!.Steps!)
-          .Must(IsSequentialOrdered)
-          .When(m => m.PathwayRequired
-                     && m.Pathway!.Steps != null
-                     && m.Pathway!.Steps.Count > 1
-                     && m.Pathway!.Steps.Any(s => s.Order.HasValue))
-          .WithMessage("Step order must be 1, 2, 3... without gaps or duplicates, in the same order as listed.");
+            .Must(steps => IsSequentialOrdered(steps, s => s.Order))
+            .When(m => m.PathwayRequired && m.Pathway?.Steps != null && m.Pathway.Steps.Count > 1)
+            .WithMessage("Step ordering: if any step has an Order, the ordered steps must be 1..K with no gaps or duplicates. Unordered steps are allowed.");
       });
     }
     #endregion
 
     #region Private Members
-    // Ordering is optional:
-    // - If none have Order → OK
-    // - If any have Order → ALL must have Order, be 1..N with no gaps/dupes, and align to list position (i == Order-1)
-    private static bool IsSequentialOrdered<TItem>(IList<TItem> items) where TItem : class
+    private static bool IsSequentialOrdered<TItem>(
+        IList<TItem> items,
+        Func<TItem, byte?> orderSelector)
     {
-      // Extract nullable byte? Order via reflection-like pattern with dynamic accessor
-      static byte? GetOrder(TItem it)
-      {
-        var prop = typeof(TItem).GetProperty("Order");
-        return (byte?)prop?.GetValue(it);
-      }
+      if (items == null || items.Count == 0) return true;
 
-      var orders = items.Select(GetOrder).ToList();
+      var values = items
+          .Select(orderSelector)
+          .Where(v => v.HasValue)
+          .Select(v => v!.Value)
+          .ToList();
 
-      // Case 1: none specified -> valid
-      if (orders.All(o => !o.HasValue))
-        return true;
+      if (values.Count == 0) return true; // nothing ordered → valid
 
-      // Case 2: some specified but not all -> invalid
-      if (orders.Any(o => !o.HasValue))
-        return false;
-
-      // All specified. Check 1..N sequential and in list order
-      var values = orders.Select(o => o!.Value).ToList();
-      var n = values.Count;
-
-      // No duplicates, min=1, max=n
-      if (values.Distinct().Count() != n) return false;
-      if (values.Min() != 1) return false;
-      if (values.Max() != n) return false;
-
-      // In order relative to list index (i -> Order == i+1)
-      for (int i = 0; i < n; i++)
-      {
-        if (values[i] != i + 1) return false;
-      }
-
-      return true;
+      var k = values.Count;
+      return values.Distinct().Count() == k
+          && values.Min() == 1
+          && values.Max() == k;
     }
     #endregion
   }

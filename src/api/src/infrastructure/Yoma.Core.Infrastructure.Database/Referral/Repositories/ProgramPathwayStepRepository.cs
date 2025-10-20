@@ -44,7 +44,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           Order = task.Order,
           DateCreated = task.DateCreated,
           DateModified = task.DateModified
-        }).OrderBy(t => t.Order == null).ThenBy(t => t.Order).ThenBy(t => t.Opportunity == null ? null : t.Opportunity.Title).ToList() : null
+        }).OrderBy(t => t.Order.HasValue).ThenBy(t => t.Order).ThenBy(t => t.Opportunity == null ? null : t.Opportunity.Title).ToList() : null
       }).AsSplitQuery();
     }
 

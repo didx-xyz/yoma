@@ -42,134 +42,6 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Public Members
-    #region Administrative Actions
-    [SwaggerOperation(Summary = "Get the referral program by id")]
-    [HttpGet("program/{id}/admin")]
-    [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public ActionResult<Domain.Referral.Models.Program> GetProgramById([FromRoute] Guid id)
-    {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetProgramById));
-
-      var result = _programService.GetById(id, true, true);
-
-      _logger.LogInformation("Request {requestName} handled", nameof(GetProgramById));
-
-      return Ok(result);
-    }
-
-    [SwaggerOperation(Summary = "Search for referral programs based on the supplied filter")]
-    [HttpPost("program/search/admin")]
-    [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public ActionResult<ProgramSearchResults> SearchProgram([FromBody] ProgramSearchFilterAdmin filter)
-    {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchProgram));
-
-      var result = _programService.Search(filter);
-
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchProgram));
-
-      return Ok(result);
-    }
-
-    [SwaggerOperation(Summary = "Create a new referral program")]
-    [HttpPost("program/create")]
-    [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> CreateProgram([FromBody] ProgramRequestCreate request)
-    {
-      _logger.LogInformation("Handling request {requestName}", nameof(CreateProgram));
-
-      var result = await _programService.Create(request);
-
-      _logger.LogInformation("Request {requestName} handled", nameof(CreateProgram));
-
-      return Ok(result);
-    }
-
-    [SwaggerOperation(Summary = "Update the specified referral program")]
-    [HttpPatch("program/update")]
-    [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgram([FromBody] ProgramRequestUpdate request)
-    {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgram));
-
-      var result = await _programService.Update(request);
-
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgram));
-
-      return Ok(result);
-    }
-
-    [SwaggerOperation(Summary = "Update the referral program image")]
-    [HttpPatch("program/{id}/image")]
-    [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramImage([FromRoute] Guid id, [Required] IFormFile file)
-    {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramImage));
-
-      var result = await _programService.UpdateImage(id, file);
-
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgramImage));
-
-      return Ok(result);
-    }
-
-    [SwaggerOperation(Summary = "Update the referral program status (Active / Inactive / Deleted)")]
-    [HttpPatch("program/{id}/{status}")]
-    [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] ProgramStatus status)
-    {
-      _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramStatus));
-
-      var result = await _programService.UpdateStatus(id, status);
-
-      _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgramStatus));
-
-      return Ok(result);
-    }
-
-    [SwaggerOperation(Summary = "Set the specified referral program as the default")]
-    [HttpPatch("program/{id}/default")]
-    [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> SetProgramAsDefault([FromRoute] Guid id)
-    {
-      _logger.LogInformation("Handling request {requestName}", nameof(SetProgramAsDefault));
-
-      var result = await _programService.SetAsDefault(id);
-
-      _logger.LogInformation("Request {requestName} handled", nameof(SetProgramAsDefault));
-
-      return Ok(result);
-    }
-
-    [SwaggerOperation(Summary = "Search for referral links based on the supplied filter")]
-    [HttpPost("link/search/admin")]
-    [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public ActionResult<ReferralLinkSearchResults> SearchLink([FromBody] ReferralLinkSearchFilterAdmin filter)
-    {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchLink));
-
-      var result = _linkService.Search(filter);
-
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchLink));
-
-      return Ok(result);
-    }
-
-    [SwaggerOperation(Summary = "Search link usages based on the supplied filter")]
-    [HttpPost("link/usage/search/admin")]
-    [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public ActionResult<ReferralLinkUsageSearchResults> SearchLinkUsage([FromBody] ReferralLinkUsageSearchFilterAdmin filter)
-    {
-      _logger.LogInformation("Handling request {requestName}", nameof(SearchLinkUsage));
-
-      var result = _linkUsageService.Search(filter);
-
-      _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkUsage));
-
-      return Ok(result);
-    }
-    #endregion
-
     #region Authenticated User Based Actions
     [SwaggerOperation(Summary = "Get the referrals availability status (Authenticated User)",
       Description = "Returns the referrals availability status for the authenticated user, including whether referrals are available, if the user is blocked, and details of the default referral program")]
@@ -341,6 +213,134 @@ namespace Yoma.Core.Api.Controllers
       _logger.LogInformation("Request {requestName} handled", nameof(ClaimAsReferee));
 
       return Ok();
+    }
+    #endregion
+
+    #region Administrative Actions
+    [SwaggerOperation(Summary = "Get the referral program by id")]
+    [HttpGet("program/{id}/admin")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public ActionResult<Domain.Referral.Models.Program> GetProgramById([FromRoute] Guid id)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetProgramById));
+
+      var result = _programService.GetById(id, true, true);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetProgramById));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Search for referral programs based on the supplied filter")]
+    [HttpPost("program/search/admin")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public ActionResult<ProgramSearchResults> SearchProgram([FromBody] ProgramSearchFilterAdmin filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchProgram));
+
+      var result = _programService.Search(filter);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchProgram));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Create a new referral program")]
+    [HttpPost("program/create")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<ActionResult<Domain.Referral.Models.Program>> CreateProgram([FromBody] ProgramRequestCreate request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(CreateProgram));
+
+      var result = await _programService.Create(request);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(CreateProgram));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Update the specified referral program")]
+    [HttpPatch("program/update")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgram([FromBody] ProgramRequestUpdate request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgram));
+
+      var result = await _programService.Update(request);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgram));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Update the referral program image")]
+    [HttpPatch("program/{id}/image")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramImage([FromRoute] Guid id, [Required] IFormFile file)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramImage));
+
+      var result = await _programService.UpdateImage(id, file);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgramImage));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Update the referral program status (Active / Inactive / Deleted)")]
+    [HttpPatch("program/{id}/{status}")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] ProgramStatus status)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramStatus));
+
+      var result = await _programService.UpdateStatus(id, status);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UpdateProgramStatus));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Set the specified referral program as the default")]
+    [HttpPatch("program/{id}/default")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<ActionResult<Domain.Referral.Models.Program>> SetProgramAsDefault([FromRoute] Guid id)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SetProgramAsDefault));
+
+      var result = await _programService.SetAsDefault(id);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SetProgramAsDefault));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Search for referral links based on the supplied filter")]
+    [HttpPost("link/search/admin")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public ActionResult<ReferralLinkSearchResults> SearchLink([FromBody] ReferralLinkSearchFilterAdmin filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchLink));
+
+      var result = _linkService.Search(filter);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchLink));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Search link usages based on the supplied filter")]
+    [HttpPost("link/usage/search/admin")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public ActionResult<ReferralLinkUsageSearchResults> SearchLinkUsage([FromBody] ReferralLinkUsageSearchFilterAdmin filter)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(SearchLinkUsage));
+
+      var result = _linkUsageService.Search(filter);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(SearchLinkUsage));
+
+      return Ok(result);
     }
     #endregion
     #endregion

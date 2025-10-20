@@ -28,7 +28,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         Order = entity.Order,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
-      });
+      }).OrderBy(t => t.Order.HasValue).ThenBy(t => t.Order).ThenBy(t => t.Opportunity == null ? null : t.Opportunity.Title);
     }
 
     public async Task<ProgramPathwayTask> Create(ProgramPathwayTask item)
