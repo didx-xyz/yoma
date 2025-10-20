@@ -187,13 +187,15 @@ namespace Yoma.Core.Domain
       services.AddScoped<ILinkStatusService, LinkStatusService>();
       services.AddScoped<ILinkUsageStatusService, LinkUsageStatusService>();
       services.AddScoped<IProgramStatusService, ProgramStatusService>();
+      services.AddScoped<IBlockReasonService, BlockReasonService>();
       #endregion Lookups
 
+      services.AddScoped<IBlockService, BlockService>();
       services.AddScoped<Referral.Interfaces.ILinkService, Referral.Services.LinkService>();
       services.AddScoped<ILinkUsageService, LinkUsageService>();
       services.AddScoped<IProgramService, ProgramService>();
       services.AddScoped<IProgramInfoService, ProgramInfoService>();
-      services.AddScoped<IReferralService, ReferralService>();
+      
       #endregion Referral
 
       #region Reward

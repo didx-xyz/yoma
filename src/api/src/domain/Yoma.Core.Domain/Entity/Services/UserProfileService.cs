@@ -17,6 +17,7 @@ using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
+using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Services
@@ -35,6 +36,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IMyOpportunityService _myOpportunityService;
     private readonly IWalletService _walletService;
     private readonly ISettingsDefinitionService _settingsDefinitionService;
+    private readonly IBlockService _referralBlockService;
     private readonly UserRequestCreateProfileValidator _userRequestCreateProfileValidator;
     private readonly UserRequestUpdateProfileValidator _userRequestUpdateProfileValidator;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
@@ -53,6 +55,7 @@ namespace Yoma.Core.Domain.Entity.Services
       IMyOpportunityService myOpportunityService,
       IWalletService walletService,
       ISettingsDefinitionService settingsDefinitionService,
+      IBlockService referralBlockService, 
       UserRequestCreateProfileValidator userRequestCreateProfileValidator,
       UserRequestUpdateProfileValidator userRequestUpdateProfileValidator,
       IRepositoryValueContainsWithNavigation<User> userRepository,
@@ -69,6 +72,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _myOpportunityService = myOpportunityService;
       _walletService = walletService;
       _settingsDefinitionService = settingsDefinitionService;
+      _referralBlockService = referralBlockService;
       _userRequestCreateProfileValidator = userRequestCreateProfileValidator;
       _userRequestUpdateProfileValidator = userRequestUpdateProfileValidator;
       _userRepository = userRepository;
@@ -317,6 +321,14 @@ namespace Yoma.Core.Domain.Entity.Services
 
       filter.VerificationStatuses = [VerificationStatus.Rejected];
       result.OpportunityCountRejected = _myOpportunityService.Search(filter, user).TotalCount ?? default;
+
+      //referral status
+      var resultBlock = _referralBlockService.GetByUserIdOrNull(result.Id);
+  
+      result.Referral = new UserProfileReferral
+      {
+        Blocked = resultBlock != null
+      };
 
       return result;
     }

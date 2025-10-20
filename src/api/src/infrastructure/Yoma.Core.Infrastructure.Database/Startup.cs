@@ -169,11 +169,13 @@ namespace Yoma.Core.Infrastructure.Database
 
       #region Referral
       #region Lookups
+      services.AddScoped<IRepository<Domain.Referral.Models.Lookups.BlockReason>, BlockReasonRepository>();
       services.AddScoped<IRepository<Domain.Referral.Models.Lookups.LinkStatus>, LinkStatusRepository>();
       services.AddScoped<IRepository<Domain.Referral.Models.Lookups.LinkUsageStatus>, LinkUsageStatusRepository>();
       services.AddScoped<IRepository<Domain.Referral.Models.Lookups.ProgramStatus>, ProgramStatusRepository>();
       #endregion Lookups
 
+      services.AddScoped<IRepository<Domain.Referral.Models.Block>, BlockRepository>();
       services.AddScoped<IRepositoryBatchedValueContains<Domain.Referral.Models.ReferralLink>, Referral.Repositories.LinkRepository>();
       services.AddScoped<IRepositoryBatched<Domain.Referral.Models.ReferralLinkUsage>, LinkUsageRepository>();
       services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathway>, ProgramPathwayRepository>();

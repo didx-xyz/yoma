@@ -5,7 +5,9 @@ using System.ComponentModel.DataAnnotations;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Interfaces;
+using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
+using Yoma.Core.Domain.Referral.Models.Lookups;
 
 namespace Yoma.Core.Api.Controllers
 {
@@ -17,43 +19,59 @@ namespace Yoma.Core.Api.Controllers
   {
     #region Class Variables
     private readonly ILogger<ReferralController> _logger;
-    private readonly IReferralService _referralService;
+    private readonly IBlockService _blockService;
     private readonly IProgramService _programService;
     private readonly IProgramInfoService _programInfoService;
     private readonly ILinkService _linkService;
     private readonly ILinkUsageService _linkUsageService;
+    private readonly IBlockReasonService _blockReasonService;
     #endregion
 
     #region Constructor
     public ReferralController(ILogger<ReferralController> logger,
-      IReferralService referralService,
+      IBlockService blockService,
       IProgramService programService,
       IProgramInfoService programInfoService,
       ILinkService linkService,
-      ILinkUsageService linkUsageService)
+      ILinkUsageService linkUsageService,
+      IBlockReasonService blockReasonService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-      _referralService = referralService ?? throw new ArgumentNullException(nameof(referralService));
+      _blockService = blockService ?? throw new ArgumentNullException(nameof(blockService));
       _programService = programService ?? throw new ArgumentNullException(nameof(programService));
       _programInfoService = programInfoService ?? throw new ArgumentNullException(nameof(programInfoService));
       _linkService = linkService ?? throw new ArgumentNullException(nameof(linkService));
       _linkUsageService = linkUsageService ?? throw new ArgumentNullException(nameof(linkUsageService));
+      _blockReasonService = blockReasonService ?? throw new ArgumentNullException(nameof(blockReasonService));
     }
     #endregion
 
     #region Public Members
     #region Authenticated User Based Actions
-    [SwaggerOperation(Summary = "Get the referrals availability status (Authenticated User)",
-      Description = "Returns the referrals availability status for the authenticated user, including whether referrals are available, if the user is blocked, and details of the default referral program")]
-    [HttpGet("status")]
+    [SwaggerOperation(Summary = "Check if any referral programs are available (Authenticated User)")]
+    [HttpGet("program/available")]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public ActionResult<ReferralStatusResponse> GetStatus()
+    public ActionResult<bool> GetAvailable()
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetStatus));
+      _logger.LogInformation("Handling request {requestName}", nameof(GetAvailable));
 
-      var result = _referralService.GetStatus();
+      var result = _programInfoService.Available();
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetStatus));
+      _logger.LogInformation("Request {requestName} handled", nameof(GetAvailable));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Get the default referral program (Authenticated User)")]
+    [HttpGet("program/default/info")]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public ActionResult<ProgramInfo> GetProgramInfoDefault()
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetProgramInfoDefault));
+
+      var result = _programInfoService.GetDefault();
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetProgramInfoDefault));
 
       return Ok(result);
     }
@@ -217,6 +235,48 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Administrative Actions
+    [SwaggerOperation(Summary = "Return a list of block reasons")]
+    [HttpGet("block/reason")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public ActionResult<BlockReason> ListBlockReasons()
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(ListBlockReasons));
+
+      var result = _blockReasonService.List();
+
+      _logger.LogInformation("Request {requestName} handled", nameof(ListBlockReasons));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Block a referrer")]
+    [HttpPut("block")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<ActionResult<Block>> BlockReferrer([FromBody] BlockRequest request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(BlockReferrer));
+
+      var result = await _blockService.Block(request);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(BlockReferrer));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Unblock a referrer")]
+    [HttpPatch("unblock")]
+    [Authorize(Roles = $"{Constants.Role_Admin}")]
+    public async Task<ActionResult<Block>> UnblockReferrer([FromBody] UnblockRequest request)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(UnblockReferrer));
+
+      var result = await _blockService.Unblock(request);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(UnblockReferrer));
+
+      return Ok(result);
+    }
+
     [SwaggerOperation(Summary = "Get the referral program by id")]
     [HttpGet("program/{id}/admin")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
@@ -290,7 +350,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Update the referral program status (Active / Inactive / Deleted)")]
     [HttpPatch("program/{id}/{status}")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] ProgramStatus status)
+    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] Domain.Referral.ProgramStatus status)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramStatus));
 

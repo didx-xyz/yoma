@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.Referral.Validators
     {
       RuleFor(x => x.ValueContains).Length(3, 50).When(x => !string.IsNullOrEmpty(x.ValueContains));
       RuleFor(x => x.DateStart).GreaterThanOrEqualTo(x => x.DateEnd).When(x => x.DateEnd.HasValue && x.DateStart.HasValue).WithMessage("{PropertyName} is earlier than the Start Date.");
-      RuleFor(x => x.PaginationEnabled).Equal(true).WithMessage("Pagination required");
+      RuleFor(x => x.PaginationEnabled).Equal(true).When(x => !x.TotalCountOnly).WithMessage("Pagination required");
     }
     #endregion
   }

@@ -19,13 +19,35 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Public Members
+    public bool Available()
+    {
+      var searchResults = _programService.Search(new ProgramSearchFilterAdmin
+      {
+        TotalCountOnly = true,
+        Statuses = [ProgramStatus.Active]
+      });
+
+      return searchResults.TotalCount > 0;
+    }
+
+    public ProgramInfo GetDefault()
+    {
+      var result = _programService.GetDefaultOrNull(true, true)
+        ?? throw new EntityNotFoundException("Default program not found");
+
+      if (result.Status != ProgramStatus.Active)
+        throw new EntityNotFoundException($"Default program '{result.Name}' is currently unavailable");
+
+      return result.ToInfo();
+    }
+
     public ProgramInfo GetById(Guid id)
     {
       var result = _programService.GetById(id, true, true);
 
-      var (resultState, message) = result.ActiveOrExpired();
-
-      if (!resultState) throw new EntityNotFoundException(message!);
+      var statuses = new ProgramStatus[] { ProgramStatus.Active, ProgramStatus.Expired };
+      if (!statuses.Contains(result.Status))
+        throw new EntityNotFoundException($"Program '{result.Name}' is currently unavailable");
 
       return result.ToInfo();
     }

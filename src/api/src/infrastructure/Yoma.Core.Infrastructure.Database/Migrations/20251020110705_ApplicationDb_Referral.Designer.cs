@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251015141840_ApplicationDb_Referral")]
+    [Migration("20251020110705_ApplicationDb_Referral")]
     partial class ApplicationDb_Referral
     {
         /// <inheritdoc />
@@ -1766,6 +1766,54 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.ToTable("ProcessingLog", "PartnerSharing");
                 });
 
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Block", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("CommentBlock")
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<string>("CommentUnblock")
+                        .HasColumnType("varchar(500)");
+
+                    b.Property<Guid>("CreatedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("DateModified")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ModifiedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ReasonId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("ModifiedByUserId");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("\"Active\" = true");
+
+                    b.HasIndex("ReasonId", "DateCreated", "DateModified");
+
+                    b.ToTable("Block", "Referral");
+                });
+
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Link", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1867,6 +1915,31 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.HasIndex("LinkId", "StatusId", "DateCreated", "DateModified");
 
                     b.ToTable("LinkUsage", "Referral");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.BlockReason", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("DateCreated")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("varchar(50)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique();
+
+                    b.ToTable("BlockReason", "Referral");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.LinkStatus", b =>
@@ -3123,6 +3196,41 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Navigation("Partner");
 
                     b.Navigation("Status");
+                });
+
+            modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Block", b =>
+                {
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "ModifiedByUser")
+                        .WithMany()
+                        .HasForeignKey("ModifiedByUserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.Lookups.BlockReason", "Reason")
+                        .WithMany()
+                        .HasForeignKey("ReasonId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Entity.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("ModifiedByUser");
+
+                    b.Navigation("Reason");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Yoma.Core.Infrastructure.Database.Referral.Entities.Link", b =>

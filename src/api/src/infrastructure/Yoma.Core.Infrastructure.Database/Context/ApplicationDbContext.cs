@@ -148,12 +148,16 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
     #region Referral
     #region Lookups
+    public DbSet<BlockReason> ReferralBlockReason { get; set; }
+
     public DbSet<LinkStatus> ReferralLinkStatus { get; set; }
 
     public DbSet<LinkUsageStatus> ReferralLinkUsageStatus { get; set; }
 
     public DbSet<ProgramStatus> ReferralProgramStatus { get; set; }
     #endregion Lookups
+
+    public DbSet<Block> ReferralBlock { get; set; }
 
     public DbSet<Referral.Entities.Link> ReferralLink { get; set; }
 
@@ -295,6 +299,10 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasIndex(e => new { e.StepId, e.EntityType, e.OpportunityId })
           .IsUnique()
           .HasFilter(null);
+
+      builder.Entity<Block>().HasIndex(o => o.UserId)
+        .IsUnique()
+        .HasFilter($"\"{nameof(Block.Active)}\" = true");
       #endregion
 
       #region Reward

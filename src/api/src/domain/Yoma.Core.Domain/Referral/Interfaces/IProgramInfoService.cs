@@ -4,6 +4,10 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 {
   public interface IProgramInfoService
   {
+    bool Available();
+
+    ProgramInfo GetDefault();
+
     ProgramInfo GetById(Guid id);
 
     ProgramSearchResultsInfo Search(ProgramSearchFilter filter);

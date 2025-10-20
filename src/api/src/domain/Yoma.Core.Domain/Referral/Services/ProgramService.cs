@@ -181,6 +181,12 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var results = new ProgramSearchResults();
 
+      if (filter.TotalCountOnly)
+      {
+        results.TotalCount = query.Count();
+        return results;
+      }
+
       if (filter.PaginationEnabled)
       {
         results.TotalCount = query.Count();
@@ -357,6 +363,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public async Task<Program> UpdateStatus(Guid id, ProgramStatus status)
     {
+      //TODO: ReferralLink cancellation: automatically due to program inactivation or deletion
+
       var result = GetById(id, false, false);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);

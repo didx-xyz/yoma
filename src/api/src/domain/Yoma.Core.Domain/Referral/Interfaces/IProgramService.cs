@@ -11,6 +11,8 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     Program? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed);
 
+    Program? GetDefaultOrNull(bool includeChildItems, bool includeComputed);
+
     ProgramSearchResults Search(ProgramSearchFilterAdmin filter);
 
     Task<Program> Create(ProgramRequestCreate request);

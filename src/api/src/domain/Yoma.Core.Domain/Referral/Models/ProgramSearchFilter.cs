@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using Yoma.Core.Domain.Core.Models;
 
 namespace Yoma.Core.Domain.Referral.Models
@@ -19,5 +20,8 @@ namespace Yoma.Core.Domain.Referral.Models
   public class ProgramSearchFilterAdmin : ProgramSearchFilterBase
   {
     public List<ProgramStatus>? Statuses { get; set; }
+
+    [JsonIgnore]
+    internal bool TotalCountOnly { get; set; }
   }
 }
