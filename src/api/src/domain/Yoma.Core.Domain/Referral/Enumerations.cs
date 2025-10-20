@@ -39,4 +39,9 @@ namespace Yoma.Core.Domain.Referral
     Completed,   // All required tasks have been completed; terminal state
     Expired      // The parent program expires or link completion elapsed; terminal state
   }
+
+  public enum ReferralBlockReason
+  {
+    Other
+  }
 }

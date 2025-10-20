@@ -266,15 +266,15 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Unblock a referrer")]
     [HttpPatch("unblock")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<Block>> UnblockReferrer([FromBody] UnblockRequest request)
+    public async Task<ActionResult> UnblockReferrer([FromBody] UnblockRequest request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UnblockReferrer));
 
-      var result = await _blockService.Unblock(request);
+      await _blockService.Unblock(request);
 
       _logger.LogInformation("Request {requestName} handled", nameof(UnblockReferrer));
 
-      return Ok(result);
+      return Ok();
     }
 
     [SwaggerOperation(Summary = "Get the referral program by id")]

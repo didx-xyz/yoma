@@ -14,6 +14,8 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     Task<ReferralLinkInfo> Update(ReferralLinkRequestUpdate request);
 
+    Task UpdateStatusByUserId(Guid userId, ReferralLinkStatus status);
+
     Task<ReferralLinkInfo> UpdateStatus(Guid id, ReferralLinkStatus status);
   }
 }

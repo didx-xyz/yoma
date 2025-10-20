@@ -8,6 +8,6 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     Task<Block> Block(BlockRequest request);
 
-    Task<Block> Unblock(UnblockRequest request);
+    Task Unblock(UnblockRequest request);
   }
 }

@@ -30,6 +30,11 @@ namespace Yoma.Core.Domain.Referral.Services
       throw new NotImplementedException();
     }
 
+    public Task UpdateStatusByUserId(Guid userId, ReferralLinkStatus status)
+    {
+      throw new NotImplementedException();
+    }
+
     public Task<ReferralLinkInfo> UpdateStatus(Guid id, ReferralLinkStatus status)
     {
       throw new NotImplementedException();
