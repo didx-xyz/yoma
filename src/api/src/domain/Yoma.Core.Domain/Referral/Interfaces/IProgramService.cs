@@ -11,18 +11,16 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     Program? GetByNameOrNull(string name, bool includeChildItems, bool includeComputed);
 
-    ProgramSearchResults Search(ProgramSearchFilter filter);
-
     ProgramSearchResults Search(ProgramSearchFilterAdmin filter);
 
     Task<Program> Create(ProgramRequestCreate request);
 
     Task<Program> Update(ProgramRequestUpdate request);
 
-    Task<ProgramInfo> UpdateImage(Guid id, IFormFile file);
+    Task<Program> UpdateImage(Guid id, IFormFile file);
 
-    Task<ProgramInfo> UpdateStatus(Guid id, ProgramStatus status);
+    Task<Program> UpdateStatus(Guid id, ProgramStatus status);
 
-    Task<ProgramInfo> SetAsDefault(Guid id);
+    Task<Program> SetAsDefault(Guid id);
   }
 }

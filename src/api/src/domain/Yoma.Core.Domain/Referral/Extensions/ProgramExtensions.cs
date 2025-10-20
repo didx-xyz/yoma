@@ -5,6 +5,17 @@ namespace Yoma.Core.Domain.Referral.Extensions
 {
   public static class ProgramExtensions
   {
+    public static (bool found, string? message) ActiveOrExpired(this Program program)
+    {
+      ArgumentNullException.ThrowIfNull(program, nameof(program));
+
+      var statuses = new ProgramStatus[] { ProgramStatus.Active, ProgramStatus.Expired }; 
+      if (!statuses.Contains(program.Status))
+        return (false, $"Program '{program.Name}' is currently unavailable");
+
+      return (true, null);
+    }
+
     public static ProgramInfo ToInfo(this Program value)
     {
       ArgumentNullException.ThrowIfNull(value, nameof(value));

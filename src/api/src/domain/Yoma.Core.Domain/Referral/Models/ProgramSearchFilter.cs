@@ -13,6 +13,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
   public class ProgramSearchFilter : ProgramSearchFilterBase
   {
+    public bool? IncludeExpired { get; set; }
   }
 
   public class ProgramSearchFilterAdmin : ProgramSearchFilterBase

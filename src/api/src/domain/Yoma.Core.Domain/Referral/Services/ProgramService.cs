@@ -12,7 +12,6 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Interfaces;
-using Yoma.Core.Domain.Referral.Extensions;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -140,11 +139,6 @@ namespace Yoma.Core.Domain.Referral.Services
         result.ImageURL = GetBlobObjectURL(result.ImageStorageType, result.ImageKey);
 
       return result;
-    }
-
-    public ProgramSearchResults Search(ProgramSearchFilter filter)
-    {
-      throw new NotImplementedException();
     }
 
     public ProgramSearchResults Search(ProgramSearchFilterAdmin filter)
@@ -291,7 +285,7 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
-    public async Task<ProgramInfo> UpdateImage(Guid id, IFormFile file)
+    public async Task<Program> UpdateImage(Guid id, IFormFile file)
     {
       var result = GetById(id, false, false);
 
@@ -312,10 +306,10 @@ namespace Yoma.Core.Domain.Referral.Services
       if (resultImage.Program == null)
         throw new InvalidOperationException($"{nameof(Models.Program)} expected");
 
-      return resultImage.Program.ToInfo();
+      return resultImage.Program;
     }
 
-    public async Task<ProgramInfo> UpdateStatus(Guid id, ProgramStatus status)
+    public async Task<Program> UpdateStatus(Guid id, ProgramStatus status)
     {
       var result = GetById(id, false, false);
 
@@ -324,7 +318,7 @@ namespace Yoma.Core.Domain.Referral.Services
       switch (status)
       {
         case ProgramStatus.Active:
-          if (result.Status == ProgramStatus.Active) return result.ToInfo();
+          if (result.Status == ProgramStatus.Active) return result;
           if (!Statuses_Activatable.Contains(result.Status))
             throw new ValidationException($"The {nameof(Program)} can not be activated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Activatable.JoinNames()}'");
 
@@ -335,14 +329,14 @@ namespace Yoma.Core.Domain.Referral.Services
           break;
 
         case ProgramStatus.Inactive:
-          if (result.Status == ProgramStatus.Inactive) return result.ToInfo();
+          if (result.Status == ProgramStatus.Inactive) return result;
           if (!Statuses_DeActivatable.Contains(result.Status))
             throw new ValidationException($"The {nameof(Program)} can not be deactivated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
 
           break;
 
         case ProgramStatus.Deleted:
-          if (result.Status == ProgramStatus.Deleted) return result.ToInfo();
+          if (result.Status == ProgramStatus.Deleted) return result;
           if (!Statuses_CanDelete.Contains(result.Status))
             throw new ValidationException($"The {nameof(Program)} can not be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
 
@@ -360,10 +354,10 @@ namespace Yoma.Core.Domain.Referral.Services
 
       result = await _programRepository.Update(result);
 
-      return result.ToInfo();
+      return result;
     }
 
-    public async Task<ProgramInfo> SetAsDefault(Guid id)
+    public async Task<Program> SetAsDefault(Guid id)
     {
       var result = GetById(id, false, false);
 
@@ -380,7 +374,7 @@ namespace Yoma.Core.Domain.Referral.Services
         scope.Complete();
       });
 
-      return result.ToInfo();
+      return result;
     }
     #endregion
 

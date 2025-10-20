@@ -116,7 +116,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Update the referral program status (Active / Inactive / Deleted)")]
     [HttpPatch("program/{id}/{status}")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<ProgramInfo>> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] ProgramStatus status)
+    public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] ProgramStatus status)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateProgramStatus));
 
@@ -130,7 +130,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Set the specified referral program as the default")]
     [HttpPatch("program/{id}/default")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
-    public async Task<ActionResult<ProgramInfo>> SetProgramAsDefault([FromRoute] Guid id)
+    public async Task<ActionResult<Domain.Referral.Models.Program>> SetProgramAsDefault([FromRoute] Guid id)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(SetProgramAsDefault));
 
@@ -186,21 +186,22 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Search for active referral programs based on the supplied filter (Authenticated User)")]
+    [SwaggerOperation(Summary = "Search for active referral programs based on the supplied filter (Authenticated User)",
+      Description = "Optionally include expired programs")]
     [HttpPost("program/search")]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public ActionResult<ProgramSearchResults> SearchProgram([FromBody] ProgramSearchFilter filter)
+    public ActionResult<ProgramSearchResultsInfo> SearchProgram([FromBody] ProgramSearchFilter filter)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(SearchProgram));
 
-      var result = _programService.Search(filter);
+      var result = _programInfoService.Search(filter);
 
       _logger.LogInformation("Request {requestName} handled", nameof(SearchProgram));
 
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Get an active referral program by id (Authenticated User)")]
+    [SwaggerOperation(Summary = "Get an active or expired referral program by id (Authenticated User)")]
     [HttpGet("program/{id}/info")]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ProgramInfo> GetProgramInfoById([FromRoute] Guid id)
