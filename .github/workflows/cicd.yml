@@ -467,7 +467,7 @@ jobs:
           role-session-name: github-cicd
       - run: aws eks update-kubeconfig --name ${{ secrets.CLUSTER }}
         if: steps.should-run.outputs.run == 'true'
-      - uses: tailscale/github-action@v3
+      - uses: tailscale/github-action@v4
         if: steps.should-run.outputs.run == 'true'
         with:
           authkey: ${{ secrets.TAILSCALE_AUTHKEY }}
