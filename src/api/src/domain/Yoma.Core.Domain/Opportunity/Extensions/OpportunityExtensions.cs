@@ -102,7 +102,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
 
     public static void AssertLinkInstantVerify(this LinkInfo link)
     {
-      if (link.EntityType != LinkEntityType.Opportunity || link.Action != LinkAction.Verify)
+      if (link.EntityType != ActionLinkEntityType.Opportunity || link.Action != LinkAction.Verify)
         throw new ValidationException($"Link is not an instant verify link");
     }
 

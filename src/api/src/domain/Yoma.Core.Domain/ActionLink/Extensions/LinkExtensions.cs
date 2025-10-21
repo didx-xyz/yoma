@@ -14,7 +14,7 @@ namespace Yoma.Core.Domain.ActionLink.Extensions
         Id = value.Id,
         Name = value.Name,
         Description = value.Description,
-        EntityType = Enum.Parse<LinkEntityType>(value.EntityType),
+        EntityType = Enum.Parse<ActionLinkEntityType>(value.EntityType),
         Action = Enum.Parse<LinkAction>(value.Action),
         StatusId = value.StatusId,
         Status = value.Status,
@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.ActionLink.Extensions
 
       switch (result.EntityType)
       {
-        case LinkEntityType.Opportunity:
+        case ActionLinkEntityType.Opportunity:
           if (!value.OpportunityId.HasValue || string.IsNullOrEmpty(value.OpportunityTitle))
             throw new InvalidOperationException("Opportunity details expected");
 

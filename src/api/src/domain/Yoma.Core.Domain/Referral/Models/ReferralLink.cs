@@ -17,7 +17,19 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public Guid ProgramId { get; set; }
 
+    public string ProgramName { get; set; } = null!;
+
     public Guid UserId { get; set; }
+
+    public string? UserDisplayName { get; set; } = null!;
+
+    public string? UserEmail { get; set; }
+
+    public string? UserPhoneNumber { get; set; }
+
+    public bool Blocked { get;set; }
+
+    public DateTimeOffset? BlockedDate { get; set; }
 
     public Guid StatusId { get; set; }
 
@@ -27,7 +39,11 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string ShortURL { get; set; } = null!;
 
+    public int? PendingTotal { get; set; }
+
     public int? CompletionTotal { get; set; }
+
+    public int? ExpiredTotal { get; set; }
 
     public decimal? ZltoRewardCumulative { get; set; }
 

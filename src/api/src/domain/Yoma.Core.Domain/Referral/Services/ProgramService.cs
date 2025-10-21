@@ -363,8 +363,6 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public async Task<Program> UpdateStatus(Guid id, ProgramStatus status)
     {
-      //TODO: ReferralLink cancellation: automatically due to program inactivation or deletion
-
       var result = GetById(id, false, false);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
@@ -383,6 +381,7 @@ namespace Yoma.Core.Domain.Referral.Services
           break;
 
         case ProgramStatus.Inactive:
+          // existing referral links remain usable and can still be completed, but new links cannot be created
           if (result.Status == ProgramStatus.Inactive) return result;
           if (!Statuses_DeActivatable.Contains(result.Status))
             throw new ValidationException($"The {nameof(Program)} can not be deactivated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
@@ -390,6 +389,7 @@ namespace Yoma.Core.Domain.Referral.Services
           break;
 
         case ProgramStatus.Deleted:
+          //TODO: all related active referral links are automatically cancelled
           if (result.Status == ProgramStatus.Deleted) return result;
           if (!Statuses_CanDelete.Contains(result.Status))
             throw new ValidationException($"The {nameof(Program)} can not be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");

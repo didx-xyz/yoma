@@ -28,7 +28,7 @@ namespace Yoma.Core.Domain.Referral
   public enum ReferralLinkStatus //suffixed to avoid swagger conflicts with ActionLink domain
   {
     Active,        // Default state when created by the referrer
-    Cancelled,     // Cancelled by the referrer or super-admin, implicitly by a super admin when blocking a referrer, or automatically due to program inactivation or deletion; cannot be reactivated
+    Cancelled,     // Cancelled by the referrer or super-admin, implicitly by a super admin when blocking a referrer, or automatically due to program deletion; cannot be reactivated
     LimitReached,  // Set when the program’s referral limit is reached; cannot be reactivated
     Expired        // Automatically flagged when the parent program expires; cannot be reactivated
   }

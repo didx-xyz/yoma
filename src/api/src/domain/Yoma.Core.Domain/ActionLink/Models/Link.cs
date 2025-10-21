@@ -14,7 +14,7 @@ namespace Yoma.Core.Domain.ActionLink.Models
 
     public Guid StatusId { get; set; }
 
-    public LinkStatus Status { get; set; }
+    public ActionLinkStatus Status { get; set; }
 
     public Guid? OpportunityId { get; set; }
 

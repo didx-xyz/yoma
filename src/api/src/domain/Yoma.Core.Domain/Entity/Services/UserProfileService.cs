@@ -327,7 +327,8 @@ namespace Yoma.Core.Domain.Entity.Services
   
       result.Referral = new UserProfileReferral
       {
-        Blocked = resultBlock != null
+        Blocked = resultBlock != null,
+        BlockedDate = resultBlock?.DateCreated
       };
 
       return result;

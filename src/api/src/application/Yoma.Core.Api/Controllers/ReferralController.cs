@@ -113,7 +113,7 @@ namespace Yoma.Core.Api.Controllers
       Description = "Admins can fetch any link. User can only fetch their own")]
     [HttpGet("link/{id}")]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public ActionResult<ReferralLinkInfo> GetLinkById([FromRoute] Guid id)
+    public ActionResult<ReferralLink> GetLinkById([FromRoute] Guid id)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(GetLinkById));
 
@@ -141,7 +141,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Create a new referral link (Authenticated User)")]
     [HttpPost("link/create")]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public async Task<ActionResult<ReferralLinkInfo>> CreateLink([FromBody] ReferralLinkRequestCreate request)
+    public async Task<ActionResult<ReferralLink>> CreateLink([FromBody] ReferralLinkRequestCreate request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(CreateLink));
 
@@ -155,7 +155,7 @@ namespace Yoma.Core.Api.Controllers
     [SwaggerOperation(Summary = "Update my referral link (Authenticated User)")]
     [HttpPatch("link/update")]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public async Task<ActionResult<ReferralLinkInfo>> UpdateLink([FromBody] ReferralLinkRequestUpdate request)
+    public async Task<ActionResult<ReferralLink>> UpdateLink([FromBody] ReferralLinkRequestUpdate request)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(UpdateLink));
 
@@ -170,7 +170,7 @@ namespace Yoma.Core.Api.Controllers
       Description = "Admins can cancel any link. Users can only cancel their own")]
     [HttpPatch("link/{id}/cancel")]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public async Task<ActionResult<ReferralLinkInfo>> CancelLink([FromRoute] Guid id)
+    public async Task<ActionResult<ReferralLink>> CancelLink([FromRoute] Guid id)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(CancelLink));
 

@@ -4,11 +4,11 @@ namespace Yoma.Core.Domain.ActionLink.Models
 {
   public class LinkSearchFilter : PaginationFilter
   {
-    public LinkEntityType EntityType { get; set; }
+    public ActionLinkEntityType EntityType { get; set; }
 
     public LinkAction? Action { get; set; }
 
-    public List<LinkStatus>? Statuses { get; set; }
+    public List<ActionLinkStatus>? Statuses { get; set; }
 
     public List<Guid>? Entities { get; set; }
 

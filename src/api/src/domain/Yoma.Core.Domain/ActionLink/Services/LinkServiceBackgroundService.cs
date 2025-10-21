@@ -20,8 +20,8 @@ namespace Yoma.Core.Domain.ActionLink.Services
     private readonly IRepositoryBatchedValueContainsWithUnnested<Link> _linkRepository;
     private readonly IDistributedLockService _distributedLockService;
 
-    internal static readonly LinkStatus[] Statuses_Expirable = [LinkStatus.Active];
-    internal static readonly LinkStatus[] Statuses_Deletion = [LinkStatus.Inactive];
+    internal static readonly ActionLinkStatus[] Statuses_Expirable = [ActionLinkStatus.Active];
+    internal static readonly ActionLinkStatus[] Statuses_Deletion = [ActionLinkStatus.Inactive];
     #endregion
 
     #region Constructor
@@ -58,7 +58,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
         _logger.LogInformation("Processing action link expiration");
 
-        var statusExpiredId = _linkStatusService.GetByName(LinkStatus.Expired.ToString()).Id;
+        var statusExpiredId = _linkStatusService.GetByName(ActionLinkStatus.Expired.ToString()).Id;
         var statusExpirableIds = Statuses_Expirable.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
 
         while (executeUntil > DateTimeOffset.UtcNow)
@@ -72,7 +72,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           foreach (var item in items)
           {
             item.StatusId = statusExpiredId;
-            item.Status = LinkStatus.Expired;
+            item.Status = ActionLinkStatus.Expired;
             item.ModifiedByUserId = user.Id;
             _logger.LogInformation("Action link with id '{id}' flagged for expiration", item.Id);
           }
@@ -108,7 +108,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         if (!lockAcquired) return;
 
         var statusDeletionIds = Statuses_Deletion.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
-        var statusDeletedId = _linkStatusService.GetByName(LinkStatus.Deleted.ToString()).Id;
+        var statusDeletedId = _linkStatusService.GetByName(ActionLinkStatus.Deleted.ToString()).Id;
 
         _logger.LogInformation("Processing action link deletion");
 
@@ -124,7 +124,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
           foreach (var item in items)
           {
             item.StatusId = statusDeletedId;
-            item.Status = LinkStatus.Deleted;
+            item.Status = ActionLinkStatus.Deleted;
             item.ModifiedByUserId = user.Id;
             _logger.LogInformation("Action link with id '{id}' flagged for deletion", item.Id);
           }

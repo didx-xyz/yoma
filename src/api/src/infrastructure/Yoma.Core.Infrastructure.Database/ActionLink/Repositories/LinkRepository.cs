@@ -29,7 +29,7 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
         EntityType = entity.EntityType,
         Action = entity.Action,
         StatusId = entity.StatusId,
-        Status = Enum.Parse<LinkStatus>(entity.Status.Name, true),
+        Status = Enum.Parse<ActionLinkStatus>(entity.Status.Name, true),
         OpportunityId = entity.OpportunityId,
         OpportunityTitle = entity.Opportunity == null ? null : entity.Opportunity.Title,
         OpportunityOrganizationId = entity.Opportunity == null ? null : entity.Opportunity.OrganizationId,
