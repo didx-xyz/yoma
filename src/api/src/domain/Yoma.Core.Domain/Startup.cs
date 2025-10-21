@@ -191,11 +191,11 @@ namespace Yoma.Core.Domain
       #endregion Lookups
 
       services.AddScoped<IBlockService, BlockService>();
+      services.AddScoped<ILinkMaintenanceService, LinkMaintenanceService>();
       services.AddScoped<Referral.Interfaces.ILinkService, Referral.Services.LinkService>();
       services.AddScoped<ILinkUsageService, LinkUsageService>();
       services.AddScoped<IProgramService, ProgramService>();
       services.AddScoped<IProgramInfoService, ProgramInfoService>();
-      
       #endregion Referral
 
       #region Reward

@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Mvc;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
 using Yoma.Core.Domain.Core;
-using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -102,7 +101,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(GetProgramInfoById));
 
-      var result = _programInfoService.GetById(id);
+      var result = _programInfoService.GetActiveOrExpiredAndStartedById(id, true, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(GetProgramInfoById));
 
@@ -113,11 +112,11 @@ namespace Yoma.Core.Api.Controllers
       Description = "Admins can fetch any link. User can only fetch their own")]
     [HttpGet("link/{id}")]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public ActionResult<ReferralLink> GetLinkById([FromRoute] Guid id)
+    public ActionResult<ReferralLink> GetLinkById([FromRoute] Guid id, [FromQuery] bool? includeQRCode)
     {
       _logger.LogInformation("Handling request {requestName}", nameof(GetLinkById));
 
-      var result = _linkService.GetById(id, true);
+      var result = _linkService.GetById(id, true, includeQRCode);
 
       _logger.LogInformation("Request {requestName} handled", nameof(GetLinkById));
 
@@ -174,7 +173,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(CancelLink));
 
-      var result = await _linkService.UpdateStatus(id, ReferralLinkStatus.Cancelled);
+      var result = await _linkService.Cancel(id);
 
       _logger.LogInformation("Request {requestName} handled", nameof(CancelLink));
 

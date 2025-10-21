@@ -176,7 +176,7 @@ namespace Yoma.Core.Infrastructure.Database
       #endregion Lookups
 
       services.AddScoped<IRepository<Domain.Referral.Models.Block>, BlockRepository>();
-      services.AddScoped<IRepositoryBatchedValueContains<Domain.Referral.Models.ReferralLink>, Referral.Repositories.LinkRepository>();
+      services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Referral.Models.ReferralLink>, Referral.Repositories.LinkRepository>();
       services.AddScoped<IRepositoryBatched<Domain.Referral.Models.ReferralLinkUsage>, LinkUsageRepository>();
       services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathway>, ProgramPathwayRepository>();
       services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathwayStep> ,ProgramPathwayStepRepository>();

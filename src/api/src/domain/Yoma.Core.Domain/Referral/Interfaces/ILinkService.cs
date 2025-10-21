@@ -4,9 +4,11 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 {
   public interface ILinkService
   {
-    ReferralLink GetById(Guid id, bool includeComputed);
+    ReferralLink GetById(Guid id, bool includeChildItems, bool? includeQRCode);
 
-    ReferralLink? GetByIdOrNull(Guid id, bool includeComputed);
+    ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool? includeQRCode);
+
+    ReferralLink? GetByNameOrNull(Guid userId, Guid programId, string name, bool includeChildItems, bool? includeQRCode);
 
     ReferralLinkSearchResults Search(ReferralLinkSearchFilter filter);
 
@@ -16,8 +18,6 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     Task<ReferralLink> Update(ReferralLinkRequestUpdate request);
 
-    Task UpdateStatusByUserId(Guid userId, ReferralLinkStatus status);
-
-    Task<ReferralLink> UpdateStatus(Guid id, ReferralLinkStatus status);
+    Task<ReferralLink> Cancel(Guid id);
   }
 }

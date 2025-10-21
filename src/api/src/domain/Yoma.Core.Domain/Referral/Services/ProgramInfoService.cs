@@ -44,9 +44,15 @@ namespace Yoma.Core.Domain.Referral.Services
       return result.ToInfo();
     }
 
-    public ProgramInfo GetById(Guid id)
+    public ProgramInfo GetById(Guid id, bool includeChildItems, bool includeComputed)
     {
-      var result = _programService.GetById(id, true, true);
+      var result = _programService.GetById(id, includeChildItems, includeComputed);
+      return result.ToInfo();
+    }
+
+    public ProgramInfo GetActiveOrExpiredAndStartedById(Guid id, bool includeChildItems, bool includeComputed)
+    {
+      var result = _programService.GetById(id, includeChildItems, includeComputed);
 
       var statuses = new ProgramStatus[] { ProgramStatus.Active, ProgramStatus.Expired };
       if (!statuses.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)

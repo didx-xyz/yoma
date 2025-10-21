@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.Referral.Models
 {
   public class ProgramInfo
@@ -33,6 +35,9 @@ namespace Yoma.Core.Domain.Referral.Models
     public bool ProofOfPersonhoodRequired { get; set; }
 
     public bool PathwayRequired { get; set; }
+
+    [JsonIgnore]
+    public bool MultipleLinksAllowed { get; set; }
 
     public ProgramStatus Status { get; set; }
 

@@ -8,7 +8,7 @@ using Yoma.Core.Infrastructure.Database.Core.Repositories;
 
 namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 {
-  public class LinkRepository : BaseRepository<Entities.Link, Guid>, IRepositoryBatchedValueContains<ReferralLink>
+  public class LinkRepository : BaseRepository<Entities.Link, Guid>, IRepositoryBatchedValueContainsWithNavigation<ReferralLink>
   {
     #region Constructor
     public LinkRepository(ApplicationDbContext context) : base(context) { }
@@ -17,13 +17,32 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
     #region Public Members
     public IQueryable<ReferralLink> Query()
     {
+      return Query(false);
+    }
+
+    public IQueryable<ReferralLink> Query(bool includeChildItems)
+    {
       return _context.ReferralLink.Select(entity => new ReferralLink
       {
         Id = entity.Id,
         Name = entity.Name,
         Description = entity.Description,
         ProgramId = entity.ProgramId,
+        ProgramName = entity.Program.Name,
         UserId = entity.UserId,
+        UserDisplayName = entity.User.DisplayName,
+        UserEmail = entity.User.Email,
+        UserPhoneNumber = entity.User.PhoneNumber,
+        Blocked = includeChildItems &&
+            entity.User.Blocks != null &&
+            entity.User.Blocks.Any(o => o.Active),
+        BlockedDate = includeChildItems && entity.User.Blocks != null
+          ? entity.User.Blocks
+            .Where(o => o.Active)
+            .OrderByDescending(o => o.DateCreated)
+            .Select(o => (DateTimeOffset?)o.DateCreated)
+            .FirstOrDefault()
+          : null,
         StatusId = entity.StatusId,
         Status = Enum.Parse<Domain.Referral.ReferralLinkStatus>(entity.Status.Name, true),
         URL = entity.URL,
@@ -31,22 +50,42 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         CompletionTotal = entity.CompletionTotal,
         ZltoRewardCumulative = entity.ZltoRewardCumulative,
         DateCreated = entity.DateCreated,
-        DateModified = entity.DateModified
-      });
+        DateModified = entity.DateModified,
+        UsageCountsRaw = includeChildItems && entity.Usages != null
+          ? entity.Usages
+            .Where(u => u.UserId == entity.UserId && u.ProgramId == entity.ProgramId)
+            .GroupBy(u => u.StatusId)
+            .Select(g => new ReferralLinkUsageCount
+            {
+              StatusId = g.Key,
+              Count = g.Count()
+            })
+            .ToList() : null
+      }).AsSplitQuery();
     }
 
     public Expression<Func<ReferralLink, bool>> Contains(Expression<Func<ReferralLink, bool>> predicate, string value)
     {
       //MS SQL: Contains
-      return predicate.Or(o => EF.Functions.ILike(o.Name, $"%{value}%")
-          || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%")));
+      return predicate.Or(o =>
+          EF.Functions.ILike(o.Name, $"%{value}%") ||
+          (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%")) ||
+          (!string.IsNullOrEmpty(o.UserDisplayName) && EF.Functions.ILike(o.UserDisplayName, $"%{value}%")) ||
+          (!string.IsNullOrEmpty(o.UserEmail) && EF.Functions.ILike(o.UserEmail, $"%{value}%")) ||
+          (!string.IsNullOrEmpty(o.UserPhoneNumber) && EF.Functions.ILike(o.UserPhoneNumber, $"%{value}%"))
+      );
     }
 
     public IQueryable<ReferralLink> Contains(IQueryable<ReferralLink> query, string value)
     {
       //MS SQL: Contains
-      return query.Where(o => EF.Functions.ILike(o.Name, $"%{value}%")
-          || (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%")));
+      return query.Where(o =>
+          EF.Functions.ILike(o.Name, $"%{value}%") ||
+          (!string.IsNullOrEmpty(o.Description) && EF.Functions.ILike(o.Description, $"%{value}%")) ||
+          (!string.IsNullOrEmpty(o.UserDisplayName) && EF.Functions.ILike(o.UserDisplayName, $"%{value}%")) ||
+          (!string.IsNullOrEmpty(o.UserEmail) && EF.Functions.ILike(o.UserEmail, $"%{value}%")) ||
+          (!string.IsNullOrEmpty(o.UserPhoneNumber) && EF.Functions.ILike(o.UserPhoneNumber, $"%{value}%"))
+      );
     }
 
     public async Task<ReferralLink> Create(ReferralLink item)

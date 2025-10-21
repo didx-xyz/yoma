@@ -18,7 +18,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private readonly IUserService _userService;
     private readonly IBlockReasonService _blockReasonService;
-    private readonly ILinkService _linkService;
+    private readonly ILinkMaintenanceService _linkMaintenanceService;
 
     private readonly BlockRequestValidator _blockRequestValidator;
     private readonly UnblockRequestValidator _unblockRequestValidator;
@@ -34,7 +34,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       IUserService userService,
       IBlockReasonService blockReasonService,
-      ILinkService linkService,
+      ILinkMaintenanceService linkMaintenanceService,
 
       IExecutionStrategyService executionStrategyService,
 
@@ -47,7 +47,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _blockReasonService = blockReasonService ?? throw new ArgumentNullException(nameof(blockReasonService));
-      _linkService = linkService ?? throw new ArgumentNullException(nameof(linkService));
+      _linkMaintenanceService = linkMaintenanceService ?? throw new ArgumentNullException(nameof(linkMaintenanceService));
 
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
 
@@ -99,8 +99,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
         await _blockRepository.Create(result);
 
-        if (request.CancelLinks == true)
-          await _linkService.UpdateStatusByUserId(user.Id, ReferralLinkStatus.Cancelled);
+        if (request.CancelLinks == true) await _linkMaintenanceService.CancelByUserId(user.Id);
 
         scope.Complete();
       });

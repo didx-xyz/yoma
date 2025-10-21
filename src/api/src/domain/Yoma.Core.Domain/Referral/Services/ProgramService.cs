@@ -28,6 +28,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IOpportunityService _opportunityService;
     private readonly IBlobService _blobService;
     private readonly IUserService _userService;
+    private readonly ILinkMaintenanceService _linkMaintenanceService;
 
     private readonly IExecutionStrategyService _executionStrategyService;
 
@@ -54,6 +55,7 @@ namespace Yoma.Core.Domain.Referral.Services
       IOpportunityService opportunityService,
       IBlobService blobService,
       IUserService userService,
+      ILinkMaintenanceService linkMaintenanceService,
 
       IExecutionStrategyService executionStrategyService,
 
@@ -73,6 +75,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
       _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+      _linkMaintenanceService = linkMaintenanceService ?? throw new ArgumentNullException(nameof(linkMaintenanceService));
 
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
 
@@ -367,6 +370,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
+      bool cancelReferralLinks = false;
       switch (status)
       {
         case ProgramStatus.Active:
@@ -394,6 +398,8 @@ namespace Yoma.Core.Domain.Referral.Services
           if (!Statuses_CanDelete.Contains(result.Status))
             throw new ValidationException($"The {nameof(Program)} can not be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
 
+          cancelReferralLinks = true;
+
           break;
 
         default:
@@ -402,11 +408,20 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var statusId = _programStatusService.GetByName(status.ToString()).Id;
 
-      result.StatusId = statusId;
-      result.Status = status;
-      result.ModifiedByUserId = user.Id;
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      {
+        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
 
-      result = await _programRepository.Update(result);
+        result.StatusId = statusId;
+        result.Status = status;
+        result.ModifiedByUserId = user.Id;
+
+        result = await _programRepository.Update(result);
+
+        if(cancelReferralLinks) await _linkMaintenanceService.CancelByProgramId(result.Id);
+
+        scope.Complete();
+      });
 
       return result;
     }

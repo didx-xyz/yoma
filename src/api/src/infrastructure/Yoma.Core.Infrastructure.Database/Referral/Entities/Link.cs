@@ -8,7 +8,7 @@ using Yoma.Core.Infrastructure.Shared.Entities;
 namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 {
   [Table("Link", Schema = "Referral")]
-  [Index(nameof(Name), nameof(UserId), IsUnique = true)]
+  [Index(nameof(Name), nameof(ProgramId), nameof(UserId), IsUnique = true)]
   [Index(nameof(URL), IsUnique = true)]
   [Index(nameof(ShortURL), IsUnique = true)]
   [Index(nameof(UserId), nameof(ProgramId), nameof(StatusId), nameof(DateCreated), nameof(DateModified))]
@@ -55,5 +55,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 
     [Required]
     public DateTimeOffset DateModified { get; set; }
+
+    public ICollection<LinkUsage>? Usages { get; set; }
   }
 }

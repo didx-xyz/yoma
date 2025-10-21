@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Models;
@@ -28,7 +29,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         Order = entity.Order,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
-      }).OrderBy(t => t.Order.HasValue).ThenBy(t => t.Order).ThenBy(t => t.Opportunity == null ? null : t.Opportunity.Title);
+      }).OrderBy(t => t.Order.HasValue).ThenBy(t => t.Order).ThenBy(t => t.Opportunity == null ? null : t.Opportunity.Title)
+      .AsSplitQuery();
     }
 
     public async Task<ProgramPathwayTask> Create(ProgramPathwayTask item)

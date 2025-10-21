@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.Referral.Models
 {
   /// <summary>
@@ -39,6 +41,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string ShortURL { get; set; } = null!;
 
+    public string? QRCodeBase64 { get; set; }
+
     public int? PendingTotal { get; set; }
 
     public int? CompletionTotal { get; set; }
@@ -50,5 +54,18 @@ namespace Yoma.Core.Domain.Referral.Models
     public DateTimeOffset DateCreated { get; set; }
 
     public DateTimeOffset DateModified { get; set; }
+
+    [JsonIgnore]
+    public List<ReferralLinkUsageCount>? UsageCountsRaw { get; set; }
+
+    [JsonIgnore]
+    public Dictionary<Guid, int>? UsageCounts => UsageCountsRaw?.ToDictionary(x => x.StatusId, x => x.Count);
+  }
+
+  public class ReferralLinkUsageCount
+  {
+    public Guid StatusId { get; set; }
+
+    public int Count { get; set; }
   }
 }

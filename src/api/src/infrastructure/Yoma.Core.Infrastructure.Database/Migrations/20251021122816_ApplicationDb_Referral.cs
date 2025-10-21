@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -12,6 +13,35 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     {
       migrationBuilder.EnsureSchema(
           name: "Referral");
+
+      migrationBuilder.CreateTable(
+          name: "Block",
+          columns: table => new
+          {
+            Id = table.Column<Guid>(type: "uuid", nullable: false),
+            UserId = table.Column<Guid>(type: "uuid", nullable: false),
+            ReasonId = table.Column<Guid>(type: "uuid", nullable: false),
+            Reason = table.Column<string>(type: "text", nullable: false),
+            ReasonDescription = table.Column<string>(type: "text", nullable: false),
+            CommentBlock = table.Column<string>(type: "text", nullable: true),
+            CommentUnBlock = table.Column<string>(type: "text", nullable: true),
+            Active = table.Column<bool>(type: "boolean", nullable: false),
+            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+            CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
+            DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
+            ModifiedByUserId = table.Column<Guid>(type: "uuid", nullable: false)
+          },
+          constraints: table =>
+          {
+            table.PrimaryKey("PK_Block", x => x.Id);
+            table.ForeignKey(
+                      name: "FK_Block_User_UserId",
+                      column: x => x.UserId,
+                      principalSchema: "Entity",
+                      principalTable: "User",
+                      principalColumn: "Id",
+                      onDelete: ReferentialAction.Cascade);
+          });
 
       migrationBuilder.CreateTable(
           name: "BlockReason",
@@ -350,6 +380,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           });
 
       migrationBuilder.CreateIndex(
+          name: "IX_Block_UserId",
+          table: "Block",
+          column: "UserId");
+
+      migrationBuilder.CreateIndex(
           name: "IX_Block_CreatedByUserId",
           schema: "Referral",
           table: "Block",
@@ -365,10 +400,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Block_ReasonId_DateCreated_DateModified",
           schema: "Referral",
           table: "Block",
-          columns: ["ReasonId", "DateCreated", "DateModified"]);
+          columns: new[] { "ReasonId", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
-          name: "IX_Block_UserId",
+          name: "IX_Block_UserId1",
           schema: "Referral",
           table: "Block",
           column: "UserId",
@@ -383,10 +418,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           unique: true);
 
       migrationBuilder.CreateIndex(
-          name: "IX_Link_Name_UserId",
+          name: "IX_Link_Name_ProgramId_UserId",
           schema: "Referral",
           table: "Link",
-          columns: ["Name", "UserId"],
+          columns: new[] { "Name", "ProgramId", "UserId" },
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -419,7 +454,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Link_UserId_ProgramId_StatusId_DateCreated_DateModified",
           schema: "Referral",
           table: "Link",
-          columns: ["UserId", "ProgramId", "StatusId", "DateCreated", "DateModified"]);
+          columns: new[] { "UserId", "ProgramId", "StatusId", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_LinkStatus_Name",
@@ -432,7 +467,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_LinkUsage_LinkId_StatusId_DateCreated_DateModified",
           schema: "Referral",
           table: "LinkUsage",
-          columns: ["LinkId", "StatusId", "DateCreated", "DateModified"]);
+          columns: new[] { "LinkId", "StatusId", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_LinkUsage_ProgramId",
@@ -450,7 +485,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_LinkUsage_UserId_ProgramId",
           schema: "Referral",
           table: "LinkUsage",
-          columns: ["UserId", "ProgramId"],
+          columns: new[] { "UserId", "ProgramId" },
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -470,7 +505,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Program_Description_StatusId_IsDefault_DateStart_DateEnd_Da~",
           schema: "Referral",
           table: "Program",
-          columns: ["Description", "StatusId", "IsDefault", "DateStart", "DateEnd", "DateCreated", "DateModified"]);
+          columns: new[] { "Description", "StatusId", "IsDefault", "DateStart", "DateEnd", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_Program_ImageId",
@@ -516,27 +551,27 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_ProgramPathway_ProgramId_DateCreated_DateModified",
           schema: "Referral",
           table: "ProgramPathway",
-          columns: ["ProgramId", "DateCreated", "DateModified"]);
+          columns: new[] { "ProgramId", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathway_ProgramId_Name",
           schema: "Referral",
           table: "ProgramPathway",
-          columns: ["ProgramId", "Name"],
+          columns: new[] { "ProgramId", "Name" },
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayStep_PathwayId_Name",
           schema: "Referral",
           table: "ProgramPathwayStep",
-          columns: ["PathwayId", "Name"],
+          columns: new[] { "PathwayId", "Name" },
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayStep_PathwayId_Order_DateCreated_DateModified",
           schema: "Referral",
           table: "ProgramPathwayStep",
-          columns: ["PathwayId", "Order", "DateCreated", "DateModified"]);
+          columns: new[] { "PathwayId", "Order", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayTask_OpportunityId",
@@ -548,14 +583,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_ProgramPathwayTask_StepId_EntityType_OpportunityId",
           schema: "Referral",
           table: "ProgramPathwayTask",
-          columns: ["StepId", "EntityType", "OpportunityId"],
+          columns: new[] { "StepId", "EntityType", "OpportunityId" },
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayTask_StepId_Order_DateCreated_DateModified",
           schema: "Referral",
           table: "ProgramPathwayTask",
-          columns: ["StepId", "Order", "DateCreated", "DateModified"]);
+          columns: new[] { "StepId", "Order", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramStatus_Name",
@@ -570,6 +605,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+      migrationBuilder.DropTable(
+          name: "Block");
+
       migrationBuilder.DropTable(
           name: "Block",
           schema: "Referral");
