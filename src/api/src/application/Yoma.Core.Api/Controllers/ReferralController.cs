@@ -48,7 +48,9 @@ namespace Yoma.Core.Api.Controllers
 
     #region Public Members
     #region Authenticated User Based Actions
-    [SwaggerOperation(Summary = "Check if any referral programs are available (Authenticated User)")]
+    [SwaggerOperation(
+      Summary = "Check if any referral programs are available (Authenticated User)",
+      Description = "Returns true if there are any referral programs available that are active and have started")]
     [HttpGet("program/available")]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<bool> GetAvailable()
@@ -62,7 +64,8 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Get the default referral program (Authenticated User)")]
+    [SwaggerOperation(Summary = "Get the default referral program (Authenticated User)",
+      Description = "Retrieves the default referral program. The default program must be active and have started")]
     [HttpGet("program/default/info")]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ProgramInfo> GetProgramInfoDefault()
@@ -76,8 +79,8 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Search for active referral programs based on the supplied filter (Authenticated User)",
-      Description = "Optionally include expired programs")]
+    [SwaggerOperation(Summary = "Search for referral programs (Authenticated User)",
+      Description = "By default, only programs that are active and have started are included. Expired programs can be optionally included via the filter")]
     [HttpPost("program/search")]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ProgramSearchResultsInfo> SearchProgram([FromBody] ProgramSearchFilter filter)
@@ -91,7 +94,8 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Get an active or expired referral program by id (Authenticated User)")]
+    [SwaggerOperation(Summary = "Get a referral program by Id (Authenticated User)",
+      Description = "Retrieves a program by Id. Programs are available if active and have started; expired programs are also retrievable")]
     [HttpGet("program/{id}/info")]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ProgramInfo> GetProgramInfoById([FromRoute] Guid id)

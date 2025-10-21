@@ -6,10 +6,6 @@ namespace Yoma.Core.Domain.Referral.Models
   public abstract class ProgramSearchFilterBase : PaginationFilter
   {
     public string? ValueContains { get; set; }
-
-    public DateTimeOffset? DateStart { get; set; }
-
-    public DateTimeOffset? DateEnd { get; set; }
   }
 
   public class ProgramSearchFilter : ProgramSearchFilterBase
@@ -20,6 +16,10 @@ namespace Yoma.Core.Domain.Referral.Models
   public class ProgramSearchFilterAdmin : ProgramSearchFilterBase
   {
     public List<ProgramStatus>? Statuses { get; set; }
+
+    public DateTimeOffset? DateStart { get; set; }
+
+    public DateTimeOffset? DateEnd { get; set; }
 
     [JsonIgnore]
     internal bool TotalCountOnly { get; set; }

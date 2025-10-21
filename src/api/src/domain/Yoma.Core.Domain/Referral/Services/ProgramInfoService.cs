@@ -21,10 +21,12 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Public Members
     public bool Available()
     {
+      //active and started
       var searchResults = _programService.Search(new ProgramSearchFilterAdmin
       {
         TotalCountOnly = true,
-        Statuses = [ProgramStatus.Active]
+        Statuses = [ProgramStatus.Active],
+        DateStart = DateTimeOffset.UtcNow,
       });
 
       return searchResults.TotalCount > 0;
@@ -35,7 +37,8 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = _programService.GetDefaultOrNull(true, true)
         ?? throw new EntityNotFoundException("Default program not found");
 
-      if (result.Status != ProgramStatus.Active)
+      //active and started
+      if (result.Status != ProgramStatus.Active || result.DateStart > DateTimeOffset.UtcNow)
         throw new EntityNotFoundException($"Default program '{result.Name}' is currently unavailable");
 
       return result.ToInfo();
@@ -46,7 +49,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = _programService.GetById(id, true, true);
 
       var statuses = new ProgramStatus[] { ProgramStatus.Active, ProgramStatus.Expired };
-      if (!statuses.Contains(result.Status))
+      if (!statuses.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)
         throw new EntityNotFoundException($"Program '{result.Name}' is currently unavailable");
 
       return result.ToInfo();
@@ -64,8 +67,7 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         Statuses = statuses,
         ValueContains = filter.ValueContains,
-        DateStart = filter.DateStart,
-        DateEnd = filter.DateEnd,
+        DateStart = DateTimeOffset.UtcNow,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize
       };
