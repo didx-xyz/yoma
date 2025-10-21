@@ -248,6 +248,8 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
+      //TODO: Ensure the link belongs to the current user
+
       var result = GetById(request.Id, true, request.IncludeQRCode);
 
       if (!Statuses_Updatable.Contains(result.Status))
@@ -271,6 +273,8 @@ namespace Yoma.Core.Domain.Referral.Services
     public async Task<ReferralLink> Cancel(Guid id)
     {
       var result = GetById(id, false, false);
+
+      //TODO: Non-admin, ensure link belongs to current user
 
       if (result.Status == ReferralLinkStatus.Cancelled) return result;
 

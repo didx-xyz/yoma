@@ -13,7 +13,7 @@ namespace Yoma.Core.Api.Controllers
   [Route($"api/{Common.Constants.Api_Version}/referral")]
   [ApiController]
   [Authorize(Policy = Common.Constants.Authorization_Policy)]
-  [SwaggerTag("(by default, Admin role required)")]
+  [SwaggerTag("(by default, User role required)")]
   public class ReferralController : ControllerBase
   {
     #region Class Variables
@@ -238,7 +238,7 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Administrative Actions
-    [SwaggerOperation(Summary = "Return a list of block reasons")]
+    [SwaggerOperation(Summary = "Return a list of block reasons (Admin role required)")]
     [HttpGet("block/reason")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public ActionResult<BlockReason> ListBlockReasons()
@@ -252,7 +252,7 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Block a referrer")]
+    [SwaggerOperation(Summary = "Block a referrer (Admin role required)")]
     [HttpPut("block")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Block>> BlockReferrer([FromBody] BlockRequest request)
@@ -266,7 +266,7 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Unblock a referrer")]
+    [SwaggerOperation(Summary = "Unblock a referrer (Admin role required)")]
     [HttpPatch("unblock")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult> UnblockReferrer([FromBody] UnblockRequest request)
@@ -280,7 +280,7 @@ namespace Yoma.Core.Api.Controllers
       return Ok();
     }
 
-    [SwaggerOperation(Summary = "Get the referral program by id")]
+    [SwaggerOperation(Summary = "Get the referral program by id (Admin role required)")]
     [HttpGet("program/{id}/admin")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public ActionResult<Domain.Referral.Models.Program> GetProgramById([FromRoute] Guid id)
@@ -294,7 +294,7 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Search for referral programs based on the supplied filter")]
+    [SwaggerOperation(Summary = "Search for referral programs based on the supplied filter (Admin role required)")]
     [HttpPost("program/search/admin")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public ActionResult<ProgramSearchResults> SearchProgram([FromBody] ProgramSearchFilterAdmin filter)
@@ -308,7 +308,7 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Create a new referral program")]
+    [SwaggerOperation(Summary = "Create a new referral program (Admin role required)")]
     [HttpPost("program/create")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Domain.Referral.Models.Program>> CreateProgram([FromBody] ProgramRequestCreate request)
@@ -322,7 +322,7 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Update the specified referral program")]
+    [SwaggerOperation(Summary = "Update the specified referral program (Admin role required)")]
     [HttpPatch("program/update")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgram([FromBody] ProgramRequestUpdate request)
@@ -336,7 +336,7 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Update the referral program image")]
+    [SwaggerOperation(Summary = "Update the referral program image (Admin role required)")]
     [HttpPatch("program/{id}/image")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramImage([FromRoute] Guid id, [Required] IFormFile file)
@@ -350,7 +350,8 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Update the referral program status (Active / Inactive / Deleted)")]
+    [SwaggerOperation(Summary = "Update the referral program status (Admin role required)",
+      Description = "Support statuses active / inactive / deleted")]
     [HttpPatch("program/{id}/{status}")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Domain.Referral.Models.Program>> UpdateProgramStatus([FromRoute] Guid id, [FromRoute] Domain.Referral.ProgramStatus status)
@@ -364,7 +365,7 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Set the specified referral program as the default")]
+    [SwaggerOperation(Summary = "Set the specified referral program as the default (Admin role required)")]
     [HttpPatch("program/{id}/default")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public async Task<ActionResult<Domain.Referral.Models.Program>> SetProgramAsDefault([FromRoute] Guid id)
@@ -378,7 +379,7 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Search for referral links based on the supplied filter")]
+    [SwaggerOperation(Summary = "Search for referral links based on the supplied filter (Admin role required)")]
     [HttpPost("link/search/admin")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public ActionResult<ReferralLinkSearchResults> SearchLink([FromBody] ReferralLinkSearchFilterAdmin filter)
@@ -392,7 +393,7 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Search link usages based on the supplied filter")]
+    [SwaggerOperation(Summary = "Search link usages based on the supplied filter (Admin role required)")]
     [HttpPost("link/usage/search/admin")]
     [Authorize(Roles = $"{Constants.Role_Admin}")]
     public ActionResult<ReferralLinkUsageSearchResults> SearchLinkUsage([FromBody] ReferralLinkUsageSearchFilterAdmin filter)
