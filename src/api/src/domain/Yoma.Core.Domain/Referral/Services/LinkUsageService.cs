@@ -1,10 +1,14 @@
+using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces;
+using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
+using Yoma.Core.Domain.Referral.Validators;
 
 namespace Yoma.Core.Domain.Referral.Services
 {
@@ -13,7 +17,11 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Class Variables
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    private readonly IUserService _userService; 
+    private readonly IProgramService _programService;
+    private readonly ILinkUsageStatusService _linkUsageStatusService;
+    private readonly IUserService _userService;
+
+    private readonly ReferralLinkUsageSearchFilterValidator _referralLinkUsageSearchFilterValidator;
 
     private readonly IRepositoryBatched<ReferralLinkUsage> _linkUsageRepository;
     #endregion
@@ -21,14 +29,22 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Constrcutor
     public LinkUsageService(
       IHttpContextAccessor httpContextAccessor,
+
+      IProgramService programService,
+      ILinkUsageStatusService linkUsageStatusService,
       IUserService userService,
 
+      ReferralLinkUsageSearchFilterValidator referralLinkUsageSearchFilterValidator,
 
       IRepositoryBatched<ReferralLinkUsage> linkUsageRepository)
     {
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
+      _programService = programService ?? throw new ArgumentNullException(nameof(programService));
+      _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+
+      _referralLinkUsageSearchFilterValidator = referralLinkUsageSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkUsageSearchFilterValidator));
 
       _linkUsageRepository = linkUsageRepository ?? throw new ArgumentNullException(nameof(linkUsageRepository));
     }
@@ -79,16 +95,107 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public ReferralLinkUsageSearchResults SearchAsReferee(ReferralLinkUsageSearchFilter filter)
     {
-      throw new NotImplementedException();
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      var results = Search(new ReferralLinkUsageSearchFilterAdmin
+      {
+        LinkId = filter.LinkId,
+        ProgramId = filter.ProgramId,
+        Statuses = filter.Statuses,
+        DateStart = filter.DateStart,
+        DateEnd = filter.DateEnd,
+        UserIdReferee = user.Id,
+        PageNumber = filter.PageNumber,
+        PageSize = filter.PageSize
+      });
+
+      return results;
     }
 
     public ReferralLinkUsageSearchResults SearchAsReferrer(ReferralLinkUsageSearchFilter filter)
     {
-      throw new NotImplementedException();
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      var results = Search(new ReferralLinkUsageSearchFilterAdmin
+      {
+        LinkId = filter.LinkId,
+        ProgramId = filter.ProgramId,
+        Statuses = filter.Statuses,
+        DateStart = filter.DateStart,
+        DateEnd = filter.DateEnd,
+        UserIdReferrer = user.Id,
+        PageNumber = filter.PageNumber,
+        PageSize = filter.PageSize
+      });
+
+      return results;
     }
     public ReferralLinkUsageSearchResults Search(ReferralLinkUsageSearchFilterAdmin filter)
     {
-      throw new NotImplementedException();
+      ArgumentNullException.ThrowIfNull(filter, nameof(filter));
+
+      _referralLinkUsageSearchFilterValidator.ValidateAndThrow(filter);
+
+      var query = _linkUsageRepository.Query();
+
+      //linkId
+      if (filter.LinkId.HasValue)
+        query = query.Where(x => x.LinkId == filter.LinkId.Value);
+
+      //programId
+      if (filter.ProgramId.HasValue)
+        query = query.Where(x => x.ProgramId == filter.ProgramId.Value);
+
+      //statuses
+      if (filter.Statuses != null && filter.Statuses.Count != 0)
+      {
+        filter.Statuses = [.. filter.Statuses.Distinct()];
+        var statusIds = filter.Statuses.Select(o => _linkUsageStatusService.GetByName(o.ToString()).Id).ToList();
+        query = query.Where(o => statusIds.Contains(o.StatusId));
+      }
+
+      //date range
+      if (filter.DateStart.HasValue)
+      {
+        filter.DateStart = filter.DateStart.Value.RemoveTime();
+        query = query.Where(o => o.DateCreated >= filter.DateStart.Value);
+      }
+
+      if (filter.DateEnd.HasValue)
+      {
+        filter.DateEnd = filter.DateEnd.Value.ToEndOfDay();
+        query = query.Where(o => o.DateCreated <= filter.DateEnd.Value);
+      }
+
+      //userIdReferee
+      if (filter.UserIdReferee.HasValue)
+        query = query.Where(x => x.UserId == filter.UserIdReferee.Value);
+
+      //userIdReferrer
+      if (filter.UserIdReferrer.HasValue)
+        query = query.Where(x => x.UserIdReferrer == filter.UserIdReferrer.Value);
+
+      query = query.OrderByDescending(o => o.DateModified)
+        .ThenBy(o => o.LinkName)
+        .ThenBy(o => o.ProgramName)
+        .ThenBy(o => o.UserDisplayName)
+        .ThenBy(o => o.Id);
+
+      var results = new ReferralLinkUsageSearchResults();
+
+      if (filter.PaginationEnabled)
+      {
+        results.TotalCount = query.Count();
+        query = query.Skip((filter.PageNumber.Value - 1) * filter.PageSize.Value).Take(filter.PageSize.Value);
+      }
+
+      results.Items = [.. query];
+
+      return results;
     }
 
     public Task ClaimAsReferee(Guid linkId)
@@ -100,7 +207,7 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Private Members
     private async Task<ReferralLinkUsageInfo> ToInfo(ReferralLinkUsage item)
     {
-      return new ReferralLinkUsageInfo
+      var result = new ReferralLinkUsageInfo
       {
         Id = item.Id,
         ProgramId = item.ProgramId,
@@ -121,6 +228,57 @@ namespace Yoma.Core.Domain.Referral.Services
         DateCompleted = item.DateCompleted,
         DateExpired = item.DateExpired
       };
+
+      result.ProofOfPersonhoodMethod = ProofOfPersonhoodMethod.None;
+
+      if (item.UserPhoneNumberConfirmed == true) result.ProofOfPersonhoodMethod |= ProofOfPersonhoodMethod.OTP;
+      if (_userService.HasSocialIdentityProviders(item.UserId)) result.ProofOfPersonhoodMethod |= ProofOfPersonhoodMethod.SocialLogin;
+      result.ProofOfPersonhoodCompleted = result.ProofOfPersonhoodMethod != ProofOfPersonhoodMethod.None;
+
+      var program = _programService.GetById(item.ProgramId, true, false);
+      if (program.PathwayRequired && program.Pathway != null)
+        throw new DataInconsistencyException("Pathway required but does not exist");
+
+      if (program.Pathway == null)
+      {
+        result.PercentComplete = result.ProofOfPersonhoodCompleted == true ? 100 : 0;
+        return result;
+      }
+
+      result.PercentComplete = result.ProofOfPersonhoodCompleted == true ? 50 : 0;
+
+      // NOTE:
+      // Pathway StepsTotal, TasksTotal, Completed and PercentComplete are computed inline via property getters.
+      // They are not stored values — each is dynamically calculated based on the current Steps/Tasks state.
+      result.Pathway = new ProgramPathwayProgress
+      {
+        Id = program.Pathway.Id,
+        Name = program.Pathway.Name,
+        Steps =
+        [
+           .. (program.Pathway.Steps ?? []).Select(s => new ProgramPathwayStepProgress
+          {
+            Id = s.Id,
+            Name = s.Name,
+            Rule = s.Rule,
+            Order = s.Order,
+            Tasks =
+            [
+              .. (s.Tasks ?? []).Select(t => new ProgramPathwayTaskProgress
+              {
+                Id = t.Id,
+                EntityType = t.EntityType,
+                Opportunity = t.Opportunity,
+                Order = t.Order
+              })
+            ]
+          })
+        ]
+      };
+
+      result.PercentComplete += result.Pathway.PercentComplete * 0.5m;
+
+      return result;
     }
     #endregion
   }

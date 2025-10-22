@@ -19,8 +19,10 @@ namespace Yoma.Core.Domain.Referral
     Opportunity = 1
   }
 
+  [Flags]
   public enum ProofOfPersonhoodMethod
   {
+    None,
     OTP,
     SocialLogin
   }

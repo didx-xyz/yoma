@@ -190,7 +190,8 @@ namespace Yoma.Core.Domain.Referral.Services
         query = query.Where(o => o.DateCreated <= filter.DateEnd.Value);
       }
 
-      query = query.OrderBy(o => o.Name)
+      query = query.OrderByDescending(o => o.DateModified)
+        .ThenBy(o => o.Name)
         .ThenBy(o => o.ProgramName)
         .ThenBy(o => o.UserDisplayName)
         .ThenBy(o => o.Id);

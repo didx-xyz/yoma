@@ -36,6 +36,8 @@ namespace Yoma.Core.Domain.Referral.Models
     public string? UserEmail { get; set; }
 
     public string? UserPhoneNumber { get; set; }
+
+    public bool? UserPhoneNumberConfirmed { get; set; }
     #endregion
 
     public Guid StatusId { get; set; }

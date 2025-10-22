@@ -475,6 +475,19 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _userLoginHistoryRepository.Create(item);
     }
+
+    public bool HasSocialIdentityProviders(Guid id)
+    {
+      var user = GetById(id, false, false);
+
+      var providerIds = Enum.GetValues<ExternalIdpProvider>()
+        .Select(p => p.ToDescription().ToLower())
+        .ToList();
+
+      return _userLoginHistoryRepository.Query()
+        .Any(o => o.UserId == id && !string.IsNullOrEmpty(o.IdentityProvider) && providerIds.Contains(o.IdentityProvider.ToLower()));
+    }
+
     #endregion
 
     #region Private Members

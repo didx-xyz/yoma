@@ -6,15 +6,15 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string Name { get; set; } = null!;
 
-    public bool Completed { get; set; }
+    public bool Completed => StepsTotal == 0 || StepsCompleted == StepsTotal;
 
     public DateTimeOffset? DateCompleted { get; set; }
 
-    public int StepsTotal { get; set; }
+    public int StepsTotal => Steps.Count;
 
-    public int StepsCompleted { get; set; }
+    public int StepsCompleted => Steps.Count(s => s.Completed);
 
-    public decimal PercentComplete { get; set; }
+    public decimal PercentComplete => StepsTotal == 0 ? 100m : Math.Round(Steps.Sum(o => o.PercentComplete) / StepsTotal, 2);
 
     public List<ProgramPathwayStepProgress> Steps { get; set; } = null!;
   }
@@ -29,15 +29,19 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public byte? Order { get; set; }
 
-    public bool Completed { get; set; }
+    public bool Completed => TasksTotal == 0 || TasksCompleted == TasksTotal;
 
     public DateTimeOffset? DateCompleted { get; set; }
 
-    public int TasksTotal { get; set; }
+    public int TasksTotal => Tasks.Count;
 
-    public int TasksCompleted { get; set; }
+    public int TasksCompleted => Tasks.Count(t => t.Completed);
 
-    public decimal PercentComplete { get; set; }
+    public decimal PercentComplete => TasksTotal == 0
+        ? 100m
+        : Rule == PathwayStepRule.Any
+            ? (Tasks.Any(t => t.Completed) ? 100m : 0m)
+            : Math.Round((decimal)Tasks.Count(t => t.Completed) / TasksTotal * 100m, 2);
 
     public List<ProgramPathwayTaskProgress> Tasks { get; set; } = null!;
   }

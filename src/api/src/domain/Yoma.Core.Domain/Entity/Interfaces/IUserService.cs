@@ -44,5 +44,7 @@ namespace Yoma.Core.Domain.Entity.Interfaces
     Task<User> YoIDOnboard(User user);
 
     Task TrackLogin(UserRequestLoginEvent request);
+
+    bool HasSocialIdentityProviders(Guid id);
   }
 }
