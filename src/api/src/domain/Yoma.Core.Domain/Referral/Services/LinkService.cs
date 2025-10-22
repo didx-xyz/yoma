@@ -11,6 +11,7 @@ using Yoma.Core.Domain.Referral.Extensions;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
+using Yoma.Core.Domain.Referral.Validators;
 using Yoma.Core.Domain.ShortLinkProvider;
 using Yoma.Core.Domain.ShortLinkProvider.Interfaces;
 using Yoma.Core.Domain.ShortLinkProvider.Models;
@@ -30,6 +31,10 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly ILinkStatusService _linkStatusService;
     private readonly ILinkUsageStatusService _linkUsageStatusService;
 
+    private readonly ReferralLinkSearchFilterValidator _referralLinkSearchFilterValidator;
+    private readonly ReferralLinkRequestCreateValidator _referralLinkRequestCreateValidator;
+    private readonly ReferralLinkRequestUpdateValidator _referralLinkRequestUpdateValidator;
+
     private readonly IRepositoryBatchedValueContainsWithNavigation<ReferralLink> _linkRepository;
 
     private static readonly ReferralLinkStatus[] Statuses_Updatable = [ReferralLinkStatus.Active];
@@ -48,6 +53,10 @@ namespace Yoma.Core.Domain.Referral.Services
       ILinkStatusService linkStatusService,
       ILinkUsageStatusService linkUsageStatusService,
 
+      ReferralLinkSearchFilterValidator referralLinkSearchFilterValidator,
+      ReferralLinkRequestCreateValidator referralLinkRequestCreateValidator,
+      ReferralLinkRequestUpdateValidator referralLinkRequestUpdateValidator,
+
       IRepositoryBatchedValueContainsWithNavigation<ReferralLink> linkRepository)
     {
       _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
@@ -60,20 +69,24 @@ namespace Yoma.Core.Domain.Referral.Services
       _linkStatusService = linkStatusService ?? throw new ArgumentNullException(nameof(linkStatusService));
       _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
 
+      _referralLinkSearchFilterValidator = referralLinkSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkSearchFilterValidator));
+      _referralLinkRequestCreateValidator = referralLinkRequestCreateValidator ?? throw new ArgumentNullException(nameof(referralLinkRequestCreateValidator));
+      _referralLinkRequestUpdateValidator = referralLinkRequestUpdateValidator ?? throw new Exception(nameof(referralLinkRequestUpdateValidator));
+
       _linkRepository = linkRepository ?? throw new ArgumentNullException(nameof(linkRepository));
     }
     #endregion
 
     #region Public Members
-    public ReferralLink GetById(Guid id, bool includeChildItems, bool? includeQRCode)
+    public ReferralLink GetById(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode)
     {
-      var result = GetByIdOrNull(id, includeChildItems, includeQRCode)
+      var result = GetByIdOrNull(id, includeChildItems, ensureOwnership, allowAdminOverride, includeQRCode)
         ?? throw new EntityNotFoundException($"{nameof(ReferralLink)} with id '{id}' does not exist");
 
       return result;
     }
 
-    public ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool? includeQRCode)
+    public ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode)
     {
       if (id == Guid.Empty)
         throw new ArgumentNullException(nameof(id));
@@ -84,7 +97,9 @@ namespace Yoma.Core.Domain.Referral.Services
       if (includeQRCode == true) result.QRCodeBase64 = QRCodeHelper.GenerateQRCodeBase64(result.URL);
       SetUsageCounts(result);
 
-      if (HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) return result;
+      if (!ensureOwnership) return result;
+
+      if (allowAdminOverride && HttpContextAccessorHelper.IsAdminRole(_httpContextAccessor)) return result;
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
       if (result.UserId != user.Id) throw new SecurityException("Unauthorized");
@@ -135,7 +150,7 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      //TODO: Validator
+      _referralLinkSearchFilterValidator.ValidateAndThrow(filter);
 
       var query = _linkRepository.Query(true);
 
@@ -198,7 +213,7 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      //TODO: Validator
+      await _referralLinkRequestCreateValidator.ValidateAndThrowAsync(request);
 
       var program = _programInfoService.GetById(request.ProgramId, false, false);
 
@@ -248,9 +263,10 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      //TODO: Ensure the link belongs to the current user
+      await _referralLinkRequestUpdateValidator.ValidateAndThrowAsync(request);
 
-      var result = GetById(request.Id, true, request.IncludeQRCode);
+      //link must belong to the current user
+      var result = GetById(request.Id, true, true, false, request.IncludeQRCode);
 
       if (!Statuses_Updatable.Contains(result.Status))
         throw new ValidationException($"Referral link can no longer be updated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Updatable.JoinNames()}'");
@@ -272,9 +288,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public async Task<ReferralLink> Cancel(Guid id)
     {
-      var result = GetById(id, false, false);
-
-      //TODO: Non-admin, ensure link belongs to current user
+      //ensures the link belongs to the current user unless the caller has admin privileges
+      var result = GetById(id, true, true, true, false);
 
       if (result.Status == ReferralLinkStatus.Cancelled) return result;
 

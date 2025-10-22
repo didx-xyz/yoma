@@ -4,9 +4,9 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 {
   public interface ILinkService
   {
-    ReferralLink GetById(Guid id, bool includeChildItems, bool? includeQRCode);
+    ReferralLink GetById(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode);
 
-    ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool? includeQRCode);
+    ReferralLink? GetByIdOrNull(Guid id, bool includeChildItems, bool ensureOwnership, bool allowAdminOverride, bool? includeQRCode);
 
     ReferralLink? GetByNameOrNull(Guid userId, Guid programId, string name, bool includeChildItems, bool? includeQRCode);
 

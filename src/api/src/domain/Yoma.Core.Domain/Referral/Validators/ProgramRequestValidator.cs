@@ -331,7 +331,7 @@ namespace Yoma.Core.Domain.Referral.Validators
     #region Constructor
     public ProgramRequestValidatorUpdate()
     {
-      RuleFor(x => x.Id).NotEmpty(); //existence validated by service
+      RuleFor(x => x.Id).NotEmpty().WithMessage("Id is required."); //existence validated by service
 
       // new pathway is being created during update -> steps & tasks must NOT specify Ids
       When(x => x.Pathway != null && x.Pathway!.Id == null, () =>

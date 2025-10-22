@@ -116,7 +116,7 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(GetLinkById));
 
-      var result = _linkService.GetById(id, true, includeQRCode);
+      var result = _linkService.GetById(id, true, true, true, includeQRCode);
 
       _logger.LogInformation("Request {requestName} handled", nameof(GetLinkById));
 
@@ -151,7 +151,8 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Update my referral link (Authenticated User)")]
+    [SwaggerOperation(Summary = "Update my referral link (Authenticated User)",
+      Description = "The link must belong to the user making the request")]
     [HttpPatch("link/update")]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public async Task<ActionResult<ReferralLink>> UpdateLink([FromBody] ReferralLinkRequestUpdate request)
