@@ -5,6 +5,9 @@ using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.MyOpportunity;
+using Yoma.Core.Domain.MyOpportunity.Interfaces;
+using Yoma.Core.Domain.MyOpportunity.Services;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -20,6 +23,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IProgramService _programService;
     private readonly ILinkUsageStatusService _linkUsageStatusService;
     private readonly IUserService _userService;
+    private readonly IMyOpportunityService _myOpportunityService;
 
     private readonly ReferralLinkUsageSearchFilterValidator _referralLinkUsageSearchFilterValidator;
 
@@ -33,6 +37,7 @@ namespace Yoma.Core.Domain.Referral.Services
       IProgramService programService,
       ILinkUsageStatusService linkUsageStatusService,
       IUserService userService,
+      IMyOpportunityService myOpportunityService,
 
       ReferralLinkUsageSearchFilterValidator referralLinkUsageSearchFilterValidator,
 
@@ -43,6 +48,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _programService = programService ?? throw new ArgumentNullException(nameof(programService));
       _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+      _myOpportunityService = myOpportunityService ?? throw new ArgumentNullException(nameof(myOpportunityService));
 
       _referralLinkUsageSearchFilterValidator = referralLinkUsageSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkUsageSearchFilterValidator));
 
@@ -58,9 +64,9 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = _linkUsageRepository.Query().SingleOrDefault(x => x.Id == id)
         ?? throw new EntityNotFoundException($"Referral link usage with Id '{id}' does not exist");
 
-      if (!ensureOwnership) return ToInfo(result).Result;
+      if (!ensureOwnership) return ToInfo(result);
 
-      if (allowAdminOverride && _httpContextAccessor.HttpContext!.User.IsInRole("Admin")) return ToInfo(result).Result;
+      if (allowAdminOverride && _httpContextAccessor.HttpContext!.User.IsInRole("Admin")) return ToInfo(result);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -68,7 +74,7 @@ namespace Yoma.Core.Domain.Referral.Services
         || result.UserIdReferrer != user.Id) //as referrer
         throw new SecurityException("Unauthorized");
 
-      return ToInfo(result).Result;
+      return ToInfo(result);
     }
 
     public ReferralLinkUsageInfo GetByProgramIdAsReferee(Guid programId, bool includeComputed)
@@ -89,9 +95,8 @@ namespace Yoma.Core.Domain.Referral.Services
       if (results.Count == 0)
         throw new EntityNotFoundException($"Referral link usage for program '{programId}' and the current user does not exist");
 
-      return ToInfo(results.Single()).Result;
+      return ToInfo(results.Single());
     }
-
 
     public ReferralLinkUsageSearchResults SearchAsReferee(ReferralLinkUsageSearchFilter filter)
     {
@@ -205,7 +210,7 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Private Members
-    private async Task<ReferralLinkUsageInfo> ToInfo(ReferralLinkUsage item)
+    private ReferralLinkUsageInfo ToInfo(ReferralLinkUsage item)
     {
       var result = new ReferralLinkUsageInfo
       {
@@ -226,10 +231,9 @@ namespace Yoma.Core.Domain.Referral.Services
         Status = item.Status,
         DateClaimed = item.DateClaimed,
         DateCompleted = item.DateCompleted,
-        DateExpired = item.DateExpired
+        DateExpired = item.DateExpired,
+        ProofOfPersonhoodMethod = ProofOfPersonhoodMethod.None
       };
-
-      result.ProofOfPersonhoodMethod = ProofOfPersonhoodMethod.None;
 
       if (item.UserPhoneNumberConfirmed == true) result.ProofOfPersonhoodMethod |= ProofOfPersonhoodMethod.OTP;
       if (_userService.HasSocialIdentityProviders(item.UserId)) result.ProofOfPersonhoodMethod |= ProofOfPersonhoodMethod.SocialLogin;
@@ -264,12 +268,35 @@ namespace Yoma.Core.Domain.Referral.Services
             Order = s.Order,
             Tasks =
             [
-              .. (s.Tasks ?? []).Select(t => new ProgramPathwayTaskProgress
+              .. (s.Tasks ?? []).Select(t =>
               {
-                Id = t.Id,
-                EntityType = t.EntityType,
-                Opportunity = t.Opportunity,
-                Order = t.Order
+                var task = new ProgramPathwayTaskProgress
+                {
+                  Id = t.Id,
+                  EntityType = t.EntityType,
+                  Opportunity = t.Opportunity,
+                  Order = t.Order
+                };
+
+                switch (t.EntityType)
+                {
+                  case PathwayTaskEntityType.Opportunity:
+                    if (t.Opportunity == null)
+                      throw new DataInconsistencyException("Pathway task entity type is 'Opportunity' but no opportunity is assigned");
+
+                    var verify = _myOpportunityService.GetVerificationStatus(t.Opportunity.Id, result.UserId);
+                    if (verify.Status == VerificationStatus.Completed)
+                    {
+                      task.Completed = true;
+                      task.DateCompleted = verify.DateCompleted;
+                    }
+                    break;
+           
+                  default:
+                    throw new InvalidOperationException($"Unsupported pathway task entity type: {t.EntityType}");
+                }
+
+                return task;
               })
             ]
           })

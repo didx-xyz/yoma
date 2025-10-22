@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public bool Completed => StepsTotal == 0 || StepsCompleted == StepsTotal;
 
-    public DateTimeOffset? DateCompleted { get; set; }
+    public DateTimeOffset? DateCompleted => !Completed ? null : Steps.Where(s => s.Completed && s.DateCompleted.HasValue).Max(s => s.DateCompleted);
 
     public int StepsTotal => Steps.Count;
 
@@ -31,7 +31,12 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public bool Completed => TasksTotal == 0 || TasksCompleted == TasksTotal;
 
-    public DateTimeOffset? DateCompleted { get; set; }
+    public DateTimeOffset? DateCompleted =>
+      !Completed
+        ? null
+        : Rule == PathwayStepRule.Any
+            ? Tasks.Where(t => t.Completed && t.DateCompleted.HasValue).Min(t => t.DateCompleted)
+            : Tasks.Where(t => t.Completed && t.DateCompleted.HasValue).Max(t => t.DateCompleted);
 
     public int TasksTotal => Tasks.Count;
 

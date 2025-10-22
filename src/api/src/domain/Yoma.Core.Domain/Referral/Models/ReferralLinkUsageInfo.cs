@@ -46,7 +46,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public ProofOfPersonhoodMethod? ProofOfPersonhoodMethod { get; set; }
 
-    public bool? PathwayCompleted { get; set; }
+    public bool? PathwayCompleted => Pathway?.Completed;
 
     public decimal? PercentComplete { get; set; }
 

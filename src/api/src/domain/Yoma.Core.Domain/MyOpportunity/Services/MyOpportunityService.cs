@@ -419,18 +419,26 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
     public MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId, User? user)
     {
-      var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
+      if (opportunityId == Guid.Empty)
+        throw new ArgumentNullException(nameof(opportunityId));
 
-      user ??= _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+      user ??= _userService.GetByUsername(
+        HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false),
+        false,
+        false);
 
-      var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
-      var myOpportunity = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId);
-      if (myOpportunity == null) return new MyOpportunityResponseVerifyStatus { Status = VerificationStatus.None };
+      return GetVerificationStatusInternal(opportunityId, user.Id);
+    }
 
-      if (!myOpportunity.VerificationStatus.HasValue)
-        throw new InvalidOperationException($"Verification status expected for 'my' opportunity with id '{myOpportunity.Id}'");
+    public MyOpportunityResponseVerifyStatus GetVerificationStatus(Guid opportunityId, Guid userId)
+    {
+      if (opportunityId == Guid.Empty)
+        throw new ArgumentNullException(nameof(opportunityId));
 
-      return new MyOpportunityResponseVerifyStatus { Status = myOpportunity.VerificationStatus.Value, Comment = myOpportunity.CommentVerification };
+      if (userId == Guid.Empty)
+        throw new ArgumentNullException(nameof(userId));
+
+      return GetVerificationStatusInternal(opportunityId, userId);
     }
 
     public MyOpportunityResponseVerifyCompletedExternal GetVerificationCompletedExternal(Guid opportunityId)
@@ -1191,6 +1199,35 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     #endregion
 
     #region Private Members
+    private MyOpportunityResponseVerifyStatus GetVerificationStatusInternal(Guid opportunityId, Guid userId)
+    {
+      var opportunity = _opportunityService.GetById(opportunityId, false, false, false);
+
+      var actionVerificationId = _myOpportunityActionService
+        .GetByName(Action.Verification.ToString())
+        .Id;
+
+      var myOpportunity = _myOpportunityRepository.Query(false)
+        .SingleOrDefault(o =>
+          o.UserId == userId &&
+          o.OpportunityId == opportunity.Id &&
+          o.ActionId == actionVerificationId);
+
+      if (myOpportunity == null)
+        return new MyOpportunityResponseVerifyStatus { Status = VerificationStatus.None };
+
+      if (!myOpportunity.VerificationStatus.HasValue)
+        throw new InvalidOperationException(
+          $"Verification status expected for 'my' opportunity with id '{myOpportunity.Id}'");
+
+      return new MyOpportunityResponseVerifyStatus
+      {
+        Status = myOpportunity.VerificationStatus.Value,
+        Comment = myOpportunity.CommentVerification,
+        DateCompleted = myOpportunity.DateCompleted
+      };
+    }
+
     private async Task<IFormFile?> DownloadToFile(Guid fileId, string userDisplayName, bool userExplictlySpecified)
     {
       var (originalFileName, contentType, tempSourceFile) = await _blobService.DownloadRawToFile(fileId);
