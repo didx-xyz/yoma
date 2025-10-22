@@ -12,13 +12,25 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string LinkName { get; set; } = null!;
 
+    #region Referrer Info (mapped to the link)
+    public Guid UserIdReferrer { get; set; }
+
+    public string? UserDisplayNameReferrer { get; set; } = null!;
+
+    public string? UserEmailReferrer { get; set; }
+
+    public string? UserPhoneNumberReferrer { get; set; }
+    #endregion
+
+    #region Referee Info (mapped to the usage)
     public Guid UserId { get; set; }
 
-    public string UserDisplayName { get; set; } = null!;
+    public string? UserDisplayName { get; set; } = null!;
 
     public string? UserEmail { get; set; }
 
-    public string? UserPhoneNumber{ get; set; }
+    public string? UserPhoneNumber { get; set; }
+    #endregion
 
     public Guid StatusId { get; set; }
 

@@ -189,23 +189,23 @@ namespace Yoma.Core.Api.Controllers
     {
       _logger.LogInformation("Handling request {requestName}", nameof(GetUsageById));
 
-      var result = _linkUsageService.GetUsageById(id);
+      var result = _linkUsageService.GetUsageById(id, true, true, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(GetUsageById));
 
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Get my usage for a link by link Id as referee (Authenticated User)")]     
-    [HttpGet("link/{linkId}/usage/referee")]
+    [SwaggerOperation(Summary = "Get my usage for a link by program Id as referee (Authenticated User)")]     
+    [HttpGet("program/{id}/link/usage/referee")]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public ActionResult<ReferralLinkUsageInfo> GetUsageByLinkIdAsReferee([FromRoute] Guid linkId)
+    public ActionResult<ReferralLinkUsageInfo> GetUsageByProgramIdAsReferee([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetUsageByLinkIdAsReferee));
+      _logger.LogInformation("Handling request {requestName}", nameof(GetUsageByProgramIdAsReferee));
 
-      var result = _linkUsageService.GetByLinkIdAsReferee(linkId);
+      var result = _linkUsageService.GetByProgramIdAsReferee(id, true);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetUsageByLinkIdAsReferee));
+      _logger.LogInformation("Request {requestName} handled", nameof(GetUsageByProgramIdAsReferee));
 
       return Ok(result);
     }

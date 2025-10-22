@@ -4,9 +4,9 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 {
   public interface ILinkUsageService
   {
-    ReferralLinkUsageInfo GetUsageById(Guid id);
+    ReferralLinkUsageInfo GetUsageById(Guid id, bool includeComputed, bool ensureOwnership, bool allowAdminOverride);
 
-    ReferralLinkUsageInfo GetByLinkIdAsReferee(Guid linkId);
+    ReferralLinkUsageInfo GetByProgramIdAsReferee(Guid programId, bool includeComputed);
 
     ReferralLinkUsageSearchResults Search(ReferralLinkUsageSearchFilterAdmin filter);
 

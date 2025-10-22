@@ -18,6 +18,17 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string LinkName { get; set; } = null!;
 
+    #region Referrer Info (mapped to the link)
+    public Guid UserIdReferrer { get; set; }
+
+    public string? UserDisplayNameReferrer { get; set; } = null!;
+
+    public string? UserEmailReferrer { get; set; }
+
+    public string? UserPhoneNumberReferrer { get; set; }
+    #endregion
+
+    #region Referee Info (mapped to the usage)
     public Guid UserId { get; set; }
 
     public string? UserDisplayName { get; set; } = null!;
@@ -25,6 +36,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public string? UserEmail { get; set; }
 
     public string? UserPhoneNumber { get; set; }
+    #endregion
 
     public Guid StatusId { get; set; }
 
@@ -32,9 +44,9 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public DateTimeOffset DateClaimed { get; set; }
 
-    public DateTimeOffset? DateCompleted { get; set; }
+    public DateTimeOffset? DateCompleted => Status == ReferralLinkUsageStatus.Completed ? DateModified : null;
 
-    public DateTimeOffset? DateExpired { get; set; }
+    public DateTimeOffset? DateExpired => Status == ReferralLinkUsageStatus.Expired ? DateModified : null;
 
     public DateTimeOffset DateCreated { get; set; }
 
