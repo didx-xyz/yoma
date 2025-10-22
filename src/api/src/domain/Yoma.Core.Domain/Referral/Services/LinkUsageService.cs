@@ -10,7 +10,12 @@ namespace Yoma.Core.Domain.Referral.Services
       throw new NotImplementedException();
     }
 
-    public ReferralLinkUsageInfo GetByIdAsReferee(Guid linkId)
+    public ReferralLinkUsageInfo GetUsageById(Guid Id)
+    {
+      throw new NotImplementedException();
+    }
+
+    public ReferralLinkUsageInfo GetByLinkIdAsReferee(Guid linkId)
     {
       throw new NotImplementedException();
     }

@@ -181,16 +181,31 @@ namespace Yoma.Core.Api.Controllers
       return Ok(result);
     }
 
-    [SwaggerOperation(Summary = "Get my usage for a link (Authenticated User)")]
+    [SwaggerOperation(Summary = "Get usage for a link by usage ID (Authenticated User)",
+      Description = "Admins can fetch any usage. Referrers can fetch usage for links they own. Referees can fetch usage for links they have claimed")]
     [HttpGet("link/{id}/usage")]
     [Authorize(Roles = $"{Constants.Role_User}")]
-    public ActionResult<ReferralLinkUsageInfo> GetUsageByLinkAsReferee([FromRoute] Guid id)
+    public ActionResult<ReferralLinkUsageInfo> GetUsageById([FromRoute] Guid id)
     {
-      _logger.LogInformation("Handling request {requestName}", nameof(GetUsageByLinkAsReferee));
+      _logger.LogInformation("Handling request {requestName}", nameof(GetUsageById));
 
-      var result = _linkUsageService.GetByIdAsReferee(id);
+      var result = _linkUsageService.GetUsageById(id);
 
-      _logger.LogInformation("Request {requestName} handled", nameof(GetUsageByLinkAsReferee));
+      _logger.LogInformation("Request {requestName} handled", nameof(GetUsageById));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Get my usage for a link by link Id as referee (Authenticated User)")]     
+    [HttpGet("link/{linkId}/usage/referee")]
+    [Authorize(Roles = $"{Constants.Role_User}")]
+    public ActionResult<ReferralLinkUsageInfo> GetUsageByLinkIdAsReferee([FromRoute] Guid linkId)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetUsageByLinkIdAsReferee));
+
+      var result = _linkUsageService.GetByLinkIdAsReferee(linkId);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetUsageByLinkIdAsReferee));
 
       return Ok(result);
     }

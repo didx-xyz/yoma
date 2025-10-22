@@ -18,10 +18,16 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       {
         Id = entity.Id,
         ProgramId = entity.ProgramId,
+        ProgramName = entity.Program.Name,
         LinkId = entity.LinkId,
+        LinkName = entity.Link.Name,
         UserId = entity.UserId,
+        UserDisplayName = entity.User.DisplayName,
+        UserEmail = entity.User.Email,
+        UserPhoneNumber = entity.User.PhoneNumber,
         StatusId = entity.StatusId,
         Status = Enum.Parse<Domain.Referral.ReferralLinkUsageStatus>(entity.Status.Name, true),
+        DateClaimed = entity.DateCreated,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
       });
