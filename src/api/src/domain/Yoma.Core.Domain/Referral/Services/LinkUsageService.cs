@@ -316,7 +316,7 @@ namespace Yoma.Core.Domain.Referral.Services
       result.ProofOfPersonhoodCompleted = result.ProofOfPersonhoodMethod != ProofOfPersonhoodMethod.None;
 
       var program = _programService.GetById(item.ProgramId, true, false);
-      if (program.PathwayRequired && program.Pathway != null)
+      if (program.PathwayRequired && program.Pathway == null)
         throw new DataInconsistencyException("Pathway required but does not exist");
 
       if (program.Pathway == null)
