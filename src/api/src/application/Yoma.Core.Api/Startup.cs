@@ -100,7 +100,7 @@ namespace Yoma.Core.Api
       })
       .AddNewtonsoftJson(options =>
       {
-        options.SerializerSettings.Converters.Add(new StringEnumConverter());
+        options.SerializerSettings.Converters.Add(new StringEnumConverter()); //TODO: AllowIntegerValues = false   // 🔒 reject numeric enum tokens
         options.SerializerSettings.Converters.Add(new StringTrimmingConverter());
       });
 
