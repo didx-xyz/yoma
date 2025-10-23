@@ -14,6 +14,10 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string? Description { get; set; }
 
+    public PathwayCompletionRule Rule { get; set; }
+
+    public PathwayOrderMode OrderMode { get; set; }
+
     public DateTimeOffset DateCreated { get; set; }
 
     public DateTimeOffset DateModified { get; set; }

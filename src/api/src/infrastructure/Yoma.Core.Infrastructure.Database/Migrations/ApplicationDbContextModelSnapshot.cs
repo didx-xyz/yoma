@@ -2165,8 +2165,16 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .IsRequired()
                       .HasColumnType("varchar(255)");
 
+            b.Property<string>("OrderMode")
+                      .IsRequired()
+                      .HasColumnType("varchar(10)");
+
             b.Property<Guid>("ProgramId")
                       .HasColumnType("uuid");
+
+            b.Property<string>("Rule")
+                      .IsRequired()
+                      .HasColumnType("varchar(10)");
 
             b.HasKey("Id");
 
@@ -2200,8 +2208,15 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       .IsRequired()
                       .HasColumnType("varchar(255)");
 
-            b.Property<byte?>("Order")
+            b.Property<short?>("Order")
                       .HasColumnType("smallint");
+
+            b.Property<short>("OrderDisplay")
+                      .HasColumnType("smallint");
+
+            b.Property<string>("OrderMode")
+                      .IsRequired()
+                      .HasColumnType("varchar(10)");
 
             b.Property<Guid>("PathwayId")
                       .HasColumnType("uuid");
@@ -2215,7 +2230,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("PathwayId", "Name")
                       .IsUnique();
 
-            b.HasIndex("PathwayId", "Order", "DateCreated", "DateModified");
+            b.HasIndex("PathwayId", "Order", "OrderDisplay", "DateCreated", "DateModified");
 
             b.ToTable("ProgramPathwayStep", "Referral");
           });
@@ -2239,7 +2254,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<Guid?>("OpportunityId")
                       .HasColumnType("uuid");
 
-            b.Property<byte?>("Order")
+            b.Property<short?>("Order")
+                      .HasColumnType("smallint");
+
+            b.Property<short>("OrderDisplay")
                       .HasColumnType("smallint");
 
             b.Property<Guid>("StepId")
@@ -2252,7 +2270,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.HasIndex("StepId", "EntityType", "OpportunityId")
                       .IsUnique();
 
-            b.HasIndex("StepId", "Order", "DateCreated", "DateModified");
+            b.HasIndex("StepId", "Order", "OrderDisplay", "DateCreated", "DateModified");
 
             b.ToTable("ProgramPathwayTask", "Referral");
           });

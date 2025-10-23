@@ -7,7 +7,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 {
   [Table("ProgramPathwayStep", Schema = "Referral")]
   [Index(nameof(PathwayId), nameof(Name), IsUnique = true)]
-  [Index(nameof(PathwayId), nameof(Order), nameof(DateCreated), nameof(DateModified))]
+  [Index(nameof(PathwayId), nameof(Order), nameof(OrderDisplay), nameof(DateCreated), nameof(DateModified))]
   public class ProgramPathwayStep : BaseEntity<Guid>
   {
     [Required]
@@ -26,7 +26,14 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     [Column(TypeName = "varchar(10)")]
     public string Rule { get; set; } = null!;
 
-    public byte? Order { get; set; }
+    [Required]
+    [Column(TypeName = "varchar(10)")]
+    public string OrderMode { get; set; } = null!;
+
+    public short? Order { get; set; }
+
+    [Required]
+    public short OrderDisplay { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

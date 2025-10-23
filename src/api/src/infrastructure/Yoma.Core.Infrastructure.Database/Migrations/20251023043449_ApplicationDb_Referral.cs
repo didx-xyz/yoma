@@ -260,6 +260,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             ProgramId = table.Column<Guid>(type: "uuid", nullable: false),
             Name = table.Column<string>(type: "varchar(255)", nullable: false),
             Description = table.Column<string>(type: "varchar(500)", nullable: true),
+            Rule = table.Column<string>(type: "varchar(10)", nullable: false),
+            OrderMode = table.Column<string>(type: "varchar(10)", nullable: false),
             DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
             DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
           },
@@ -331,7 +333,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             Name = table.Column<string>(type: "varchar(255)", nullable: false),
             Description = table.Column<string>(type: "varchar(500)", nullable: true),
             Rule = table.Column<string>(type: "varchar(10)", nullable: false),
-            Order = table.Column<byte>(type: "smallint", nullable: true),
+            OrderMode = table.Column<string>(type: "varchar(10)", nullable: false),
+            Order = table.Column<short>(type: "smallint", nullable: true),
+            OrderDisplay = table.Column<short>(type: "smallint", nullable: false),
             DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
             DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
           },
@@ -356,7 +360,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             StepId = table.Column<Guid>(type: "uuid", nullable: false),
             EntityType = table.Column<string>(type: "varchar(25)", nullable: false),
             OpportunityId = table.Column<Guid>(type: "uuid", nullable: true),
-            Order = table.Column<byte>(type: "smallint", nullable: true),
+            Order = table.Column<short>(type: "smallint", nullable: true),
+            OrderDisplay = table.Column<short>(type: "smallint", nullable: false),
             DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
             DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
           },
@@ -399,7 +404,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Block_ReasonId_DateCreated_DateModified",
           schema: "Referral",
           table: "Block",
-          columns: new[] { "ReasonId", "DateCreated", "DateModified" });
+          columns: ["ReasonId", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_Block_UserId1",
@@ -420,7 +425,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Link_Name_ProgramId_UserId",
           schema: "Referral",
           table: "Link",
-          columns: new[] { "Name", "ProgramId", "UserId" },
+          columns: ["Name", "ProgramId", "UserId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -453,7 +458,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Link_UserId_ProgramId_StatusId_DateCreated_DateModified",
           schema: "Referral",
           table: "Link",
-          columns: new[] { "UserId", "ProgramId", "StatusId", "DateCreated", "DateModified" });
+          columns: ["UserId", "ProgramId", "StatusId", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_LinkStatus_Name",
@@ -466,7 +471,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_LinkUsage_LinkId_StatusId_DateCreated_DateModified",
           schema: "Referral",
           table: "LinkUsage",
-          columns: new[] { "LinkId", "StatusId", "DateCreated", "DateModified" });
+          columns: ["LinkId", "StatusId", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_LinkUsage_ProgramId",
@@ -484,7 +489,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_LinkUsage_UserId_ProgramId",
           schema: "Referral",
           table: "LinkUsage",
-          columns: new[] { "UserId", "ProgramId" },
+          columns: ["UserId", "ProgramId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -504,7 +509,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Program_Description_StatusId_IsDefault_DateStart_DateEnd_Da~",
           schema: "Referral",
           table: "Program",
-          columns: new[] { "Description", "StatusId", "IsDefault", "DateStart", "DateEnd", "DateCreated", "DateModified" });
+          columns: ["Description", "StatusId", "IsDefault", "DateStart", "DateEnd", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_Program_ImageId",
@@ -550,27 +555,27 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_ProgramPathway_ProgramId_DateCreated_DateModified",
           schema: "Referral",
           table: "ProgramPathway",
-          columns: new[] { "ProgramId", "DateCreated", "DateModified" });
+          columns: ["ProgramId", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathway_ProgramId_Name",
           schema: "Referral",
           table: "ProgramPathway",
-          columns: new[] { "ProgramId", "Name" },
+          columns: ["ProgramId", "Name"],
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayStep_PathwayId_Name",
           schema: "Referral",
           table: "ProgramPathwayStep",
-          columns: new[] { "PathwayId", "Name" },
+          columns: ["PathwayId", "Name"],
           unique: true);
 
       migrationBuilder.CreateIndex(
-          name: "IX_ProgramPathwayStep_PathwayId_Order_DateCreated_DateModified",
+          name: "IX_ProgramPathwayStep_PathwayId_Order_OrderDisplay_DateCreated~",
           schema: "Referral",
           table: "ProgramPathwayStep",
-          columns: new[] { "PathwayId", "Order", "DateCreated", "DateModified" });
+          columns: ["PathwayId", "Order", "OrderDisplay", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayTask_OpportunityId",
@@ -582,14 +587,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_ProgramPathwayTask_StepId_EntityType_OpportunityId",
           schema: "Referral",
           table: "ProgramPathwayTask",
-          columns: new[] { "StepId", "EntityType", "OpportunityId" },
+          columns: ["StepId", "EntityType", "OpportunityId"],
           unique: true);
 
       migrationBuilder.CreateIndex(
-          name: "IX_ProgramPathwayTask_StepId_Order_DateCreated_DateModified",
+          name: "IX_ProgramPathwayTask_StepId_Order_OrderDisplay_DateCreated_Da~",
           schema: "Referral",
           table: "ProgramPathwayTask",
-          columns: new[] { "StepId", "Order", "DateCreated", "DateModified" });
+          columns: ["StepId", "Order", "OrderDisplay", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramStatus_Name",

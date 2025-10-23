@@ -8,9 +8,13 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string? Description { get; set; }
 
-    public PathwayStepRule Rule { get; set; }
+    public PathwayCompletionRule Rule { get; set; }
 
-    public byte? Order { get; set; }
+    public PathwayOrderMode OrderMode { get; set; }
+
+    public short? Order { get; set; }
+
+    public short OrderDisplay { get; set; }
 
     public List<ProgramPathwayTaskInfo> Tasks { get; set; } = null!;
 

@@ -27,9 +27,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           Title = entity.Opportunity.Title
         },
         Order = entity.Order,
+        OrderDisplay = entity.OrderDisplay,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
-      }).OrderBy(t => t.Order.HasValue).ThenBy(t => t.Order).ThenBy(t => t.Opportunity == null ? null : t.Opportunity.Title)
+      }).OrderBy(t => t.OrderDisplay)
       .AsSplitQuery();
     }
 
@@ -45,6 +46,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         EntityType = item.EntityType.ToString(),
         OpportunityId = item.Opportunity?.Id,
         Order = item.Order,
+        OrderDisplay = item.OrderDisplay,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };
@@ -65,6 +67,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       entity.EntityType = item.EntityType.ToString();
       entity.OpportunityId = item.Opportunity?.Id;
       entity.Order = item.Order;
+      entity.OrderDisplay = item.OrderDisplay;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();

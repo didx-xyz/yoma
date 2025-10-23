@@ -8,11 +8,18 @@ namespace Yoma.Core.Domain.Referral
     Deleted      // Terminal state; may result from manual deletion or automated cleanup by the system
   }
 
-  public enum PathwayStepRule
+  public enum PathwayCompletionRule
   {
     All,
     Any
   }
+
+  public enum PathwayOrderMode
+  {
+    Sequential,
+    AnyOrder
+  }
+
 
   public enum PathwayTaskEntityType
   {

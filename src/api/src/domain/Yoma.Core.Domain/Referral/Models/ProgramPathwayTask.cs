@@ -23,7 +23,9 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public Opportunity.Models.OpportunityItem? Opportunity { get; set; }
 
-    public byte? Order { get; set; }
+    public short? Order { get; set; }
+
+    public short OrderDisplay { get; set; }
 
     public DateTimeOffset DateCreated { get; set; }
 

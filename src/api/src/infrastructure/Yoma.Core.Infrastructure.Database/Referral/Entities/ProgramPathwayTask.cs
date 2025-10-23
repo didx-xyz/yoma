@@ -6,7 +6,7 @@ using Yoma.Core.Infrastructure.Shared.Entities;
 namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 {
   [Table("ProgramPathwayTask", Schema = "Referral")]
-  [Index(nameof(StepId), nameof(Order), nameof(DateCreated), nameof(DateModified))]
+  [Index(nameof(StepId), nameof(Order), nameof(OrderDisplay), nameof(DateCreated), nameof(DateModified))]
   public class ProgramPathwayTask : BaseEntity<Guid>
   {
     [Required]
@@ -22,7 +22,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     public Guid? OpportunityId { get; set; }
     public Opportunity.Entities.Opportunity? Opportunity { get; set; }
 
-    public byte? Order { get; set; }
+    public short? Order { get; set; }
+
+    [Required]
+    public short OrderDisplay { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

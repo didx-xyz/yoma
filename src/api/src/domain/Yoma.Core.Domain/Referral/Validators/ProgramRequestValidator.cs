@@ -157,6 +157,10 @@ namespace Yoma.Core.Domain.Referral.Validators
             .When(o => !string.IsNullOrWhiteSpace(o.Pathway!.Description))
             .WithMessage("The pathway description cannot be longer than 500 characters.");
 
+        RuleFor(x => x.Pathway!)
+            .Must(p => p.OrderMode != PathwayOrderMode.Sequential || p.Rule == PathwayCompletionRule.All)
+            .WithMessage("When the pathway order mode is 'Sequential', the pathway rule must be 'All' (cannot be 'Any').");
+
         // ---------------------------------------
         // Steps rules
         // ---------------------------------------
@@ -196,34 +200,14 @@ namespace Yoma.Core.Domain.Referral.Validators
                 .When(s => !string.IsNullOrWhiteSpace(s.Description))
                 .WithMessage("The step description cannot be longer than 500 characters.");
 
-            // Rule must be All or Any
-            step.RuleFor(s => s.Rule)
-                .Must(r => r == PathwayStepRule.All || r == PathwayStepRule.Any)
-                .WithMessage("Step rule must be either 'All' or 'Any'.");
+            step.RuleFor(s => s)
+                .Must(s => s.OrderMode != PathwayOrderMode.Sequential || s.Rule == PathwayCompletionRule.All)
+                .WithMessage("When a step's order mode is 'Sequential', the step rule must be 'All' (cannot be 'Any').");
 
             // Each step MUST have ≥ 1 task
             step.RuleFor(s => s.Tasks)
                 .NotEmpty()
                 .WithMessage("Please add at least one task to each step.");
-
-            // TASKS (inside a step)
-            // Mixed ordering allowed: some tasks may have an Order, others may not.
-            // If any task has an Order, the ordered subset must be 1..K (no gaps/dupes).
-            // Unordered tasks are allowed and can appear anywhere.
-            // - Task order is only meaningful if the step contains more than one task.
-            step.RuleFor(s => s.Tasks!)
-                .Must(tasks => IsSequentialOrdered(tasks, t => t.Order))
-                .When(s => s.Rule == PathwayStepRule.All
-                       && s.Tasks != null
-                       && s.Tasks.Count > 1)
-                .WithMessage("Task ordering: for steps with Rule = All, if any task has an Order, the ordered tasks must be 1..K with no gaps or duplicates. Unordered tasks are allowed.");
-
-            // TASKS (inside a step) — Rule = Any
-            // When Step Rule = Any, task order is not allowed (must be null).
-            step.RuleFor(s => s.Tasks!)
-                .Must(ts => ts == null || ts.All(t => !t.Order.HasValue))
-                .When(s => s.Rule == PathwayStepRule.Any)
-                .WithMessage("Task ordering: for steps with Rule = Any, tasks must not specify an Order.");
 
             // Ensure unique tasks per step by (EntityType, EntityId)
             step.RuleFor(s => s.Tasks!)
@@ -249,47 +233,9 @@ namespace Yoma.Core.Domain.Referral.Validators
                 task.RuleFor(t => t.EntityId)
                     .NotEmpty()
                     .WithMessage("Each task must reference an entity.");
-
-                // Optional order, but if provided must be ≥ 1
-                task.RuleFor(t => t.Order)
-                    .GreaterThanOrEqualTo((byte)1)
-                    .When(t => t.Order.HasValue)
-                    .WithMessage("Task order must be 1 or higher.");
               });
           });
-
-        // STEPS (within a pathway)
-        // Mixed ordering allowed: some steps can have an Order, others may not.
-        // If any step has an Order, the ordered subset must be 1..K (no gaps/dupes).
-        // Unordered steps are allowed and can appear anywhere.
-        // - Step order is only meaningful if the pathway contains more than one step.
-        RuleFor(x => x.Pathway!.Steps!)
-            .Must(steps => IsSequentialOrdered(steps, s => s.Order))
-            .When(m => m.PathwayRequired && m.Pathway?.Steps != null && m.Pathway.Steps.Count > 1)
-            .WithMessage("Step ordering: if any step has an Order, the ordered steps must be 1..K with no gaps or duplicates. Unordered steps are allowed.");
       });
-    }
-    #endregion
-
-    #region Private Members
-    private static bool IsSequentialOrdered<TItem>(
-        IList<TItem> items,
-        Func<TItem, byte?> orderSelector)
-    {
-      if (items == null || items.Count == 0) return true;
-
-      var values = items
-          .Select(orderSelector)
-          .Where(v => v.HasValue)
-          .Select(v => v!.Value)
-          .ToList();
-
-      if (values.Count == 0) return true; // nothing ordered → valid
-
-      var k = values.Count;
-      return values.Distinct().Count() == k
-          && values.Min() == 1
-          && values.Max() == k;
     }
     #endregion
   }
@@ -375,3 +321,4 @@ namespace Yoma.Core.Domain.Referral.Validators
     #endregion
   }
 }
+

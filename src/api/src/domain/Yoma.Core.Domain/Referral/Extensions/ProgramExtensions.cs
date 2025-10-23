@@ -37,18 +37,23 @@ namespace Yoma.Core.Domain.Referral.Extensions
           Id = value.Pathway.Id,
           Name = value.Pathway.Name,
           Description = value.Pathway.Description,
+          Rule = value.Pathway.Rule,
+          OrderMode = value.Pathway.OrderMode,  
           Steps = value.Pathway.Steps?.Select(step => new ProgramPathwayStepInfo
           {
             Id = step.Id,
             Name = step.Name,
             Description = step.Description,
             Rule = step.Rule,
+            OrderMode = step.OrderMode, 
             Order = step.Order,
+            OrderDisplay = step.OrderDisplay,
             Tasks = step.Tasks?.Select(task => new ProgramPathwayTaskInfo
             {
               Id = task.Id,
               EntityType = task.EntityType,
               Order = task.Order,
+              OrderDisplay = task.OrderDisplay,
               Opportunity = task.Opportunity == null ? null : new OpportunityItem
               {
                 Id = task.Opportunity.Id,

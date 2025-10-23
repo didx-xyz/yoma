@@ -58,6 +58,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           ProgramId = entity.Pathway.ProgramId,
           Name = entity.Pathway.Name,
           Description = entity.Pathway.Description,
+          Rule = Enum.Parse<PathwayCompletionRule>(entity.Pathway.Rule, true),
+          OrderMode = Enum.Parse<PathwayOrderMode>(entity.Pathway.OrderMode, true),
           DateCreated = entity.Pathway.DateCreated,
           DateModified = entity.Pathway.DateModified,
           Steps = entity.Pathway.Steps.Select(step => new ProgramPathwayStep
@@ -66,8 +68,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
             PathwayId = step.PathwayId,
             Name = step.Name,
             Description = step.Description,
-            Rule = Enum.Parse<PathwayStepRule>(step.Rule, true),
+            Rule = Enum.Parse<PathwayCompletionRule>(step.Rule, true),
+            OrderMode = Enum.Parse<PathwayOrderMode>(step.OrderMode, true),
             Order = step.Order,
+            OrderDisplay = step.OrderDisplay,
             DateCreated = step.DateCreated,
             DateModified = step.DateModified,
             Tasks = step.Tasks.Select(task => new ProgramPathwayTask
@@ -81,10 +85,11 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
                 Title = task.Opportunity.Title
               },
               Order = task.Order,
+              OrderDisplay = task.OrderDisplay,
               DateCreated = task.DateCreated,
               DateModified = task.DateModified
-            }).OrderBy(t => t.Order.HasValue).ThenBy(t => t.Order).ThenBy(t => t.Opportunity == null ? null : t.Opportunity.Title).ToList()
-          }).OrderBy(s => s.Order.HasValue).ThenBy(s => s.Order).ThenBy(s => s.Name).ToList()
+            }).OrderBy(t => t.OrderDisplay).ToList()
+          }).OrderBy(s => s.OrderDisplay).ToList()
         } : null
       }).AsSplitQuery();
     }

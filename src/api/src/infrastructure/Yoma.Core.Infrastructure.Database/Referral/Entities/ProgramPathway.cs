@@ -23,6 +23,14 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     public string? Description { get; set; }
 
     [Required]
+    [Column(TypeName = "varchar(10)")]
+    public string Rule { get; set; } = null!;
+
+    [Required]
+    [Column(TypeName = "varchar(10)")]
+    public string OrderMode { get; set; } = null!;
+
+    [Required]
     public DateTimeOffset DateCreated { get; set; }
 
     [Required]

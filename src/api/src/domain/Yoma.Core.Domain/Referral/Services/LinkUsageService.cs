@@ -7,7 +7,6 @@ using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
-using Yoma.Core.Domain.MyOpportunity.Services;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -258,6 +257,8 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         Id = program.Pathway.Id,
         Name = program.Pathway.Name,
+        Rule = program.Pathway.Rule,
+        OrderMode = program.Pathway.OrderMode,
         Steps =
         [
            .. (program.Pathway.Steps ?? []).Select(s => new ProgramPathwayStepProgress
@@ -265,7 +266,9 @@ namespace Yoma.Core.Domain.Referral.Services
             Id = s.Id,
             Name = s.Name,
             Rule = s.Rule,
+            OrderMode = s.OrderMode,  
             Order = s.Order,
+            OrderDisplay = s.OrderDisplay,
             Tasks =
             [
               .. (s.Tasks ?? []).Select(t =>
@@ -275,7 +278,8 @@ namespace Yoma.Core.Domain.Referral.Services
                   Id = t.Id,
                   EntityType = t.EntityType,
                   Opportunity = t.Opportunity,
-                  Order = t.Order
+                  Order = t.Order,
+                  OrderDisplay = t.OrderDisplay 
                 };
 
                 switch (t.EntityType)

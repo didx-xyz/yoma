@@ -27,6 +27,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         ProgramId = entity.ProgramId,
         Name = entity.Name,
         Description = entity.Description,
+        Rule = Enum.Parse<PathwayCompletionRule>(entity.Rule, true),
+        OrderMode = Enum.Parse<PathwayOrderMode>(entity.OrderMode, true),
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified,
         Steps = includeChildItems ? entity.Steps.Select(step => new ProgramPathwayStep
@@ -35,8 +37,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           PathwayId = step.PathwayId,
           Name = step.Name,
           Description = step.Description,
-          Rule = Enum.Parse<PathwayStepRule>(step.Rule, true),
+          Rule = Enum.Parse<PathwayCompletionRule>(step.Rule, true),
+          OrderMode = Enum.Parse<PathwayOrderMode>(step.OrderMode, true), 
           Order = step.Order,
+          OrderDisplay = step.OrderDisplay, 
           DateCreated = step.DateCreated,
           DateModified = step.DateModified,
           Tasks = step.Tasks.Select(task => new ProgramPathwayTask
@@ -50,10 +54,11 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
               Title = task.Opportunity.Title
             },
             Order = task.Order,
+            OrderDisplay = task.OrderDisplay, 
             DateCreated = task.DateCreated,
             DateModified = task.DateModified
-          }).OrderBy(t => t.Order.HasValue).ThenBy(t => t.Order).ThenBy(t => t.Opportunity == null ? null : t.Opportunity.Title).ToList()
-        }).OrderBy(s => s.Order.HasValue).ThenBy(s => s.Order).ThenBy(s => s.Name).ToList() : null
+          }).OrderBy(t => t.OrderDisplay).ToList()
+        }).OrderBy(s => s.OrderDisplay).ToList() : null
       }).AsSplitQuery();
     }
 
@@ -68,6 +73,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         ProgramId = item.ProgramId,
         Name = item.Name,
         Description = item.Description,
+        Rule = item.Rule.ToString(),
+        OrderMode = item.OrderMode.ToString(),
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };
@@ -87,6 +94,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
       entity.Name = item.Name;
       entity.Description = item.Description;
+      entity.Rule = item.Rule.ToString();
+      entity.OrderMode = item.OrderMode.ToString();
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();

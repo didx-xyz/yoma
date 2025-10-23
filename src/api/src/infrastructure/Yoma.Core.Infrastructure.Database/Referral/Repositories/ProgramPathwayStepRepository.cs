@@ -27,8 +27,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         PathwayId = entity.PathwayId,
         Name = entity.Name,
         Description = entity.Description,
-        Rule = Enum.Parse<PathwayStepRule>(entity.Rule, true),
+        Rule = Enum.Parse<PathwayCompletionRule>(entity.Rule, true),
+        OrderMode = Enum.Parse<PathwayOrderMode>(entity.OrderMode, true),
         Order = entity.Order,
+        OrderDisplay = entity.OrderDisplay,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified,
         Tasks = includeChildItems ? entity.Tasks.Select(task => new ProgramPathwayTask
@@ -42,9 +44,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
             Title = task.Opportunity.Title
           },
           Order = task.Order,
+          OrderDisplay = task.OrderDisplay, 
           DateCreated = task.DateCreated,
           DateModified = task.DateModified
-        }).OrderBy(t => t.Order.HasValue).ThenBy(t => t.Order).ThenBy(t => t.Opportunity == null ? null : t.Opportunity.Title).ToList() : null
+        }).OrderBy(t => t.OrderDisplay).ToList() : null
       }).AsSplitQuery();
     }
 
@@ -60,7 +63,9 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         Name = item.Name,
         Description = item.Description,
         Rule = item.Rule.ToString(),
+        OrderMode = item.OrderMode.ToString(),
         Order = item.Order,
+        OrderDisplay = item.OrderDisplay,
         DateCreated = item.DateCreated,
         DateModified = item.DateModified
       };
@@ -81,7 +86,9 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       entity.Name = item.Name;
       entity.Description = item.Description;
       entity.Rule = item.Rule.ToString();
+      entity.OrderMode = item.OrderMode.ToString(); 
       entity.Order = item.Order;
+      entity.OrderDisplay = item.OrderDisplay;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();

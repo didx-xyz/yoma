@@ -544,7 +544,9 @@ namespace Yoma.Core.Domain.Referral.Services
         {
           ProgramId = program.Id,
           Name = request.Name,
-          Description = request.Description
+          Description = request.Description,
+          Rule = request.Rule,
+          OrderMode = request.OrderMode
         };
 
         resultPathway = await _programPathwayRepository.Create(resultPathway);
@@ -560,6 +562,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
         resultPathway.Name = request.Name;
         resultPathway.Description = request.Description;
+        resultPathway.Rule = request.Rule;
+        resultPathway.OrderMode = request.OrderMode;
 
         resultPathway = await _programPathwayRepository.Update(resultPathway);
       }
@@ -579,6 +583,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var resultSteps = new List<ProgramPathwayStep>();
 
+      byte orderDisplay = 1;
       foreach (var request in requests)
       {
         var resultStep = request.Id.HasValue ? pathway.Steps.SingleOrDefault(s => s.Id == request.Id) : null;
@@ -594,7 +599,9 @@ namespace Yoma.Core.Domain.Referral.Services
             Name = request.Name,
             Description = request.Description,
             Rule = request.Rule,
-            Order = request.Order
+            OrderMode = request.OrderMode,
+            Order = pathway.OrderMode == PathwayOrderMode.Sequential ? orderDisplay : null,
+            OrderDisplay = orderDisplay
           };
 
           resultStep = await _programPathwayStepRepository.Create(resultStep);
@@ -605,14 +612,18 @@ namespace Yoma.Core.Domain.Referral.Services
           resultStep.Name = request.Name;
           resultStep.Description = request.Description;
           resultStep.Rule = request.Rule;
-          resultStep.Order = request.Order;
-
+          resultStep.OrderMode = request.OrderMode;
+          resultStep.Order = pathway.OrderMode == PathwayOrderMode.Sequential ? orderDisplay : null;
+          resultStep.OrderDisplay = orderDisplay;
+          
           resultStep = await _programPathwayStepRepository.Update(resultStep);
           resultSteps.Add(resultStep);
         }
 
         // And inside each step:
         await UpsertProgramPathwayTasks(resultStep, request.Tasks);
+
+        orderDisplay++;
       }
 
       // avoids confusing the change tracker and minimizes churn
@@ -632,6 +643,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var resultTasks = new List<ProgramPathwayTask>();
 
+      byte orderDisplay = 1;
       foreach (var request in requests)
       {
         var resultTask = request.Id.HasValue ? step.Tasks.SingleOrDefault(t => t.Id == request.Id) : null;
@@ -672,7 +684,8 @@ namespace Yoma.Core.Domain.Referral.Services
             StepId = step.Id,
             EntityType = request.EntityType,
             Opportunity = opportunityItem,
-            Order = request.Order
+            Order = step.OrderMode == PathwayOrderMode.Sequential ? orderDisplay : null,
+            OrderDisplay = orderDisplay
           };
 
           resultTask = await _programPathwayTaskRepository.Create(resultTask);
@@ -682,11 +695,14 @@ namespace Yoma.Core.Domain.Referral.Services
         {
           resultTask.EntityType = request.EntityType;
           resultTask.Opportunity = opportunityItem;
-          resultTask.Order = request.Order;
+          resultTask.Order = step.OrderMode == PathwayOrderMode.Sequential ? orderDisplay : null;
+          resultTask.OrderDisplay = orderDisplay;
 
           resultTask = await _programPathwayTaskRepository.Update(resultTask);
           resultTasks.Add(resultTask);
         }
+
+        orderDisplay++;
       }
 
       // avoids confusing the change tracker and minimizes churn
