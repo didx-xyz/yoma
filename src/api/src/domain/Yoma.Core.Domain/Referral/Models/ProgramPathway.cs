@@ -2,7 +2,24 @@ namespace Yoma.Core.Domain.Referral.Models
 {
   /// <summary>
   /// Admin-defined engagement “checklist” for a program.
-  /// The checklist is made up of Steps, each containing one or more Tasks.
+  /// The checklist is composed of ordered or unordered Steps,
+  /// each containing one or more Tasks.
+  ///
+  /// Pathway ordering and rules:
+  ///
+  /// • Pathway Rule:
+  ///   – All → all steps must be completed to finish the program.
+  ///   – Any → any single step completes the pathway.
+  ///
+  /// • Pathway OrderMode:
+  ///   – Sequential → steps must be completed in order (Step 1 → Step 2 → ...).
+  ///     Only valid when Rule = All.
+  ///   – AnyOrder → steps can be completed in any order.
+  ///
+  /// • Ordering:
+  ///   – Step Order and OrderDisplay values are hydrated server-side
+  ///     based on the Pathway’s configured OrderMode and Rule.
+  ///     The UI does not control or persist these values directly.
   /// </summary>
   public class ProgramPathway
   {

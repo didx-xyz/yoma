@@ -1,17 +1,20 @@
 namespace Yoma.Core.Domain.Referral.Models
 {
   /// <summary>
-  /// A concrete Task the referee must complete.
+  /// A concrete Task the referee must complete as part of a Step.
+  ///
   /// Phase 1 supports EntityType = Opportunity (complete a specific opportunity).
   ///
   /// Task ordering within a step:
   ///
-  /// • Order = null → no enforced sequence between tasks.
-  /// • Order = 1..N → sequential execution (only valid when the parent step Rule = All).
+  /// • OrderMode = Sequential → enforce sequential execution (Order = 1..N).
+  /// • OrderMode = AnyOrder → tasks can be completed in any order (Order = null).
   ///
   /// Notes:
-  /// - When Step Rule = Any, task order cannot be specified (must be null).
-  /// - Task order is only meaningful if the step contains more than one task.
+  /// - When Step Rule = Any, task order must always be null.
+  /// - OrderDisplay always reflects creation/display order from the UI.
+  /// - Task order is only meaningful when the parent step Rule = All
+  ///   and the step has more than one task.
   /// </summary>
   public class ProgramPathwayTask
   {

@@ -5,15 +5,27 @@ namespace Yoma.Core.Domain.Referral.Models
 {
   /// <summary>
   /// Referral program configuration (platform-wide; supports multiple programs; exactly one may be the default).
+  ///
   /// NOTES
-  /// • Scope: Programs are Yoma-wide (no per-organization programs).
+  /// • Scope:
+  ///   – Programs are Yoma-wide (no per-organization programs).
+  ///
   /// • Claims & caps:
-  ///    – Per-referrer completion cap and program-wide completion cap are enforced at claim time:
-  ///      if a cap is reached, NEW claims are blocked.
-  ///    – Claims created before a cap was reached may still complete, but no rewards are paid once a cap is reached.
-  /// • Rewards timing: Rewards are determined at completion time (not at claim) using the program’s then-current values.
-  /// • Pool behavior: Program-level ZLTO pool covers both referee and referrer; on completion, pay from the remaining pool
-  ///   with referee priority and allow partial payouts (referee first, then referrer). If the pool is empty, pay 0.
+  ///   – Per-referrer and program-wide completion caps are enforced at claim time:
+  ///     if a cap is reached, NEW claims are blocked.
+  ///   – Claims created before a cap was reached may still complete,
+  ///     but no rewards are paid once a cap is reached.
+  ///
+  /// • Rewards timing:
+  ///   – Rewards are determined at completion time (not at claim)
+  ///     using the program’s then-current reward configuration.
+  ///
+  /// • Pool behavior:
+  ///   – The ZLTO reward pool covers both referrer and referee rewards.
+  ///   – On completion, payouts draw from the remaining pool,
+  ///     paying the referee first and the referrer second.
+  ///   – Partial payouts are allowed (referee priority).
+  ///   – If the pool is empty, the completion yields 0 reward.
   /// </summary>
   public class Program
   {
