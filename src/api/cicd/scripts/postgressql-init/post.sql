@@ -670,16 +670,16 @@ DECLARE
   v_status_deleted_id    uuid := (SELECT "Id" FROM "Referral"."ProgramStatus" WHERE "Name" = 'Deleted');
 
   v_words                text := 'Youth,Referral,Learn,Apply,Round,Flow,Onboard,Capstone,Community,Engage,Pathway,Skills,Program,Launch,Venture,Starter,Pro,Advanced,Scholar,Track,Journey';
-  v_program_name         varchar(255);
-  v_program_desc         varchar(500);
 
-  v_existing_default     boolean := EXISTS (SELECT 1 FROM "Referral"."Program" WHERE "IsDefault" = TRUE);
+  v_is_default_assigned  boolean := false;
   v_make_default_index   int := 1 + floor(random()*50)::int; -- random default among the 50
 
   v_i int := 0;
 
   -- program fields
   v_program_id uuid;
+  v_program_name varchar(255);
+  v_program_desc varchar(500);
   v_status_id uuid;
   v_is_default boolean;
   v_pop boolean;
@@ -716,76 +716,91 @@ DECLARE
   v_task_order smallint;
   v_task_id uuid;
 
+  -- random name helpers
+  v_arr text[];
+  v_cnt int;
+
   -- opportunity for tasks (must be active + verification enabled + method present)
   v_opp_id uuid;
-  v_used_opps uuid[]; -- track per-step to keep unique
 
-  -- helpers (inline)
-  v_cnt int;
-  v_arr text[];
-  v_suffix text;
 BEGIN
   IF v_admin_user_id IS NULL THEN
     RAISE EXCEPTION 'Admin user not found: %', 'testadminuser@gmail.com';
   END IF;
 
   WHILE v_i < 50 LOOP
-	-- Program name/desc (unique, concise ~50–80 chars)
-	v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
-	SELECT array_agg(w ORDER BY random()) INTO v_arr
-	FROM regexp_split_to_table(v_words, ',') AS w
-	LIMIT v_cnt;
-
-	-- keep it readable; short 3-digit suffix for uniqueness
-	v_program_name :=
-	  left(trim(both ' ' from array_to_string(v_arr, ' ')), 70)
-	  || ' ' || (100 + floor(random()*900))::text; -- 100..999
-
-	v_program_desc := 'Seeded program for QA automation and manual testing';
-
-    -- Random state bucket (1=Active, 2=Inactive, 3=Expired(Active+past end), 4=Deleted)
+    -- -------------------------
+    -- Random state bucket
+    -- 1=Active, 2=Inactive, 3=Expired(Active+past end), 4=Deleted
+    -- -------------------------
     CASE 1 + floor(random()*4)::int
-      WHEN 1 THEN v_status_id := v_status_active_id;
-      WHEN 2 THEN v_status_id := v_status_inactive_id;
-      WHEN 3 THEN v_status_id := v_status_active_id;   -- Expired shape enforced below
-      WHEN 4 THEN v_status_id := v_status_deleted_id;
+      WHEN 1 THEN v_status_id := v_status_active_id;    -- Active window (not expired)
+      WHEN 2 THEN v_status_id := v_status_inactive_id;  -- Inactive
+      WHEN 3 THEN v_status_id := v_status_active_id;    -- Expired shape (Active + past end)
+      WHEN 4 THEN v_status_id := v_status_deleted_id;   -- Deleted
     END CASE;
 
+    -- -------------------------
+    -- Program name/desc (unique, concise ~50–80 chars)
+    -- -------------------------
+    v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
+    SELECT array_agg(w ORDER BY random()) INTO v_arr
+    FROM regexp_split_to_table(v_words, ',') AS w
+    LIMIT v_cnt;
+
+    v_program_name :=
+      left(trim(both ' ' from array_to_string(v_arr, ' ')), 70)
+      || ' ' || (100 + floor(random()*900))::text; -- 100..999
+
+    v_program_desc := 'Seeded program for QA automation and manual testing';
+
+    -- -------------------------
     -- Dates to match state
+    -- -------------------------
     IF v_status_id = v_status_deleted_id THEN
+      -- Deleted: dates irrelevant; keep sane window
       v_date_start := date_trunc('day', v_now - interval '5 days');
       v_date_end   := NULL;
+
     ELSIF v_status_id = v_status_inactive_id THEN
+      -- Inactive but current/future window (not enforced by status)
       v_date_start := date_trunc('day', v_now - interval '2 days');
-      v_date_end   := date_trunc('day', v_now + interval '20 days') + interval '1 day' - interval '1 millisecond';
+      v_date_end   := CASE WHEN random() < 0.5
+                       THEN date_trunc('day', v_now + interval '20 days') + interval '1 day' - interval '1 millisecond'
+                       ELSE NULL
+                     END;
+
     ELSE
-      IF (random() < 0.5) THEN
+      -- Active or Expired:
+      IF random() < 0.5 THEN
+        -- bounded window (likely active)
         v_date_start := date_trunc('day', v_now - interval '3 days');
         v_date_end   := date_trunc('day', v_now + interval '10 days') + interval '1 day' - interval '1 millisecond';
       ELSE
+        -- open-ended (active)
         v_date_start := date_trunc('day', v_now - interval '7 days');
         v_date_end   := NULL;
       END IF;
+
+      -- For variety, force some "expired" shape (Active status but end in the past)
+      IF v_i % 4 = 0 THEN
+        v_date_start := date_trunc('day', v_now - interval '30 days');
+        v_date_end   := date_trunc('day', v_now - interval '5 days') + interval '1 day' - interval '1 millisecond';
+      END IF;
     END IF;
 
-    -- Force ~25% of actives into "expired" shape
-    IF v_status_id = v_status_active_id AND (v_i % 4 = 0) THEN
-      v_date_start := date_trunc('day', v_now - interval '30 days');
-      v_date_end   := date_trunc('day', v_now - interval '5 days') + interval '1 day' - interval '1 millisecond';
-    END IF;
-
-    -- Random flags
-    IF v_existing_default THEN
-      v_is_default := FALSE; -- a default already exists; avoid unique violation
-    ELSE
-      v_is_default := (v_i + 1 = v_make_default_index); -- assign exactly one in this batch
-    END IF;
-
-    v_pop              := (random() < 0.5);
-    v_pathway_required := (random() < 0.5);
+    -- -------------------------
+    -- Random flags (then correct to satisfy rules)
+    -- -------------------------
+    v_is_default       := (v_i + 1 = v_make_default_index);  -- exactly one default
+    v_pop              := (random() < 0.5);                  -- ProofOfPersonhoodRequired
+    v_pathway_required := (random() < 0.5);                  -- allow some without pathway
     v_multiple_links   := (random() < 0.5);
 
-    -- Rewards & caps
+    -- -------------------------
+    -- Rewards & caps (respect limits)
+    -- 30% no rewards; else pick integers 1..2000 and pool ≥ sum, ≤ 10M
+    -- -------------------------
     IF random() < 0.30 THEN
       v_z_referrer := NULL;
       v_z_referee  := NULL;
@@ -794,35 +809,38 @@ BEGIN
       v_cap_per_ref := NULL;
       v_cap_program := NULL;
     ELSE
-      v_z_referrer := (floor(random()*2000)::int)::numeric;
-      v_z_referee  := (floor(random()*2000)::int)::numeric;
+      -- integer rewards within [1..2000]
+      v_z_referrer := (1 + floor(random()*2000)::int)::numeric;
+      v_z_referee  := (1 + floor(random()*2000)::int)::numeric;
 
-      IF (coalesce(v_z_referrer,0) + coalesce(v_z_referee,0)) = 0 THEN
-        v_z_referrer := NULL; v_z_referee := NULL; v_z_pool := NULL;
-        v_comp_window := NULL; v_cap_per_ref := NULL; v_cap_program := NULL;
+      -- pool >= sum and ≤ 10M (integer)
+      v_z_pool := (v_z_referrer + v_z_referee) + (floor(random()*5000)::int);
+      IF v_z_pool > 10000000 THEN v_z_pool := 10000000; END IF;
+
+      -- at least one cap
+      IF random() < 0.5 THEN
+        v_cap_per_ref := 1 + floor(random()*5)::int;
+        v_cap_program := NULL;
       ELSE
-        v_z_pool := (v_z_referrer + v_z_referee) + (floor(random()*5000)::int);
-        IF v_z_pool > 10000000 THEN v_z_pool := 10000000; END IF;
-
-        IF (random() < 0.5) THEN
-          v_cap_per_ref := 1 + floor(random()*5)::int;
-          v_cap_program := NULL;
-        ELSE
-          v_cap_per_ref := NULL;
-          v_cap_program := 10 + floor(random()*200)::int;
-        END IF;
-
-        v_comp_window := 7 + floor(random()*30)::int;
+        v_cap_per_ref := NULL;
+        v_cap_program := 10 + floor(random()*200)::int;
       END IF;
+
+      -- reasonable completion window (days)
+      v_comp_window := 7 + floor(random()*30)::int;
     END IF;
 
+    -- -------------------------
     -- Enforce global rules
+    -- -------------------------
+    -- If rewards set → require POP or Pathway
     IF (coalesce(v_z_referrer,0) + coalesce(v_z_referee,0)) > 0 THEN
       IF NOT (v_pop OR v_pathway_required) THEN
-        IF (random() < 0.5) THEN v_pop := true; ELSE v_pathway_required := true; END IF;
+        IF random() < 0.5 THEN v_pop := true; ELSE v_pathway_required := true; END IF;
       END IF;
+      -- require at least one cap
       IF coalesce(v_cap_per_ref,0) = 0 AND coalesce(v_cap_program,0) = 0 THEN
-        IF (random() < 0.5) THEN
+        IF random() < 0.5 THEN
           v_cap_per_ref := 1 + floor(random()*5)::int;
         ELSE
           v_cap_program := 10 + floor(random()*200)::int;
@@ -830,15 +848,19 @@ BEGIN
       END IF;
     END IF;
 
+    -- If default → require POP or Pathway
     IF v_is_default AND NOT (v_pop OR v_pathway_required) THEN
-      IF (random() < 0.5) THEN v_pop := true; ELSE v_pathway_required := true; END IF;
+      IF random() < 0.5 THEN v_pop := true; ELSE v_pathway_required := true; END IF;
     END IF;
 
+    -- If multiple links → require POP or per-ref cap or Pathway
     IF v_multiple_links AND NOT (v_pop OR v_pathway_required OR (coalesce(v_cap_per_ref,0) > 0)) THEN
       v_cap_per_ref := 1 + floor(random()*5)::int;
     END IF;
 
+    -- -------------------------
     -- INSERT Program
+    -- -------------------------
     v_program_id := gen_random_uuid();
 
     INSERT INTO "Referral"."Program"(
@@ -859,25 +881,24 @@ BEGIN
       v_now, v_admin_user_id, v_now, v_admin_user_id
     );
 
+    -- -------------------------
     -- Pathway (only if required)
+    -- -------------------------
     IF v_pathway_required THEN
       v_pathway_id := gen_random_uuid();
 
-	-- Pathway name (concise)
-	v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
-	SELECT array_agg(w ORDER BY random()) INTO v_arr
-	FROM regexp_split_to_table(v_words, ',') AS w
-	LIMIT v_cnt;
+      -- Pathway name (concise)
+      v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
+      SELECT array_agg(w ORDER BY random()) INTO v_arr
+      FROM regexp_split_to_table(v_words, ',') AS w
+      LIMIT v_cnt;
 
-	v_pathway_name :=
-	  left(trim(both ' ' from array_to_string(v_arr, ' ')), 55)
-	  || ' Pathway';  -- keeps it human friendly
-
-
+      v_pathway_name := left(trim(both ' ' from array_to_string(v_arr, ' ')), 55) || ' Pathway';
       v_pathway_desc := 'Seeded pathway (minimal valid structure)';
 
-      v_pathway_rule := CASE WHEN (random() < 0.5) THEN 'All' ELSE 'Any' END;
-      v_pathway_order_mode := CASE WHEN (random() < 0.5) THEN 'Sequential' ELSE 'AnyOrder' END;
+      -- pathway rule/order mode (if Sequential → must be All)
+      v_pathway_rule := CASE WHEN random() < 0.5 THEN 'All' ELSE 'Any' END;
+      v_pathway_order_mode := CASE WHEN random() < 0.5 THEN 'Sequential' ELSE 'AnyOrder' END;
       IF v_pathway_order_mode = 'Sequential' AND v_pathway_rule = 'Any' THEN
         v_pathway_rule := 'All';
       END IF;
@@ -897,18 +918,18 @@ BEGIN
       FOR s IN 1..v_steps_count LOOP
         v_step_id := gen_random_uuid();
 
-		-- Step name (concise)
-		v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
-		SELECT array_agg(w ORDER BY random()) INTO v_arr
-		FROM regexp_split_to_table(v_words, ',') AS w
-		LIMIT v_cnt;
+        -- Step name (concise)
+        v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
+        SELECT array_agg(w ORDER BY random()) INTO v_arr
+        FROM regexp_split_to_table(v_words, ',') AS w
+        LIMIT v_cnt;
 
-		v_step_name := left(trim(both ' ' from array_to_string(v_arr, ' ')), 45);
-
+        v_step_name := left(trim(both ' ' from array_to_string(v_arr, ' ')), 45);
         v_step_desc := 'Seeded step';
 
-        v_step_rule := CASE WHEN (random() < 0.5) THEN 'All' ELSE 'Any' END;
-        v_step_order_mode := CASE WHEN (random() < 0.5) THEN 'Sequential' ELSE 'AnyOrder' END;
+        v_step_rule := CASE WHEN random() < 0.5 THEN 'All' ELSE 'Any' END;
+        v_step_order_mode := CASE WHEN random() < 0.5 THEN 'Sequential' ELSE 'AnyOrder' END;
+        -- sequential steps must be All
         IF v_step_order_mode = 'Sequential' AND v_step_rule = 'Any' THEN
           v_step_rule := 'All';
         END IF;
@@ -923,24 +944,23 @@ BEGIN
           v_now, v_now
         );
 
-        -- 1..3 tasks per step, unique opps per step
+        -- 1..3 tasks per step
         v_tasks_count := 1 + floor(random()*3)::int;
         v_task_order_display := 1;
-        v_used_opps := ARRAY[]::uuid[];
 
         FOR t IN 1..v_tasks_count LOOP
-          -- choose a valid, not-yet-used opportunity
+          -- choose a valid opportunity
           SELECT "Id"
           INTO v_opp_id
           FROM "Opportunity"."Opportunity"
           WHERE "VerificationEnabled" = TRUE
             AND "VerificationMethod" IS NOT NULL
             AND "StatusId" = (SELECT "Id" FROM "Opportunity"."OpportunityStatus" WHERE "Name"='Active')
-            AND ("Id" <> ALL (v_used_opps))
           ORDER BY random()
           LIMIT 1;
 
           IF v_opp_id IS NULL THEN
+            -- if none found, skip task create (keeps schema valid; unlikely given seed)
             CONTINUE;
           END IF;
 
@@ -953,7 +973,6 @@ BEGIN
             v_task_id, v_step_id, 'Opportunity', v_opp_id, v_task_order, v_task_order_display, v_now, v_now
           );
 
-          v_used_opps := array_append(v_used_opps, v_opp_id);
           v_task_order_display := v_task_order_display + 1;
         END LOOP;
 
@@ -964,11 +983,11 @@ BEGIN
     v_i := v_i + 1;
   END LOOP;
 
-  -- Ensure exactly one default: if none exists at all (before + this batch), promote one now
+  -- Safety: ensure exactly one default exists (if random pick missed)
   IF NOT EXISTS (SELECT 1 FROM "Referral"."Program" WHERE "IsDefault" = TRUE) THEN
     UPDATE "Referral"."Program"
     SET "IsDefault" = TRUE,
-        "ProofOfPersonhoodRequired" = TRUE
+        "ProofOfPersonhoodRequired" = TRUE -- enforce default rule
     WHERE "Id" = (
       SELECT "Id"
       FROM "Referral"."Program"
