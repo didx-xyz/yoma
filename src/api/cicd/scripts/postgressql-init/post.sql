@@ -730,14 +730,18 @@ BEGIN
   END IF;
 
   WHILE v_i < 50 LOOP
-    -- Program name/desc (unique)
-    v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
-    v_suffix := ' ' || (100000 + floor(random()*899999))::text;
-    SELECT array_agg(w ORDER BY random()) INTO v_arr
-    FROM regexp_split_to_table(v_words, ',') AS w
-    LIMIT v_cnt;
-    v_program_name := trim(both ' ' from array_to_string(v_arr, ' ')) || v_suffix;
-    v_program_desc := 'Seeded program for QA automation and manual testing';
+	-- Program name/desc (unique, concise ~50–80 chars)
+	v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
+	SELECT array_agg(w ORDER BY random()) INTO v_arr
+	FROM regexp_split_to_table(v_words, ',') AS w
+	LIMIT v_cnt;
+
+	-- keep it readable; short 3-digit suffix for uniqueness
+	v_program_name :=
+	  left(trim(both ' ' from array_to_string(v_arr, ' ')), 70)
+	  || ' ' || (100 + floor(random()*900))::text; -- 100..999
+
+	v_program_desc := 'Seeded program for QA automation and manual testing';
 
     -- Random state bucket (1=Active, 2=Inactive, 3=Expired(Active+past end), 4=Deleted)
     CASE 1 + floor(random()*4)::int
@@ -859,12 +863,16 @@ BEGIN
     IF v_pathway_required THEN
       v_pathway_id := gen_random_uuid();
 
-      -- pathway name
-      v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
-      SELECT array_agg(w ORDER BY random()) INTO v_arr
-      FROM regexp_split_to_table(v_words, ',') AS w
-      LIMIT v_cnt;
-      v_pathway_name := trim(both ' ' from array_to_string(v_arr, ' ')) || ' Pathway';
+	-- Pathway name (concise)
+	v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
+	SELECT array_agg(w ORDER BY random()) INTO v_arr
+	FROM regexp_split_to_table(v_words, ',') AS w
+	LIMIT v_cnt;
+
+	v_pathway_name :=
+	  left(trim(both ' ' from array_to_string(v_arr, ' ')), 55)
+	  || ' Pathway';  -- keeps it human friendly
+
 
       v_pathway_desc := 'Seeded pathway (minimal valid structure)';
 
@@ -889,12 +897,13 @@ BEGIN
       FOR s IN 1..v_steps_count LOOP
         v_step_id := gen_random_uuid();
 
-        -- step name (unique within pathway by appending display order)
-        v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
-        SELECT array_agg(w ORDER BY random()) INTO v_arr
-        FROM regexp_split_to_table(v_words, ',') AS w
-        LIMIT v_cnt;
-        v_step_name := trim(both ' ' from array_to_string(v_arr, ' ')) || ' Step ' || v_step_order_display::text;
+		-- Step name (concise)
+		v_cnt := 2 + floor(random()*3)::int; -- 2..4 words
+		SELECT array_agg(w ORDER BY random()) INTO v_arr
+		FROM regexp_split_to_table(v_words, ',') AS w
+		LIMIT v_cnt;
+
+		v_step_name := left(trim(both ' ' from array_to_string(v_arr, ' ')), 45);
 
         v_step_desc := 'Seeded step';
 
