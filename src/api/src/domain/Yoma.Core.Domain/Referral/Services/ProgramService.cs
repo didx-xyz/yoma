@@ -393,7 +393,6 @@ namespace Yoma.Core.Domain.Referral.Services
           break;
 
         case ProgramStatus.Deleted:
-          //TODO: all related active referral links are automatically cancelled
           if (result.Status == ProgramStatus.Deleted) return result;
           if (!Statuses_CanDelete.Contains(result.Status))
             throw new ValidationException($"The {nameof(Program)} can not be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");

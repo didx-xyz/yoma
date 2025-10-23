@@ -10,7 +10,6 @@ using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi.Models;
-using Newtonsoft.Json.Converters;
 using StackExchange.Redis;
 using System.Net.Mime;
 using tusdotnet.Helpers;
@@ -100,7 +99,12 @@ namespace Yoma.Core.Api
       })
       .AddNewtonsoftJson(options =>
       {
-        options.SerializerSettings.Converters.Add(new StringEnumConverter()); //TODO: AllowIntegerValues = false   // 🔒 reject numeric enum tokens
+        options.SerializerSettings.Converters.Add(new StrictStringEnumConverter //extends Newtonsoft.Json StringEnumConverter
+        {
+          AllowIntegerValues = true,
+          RejectUndefinedValues = true,
+          // no NamingStrategy set → default (PascalCase) output
+        });
         options.SerializerSettings.Converters.Add(new StringTrimmingConverter());
       });
 
