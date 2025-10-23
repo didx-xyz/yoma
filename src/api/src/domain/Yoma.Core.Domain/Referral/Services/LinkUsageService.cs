@@ -23,6 +23,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly ILinkUsageStatusService _linkUsageStatusService;
     private readonly IUserService _userService;
     private readonly IMyOpportunityService _myOpportunityService;
+    private readonly ILinkService _linkService;
 
     private readonly ReferralLinkUsageSearchFilterValidator _referralLinkUsageSearchFilterValidator;
 
@@ -37,6 +38,7 @@ namespace Yoma.Core.Domain.Referral.Services
       ILinkUsageStatusService linkUsageStatusService,
       IUserService userService,
       IMyOpportunityService myOpportunityService,
+      ILinkService linkService,
 
       ReferralLinkUsageSearchFilterValidator referralLinkUsageSearchFilterValidator,
 
@@ -48,6 +50,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _myOpportunityService = myOpportunityService ?? throw new ArgumentNullException(nameof(myOpportunityService));
+      _linkService = linkService ?? throw new ArgumentNullException(nameof(linkService));
 
       _referralLinkUsageSearchFilterValidator = referralLinkUsageSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkUsageSearchFilterValidator));
 
@@ -202,9 +205,83 @@ namespace Yoma.Core.Domain.Referral.Services
       return results;
     }
 
-    public Task ClaimAsReferee(Guid linkId)
+    public async Task ClaimAsReferee(Guid linkId)
     {
-      throw new NotImplementedException();
+      var link = _linkService.GetById(linkId, true, false, false, false);
+      var program = _programService.GetById(link.ProgramId, true, false);
+      var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
+
+      // Self-referral guard
+      if (link.UserId == user.Id)
+        throw new ValidationException("You cannot claim your own referral link");
+
+      // A referee can only ever claim once per PROGRAM(any link, any status)
+      var msgProgramClaimed = $"You have already participated in program '{program.Name}' and cannot claim again";
+
+      var programClaimed = _linkUsageRepository.Query().Any(u => u.ProgramId == program.Id && u.UserId == user.Id);
+      if (programClaimed) throw new ValidationException(msgProgramClaimed);
+
+      var usageExisting = _linkUsageRepository.Query().SingleOrDefault(x => x.LinkId == link.Id && x.UserId == user.Id);
+      if (usageExisting != null)
+      {
+        switch (usageExisting.Status)
+        {
+          case ReferralLinkUsageStatus.Pending:
+            // Fallback guard in case program expiration job has’t run yet
+            var effectiveExpiry = program.CompletionWindowInDays.HasValue
+              ? usageExisting.DateClaimed.AddDays(program.CompletionWindowInDays.Value)
+              : program.DateEnd; // fallback to program end if defined
+
+            if (effectiveExpiry.HasValue && effectiveExpiry <= DateTimeOffset.UtcNow)
+              throw new ValidationException($"{msgProgramClaimed}. Your previous claim for link '{link.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' has expired on '{effectiveExpiry:yyyy-MM-dd}'");
+            
+            throw new ValidationException($"{msgProgramClaimed}. You already claimed link '{link.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' and it is still pending");
+
+          case ReferralLinkUsageStatus.Completed:
+            throw new ValidationException($"{msgProgramClaimed}. You already completed program '{program.Name}' using link '{link.Name}' on '{usageExisting.DateCompleted:yyyy-MM-dd}'");
+
+          case ReferralLinkUsageStatus.Expired:
+            throw new ValidationException($"{msgProgramClaimed}. Your claim for link '{link.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' expired on '{usageExisting.DateExpired:yyyy-MM-dd}'");
+
+          default:
+            throw new InvalidOperationException($"Unsupported referral link usage status: {usageExisting.Status}");
+        }
+      }
+
+      //block applies to referrers and not referees
+
+      // Program must be active, not before start, not after end
+      if (program.Status != ProgramStatus.Active)
+        throw new ValidationException($"Program '{program.Name}' status is '{program.Status.ToDescription()}'");
+
+      if (program.DateStart > DateTimeOffset.UtcNow)
+        throw new ValidationException($"Program '{program.Name}' only starts on '{program.DateStart:yyyy-MM-dd}'");
+
+      if (program.DateEnd.HasValue && program.DateEnd <= DateTimeOffset.UtcNow) // Fallback guard in case program expiration job has’t run yet
+        throw new ValidationException($"Program '{program.Name}' expired on '{program.DateEnd:yyyy-MM-dd}'");
+
+      // Caps at claim time: program-wide + per-referrer
+      var programCapReached =
+          (program.CompletionLimit.HasValue && (program.CompletionBalance ?? 0) <= 0) ||
+          (program.CompletionLimitReferee.HasValue && link.CompletionTotal >= program.CompletionLimitReferee);
+
+      if (programCapReached)
+        throw new ValidationException($"Program '{program.Name}' has reached its completion limit");
+
+      // link must be active (referrer blocks should already have cancelled links)
+      if (link.Status != ReferralLinkStatus.Active)
+        throw new ValidationException($"Referral link '{link.Name}' status is '{link.Status.ToDescription()}'");
+
+      var usage = new ReferralLinkUsage
+      {
+        ProgramId = program.Id,
+        LinkId = link.Id,
+        UserId = user.Id,
+        StatusId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id,
+        DateClaimed = DateTimeOffset.UtcNow
+      };
+
+      await _linkUsageRepository.Create(usage);
     }
     #endregion
 
@@ -266,7 +343,7 @@ namespace Yoma.Core.Domain.Referral.Services
             Id = s.Id,
             Name = s.Name,
             Rule = s.Rule,
-            OrderMode = s.OrderMode,  
+            OrderMode = s.OrderMode,
             Order = s.Order,
             OrderDisplay = s.OrderDisplay,
             Tasks =
@@ -279,7 +356,7 @@ namespace Yoma.Core.Domain.Referral.Services
                   EntityType = t.EntityType,
                   Opportunity = t.Opportunity,
                   Order = t.Order,
-                  OrderDisplay = t.OrderDisplay 
+                  OrderDisplay = t.OrderDisplay
                 };
 
                 switch (t.EntityType)
@@ -295,7 +372,7 @@ namespace Yoma.Core.Domain.Referral.Services
                       task.DateCompleted = verify.DateCompleted;
                     }
                     break;
-           
+
                   default:
                     throw new InvalidOperationException($"Unsupported pathway task entity type: {t.EntityType}");
                 }
