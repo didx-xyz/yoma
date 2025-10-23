@@ -1108,3 +1108,276 @@ BEGIN
     v_i := v_i + 1;
   END LOOP;
 END $$ LANGUAGE plpgsql;
+
+-- ==========================================================================================
+-- Referral Link Usages (seed) for testuser@gmail.com AS REFEREE
+-- NOTE: This intentionally BREAKS the "you cannot claim your own link" rule for seed data.
+-- ==========================================================================================
+
+DO $$
+DECLARE
+  v_user_id                uuid := (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com');
+  v_now                    timestamptz := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
+
+  -- LinkUsage statuses
+  v_usage_pending_id       uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Pending');
+  v_usage_completed_id     uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Completed');
+  v_usage_expired_id       uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Expired');
+
+  -- MyOpportunity enums to decide if an opportunity is completed by the user
+  v_mo_action_verif_id     uuid := (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification');
+  v_mo_status_completed_id uuid := (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed');
+
+  rec RECORD;
+  v_status_id uuid;
+BEGIN
+  IF v_user_id IS NULL THEN
+    RAISE EXCEPTION 'Seed referee user not found: %', 'testuser@gmail.com';
+  END IF;
+  IF v_usage_pending_id IS NULL OR v_usage_completed_id IS NULL OR v_usage_expired_id IS NULL THEN
+    RAISE EXCEPTION 'LinkUsageStatus rows missing (Pending/Completed/Expired)';
+  END IF;
+  IF v_mo_action_verif_id IS NULL OR v_mo_status_completed_id IS NULL THEN
+    RAISE EXCEPTION 'MyOpportunity enums missing (Action=Verification or Status=Completed)';
+  END IF;
+
+  -- Iterate one random link per program for this referrer (self-claim for seed)
+  FOR rec IN
+    SELECT DISTINCT ON (l."ProgramId")
+           l."Id"        AS link_id,
+           l."ProgramId" AS program_id
+    FROM "Referral"."Link" l
+    WHERE l."UserId" = v_user_id
+    ORDER BY l."ProgramId", random()
+  LOOP
+    -- Skip if a usage already exists for this user & program (respect unique constraint)
+    IF EXISTS (
+      SELECT 1
+      FROM "Referral"."LinkUsage" u
+      WHERE u."UserId" = v_user_id
+        AND u."ProgramId" = rec.program_id
+    ) THEN
+      CONTINUE;
+    END IF;
+
+    -- Compute status (Expired > Completed > Pending)
+    WITH prog AS (
+      SELECT
+        p."Id",
+        p."ProofOfPersonhoodRequired"  AS pop_required,
+        p."PathwayRequired"            AS pathway_required,
+        p."DateStart",
+        p."DateEnd",
+        CASE
+          WHEN p."DateEnd" IS NOT NULL AND p."DateEnd" < v_now THEN TRUE
+          ELSE FALSE
+        END AS is_expired
+      FROM "Referral"."Program" p
+      WHERE p."Id" = rec.program_id
+    ),
+    pw AS (
+      SELECT
+        pw."Id",
+        pw."Rule"      AS pathway_rule,      -- 'All' | 'Any'
+        pw."OrderMode" AS pathway_order_mode -- not used for completion
+      FROM "Referral"."ProgramPathway" pw
+      WHERE pw."ProgramId" = rec.program_id
+    ),
+    steps AS (
+      SELECT
+        s."Id",
+        s."Rule" AS step_rule
+      FROM "Referral"."ProgramPathwayStep" s
+      JOIN pw ON pw."Id" = s."PathwayId"
+    ),
+    step_task AS (
+      SELECT
+        s."Id" AS step_id,
+        COUNT(t."Id") AS total_tasks,
+        COUNT(*) FILTER (
+          WHERE EXISTS (
+            SELECT 1
+            FROM "Opportunity"."MyOpportunity" mo
+            WHERE mo."UserId" = v_user_id
+              AND mo."OpportunityId" = t."OpportunityId"
+              AND mo."ActionId" = v_mo_action_verif_id
+              AND mo."VerificationStatusId" = v_mo_status_completed_id
+          )
+        ) AS completed_tasks
+      FROM steps s
+      JOIN "Referral"."ProgramPathwayTask" t ON t."StepId" = s."Id"
+      GROUP BY s."Id"
+    ),
+    step_satisfied AS (
+      SELECT
+        s."Id" AS step_id,
+        CASE
+          WHEN s.step_rule = 'All' THEN (st.completed_tasks = st.total_tasks)
+          WHEN s.step_rule = 'Any' THEN (st.completed_tasks >= 1)
+          ELSE FALSE
+        END AS is_satisfied
+      FROM (
+        SELECT s."Id", s."Rule" AS step_rule
+        FROM "Referral"."ProgramPathwayStep" s
+        JOIN pw ON pw."Id" = s."PathwayId"
+      ) s
+      JOIN step_task st ON st.step_id = s."Id"
+    ),
+    pathway_eval AS (
+      SELECT
+        pw."Id" AS pathway_id,
+        CASE
+          WHEN pw."Id" IS NULL THEN FALSE
+          WHEN pw.pathway_rule = 'All'
+            THEN NOT EXISTS (
+                   SELECT 1 FROM "Referral"."ProgramPathwayStep" s
+                   WHERE s."PathwayId" = pw."Id"
+                     AND NOT EXISTS (
+                       SELECT 1 FROM step_satisfied ss WHERE ss.step_id = s."Id" AND ss.is_satisfied = TRUE
+                     )
+                 )
+          WHEN pw.pathway_rule = 'Any'
+            THEN EXISTS (SELECT 1 FROM step_satisfied ss WHERE ss.is_satisfied = TRUE)
+          ELSE FALSE
+        END AS pathway_satisfied
+      FROM pw
+    )
+    SELECT
+      CASE
+        WHEN (SELECT is_expired FROM prog) = TRUE
+          THEN v_usage_expired_id
+        WHEN (SELECT pop_required FROM prog) = TRUE
+          THEN v_usage_pending_id
+        WHEN (SELECT pathway_required FROM prog) = TRUE
+          THEN CASE WHEN COALESCE((SELECT pathway_satisfied FROM pathway_eval), FALSE)
+                    THEN v_usage_completed_id
+                    ELSE v_usage_pending_id
+               END
+        ELSE
+          v_usage_pending_id
+      END
+    INTO v_status_id;
+
+    INSERT INTO "Referral"."LinkUsage"(
+      "Id","ProgramId","LinkId","UserId","StatusId","DateCreated","DateModified"
+    ) VALUES (
+      gen_random_uuid(), rec.program_id, rec.link_id, v_user_id, v_status_id, v_now, v_now
+    );
+  END LOOP;
+END $$ LANGUAGE plpgsql;
+
+-- ============================================================
+-- Referral Running Totals & Computed States
+-- - Program: CompletionTotal, ZltoRewardCumulative
+-- - Link:    CompletionTotal, ZltoRewardCumulative, Status=LimitReached
+-- ============================================================
+
+DO $$
+DECLARE
+  v_now                   timestamptz := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
+  v_status_active_id      uuid := (SELECT "Id" FROM "Referral"."LinkStatus" WHERE "Name"='Active');
+  v_status_limit_id       uuid := (SELECT "Id" FROM "Referral"."LinkStatus" WHERE "Name"='LimitReached');
+BEGIN
+  -- Safety
+  IF v_status_active_id IS NULL OR v_status_limit_id IS NULL THEN
+    RAISE EXCEPTION 'Missing LinkStatus rows (Active/LimitReached)';
+  END IF;
+
+  -- ===========================================
+  -- PROGRAM: CompletionTotal & ZltoRewardCumulative
+  -- ===========================================
+  WITH usage_completed AS (
+    SELECT u."ProgramId", COUNT(*)::int AS completed_cnt
+    FROM "Referral"."LinkUsage" u
+    JOIN "Referral"."LinkUsageStatus" s ON s."Id" = u."StatusId" AND s."Name" = 'Completed'
+    GROUP BY u."ProgramId"
+  ),
+  rewards AS (
+    SELECT p."Id" AS program_id,
+           COALESCE(p."ZltoRewardReferrer", 0)::numeric +
+           COALESCE(p."ZltoRewardReferee", 0)::numeric AS reward_per_completion,
+           p."ZltoRewardPool" AS pool
+    FROM "Referral"."Program" p
+  ),
+  agg AS (
+    SELECT r.program_id,
+           COALESCE(uc.completed_cnt, 0) AS completed_cnt,
+           r.reward_per_completion,
+           r.pool,
+           CASE
+             WHEN r.reward_per_completion IS NULL OR r.reward_per_completion = 0 THEN NULL
+             WHEN COALESCE(uc.completed_cnt,0) = 0 THEN NULL
+             ELSE (r.reward_per_completion * COALESCE(uc.completed_cnt,0))
+           END AS raw_cumulative
+    FROM rewards r
+    LEFT JOIN usage_completed uc ON uc."ProgramId" = r.program_id
+  ),
+  capped AS (
+    SELECT program_id,
+           completed_cnt,
+           CASE
+             WHEN raw_cumulative IS NULL THEN NULL
+             WHEN pool IS NULL THEN raw_cumulative
+             ELSE LEAST(raw_cumulative, pool)
+           END AS zlto_cumulative
+    FROM agg
+  )
+  UPDATE "Referral"."Program" p
+  SET "CompletionTotal"      = c.completed_cnt,
+      "ZltoRewardCumulative" = c.zlto_cumulative,
+      "DateModified"         = v_now
+  FROM capped c
+  WHERE p."Id" = c.program_id;
+
+  -- ===========================================
+  -- LINK: CompletionTotal & ZltoRewardCumulative
+  --  (per-link cumulative computed from program reward-per-completion;
+  --   not capped here to avoid double pool application across many links)
+  -- ===========================================
+  WITH usage_completed AS (
+    SELECT u."LinkId", COUNT(*)::int AS completed_cnt
+    FROM "Referral"."LinkUsage" u
+    JOIN "Referral"."LinkUsageStatus" s ON s."Id" = u."StatusId" AND s."Name"='Completed'
+    GROUP BY u."LinkId"
+  ),
+  reward_map AS (
+    SELECT l."Id" AS link_id,
+           COALESCE(p."ZltoRewardReferrer",0)::numeric +
+           COALESCE(p."ZltoRewardReferee",0)::numeric AS reward_per_completion
+    FROM "Referral"."Link" l
+    JOIN "Referral"."Program" p ON p."Id" = l."ProgramId"
+  ),
+  agg AS (
+    SELECT rm.link_id,
+           COALESCE(uc.completed_cnt, 0) AS completed_cnt,
+           CASE
+             WHEN rm.reward_per_completion IS NULL OR rm.reward_per_completion = 0 THEN NULL
+             WHEN COALESCE(uc.completed_cnt,0) = 0 THEN NULL
+             ELSE (rm.reward_per_completion * COALESCE(uc.completed_cnt,0))
+           END AS zlto_cumulative
+    FROM reward_map rm
+    LEFT JOIN usage_completed uc ON uc."LinkId" = rm.link_id
+  )
+  UPDATE "Referral"."Link" l
+  SET "CompletionTotal"      = a.completed_cnt,
+      "ZltoRewardCumulative" = a.zlto_cumulative,
+      "DateModified"         = v_now
+  FROM agg a
+  WHERE l."Id" = a.link_id;
+
+  -- ===========================================
+  -- LINK: flip Active -> LimitReached
+  --  Rule: if program has per-referrer cap AND
+  --        link.CompletionTotal >= cap
+  -- ===========================================
+  UPDATE "Referral"."Link" l
+  SET "StatusId"    = v_status_limit_id,
+      "DateModified" = v_now
+  FROM "Referral"."Program" p
+  WHERE l."ProgramId" = p."Id"
+    AND p."CompletionLimitReferee" IS NOT NULL
+    AND l."CompletionTotal" IS NOT NULL
+    AND l."CompletionTotal" >= p."CompletionLimitReferee"
+    AND l."StatusId" = v_status_active_id;  -- only flip Active
+
+END $$ LANGUAGE plpgsql;
