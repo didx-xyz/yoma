@@ -997,3 +997,114 @@ BEGIN
   END IF;
 
 END $$ LANGUAGE plpgsql;
+
+-- ============================================================
+-- Referral Links (100) for testuser@gmail.com
+-- States: Active, Cancelled, Expired (only on truly expired programs)
+-- NOTE: LimitReached will be set later after we add usages
+-- ============================================================
+
+DO $$
+DECLARE
+  v_ref_user_id         uuid := (SELECT "Id" FROM "Entity"."User" WHERE "Email" = 'testuser@gmail.com');
+  v_now                 timestamptz := (CURRENT_TIMESTAMP AT TIME ZONE 'UTC');
+
+  v_status_active_id    uuid := (SELECT "Id" FROM "Referral"."LinkStatus" WHERE "Name" = 'Active');
+  v_status_cancelled_id uuid := (SELECT "Id" FROM "Referral"."LinkStatus" WHERE "Name" = 'Cancelled');
+  v_status_expired_id   uuid := (SELECT "Id" FROM "Referral"."LinkStatus" WHERE "Name" = 'Expired');
+
+  v_words               text := 'Spark,Route,Growth,Engage,Pulse,Loop,Edge,Flow,Track,Boost,Orbit,Bridge,Lift,Peak,Stride,Signal,Anchor,Path,Trail,Link';
+  v_arr                 text[];
+  v_cnt                 int;
+
+  v_link_id             uuid;
+  v_state_pick          int;
+  v_program_id          uuid;
+  v_status_id           uuid;
+  v_link_name           varchar(255);
+  v_url                 varchar(2048);
+  v_shorturl            varchar(2048);
+
+  v_i int := 0;
+BEGIN
+  IF v_ref_user_id IS NULL THEN
+    RAISE EXCEPTION 'Referrer user not found: %', 'testuser@gmail.com';
+  END IF;
+
+  -- Ensure we have at least one active and one expired program
+  IF NOT EXISTS (
+    SELECT 1 FROM "Referral"."Program" p
+    WHERE p."StatusId" = (SELECT "Id" FROM "Referral"."ProgramStatus" WHERE "Name"='Active')
+      AND p."DateStart" <= v_now
+      AND (p."DateEnd" IS NULL OR p."DateEnd" > v_now)
+  ) THEN
+    RAISE EXCEPTION 'No active program found to attach Active/Cancelled links';
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM "Referral"."Program" p
+    WHERE p."DateEnd" IS NOT NULL AND p."DateEnd" < v_now
+  ) THEN
+    RAISE EXCEPTION 'No expired program found to attach Expired links';
+  END IF;
+
+  WHILE v_i < 100 LOOP
+    -- Distribution: 60% Active, 25% Cancelled, 15% Expired
+    v_state_pick := 1 + floor(random()*100)::int;
+
+    IF v_state_pick <= 60 THEN
+      v_status_id := v_status_active_id;
+      SELECT p."Id" INTO v_program_id
+      FROM "Referral"."Program" p
+      WHERE p."StatusId" = (SELECT "Id" FROM "Referral"."ProgramStatus" WHERE "Name"='Active')
+        AND p."DateStart" <= v_now
+        AND (p."DateEnd" IS NULL OR p."DateEnd" > v_now)
+      ORDER BY random() LIMIT 1;
+
+    ELSIF v_state_pick <= 85 THEN
+      v_status_id := v_status_cancelled_id;
+      SELECT p."Id" INTO v_program_id
+      FROM "Referral"."Program" p
+      WHERE p."StatusId" = (SELECT "Id" FROM "Referral"."ProgramStatus" WHERE "Name"='Active')
+        AND p."DateStart" <= v_now
+        AND (p."DateEnd" IS NULL OR p."DateEnd" > v_now)
+      ORDER BY random() LIMIT 1;
+
+    ELSE
+      v_status_id := v_status_expired_id;
+      SELECT p."Id" INTO v_program_id
+      FROM "Referral"."Program" p
+      WHERE p."DateEnd" IS NOT NULL AND p."DateEnd" < v_now
+      ORDER BY random() LIMIT 1;
+    END IF;
+
+    IF v_program_id IS NULL THEN
+      CONTINUE;
+    END IF;
+
+    -- Short, usable name: 2..4 words (trimmed) + compact suffix
+    v_cnt := 2 + floor(random()*3)::int; -- 2..4
+    SELECT array_agg(w ORDER BY random()) INTO v_arr
+    FROM regexp_split_to_table(v_words, ',') AS w
+    LIMIT v_cnt;
+
+    v_link_name :=
+      left(trim(both ' ' from array_to_string(v_arr, ' ')), 40) || ' Lk ' || (v_i + 1)::text;
+
+    -- Unique URLs (respect unique constraints)
+    v_link_id := gen_random_uuid();
+    v_url := 'https://www.yoma.world/ref/' || v_link_id::text;
+    v_shorturl := 'https://y.w/' || substring(v_link_id::text from 1 for 8);
+
+    INSERT INTO "Referral"."Link"(
+      "Id","Name","Description","ProgramId","UserId","StatusId","URL","ShortURL",
+      "CompletionTotal","ZltoRewardCumulative","DateCreated","DateModified"
+    )
+    VALUES(
+      v_link_id, v_link_name, 'Seeded referral link', v_program_id, v_ref_user_id, v_status_id, v_url, v_shorturl,
+      NULL, NULL, v_now, v_now
+    );
+
+    v_i := v_i + 1;
+  END LOOP;
+END $$ LANGUAGE plpgsql;
