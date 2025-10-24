@@ -17,7 +17,7 @@ namespace Yoma.Core.Domain.Referral.Validators
 
       RuleFor(x => x.UserIdReferee).Must(x => !x.HasValue || x != Guid.Empty).WithMessage("User Id Referee is optional, but if specified, it cannot be empty.");
       RuleFor(x => x.UserIdReferrer).Must(x => !x.HasValue || x != Guid.Empty).WithMessage("User Id Referrer is optional, but if specified, it cannot be empty.");
-      RuleFor(x => x).Must(x => x.UserIdReferee.HasValue || x.UserIdReferrer.HasValue).WithMessage("Either User Id Referrer or User Id Referee can be specified.");
+      RuleFor(x => x).Must(x => !(x.UserIdReferrer.HasValue && x.UserIdReferee.HasValue)).WithMessage("Only one of UserIdReferrer or UserIdReferee may be specified, not both.");
     }
     #endregion
   }
