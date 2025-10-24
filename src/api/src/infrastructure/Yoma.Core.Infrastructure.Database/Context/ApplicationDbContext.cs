@@ -278,6 +278,28 @@ namespace Yoma.Core.Infrastructure.Database.Context
       #endregion Opportunity
 
       #region Referral
+      builder.Entity<Block>()
+          .HasOne(b => b.User)
+          .WithMany(u => u.Blocks)
+          .HasForeignKey(b => b.UserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Block>()
+          .HasOne(b => b.CreatedByUser)
+          .WithMany()
+          .HasForeignKey(b => b.CreatedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Block>()
+          .HasOne(b => b.ModifiedByUser)
+          .WithMany()
+          .HasForeignKey(b => b.ModifiedByUserId)
+          .OnDelete(DeleteBehavior.NoAction);
+
+      builder.Entity<Block>().HasIndex(o => o.UserId)
+          .IsUnique()
+          .HasFilter($"\"{nameof(Block.Active)}\" = true");
+
       builder.Entity<Program>()
           .HasOne(o => o.CreatedByUser)
           .WithMany()
@@ -299,10 +321,6 @@ namespace Yoma.Core.Infrastructure.Database.Context
           .HasIndex(e => new { e.StepId, e.EntityType, e.OpportunityId })
           .IsUnique()
           .HasFilter(null);
-
-      builder.Entity<Block>().HasIndex(o => o.UserId)
-        .IsUnique()
-        .HasFilter($"\"{nameof(Block.Active)}\" = true");
       #endregion
 
       #region Reward

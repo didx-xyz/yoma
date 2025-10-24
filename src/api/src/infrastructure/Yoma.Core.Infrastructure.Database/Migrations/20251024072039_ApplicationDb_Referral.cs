@@ -14,35 +14,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "Referral");
 
       migrationBuilder.CreateTable(
-          name: "Block",
-          columns: table => new
-          {
-            Id = table.Column<Guid>(type: "uuid", nullable: false),
-            UserId = table.Column<Guid>(type: "uuid", nullable: false),
-            ReasonId = table.Column<Guid>(type: "uuid", nullable: false),
-            Reason = table.Column<string>(type: "text", nullable: false),
-            ReasonDescription = table.Column<string>(type: "text", nullable: false),
-            CommentBlock = table.Column<string>(type: "text", nullable: true),
-            CommentUnBlock = table.Column<string>(type: "text", nullable: true),
-            Active = table.Column<bool>(type: "boolean", nullable: false),
-            DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-            CreatedByUserId = table.Column<Guid>(type: "uuid", nullable: false),
-            DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
-            ModifiedByUserId = table.Column<Guid>(type: "uuid", nullable: false)
-          },
-          constraints: table =>
-          {
-            table.PrimaryKey("PK_Block", x => x.Id);
-            table.ForeignKey(
-                      name: "FK_Block_User_UserId",
-                      column: x => x.UserId,
-                      principalSchema: "Entity",
-                      principalTable: "User",
-                      principalColumn: "Id",
-                      onDelete: ReferentialAction.Cascade);
-          });
-
-      migrationBuilder.CreateTable(
           name: "BlockReason",
           schema: "Referral",
           columns: table => new
@@ -130,22 +101,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                       column: x => x.CreatedByUserId,
                       principalSchema: "Entity",
                       principalTable: "User",
-                      principalColumn: "Id",
-                      onDelete: ReferentialAction.Cascade);
+                      principalColumn: "Id");
             table.ForeignKey(
                       name: "FK_Block_User_ModifiedByUserId",
                       column: x => x.ModifiedByUserId,
                       principalSchema: "Entity",
                       principalTable: "User",
-                      principalColumn: "Id",
-                      onDelete: ReferentialAction.Cascade);
+                      principalColumn: "Id");
             table.ForeignKey(
                       name: "FK_Block_User_UserId",
                       column: x => x.UserId,
                       principalSchema: "Entity",
                       principalTable: "User",
-                      principalColumn: "Id",
-                      onDelete: ReferentialAction.Cascade);
+                      principalColumn: "Id");
           });
 
       migrationBuilder.CreateTable(
@@ -384,11 +352,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           });
 
       migrationBuilder.CreateIndex(
-          name: "IX_Block_UserId",
-          table: "Block",
-          column: "UserId");
-
-      migrationBuilder.CreateIndex(
           name: "IX_Block_CreatedByUserId",
           schema: "Referral",
           table: "Block",
@@ -407,7 +370,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           columns: ["ReasonId", "DateCreated", "DateModified"]);
 
       migrationBuilder.CreateIndex(
-          name: "IX_Block_UserId1",
+          name: "IX_Block_UserId",
           schema: "Referral",
           table: "Block",
           column: "UserId",
@@ -609,9 +572,6 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
-      migrationBuilder.DropTable(
-          name: "Block");
-
       migrationBuilder.DropTable(
           name: "Block",
           schema: "Referral");
