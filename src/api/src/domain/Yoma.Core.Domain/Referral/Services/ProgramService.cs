@@ -402,7 +402,7 @@ namespace Yoma.Core.Domain.Referral.Services
           break;
 
         default:
-          throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(Status)} of '{status.ToDescription()}' not supported");
+          throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(ProgramStatus)} of '{status.ToDescription()}' not supported");
       }
 
       var statusId = _programStatusService.GetByName(status.ToString()).Id;

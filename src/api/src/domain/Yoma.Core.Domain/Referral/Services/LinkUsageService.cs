@@ -252,7 +252,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       // Program must be active, not before start, not after end
       if (program.Status != ProgramStatus.Active)
-        throw new ValidationException($"Program '{program.Name}' status is '{program.Status.ToDescription()}'");
+        throw new ValidationException($"Program '{program.Name}' status is '{program.Status}'");
 
       if (program.DateStart > DateTimeOffset.UtcNow)
         throw new ValidationException($"Program '{program.Name}' only starts on '{program.DateStart:yyyy-MM-dd}'");
@@ -270,7 +270,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       // link must be active (referrer blocks should already have cancelled links)
       if (link.Status != ReferralLinkStatus.Active)
-        throw new ValidationException($"Referral link '{link.Name}' status is '{link.Status.ToDescription()}'");
+        throw new ValidationException($"Referral link '{link.Name}' status is '{link.Status}'");
 
       var usage = new ReferralLinkUsage
       {
