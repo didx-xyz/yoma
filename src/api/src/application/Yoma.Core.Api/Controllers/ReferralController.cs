@@ -183,7 +183,7 @@ namespace Yoma.Core.Api.Controllers
 
     [SwaggerOperation(Summary = "Get usage for a link by usage ID (Authenticated User)",
       Description = "Admins can fetch any usage. Referrers can fetch usage for links they own. Referees can fetch usage for links they have claimed")]
-    [HttpGet("link/{id}/usage")]
+    [HttpGet("link/usage/{id}")]
     [Authorize(Roles = $"{Constants.Role_User}")]
     public ActionResult<ReferralLinkUsageInfo> GetUsageById([FromRoute] Guid id)
     {
