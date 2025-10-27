@@ -62,11 +62,17 @@ export interface UserProfile {
   dateYoIDOnboarded: string | null;
   adminsOf: OrganizationInfo[];
   zlto: UserProfileZlto;
+  referral: UserProfileReferral | null;
   opportunityCountSaved: number;
   opportunityCountPending: number;
   opportunityCountCompleted: number;
   opportunityCountRejected: number;
   settings?: SettingsInfo;
+}
+
+export interface UserProfileReferral {
+  blocked: boolean;
+  blockedDate: string | null;
 }
 
 export interface UserProfileZlto {

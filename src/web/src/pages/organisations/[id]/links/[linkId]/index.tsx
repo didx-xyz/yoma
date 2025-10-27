@@ -21,7 +21,7 @@ import {
   LinkInfo,
   LinkSearchFilterUsage,
   LinkSearchResultsUsage,
-  LinkUsageStatus,
+  ActionLinkUsageStatus,
 } from "~/api/models/actionLinks";
 import { getLinkById, searchLinkUsage } from "~/api/services/actionLinks";
 import CustomSlider from "~/components/Carousel/CustomSlider";
@@ -71,7 +71,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     const linkData = await searchLinkUsage(
       {
         id: linkId,
-        usage: usage?.toString() ?? LinkUsageStatus.All,
+        usage: usage?.toString() ?? ActionLinkUsageStatus.All,
         valueContains: valueContains?.toString() ?? null,
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,
@@ -133,14 +133,14 @@ const LinkOverview: NextPageWithLayout<{
     queryKey: [
       "Link",
       linkId,
-      usage ?? LinkUsageStatus.All,
+      usage ?? ActionLinkUsageStatus.All,
       valueContains ?? "",
       page ?? "",
     ],
     queryFn: () =>
       searchLinkUsage({
         id: linkId,
-        usage: usage ?? LinkUsageStatus.All,
+        usage: usage ?? ActionLinkUsageStatus.All,
         valueContains: valueContains?.toString() ?? null,
         pageNumber: page ? parseInt(page.toString()) : 1,
         pageSize: PAGE_SIZE,

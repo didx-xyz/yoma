@@ -14,11 +14,11 @@ import {
 import { IoIosSettings, IoMdWarning } from "react-icons/io";
 import { IoClose, IoShareSocialOutline } from "react-icons/io5";
 import { toast } from "react-toastify";
-import { LinkInfo, LinkStatus } from "~/api/models/actionLinks";
+import { LinkInfo, ActionLinkStatus } from "~/api/models/actionLinks";
 import {
   getLinkById,
   sendInstantVerifyReminders,
-  updateLinkStatus,
+  updateActionLinkStatus,
 } from "~/api/services/actionLinks";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { Loading } from "~/components/Status/Loading";
@@ -115,7 +115,7 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
   );
 
   const handleStatusUpdate = useCallback(
-    async (item: LinkInfo, status: LinkStatus) => {
+    async (item: LinkInfo, status: ActionLinkStatus) => {
       // confirm dialog
       const result = await modalContext.showConfirmation(
         "",
@@ -130,17 +130,17 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
 
           <div>
             <p className="text-sm leading-6">
-              {status === LinkStatus.Active && (
+              {status === ActionLinkStatus.Active && (
                 <>
                   Are you sure you want to <i>activate</i> this link?
                 </>
               )}
-              {status === LinkStatus.Inactive && (
+              {status === ActionLinkStatus.Inactive && (
                 <>
                   Are you sure you want to <i>inactivate</i> this link?
                 </>
               )}
-              {status === LinkStatus.Deleted && (
+              {status === ActionLinkStatus.Deleted && (
                 <>
                   Are you sure you want to <i>delete</i> this link?
                 </>
@@ -155,7 +155,7 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
 
       try {
         // call api
-        await updateLinkStatus(item.id, status);
+        await updateActionLinkStatus(item.id, status);
 
         // 📊 ANALYTICS: track link status update
         analytics.trackEvent("link_status_updated", {
@@ -330,7 +330,9 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
                 <button
                   type="button"
                   className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() => handleStatusUpdate(link, LinkStatus.Active)}
+                  onClick={() =>
+                    handleStatusUpdate(link, ActionLinkStatus.Active)
+                  }
                 >
                   <FaStar className="text-green size-4" />
                   Activate
@@ -412,7 +414,9 @@ export const LinkActions: React.FC<LinkActionsProps> = ({
                 <button
                   type="button"
                   className="text-gray-dark flex flex-row items-center hover:brightness-50"
-                  onClick={() => handleStatusUpdate(link, LinkStatus.Deleted)}
+                  onClick={() =>
+                    handleStatusUpdate(link, ActionLinkStatus.Deleted)
+                  }
                 >
                   <FaTrash className="text-green size-4" />
                   Delete

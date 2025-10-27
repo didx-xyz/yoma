@@ -6,17 +6,23 @@ import { toBase64, shimmer } from "~/lib/image";
 
 interface InputProps {
   items: TabItem[];
+  className?: string;
+  classNameLink?: string;
 }
 
-const Breadcrumb: React.FC<InputProps> = ({ items }) => {
+const Breadcrumb: React.FC<InputProps> = ({
+  items,
+  className = "",
+  classNameLink = "hover:text-gray-dark",
+}) => {
   return (
-    <div className="breadcrumbs">
+    <div className={`breadcrumbs ${className}`}>
       <ul>
         {items.map((item, index) => (
           <li key={index}>
             {item.url ? (
               <Link
-                className="hover:text-gray-dark max-w-[200px] overflow-hidden font-bold text-ellipsis"
+                className={`max-w-[200px] overflow-hidden font-bold text-ellipsis ${classNameLink}`}
                 href={item.url}
               >
                 {item.iconImage && (

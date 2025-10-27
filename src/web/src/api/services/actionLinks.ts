@@ -9,7 +9,7 @@ import {
   type LinkSearchFilterUsage,
   type LinkSearchResult,
   type LinkSearchResultsUsage,
-  type LinkStatus,
+  type ActionLinkStatus,
 } from "../models/actionLinks";
 
 export const createLinkSharing = async (
@@ -60,9 +60,9 @@ export const searchLinks = async (
   return data;
 };
 
-export const updateLinkStatus = async (
+export const updateActionLinkStatus = async (
   linkId: string,
-  status: LinkStatus,
+  status: ActionLinkStatus,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<LinkInfo> => {
   const instance = context ? ApiServer(context) : await ApiClient;

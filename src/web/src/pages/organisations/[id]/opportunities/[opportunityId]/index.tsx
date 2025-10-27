@@ -395,7 +395,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     postAsActive: opportunity?.published ?? false,
     shareWithPartners: opportunity?.shareWithPartners ?? false,
     hidden: opportunity?.hidden ?? false,
-
     showZltoReward: !!(opportunity?.zltoReward ?? false),
     showZltoRewardPool: !!(opportunity?.zltoRewardPool ?? false),
   });
@@ -1312,7 +1311,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
   );
 
   const onSubmitStep = useCallback(
-    async (step: number, data: FieldValues) => {
+    async (nextStep: number, data: FieldValues) => {
       // set form data
       const model = {
         ...formData,
@@ -1321,18 +1320,11 @@ const OpportunityAdminDetails: NextPageWithLayout<{
 
       setFormData(model);
 
-      if (step === menuItems.length + 1) {
+      if (nextStep === menuItems.length + 1) {
         await onSubmit(model);
-
-        // // 📊 GOOGLE ANALYTICS: track event
-        // trackGAEvent(
-        //   GA_CATEGORY_OPPORTUNITY,
-        //   GA_ACTION_OPPORTUNITY_CREATE,
-        //   `Created Opportunity: ${model.title}`,
-        // );
+      } else {
+        setStep(nextStep);
       }
-      // move to next step
-      else setStep(step);
 
       // forms needs to be reset in order to clear the dirty fields
       resetStep1(model);
@@ -1354,9 +1346,9 @@ const OpportunityAdminDetails: NextPageWithLayout<{
       setLastStepBeforeSaveChangesDialog(null);
     },
     [
+      formData,
       menuItems.length,
       setStep,
-      formData,
       setFormData,
       onSubmit,
       lastStepBeforeSaveChangesDialog,
@@ -1435,7 +1427,6 @@ const OpportunityAdminDetails: NextPageWithLayout<{
     },
     1000,
   );
-
   //#endregion Event Handlers
 
   if (error) {
@@ -1652,7 +1643,7 @@ const OpportunityAdminDetails: NextPageWithLayout<{
                 <a
                   className={`${
                     item.step === step
-                      ? "bg-green-light text-green hover:bg-green-light font-bold"
+                      ? "bg-green-light text-green hover:bg-green-light"
                       : "bg-gray-light text-gray-dark hover:bg-gray"
                   } py-3`}
                 >

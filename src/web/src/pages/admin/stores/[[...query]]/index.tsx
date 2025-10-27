@@ -5,15 +5,10 @@ import Head from "next/head";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
-import {
-  IoIosAdd,
-  IoIosSettings,
-  IoMdCalendar,
-  IoMdWarning,
-} from "react-icons/io";
+import { IoIosSettings, IoMdCalendar, IoMdWarning } from "react-icons/io";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
-import { LinkStatus } from "~/api/models/actionLinks";
+import { ActionLinkStatus } from "~/api/models/actionLinks";
 import {
   StoreAccessControlRuleStatus,
   type StoreAccessControlRuleInfo,
@@ -46,6 +41,7 @@ import { analytics } from "~/lib/analytics";
 import { getSafeUrl } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
+import { FaPlusCircle } from "react-icons/fa";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -141,7 +137,7 @@ const Stores: NextPageWithLayout<{
       "StoreAccessControlRule",
       `${nameContains}_${stores}_${organizations}_${statuses}_${page}`,
       "TotalCount",
-      LinkStatus.Active,
+      ActionLinkStatus.Active,
     ],
     queryFn: () =>
       searchStoreAccessControlRule({
@@ -160,7 +156,7 @@ const Stores: NextPageWithLayout<{
       "StoreAccessControlRule",
       `${nameContains}_${stores}_${organizations}_${statuses}_${page}`,
       "TotalCount",
-      LinkStatus.Inactive,
+      ActionLinkStatus.Inactive,
     ],
     queryFn: () =>
       searchStoreAccessControlRule({
@@ -179,7 +175,7 @@ const Stores: NextPageWithLayout<{
       "StoreAccessControlRule",
       `${nameContains}_${stores}_${organizations}_${statuses}_${page}`,
       "TotalCount",
-      LinkStatus.Deleted,
+      ActionLinkStatus.Deleted,
     ],
     queryFn: () =>
       searchStoreAccessControlRule({
@@ -540,8 +536,7 @@ const Stores: NextPageWithLayout<{
             to learn more.
           </FormMessage>
 
-          {/* SEARCH INPUT */}
-          <div className="flex w-full grow items-center justify-between gap-4 sm:justify-end">
+          <div className="flex w-full grow flex-col items-center justify-between gap-4 sm:justify-end md:flex-row">
             {/* FILTER */}
             <StoreAccessControlRuleSearchFilters
               searchFilter={searchFilter}
@@ -557,11 +552,10 @@ const Stores: NextPageWithLayout<{
               href={`/admin/stores/create${`?returnUrl=${encodeURIComponent(
                 getSafeUrl(returnUrl, router.asPath),
               )}`}`}
-              className="bg-theme btn btn-circle btn-secondary btn-sm shadow-custom h-fit w-fit !border-none p-1 text-xs whitespace-nowrap text-white brightness-105 md:p-2 md:px-4"
+              className="bg-theme btn btn-circle btn-sm w-fit p-1 px-4 text-xs"
               id="btnCreateLink"
             >
-              <IoIosAdd className="h-7 w-7 md:h-5 md:w-5" />
-              <span className="hidden md:inline">Add Rule</span>
+              <FaPlusCircle className="h-4 w-4" /> Create Rule
             </Link>
           </div>
         </div>

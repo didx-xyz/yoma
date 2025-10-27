@@ -8,7 +8,7 @@ import type { ParsedUrlQuery } from "querystring";
 import { useCallback, useState, type ReactElement } from "react";
 import { IoMdCalendar } from "react-icons/io";
 import Moment from "react-moment";
-import { LinkStatus } from "~/api/models/actionLinks";
+import { ActionLinkStatus } from "~/api/models/actionLinks";
 import {
   StoreAccessControlRuleStatus,
   type StoreAccessControlRuleSearchFilter,
@@ -121,7 +121,7 @@ const Stores: NextPageWithLayout<{
       "StoreAccessControlRule",
       `${nameContains}_${stores}_${id}_${statuses}_${page}`,
       "TotalCount",
-      LinkStatus.Active,
+      ActionLinkStatus.Active,
     ],
     queryFn: () =>
       searchStoreAccessControlRule({
@@ -139,7 +139,7 @@ const Stores: NextPageWithLayout<{
       "StoreAccessControlRule",
       `${nameContains}_${stores}_${id}_${statuses}_${page}`,
       "TotalCount",
-      LinkStatus.Inactive,
+      ActionLinkStatus.Inactive,
     ],
     queryFn: () =>
       searchStoreAccessControlRule({
@@ -157,7 +157,7 @@ const Stores: NextPageWithLayout<{
       "StoreAccessControlRule",
       `${nameContains}_${stores}_${id}_${statuses}_${page}`,
       "TotalCount",
-      LinkStatus.Deleted,
+      ActionLinkStatus.Deleted,
     ],
     queryFn: () =>
       searchStoreAccessControlRule({
