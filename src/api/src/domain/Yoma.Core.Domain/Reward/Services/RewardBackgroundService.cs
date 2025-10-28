@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
@@ -87,7 +88,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
                   await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
                   {
-                    using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                    using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
                     var (username, wallet) = await _walletService.CreateWallet(item.UserId);
 

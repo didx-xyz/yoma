@@ -187,7 +187,7 @@ namespace Yoma.Core.Infrastructure.Substack.Services
 
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
             await ProcessNewsArticles(feedType, articles, now);
 

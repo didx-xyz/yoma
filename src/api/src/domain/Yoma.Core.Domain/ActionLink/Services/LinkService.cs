@@ -226,7 +226,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         item = await GenerateShortLinkAndCreate(request, item);
 
@@ -738,7 +738,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
         LinkAction.Share => ShortLinkProvider.LinkAction.Share,
         LinkAction.Verify => ShortLinkProvider.LinkAction.Verify,
         _ => throw new InvalidOperationException($"Invalid / unsupported action of '{request.Action}'"),
-      };  
+      };
 
       var responseShortLink = await _shortLinkProviderClient.CreateShortLink(new ShortLinkRequest
       {
@@ -807,7 +807,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
         usageLog = await _linkUsageLogRepository.Create(new LinkUsageLog
         {

@@ -1103,7 +1103,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
-            using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+            using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
             await ProcessImportAndUpsertOpportunity(organizationId, dto, true); //probe only; notifications not send
             probedTitles.Add(dto.Title); //required; validated during processing
             probedExternalIds.Add(dto.ExternalId); //required; validated during processing
@@ -1132,7 +1132,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var committed = new List<(Models.Opportunity Opportunity, EventType ActionTaken)>();
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         foreach (var (dto, row) in parsed)
         {
@@ -1261,7 +1261,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         result = await _opportunityRepository.Create(result);
 
         // categories
@@ -1407,7 +1407,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       {
         await AssertUpdatablePartnerSharing(request, resultCurrent); //check will abort sharing if possible and needs to be rolled back if the update fails
 
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         result = await _opportunityRepository.Update(result);
 
         // categories
@@ -1494,7 +1494,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
         opportunity.ParticipantCount = count;
         opportunity.ModifiedByUserId = user.Id;
@@ -1629,7 +1629,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await AssignCategories(result, categoryIds);
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
@@ -1654,7 +1654,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await RemoveCategories(result, categoryIds);
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
@@ -1676,7 +1676,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await AssignCountries(result, countryIds);
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
@@ -1714,7 +1714,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await AssignLanguages(result, languageIds);
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
@@ -1739,7 +1739,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await RemoveLanguages(result, languageIds);
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
@@ -1764,7 +1764,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await AssignSkills(result, skillIds);
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
@@ -1789,7 +1789,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await RemoveSkills(result, skillIds);
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
@@ -1814,7 +1814,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await AssignVerificationTypes(result, verificationTypes);
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
@@ -1842,7 +1842,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await RemoveVerificationTypes(result, verificationTypes);
         result.ModifiedByUserId = user.Id;
         result = await _opportunityRepository.Update(result);
@@ -2140,7 +2140,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var countryId in countryIds)
         {
           var country = _countryService.GetById(countryId);
@@ -2175,7 +2175,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var countryId in countryIds)
         {
           var country = _countryService.GetById(countryId);
@@ -2203,7 +2203,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var categoryId in categoryIds)
         {
           var category = _opportunityCategoryService.GetById(categoryId);
@@ -2237,7 +2237,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var categoryId in categoryIds)
         {
           var category = _opportunityCategoryService.GetById(categoryId);
@@ -2267,7 +2267,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var languageId in languageIds)
         {
           var language = _languageService.GetById(languageId);
@@ -2302,7 +2302,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var languageId in languageIds)
         {
           var language = _languageService.GetById(languageId);
@@ -2329,7 +2329,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var skillId in skillIds)
         {
           var skill = _skillService.GetById(skillId);
@@ -2363,7 +2363,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var skillId in skillIds)
         {
           var skill = _skillService.GetById(skillId);
@@ -2390,7 +2390,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var type in verificationTypes)
         {
           var verificationType = _opportunityVerificationTypeService.GetByType(type.Type);
@@ -2440,7 +2440,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var type in verificationTypes)
         {
           var verificationType = _opportunityVerificationTypeService.GetByType(type);

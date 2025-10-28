@@ -83,7 +83,7 @@ namespace Yoma.Core.Domain.Referral.Services
       Block? result = null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         result = new Block()
         {

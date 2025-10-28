@@ -244,7 +244,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         //create the program
         result = await _programRepository.Create(result);
@@ -322,7 +322,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         //pathway
         if (request.Pathway == null)
@@ -360,7 +360,7 @@ namespace Yoma.Core.Domain.Referral.Services
       (Program? Program, BlobObject? ItemAdded) resultImage = (null, null);
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         resultImage = await UpdateImage(result, file);
         result.ModifiedByUserId = user.Id;
         result = await _programRepository.Update(result);
@@ -418,7 +418,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         result.StatusId = statusId;
         result.Status = status;
@@ -444,7 +444,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         var outcome = await SetAsDefault(result);
         if (!outcome.Updated) return;
@@ -736,7 +736,7 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+          using var scope = TransactionScopeHelper.CreateReadCommitted();
           blobObject = await _blobService.Create(FileType.Photos, StorageType.Public, file, null); // public storage; images must remain permanently accessible (e.g., emails, shared links).
           program.ImageId = blobObject.Id;
           program.ImageStorageType = blobObject.StorageType;
@@ -771,7 +771,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
         var currentDefault = GetDefaultOrNull(false, false);
         if (currentDefault?.Id == program.Id) // avoid TOCTOU

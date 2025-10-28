@@ -277,7 +277,7 @@ namespace Yoma.Core.Domain.Core.Services
               // ensuring data consistency.
               await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
               {
-                using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
+                using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
                 var fileId = item.FileId.Value;
 

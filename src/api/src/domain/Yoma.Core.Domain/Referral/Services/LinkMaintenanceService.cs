@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Logging;
 using System.Transactions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
@@ -122,7 +123,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
         var linkIds = items.Select(o => o.Id).Distinct().ToList();
 
