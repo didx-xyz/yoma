@@ -80,7 +80,9 @@ namespace Yoma.Core.Domain.Core
   {
     Create,
     Update,
-    Delete
+    Delete,
+    IdentityAction,
+    VerificationCompleted
   }
 
   public enum EngagementTypeOption

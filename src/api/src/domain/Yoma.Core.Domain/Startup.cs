@@ -193,6 +193,8 @@ namespace Yoma.Core.Domain
       services.AddScoped<IBlockService, BlockService>();
       services.AddScoped<ILinkMaintenanceService, LinkMaintenanceService>();
       services.AddScoped<Referral.Interfaces.ILinkService, Referral.Services.LinkService>();
+      services.AddScoped<ILinkUsageBackgroundService, LinkUsageBackgroundService>();
+      services.AddScoped<IProgramBackgroundService, ProgramBackgroundService>();
       services.AddScoped<ILinkUsageService, LinkUsageService>();
       services.AddScoped<IProgramService, ProgramService>();
       services.AddScoped<IProgramInfoService, ProgramInfoService>();

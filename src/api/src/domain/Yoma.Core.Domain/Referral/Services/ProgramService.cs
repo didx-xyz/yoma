@@ -198,6 +198,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       results.Items = [.. query];
 
+      results.Items.ForEach(o => o.ImageURL = GetBlobObjectURL(o.ImageStorageType, o.ImageKey));
       return results;
     }
 
@@ -249,7 +250,11 @@ namespace Yoma.Core.Domain.Referral.Services
         result = await _programRepository.Create(result);
 
         //set as default
-        if (request.IsDefault) await SetAsDefault(result);
+        if (request.IsDefault)
+        {
+          var outcome = await SetAsDefault(result);
+          if (outcome.Updated) result = outcome.Program;
+        }
 
         //pathway
         if (request.Pathway != null) result = await UpsertProgramPathway(result, request.Pathway);
@@ -310,7 +315,7 @@ namespace Yoma.Core.Domain.Referral.Services
       result.PathwayRequired = request.PathwayRequired;
       result.MultipleLinksAllowed = request.MultipleLinksAllowed;
       //status processed above
-      result.IsDefault = request.IsDefault; //processed below if true
+      if (!request.IsDefault) result.IsDefault = false; //processed below if true to avoid unique index constraint 
       result.DateStart = request.DateStart;
       result.DateEnd = request.DateEnd;
       result.ModifiedByUserId = user.Id;
@@ -332,7 +337,11 @@ namespace Yoma.Core.Domain.Referral.Services
         result = await _programRepository.Update(result);
 
         //set as default
-        if (request.IsDefault) await SetAsDefault(result);
+        if (request.IsDefault)
+        {
+          var outcome = await SetAsDefault(result);
+          if (outcome.Updated) result = outcome.Program;
+        }
 
         scope.Complete();
       });
@@ -359,7 +368,7 @@ namespace Yoma.Core.Domain.Referral.Services
       });
 
       if (resultImage.Program == null)
-        throw new InvalidOperationException($"{nameof(Models.Program)} expected");
+        throw new InvalidOperationException($"{nameof(Program)} expected");
 
       return resultImage.Program;
     }
@@ -417,7 +426,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
         result = await _programRepository.Update(result);
 
-        if(cancelReferralLinks) await _linkMaintenanceService.CancelByProgramId(result.Id);
+        if (cancelReferralLinks) await _linkMaintenanceService.CancelByProgramId(result.Id);
 
         scope.Complete();
       });
@@ -436,9 +445,14 @@ namespace Yoma.Core.Domain.Referral.Services
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.RequiresNew, TransactionScopeAsyncFlowOption.Enabled);
-        result = await SetAsDefault(result);
+
+        var outcome = await SetAsDefault(result);
+        if (!outcome.Updated) return;
+
+        result = outcome.Program;
         result.ModifiedByUserId = user.Id;
         result = await _programRepository.Update(result);
+
         scope.Complete();
       });
 
@@ -614,7 +628,7 @@ namespace Yoma.Core.Domain.Referral.Services
           resultStep.OrderMode = request.OrderMode;
           resultStep.Order = pathway.OrderMode == PathwayOrderMode.Sequential ? orderDisplay : null;
           resultStep.OrderDisplay = orderDisplay;
-          
+
           resultStep = await _programPathwayStepRepository.Update(resultStep);
           resultSteps.Add(resultStep);
         }
@@ -751,8 +765,10 @@ namespace Yoma.Core.Domain.Referral.Services
       return (program, blobObject);
     }
 
-    private async Task<Program> SetAsDefault(Program program)
+    private async Task<(Program Program, bool Updated)> SetAsDefault(Program program)
     {
+      var updated = false;
+
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = new TransactionScope(TransactionScopeOption.Required, TransactionScopeAsyncFlowOption.Enabled);
@@ -763,6 +779,8 @@ namespace Yoma.Core.Domain.Referral.Services
           scope.Complete();
           return;
         }
+
+        var items = new List<Program>();
 
         if (currentDefault != null)
         {
@@ -775,9 +793,11 @@ namespace Yoma.Core.Domain.Referral.Services
         //ModifiedByUserId: set by caller
 
         scope.Complete();
+
+        updated = true;
       });
 
-      return program;
+      return (program, updated);
     }
     #endregion
   }

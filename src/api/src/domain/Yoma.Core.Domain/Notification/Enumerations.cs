@@ -15,7 +15,11 @@ namespace Yoma.Core.Domain.Notification
     ActionLink_Verify_Distribution, //sent to youth mailing / distribution list
     ActionLink_Verify_Activated, //sent to organization admin
     Opportunity_Published, //sent to youth
-    Download //sent to admin or organization admin
+    Download, //sent to admin or organization admin
+
+    //TODO: To be confirmed (possible notifications)
+    Referral_Expiration_Expired, //sent to admin
+    Referral_Expiration_WithinNextDays //sent to admin
   }
 
   [Flags]

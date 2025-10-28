@@ -158,6 +158,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           Id = item.Id,
           Name = item.Name,
           Description = item.Description,
+          ImageId = item.ImageId,
           CompletionWindowInDays = item.CompletionWindowInDays,
           CompletionLimitReferee = item.CompletionLimitReferee,
           CompletionLimit = item.CompletionLimit,
@@ -202,6 +203,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
       entity.Name = item.Name;
       entity.Description = item.Description;
+      entity.ImageId = item.ImageId;
       entity.CompletionWindowInDays = item.CompletionWindowInDays;
       entity.CompletionLimitReferee = item.CompletionLimitReferee;
       entity.CompletionLimit = item.CompletionLimit;
@@ -241,6 +243,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
         entity.Name = item.Name;
         entity.Description = item.Description;
+        entity.ImageId = item.ImageId;
         entity.CompletionWindowInDays = item.CompletionWindowInDays;
         entity.CompletionLimitReferee = item.CompletionLimitReferee;
         entity.CompletionLimit = item.CompletionLimit;
@@ -265,7 +268,6 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
       return items;
     }
-
 
     public Task Delete(Program item)
     {

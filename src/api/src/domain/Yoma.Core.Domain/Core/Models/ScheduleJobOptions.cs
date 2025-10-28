@@ -115,5 +115,19 @@ namespace Yoma.Core.Domain.Core.Models
     public int ResumableUploadStoreDeletionBatchSize { get; set; }
 
     //resumable upload deletion interval based on app setting 'DownloadScheduleLinkExpirationHours'
+
+    public string ReferralProgramExpirationSchedule { get; set; } = null!;
+
+    // Recommended batch size: 100 programs per run.
+    // Each program expiration cascades to all its links and link usages, potentially updating thousands of rows.
+    // Keeping the batch size around 100 limits transaction size, reduces lock contention and WAL pressure,
+    // while still providing good throughput for nightly expiration jobs.
+    public int ReferralProgramExpirationScheduleBatchSize { get; set; }
+
+    public string ReferralProgramDeletionSchedule { get; set; } = null!;
+
+    public int ReferralProgramDeletionScheduleBatchSize { get; set; }
+
+    public int ReferralProgramDeletionScheduleIntervalInDays { get; set; }
   }
 }

@@ -141,6 +141,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       return results;
     }
+
     public ReferralLinkUsageSearchResults Search(ReferralLinkUsageSearchFilterAdmin filter)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
@@ -234,7 +235,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
             if (effectiveExpiry.HasValue && effectiveExpiry <= DateTimeOffset.UtcNow)
               throw new ValidationException($"{msgProgramClaimed}. Your previous claim for link '{link.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' has expired on '{effectiveExpiry:yyyy-MM-dd}'");
-            
+
             throw new ValidationException($"{msgProgramClaimed}. You already claimed link '{link.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' and it is still pending");
 
           case ReferralLinkUsageStatus.Completed:

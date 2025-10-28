@@ -22,6 +22,7 @@ namespace Yoma.Core.Domain.Opportunity.Events
     }
     #endregion
 
+    #region Public Members
     public async Task Handle(OpportunityEvent notification, CancellationToken cancellationToken)
     {
       try
@@ -97,5 +98,6 @@ namespace Yoma.Core.Domain.Opportunity.Events
         _logger.LogError(ex, "Error handling {eventType} event for opportunity with id {entityId}: {errorMessage}", notification.EventType, notification.Entity.Id, ex.Message);
       }
     }
+    #endregion
   }
 }
