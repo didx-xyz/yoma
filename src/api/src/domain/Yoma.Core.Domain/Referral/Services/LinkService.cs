@@ -38,7 +38,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IRepositoryBatchedValueContainsWithNavigation<ReferralLink> _linkRepository;
 
     private static readonly ReferralLinkStatus[] Statuses_Updatable = [ReferralLinkStatus.Active];
-    private static readonly ReferralLinkStatus[] Statuses_CanCancel = [ReferralLinkStatus.Active];
+    internal static readonly ReferralLinkStatus[] Statuses_Cancellable = [ReferralLinkStatus.Active];
     #endregion
 
     #region Constructor
@@ -294,8 +294,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
       if (result.Status == ReferralLinkStatus.Cancelled) return result;
 
-      if (!Statuses_CanCancel.Contains(result.Status))
-        throw new ValidationException($"Referral link can not be cancelled (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanCancel.JoinNames()}'");
+      if (!Statuses_Cancellable.Contains(result.Status))
+        throw new ValidationException($"Referral link can not be cancelled (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Cancellable.JoinNames()}'");
 
       var status = _linkStatusService.GetByName(ReferralLinkStatus.Cancelled.ToString());
       result.StatusId = status.Id;

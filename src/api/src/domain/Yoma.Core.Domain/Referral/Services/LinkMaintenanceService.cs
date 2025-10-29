@@ -26,7 +26,7 @@ namespace Yoma.Core.Domain.Referral.Services
       ILinkStatusService linkStatusService,
       ILinkUsageStatusService linkUsageStatusService,
 
-      IExecutionStrategyService executionStrategyService, 
+      IExecutionStrategyService executionStrategyService,
 
       IRepositoryBatchedValueContainsWithNavigation<ReferralLink> linkRepository,
       IRepositoryBatched<ReferralLinkUsage> linkUsageRepository)
@@ -43,19 +43,21 @@ namespace Yoma.Core.Domain.Referral.Services
 
     #region Public Members
     /// <summary>
-    /// Action upon referrer blocking: optionally cancel all active links associated with the user
+    /// Action upon referrer blocking: cancels all links associated with the specified user that are eligible for cancellation
     /// </summary>
     public async Task CancelByUserId(Guid userId)
     {
       if (userId == Guid.Empty)
         throw new ArgumentNullException(nameof(userId));
 
-      var statusActiveId = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString()).Id;
       var statusCancelledId = _linkStatusService.GetByName(ReferralLinkStatus.Cancelled.ToString()).Id;
+      var statusCancellableIds = LinkService.Statuses_Cancellable.Select(s => _linkStatusService.GetByName(s.ToString()).Id).ToList();
 
       var items = _linkRepository.Query()
-        .Where(o => o.UserId == userId && o.StatusId == statusActiveId)
+        .Where(o => o.UserId == userId && statusCancellableIds.Contains(o.StatusId))
         .ToList();
+
+      if (items.Count == 0) return;
 
       items.ForEach(o =>
       {
@@ -67,7 +69,7 @@ namespace Yoma.Core.Domain.Referral.Services
     }
 
     /// <summary>
-    /// Action upon program deletion: cancel all active links associated with the program
+    /// Action upon program deletion: cancels all links associated with the specified program that are eligible for cancellation
     /// </summary>
     public async Task CancelByProgramId(Guid programId, ILogger? logger = null)
     {
@@ -78,7 +80,7 @@ namespace Yoma.Core.Domain.Referral.Services
     }
 
     /// <summary>
-    /// Action upon program deletion: cancel all active links associated with the programs
+    /// Action upon program deletion: cancels all links associated with the specified programs that are eligible for cancellation
     /// </summary>
     public async Task CancelByProgramId(List<Guid> programIds, ILogger? logger = null)
     {
@@ -87,33 +89,33 @@ namespace Yoma.Core.Domain.Referral.Services
 
       programIds = [.. programIds.Distinct()];
 
-      var statusActiveId = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString()).Id;
       var statusCancelledId = _linkStatusService.GetByName(ReferralLinkStatus.Cancelled.ToString()).Id;
+      var statusCancellableIds = LinkService.Statuses_Cancellable.Select(s => _linkStatusService.GetByName(s.ToString()).Id).ToList();
 
       var items = _linkRepository.Query()
-        .Where(o => programIds.Contains(o.ProgramId) && o.StatusId == statusActiveId)
+        .Where(o => programIds.Contains(o.ProgramId) && statusCancellableIds.Contains(o.StatusId))
         .ToList();
 
       if (items.Count == 0)
       {
-        logger?.LogInformation("No cancellable links found for the requested programs.");
+        logger?.LogInformation("No cancellable links found for {ProgramCount} program(s)", programIds.Count);
         return;
       }
 
-      // 2) Flip statuses in-memory
-      items.ForEach(o =>
-      {
-        o.StatusId = statusCancelledId;
-        o.Status = ReferralLinkStatus.Cancelled;
-
-        logger?.LogInformation("Link with id '{id}' flagged for cancellation ", o.Id);
-      });
-
+      items.ForEach(o => { o.StatusId = statusCancelledId; o.Status = ReferralLinkStatus.Cancelled; });
       await _linkRepository.Update(items);
+
+      if (logger == null) return;
+
+      var byProgram = items.GroupBy(x => x.ProgramId).Select(g => new { g.Key, Count = g.Count() });
+      foreach (var g in byProgram)
+        logger.LogInformation("Cancelled {Count} active link(s) for program {ProgramId}", g.Count, g.Key);
+
+      logger.LogInformation("Cancelled {Total} active link(s) across {ProgramCount} program(s)", items.Count, byProgram.Count());
     }
 
     /// <summary>
-    /// Action upon program expiration: expire all active links and usages associated with the program
+    /// Action upon program expiration: expires all links and usages associated with the specified programs that are eligible for expiration
     /// </summary>
     public async Task ExpireByProgramId(List<Guid> programIds, ILogger? logger = null)
     {
@@ -130,17 +132,11 @@ namespace Yoma.Core.Domain.Referral.Services
 
       if (items.Count == 0)
       {
-        logger?.LogInformation("No expirable links found for the requested programs");
+        logger?.LogInformation("No expirable links found for {ProgramCount} program(s)", programIds.Count);
         return;
       }
 
-      items.ForEach(o =>
-      {
-        o.StatusId = statusExpiredId;
-        o.Status = ReferralLinkStatus.Expired;
-
-        logger?.LogInformation("Link with id '{id}' flagged for expiration", o.Id);
-      });
+      items.ForEach(o => { o.StatusId = statusExpiredId; o.Status = ReferralLinkStatus.Expired; });
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
@@ -153,9 +149,20 @@ namespace Yoma.Core.Domain.Referral.Services
 
         scope.Complete();
       });
+
+      if (logger == null) return;
+
+      var byProgram = items.GroupBy(x => x.ProgramId).Select(g => new { g.Key, Count = g.Count() });
+      foreach (var g in byProgram)
+        logger.LogInformation("Expired {Count} link(s) for program {ProgramId}", g.Count, g.Key);
+
+      logger.LogInformation("Expired {Total} link(s) across {ProgramCount} program(s)", items.Count, byProgram.Count());
     }
     #endregion
 
+    /// <summary>
+    /// Action upon program expiration: expire all usages with the specified links that are eligible for expiration
+    /// </summary>
     private async Task ExpireLinkUsagesByLinkId(List<Guid> linkIds, ILogger? logger = null)
     {
       if (linkIds == null || linkIds.Count == 0 || linkIds.Any(o => o == Guid.Empty))
@@ -171,19 +178,14 @@ namespace Yoma.Core.Domain.Referral.Services
 
       if (items.Count == 0)
       {
-        logger?.LogInformation("No expirable link usages found for the requested links");
+        logger?.LogInformation("No expirable link usages found for {LinkCount} link(s)", linkIds.Count);
         return;
       }
 
-      items.ForEach(o =>
-      {
-        o.StatusId = statusExpiredId;
-        o.Status = ReferralLinkUsageStatus.Expired;
-
-        logger?.LogInformation("Link usage with id '{id}' flagged for expiration", o.Id);
-      });
-
+      items.ForEach(o => { o.StatusId = statusExpiredId; o.Status = ReferralLinkUsageStatus.Expired; });
       await _linkUsageRepository.Update(items);
+
+      logger?.LogInformation("Expired {Count} link usage(s) across {LinkCount} link(s)", items.Count, linkIds.Count);
     }
   }
 }
