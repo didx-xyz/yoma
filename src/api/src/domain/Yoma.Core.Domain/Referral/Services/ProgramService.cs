@@ -318,6 +318,7 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         result.StatusId = _programStatusService.GetByName(Status.Expired.ToString()).Id;
         result.Status = ProgramStatus.Expired;
+        //TODO: Expire associated links and usages
       }
 
       if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
@@ -419,6 +420,7 @@ namespace Yoma.Core.Domain.Referral.Services
           if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
             throw new ValidationException($"The {nameof(Program)} cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Program).ToLower()} before proceeding with activation");
 
+          //TODO: Ensure completable pathway specially for opportunity tasks
           break;
 
         case ProgramStatus.Inactive:

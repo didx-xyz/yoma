@@ -106,7 +106,7 @@ namespace Yoma.Core.Domain.Referral.Services
             scope.Complete();
           });
 
-          //TODO: Notification: Referral_Expiration_Expired: sent to admin; use itemsExpired
+          //TODO: NotificationType.Referral_Expiration_Expired (sent to admin)
 
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
@@ -122,6 +122,9 @@ namespace Yoma.Core.Domain.Referral.Services
         if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
+
+    //TODO [Confirm Requirement]: ProcessExpirationNotifications with NotificationType.Referral_Expiration_WithinNextDays
+    //TODO [Confirm Requirement]: ProcessNonCompletableNotifications with NotificationType.Referral_NonCompletable - for active programs only (validated upon implicit activation with ProgressiveBackoffSchedule)
 
     public async Task ProcessDeletion()
     {
