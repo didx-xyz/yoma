@@ -22,9 +22,9 @@ using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Validators;
-using Yoma.Core.Domain.IdentityProvider.Extensions;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
+using Yoma.Core.Domain.IdentityProvider.Extensions;
 
 namespace Yoma.Core.Domain.Entity.Services
 {

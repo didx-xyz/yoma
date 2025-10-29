@@ -76,13 +76,17 @@ namespace Yoma.Core.Domain.Core
     PreferNotToSay
   }
 
+  /// <summary>
+  /// Defines the CRUD-style operation represented by an event.
+  /// This value is optional and should only be specified when the event
+  /// semantically represents a Create, Update, or Delete action.
+  /// For business or non-CRUD events, omit this value (set to on the event payload)
+  /// </summary>
   public enum EventType
   {
     Create,
     Update,
-    Delete,
-    IdentityAction,
-    VerificationCompleted
+    Delete
   }
 
   public enum EngagementTypeOption

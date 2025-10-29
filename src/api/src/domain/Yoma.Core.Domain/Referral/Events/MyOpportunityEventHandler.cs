@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.Extensions.Logging;
+using Yoma.Core.Domain.MyOpportunity.Events;
 
 namespace Yoma.Core.Domain.Referral.Events
 {
@@ -17,9 +18,9 @@ namespace Yoma.Core.Domain.Referral.Events
     #endregion
 
     #region Public Members  
-    public Task Handle(MyOpportunityEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(MyOpportunityEvent notification, CancellationToken cancellationToken)
     {
-      throw new NotImplementedException();
+      await Task.CompletedTask;
 
       //link usages: move pending to completed based on opportunity completions
       //link: move active to limit reached based on program limits (CompletionLimitReferee || CompletionLimit)

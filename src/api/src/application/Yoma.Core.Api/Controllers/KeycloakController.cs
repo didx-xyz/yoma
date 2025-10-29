@@ -9,6 +9,8 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
+using Yoma.Core.Domain.IdentityProvider;
+using Yoma.Core.Domain.IdentityProvider.Events;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces;
@@ -34,6 +36,7 @@ namespace Yoma.Core.Api.Controllers
     private readonly ICountryService _countryService;
     private readonly IEducationService _educationService;
     private readonly IWalletService _walletService;
+    private readonly IEventPublisher _eventPublisher;
 
     private const string Key_Prefix = "keycloak_event";
     #endregion
@@ -48,7 +51,8 @@ namespace Yoma.Core.Api.Controllers
       IGenderService genderService,
       ICountryService countryService,
       IEducationService educationService,
-      IWalletService walletService)
+      IWalletService walletService,
+      IEventPublisher eventPublisher)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
@@ -60,6 +64,7 @@ namespace Yoma.Core.Api.Controllers
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _educationService = educationService ?? throw new ArgumentNullException(nameof(educationService));
       _walletService = walletService ?? throw new ArgumentNullException(nameof(walletService));
+      _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
     }
     #endregion
 
@@ -133,14 +138,14 @@ namespace Yoma.Core.Api.Controllers
             var sType = payload.Type;
             _logger.LogInformation("{sType} event received (id={eventId})", sType, payload.Id);
 
-            var type = EnumHelper.GetValueFromDescription<WebhookRequestEventType>(sType);
-            if (!type.HasValue) type = WebhookRequestEventType.Undefined;
+            var type = EnumHelper.GetValueFromDescription<IdentityEventType>(sType);
+            if (!type.HasValue) type = IdentityEventType.Undefined;
 
             switch (type)
             {
-              case WebhookRequestEventType.Register:
-              case WebhookRequestEventType.UpdateProfile:
-              case WebhookRequestEventType.Login:
+              case IdentityEventType.Register:
+              case IdentityEventType.UpdateProfile:
+              case IdentityEventType.Login:
                 _logger.LogInformation("{type} event processing", type.Value);
 
                 await UpdateUserProfile(type.Value, payload);
@@ -164,7 +169,7 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Private Members
-    private async Task UpdateUserProfile(WebhookRequestEventType type, KeycloakWebhookRequest payload)
+    private async Task UpdateUserProfile(IdentityEventType type, KeycloakWebhookRequest payload)
     {
       var userId = Guid.Parse(payload.UserId);
       var lockKey = $"{Key_Prefix}:{userId}";
@@ -208,7 +213,7 @@ namespace Yoma.Core.Api.Controllers
               // only attempt lookup once during registration.
               // retries are reserved for UpdateProfile and Login to handle race conditions
               // where those webhooks may fire before the registration transaction completes
-              return type == WebhookRequestEventType.Register || result != null;
+              return type == IdentityEventType.Register || result != null;
             },
             timeout: TimeSpan.FromSeconds(10),
             retryOnException: false,
@@ -222,11 +227,11 @@ namespace Yoma.Core.Api.Controllers
 
         switch (type)
         {
-          case WebhookRequestEventType.Register:
-          case WebhookRequestEventType.UpdateProfile:
+          case IdentityEventType.Register:
+          case IdentityEventType.UpdateProfile:
             if (userRequest == null)
             {
-              if (type == WebhookRequestEventType.UpdateProfile)
+              if (type == IdentityEventType.UpdateProfile)
               {
                 _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
                 return;
@@ -284,7 +289,7 @@ namespace Yoma.Core.Api.Controllers
                 userRequest.DateOfBirth = dateOfBirth;
             }
 
-            if (type == WebhookRequestEventType.UpdateProfile) break;
+            if (type == IdentityEventType.UpdateProfile) break;
 
             try
             {
@@ -297,7 +302,7 @@ namespace Yoma.Core.Api.Controllers
             }
             break;
 
-          case WebhookRequestEventType.Login:
+          case IdentityEventType.Login:
             if (userRequest == null)
             {
               _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
@@ -339,6 +344,8 @@ namespace Yoma.Core.Api.Controllers
         userRequest.ExternalId = kcUser.Id;
 
         await _userService.Upsert(userRequest);
+
+        await _eventPublisher.Publish(new IdentityEvent(new Domain.IdentityProvider.Models.IdentityEventMessage { Type = type, User = kcUser }));
       });
     }
 

@@ -1,4 +1,5 @@
 using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -22,6 +23,7 @@ using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Helpers;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Models;
+using Yoma.Core.Domain.MyOpportunity.Events;
 using Yoma.Core.Domain.MyOpportunity.Extensions;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
@@ -62,12 +64,14 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
     private readonly ITimeIntervalService _timeIntervalService;
     private readonly IDownloadService _downloadService;
     private readonly IOpportunityVerificationTypeService _opportunityVerificationTypeService;
+    private readonly IDelayedExecutionService _delayedExecutionService;
     private readonly MyOpportunitySearchFilterVerificationFilesAdminValidator _myOpportunitySearchFilterVerificationFilesAdminValidator;
     private readonly MyOpportunitySearchFilterAdminValidator _myOpportunitySearchFilterAdminValidator;
     private readonly MyOpportunityRequestValidatorVerify _myOpportunityRequestValidatorVerify;
     private readonly MyOpportunityRequestValidatorVerifyFinalize _myOpportunityRequestValidatorVerifyFinalize;
     private readonly MyOpportunityRequestValidatorVerifyFinalizeBatch _myOpportunityRequestValidatorVerifyFinalizeBatch;
     private readonly MyOpportunityRequestValidatorVerifyImportCsv _myOpportunityRequestValidatorVerifyImportCsv;
+    private readonly IMediator _mediator;
     private readonly IRepositoryBatchedWithNavigation<Models.MyOpportunity> _myOpportunityRepository;
     private readonly IRepository<MyOpportunityVerification> _myOpportunityVerificationRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
@@ -101,46 +105,50 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         ITimeIntervalService timeIntervalService,
         IDownloadService downloadService,
         IOpportunityVerificationTypeService opportunityVerificationTypeService,
+        IDelayedExecutionService delayedExecutionService,
         MyOpportunitySearchFilterVerificationFilesAdminValidator myOpportunitySearchFilterVerificationFilesAdminValidator,
         MyOpportunitySearchFilterAdminValidator myOpportunitySearchFilterAdminValidator,
         MyOpportunityRequestValidatorVerify myOpportunityRequestValidatorVerify,
         MyOpportunityRequestValidatorVerifyFinalize myOpportunityRequestValidatorVerifyFinalize,
         MyOpportunityRequestValidatorVerifyFinalizeBatch myOpportunityRequestValidatorVerifyFinalizeBatch,
         MyOpportunityRequestValidatorVerifyImportCsv myOpportunityRequestValidatorVerifyImportCsv,
+        IMediator mediator,
         IRepositoryBatchedWithNavigation<Models.MyOpportunity> myOpportunityRepository,
         IRepository<MyOpportunityVerification> myOpportunityVerificationRepository,
         IExecutionStrategyService executionStrategyService)
     {
-      _logger = logger;
-      _appSettings = appSettings.Value;
-      _httpContextAccessor = httpContextAccessor;
-      _userService = userService;
-      _organizationService = organizationService;
-      _opportunityService = opportunityService;
-      _myOpportunityActionService = myOpportunityActionService;
-      _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService;
-      _opportunityStatusService = opportunityStatusService;
-      _organizationStatusService = organizationStatusService;
-      _blobService = blobService;
-      _ssiCredentialService = ssiCredentialService;
-      _rewardService = rewardService;
-      _linkService = linkService;
-      _notificationURLFactory = notificationURLFactory;
-      _notificationDeliveryService = notificationDeliveryService;
-      _countryService = countryService;
-      _genderService = genderService;
-      _timeIntervalService = timeIntervalService;
-      _downloadService = downloadService;
-      _opportunityVerificationTypeService = opportunityVerificationTypeService;
-      _myOpportunitySearchFilterVerificationFilesAdminValidator = myOpportunitySearchFilterVerificationFilesAdminValidator;
-      _myOpportunitySearchFilterAdminValidator = myOpportunitySearchFilterAdminValidator;
-      _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify;
-      _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize;
-      _myOpportunityRequestValidatorVerifyFinalizeBatch = myOpportunityRequestValidatorVerifyFinalizeBatch;
-      _myOpportunityRequestValidatorVerifyImportCsv = myOpportunityRequestValidatorVerifyImportCsv;
-      _myOpportunityRepository = myOpportunityRepository;
-      _myOpportunityVerificationRepository = myOpportunityVerificationRepository;
-      _executionStrategyService = executionStrategyService;
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+      _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
+      _userService = userService ?? throw new ArgumentNullException(nameof(userService));
+      _organizationService = organizationService ?? throw new ArgumentNullException(nameof(organizationService));
+      _opportunityService = opportunityService ?? throw new ArgumentNullException(nameof(opportunityService));
+      _myOpportunityActionService = myOpportunityActionService ?? throw new ArgumentNullException(nameof(myOpportunityActionService));
+      _myOpportunityVerificationStatusService = myOpportunityVerificationStatusService ?? throw new ArgumentNullException(nameof(myOpportunityVerificationStatusService));
+      _opportunityStatusService = opportunityStatusService ?? throw new ArgumentNullException(nameof(opportunityStatusService));
+      _organizationStatusService = organizationStatusService ?? throw new ArgumentNullException(nameof(organizationStatusService));
+      _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
+      _ssiCredentialService = ssiCredentialService ?? throw new ArgumentNullException(nameof(ssiCredentialService));
+      _rewardService = rewardService ?? throw new ArgumentNullException(nameof(rewardService));
+      _linkService = linkService ?? throw new ArgumentNullException(nameof(linkService));
+      _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
+      _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
+      _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
+      _genderService = genderService ?? throw new ArgumentNullException(nameof(genderService));
+      _timeIntervalService = timeIntervalService ?? throw new ArgumentNullException(nameof(timeIntervalService));
+      _downloadService = downloadService ?? throw new ArgumentNullException(nameof(downloadService));
+      _opportunityVerificationTypeService = opportunityVerificationTypeService ?? throw new ArgumentNullException(nameof(opportunityVerificationTypeService));
+      _delayedExecutionService = delayedExecutionService ?? throw new ArgumentNullException(nameof(delayedExecutionService));
+      _myOpportunitySearchFilterVerificationFilesAdminValidator = myOpportunitySearchFilterVerificationFilesAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterVerificationFilesAdminValidator));
+      _myOpportunitySearchFilterAdminValidator = myOpportunitySearchFilterAdminValidator ?? throw new ArgumentNullException(nameof(myOpportunitySearchFilterAdminValidator));
+      _myOpportunityRequestValidatorVerify = myOpportunityRequestValidatorVerify ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerify));
+      _myOpportunityRequestValidatorVerifyFinalize = myOpportunityRequestValidatorVerifyFinalize ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerifyFinalize));
+      _myOpportunityRequestValidatorVerifyFinalizeBatch = myOpportunityRequestValidatorVerifyFinalizeBatch ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerifyFinalizeBatch));
+      _myOpportunityRequestValidatorVerifyImportCsv = myOpportunityRequestValidatorVerifyImportCsv ?? throw new ArgumentNullException(nameof(myOpportunityRequestValidatorVerifyImportCsv));
+      _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+      _myOpportunityRepository = myOpportunityRepository ?? throw new ArgumentNullException(nameof(myOpportunityRepository));
+      _myOpportunityVerificationRepository = myOpportunityVerificationRepository ?? throw new ArgumentNullException(nameof(myOpportunityVerificationRepository));
+      _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
     }
     #endregion
 
@@ -882,19 +890,30 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //ensure link is still usable
       _linkService.AssertActive(link.Id);
 
-      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      try
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+        {
+          _delayedExecutionService.Reset();
 
-        await _linkService.LogUsage(link.Id);
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-        var request = new MyOpportunityRequestVerify { InstantOrImportedVerification = true, OverridePending = true };
-        await PerformActionSendForVerification(user, link.EntityId, request, null); //any verification method
+          await _linkService.LogUsage(link.Id);
 
-        await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, null, "Auto-verification");
+          var request = new MyOpportunityRequestVerify { InstantOrImportedVerification = true, OverridePending = true };
+          await PerformActionSendForVerification(user, link.EntityId, request, null); //any verification method
 
-        scope.Complete();
-      });
+          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, null, "Auto-verification");
+
+          scope.Complete();
+        });
+
+        await _delayedExecutionService.FlushAsync();
+      }
+      finally
+      {
+        _delayedExecutionService.Reset();
+      }
     }
 
     public async Task PerformActionSendForVerificationManualDelete(Guid opportunityId)
@@ -981,7 +1000,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
           user = _userService.GetById(item.UserId, false, false);
           opportunity = _opportunityService.GetById(item.OpportunityId, true, true, false);
 
-          await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment);
+          try
+          {
+            _delayedExecutionService.Reset();
+
+            await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment);
+
+            await _delayedExecutionService.FlushAsync();
+          }
+          finally
+          {
+            _delayedExecutionService.Reset();
+          }
 
           var successItem = new MyOpportunityResponseVerifyFinalizeBatchItem
           {
@@ -1029,7 +1059,18 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var user = _userService.GetById(request.UserId, false, false);
       var opportunity = _opportunityService.GetById(request.OpportunityId, true, true, false);
 
-      await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment);
+      try
+      {
+        _delayedExecutionService.Reset();
+
+        await FinalizeVerification(user, opportunity, request.Status, false, null, request.Comment);
+
+        await _delayedExecutionService.FlushAsync();
+      }
+      finally
+      {
+        _delayedExecutionService.Reset();
+      }
     }
 
     public Dictionary<Guid, int>? ListAggregatedOpportunityByViewed(bool includeExpired)
@@ -1293,17 +1334,28 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         user = await _userService.Upsert(request);
       }
 
-      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+      try
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+        {
+          _delayedExecutionService.Reset();
 
-        var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true }; //with instant or imported verifications, pending notifications are not sent
-        await PerformActionSendForVerification(user, opportunity.Id, requestVerify, null); //any verification method
+          using var scope = TransactionScopeHelper.CreateReadCommitted();
 
-        await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, item.DateCompleted?.ToDateTimeOffset().ToEndOfDay(), requestImport.Comment, !probeOnly);
+          var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true }; //with instant or imported verifications, pending notifications are not sent
+          await PerformActionSendForVerification(user, opportunity.Id, requestVerify, null); //any verification method
 
-        scope.Complete();
-      });
+          await FinalizeVerification(user, opportunity, VerificationStatus.Completed, true, item.DateCompleted?.ToDateTimeOffset().ToEndOfDay(), requestImport.Comment, !probeOnly);
+
+          scope.Complete();
+        });
+
+        await _delayedExecutionService.FlushAsync();
+      }
+      finally
+      {
+        _delayedExecutionService.Reset();
+      } 
     }
 
     private static List<(DateTime WeekEnding, int Count)> SummaryGroupByWeekItems(List<MyOpportunityInfo> items)
@@ -1417,8 +1469,11 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (!notificationType.HasValue)
         throw new InvalidOperationException($"Notification type expected");
 
-      if (sendNotification)
-        await SendNotification(item, notificationType.Value);
+      if (sendNotification) _delayedExecutionService.Enqueue(async () => await SendNotification(item, notificationType.Value),
+        nameof(SendNotification), $"{nameof(Models.MyOpportunity)}.{nameof(FinalizeVerification)}");
+
+      _delayedExecutionService.Enqueue(async () => await _mediator.Publish(new MyOpportunityEvent(item)),
+        $"{nameof(MyOpportunityEvent)}", "Publish");
     }
 
     private void EnsureNoEarlierPendingVerificationsForOtherStudents(User user, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity currentItem, bool instantVerification)

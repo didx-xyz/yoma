@@ -2,10 +2,12 @@ using MediatR;
 using Microsoft.Extensions.Logging;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
+using Yoma.Core.Domain.Opportunity;
+using Yoma.Core.Domain.Opportunity.Events;
 using Yoma.Core.Domain.PartnerSharing.Interfaces;
 using Yoma.Core.Domain.PartnerSharing.Services;
 
-namespace Yoma.Core.Domain.Opportunity.Events
+namespace Yoma.Core.Domain.PartnerSharing.Events
 {
   public class OpportunityEventHandler : INotificationHandler<OpportunityEvent>
   {
@@ -46,7 +48,7 @@ namespace Yoma.Core.Domain.Opportunity.Events
               break;
             }
 
-            await _sharingService.ScheduleCreate(PartnerSharing.EntityType.Opportunity, notification.Entity.Id);
+            await _sharingService.ScheduleCreate(EntityType.Opportunity, notification.Entity.Id);
 
             break;
 
@@ -57,7 +59,7 @@ namespace Yoma.Core.Domain.Opportunity.Events
               break;
             }
 
-            await _sharingService.ScheduleUpdate(PartnerSharing.EntityType.Opportunity, notification.Entity.Id,
+            await _sharingService.ScheduleUpdate(EntityType.Opportunity, notification.Entity.Id,
               notification.Entity.OrganizationStatus == Entity.OrganizationStatus.Active && notification.Entity.Status == Status.Active);
 
             break;
@@ -85,7 +87,7 @@ namespace Yoma.Core.Domain.Opportunity.Events
                 throw new InvalidOperationException($"{nameof(Status)} of '{notification.Entity.Status.ToDescription()}' not supported");
             }
 
-            await _sharingService.ScheduleDelete(PartnerSharing.EntityType.Opportunity, notification.Entity.Id);
+            await _sharingService.ScheduleDelete(EntityType.Opportunity, notification.Entity.Id);
 
             break;
 

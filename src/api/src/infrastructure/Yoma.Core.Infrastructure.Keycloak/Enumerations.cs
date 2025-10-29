@@ -18,17 +18,6 @@ namespace Yoma.Core.Infrastructure.Keycloak
     PhoneNumberVerified
   }
 
-  public enum WebhookRequestEventType
-  {
-    Undefined,
-    [Description("REGISTER")]
-    Register,
-    [Description("UPDATE_PROFILE")]
-    UpdateProfile,
-    [Description("LOGIN")]
-    Login
-  }
-
   public enum RegisterMethod
   {
     [Description("form")]
