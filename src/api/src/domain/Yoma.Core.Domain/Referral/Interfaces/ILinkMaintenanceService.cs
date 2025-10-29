@@ -6,7 +6,9 @@ namespace Yoma.Core.Domain.Referral.Interfaces
   {
     Task CancelByUserId(Guid userId);
 
-    Task CancelByProgramId(Guid programId);
+    Task CancelByProgramId(Guid programId, ILogger? logger = null);
+
+    Task CancelByProgramId(List<Guid> programIds, ILogger? logger = null);
 
     Task ExpireByProgramId(List<Guid> programIds, ILogger? logger = null);
   }

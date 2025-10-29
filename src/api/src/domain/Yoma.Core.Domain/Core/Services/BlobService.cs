@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.Http;
-using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.BlobProvider.Interfaces;
 using Yoma.Core.Domain.Core.Exceptions;

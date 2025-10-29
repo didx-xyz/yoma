@@ -8,9 +8,7 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     ProgramInfo GetDefault();
 
-    ProgramInfo GetById(Guid id, bool includeChildItems, bool includeComputed);
-
-    ProgramInfo GetActiveOrExpiredAndStartedById(Guid id, bool includeChildItems, bool includeComputed);
+    ProgramInfo GetById(Guid id, bool includeChildItems, bool includeComputed, bool enforceAvailableOrExpired);
 
     ProgramSearchResultsInfo Search(ProgramSearchFilter filter);
   }

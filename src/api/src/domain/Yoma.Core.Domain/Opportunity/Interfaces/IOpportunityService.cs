@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Opportunity.Models;

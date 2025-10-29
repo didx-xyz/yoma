@@ -42,11 +42,4 @@ namespace Yoma.Core.Domain.Opportunity
   {
     Other
   }
-
-  public enum PublishedState
-  {
-    NotStarted,
-    Active,
-    Expired
-  }
 }

@@ -159,6 +159,34 @@ namespace Yoma.Core.Domain.Referral.Services
         query = _programRepository.Contains(query, filter.ValueContains);
       }
 
+      if (filter.PublishedStates != null)
+      {
+        var statusActiveId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
+        var statusExpiredId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
+
+        var predicate = PredicateBuilder.False<Models.Program>();
+        foreach (var state in filter.PublishedStates)
+        {
+          switch (state)
+          {
+            case PublishedState.NotStarted:
+              predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart > DateTimeOffset.UtcNow);
+
+              break;
+
+            case PublishedState.Active:
+              predicate = predicate.Or(o => o.StatusId == statusActiveId && o.DateStart <= DateTimeOffset.UtcNow);
+              break;
+
+            case PublishedState.Expired:
+              predicate = predicate.Or(o => o.StatusId == statusExpiredId);
+              break;
+          }
+        }
+
+        query = query.Where(predicate);
+      }
+
       //date range
       if (filter.DateStart.HasValue)
       {

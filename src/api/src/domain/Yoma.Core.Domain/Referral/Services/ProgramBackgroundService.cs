@@ -136,13 +136,47 @@ namespace Yoma.Core.Domain.Referral.Services
         lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
         if (!lockAcquired) return;
 
-        _logger.LogInformation("Processing program expiration");
+        _logger.LogInformation("Processing program deletion");
 
-        //auto-delete inactive and expired programs if not modified for x days (inactive excluded from auto-deletion)
+        var statusDeletionIds = Statuses_Deletion.Select(o => _programStatusService.GetByName(o.ToString()).Id).ToList();
+        var statusDeletedId = _programStatusService.GetByName(ProgramStatus.Deleted.ToString()).Id;
 
-        //cancel links associated with deleted programs
+        var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
 
-        _logger.LogInformation("Processed program expiration");
+        while (executeUntil > DateTimeOffset.UtcNow)
+        {
+          //auto-delete inactive and expired programs if not modified for x days
+          var items = _programRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
+              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.ReferralProgramDeletionScheduleIntervalInDays))
+              .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.ReferralProgramDeletionScheduleBatchSize).ToList();
+          if (items.Count == 0) break;
+
+          foreach (var item in items)
+          {
+            item.StatusId = statusDeletedId;
+            item.Status = ProgramStatus.Deleted;
+            item.ModifiedByUserId = user.Id;
+            _logger.LogInformation("Program with id '{id}' flagged for deletion", item.Id);
+          }
+
+          var programIds = items.Select(o => o.Id).Distinct().ToList(); 
+
+          await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+          {
+            using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+
+            await _programRepository.Update(items);
+
+            //cancel links associated with deleted programs
+            await _linkMaintenanceService.CancelByProgramId(programIds, _logger);
+
+            scope.Complete();
+          });
+
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
+        }
+
+        _logger.LogInformation("Processed program deletion");
       }
       catch (Exception ex)
       {

@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.ActionLink.Interfaces;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
@@ -123,7 +124,7 @@ namespace Yoma.Core.Domain.Opportunity.Services
       var filterInternal = new OpportunitySearchFilterAdmin
       {
         PublishedStates = filter.PublishedStates == null || filter.PublishedStates.Count == 0 ?
-                    [PublishedState.NotStarted, PublishedState.Active] : filter.PublishedStates,
+          [PublishedState.NotStarted, PublishedState.Active] : filter.PublishedStates,
         Types = filter.Types,
         Categories = filter.Categories,
         Languages = filter.Languages,

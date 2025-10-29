@@ -1,3 +1,4 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Referral.Extensions;
 using Yoma.Core.Domain.Referral.Interfaces;
@@ -21,12 +22,11 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Public Members
     public bool Available()
     {
-      //active and started
+      //active and started (published state active)
       var searchResults = _programService.Search(new ProgramSearchFilterAdmin
       {
-        TotalCountOnly = true,
-        Statuses = [ProgramStatus.Active],
-        DateStart = DateTimeOffset.UtcNow,
+        PublishedStates = [PublishedState.Active],
+        TotalCountOnly = true
       });
 
       return searchResults.TotalCount > 0;
@@ -44,19 +44,16 @@ namespace Yoma.Core.Domain.Referral.Services
       return result.ToInfo();
     }
 
-    public ProgramInfo GetById(Guid id, bool includeChildItems, bool includeComputed)
-    {
-      var result = _programService.GetById(id, includeChildItems, includeComputed);
-      return result.ToInfo();
-    }
-
-    public ProgramInfo GetActiveOrExpiredAndStartedById(Guid id, bool includeChildItems, bool includeComputed)
+    public ProgramInfo GetById(Guid id, bool includeChildItems, bool includeComputed, bool enforceAvailableOrExpired)
     {
       var result = _programService.GetById(id, includeChildItems, includeComputed);
 
-      var statuses = new ProgramStatus[] { ProgramStatus.Active, ProgramStatus.Expired };
-      if (!statuses.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)
-        throw new EntityNotFoundException($"Program '{result.Name}' is currently unavailable");
+      if (enforceAvailableOrExpired)
+      {
+        var statuses = new ProgramStatus[] { ProgramStatus.Active, ProgramStatus.Expired };
+        if (!statuses.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)
+          throw new EntityNotFoundException($"Program '{result.Name}' is currently unavailable");
+      }
 
       return result.ToInfo();
     }
@@ -65,15 +62,10 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
 
-      var statuses = new List<ProgramStatus> { ProgramStatus.Active };
-      if (filter.IncludeExpired == true)
-        statuses.Add(ProgramStatus.Expired);
-
       var filterInternal = new ProgramSearchFilterAdmin
       {
-        Statuses = statuses,
+        PublishedStates = filter.PublishedStates == null || filter.PublishedStates.Count == 0 ? [PublishedState.Active] : filter.PublishedStates,
         ValueContains = filter.ValueContains,
-        DateStart = DateTimeOffset.UtcNow,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize
       };

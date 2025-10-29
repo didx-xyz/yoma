@@ -79,8 +79,8 @@ namespace Yoma.Core.Api.Controllers
 		}
 
 		[SwaggerOperation(Summary = "Search for referral programs (Authenticated User)",
-		  Description = "By default, only programs that are active and have started are included. Expired programs can be optionally included via the filter")]
-		[HttpPost("program/search")]
+		  Description = "By default, results include programs that are active and have started (thus published state Active). This default behavior can be overridden")]
+        [HttpPost("program/search")]
 		[Authorize(Roles = $"{Constants.Role_User}")]
 		public ActionResult<ProgramSearchResultsInfo> SearchProgram([FromBody] ProgramSearchFilter filter)
 		{
@@ -93,15 +93,15 @@ namespace Yoma.Core.Api.Controllers
 			return Ok(result);
 		}
 
-		[SwaggerOperation(Summary = "Get a referral program by Id (Authenticated User)",
-		  Description = "Retrieves a program by Id. Programs are available if active and have started; expired programs are also retrievable")]
+		[SwaggerOperation(Summary = "Get the referral program by Id (Authenticated User)",
+		  Description = "Returns a program if it is active and has started, or if it has expired")]
 		[HttpGet("program/{id}/info")]
 		[Authorize(Roles = $"{Constants.Role_User}")]
 		public ActionResult<ProgramInfo> GetProgramInfoById([FromRoute] Guid id)
 		{
 			_logger.LogInformation("Handling request {requestName}", nameof(GetProgramInfoById));
 
-			var result = _programInfoService.GetActiveOrExpiredAndStartedById(id, true, true);
+			var result = _programInfoService.GetById(id, true, true, true);
 
 			_logger.LogInformation("Request {requestName} handled", nameof(GetProgramInfoById));
 

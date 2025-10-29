@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging;
-using System.Transactions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces;
@@ -70,22 +69,44 @@ namespace Yoma.Core.Domain.Referral.Services
     /// <summary>
     /// Action upon program deletion: cancel all active links associated with the program
     /// </summary>
-    public async Task CancelByProgramId(Guid programId)
+    public async Task CancelByProgramId(Guid programId, ILogger? logger = null)
     {
       if (programId == Guid.Empty)
         throw new ArgumentNullException(nameof(programId));
+
+      await CancelByProgramId([programId], logger);
+    }
+
+    /// <summary>
+    /// Action upon program deletion: cancel all active links associated with the programs
+    /// </summary>
+    public async Task CancelByProgramId(List<Guid> programIds, ILogger? logger = null)
+    {
+      if (programIds == null || programIds.Count == 0 || programIds.Any(id => id == Guid.Empty))
+        throw new ArgumentNullException(nameof(programIds));
+
+      programIds = [.. programIds.Distinct()];
 
       var statusActiveId = _linkStatusService.GetByName(ReferralLinkStatus.Active.ToString()).Id;
       var statusCancelledId = _linkStatusService.GetByName(ReferralLinkStatus.Cancelled.ToString()).Id;
 
       var items = _linkRepository.Query()
-        .Where(o => o.ProgramId == programId && o.StatusId == statusActiveId)
+        .Where(o => programIds.Contains(o.ProgramId) && o.StatusId == statusActiveId)
         .ToList();
 
+      if (items.Count == 0)
+      {
+        logger?.LogInformation("No cancellable links found for the requested programs.");
+        return;
+      }
+
+      // 2) Flip statuses in-memory
       items.ForEach(o =>
       {
         o.StatusId = statusCancelledId;
         o.Status = ReferralLinkStatus.Cancelled;
+
+        logger?.LogInformation("Link with id '{id}' flagged for cancellation ", o.Id);
       });
 
       await _linkRepository.Update(items);

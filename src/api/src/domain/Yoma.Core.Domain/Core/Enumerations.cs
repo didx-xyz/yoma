@@ -132,4 +132,25 @@ namespace Yoma.Core.Domain.Core
     [Description("Processing Error")]
     ProcessingError
   }
+
+  /// <summary>
+  /// Combines entity status with start and end dates to determine its published state
+  /// </summary>
+  public enum PublishedState
+  {
+    /// <summary>
+    /// Active but not yet started.
+    /// </summary>
+    NotStarted,
+
+    /// <summary>
+    /// Active and currently running.
+    /// </summary>
+    Active,
+
+    /// <summary>
+    /// End date reached or expired.
+    /// </summary>
+    Expired
+  }
 }

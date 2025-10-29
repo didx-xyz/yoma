@@ -216,7 +216,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await _referralLinkRequestCreateValidator.ValidateAndThrowAsync(request);
 
-      var program = _programInfoService.GetById(request.ProgramId, false, false);
+      var program = _programInfoService.GetById(request.ProgramId, false, false, false);
 
       if (program.Status != ProgramStatus.Active || program.DateStart > DateTimeOffset.Now)
         throw new ValidationException($"Referral program '{program.Name}' is not active or has not started");
