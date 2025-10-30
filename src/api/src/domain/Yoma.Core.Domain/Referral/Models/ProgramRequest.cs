@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.Referral.Models
 {
   public abstract class ProgramRequestBase
@@ -68,6 +70,9 @@ namespace Yoma.Core.Domain.Referral.Models
     public PathwayOrderMode OrderMode { get; set; }
 
     public List<ProgramPathwayTaskRequestUpsert> Tasks { get; set; } = null!;
+
+    [JsonIgnore]
+    internal short OrderDisplay { get; set; }
   }
 
   public class ProgramPathwayTaskRequestUpsert
@@ -77,5 +82,8 @@ namespace Yoma.Core.Domain.Referral.Models
     public PathwayTaskEntityType EntityType { get; set; }
 
     public Guid EntityId { get; set; }
+
+    [JsonIgnore]
+    internal short OrderDisplay { get; set; }
   }
 }

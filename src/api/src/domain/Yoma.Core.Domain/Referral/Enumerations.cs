@@ -20,7 +20,6 @@ namespace Yoma.Core.Domain.Referral
     AnyOrder
   }
 
-
   public enum PathwayTaskEntityType
   {
     Opportunity = 1

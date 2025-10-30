@@ -574,9 +574,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private async Task<Program> UpsertProgramPathway(Program program, ProgramPathwayRequestUpsert request)
     {
       //pathway name is implicitly unique per program — currently a program can only have one pathway
-
       var resultPathway = program.Pathway;
-
       if (resultPathway == null)
       {
         //program has no pathway, but the request includes an existing pathway
@@ -612,146 +610,129 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       program.Pathway = await UpsertProgramPathwaySteps(resultPathway, request.Steps);
-
       return program;
     }
 
     private async Task<ProgramPathway> UpsertProgramPathwaySteps(ProgramPathway pathway, List<ProgramPathwayStepRequestUpsert> requests)
     {
-      // No need to recheck for duplicate step names here —
-      // the validator already enforces unique names within the incoming request,
-      // and after delete, update, and insert operations, the persisted steps will exactly match the request set.
-
+      //step names already validated – persisted steps will match the request
       pathway.Steps ??= [];
-
       var resultSteps = new List<ProgramPathwayStep>();
 
-      byte orderDisplay = 1;
-      foreach (var request in requests)
+      //set display order to match request sequence
+      for (int i = 0; i < requests.Count; i++) requests[i].OrderDisplay = (short)(i + 1);
+
+      //updates before inserts – prevents unique constraint conflicts under SERIALIZABLE
+      foreach (var request in requests.Where(r => r.Id.HasValue))
       {
-        var resultStep = request.Id.HasValue ? pathway.Steps.SingleOrDefault(s => s.Id == request.Id) : null;
+        var resultStep = pathway.Steps.Single(s => s.Id == request.Id);
+        resultStep.Name = request.Name;
+        resultStep.Description = request.Description;
+        resultStep.Rule = request.Rule;
+        resultStep.OrderMode = request.OrderMode;
+        resultStep.Order = pathway.OrderMode == PathwayOrderMode.Sequential ? request.OrderDisplay : null;
+        resultStep.OrderDisplay = request.OrderDisplay;
 
-        if (resultStep == null)
-        {
-          if (request.Id.HasValue)
-            throw new ValidationException($"The specified step '{request.Name}' does not match an existing step for pathway");
-
-          resultStep = new ProgramPathwayStep
-          {
-            PathwayId = pathway.Id,
-            Name = request.Name,
-            Description = request.Description,
-            Rule = request.Rule,
-            OrderMode = request.OrderMode,
-            Order = pathway.OrderMode == PathwayOrderMode.Sequential ? orderDisplay : null,
-            OrderDisplay = orderDisplay
-          };
-
-          resultStep = await _programPathwayStepRepository.Create(resultStep);
-          resultSteps.Add(resultStep);
-        }
-        else
-        {
-          resultStep.Name = request.Name;
-          resultStep.Description = request.Description;
-          resultStep.Rule = request.Rule;
-          resultStep.OrderMode = request.OrderMode;
-          resultStep.Order = pathway.OrderMode == PathwayOrderMode.Sequential ? orderDisplay : null;
-          resultStep.OrderDisplay = orderDisplay;
-
-          resultStep = await _programPathwayStepRepository.Update(resultStep);
-          resultSteps.Add(resultStep);
-        }
-
-        // And inside each step:
-        await UpsertProgramPathwayTasks(resultStep, request.Tasks);
-
-        orderDisplay++;
+        resultStep = await _programPathwayStepRepository.Update(resultStep);
+        resultStep = await UpsertProgramPathwayTasks(resultStep, request.Tasks);
+        resultSteps.Add(resultStep);
       }
 
-      // avoids confusing the change tracker and minimizes churn
-      pathway.Steps.Clear();
-      pathway.Steps.AddRange(resultSteps);
+      //process inserts second
+      foreach (var request in requests.Where(r => !r.Id.HasValue))
+      {
+        var resultStep = new ProgramPathwayStep
+        {
+          PathwayId = pathway.Id,
+          Name = request.Name,
+          Description = request.Description,
+          Rule = request.Rule,
+          OrderMode = request.OrderMode,
+          Order = pathway.OrderMode == PathwayOrderMode.Sequential ? request.OrderDisplay : null,
+          OrderDisplay = request.OrderDisplay
+        };
 
+        resultStep = await _programPathwayStepRepository.Create(resultStep);
+        resultStep = await UpsertProgramPathwayTasks(resultStep, request.Tasks);
+        resultSteps.Add(resultStep);
+      }
+
+      //reorder to match final display order
+      pathway.Steps = [.. resultSteps.OrderBy(s => s.OrderDisplay)];
       return pathway;
     }
 
     private async Task<ProgramPathwayStep> UpsertProgramPathwayTasks(ProgramPathwayStep step, List<ProgramPathwayTaskRequestUpsert> requests)
     {
-      // No need to recheck for duplicate tasks here —
-      // the validator already enforces unique entity references within each step,
-      // and after delete, update, and insert operations, the persisted tasks will exactly match the request set.
-
+      //tasks already validated – persisted tasks will match the request
       step.Tasks ??= [];
-
       var resultTasks = new List<ProgramPathwayTask>();
 
-      byte orderDisplay = 1;
-      foreach (var request in requests)
+      //set display order to match request sequence
+      for (int i = 0; i < requests.Count; i++) requests[i].OrderDisplay = (short)(i + 1);
+
+      //updates before inserts – prevents unique constraint conflicts under SERIALIZABLE
+      foreach (var request in requests.Where(o => o.Id.HasValue))
       {
-        var resultTask = request.Id.HasValue ? step.Tasks.SingleOrDefault(t => t.Id == request.Id) : null;
+        var resultTask = step.Tasks.Single(t => t.Id == request.Id);
+        resultTask.EntityType = request.EntityType;
+        resultTask.Order = step.OrderMode == PathwayOrderMode.Sequential ? request.OrderDisplay : null;
+        resultTask.OrderDisplay = request.OrderDisplay;
+        resultTask = ParseTaskEntity(resultTask, request);
 
-        OpportunityItem? opportunityItem = null;
-        switch (request.EntityType)
-        {
-          case PathwayTaskEntityType.Opportunity:
-            var opportunity = _opportunityService.GetById(request.EntityId, false, true, false);
-            if (!opportunity.Published)
-              throw new ValidationException($"The specified opportunity is not published and cannot be assigned as a task");
-
-            if (!opportunity.VerificationEnabled)
-              throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
-
-            if (!opportunity.VerificationMethod.HasValue) //support any verification method
-              throw new DataInconsistencyException($"Data inconsistency detected: The opportunity '{opportunity.Title}' has verification enabled, but no verification method is set");
-
-            opportunityItem = new OpportunityItem
-            {
-              Id = opportunity.Id,
-              Title = opportunity.Title
-            };
-
-            break;
-
-          default:
-            throw new InvalidOperationException($"Entity type of '{request.EntityType}' is not supported");
-        }
-
-        if (resultTask == null)
-        {
-          if (request.Id.HasValue)
-            throw new ValidationException($"The specified task for entity '{request.EntityType}: {request.EntityId}' does not match an existing task for step {step.Name}");
-
-          resultTask = new ProgramPathwayTask
-          {
-            StepId = step.Id,
-            EntityType = request.EntityType,
-            Opportunity = opportunityItem,
-            Order = step.OrderMode == PathwayOrderMode.Sequential ? orderDisplay : null,
-            OrderDisplay = orderDisplay
-          };
-
-          resultTask = await _programPathwayTaskRepository.Create(resultTask);
-          resultTasks.Add(resultTask);
-        }
-        else
-        {
-          resultTask.EntityType = request.EntityType;
-          resultTask.Opportunity = opportunityItem;
-          resultTask.Order = step.OrderMode == PathwayOrderMode.Sequential ? orderDisplay : null;
-          resultTask.OrderDisplay = orderDisplay;
-
-          resultTask = await _programPathwayTaskRepository.Update(resultTask);
-          resultTasks.Add(resultTask);
-        }
-
-        orderDisplay++;
+        resultTask = await _programPathwayTaskRepository.Update(resultTask);
+        resultTasks.Add(resultTask);
       }
 
-      // avoids confusing the change tracker and minimizes churn
-      step.Tasks.Clear();
-      step.Tasks.AddRange(resultTasks);
+      //process inserts second
+      foreach (var request in requests.Where(o => !o.Id.HasValue))
+      {
+        var resultTask = new ProgramPathwayTask
+        {
+          StepId = step.Id,
+          EntityType = request.EntityType,
+          Order = step.OrderMode == PathwayOrderMode.Sequential ? request.OrderDisplay : null,
+          OrderDisplay = request.OrderDisplay
+        };
+        resultTask = ParseTaskEntity(resultTask, request);
+
+        resultTask = await _programPathwayTaskRepository.Create(resultTask);
+        resultTasks.Add(resultTask);
+      }
+
+      //reorder to match final display order
+      step.Tasks = [.. resultTasks.OrderBy(s => s.OrderDisplay)];
       return step;
+    }
+
+    private ProgramPathwayTask ParseTaskEntity(ProgramPathwayTask task, ProgramPathwayTaskRequestUpsert request)
+    {
+      switch (request.EntityType)
+      {
+        case PathwayTaskEntityType.Opportunity:
+          var opportunity = _opportunityService.GetById(request.EntityId, false, true, false);
+          if (!opportunity.Published)
+            throw new ValidationException($"The specified opportunity is not published and cannot be assigned as a task");
+
+          if (!opportunity.VerificationEnabled)
+            throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
+
+          if (!opportunity.VerificationMethod.HasValue) //support any verification method
+            throw new DataInconsistencyException($"Data inconsistency detected: The opportunity '{opportunity.Title}' has verification enabled, but no verification method is set");
+
+          task.Opportunity = new OpportunityItem
+          {
+            Id = opportunity.Id,
+            Title = opportunity.Title
+          };
+
+          break;
+
+        default:
+          throw new InvalidOperationException($"Entity type of '{request.EntityType}' is not supported");
+      }
+
+      return task;
     }
 
     private async Task<(Program Program, BlobObject ItemAdded)> UpdateImage(Program program, IFormFile? file)
