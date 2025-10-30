@@ -30,27 +30,18 @@ using Yoma.Core.Infrastructure.Database.Reward.Repositories;
 using Yoma.Core.Infrastructure.Database.Reward.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups;
+using Yoma.Core.Infrastructure.Shared;
+using Yoma.Core.Infrastructure.Shared.Interceptors;
 
 namespace Yoma.Core.Infrastructure.Database
 {
   public static class Startup
   {
-    private const string ConnectionStrings_SQLConnection = "SQLConnection";
-
     #region Public Members
-    public static string Configuration_ConnectionString(this IConfiguration configuration)
-    {
-      var result = configuration.GetConnectionString(ConnectionStrings_SQLConnection);
-      if (string.IsNullOrEmpty(result))
-        throw new InvalidOperationException($"Failed to retrieve configuration section 'ConnectionStrings.{ConnectionStrings_SQLConnection}'");
-
-      return result;
-    }
-
     public static void ConfigureServices_InfrastructureDatabase(this IServiceCollection services, IConfiguration configuration, AppSettings appSettings)
     {
       // infrastructure
-      services.AddDbContext<ApplicationDbContext>(options =>
+      services.AddDbContext<ApplicationDbContext>((sp, options) =>
       {
         options.UseNpgsql(configuration.Configuration_ConnectionString(), npgsqlOptions =>
               {
@@ -61,7 +52,8 @@ namespace Yoma.Core.Infrastructure.Database
               })
         //disable warning related to not using AsSplitQuery() as per MS SQL implementation
         //.UseLazyLoadingProxies(): without arguments is used to enable lazy loading. Simply not calling UseLazyLoadingProxies() ensure lazy loading is not enabled
-        .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.MultipleCollectionIncludeWarning));
+        .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.MultipleCollectionIncludeWarning))
+        .AddInterceptors(sp.GetRequiredService<SerializableTransactionInterceptor>());
 
       }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 

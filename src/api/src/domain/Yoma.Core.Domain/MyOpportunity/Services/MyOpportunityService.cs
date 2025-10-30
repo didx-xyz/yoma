@@ -278,7 +278,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
 
         for (var page = 1; page <= totalPages; page++)
         {
@@ -896,7 +896,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
           _delayedExecutionService.Reset();
 
-          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+          using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
 
           await _linkService.LogUsage(link.Id);
 
@@ -937,7 +937,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+          using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
 
           var items = myOpportunity.Verifications?.Where(o => o.FileId.HasValue).ToList();
           if (items != null)
@@ -1200,7 +1200,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
-            using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+            using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
             await ProcessImportVerification(request, dto, true); //probe only; notifications not send
             if (!string.IsNullOrEmpty(dto.VerificationEntry)) probedVerifications.Add(dto.VerificationEntry);
             //probe only, do not commit the scope; disposed as aborted
@@ -1227,7 +1227,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       // PASS B — commit: single atomic transaction for the whole file
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
 
         foreach (var (dto, row) in parsed)
           await ProcessImportVerification(request, dto, false);
@@ -1340,7 +1340,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
           _delayedExecutionService.Reset();
 
-          using var scope = TransactionScopeHelper.CreateReadCommitted();
+          using var scope = TransactionScopeHelper.CreateSerializable();
 
           var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true }; //with instant or imported verifications, pending notifications are not sent
           await PerformActionSendForVerification(user, opportunity.Id, requestVerify, null); //any verification method
@@ -1403,7 +1403,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       NotificationType? notificationType = null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        using var scope = TransactionScopeHelper.CreateSerializable();
 
         item.VerificationStatusId = statusId;
         item.CommentVerification = comment;
@@ -1780,7 +1780,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = TransactionScopeHelper.CreateReadCommitted();
+          using var scope = TransactionScopeHelper.CreateSerializable();
 
           if (isNew)
             myOpportunity = await _myOpportunityRepository.Create(myOpportunity);

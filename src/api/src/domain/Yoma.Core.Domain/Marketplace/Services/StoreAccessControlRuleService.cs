@@ -300,7 +300,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
 
         result = await _storeAccessControlRuleRepistory.Create(result);
 
@@ -384,7 +384,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
 
         result = await _storeAccessControlRuleRepistory.Update(result);
 

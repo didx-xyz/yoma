@@ -140,7 +140,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        using var scope = TransactionScopeHelper.CreateSerializable();
 
         var linkIds = items.Select(o => o.Id).Distinct().ToList();
 

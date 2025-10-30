@@ -121,7 +121,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        using var scope = TransactionScopeHelper.CreateSerializable();
 
         await _blobObjectRepository.Delete(item);
         await client.Delete(item.Key);
@@ -175,7 +175,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        using var scope = TransactionScopeHelper.CreateSerializable();
 
         result = await _blobObjectRepository.Create(result);
 
@@ -216,7 +216,7 @@ namespace Yoma.Core.Domain.Core.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        using var scope = TransactionScopeHelper.CreateSerializable();
 
         result = await _blobObjectRepository.Create(result);
 

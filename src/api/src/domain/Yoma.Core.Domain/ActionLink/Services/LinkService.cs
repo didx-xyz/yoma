@@ -226,7 +226,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+        using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
 
         item = await GenerateShortLinkAndCreate(request, item);
 
@@ -807,7 +807,7 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted();
+        using var scope = TransactionScopeHelper.CreateSerializable();
 
         usageLog = await _linkUsageLogRepository.Create(new LinkUsageLog
         {

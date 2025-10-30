@@ -25,6 +25,7 @@ using Yoma.Core.Domain.Core.Services;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.PartnerSharing;
 using Yoma.Core.Domain.PartnerSharing.Interfaces.Provider;
+using Yoma.Core.Infrastructure.Shared;
 using Yoma.Core.Infrastructure.AmazonS3;
 using Yoma.Core.Infrastructure.AriesCloud;
 using Yoma.Core.Infrastructure.Bitly;
@@ -129,15 +130,16 @@ namespace Yoma.Core.Api
       #region Services & Infrastructure
       services.ConfigureServices_DomainServices();
 
+      services.ConfigureServices_InfrastructureShared();
       services.ConfigureServices_InfrastructureBlobProvider();
       services.AddResumableUploadStore(_environment);
-      services.ConfigureServices_InfrastructureSSIProvider(_configuration, _configuration.Configuration_ConnectionString(), _appSettings);
       services.ConfigureServices_InfrastructureShortLinkProvider();
       services.ConfigureServices_InfrastructureDatabase(_configuration, _appSettings);
+      services.ConfigureServices_InfrastructureSSIProvider(_configuration, _appSettings);
+      services.ConfigureServices_InfrastructureNewsFeedProvider(_configuration, _appSettings);
       services.ConfigureServices_InfrastructureLaborMarketProvider();
       services.ConfigureServices_InfrastructureIdentityProvider();
       services.ConfigureServices_InfrastructureSharingProvider();
-      services.ConfigureServices_InfrastructureNewsFeedProvider(_configuration, _configuration.Configuration_ConnectionString(), _appSettings);
       services.ConfigureServices_InfrastructureEmailProvider(_configuration);
       services.ConfigureServices_InfrastructureMessageProvider(_configuration);
       services.ConfigureServices_InfrastructureRewardProvider();

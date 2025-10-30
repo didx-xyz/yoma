@@ -277,7 +277,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+          using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
 
           transaction.StatusId = _transactionStatusService.GetByName(TransactionStatus.Sold.ToString()).Id;
           transaction.Status = TransactionStatus.Sold;
@@ -308,7 +308,7 @@ namespace Yoma.Core.Domain.Marketplace.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
+          using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
 
           transaction.StatusId = _transactionStatusService.GetByName(TransactionStatus.Released.ToString()).Id;
           transaction.Status = TransactionStatus.Released;
