@@ -10,9 +10,11 @@ using Yoma.Core.Domain.Entity.Extensions;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.IdentityProvider;
-using Yoma.Core.Domain.IdentityProvider.Events;
 using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Referral;
+using Yoma.Core.Domain.Referral.Events;
+using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Infrastructure.Keycloak;
 using Yoma.Core.Infrastructure.Keycloak.Models;
@@ -138,14 +140,14 @@ namespace Yoma.Core.Api.Controllers
             var sType = payload.Type;
             _logger.LogInformation("{sType} event received (id={eventId})", sType, payload.Id);
 
-            var type = EnumHelper.GetValueFromDescription<IdentityEventType>(sType);
-            if (!type.HasValue) type = IdentityEventType.Undefined;
+            var type = EnumHelper.GetValueFromDescription<IdentityActionType>(sType);
+            if (!type.HasValue) type = IdentityActionType.Undefined;
 
             switch (type)
             {
-              case IdentityEventType.Register:
-              case IdentityEventType.UpdateProfile:
-              case IdentityEventType.Login:
+              case IdentityActionType.Register:
+              case IdentityActionType.UpdateProfile:
+              case IdentityActionType.Login:
                 _logger.LogInformation("{type} event processing", type.Value);
 
                 await UpdateUserProfile(type.Value, payload);
@@ -169,7 +171,7 @@ namespace Yoma.Core.Api.Controllers
     #endregion
 
     #region Private Members
-    private async Task UpdateUserProfile(IdentityEventType type, KeycloakWebhookRequest payload)
+    private async Task UpdateUserProfile(IdentityActionType type, KeycloakWebhookRequest payload)
     {
       var userId = Guid.Parse(payload.UserId);
       var lockKey = $"{Key_Prefix}:{userId}";
@@ -213,7 +215,7 @@ namespace Yoma.Core.Api.Controllers
               // only attempt lookup once during registration.
               // retries are reserved for UpdateProfile and Login to handle race conditions
               // where those webhooks may fire before the registration transaction completes
-              return type == IdentityEventType.Register || result != null;
+              return type == IdentityActionType.Register || result != null;
             },
             timeout: TimeSpan.FromSeconds(10),
             retryOnException: false,
@@ -227,11 +229,11 @@ namespace Yoma.Core.Api.Controllers
 
         switch (type)
         {
-          case IdentityEventType.Register:
-          case IdentityEventType.UpdateProfile:
+          case IdentityActionType.Register:
+          case IdentityActionType.UpdateProfile:
             if (userRequest == null)
             {
-              if (type == IdentityEventType.UpdateProfile)
+              if (type == IdentityActionType.UpdateProfile)
               {
                 _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
                 return;
@@ -289,7 +291,7 @@ namespace Yoma.Core.Api.Controllers
                 userRequest.DateOfBirth = dateOfBirth;
             }
 
-            if (type == IdentityEventType.UpdateProfile) break;
+            if (type == IdentityActionType.UpdateProfile) break;
 
             try
             {
@@ -302,7 +304,7 @@ namespace Yoma.Core.Api.Controllers
             }
             break;
 
-          case IdentityEventType.Login:
+          case IdentityActionType.Login:
             if (userRequest == null)
             {
               _logger.LogError("{type}: Failed to retrieve the Yoma user with username '{username}'", type, kcUser.Username);
@@ -343,9 +345,14 @@ namespace Yoma.Core.Api.Controllers
 
         userRequest.ExternalId = kcUser.Id;
 
-        await _userService.Upsert(userRequest);
-
-        await _eventPublisher.Publish(new IdentityEvent(new Domain.IdentityProvider.Models.IdentityEventMessage { Type = type, User = kcUser }));
+        var user = await _userService.Upsert(userRequest);
+        await _eventPublisher.Publish(new ReferralProgressTriggerEvent(new ReferralProgressTriggerMessage
+        {
+          Source = ReferralTriggerSource.IdentityAction,
+          UserId = user.Id,
+          Username = user.Username,
+          UserDisplayName = user.DisplayName
+        }));
       });
     }
 

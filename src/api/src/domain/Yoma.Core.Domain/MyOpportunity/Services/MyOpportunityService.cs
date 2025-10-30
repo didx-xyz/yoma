@@ -23,7 +23,6 @@ using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Lookups.Helpers;
 using Yoma.Core.Domain.Lookups.Interfaces;
 using Yoma.Core.Domain.Lookups.Models;
-using Yoma.Core.Domain.MyOpportunity.Events;
 using Yoma.Core.Domain.MyOpportunity.Extensions;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
@@ -35,6 +34,7 @@ using Yoma.Core.Domain.Opportunity;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Interfaces.Lookups;
+using Yoma.Core.Domain.Referral.Events;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.SSI.Interfaces;
 
@@ -1355,7 +1355,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       finally
       {
         _delayedExecutionService.Reset();
-      } 
+      }
     }
 
     private static List<(DateTime WeekEnding, int Count)> SummaryGroupByWeekItems(List<MyOpportunityInfo> items)
@@ -1472,8 +1472,16 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       if (sendNotification) _delayedExecutionService.Enqueue(async () => await SendNotification(item, notificationType.Value),
         nameof(SendNotification), $"{nameof(Models.MyOpportunity)}.{nameof(FinalizeVerification)}");
 
-      _delayedExecutionService.Enqueue(async () => await _mediator.Publish(new MyOpportunityEvent(item)),
-        $"{nameof(MyOpportunityEvent)}", "Publish");
+      _delayedExecutionService.Enqueue(async () => await _mediator.Publish(new ReferralProgressTriggerEvent(
+        new Referral.Models.ReferralProgressTriggerMessage
+        {
+          Source = Referral.ReferralTriggerSource.OpportunityCompletion,
+          UserId = user.Id,
+          Username = user.Username,
+          UserDisplayName = user.DisplayName,
+          OpportunityId = opportunity.Id,
+          OpportunityTitle = opportunity.Title
+        })), $"{nameof(ReferralProgressTriggerEvent)}", "Publish");
     }
 
     private void EnsureNoEarlierPendingVerificationsForOtherStudents(User user, Opportunity.Models.Opportunity opportunity, Models.MyOpportunity currentItem, bool instantVerification)

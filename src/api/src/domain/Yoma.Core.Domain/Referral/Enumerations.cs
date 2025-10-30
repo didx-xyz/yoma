@@ -52,4 +52,10 @@ namespace Yoma.Core.Domain.Referral
   {
     Other
   }
+
+  public enum ReferralTriggerSource
+  {
+    IdentityAction,
+    OpportunityCompletion
+  }
 }

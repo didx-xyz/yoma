@@ -2,7 +2,7 @@ using System.ComponentModel;
 
 namespace Yoma.Core.Domain.IdentityProvider
 {
-  public enum IdentityEventType
+  public enum IdentityActionType
   {
     Undefined,
     [Description("REGISTER")]
