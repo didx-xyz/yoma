@@ -161,7 +161,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
       </CustomModal>
 
       {/* IMAGE UPLOAD */}
-      <div className="flex w-full overflow-x-hidden">
+      <div className="flex w-full items-center">
         <input
           name="logo"
           type="file"
@@ -174,6 +174,7 @@ const AvatarUpload: React.FC<AvatarUploadProps> = ({
         {selectedImage && (
           <div className="flex grow justify-end gap-4">
             <button
+              type="button"
               className="btn btn-secondary rounded-full text-white"
               onClick={() => setCropModalVisible(true)}
             >

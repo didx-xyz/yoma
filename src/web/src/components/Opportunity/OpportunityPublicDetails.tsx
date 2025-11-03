@@ -644,7 +644,10 @@ const OpportunityPublicDetails: React.FC<{
                 </h6>
 
                 {/* BADGES */}
-                <PublicBadges opportunity={opportunityInfo} />
+                <PublicBadges
+                  opportunity={opportunityInfo}
+                  showToolTips={true}
+                />
 
                 {/* DATES */}
                 {opportunityInfo.status == "Active" && (

@@ -471,14 +471,12 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       shortURL: `https://yoma.world/r/P${program.id}L1`,
       qrCodeBase64:
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-      expiredTotal: 2,
+
       zltoRewardCumulative:
         (12 + programIndex * 3) * (program.zltoRewardReferrer ?? 0),
-      usageCounts: {
-        [STATUS_ID_PENDING]: 5 + programIndex * 2,
-        [STATUS_ID_COMPLETED]: 12 + programIndex * 3,
-        [STATUS_ID_EXPIRED]: 2,
-      },
+      pendingTotal: 5 + programIndex * 2,
+      completionTotal: 12 + programIndex * 3,
+      expiredTotal: 2,
       dateCreated: new Date(
         Date.now() - 30 * 24 * 60 * 60 * 1000,
       ).toISOString(),
@@ -503,13 +501,10 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       url: `https://yoma.world/referral?code=PROG${program.id}LINK2`,
       shortURL: `https://yoma.world/r/P${program.id}L2`,
       qrCodeBase64: null,
-      expiredTotal: 1,
       zltoRewardCumulative: 8 * (program.zltoRewardReferrer ?? 0),
-      usageCounts: {
-        [STATUS_ID_PENDING]: 3,
-        [STATUS_ID_COMPLETED]: 8,
-        [STATUS_ID_EXPIRED]: 1,
-      },
+      pendingTotal: 5 + programIndex * 2,
+      completionTotal: 12 + programIndex * 3,
+      expiredTotal: 1,
       dateCreated: new Date(
         Date.now() - 20 * 24 * 60 * 60 * 1000,
       ).toISOString(),
@@ -534,13 +529,10 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       url: `https://yoma.world/referral?code=PROG${program.id}OLDLINK`,
       shortURL: `https://yoma.world/r/P${program.id}OLD`,
       qrCodeBase64: null,
-      expiredTotal: 0,
       zltoRewardCumulative: 3 * (program.zltoRewardReferrer ?? 0),
-      usageCounts: {
-        [STATUS_ID_PENDING]: 0,
-        [STATUS_ID_COMPLETED]: 3,
-        [STATUS_ID_EXPIRED]: 0,
-      },
+      pendingTotal: 5 + programIndex * 2,
+      expiredTotal: 0,
+      completionTotal: 12 + programIndex * 3,
       dateCreated: new Date(
         Date.now() - 45 * 24 * 60 * 60 * 1000,
       ).toISOString(),
@@ -567,13 +559,10 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       url: `https://yoma.world/referral?code=PROG${program.id}FULL`,
       shortURL: `https://yoma.world/r/P${program.id}F`,
       qrCodeBase64: null,
-      expiredTotal: 5,
       zltoRewardCumulative: 50 * (program.zltoRewardReferrer ?? 0),
-      usageCounts: {
-        [STATUS_ID_PENDING]: 0,
-        [STATUS_ID_COMPLETED]: 50,
-        [STATUS_ID_EXPIRED]: 5,
-      },
+      pendingTotal: 5 + programIndex * 2,
+      completionTotal: 12 + programIndex * 3,
+      expiredTotal: 5,
       dateCreated: new Date(
         Date.now() - 60 * 24 * 60 * 60 * 1000,
       ).toISOString(),
@@ -600,13 +589,10 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       url: `https://yoma.world/referral?code=PROG${program.id}EXPIRED`,
       shortURL: `https://yoma.world/r/P${program.id}E`,
       qrCodeBase64: null,
-      expiredTotal: 3,
       zltoRewardCumulative: 10 * (program.zltoRewardReferrer ?? 0),
-      usageCounts: {
-        [STATUS_ID_PENDING]: 0,
-        [STATUS_ID_COMPLETED]: 10,
-        [STATUS_ID_EXPIRED]: 3,
-      },
+      pendingTotal: 5 + programIndex * 2,
+      completionTotal: 12 + programIndex * 3,
+      expiredTotal: 3,
       dateCreated: new Date(
         Date.now() - 90 * 24 * 60 * 60 * 1000,
       ).toISOString(),
@@ -623,6 +609,7 @@ const MOCK_REFERRAL_LINKS = generateMockReferralLinks();
 
 export const getReferralLinkById = async (
   id: string,
+  includeQRCode?: boolean,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ReferralLink> => {
   if (USE_MOCK_DATA) {
@@ -642,9 +629,12 @@ export const getReferralLinkById = async (
     return link;
   }
 
-  // Real API call
+  // Real API call - include QR code parameter
   const instance = context ? ApiServer(context) : await ApiClient;
-  const { data } = await instance.get<ReferralLink>(`/referral/link/${id}`);
+  const params = includeQRCode !== undefined ? { includeQRCode } : {};
+  const { data } = await instance.get<ReferralLink>(`/referral/link/${id}`, {
+    params,
+  });
   return data;
 };
 
@@ -733,9 +723,10 @@ export const createReferralLink = async (
       qrCodeBase64: request.includeQRCode
         ? "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
         : null,
-      expiredTotal: 0,
       zltoRewardCumulative: 0,
-      usageCounts: null,
+      pendingTotal: 0,
+      completionTotal: 0,
+      expiredTotal: 0,
       dateCreated: new Date().toISOString(),
       dateModified: new Date().toISOString(),
     };

@@ -33,6 +33,7 @@ import { OpportunitiesSummary } from "../YoID/OpportunitiesSummary";
 import { PassportCard } from "../YoID/PassportCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
+import { ReferralCard } from "../YoID/ReferralCard";
 import { YoIdModal } from "../YoID/YoIdModal";
 import { SignOutButton } from "../SignOutButton";
 import { LoadingInline } from "../Status/LoadingInline";
@@ -274,6 +275,24 @@ export const UserMenu: React.FC = () => {
                 </div>
               </div>
 
+              {/* REFERRALS */}
+              <div className="flex w-full flex-col gap-2">
+                <Suspense
+                  isLoading={!userProfile}
+                  loader={
+                    <LoadingInline
+                      className="flex-col p-0"
+                      classNameSpinner="h-12 w-12"
+                    />
+                  }
+                >
+                  <ReferralCard
+                    userProfile={userProfile!}
+                    onClick={() => setDrawerOpen(false)}
+                  />
+                </Suspense>
+              </div>
+
               <div className="divider !bg-gray my-2" />
 
               {/* YoID Dashboard components */}
@@ -450,6 +469,7 @@ export const UserMenu: React.FC = () => {
                     <FaArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
+
                 <div className="flex w-full flex-col gap-2">
                   <div className="divider !bg-gray my-4" />
                   <SignOutButton />

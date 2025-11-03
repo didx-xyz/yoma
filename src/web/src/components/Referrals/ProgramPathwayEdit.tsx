@@ -19,6 +19,7 @@ import { searchCriteriaOpportunities } from "~/api/services/opportunities";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { debounce } from "~/lib/utils";
 import PathwayTaskOpportunity from "./PathwayTaskOpportunity";
+import { IoList, IoCheckmarkCircle } from "react-icons/io5";
 
 const PAGE_SIZE_MEDIUM = 10;
 
@@ -137,9 +138,12 @@ export const ProgramPathwayEditComponent: React.FC<ProgramPathwayEditProps> = ({
         <div className="space-y-6 rounded-lg border border-gray-200 bg-white p-4">
           {/* Step Instruction Header */}
           {stepFields.length > 1 ? (
-            <div className="mb-4 flex items-center justify-between rounded-lg bg-blue-50 p-3">
+            <div className="mb-4 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3">
               <div className="flex items-center gap-2 text-sm font-medium text-blue-900">
-                📋 Complete{" "}
+                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-blue-400 bg-white text-xs font-bold text-blue-600">
+                  ✓
+                </span>
+                Complete{" "}
                 <Controller
                   name="pathway.rule"
                   control={control}
@@ -153,7 +157,7 @@ export const ProgramPathwayEditComponent: React.FC<ProgramPathwayEditProps> = ({
                     </select>
                   )}
                 />{" "}
-                of these steps{" "}
+                of these {stepFields.length} steps{" "}
                 <Controller
                   name="pathway.rule"
                   control={control}
@@ -204,9 +208,12 @@ export const ProgramPathwayEditComponent: React.FC<ProgramPathwayEditProps> = ({
               </button>
             </div>
           ) : (
-            <div className="mb-4 flex items-center justify-between rounded-lg bg-blue-50 p-3">
+            <div className="mb-4 flex items-center justify-between rounded-lg border border-blue-200 bg-blue-50 p-3">
               <div className="flex items-center gap-2 text-sm font-medium text-blue-900">
-                📋 Complete this step
+                <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-blue-400 bg-white text-xs font-bold text-blue-600">
+                  ✓
+                </span>
+                Complete this step
               </div>
               <button
                 type="button"
@@ -500,7 +507,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
       <div className="mt-6 ml-12 space-y-3">
         {/* Task Instruction Header */}
         {taskFields.length === 0 ? (
-          <div className="mb-4 flex items-center justify-between rounded-lg bg-yellow-50 p-3">
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-yellow-300 bg-yellow-50 p-3">
             <div className="flex w-full flex-row rounded-lg">
               <IoMdAlert className="text-yellow mr-2 h-6 w-6 flex-none" />
               <span className="content-center text-sm font-medium text-yellow-800">
@@ -523,9 +530,12 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
             </button>
           </div>
         ) : taskFields.length === 1 ? (
-          <div className="mb-4 flex items-center justify-between rounded-lg bg-green-50 p-3">
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3">
             <div className="flex items-center gap-2 text-sm font-medium text-green-900">
-              ✅ Complete this task
+              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-green-400 bg-white text-xs font-bold text-green-600">
+                ✓
+              </span>
+              Complete this task
             </div>
             <button
               type="button"
@@ -544,9 +554,12 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
             </button>
           </div>
         ) : (
-          <div className="mb-4 flex items-center justify-between rounded-lg bg-green-50 p-3">
+          <div className="mb-4 flex items-center justify-between rounded-lg border border-green-200 bg-green-50 p-3">
             <div className="flex items-center gap-2 text-sm font-medium text-green-900">
-              ✅ Complete{" "}
+              <span className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full border-2 border-green-400 bg-white text-xs font-bold text-green-600">
+                ✓
+              </span>
+              Complete{" "}
               <Controller
                 name={`pathway.steps.${stepIndex}.rule`}
                 control={control}
@@ -560,7 +573,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                   </select>
                 )}
               />{" "}
-              of these tasks{" "}
+              of these {taskFields.length} tasks{" "}
               <Controller
                 name={`pathway.steps.${stepIndex}.rule`}
                 control={control}

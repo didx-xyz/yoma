@@ -305,21 +305,27 @@ export interface ReferralLink {
   programId: string;
   programName: string;
   userId: string;
-  userDisplayName: string;
+  userDisplayName: string | null;
   userEmail: string | null;
   userPhoneNumber: string | null;
   blocked: boolean;
   blockedDate: string | null;
   statusId: string;
-  status: ReferralLinkStatus | string;
+  status: ReferralLinkStatus;
   url: string;
   shortURL: string;
   qrCodeBase64: string | null;
+  pendingTotal: number | null;
+  completionTotal: number | null;
   expiredTotal: number | null;
   zltoRewardCumulative: number | null;
-  usageCounts: Record<string, number> | null;
   dateCreated: string;
   dateModified: string;
+}
+
+export interface ReferralLinkUsageCount {
+  statusId: string;
+  count: number;
 }
 
 export interface ReferralLinkRequestBase {

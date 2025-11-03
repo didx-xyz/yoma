@@ -9,8 +9,9 @@ import {
   PathwayTaskEntityType,
 } from "~/api/models/referrals";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import { ProgramPathwayViewComponent } from "./ProgramPathwayView";
+import { ProgramPathwayProgressComponent } from "./ProgramPathwayProgress";
 import { useMemo } from "react";
+import { AvatarImage } from "../AvatarImage";
 
 export enum ProgramInfoFilterOptions {
   PROGRAM_INFO = "programInfo",
@@ -175,16 +176,12 @@ export const ProgramInfo: React.FC<ProgramInfoProps> = ({
 
             {/* Program Image */}
             {displayImageUrl && (
-              <div className="mt-8 flex justify-center">
-                <div className="relative h-48 w-48 overflow-hidden">
-                  <Image
-                    src={displayImageUrl}
-                    alt={program.name}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
-                </div>
+              <div className="mt-4 flex w-full justify-center rounded-lg bg-white py-8">
+                <AvatarImage
+                  icon={displayImageUrl}
+                  alt={program.name}
+                  size={150}
+                />
               </div>
             )}
           </div>
@@ -454,7 +451,7 @@ export const ProgramInfo: React.FC<ProgramInfoProps> = ({
           </h2>
           <div className="overflow-x-auto">
             {pathwayProgress ? (
-              <ProgramPathwayViewComponent pathway={pathwayProgress} />
+              <ProgramPathwayProgressComponent pathway={pathwayProgress} />
             ) : (
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <p className="text-sm text-gray-500">No pathway configured</p>

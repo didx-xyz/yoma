@@ -19,6 +19,7 @@ import { PassportCard } from "~/components/YoID/PassportCard";
 import { SkillsCard } from "~/components/YoID/SkillsCard";
 import { WalletCard } from "~/components/YoID/WalletCard";
 import { ZltoModal } from "~/components/YoID/ZltoModal";
+import { ReferralCard } from "~/components/YoID/ReferralCard";
 import { MAXINT32 } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
 import type { NextPageWithLayout } from "~/pages/_app";
@@ -137,6 +138,21 @@ const YoIDDashboard: NextPageWithLayout<{
 
       {/* DASHBOARD */}
       <div className="mt-2 flex h-full w-full flex-wrap items-center justify-center gap-4 lg:max-w-7xl">
+        {/* REFERRALS */}
+        <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
+          <Suspense
+            isLoading={!userProfile}
+            loader={
+              <LoadingInline
+                className="h-[185px] flex-col p-0"
+                classNameSpinner="h-12 w-12"
+              />
+            }
+          >
+            <ReferralCard userProfile={userProfile!} />
+          </Suspense>
+        </div>
+
         {/* WALLET */}
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">
           <Header title="💸 Wallet" url="/yoid/wallet" />

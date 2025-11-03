@@ -23,7 +23,7 @@ import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
-import { ProgramPathwayViewComponent } from "~/components/Referrals/ProgramPathwayView";
+import { ProgramPathwayProgressComponent } from "~/components/Referrals/ProgramPathwayProgress";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -388,7 +388,7 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
                 🛤️ Engagement Pathway Progress
               </h2>
               <div className="overflow-x-auto">
-                <ProgramPathwayViewComponent pathway={usage.pathway} />
+                <ProgramPathwayProgressComponent pathway={usage.pathway} />
               </div>
             </section>
           )}
