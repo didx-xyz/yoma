@@ -11,6 +11,27 @@ namespace Yoma.Core.Infrastructure.Shared.Interceptors
   ///
   /// Works transparently with EF Core’s execution strategy and PostgreSQL’s
   /// snapshot isolation model to prevent race conditions and write conflicts.
+  ///
+  /// To hookup the interceptor if ever needed
+  /// 
+  /// <code>
+  /// await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
+  /// {
+  ///     using var scope = TransactionScopeHelper.CreateReadCommitted();
+  ///     // critical logic here (e.g. reward allocation, cap enforcement)
+  ///     scope.Complete();
+  /// });
+  /// </code>
+  /// 
+  /// 📦 To enable globally (use with caution):
+  /// In ConfigureServices_InfrastructureShared:
+  /// <code>
+  /// services.AddSingleton&lt;SerializableTransactionInterceptor&gt;();
+  /// </code>
+  /// And in each AddDbContext registration:
+  /// <code>
+  /// .AddInterceptors(sp.GetRequiredService&lt;SerializableTransactionInterceptor&gt;())
+  /// </code>
   /// </summary>
   public sealed class SerializableTransactionInterceptor : DbTransactionInterceptor
   {

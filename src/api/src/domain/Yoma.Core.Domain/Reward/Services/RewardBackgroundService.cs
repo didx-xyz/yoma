@@ -88,7 +88,7 @@ namespace Yoma.Core.Domain.Reward.Services
 
                   await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
                   {
-                    using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
+                    using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
                     var (username, wallet) = await _walletService.CreateWallet(item.UserId);
 

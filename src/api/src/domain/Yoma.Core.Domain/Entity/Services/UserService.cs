@@ -327,7 +327,7 @@ namespace Yoma.Core.Domain.Entity.Services
       {
         await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
         {
-          using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
           blobObject = await _blobService.Create(FileType.Photos, StorageType.Public, file, null);
           result.PhotoId = blobObject.Id;
           result.PhotoStorageType = blobObject.StorageType;
@@ -391,7 +391,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateSerializable();
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
         foreach (var skillId in skillIds)
         {
           var skill = _skillService.GetById(skillId);
@@ -433,7 +433,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateSerializable();
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
         user.YoIDOnboarded = true;
         user.DateYoIDOnboarded = DateTimeOffset.UtcNow;

@@ -1,6 +1,5 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Yoma.Core.Infrastructure.Shared.Interceptors;
 
 namespace Yoma.Core.Infrastructure.Shared
 {
@@ -22,7 +21,6 @@ namespace Yoma.Core.Infrastructure.Shared
 
     public static void ConfigureServices_InfrastructureShared(this IServiceCollection services)
     {
-      services.AddSingleton<SerializableTransactionInterceptor>();
     }
     #endregion
   }

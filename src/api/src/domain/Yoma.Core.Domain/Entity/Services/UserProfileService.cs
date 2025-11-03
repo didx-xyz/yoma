@@ -245,7 +245,7 @@ namespace Yoma.Core.Domain.Entity.Services
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
         result = await _userRepository.Update(result);
 
         username = result.Email ?? result.PhoneNumber;

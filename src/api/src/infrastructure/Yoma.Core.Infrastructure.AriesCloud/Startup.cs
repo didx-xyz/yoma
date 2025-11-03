@@ -15,7 +15,6 @@ using Yoma.Core.Infrastructure.AriesCloud.Models;
 using Yoma.Core.Infrastructure.AriesCloud.Repositories;
 using Yoma.Core.Infrastructure.AriesCloud.Services;
 using Yoma.Core.Infrastructure.Shared;
-using Yoma.Core.Infrastructure.Shared.Interceptors;
 
 namespace Yoma.Core.Infrastructure.AriesCloud
 {
@@ -39,9 +38,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud
               })
         //disable warning related to not using AsSplitQuery() as per MS SQL implementation
         //.UseLazyLoadingProxies(): without arguments is used to enable lazy loading. Simply not calling UseLazyLoadingProxies() ensure lazy loading is not enabled
-        .ConfigureWarnings(w => w.Ignore(RelationalEventId.MultipleCollectionIncludeWarning))
-        .AddInterceptors(sp.GetRequiredService<SerializableTransactionInterceptor>());
-
+        .ConfigureWarnings(w => w.Ignore(RelationalEventId.MultipleCollectionIncludeWarning));
       }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
       // repositories

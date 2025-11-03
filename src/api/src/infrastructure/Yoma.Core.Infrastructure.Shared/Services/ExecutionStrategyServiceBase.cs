@@ -9,13 +9,13 @@ namespace Yoma.Core.Infrastructure.Shared.Services
   /// serialization failures with SQLSTATE 40001) are automatically retried by EF in
   /// almost all cases.
   ///
-  /// Combined with global SERIALIZABLE isolation (via interceptor) and explicit
-  /// transaction scopes, this provides robust protection against race conditions
-  /// without additional manual retry logic. EF’s execution strategy internally retries
-  /// 40001 conflicts when detected by Npgsql, which is sufficient for 99% of cases.
+  /// Default transactions run under PostgreSQL’s standard READ COMMITTED isolation level.
+  /// Critical flows explicitly request SERIALIZABLE isolation via TransactionScopeHelper.CreateReadCommitted()
+  /// to guarantee atomicity and prevent double-counting under high concurrency.
   ///
-  /// For mission-critical, high-value flows, additional distributed (Redis) locks are
-  /// applied at service level to further reduce contention.
+  /// Combined with explicit transaction scopes and distributed (Redis) locks for
+  /// mission-critical sections, this provides robust protection against race conditions
+  /// without requiring custom retry logic.
   /// </summary>
   public abstract class ExecutionStrategyServiceBase : IExecutionStrategyService
   {
