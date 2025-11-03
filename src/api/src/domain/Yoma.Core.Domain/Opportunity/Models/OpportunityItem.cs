@@ -1,3 +1,6 @@
+using Newtonsoft.Json;
+using Yoma.Core.Domain.Entity;
+
 namespace Yoma.Core.Domain.Opportunity.Models
 {
   public class OpportunityItem
@@ -5,5 +8,16 @@ namespace Yoma.Core.Domain.Opportunity.Models
     public Guid Id { get; set; }
 
     public string Title { get; set; } = null!;
+
+    [JsonIgnore]
+    public OrganizationStatus OrganizationStatus { get; set; }
+
+    [JsonIgnore]
+    public bool VerificationEnabled { get; set; }
+
+    [JsonIgnore]
+    public Status Status { get; set; }
+
+    public bool IsCompletable => Status == Status.Active && OrganizationStatus == OrganizationStatus.Active && VerificationEnabled;
   }
 }

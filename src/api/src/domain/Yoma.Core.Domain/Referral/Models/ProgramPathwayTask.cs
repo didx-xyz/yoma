@@ -33,5 +33,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public DateTimeOffset DateCreated { get; set; }
 
     public DateTimeOffset DateModified { get; set; }
+
+    public bool IsCompletable => Opportunity?.IsCompletable ?? false;
   }
 }

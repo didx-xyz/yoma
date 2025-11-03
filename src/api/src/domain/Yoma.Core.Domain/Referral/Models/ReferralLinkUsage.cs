@@ -44,6 +44,12 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public ReferralLinkUsageStatus Status { get; set; }
 
+    public decimal? ZltoRewardReferrer { get; set; }
+
+    public decimal? ZltoRewardReferee { get; set; }
+
+    public decimal? ZltoRewardTotal => (ZltoRewardReferrer ?? 0) + (ZltoRewardReferee ?? 0);
+
     public DateTimeOffset DateClaimed { get; set; }
 
     public DateTimeOffset? DateCompleted => Status == ReferralLinkUsageStatus.Completed ? DateModified : null;

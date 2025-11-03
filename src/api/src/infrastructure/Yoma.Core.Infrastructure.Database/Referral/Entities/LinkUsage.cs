@@ -32,6 +32,12 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     public Guid StatusId { get; set; }
     public LinkUsageStatus Status { get; set; } = null!;
 
+    [Column(TypeName = "decimal(8,2)")]
+    public decimal ? ZltoRewardReferrer { get; set; }
+
+    [Column(TypeName = "decimal(8,2)")]
+    public decimal ? ZltoRewardReferee { get; set; }
+
     [Required]
     public DateTimeOffset DateCreated { get; set; }
 

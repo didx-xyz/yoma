@@ -1900,6 +1900,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             b.Property<Guid>("UserId")
                       .HasColumnType("uuid");
 
+            b.Property<decimal?>("ZltoRewardReferee")
+                      .HasColumnType("decimal(8,2)");
+
+            b.Property<decimal?>("ZltoRewardReferrer")
+                      .HasColumnType("decimal(8,2)");
+
             b.HasKey("Id");
 
             b.HasIndex("ProgramId");

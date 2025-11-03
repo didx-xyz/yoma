@@ -57,8 +57,12 @@ namespace Yoma.Core.Domain.Referral.Extensions
               Opportunity = task.Opportunity == null ? null : new OpportunityItem
               {
                 Id = task.Opportunity.Id,
-                Title = task.Opportunity.Title
-              }
+                Title = task.Opportunity.Title,
+                OrganizationStatus = task.Opportunity.OrganizationStatus,
+                VerificationEnabled = task.Opportunity.VerificationEnabled,
+                Status = task.Opportunity.Status
+              },
+              IsCompletable = task.IsCompletable
             }).ToList() ?? []
           }).ToList() ?? []
         }

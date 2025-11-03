@@ -32,6 +32,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         StatusId = entity.StatusId,
         Status = Enum.Parse<Domain.Referral.ReferralLinkUsageStatus>(entity.Status.Name, true),
         DateClaimed = entity.DateCreated,
+        ZltoRewardReferee = entity.ZltoRewardReferee,
+        ZltoRewardReferrer = entity.ZltoRewardReferrer,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
       });
@@ -99,6 +101,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       item.DateModified = DateTimeOffset.UtcNow;
 
       entity.StatusId = item.StatusId;
+      entity.ZltoRewardReferrer = item.ZltoRewardReferrer;
+      entity.ZltoRewardReferee = item.ZltoRewardReferee;  
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();
@@ -121,6 +125,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         item.DateModified = DateTimeOffset.UtcNow;
 
         entity.StatusId = item.StatusId;
+        entity.ZltoRewardReferrer = item.ZltoRewardReferrer;
+        entity.ZltoRewardReferee = item.ZltoRewardReferee;  
         entity.DateModified = item.DateModified;
       }
 
@@ -129,7 +135,6 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
       return items;
     }
-
 
     public Task Delete(ReferralLinkUsage item)
     {

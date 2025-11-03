@@ -255,6 +255,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
             LinkId = table.Column<Guid>(type: "uuid", nullable: false),
             UserId = table.Column<Guid>(type: "uuid", nullable: false),
             StatusId = table.Column<Guid>(type: "uuid", nullable: false),
+            ZltoRewardReferrer = table.Column<decimal>(type: "numeric(8,2)", nullable: true),
+            ZltoRewardReferee = table.Column<decimal>(type: "numeric(8,2)", nullable: true),
             DateCreated = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false),
             DateModified = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: false)
           },

@@ -1112,6 +1112,8 @@ END $$ LANGUAGE plpgsql;
 -- ==========================================================================================
 -- Referral Link Usages (seed) for testuser@gmail.com AS REFEREE
 -- NOTE: This intentionally BREAKS the "you cannot claim your own link" rule for seed data.
+-- Adds per-usage reward snapshots when status = Completed:
+--   LinkUsage."ZltoRewardReferrer" and LinkUsage."ZltoRewardReferee"
 -- ==========================================================================================
 
 DO $$
@@ -1124,12 +1126,16 @@ DECLARE
   v_usage_completed_id     uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Completed');
   v_usage_expired_id       uuid := (SELECT "Id" FROM "Referral"."LinkUsageStatus" WHERE "Name" = 'Expired');
 
-  -- MyOpportunity enums to decide if an opportunity is completed by the user
+  -- MyOpportunity enums
   v_mo_action_verif_id     uuid := (SELECT "Id" FROM "Opportunity"."MyOpportunityAction" WHERE "Name" = 'Verification');
   v_mo_status_completed_id uuid := (SELECT "Id" FROM "Opportunity"."MyOpportunityVerificationStatus" WHERE "Name" = 'Completed');
 
   rec RECORD;
   v_status_id uuid;
+
+  -- reward snapshots (from Program at seed-time)
+  v_prog_reward_referrer numeric;
+  v_prog_reward_referee  numeric;
 BEGIN
   IF v_user_id IS NULL THEN
     RAISE EXCEPTION 'Seed referee user not found: %', 'testuser@gmail.com';
@@ -1141,7 +1147,6 @@ BEGIN
     RAISE EXCEPTION 'MyOpportunity enums missing (Action=Verification or Status=Completed)';
   END IF;
 
-  -- Iterate one random link per program for this referrer (self-claim for seed)
   FOR rec IN
     SELECT DISTINCT ON (l."ProgramId")
            l."Id"        AS link_id,
@@ -1150,7 +1155,7 @@ BEGIN
     WHERE l."UserId" = v_user_id
     ORDER BY l."ProgramId", random()
   LOOP
-    -- Skip if a usage already exists for this user & program (respect unique constraint)
+    -- skip if usage already exists for this user & program
     IF EXISTS (
       SELECT 1
       FROM "Referral"."LinkUsage" u
@@ -1160,7 +1165,7 @@ BEGIN
       CONTINUE;
     END IF;
 
-    -- Compute status (Expired > Completed > Pending)
+    -- compute status (Expired > Completed > Pending)
     WITH prog AS (
       SELECT
         p."Id",
@@ -1168,25 +1173,17 @@ BEGIN
         p."PathwayRequired"            AS pathway_required,
         p."DateStart",
         p."DateEnd",
-        CASE
-          WHEN p."DateEnd" IS NOT NULL AND p."DateEnd" < v_now THEN TRUE
-          ELSE FALSE
-        END AS is_expired
+        CASE WHEN p."DateEnd" IS NOT NULL AND p."DateEnd" < v_now THEN TRUE ELSE FALSE END AS is_expired
       FROM "Referral"."Program" p
       WHERE p."Id" = rec.program_id
     ),
     pw AS (
-      SELECT
-        pw."Id",
-        pw."Rule"      AS pathway_rule,      -- 'All' | 'Any'
-        pw."OrderMode" AS pathway_order_mode -- not used for completion
+      SELECT pw."Id", pw."Rule" AS pathway_rule, pw."OrderMode" AS pathway_order_mode
       FROM "Referral"."ProgramPathway" pw
       WHERE pw."ProgramId" = rec.program_id
     ),
     steps AS (
-      SELECT
-        s."Id",
-        s."Rule" AS step_rule
+      SELECT s."Id", s."Rule" AS step_rule
       FROM "Referral"."ProgramPathwayStep" s
       JOIN pw ON pw."Id" = s."PathwayId"
     ),
@@ -1258,10 +1255,22 @@ BEGIN
       END
     INTO v_status_id;
 
+    -- load program reward snapshots (for insert)
+    SELECT p."ZltoRewardReferrer", p."ZltoRewardReferee"
+    INTO   v_prog_reward_referrer,  v_prog_reward_referee
+    FROM "Referral"."Program" p
+    WHERE p."Id" = rec.program_id;
+
     INSERT INTO "Referral"."LinkUsage"(
-      "Id","ProgramId","LinkId","UserId","StatusId","DateCreated","DateModified"
-    ) VALUES (
-      gen_random_uuid(), rec.program_id, rec.link_id, v_user_id, v_status_id, v_now, v_now
+      "Id","ProgramId","LinkId","UserId","StatusId",
+      "ZltoRewardReferrer","ZltoRewardReferee",
+      "DateCreated","DateModified"
+    )
+    VALUES (
+      gen_random_uuid(), rec.program_id, rec.link_id, v_user_id, v_status_id,
+      CASE WHEN v_status_id = v_usage_completed_id THEN v_prog_reward_referrer ELSE NULL END,
+      CASE WHEN v_status_id = v_usage_completed_id THEN v_prog_reward_referee  ELSE NULL END,
+      v_now, v_now
     );
   END LOOP;
 END $$ LANGUAGE plpgsql;

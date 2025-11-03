@@ -44,16 +44,9 @@ namespace Yoma.Core.Domain.Referral.Services
       return result.ToInfo();
     }
 
-    public ProgramInfo GetById(Guid id, bool includeChildItems, bool includeComputed, bool enforceAvailableOrExpired)
+    public ProgramInfo GetById(Guid id, bool includeChildItems, bool includeComputed)
     {
       var result = _programService.GetById(id, includeChildItems, includeComputed);
-
-      if (enforceAvailableOrExpired)
-      {
-        var statuses = new ProgramStatus[] { ProgramStatus.Active, ProgramStatus.Expired };
-        if (!statuses.Contains(result.Status) || result.DateStart > DateTimeOffset.UtcNow)
-          throw new EntityNotFoundException($"Program '{result.Name}' is currently unavailable");
-      }
 
       return result.ToInfo();
     }

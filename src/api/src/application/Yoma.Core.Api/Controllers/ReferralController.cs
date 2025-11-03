@@ -93,15 +93,14 @@ namespace Yoma.Core.Api.Controllers
 			return Ok(result);
 		}
 
-		[SwaggerOperation(Summary = "Get the referral program by Id (Authenticated User)",
-		  Description = "Returns a program if it is active and has started, or if it has expired")]
+		[SwaggerOperation(Summary = "Get the referral program by Id (Authenticated User)")]
 		[HttpGet("program/{id}/info")]
 		[Authorize(Roles = $"{Constants.Role_User}")]
 		public ActionResult<ProgramInfo> GetProgramInfoById([FromRoute] Guid id)
 		{
 			_logger.LogInformation("Handling request {requestName}", nameof(GetProgramInfoById));
 
-			var result = _programInfoService.GetById(id, true, true, true);
+			var result = _programInfoService.GetById(id, true, true);
 
 			_logger.LogInformation("Request {requestName} handled", nameof(GetProgramInfoById));
 

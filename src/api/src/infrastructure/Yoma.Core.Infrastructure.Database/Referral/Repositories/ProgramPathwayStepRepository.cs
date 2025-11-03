@@ -41,7 +41,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           Opportunity = task.Opportunity == null ? null : new Domain.Opportunity.Models.OpportunityItem
           {
             Id = task.Opportunity.Id,
-            Title = task.Opportunity.Title
+            Title = task.Opportunity.Title,
+            OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(task.Opportunity.Organization.Status.Name, true),
+            VerificationEnabled = task.Opportunity.VerificationEnabled,
+            Status = Enum.Parse<Domain.Opportunity.Status>(task.Opportunity.Status.Name, true)
           },
           Order = task.Order,
           OrderDisplay = task.OrderDisplay, 

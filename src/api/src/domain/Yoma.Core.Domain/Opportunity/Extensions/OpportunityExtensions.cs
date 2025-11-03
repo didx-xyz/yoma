@@ -75,7 +75,10 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       return new OpportunityItem
       {
         Id = value.Id,
-        Title = value.Title.RemoveSpecialCharacters()
+        Title = value.Title.RemoveSpecialCharacters(),
+        OrganizationStatus = value.OrganizationStatus,
+        VerificationEnabled = value.VerificationEnabled,
+        Status = value.Status
       };
     }
 

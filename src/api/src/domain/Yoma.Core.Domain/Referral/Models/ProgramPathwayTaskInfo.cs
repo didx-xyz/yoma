@@ -11,5 +11,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public short? Order { get; set; }
 
     public short OrderDisplay { get; set; }
+
+    public bool IsCompletable { get; set; }
   }
 }

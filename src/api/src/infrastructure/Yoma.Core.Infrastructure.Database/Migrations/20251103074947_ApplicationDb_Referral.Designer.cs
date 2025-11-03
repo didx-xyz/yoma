@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251024072039_ApplicationDb_Referral")]
+    [Migration("20251103074947_ApplicationDb_Referral")]
     partial class ApplicationDb_Referral
     {
         /// <inheritdoc />
@@ -1902,6 +1902,12 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.Property<Guid>("UserId")
                         .HasColumnType("uuid");
+
+                    b.Property<decimal?>("ZltoRewardReferee")
+                        .HasColumnType("decimal(8,2)");
+
+                    b.Property<decimal?>("ZltoRewardReferrer")
+                        .HasColumnType("decimal(8,2)");
 
                     b.HasKey("Id");
 

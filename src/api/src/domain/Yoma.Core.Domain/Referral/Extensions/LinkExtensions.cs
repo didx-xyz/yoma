@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.Referral.Extensions
 
       if (value.Id == Guid.Empty) throw new ArgumentException("Id cannot be empty", nameof(value));
 
-      return appBaseURL.AppendPathSegment($"user/referrals/claim").AppendPathSegment(value.Id.ToString());
+      return appBaseURL.AppendPathSegment($"referrals/claim").AppendPathSegment(value.Id.ToString());
     }
     #endregion
   }

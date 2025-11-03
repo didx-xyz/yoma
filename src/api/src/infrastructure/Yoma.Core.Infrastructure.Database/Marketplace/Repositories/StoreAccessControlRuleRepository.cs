@@ -48,11 +48,14 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified,
         Opportunities = entity.Opportunities == null ? null : includeChildItems ?
-              entity.Opportunities.Select(o => new OpportunityItem
-              {
-                Id = o.OpportunityId,
-                Title = o.Opportunity.Title
-              }).OrderBy(o => o.Title).ToList() : null,
+          entity.Opportunities.Select(o => new OpportunityItem
+          {
+            Id = o.OpportunityId,
+            Title = o.Opportunity.Title,
+            OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(o.Opportunity.Organization.Status.Name, true),
+            VerificationEnabled = o.Opportunity.VerificationEnabled,
+            Status = Enum.Parse<Domain.Opportunity.Status>(o.Opportunity.Status.Name, true)
+          }).OrderBy(o => o.Title).ToList() : null,
       });
     }
 

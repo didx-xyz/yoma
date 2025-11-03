@@ -66,6 +66,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           ,
           {"D6E34140-A511-4BF9-945C-81ECAB794BCF","Expired",DateTimeOffset.UtcNow}
           ,
+          {"69B129FD-697A-42F4-8E08-7D203E8D1A8A","LimitReached",DateTimeOffset.UtcNow}
+          ,
+          {"E44210AF-F269-415A-BD09-CE17727AF39B","UnCompletable",DateTimeOffset.UtcNow}
+          ,
           {"9E7282E1-A3CE-4F8C-9BC2-B9B44E3FAC6C","Deleted",DateTimeOffset.UtcNow}
        },
        schema: "Referral");

@@ -41,10 +41,11 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IRepositoryWithNavigation<ProgramPathwayStep> _programPathwayStepRepository;
     private readonly IRepository<ProgramPathwayTask> _programPathwayTaskRepository;
 
-    private static readonly ProgramStatus[] Statuses_Updatable = [ProgramStatus.Active, ProgramStatus.Inactive];
-    private static readonly ProgramStatus[] Statuses_Activatable = [ProgramStatus.Inactive];
-    private static readonly ProgramStatus[] Statuses_CanDelete = [ProgramStatus.Active, ProgramStatus.Inactive];
-    private static readonly ProgramStatus[] Statuses_DeActivatable = [ProgramStatus.Active, ProgramStatus.Expired];
+    private static readonly ProgramStatus[] Statuses_Updatable = [ProgramStatus.Active, ProgramStatus.Inactive, ProgramStatus.UnCompletable];
+    private static readonly ProgramStatus[] Statuses_Activatable = [ProgramStatus.Inactive]; // Expired must go Inactive→fix→Active; LimitReached is locked
+    private static readonly ProgramStatus[] Statuses_CanDelete = [ProgramStatus.Active, ProgramStatus.Inactive, ProgramStatus.UnCompletable];
+    private static readonly ProgramStatus[] Statuses_DeActivatable = [ProgramStatus.Active, ProgramStatus.Expired]; // allow moving Expired→Inactive to edit
+
     #endregion
 
     #region Constrcutor
@@ -313,12 +314,18 @@ namespace Yoma.Core.Domain.Referral.Services
       if (!result.DateStart.Equals(request.DateStart) && request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
         throw new ValidationException("The start date cannot be in the past. The start date has been updated and must be today or later");
 
-      //by default, status remains unchanged, except for immediate expiration based on DateEnd (status updated via UpdateStatus)
+      // If program was UnCompletable but the edit makes it healthy, flip to Active first.
+      if (result.Status == ProgramStatus.UnCompletable)
+      {
+        result.Status = ProgramStatus.Active;
+        result.StatusId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
+      }
+
+      // If DateEnd is in the past/now, immediately expire 
       if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
       {
         result.StatusId = _programStatusService.GetByName(Status.Expired.ToString()).Id;
         result.Status = ProgramStatus.Expired;
-        //TODO: Expire associated links and usages
       }
 
       if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
@@ -372,6 +379,9 @@ namespace Yoma.Core.Domain.Referral.Services
           if (outcome.Updated) result = outcome.Program;
         }
 
+        if (result.Status == ProgramStatus.Expired)
+          await _linkMaintenanceService.ExpireByProgramId([result.Id]);
+
         scope.Complete();
       });
 
@@ -404,7 +414,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public async Task<Program> UpdateStatus(Guid id, ProgramStatus status)
     {
-      var result = GetById(id, false, false);
+      var result = GetById(id, true, false);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -420,7 +430,25 @@ namespace Yoma.Core.Domain.Referral.Services
           if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
             throw new ValidationException($"The {nameof(Program)} cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Program).ToLower()} before proceeding with activation");
 
-          //TODO: Ensure completable pathway specially for opportunity tasks
+          var allTasks = (result.Pathway?.Steps ?? []).SelectMany(s => s.Tasks ?? []);
+          foreach (var t in allTasks)
+          {
+            switch (t.EntityType)
+            {
+              case PathwayTaskEntityType.Opportunity:
+                if (t.Opportunity == null)
+                  throw new DataInconsistencyException($"The {nameof(ProgramPathwayTask)} with id '{t.Id}' has an entity type of '{PathwayTaskEntityType.Opportunity.ToDescription()}' but no associated opportunity item");
+
+                if (!t.Opportunity.IsCompletable)
+                  throw new ValidationException($"The specified opportunity is not completable, thus not published or verification is not enabled");
+
+                break;
+
+              default:
+                throw new InvalidOperationException($"Entity type of '{t.EntityType}' is not supported");
+            }
+          }
+
           break;
 
         case ProgramStatus.Inactive:
@@ -710,21 +738,19 @@ namespace Yoma.Core.Domain.Referral.Services
       switch (request.EntityType)
       {
         case PathwayTaskEntityType.Opportunity:
-          var opportunity = _opportunityService.GetById(request.EntityId, false, true, false);
-          if (!opportunity.Published)
-            throw new ValidationException($"The specified opportunity is not published and cannot be assigned as a task");
-
-          if (!opportunity.VerificationEnabled)
-            throw new ValidationException($"Opportunity '{opportunity.Title}' can not be completed / verification is not enabled");
-
-          if (!opportunity.VerificationMethod.HasValue) //support any verification method
-            throw new DataInconsistencyException($"Data inconsistency detected: The opportunity '{opportunity.Title}' has verification enabled, but no verification method is set");
+          var opportunity = _opportunityService.GetById(request.EntityId, false, false, false);
 
           task.Opportunity = new OpportunityItem
           {
             Id = opportunity.Id,
-            Title = opportunity.Title
+            Title = opportunity.Title,
+            OrganizationStatus = opportunity.OrganizationStatus,
+            VerificationEnabled = opportunity.VerificationEnabled,
+            Status = opportunity.Status
           };
+
+          if (!task.Opportunity.IsCompletable)
+            throw new ValidationException($"The specified opportunity is not completable, thus not published or verification is not enabled");
 
           break;
 

@@ -124,6 +124,12 @@ namespace Yoma.Core.Domain.Core.Models
     // while still providing good throughput for nightly expiration jobs.
     public int ReferralProgramExpirationScheduleBatchSize { get; set; }
 
+    public string ReferralProgramHealthSchedule { get; set; } = null!;
+
+    public int ReferralProgramHealthScheduleBatchSize { get; set; }
+
+    public int ReferralProgramHealthScheduleGracePeriodInDays { get; set; }
+
     public string ReferralProgramDeletionSchedule { get; set; } = null!;
 
     public int ReferralProgramDeletionScheduleBatchSize { get; set; }

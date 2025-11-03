@@ -24,7 +24,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         Opportunity = entity.Opportunity == null ? null : new Domain.Opportunity.Models.OpportunityItem
         {
           Id = entity.Opportunity.Id,
-          Title = entity.Opportunity.Title
+          Title = entity.Opportunity.Title,
+          OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(entity.Opportunity.Organization.Status.Name, true),
+          VerificationEnabled = entity.Opportunity.VerificationEnabled,
+          Status = Enum.Parse<Domain.Opportunity.Status>(entity.Opportunity.Status.Name, true)
         },
         Order = entity.Order,
         OrderDisplay = entity.OrderDisplay,

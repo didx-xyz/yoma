@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Hosting;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -216,13 +217,27 @@ namespace Yoma.Core.Domain.Referral.Services
       if (link.UserId == user.Id)
         throw new ValidationException("You cannot claim your own referral link");
 
-      // A referee can only ever claim once per PROGRAM(any link, any status)
-      var msgProgramClaimed = $"You have already participated in program '{program.Name}' and cannot claim again";
+      // Prevents retroactive referral claims — only allowed within 10 minutes of onboarding to stop users from linking after registration
+      if (!user.DateYoIDOnboarded.HasValue)
+        throw new ValidationException("You must complete your profile before claiming a referral link");
 
-      var programClaimed = _linkUsageRepository.Query().Any(u => u.ProgramId == program.Id && u.UserId == user.Id);
-      if (programClaimed) throw new ValidationException(msgProgramClaimed);
+      if (DateTimeOffset.UtcNow - user.DateYoIDOnboarded.Value > TimeSpan.FromMinutes(10))
+        throw new ValidationException("You are already registered. Registration with a referral link only applies to new registrations");
 
-      var usageExisting = _linkUsageRepository.Query().SingleOrDefault(x => x.LinkId == link.Id && x.UserId == user.Id);
+      // All usages by this user (any program)
+      var userUsages = _linkUsageRepository.Query().Where(u => u.UserId == user.Id);
+
+      // Block if user has participated in ANY OTHER program
+      var otherProgramsClaimed = userUsages.Where(u => u.ProgramId != program.Id).Select(o => o.ProgramName).Distinct().ToList();
+      if (otherProgramsClaimed.Count > 0)
+        throw new ValidationException($"You have already participated in program(s) '{string.Join(", ", otherProgramsClaimed)}' and cannot claim again.");
+
+      // For THIS program: there can be at most one usage(unique on(UserId, ProgramId))
+      var usageExisting = userUsages.SingleOrDefault(o => o.ProgramId == program.Id);
+      if (usageExisting != null && usageExisting.LinkId != link.Id)
+        throw new DataInconsistencyException($"Data integrity violation: user '{user.Id}' already has a usage record for program '{program.Id}' linked to a different referral link '{usageExisting.LinkId}'.");
+
+      var msgUsageExisting = $"You have already participated in program '{program.Name}' and cannot claim again";
       if (usageExisting != null)
       {
         switch (usageExisting.Status)
@@ -234,15 +249,15 @@ namespace Yoma.Core.Domain.Referral.Services
               : program.DateEnd; // fallback to program end if defined
 
             if (effectiveExpiry.HasValue && effectiveExpiry <= DateTimeOffset.UtcNow)
-              throw new ValidationException($"{msgProgramClaimed}. Your previous claim for link '{link.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' has expired on '{effectiveExpiry:yyyy-MM-dd}'");
+              throw new ValidationException($"{msgUsageExisting}. Your previous claim for link '{link.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' has expired on '{effectiveExpiry:yyyy-MM-dd}'");
 
-            throw new ValidationException($"{msgProgramClaimed}. You already claimed link '{link.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' and it is still pending");
+            throw new ValidationException($"{msgUsageExisting}. You already claimed link '{link.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' and it is still pending");
 
           case ReferralLinkUsageStatus.Completed:
-            throw new ValidationException($"{msgProgramClaimed}. You already completed program '{program.Name}' using link '{link.Name}' on '{usageExisting.DateCompleted:yyyy-MM-dd}'");
+            throw new ValidationException($"{msgUsageExisting}. You already completed program '{program.Name}' using link '{link.Name}' on '{usageExisting.DateCompleted:yyyy-MM-dd}'");
 
           case ReferralLinkUsageStatus.Expired:
-            throw new ValidationException($"{msgProgramClaimed}. Your claim for link '{link.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' expired on '{usageExisting.DateExpired:yyyy-MM-dd}'");
+            throw new ValidationException($"{msgUsageExisting}. Your claim for link '{link.Name}' on '{usageExisting.DateClaimed:yyyy-MM-dd}' expired on '{usageExisting.DateExpired:yyyy-MM-dd}'");
 
           default:
             throw new InvalidOperationException($"Unsupported referral link usage status: {usageExisting.Status}");
@@ -307,6 +322,8 @@ namespace Yoma.Core.Domain.Referral.Services
         StatusId = item.StatusId,
         Status = item.Status,
         DateClaimed = item.DateClaimed,
+        ZltoRewardReferrer = item.ZltoRewardReferrer,
+        ZltoRewardReferee = item.ZltoRewardReferee,
         DateCompleted = item.DateCompleted,
         DateExpired = item.DateExpired,
         ProofOfPersonhoodMethod = ProofOfPersonhoodMethod.None
@@ -357,7 +374,8 @@ namespace Yoma.Core.Domain.Referral.Services
                   EntityType = t.EntityType,
                   Opportunity = t.Opportunity,
                   Order = t.Order,
-                  OrderDisplay = t.OrderDisplay
+                  OrderDisplay = t.OrderDisplay,
+                  IsCompletable = t.IsCompletable,
                 };
 
                 switch (t.EntityType)
