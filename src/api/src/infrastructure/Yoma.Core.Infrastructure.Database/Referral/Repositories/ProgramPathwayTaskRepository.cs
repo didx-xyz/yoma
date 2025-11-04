@@ -27,7 +27,8 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           Title = entity.Opportunity.Title,
           OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(entity.Opportunity.Organization.Status.Name, true),
           VerificationEnabled = entity.Opportunity.VerificationEnabled,
-          Status = Enum.Parse<Domain.Opportunity.Status>(entity.Opportunity.Status.Name, true)
+          Status = Enum.Parse<Domain.Opportunity.Status>(entity.Opportunity.Status.Name, true),
+          DateStart = entity.Opportunity.DateStart
         },
         Order = entity.Order,
         OrderDisplay = entity.OrderDisplay,

@@ -430,25 +430,7 @@ namespace Yoma.Core.Domain.Referral.Services
           if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
             throw new ValidationException($"The {nameof(Program)} cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Program).ToLower()} before proceeding with activation");
 
-          var allTasks = (result.Pathway?.Steps ?? []).SelectMany(s => s.Tasks ?? []);
-          foreach (var t in allTasks)
-          {
-            switch (t.EntityType)
-            {
-              case PathwayTaskEntityType.Opportunity:
-                if (t.Opportunity == null)
-                  throw new DataInconsistencyException($"The {nameof(ProgramPathwayTask)} with id '{t.Id}' has an entity type of '{PathwayTaskEntityType.Opportunity.ToDescription()}' but no associated opportunity item");
-
-                if (!t.Opportunity.IsCompletable)
-                  throw new ValidationException($"The specified opportunity is not completable, thus not published or verification is not enabled");
-
-                break;
-
-              default:
-                throw new InvalidOperationException($"Entity type of '{t.EntityType}' is not supported");
-            }
-          }
-
+          EnsurePathwayIsCompletableOrThrow(result.Pathway);
           break;
 
         case ProgramStatus.Inactive:
@@ -519,6 +501,29 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Private Members
+    private static void EnsurePathwayIsCompletableOrThrow(ProgramPathway? pathway)
+    {
+      if (pathway == null) return;
+
+      if (pathway.IsCompletable) return;
+
+      var stepMessages = new List<string>();
+
+      foreach (var step in pathway.Steps?.Where(s => !s.IsCompletable) ?? [])
+      {
+        var taskReasons = step.Tasks?
+          .Where(t => !t.IsCompletable)
+          .Select(t => t.NonCompletableReason!)
+          .ToList() ?? [];
+
+        var combinedReasons = string.Join(", ", taskReasons);
+        stepMessages.Add($"step '{step.Name}' is not completable: {combinedReasons}");
+      }
+
+      var message = $"Program pathway '{pathway.Name}' cannot be completed because {string.Join(", ", stepMessages)}.";
+      throw new ValidationException(message);
+    }
+
     private static void AssertUpdatable(Program program)
     {
       if (!Statuses_Updatable.Contains(program.Status))
@@ -638,6 +643,9 @@ namespace Yoma.Core.Domain.Referral.Services
       }
 
       program.Pathway = await UpsertProgramPathwaySteps(resultPathway, request.Steps);
+
+      EnsurePathwayIsCompletableOrThrow(program.Pathway);
+
       return program;
     }
 
@@ -746,11 +754,9 @@ namespace Yoma.Core.Domain.Referral.Services
             Title = opportunity.Title,
             OrganizationStatus = opportunity.OrganizationStatus,
             VerificationEnabled = opportunity.VerificationEnabled,
-            Status = opportunity.Status
+            Status = opportunity.Status,
+            DateStart = opportunity.DateStart
           };
-
-          if (!task.Opportunity.IsCompletable)
-            throw new ValidationException($"The specified opportunity is not completable, thus not published or verification is not enabled");
 
           break;
 

@@ -218,6 +218,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var program = _programInfoService.GetById(request.ProgramId, false, false);
 
+      //TODO: Check ended and job has not run yet
       if (program.Status != ProgramStatus.Active || program.DateStart > DateTimeOffset.Now)
         throw new ValidationException($"Referral program '{program.Name}' is not active or has not started");
 

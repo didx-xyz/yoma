@@ -1,10 +1,10 @@
+using FluentValidation;
 using Flurl;
-using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.ActionLink;
+using Yoma.Core.Domain.ActionLink.Models;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Opportunity.Models;
-using FluentValidation;
 
 namespace Yoma.Core.Domain.Opportunity.Extensions
 {
@@ -78,7 +78,8 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Title = value.Title.RemoveSpecialCharacters(),
         OrganizationStatus = value.OrganizationStatus,
         VerificationEnabled = value.VerificationEnabled,
-        Status = value.Status
+        Status = value.Status,
+        DateStart = value.DateStart
       };
     }
 
@@ -159,6 +160,42 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
         Skills = value.Skills,
         VerificationTypes = value.VerificationTypes
       };
+    }
+
+    public static bool Published(this OpportunityItem item)
+    {
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
+
+      return item.Status == Status.Active && item.OrganizationStatus == Entity.OrganizationStatus.Active;
+    }
+
+    public static bool Completable(this OpportunityItem item, out string? reason)
+    {
+      ArgumentNullException.ThrowIfNull(item, nameof(item));
+
+      reason = null;
+
+      var canSendForVerification = item.Status == Status.Expired || (item.Published() && item.DateStart <= DateTimeOffset.Now);
+      var isCompletable = canSendForVerification && item.VerificationEnabled;
+
+      if (isCompletable) return true;
+
+      var reasons = new List<string>();
+
+      if (!item.Published())
+        reasons.Add("it has not been published");
+
+      if (item.Status != Status.Active && item.Status != Status.Expired)
+        reasons.Add($"its status is '{item.Status.ToDescription()}'");
+
+      if (item.DateStart > DateTimeOffset.UtcNow )
+        reasons.Add($"it has not yet started (start date: {item.DateStart:yyyy-MM-dd})");
+
+      if (!item.VerificationEnabled)
+        reasons.Add("verification is not enabled");
+
+      reason = $"Opportunity '{item.Title}' can not be completed, because {string.Join(", ", reasons)}";
+      return false;
     }
     #endregion
 

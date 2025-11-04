@@ -60,7 +60,8 @@ namespace Yoma.Core.Domain.Referral.Extensions
                 Title = task.Opportunity.Title,
                 OrganizationStatus = task.Opportunity.OrganizationStatus,
                 VerificationEnabled = task.Opportunity.VerificationEnabled,
-                Status = task.Opportunity.Status
+                Status = task.Opportunity.Status,
+                DateStart = task.Opportunity.DateStart
               },
               IsCompletable = task.IsCompletable
             }).ToList() ?? []

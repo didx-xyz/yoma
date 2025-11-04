@@ -1,6 +1,5 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Hosting;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -354,6 +353,7 @@ namespace Yoma.Core.Domain.Referral.Services
         Name = program.Pathway.Name,
         Rule = program.Pathway.Rule,
         OrderMode = program.Pathway.OrderMode,
+        IsCompletable = program.Pathway.IsCompletable,
         Steps =
         [
            .. (program.Pathway.Steps ?? []).Select(s => new ProgramPathwayStepProgress
@@ -364,6 +364,7 @@ namespace Yoma.Core.Domain.Referral.Services
             OrderMode = s.OrderMode,
             Order = s.Order,
             OrderDisplay = s.OrderDisplay,
+            IsCompletable = s.IsCompletable,
             Tasks =
             [
               .. (s.Tasks ?? []).Select(t =>
@@ -376,6 +377,7 @@ namespace Yoma.Core.Domain.Referral.Services
                   Order = t.Order,
                   OrderDisplay = t.OrderDisplay,
                   IsCompletable = t.IsCompletable,
+                  NonCompletableReason = t.NonCompletableReason
                 };
 
                 switch (t.EntityType)

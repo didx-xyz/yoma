@@ -754,7 +754,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //published opportunities (irrespective of started)
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
       if (!opportunity.Published)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned", false));
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -780,7 +780,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //published opportunities (irrespective of started)
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
       if (!opportunity.Published)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned", false));
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -821,7 +821,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //published opportunities (irrespective of started)
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
       if (!opportunity.Published)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned", false));
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -847,7 +847,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       //published opportunities (irrespective of started)
       var opportunity = _opportunityService.GetById(opportunityId, false, true, false);
       if (!opportunity.Published)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned"));
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be actioned", false));
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -1367,7 +1367,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var canFinalize = opportunity.Status == Status.Expired;
       if (!canFinalize) canFinalize = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
       if (!canFinalize)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "verification cannot be finalized"));
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "verification cannot be finalized", true));
 
       var actionVerificationId = _myOpportunityActionService.GetByName(Action.Verification.ToString()).Id;
       var item = _myOpportunityRepository.Query(false).SingleOrDefault(o => o.UserId == user.Id && o.OpportunityId == opportunity.Id && o.ActionId == actionVerificationId)
@@ -1527,22 +1527,22 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       return _blobService.GetURL(storageType.Value, key);
     }
 
-    private static string PerformActionNotPossibleValidationMessage(Opportunity.Models.Opportunity opportunity, string description)
+    private static string PerformActionNotPossibleValidationMessage(Opportunity.Models.Opportunity opportunity, string description, bool includeExpiredAsAcceptable)
     {
       var reasons = new List<string>();
 
       if (!opportunity.Published)
         reasons.Add("it has not been published");
 
-      if (opportunity.Status != Status.Active)
+      if (opportunity.Status != Status.Active && (!includeExpiredAsAcceptable || opportunity.Status != Status.Expired))
         reasons.Add($"its status is '{opportunity.Status.ToDescription()}'");
-
+    
       if (opportunity.DateStart > DateTimeOffset.UtcNow)
         reasons.Add($"it has not yet started (start date: {opportunity.DateStart:yyyy-MM-dd})");
 
       var reasonText = string.Join(", ", reasons);
 
-      return $"Opportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again";
+      return $"Opportunity '{opportunity.Title}' {description}, because {reasonText}. Please check these conditions and try again.";
     }
 
     private static void PerformActionSendForVerificationApplyDefaults(MyOpportunityRequestVerify request, Opportunity.Models.Opportunity opportunity)
@@ -1637,7 +1637,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       var canSendForVerification = opportunity.Status == Status.Expired;
       if (!canSendForVerification) canSendForVerification = opportunity.Published && opportunity.DateStart <= DateTimeOffset.UtcNow;
       if (!canSendForVerification)
-        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be sent for verification"));
+        throw new ValidationException(PerformActionNotPossibleValidationMessage(opportunity, "cannot be sent for verification", true));
 
       PerformActionSendForVerificationParseCommitment(request, opportunity);
 

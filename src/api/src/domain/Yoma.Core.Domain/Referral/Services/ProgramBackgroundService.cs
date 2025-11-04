@@ -26,7 +26,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<Program> _programRepository;
 
-    internal static readonly ProgramStatus[] Statuses_Expirable = [ProgramStatus.Active];
+    internal static readonly ProgramStatus[] Statuses_Expirable = [ProgramStatus.Active]; //TODO: Include UnCompletable?
     internal static readonly ProgramStatus[] Statuses_Deletion = [ProgramStatus.Inactive];
     internal static readonly ProgramStatus[] Statuses_HealthProbe = [ProgramStatus.Active, ProgramStatus.UnCompletable];
     #endregion
@@ -95,37 +95,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
           foreach (var item in items)
           {
-            // Evaluate if the program is currently completable (pathway + steps + tasks)
-            var completable = true;
-
-            if (item.Pathway?.Steps?.Count > 0)
-            {
-              var stepResults = item.Pathway.Steps.Select(step =>
-              {
-                // No tasks => completable
-                if (step.Tasks == null || step.Tasks.Count == 0)
-                  return true;
-
-                var hasCompletableTask = step.Tasks.Any(t => t.IsCompletable);
-                var allTasksCompletable = step.Tasks.All(t => t.IsCompletable);
-
-                return step.Rule switch
-                {
-                  PathwayCompletionRule.All => allTasksCompletable,
-                  PathwayCompletionRule.Any => hasCompletableTask,
-                  _ => throw new InvalidOperationException(
-                         $"Pathway step completion rule of '{step.Rule}' not supported")
-                };
-              }).ToList();
-
-              completable = item.Pathway.Rule switch
-              {
-                PathwayCompletionRule.All => stepResults.All(s => s),
-                PathwayCompletionRule.Any => stepResults.Any(s => s),
-                _ => throw new InvalidOperationException(
-                       $"Pathway completion rule of '{item.Pathway.Rule}' not supported")
-              };
-            }
+            var completable = item.Pathway?.IsCompletable ?? true;
 
             switch (item.Status)
             {
@@ -142,6 +112,7 @@ namespace Yoma.Core.Domain.Referral.Services
               case ProgramStatus.UnCompletable:
                 if (completable)
                 {
+                  //TODO: What if the program ended? 
                   item.Status = ProgramStatus.Active;
                   item.StatusId = statusActiveId;
                   item.ModifiedByUserId = user.Id;

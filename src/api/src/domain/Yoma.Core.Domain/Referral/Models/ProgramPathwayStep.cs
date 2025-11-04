@@ -42,5 +42,9 @@ namespace Yoma.Core.Domain.Referral.Models
     public DateTimeOffset DateCreated { get; set; }
 
     public DateTimeOffset DateModified { get; set; }
+
+    public bool IsCompletable => Tasks == null
+      || (Rule == PathwayCompletionRule.All && Tasks.All(t => t.IsCompletable))
+      || (Rule == PathwayCompletionRule.Any && Tasks.Any(t => t.IsCompletable));  
   }
 }

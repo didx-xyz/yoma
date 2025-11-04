@@ -54,7 +54,8 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
             Title = o.Opportunity.Title,
             OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(o.Opportunity.Organization.Status.Name, true),
             VerificationEnabled = o.Opportunity.VerificationEnabled,
-            Status = Enum.Parse<Domain.Opportunity.Status>(o.Opportunity.Status.Name, true)
+            Status = Enum.Parse<Domain.Opportunity.Status>(o.Opportunity.Status.Name, true),
+            DateStart = o.Opportunity.DateStart,  
           }).OrderBy(o => o.Title).ToList() : null,
       });
     }

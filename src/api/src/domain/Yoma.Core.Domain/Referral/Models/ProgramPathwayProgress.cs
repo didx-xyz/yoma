@@ -30,6 +30,8 @@ namespace Yoma.Core.Domain.Referral.Models
             : Math.Round((decimal)Steps.Count(t => t.Completed) / StepsTotal * 100m, 2);
 
     public List<ProgramPathwayStepProgress> Steps { get; set; } = null!;
+
+    public bool IsCompletable { get; set; }
   }
 
   public class ProgramPathwayStepProgress
@@ -66,6 +68,8 @@ namespace Yoma.Core.Domain.Referral.Models
             : Math.Round((decimal)Tasks.Count(t => t.Completed) / TasksTotal * 100m, 2);
 
     public List<ProgramPathwayTaskProgress> Tasks { get; set; } = null!;
+
+    public bool IsCompletable { get; set; }
   }
 
   public class ProgramPathwayTaskProgress
@@ -85,5 +89,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public DateTimeOffset? DateCompleted { get; set; }
 
     public bool IsCompletable { get; set; }
+
+    public string? NonCompletableReason { get; set; }
   }
 }

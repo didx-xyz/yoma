@@ -40,5 +40,9 @@ namespace Yoma.Core.Domain.Referral.Models
     public DateTimeOffset DateModified { get; set; }
 
     public List<ProgramPathwayStep>? Steps { get; set; }
+
+    public bool IsCompletable => Steps == null
+      || (Rule == PathwayCompletionRule.All && Steps.All(s => s.IsCompletable))
+      || (Rule == PathwayCompletionRule.Any && Steps.Any(s => s.IsCompletable));  
   }
 }
