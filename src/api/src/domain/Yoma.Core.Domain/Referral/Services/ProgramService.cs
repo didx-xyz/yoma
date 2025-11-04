@@ -165,7 +165,7 @@ namespace Yoma.Core.Domain.Referral.Services
         var statusActiveId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
         var statusExpiredId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
 
-        var predicate = PredicateBuilder.False<Models.Program>();
+        var predicate = PredicateBuilder.False<Program>();
         foreach (var state in filter.PublishedStates)
         {
           switch (state)
