@@ -258,6 +258,8 @@ namespace Yoma.Core.Domain.SSI.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          var now = DateTimeOffset.UtcNow;
+
           var items = _ssiCredentialService.ListPendingIssuanceSchedule(_scheduleJobOptions.SSICredentialIssuanceScheduleBatchSize, [.. itemIdsToSkip]);
           if (items.Count == 0) break;
 
@@ -293,7 +295,7 @@ namespace Yoma.Core.Domain.SSI.Services
                   ArtifactType = item.ArtifactType,
                   Attributes = new Dictionary<string, string>()
                                 {
-                                    { SSISchemaService.SchemaAttribute_Internal_DateIssued, DateTimeOffset.UtcNow.ToString()},
+                                    { SSISchemaService.SchemaAttribute_Internal_DateIssued, now.ToString()},
                                     { SSISchemaService.SchemaAttribute_Internal_ReferentClient, item.Id.ToString()}
                                 }
                 };

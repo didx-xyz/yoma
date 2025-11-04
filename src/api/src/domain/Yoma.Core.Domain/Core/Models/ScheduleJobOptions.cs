@@ -135,5 +135,9 @@ namespace Yoma.Core.Domain.Core.Models
     public int ReferralProgramDeletionScheduleBatchSize { get; set; }
 
     public int ReferralProgramDeletionScheduleIntervalInDays { get; set; }
+
+    public string ReferralLinkUsageExpirationSchedule { get; set; } = null!;
+
+    public int ReferralLinkUsageExpirationScheduleBatchSize { get; set; }
   }
 }

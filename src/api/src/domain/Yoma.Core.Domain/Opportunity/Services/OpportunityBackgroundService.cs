@@ -132,8 +132,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          var now = DateTimeOffset.UtcNow;
+
           var items = _opportunityRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-              o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
+              o.DateEnd.HasValue && o.DateEnd.Value <= now).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.OpportunityExpirationBatchSize).ToList();
           if (items.Count == 0) break;
 
           foreach (var item in items)
@@ -224,8 +226,10 @@ namespace Yoma.Core.Domain.Opportunity.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          var now = DateTimeOffset.UtcNow;
+
           var items = _opportunityRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
+              o.DateModified <= now.AddDays(-_scheduleJobOptions.OpportunityDeletionIntervalInDays))
               .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.OpportunityDeletionBatchSize).ToList();
           if (items.Count == 0) break;
 

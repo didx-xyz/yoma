@@ -308,6 +308,7 @@ namespace Yoma.Core.Domain.Referral.Services
         Id = item.Id,
         ProgramId = item.ProgramId,
         ProgramName = item.ProgramName,
+        ProgramCompletionWindowInDays = item.ProgramCompletionWindowInDays,
         LinkId = item.LinkId,
         LinkName = item.LinkName,
         UserIdReferrer = item.UserIdReferrer,

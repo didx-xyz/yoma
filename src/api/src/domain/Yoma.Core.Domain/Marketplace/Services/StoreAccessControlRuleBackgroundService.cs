@@ -57,8 +57,10 @@ namespace Yoma.Core.Domain.Marketplace.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          var now = DateTimeOffset.UtcNow;
+
           var items = _storeAccessControlRuleRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.StoreAccessControlRuleDeletionScheduleIntervalInDays))
+              o.DateModified <= now.AddDays(-_scheduleJobOptions.StoreAccessControlRuleDeletionScheduleIntervalInDays))
               .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.StoreAccessControlRuleDeletionScheduleBatchSize).ToList();
           if (items.Count == 0) break;
 

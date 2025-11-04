@@ -218,9 +218,14 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var program = _programInfoService.GetById(request.ProgramId, false, false);
 
-      //TODO: Check ended and job has not run yet
       if (program.Status != ProgramStatus.Active || program.DateStart > DateTimeOffset.Now)
         throw new ValidationException($"Referral program '{program.Name}' is not active or has not started");
+
+      if (program.DateEnd.HasValue && program.DateEnd <= DateTimeOffset.UtcNow) // Fallback guard in case program expiration job has’t run yet
+        throw new ValidationException($"Referral program '{program.Name}' expired on '{program.DateEnd:yyyy-MM-dd}'");
+
+      if (program.CompletionLimit.HasValue && (program.CompletionBalance ?? 0) <= 0)
+        throw new ValidationException($"Referral program '{program.Name}' has reached its completion limit");
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 

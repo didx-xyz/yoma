@@ -18,7 +18,6 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly ScheduleJobOptions _scheduleJobOptions;
 
     private readonly IUserService _userService;
-    private readonly IProgramService _programService;
     private readonly IProgramStatusService _programStatusService;
     private readonly ILinkMaintenanceService _linkMaintenanceService;
     private readonly IDistributedLockService _distributedLockService;
@@ -26,7 +25,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<Program> _programRepository;
 
-    internal static readonly ProgramStatus[] Statuses_Expirable = [ProgramStatus.Active]; //TODO: Include UnCompletable?
+    internal static readonly ProgramStatus[] Statuses_Expirable = [ProgramStatus.Active, ProgramStatus.UnCompletable]; 
     internal static readonly ProgramStatus[] Statuses_Deletion = [ProgramStatus.Inactive];
     internal static readonly ProgramStatus[] Statuses_HealthProbe = [ProgramStatus.Active, ProgramStatus.UnCompletable];
     #endregion
@@ -37,7 +36,6 @@ namespace Yoma.Core.Domain.Referral.Services
       IOptions<ScheduleJobOptions> scheduleJobOptions,
 
       IUserService userService,
-      IProgramService programService,
       IProgramStatusService programStatusService,
       ILinkMaintenanceService linkMaintenanceService,
       IDistributedLockService distributedLockService,
@@ -49,7 +47,6 @@ namespace Yoma.Core.Domain.Referral.Services
       _scheduleJobOptions = scheduleJobOptions.Value ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
 
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
-      _programService = programService ?? throw new ArgumentNullException(nameof(programService));
       _programStatusService = programStatusService ?? throw new ArgumentNullException(nameof(programStatusService));
       _linkMaintenanceService = linkMaintenanceService ?? throw new ArgumentNullException(nameof(linkMaintenanceService));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
@@ -62,7 +59,7 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Public Members
     public async Task ProcessProgramHealth()
     {
-      const string lockIdentifier = "program_process_health";
+      const string lockIdentifier = "referral_program_process_health";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -80,13 +77,13 @@ namespace Yoma.Core.Domain.Referral.Services
         var statusActiveId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
         var statusUnCompletableId = _programStatusService.GetByName(ProgramStatus.UnCompletable.ToString()).Id;
         var statusExpiredId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
-        var statusHealthProberIds = Statuses_HealthProbe.Select(o => _programStatusService.GetByName(o.ToString()).Id).ToList();
+        var statusHealthProbeIds = Statuses_HealthProbe.Select(o => _programStatusService.GetByName(o.ToString()).Id).ToList();
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
           var now = DateTimeOffset.UtcNow;
 
-          var items = _programRepository.Query(true).Where(o => statusHealthProberIds.Contains(o.StatusId)).OrderBy(o => o.DateModified)
+          var items = _programRepository.Query(true).Where(o => statusHealthProbeIds.Contains(o.StatusId)).OrderBy(o => o.DateModified)
             .Take(_scheduleJobOptions.ReferralProgramHealthScheduleBatchSize).ToList();
           if (items.Count == 0) break;
 
@@ -107,16 +104,32 @@ namespace Yoma.Core.Domain.Referral.Services
                 item.ModifiedByUserId = user.Id;
                 itemsToUpdate.Add(item);
 
+                _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) marked UnCompletable — broken pathway detected", item.Name, item.Id);
+
                 break;
 
               case ProgramStatus.UnCompletable:
                 if (completable)
                 {
-                  //TODO: What if the program ended? 
+                  if(item.DateEnd.HasValue && item.DateEnd.Value <= now)
+                  {
+                    item.Status = ProgramStatus.Expired;
+                    item.StatusId = statusExpiredId;
+                    item.ModifiedByUserId = user.Id;
+                    itemsToUpdate.Add(item);
+                    programIdsToExpire.Add(item.Id);
+
+                    _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) expired instead of reactivation — end date reached {DateEnd:yyyy-MM-dd}", item.Name, item.Id, item.DateEnd);
+
+                    break;
+                  }
+
                   item.Status = ProgramStatus.Active;
                   item.StatusId = statusActiveId;
                   item.ModifiedByUserId = user.Id;
                   itemsToUpdate.Add(item);
+
+                  _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) reactivated — pathway now completable", item.Name, item.Id);
 
                   break;
                 }
@@ -130,6 +143,8 @@ namespace Yoma.Core.Domain.Referral.Services
                 itemsToUpdate.Add(item);
                 programIdsToExpire.Add(item.Id);
 
+                _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) expired — un-completable beyond grace period (modified {DateModified:yyyy-MM-dd})", item.Name, item.Id, item.DateModified);
+
                 break;
 
               default:
@@ -141,12 +156,15 @@ namespace Yoma.Core.Domain.Referral.Services
           {
             await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
             {
-              using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
+              using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
               await _programRepository.Update(itemsToUpdate);
 
               if (programIdsToExpire.Count > 0)
+              {
+                _logger.LogInformation("Expiring {Count} program(s) due to health probe or end date", programIdsToExpire.Count);
                 await _linkMaintenanceService.ExpireByProgramId(programIdsToExpire, _logger);
+              }
 
               scope.Complete();
             });
@@ -169,7 +187,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public async Task ProcessExpiration()
     {
-      const string lockIdentifier = "program_process_expiration";
+      const string lockIdentifier = "referral_program_process_expiration";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -189,8 +207,10 @@ namespace Yoma.Core.Domain.Referral.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          var now = DateTimeOffset.UtcNow;
+
           var items = _programRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-            o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.ReferralProgramExpirationScheduleBatchSize).ToList();
+            o.DateEnd.HasValue && o.DateEnd.Value <= now).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.ReferralProgramExpirationScheduleBatchSize).ToList();
 
           if (items.Count == 0) break;
 
@@ -207,7 +227,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
-            using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
+            using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
             await _programRepository.Update(items);
 
@@ -239,7 +259,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public async Task ProcessDeletion()
     {
-      const string lockIdentifier = "program_process_deletion";
+      const string lockIdentifier = "referral_program_process_deletion";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -259,9 +279,11 @@ namespace Yoma.Core.Domain.Referral.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          var now = DateTimeOffset.UtcNow;
+
           //auto-delete inactive and expired programs if not modified for x days
           var items = _programRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.ReferralProgramDeletionScheduleIntervalInDays))
+              o.DateModified <= now.AddDays(-_scheduleJobOptions.ReferralProgramDeletionScheduleIntervalInDays))
               .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.ReferralProgramDeletionScheduleBatchSize).ToList();
           if (items.Count == 0) break;
 
@@ -277,7 +299,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
-            using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
+            using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
             await _programRepository.Update(items);
 

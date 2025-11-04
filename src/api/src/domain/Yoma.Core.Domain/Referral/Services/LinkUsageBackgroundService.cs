@@ -45,7 +45,7 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Public Members
     public async Task ProcessExpiration()
     {
-      const string lockIdentifier = "link_usage_process_expiration";
+      const string lockIdentifier = "referral_link_usage_process_expiration";
       var dateTimeNow = DateTimeOffset.UtcNow;
       var executeUntil = dateTimeNow.AddHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours);
       var lockDuration = executeUntil - dateTimeNow + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
@@ -58,7 +58,32 @@ namespace Yoma.Core.Domain.Referral.Services
 
         _logger.LogInformation("Processing link usage expiration");
 
-        //link usage completion windows elapsed based on program level completion window in-days
+        var statusExpiredId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Expired.ToString()).Id;
+        var statusExpirableIds = Statuses_Expirable.Select(o => _linkUsageStatusService.GetByName(o.ToString()).Id).ToList();
+
+        while (executeUntil > DateTimeOffset.UtcNow)
+        {
+          var now = DateTimeOffset.UtcNow;
+
+          var items = _linkUsageRepository.Query().Where(o =>
+            statusExpirableIds.Contains(o.StatusId) && o.ProgramCompletionWindowInDays.HasValue && o.DateClaimed <= now.AddDays(-o.ProgramCompletionWindowInDays.Value)).OrderBy(o => o.DateModified)
+           .Take(_scheduleJobOptions.ReferralLinkUsageExpirationScheduleBatchSize).ToList(); 
+          if (items.Count == 0) break;
+
+          items.ForEach(o =>
+          {
+            o.StatusId = statusExpiredId;
+            o.Status = ReferralLinkUsageStatus.Expired;
+
+            _logger.LogInformation(
+              "Expiring LinkUsage '{LinkUsageId}' (claimed {DateClaimed:yyyy-MM-dd}, window {WindowDays} days, program {ProgramId}, link {LinkId})",
+              o.Id, o.DateClaimed, o.ProgramCompletionWindowInDays, o.ProgramId, o.LinkId);
+          });
+
+          await _linkUsageRepository.Update(items);
+
+          if (executeUntil <= DateTimeOffset.UtcNow) break;
+        }
 
         _logger.LogInformation("Processed link usage expiration");
       }
@@ -70,7 +95,6 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
-
     }
     #endregion
   }

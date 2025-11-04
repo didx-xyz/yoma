@@ -63,8 +63,10 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          var now = DateTimeOffset.UtcNow;
+
           var items = _linkRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
-              o.DateEnd.HasValue && o.DateEnd.Value <= DateTimeOffset.UtcNow).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.ActionLinkExpirationScheduleBatchSize).ToList();
+              o.DateEnd.HasValue && o.DateEnd.Value <= now).OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.ActionLinkExpirationScheduleBatchSize).ToList();
           if (items.Count == 0) break;
 
           var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsernameSystem, false, false);
@@ -114,8 +116,10 @@ namespace Yoma.Core.Domain.ActionLink.Services
 
         while (executeUntil > DateTimeOffset.UtcNow)
         {
+          var now = DateTimeOffset.UtcNow;
+
           var items = _linkRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
-              o.DateModified <= DateTimeOffset.UtcNow.AddDays(-_scheduleJobOptions.ActionLinkDeletionScheduleIntervalInDays))
+              o.DateModified <= now.AddDays(-_scheduleJobOptions.ActionLinkDeletionScheduleIntervalInDays))
               .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.ActionLinkDeletionScheduleBatchSize).ToList();
           if (items.Count == 0) break;
 
