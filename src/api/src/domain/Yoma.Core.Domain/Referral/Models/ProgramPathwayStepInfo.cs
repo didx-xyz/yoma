@@ -19,5 +19,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public List<ProgramPathwayTaskInfo> Tasks { get; set; } = null!;
 
     public int TasksTotal => Tasks.Count;
+
+    public bool IsCompletable { get; set; }
   }
 }

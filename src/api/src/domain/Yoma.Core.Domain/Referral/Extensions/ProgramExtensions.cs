@@ -38,7 +38,8 @@ namespace Yoma.Core.Domain.Referral.Extensions
           Name = value.Pathway.Name,
           Description = value.Pathway.Description,
           Rule = value.Pathway.Rule,
-          OrderMode = value.Pathway.OrderMode,  
+          OrderMode = value.Pathway.OrderMode,
+          IsCompletable = value.Pathway.IsCompletable,
           Steps = value.Pathway.Steps?.Select(step => new ProgramPathwayStepInfo
           {
             Id = step.Id,
@@ -48,6 +49,7 @@ namespace Yoma.Core.Domain.Referral.Extensions
             OrderMode = step.OrderMode, 
             Order = step.Order,
             OrderDisplay = step.OrderDisplay,
+            IsCompletable = step.IsCompletable,
             Tasks = step.Tasks?.Select(task => new ProgramPathwayTaskInfo
             {
               Id = task.Id,
@@ -63,7 +65,8 @@ namespace Yoma.Core.Domain.Referral.Extensions
                 Status = task.Opportunity.Status,
                 DateStart = task.Opportunity.DateStart
               },
-              IsCompletable = task.IsCompletable
+              IsCompletable = task.IsCompletable,
+              NonCompletableReason = task.NonCompletableReason
             }).ToList() ?? []
           }).ToList() ?? []
         }

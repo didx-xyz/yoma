@@ -15,5 +15,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public List<ProgramPathwayStepInfo> Steps { get; set; } = null!;
 
     public int StepsTotal => Steps.Count;
+
+    public bool IsCompletable { get; set;  }
   }
 }

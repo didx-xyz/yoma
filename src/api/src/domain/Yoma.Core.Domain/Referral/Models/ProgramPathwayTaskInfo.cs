@@ -13,5 +13,8 @@ namespace Yoma.Core.Domain.Referral.Models
     public short OrderDisplay { get; set; }
 
     public bool IsCompletable { get; set; }
+
+
+    public string? NonCompletableReason { get; set; }
   }
 }

@@ -60,7 +60,7 @@ namespace Yoma.Core.Infrastructure.AmazonS3.Services
     /// - These rules delete both `files/` and `upload-info/` objects after 1 day,
     ///   acting as a safety net without requiring database infrastructure to track them.
     /// 
-    /// Combined:
+    /// Combined: 
     /// - This service = proactive cleanup of expired + incomplete uploads.
     /// - Lifecycle rules = fallback cleanup for completed-but-abandoned uploads.
     /// </summary>
