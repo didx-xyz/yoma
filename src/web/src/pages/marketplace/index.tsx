@@ -7,7 +7,6 @@ import iconLocation from "public/images/icon-location.svg";
 import React, {
   useCallback,
   useEffect,
-  useRef,
   useState,
   type ReactElement,
 } from "react";

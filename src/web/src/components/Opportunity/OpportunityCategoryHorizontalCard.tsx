@@ -23,7 +23,9 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
   return (
     <button
       onClick={handleClick}
-      className={`group border-gray flex aspect-square cursor-pointer flex-col items-center rounded-lg bg-white px-1 py-2 shadow-md transition-colors duration-200 select-none hover:bg-gray-50`}
+      className={`group border-gray flex aspect-square cursor-pointer flex-col items-center rounded-lg px-1 py-2 shadow-md transition-colors duration-200 select-none ${
+        selected ? "bg-green-light" : "bg-white hover:bg-gray-50"
+      }`}
     >
       <div className="flex flex-col gap-2 md:gap-2">
         <div className="flex items-center justify-center">

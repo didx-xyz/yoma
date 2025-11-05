@@ -17,7 +17,6 @@ import {
 } from "~/lib/store";
 import { AvatarImage } from "../AvatarImage";
 import { Footer } from "../Footer/Footer";
-import { SocialMediaLinks } from "../Footer/SocialMediaLinks";
 import { SignInButton } from "../SignInButton";
 import { SignOutButton } from "../SignOutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";

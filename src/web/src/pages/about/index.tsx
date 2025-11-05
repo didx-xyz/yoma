@@ -20,12 +20,11 @@ import {
 import { OpportunityCategory, PublishedState } from "~/api/models/opportunity";
 import { listNewsFeeds, searchNewsArticles } from "~/api/services/newsfeed";
 import { getOpportunityCategories } from "~/api/services/opportunities";
-import { ScrollableContainer } from "~/components/Carousel";
 import PartnerLogos from "~/components/Home/PartnerLogos";
 import MainLayout from "~/components/Layout/Main";
 import { NewsArticleCard } from "~/components/News/NewsArticleCard";
 import OpportunityCategoriesHorizontalFilter from "~/components/Opportunity/OpportunityCategoriesHorizontalFilter";
-import { PAGE_SIZE_MINIMUM, THEME_WHITE } from "~/lib/constants";
+import { THEME_WHITE } from "~/lib/constants";
 import { type NextPageWithLayout } from "../_app";
 
 // 👇 SSG
