@@ -321,7 +321,7 @@ namespace Yoma.Core.Domain.Referral.Services
       // If program was UnCompletable but the edit makes it healthy, flip to Active first.
       if (result.Status == ProgramStatus.UnCompletable)
       {
-        //TODO: limit reached override
+        //TODO: Limit reached override
         result.Status = ProgramStatus.Active;
         result.StatusId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
       }

@@ -124,7 +124,7 @@ namespace Yoma.Core.Domain.Referral.Services
                     break;
                   }
 
-                  //TODO: limit reached override
+                  //TODO: Limit reached override
 
                   item.Status = ProgramStatus.Active;
                   item.StatusId = statusActiveId;
