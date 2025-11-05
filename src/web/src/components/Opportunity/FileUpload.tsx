@@ -39,6 +39,8 @@ export interface InputProps {
   children?: ReactElement | undefined;
   onUploadComplete?: (data: any[]) => void;
   inlineUpload?: boolean; // New prop to enable TUS uploads
+  maxFileSize?: number; // Custom max file size in bytes (defaults to MAX_FILE_SIZE)
+  maxFileSizeLabel?: string; // Custom max file size label (defaults to MAX_FILE_SIZE_LABEL)
   onUploadProgress?: (fileIndex: number, progress: number) => void;
   onUploadError?: (fileIndex: number, error: Error) => void;
 }
@@ -55,6 +57,8 @@ export const FileUpload: React.FC<InputProps> = ({
   children,
   onUploadComplete,
   inlineUpload = false,
+  maxFileSize = MAX_FILE_SIZE,
+  maxFileSizeLabel = MAX_FILE_SIZE_LABEL,
   onUploadProgress,
   onUploadError,
 }) => {
@@ -193,9 +197,9 @@ export const FileUpload: React.FC<InputProps> = ({
       const picked = event.target.files[0];
 
       // Validate file size before upload
-      if (picked.size > MAX_FILE_SIZE) {
+      if (picked.size > maxFileSize) {
         toast.error(
-          `File size exceeds the maximum allowed size of ${MAX_FILE_SIZE_LABEL}. Please select a smaller file.`,
+          `File size exceeds the maximum allowed size of ${maxFileSizeLabel}. Please select a smaller file.`,
         );
         resetNativeInput();
         return;
@@ -268,6 +272,10 @@ export const FileUpload: React.FC<InputProps> = ({
           <div className="text-gray-dark text-sm">
             Allowed file types:{" "}
             <span className="font-bold italic">{fileTypesLabels}</span>
+          </div>
+          <div className="text-gray-dark text-sm">
+            Max file size:{" "}
+            <span className="font-bold italic">{maxFileSizeLabel}</span>
           </div>
 
           <div className="mt-4 flex flex-col gap-4">

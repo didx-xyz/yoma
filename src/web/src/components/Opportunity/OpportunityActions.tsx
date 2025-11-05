@@ -372,18 +372,13 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
           {actionOptions.includes(OpportunityActionOptions.EDIT_DETAILS) &&
             opportunity?.status != "Deleted" && (
               <li>
-                <button
-                  type="button"
+                <a
+                  href={`/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`}
                   className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() => {
-                    void router.push(
-                      `/organisations/${opportunity.organizationId}/opportunities/${opportunity.id}?returnUrl=${encodeURIComponent(router.asPath)}`,
-                    );
-                  }}
                 >
                   <FaEdit className="text-green size-4" />
                   Edit Opportunity Details
-                </button>
+                </a>
               </li>
             )}
 
@@ -431,18 +426,13 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
             OpportunityActionOptions.VIEW_ATTENDANCE_LINKS,
           ) && (
             <li>
-              <button
-                type="button"
+              <a
+                href={`/organisations/${organizationId}/links?entities=${opportunity.id}`}
                 className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                onClick={() => {
-                  void router.push(
-                    `/organisations/${organizationId}/links?entities=${opportunity.id}`,
-                  );
-                }}
               >
                 <FaExternalLinkSquareAlt className="text-green size-4" />
                 View Attendance Links
-              </button>
+              </a>
             </li>
           )}
 
@@ -452,33 +442,28 @@ export const OpportunityActions: React.FC<OpportunityActionsProps> = ({
           ) &&
             opportunity?.status != "Deleted" && (
               <li>
-                <button
-                  type="button"
+                <a
+                  href={`/organisations/${organizationId}/links/create?name=${encodeURIComponent(
+                    `Attendance-${moment().format("DDMMMYYYY")}`,
+                  )}&description=&entityType=0&entityId=${
+                    opportunity.id
+                  }&usagesLimit=&dateEnd=${encodeURIComponent(
+                    moment().format("DDMMMYYYY"),
+                  )}&distributionList=&includeQRCode=&lockToDistributionList=false${
+                    returnUrl
+                      ? `&returnUrl=${encodeURIComponent(
+                          getSafeUrl(returnUrl, router.asPath),
+                        )}`
+                      : ""
+                  }`}
                   title="Create Attendance Link"
                   className="text-gray-dark flex flex-row items-center gap-2 hover:brightness-50"
-                  onClick={() => {
-                    void router.push(
-                      `/organisations/${organizationId}/links/create?name=${encodeURIComponent(
-                        `Attendance-${moment().format("DDMMMYYYY")}`,
-                      )}&description=&entityType=0&entityId=${
-                        opportunity.id
-                      }&usagesLimit=&dateEnd=${encodeURIComponent(
-                        moment().format("DDMMMYYYY"),
-                      )}&distributionList=&includeQRCode=&lockToDistributionList=false${
-                        returnUrl
-                          ? `&returnUrl=${encodeURIComponent(
-                              getSafeUrl(returnUrl, router.asPath),
-                            )}`
-                          : ""
-                      }`,
-                    );
-                  }}
                 >
                   <FaExternalLinkAlt className="text-green size-4" />
                   Create Attendance Link
                   <br />
                   (Quick Link)
-                </button>
+                </a>
               </li>
             )}
 
