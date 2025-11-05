@@ -8,27 +8,19 @@ export const Footer: React.FC<{
   tabIndex?: number;
   size?: "small" | "large";
 }> = ({ showSocialMediaLinks, tabIndex, size = "large" }) => {
-  const isMobileLayout = size === "small";
+  const forceSmall = size === "small";
 
   return (
     <footer
-      className={`flex w-full ${
-        isMobileLayout
-          ? "flex-col gap-4 p-2"
-          : "flex-col gap-4 p-4 md:flex-row md:items-center md:gap-8 md:p-2 md:px-4"
-      } overflow-x-hidden`}
+      className={`flex w-full flex-col gap-4 overflow-x-hidden p-4 ${forceSmall ? "" : "md:flex-row md:items-center md:gap-8 md:p-2 md:px-4"}`}
     >
-      {/* LEFT SECTION: LINKS */}
-      <div
-        className={`flex flex-col gap-2 ${isMobileLayout ? "text-xs" : "text-sm"}`}
-      >
+      {/* LINKS */}
+      <div className="flex flex-col gap-2 text-sm">
         <div className="flex flex-wrap gap-1">
           <span className="notranslate">© 2021 Yoma.</span>
           <span>All Rights Reserved</span>
         </div>
-        <div
-          className={`flex ${isMobileLayout ? "flex-row gap-2" : "flex-row gap-2 md:gap-6"}`}
-        >
+        <div className={`flex flex-row gap-2 ${forceSmall ? "" : "md:gap-6"}`}>
           <Link
             className="text-green font-semibold hover:underline"
             href="/terms"
@@ -46,18 +38,15 @@ export const Footer: React.FC<{
         </div>
       </div>
 
-      {/* CENTER SECTION (DESKTOP): SOCIAL MEDIA ICONS */}
-      {!isMobileLayout && showSocialMediaLinks && (
-        <div className="hidden md:block">
-          <SocialMediaLinks />
-        </div>
-      )}
-
-      {/* MOBILE: SOCIAL MEDIA ICONS & LOGO IN ONE ROW */}
+      {/* SOCIAL LINKS & LOGO */}
       <div
-        className={`flex flex-row items-center justify-between ${isMobileLayout ? "" : "md:hidden"}`}
+        className={`flex flex-row items-center justify-between ${forceSmall ? "" : "md:flex-1"}`}
       >
-        {showSocialMediaLinks && <SocialMediaLinks />}
+        {showSocialMediaLinks && (
+          <div>
+            <SocialMediaLinks />
+          </div>
+        )}
         <div className="flex-shrink-0">
           <Link href="/" tabIndex={tabIndex} title="Go Home">
             <Image
@@ -72,23 +61,6 @@ export const Footer: React.FC<{
           </Link>
         </div>
       </div>
-
-      {/* RIGHT SECTION (DESKTOP): LOGO */}
-      {!isMobileLayout && (
-        <div className="hidden flex-shrink-0 md:ml-auto md:block">
-          <Link href="/" tabIndex={tabIndex} title="Go Home">
-            <Image
-              src={logoPicDark}
-              alt="Logo"
-              priority={false}
-              width={85}
-              className="h-auto"
-              sizes="100vw"
-              tabIndex={tabIndex}
-            />
-          </Link>
-        </div>
-      )}
     </footer>
   );
 };

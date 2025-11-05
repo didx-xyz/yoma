@@ -4,7 +4,7 @@ export const SocialMediaLinks: React.FC<{
   tabIndex?: number;
 }> = ({ tabIndex }) => {
   return (
-    <div className="flex items-center justify-start gap-4 md:justify-center">
+    <div className="flex items-center gap-4">
       <a
         href="https://www.instagram.com/yoma.world/"
         target="_blank"

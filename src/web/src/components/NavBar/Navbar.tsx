@@ -289,7 +289,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     <div className="fixed top-0 right-0 left-0 z-40">
       <div className={`bg-theme navbar z-40`}>
         <div className="flex w-full items-center gap-2">
-          {/* hover menu */}
+          {/* HOVER MENU */}
           <div
             className="absolute top-1/5 left-0 h-[100vh] w-[2px] bg-transparent"
             onMouseEnter={handleMouseEnter}
@@ -500,10 +500,12 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
 
                     <div className="divider !bg-gray my-2 grow-0" />
 
-                    <SocialMediaLinks tabIndex={isDrawerOpen ? 0 : -1} />
-
                     <div className="grow-0">
-                      <Footer tabIndex={isDrawerOpen ? 0 : -1} size="small" />
+                      <Footer
+                        tabIndex={isDrawerOpen ? 0 : -1}
+                        size="small"
+                        showSocialMediaLinks={true}
+                      />
                     </div>
                   </div>
                 </div>
