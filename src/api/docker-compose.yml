@@ -58,7 +58,7 @@ services:
 
   keycloak-init:
     # Initialise the local Keycloak server by adding the bcrypt & webhook provider
-    image: openjdk:17-jdk-alpine
+    image: alpine:3
     container_name: keycloak-init
     user: root
     command: |

@@ -34,9 +34,10 @@
   --color-yellow-light: #fddf99;
   --color-yellow-tint: #fae4c6;
   --color-beige: #f7f5eb;
+  --color-beige-light: #fffef8;
 
   /* Gray variants */
-  --color-gray-dark: #545859 /*#565b6f*/;
+  --color-gray-dark: #545859;
   --color-gray: #dce0e5;
   --color-gray-light: #f3f6fa;
 

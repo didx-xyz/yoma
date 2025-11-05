@@ -42,11 +42,12 @@ export const ZltoModal = ({
               />
             </div>
             <h3>What is Zlto?</h3>
-            <p className="bg-gray-light rounded-lg p-2 text-center md:w-[450px] md:p-4">
-              Introducing Zlto, Yoma&apos;s fantastic reward system. Earn Zlto
-              by completing tasks and opportunities. Redeem your well-deserved
-              rewards in the marketplace and enjoy the amazing benefits that
-              await you!
+            <p className="bg-gray-light rounded-lg p-2 text-center text-sm md:w-[450px] md:p-4">
+              Introducing Zlto, a reward system used on Yoma. You can earn Zlto
+              by completing tasks and opportunities listed on our platform. Once
+              your submission has been approved and you receive your Zlto, you
+              can redeem your well-deserved rewards in the marketplace and enjoy
+              the amazing benefits.
             </p>
 
             <h3 className="mt-4">How does Zlto balances work?</h3>

@@ -6,49 +6,60 @@ import { SocialMediaLinks } from "./SocialMediaLinks";
 export const Footer: React.FC<{
   showSocialMediaLinks?: boolean;
   tabIndex?: number;
-}> = ({ showSocialMediaLinks, tabIndex }) => {
-  return (
-    <footer className="flex w-full items-center overflow-x-hidden p-2 px-4">
-      <div className="flex grow flex-row gap-4">
-        {/* LINKS */}
-        <div className="flex flex-col gap-1 text-xs">
-          <div className="flex flex-wrap gap-1">
-            <span className="notranslate">© 2023 Yoma.</span>
-            <span>All Rights Reserved</span>
-          </div>
-          <div className="flex flex-row flex-wrap gap-1">
-            <Link
-              className="text-green hover:underline"
-              href="/terms"
-              tabIndex={tabIndex}
-            >
-              Terms and Conditions
-            </Link>
-            <Link
-              className="notranslate text-green hover:underline"
-              href="mailto:help@yoma.world"
-              tabIndex={tabIndex}
-            >
-              help@yoma.world
-            </Link>
-          </div>
-        </div>
+  size?: "small" | "large";
+}> = ({ showSocialMediaLinks, tabIndex, size = "large" }) => {
+  const forceSmall = size === "small";
 
-        {showSocialMediaLinks && <SocialMediaLinks />}
-      </div>
-      <div className="flex-none">
-        {/* LOGO */}
-        <Link href="/" tabIndex={tabIndex} title="Go Home">
-          <Image
-            src={logoPicDark}
-            alt="Logo"
-            priority={false}
-            width={85}
-            className="h-auto"
-            sizes="100vw"
+  return (
+    <footer
+      className={`flex w-full flex-col gap-4 overflow-x-hidden p-4 ${forceSmall ? "" : "md:flex-row md:items-center md:gap-8 md:p-2 md:px-4"}`}
+    >
+      {/* LINKS */}
+      <div className="flex flex-col gap-2 text-sm">
+        <div className="flex flex-wrap gap-1">
+          <span className="notranslate">© 2021 Yoma.</span>
+          <span>All Rights Reserved</span>
+        </div>
+        <div className={`flex flex-row gap-2 ${forceSmall ? "" : "md:gap-6"}`}>
+          <Link
+            className="text-green font-semibold hover:underline"
+            href="/terms"
             tabIndex={tabIndex}
-          />
-        </Link>
+          >
+            Terms and conditions
+          </Link>
+          <Link
+            className="notranslate text-green font-semibold hover:underline"
+            href="mailto:help@yoma.world"
+            tabIndex={tabIndex}
+          >
+            help@yoma.world
+          </Link>
+        </div>
+      </div>
+
+      {/* SOCIAL LINKS & LOGO */}
+      <div
+        className={`flex flex-row items-center justify-between ${forceSmall ? "" : "md:flex-1"}`}
+      >
+        {showSocialMediaLinks && (
+          <div>
+            <SocialMediaLinks />
+          </div>
+        )}
+        <div className="flex-shrink-0">
+          <Link href="/" tabIndex={tabIndex} title="Go Home">
+            <Image
+              src={logoPicDark}
+              alt="Logo"
+              priority={false}
+              width={85}
+              className="h-auto"
+              sizes="100vw"
+              tabIndex={tabIndex}
+            />
+          </Link>
+        </div>
       </div>
     </footer>
   );

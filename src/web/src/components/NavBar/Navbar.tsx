@@ -17,7 +17,6 @@ import {
 } from "~/lib/store";
 import { AvatarImage } from "../AvatarImage";
 import { Footer } from "../Footer/Footer";
-import { SocialMediaLinks } from "../Footer/SocialMediaLinks";
 import { SignInButton } from "../SignInButton";
 import { SignOutButton } from "../SignOutButton";
 import { LanguageSwitcher } from "./LanguageSwitcher";
@@ -289,7 +288,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
     <div className="fixed top-0 right-0 left-0 z-40">
       <div className={`bg-theme navbar z-40`}>
         <div className="flex w-full items-center gap-2">
-          {/* hover menu */}
+          {/* HOVER MENU */}
           <div
             className="absolute top-1/5 left-0 h-[100vh] w-[2px] bg-transparent"
             onMouseEnter={handleMouseEnter}
@@ -378,7 +377,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                             tabIndex={isDrawerOpen ? 0 : -1}
                             className="w-full"
                           >
-                            <span className="flex h-6 w-6 shrink-0 items-center justify-center">
+                            <span className="font-nunito flex h-6 w-6 shrink-0 items-center justify-center">
                               {link.iconImage}
                             </span>
                             <span>{link.title}</span>
@@ -390,7 +389,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                     <div className="divider !bg-gray my-2 grow-0" />
 
                     <LanguageSwitcher
-                      className="hover:bg-gray ml-1 bg-transparent px-3 !py-1"
+                      className="hover:bg-gray font-nunito ml-1 bg-transparent px-3 !py-1"
                       classNameIcon="text-gray-dark !h-5 !w-5"
                       classNameSelect="text-gray-dark text-sm"
                       tabIndex={isDrawerOpen ? 0 : -1}
@@ -500,10 +499,12 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
 
                     <div className="divider !bg-gray my-2 grow-0" />
 
-                    <SocialMediaLinks tabIndex={isDrawerOpen ? 0 : -1} />
-
                     <div className="grow-0">
-                      <Footer tabIndex={isDrawerOpen ? 0 : -1} />
+                      <Footer
+                        tabIndex={isDrawerOpen ? 0 : -1}
+                        size="small"
+                        showSocialMediaLinks={true}
+                      />
                     </div>
                   </div>
                 </div>
@@ -553,7 +554,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                       href={link.url!}
                       tabIndex={index}
                       id={`lnkNavbarMenu_${link.title}`}
-                      className="bg-theme group btn flex-shrink-0 !rounded-md border-none p-2 px-4 text-base text-white shadow-none duration-0 hover:brightness-95"
+                      className="bg-theme group btn font-nunito flex-shrink-0 !rounded-md border-none p-2 px-4 text-base text-white shadow-none duration-0 hover:brightness-95"
                       draggable={false}
                     >
                       {/* ICON */}
