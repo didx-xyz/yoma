@@ -155,7 +155,7 @@ keycloak:
   replicas: 1
 
   image:
-    tag: 26.4.0
+    tag: 26.4.7
 
   ingressDomain: yoma.world
 
