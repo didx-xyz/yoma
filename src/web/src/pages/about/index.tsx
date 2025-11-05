@@ -58,9 +58,9 @@ export const getStaticProps: GetStaticProps = async (context) => {
       feedType: FeedType.News,
       startDate: null,
       endDate: null,
-      valueContains: null,
+      valueContains: "Youth4Climate",
       pageNumber: 1,
-      pageSize: PAGE_SIZE_MINIMUM,
+      pageSize: 1,
     },
     context,
   );
@@ -106,10 +106,10 @@ const About: NextPageWithLayout<{
             {/* CENTER: HEADER AND PARAGRAPH */}
             {/* LEFT: HEADERS AND TEXT */}
             <div className="md:py-20x flex max-w-4xl flex-col gap-3 py-14 pt-24 text-center md:text-start">
-              <h6 className="text-center font-sans text-xs font-semibold tracking-widest text-[#020304] uppercase">
+              <h6 className="text-center text-xs font-semibold tracking-widest text-[#020304] uppercase">
                 About Us
               </h6>
-              <h1 className="text-4xl font-bold tracking-normal text-black md:text-4xl">
+              <h1 className="font-nunito text-center text-4xl font-bold tracking-normal text-black md:text-4xl">
                 Yoma is a{" "}
                 <span className="text-purple-light">digital marketplace</span>{" "}
                 that opens up a world of{" "}
@@ -118,7 +118,7 @@ const About: NextPageWithLayout<{
                 </span>
                 .
               </h1>
-              <p className="text-gray-darkx font-sans text-sm tracking-normal md:text-base">
+              <p className="text-center text-sm tracking-normal md:text-base">
                 Yoma is a partnership ecosystem, enabled by technology, that
                 creates pathways that improve youth&amp;s employability. This
                 collaborative approach seeks to disrupt the fragmented youth
@@ -132,14 +132,14 @@ const About: NextPageWithLayout<{
         </div>
 
         {/* BEIGE SECTION - VIDEO & HEADER */}
-        <div className="bg-beige w-full">
+        <div className="bg-beige-light w-full">
           <section className="relative z-10 -mt-10 w-full">
             <div className="-mt-8 flex flex-col items-center justify-center px-4 md:-mt-16">
               {/* YOUTUBE VIDEO */}
               <div className="flex w-full justify-center">
                 <div className="relative aspect-video w-full max-w-[601px]">
                   <iframe
-                    className="h-full w-full rounded-lg"
+                    className="h-full w-full rounded-lg shadow-2xl"
                     src="https://www.youtube.com/embed/WjTpSPYIZvE?rel=0&modestbranding=1"
                     title="YouTube Video"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -150,7 +150,7 @@ const About: NextPageWithLayout<{
 
               {/* CENTER: HEADERS AND TEXT */}
               <div className="flex flex-col items-center gap-2 px-3 text-center md:max-w-5xl">
-                <h2 className="mt-10 text-[26px] font-semibold tracking-normal">
+                <h2 className="font-nunito mt-10 text-[26px] font-semibold tracking-normal">
                   Understanding the challenge and the opportunity
                 </h2>
                 {/* <p className="font-sans text-sm tracking-normal text-white md:text-base">
@@ -160,7 +160,7 @@ const About: NextPageWithLayout<{
                 </p> */}
               </div>
 
-              <div className="my-10 flex flex-col gap-4 rounded-xl bg-white p-4 md:max-w-5xl">
+              <div className="my-10 flex flex-col gap-4 rounded-xl bg-white p-4 shadow-xl md:max-w-5xl">
                 <p className="font-sans text-sm font-semibold tracking-normal text-black md:text-base">
                   More than
                   <span className="text-orange mx-2 text-2xl">
@@ -195,11 +195,11 @@ const About: NextPageWithLayout<{
                         />
                       </div>
 
-                      <h1 className="font-sans text-sm font-semibold tracking-normal text-black md:text-base">
+                      <h1 className="font-nunito text-sm font-semibold tracking-normal text-black md:text-lg">
                         Fragmented Opportunities
                       </h1>
                     </div>
-                    <p className="text-gray-dark -mt-4x font-sans text-sm tracking-tight md:text-base">
+                    <p className="text-gray-dark -mt-4x text-sm md:text-base">
                       Youth expressed they feel lost in a fragmented system and
                       they struggle to identify meaningful opportunities that
                       will result in a job.
@@ -219,18 +219,14 @@ const About: NextPageWithLayout<{
                         />
                       </div>
 
-                      <h1 className="font-sans text-sm font-semibold tracking-normal text-black md:text-base">
-                        Limited Access to Opportunities
+                      <h1 className="font-nunito text-base font-semibold tracking-normal text-black md:text-lg">
+                        Limited Opportunities
                       </h1>
                     </div>
-                    <p className="text-gray-dark -mt-4x font-sans text-sm tracking-tight md:text-base">
+                    <p className="text-gray-dark text-sm md:text-base">
                       Opportunities are scarce, primarily concentrated in large
                       cities, and mostly accessible to more privileged
-                      socio-economic groups. Additionally, there is a
-                      significant mismatch between the growing number of youth
-                      seeking employment and the limited availability of
-                      suitable opportunities. Youth emphasised the need to
-                      significantly increase access to opportunities.
+                      socio-economic groups.
                     </p>
                   </div>
                 </div>
@@ -253,11 +249,10 @@ const About: NextPageWithLayout<{
               src={imageAboutInfo}
               alt="About Info"
               sizes="100vw"
+              width={918}
+              height={557}
+              style={{ width: "918px", height: "557px" }}
               priority={true}
-              style={{
-                objectFit: "cover",
-                zIndex: 20,
-              }}
             />
           </div>
 
@@ -330,40 +325,71 @@ const About: NextPageWithLayout<{
         </div>
 
         {/* BEIGE SECTION - NEWS */}
-        <div className="bg-beige w-full pb-8">
-          <section className="z-10 w-full py-8">
-            <div className="flex flex-col items-center justify-center px-4">
-              {/* NEWS */}
-              {lookups_NewsArticles?.items &&
-                lookups_NewsArticles.items.length > 0 && (
-                  <>
-                    <div className="w-full max-w-7xl">
-                      <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 xl:gap-8">
-                        {lookups_NewsArticles.items.map((article, index) => (
-                          <NewsArticleCard key={index} data={article} />
-                        ))}
-                      </ScrollableContainer>
-                    </div>
+        <div className="bg-beige-light w-full p-2 pb-8">
+          <section className="z-10 w-full py-4">
+            <div className="flex flex-col items-center justify-center">
+              <div className="flex w-full max-w-7xl flex-col items-stretch justify-center gap-2 md:flex-row">
+                {/* LEFT CARD */}
+                <div className="flex w-full flex-col gap-3 rounded-xl p-6 md:w-1/2">
+                  <h2 className="font-nunito text-xl leading-tight font-semibold text-black md:text-2xl">
+                    Join the Youth Force and Be a #Youth4Change!
+                  </h2>
+                  <p className="text-gray-dark text-xs leading-relaxed md:text-sm">
+                    To maximize the potential of young people and accelerate
+                    action toward towards the SDGs, UNICEF together with Yoma
+                    introduce Youth4Change (Y4C): an approach where young people
+                    can learn, earn and make impact at scale! Y4C taps into a
+                    &quot;Youth (Work)Force&quot;, which aims to activate
+                    millions of youth to drive results for children, youth and
+                    communities. Yoma, as an innovative digital technology and
+                    ecosystem solution, is a core engine to empower youth as
+                    agents of change.
+                  </p>
+                </div>
 
-                    {lookup_NewsFeed && (
-                      <Link
-                        href={lookup_NewsFeed.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-base text-white normal-case"
-                      >
-                        Read more{" "}
-                        <span className="lowercase">
-                          {lookup_NewsFeed.type}
-                        </span>
-                      </Link>
-                    )}
-                  </>
-                )}
+                {/* RIGHT CARD */}
+                <div className="flex w-full px-4 md:w-1/2">
+                  {/* NEWS */}
+                  {lookups_NewsArticles?.items &&
+                  lookups_NewsArticles.items.length > 0 &&
+                  lookups_NewsArticles.items[0] ? (
+                    <div className="h-full w-full">
+                      <NewsArticleCard
+                        key={0}
+                        data={lookups_NewsArticles.items[0]}
+                        className="h-[300px]"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-4 rounded-xl bg-white p-6 shadow-lg">
+                      <h3 className="font-nunito text-center text-xl font-semibold text-black">
+                        Stay Updated with Yoma News
+                      </h3>
+                      <p className="text-gray-dark text-center text-sm">
+                        Discover the latest stories, insights, and impact from
+                        our community.
+                      </p>
+                      {lookup_NewsFeed && (
+                        <Link
+                          href={lookup_NewsFeed.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-sm text-white normal-case"
+                        >
+                          Read more{" "}
+                          <span className="lowercase">
+                            {lookup_NewsFeed.type}
+                          </span>
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* CENTER: HEADER AND CATEGORIES */}
-              <div className="mt-8 flex flex-col items-center gap-2 px-6 text-center text-sm">
-                <h2 className="text-[18px] font-semibold tracking-normal text-black md:text-[27px]">
+              <div className="mt-12 flex flex-col items-center gap-2 px-6 text-center text-sm">
+                <h2 className="text-[18px] font-semibold tracking-normal text-black">
                   Would you like to become a #Youth4Change? Explore Yoma.World
                   for more opportunities:
                 </h2>
@@ -468,8 +494,8 @@ const About: NextPageWithLayout<{
         </div> */}
 
         {/* BEIGE SECTION - PARTNERS */}
-        <div className="bg-beige w-full">
-          <section className="pt-8x z-10 w-full pb-8">
+        <div className="bg-beige-light w-full">
+          <section className="z-10 w-full pb-8">
             <div className="flex flex-col items-center justify-center px-4">
               {/* PARTNERS */}
               <PartnerLogos headerText="Our partners" />

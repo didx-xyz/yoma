@@ -378,7 +378,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                             tabIndex={isDrawerOpen ? 0 : -1}
                             className="w-full"
                           >
-                            <span className="flex h-6 w-6 shrink-0 items-center justify-center">
+                            <span className="font-nunito flex h-6 w-6 shrink-0 items-center justify-center">
                               {link.iconImage}
                             </span>
                             <span>{link.title}</span>
@@ -390,7 +390,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                     <div className="divider !bg-gray my-2 grow-0" />
 
                     <LanguageSwitcher
-                      className="hover:bg-gray ml-1 bg-transparent px-3 !py-1"
+                      className="hover:bg-gray font-nunito ml-1 bg-transparent px-3 !py-1"
                       classNameIcon="text-gray-dark !h-5 !w-5"
                       classNameSelect="text-gray-dark text-sm"
                       tabIndex={isDrawerOpen ? 0 : -1}
@@ -503,7 +503,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                     <SocialMediaLinks tabIndex={isDrawerOpen ? 0 : -1} />
 
                     <div className="grow-0">
-                      <Footer tabIndex={isDrawerOpen ? 0 : -1} />
+                      <Footer tabIndex={isDrawerOpen ? 0 : -1} size="small" />
                     </div>
                   </div>
                 </div>
@@ -553,7 +553,7 @@ export const Navbar: React.FC<{ theme: string }> = (theme) => {
                       href={link.url!}
                       tabIndex={index}
                       id={`lnkNavbarMenu_${link.title}`}
-                      className="bg-theme group btn flex-shrink-0 !rounded-md border-none p-2 px-4 text-base text-white shadow-none duration-0 hover:brightness-95"
+                      className="bg-theme group btn font-nunito flex-shrink-0 !rounded-md border-none p-2 px-4 text-base text-white shadow-none duration-0 hover:brightness-95"
                       draggable={false}
                     >
                       {/* ICON */}

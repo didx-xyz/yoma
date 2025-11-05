@@ -3,6 +3,12 @@
 
 /* TailwindCSS overrides */
 @theme {
+  /* Font families */
+  --font-family-sans:
+    "Open Sans", "Nunito", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-family-nunito: "Nunito", ui-sans-serif, system-ui, sans-serif;
+
   /* Font sizes */
   --text-xs: 12px;
   --text-sm: 14px;
@@ -333,6 +339,7 @@
   --color-yellow-light: var(--color-yellow-light);
   --color-yellow-tint: var(--color-yellow-tint);
   --color-beige: var(--color-beige);
+  --color-beige-light: var(--color-beige-light);
 
   /* Gray variants */
   --color-gray: var(--color-gray);
@@ -367,6 +374,19 @@
 /* Body Styles */
 body {
   background-color: var(--color-white);
+}
+
+/* Apply fonts from CSS variables set by Next.js font loader */
+#mainContent {
+  font-family:
+    var(--font-open-sans), var(--font-nunito), "Open Sans", "Nunito",
+    ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Font utility classes */
+.font-nunito {
+  font-family:
+    var(--font-nunito), "Nunito", ui-sans-serif, system-ui, sans-serif !important;
 }
 
 /* Button Styles */

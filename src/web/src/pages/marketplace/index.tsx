@@ -76,7 +76,6 @@ const Marketplace: NextPageWithLayout<{
   const [countrySelectorDialogVisible, setCountrySelectorDialogVisible] =
     useState(false);
   const [selectedCountry, setSelectedCountry] = useState<string | null>();
-  const myRef = useRef<HTMLDivElement>(null);
 
   const onFilterCountry = useCallback(
     (value: string) => {
@@ -133,9 +132,6 @@ const Marketplace: NextPageWithLayout<{
 
   return (
     <div className="flex w-full max-w-7xl flex-col gap-4">
-      {/* REFERENCE FOR FILTER POPUP: fix menu z-index issue */}
-      <div ref={myRef} />
-
       {countrySelectorDialogVisible && (
         <CustomModal
           isOpen={countrySelectorDialogVisible}
@@ -168,11 +164,10 @@ const Marketplace: NextPageWithLayout<{
                 value={countryOptions?.find((c) => c.value === selectedCountry)}
                 placeholder="Country"
                 inputId="input_country" // e2e
-                // fix menu z-index issue
-                // menuPortalTarget={myRef.current!}
-                // styles={{
-                //   menuPortal: (base) => ({ ...base, zIndex: 9999 }),
-                // }}
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                }}
               />
 
               <div className="mt-4 flex w-full grow justify-center gap-4">

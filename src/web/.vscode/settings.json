@@ -1,3 +1,11 @@
 {
-  "cSpell.words": ["daisyui", "Keycloak", "nextjs", "tailwindcss", "yoma"]
+  "cSpell.words": ["daisyui", "Keycloak", "nextjs", "tailwindcss", "yoma"],
+  "tailwindCSS.experimental.classRegex": [
+    ["cva\\(([^)]*)\\)", "[\"'`]([^\"'`]*).*?[\"'`]"],
+    ["cn\\(([^)]*)\\)", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
+  ],
+  "tailwindCSS.includeLanguages": {
+    "typescript": "javascript",
+    "typescriptreact": "javascript"
+  }
 }

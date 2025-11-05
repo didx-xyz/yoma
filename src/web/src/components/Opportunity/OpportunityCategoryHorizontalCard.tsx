@@ -23,9 +23,9 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
   return (
     <button
       onClick={handleClick}
-      className={`group border-gray flex aspect-square cursor-pointer flex-col items-center rounded-lg bg-white px-1 py-2 duration-0 select-none`}
+      className={`group border-gray flex aspect-square cursor-pointer flex-col items-center rounded-lg bg-white px-1 py-2 shadow-md transition-colors duration-200 select-none hover:bg-gray-50`}
     >
-      <div className="flex flex-col gap-2 md:gap-1">
+      <div className="flex flex-col gap-2 md:gap-2">
         <div className="flex items-center justify-center">
           <AvatarImage
             icon={data.imageURL ?? null}
@@ -34,23 +34,14 @@ const OpportunityCategoryHorizontalCard: React.FC<InputProps> = ({
           />
         </div>
 
-        <div className="flex grow flex-col">
-          <div className="flex grow flex-col">
-            <h1 className="h-8 w-[94px] text-center text-[11px] leading-tight font-semibold whitespace-normal text-black md:text-[11.3px]">
-              {data.name}
-            </h1>
+        <div className="flex grow flex-col gap-1">
+          <h1 className="min-h-8x line-clamp-2 w-[112px] text-center text-xs leading-tight font-semibold whitespace-normal text-black">
+            {data.name}
+          </h1>
 
-            <h6 className="text-center text-[10px] font-bold text-[#545859]">
-              <strong>{data.count}</strong> available
-            </h6>
-
-            {/* selected line */}
-            <span
-              className={`bg-green mt-1 block h-0.5 max-w-0 transition-all duration-500 ${
-                selected ? "max-w-full" : "group-hover:max-w-full"
-              }`}
-            ></span>
-          </div>
+          <h6 className="text-gray-dark font-boldx text-center text-[10px]">
+            {data.count} available
+          </h6>
         </div>
       </div>
     </button>

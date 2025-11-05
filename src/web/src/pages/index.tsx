@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { env } from "process";
-import imageWoman2 from "public/images/home/bg-woman.png";
+import imageWoman from "public/images/home/bg-woman.png";
 import imageCardYOID from "public/images/home/card-yoid.png";
 import imageDiamond from "public/images/home/icon_diamond.svg";
 import imageFile from "public/images/home/icon_file.svg";
@@ -119,12 +119,12 @@ const Home: NextPageWithLayout<{
 
       <div className="relative right-0 left-0 flex w-screen flex-col overflow-x-hidden">
         {/* HERO SECTION WITH FULL WIDTH BEIGE BACKGROUND */}
-        <div className="bg-beige w-full">
+        <div className="bg-beige w-full lg:pb-0">
           <div className="relative z-10 flex flex-col items-center justify-center px-4">
             <div className="flex w-full justify-center">
               <div className="flex max-w-7xl flex-row px-6 md:px-0">
                 {/* LEFT: HEADERS AND TEXT */}
-                <div className="relative flex max-w-md flex-col gap-3 py-14 pt-24 text-center md:mt-20 md:text-start">
+                <div className="relative flex max-w-md flex-col gap-3 py-6 pt-24 text-center md:mt-20 md:py-14 md:text-start">
                   {/* PURPLE STENCIL */}
                   <div className="absolute top-16 right-0 z-10 hidden lg:block">
                     <Image
@@ -138,16 +138,16 @@ const Home: NextPageWithLayout<{
                     />
                   </div>
 
-                  <h6 className="font-sans text-xs font-semibold tracking-widest text-[#020304] uppercase">
+                  <h6 className="text-xs font-semibold tracking-widest text-[#020304] uppercase">
                     Welcome to Yoma
                   </h6>
-                  <h1 className="text-3xl font-bold tracking-normal text-black md:text-4xl">
+                  <h1 className="font-nunito text-3xl font-bold tracking-normal text-black md:text-4xl">
                     Building <span className="text-orange">futures</span>,{" "}
                     <br className="md:hidden" /> one{" "}
                     <span className="text-purple-dark">opportunity</span>{" "}
                     <br className="md:hidden" /> at a time.
                   </h1>
-                  <p className="text-gray-dark font-sans text-sm tracking-normal md:text-base">
+                  <p className="text-gray-dark text-sm tracking-normal md:text-base">
                     Yoma is your friendly platform of trusted partners, bringing
                     you the freshest opportunities to keep your skills sharp and
                     stay in the loop with what&apos;s happening in the working
@@ -161,10 +161,10 @@ const Home: NextPageWithLayout<{
                   </div>
                 </div>
 
-                {/* RIGHT: WOMAN & CARDS IMAGES */}
-                <div className="relative z-20 -mr-8 hidden lg:flex">
+                {/* RIGHT: WOMAN IMAGE */}
+                <div className="relativex z-20 mt-20 -mr-10 hidden lg:mb-[-80px] lg:flex">
                   <Image
-                    src={imageWoman2}
+                    src={imageWoman}
                     alt="Woman smiling"
                     sizes="100vw"
                     priority={true}
@@ -180,11 +180,11 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* HERO SECTION WITH FULL WIDTH WHITE BACKGROUND */}
-        <div className="w-full bg-white">
+        <div className="bg-beige-light w-full sm:pt-10 lg:pt-24">
           <div className="relative z-10 flex flex-col items-center justify-center px-4">
             {/* CENTER: HEADER AND PARAGRAPH */}
-            <div className="my-14 flex max-w-md flex-col items-center gap-2 px-6 text-center lg:max-w-5xl">
-              <h2 className="text-[18px] font-semibold tracking-normal text-black md:text-[27px]">
+            <div className="my-8 flex max-w-md flex-col items-center gap-2 px-6 text-center md:mt-0 lg:max-w-5xl">
+              <h2 className="font-nunito text-[18px] font-semibold tracking-normal text-black md:text-[27px]">
                 Yoma is a digital marketplace that upskills and connects young
                 people​ to opportunities to transform their future and unlock
                 their potential.
@@ -202,11 +202,11 @@ const Home: NextPageWithLayout<{
 
         {/* GREEN SECTION - YO-ID WITH FULL WIDTH BACKGROUND */}
         <div className="bg-green w-full">
-          <section className="relative z-10 w-full pt-16 pb-32">
+          <section className="relative z-10 w-full pt-8 pb-32">
             <div className="flex flex-col items-center justify-center px-4">
               <div className="flex max-w-md flex-col items-center gap-2 text-center text-white lg:max-w-5xl">
                 {/* CENTER: HEADERS AND TEXT */}
-                <h2 className="text-[26px] font-semibold tracking-normal">
+                <h2 className="font-nunito text-[26px] font-semibold tracking-normal">
                   Meet Yo-ID: Your Passport to Opportunities
                 </h2>
                 <p className="z-20 px-3 font-sans text-sm tracking-normal text-white md:text-base">
@@ -247,7 +247,7 @@ const Home: NextPageWithLayout<{
               <div className="z-20 mt-6 w-full max-w-7xl">
                 <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 md:gap-8">
                   {/* CARD 1 */}
-                  <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+                  <div className="bg-green flex w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white p-4 text-white md:w-[280px]">
                     <Image
                       src={imageDiamond}
                       alt="Diamond"
@@ -256,11 +256,11 @@ const Home: NextPageWithLayout<{
                       sizes="100vw"
                     />
 
-                    <h1 className="text-center text-[18px] font-semibold">
+                    <h1 className="font-nunito text-center text-[18px] font-semibold">
                       Showcase Your Skills
                       <br /> &amp; Achievements
                     </h1>
-                    <p className="-mt-4 text-center font-sans md:text-sm">
+                    <p className="-mt-4 text-center font-sans text-sm font-normal">
                       Every course you finish, challenge you take on, or project
                       you complete becomes a verified digital credential.
                       It&apos;s secure proof of your skills and achievements.
@@ -268,7 +268,7 @@ const Home: NextPageWithLayout<{
                   </div>
 
                   {/* CARD 2 */}
-                  <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+                  <div className="bg-green flex w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white p-4 text-white md:w-[280px]">
                     <Image
                       src={imageLock}
                       alt="Lock"
@@ -277,10 +277,10 @@ const Home: NextPageWithLayout<{
                       sizes="100vw"
                     />
 
-                    <h1 className="text-center text-[18px] font-semibold">
+                    <h1 className="font-nunito text-center text-[18px] font-semibold">
                       Localised and Relevant
                     </h1>
-                    <p className="-mt-4 text-center font-sans md:text-sm">
+                    <p className="-mt-4 text-center font-sans text-sm font-normal">
                       Yoma partners with local opportunity providers to make
                       sure the content is relevant to you. Currently the
                       platform is available in five languages with plans to
@@ -289,7 +289,7 @@ const Home: NextPageWithLayout<{
                   </div>
 
                   {/* CARD 3 */}
-                  <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+                  <div className="bg-green flex w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white p-4 text-white md:w-[280px]">
                     <Image
                       src={imageHat}
                       alt="Hat"
@@ -298,10 +298,10 @@ const Home: NextPageWithLayout<{
                       sizes="100vw"
                     />
 
-                    <h1 className="text-center text-[18px] font-semibold">
+                    <h1 className="font-nunito text-center text-[18px] font-semibold">
                       Boost Your Employability -<br /> 100% for free
                     </h1>
-                    <p className="-mt-4 text-center font-sans md:text-sm">
+                    <p className="-mt-4 text-center font-sans text-sm font-normal">
                       Yoma is completely free and focused on helping you move
                       forward in your career. Verified skills and experiences on
                       Yoma are recognised by our partners, increasing your
@@ -310,7 +310,7 @@ const Home: NextPageWithLayout<{
                   </div>
 
                   {/* CARD 4 */}
-                  <div className="bg-green flex h-[340px] w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white px-6 py-4 text-white md:h-[290px] md:w-[280px]">
+                  <div className="bg-green flex w-[300px] flex-shrink-0 flex-col items-center gap-4 rounded-xl border border-white p-4 text-white md:w-[280px]">
                     <Image
                       src={imagePlant}
                       alt="Plant"
@@ -319,10 +319,10 @@ const Home: NextPageWithLayout<{
                       sizes="100vw"
                     />
 
-                    <h1 className="text-center text-[18px] font-semibold">
+                    <h1 className="font-nunito text-center text-[18px] font-semibold">
                       Earn While You Grow
                     </h1>
-                    <p className="-mt-4 text-center font-sans md:text-sm">
+                    <p className="-mt-4 text-center font-sans text-sm font-normal">
                       As you learn, you get the chance to earn digital tokens
                       that can be cashed out or redeemed in the Yoma
                       marketplace. Some options on the marketplace include
@@ -377,7 +377,7 @@ const Home: NextPageWithLayout<{
                   />
 
                   <p className="text-center font-sans md:text-sm">Active in</p>
-                  <h1 className="-mt-5 text-center text-base font-semibold tracking-normal">
+                  <h1 className="font-nunito -mt-5 text-center text-base font-semibold tracking-normal">
                     12 countries
                   </h1>
                 </div>
@@ -392,7 +392,7 @@ const Home: NextPageWithLayout<{
                     sizes="100vw"
                   />
 
-                  <h1 className="text-center text-base font-semibold tracking-normal">
+                  <h1 className="font-nunito text-center text-base font-semibold tracking-normal">
                     More than 400 opportunities offered,
                   </h1>
                   <p className="-mt-4 text-center font-sans md:text-sm">
@@ -410,7 +410,7 @@ const Home: NextPageWithLayout<{
                     sizes="100vw"
                   />
 
-                  <h1 className="text-center text-base font-semibold tracking-normal">
+                  <h1 className="font-nunito text-center text-base font-semibold tracking-normal">
                     More than 255K YoIDs created
                   </h1>
                   <p className="-mt-4 text-center font-sans md:text-sm">
@@ -428,7 +428,7 @@ const Home: NextPageWithLayout<{
                     sizes="100vw"
                   />
 
-                  <h1 className="text-center text-base font-semibold tracking-normal">
+                  <h1 className="font-nunito text-center text-base font-semibold tracking-normal">
                     70 global
                   </h1>
                   <p className="-mt-4 text-center font-sans md:text-sm">
@@ -441,7 +441,7 @@ const Home: NextPageWithLayout<{
         </div>
 
         {/* BEIGE SECTION - NEWS & PARTNERS */}
-        <div className="bg-beige w-full">
+        <div className="bg-beige-light w-full">
           <section className="relative z-10 w-full pt-16 pb-8">
             <div className="-mt-36 flex flex-col items-center justify-center px-4">
               {/* NEWS */}
@@ -461,7 +461,7 @@ const Home: NextPageWithLayout<{
                         href={lookup_NewsFeed.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-base text-white normal-case"
+                        className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-sm text-white normal-case"
                       >
                         Read more{" "}
                         <span className="lowercase">

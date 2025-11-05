@@ -10,7 +10,7 @@ import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { ThemeProvider } from "next-themes";
 import type { AppProps } from "next/app";
-import { Nunito } from "next/font/google";
+import { Nunito, Open_Sans } from "next/font/google";
 import { useRouter } from "next/router";
 import type { ReactElement, ReactNode } from "react";
 import { useState, useEffect } from "react";
@@ -28,11 +28,19 @@ import Router from "next/router";
 import NProgress from "nprogress";
 import "nprogress/nprogress.css";
 
-// configure font for tailwindcss
+// configure fonts for tailwindcss
+const openSans = Open_Sans({
+  subsets: ["latin"],
+  variable: "--font-open-sans",
+  display: "swap",
+  weight: ["300", "400", "500", "600", "700", "800"],
+});
+
 const nunito = Nunito({
   subsets: ["latin"],
   variable: "--font-nunito",
   display: "swap",
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
 });
 
 //#region Configure NProgress
@@ -97,7 +105,10 @@ const MyApp = ({
         <ThemeProvider enableSystem={false} forcedTheme={theme}>
           <QueryClientProvider client={queryClient}>
             <HydrationBoundary state={pageProps.dehydratedState ?? null}>
-              <div id="mainContent" className={`${nunito.className}`}>
+              <div
+                id="mainContent"
+                className={`${openSans.variable} ${nunito.variable} font-sans`}
+              >
                 <ConfirmationModalContextProvider>
                   <Global />
                   <Navbar theme={theme} />
