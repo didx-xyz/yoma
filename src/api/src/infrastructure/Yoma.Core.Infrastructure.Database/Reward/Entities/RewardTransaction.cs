@@ -28,6 +28,10 @@ namespace Yoma.Core.Infrastructure.Database.Reward.Entities
     public Guid? MyOpportunityId { get; set; }
     public MyOpportunity.Entities.MyOpportunity? MyOpportunity { get; set; }
 
+    [ForeignKey("LinkUsageId")]
+    public Guid? ReferralLinkUsageId { get; set; }
+    public Referral.Entities.LinkUsage? ReferralLinkUsage { get; set; }
+
     [Required]
     [Column(TypeName = "decimal(8,2)")]
     public decimal Amount { get; set; }

@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -21,6 +22,7 @@ namespace Yoma.Core.Domain.Referral.Services
   public class LinkService : ILinkService
   {
     #region Class Variables
+    private readonly ILogger<LinkService> _logger;
     private readonly AppSettings _appSettings;
 
     private readonly IHttpContextAccessor _httpContextAccessor;
@@ -43,6 +45,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     #region Constructor
     public LinkService(
+      ILogger<LinkService> logger,
       IOptions<AppSettings> appSettings,
 
       IHttpContextAccessor httpContextAccessor,
@@ -59,6 +62,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       IRepositoryBatchedValueContainsWithNavigation<ReferralLink> linkRepository)
     {
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));  
       _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
 
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
@@ -247,6 +251,7 @@ namespace Yoma.Core.Domain.Referral.Services
         Description = request.Description,
         ProgramId = program.Id,
         ProgramName = program.Name,
+        ProgramCompletionLimitReferee = program.CompletionLimit,
         UserId = user.Id,
         UserDisplayName = user.DisplayName,
         UserEmail = user.Email,
@@ -311,6 +316,46 @@ namespace Yoma.Core.Domain.Referral.Services
 
       return result;
     }
+
+    public async Task<ReferralLink> ProcessCompletion(ReferralLink link, decimal? rewardAmount)
+    {
+      ArgumentNullException.ThrowIfNull(link, nameof(link));
+
+      var statusLimitReached = _linkStatusService.GetByName(ReferralLinkStatus.LimitReached.ToString());
+
+      // Increment total (always)
+      link.CompletionTotal = (link.CompletionTotal ?? 0) + 1;
+
+      // Only init (if needed) and add reward if any reward
+      if (rewardAmount.HasValue && rewardAmount.Value > 0m)
+        link.ZltoRewardCumulative = (link.ZltoRewardCumulative ?? 0m) + rewardAmount.Value;
+
+      // Only flip to LimitReached if:
+      //  • cap is configured
+      //  • total >= cap
+      //  • link currently Active
+      if (link.ProgramCompletionLimitReferee.HasValue &&
+          link.CompletionTotal >= link.ProgramCompletionLimitReferee.Value &&
+          link.Status == ReferralLinkStatus.Active)
+      {
+        _logger.LogInformation(
+          "Referral link {LinkId}: per-referrer cap reached (total {Total} >= limit {Limit}) — flipping to LIMIT_REACHED",
+          link.Id, link.CompletionTotal, link.ProgramCompletionLimitReferee.Value);
+
+        link.Status = ReferralLinkStatus.LimitReached;
+        link.StatusId = statusLimitReached.Id;
+      }
+      else
+      {
+        _logger.LogDebug(
+          "Referral link {LinkId}: totals updated (total {Total}, rewardΔ {RewardDelta}); status remains {Status} (cap {Cap}, active={IsActive})",
+          link.Id, link.CompletionTotal, rewardAmount ?? 0m, link.Status, link.ProgramCompletionLimitReferee?.ToString() ?? "null", link.Status == ReferralLinkStatus.Active);
+      }
+
+      link = await _linkRepository.Update(link);
+      return link;
+    }
+
     #endregion
 
     #region Private Members

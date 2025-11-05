@@ -155,6 +155,8 @@ namespace Yoma.Core.Domain.Core.Models
     public int DistributedLockRetryDelayInMilliseconds { get; set; }
 
     public int DistributedLockKeycloakEventDurationInSeconds { get; set; }
+
+    public int DistributedLockReferralProgressDurationInSeconds { get; set; }
     #endregion
 
     #region Private Members

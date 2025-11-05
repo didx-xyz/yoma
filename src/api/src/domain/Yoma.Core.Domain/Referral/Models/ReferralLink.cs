@@ -21,6 +21,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string ProgramName { get; set; } = null!;
 
+    public int? ProgramCompletionLimitReferee { get; set; }
+
     public Guid UserId { get; set; }
 
     public string? UserDisplayName { get; set; } = null!;

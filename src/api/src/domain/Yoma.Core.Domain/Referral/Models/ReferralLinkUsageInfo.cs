@@ -8,6 +8,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string ProgramName { get; set; } = null!;
 
+    public string? ProgramDescription { get; set; }
+
     public int? ProgramCompletionWindowInDays { get; set; }
 
     public Guid LinkId { get; set; }
@@ -55,6 +57,8 @@ namespace Yoma.Core.Domain.Referral.Models
     public ProofOfPersonhoodMethod? ProofOfPersonhoodMethod { get; set; }
 
     public bool? PathwayCompleted => Pathway?.Completed;
+
+    public bool Completed => ProofOfPersonhoodCompleted == true && PathwayCompleted == true;
 
     public decimal? PercentComplete { get; set; }
 

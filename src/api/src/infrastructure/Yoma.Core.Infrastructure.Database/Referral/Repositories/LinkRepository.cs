@@ -29,6 +29,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         Description = entity.Description,
         ProgramId = entity.ProgramId,
         ProgramName = entity.Program.Name,
+        ProgramCompletionLimitReferee = entity.Program.CompletionLimitReferee,
         UserId = entity.UserId,
         UserDisplayName = entity.User.DisplayName,
         UserEmail = entity.User.Email,

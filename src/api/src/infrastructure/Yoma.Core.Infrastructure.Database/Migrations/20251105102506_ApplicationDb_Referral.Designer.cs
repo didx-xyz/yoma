@@ -12,7 +12,7 @@ using Yoma.Core.Infrastructure.Database.Context;
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20251103074947_ApplicationDb_Referral")]
+    [Migration("20251105102506_ApplicationDb_Referral")]
     partial class ApplicationDb_Referral
     {
         /// <inheritdoc />
@@ -2299,6 +2299,9 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                     b.Property<Guid?>("MyOpportunityId")
                         .HasColumnType("uuid");
 
+                    b.Property<Guid?>("ReferralLinkUsageId")
+                        .HasColumnType("uuid");
+
                     b.Property<byte?>("RetryCount")
                         .HasColumnType("smallint");
 
@@ -2319,9 +2322,11 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
 
                     b.HasIndex("MyOpportunityId");
 
+                    b.HasIndex("ReferralLinkUsageId");
+
                     b.HasIndex("StatusId", "DateCreated", "DateModified");
 
-                    b.HasIndex("UserId", "SourceEntityType", "MyOpportunityId")
+                    b.HasIndex("UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId")
                         .IsUnique();
 
                     b.ToTable("Transaction", "Reward");
@@ -3397,6 +3402,10 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .WithMany()
                         .HasForeignKey("MyOpportunityId");
 
+                    b.HasOne("Yoma.Core.Infrastructure.Database.Referral.Entities.LinkUsage", "ReferralLinkUsage")
+                        .WithMany()
+                        .HasForeignKey("ReferralLinkUsageId");
+
                     b.HasOne("Yoma.Core.Infrastructure.Database.Reward.Entities.Lookups.RewardTransactionStatus", "Status")
                         .WithMany()
                         .HasForeignKey("StatusId")
@@ -3410,6 +3419,8 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
                         .IsRequired();
 
                     b.Navigation("MyOpportunity");
+
+                    b.Navigation("ReferralLinkUsage");
 
                     b.Navigation("Status");
 

@@ -1,5 +1,6 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System.Transactions;
 using Yoma.Core.Domain.BlobProvider;
 using Yoma.Core.Domain.Core;
@@ -22,6 +23,7 @@ namespace Yoma.Core.Domain.Referral.Services
   public class ProgramService : IProgramService
   {
     #region Class Variables
+    private readonly ILogger<ProgramService> _logger;  
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     private readonly IProgramStatusService _programStatusService;
@@ -50,6 +52,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     #region Constrcutor
     public ProgramService(
+      ILogger<ProgramService> logger,
       IHttpContextAccessor httpContextAccessor,
 
       IProgramStatusService programStatusService,
@@ -70,6 +73,7 @@ namespace Yoma.Core.Domain.Referral.Services
       IRepository<ProgramPathwayTask> programPathwayTaskRepository
     )
     {
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));  
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
       _programStatusService = programStatusService ?? throw new ArgumentNullException(nameof(programStatusService));
@@ -317,6 +321,7 @@ namespace Yoma.Core.Domain.Referral.Services
       // If program was UnCompletable but the edit makes it healthy, flip to Active first.
       if (result.Status == ProgramStatus.UnCompletable)
       {
+        //TODO: limit reached override
         result.Status = ProgramStatus.Active;
         result.StatusId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
       }
@@ -431,6 +436,8 @@ namespace Yoma.Core.Domain.Referral.Services
             throw new ValidationException($"The {nameof(Program)} cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Program).ToLower()} before proceeding with activation");
 
           EnsurePathwayIsCompletableOrThrow(result.Pathway);
+
+          //TODO: Limit reached override
           break;
 
         case ProgramStatus.Inactive:
@@ -497,6 +504,46 @@ namespace Yoma.Core.Domain.Referral.Services
       });
 
       return result;
+    }
+
+    public async Task<Program> ProcessCompletion(Program program, decimal? rewardAmount)
+    {
+      ArgumentNullException.ThrowIfNull(program, nameof(program));
+
+      var statusLimitReached = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString());
+
+      // Increment global completion total (always)
+      program.CompletionTotal = (program.CompletionTotal ?? 0) + 1;
+
+      // Only init (if needed) and add reward if any reward
+      if (rewardAmount.HasValue && rewardAmount.Value > 0m)
+        program.ZltoRewardCumulative = (program.ZltoRewardCumulative ?? 0m) + rewardAmount.Value;
+
+      // Only flip to LimitReached if:
+      //  • cap is configured
+      //  • total >= cap
+      //  • program currently Active
+      if (program.CompletionLimit.HasValue &&
+          program.CompletionTotal >= program.CompletionLimit.Value &&
+          program.Status == ProgramStatus.Active)
+      {
+        _logger.LogInformation(
+          "Referral program {ProgramId}: global completion cap reached (total {Total} >= limit {Limit}) — flipping to LIMIT_REACHED",
+          program.Id, program.CompletionTotal, program.CompletionLimit.Value);
+
+        program.Status = ProgramStatus.LimitReached;
+        program.StatusId = statusLimitReached.Id;
+      }
+      else
+      {
+        _logger.LogDebug(
+          "Referral program {ProgramId}: totals updated (total {Total}, rewardΔ {RewardDelta}); status remains {Status} (cap {Cap}, active={IsActive})",
+          program.Id, program.CompletionTotal, rewardAmount ?? 0m, program.Status,
+          program.CompletionLimit?.ToString() ?? "null", program.Status == ProgramStatus.Active);
+      }
+
+      program = await _programRepository.Update(program);
+      return program;
     }
     #endregion
 

@@ -24,5 +24,7 @@ namespace Yoma.Core.Domain.Referral.Interfaces
     Task<Program> UpdateStatus(Guid id, ProgramStatus status);
 
     Task<Program> SetAsDefault(Guid id);
+
+    Task<Program> ProcessCompletion(Program program, decimal? rewardAmount);
   }
 }

@@ -188,7 +188,7 @@ namespace Yoma.Core.Api.Controllers
 		{
 			_logger.LogInformation("Handling request {requestName}", nameof(GetUsageById));
 
-			var result = _linkUsageService.GetUsageById(id, true, true, true);
+			var result = _linkUsageService.GetById(id, true, true, true);
 
 			_logger.LogInformation("Request {requestName} handled", nameof(GetUsageById));
 

@@ -19,5 +19,7 @@ namespace Yoma.Core.Domain.Referral.Interfaces
     Task<ReferralLink> Update(ReferralLinkRequestUpdate request);
 
     Task<ReferralLink> Cancel(Guid id);
+
+    Task<ReferralLink> ProcessCompletion(ReferralLink link, decimal? rewardAmount);
   }
 }

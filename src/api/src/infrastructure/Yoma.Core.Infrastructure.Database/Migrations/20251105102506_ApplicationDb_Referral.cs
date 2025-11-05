@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -10,8 +11,20 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
     /// <inheritdoc />
     protected override void Up(MigrationBuilder migrationBuilder)
     {
+      migrationBuilder.DropIndex(
+          name: "IX_Transaction_UserId_SourceEntityType_MyOpportunityId",
+          schema: "Reward",
+          table: "Transaction");
+
       migrationBuilder.EnsureSchema(
           name: "Referral");
+
+      migrationBuilder.AddColumn<Guid>(
+          name: "ReferralLinkUsageId",
+          schema: "Reward",
+          table: "Transaction",
+          type: "uuid",
+          nullable: true);
 
       migrationBuilder.CreateTable(
           name: "BlockReason",
@@ -354,6 +367,19 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           });
 
       migrationBuilder.CreateIndex(
+          name: "IX_Transaction_ReferralLinkUsageId",
+          schema: "Reward",
+          table: "Transaction",
+          column: "ReferralLinkUsageId");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Transaction_UserId_SourceEntityType_MyOpportunityId_Referra~",
+          schema: "Reward",
+          table: "Transaction",
+          columns: new[] { "UserId", "SourceEntityType", "MyOpportunityId", "ReferralLinkUsageId" },
+          unique: true);
+
+      migrationBuilder.CreateIndex(
           name: "IX_Block_CreatedByUserId",
           schema: "Referral",
           table: "Block",
@@ -369,7 +395,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Block_ReasonId_DateCreated_DateModified",
           schema: "Referral",
           table: "Block",
-          columns: ["ReasonId", "DateCreated", "DateModified"]);
+          columns: new[] { "ReasonId", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_Block_UserId",
@@ -390,7 +416,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Link_Name_ProgramId_UserId",
           schema: "Referral",
           table: "Link",
-          columns: ["Name", "ProgramId", "UserId"],
+          columns: new[] { "Name", "ProgramId", "UserId" },
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -423,7 +449,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Link_UserId_ProgramId_StatusId_DateCreated_DateModified",
           schema: "Referral",
           table: "Link",
-          columns: ["UserId", "ProgramId", "StatusId", "DateCreated", "DateModified"]);
+          columns: new[] { "UserId", "ProgramId", "StatusId", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_LinkStatus_Name",
@@ -436,7 +462,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_LinkUsage_LinkId_StatusId_DateCreated_DateModified",
           schema: "Referral",
           table: "LinkUsage",
-          columns: ["LinkId", "StatusId", "DateCreated", "DateModified"]);
+          columns: new[] { "LinkId", "StatusId", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_LinkUsage_ProgramId",
@@ -454,7 +480,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_LinkUsage_UserId_ProgramId",
           schema: "Referral",
           table: "LinkUsage",
-          columns: ["UserId", "ProgramId"],
+          columns: new[] { "UserId", "ProgramId" },
           unique: true);
 
       migrationBuilder.CreateIndex(
@@ -474,7 +500,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_Program_Description_StatusId_IsDefault_DateStart_DateEnd_Da~",
           schema: "Referral",
           table: "Program",
-          columns: ["Description", "StatusId", "IsDefault", "DateStart", "DateEnd", "DateCreated", "DateModified"]);
+          columns: new[] { "Description", "StatusId", "IsDefault", "DateStart", "DateEnd", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_Program_ImageId",
@@ -520,27 +546,27 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_ProgramPathway_ProgramId_DateCreated_DateModified",
           schema: "Referral",
           table: "ProgramPathway",
-          columns: ["ProgramId", "DateCreated", "DateModified"]);
+          columns: new[] { "ProgramId", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathway_ProgramId_Name",
           schema: "Referral",
           table: "ProgramPathway",
-          columns: ["ProgramId", "Name"],
+          columns: new[] { "ProgramId", "Name" },
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayStep_PathwayId_Name",
           schema: "Referral",
           table: "ProgramPathwayStep",
-          columns: ["PathwayId", "Name"],
+          columns: new[] { "PathwayId", "Name" },
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayStep_PathwayId_Order_OrderDisplay_DateCreated~",
           schema: "Referral",
           table: "ProgramPathwayStep",
-          columns: ["PathwayId", "Order", "OrderDisplay", "DateCreated", "DateModified"]);
+          columns: new[] { "PathwayId", "Order", "OrderDisplay", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayTask_OpportunityId",
@@ -552,14 +578,14 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           name: "IX_ProgramPathwayTask_StepId_EntityType_OpportunityId",
           schema: "Referral",
           table: "ProgramPathwayTask",
-          columns: ["StepId", "EntityType", "OpportunityId"],
+          columns: new[] { "StepId", "EntityType", "OpportunityId" },
           unique: true);
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramPathwayTask_StepId_Order_OrderDisplay_DateCreated_Da~",
           schema: "Referral",
           table: "ProgramPathwayTask",
-          columns: ["StepId", "Order", "OrderDisplay", "DateCreated", "DateModified"]);
+          columns: new[] { "StepId", "Order", "OrderDisplay", "DateCreated", "DateModified" });
 
       migrationBuilder.CreateIndex(
           name: "IX_ProgramStatus_Name",
@@ -568,12 +594,26 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           column: "Name",
           unique: true);
 
-      ApplicationDb_Referral_Seeding.Seed(migrationBuilder);
+      migrationBuilder.AddForeignKey(
+          name: "FK_Transaction_LinkUsage_ReferralLinkUsageId",
+          schema: "Reward",
+          table: "Transaction",
+          column: "ReferralLinkUsageId",
+          principalSchema: "Referral",
+          principalTable: "LinkUsage",
+          principalColumn: "Id");
+
+      ApplicationDb_Referral_Seeding.Seed(migrationBuilder);  
     }
 
     /// <inheritdoc />
     protected override void Down(MigrationBuilder migrationBuilder)
     {
+      migrationBuilder.DropForeignKey(
+          name: "FK_Transaction_LinkUsage_ReferralLinkUsageId",
+          schema: "Reward",
+          table: "Transaction");
+
       migrationBuilder.DropTable(
           name: "Block",
           schema: "Referral");
@@ -617,6 +657,28 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
       migrationBuilder.DropTable(
           name: "ProgramStatus",
           schema: "Referral");
+
+      migrationBuilder.DropIndex(
+          name: "IX_Transaction_ReferralLinkUsageId",
+          schema: "Reward",
+          table: "Transaction");
+
+      migrationBuilder.DropIndex(
+          name: "IX_Transaction_UserId_SourceEntityType_MyOpportunityId_Referra~",
+          schema: "Reward",
+          table: "Transaction");
+
+      migrationBuilder.DropColumn(
+          name: "ReferralLinkUsageId",
+          schema: "Reward",
+          table: "Transaction");
+
+      migrationBuilder.CreateIndex(
+          name: "IX_Transaction_UserId_SourceEntityType_MyOpportunityId",
+          schema: "Reward",
+          table: "Transaction",
+          columns: new[] { "UserId", "SourceEntityType", "MyOpportunityId" },
+          unique: true);
     }
   }
 }

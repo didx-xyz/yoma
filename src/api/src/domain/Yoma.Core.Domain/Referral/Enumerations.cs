@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.Referral
     /// Expired (end date reached OR auto-expired after UnCompletable grace timeout)
     /// - New Link? NO (existing links are expired)
     /// - New Claim? NO
-    /// - Pending Usages: EXPIRE (cascade)
+    /// - Active Links and Pending Usages: EXPIRE (cascade)
     /// Editable: NO (must go Inactive → edit → Active)
     /// Transitions: → Deleted (manual/retention)
     /// </summary>
@@ -43,7 +43,7 @@ namespace Yoma.Core.Domain.Referral
     /// - New Link? NO (all links flagged LimitReached)
     /// - New Claim? NO (claims blocked)
     /// - Pending Usages: Continue and may complete (do not punish in-flight)
-    /// Editable: NO (locked for audit)
+    /// Editable: NO (locked for audit; Terminal)
     /// Transitions: → Deleted (retention cleanup)
     /// </summary>
     LimitReached,
@@ -63,7 +63,7 @@ namespace Yoma.Core.Domain.Referral
     /// - New Link? NO (existing links are CANCELLED)
     /// - New Claim? NO
     /// - Pending Usages: Continue and may complete (do not punish in-flight)
-    /// Editable: NO
+    /// Editable: NO (Terminal)
     /// Notes: Manual delete allowed anytime; retention cleanup may also land here.
     /// </summary>
     Deleted

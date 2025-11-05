@@ -325,7 +325,7 @@ namespace Yoma.Core.Infrastructure.Database.Context
 
       #region Reward
       builder.Entity<Reward.Entities.RewardTransaction>()
-          .HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId })
+          .HasIndex(e => new { e.UserId, e.SourceEntityType, e.MyOpportunityId, e.ReferralLinkUsageId })
           .IsUnique()
           .HasFilter(null);
       #endregion Reward

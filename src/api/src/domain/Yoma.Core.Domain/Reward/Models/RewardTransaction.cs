@@ -14,6 +14,8 @@ namespace Yoma.Core.Domain.Reward.Models
 
     public Guid? MyOpportunityId { get; set; }
 
+    public Guid? ReferralLinkUsageId { get; set; }
+
     public decimal Amount { get; set; }
 
     public string? TransactionId { get; set; }

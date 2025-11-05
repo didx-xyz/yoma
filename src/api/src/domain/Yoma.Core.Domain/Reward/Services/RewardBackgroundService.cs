@@ -7,6 +7,8 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.Opportunity.Extensions;
 using Yoma.Core.Domain.Opportunity.Interfaces;
+using Yoma.Core.Domain.Referral.Extensions;
+using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces;
 using Yoma.Core.Domain.Reward.Interfaces.Provider;
 using Yoma.Core.Domain.Reward.Models;
@@ -24,6 +26,7 @@ namespace Yoma.Core.Domain.Reward.Services
     private readonly IRewardService _rewardService;
     private readonly IMyOpportunityService _myOpportunityService;
     private readonly IOpportunityService _opportunityService;
+    private readonly ILinkUsageService _referralLinkUsageService;
     private readonly IRewardProviderClient _rewardProviderClient;
     private readonly IExecutionStrategyService _executionStrategyService;
     private readonly IDistributedLockService _distributedLockService;
@@ -36,6 +39,7 @@ namespace Yoma.Core.Domain.Reward.Services
         IRewardService rewardService,
         IMyOpportunityService myOpportunityService,
         IOpportunityService opportunityService,
+        ILinkUsageService referralLinkUsageService,
         IRewardProviderClientFactory rewardProviderClientFactory,
         IExecutionStrategyService executionStrategyService,
         IDistributedLockService distributedLockService)
@@ -46,6 +50,7 @@ namespace Yoma.Core.Domain.Reward.Services
       _rewardService = rewardService;
       _myOpportunityService = myOpportunityService;
       _opportunityService = opportunityService;
+      _referralLinkUsageService = referralLinkUsageService; 
       _rewardProviderClient = rewardProviderClientFactory.CreateClient();
       _executionStrategyService = executionStrategyService;
       _distributedLockService = distributedLockService;
@@ -213,6 +218,26 @@ namespace Yoma.Core.Domain.Reward.Services
                   request.ExternalURL = opportunity.URL;
                   request.StartDate = myOpportunity.DateStart;
                   request.EndDate = myOpportunity.DateEnd;
+
+                  break;
+
+                case RewardTransactionEntityType.ReferralLinkUsage:
+                  if (!item.ReferralLinkUsageId.HasValue)
+                    throw new InvalidOperationException($"Source entity type '{item.SourceEntityType}': referral link usage id is null");
+
+                  var linkUsage = _referralLinkUsageService.GetById(item.ReferralLinkUsageId.Value, false, false, false);  
+
+                  request.Id = linkUsage.Id;
+                  request.Title = linkUsage.ProgramName;
+                  request.Description = string.IsNullOrEmpty(linkUsage.ProgramDescription) ? "n/a" : linkUsage.ProgramDescription; 
+                  request.Instructions = null;
+                  request.Skills = null;
+                  request.Countries = null;
+                  request.Languages = null;
+                  request.TimeInvestedInHours = linkUsage.GetHoursToComplete();
+                  request.ExternalURL = null;
+                  request.StartDate = linkUsage.DateClaimed;
+                  request.EndDate = linkUsage.DateCompleted;
 
                   break;
 
