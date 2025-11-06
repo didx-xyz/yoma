@@ -45,9 +45,11 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string? QRCodeBase64 { get; set; }
 
-    public int? PendingTotal { get; set; }
-
     public int? CompletionTotal { get; set; }
+
+    public int? CompletionBalance => ProgramCompletionLimitReferee.HasValue ? ProgramCompletionLimitReferee - (CompletionTotal ?? default) : null;
+
+    public int? PendingTotal { get; set; }
 
     public int? ExpiredTotal { get; set; }
 

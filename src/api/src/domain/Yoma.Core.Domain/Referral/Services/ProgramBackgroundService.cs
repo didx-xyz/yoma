@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
@@ -25,7 +26,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<Program> _programRepository;
 
-    internal static readonly ProgramStatus[] Statuses_Expirable = [ProgramStatus.Active, ProgramStatus.UnCompletable]; 
+    internal static readonly ProgramStatus[] Statuses_Expirable = [ProgramStatus.Active, ProgramStatus.UnCompletable];
     internal static readonly ProgramStatus[] Statuses_Deletion = [ProgramStatus.Inactive];
     internal static readonly ProgramStatus[] Statuses_HealthProbe = [ProgramStatus.Active, ProgramStatus.UnCompletable];
     #endregion
@@ -77,6 +78,7 @@ namespace Yoma.Core.Domain.Referral.Services
         var statusActiveId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
         var statusUnCompletableId = _programStatusService.GetByName(ProgramStatus.UnCompletable.ToString()).Id;
         var statusExpiredId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
+        var statusLimitReachedId = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString()).Id;
         var statusHealthProbeIds = Statuses_HealthProbe.Select(o => _programStatusService.GetByName(o.ToString()).Id).ToList();
 
         while (executeUntil > DateTimeOffset.UtcNow)
@@ -89,6 +91,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
           var itemsToUpdate = new List<Program>();
           var programIdsToExpire = new List<Guid>();
+          var programIdsToLimitReached = new List<Guid>();
 
           foreach (var item in items)
           {
@@ -111,7 +114,7 @@ namespace Yoma.Core.Domain.Referral.Services
               case ProgramStatus.UnCompletable:
                 if (completable)
                 {
-                  if(item.DateEnd.HasValue && item.DateEnd.Value <= now)
+                  if (item.DateEnd.HasValue && item.DateEnd.Value <= now)
                   {
                     item.Status = ProgramStatus.Expired;
                     item.StatusId = statusExpiredId;
@@ -124,7 +127,19 @@ namespace Yoma.Core.Domain.Referral.Services
                     break;
                   }
 
-                  //TODO: Limit reached override
+                  if (item.CompletionLimit.HasValue && (item.CompletionTotal ?? 0) >= item.CompletionLimit.Value)
+                  {
+                    item.Status = ProgramStatus.LimitReached;
+                    item.StatusId = statusLimitReachedId;
+                    item.ModifiedByUserId = user.Id;
+                    itemsToUpdate.Add(item);
+                    programIdsToLimitReached.Add(item.Id);
+
+                    _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) set to LIMIT_REACHED instead of reactivation — cap hit (total {Total} >= limit {Limit})",
+                      item.Name, item.Id, item.CompletionTotal ?? 0, item.CompletionLimit.Value);
+
+                    break;
+                  }
 
                   item.Status = ProgramStatus.Active;
                   item.StatusId = statusActiveId;
@@ -136,7 +151,7 @@ namespace Yoma.Core.Domain.Referral.Services
                   break;
                 }
 
-                if (item.DateModified.AddDays(_scheduleJobOptions.ReferralProgramHealthScheduleGracePeriodInDays) > now) 
+                if (item.DateModified.AddDays(_scheduleJobOptions.ReferralProgramHealthScheduleGracePeriodInDays) > now)
                   break;
 
                 item.Status = ProgramStatus.Expired;
@@ -166,6 +181,12 @@ namespace Yoma.Core.Domain.Referral.Services
               {
                 _logger.LogInformation("Expiring {Count} program(s) due to health probe or end date", programIdsToExpire.Count);
                 await _linkMaintenanceService.ExpireByProgramId(programIdsToExpire, _logger);
+              }
+
+              if (programIdsToLimitReached.Count > 0)
+              {
+                _logger.LogInformation("Flipping {Count} program(s) to limit reached due to hitting cap", programIdsToLimitReached.Count);
+                await _linkMaintenanceService.LimitReachedByProgramId(programIdsToLimitReached, _logger);
               }
 
               scope.Complete();

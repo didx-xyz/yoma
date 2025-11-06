@@ -116,7 +116,7 @@ namespace Yoma.Core.Domain.Referral
     Cancelled,
 
     /// <summary>
-    /// LimitReached (per-referrer completion cap hit)
+    /// LimitReached (per-referrer or global completion cap cap hit)
     /// - New Claim? NO
     /// - Pending Usages: Continue and may complete (in-flight not punished)
     /// Terminal for the link’s growth.

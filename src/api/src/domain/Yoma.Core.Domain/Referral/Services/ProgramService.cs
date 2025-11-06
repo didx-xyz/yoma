@@ -23,7 +23,7 @@ namespace Yoma.Core.Domain.Referral.Services
   public class ProgramService : IProgramService
   {
     #region Class Variables
-    private readonly ILogger<ProgramService> _logger;  
+    private readonly ILogger<ProgramService> _logger;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     private readonly IProgramStatusService _programStatusService;
@@ -73,7 +73,7 @@ namespace Yoma.Core.Domain.Referral.Services
       IRepository<ProgramPathwayTask> programPathwayTaskRepository
     )
     {
-      _logger = logger ?? throw new ArgumentNullException(nameof(logger));  
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
       _programStatusService = programStatusService ?? throw new ArgumentNullException(nameof(programStatusService));
@@ -308,29 +308,44 @@ namespace Yoma.Core.Domain.Referral.Services
       if (request.DateEnd.HasValue) request.DateEnd = request.DateEnd.Value.ToEndOfDay();
 
       var result = GetById(request.Id, true, false);
+      var now = DateTimeOffset.UtcNow;
 
       AssertUpdatable(result);
+
+      _logger.LogInformation("Updating Program {ProgramId}. Current(Status={Status}, Start={Start:yyyy-MM-dd}, End={End:yyyy-MM-dd}, Limit={Limit}, Total={Total}) Requested(Start={RStart:yyyy-MM-dd}, End={REnd:yyyy-MM-dd}, Limit={RLimit})",
+        result.Id, result.Status, result.DateStart, result.DateEnd, result.CompletionLimit, result.CompletionTotal, request.DateStart, request.DateEnd, request.CompletionLimit);
 
       var existingByName = GetByNameOrNull(request.Name, false, false);
       if (existingByName != null && result.Id != existingByName.Id)
         throw new ValidationException($"{nameof(Program)} with the specified name '{request.Name}' already exists");
 
-      if (!result.DateStart.Equals(request.DateStart) && request.DateStart < DateTimeOffset.UtcNow.RemoveTime())
+      if (!result.DateStart.Equals(request.DateStart) && request.DateStart < now.RemoveTime())
         throw new ValidationException("The start date cannot be in the past. The start date has been updated and must be today or later");
 
-      // If program was UnCompletable but the edit makes it healthy, flip to Active first.
-      if (result.Status == ProgramStatus.UnCompletable)
-      {
-        //TODO: Limit reached override
-        result.Status = ProgramStatus.Active;
-        result.StatusId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
-      }
-
       // If DateEnd is in the past/now, immediately expire 
-      if (request.DateEnd.HasValue && request.DateEnd.Value <= DateTimeOffset.UtcNow)
+      if (request.DateEnd.HasValue && request.DateEnd.Value <= now)
       {
-        result.StatusId = _programStatusService.GetByName(Status.Expired.ToString()).Id;
         result.Status = ProgramStatus.Expired;
+        result.StatusId = _programStatusService.GetByName(ProgramStatus.Expired.ToString()).Id;
+      }
+      // If program was UnCompletable but the edit makes it healthy, flip to Active provided not limit reached
+      else if (result.Status == ProgramStatus.UnCompletable)
+      {
+        if (request.CompletionLimit.HasValue && (result.CompletionTotal ?? 0) >= request.CompletionLimit.Value)
+        {
+          _logger.LogInformation("Program {ProgramId} edited from UnCompletable -> LimitReached (cap hit: {CompletionTotal}/{CompletionLimit})",
+            result.Id, result.CompletionTotal, request.CompletionLimit);
+
+          result.Status = ProgramStatus.LimitReached;
+          result.StatusId = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString()).Id;
+        }
+        else
+        {
+          _logger.LogInformation("Program {ProgramId} edited from UnCompletable -> Active", result.Id);
+
+          result.Status = ProgramStatus.Active;
+          result.StatusId = _programStatusService.GetByName(ProgramStatus.Active.ToString()).Id;
+        }
       }
 
       if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
@@ -385,10 +400,14 @@ namespace Yoma.Core.Domain.Referral.Services
         }
 
         if (result.Status == ProgramStatus.Expired)
-          await _linkMaintenanceService.ExpireByProgramId([result.Id]);
+          await _linkMaintenanceService.ExpireByProgramId([result.Id], _logger);
+        else if (result.Status == ProgramStatus.LimitReached)
+          await _linkMaintenanceService.LimitReachedByProgramId([result.Id], _logger);
 
         scope.Complete();
       });
+
+      _logger.LogInformation("Program {ProgramId} updated. FinalStatus={Status}", result.Id, result.Status);
 
       return result;
     }
@@ -420,38 +439,55 @@ namespace Yoma.Core.Domain.Referral.Services
     public async Task<Program> UpdateStatus(Guid id, ProgramStatus status)
     {
       var result = GetById(id, true, false);
+      var now = DateTimeOffset.UtcNow;
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       bool cancelReferralLinks = false;
+      bool flipLinksToLimitReached = false;
+
+      var originalStatus = result.Status;
+      var finalStatus = status;
+
+      _logger.LogInformation("UpdateStatus requested for Program {ProgramId}. Requested={Requested} Current={Current} End={End} CompletionLimit={CompletionLimit} CompletionTotal={CompletionTotal}",
+        result.Id, status, result.Status, result.DateEnd?.ToString("yyyy-MM-dd") ?? "(null)", result.CompletionLimit, result.CompletionTotal);
+
       switch (status)
       {
         case ProgramStatus.Active:
           if (result.Status == ProgramStatus.Active) return result;
           if (!Statuses_Activatable.Contains(result.Status))
-            throw new ValidationException($"The {nameof(Program)} can not be activated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Activatable.JoinNames()}'");
+            throw new ValidationException($"The {nameof(Program)} cannot be activated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Activatable.JoinNames()}'");
 
           //ensure DateEnd was updated for re-activation of previously expired program
-          if (result.DateEnd.HasValue && result.DateEnd.Value <= DateTimeOffset.UtcNow)
+          if (result.DateEnd.HasValue && result.DateEnd.Value <= now)
             throw new ValidationException($"The {nameof(Program)} cannot be activated because its end date ('{result.DateEnd:yyyy-MM-dd}') is in the past. Please update the {nameof(Program).ToLower()} before proceeding with activation");
 
           EnsurePathwayIsCompletableOrThrow(result.Pathway);
 
-          //TODO: Limit reached override
+          if (result.CompletionLimit.HasValue && (result.CompletionTotal ?? 0) >= result.CompletionLimit.Value)
+          {
+            finalStatus = ProgramStatus.LimitReached;
+            _logger.LogInformation("Program {ProgramId} activation resolved to LimitReached (cap hit: {Total}/{Limit})", result.Id, result.CompletionTotal, result.CompletionLimit);
+
+            flipLinksToLimitReached = true;
+          }
+          else
+            finalStatus = ProgramStatus.Active;
           break;
 
         case ProgramStatus.Inactive:
           // existing referral links remain usable and can still be completed, but new links cannot be created
           if (result.Status == ProgramStatus.Inactive) return result;
           if (!Statuses_DeActivatable.Contains(result.Status))
-            throw new ValidationException($"The {nameof(Program)} can not be deactivated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
+            throw new ValidationException($"The {nameof(Program)} cannot be deactivated (current status '{result.Status.ToDescription()}'). Required state '{Statuses_DeActivatable.JoinNames()}'");
 
           break;
 
         case ProgramStatus.Deleted:
           if (result.Status == ProgramStatus.Deleted) return result;
           if (!Statuses_CanDelete.Contains(result.Status))
-            throw new ValidationException($"The {nameof(Program)} can not be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
+            throw new ValidationException($"The {nameof(Program)} cannot be deleted (current status '{result.Status.ToDescription()}'). Required state '{Statuses_CanDelete.JoinNames()}'");
 
           cancelReferralLinks = true;
 
@@ -461,25 +497,38 @@ namespace Yoma.Core.Domain.Referral.Services
           throw new ArgumentOutOfRangeException(nameof(status), $"{nameof(ProgramStatus)} of '{status.ToDescription()}' not supported");
       }
 
-      var statusId = _programStatusService.GetByName(status.ToString()).Id;
+      if (finalStatus == originalStatus && !cancelReferralLinks && !flipLinksToLimitReached) return result;
+
+      var statusId = _programStatusService.GetByName(finalStatus.ToString()).Id;
 
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
         using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         result.StatusId = statusId;
-        result.Status = status;
+        result.Status = finalStatus;
         result.ModifiedByUserId = user.Id;
 
         result = await _programRepository.Update(result);
 
-        if (cancelReferralLinks) await _linkMaintenanceService.CancelByProgramId(result.Id);
+        if (cancelReferralLinks)
+        {
+          _logger.LogInformation("Cancelling all referral links for program {ProgramId}", result.Id);
+          await _linkMaintenanceService.CancelByProgramId(result.Id);
+        }
+        else if (flipLinksToLimitReached)
+        {
+          _logger.LogInformation("Flipping links to limit-reached for program {ProgramId}", result.Id);
+          await _linkMaintenanceService.LimitReachedByProgramId(result.Id, _logger);
+        }
 
         scope.Complete();
       });
 
+      _logger.LogInformation("Program {ProgramId} status updated. Requested={Requested} Final={Final}", result.Id, status, finalStatus);
+
       return result;
-    }
+    } 
 
     public async Task<Program> SetAsDefault(Guid id)
     {
@@ -512,37 +561,46 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var statusLimitReached = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString());
 
-      // Increment global completion total (always)
-      program.CompletionTotal = (program.CompletionTotal ?? 0) + 1;
-
-      // Only init (if needed) and add reward if any reward
-      if (rewardAmount.HasValue && rewardAmount.Value > 0m)
-        program.ZltoRewardCumulative = (program.ZltoRewardCumulative ?? 0m) + rewardAmount.Value;
-
-      // Only flip to LimitReached if:
-      //  • cap is configured
-      //  • total >= cap
-      //  • program currently Active
-      if (program.CompletionLimit.HasValue &&
-          program.CompletionTotal >= program.CompletionLimit.Value &&
-          program.Status == ProgramStatus.Active)
+      await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        _logger.LogInformation(
-          "Referral program {ProgramId}: global completion cap reached (total {Total} >= limit {Limit}) — flipping to LIMIT_REACHED",
-          program.Id, program.CompletionTotal, program.CompletionLimit.Value);
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
-        program.Status = ProgramStatus.LimitReached;
-        program.StatusId = statusLimitReached.Id;
-      }
-      else
-      {
-        _logger.LogDebug(
-          "Referral program {ProgramId}: totals updated (total {Total}, rewardΔ {RewardDelta}); status remains {Status} (cap {Cap}, active={IsActive})",
-          program.Id, program.CompletionTotal, rewardAmount ?? 0m, program.Status,
-          program.CompletionLimit?.ToString() ?? "null", program.Status == ProgramStatus.Active);
-      }
+        // Increment global completion total (always)
+        program.CompletionTotal = (program.CompletionTotal ?? 0) + 1;
 
-      program = await _programRepository.Update(program);
+        // Only init (if needed) and add reward if any reward
+        if (rewardAmount.HasValue && rewardAmount.Value > 0m)
+          program.ZltoRewardCumulative = (program.ZltoRewardCumulative ?? 0m) + rewardAmount.Value;
+
+        // Only flip to LimitReached if:
+        //  • cap is configured
+        //  • total >= cap
+        //  • program currently Active
+        if (program.Status == ProgramStatus.Active &&
+            program.CompletionLimit.HasValue &&
+            program.CompletionTotal >= program.CompletionLimit.Value)
+        {
+          _logger.LogInformation(
+            "Referral program {ProgramId}: global completion cap reached (total {Total} >= limit {Limit}) — flipping to LIMIT_REACHED",
+            program.Id, program.CompletionTotal, program.CompletionLimit.Value);
+
+          program.Status = ProgramStatus.LimitReached;
+          program.StatusId = statusLimitReached.Id;
+
+          await _linkMaintenanceService.LimitReachedByProgramId(program.Id, _logger);
+        }
+        else
+        {
+          _logger.LogDebug(
+            "Referral program {ProgramId}: totals updated (total {Total}, rewardΔ {RewardDelta}); status remains {Status} (cap {Cap}, active={IsActive})",
+            program.Id, program.CompletionTotal, rewardAmount ?? 0m, program.Status,
+            program.CompletionLimit?.ToString() ?? "null", program.Status == ProgramStatus.Active);
+        }
+
+        program = await _programRepository.Update(program);
+
+        scope.Complete();
+      });
       return program;
     }
     #endregion

@@ -69,7 +69,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int? CompletionTotal { get; set; }
 
-    public int? CompletionBalance => CompletionLimit.HasValue ? CompletionLimit - (CompletionTotal ?? default) : null;
+    public int? CompletionBalance => CompletionLimit.HasValue ? CompletionLimit - (CompletionTotal ?? 0) : null;
 
     /// <summary>
     /// ZLTO amount for the referrer, read at completion time (not at claim).
@@ -94,7 +94,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public decimal? ZltoRewardCumulative { get; set; }
 
-    public decimal? ZltoRewardBalance => ZltoRewardPool.HasValue ? ZltoRewardPool - (ZltoRewardCumulative ?? default) : null;
+    public decimal? ZltoRewardBalance => ZltoRewardPool.HasValue ? ZltoRewardPool - (ZltoRewardCumulative ?? 0) : null;
 
     /// <summary>
     /// Toggle: proof of personhood required to qualify (phone OTP or social sign-in).

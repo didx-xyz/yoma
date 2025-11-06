@@ -2,6 +2,7 @@ using FluentValidation;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System;
 using System.Transactions;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
@@ -482,7 +483,7 @@ namespace Yoma.Core.Domain.Referral.Services
             }
 
             // fallback limit reached check if eligibility; only flip active to limit reached (see below); might remain in another state until activated (update, status update or health probe)
-            if (eligibleForRewards && program.CompletionLimit.HasValue && program.CompletionTotal >= program.CompletionLimit.Value)
+            if (eligibleForRewards && program.CompletionLimit.HasValue && (program.CompletionTotal ?? 0) >= program.CompletionLimit.Value)
             {
               eligibleForRewards = false;
               _logger.LogInformation("Referral progress: program {ProgramId} completion cap reached (total {Total} >= limit {Limit}); suppressing rewards for usage {UsageId}",
@@ -606,11 +607,20 @@ namespace Yoma.Core.Domain.Referral.Services
               ? (rewardReferee ?? 0m) + (rewardReferrer ?? 0m)
               : null;
 
-            // Increment running totals (CompletionTotal and ZltoRewardCumulative); possible flip to LimitReached (per-referrer completion cap hit)
-            link = await _linkService.ProcessCompletion(link, totalAwarded);
+            // We update Program first so global cap logic can cascade-close all active links (set to LIMIT_REACHED)
+            var programStatusCurrent = program.Status;
+            var linkStatusCurrent = link.Status;
 
-            // Increment running totals (CompletionTotal and ZltoRewardCumulative); possible flip to LimitReached (global completion cap hit)
+            // Increment running totals (CompletionTotal and ZltoRewardCumulative); may flip Program to LIMIT_REACHED if ACTIVE, inclusive of all ACTIVE links (global completion cap hit)
             program = await _programService.ProcessCompletion(program, totalAwarded);
+
+            // If the program flipped from ACTIVE → LIMIT_REACHED, all ACTIVE links will also be flipped to LIMIT_REACHED
+            if (programStatusCurrent == ProgramStatus.Active && program.Status == ProgramStatus.LimitReached && linkStatusCurrent == ReferralLinkStatus.Active)
+              // Re-read ensures we don't rely on a stale in-memory link
+              link = _linkService.GetById(myUsage.LinkId, false, false, false, false);
+  
+            // Increment running totals (CompletionTotal and ZltoRewardCumulative); may flip to LIMIT_REACHED if ACTIVE (per-referrer completion cap hit)
+            link = await _linkService.ProcessCompletion(program, link, totalAwarded);
 
             linkCache[link.Id] = link;
             programCache[program.Id] = program;
@@ -637,7 +647,6 @@ namespace Yoma.Core.Domain.Referral.Services
         ProgramId = item.ProgramId,
         ProgramName = item.ProgramName,
         ProgramDescription = item.ProgramDescription,
-        ProgramCompletionWindowInDays = item.ProgramCompletionWindowInDays,
         LinkId = item.LinkId,
         LinkName = item.LinkName,
         UserIdReferrer = item.UserIdReferrer,

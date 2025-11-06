@@ -17,8 +17,6 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<ReferralLink> _linkRepository;
     private readonly IRepositoryBatched<ReferralLinkUsage> _linkUsageRepository;
-
-    private static readonly ReferralLinkStatus[] Statuses_Link_Expirable = [ReferralLinkStatus.Active];
     #endregion
 
     #region Constructor
@@ -43,7 +41,53 @@ namespace Yoma.Core.Domain.Referral.Services
 
     #region Public Members
     /// <summary>
-    /// Action upon referrer blocking: cancels all links associated with the specified user that are eligible for cancellation
+    /// Action upon program hitting global completion cap: flips all links associated with the specified program that are eligible
+    /// </summary>
+    public async Task LimitReachedByProgramId(Guid programId, ILogger? logger = null)
+    {
+      if (programId == Guid.Empty)
+        throw new ArgumentNullException(nameof(programId));
+
+      await LimitReachedByProgramId([programId], logger);
+    }
+
+    /// <summary>
+    /// Action upon program hitting global completion cap: flips all links associated with the specified program that are eligible
+    /// </summary>
+    public async Task LimitReachedByProgramId(List<Guid> programIds, ILogger? logger = null)
+    {
+      if (programIds == null || programIds.Count == 0 || programIds.Any(id => id == Guid.Empty))
+        throw new ArgumentNullException(nameof(programIds));
+
+      programIds = [.. programIds.Distinct()];
+
+      var statusLimitReachedId = _linkStatusService.GetByName(ReferralLinkStatus.LimitReached.ToString()).Id;
+      var statusLimitReachableIds = LinkService.Statuses_LimitReached.Select(s => _linkStatusService.GetByName(s.ToString()).Id).ToList();
+
+      var items = _linkRepository.Query()
+        .Where(o => programIds.Contains(o.ProgramId) && statusLimitReachableIds.Contains(o.StatusId))
+        .ToList();
+
+      if (items.Count == 0)
+      {
+        logger?.LogInformation("No links eligible to flip to limit reached for {ProgramCount} program(s)", programIds.Count);
+        return;
+      }
+
+      items.ForEach(o => { o.StatusId = statusLimitReachedId; o.Status = ReferralLinkStatus.LimitReached; });
+      await _linkRepository.Update(items);
+
+      if (logger == null) return;
+
+      var byProgram = items.GroupBy(x => x.ProgramId).Select(g => new { g.Key, Count = g.Count() });
+      foreach (var g in byProgram)
+        logger.LogInformation("Flipped {Count} link(s) to limit reached for program {ProgramId}", g.Count, g.Key);
+
+      logger.LogInformation("Flipped {Total} link(s) to limit reached across {ProgramCount} program(s)", items.Count, byProgram.Count());
+    }
+
+    /// <summary>
+    /// Action upon referrer blocking: flip all links associated with the specified program that are eligible
     /// </summary>
     public async Task CancelByUserId(Guid userId)
     {
@@ -109,9 +153,9 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var byProgram = items.GroupBy(x => x.ProgramId).Select(g => new { g.Key, Count = g.Count() });
       foreach (var g in byProgram)
-        logger.LogInformation("Cancelled {Count} active link(s) for program {ProgramId}", g.Count, g.Key);
+        logger.LogInformation("Cancelled {Count} link(s) for program {ProgramId}", g.Count, g.Key);
 
-      logger.LogInformation("Cancelled {Total} active link(s) across {ProgramCount} program(s)", items.Count, byProgram.Count());
+      logger.LogInformation("Cancelled {Total} link(s) across {ProgramCount} program(s)", items.Count, byProgram.Count());
     }
 
     /// <summary>
@@ -124,7 +168,7 @@ namespace Yoma.Core.Domain.Referral.Services
       programIds = [.. programIds.Distinct()];
 
       var statusExpiredId = _linkStatusService.GetByName(ReferralLinkStatus.Expired.ToString()).Id;
-      var statusExpirableIds = Statuses_Link_Expirable.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
+      var statusExpirableIds = LinkService.Statuses_Expirable.Select(o => _linkStatusService.GetByName(o.ToString()).Id).ToList();
 
       var items = _linkRepository.Query()
         .Where(o => programIds.Contains(o.ProgramId) && statusExpirableIds.Contains(o.StatusId))
@@ -160,6 +204,7 @@ namespace Yoma.Core.Domain.Referral.Services
     }
     #endregion
 
+    #region Private Members
     /// <summary>
     /// Action upon program expiration: expire all usages with the specified links that are eligible for expiration
     /// </summary>
@@ -187,6 +232,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       logger?.LogInformation("Expired {Count} link usage(s) across {LinkCount} link(s)", items.Count, linkIds.Count);
     }
+    #endregion
   }
 }
 

@@ -41,6 +41,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
     private static readonly ReferralLinkStatus[] Statuses_Updatable = [ReferralLinkStatus.Active];
     internal static readonly ReferralLinkStatus[] Statuses_Cancellable = [ReferralLinkStatus.Active];
+    internal static readonly ReferralLinkStatus[] Statuses_Expirable = [ReferralLinkStatus.Active];
+    internal static readonly ReferralLinkStatus[] Statuses_LimitReached = [ReferralLinkStatus.Active];
     #endregion
 
     #region Constructor
@@ -251,7 +253,7 @@ namespace Yoma.Core.Domain.Referral.Services
         Description = request.Description,
         ProgramId = program.Id,
         ProgramName = program.Name,
-        ProgramCompletionLimitReferee = program.CompletionLimit,
+        ProgramCompletionLimitReferee = program.CompletionLimitReferee,
         UserId = user.Id,
         UserDisplayName = user.DisplayName,
         UserEmail = user.Email,
@@ -317,8 +319,9 @@ namespace Yoma.Core.Domain.Referral.Services
       return result;
     }
 
-    public async Task<ReferralLink> ProcessCompletion(ReferralLink link, decimal? rewardAmount)
+    public async Task<ReferralLink> ProcessCompletion(Program program, ReferralLink link, decimal? rewardAmount)
     {
+      ArgumentNullException.ThrowIfNull(program, nameof(program));
       ArgumentNullException.ThrowIfNull(link, nameof(link));
 
       var statusLimitReached = _linkStatusService.GetByName(ReferralLinkStatus.LimitReached.ToString());
@@ -331,16 +334,33 @@ namespace Yoma.Core.Domain.Referral.Services
         link.ZltoRewardCumulative = (link.ZltoRewardCumulative ?? 0m) + rewardAmount.Value;
 
       // Only flip to LimitReached if:
-      //  • cap is configured
-      //  • total >= cap
+      //  • cap is configured and total >= cap (per-referrer), OR program already LimitReached (global cap)
       //  • link currently Active
-      if (link.ProgramCompletionLimitReferee.HasValue &&
-          link.CompletionTotal >= link.ProgramCompletionLimitReferee.Value &&
-          link.Status == ReferralLinkStatus.Active)
+      var perRefCapHit = program.CompletionLimitReferee.HasValue &&
+                         link.CompletionTotal >= program.CompletionLimitReferee.Value;
+
+      var programCapHit = program.Status == ProgramStatus.LimitReached;
+
+      if (link.Status == ReferralLinkStatus.Active && (perRefCapHit || programCapHit))
       {
-        _logger.LogInformation(
-          "Referral link {LinkId}: per-referrer cap reached (total {Total} >= limit {Limit}) — flipping to LIMIT_REACHED",
-          link.Id, link.CompletionTotal, link.ProgramCompletionLimitReferee.Value);
+        if (perRefCapHit && programCapHit)
+        {
+          _logger.LogInformation(
+            "Referral link {LinkId}: per-referrer cap reached (total {Total} >= limit {Limit}) AND program {ProgramId} LIMIT_REACHED — flipping link to LIMIT_REACHED",
+            link.Id, link.CompletionTotal, program.CompletionLimitReferee, program.Id);
+        }
+        else if (perRefCapHit)
+        {
+          _logger.LogInformation(
+            "Referral link {LinkId}: per-referrer cap reached (total {Total} >= limit {Limit}) — flipping to LIMIT_REACHED",
+            link.Id, link.CompletionTotal, program.CompletionLimitReferee);
+        }
+        else // programCapHit
+        {
+          _logger.LogInformation(
+            "Referral link {LinkId}: program {ProgramId} LIMIT_REACHED (global cap) — flipping link to LIMIT_REACHED",
+            link.Id, program.Id);
+        }
 
         link.Status = ReferralLinkStatus.LimitReached;
         link.StatusId = statusLimitReached.Id;
@@ -348,14 +368,19 @@ namespace Yoma.Core.Domain.Referral.Services
       else
       {
         _logger.LogDebug(
-          "Referral link {LinkId}: totals updated (total {Total}, rewardΔ {RewardDelta}); status remains {Status} (cap {Cap}, active={IsActive})",
-          link.Id, link.CompletionTotal, rewardAmount ?? 0m, link.Status, link.ProgramCompletionLimitReferee?.ToString() ?? "null", link.Status == ReferralLinkStatus.Active);
+          "Referral link {LinkId}: totals updated (total {Total}, rewardΔ {RewardDelta}); status remains {Status} (per-ref cap {Cap}, programLimitReached={ProgCap}, active={IsActive})",
+          link.Id,
+          link.CompletionTotal,
+          rewardAmount ?? 0m,
+          link.Status,
+          program.CompletionLimitReferee?.ToString() ?? "null",
+          programCapHit,
+          link.Status == ReferralLinkStatus.Active);
       }
 
       link = await _linkRepository.Update(link);
       return link;
     }
-
     #endregion
 
     #region Private Members
