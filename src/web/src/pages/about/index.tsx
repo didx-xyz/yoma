@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import { GetStaticProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
@@ -11,7 +12,6 @@ import imagePeople from "public/images/home/icon_people.svg";
 import imagePlant from "public/images/home/icon_plant.svg";
 import imageStats from "public/images/home/icon_stats.svg";
 import { useCallback, type ReactElement } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import {
   FeedType,
   NewsArticleSearchResults,
@@ -87,6 +87,59 @@ const About: NextPageWithLayout<{
   lookups_NewsArticles: NewsArticleSearchResults;
   lookup_NewsFeed: NewsFeed;
 }> = ({ lookups_categories, lookups_NewsArticles, lookup_NewsFeed }) => {
+  // Fallback client-side data fetching if SSG data is null/empty
+  const { data: clientCategories } = useQuery({
+    queryKey: ["opportunityCategories", "about"],
+    queryFn: async () =>
+      await getOpportunityCategories([
+        PublishedState.Active,
+        PublishedState.NotStarted,
+      ]),
+    enabled: !lookups_categories || lookups_categories.length === 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fallback client-side data fetching for news articles
+  const { data: clientNewsArticles } = useQuery({
+    queryKey: ["newsArticles", "about"],
+    queryFn: async () =>
+      await searchNewsArticles({
+        feedType: FeedType.News,
+        startDate: null,
+        endDate: null,
+        valueContains: "Youth4Climate",
+        pageNumber: 1,
+        pageSize: 1,
+      }),
+    enabled:
+      !lookups_NewsArticles?.items || lookups_NewsArticles.items.length === 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fallback client-side data fetching for news feed
+  const { data: clientNewsFeed } = useQuery({
+    queryKey: ["newsFeed", "about"],
+    queryFn: async () => {
+      const feeds = await listNewsFeeds();
+      return feeds.find((feed) => feed.type === "News");
+    },
+    enabled: !lookup_NewsFeed,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Use SSG data if available, otherwise fallback to client-side data
+  const categories =
+    lookups_categories && lookups_categories.length > 0
+      ? lookups_categories
+      : (clientCategories ?? []);
+
+  const newsArticles =
+    lookups_NewsArticles?.items && lookups_NewsArticles.items.length > 0
+      ? lookups_NewsArticles
+      : clientNewsArticles;
+
+  const newsFeed = lookup_NewsFeed ?? clientNewsFeed;
+
   const onClickCategoryFilter = useCallback((cat: OpportunityCategory) => {
     void router.push(
       `/opportunities?categories=${encodeURIComponent(cat.name)}`,
@@ -351,13 +404,13 @@ const About: NextPageWithLayout<{
                 {/* RIGHT CARD */}
                 <div className="flex w-full px-4 md:w-1/2">
                   {/* NEWS */}
-                  {lookups_NewsArticles?.items &&
-                  lookups_NewsArticles.items.length > 0 &&
-                  lookups_NewsArticles.items[0] ? (
+                  {newsArticles?.items &&
+                  newsArticles.items.length > 0 &&
+                  newsArticles.items[0] ? (
                     <div className="h-full w-full">
                       <NewsArticleCard
                         key={0}
-                        data={lookups_NewsArticles.items[0]}
+                        data={newsArticles.items[0]}
                         className="h-[300px]"
                       />
                     </div>
@@ -370,17 +423,15 @@ const About: NextPageWithLayout<{
                         Discover the latest stories, insights, and impact from
                         our community.
                       </p>
-                      {lookup_NewsFeed && (
+                      {newsFeed && (
                         <Link
-                          href={lookup_NewsFeed.url}
+                          href={newsFeed.url}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-sm text-white normal-case"
                         >
                           Read more{" "}
-                          <span className="lowercase">
-                            {lookup_NewsFeed.type}
-                          </span>
+                          <span className="lowercase">{newsFeed.type}</span>
                         </Link>
                       )}
                     </div>
@@ -400,7 +451,7 @@ const About: NextPageWithLayout<{
 
           {/* FILTER: CATEGORIES */}
           <OpportunityCategoriesHorizontalFilter
-            lookups_categories={lookups_categories}
+            lookups_categories={categories}
             selected_categories={undefined}
             onClick={onClickCategoryFilter}
           />

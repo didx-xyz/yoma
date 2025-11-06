@@ -17,7 +17,6 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import Select from "react-select";
 import { toast } from "react-toastify";

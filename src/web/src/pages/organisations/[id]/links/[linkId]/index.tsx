@@ -13,7 +13,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useState, type ReactElement } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import { IoMdArrowRoundBack, IoMdClose } from "react-icons/io";
 import { IoShareSocialOutline } from "react-icons/io5";
 import Moment from "react-moment";

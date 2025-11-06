@@ -3,7 +3,6 @@ import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import zod from "zod";
 import type { SelectOption } from "~/api/models/lookups";
-import "react-datepicker/dist/react-datepicker.css";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
 import { components, type ValueContainerProps } from "react-select";
 import Async from "react-select/async";

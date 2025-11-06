@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { type Organization } from "~/api/models/organisation";
 import { getOrganisationById } from "~/api/services/organisations";
