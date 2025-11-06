@@ -98,6 +98,7 @@ const About: NextPageWithLayout<{
       <Head>
         <title>Yoma | About Us</title>
       </Head>
+
       <div className="relative right-0 left-0 flex w-screen flex-col overflow-x-hidden">
         {/* HERO SECTION WITH FULL WIDTH WHITE BACKGROUND */}
         <div className="bg-orange w-full py-4 md:py-16">
@@ -331,7 +332,8 @@ const About: NextPageWithLayout<{
                 {/* LEFT CARD */}
                 <div className="flex w-full flex-col gap-3 rounded-xl p-6 md:w-1/2">
                   <h2 className="font-nunito text-xl leading-tight font-semibold text-black md:text-2xl">
-                    Join the Youth Force and Be a #Youth4Change!
+                    Join the Youth Force and Be a <br />
+                    #Youth4Change!
                   </h2>
                   <p className="text-gray-dark text-xs leading-relaxed md:text-sm">
                     To maximize the potential of young people and accelerate
