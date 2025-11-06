@@ -16,7 +16,6 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import {
   IoMdCheckmarkCircleOutline,
   IoMdClose,

@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import { useForm } from "react-hook-form";
 import { FaUpload } from "react-icons/fa";
 import { FcDocument } from "react-icons/fc";

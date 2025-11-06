@@ -4,7 +4,6 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import iconSuccess from "public/images/icon-success.png";
 import { useCallback, useEffect, useState } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm } from "react-hook-form";
 import {
   FcComments,

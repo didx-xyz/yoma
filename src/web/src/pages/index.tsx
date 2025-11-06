@@ -1,3 +1,4 @@
+import { useQuery } from "@tanstack/react-query";
 import type { GetStaticProps } from "next";
 import Head from "next/head";
 import Image from "next/image";
@@ -18,7 +19,6 @@ import imageStencilPurple from "public/images/home/stencil-purple.png";
 import imageStamp1 from "public/images/stamp-1.png";
 import imageStamp2 from "public/images/stamp-2.png";
 import { type ReactElement, useCallback } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import {
   FeedType,
   NewsArticleSearchResults,
@@ -86,6 +86,42 @@ const Home: NextPageWithLayout<{
   lookup_NewsFeed: NewsFeed;
 }> = ({ lookups_NewsArticles, lookup_NewsFeed }) => {
   const router = useRouter();
+
+  // Fallback client-side data fetching for news articles
+  const { data: clientNewsArticles } = useQuery({
+    queryKey: ["newsArticles", "home"],
+    queryFn: async () =>
+      await searchNewsArticles({
+        feedType: FeedType.Stories,
+        startDate: null,
+        endDate: null,
+        valueContains: null,
+        pageNumber: 1,
+        pageSize: PAGE_SIZE_MINIMUM,
+      }),
+    enabled:
+      !lookups_NewsArticles?.items || lookups_NewsArticles.items.length === 0,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Fallback client-side data fetching for news feed
+  const { data: clientNewsFeed } = useQuery({
+    queryKey: ["newsFeed", "home"],
+    queryFn: async () => {
+      const feeds = await listNewsFeeds();
+      return feeds.find((feed) => feed.type === "Stories");
+    },
+    enabled: !lookup_NewsFeed,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Use SSG data if available, otherwise fallback to client-side data
+  const newsArticles =
+    lookups_NewsArticles?.items && lookups_NewsArticles.items.length > 0
+      ? lookups_NewsArticles
+      : clientNewsArticles;
+
+  const newsFeed = lookup_NewsFeed ?? clientNewsFeed;
 
   const onSearchInputSubmit = useCallback(
     (query: string) => {
@@ -445,32 +481,29 @@ const Home: NextPageWithLayout<{
           <section className="relative z-10 w-full pt-16 pb-8">
             <div className="-mt-36 flex flex-col items-center justify-center px-4">
               {/* NEWS */}
-              {lookups_NewsArticles?.items &&
-                lookups_NewsArticles.items.length > 0 && (
-                  <>
-                    <div className="w-full max-w-7xl">
-                      <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 xl:gap-8">
-                        {lookups_NewsArticles.items.map((article, index) => (
-                          <NewsArticleCard key={index} data={article} />
-                        ))}
-                      </ScrollableContainer>
-                    </div>
+              {newsArticles?.items && newsArticles.items.length > 0 && (
+                <>
+                  <div className="w-full max-w-7xl">
+                    <ScrollableContainer className="flex gap-4 overflow-x-auto py-4 xl:gap-8">
+                      {newsArticles.items.map((article, index) => (
+                        <NewsArticleCard key={index} data={article} />
+                      ))}
+                    </ScrollableContainer>
+                  </div>
 
-                    {lookup_NewsFeed && (
-                      <Link
-                        href={lookup_NewsFeed.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-sm text-white normal-case"
-                      >
-                        Read more{" "}
-                        <span className="lowercase">
-                          {lookup_NewsFeed.type}
-                        </span>
-                      </Link>
-                    )}
-                  </>
-                )}
+                  {newsFeed && (
+                    <Link
+                      href={newsFeed.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-rounded bg-green hover:bg-green/90 mt-10 w-full max-w-[300px] text-sm text-white normal-case"
+                    >
+                      Read more{" "}
+                      <span className="lowercase">{newsFeed.type}</span>
+                    </Link>
+                  )}
+                </>
+              )}
 
               {/* PARTNERS */}
               <PartnerLogos />

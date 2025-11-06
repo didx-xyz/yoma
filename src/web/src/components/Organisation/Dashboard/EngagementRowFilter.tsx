@@ -3,7 +3,6 @@ import { useCallback, useEffect } from "react";
 import { type FieldValues, Controller, useForm } from "react-hook-form";
 import zod from "zod";
 import type { Country, SelectOption } from "~/api/models/lookups";
-import "react-datepicker/dist/react-datepicker.css";
 import Select, { components, type ValueContainerProps } from "react-select";
 import FilterBadges from "~/components/FilterBadges";
 import type { OrganizationSearchFilterSummaryViewModel } from "~/pages/organisations/dashboard";

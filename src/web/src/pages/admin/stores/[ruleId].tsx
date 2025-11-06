@@ -19,7 +19,6 @@ import {
   useState,
   type ReactElement,
 } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import { Controller, useForm, type FieldValues } from "react-hook-form";
 import { FaExclamationTriangle } from "react-icons/fa";
 import { IoMdArrowRoundBack, IoMdClose, IoMdWarning } from "react-icons/io";

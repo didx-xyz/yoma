@@ -3,7 +3,6 @@ import { useAtom } from "jotai";
 import type { GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import { useState, type ReactElement } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
 import { getUserSkills } from "~/api/services/user";

@@ -59,7 +59,6 @@
     "@types/prettier": "^3.0.0",
     "@types/react": "^19",
     "@types/react-avatar-editor": "^13.0.4",
-    "@types/react-datepicker": "^7.0.0",
     "@types/react-dom": "^19",
     "@types/react-modal": "^3.16.3",
     "cross-env": "^10.0.0",

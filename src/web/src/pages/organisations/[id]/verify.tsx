@@ -12,7 +12,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { useCallback, useState, type ReactElement } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import {
   IoIosCheckmark,
   IoMdArrowRoundBack,
