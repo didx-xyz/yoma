@@ -108,6 +108,8 @@ namespace Yoma.Core.Domain.Referral.Services
         throw new InvalidOperationException("Block operation failed. Result expected but null");
 
       return result;
+
+      //TODO: NotificationType.Referral_Blocked_Referrer (sent to referrer / youth)
     }
 
     public async Task Unblock(UnblockRequest request)
@@ -128,6 +130,8 @@ namespace Yoma.Core.Domain.Referral.Services
       result.ModifiedByUserId = userActor.Id;
 
       await _blockRepository.Update(result);
+
+      //TODO: NotificationType.Referral_Unblocked_Referrer (sent to referrer / youth)
     }
   }
 }

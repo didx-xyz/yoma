@@ -347,6 +347,9 @@ namespace Yoma.Core.Domain.Referral.Services
       };
 
       await _linkUsageRepository.Create(usage);
+
+
+      //TODO: NotificationType.ReferralUsage_Welcome (sent to referee / youth)
     }
 
     public async Task ProcessProgressByUserId(Guid userId)
@@ -629,6 +632,10 @@ namespace Yoma.Core.Domain.Referral.Services
 
             if ((rewardReferee ?? 0m) > 0m)
               await _rewardService.ScheduleRewardTransaction(myUsage.UserId, Reward.RewardTransactionEntityType.ReferralLinkUsage, myUsage.Id, rewardReferee!.Value);
+
+            //TODO: NotificationType.ReferralLink_Usage_Completed (sent to referrer / youth)
+            //TODO: NotificationType.ReferralUsage_Welcome (sent to referee / youth)
+
             scope.Complete();
           });
         }

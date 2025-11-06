@@ -17,12 +17,24 @@ namespace Yoma.Core.Domain.Notification
     Opportunity_Published, //sent to youth
     Download, //sent to admin or organization admin
 
-    //TODO: To be confirmed (possible notifications)
-    Referral_Expiration_Expired, //sent to admin
-    Referral_Expiration_WithinNextDays //sent to admin
+    // sent to admin
+    ReferralProgram_Expiration_Expired,          // program reached End Date (if specified) OR remained UnCompletable beyond the 15-day grace period (configurable) → program expired
+    ReferralProgram_Expiration_WithinNextDays,   // program approaching End Date — sent once per day during the final 3 days (configurable) before expiration
+    ReferralProgram_UnCompletable,               // pathway became Un-Completable — send immediately, then every 5 days (configurable), and daily for the last 3 days (configurable) before the 15-day grace (configurable) period elapses
+    ReferralProgram_LimitReached,                // program hit the global Completion Limit (if configured at program level) and flipped to Limit Reached
+
+    // sent to referrer (youth)
+    ReferralLink_Usage_Completed,                // a referee completed and the referrer received reward > 0 Zlto
+    ReferralLink_LimitReached,                   // referrer’s link hit the per-referrer cap (if configured at program level) and flipped to LimitReached
+    Referral_Blocked_Referrer,                   // referrer was blocked from using the referral system
+    Referral_Unblocked_Referrer,                 // referrer was unblocked and can use the referral system again
+
+    // sent to referee (youth)
+    ReferralUsage_Welcome,                       // referee claimed a referral link (welcome message + instructions)
+    ReferralUsage_Completion                     // referee completed the referral program associated with the claimed link (includes note of any reward earned)
   }
 
-  [Flags]
+[Flags]
   public enum MessageType
   {
     Email = 1,

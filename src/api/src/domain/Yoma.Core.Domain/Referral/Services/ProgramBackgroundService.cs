@@ -11,6 +11,8 @@ using Yoma.Core.Domain.Referral.Models;
 
 namespace Yoma.Core.Domain.Referral.Services
 {
+  //TODO: ReferralProgram_Expiration_WithinNextDays (sent to admin) - new job ProcessExpirationNotifications
+
   public class ProgramBackgroundService : IProgramBackgroundService
   {
     #region Class Variables
@@ -108,6 +110,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
                 _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) marked UnCompletable — broken pathway detected", item.Name, item.Id);
 
+                //TODO: ReferralProgram_UnCompletable (sent to admin)
+
                 break;
 
               case ProgramStatus.UnCompletable:
@@ -123,6 +127,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
                     _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) expired instead of reactivation — end date reached {DateEnd:yyyy-MM-dd}", item.Name, item.Id, item.DateEnd);
 
+                    //TODO: NotificationType.ReferralProgram_Expiration_Expired (sent to admin)
+
                     break;
                   }
 
@@ -136,6 +142,8 @@ namespace Yoma.Core.Domain.Referral.Services
 
                     _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) set to LIMIT_REACHED instead of reactivation — cap hit (total {Total} >= limit {Limit})",
                       item.Name, item.Id, item.CompletionTotal ?? 0, item.CompletionLimit.Value);
+
+                    //TODO: NotificationType.ReferralProgram_LimitReached (sent to admin)
 
                     break;
                   }
@@ -158,6 +166,8 @@ namespace Yoma.Core.Domain.Referral.Services
                 item.ModifiedByUserId = user.Id;
                 itemsToUpdate.Add(item);
                 programIdsToExpire.Add(item.Id);
+
+                //TODO: NotificationType.ReferralProgram_Expiration_Expired (sent to admin)
 
                 _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) expired — un-completable beyond grace period (modified {DateModified:yyyy-MM-dd})", item.Name, item.Id, item.DateModified);
 
@@ -196,6 +206,8 @@ namespace Yoma.Core.Domain.Referral.Services
         }
 
         _logger.LogInformation("Processed program health");
+
+        //TODO: ReferralProgram_UnCompletable (sent to admin) - Escalations every 5 days + daily in last 3 days
       }
       catch (Exception ex)
       {
@@ -259,10 +271,10 @@ namespace Yoma.Core.Domain.Referral.Services
             scope.Complete();
           });
 
-          //TODO: NotificationType.Referral_Expiration_Expired (sent to admin)
-
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
+
+        //TODO: NotificationType.ReferralProgram_Expiration_Expired (sent to admin)
 
         _logger.LogInformation("Processed program expiration");
       }
@@ -275,9 +287,6 @@ namespace Yoma.Core.Domain.Referral.Services
         if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
     }
-
-    //TODO [Confirm Requirement]: ProcessExpirationNotifications with NotificationType.Referral_Expiration_WithinNextDays
-    //TODO [Confirm Requirement]: ProcessNonCompletableNotifications with NotificationType.Referral_NonCompletable - for active programs only (validated upon implicit activation with ProgressiveBackoffSchedule)
 
     public async Task ProcessDeletion()
     {
