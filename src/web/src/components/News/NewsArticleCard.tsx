@@ -29,7 +29,7 @@ export const NewsArticleCard: React.FC<NewsArticleCardProps> = ({
         <Image
           src={data.thumbnailURL || imageThumbnailWoman}
           alt={data.title || "News article"}
-          className="h-[90px] w-[90px] flex-shrink-0 rounded-full object-contain"
+          className="h-[90px] w-[90px] flex-shrink-0 rounded-full object-cover"
           width={90}
           height={90}
           sizes="100vw"
