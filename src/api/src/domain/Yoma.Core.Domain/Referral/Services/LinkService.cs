@@ -77,7 +77,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       _referralLinkSearchFilterValidator = referralLinkSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkSearchFilterValidator));
       _referralLinkRequestCreateValidator = referralLinkRequestCreateValidator ?? throw new ArgumentNullException(nameof(referralLinkRequestCreateValidator));
-      _referralLinkRequestUpdateValidator = referralLinkRequestUpdateValidator ?? throw new Exception(nameof(referralLinkRequestUpdateValidator));
+      _referralLinkRequestUpdateValidator = referralLinkRequestUpdateValidator ?? throw new ArgumentNullException(nameof(referralLinkRequestUpdateValidator));
 
       _linkRepository = linkRepository ?? throw new ArgumentNullException(nameof(linkRepository));
     }
@@ -224,7 +224,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var program = _programInfoService.GetById(request.ProgramId, false, false);
 
-      if (program.Status != ProgramStatus.Active || program.DateStart > DateTimeOffset.Now)
+      if (program.Status != ProgramStatus.Active || program.DateStart > DateTimeOffset.UtcNow)
         throw new ValidationException($"Referral program '{program.Name}' is not active or has not started");
 
       if (program.DateEnd.HasValue && program.DateEnd <= DateTimeOffset.UtcNow) // Fallback guard in case program expiration job has’t run yet
@@ -308,7 +308,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (result.Status == ReferralLinkStatus.Cancelled) return result;
 
       if (!Statuses_Cancellable.Contains(result.Status))
-        throw new ValidationException($"Referral link can not be cancelled (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Cancellable.JoinNames()}'");
+        throw new ValidationException($"Referral link cannot be cancelled (current status '{result.Status.ToDescription()}'). Required state '{Statuses_Cancellable.JoinNames()}'");
 
       var status = _linkStatusService.GetByName(ReferralLinkStatus.Cancelled.ToString());
       result.StatusId = status.Id;

@@ -1,4 +1,3 @@
-using Microsoft.AspNetCore.Http.Metadata;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
@@ -243,7 +242,7 @@ namespace Yoma.Core.Domain.Referral.Services
             o.Status = ProgramStatus.Expired;
             o.ModifiedByUserId = user.Id;
 
-            _logger.LogInformation("Program with id '{id}' flagged for expiration", o.Id);
+            _logger.LogInformation("Program with id '{ProgramId}' flagged for expiration — end date {DateEnd:yyyy-MM-dd}", o.Id, o.DateEnd.Value);
           });
 
           var programIds = items.Select(o => o.Id).Distinct().ToList();
@@ -304,7 +303,7 @@ namespace Yoma.Core.Domain.Referral.Services
         {
           var now = DateTimeOffset.UtcNow;
 
-          //auto-delete inactive and expired programs if not modified for x days
+          //auto-delete eligible programs if not modified for x days
           var items = _programRepository.Query().Where(o => statusDeletionIds.Contains(o.StatusId) &&
               o.DateModified <= now.AddDays(-_scheduleJobOptions.ReferralProgramDeletionScheduleIntervalInDays))
               .OrderBy(o => o.DateModified).Take(_scheduleJobOptions.ReferralProgramDeletionScheduleBatchSize).ToList();
@@ -339,7 +338,7 @@ namespace Yoma.Core.Domain.Referral.Services
       }
       catch (Exception ex)
       {
-        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessDeletion), ex.Message);
       }
       finally
       {

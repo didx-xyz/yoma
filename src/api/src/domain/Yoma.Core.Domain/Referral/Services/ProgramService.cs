@@ -351,11 +351,11 @@ namespace Yoma.Core.Domain.Referral.Services
       if (request.ZltoRewardPool.HasValue && result.ZltoRewardCumulative.HasValue && request.ZltoRewardPool.Value < result.ZltoRewardCumulative.Value)
         throw new ValidationException($"The Zlto reward pool cannot be less than the cumulative Zlto rewards ({result.ZltoRewardCumulative.Value:F0}) already allocated to participants");
 
-      if (request.CompletionLimitReferee.HasValue && result.CompletionTotal.HasValue && request.CompletionLimitReferee.Value < result.CompletionTotal.Value)
-        throw new ValidationException($"The per-referrer completion limit cannot be lower than the total completions already recorded ({result.CompletionTotal.Value}).");
+      if (request.CompletionLimitReferee.HasValue && request.CompletionLimit.HasValue && request.CompletionLimitReferee.Value > request.CompletionLimit.Value)
+        throw new ValidationException($"The per-referrer completion limit cannot exceed the overall completion limit of {request.CompletionLimit.Value}");
 
       if (request.CompletionLimit.HasValue && result.CompletionTotal.HasValue && request.CompletionLimit.Value < result.CompletionTotal.Value)
-        throw new ValidationException($"The overall completion limit cannot be lower than the total completions already recorded ({result.CompletionTotal.Value:F0}).");
+        throw new ValidationException($"The overall completion limit cannot be lower than the total completions already recorded ({result.CompletionTotal.Value:F0})");
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 

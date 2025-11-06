@@ -11,7 +11,7 @@ namespace Yoma.Core.Domain.Referral.Services
   public class LinkUsageBackgroundService : ILinkUsageBackgroundService
   {
     #region Class Variables
-    private readonly ILogger<ProgramBackgroundService> _logger;
+    private readonly ILogger<LinkUsageBackgroundService> _logger;
     private readonly ScheduleJobOptions _scheduleJobOptions;
 
     private readonly ILinkUsageStatusService _linkUsageStatusService;
@@ -24,7 +24,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     #region Constructor
     public LinkUsageBackgroundService(
-      ILogger<ProgramBackgroundService> logger,
+      ILogger<LinkUsageBackgroundService> logger,
       IOptions<ScheduleJobOptions> scheduleJobOptions,
 
       IDistributedLockService distributedLockService,

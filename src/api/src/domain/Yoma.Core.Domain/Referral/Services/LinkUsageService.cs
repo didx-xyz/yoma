@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System;
 using System.Transactions;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -43,7 +44,7 @@ namespace Yoma.Core.Domain.Referral.Services
     private const string Key_Prefix = "link_usage_process_progress";
     #endregion
 
-    #region Constrcutor
+    #region Constructor
     public LinkUsageService(
       ILogger<LinkUsageService> logger,
       IOptions<AppSettings> appSettings,
@@ -89,17 +90,17 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = _linkUsageRepository.Query().SingleOrDefault(x => x.Id == id)
         ?? throw new EntityNotFoundException($"Referral link usage with Id '{id}' does not exist");
 
-      if (!ensureOwnership) return ToInfo(result);
+      if (!ensureOwnership) return ToInfo(result, includeComputed);
 
-      if (allowAdminOverride && _httpContextAccessor.HttpContext!.User.IsInRole("Admin")) return ToInfo(result);
+      if (allowAdminOverride && _httpContextAccessor.HttpContext!.User.IsInRole(Constants.Role_Admin)) return ToInfo(result, includeComputed);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
       if (result.UserId != user.Id //as referee
-        || result.UserIdReferrer != user.Id) //as referrer
+        && result.UserIdReferrer != user.Id) //as referrer
         throw new SecurityException("Unauthorized");
 
-      return ToInfo(result);
+      return ToInfo(result, includeComputed);
     }
 
     public ReferralLinkUsageInfo GetByProgramIdAsReferee(Guid programId, bool includeComputed)
@@ -109,9 +110,6 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
-      var usage = _linkUsageRepository.Query()
-        .SingleOrDefault(x => x.ProgramId == programId && x.UserId == user.Id);
-
       var results = _linkUsageRepository.Query().Where(x => x.ProgramId == programId && x.UserId == user.Id).ToList();
 
       if (results.Count > 1)
@@ -120,7 +118,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (results.Count == 0)
         throw new EntityNotFoundException($"Referral link usage for program '{programId}' and the current user does not exist");
 
-      return ToInfo(results.Single());
+      return ToInfo(results.Single(), includeComputed);
     }
 
     public ReferralLinkUsageSearchResults SearchAsReferee(ReferralLinkUsageSearchFilter filter)
@@ -412,7 +410,7 @@ namespace Yoma.Core.Domain.Referral.Services
             }
 
             // Evaluate pathway completion
-            var usageProgress = ToInfo(myUsage);
+            var usageProgress = ToInfo(myUsage, true);
             if (!usageProgress.Completed)
             {
               _logger.LogDebug("Referral progress: usage {UsageId} not completed yet; skipping", myUsage.Id);
@@ -639,7 +637,7 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Private Members
-    private ReferralLinkUsageInfo ToInfo(ReferralLinkUsage item)
+    private ReferralLinkUsageInfo ToInfo(ReferralLinkUsage item, bool includeComputed)
     {
       var result = new ReferralLinkUsageInfo
       {
@@ -666,6 +664,8 @@ namespace Yoma.Core.Domain.Referral.Services
         DateExpired = item.DateExpired,
         ProofOfPersonhoodMethod = ProofOfPersonhoodMethod.None
       };
+
+      if (!includeComputed) return result;  
 
       if (item.UserPhoneNumberConfirmed == true) result.ProofOfPersonhoodMethod |= ProofOfPersonhoodMethod.OTP;
       if (_userService.HasSocialIdentityProviders(item.UserId)) result.ProofOfPersonhoodMethod |= ProofOfPersonhoodMethod.SocialLogin;

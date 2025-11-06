@@ -225,7 +225,7 @@ namespace Yoma.Core.Domain.Reward.Services
                   if (!item.ReferralLinkUsageId.HasValue)
                     throw new InvalidOperationException($"Source entity type '{item.SourceEntityType}': referral link usage id is null");
 
-                  var linkUsage = _referralLinkUsageService.GetById(item.ReferralLinkUsageId.Value, false, false, false);  
+                  var linkUsage = _referralLinkUsageService.GetById(item.ReferralLinkUsageId.Value, true, false, false);  
 
                   request.Id = linkUsage.Id;
                   request.Title = linkUsage.ProgramName;
