@@ -1,4 +1,4 @@
-using Yoma.Core.Domain.Referral.Models.Lookups;
+using Yoma.Core.Domain.Referral.Models;
 
 namespace Yoma.Core.Domain.Entity.Models
 {
@@ -11,17 +11,6 @@ namespace Yoma.Core.Domain.Entity.Models
 
     public DateTimeOffset? BlockedDate { get; set; }
 
-    public List<UserProfileReferralLinkUsage>? LinkUsages { get; set; }
-  }
-
-  public class UserProfileReferralLinkUsage
-  {
-    public Guid Id { get; set; }
-
-    public Referral.ReferralLinkUsageStatus Status { get; set; }
-
-    public Guid ProgramId { get; set; }
-
-    public string ProgramName { get; set; } = null!;
+    public List<ReferralLinkUsageItem>? LinkUsages { get; set; }
   }
 }

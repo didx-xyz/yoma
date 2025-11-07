@@ -18,6 +18,7 @@ using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity.Models;
 using Yoma.Core.Domain.Referral.Interfaces;
+using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Domain.Reward.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Services
@@ -334,13 +335,14 @@ namespace Yoma.Core.Domain.Entity.Services
         BlockedDate = resultBlock?.DateCreated
       };
 
-      var resultLinkUsage = _linkUsageService.SearchAsReferee(new Referral.Models.ReferralLinkUsageSearchFilter { PageNumber = 1, PageSize = 10 });
-      result.Referral.LinkUsages = [.. resultLinkUsage.Items.Select(lu => new UserProfileReferralLinkUsage
+      var resultLinkUsage = _linkUsageService.SearchAsReferee(new ReferralLinkUsageSearchFilter { PageNumber = 1, PageSize = 10 });
+      result.Referral.LinkUsages = resultLinkUsage.Items.Count == 0 ? null : [..resultLinkUsage.Items.Select(lu => new ReferralLinkUsageItem
       {
         Id = lu.Id,
         Status = lu.Status,
         ProgramId = lu.ProgramId,
-        ProgramName = lu.ProgramName
+        ProgramName = lu.ProgramName,
+        DateClaimed = lu.DateClaimed
       })];
 
       return result;
