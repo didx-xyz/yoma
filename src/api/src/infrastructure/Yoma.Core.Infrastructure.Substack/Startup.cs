@@ -12,6 +12,7 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.NewsFeedProvider.Interfaces.Provider;
 using Yoma.Core.Domain.NewsFeedProvider.Models;
 using Yoma.Core.Infrastructure.Shared;
+using Yoma.Core.Infrastructure.Shared.Interceptors;
 using Yoma.Core.Infrastructure.Substack.Client;
 using Yoma.Core.Infrastructure.Substack.Context;
 using Yoma.Core.Infrastructure.Substack.Interfaces;
@@ -51,7 +52,8 @@ namespace Yoma.Core.Infrastructure.Substack
         })
         //disable warning related to not using AsSplitQuery() as per MS SQL implementation
         //.UseLazyLoadingProxies(): without arguments is used to enable lazy loading. Simply not calling UseLazyLoadingProxies() ensure lazy loading is not enabled
-        .ConfigureWarnings(w => w.Ignore(RelationalEventId.MultipleCollectionIncludeWarning));
+        .ConfigureWarnings(w => w.Ignore(RelationalEventId.MultipleCollectionIncludeWarning))
+        .AddInterceptors(sp.GetRequiredService<ForUpdateInterceptor>());
       }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
       // repositories

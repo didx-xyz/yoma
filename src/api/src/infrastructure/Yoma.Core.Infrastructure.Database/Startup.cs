@@ -31,6 +31,7 @@ using Yoma.Core.Infrastructure.Database.Reward.Repositories.Lookup;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories;
 using Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups;
 using Yoma.Core.Infrastructure.Shared;
+using Yoma.Core.Infrastructure.Shared.Interceptors;
 
 namespace Yoma.Core.Infrastructure.Database
 {
@@ -51,7 +52,8 @@ namespace Yoma.Core.Infrastructure.Database
               })
         //disable warning related to not using AsSplitQuery() as per MS SQL implementation
         //.UseLazyLoadingProxies(): without arguments is used to enable lazy loading. Simply not calling UseLazyLoadingProxies() ensure lazy loading is not enabled
-        .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.MultipleCollectionIncludeWarning));
+        .ConfigureWarnings(warnings => warnings.Ignore(RelationalEventId.MultipleCollectionIncludeWarning))
+        .AddInterceptors(sp.GetRequiredService<ForUpdateInterceptor>());
       }, ServiceLifetime.Scoped, ServiceLifetime.Scoped);
 
       services.AddHealthChecks().AddNpgSql(
@@ -168,7 +170,7 @@ namespace Yoma.Core.Infrastructure.Database
       services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Referral.Models.ReferralLink>, Referral.Repositories.LinkRepository>();
       services.AddScoped<IRepositoryBatched<Domain.Referral.Models.ReferralLinkUsage>, LinkUsageRepository>();
       services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathway>, ProgramPathwayRepository>();
-      services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathwayStep> ,ProgramPathwayStepRepository>();
+      services.AddScoped<IRepositoryWithNavigation<Domain.Referral.Models.ProgramPathwayStep>, ProgramPathwayStepRepository>();
       services.AddScoped<IRepository<Domain.Referral.Models.ProgramPathwayTask>, ProgramPathwayTaskRepository>();
       services.AddScoped<IRepositoryBatchedValueContainsWithNavigation<Domain.Referral.Models.Program>, ProgramRepository>();
       #endregion Referral

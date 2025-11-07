@@ -254,7 +254,7 @@ namespace Yoma.Core.Domain.Referral.Services
             o.Status = ProgramStatus.Expired;
             o.ModifiedByUserId = user.Id;
 
-            _logger.LogInformation("Program with id '{ProgramId}' flagged for expiration — end date {DateEnd:yyyy-MM-dd}", o.Id, o.DateEnd.Value);
+            _logger.LogInformation("Program with id '{ProgramId}' flagged for expiration — end date {DateEnd:yyyy-MM-dd}", o.Id, o.DateEnd!);
           });
 
           var programIds = items.Select(o => o.Id).Distinct().ToList();

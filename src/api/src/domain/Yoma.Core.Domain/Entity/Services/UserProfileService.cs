@@ -37,6 +37,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IWalletService _walletService;
     private readonly ISettingsDefinitionService _settingsDefinitionService;
     private readonly IBlockService _referralBlockService;
+    private readonly ILinkUsageService _linkUsageService;
     private readonly UserRequestCreateProfileValidator _userRequestCreateProfileValidator;
     private readonly UserRequestUpdateProfileValidator _userRequestUpdateProfileValidator;
     private readonly IRepositoryValueContainsWithNavigation<User> _userRepository;
@@ -55,7 +56,8 @@ namespace Yoma.Core.Domain.Entity.Services
       IMyOpportunityService myOpportunityService,
       IWalletService walletService,
       ISettingsDefinitionService settingsDefinitionService,
-      IBlockService referralBlockService, 
+      IBlockService referralBlockService,
+      ILinkUsageService linkUsageService,
       UserRequestCreateProfileValidator userRequestCreateProfileValidator,
       UserRequestUpdateProfileValidator userRequestUpdateProfileValidator,
       IRepositoryValueContainsWithNavigation<User> userRepository,
@@ -73,6 +75,7 @@ namespace Yoma.Core.Domain.Entity.Services
       _walletService = walletService;
       _settingsDefinitionService = settingsDefinitionService;
       _referralBlockService = referralBlockService;
+      _linkUsageService = linkUsageService;
       _userRequestCreateProfileValidator = userRequestCreateProfileValidator;
       _userRequestUpdateProfileValidator = userRequestUpdateProfileValidator;
       _userRepository = userRepository;
@@ -324,12 +327,21 @@ namespace Yoma.Core.Domain.Entity.Services
 
       //referral status
       var resultBlock = _referralBlockService.GetByUserIdOrNull(result.Id);
-  
+
       result.Referral = new UserProfileReferral
       {
         Blocked = resultBlock != null,
         BlockedDate = resultBlock?.DateCreated
       };
+
+      var resultLinkUsage = _linkUsageService.SearchAsReferee(new Referral.Models.ReferralLinkUsageSearchFilter { PageNumber = 1, PageSize = 10 });
+      result.Referral.LinkUsages = [.. resultLinkUsage.Items.Select(lu => new UserProfileReferralLinkUsage
+      {
+        Id = lu.Id,
+        Status = lu.Status,
+        ProgramId = lu.ProgramId,
+        ProgramName = lu.ProgramName
+      })];
 
       return result;
     }
