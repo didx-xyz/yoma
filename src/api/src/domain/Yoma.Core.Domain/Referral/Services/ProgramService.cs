@@ -95,7 +95,6 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Public Membmers
-    //TODO: GetByLinkId: Get the program for the specified link id
     public Program GetById(Guid id, bool includeChildItems, bool includeComputed)
     {
       var result = GetByIdOrNull(id, includeChildItems, includeComputed)
@@ -132,6 +131,13 @@ namespace Yoma.Core.Domain.Referral.Services
         result.ImageURL = GetBlobObjectURL(result.ImageStorageType, result.ImageKey);
 
       return result;
+    }
+
+    public Program GetByLinkId(Guid linkId, bool includeChildItems, bool includeComputed)
+    {
+      var link = _linkMaintenanceService.GetById(linkId);
+
+      return GetById(link.ProgramId, includeChildItems, includeComputed);
     }
 
     public Program? GetDefaultOrNull(bool includeChildItems, bool includeComputed)
@@ -534,7 +540,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _logger.LogInformation("Program {ProgramId} status updated. Requested={Requested} Final={Final}", result.Id, status, finalStatus);
 
       return result;
-    } 
+    }
 
     public async Task<Program> SetAsDefault(Guid id)
     {

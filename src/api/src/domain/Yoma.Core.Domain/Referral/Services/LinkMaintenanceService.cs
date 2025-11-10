@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces;
@@ -40,6 +41,17 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Public Members
+    public ReferralLink GetById(Guid id)
+    {
+      if (id == Guid.Empty)
+        throw new ArgumentNullException(nameof(id));
+
+      var result = _linkRepository.Query().SingleOrDefault(o => o.Id == id)
+        ?? throw new EntityNotFoundException($"Referral link with id '{id}' not found");
+
+      return result;
+    }
+
     /// <summary>
     /// Action upon program hitting global completion cap: flips all links associated with the specified program that are eligible
     /// </summary>

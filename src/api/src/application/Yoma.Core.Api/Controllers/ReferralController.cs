@@ -93,7 +93,7 @@ namespace Yoma.Core.Api.Controllers
     }
 
     [SwaggerOperation(Summary = "Get the referral program by Id (Anonymous)",
-      Description = "By defaultm, only programs that are active and have started can be retrieved. Authenticated users can retrieve any program")]
+      Description = "By default, only programs that are active and have started can be retrieved. Authenticated users can retrieve any program")]
     [HttpGet("program/{id}/info")]
     [AllowAnonymous]
     public ActionResult<ProgramInfo> GetProgramInfoById([FromRoute] Guid id)
@@ -103,6 +103,21 @@ namespace Yoma.Core.Api.Controllers
       var result = _programInfoService.GetById(id, true, true);
 
       _logger.LogInformation("Request {requestName} handled", nameof(GetProgramInfoById));
+
+      return Ok(result);
+    }
+
+    [SwaggerOperation(Summary = "Get the referral program by link Id (Anonymous)",
+      Description = "By default, only programs that are active and have started can be retrieved. Authenticated users can retrieve any program")]
+    [HttpGet("program/by-link/{linkId}/info")]
+    [AllowAnonymous]
+    public ActionResult<ProgramInfo> GetProgramInfoByLinkId([FromRoute] Guid linkId)
+    {
+      _logger.LogInformation("Handling request {requestName}", nameof(GetProgramInfoByLinkId));
+
+      var result = _programInfoService.GetByLinkId(linkId, true, true);
+
+      _logger.LogInformation("Request {requestName} handled", nameof(GetProgramInfoByLinkId));
 
       return Ok(result);
     }

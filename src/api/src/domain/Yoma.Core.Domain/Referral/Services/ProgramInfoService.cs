@@ -63,6 +63,20 @@ namespace Yoma.Core.Domain.Referral.Services
       return result.ToInfo();
     }
 
+    public ProgramInfo GetByLinkId(Guid linkId, bool includeChildItems, bool includeComputed)
+    {
+      var result = _programService.GetByLinkId(linkId, includeChildItems, includeComputed); 
+
+      if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
+      {
+        //only allow active and started programs for anonymous users
+        if (result.Status != ProgramStatus.Active || result.DateStart > DateTimeOffset.UtcNow)
+          throw new EntityNotFoundException($"Program not found");
+      }
+
+      return result.ToInfo();
+    }
+
     public ProgramSearchResultsInfo Search(ProgramSearchFilter filter)
     {
       ArgumentNullException.ThrowIfNull(filter, nameof(filter));
