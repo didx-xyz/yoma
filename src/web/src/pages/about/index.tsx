@@ -20,7 +20,9 @@ import {
 import { OpportunityCategory, PublishedState } from "~/api/models/opportunity";
 import { listNewsFeeds, searchNewsArticles } from "~/api/services/newsfeed";
 import { getOpportunityCategories } from "~/api/services/opportunities";
-import PartnerLogos from "~/components/Home/PartnerLogos";
+import PartnerLogos, {
+  PartnerLogoOptions,
+} from "~/components/Home/PartnerLogos";
 import MainLayout from "~/components/Layout/Main";
 import { NewsArticleCard } from "~/components/News/NewsArticleCard";
 import OpportunityCategoriesHorizontalFilter from "~/components/Opportunity/OpportunityCategoriesHorizontalFilter";
@@ -550,7 +552,25 @@ const About: NextPageWithLayout<{
           <section className="z-10 w-full pb-8">
             <div className="flex flex-col items-center justify-center px-4">
               {/* PARTNERS */}
-              <PartnerLogos headerText="Our partners" />
+              <PartnerLogos
+                headerText="Our partners"
+                options={[
+                  PartnerLogoOptions.GEN_UNLIMITED,
+                  PartnerLogoOptions.UNICEF,
+                  PartnerLogoOptions.DIDX,
+                  PartnerLogoOptions.GIZ,
+                  PartnerLogoOptions.GOODWALL,
+                  PartnerLogoOptions.RLABS,
+                  PartnerLogoOptions.BOTNAR,
+                  PartnerLogoOptions.UMUZI,
+                  PartnerLogoOptions.ACCENTURE,
+                  PartnerLogoOptions.SAP,
+                  PartnerLogoOptions.IXO,
+                  PartnerLogoOptions.CAP_GEMINI,
+                  PartnerLogoOptions.CANADA,
+                  PartnerLogoOptions.ADA,
+                ]}
+              />
             </div>
           </section>
         </div>
