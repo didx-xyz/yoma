@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.Http;
 using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
+using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Referral.Extensions;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Models;
@@ -10,12 +12,15 @@ namespace Yoma.Core.Domain.Referral.Services
   {
     #region Class Variables
     private readonly IProgramService _programService;
+    private readonly IHttpContextAccessor _httpContextAccessor;
     #endregion
 
     #region Constructor
-    public ProgramInfoService(IProgramService programService)
+    public ProgramInfoService(IProgramService programService,
+      IHttpContextAccessor httpContextAccessor)
     {
       _programService = programService ?? throw new ArgumentNullException(nameof(programService));
+      _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
     }
     #endregion
 
@@ -48,6 +53,13 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       var result = _programService.GetById(id, includeChildItems, includeComputed);
 
+      if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
+      {
+        //only allow active and started programs for anonymous users
+        if (result.Status != ProgramStatus.Active || result.DateStart > DateTimeOffset.UtcNow)
+          throw new EntityNotFoundException($"Program not found");
+      }
+
       return result.ToInfo();
     }
 
@@ -57,7 +69,10 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var filterInternal = new ProgramSearchFilterAdmin
       {
-        PublishedStates = filter.PublishedStates == null || filter.PublishedStates.Count == 0 ? [PublishedState.Active] : filter.PublishedStates,
+        // Anonymous users: only allow published state active (active + started), ignore inmput
+        // Authenticated users: if none specified, default to published state active; else use provided list
+        PublishedStates = !HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor) || filter.PublishedStates == null || filter.PublishedStates.Count == 0
+          ? [PublishedState.Active] : filter.PublishedStates,
         ValueContains = filter.ValueContains,
         PageNumber = filter.PageNumber,
         PageSize = filter.PageSize
