@@ -34,7 +34,7 @@ namespace Yoma.Core.Domain.Notification
     ReferralUsage_Completion                     // referee completed the referral program associated with the claimed link (includes note of any reward earned)
   }
 
-[Flags]
+  [Flags]
   public enum MessageType
   {
     Email = 1,
