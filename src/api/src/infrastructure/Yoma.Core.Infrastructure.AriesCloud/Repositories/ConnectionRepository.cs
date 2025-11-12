@@ -1,18 +1,26 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.AriesCloud.Context;
+using Yoma.Core.Infrastructure.AriesCloud.Models;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
 {
-  public class ConnectionRepository : BaseRepository<Entities.Connection, Guid>, IRepository<Models.Connection>
+  public class ConnectionRepository : BaseRepository<Entities.Connection, Guid>, IRepository<Connection>
   {
     #region Constructor
     public ConnectionRepository(AriesCloudDbContext context) : base(context) { }
     #endregion
 
     #region Public Members
-    public IQueryable<Models.Connection> Query()
+    public IQueryable<Connection> Query(LockMode lockMode)
     {
-      return _context.Connection.Select(entity => new Models.Connection
+      return Query().WithLock(lockMode);
+    }
+
+    public IQueryable<Connection> Query()
+    {
+      return _context.Connection.Select(entity => new Connection
       {
         Id = entity.Id,
         SourceTenantId = entity.SourceTenantId,
@@ -24,7 +32,7 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
       });
     }
 
-    public async Task<Models.Connection> Create(Models.Connection item)
+    public async Task<Connection> Create(Connection item)
     {
       item.DateCreated = DateTimeOffset.UtcNow;
 
@@ -46,12 +54,12 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
       return item;
     }
 
-    public Task<Models.Connection> Update(Models.Connection item)
+    public Task<Connection> Update(Connection item)
     {
       throw new NotImplementedException();
     }
 
-    public async Task Delete(Models.Connection item)
+    public async Task Delete(Connection item)
     {
       var entity = _context.Connection.Where(o => o.Id == item.Id).SingleOrDefault() ?? throw new ArgumentOutOfRangeException(nameof(item), $"{nameof(Entities.Connection)} with id '{item.Id}' does not exist");
       _context.Connection.Remove(entity);

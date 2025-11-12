@@ -1,8 +1,10 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Marketplace;
 using Yoma.Core.Domain.Marketplace.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
 {
@@ -13,6 +15,11 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<TransactionLog> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<TransactionLog> Query()
     {
       return _context.TransactionLog.Select(entity => new TransactionLog

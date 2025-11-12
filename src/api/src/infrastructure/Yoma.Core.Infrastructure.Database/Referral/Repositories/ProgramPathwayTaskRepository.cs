@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 {
@@ -14,6 +16,11 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<ProgramPathwayTask> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<ProgramPathwayTask> Query()
     {
       return _context.ReferralProgramPathwayTask.Select(entity => new ProgramPathwayTask
@@ -34,8 +41,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         OrderDisplay = entity.OrderDisplay,
         DateCreated = entity.DateCreated,
         DateModified = entity.DateModified
-      }).OrderBy(t => t.OrderDisplay)
-      .AsSplitQuery();
+      }).AsSplitQuery();
     }
 
     public async Task<ProgramPathwayTask> Create(ProgramPathwayTask item)

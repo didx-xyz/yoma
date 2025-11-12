@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.BlobProvider;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 {
@@ -22,9 +24,19 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       return Query(false);
     }
 
+    public IQueryable<Program> Query(bool includeChildItems, LockMode lockMode)
+    {
+      return Query(includeChildItems).WithLock(lockMode);
+    }
+
+    public IQueryable<Program> Query(LockMode lockMode)
+    {
+      return Query(false).WithLock(lockMode);
+    }
+
     public IQueryable<Program> Query(bool includeChildItems)
     {
-      return _context.ReferralProgram.Select(entity => new Program
+      var query = _context.ReferralProgram.Select(entity => new Program
       {
         Id = entity.Id,
         Name = entity.Name,
@@ -95,7 +107,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
             }).OrderBy(t => t.OrderDisplay).ToList()
           }).OrderBy(s => s.OrderDisplay).ToList()
         } : null
-      }).AsSplitQuery();
+      });
+
+      if (includeChildItems) query = query.AsSplitQuery();
+      return query;
     }
 
     public Expression<Func<Program, bool>> Contains(Expression<Func<Program, bool>> predicate, string value)

@@ -1,11 +1,12 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
-using Yoma.Core.Infrastructure.Database.Lookups.Entities;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 {
-  public class CountryRepository : BaseRepository<Country, Guid>, IRepository<Domain.Lookups.Models.Country>
+  public class CountryRepository : BaseRepository<Entities.Country, Guid>, IRepository<Domain.Lookups.Models.Country>
   {
     #region Constructor
     public CountryRepository(ApplicationDbContext context) : base(context)
@@ -14,6 +15,11 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<Domain.Lookups.Models.Country> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<Domain.Lookups.Models.Country> Query()
     {
       return _context.Country.Select(entity => new Domain.Lookups.Models.Country

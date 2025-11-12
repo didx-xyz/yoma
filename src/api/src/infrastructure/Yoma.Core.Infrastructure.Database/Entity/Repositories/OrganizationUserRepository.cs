@@ -1,7 +1,9 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Database.Entity.Entities;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
 {
@@ -12,6 +14,11 @@ namespace Yoma.Core.Infrastructure.Database.Entity.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<Domain.Entity.Models.OrganizationUser> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<Domain.Entity.Models.OrganizationUser> Query()
     {
       return _context.OrganizationUsers.Select(entity => new Domain.Entity.Models.OrganizationUser

@@ -1,7 +1,9 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.SSI;
 using Yoma.Core.Infrastructure.AriesCloud.Context;
 using Yoma.Core.Infrastructure.AriesCloud.Models;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
 {
@@ -12,6 +14,11 @@ namespace Yoma.Core.Infrastructure.AriesCloud.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<CredentialSchema> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<CredentialSchema> Query()
     {
       return _context.CredentialSchema.Select(entity => new CredentialSchema

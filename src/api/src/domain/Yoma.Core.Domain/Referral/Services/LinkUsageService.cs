@@ -357,6 +357,12 @@ namespace Yoma.Core.Domain.Referral.Services
 
       var user = _userService.GetById(userId, false, false);
 
+      if (user.YoIDOnboarded != true)
+      {
+        _logger.LogInformation("Referral progress: user {UserId} not YoIDOnboarded; skipping", user.Id);
+        return;
+      }
+
       // Business rule (current): one usage per program (DB-enforced); also a single claim across all programs (may change later)
       var statusPendingId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id;
       var statusCompletedId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Completed.ToString()).Id;
@@ -618,7 +624,7 @@ namespace Yoma.Core.Domain.Referral.Services
             if (programStatusCurrent == ProgramStatus.Active && program.Status == ProgramStatus.LimitReached && linkStatusCurrent == ReferralLinkStatus.Active)
               // Re-read ensures we don't rely on a stale in-memory link
               link = _linkService.GetById(myUsage.LinkId, false, false, false, false);
-  
+
             // Increment running totals (CompletionTotal and ZltoRewardCumulative); may flip to LIMIT_REACHED if ACTIVE (per-referrer completion cap hit)
             link = await _linkService.ProcessCompletion(program, link, totalAwarded);
 
@@ -671,7 +677,7 @@ namespace Yoma.Core.Domain.Referral.Services
         ProofOfPersonhoodMethod = ProofOfPersonhoodMethod.None
       };
 
-      if (!includeComputed) return result;  
+      if (!includeComputed) return result;
 
       if (item.UserPhoneNumberConfirmed == true) result.ProofOfPersonhoodMethod |= ProofOfPersonhoodMethod.OTP;
       if (_userService.HasSocialIdentityProviders(item.UserId)) result.ProofOfPersonhoodMethod |= ProofOfPersonhoodMethod.SocialLogin;

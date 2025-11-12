@@ -1,11 +1,12 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
-using Yoma.Core.Infrastructure.Database.Lookups.Entities;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 {
-  public class EducationRepository : BaseRepository<Education, Guid>, IRepository<Domain.Lookups.Models.Education>
+  public class EducationRepository : BaseRepository<Entities.Education, Guid>, IRepository<Domain.Lookups.Models.Education>
   {
     #region Constructor
     public EducationRepository(ApplicationDbContext context) : base(context)
@@ -14,6 +15,11 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<Domain.Lookups.Models.Education> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<Domain.Lookups.Models.Education> Query()
     {
       return _context.Education.Select(entity => new Domain.Lookups.Models.Education

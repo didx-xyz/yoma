@@ -346,6 +346,7 @@ namespace Yoma.Core.Api.Controllers
         userRequest.ExternalId = kcUser.Id;
 
         var user = await _userService.Upsert(userRequest);
+
         await _eventPublisher.Publish(new ReferralProgressTriggerEvent(new ReferralProgressTriggerMessage
         {
           Source = ReferralTriggerSource.IdentityAction,

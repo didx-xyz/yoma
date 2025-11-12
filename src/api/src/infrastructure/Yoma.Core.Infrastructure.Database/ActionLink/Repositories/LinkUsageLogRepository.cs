@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
 using Yoma.Core.Domain.ActionLink.Models;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
 {
@@ -15,6 +17,11 @@ namespace Yoma.Core.Infrastructure.Database.ActionLink.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<LinkUsageLog> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<LinkUsageLog> Query()
     {
       return _context.LinkUsageLog.Select(entity => new LinkUsageLog

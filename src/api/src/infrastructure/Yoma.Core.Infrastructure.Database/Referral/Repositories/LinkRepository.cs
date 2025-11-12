@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Expressions;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 {
@@ -20,9 +22,19 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       return Query(false);
     }
 
+    public IQueryable<ReferralLink> Query(bool includeChildItems, LockMode lockMode)
+    {
+       return Query(includeChildItems).WithLock(lockMode);
+    }
+
+    public IQueryable<ReferralLink> Query(LockMode lockMode)
+    {
+      return Query(false).WithLock(lockMode);
+    }
+
     public IQueryable<ReferralLink> Query(bool includeChildItems)
     {
-      return _context.ReferralLink.Select(entity => new ReferralLink
+      var query = _context.ReferralLink.Select(entity => new ReferralLink
       {
         Id = entity.Id,
         Name = entity.Name,
@@ -62,7 +74,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
               Count = g.Count()
             })
             .ToList() : null
-      }).AsSplitQuery();
+      });
+
+      if (includeChildItems) query = query.AsSplitQuery();
+      return query;
     }
 
     public Expression<Func<ReferralLink, bool>> Contains(Expression<Func<ReferralLink, bool>> predicate, string value)

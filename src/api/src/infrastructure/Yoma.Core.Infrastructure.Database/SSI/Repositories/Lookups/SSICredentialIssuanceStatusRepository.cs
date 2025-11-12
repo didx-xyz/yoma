@@ -1,19 +1,24 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.SSI.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
 {
   public class SSICredentialIssuanceStatusRepository : BaseRepository<Entities.Lookups.SSICredentialIssuanceStatus, Guid>, IRepository<SSICredentialIssuanceStatus>
   {
     #region Constructor
-    public SSICredentialIssuanceStatusRepository(ApplicationDbContext context) : base(context)
-    {
-    }
+    public SSICredentialIssuanceStatusRepository(ApplicationDbContext context) : base(context)  {  }
     #endregion
 
     #region Public Members
+    public IQueryable<SSICredentialIssuanceStatus> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<SSICredentialIssuanceStatus> Query()
     {
       return _context.SSICredentialIssuanceStatus.Select(entity => new SSICredentialIssuanceStatus

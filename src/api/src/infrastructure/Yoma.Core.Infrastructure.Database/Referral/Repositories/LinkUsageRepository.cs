@@ -1,7 +1,9 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 {
@@ -12,6 +14,11 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<ReferralLinkUsage> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<ReferralLinkUsage> Query()
     {
       return _context.ReferralLinkUsage.Select(entity => new ReferralLinkUsage

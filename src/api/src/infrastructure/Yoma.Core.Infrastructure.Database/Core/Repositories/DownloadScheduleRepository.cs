@@ -3,6 +3,7 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Infrastructure.Database.Context;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Core.Repositories
 {
@@ -13,6 +14,11 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<DownloadSchedule> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);  
+    }
+
     public IQueryable<DownloadSchedule> Query()
     {
       return _context.DownloadSchedule.Select(entity => new DownloadSchedule
@@ -33,6 +39,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
         DateModified = entity.DateModified
       });
     }
+
     public async Task<DownloadSchedule> Create(DownloadSchedule item)
     {
       item.DateCreated = DateTimeOffset.UtcNow;

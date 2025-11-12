@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Yoma.Core.Domain.Core;
 
 namespace Yoma.Core.Infrastructure.Shared.Extensions
 {
@@ -8,14 +9,14 @@ namespace Yoma.Core.Infrastructure.Shared.Extensions
     /// Applies an EF hint to a SELECT query.
     /// The PostgreSQL interceptor translates this hint into the required TSQL.
     /// </summary>
-    public static IQueryable<T> WithPessimisticLock<T>(
+    public static IQueryable<T> WithLock<T>(
         this IQueryable<T> query,
-        PessimisticLock lockMode)
+        LockMode lockMode)
     {
       ArgumentNullException.ThrowIfNull(query, nameof(query));
 
-      if (!HintConfig.PessimisticLockHints.TryGetValue(lockMode, out var hint))
-        throw new InvalidOperationException($"Unsupported pessimistic lock mode '{lockMode}'");
+      if (!HintConfig.LockHints.TryGetValue(lockMode, out var hint))
+        throw new InvalidOperationException($"Unsupported lock mode '{lockMode}'");
 
       return query.TagWith(hint);
     }

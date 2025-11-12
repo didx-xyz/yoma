@@ -1,11 +1,12 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
-using Yoma.Core.Infrastructure.Database.Lookups.Entities;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
 {
-  public class GenderRepository : BaseRepository<Gender, Guid>, IRepository<Domain.Lookups.Models.Gender>
+  public class GenderRepository : BaseRepository<Entities.Gender, Guid>, IRepository<Domain.Lookups.Models.Gender>
   {
     #region Constructor
     public GenderRepository(ApplicationDbContext context) : base(context)
@@ -14,6 +15,11 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<Domain.Lookups.Models.Gender> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<Domain.Lookups.Models.Gender> Query()
     {
       return _context.Gender.Select(entity => new Domain.Lookups.Models.Gender

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Newtonsoft.Json;
 using System.Linq.Expressions;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Marketplace;
@@ -8,6 +9,7 @@ using Yoma.Core.Domain.Marketplace.Models;
 using Yoma.Core.Domain.Opportunity.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
 {
@@ -23,9 +25,19 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
       return Query(false);
     }
 
+    public IQueryable<StoreAccessControlRule> Query(LockMode lockMode)
+    {
+      return Query(false).WithLock(lockMode);
+    }
+
+    public IQueryable<StoreAccessControlRule> Query(bool includeChildItems, LockMode lockMode)
+    {
+      return Query(includeChildItems).WithLock(lockMode);
+    }
+
     public IQueryable<StoreAccessControlRule> Query(bool includeChildItems)
     {
-      return _context.StoreAccessControlRule.Select(entity => new StoreAccessControlRule
+      var query = _context.StoreAccessControlRule.Select(entity => new StoreAccessControlRule
       {
         Id = entity.Id,
         Name = entity.Name,
@@ -55,9 +67,12 @@ namespace Yoma.Core.Infrastructure.Database.Marketplace.Repositories
             OrganizationStatus = Enum.Parse<Domain.Entity.OrganizationStatus>(o.Opportunity.Organization.Status.Name, true),
             VerificationEnabled = o.Opportunity.VerificationEnabled,
             Status = Enum.Parse<Domain.Opportunity.Status>(o.Opportunity.Status.Name, true),
-            DateStart = o.Opportunity.DateStart,  
+            DateStart = o.Opportunity.DateStart,
           }).OrderBy(o => o.Title).ToList() : null,
       });
+
+      if (includeChildItems) query = query.AsSplitQuery();
+      return query;
     }
 
     public Expression<Func<StoreAccessControlRule, bool>> Contains(Expression<Func<StoreAccessControlRule, bool>> predicate, string value)

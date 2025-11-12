@@ -1,9 +1,11 @@
 using Microsoft.EntityFrameworkCore;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 {
@@ -19,9 +21,19 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       return Query(false);
     }
 
+    public IQueryable<ProgramPathwayStep> Query(bool includeChildItems, LockMode lockMode)
+    {
+      return Query(includeChildItems).WithLock(lockMode);
+    }
+
+    public IQueryable<ProgramPathwayStep> Query(LockMode lockMode)
+    {
+      return Query(false).WithLock(lockMode);
+    }
+
     public IQueryable<ProgramPathwayStep> Query(bool includeChildItems)
     {
-      return _context.ReferralProgramPathwayStep.Select(entity => new ProgramPathwayStep
+      var query = _context.ReferralProgramPathwayStep.Select(entity => new ProgramPathwayStep
       {
         Id = entity.Id,
         PathwayId = entity.PathwayId,
@@ -48,11 +60,14 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
             DateStart = task.Opportunity.DateStart
           },
           Order = task.Order,
-          OrderDisplay = task.OrderDisplay, 
+          OrderDisplay = task.OrderDisplay,
           DateCreated = task.DateCreated,
           DateModified = task.DateModified
         }).OrderBy(t => t.OrderDisplay).ToList() : null
-      }).AsSplitQuery();
+      });
+
+      if (includeChildItems) query = query.AsSplitQuery();
+      return query;
     }
 
     public async Task<ProgramPathwayStep> Create(ProgramPathwayStep item)
@@ -90,7 +105,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       entity.Name = item.Name;
       entity.Description = item.Description;
       entity.Rule = item.Rule.ToString();
-      entity.OrderMode = item.OrderMode.ToString(); 
+      entity.OrderMode = item.OrderMode.ToString();
       entity.Order = item.Order;
       entity.OrderDisplay = item.OrderDisplay;
       entity.DateModified = item.DateModified;

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral;
 using Yoma.Core.Domain.Referral.Models;
@@ -19,9 +20,19 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       return Query(false);
     }
 
+    public IQueryable<ProgramPathway> Query(bool includeChildItems, LockMode lockMode)
+    {
+      throw new NotImplementedException();
+    }
+
+    public IQueryable<ProgramPathway> Query(LockMode lockMode)
+    {
+      throw new NotImplementedException();
+    }
+
     public IQueryable<ProgramPathway> Query(bool includeChildItems)
     {
-      return _context.ReferralProgramPathway.Select(entity => new ProgramPathway
+      var query = _context.ReferralProgramPathway.Select(entity => new ProgramPathway
       {
         Id = entity.Id,
         ProgramId = entity.ProgramId,
@@ -38,9 +49,9 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
           Name = step.Name,
           Description = step.Description,
           Rule = Enum.Parse<PathwayCompletionRule>(step.Rule, true),
-          OrderMode = Enum.Parse<PathwayOrderMode>(step.OrderMode, true), 
+          OrderMode = Enum.Parse<PathwayOrderMode>(step.OrderMode, true),
           Order = step.Order,
-          OrderDisplay = step.OrderDisplay, 
+          OrderDisplay = step.OrderDisplay,
           DateCreated = step.DateCreated,
           DateModified = step.DateModified,
           Tasks = step.Tasks.Select(task => new ProgramPathwayTask
@@ -58,12 +69,15 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
               DateStart = task.Opportunity.DateStart
             },
             Order = task.Order,
-            OrderDisplay = task.OrderDisplay, 
+            OrderDisplay = task.OrderDisplay,
             DateCreated = task.DateCreated,
             DateModified = task.DateModified
           }).OrderBy(t => t.OrderDisplay).ToList()
         }).OrderBy(s => s.OrderDisplay).ToList() : null
-      }).AsSplitQuery();
+      });
+
+      if (includeChildItems) query = query.AsSplitQuery();
+      return query;
     }
 
     public async Task<ProgramPathway> Create(ProgramPathway item)

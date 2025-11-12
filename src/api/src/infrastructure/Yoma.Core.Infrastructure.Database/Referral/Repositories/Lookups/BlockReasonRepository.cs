@@ -1,7 +1,9 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Referral.Models.Lookups;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Referral.Repositories.Lookups
 {
@@ -12,6 +14,11 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories.Lookups
     #endregion
 
     #region Public Members
+    public IQueryable<BlockReason> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<BlockReason> Query()
     {
       return _context.ReferralBlockReason.Select(entity => new BlockReason

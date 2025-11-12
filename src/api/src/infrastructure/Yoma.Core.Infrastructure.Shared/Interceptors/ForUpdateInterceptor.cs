@@ -79,8 +79,8 @@ namespace Yoma.Core.Infrastructure.Shared.Interceptors
       if (HasForUpdate.IsMatch(sql)) return;
 
       // Extract supported hints from single source of truth
-      var waitHint = HintConfig.PessimisticLockHints[PessimisticLock.Wait];           // EF_HINT:FOR_UPDATE_WAIT
-      var skipHint = HintConfig.PessimisticLockHints[PessimisticLock.SkipLocked];     // EF_HINT:FOR_UPDATE_SKIP_LOCKED
+      var waitHint = HintConfig.LockHints[Domain.Core.LockMode.Wait];           // EF_HINT:FOR_UPDATE_WAIT
+      var skipHint = HintConfig.LockHints[Domain.Core.LockMode.SkipLocked];     // EF_HINT:FOR_UPDATE_SKIP_LOCKED
 
       // Ensure we truly have a tag (TagWith emits as a SQL comment)
       if (!AnyEfHint.IsMatch(sql)) return;

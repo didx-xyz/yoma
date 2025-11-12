@@ -3,6 +3,7 @@ using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Entities;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 
 namespace Yoma.Core.Infrastructure.Database.Core.Repositories
 {
@@ -18,6 +19,11 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<Domain.Core.Models.BlobObject> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<Domain.Core.Models.BlobObject> Query()
     {
       return _context.BlobObject.Select(entity => new Domain.Core.Models.BlobObject

@@ -1,4 +1,6 @@
+using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Interfaces;
+using Yoma.Core.Infrastructure.Shared.Extensions;
 using Yoma.Core.Infrastructure.Substack.Context;
 using Yoma.Core.Infrastructure.Substack.Models;
 
@@ -11,6 +13,11 @@ namespace Yoma.Core.Infrastructure.Substack.Repositories
     #endregion
 
     #region Public Members
+    public IQueryable<FeedSyncTracking> Query(LockMode lockMode)
+    {
+      return Query().WithLock(lockMode);
+    }
+
     public IQueryable<FeedSyncTracking> Query()
     {
       return _context.FeedSyncTracking.Select(entity => new FeedSyncTracking
