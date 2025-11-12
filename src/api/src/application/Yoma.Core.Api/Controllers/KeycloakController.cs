@@ -38,7 +38,6 @@ namespace Yoma.Core.Api.Controllers
     private readonly ICountryService _countryService;
     private readonly IEducationService _educationService;
     private readonly IWalletService _walletService;
-    private readonly IEventPublisher _eventPublisher;
 
     private const string Key_Prefix = "keycloak_event";
     #endregion
@@ -53,8 +52,7 @@ namespace Yoma.Core.Api.Controllers
       IGenderService genderService,
       ICountryService countryService,
       IEducationService educationService,
-      IWalletService walletService,
-      IEventPublisher eventPublisher)
+      IWalletService walletService)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
@@ -66,7 +64,6 @@ namespace Yoma.Core.Api.Controllers
       _countryService = countryService ?? throw new ArgumentNullException(nameof(countryService));
       _educationService = educationService ?? throw new ArgumentNullException(nameof(educationService));
       _walletService = walletService ?? throw new ArgumentNullException(nameof(walletService));
-      _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
     }
     #endregion
 
@@ -345,15 +342,7 @@ namespace Yoma.Core.Api.Controllers
 
         userRequest.ExternalId = kcUser.Id;
 
-        var user = await _userService.Upsert(userRequest);
-
-        await _eventPublisher.Publish(new ReferralProgressTriggerEvent(new ReferralProgressTriggerMessage
-        {
-          Source = ReferralTriggerSource.IdentityAction,
-          UserId = user.Id,
-          Username = user.Username,
-          UserDisplayName = user.DisplayName
-        }));
+        await _userService.Upsert(userRequest);
       });
     }
 

@@ -29,14 +29,9 @@ namespace Yoma.Core.Domain.Referral.Events
         switch (notification.Entity.Source)
         {
           case ReferralTriggerSource.IdentityAction:
-            if (!notification.Entity.IdentityEventType.HasValue)
-              throw new InvalidOperationException("IdentityEventType must be provided for IdentityAction source");
-
-            _logger.LogInformation(
-              "Referral progress: handling Identity trigger for user {UserId} ({Username}) — event {EventType}",
+            _logger.LogInformation("Referral progress: handling identity trigger for user {UserId} ({Username})",
               notification.Entity.UserId,
-              notification.Entity.Username,
-              notification.Entity.IdentityEventType);
+              notification.Entity.Username);
             break;
 
           case ReferralTriggerSource.OpportunityCompletion:

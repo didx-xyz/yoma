@@ -17,6 +17,9 @@ using Yoma.Core.Domain.Entity.Interfaces.Lookups;
 using Yoma.Core.Domain.Entity.Models;
 using Yoma.Core.Domain.Entity.Validators;
 using Yoma.Core.Domain.Lookups.Interfaces;
+using Yoma.Core.Domain.Referral;
+using Yoma.Core.Domain.Referral.Events;
+using Yoma.Core.Domain.Referral.Models;
 using Yoma.Core.Domain.SSI.Interfaces;
 
 namespace Yoma.Core.Domain.Entity.Services
@@ -38,6 +41,7 @@ namespace Yoma.Core.Domain.Entity.Services
     private readonly IRepository<UserSkillOrganization> _userSkillOrganizationRepository;
     private readonly IRepository<UserLoginHistory> _userLoginHistoryRepository;
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly IEventPublisher _eventPublisher;
     #endregion
 
     #region Constructor
@@ -55,22 +59,25 @@ namespace Yoma.Core.Domain.Entity.Services
         IRepository<UserSkill> userSkillRepository,
         IRepository<UserSkillOrganization> userSkillOrganizationRepository,
         IRepository<UserLoginHistory> userLoginHistoryRepository,
-        IExecutionStrategyService executionStrategyService)
+        IExecutionStrategyService executionStrategyService,
+        IEventPublisher eventPublisher)
     {
-      _appSettings = appSettings.Value;
-      _blobService = blobService;
-      _skillService = skillService;
-      _ssiTenantService = ssiTenantService;
-      _ssiCredentialService = ssiCredentialService;
-      _settingsDefinitionService = settingsDefinitionService;
-      _userRequestValidator = userValidator;
-      _userSearchFilterValidator = userSearchFilterValidator;
-      _settingsRequestValidator = settingsRequestValidator;
-      _userRepository = userRepository;
-      _userSkillRepository = userSkillRepository;
-      _userSkillOrganizationRepository = userSkillOrganizationRepository;
-      _userLoginHistoryRepository = userLoginHistoryRepository;
-      _executionStrategyService = executionStrategyService;
+      _appSettings = appSettings?.Value ?? throw new ArgumentNullException(nameof(appSettings));
+      _blobService = blobService ?? throw new ArgumentNullException(nameof(blobService));
+      _skillService = skillService ?? throw new ArgumentNullException(nameof(skillService));
+      _ssiTenantService = ssiTenantService ?? throw new ArgumentNullException(nameof(ssiTenantService));
+      _ssiCredentialService = ssiCredentialService ?? throw new ArgumentNullException(nameof(ssiCredentialService));
+      _settingsDefinitionService = settingsDefinitionService ?? throw new ArgumentNullException(nameof(settingsDefinitionService));
+      _userRequestValidator = userValidator ?? throw new ArgumentNullException(nameof(userValidator));
+      _userSearchFilterValidator = userSearchFilterValidator ?? throw new ArgumentNullException(nameof(userSearchFilterValidator));
+      _settingsRequestValidator = settingsRequestValidator ?? throw new ArgumentNullException(nameof(settingsRequestValidator));
+      _userRepository = userRepository ?? throw new ArgumentNullException(nameof(userRepository));
+      _userSkillRepository = userSkillRepository ?? throw new ArgumentNullException(nameof(userSkillRepository));
+      _userSkillOrganizationRepository = userSkillOrganizationRepository ?? throw new ArgumentNullException(nameof(userSkillOrganizationRepository));
+      _userLoginHistoryRepository = userLoginHistoryRepository ?? throw new ArgumentNullException(nameof(userLoginHistoryRepository));
+      _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
+      _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
+      _eventPublisher = eventPublisher ?? throw new ArgumentNullException(nameof(eventPublisher));
     }
     #endregion
 
@@ -308,6 +315,8 @@ namespace Yoma.Core.Domain.Entity.Services
 
       result = isNew ? await _userRepository.Create(result) : await _userRepository.Update(result);
 
+      await PublishReferralProgressEvent(result);
+
       return result;
     }
 
@@ -445,6 +454,8 @@ namespace Yoma.Core.Domain.Entity.Services
         scope.Complete();
       });
 
+      await PublishReferralProgressEvent(user);
+
       return user;
     }
 
@@ -492,6 +503,21 @@ namespace Yoma.Core.Domain.Entity.Services
     #endregion
 
     #region Private Members
+    // Raises a referral event of type 'IdentityAction'. Invoked by:
+    // - Upsert (above): syncs the user using the IdP as the source of truth, triggered by Keycloak events or opportunity verification imports (which act as a virtual IdP).
+    // - YoIDOnboard (below): raises another event of the same type, as it is a precondition for claiming and serves as a fallback to progress referrals.
+    private async Task PublishReferralProgressEvent(User user)
+    {
+
+      await _eventPublisher.Publish(new ReferralProgressTriggerEvent(new ReferralProgressTriggerMessage
+      {
+        Source = ReferralTriggerSource.IdentityAction,
+        UserId = user.Id,
+        Username = user.Username,
+        UserDisplayName = user.DisplayName
+      }));
+    }
+
     private string? GetBlobObjectURL(StorageType? storageType, string? key)
     {
       if (!storageType.HasValue || string.IsNullOrEmpty(key)) return null;

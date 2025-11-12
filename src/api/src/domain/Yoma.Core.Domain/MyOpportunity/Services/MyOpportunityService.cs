@@ -896,7 +896,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
           _delayedExecutionService.Reset();
 
-          using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew); //inner scopes inherit outer scopes isolation level 
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew); 
 
           await _linkService.LogUsage(link.Id);
 
@@ -1205,7 +1205,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       // PASS B — commit: single atomic transaction for the whole file
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew); //inner scopes inherit outer scopes isolation level
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew); 
 
         foreach (var (dto, row) in parsed)
           await ProcessImportVerification(request, dto, false);
@@ -1318,7 +1318,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
           _delayedExecutionService.Reset();
 
-          using var scope = TransactionScopeHelper.CreateSerializable(); //inner scopes inherit outer scopes isolation level
+          using var scope = TransactionScopeHelper.CreateReadCommitted();
 
           var requestVerify = new MyOpportunityRequestVerify { InstantOrImportedVerification = true }; //with instant or imported verifications, pending notifications are not sent
           await PerformActionSendForVerification(user, opportunity.Id, requestVerify, null, true); //any verification method
@@ -1383,7 +1383,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       NotificationType? notificationType = null;
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateSerializable(); //inner scopes inherit outer scopes isolation level
+        using var scope = TransactionScopeHelper.CreateReadCommitted();
 
         item.VerificationStatusId = statusId;
         item.CommentVerification = comment;

@@ -393,7 +393,7 @@ namespace Yoma.Core.Domain.Referral.Services
           // Process each usage independently; a broken row must not abort the batch
           await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
           {
-            using var scope = TransactionScopeHelper.CreateSerializable(TransactionScopeOption.RequiresNew);
+            using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
             var myUsage = _linkUsageRepository.Query().Single(o => o.Id == usageId);
             if (myUsage.Status != ReferralLinkUsageStatus.Pending) //state change between fetching the worklist and processing
