@@ -7,7 +7,7 @@ using Yoma.Core.Infrastructure.Shared.Entities;
 
 namespace Yoma.Core.Infrastructure.Database.Referral.Entities
 {
-  [Table("Program", Schema = "Referral")] 
+  [Table("Program", Schema = "Referral")]
   [Index(nameof(Name), IsUnique = true)]
   [Index(nameof(Description), nameof(StatusId), nameof(IsDefault), nameof(DateStart), nameof(DateEnd),
     nameof(DateCreated), nameof(DateModified))]

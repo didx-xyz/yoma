@@ -33,10 +33,10 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     public LinkUsageStatus Status { get; set; } = null!;
 
     [Column(TypeName = "decimal(8,2)")]
-    public decimal ? ZltoRewardReferrer { get; set; }
+    public decimal? ZltoRewardReferrer { get; set; }
 
     [Column(TypeName = "decimal(8,2)")]
-    public decimal ? ZltoRewardReferee { get; set; }
+    public decimal? ZltoRewardReferee { get; set; }
 
     [Required]
     public DateTimeOffset DateCreated { get; set; }

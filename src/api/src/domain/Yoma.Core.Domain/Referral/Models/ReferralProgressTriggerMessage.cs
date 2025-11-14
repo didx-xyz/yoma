@@ -1,5 +1,3 @@
-using Yoma.Core.Domain.IdentityProvider;
-
 namespace Yoma.Core.Domain.Referral.Models
 {
   public sealed class ReferralProgressTriggerMessage
@@ -14,6 +12,6 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public Guid? OpportunityId { get; set; }
 
-    public string? OpportunityTitle { get; set; } 
+    public string? OpportunityTitle { get; set; }
   }
 }

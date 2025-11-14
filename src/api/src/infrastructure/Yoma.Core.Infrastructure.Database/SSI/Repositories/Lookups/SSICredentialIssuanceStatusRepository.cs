@@ -10,7 +10,7 @@ namespace Yoma.Core.Infrastructure.Database.SSI.Repositories.Lookups
   public class SSICredentialIssuanceStatusRepository : BaseRepository<Entities.Lookups.SSICredentialIssuanceStatus, Guid>, IRepository<SSICredentialIssuanceStatus>
   {
     #region Constructor
-    public SSICredentialIssuanceStatusRepository(ApplicationDbContext context) : base(context)  {  }
+    public SSICredentialIssuanceStatusRepository(ApplicationDbContext context) : base(context) { }
     #endregion
 
     #region Public Members

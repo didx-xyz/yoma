@@ -236,32 +236,32 @@ namespace Yoma.Core.Domain.Referral.Services
       if (link.UserId == user.Id)
         throw new ValidationException("You cannot claim your own referral link");
 
-      // Prevents retroactive claims — only allowed within 10 minutes of onboarding
+      // Ensure onboarded (profile updated during registration flow)
       if (!user.DateYoIDOnboarded.HasValue)
         throw new ValidationException("You must complete your profile before claiming a referral link");
 
-      if (DateTimeOffset.UtcNow - user.DateYoIDOnboarded.Value > TimeSpan.FromMinutes(10))
+      // All usages by this user (any program)
+      var userUsages = _linkUsageRepository.Query().Where(u => u.UserId == user.Id).ToList();
+
+      // First claim only: prevents retroactive claims — only allowed within configured window after onboarding
+      if (userUsages.Count == 0 && DateTimeOffset.UtcNow - user.DateYoIDOnboarded.Value > TimeSpan.FromSeconds(_appSettings.ReferralFirstClaimSinceYoIDOnboardedTimeoutInSeconds))
         throw new ValidationException("You are already registered. Registration with a referral link only applies to new registrations");
 
-      // All usages by this user (any program)
-      var userUsages = _linkUsageRepository.Query().Where(u => u.UserId == user.Id);
+      if (_appSettings.ReferralRestrictRefereeToSingleProgram)
+      {
+        // Usages by this user (other programs)
+        var otherProgramsClaimed = userUsages.Where(u => u.ProgramId != program.Id).Select(o => o.ProgramName).Distinct().ToList();
 
-      // Block if user has participated in ANY OTHER program
-      var otherProgramsClaimed = userUsages
-        .Where(u => u.ProgramId != program.Id)
-        .Select(o => o.ProgramName)
-        .Distinct()
-        .ToList();
-
-      if (otherProgramsClaimed.Count > 0)
-        throw new ValidationException($"You have already participated in program(s) '{string.Join(", ", otherProgramsClaimed)}' and cannot claim again.");
+        // Block if user has participated in ANY OTHER program
+        if (otherProgramsClaimed.Count > 0)
+          throw new ValidationException($"You have already participated in program(s) '{string.Join(", ", otherProgramsClaimed)}' and cannot claim again.");
+      }
 
       // For THIS program: a user can have at most one usage (unique on UserId, ProgramId)
       var usagesForProgram = userUsages.Where(o => o.ProgramId == program.Id).ToList();
 
       if (usagesForProgram.Count > 1)
-        throw new DataInconsistencyException(
-          $"Data integrity violation: user '{user.Id}' has {usagesForProgram.Count} usage records for program '{program.Id}'. Expected at most one.");
+        throw new DataInconsistencyException($"Data integrity violation: user '{user.Id}' has {usagesForProgram.Count} usage records for program '{program.Id}'. Expected at most one.");
 
       var usageExisting = usagesForProgram.FirstOrDefault();
       if (usageExisting is not null)
@@ -638,8 +638,8 @@ namespace Yoma.Core.Domain.Referral.Services
             if ((rewardReferee ?? 0m) > 0m)
               await _rewardService.ScheduleRewardTransaction(myUsage.UserId, Reward.RewardTransactionEntityType.ReferralLinkUsage, myUsage.Id, rewardReferee!.Value);
 
-            //TODO: NotificationType.ReferralLink_Usage_Completed (sent to referrer / youth)
-            //TODO: NotificationType.ReferralUsage_Welcome (sent to referee / youth)
+            //TODO: NotificationType.ReferralLink_Completed_ReferrerAwarded (sent to referrer / youth)
+            //TODO: NotificationType.ReferralUsage_Completion (sent to referee / youth)
 
             scope.Complete();
           });
@@ -702,6 +702,7 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         Id = program.Pathway.Id,
         Name = program.Pathway.Name,
+        Description = program.Pathway.Description,
         Rule = program.Pathway.Rule,
         OrderMode = program.Pathway.OrderMode,
         IsCompletable = program.Pathway.IsCompletable,

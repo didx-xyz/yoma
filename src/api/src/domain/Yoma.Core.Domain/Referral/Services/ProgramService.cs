@@ -346,8 +346,6 @@ namespace Yoma.Core.Domain.Referral.Services
 
           result.Status = ProgramStatus.LimitReached;
           result.StatusId = _programStatusService.GetByName(ProgramStatus.LimitReached.ToString()).Id;
-
-          //notification not send ReferralProgram_LimitReached (sent to admin); explicit admin action
         }
         else
         {
@@ -481,8 +479,6 @@ namespace Yoma.Core.Domain.Referral.Services
             _logger.LogInformation("Program {ProgramId} activation resolved to LimitReached (cap hit: {Total}/{Limit})", result.Id, result.CompletionTotal, result.CompletionLimit);
 
             flipLinksToLimitReached = true;
-
-            //notification not send ReferralProgram_LimitReached (sent to admin); explicit admin action
           }
           else
             finalStatus = ProgramStatus.Active;
@@ -600,8 +596,6 @@ namespace Yoma.Core.Domain.Referral.Services
           program.StatusId = statusLimitReached.Id;
 
           await _linkMaintenanceService.LimitReachedByProgramId(program.Id, _logger);
-
-          //TODO: NotificationType.ReferralProgram_LimitReached (sent to admin)
         }
         else
         {

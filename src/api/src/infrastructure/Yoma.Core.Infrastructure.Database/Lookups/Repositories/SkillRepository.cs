@@ -21,7 +21,7 @@ namespace Yoma.Core.Infrastructure.Database.Lookups.Repositories
     #region Public Members
     public IQueryable<Domain.Lookups.Models.Skill> Query(LockMode lockMode)
     {
-       return Query().WithLock(lockMode);
+      return Query().WithLock(lockMode);
     }
 
     public IQueryable<Domain.Lookups.Models.Skill> Query()

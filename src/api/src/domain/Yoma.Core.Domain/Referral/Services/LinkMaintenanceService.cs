@@ -96,9 +96,6 @@ namespace Yoma.Core.Domain.Referral.Services
         logger.LogInformation("Flipped {Count} link(s) to limit reached for program {ProgramId}", g.Count, g.Key);
 
       logger.LogInformation("Flipped {Total} link(s) to limit reached across {ProgramCount} program(s)", items.Count, byProgram.Count());
-
-
-      //TODO: NotificationType.ReferralLink_LimitReached (sent to referrer / youth)
     }
 
     /// <summary>

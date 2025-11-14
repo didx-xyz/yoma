@@ -99,7 +99,7 @@ namespace Yoma.Core.Domain
       services.AddScoped<IDownloadService, DownloadService>();
       services.AddScoped<IDownloadBackgroundService, DownloadBackgroundService>();
       services.AddScoped<IEventPublisher, EventPublisher>();
-      services.AddScoped<IDelayedExecutionService, DelayedExecutionService>();  
+      services.AddScoped<IDelayedExecutionService, DelayedExecutionService>();
       #endregion Core
 
       #region Entity

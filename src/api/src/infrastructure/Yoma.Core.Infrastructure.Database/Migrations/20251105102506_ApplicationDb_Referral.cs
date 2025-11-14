@@ -602,7 +602,7 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
           principalTable: "LinkUsage",
           principalColumn: "Id");
 
-      ApplicationDb_Referral_Seeding.Seed(migrationBuilder);  
+      ApplicationDb_Referral_Seeding.Seed(migrationBuilder);
     }
 
     /// <inheritdoc />

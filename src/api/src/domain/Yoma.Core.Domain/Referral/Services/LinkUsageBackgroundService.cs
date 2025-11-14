@@ -39,7 +39,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _linkUsageStatusService = linkUsageStatusService ?? throw new ArgumentNullException(nameof(linkUsageStatusService));
 
       _linkUsageRepository = linkUsageRepository ?? throw new ArgumentNullException(nameof(linkUsageRepository));
-    } 
+    }
     #endregion
 
     #region Public Members
@@ -67,7 +67,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
           var items = _linkUsageRepository.Query().Where(o =>
             statusExpirableIds.Contains(o.StatusId) && o.ProgramCompletionWindowInDays.HasValue && o.DateClaimed <= now.AddDays(-o.ProgramCompletionWindowInDays.Value)).OrderBy(o => o.DateModified)
-           .Take(_scheduleJobOptions.ReferralLinkUsageExpirationScheduleBatchSize).ToList(); 
+           .Take(_scheduleJobOptions.ReferralLinkUsageExpirationScheduleBatchSize).ToList();
           if (items.Count == 0) break;
 
           items.ForEach(o =>

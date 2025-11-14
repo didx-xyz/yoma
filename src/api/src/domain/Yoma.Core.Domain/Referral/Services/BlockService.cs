@@ -69,7 +69,7 @@ namespace Yoma.Core.Domain.Referral.Services
     {
       ArgumentNullException.ThrowIfNull(request, nameof(request));
 
-      _blockRequestValidator.ValidateAndThrow(request); 
+      _blockRequestValidator.ValidateAndThrow(request);
 
       var user = _userService.GetById(request.UserId, false, false);
 

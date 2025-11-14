@@ -65,7 +65,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
     public ProgramInfo GetByLinkId(Guid linkId, bool includeChildItems, bool includeComputed)
     {
-      var result = _programService.GetByLinkId(linkId, includeChildItems, includeComputed); 
+      var result = _programService.GetByLinkId(linkId, includeChildItems, includeComputed);
 
       if (!HttpContextAccessorHelper.UserContextAvailable(_httpContextAccessor))
       {

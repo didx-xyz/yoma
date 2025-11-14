@@ -143,8 +143,6 @@ namespace Yoma.Core.Domain.Referral.Services
                     _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) set to LIMIT_REACHED instead of reactivation — cap hit (total {Total} >= limit {Limit})",
                       item.Name, item.Id, item.CompletionTotal ?? 0, item.CompletionLimit.Value);
 
-                    //TODO: NotificationType.ReferralProgram_LimitReached (sent to admin)
-
                     break;
                   }
 

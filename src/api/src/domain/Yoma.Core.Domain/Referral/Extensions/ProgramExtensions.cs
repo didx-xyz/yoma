@@ -46,7 +46,7 @@ namespace Yoma.Core.Domain.Referral.Extensions
             Name = step.Name,
             Description = step.Description,
             Rule = step.Rule,
-            OrderMode = step.OrderMode, 
+            OrderMode = step.OrderMode,
             Order = step.Order,
             OrderDisplay = step.OrderDisplay,
             IsCompletable = step.IsCompletable,

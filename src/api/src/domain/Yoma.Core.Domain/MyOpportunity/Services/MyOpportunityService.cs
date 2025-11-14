@@ -896,7 +896,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
         {
           _delayedExecutionService.Reset();
 
-          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew); 
+          using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
           await _linkService.LogUsage(link.Id);
 
@@ -1205,7 +1205,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
       // PASS B — commit: single atomic transaction for the whole file
       await _executionStrategyService.ExecuteInExecutionStrategyAsync(async () =>
       {
-        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew); 
+        using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
         foreach (var (dto, row) in parsed)
           await ProcessImportVerification(request, dto, false);
@@ -1536,7 +1536,7 @@ namespace Yoma.Core.Domain.MyOpportunity.Services
 
       if (opportunity.Status != Status.Active && (!includeExpiredAsAcceptable || opportunity.Status != Status.Expired))
         reasons.Add($"its status is '{opportunity.Status.ToDescription()}'");
-    
+
       if (opportunity.DateStart > DateTimeOffset.UtcNow)
         reasons.Add($"it has not yet started (start date: {opportunity.DateStart:yyyy-MM-dd})");
 

@@ -50,7 +50,7 @@ namespace Yoma.Core.Domain.Reward.Services
       _rewardService = rewardService;
       _myOpportunityService = myOpportunityService;
       _opportunityService = opportunityService;
-      _referralLinkUsageService = referralLinkUsageService; 
+      _referralLinkUsageService = referralLinkUsageService;
       _rewardProviderClient = rewardProviderClientFactory.CreateClient();
       _executionStrategyService = executionStrategyService;
       _distributedLockService = distributedLockService;
@@ -225,11 +225,11 @@ namespace Yoma.Core.Domain.Reward.Services
                   if (!item.ReferralLinkUsageId.HasValue)
                     throw new InvalidOperationException($"Source entity type '{item.SourceEntityType}': referral link usage id is null");
 
-                  var linkUsage = _referralLinkUsageService.GetById(item.ReferralLinkUsageId.Value, true, false, false);  
+                  var linkUsage = _referralLinkUsageService.GetById(item.ReferralLinkUsageId.Value, true, false, false);
 
                   request.Id = linkUsage.Id;
                   request.Title = linkUsage.ProgramName;
-                  request.Description = string.IsNullOrEmpty(linkUsage.ProgramDescription) ? "n/a" : linkUsage.ProgramDescription; 
+                  request.Description = string.IsNullOrEmpty(linkUsage.ProgramDescription) ? "n/a" : linkUsage.ProgramDescription;
                   request.Instructions = null;
                   request.Skills = null;
                   request.Countries = null;

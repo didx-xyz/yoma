@@ -16,6 +16,6 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int StepsTotal => Steps.Count;
 
-    public bool IsCompletable { get; set;  }
+    public bool IsCompletable { get; set; }
   }
 }

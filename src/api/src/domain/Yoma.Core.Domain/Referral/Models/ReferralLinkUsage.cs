@@ -16,7 +16,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string? ProgramDescription { get; set; }
 
-    public int? ProgramCompletionWindowInDays { get; set; } 
+    public int? ProgramCompletionWindowInDays { get; set; }
 
     public Guid LinkId { get; set; }
 

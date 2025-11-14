@@ -157,6 +157,10 @@ namespace Yoma.Core.Domain.Core.Models
     public int DistributedLockKeycloakEventDurationInSeconds { get; set; }
 
     public int DistributedLockReferralProgressDurationInSeconds { get; set; }
+
+    public bool ReferralRestrictRefereeToSingleProgram { get; set; }
+
+    public int ReferralFirstClaimSinceYoIDOnboardedTimeoutInSeconds { get; set; }
     #endregion
 
     #region Private Members

@@ -10,7 +10,6 @@ using Yoma.Core.Domain.Opportunity.Services;
 using Yoma.Core.Infrastructure.Database.Context;
 using Yoma.Core.Infrastructure.Database.Core.Repositories;
 using Yoma.Core.Infrastructure.Shared.Extensions;
-using static QRCoder.PayloadGenerator;
 
 namespace Yoma.Core.Infrastructure.Database.Opportunity.Repositories
 {

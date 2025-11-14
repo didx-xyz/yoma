@@ -32,7 +32,7 @@ namespace Yoma.Core.Domain.Referral.Models
     public decimal? ZltoRewardCumulative { get; set; }
 
     [JsonIgnore]
-    public decimal? ZltoRewardBalance => ZltoRewardPool.HasValue? ZltoRewardPool - (ZltoRewardCumulative ?? default) : null;
+    public decimal? ZltoRewardBalance => ZltoRewardPool.HasValue ? ZltoRewardPool - (ZltoRewardCumulative ?? default) : null;
 
     public bool ProofOfPersonhoodRequired { get; set; }
 

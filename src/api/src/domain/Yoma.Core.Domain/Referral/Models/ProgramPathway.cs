@@ -43,6 +43,6 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public bool IsCompletable => Steps == null
       || (Rule == PathwayCompletionRule.All && Steps.All(s => s.IsCompletable))
-      || (Rule == PathwayCompletionRule.Any && Steps.Any(s => s.IsCompletable));  
+      || (Rule == PathwayCompletionRule.Any && Steps.Any(s => s.IsCompletable));
   }
 }

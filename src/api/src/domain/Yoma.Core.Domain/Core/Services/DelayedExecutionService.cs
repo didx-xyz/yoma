@@ -24,7 +24,7 @@ namespace Yoma.Core.Domain.Core.Services
     {
       ArgumentNullException.ThrowIfNull(action);
 
-      name = name?.Trim() ?? null;  
+      name = name?.Trim() ?? null;
       meta = meta?.Trim() ?? null;
 
       _queue.Add((name, meta, action));

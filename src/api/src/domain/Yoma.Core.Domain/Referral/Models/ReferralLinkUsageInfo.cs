@@ -58,7 +58,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public bool Completed => ProofOfPersonhoodCompleted == true && PathwayCompleted == true;
 
-    public decimal? PercentComplete { get; set; }
+    public decimal? PercentComplete { get; set; } //TODO: Review logic to ensure most accurate value
 
     public ProgramPathwayProgress? Pathway { get; set; }
   }

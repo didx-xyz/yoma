@@ -29,4 +29,5 @@ namespace Yoma.Core.Domain.Core.Events
 
     public T Entity { get; init; }
     #endregion
-  }}
+  }
+}

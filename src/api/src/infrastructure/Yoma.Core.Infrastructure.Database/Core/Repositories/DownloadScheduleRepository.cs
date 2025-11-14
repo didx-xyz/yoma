@@ -16,7 +16,7 @@ namespace Yoma.Core.Infrastructure.Database.Core.Repositories
     #region Public Members
     public IQueryable<DownloadSchedule> Query(LockMode lockMode)
     {
-      return Query().WithLock(lockMode);  
+      return Query().WithLock(lockMode);
     }
 
     public IQueryable<DownloadSchedule> Query()

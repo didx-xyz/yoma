@@ -111,7 +111,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
       entity.StatusId = item.StatusId;
       entity.ZltoRewardReferrer = item.ZltoRewardReferrer;
-      entity.ZltoRewardReferee = item.ZltoRewardReferee;  
+      entity.ZltoRewardReferee = item.ZltoRewardReferee;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();
@@ -135,7 +135,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
         entity.StatusId = item.StatusId;
         entity.ZltoRewardReferrer = item.ZltoRewardReferrer;
-        entity.ZltoRewardReferee = item.ZltoRewardReferee;  
+        entity.ZltoRewardReferee = item.ZltoRewardReferee;
         entity.DateModified = item.DateModified;
       }
 

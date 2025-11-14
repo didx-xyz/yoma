@@ -64,7 +64,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       IRepositoryBatchedValueContainsWithNavigation<ReferralLink> linkRepository)
     {
-      _logger = logger ?? throw new ArgumentNullException(nameof(logger));  
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _appSettings = appSettings.Value ?? throw new ArgumentNullException(nameof(appSettings));
 
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
@@ -253,6 +253,7 @@ namespace Yoma.Core.Domain.Referral.Services
         Description = request.Description,
         ProgramId = program.Id,
         ProgramName = program.Name,
+        ProgramDescription = program.Description,
         ProgramCompletionLimitReferee = program.CompletionLimitReferee,
         UserId = user.Id,
         UserDisplayName = user.DisplayName,

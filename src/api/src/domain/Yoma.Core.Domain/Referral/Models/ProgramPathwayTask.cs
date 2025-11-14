@@ -36,6 +36,6 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public bool IsCompletable => Opportunity == null || Opportunity.IsCompletable;
 
-    public string? NonCompletableReason => Opportunity?.NonCompletableReason; 
+    public string? NonCompletableReason => Opportunity?.NonCompletableReason;
   }
 }

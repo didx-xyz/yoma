@@ -12,7 +12,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Entities
     [Required]
     [ForeignKey("PathwayId")]
     public Guid StepId { get; set; }
-    public ProgramPathwayStep Step { get; set; } = null!;  
+    public ProgramPathwayStep Step { get; set; } = null!;
 
     [Required]
     [Column(TypeName = "varchar(25)")]

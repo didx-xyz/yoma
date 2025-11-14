@@ -21,6 +21,8 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string ProgramName { get; set; } = null!;
 
+    public string? ProgramDescription { get; set; }
+
     public int? ProgramCompletionLimitReferee { get; set; }
 
     public Guid UserId { get; set; }
@@ -31,7 +33,7 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string? UserPhoneNumber { get; set; }
 
-    public bool Blocked { get;set; }
+    public bool Blocked { get; set; }
 
     public DateTimeOffset? BlockedDate { get; set; }
 

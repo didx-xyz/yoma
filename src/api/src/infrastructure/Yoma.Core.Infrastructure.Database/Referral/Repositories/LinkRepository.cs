@@ -24,7 +24,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
 
     public IQueryable<ReferralLink> Query(bool includeChildItems, LockMode lockMode)
     {
-       return Query(includeChildItems).WithLock(lockMode);
+      return Query(includeChildItems).WithLock(lockMode);
     }
 
     public IQueryable<ReferralLink> Query(LockMode lockMode)
@@ -41,6 +41,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         Description = entity.Description,
         ProgramId = entity.ProgramId,
         ProgramName = entity.Program.Name,
+        ProgramDescription = entity.Program.Description,
         ProgramCompletionLimitReferee = entity.Program.CompletionLimitReferee,
         UserId = entity.UserId,
         UserDisplayName = entity.User.DisplayName,
@@ -179,7 +180,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       entity.Description = item.Description;
       entity.StatusId = item.StatusId;
       entity.CompletionTotal = item.CompletionTotal;
-      entity.ZltoRewardCumulative = item.ZltoRewardCumulative;  
+      entity.ZltoRewardCumulative = item.ZltoRewardCumulative;
       entity.DateModified = item.DateModified;
 
       await _context.SaveChangesAsync();

@@ -2,7 +2,7 @@ namespace Yoma.Core.Domain.Analytics.Models
 {
   public class OrganizationSearchResultsEngagement
   {
-    public OrganizationOpportunity Opportunities { get; set; } = null!;  
+    public OrganizationOpportunity Opportunities { get; set; } = null!;
 
     public OrganizationOpportunitySkill Skills { get; set; } = null!;
 

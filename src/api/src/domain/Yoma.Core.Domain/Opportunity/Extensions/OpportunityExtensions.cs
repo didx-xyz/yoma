@@ -188,7 +188,7 @@ namespace Yoma.Core.Domain.Opportunity.Extensions
       if (item.Status != Status.Active && item.Status != Status.Expired)
         reasons.Add($"its status is '{item.Status.ToDescription()}'");
 
-      if (item.DateStart > DateTimeOffset.UtcNow )
+      if (item.DateStart > DateTimeOffset.UtcNow)
         reasons.Add($"it has not yet started (start date: {item.DateStart:yyyy-MM-dd})");
 
       if (!item.VerificationEnabled)

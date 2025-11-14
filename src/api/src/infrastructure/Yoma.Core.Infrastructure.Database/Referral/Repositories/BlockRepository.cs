@@ -35,7 +35,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         CreatedByUserId = entity.CreatedByUserId,
         DateModified = entity.DateModified,
         ModifiedByUserId = entity.ModifiedByUserId
-      }); 
+      });
     }
 
     public async Task<Block> Create(Block item)
