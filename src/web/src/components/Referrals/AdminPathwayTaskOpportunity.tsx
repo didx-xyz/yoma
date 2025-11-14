@@ -3,12 +3,12 @@ import type { Opportunity } from "~/api/models/opportunity";
 import { getOpportunityById } from "~/api/services/opportunities";
 import OpportunityPublicSmallRow from "../Opportunity/OpportunityPublicSmallRow";
 
-interface PathwayTaskOpportunityProps {
+interface AdminPathwayTaskOpportunityProps {
   opportunityId: string;
   mockOpportunity?: Opportunity;
 }
 
-const PathwayTaskOpportunity: React.FC<PathwayTaskOpportunityProps> = ({
+const AdminPathwayTaskOpportunity: React.FC<AdminPathwayTaskOpportunityProps> = ({
   opportunityId,
   mockOpportunity,
 }) => {
@@ -43,4 +43,4 @@ const PathwayTaskOpportunity: React.FC<PathwayTaskOpportunityProps> = ({
   return <OpportunityPublicSmallRow opportunity={displayOpportunity} />;
 };
 
-export default PathwayTaskOpportunity;
+export default AdminPathwayTaskOpportunity;

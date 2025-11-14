@@ -7,7 +7,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import Moment from "react-moment";
 import type { ReferralLinkUsageInfo } from "~/api/models/referrals";
@@ -205,6 +204,11 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
                     >
                       {usage?.programName ?? "N/A"}
                     </Link>
+                    {usage?.programDescription && (
+                      <div className="mt-1 text-xs text-gray-600">
+                        {usage.programDescription}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -286,6 +290,23 @@ const ReferralLinkUsageInfo: NextPageWithLayout<{
                       </span>
                     ) : (
                       <span className="text-gray-500">Not completed</span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="flex">
+                  <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
+                    All Requirements Met
+                  </div>
+                  <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
+                    {usage?.completed ? (
+                      <span className="badge badge-success badge-sm">
+                        ✓ Yes
+                      </span>
+                    ) : (
+                      <span className="text-gray-500">
+                        No (Pending pathway completion or proof of personhood)
+                      </span>
                     )}
                   </div>
                 </div>

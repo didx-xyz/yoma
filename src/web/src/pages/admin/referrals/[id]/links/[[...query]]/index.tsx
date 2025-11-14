@@ -25,8 +25,8 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import {
   ReferralLinkFilterOptions,
   ReferralLinkSearchFilters,
-} from "~/components/Referrals/ReferralLinkSearchFilter";
-import { ReferralLinkActions } from "~/components/Referrals/ReferralLinkActions";
+} from "~/components/Referrals/AdminReferralLinkSearchFilter";
+import { AdminReferralLinkActions } from "~/components/Referrals/AdminReferralLinkActions";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -518,7 +518,7 @@ const ReferralLinks: NextPageWithLayout<{
                             {link.name}
                           </p>
                         </div>
-                        <ReferralLinkActions
+                        <AdminReferralLinkActions
                           link={link}
                           returnUrl={getSafeUrl(
                             returnUrl?.toString(),
@@ -610,15 +610,26 @@ const ReferralLinks: NextPageWithLayout<{
 
                         {/* Statistics */}
                         <div className="flex justify-between">
-                          <p className="text-sm tracking-wider">Pending</p>
-                          <span className="text-sm font-semibold">
-                            {getTotalFromUsageCounts(link.usageCounts)}
-                          </span>
-                        </div>
-                        <div className="flex justify-between">
                           <p className="text-sm tracking-wider">Completed</p>
                           <span className="text-sm font-semibold">
-                            {getTotalFromUsageCounts(link.usageCounts)}
+                            {link.completionTotal ?? 0}
+                          </span>
+                        </div>
+                        {link.programCompletionLimitReferee !== null &&
+                          link.completionBalance !== null && (
+                            <div className="flex justify-between">
+                              <p className="text-sm tracking-wider">
+                                Remaining
+                              </p>
+                              <span className="badge bg-blue-light text-blue text-xs">
+                                {link.completionBalance}
+                              </span>
+                            </div>
+                          )}
+                        <div className="flex justify-between">
+                          <p className="text-sm tracking-wider">Pending</p>
+                          <span className="text-sm font-semibold">
+                            {link.pendingTotal ?? 0}
                           </span>
                         </div>
                         <div className="flex justify-between">
@@ -742,19 +753,28 @@ const ReferralLinks: NextPageWithLayout<{
                           <div className="flex flex-col gap-1 text-xs">
                             <div className="flex gap-2">
                               <span className="text-gray-dark w-20 font-bold">
-                                Pending:
-                              </span>
-                              <span>
-                                {getTotalFromUsageCounts(link.usageCounts)}
-                              </span>
-                            </div>
-                            <div className="flex gap-2">
-                              <span className="text-gray-dark w-20 font-bold">
                                 Completed:
                               </span>
                               <span className="font-semibold">
-                                {getTotalFromUsageCounts(link.usageCounts)}
+                                {link.completionTotal ?? 0}
                               </span>
+                            </div>
+                            {link.programCompletionLimitReferee !== null &&
+                              link.completionBalance !== null && (
+                                <div className="flex gap-2">
+                                  <span className="text-gray-dark w-20 font-bold">
+                                    Remaining:
+                                  </span>
+                                  <span className="badge bg-blue-light text-blue text-xs">
+                                    {link.completionBalance}
+                                  </span>
+                                </div>
+                              )}
+                            <div className="flex gap-2">
+                              <span className="text-gray-dark w-20 font-bold">
+                                Pending:
+                              </span>
+                              <span>{link.pendingTotal ?? 0}</span>
                             </div>
                             <div className="flex gap-2">
                               <span className="text-gray-dark w-20 font-bold">
@@ -772,7 +792,7 @@ const ReferralLinks: NextPageWithLayout<{
                           </span>
                         </td>*/}
                         <td className="border-gray-light border-b-2 text-center !align-top">
-                          <ReferralLinkActions
+                          <AdminReferralLinkActions
                             link={link}
                             returnUrl={getSafeUrl(
                               returnUrl?.toString(),

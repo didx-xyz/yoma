@@ -27,8 +27,8 @@ import { PaginationButtons } from "~/components/PaginationButtons";
 import {
   ReferralLinkUsageFilterOptions,
   ReferralLinkUsageSearchFilters,
-} from "~/components/Referrals/ReferralLinkUsageSearchFilter";
-import { ReferralLinkUsageActions } from "~/components/Referrals/ReferralLinkUsageActions";
+} from "~/components/Referrals/AdminReferralLinkUsageSearchFilter";
+import { AdminReferralLinkUsageActions } from "~/components/Referrals/AdminReferralLinkUsageActions";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -95,7 +95,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
     const [usagesData, programData, linkData] = await Promise.all([
       searchReferralLinkUsagesAdmin(searchFilter, context),
       getReferralProgramById(id.toString(), context),
-      getReferralLinkById(linkId.toString(), context),
+      getReferralLinkById(linkId.toString(), false, context),
     ]);
 
     await queryClient.prefetchQuery({
@@ -577,7 +577,7 @@ const ReferralLinkUsage: NextPageWithLayout<{
                             </p>
                           )}
                         </div>
-                        <ReferralLinkUsageActions
+                        <AdminReferralLinkUsageActions
                           usage={usage}
                           returnUrl={getSafeUrl(
                             returnUrl?.toString(),
@@ -813,7 +813,7 @@ const ReferralLinkUsage: NextPageWithLayout<{
                           </div>
                         </td>
                         <td className="border-gray-light border-b-2 text-center !align-top">
-                          <ReferralLinkUsageActions
+                          <AdminReferralLinkUsageActions
                             usage={usage}
                             returnUrl={getSafeUrl(
                               returnUrl?.toString(),

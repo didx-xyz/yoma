@@ -4,6 +4,7 @@ import { IoIosCheckmarkCircle, IoMdClose } from "react-icons/io";
 import Moment from "react-moment";
 import {
   Program,
+  ProgramInfo,
   ProgramPathwayProgress,
   PathwayCompletionRule,
   PathwayTaskEntityType,
@@ -12,6 +13,7 @@ import { DATE_FORMAT_HUMAN } from "~/lib/constants";
 import { ProgramPathwayProgressComponent } from "./ProgramPathwayProgress";
 import { useMemo } from "react";
 import { AvatarImage } from "../AvatarImage";
+import { ProgramPathwayView } from "./ProgramPathwayView";
 
 export enum ProgramInfoFilterOptions {
   PROGRAM_INFO = "programInfo",
@@ -22,13 +24,14 @@ export enum ProgramInfoFilterOptions {
   AUDIT_INFO = "auditInfo",
 }
 
-interface ProgramInfoProps {
+interface AdminProgramInfoProps {
   program: Program;
   filterOptions?: ProgramInfoFilterOptions[];
+  isExpanded?: boolean;
   imagePreviewUrl?: string | null;
 }
 
-export const ProgramInfo: React.FC<ProgramInfoProps> = ({
+export const AdminProgramInfo: React.FC<AdminProgramInfoProps> = ({
   program,
   filterOptions = [
     ProgramInfoFilterOptions.PROGRAM_INFO,
@@ -55,6 +58,7 @@ export const ProgramInfo: React.FC<ProgramInfoProps> = ({
       stepsTotal: program.pathway.steps?.length ?? 0,
       stepsCompleted: 0,
       percentComplete: 0,
+      isCompletable: true,
       steps:
         program.pathway.steps?.map((step) => ({
           id: step.id,
@@ -69,6 +73,7 @@ export const ProgramInfo: React.FC<ProgramInfoProps> = ({
           tasksTotal: step.tasks?.length ?? 0,
           tasksCompleted: 0,
           percentComplete: 0,
+          isCompletable: true,
           tasks:
             step.tasks?.map((task) => ({
               id: task.id,
@@ -87,6 +92,8 @@ export const ProgramInfo: React.FC<ProgramInfoProps> = ({
               orderDisplay: task.orderDisplay ?? 0,
               completed: false,
               dateCompleted: null,
+              isCompletable: true,
+              nonCompletableReason: null,
             })) ?? [],
         })) ?? [],
     };
@@ -210,6 +217,9 @@ export const ProgramInfo: React.FC<ProgramInfoProps> = ({
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                   Referrer Cap
+                  <div className="text-xs font-normal text-gray-500">
+                    (Per referrer limit)
+                  </div>
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
                   {program?.completionLimitReferee ?? "No limit"}
@@ -219,6 +229,9 @@ export const ProgramInfo: React.FC<ProgramInfoProps> = ({
               <div className="flex">
                 <div className="w-40 border border-gray-200 bg-gray-50 px-4 py-2 text-sm font-medium text-gray-700">
                   Program Cap
+                  <div className="text-xs font-normal text-gray-500">
+                    (Total program limit)
+                  </div>
                 </div>
                 <div className="flex-1 border border-gray-200 px-4 py-2 text-sm hover:bg-gray-100">
                   {program?.completionLimit ?? "No limit"}
@@ -451,7 +464,7 @@ export const ProgramInfo: React.FC<ProgramInfoProps> = ({
           </h2>
           <div className="overflow-x-auto">
             {pathwayProgress ? (
-              <ProgramPathwayProgressComponent pathway={pathwayProgress} />
+              <ProgramPathwayView pathway={program.pathway as any} />
             ) : (
               <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                 <p className="text-sm text-gray-500">No pathway configured</p>

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { IoMdCheckmarkCircle, IoMdClose } from "react-icons/io";
 import { IoGift } from "react-icons/io5";
-import { FaLink } from "react-icons/fa";
+import { FaLink, FaRoad } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import type { ProgramInfo, ReferralLink } from "~/api/models/referrals";
@@ -16,11 +16,11 @@ import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormToggle from "~/components/Common/FormToggle";
-import { ProgramCard } from "./ProgramCard";
+import { RefereeProgramDetails } from "./RefereeProgramDetails";
 import { ProgramRequirements } from "./ProgramRequirements";
-import { LinkDetails } from "./LinkDetails";
+import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
 import { ShareButtons } from "./ShareButtons";
-import { ProgramsList } from "./ProgramsList";
+import { ReferrerProgramsList } from "./ReferrerProgramsList";
 import { ApiErrors } from "../Status/ApiErrors";
 import { AxiosError } from "axios";
 
@@ -51,7 +51,7 @@ const linkFormSchema = z.object({
 
 type LinkFormData = z.infer<typeof linkFormSchema>;
 
-export const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
+export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
   programs,
   selectedProgram,
   editLink,
@@ -292,7 +292,7 @@ export const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
               )}
 
               {programs.length > 0 && (
-                <ProgramsList
+                <ReferrerProgramsList
                   onProgramClick={handleProgramSelect}
                   onCreateLink={handleProgramSelect}
                   initialPageSize={5}
@@ -366,7 +366,11 @@ export const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
                     </h3>
                   </div>
                   <div className="bg-white">
-                    <ProgramCard program={currentProgram} context="preview" />
+                    <RefereeProgramDetails
+                      program={currentProgram}
+                      context="preview"
+                      perspective="referrer"
+                    />
                   </div>
                 </div>
                 <ProgramRequirements
@@ -558,7 +562,7 @@ export const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
               </div>
 
               {/* Link Details Card */}
-              <LinkDetails
+              <ReferrerLinkDetails
                 link={createdLink}
                 mode="large"
                 showQRCode={true}
@@ -567,8 +571,11 @@ export const CreateLinkModal: React.FC<CreateLinkModalProps> = ({
 
               {/* Next Steps */}
               <div className="rounded-lg border-2 border-dashed border-blue-300 bg-blue-50 p-4">
-                <h4 className="mb-2 font-semibold text-blue-900">
-                  🎯 What's Next?
+                <h4 className="mb-2 flex items-center gap-2 font-semibold text-blue-900">
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-purple-400 to-purple-600">
+                    <FaRoad className="h-2.5 w-2.5 text-white" />
+                  </span>
+                  What's Next?
                 </h4>
                 <ul className="space-y-1 text-sm text-blue-800">
                   <li>📢 Share your link with friends and family</li>

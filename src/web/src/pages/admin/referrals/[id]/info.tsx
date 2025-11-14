@@ -8,7 +8,6 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { type ParsedUrlQuery } from "querystring";
 import { type ReactElement } from "react";
-import "react-datepicker/dist/react-datepicker.css";
 import { IoMdArrowRoundBack } from "react-icons/io";
 import { Program } from "~/api/models/referrals";
 import { getReferralProgramById } from "~/api/services/referrals";
@@ -24,8 +23,8 @@ import type { NextPageWithLayout } from "~/pages/_app";
 import { authOptions, type User } from "~/server/auth";
 import {
   ReferralProgramActionOptions,
-  ReferralProgramActions,
-} from "~/components/Referrals/ReferralProgramActions";
+  AdminReferralProgramActions,
+} from "~/components/Referrals/AdminReferralProgramActions";
 import {
   ProgramInfo,
   ProgramInfoFilterOptions,
@@ -154,7 +153,7 @@ const ReferralProgramInfo: NextPageWithLayout<{
             </div>
 
             {program && (
-              <ReferralProgramActions
+              <AdminReferralProgramActions
                 program={program}
                 returnUrl={returnUrl?.toString()}
                 actionOptions={[

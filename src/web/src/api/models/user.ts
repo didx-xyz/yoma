@@ -73,6 +73,20 @@ export interface UserProfile {
 export interface UserProfileReferral {
   blocked: boolean;
   blockedDate: string | null;
+  linkUsages: ReferralLinkUsageItem[] | null;
+}
+
+export interface ReferralLinkUsageItem {
+  id: string;
+  status: ReferralLinkUsageStatus | string;
+  programId: string;
+  programName: string;
+  dateClaimed: string;
+}
+export enum ReferralLinkUsageStatus {
+  Pending,
+  Completed,
+  Expired,
 }
 
 export interface UserProfileZlto {

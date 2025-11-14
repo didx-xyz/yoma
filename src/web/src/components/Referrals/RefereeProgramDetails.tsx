@@ -10,25 +10,29 @@ import {
 import type { ProgramInfo } from "~/api/models/referrals";
 import ProgramBadges from "./ProgramBadges";
 
-interface ProgramCardProps {
+export interface ProgramDetailsProps {
   program: ProgramInfo;
+  perspective: "referrer" | "referee";
+  isExpanded?: boolean;
+  // Referrer-specific props
   onClick?: () => void;
   onCreateLink?: () => void;
   selected?: boolean;
   className?: string;
-  // Context for button behavior
   context?: "list" | "select" | "preview"; // list=Create Link, select=Select Program, preview=hide button
 }
 
-export const ProgramCard: React.FC<ProgramCardProps> = ({
+export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
   program,
+  perspective,
+  isExpanded = false,
   onClick,
   onCreateLink,
   selected = false,
   className = "",
   context = "list",
 }) => {
-  const [showDetails, setShowDetails] = useState(false);
+  const [showDetails, setShowDetails] = useState(isExpanded);
 
   const handleToggleDetails = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -36,32 +40,57 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({
     setShowDetails(!showDetails);
   };
 
+  // Theme colors based on perspective
+  const themeColors = {
+    referrer: {
+      border: "border-orange-200",
+      bg: "from-orange-50 to-white",
+      headerBg: "from-orange-50",
+      headerBorder: "border-orange-100",
+      textPrimary: "text-orange-900",
+      textSecondary: "text-orange-700",
+      buttonBorder: "border-orange-300",
+      buttonText: "text-orange-600",
+      buttonHover: "hover:bg-orange-100",
+      dividerBorder: "border-orange-100",
+    },
+    referee: {
+      border: "border-purple-200",
+      bg: "from-purple-50 to-white",
+      headerBg: "from-purple-50",
+      headerBorder: "border-purple-100",
+      textPrimary: "text-purple-900",
+      textSecondary: "text-purple-700",
+      buttonBorder: "border-purple-300",
+      buttonText: "text-purple-600",
+      buttonHover: "hover:bg-purple-100",
+      dividerBorder: "border-purple-100",
+    },
+  };
+
+  const theme = themeColors[perspective];
+
   return (
     <div
       className={`group overflow-hidden rounded-xl border-2 bg-gradient-to-br shadow-md transition-all hover:shadow-lg ${
         selected
-          ? "border-orange-400 from-orange-100 to-white"
-          : "border-orange-200 from-orange-50 to-white"
+          ? `${theme.border.replace("200", "400")} ${theme.bg.replace("50", "100")}`
+          : `${theme.border} ${theme.bg}`
       } ${className}`}
     >
       {/* Header Section */}
       <div
         onClick={onClick}
-        className={`border-b border-orange-100 bg-gradient-to-r from-orange-50 to-transparent px-4 py-2 ${
+        className={`border-b ${theme.headerBorder} bg-gradient-to-r ${theme.headerBg} to-transparent px-4 py-2 ${
           onClick ? "cursor-pointer" : ""
         }`}
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            {/* Pathway Name */}
-            {program.pathway && (
-              <p className="mb-1 text-xs font-medium text-orange-700">
-                🎯 {program.pathway.name}
-              </p>
-            )}
-
             {/* Title */}
-            <h3 className="mb-1 line-clamp-1 text-sm font-bold text-orange-900 transition-colors hover:text-orange-700">
+            <h3
+              className={`mb-1 line-clamp-1 text-sm font-bold ${theme.textPrimary} ${onClick ? "hover:text-opacity-80 transition-colors" : ""}`}
+            >
               {program.name}
             </h3>
 
@@ -95,7 +124,7 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({
 
         {/* Action Buttons Row */}
         <div className="mt-3 flex gap-2">
-          {context !== "preview" && (
+          {perspective === "referrer" && context !== "preview" && (
             <button
               type="button"
               onClick={(e) => {
@@ -130,8 +159,10 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({
           <button
             type="button"
             onClick={handleToggleDetails}
-            className={`btn btn-sm gap-1 border-orange-300 bg-transparent text-orange-600 hover:bg-orange-100 ${
-              context === "preview" ? "mx-auto" : ""
+            className={`btn btn-sm gap-1 ${theme.buttonBorder} bg-transparent ${theme.buttonText} ${theme.buttonHover} ${
+              perspective === "referee" || context === "preview"
+                ? "mx-auto"
+                : ""
             }`}
           >
             {showDetails ? (
@@ -150,15 +181,51 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({
 
         {/* Expandable Details */}
         {showDetails && (
-          <div className="animate-fade-in mt-3 space-y-3 border-t border-orange-100 pt-3">
+          <div
+            className={`animate-fade-in mt-3 space-y-3 border-t ${theme.dividerBorder} pt-3`}
+          >
             {/* DETAILS Section */}
             <div className="space-y-2">
-              <h4 className="text-xs font-bold text-orange-900">Details</h4>
+              <h4 className={`text-xs font-bold ${theme.textPrimary}`}>
+                Details
+              </h4>
 
               {/* Rewards - Always show, even if none */}
               <div className="space-y-2">
-                {program.zltoRewardReferrer !== null ||
-                program.zltoRewardReferee !== null ? (
+                {perspective === "referee" &&
+                (program.zltoRewardReferee !== null ||
+                  program.zltoRewardReferrer !== null) ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    {program.zltoRewardReferee !== null && (
+                      <div className="rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-white p-2 shadow-sm">
+                        <p className="text-xs font-medium text-green-700">
+                          Your Reward 🎁
+                        </p>
+                        <p className="text-sm font-bold text-green-900">
+                          {program.zltoRewardReferee.toLocaleString()} ZLTO
+                        </p>
+                        <p className="text-[10px] text-gray-600">
+                          When you complete
+                        </p>
+                      </div>
+                    )}
+                    {program.zltoRewardReferrer !== null && (
+                      <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-2 shadow-sm">
+                        <p className="text-xs font-medium text-blue-700">
+                          Friend's Reward 🤝
+                        </p>
+                        <p className="text-sm font-bold text-blue-900">
+                          {program.zltoRewardReferrer.toLocaleString()} ZLTO
+                        </p>
+                        <p className="text-[10px] text-gray-600">
+                          For who referred you
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                ) : perspective === "referrer" &&
+                  (program.zltoRewardReferrer !== null ||
+                    program.zltoRewardReferee !== null) ? (
                   <div className="grid grid-cols-2 gap-2">
                     {program.zltoRewardReferrer !== null && (
                       <div className="rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-white p-2 shadow-sm">
@@ -199,67 +266,96 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({
                 )}
               </div>
 
-              {/* Limits & Window - Always show, even if none */}
+              {/* Timeline */}
               <div className="space-y-2">
-                <div className="grid grid-cols-2 gap-2">
-                  {/* Max Referrals */}
-                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-2">
-                    <p className="text-xs font-semibold text-orange-700">
-                      Max Referrals
-                    </p>
-                    <p className="text-sm font-bold text-orange-900">
-                      {program.completionLimitReferee === null ||
-                      program.completionLimitReferee === 0
-                        ? "Unlimited"
-                        : program.completionLimitReferee.toLocaleString()}
-                    </p>
-                    <p className="text-[10px] text-gray-600">
-                      {program.completionLimitReferee === null ||
-                      program.completionLimitReferee === 0
-                        ? "No limit on referrals"
-                        : `You can refer up to ${program.completionLimitReferee}`}{" "}
-                      people
-                    </p>
-                  </div>
+                <div
+                  className={`grid ${perspective === "referrer" ? "grid-cols-2" : "grid-cols-2"} gap-2`}
+                >
+                  {perspective === "referrer" && (
+                    <div
+                      className={`rounded-lg border ${theme.border} bg-gradient-to-br ${theme.bg} p-2`}
+                    >
+                      <p
+                        className={`text-xs font-semibold ${theme.textSecondary}`}
+                      >
+                        Max Referrals
+                      </p>
+                      <p className={`text-sm font-bold ${theme.textPrimary}`}>
+                        {program.completionLimitReferee === null ||
+                        program.completionLimitReferee === 0
+                          ? "Unlimited"
+                          : program.completionLimitReferee.toLocaleString()}
+                      </p>
+                      <p className="text-[10px] text-gray-600">
+                        {program.completionLimitReferee === null ||
+                        program.completionLimitReferee === 0
+                          ? "No limit on referrals"
+                          : `You can refer up to ${program.completionLimitReferee} people`}
+                      </p>
+                    </div>
+                  )}
 
                   {/* Completion Window */}
-                  <div className="rounded-lg border border-orange-200 bg-orange-50 p-2">
-                    <p className="text-xs font-semibold text-orange-700">
-                      Completion Window
+                  <div
+                    className={`rounded-lg border ${theme.border} bg-gradient-to-br ${theme.bg} p-2`}
+                  >
+                    <p
+                      className={`text-xs font-semibold ${theme.textSecondary}`}
+                    >
+                      {perspective === "referrer"
+                        ? "Completion Window"
+                        : "Time to Complete"}
                     </p>
-                    <p className="text-sm font-bold text-orange-900">
+                    <p className={`text-sm font-bold ${theme.textPrimary}`}>
                       {program.completionWindowInDays !== null
                         ? `${program.completionWindowInDays} days`
                         : "No limit"}
                     </p>
                     <p className="text-[10px] text-gray-600">
                       {program.completionWindowInDays !== null
-                        ? `They have ${program.completionWindowInDays} days to complete the program`
-                        : "No time restriction"}
+                        ? perspective === "referrer"
+                          ? `They have ${program.completionWindowInDays} days to complete the program`
+                          : `Complete within ${program.completionWindowInDays} days after claiming`
+                        : perspective === "referrer"
+                          ? "No time restriction"
+                          : "Take your time - no deadline!"}
+                    </p>
+                  </div>
+
+                  {/* Start Date */}
+                  <div
+                    className={`rounded-lg border ${theme.border} bg-gradient-to-br ${theme.bg} p-2`}
+                  >
+                    <p
+                      className={`text-xs font-semibold ${theme.textSecondary}`}
+                    >
+                      {perspective === "referrer"
+                        ? "Start Date"
+                        : "Program Start Date"}
+                    </p>
+                    <p className={`text-sm font-bold ${theme.textPrimary}`}>
+                      {new Date(program.dateStart).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })}
+                    </p>
+                    <p className="text-[10px] text-gray-600">
+                      {perspective === "referrer"
+                        ? "Program launched"
+                        : "When it started"}
                     </p>
                   </div>
                 </div>
               </div>
-
-              {/* Start Date */}
-              <div className="rounded-lg bg-gray-50 p-2">
-                <p className="text-[10px] font-semibold text-gray-700">
-                  Start Date
-                </p>
-                <p className="text-xs text-gray-900">
-                  {new Date(program.dateStart).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                  })}
-                </p>
-              </div>
             </div>
 
             {/* REQUIREMENTS Section */}
-            <div className="space-y-2 border-t border-orange-100 pt-3">
-              <h4 className="text-xs font-bold text-orange-900">
-                Program Requirements
+            <div className={`space-y-2 border-t ${theme.dividerBorder} pt-3`}>
+              <h4 className={`text-xs font-bold ${theme.textPrimary}`}>
+                {perspective === "referrer"
+                  ? "Program Requirements"
+                  : "What You Need to Do"}
               </h4>
 
               {program.proofOfPersonhoodRequired || program.pathwayRequired ? (
@@ -268,12 +364,14 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({
                     <div className="flex items-center gap-2 rounded-lg">
                       <span className="badge badge-sm flex-shrink-0 bg-blue-100 text-blue-700">
                         <IoCheckmarkCircle className="h-4 w-4" />
-                        <span className="ml-1">Proof of Person Required</span>
+                        <span className="ml-1">Proof of Person</span>
                       </span>
                       <div className="flex items-start gap-1">
                         <IoInformationCircleOutline className="mt-0.5 h-3 w-3 flex-shrink-0 text-gray-500" />
                         <p className="text-[10px] leading-relaxed text-gray-600">
-                          Identity verification needed
+                          {perspective === "referrer"
+                            ? "Identity verification needed"
+                            : "Verify you're a real person"}
                         </p>
                       </div>
                     </div>
@@ -282,14 +380,14 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({
                     <div className="flex items-center gap-2 rounded-lg">
                       <span className="badge badge-sm flex-shrink-0 bg-blue-100 text-blue-700">
                         <IoCheckmarkCircle className="h-4 w-4" />
-                        <span className="ml-1">
-                          Pathway Completion Required
-                        </span>
+                        <span className="ml-1">Pathway Completion</span>
                       </span>
                       <div className="flex items-start gap-1">
                         <IoInformationCircleOutline className="mt-0.5 h-3 w-3 flex-shrink-0 text-gray-500" />
                         <p className="text-[10px] leading-relaxed text-gray-600">
-                          All pathway steps must be completed
+                          {perspective === "referrer"
+                            ? "All pathway steps must be completed"
+                            : "Complete all pathway activities"}
                         </p>
                       </div>
                     </div>
@@ -301,7 +399,9 @@ export const ProgramCard: React.FC<ProgramCardProps> = ({
                     ℹ️ No special requirements
                   </span>
                   <p className="mt-1 text-[10px] text-gray-600">
-                    Anyone can participate in this program
+                    {perspective === "referrer"
+                      ? "Anyone can participate in this program"
+                      : "Just claim the link to participate!"}
                   </p>
                 </div>
               )}

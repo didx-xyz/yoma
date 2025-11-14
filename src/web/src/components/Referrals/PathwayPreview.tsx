@@ -113,6 +113,7 @@ export const PathwayPreview: React.FC = () => {
     stepsTotal: 3,
     percentComplete: 33,
     completed: false,
+    isCompletable: true,
     steps: [
       {
         id: "step-1",
@@ -124,6 +125,7 @@ export const PathwayPreview: React.FC = () => {
         tasksTotal: 1,
         percentComplete: 100,
         completed: true,
+        isCompletable: true,
         tasks: [
           {
             id: "task-1",
@@ -150,6 +152,7 @@ export const PathwayPreview: React.FC = () => {
         tasksTotal: 2,
         percentComplete: 0,
         completed: false,
+        isCompletable: true,
         tasks: [
           {
             id: "task-2",
@@ -187,6 +190,7 @@ export const PathwayPreview: React.FC = () => {
         tasksTotal: 2,
         percentComplete: 0,
         completed: false,
+        isCompletable: true,
         tasks: [
           {
             id: "task-4",

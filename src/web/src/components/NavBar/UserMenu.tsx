@@ -18,6 +18,8 @@ import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
 import { getUserSkills } from "~/api/services/user";
+import { searchReferralLinks } from "~/api/services/referrals";
+import { ReferralLinkUsageStatus } from "~/api/models/user";
 import { MAXINT32 } from "~/lib/constants";
 import {
   RoleView,
@@ -34,6 +36,8 @@ import { PassportCard } from "../YoID/PassportCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
 import { ReferralCard } from "../YoID/ReferralCard";
+import { ReferralBlockedCard } from "../YoID/ReferralBlockedCard";
+import { ReferrerProgressCard } from "../YoID/ReferrerProgressCard";
 import { YoIdModal } from "../YoID/YoIdModal";
 import { SignOutButton } from "../SignOutButton";
 import { LoadingInline } from "../Status/LoadingInline";
@@ -121,6 +125,33 @@ export const UserMenu: React.FC = () => {
       }),
     enabled: isDrawerOpen && !isCollapsedPassport && passport_enabled,
   });
+
+  // Check for active referrer status (created links)
+  const { data: referrerPrograms, isLoading: referrerProgramsLoading } =
+    useQuery({
+      queryKey: ["ReferralLinks", "usermenu"],
+      queryFn: () =>
+        searchReferralLinks({
+          pageNumber: 1,
+          pageSize: 1,
+          programId: null,
+          valueContains: null,
+          statuses: null,
+        }),
+      enabled: isDrawerOpen,
+    });
+
+  // Check if user has a pending referral (as referee) from user profile
+  const hasActiveReferral =
+    userProfile?.referral?.linkUsages?.some((p) => p.status === "Pending") ??
+    false;
+  const activeReferralProgram = userProfile?.referral?.linkUsages?.find(
+    (p) => p.status === "Pending",
+  );
+
+  // Check if user has created any links (as referrer)
+  const hasCreatedLinks = (referrerPrograms?.items?.length ?? 0) > 0;
+  const firstReferrerProgram = referrerPrograms?.items?.[0];
   //#endregion
 
   return (
@@ -276,22 +307,72 @@ export const UserMenu: React.FC = () => {
               </div>
 
               {/* REFERRALS */}
-              <div className="flex w-full flex-col gap-2">
-                <Suspense
-                  isLoading={!userProfile}
-                  loader={
-                    <LoadingInline
-                      className="flex-col p-0"
-                      classNameSpinner="h-12 w-12"
-                    />
-                  }
-                >
-                  <ReferralCard
-                    userProfile={userProfile!}
-                    onClick={() => setDrawerOpen(false)}
+
+              <Suspense
+                isLoading={!userProfile || referrerProgramsLoading}
+                loader={
+                  <LoadingInline
+                    className="flex-col p-0"
+                    classNameSpinner="h-12 w-12"
                   />
-                </Suspense>
-              </div>
+                }
+              >
+                {" "}
+                <div className="flex w-full flex-col gap-2">
+                  {/* Show ReferralBlockedCard if user is blocked */}
+                  {userProfile?.referral?.blocked && (
+                    <ReferralBlockedCard
+                      blockedDate={
+                        userProfile?.referral?.blockedDate ?? undefined
+                      }
+                      onClick={() => setDrawerOpen(false)}
+                    />
+                  )}
+                  {/* Show default ReferralCard if no links created as referrer and not blocked */}
+                  {!userProfile?.referral?.blocked && !hasCreatedLinks && (
+                    <ReferralCard
+                      userProfile={userProfile!}
+                      onClick={() => setDrawerOpen(false)}
+                    />
+                  )}
+                  {/* TRACK PROGRESS (REFERRER) - Show if user has created links and not blocked */}
+                  {!userProfile?.referral?.blocked &&
+                    hasCreatedLinks &&
+                    firstReferrerProgram && (
+                      <ReferrerProgressCard
+                        programId={firstReferrerProgram.programId}
+                        programName={firstReferrerProgram.programName}
+                        onClick={() => setDrawerOpen(false)}
+                        tabIndex={isDrawerOpen ? 0 : -1}
+                      />
+                    )}
+                  {/* TRACK PROGRESS (REFEREE) - Show if user has pending referral */}
+                  {hasActiveReferral && activeReferralProgram && (
+                    <Link
+                      href={`/yoid/referee/${activeReferralProgram.programId}`}
+                      className="flex flex-col gap-2 rounded-lg border-2 border-blue-300 bg-gradient-to-br from-blue-50 to-white p-4 shadow-md transition-all hover:scale-[1.02] hover:shadow-lg"
+                      onClick={() => setDrawerOpen(false)}
+                      tabIndex={isDrawerOpen ? 0 : -1}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">🎯</span>
+                        <span className="font-bold text-blue-900">
+                          My Referral Progress
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-700">
+                        🚀 In Progress: {activeReferralProgram.programName}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-600">
+                          Track your progress
+                        </span>
+                        <FaArrowRight className="h-3 w-3 text-blue-600" />
+                      </div>
+                    </Link>
+                  )}
+                </div>
+              </Suspense>
 
               <div className="divider !bg-gray my-2" />
 

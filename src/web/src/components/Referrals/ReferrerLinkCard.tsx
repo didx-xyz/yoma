@@ -7,7 +7,7 @@ import {
   IoShareSocial,
 } from "react-icons/io5";
 import type { ReferralLink, ProgramInfo } from "~/api/models/referrals";
-import { LinkDetails } from "./LinkDetails";
+import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
 import Image from "next/image";
 import { FaLink } from "react-icons/fa";
 
@@ -20,7 +20,7 @@ interface LinkCardProps {
   className?: string;
 }
 
-export const LinkCard: React.FC<LinkCardProps> = ({
+export const ReferrerLinkCard: React.FC<LinkCardProps> = ({
   link,
   programs = [],
   onViewUsage,
@@ -196,7 +196,7 @@ export const LinkCard: React.FC<LinkCardProps> = ({
           <div className="animate-fade-in mt-3 space-y-3 border-t border-blue-100 pt-3">
             {/* Link Details */}
             <div>
-              <LinkDetails
+              <ReferrerLinkDetails
                 link={link}
                 mode="small"
                 showQRCode={true}

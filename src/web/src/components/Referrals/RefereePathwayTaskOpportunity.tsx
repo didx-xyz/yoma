@@ -1,23 +1,28 @@
 import { useQuery } from "@tanstack/react-query";
-import type { OpportunityInfo } from "~/api/models/opportunity";
+import type { OpportunityInfo, Opportunity } from "~/api/models/opportunity";
 import { getOpportunityInfoById } from "~/api/services/opportunities";
 import OpportunityPublicSmallRow from "../Opportunity/OpportunityPublicSmallRow";
 
-interface PathwayTaskOpportunityPublicProps {
+interface RefereePathwayTaskOpportunityProps {
   opportunityId: string;
+  mockOpportunity?: Opportunity;
+  isCompleted?: boolean;
 }
 
-const PathwayTaskOpportunityPublic: React.FC<
-  PathwayTaskOpportunityPublicProps
-> = ({ opportunityId }) => {
+const RefereePathwayTaskOpportunity: React.FC<
+  RefereePathwayTaskOpportunityProps
+> = ({ opportunityId, mockOpportunity, isCompleted = false }) => {
   const { data: opportunity, isLoading } = useQuery<OpportunityInfo>({
     queryKey: ["opportunityInfo", opportunityId],
     queryFn: () => getOpportunityInfoById(opportunityId),
-    enabled: !!opportunityId,
+    enabled: !!opportunityId && !mockOpportunity,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  if (isLoading) {
+  // Use mock opportunity if provided (for preview mode)
+  const displayOpportunity = mockOpportunity || opportunity;
+
+  if (!mockOpportunity && isLoading) {
     return (
       <div className="flex h-[121.333px] items-center gap-2 text-sm text-gray-500">
         <span className="loading loading-spinner loading-sm"></span>
@@ -26,7 +31,7 @@ const PathwayTaskOpportunityPublic: React.FC<
     );
   }
 
-  if (!opportunity) {
+  if (!displayOpportunity) {
     return (
       <div className="flex items-center gap-2 text-sm text-gray-500">
         <span>⚠️</span>
@@ -35,7 +40,12 @@ const PathwayTaskOpportunityPublic: React.FC<
     );
   }
 
-  return <OpportunityPublicSmallRow opportunity={opportunity as any} />;
+  return (
+    <OpportunityPublicSmallRow
+      opportunity={displayOpportunity as any}
+      isCompleted={isCompleted}
+    />
+  );
 };
 
-export default PathwayTaskOpportunityPublic;
+export default RefereePathwayTaskOpportunity;

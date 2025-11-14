@@ -1,14 +1,11 @@
-import { useCallback, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { IoChevronDown, IoGift } from "react-icons/io5";
-import type {
-  ProgramInfo,
-  ProgramSearchResultsInfo,
-} from "~/api/models/referrals";
+import type { ProgramInfo } from "~/api/models/referrals";
 import { searchReferralProgramsInfo } from "~/api/services/referrals";
-import { ProgramCard } from "./ProgramCard";
+import { RefereeProgramDetails } from "./RefereeProgramDetails";
 import Suspense from "~/components/Common/Suspense";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { usePaginatedQuery } from "~/hooks/usePaginatedQuery";
 
 interface ProgramsListProps {
   onProgramClick?: (program: ProgramInfo) => void;
@@ -19,7 +16,7 @@ interface ProgramsListProps {
   context?: "list" | "select" | "preview";
 }
 
-export const ProgramsList: React.FC<ProgramsListProps> = ({
+export const ReferrerProgramsList: React.FC<ProgramsListProps> = ({
   onProgramClick,
   onCreateLink,
   initialPageSize = 4,
@@ -27,31 +24,31 @@ export const ProgramsList: React.FC<ProgramsListProps> = ({
   showDescription = true,
   context = "list",
 }) => {
-  const [pageSize, setPageSize] = useState(initialPageSize);
-
   const {
-    data: programsData,
-    error: programsError,
-    isLoading: programsIsLoading,
-    isFetching: programsIsFetching,
-  } = useQuery<ProgramSearchResultsInfo>({
-    queryKey: ["ReferralPrograms", pageSize],
-    queryFn: () =>
-      searchReferralProgramsInfo({
-        pageNumber: 1,
-        pageSize: pageSize,
+    items: programs,
+    error,
+    isLoading,
+    isFetching,
+    hasMore,
+    loadMore,
+  } = usePaginatedQuery<ProgramInfo>({
+    queryKey: ["ReferralPrograms"],
+    queryFn: async (pageNumber, pageSize) => {
+      const result = await searchReferralProgramsInfo({
+        pageNumber,
+        pageSize,
         valueContains: null,
         includeExpired: false,
-      }),
-    placeholderData: (previousData) => previousData,
+      });
+      return {
+        items: result.items || [],
+        totalCount: result.totalCount || 0,
+      };
+    },
+    pageSize: initialPageSize,
   });
 
-  const hasPrograms = (programsData?.items?.length ?? 0) > 0;
-  const hasMorePrograms = (programsData?.totalCount ?? 0) > pageSize;
-
-  const handleLoadMore = useCallback(() => {
-    setPageSize((prev) => prev + 5);
-  }, []);
+  const hasPrograms = programs.length > 0;
 
   return (
     <div className={showHeader ? "shadow-custom rounded-lg bg-white p-6" : ""}>
@@ -70,10 +67,7 @@ export const ProgramsList: React.FC<ProgramsListProps> = ({
         </>
       )}
 
-      <Suspense
-        isLoading={programsIsLoading && !programsData}
-        error={programsError as any}
-      >
+      <Suspense isLoading={isLoading && !hasPrograms} error={error as any}>
         {!hasPrograms && (
           <NoRowsMessage
             title="No Programs Available"
@@ -84,25 +78,26 @@ export const ProgramsList: React.FC<ProgramsListProps> = ({
 
         {hasPrograms && (
           <div className="space-y-3">
-            {programsData?.items?.map((program: ProgramInfo) => (
-              <ProgramCard
+            {programs?.map((program: ProgramInfo) => (
+              <RefereeProgramDetails
                 key={program.id}
                 program={program}
                 onClick={() => onProgramClick?.(program)}
                 onCreateLink={() => onCreateLink?.(program)}
                 context={context}
+                perspective="referrer"
               />
             ))}
 
             {/* See More Button */}
-            {hasMorePrograms && (
+            {hasMore && (
               <div className="flex justify-center pt-2">
                 <button
-                  onClick={handleLoadMore}
-                  disabled={programsIsFetching}
+                  onClick={loadMore}
+                  disabled={isFetching}
                   className="btn btn-sm gap-2 border-orange-300 bg-orange-50 text-orange-700 hover:bg-orange-100 disabled:opacity-50"
                 >
-                  {programsIsFetching ? (
+                  {isFetching ? (
                     <>
                       <span className="loading loading-spinner loading-xs"></span>
                       Loading...

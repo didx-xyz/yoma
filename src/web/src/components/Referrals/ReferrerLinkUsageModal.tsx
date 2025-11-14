@@ -27,8 +27,8 @@ import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import Suspense from "~/components/Common/Suspense";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PAGE_SIZE } from "~/lib/constants";
-import { LinkDetails } from "./LinkDetails";
-import { ProgramCard } from "./ProgramCard";
+import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
+import { RefereeProgramDetails } from "./RefereeProgramDetails";
 import { ProgramRequirements } from "./ProgramRequirements";
 
 interface LinkUsageModalProps {
@@ -37,7 +37,7 @@ interface LinkUsageModalProps {
   onClose: () => void;
 }
 
-export const LinkUsageModal: React.FC<LinkUsageModalProps> = ({
+export const ReferrerLinkUsageModal: React.FC<LinkUsageModalProps> = ({
   link,
   isOpen,
   onClose,
@@ -153,7 +153,7 @@ export const LinkUsageModal: React.FC<LinkUsageModalProps> = ({
                       <IoLink className="inline h-6 w-6 text-blue-600" /> Your
                       Referral Link
                     </h2>
-                    <LinkDetails
+                    <ReferrerLinkDetails
                       link={fullLinkData}
                       mode="large"
                       showQRCode={true}
@@ -174,7 +174,11 @@ export const LinkUsageModal: React.FC<LinkUsageModalProps> = ({
                         </h3>
                       </div>
                       <div className="bg-white">
-                        <ProgramCard program={programData} context="preview" />
+                        <RefereeProgramDetails
+                          program={programData}
+                          context="preview"
+                          perspective="referrer"
+                        />
                       </div>
                     </div>
                     <ProgramRequirements

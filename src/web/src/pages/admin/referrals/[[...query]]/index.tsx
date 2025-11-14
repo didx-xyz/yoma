@@ -33,8 +33,8 @@ import { authOptions } from "~/server/auth";
 import {
   ReferralProgramSearchFilters,
   ReferralFilterOptions,
-} from "~/components/Referrals/ReferralProgramSearchFilter";
-import { ReferralProgramActions } from "~/components/Referrals/ReferralProgramActions";
+} from "~/components/Referrals/AdminReferralProgramSearchFilter";
+import { AdminReferralProgramActions } from "~/components/Referrals/AdminReferralProgramActions";
 import Moment from "react-moment";
 
 // ⚠️ SSR
@@ -490,7 +490,7 @@ const ReferralPrograms: NextPageWithLayout<{
                             </span>
                           )}
                         </div>
-                        <ReferralProgramActions
+                        <AdminReferralProgramActions
                           program={program}
                           returnUrl={router.asPath}
                         />
@@ -532,18 +532,14 @@ const ReferralPrograms: NextPageWithLayout<{
                         </div>
 
                         {/* Completion Balance */}
-                        {program.completionLimit !== null &&
-                          program.completionTotal !== null && (
-                            <div className="flex justify-between">
-                              <p className="text-sm tracking-wider">
-                                Remaining
-                              </p>
-                              <span className="badge bg-blue-light text-blue">
-                                {program.completionLimit -
-                                  program.completionTotal}
-                              </span>
-                            </div>
-                          )}
+                        {program.completionBalance !== null && (
+                          <div className="flex justify-between">
+                            <p className="text-sm tracking-wider">Remaining</p>
+                            <span className="badge bg-blue-light text-blue">
+                              {program.completionBalance}
+                            </span>
+                          </div>
+                        )}
 
                         {/* ZLTO Pool */}
                         <div className="flex justify-between">
@@ -756,18 +752,16 @@ const ReferralPrograms: NextPageWithLayout<{
                                 {program.completionTotal ?? 0}
                               </span>
                             </div>
-                            {program.completionLimit !== null &&
-                              program.completionTotal !== null && (
-                                <div className="flex gap-2">
-                                  <span className="text-gray-dark w-14 font-bold">
-                                    Left:
-                                  </span>
-                                  <span className="badge bg-blue-light text-blue">
-                                    {program.completionLimit -
-                                      program.completionTotal}
-                                  </span>
-                                </div>
-                              )}
+                            {program.completionBalance !== null && (
+                              <div className="flex gap-2">
+                                <span className="text-gray-dark w-14 font-bold">
+                                  Left:
+                                </span>
+                                <span className="badge bg-blue-light text-blue">
+                                  {program.completionBalance}
+                                </span>
+                              </div>
+                            )}
                           </div>
                         </td>
                         <td className="border-gray-light text-gray-dark border-b-2 !align-top">
@@ -850,7 +844,7 @@ const ReferralPrograms: NextPageWithLayout<{
                           </div>
                         </td>
                         <td className="border-gray-light border-b-2 text-center !align-top">
-                          <ReferralProgramActions
+                          <AdminReferralProgramActions
                             program={program}
                             returnUrl={router.asPath}
                           />

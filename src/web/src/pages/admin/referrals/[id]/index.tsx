@@ -59,10 +59,10 @@ import FormRequiredFieldMessage from "~/components/Common/FormRequiredFieldMessa
 import MainLayout from "~/components/Layout/Main";
 import { PageBackground } from "~/components/PageBackground";
 import {
-  ProgramInfo,
+  AdminProgramInfo,
   ProgramInfoFilterOptions,
-} from "~/components/Referrals/ProgramInfo";
-import { ProgramPathwayEditComponent } from "~/components/Referrals/ProgramPathwayEdit";
+} from "~/components/Referrals/AdminProgramInfo";
+import { AdminProgramPathwayEditComponent } from "~/components/Referrals/AdminProgramPathwayEdit";
 import { ApiErrors } from "~/components/Status/ApiErrors";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { Loading } from "~/components/Status/Loading";
@@ -851,6 +851,7 @@ const ReferralProgramForm: NextPageWithLayout<{
           orderMode: PathwayOrderMode.Sequential,
           dateCreated: new Date().toISOString(),
           dateModified: new Date().toISOString(),
+          isCompletable: true,
           steps: [],
         },
       };
@@ -2117,7 +2118,9 @@ const ReferralProgramForm: NextPageWithLayout<{
                     )}
 
                     {pathwayRequiredWatch ? (
-                      <ProgramPathwayEditComponent control={controlStep5} />
+                      <AdminProgramPathwayEditComponent
+                        control={controlStep5}
+                      />
                     ) : (
                       <FormMessage messageType={FormMessageType.Info}>
                         Pathway configuration is disabled. Enable &quot;Enable
@@ -2159,7 +2162,7 @@ const ReferralProgramForm: NextPageWithLayout<{
                   </div>
 
                   {programPreview && (
-                    <ProgramInfo
+                    <AdminProgramInfo
                       program={programPreview}
                       imagePreviewUrl={imagePreviewUrl}
                       filterOptions={[

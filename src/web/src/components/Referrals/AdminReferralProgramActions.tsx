@@ -35,7 +35,7 @@ interface ReferralProgramActionsProps {
   actionOptions?: ReferralProgramActionOptions[];
 }
 
-export const ReferralProgramActions: React.FC<ReferralProgramActionsProps> = ({
+export const AdminReferralProgramActions: React.FC<ReferralProgramActionsProps> = ({
   program,
   returnUrl,
   actionOptions = [

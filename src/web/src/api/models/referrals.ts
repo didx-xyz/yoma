@@ -138,6 +138,7 @@ export interface ProgramPathway {
   dateCreated: string;
   dateModified: string;
   steps: ProgramPathwayStep[] | null;
+  isCompletable: boolean;
 }
 
 export interface ProgramPathwayInfo {
@@ -147,6 +148,7 @@ export interface ProgramPathwayInfo {
   rule: PathwayCompletionRule | string;
   orderMode: PathwayOrderMode | string;
   steps: ProgramPathwayStepInfo[] | null;
+  isCompletable: boolean;
 }
 
 export interface ProgramPathwayStep {
@@ -173,6 +175,7 @@ export interface ProgramPathwayStepInfo {
   orderDisplay: number;
   tasks: ProgramPathwayTaskInfo[] | null;
   completed: boolean | null;
+  isCompletable: boolean;
 }
 
 export interface ProgramPathwayTask {
@@ -193,6 +196,8 @@ export interface ProgramPathwayTaskInfo {
   order: number | null;
   orderDisplay: number;
   completed: boolean | null;
+  isCompletable: boolean;
+  nonCompletableReason: string | null;
 }
 
 // Request Models
@@ -304,6 +309,7 @@ export interface ReferralLink {
   description: string | null;
   programId: string;
   programName: string;
+  programCompletionLimitReferee: number | null;
   userId: string;
   userDisplayName: string | null;
   userEmail: string | null;
@@ -315,8 +321,9 @@ export interface ReferralLink {
   url: string;
   shortURL: string;
   qrCodeBase64: string | null;
-  pendingTotal: number | null;
   completionTotal: number | null;
+  completionBalance: number | null;
+  pendingTotal: number | null;
   expiredTotal: number | null;
   zltoRewardCumulative: number | null;
   dateCreated: string;
@@ -342,14 +349,14 @@ export interface ReferralLinkRequestUpdate extends ReferralLinkRequestBase {
   id: string;
 }
 
-export interface ReferralLinkSearchFilter extends PaginationFilter {
+export interface AdminReferralLinkSearchFilter extends PaginationFilter {
   programId: string | null;
   valueContains: string | null;
   statuses: ReferralLinkStatus[] | null;
 }
 
 export interface ReferralLinkSearchFilterAdmin
-  extends ReferralLinkSearchFilter {
+  extends AdminReferralLinkSearchFilter {
   userId: string | null;
 }
 
@@ -362,6 +369,8 @@ export interface ReferralLinkUsage {
   id: string;
   programId: string;
   programName: string;
+  programDescription: string | null;
+  programCompletionWindowInDays: number | null;
   linkId: string;
   linkName: string;
   // Referrer Info (from link)
@@ -384,7 +393,7 @@ export interface ReferralLinkUsage {
 }
 
 // Link Usage Models
-export interface ReferralLinkUsageSearchFilter extends PaginationFilter {
+export interface AdminReferralLinkUsageSearchFilter extends PaginationFilter {
   linkId: string | null;
   programId: string | null;
   statuses: ReferralLinkUsageStatus[] | null;
@@ -393,7 +402,7 @@ export interface ReferralLinkUsageSearchFilter extends PaginationFilter {
 }
 
 export interface ReferralLinkUsageSearchFilterAdmin
-  extends ReferralLinkUsageSearchFilter {
+  extends AdminReferralLinkUsageSearchFilter {
   userIdReferee: string | null;
   userIdReferrer: string | null;
 }
@@ -402,6 +411,7 @@ export interface ReferralLinkUsageInfo {
   id: string;
   programId: string;
   programName: string;
+  programDescription: string | null;
   linkId: string;
   linkName: string;
   // Referrer Info (from link)
@@ -424,6 +434,8 @@ export interface ReferralLinkUsageInfo {
   pathwayComplete: boolean | null;
   percentComplete: number | null;
   pathway: ProgramPathwayProgress | null;
+  // Computed property (matches C# model logic)
+  completed: boolean;
 }
 
 export interface ProgramPathwayProgress {
@@ -438,6 +450,7 @@ export interface ProgramPathwayProgress {
   stepsCompleted: number;
   percentComplete: number;
   steps: ProgramPathwayStepProgress[];
+  isCompletable: boolean;
 }
 
 export interface ProgramPathwayStepProgress {
@@ -454,6 +467,7 @@ export interface ProgramPathwayStepProgress {
   tasksCompleted: number;
   percentComplete: number;
   tasks: ProgramPathwayTaskProgress[];
+  isCompletable: boolean;
 }
 
 export interface ProgramPathwayTaskProgress {
@@ -464,6 +478,8 @@ export interface ProgramPathwayTaskProgress {
   orderDisplay: number;
   completed: boolean;
   dateCompleted: string | null;
+  isCompletable: boolean;
+  nonCompletableReason: string | null;
 }
 
 export interface ReferralLinkUsageSearchResults {

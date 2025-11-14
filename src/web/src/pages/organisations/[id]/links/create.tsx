@@ -130,7 +130,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 
 // 👇 PAGE COMPONENT: Link Create/Edit
 // this page acts as a create (/links/create) or edit page (/links/:id) based on the [entityId] route param
-const LinkDetails: NextPageWithLayout<{
+const ReferrerLinkDetails: NextPageWithLayout<{
   id: string;
   user: User;
   theme: string;
@@ -1488,13 +1488,13 @@ const LinkDetails: NextPageWithLayout<{
   );
 };
 
-LinkDetails.getLayout = function getLayout(page: ReactElement) {
+ReferrerLinkDetails.getLayout = function getLayout(page: ReactElement) {
   return <MainLayout>{page}</MainLayout>;
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-LinkDetails.theme = function getTheme(page: ReactElement<{ theme: string }>) {
+ReferrerLinkDetails.theme = function getTheme(page: ReactElement<{ theme: string }>) {
   return page.props.theme;
 };
 
-export default LinkDetails;
+export default ReferrerLinkDetails;

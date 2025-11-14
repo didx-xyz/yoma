@@ -139,7 +139,7 @@ const YoIDDashboard: NextPageWithLayout<{
       {/* DASHBOARD */}
       <div className="mt-2 flex h-full w-full flex-wrap items-center justify-center gap-4 lg:max-w-7xl">
         {/* REFERRALS */}
-        <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
+        {/* <div className="flex w-full flex-col gap-2 sm:w-[616px] md:w-[716px] lg:w-[816px]">
           <Suspense
             isLoading={!userProfile}
             loader={
@@ -151,7 +151,7 @@ const YoIDDashboard: NextPageWithLayout<{
           >
             <ReferralCard userProfile={userProfile!} />
           </Suspense>
-        </div>
+        </div> */}
 
         {/* WALLET */}
         <div className="flex w-full flex-col gap-2 sm:w-[300px] md:w-[350px] lg:w-[400px]">

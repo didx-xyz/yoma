@@ -9,7 +9,7 @@ import type { BlockReason } from "~/api/models/referrals";
 import { getBlockReasons } from "~/api/services/referrals";
 import { LoadingInline } from "../Status/LoadingInline";
 
-export interface BlockUnblockFormProps {
+export interface AdminReferrerBlockFormProps {
   userId: string;
   isBlocked: boolean;
   onSubmit: (data: BlockFormData | UnblockFormData) => void;
@@ -42,7 +42,7 @@ const unblockSchema = zod.object({
 type BlockFormValues = zod.infer<typeof blockSchema>;
 type UnblockFormValues = zod.infer<typeof unblockSchema>;
 
-export const BlockUnblockForm: React.FC<BlockUnblockFormProps> = ({
+export const AdminReferrerBlockForm: React.FC<AdminReferrerBlockFormProps> = ({
   userId,
   isBlocked,
   onSubmit,
@@ -62,7 +62,7 @@ export const BlockUnblockForm: React.FC<BlockUnblockFormProps> = ({
     enabled: !isBlocked, // Only fetch when blocking
   });
 
-  console.log("🎯 BlockUnblockForm state:", {
+  console.log("🎯 AdminReferrerBlockForm state:", {
     isBlocked,
     isLoading,
     blockReasonsCount: blockReasons?.length ?? 0,

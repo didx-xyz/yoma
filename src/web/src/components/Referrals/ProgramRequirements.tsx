@@ -168,7 +168,7 @@ export const ProgramRequirements: React.FC<ProgramRequirementsProps> = ({
               <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
                 <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-blue-900">
                   <IoCheckmarkCircle className="h-4 w-4" />
-                  Proof of Person Required
+                  Proof of Person
                 </h4>
                 <p className="text-xs text-blue-800">
                   Users must verify their identity to ensure they are a real
@@ -183,7 +183,7 @@ export const ProgramRequirements: React.FC<ProgramRequirementsProps> = ({
               <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm">
                 <h4 className="mb-2 flex items-center gap-2 text-sm font-bold text-blue-900">
                   <IoTrophy className="h-4 w-4" />
-                  Pathway Completion Required
+                  Pathway Completion
                 </h4>
                 <p className="mb-3 text-xs text-blue-800">
                   Users must complete the below pathway by following the steps

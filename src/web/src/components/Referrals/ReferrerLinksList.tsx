@@ -1,16 +1,12 @@
-import { useCallback, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useCallback } from "react";
 import { FaLink, FaPlus } from "react-icons/fa";
 import { IoChevronDown } from "react-icons/io5";
-import type {
-  ReferralLink,
-  ReferralLinkSearchResults,
-  ProgramInfo,
-} from "~/api/models/referrals";
+import type { ReferralLink, ProgramInfo } from "~/api/models/referrals";
 import { searchReferralLinks } from "~/api/services/referrals";
-import { LinkCard } from "./LinkCard";
+import { ReferrerLinkCard } from "./ReferrerLinkCard";
 import Suspense from "~/components/Common/Suspense";
 import NoRowsMessage from "~/components/NoRowsMessage";
+import { usePaginatedQuery } from "~/hooks/usePaginatedQuery";
 
 interface LinksListProps {
   programs?: ProgramInfo[];
@@ -20,40 +16,40 @@ interface LinksListProps {
   initialPageSize?: number;
 }
 
-export const LinksList: React.FC<LinksListProps> = ({
+export const ReferrerLinksList: React.FC<LinksListProps> = ({
   programs = [],
   onViewUsage,
   onEdit,
   onCreateLink,
   initialPageSize = 3,
 }) => {
-  const [pageSize, setPageSize] = useState(initialPageSize);
-
   const {
-    data: linksData,
-    error: linksError,
-    isLoading: linksIsLoading,
-    isFetching: linksIsFetching,
-  } = useQuery<ReferralLinkSearchResults>({
-    queryKey: ["ReferralLinks", pageSize],
-    queryFn: () =>
-      searchReferralLinks({
-        pageNumber: 1,
-        pageSize: pageSize,
+    items: links,
+    error,
+    isLoading,
+    isFetching,
+    hasMore,
+    loadMore,
+  } = usePaginatedQuery<ReferralLink>({
+    queryKey: ["ReferralLinks"],
+    queryFn: async (pageNumber, pageSize) => {
+      const result = await searchReferralLinks({
+        pageNumber,
+        pageSize,
         programId: null,
         valueContains: null,
         statuses: null,
-      }),
-    placeholderData: (previousData) => previousData,
+      });
+      return {
+        items: result.items || [],
+        totalCount: result.totalCount || 0,
+      };
+    },
+    pageSize: initialPageSize,
   });
 
-  const hasLinks = (linksData?.items?.length ?? 0) > 0;
+  const hasLinks = links.length > 0;
   const hasPrograms = programs.length > 0;
-  const hasMoreLinks = (linksData?.totalCount ?? 0) > pageSize;
-
-  const handleLoadMore = useCallback(() => {
-    setPageSize((prev) => prev + 5);
-  }, []);
 
   return (
     <div className="shadow-custom rounded-lg bg-white p-6">
@@ -72,10 +68,7 @@ export const LinksList: React.FC<LinksListProps> = ({
         )}
       </div>
 
-      <Suspense
-        isLoading={linksIsLoading && !linksData}
-        error={linksError as any}
-      >
+      <Suspense isLoading={isLoading && !hasLinks} error={error as any}>
         {!hasLinks && !hasPrograms && (
           <NoRowsMessage
             title="No Links Yet"
@@ -93,8 +86,8 @@ export const LinksList: React.FC<LinksListProps> = ({
 
         {hasLinks && (
           <div className="space-y-3">
-            {linksData?.items?.map((link: ReferralLink) => (
-              <LinkCard
+            {links?.map((link: ReferralLink) => (
+              <ReferrerLinkCard
                 key={link.id}
                 link={link}
                 programs={programs}
@@ -105,14 +98,14 @@ export const LinksList: React.FC<LinksListProps> = ({
             ))}
 
             {/* See More Button */}
-            {hasMoreLinks && (
+            {hasMore && (
               <div className="flex justify-center pt-2">
                 <button
-                  onClick={handleLoadMore}
-                  disabled={linksIsFetching}
+                  onClick={loadMore}
+                  disabled={isFetching}
                   className="btn btn-sm gap-2 border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100 disabled:opacity-50"
                 >
-                  {linksIsFetching ? (
+                  {isFetching ? (
                     <>
                       <span className="loading loading-spinner loading-xs"></span>
                       Loading...

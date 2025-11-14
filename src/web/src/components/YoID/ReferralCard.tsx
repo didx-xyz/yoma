@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { IoWarning, IoGift, IoChevronDown, IoChevronUp } from "react-icons/io5";
+import { IoGift, IoChevronDown, IoChevronUp } from "react-icons/io5";
 import { FaArrowRight } from "react-icons/fa";
 import type { UserProfile } from "~/api/models/user";
 import { useState } from "react";
@@ -16,12 +16,8 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
   const router = useRouter();
   const [showDetails, setShowDetails] = useState(false);
 
-  // Check if user is blocked
-  const isBlocked = userProfile?.referral?.blocked ?? false;
-  const blockedDate = userProfile?.referral?.blockedDate;
-
   // TODO: Get actual stats from API when available
-  const hasActiveLinks = false; // This will be fetched from APIq
+  const hasActiveLinks = false; // This will be fetched from API
   const totalReferrals = 0;
   const totalEarned = 0;
 
@@ -29,49 +25,6 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
     onClick?.();
     router.push("/yoid/referrals");
   };
-
-  // Blocked state
-  if (isBlocked) {
-    return (
-      <div className="flex h-full flex-col gap-3 text-xs text-black md:text-sm">
-        <div className="flex items-start gap-2">
-          <IoWarning className="text-orange mt-0.5 h-5 w-5 flex-shrink-0" />
-          <div className="flex-1">
-            <p className="text-orange font-semibold">
-              Referral Access Suspended
-            </p>
-            <p className="text-gray-dark mt-1 text-xs">
-              Your referral program access has been temporarily suspended.
-            </p>
-            {blockedDate && (
-              <p className="text-gray-dark mt-1 text-xs">
-                Since:{" "}
-                {new Date(blockedDate).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                })}
-              </p>
-            )}
-            {/* TODO: Show block reason and comments when available from API */}
-          </div>
-        </div>
-
-        <div className="border-gray-light mt-2 border-t pt-3">
-          <button
-            onClick={() => {
-              onClick?.();
-              router.push("/support");
-            }}
-            className="text-green hover:text-green-dark flex w-full items-center justify-between text-xs font-semibold underline"
-          >
-            <span>Contact Support</span>
-            <FaArrowRight className="h-3 w-3" />
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   // Active referrer state with stats
   if (hasActiveLinks) {
@@ -126,41 +79,29 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
             </div>
             <div className="flex-1">
               <h3 className="text-base font-bold text-gray-900">
-                Share Yoma. Earn Rewards. Grow Together!
+                Share Yoma & <br />
+                Earn Rewards!
               </h3>
-              <p className="text-xs text-gray-600">
-                Help friends discover opportunities and you'll both earn ZLTO
-              </p>
             </div>
           </div>
+          <p className="mt-2 text-xs text-gray-600">
+            Help friends discover opportunities and you'll both earn ZLTO.{"  "}
+            {/* Toggle Details Button */}
+            <button
+              type="button"
+              onClick={() => setShowDetails(!showDetails)}
+              className="text-green cursor-pointer text-xs underline"
+            >
+              {showDetails ? <>Hide details</> : <>See more...</>}
+            </button>
+          </p>
         </div>
 
         {/* Content */}
         <div className="p-4">
-          {/* Toggle Details Button */}
-          <div className="flex justify-center">
-            <button
-              type="button"
-              onClick={() => setShowDetails(!showDetails)}
-              className="btn btn-sm text-green gap-1 border-green-300 bg-transparent hover:bg-green-100"
-            >
-              {showDetails ? (
-                <>
-                  <IoChevronUp className="h-4 w-4" />
-                  <span className="text-xs">Hide</span>
-                </>
-              ) : (
-                <>
-                  <IoChevronDown className="h-4 w-4" />
-                  <span className="text-xs">Details</span>
-                </>
-              )}
-            </button>
-          </div>
-
           {/* Expandable Details */}
           {showDetails && (
-            <div className="animate-fade-in mt-3 space-y-3 border-t border-green-100 pt-3">
+            <div className="animate-fade-in border-tx border-green-100x mb-4 space-y-3">
               <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-sm">
                 <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-blue-900">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
@@ -218,7 +159,7 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
           {/* Get Started Button */}
           <button
             onClick={handleGetStarted}
-            className="btn btn-success mt-8 w-full gap-2 rounded-lg normal-case shadow-md transition-all hover:scale-105 hover:shadow-lg"
+            className="btn btn-success mt-8x w-full gap-2 rounded-lg normal-case shadow-md transition-all hover:scale-105 hover:shadow-lg"
           >
             <span className="font-semibold">Get Started</span>
             <FaArrowRight className="h-4 w-4" />

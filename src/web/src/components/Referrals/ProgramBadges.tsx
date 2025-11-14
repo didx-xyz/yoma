@@ -78,7 +78,7 @@ const ProgramBadges: React.FC<ProgramBadgesProps> = ({
             >
               <span className="badge badge-sm bg-blue-100 whitespace-nowrap text-blue-700">
                 <IoCheckmarkCircle className="h-4 w-4" />
-                <span className="ml-1">Proof of Person Required</span>
+                <span className="ml-1">Proof of Person</span>
               </span>
             </div>
           )}
@@ -93,7 +93,7 @@ const ProgramBadges: React.FC<ProgramBadgesProps> = ({
             >
               <span className="badge badge-sm bg-blue-100 whitespace-nowrap text-blue-700">
                 <IoCheckmarkCircle className="h-4 w-4" />
-                <span className="ml-1">Pathway Completion Required</span>
+                <span className="ml-1">Pathway Completion</span>
               </span>
             </div>
           )}

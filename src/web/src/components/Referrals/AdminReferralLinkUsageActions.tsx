@@ -15,7 +15,7 @@ interface ReferralLinkUsageActionsProps {
   actionOptions?: ReferralLinkUsageActionOptions[];
 }
 
-export const ReferralLinkUsageActions: React.FC<
+export const AdminReferralLinkUsageActions: React.FC<
   ReferralLinkUsageActionsProps
 > = ({
   usage,

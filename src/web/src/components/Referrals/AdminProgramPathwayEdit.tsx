@@ -18,7 +18,7 @@ import Async from "react-select/async";
 import { searchCriteriaOpportunities } from "~/api/services/opportunities";
 import type { OpportunityInfo } from "~/api/models/opportunity";
 import { debounce } from "~/lib/utils";
-import PathwayTaskOpportunity from "./PathwayTaskOpportunity";
+import AdminPathwayTaskOpportunity from "./AdminPathwayTaskOpportunity";
 import { IoList, IoCheckmarkCircle } from "react-icons/io5";
 
 const PAGE_SIZE_MEDIUM = 10;
@@ -27,7 +27,7 @@ export interface ProgramPathwayEditProps {
   control: Control<any>;
 }
 
-export const ProgramPathwayEditComponent: React.FC<ProgramPathwayEditProps> = ({
+export const AdminProgramPathwayEditComponent: React.FC<ProgramPathwayEditProps> = ({
   control,
 }) => {
   const { errors } = useFormState({ control });
@@ -751,7 +751,7 @@ const StepEditComponent: React.FC<StepEditComponentProps> = ({
                                   <>
                                     {field.value && (
                                       <div className="rounded border border-gray-200 bg-white p-3">
-                                        <PathwayTaskOpportunity
+                                        <AdminPathwayTaskOpportunity
                                           opportunityId={field.value}
                                         />
                                       </div>

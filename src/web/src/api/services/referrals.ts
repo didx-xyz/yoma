@@ -13,13 +13,13 @@ import {
   PathwayOrderMode,
   ReferralLink,
   ReferralLinkStatus,
-  ReferralLinkSearchFilter,
+  AdminReferralLinkSearchFilter,
   ReferralLinkSearchResults,
   ReferralLinkRequestCreate,
   ReferralLinkRequestUpdate,
   ReferralLinkUsageStatus,
   ReferralLinkUsageInfo,
-  ReferralLinkUsageSearchFilter,
+  AdminReferralLinkUsageSearchFilter,
   ReferralLinkUsageSearchFilterAdmin,
   ReferralLinkUsageSearchResults,
   ProofOfPersonhoodMethod,
@@ -110,6 +110,7 @@ const MOCK_PROGRAMS: Program[] = [
       orderMode: PathwayOrderMode.Sequential,
       dateCreated: new Date().toISOString(),
       dateModified: new Date().toISOString(),
+      isCompletable: true,
       steps: [
         {
           id: "step1",
@@ -459,6 +460,7 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       description: `Primary referral link for ${program.name}`,
       programId: program.id,
       programName: program.name,
+      programCompletionLimitReferee: program.completionLimitReferee,
       userId: "user1",
       userDisplayName: "John Smith",
       userEmail: "john.smith@example.com",
@@ -471,12 +473,14 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       shortURL: `https://yoma.world/r/P${program.id}L1`,
       qrCodeBase64:
         "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==",
-
+      completionTotal: 12 + programIndex * 3,
+      completionBalance: program.completionLimitReferee
+        ? program.completionLimitReferee - (12 + programIndex * 3)
+        : null,
+      pendingTotal: 5 + programIndex * 2,
+      expiredTotal: 2,
       zltoRewardCumulative:
         (12 + programIndex * 3) * (program.zltoRewardReferrer ?? 0),
-      pendingTotal: 5 + programIndex * 2,
-      completionTotal: 12 + programIndex * 3,
-      expiredTotal: 2,
       dateCreated: new Date(
         Date.now() - 30 * 24 * 60 * 60 * 1000,
       ).toISOString(),
@@ -490,6 +494,7 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       description: `Secondary referral link for ${program.name}`,
       programId: program.id,
       programName: program.name,
+      programCompletionLimitReferee: program.completionLimitReferee,
       userId: "user1",
       userDisplayName: "Jane Doe",
       userEmail: "jane.doe@example.com",
@@ -501,10 +506,13 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       url: `https://yoma.world/referral?code=PROG${program.id}LINK2`,
       shortURL: `https://yoma.world/r/P${program.id}L2`,
       qrCodeBase64: null,
-      zltoRewardCumulative: 8 * (program.zltoRewardReferrer ?? 0),
-      pendingTotal: 5 + programIndex * 2,
       completionTotal: 12 + programIndex * 3,
+      completionBalance: program.completionLimitReferee
+        ? program.completionLimitReferee - (12 + programIndex * 3)
+        : null,
+      pendingTotal: 5 + programIndex * 2,
       expiredTotal: 1,
+      zltoRewardCumulative: 8 * (program.zltoRewardReferrer ?? 0),
       dateCreated: new Date(
         Date.now() - 20 * 24 * 60 * 60 * 1000,
       ).toISOString(),
@@ -518,6 +526,7 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       description: "This link was cancelled",
       programId: program.id,
       programName: program.name,
+      programCompletionLimitReferee: program.completionLimitReferee,
       userId: "user2",
       userDisplayName: "Bob Anderson",
       userEmail: "bob.anderson@example.com",
@@ -529,10 +538,13 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       url: `https://yoma.world/referral?code=PROG${program.id}OLDLINK`,
       shortURL: `https://yoma.world/r/P${program.id}OLD`,
       qrCodeBase64: null,
-      zltoRewardCumulative: 3 * (program.zltoRewardReferrer ?? 0),
+      completionTotal: 12 + programIndex * 3,
+      completionBalance: program.completionLimitReferee
+        ? program.completionLimitReferee - (12 + programIndex * 3)
+        : null,
       pendingTotal: 5 + programIndex * 2,
       expiredTotal: 0,
-      completionTotal: 12 + programIndex * 3,
+      zltoRewardCumulative: 3 * (program.zltoRewardReferrer ?? 0),
       dateCreated: new Date(
         Date.now() - 45 * 24 * 60 * 60 * 1000,
       ).toISOString(),
@@ -548,6 +560,7 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       description: "This link has reached its usage limit",
       programId: program.id,
       programName: program.name,
+      programCompletionLimitReferee: program.completionLimitReferee,
       userId: "user1",
       userDisplayName: "John Smith",
       userEmail: "john.smith@example.com",
@@ -559,10 +572,13 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       url: `https://yoma.world/referral?code=PROG${program.id}FULL`,
       shortURL: `https://yoma.world/r/P${program.id}F`,
       qrCodeBase64: null,
-      zltoRewardCumulative: 50 * (program.zltoRewardReferrer ?? 0),
-      pendingTotal: 5 + programIndex * 2,
       completionTotal: 12 + programIndex * 3,
+      completionBalance: program.completionLimitReferee
+        ? program.completionLimitReferee - (12 + programIndex * 3)
+        : null,
+      pendingTotal: 5 + programIndex * 2,
       expiredTotal: 5,
+      zltoRewardCumulative: 50 * (program.zltoRewardReferrer ?? 0),
       dateCreated: new Date(
         Date.now() - 60 * 24 * 60 * 60 * 1000,
       ).toISOString(),
@@ -578,6 +594,7 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       description: "This link has expired",
       programId: program.id,
       programName: program.name,
+      programCompletionLimitReferee: program.completionLimitReferee,
       userId: "user3",
       userDisplayName: "Sarah Williams",
       userEmail: "sarah.williams@example.com",
@@ -589,10 +606,13 @@ const generateMockReferralLinks = (): ReferralLink[] => {
       url: `https://yoma.world/referral?code=PROG${program.id}EXPIRED`,
       shortURL: `https://yoma.world/r/P${program.id}E`,
       qrCodeBase64: null,
-      zltoRewardCumulative: 10 * (program.zltoRewardReferrer ?? 0),
-      pendingTotal: 5 + programIndex * 2,
       completionTotal: 12 + programIndex * 3,
+      completionBalance: program.completionLimitReferee
+        ? program.completionLimitReferee - (12 + programIndex * 3)
+        : null,
+      pendingTotal: 5 + programIndex * 2,
       expiredTotal: 3,
+      zltoRewardCumulative: 10 * (program.zltoRewardReferrer ?? 0),
       dateCreated: new Date(
         Date.now() - 90 * 24 * 60 * 60 * 1000,
       ).toISOString(),
@@ -639,7 +659,7 @@ export const getReferralLinkById = async (
 };
 
 export const searchReferralLinks = async (
-  filter: ReferralLinkSearchFilter,
+  filter: AdminReferralLinkSearchFilter,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ReferralLinkSearchResults> => {
   if (USE_MOCK_DATA) {
@@ -705,11 +725,12 @@ export const createReferralLink = async (
     const program = MOCK_PROGRAMS.find((p) => p.id === request.programId);
 
     const newLink: ReferralLink = {
-      id: `link${MOCK_REFERRAL_LINKS.length + 1}`,
+      id: `link-${MOCK_REFERRAL_LINKS.length + 1}`,
       name: request.name,
       description: request.description,
       programId: request.programId,
       programName: program?.name ?? "Unknown Program",
+      programCompletionLimitReferee: program?.completionLimitReferee ?? null,
       userId: "user1",
       userDisplayName: "Current User",
       userEmail: "current.user@example.com",
@@ -723,10 +744,11 @@ export const createReferralLink = async (
       qrCodeBase64: request.includeQRCode
         ? "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
         : null,
-      zltoRewardCumulative: 0,
-      pendingTotal: 0,
       completionTotal: 0,
+      completionBalance: program?.completionLimitReferee ?? null,
+      pendingTotal: 0,
       expiredTotal: 0,
+      zltoRewardCumulative: 0,
       dateCreated: new Date().toISOString(),
       dateModified: new Date().toISOString(),
     };
@@ -820,6 +842,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
         id: `usage-${link.id}-1`,
         programId: program.id,
         programName: program.name,
+        programDescription: program.description,
         linkId: link.id,
         linkName: link.name,
         // Referrer info (from link)
@@ -845,6 +868,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
         proofOfPersonhoodMethod: ProofOfPersonhoodMethod.OTP,
         pathwayComplete: true,
         percentComplete: 100,
+        completed: true,
         pathway: program.pathway
           ? {
               id: program.pathway.id,
@@ -858,6 +882,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
               stepsTotal: program.pathway.steps?.length ?? 0,
               stepsCompleted: program.pathway.steps?.length ?? 0,
               percentComplete: 100,
+              isCompletable: true,
               steps:
                 program.pathway.steps?.map((step) => ({
                   id: step.id,
@@ -873,6 +898,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
                   tasksTotal: step.tasks?.length ?? 0,
                   tasksCompleted: step.tasks?.length ?? 0,
                   percentComplete: 100,
+                  isCompletable: true,
                   tasks:
                     step.tasks?.map((task, taskIndex) => ({
                       id: task.id,
@@ -888,6 +914,8 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
                                 (10 + linkIndex * 2) * 24 * 60 * 60 * 1000,
                             ).toISOString()
                           : null,
+                      isCompletable: true,
+                      nonCompletableReason: null,
                     })) ?? [],
                 })) ?? [],
             }
@@ -899,6 +927,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
         id: `usage-${link.id}-2`,
         programId: program.id,
         programName: program.name,
+        programDescription: program.description,
         linkId: link.id,
         linkName: link.name,
         // Referrer info (from link)
@@ -922,6 +951,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
         proofOfPersonhoodMethod: ProofOfPersonhoodMethod.SocialLogin,
         pathwayComplete: false,
         percentComplete: 60,
+        completed: false,
         pathway: program.pathway
           ? {
               id: program.pathway.id,
@@ -933,6 +963,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
               stepsTotal: program.pathway.steps?.length ?? 0,
               stepsCompleted: 1,
               percentComplete: 60,
+              isCompletable: true,
               steps:
                 program.pathway.steps?.map((step, stepIndex) => ({
                   id: step.id,
@@ -952,6 +983,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
                   tasksCompleted:
                     stepIndex === 0 ? (step.tasks?.length ?? 0) : 0,
                   percentComplete: stepIndex === 0 ? 100 : 0,
+                  isCompletable: true,
                   tasks:
                     step.tasks?.map((task) => ({
                       id: task.id,
@@ -967,6 +999,8 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
                                 (5 + linkIndex) * 24 * 60 * 60 * 1000,
                             ).toISOString()
                           : null,
+                      isCompletable: true,
+                      nonCompletableReason: null,
                     })) ?? [],
                 })) ?? [],
             }
@@ -978,6 +1012,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
         id: `usage-${link.id}-3`,
         programId: program.id,
         programName: program.name,
+        programDescription: program.description,
         linkId: link.id,
         linkName: link.name,
         // Referrer info (from link)
@@ -1001,6 +1036,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
         proofOfPersonhoodMethod: null,
         pathwayComplete: false,
         percentComplete: 30,
+        completed: false,
         pathway: program.pathway
           ? {
               id: program.pathway.id,
@@ -1012,6 +1048,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
               stepsTotal: program.pathway.steps?.length ?? 0,
               stepsCompleted: 0,
               percentComplete: 30,
+              isCompletable: true,
               steps:
                 program.pathway.steps?.map((step, stepIndex) => ({
                   id: step.id,
@@ -1025,6 +1062,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
                   tasksTotal: step.tasks?.length ?? 0,
                   tasksCompleted: stepIndex === 0 ? 1 : 0, // Partial progress on first step
                   percentComplete: stepIndex === 0 ? 50 : 0,
+                  isCompletable: true,
                   tasks:
                     step.tasks?.map((task, taskIndex) => ({
                       id: task.id,
@@ -1040,6 +1078,8 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
                                 (3 + linkIndex) * 24 * 60 * 60 * 1000,
                             ).toISOString()
                           : null,
+                      isCompletable: true,
+                      nonCompletableReason: null,
                     })) ?? [],
                 })) ?? [],
             }
@@ -1051,6 +1091,7 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
         id: `usage-${link.id}-4`,
         programId: program.id,
         programName: program.name,
+        programDescription: program.description,
         linkId: link.id,
         linkName: link.name,
         // Referrer info (from link)
@@ -1075,7 +1116,8 @@ const generateMockLinkUsages = (): ReferralLinkUsageInfo[] => {
         proofOfPersonhoodCompleted: false,
         proofOfPersonhoodMethod: null,
         pathwayComplete: false,
-        percentComplete: 20,
+        percentComplete: 50,
+        completed: false,
         pathway: null,
       });
     });
@@ -1123,6 +1165,17 @@ export const getReferralProgramInfoById = async (
   const instance = context ? ApiServer(context) : await ApiClient;
   const { data } = await instance.get<ProgramInfo>(
     `/referral/program/${id}/info`,
+  );
+  return data;
+};
+
+export const getReferralProgramInfoByLinkId = async (
+  linkId: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<ProgramInfo> => {
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<ProgramInfo>(
+    `/referral/program/by-link/${linkId}/info`,
   );
   return data;
 };
@@ -1182,8 +1235,60 @@ export const getReferralLinkUsageByIdAsReferee = async (
   return data;
 };
 
+export const getReferralLinkUsageByProgramIdAsReferee = async (
+  programId: string,
+  context?: GetServerSidePropsContext | GetStaticPropsContext,
+): Promise<ReferralLinkUsageInfo> => {
+  if (USE_MOCK_DATA) {
+    // Mock data for development
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    const usage = MOCK_LINK_USAGES.find((u) => u.programId === programId);
+    if (!usage) {
+      throw new Error(`Link usage for program ${programId} not found`);
+    }
+
+    return usage;
+  }
+
+  // Real API call
+  const instance = context ? ApiServer(context) : await ApiClient;
+  const { data } = await instance.get<ReferralLinkUsageInfo>(
+    `/referral/program/${programId}/link/usage/referee`,
+  );
+
+  return data;
+  // TEMP: Hardcode status to "Completed" for testing API bug
+  //   return {
+  //     ...data,
+  //     status: ReferralLinkUsageStatus.Completed,
+  //     completed: true,
+  //     percentComplete: 100,
+  //     proofOfPersonhoodCompleted: true,
+  //     pathwayComplete: true,
+  //     pathway: data.pathway
+  //       ? {
+  //           ...data.pathway,
+  //           completed: true,
+  //           percentComplete: 100,
+  //           stepsCompleted: data.pathway.stepsTotal,
+  //           steps: data.pathway.steps.map((step) => ({
+  //             ...step,
+  //             completed: true,
+  //             percentComplete: 100,
+  //             tasksCompleted: step.tasksTotal,
+  //             tasks: step.tasks.map((task) => ({
+  //               ...task,
+  //               completed: true,
+  //               dateCompleted: task.dateCompleted || new Date().toISOString(),
+  //             })),
+  //           })),
+  //         }
+  //       : null,
+  //   };
+};
 export const searchReferralLinkUsagesAsReferrer = async (
-  filter: ReferralLinkUsageSearchFilter,
+  filter: AdminReferralLinkUsageSearchFilter,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ReferralLinkUsageSearchResults> => {
   if (USE_MOCK_DATA) {
@@ -1248,7 +1353,7 @@ export const searchReferralLinkUsagesAsReferrer = async (
 };
 
 export const searchReferralLinkUsagesAsReferee = async (
-  filter: ReferralLinkUsageSearchFilter,
+  filter: AdminReferralLinkUsageSearchFilter,
   context?: GetServerSidePropsContext | GetStaticPropsContext,
 ): Promise<ReferralLinkUsageSearchResults> => {
   if (USE_MOCK_DATA) {
@@ -1358,6 +1463,7 @@ export const claimReferralLinkAsReferee = async (
       id: `usage${MOCK_LINK_USAGES.length + 1}`,
       programId: link.programId,
       programName: "Program Name",
+      programDescription: null,
       linkId: link.id,
       linkName: link.name,
       // Referrer info (from link)
@@ -1379,6 +1485,7 @@ export const claimReferralLinkAsReferee = async (
       proofOfPersonhoodMethod: null,
       pathwayComplete: false,
       percentComplete: 0,
+      completed: false,
       pathway: null,
     };
 

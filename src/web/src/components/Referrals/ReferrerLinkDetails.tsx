@@ -16,7 +16,7 @@ interface LinkDetailsProps {
   shareDescription?: string;
 }
 
-export const LinkDetails: React.FC<LinkDetailsProps> = ({
+export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
   link,
   mode = "large",
   showQRCode: showQRCodeProp = true,
@@ -220,7 +220,7 @@ export const LinkDetails: React.FC<LinkDetailsProps> = ({
   // Large mode (default)
   return (
     <div className="rounded-lg bg-gradient-to-br from-green-50 to-white p-6 shadow-sm">
-      {/* Short URL */}
+      [{displayLink.url}]{/* Short URL */}
       {displayLink.shortURL && (
         <div className="mb-4">
           {/* Header */}
@@ -252,7 +252,6 @@ export const LinkDetails: React.FC<LinkDetailsProps> = ({
           </div>
         </div>
       )}
-
       {/* QR Code */}
       {showQRCodeProp && (
         <div className="mb-4">
@@ -324,7 +323,6 @@ export const LinkDetails: React.FC<LinkDetailsProps> = ({
           )}
         </div>
       )}
-
       {/* Share Buttons */}
       {showShare && (
         <div className="mt-4 border-t border-green-200 pt-4">

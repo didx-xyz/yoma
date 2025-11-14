@@ -19,10 +19,10 @@ import { analytics } from "~/lib/analytics";
 import { getSafeUrl } from "~/lib/utils";
 import CustomModal from "../Common/CustomModal";
 import {
-  BlockUnblockForm,
+  AdminReferrerBlockForm,
   type BlockFormData,
   type UnblockFormData,
-} from "./BlockUnblockForm";
+} from "./AdminReferrerBlockForm";
 
 export enum ReferralLinkActionOptions {
   VIEW_USAGE = "viewUsage",
@@ -36,7 +36,7 @@ interface ReferralLinkActionsProps {
   actionOptions?: ReferralLinkActionOptions[];
 }
 
-export const ReferralLinkActions: React.FC<ReferralLinkActionsProps> = ({
+export const AdminReferralLinkActions: React.FC<ReferralLinkActionsProps> = ({
   link,
   returnUrl,
   actionOptions = [
@@ -191,7 +191,7 @@ export const ReferralLinkActions: React.FC<ReferralLinkActionsProps> = ({
         onRequestClose={() => setModalBlockUnblockVisible(false)}
         className={`md:max-h-[620px] md:w-[800px]`}
       >
-        <BlockUnblockForm
+        <AdminReferrerBlockForm
           userId={link.userId}
           isBlocked={link.blocked}
           onSubmit={handleBlockUnblock}
