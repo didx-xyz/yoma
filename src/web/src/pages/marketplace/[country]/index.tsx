@@ -496,7 +496,7 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
           >
             <CustomCarousel
               id={`CompletedOpportunities_CustomCarousel`}
-              title={category_storeItems.category.name}
+              title={`${category_storeItems.category.name} > ${storeItem.store?.name}`}
               data={storeItem.items.items}
               renderSlide={(item, index) => (
                 <ItemCardComponent
