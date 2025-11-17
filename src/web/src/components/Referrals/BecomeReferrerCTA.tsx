@@ -45,7 +45,7 @@ export const BecomeReferrerCTA: React.FC = () => {
           </div>
           <h3 className="mb-1 font-bold text-green-900">Track Progress</h3>
           <p className="text-xs text-gray-600">
-            Monitor your referrals and see how much you've earned
+            Monitor your referrals and see how much you&apos;ve earned
           </p>
         </div>
         <div className="rounded-lg border-2 border-yellow-200 bg-gradient-to-br from-yellow-50 to-white p-4 text-center shadow-sm">

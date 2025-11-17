@@ -1,6 +1,6 @@
 import { useMemo } from "react";
+import { FaRoad } from "react-icons/fa";
 import {
-  IoCheckmarkCircle,
   IoClose,
   IoGift,
   IoRocket,
@@ -8,7 +8,6 @@ import {
   IoTimeOutline,
   IoTrophy,
 } from "react-icons/io5";
-import { FaRoad } from "react-icons/fa";
 import type {
   ProgramInfo,
   ReferralLinkUsageInfo,
@@ -129,7 +128,7 @@ export const RefereeStatusBanner: React.FC<RefereeStatusBannerProps> = ({
       accentColor: "text-amber-900",
       showConfetti: false,
     };
-  }, [usage.status, usage.percentComplete, program.name]);
+  }, [usage.status, usage.percentComplete]);
 
   const Icon = progressionStage.icon;
 

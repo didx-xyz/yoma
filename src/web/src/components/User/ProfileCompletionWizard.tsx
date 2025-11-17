@@ -5,11 +5,7 @@ import { IoCheckmarkCircle } from "react-icons/io5";
 import { useSetAtom } from "jotai";
 import type { SettingsRequest } from "~/api/models/common";
 import type { UserProfile } from "~/api/models/user";
-import {
-  getSettings,
-  updateSettings,
-  getUserProfile,
-} from "~/api/services/user";
+import { getSettings, updateSettings } from "~/api/services/user";
 import { SETTING_USER_SETTINGS_CONFIGURED } from "~/lib/constants";
 import { userProfileAtom } from "~/lib/store";
 import analytics from "~/lib/analytics";
@@ -136,7 +132,7 @@ export const ProfileCompletionWizard: React.FC<
         throw error;
       }
     },
-    [queryClient],
+    [queryClient, scrollToComponent],
   );
 
   const handlePhotoSubmit = useCallback(

@@ -11,7 +11,6 @@ import {
   IoWarning,
   IoInformationCircle,
   IoRocket,
-  IoCash,
   IoCart,
   IoTrophy,
   IoShareSocial,
@@ -120,7 +119,6 @@ const RefereeDashboard: NextPageWithLayout<{
     data: usage,
     error: usageError,
     isLoading: usageLoading,
-    refetch: refetchUsage,
   } = useQuery<ReferralLinkUsageInfo>({
     queryKey: ["RefereeUsage", programId],
     queryFn: () => getReferralLinkUsageByProgramIdAsReferee(programId),
@@ -163,7 +161,7 @@ const RefereeDashboard: NextPageWithLayout<{
                 Referral Not Found
               </h1>
               <p className="text-gray-700">
-                You don't have an active referral for this program.
+                You don&apos;t have an active referral for this program.
               </p>
             </div>
           </div>
@@ -247,13 +245,13 @@ const RefereeDashboard: NextPageWithLayout<{
                         All Requirements Complete
                       </p>
                       <p className="text-sm leading-relaxed text-gray-800">
-                        You've completed all requirements for this referral
+                        You&apos;ve completed all requirements for this referral
                         program!
                         {program.zltoRewardReferee && (
                           <>
                             {" "}
-                            You'll receive {program.zltoRewardReferee} ZLTO once
-                            the program is finalized.
+                            You&apos;ll receive {program.zltoRewardReferee} ZLTO
+                            once the program is finalized.
                           </>
                         )}
                       </p>
@@ -263,7 +261,7 @@ const RefereeDashboard: NextPageWithLayout<{
                             <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600">
                               <IoGift className="h-3 w-3 text-white" />
                             </span>
-                            What's Next?
+                            What&apos;s Next?
                           </h4>
                           <p className="text-sm text-gray-700">
                             Once you receive your ZLTO rewards, visit the
@@ -361,8 +359,8 @@ const RefereeDashboard: NextPageWithLayout<{
                     </h4>
                     <ol className="ml-5 list-decimal space-y-2 text-sm text-green-900">
                       <li>
-                        <strong>Click "View Opportunity"</strong> above to see
-                        the full details
+                        <strong>Click &quot;View Opportunity&quot;</strong>{" "}
+                        above to see the full details
                       </li>
                       <li>
                         Read the requirements carefully and complete the
@@ -373,8 +371,8 @@ const RefereeDashboard: NextPageWithLayout<{
                         documents, etc.) on the opportunity page
                       </li>
                       <li>
-                        Wait for verification - You'll be notified when someone
-                        has reviewed your submission.
+                        Wait for verification - You&apos;ll be notified when
+                        someone has reviewed your submission.
                       </li>
                       <li>
                         Check back here to track your progress - the checkmark
@@ -403,20 +401,20 @@ const RefereeDashboard: NextPageWithLayout<{
               <div className="min-w-0 flex-1">
                 <div className="min-w-0 flex-1">
                   <h2 className="text-xl font-bold text-orange-900">
-                    What's Next?
+                    What&apos;s Next?
                   </h2>
                   <p className="min-w-0 text-sm leading-relaxed text-gray-800">
                     {program.zltoRewardReferee ? (
                       <>
                         Your <strong>{program.zltoRewardReferee} ZLTO</strong>{" "}
-                        has been added to your wallet! Your journey doesn't have
-                        to end here.
+                        has been added to your wallet! Your journey doesn&apos;t
+                        have to end here.
                       </>
                     ) : (
                       <>
                         You have gained valuable skills which are stored as
-                        credentials in your wallet. Your journey doesn't have to
-                        end here.
+                        credentials in your wallet. Your journey doesn&apos;t
+                        have to end here.
                       </>
                     )}
                   </p>
@@ -539,16 +537,16 @@ const RefereeDashboard: NextPageWithLayout<{
                 <div className="mb-4 min-w-0 flex-1">
                   <div className="mb-2">
                     <h2 className="text-xl font-bold text-orange-900">
-                      Don't Give Up! 💪
+                      Don&apos;t Give Up! 💪
                     </h2>
                   </div>
                   <p className="mb-2 min-w-0 truncate text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                    What's Next?
+                    What&apos;s Next?
                   </p>
                   <p className="min-w-0 text-sm leading-relaxed text-gray-800">
-                    This program may have expired, but your journey doesn't have
-                    to end here. There are plenty of other ways to earn ZLTO and
-                    grow!
+                    This program may have expired, but your journey doesn&apos;t
+                    have to end here. There are plenty of other ways to earn
+                    ZLTO and grow!
                   </p>
                 </div>
               </div>

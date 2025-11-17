@@ -35,7 +35,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
     try {
       await navigator.clipboard.writeText(url);
       toast.success("Link copied to clipboard!", { autoClose: 2000 });
-    } catch (error) {
+    } catch {
       toast.error("Failed to copy link");
     }
   }, []);
@@ -50,7 +50,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
       linkEl.click();
       document.body.removeChild(linkEl);
       toast.success("QR code downloaded!", { autoClose: 2000 });
-    } catch (error) {
+    } catch {
       toast.error("Failed to download QR code");
     }
   }, []);
@@ -220,7 +220,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
   // Large mode (default)
   return (
     <div className="rounded-lg bg-gradient-to-br from-green-50 to-white p-6 shadow-sm">
-      [{displayLink.url}]{/* Short URL */}
+      {/* Short URL */}
       {displayLink.shortURL && (
         <div className="mb-4">
           {/* Header */}

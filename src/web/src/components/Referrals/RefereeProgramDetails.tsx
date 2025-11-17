@@ -212,7 +212,7 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                     {program.zltoRewardReferrer !== null && (
                       <div className="rounded-lg border border-blue-200 bg-gradient-to-br from-blue-50 to-white p-2 shadow-sm">
                         <p className="text-xs font-medium text-blue-700">
-                          Friend's Reward 🤝
+                          Friend&apos;s Reward 🤝
                         </p>
                         <p className="text-sm font-bold text-blue-900">
                           {program.zltoRewardReferrer.toLocaleString()} ZLTO
@@ -243,7 +243,7 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                     {program.zltoRewardReferee !== null && (
                       <div className="rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-white p-2 shadow-sm">
                         <p className="text-xs font-medium text-green-700">
-                          Friend's Reward 🎉
+                          Friend&apos;s Reward 🎉
                         </p>
                         <p className="text-sm font-bold text-green-900">
                           {program.zltoRewardReferee.toLocaleString()} ZLTO
@@ -260,7 +260,7 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                       ℹ️ No ZLTO rewards
                     </span>
                     <p className="mt-1 text-[10px] text-gray-600">
-                      This program doesn't offer ZLTO rewards
+                      This program doesn&apos;t offer ZLTO rewards
                     </p>
                   </div>
                 )}

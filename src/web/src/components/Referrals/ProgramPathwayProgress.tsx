@@ -12,22 +12,6 @@ import {
 } from "./InstructionHeaders";
 import { FaRoad } from "react-icons/fa";
 
-// Reusable Progress Display Component
-const ProgressDisplay: React.FC<{
-  completed: number;
-  total: number;
-  percentComplete: number;
-  isCompleted: boolean;
-  color?: "blue" | "green";
-}> = ({ completed, total, percentComplete, isCompleted, color = "blue" }) => (
-  <div className="flex items-center gap-2">
-    <span className={`text-[10px] font-semibold text-${color}-700`}>
-      {completed} / {total} ({percentComplete}%)
-    </span>
-    {isCompleted && <span className="badge badge-success badge-xs">✓</span>}
-  </div>
-);
-
 export interface ProgramPathwayProgressComponentProps {
   pathway: ProgramPathwayProgress;
   mockOpportunities?: Record<string, Opportunity>;
@@ -91,10 +75,6 @@ export const ProgramPathwayProgressComponent: React.FC<
                 />
 
                 {pathway.steps?.map((step, stepIndex) => {
-                  const hasSequentialTasks =
-                    step.rule !== PathwayCompletionRule.Any &&
-                    step.orderMode === PathwayOrderMode.Sequential;
-
                   return (
                     <div key={step.id} className="w-full space-y-3">
                       {/* Step Header */}

@@ -1,18 +1,7 @@
 import Image from "next/image";
-import iconClock from "public/images/icon-clock.svg";
 import iconZlto from "public/images/icon-zlto.svg";
-import {
-  IoMdCheckmarkCircle,
-  IoMdPerson,
-  IoMdTime,
-  IoMdTrophy,
-} from "react-icons/io";
-import {
-  IoGift,
-  IoList,
-  IoCheckmarkCircleOutline,
-  IoCheckmarkCircle,
-} from "react-icons/io5";
+import { IoMdCheckmarkCircle, IoMdPerson, IoMdTime } from "react-icons/io";
+import { IoCheckmarkCircle, IoGift } from "react-icons/io5";
 import type { ProgramInfo } from "~/api/models/referrals";
 
 interface ProgramBadgesProps {

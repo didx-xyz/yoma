@@ -1,11 +1,12 @@
 import { QueryClient, dehydrate, useQuery } from "@tanstack/react-query";
+import { useAtomValue, useSetAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
 import Image from "next/image";
 import { useRouter } from "next/router";
-import { useCallback, useState, useEffect, type ReactElement } from "react";
-import { IoGift, IoLockClosed, IoWarning } from "react-icons/io5";
+import { useCallback, useEffect, useState, type ReactElement } from "react";
+import { IoLockClosed, IoWarning } from "react-icons/io5";
 import type { ErrorResponseItem } from "~/api/models/common";
 import type { ProgramInfo } from "~/api/models/referrals";
 import type { UserProfile } from "~/api/models/user";
@@ -18,19 +19,18 @@ import MainLayout from "~/components/Layout/Main";
 import { AlternativeActions } from "~/components/Referrals/AlternativeActions";
 import { BecomeReferrerCTA } from "~/components/Referrals/BecomeReferrerCTA";
 import { HelpReferee } from "~/components/Referrals/HelpReferee";
+import { RefereeImportantInfo } from "~/components/Referrals/RefereeImportantInfo";
 import { RefereeProgramDetails } from "~/components/Referrals/RefereeProgramDetails";
 import { RefereeRequirements } from "~/components/Referrals/RefereeRequirements";
-import { RefereeImportantInfo } from "~/components/Referrals/RefereeImportantInfo";
+import { LoadingInline } from "~/components/Status/LoadingInline";
 import { ProfileCompletionWizard } from "~/components/User/ProfileCompletionWizard";
-import { config } from "~/lib/react-query-config";
-import { authOptions } from "~/server/auth";
-import { type NextPageWithLayout } from "../../_app";
 import analytics from "~/lib/analytics";
 import { handleUserSignIn } from "~/lib/authUtils";
-import { useAtomValue, useSetAtom } from "jotai";
+import { config } from "~/lib/react-query-config";
 import { currentLanguageAtom, userProfileAtom } from "~/lib/store";
-import { LoadingInline } from "~/components/Status/LoadingInline";
 import { getProfileCompletionStep } from "~/lib/utils/profile";
+import { authOptions } from "~/server/auth";
+import { type NextPageWithLayout } from "../../_app";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const session = await getServerSession(context.req, context.res, authOptions);
@@ -348,8 +348,8 @@ const ReferralClaimPage: NextPageWithLayout<{
               ) : (
                 // Show default reasons
                 <>
-                  <li>You've already claimed this referral link</li>
-                  <li>You don't meet the program requirements</li>
+                  <li>You&apos;ve already claimed this referral link</li>
+                  <li>You don&apos;t meet the program requirements</li>
                   <li>The link has reached its maximum number of claims</li>
                   <li>The link has expired</li>
                   <li>
@@ -380,7 +380,7 @@ const ReferralClaimPage: NextPageWithLayout<{
         <title>Join {program.name} | Yoma Referral</title>
         <meta
           name="description"
-          content={`Join ${program.name} through a friend's referral link and earn rewards!`}
+          content={`Join ${program.name} through a friend&apos;s referral link and earn rewards!`}
         />
       </Head>
 
@@ -391,7 +391,7 @@ const ReferralClaimPage: NextPageWithLayout<{
             {!isAuthenticated && (
               <div className="flex flex-1 flex-col gap-2">
                 <h1 className="mb-2x text-lg font-bold text-orange-900 md:text-xl">
-                  🎁 You've Been Invited!
+                  🎁 You&apos;ve Been Invited!
                 </h1>
                 <p className="md:text-basex mb-2 text-sm text-gray-700">
                   A friend has invited you to join the following program:{" "}

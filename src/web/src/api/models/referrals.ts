@@ -86,6 +86,29 @@ export interface Program {
   pathway: ProgramPathway | null;
 }
 
+// export interface ProgramInfo {
+//   id: string;
+//   name: string;
+//   description: string | null;
+//   imageURL: string | null;
+//   completionWindowInDays: number | null;
+//   completionLimitReferee: number | null;
+//   zltoRewardReferrer: number | null;
+//   zltoRewardReferee: number | null;
+//   proofOfPersonhoodRequired: boolean;
+//   pathwayRequired: boolean;
+//   dateStart: string;
+//   dateEnd: string | null;
+//   pathway: ProgramPathwayInfo | null;
+//   // Referee Status
+//   linkUsageStatus: ReferralLinkUsageStatus | null;
+//   dateClaimed: string | null;
+//   dateCompleted: string | null;
+//   proofOfPersonhoodCompleted: boolean | null;
+//   proofOfPersonhoodMethod: ProofOfPersonhoodMethod | null;
+//   pathwaysCompleted: boolean | null;
+// }
+
 export interface ProgramInfo {
   id: string;
   name: string;
@@ -93,20 +116,19 @@ export interface ProgramInfo {
   imageURL: string | null;
   completionWindowInDays: number | null;
   completionLimitReferee: number | null;
+  completionLimit: number | null;
+  completionTotal: number | null;
+  completionBalance: number | null;
   zltoRewardReferrer: number | null;
   zltoRewardReferee: number | null;
+  zltoRewardCumulative: number | null;
   proofOfPersonhoodRequired: boolean;
   pathwayRequired: boolean;
+  status: ProgramStatus;
+  isDefault: boolean;
   dateStart: string;
   dateEnd: string | null;
   pathway: ProgramPathwayInfo | null;
-  // Referee Status
-  linkUsageStatus: ReferralLinkUsageStatus | null;
-  dateClaimed: string | null;
-  dateCompleted: string | null;
-  proofOfPersonhoodCompleted: boolean | null;
-  proofOfPersonhoodMethod: ProofOfPersonhoodMethod | null;
-  pathwaysCompleted: boolean | null;
 }
 
 export interface ProgramItem {
@@ -431,7 +453,7 @@ export interface ReferralLinkUsageInfo {
   dateExpired: string | null;
   proofOfPersonhoodCompleted: boolean | null;
   proofOfPersonhoodMethod: ProofOfPersonhoodMethod | null;
-  pathwayComplete: boolean | null;
+  pathwayCompleted: boolean | null;
   percentComplete: number | null;
   pathway: ProgramPathwayProgress | null;
   // Computed property (matches C# model logic)

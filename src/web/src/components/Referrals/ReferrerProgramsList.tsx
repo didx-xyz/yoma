@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { IoChevronDown, IoGift } from "react-icons/io5";
 import type { ProgramInfo } from "~/api/models/referrals";
 import { searchReferralProgramsInfo } from "~/api/services/referrals";

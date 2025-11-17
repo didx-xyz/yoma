@@ -1,11 +1,5 @@
 import { useCallback, useState } from "react";
-import {
-  IoChevronDown,
-  IoChevronUp,
-  IoEye,
-  IoPencil,
-  IoShareSocial,
-} from "react-icons/io5";
+import { IoChevronDown, IoChevronUp, IoEye, IoPencil } from "react-icons/io5";
 import type { ReferralLink, ProgramInfo } from "~/api/models/referrals";
 import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
 import Image from "next/image";

@@ -262,7 +262,7 @@ export const HelpReferee: React.FC<HelpRefereeProps> = ({
       {howItWorksExpanded && (
         <div className="animate-fade-in">
           {/* Timeline Overview */}
-          <div className="flex justify-center md:pt-36">
+          <div className="flex justify-center lg:pt-36">
             <ul className="timeline timeline-vertical timeline-snap-icon max-md:timeline-compact lg:timeline-horizontal">
               {displaySteps.map((step, index) => {
                 const Icon = step.icon;
@@ -341,7 +341,6 @@ export const HelpReferee: React.FC<HelpRefereeProps> = ({
               {/* Detailed Steps */}
               <div className="space-y-3">
                 {displaySteps.map((step) => {
-                  const Icon = step.icon;
                   return (
                     <div
                       key={step.number}
@@ -370,81 +369,6 @@ export const HelpReferee: React.FC<HelpRefereeProps> = ({
                   );
                 })}
               </div>
-
-              {/* Important Info */}
-              {/* <div className="rounded-lg border-2 border-purple-200 bg-purple-50 p-6">
-                <h3 className="mb-3 flex items-center gap-2 text-lg font-bold text-purple-900">
-                  <span className="text-2xl">💡</span>
-                  Program Requirements Explained
-                </h3>
-                <p className="mb-4 text-sm text-gray-800">
-                  Each referral program can have different requirements. Here's
-                  what you need to know:
-                </p>
-                <ul className="ml-6 list-disc space-y-3 text-sm text-gray-800">
-                  <li>
-                    <strong>Proof-of-Personhood (Conditional):</strong> Some
-                    programs require identity verification through
-                    Google/Facebook sign-in or phone registration to ensure real
-                    people are participating and prevent abuse.
-                  </li>
-                  <li>
-                    <strong>YoID Profile (Always Required):</strong> You must
-                    complete your profile with personal information and
-                    settings. This helps Yoma tailor opportunities to your
-                    interests and goals.
-                  </li>
-                  <li>
-                    <strong>Pathway Completion (Conditional):</strong> If the
-                    program has a pathway, you&apos;ll need to complete all
-                    steps and tasks. These can range from quick activities to
-                    more in-depth learning experiences.
-                  </li>
-                  <li>
-                    <strong>ZLTO Rewards (Conditional):</strong> Not all
-                    programs offer ZLTO rewards. Some focus on skill-building
-                    and achievements instead. Check the program details to see
-                    what&apos;s offered!
-                  </li>
-                  <li>
-                    <strong>Time Limits:</strong> Some programs have completion
-                    windows. Make sure to check the deadline and complete all
-                    requirements in time.
-                  </li>
-                  <li>
-                    <strong>One Claim Per Person:</strong> You can only claim
-                    one referral link per program. Choose carefully and make
-                    sure you can complete the requirements!
-                  </li>
-                </ul>
-              </div> */}
-
-              {/* Key Info Cards */}
-              {/* <div className="grid gap-4 md:grid-cols-2">
-                <div className="rounded-lg border-2 border-orange-200 bg-orange-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 font-bold text-orange-900">
-                    <span className="text-xl">⚠️</span>
-                    New Users Only
-                  </h4>
-                  <p className="text-sm text-gray-800">
-                    Most referral programs are designed for people who are new
-                    to Yoma. If you already have an account and have completed
-                    certain activities, you may not be eligible for all
-                    programs.
-                  </p>
-                </div>
-                <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
-                  <h4 className="mb-2 flex items-center gap-2 font-bold text-blue-900">
-                    <span className="text-xl">⏱️</span>
-                    Track Your Progress
-                  </h4>
-                  <p className="text-sm text-gray-800">
-                    Once you claim a link, you can track your progress in
-                    real-time on your dashboard. You&apos;ll see exactly what
-                    steps remain and how close you are to completion.
-                  </p>
-                </div>
-              </div> */}
 
               {/* Bottom Toggle Button */}
               <div className="flex justify-center border-t-2 border-blue-200 pt-4">

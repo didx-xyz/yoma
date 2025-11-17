@@ -1,7 +1,6 @@
-import { IoWarning, IoInformationCircle } from "react-icons/io5";
+import { IoWarning } from "react-icons/io5";
 import {
   PathwayCompletionRule,
-  type PathwayOrderMode,
   type ProgramPathwayStepInfo,
 } from "~/api/models/referrals";
 

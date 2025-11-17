@@ -7,21 +7,16 @@ import {
   IoRocket,
   IoTrophy,
   IoCheckmark,
-  IoClose,
   IoEllipseOutline,
-  IoArrowForward,
   IoAlertCircle,
   IoArrowUp,
   IoPersonCircle,
   IoShieldCheckmark,
 } from "react-icons/io5";
 import { FaRoad } from "react-icons/fa";
-import Link from "next/link";
 import type {
   ProgramInfo,
   ReferralLinkUsageInfo,
-  ProgramPathwayStepProgress,
-  ProgramPathwayTaskProgress,
 } from "~/api/models/referrals";
 import { ProgramPathwayProgressComponent } from "./ProgramPathwayProgress";
 
@@ -57,7 +52,7 @@ export function getNextAction(
   program: ProgramInfo,
 ): NextActionInfo | null {
   // Only provide next action if pathway is required and not yet complete
-  if (!program.pathwayRequired || !usage.pathway || usage.pathwayComplete) {
+  if (!program.pathwayRequired || !usage.pathway || usage.pathwayCompleted) {
     return null;
   }
 
@@ -117,10 +112,7 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
     let stepNumber = 1;
     let currentStepFound = false;
 
-    // Step 1: Register (with or without POH) - ALWAYS COMPLETED at this stage
-    const registrationCompleted = true; // Always completed if user is on this page
-    const pohCompleted = usage.proofOfPersonhoodCompleted ?? true; // Always completed at this stage
-
+    // Step 1: Register (with or without POP) - ALWAYS COMPLETED at this stage
     if (program.proofOfPersonhoodRequired) {
       generatedSteps.push({
         number: stepNumber++,
@@ -153,7 +145,7 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
 
     // Step 3: Complete Pathway (conditional)
     if (program.pathwayRequired) {
-      const pathwayCompleted = usage.pathwayComplete ?? false;
+      const pathwayCompleted = usage.pathwayCompleted === true;
       generatedSteps.push({
         number: stepNumber++,
         title: "Complete Pathway",
@@ -173,7 +165,7 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
 
     // Step 4: Earn Rewards or Complete Onboarding
     const allRequirementsMet =
-      !program.pathwayRequired || (usage.pathwayComplete ?? false);
+      !program.pathwayRequired || (usage.pathwayCompleted ?? false);
     const rewardsEarned = usage.status === "Completed";
 
     if (program.zltoRewardReferee && program.zltoRewardReferee > 0) {
@@ -220,7 +212,7 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
             <p className="min-w-0 text-sm leading-relaxed text-gray-800">
               {steps.every((s) => s.completed)
                 ? "Track your journey"
-                : "Track your progress and see what's next"}
+                : "Track your progress and see what&apos;s next"}
             </p>
           </div>
         </div>
@@ -247,7 +239,7 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
       {isExpanded && (
         <div className="animate-fade-in">
           {/* Timeline Overview */}
-          <div className="flex justify-center md:pt-36">
+          <div className="flex justify-center lg:pt-36">
             <ul className="timeline timeline-vertical timeline-snap-icon max-md:timeline-compact lg:timeline-horizontal">
               {steps.map((step, index) => {
                 const Icon = step.icon;
@@ -381,14 +373,13 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
                     Your Journey Details
                   </h3>
                   <p className="min-w-0 text-sm leading-relaxed text-gray-800">
-                    Here's a complete breakdown of your progress so far
+                    Here&apos;s a complete breakdown of your progress so far
                   </p>
                 </div>
               </div>
               <div className="rounded-lg border-2 border-gray-200 bg-white p-6">
                 <div className="space-y-4">
                   {steps.map((step) => {
-                    const Icon = step.icon;
                     return (
                       <div key={step.number} className="flex items-start gap-3">
                         <div className="mt-1 flex-shrink-0">

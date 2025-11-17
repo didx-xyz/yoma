@@ -1,9 +1,10 @@
 import { zodResolver } from "@hookform/resolvers/zod";
+import { AxiosError } from "axios";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { FaLink, FaRoad } from "react-icons/fa";
 import { IoMdCheckmarkCircle, IoMdClose } from "react-icons/io";
 import { IoGift } from "react-icons/io5";
-import { FaLink, FaRoad } from "react-icons/fa";
 import { toast } from "react-toastify";
 import { z } from "zod";
 import type { ProgramInfo, ReferralLink } from "~/api/models/referrals";
@@ -16,13 +17,11 @@ import FormField from "~/components/Common/FormField";
 import FormInput from "~/components/Common/FormInput";
 import FormMessage, { FormMessageType } from "~/components/Common/FormMessage";
 import FormToggle from "~/components/Common/FormToggle";
-import { RefereeProgramDetails } from "./RefereeProgramDetails";
-import { ProgramRequirements } from "./ProgramRequirements";
-import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
-import { ShareButtons } from "./ShareButtons";
-import { ReferrerProgramsList } from "./ReferrerProgramsList";
 import { ApiErrors } from "../Status/ApiErrors";
-import { AxiosError } from "axios";
+import { ProgramRequirements } from "./ProgramRequirements";
+import { RefereeProgramDetails } from "./RefereeProgramDetails";
+import { ReferrerLinkDetails } from "./ReferrerLinkDetails";
+import { ReferrerProgramsList } from "./ReferrerProgramsList";
 
 interface CreateLinkModalProps {
   programs: ProgramInfo[];
@@ -267,9 +266,10 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 <FormMessage messageType={FormMessageType.Info}>
                   <strong>First Link!</strong> Please note each program has
                   different requirements &amp; rewards. Check the details before
-                  creating the link. Share this link with friends who haven't
-                  completed the onboarding yet. If someone has already completed
-                  it, neither of you will be eligible for rewards.
+                  creating the link. Share this link with friends who
+                  haven&apos;t completed the onboarding yet. If someone has
+                  already completed it, neither of you will be eligible for
+                  rewards.
                 </FormMessage>
               )}
 
@@ -340,7 +340,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                     <>
                       Complete this form to generate your unique referral link
                       for the selected program. Share it with friends, and
-                      you'll both may earn rewards when they complete the
+                      you&apos;ll both may earn rewards when they complete the
                       program requirements!
                     </>
                   )}
@@ -351,7 +351,8 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
               {!isEditMode && existingLinksCount === 0 && (
                 <FormMessage messageType={FormMessageType.Info}>
                   <strong>Check the program details!</strong> Then share this
-                  link with friends who haven't completed the onboarding yet.
+                  link with friends who haven&apos;t completed the onboarding
+                  yet.
                 </FormMessage>
               )}
 
@@ -466,12 +467,12 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                     </>
                   ) : (
                     <>
-                      <strong>After creating this link:</strong> You'll receive
-                      a unique URL to share across social media, messaging apps,
-                      or email. When your friends sign up using your link and
-                      complete the program requirements, you'll both earn ZLTO
-                      rewards. Track all referrals and their progress from your
-                      dashboard.
+                      <strong>After creating this link:</strong> You&apos;ll
+                      receive a unique URL to share across social media,
+                      messaging apps, or email. When your friends sign up using
+                      your link and complete the program requirements,
+                      you&apos;ll both earn ZLTO rewards. Track all referrals
+                      and their progress from your dashboard.
                     </>
                   )}
                 </FormMessage>
@@ -479,8 +480,8 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                 {/* Abuse Warning */}
                 {!isEditMode && (
                   <FormMessage messageType={FormMessageType.Error}>
-                    <strong>Caution:</strong> Don't create too many links as you
-                    risk being blocked for abuse of the system. Share
+                    <strong>Caution:</strong> Don&apos;t create too many links
+                    as you risk being blocked for abuse of the system. Share
                     responsibly and only with genuine contacts. See our{" "}
                     <a
                       href="/help"
@@ -575,7 +576,7 @@ export const ReferrerCreateLinkModal: React.FC<CreateLinkModalProps> = ({
                   <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-purple-400 to-purple-600">
                     <FaRoad className="h-2.5 w-2.5 text-white" />
                   </span>
-                  What's Next?
+                  What&apos;s Next?
                 </h4>
                 <ul className="space-y-1 text-sm text-blue-800">
                   <li>📢 Share your link with friends and family</li>

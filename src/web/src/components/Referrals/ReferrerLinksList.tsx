@@ -1,4 +1,3 @@
-import { useCallback } from "react";
 import { FaLink, FaPlus } from "react-icons/fa";
 import { IoChevronDown } from "react-icons/io5";
 import type { ReferralLink, ProgramInfo } from "~/api/models/referrals";

@@ -1,17 +1,15 @@
 import Image from "next/image";
 import iconZlto from "public/images/icon-zlto.svg";
+import { useMemo } from "react";
 import { IoIosCheckmarkCircle, IoMdClose } from "react-icons/io";
 import Moment from "react-moment";
 import {
-  Program,
-  ProgramInfo,
-  ProgramPathwayProgress,
   PathwayCompletionRule,
   PathwayTaskEntityType,
+  Program,
+  ProgramPathwayProgress,
 } from "~/api/models/referrals";
 import { DATE_FORMAT_HUMAN } from "~/lib/constants";
-import { ProgramPathwayProgressComponent } from "./ProgramPathwayProgress";
-import { useMemo } from "react";
 import { AvatarImage } from "../AvatarImage";
 import { ProgramPathwayView } from "./ProgramPathwayView";
 

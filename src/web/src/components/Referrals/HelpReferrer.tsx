@@ -59,7 +59,7 @@ export const HelpReferrer: React.FC<HelpReferrerProps> = ({
       {howItWorksExpanded && (
         <div className="animate-fade-in">
           {/* Quick Overview - Centered Timeline */}
-          <div className="flex justify-center md:pt-36">
+          <div className="flex justify-center lg:pt-36">
             <ul className="timeline timeline-vertical timeline-snap-icon max-md:timeline-compact lg:timeline-horizontal">
               {/* Step 1 */}
               <li>
@@ -224,9 +224,9 @@ export const HelpReferrer: React.FC<HelpReferrerProps> = ({
                     </h3>
                   </div>
                   <p className="text-gray-dark mb-3 text-sm leading-relaxed">
-                    When your friend completes the program requirements, you'll
-                    both receive ZLTO rewards! The more friends you refer
-                    successfully, the more you earn together.
+                    When your friend completes the program requirements,
+                    you&apos;ll both receive ZLTO rewards! The more friends you
+                    refer successfully, the more you earn together.
                   </p>
                   <div className="flex items-center gap-2 text-xs font-semibold text-yellow-700">
                     <IoCheckmarkCircle className="h-4 w-4" />

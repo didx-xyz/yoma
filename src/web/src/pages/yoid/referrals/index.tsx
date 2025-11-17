@@ -116,11 +116,7 @@ const ReferralsDashboard: NextPageWithLayout<{
   });
 
   // 👇 use prefetched queries from server (match ReferrerProgramsList query key)
-  const {
-    data: programsData,
-    error: programsError,
-    isLoading: programsIsLoading,
-  } = useQuery<ProgramSearchResultsInfo>({
+  const { data: programsData } = useQuery<ProgramSearchResultsInfo>({
     queryKey: ["ReferralPrograms", 1, 4], // pageNumber: 1, pageSize: 4
     queryFn: () =>
       searchReferralProgramsInfo({
@@ -377,7 +373,7 @@ const ReferralsDashboard: NextPageWithLayout<{
           setSelectedLinkForEdit(null);
           setSelectedProgramForLink(null);
         }}
-        onSuccess={async (link) => {
+        onSuccess={async () => {
           // Invalidate the query to trigger a refetch
           await queryClient.invalidateQueries({ queryKey: ["ReferralLinks"] });
         }}

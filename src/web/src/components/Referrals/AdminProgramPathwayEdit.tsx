@@ -1,25 +1,24 @@
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Controller,
-  type Control,
   useFieldArray,
   useFormState,
+  type Control,
 } from "react-hook-form";
 import { IoMdAdd, IoMdAlert, IoMdTrash } from "react-icons/io";
+import Async from "react-select/async";
+import type { OpportunityInfo } from "~/api/models/opportunity";
 import {
   PathwayCompletionRule,
   PathwayOrderMode,
   PathwayTaskEntityType,
 } from "~/api/models/referrals";
+import { searchCriteriaOpportunities } from "~/api/services/opportunities";
+import { debounce } from "~/lib/utils";
+import FormError from "../Common/FormError";
 import FormField from "../Common/FormField";
 import FormInput from "../Common/FormInput";
-import FormError from "../Common/FormError";
-import { useCallback, useState, useEffect, useMemo } from "react";
-import Async from "react-select/async";
-import { searchCriteriaOpportunities } from "~/api/services/opportunities";
-import type { OpportunityInfo } from "~/api/models/opportunity";
-import { debounce } from "~/lib/utils";
 import AdminPathwayTaskOpportunity from "./AdminPathwayTaskOpportunity";
-import { IoList, IoCheckmarkCircle } from "react-icons/io5";
 
 const PAGE_SIZE_MEDIUM = 10;
 
@@ -27,9 +26,9 @@ export interface ProgramPathwayEditProps {
   control: Control<any>;
 }
 
-export const AdminProgramPathwayEditComponent: React.FC<ProgramPathwayEditProps> = ({
-  control,
-}) => {
+export const AdminProgramPathwayEditComponent: React.FC<
+  ProgramPathwayEditProps
+> = ({ control }) => {
   const { errors } = useFormState({ control });
 
   const {

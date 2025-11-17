@@ -2,14 +2,12 @@ import Link from "next/link";
 import { FaArrowRight } from "react-icons/fa";
 
 interface ReferrerProgressCardProps {
-  programId: string;
   programName: string;
   onClick: () => void;
   tabIndex: number;
 }
 
 export const ReferrerProgressCard: React.FC<ReferrerProgressCardProps> = ({
-  programId,
   programName,
   onClick,
   tabIndex,

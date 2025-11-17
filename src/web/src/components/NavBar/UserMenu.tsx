@@ -3,11 +3,10 @@ import { useAtomValue } from "jotai";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
 import Link from "next/link";
-import React, { useEffect } from "react";
 import stamp1 from "public/images/stamp-1.png";
 import stamp2 from "public/images/stamp-2.png";
 import worldMap from "public/images/world-map.png";
-import { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { FaArrowRight } from "react-icons/fa";
 import {
   IoIosCheckmarkCircle,
@@ -17,9 +16,9 @@ import {
 import { MdKeyboardArrowDown, MdKeyboardArrowUp } from "react-icons/md";
 import { searchCredentials } from "~/api/services/credentials";
 import { searchMyOpportunitiesSummary } from "~/api/services/myOpportunities";
-import { getUserSkills } from "~/api/services/user";
 import { searchReferralLinks } from "~/api/services/referrals";
-import { ReferralLinkUsageStatus } from "~/api/models/user";
+import { getUserSkills } from "~/api/services/user";
+import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 import { MAXINT32 } from "~/lib/constants";
 import {
   RoleView,
@@ -27,23 +26,22 @@ import {
   currentOrganisationLogoAtom,
   userProfileAtom,
 } from "~/lib/store";
+import { fetchClientEnv } from "~/lib/utils";
 import { AvatarImage } from "../AvatarImage";
 import { Header } from "../Common/Header";
 import Suspense from "../Common/Suspense";
+import NoRowsMessage from "../NoRowsMessage";
+import { SignOutButton } from "../SignOutButton";
+import { LoadingInline } from "../Status/LoadingInline";
 import { LineChart } from "../YoID/LineChart";
 import { OpportunitiesSummary } from "../YoID/OpportunitiesSummary";
 import { PassportCard } from "../YoID/PassportCard";
+import { ReferralBlockedCard } from "../YoID/ReferralBlockedCard";
+import { ReferralCard } from "../YoID/ReferralCard";
+import { ReferrerProgressCard } from "../YoID/ReferrerProgressCard";
 import { SkillsCard } from "../YoID/SkillsCard";
 import { WalletCard } from "../YoID/WalletCard";
-import { ReferralCard } from "../YoID/ReferralCard";
-import { ReferralBlockedCard } from "../YoID/ReferralBlockedCard";
-import { ReferrerProgressCard } from "../YoID/ReferrerProgressCard";
 import { YoIdModal } from "../YoID/YoIdModal";
-import { SignOutButton } from "../SignOutButton";
-import { LoadingInline } from "../Status/LoadingInline";
-import NoRowsMessage from "../NoRowsMessage";
-import { fetchClientEnv } from "~/lib/utils";
-import { useDisableBodyScroll } from "~/hooks/useDisableBodyScroll";
 
 export const UserMenu: React.FC = () => {
   const [isDrawerOpen, setDrawerOpen] = useState(false);
@@ -330,17 +328,13 @@ export const UserMenu: React.FC = () => {
                   )}
                   {/* Show default ReferralCard if no links created as referrer and not blocked */}
                   {!userProfile?.referral?.blocked && !hasCreatedLinks && (
-                    <ReferralCard
-                      userProfile={userProfile!}
-                      onClick={() => setDrawerOpen(false)}
-                    />
+                    <ReferralCard onClick={() => setDrawerOpen(false)} />
                   )}
                   {/* TRACK PROGRESS (REFERRER) - Show if user has created links and not blocked */}
                   {!userProfile?.referral?.blocked &&
                     hasCreatedLinks &&
                     firstReferrerProgram && (
                       <ReferrerProgressCard
-                        programId={firstReferrerProgram.programId}
                         programName={firstReferrerProgram.programName}
                         onClick={() => setDrawerOpen(false)}
                         tabIndex={isDrawerOpen ? 0 : -1}

@@ -37,8 +37,8 @@ export const RefereeImportantInfo: React.FC<RefereeImportantInfoProps> = ({
       icon: "🚫",
       title: "New Users Only",
       description: program.proofOfPersonhoodRequired
-        ? "This referral is for NEW users. If you're already a Yoma user, you're NOT eligible. New users must sign in with Google/Facebook or register with a phone number (South Africa only)."
-        : "This referral is for NEW users only. If you already have a Yoma account, you're NOT eligible to claim this link.",
+        ? "This referral is for NEW users. If you&apos;re already a Yoma user, you&apos;re NOT eligible. New users must sign in with Google/Facebook or register with a phone number (South Africa only)."
+        : "This referral is for NEW users only. If you already have a Yoma account, you&apos;re NOT eligible to claim this link.",
       color: "red",
     });
 
@@ -178,8 +178,8 @@ export const RefereeImportantInfo: React.FC<RefereeImportantInfoProps> = ({
             </h6>
             <p className="text-sm text-gray-800">
               Once you claim this link, you can track your progress in real-time
-              on your dashboard. You'll see exactly what steps remain and how
-              close you are to completion.
+              on your dashboard. You&apos;ll see exactly what steps remain and
+              how close you are to completion.
             </p>
           </div>
         </div>

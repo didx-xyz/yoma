@@ -1,25 +1,41 @@
 import { useRouter } from "next/router";
-import { IoGift, IoChevronDown, IoChevronUp } from "react-icons/io5";
+import { IoGift } from "react-icons/io5";
 import { FaArrowRight } from "react-icons/fa";
-import type { UserProfile } from "~/api/models/user";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { searchReferralLinkUsagesAsReferrer } from "~/api/services/referrals";
 
 interface ReferralCardProps {
-  userProfile: UserProfile;
   onClick?: () => void;
 }
 
-export const ReferralCard: React.FC<ReferralCardProps> = ({
-  userProfile,
-  onClick,
-}) => {
+export const ReferralCard: React.FC<ReferralCardProps> = ({ onClick }) => {
   const router = useRouter();
   const [showDetails, setShowDetails] = useState(false);
 
-  // TODO: Get actual stats from API when available
-  const hasActiveLinks = false; // This will be fetched from API
-  const totalReferrals = 0;
-  const totalEarned = 0;
+  // Fetch referrer usage statistics
+  const { data: usageResults } = useQuery({
+    queryKey: ["ReferralLinkUsages", "Referrer", "Stats"],
+    queryFn: () =>
+      searchReferralLinkUsagesAsReferrer({
+        pageNumber: 1,
+        pageSize: 100, // Get all usages to calculate stats
+        linkId: null,
+        programId: null,
+        statuses: null,
+        dateStart: null,
+        dateEnd: null,
+      }),
+  });
+
+  const hasActiveLinks = (usageResults?.items?.length ?? 0) > 0;
+  const totalReferrals = usageResults?.totalCount ?? 0;
+
+  // Total earned would need program-level reward data which isn&apos;t in the usage response
+  // For now, show count of completed referrals as the metric
+  const completedReferrals =
+    usageResults?.items?.filter((usage) => usage.status === "Completed")
+      .length ?? 0;
 
   const handleGetStarted = () => {
     onClick?.();
@@ -48,9 +64,9 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
             </span>
           </div>
           <div className="flex flex-row items-center justify-between">
-            <p className="text-gray-dark">ZLTO Earned:</p>
+            <p className="text-gray-dark">Completed:</p>
             <span className="badge bg-yellow-tint text-yellow font-semibold">
-              {totalEarned}
+              {completedReferrals}
             </span>
           </div>
         </div>
@@ -85,7 +101,8 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
             </div>
           </div>
           <p className="mt-2 text-xs text-gray-600">
-            Help friends discover opportunities and you'll both earn ZLTO.{"  "}
+            Help friends discover opportunities and you&apos;ll both earn ZLTO.
+            {"  "}
             {/* Toggle Details Button */}
             <button
               type="button"
@@ -101,7 +118,7 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
         <div className="p-4">
           {/* Expandable Details */}
           {showDetails && (
-            <div className="animate-fade-in border-tx border-green-100x mb-4 space-y-3">
+            <div className="animate-fade-in mb-4 space-y-3">
               <div className="rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-3 shadow-sm">
                 <h4 className="mb-1 flex items-center gap-2 text-xs font-semibold text-blue-900">
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-xs text-white">
@@ -148,7 +165,7 @@ export const ReferralCard: React.FC<ReferralCardProps> = ({
                     </p>
                     <p className="mt-1 text-xs text-gray-600">
                       Help your network discover opportunities while earning
-                      rewards. It's a win for everyone!
+                      rewards. It&apos;s a win for everyone!
                     </p>
                   </div>
                 </div>

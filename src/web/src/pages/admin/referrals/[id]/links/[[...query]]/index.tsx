@@ -39,14 +39,6 @@ import { authOptions } from "~/server/auth";
 import Moment from "react-moment";
 import { toast } from "react-toastify";
 
-// Helper function to get total count from usageCounts dictionary
-const getTotalFromUsageCounts = (
-  usageCounts: Record<string, number> | null | undefined,
-): number => {
-  if (!usageCounts) return 0;
-  return Object.values(usageCounts).reduce((sum, count) => sum + count, 0);
-};
-
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
   const { id, query, page, status, valueContains, userId, returnUrl } =

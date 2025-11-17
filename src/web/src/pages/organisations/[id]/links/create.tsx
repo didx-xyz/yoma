@@ -1493,7 +1493,9 @@ ReferrerLinkDetails.getLayout = function getLayout(page: ReactElement) {
 };
 
 // 👇 return theme from component properties. this is set server-side (getServerSideProps)
-ReferrerLinkDetails.theme = function getTheme(page: ReactElement<{ theme: string }>) {
+ReferrerLinkDetails.theme = function getTheme(
+  page: ReactElement<{ theme: string }>,
+) {
   return page.props.theme;
 };
 
