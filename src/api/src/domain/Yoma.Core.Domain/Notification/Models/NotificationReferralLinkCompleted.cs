@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Notification.Models
 {
   public sealed class NotificationReferralLinkCompleted : NotificationBase
   {
-    [JsonProperty("dashboardURL")]
+    [JsonProperty("dashboardURL")] //yoid/referrals
     public string? DashboardURL { get; set; }
 
     [JsonProperty("links")]

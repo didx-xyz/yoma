@@ -25,7 +25,6 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int StepsCompleted => Steps.Count(s => s.Completed);
 
-    //TODO: Review logic to ensure most accurate value
     public decimal PercentComplete => StepsTotal == 0
         ? 100m
         : Rule == PathwayCompletionRule.Any
@@ -64,7 +63,6 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int TasksCompleted => Tasks.Count(t => t.Completed);
 
-    //TODO: Review logic to ensure most accurate value
     public decimal PercentComplete => TasksTotal == 0
         ? 100m
         : Rule == PathwayCompletionRule.Any

@@ -5,10 +5,10 @@ namespace Yoma.Core.Domain.Notification.Models
   public sealed class NotificationReferralUsageWelcome : NotificationBase
   {
     [JsonProperty("yoIDURL")]
-    public string? YoIDURL { get; set; }
+    public string? YoIDURL { get; set; } //yoid/referee/[programId]
 
     [JsonProperty("linkClaimURL")]
-    public string? LinkClaimURL { get; set; }
+    public string? LinkClaimURL { get; set; } //referrals/claim/[programId]?linkId=[linkId]
 
     [JsonProperty("dateClaimed")]
     public DateTimeOffset DateClaimed { get; set; }
@@ -38,7 +38,7 @@ namespace Yoma.Core.Domain.Notification.Models
     public DateTimeOffset? DateDeadline => CompletionWindowInDays.HasValue ? DateClaimed.AddDays(CompletionWindowInDays.Value) : null;
 
     [JsonProperty("dateDeadlineFormatted")]
-    public string? DateDeadlineFormatted => DateDeadline.HasValue ? DateDeadline.Value.ToString("ddd, MMM dd, yyyy HH:mm") : null;
+    public string? DateDeadlineFormatted => DateDeadline.HasValue ? DateDeadline.Value.ToString("ddd, MMM dd, yyyy HH:mm") : "No deadline";
 
     [JsonProperty("zltoReward")]
     public decimal? ZltoReward { get; set; }

@@ -687,13 +687,20 @@ namespace Yoma.Core.Domain.Referral.Services
       if (program.PathwayRequired && program.Pathway == null)
         throw new DataInconsistencyException("Pathway required but does not exist");
 
+      // No pathway configured
+      var proofRequired = program.ProofOfPersonhoodRequired == true;
       if (program.Pathway == null)
       {
+        if (!proofRequired)
+        {
+          // No POP required and no pathway → nothing to complete → trivially 100%
+          result.PercentComplete = 100;
+          return result;
+        }
+
         result.PercentComplete = result.ProofOfPersonhoodCompleted == true ? 100 : 0;
         return result;
       }
-
-      result.PercentComplete = result.ProofOfPersonhoodCompleted == true ? 50 : 0;
 
       // NOTE:
       // Pathway StepsTotal, TasksTotal, Completed and PercentComplete are computed inline via property getters.
@@ -757,8 +764,18 @@ namespace Yoma.Core.Domain.Referral.Services
         ]
       };
 
-      result.PercentComplete += result.Pathway.PercentComplete * 0.5m;
-
+      // If POP is required, it owns the first 50%
+      if (proofRequired)
+      {
+        result.PercentComplete = result.ProofOfPersonhoodCompleted == true ? 50m : 0m;
+        result.PercentComplete += Math.Clamp(result.Pathway.PercentComplete * 0.5m, 0, 50);
+      }
+      else
+      {
+        // POP not required → pathway drives full 0–100%
+        result.PercentComplete = Math.Clamp(result.Pathway.PercentComplete, 0, 100);
+      }
+      
       return result;
     }
     #endregion

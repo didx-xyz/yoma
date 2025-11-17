@@ -134,8 +134,15 @@ namespace Yoma.Core.Domain.Notification.Services
         NotificationType.ActionLink_Verify_Distribution => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, //sent to youth mailing / distribution list
         NotificationType.ActionLink_Verify_Activated => MessageType.Email, //sent to organization admin
         NotificationType.Opportunity_Published => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, //sent to youth
-        NotificationType.Download => MessageType.Email, //sent to admin or organization admin
-
+        NotificationType.Download => MessageType.Email, //sent to admin or organization admin,
+        NotificationType.ReferralProgram_Expiration_Expired => MessageType.Email, // sent to admin
+        NotificationType.ReferralProgram_Expiration_WithinNextDays => MessageType.Email, // sent to admin
+        NotificationType.ReferralProgram_UnCompletable => MessageType.Email, // sent to admin
+        NotificationType.ReferralLink_Completed_ReferrerAwarded => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, // sent to referrer (youth)
+        NotificationType.Referral_Blocked_Referrer => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, // sent to referrer (youth)
+        NotificationType.Referral_Unblocked_Referrer => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, // sent to referrer (youth)
+        NotificationType.ReferralUsage_Welcome => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, // sent to referee (youth)
+        NotificationType.ReferralUsage_Completion => MessageType.Email | MessageType.SMS | MessageType.WhatsApp, // sent to referee (youth)
         _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported"),
       };
 

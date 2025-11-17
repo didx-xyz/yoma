@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore.Migrations;
+using Yoma.Core.Domain.Core;
 
 namespace Yoma.Core.Infrastructure.Database.Migrations
 {
@@ -6,6 +7,102 @@ namespace Yoma.Core.Infrastructure.Database.Migrations
   {
     internal static void Seed(MigrationBuilder migrationBuilder)
     {
+      #region Entity
+      #region Lookups
+      migrationBuilder.UpdateData(
+          table: "SettingsDefinition",
+          schema: "Entity",
+          keyColumn: "Key",
+          keyValue: "User_MailingList_Subscribe",
+          column: "Order",
+          value: 9
+      );
+
+      migrationBuilder.UpdateData(
+          table: "SettingsDefinition",
+          schema: "Entity",
+          keyColumn: "Key",
+          keyValue: "Organization_Admin_Notification_Opportunity_Expiration",
+          column: "Order",
+          value: 10
+      );
+
+      migrationBuilder.UpdateData(
+          table: "SettingsDefinition",
+          schema: "Entity",
+          keyColumn: "Key",
+          keyValue: "Organization_Admin_Notification_Organization_Approval",
+          column: "Order",
+          value: 11
+      );
+
+      migrationBuilder.UpdateData(
+          table: "SettingsDefinition",
+          schema: "Entity",
+          keyColumn: "Key",
+          keyValue: "Organization_Admin_Notification_Opportunity_Completion",
+          column: "Order",
+          value: 12
+      );
+
+      migrationBuilder.UpdateData(
+          table: "SettingsDefinition",
+          schema: "Entity",
+          keyColumn: "Key",
+          keyValue: "Organization_Admin_Notification_ActionLink_Verify_Activated",
+          column: "Order",
+          value: 13
+      );
+
+      migrationBuilder.UpdateData(
+          table: "SettingsDefinition",
+          schema: "Entity",
+          keyColumn: "Key",
+          keyValue: "Admin_Notification_Opportunity_Posted",
+          column: "Order",
+          value: 14
+      );
+
+      migrationBuilder.UpdateData(
+          table: "SettingsDefinition",
+          schema: "Entity",
+          keyColumn: "Key",
+          keyValue: "Admin_Notification_Organization_Approval",
+          column: "Order",
+          value: 15
+      );
+
+      migrationBuilder.UpdateData(
+          table: "SettingsDefinition",
+          schema: "Entity",
+          keyColumn: "Key",
+          keyValue: "User_Share_Contact_Info_With_Partners",
+          column: "Order",
+          value: 18
+      );
+
+      migrationBuilder.InsertData(
+        table: "SettingsDefinition",
+        columns: ["Id", "EntityType", "Key", "Title", "Description", "Group", "SubGroup", "Order", "Roles", "DefaultValue", "Type", "Enabled", "Visible"],
+        values: new object?[,]
+        {
+          // Notifications: Referrals (Youth / Referrer)
+          { "4A7D9D94-4B94-40C0-96EE-8B147B6FA1E7", "User", "User_Referrer_Notification_ReferralLink_Completed_Awarded", "Referral completed", "Notify when someone you referred completes the program and you earn a reward", "Notifications", "General", 5, $"[\"{Constants.Role_User}\"]", "true", "Boolean", true, true },
+          { "78A34A2C-7A34-4C5C-8BBF-248E24D9F6E2", "User", "User_Referrer_Notification_Referral_AccessChange", "Referral access changed", "Notify when your referral access is blocked or restored", "Notifications", "General", 6, $"[\"{Constants.Role_User}\"]", "true", "Boolean", true, true },
+
+          // Notifications: Referrals (Youth / Referee)
+          { "CD46C821-7169-4EF6-AFD2-147A21E45A17", "User", "User_Referee_Notification_ReferralUsage_Welcome", "Referral welcome", "Sent after claiming a referral link with instructions and next steps", "Notifications", "General", 7, $"[\"{Constants.Role_User}\"]", "true", "Boolean", false, false },
+          { "AC2310A8-93A4-4C2E-A97F-9FE81B70D64B", "User", "User_Referee_Notification_ReferralUsage_Completed", "Referral complete", "Sent when the referee completes the program, including their reward", "Notifications", "General", 8, $"[\"{Constants.Role_User}\"]", "true", "Boolean", false, false },
+
+          // Notifications: Referrals (Admin)
+          { "C7E10477-87E2-4D0F-8128-7F7277ACF731", "User", "Admin_Notification_ReferralProgram_Expiration", "Program expiring", "Notify when a referral program nears its end date or expires", "Notifications", "Admin", 16, $"[\"{Constants.Role_Admin}\"]", "true", "Boolean", true, true },
+          { "E1C9B472-463C-4B1F-BE7E-CE394AF28C38", "User", "Admin_Notification_ReferralProgram_UnCompletable", "Program un-completable", "Notify when a referral program becomes un-completable and requires fixing", "Notifications", "Admin", 17, $"[\"{Constants.Role_Admin}\"]", "true", "Boolean", true, true },
+
+        },
+        schema: "Entity");
+      #endregion Lookups
+      #endregion Entity
+
       #region Referral
       #region Lookups
       migrationBuilder.InsertData(
