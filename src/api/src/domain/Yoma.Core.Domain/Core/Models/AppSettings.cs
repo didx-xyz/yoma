@@ -160,7 +160,7 @@ namespace Yoma.Core.Domain.Core.Models
 
     public bool ReferralRestrictRefereeToSingleProgram { get; set; }
 
-    public int ReferralFirstClaimSinceYoIDOnboardedTimeoutInSeconds { get; set; }
+    public int ReferralFirstClaimSinceYoIDOnboardedTimeoutInHours { get; set; }
     #endregion
 
     #region Private Members

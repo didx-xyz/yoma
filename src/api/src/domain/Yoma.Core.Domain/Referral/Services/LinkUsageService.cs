@@ -46,6 +46,11 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IRepositoryBatched<ReferralLinkUsage> _linkUsageRepository;
 
     private const string Key_Prefix = "link_usage_process_progress";
+
+    // Progress weight distribution for referral usage completion
+    private const decimal PercentComplete_Weight_YoIDProfileCompleted = 25m; // YoID Onboarded / Profile Completed
+    private const decimal PercentComplete_Weight_Pop = 25m; //Proof of Personhood
+    private const decimal PercentComplete_Weight_Pathway = 50m; //Pathway completion
     #endregion
 
     #region Constructor
@@ -253,7 +258,7 @@ namespace Yoma.Core.Domain.Referral.Services
       var userUsages = _linkUsageRepository.Query().Where(u => u.UserId == user.Id).ToList();
 
       // First claim only: prevents retroactive claims — only allowed within configured window after onboarding
-      if (userUsages.Count == 0 && DateTimeOffset.UtcNow - user.DateYoIDOnboarded.Value > TimeSpan.FromSeconds(_appSettings.ReferralFirstClaimSinceYoIDOnboardedTimeoutInSeconds))
+      if (userUsages.Count == 0 && DateTimeOffset.UtcNow - user.DateYoIDOnboarded.Value > TimeSpan.FromHours(_appSettings.ReferralFirstClaimSinceYoIDOnboardedTimeoutInHours))
         throw new ValidationException("You are already registered. Registration with a referral link only applies to new registrations");
 
       if (_appSettings.ReferralRestrictRefereeToSingleProgram)
@@ -814,7 +819,19 @@ namespace Yoma.Core.Domain.Referral.Services
         throw new DataInconsistencyException("Pathway required but does not exist");
 
       // No pathway configured
+      var yoIDOnboardedProfileCompleted = item.UserYoIDOnboarded == true;
       var proofRequired = program.ProofOfPersonhoodRequired == true;
+      var pathwayRequired = program.PathwayRequired;
+
+      // NOTE:
+      // We intentionally do NOT factor YoID onboarding into this branch because:
+      // - A referral usage can ONLY exist if the user has already completed YoID onboarding.
+      // - Meaning: by the time we reach this logic, YoID is already guaranteed.
+      // - Therefore YoID adds no incremental value here and would always equal 100%.
+      //
+      // Summary:
+      // YoID affects progress only when additional gates (POP / Pathway) exist.
+      // Otherwise, we simply treat the program as fully complete.
       if (program.Pathway == null)
       {
         if (!proofRequired)
@@ -890,17 +907,35 @@ namespace Yoma.Core.Domain.Referral.Services
         ]
       };
 
-      // If POP is required, it owns the first 50%
+      // Weighted model from percent complete
+      var totalWeight = 0m;
+      var points = 0m;
+
+      // YoID onboarding (profile completed) is always part of the picture once we have any gate
+      totalWeight += PercentComplete_Weight_YoIDProfileCompleted;
+      if (yoIDOnboardedProfileCompleted) points += PercentComplete_Weight_YoIDProfileCompleted;
+
+      // POP (only if required)
       if (proofRequired)
       {
-        result.PercentComplete = result.ProofOfPersonhoodCompleted == true ? 50m : 0m;
-        result.PercentComplete += Math.Clamp(result.Pathway.PercentComplete * 0.5m, 0, 50);
+        totalWeight += PercentComplete_Weight_Pop;
+
+        if (result.ProofOfPersonhoodCompleted == true)
+          points += PercentComplete_Weight_Pop;
       }
-      else
+
+      // Pathway (only if required)
+      // Uses result.Pathway.PercentComplete (0–100) to contribute proportionally
+      if (pathwayRequired)
       {
-        // POP not required → pathway drives full 0–100%
-        result.PercentComplete = Math.Clamp(result.Pathway.PercentComplete, 0, 100);
+        totalWeight += PercentComplete_Weight_Pathway;
+
+        var pathwayPercent = Math.Clamp(result.Pathway.PercentComplete, 0m, 100m);
+        points += pathwayPercent / 100m * PercentComplete_Weight_Pathway;
       }
+
+      // Safety: if no weights somehow ended up active, treat as fully complete
+      result.PercentComplete = totalWeight <= 0m ? 100m : Math.Round(points / totalWeight * 100m, 2);
 
       return result;
     }

@@ -5,6 +5,7 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Notification;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -269,10 +270,10 @@ namespace Yoma.Core.Domain.Referral.Services
             scope.Complete();
           });
 
+          await SendNotification(NotificationType.ReferralProgram_Expiration_Expired, items);
+
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
-
-        //TODO: NotificationType.ReferralProgram_Expiration_Expired (sent to admin)
 
         _logger.LogInformation("Processed program expiration");
       }
@@ -351,6 +352,13 @@ namespace Yoma.Core.Domain.Referral.Services
       {
         if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
       }
+    }
+    #endregion
+
+    #region Private Members
+    private async Task SendNotification(NotificationType type, List<Program> items)
+    {
+      //TODO:
     }
     #endregion
   }

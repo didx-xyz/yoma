@@ -53,6 +53,8 @@ namespace Yoma.Core.Domain.Referral.Models
     public string? UserPhoneNumber { get; set; }
 
     public bool? UserPhoneNumberConfirmed { get; set; }
+
+    public bool? UserYoIDOnboarded { get; set; }
     #endregion
 
     public Guid StatusId { get; set; }

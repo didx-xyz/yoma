@@ -44,6 +44,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         UserEmailConfirmed = entity.User.EmailConfirmed,
         UserPhoneNumber = entity.User.PhoneNumber,
         UserPhoneNumberConfirmed = entity.User.PhoneNumberConfirmed,
+        UserYoIDOnboarded = entity.User.YoIDOnboarded,  
         StatusId = entity.StatusId,
         Status = Enum.Parse<Domain.Referral.ReferralLinkUsageStatus>(entity.Status.Name, true),
         DateClaimed = entity.DateCreated,

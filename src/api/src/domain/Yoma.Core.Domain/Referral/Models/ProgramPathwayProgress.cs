@@ -25,11 +25,33 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public int StepsCompleted => Steps.Count(s => s.Completed);
 
-    public decimal PercentComplete => StepsTotal == 0
-        ? 100m
-        : Rule == PathwayCompletionRule.Any
-            ? (Steps.Any(t => t.Completed) ? 100m : 0m)
-            : Math.Round((decimal)Steps.Count(t => t.Completed) / StepsTotal * 100m, 2);
+    /// <summary>
+    /// Pathway-level progress:
+    /// - If no steps exist → 100%
+    /// - If rule = ANY → binary (any completed step = 100%, else 0)
+    /// - If rule = ALL → partial progress allowed:
+    ///     averages step.PercentComplete values rather than only counting completed steps
+    ///     (this avoids getting stuck at 0% until a full step completes)
+    /// </summary>
+    public decimal PercentComplete
+    {
+      get
+      {
+        if (StepsTotal == 0)
+          return 100m;
+
+        if (Rule == PathwayCompletionRule.Any)
+        {
+          // Binary: any fully completed step = 100% for entire pathway
+          return Steps.Any(s => s.PercentComplete >= 100m) ? 100m : 0m;
+        }
+
+        // ALL = proportional avg based on partial step completions
+        // (e.g. step with 50% progress now contributes instead of being 0 until complete)
+        var avg = Steps.Sum(s => s.PercentComplete) / StepsTotal;
+        return Math.Round(Math.Clamp(avg, 0m, 100m), 2);
+      }
+    }
 
     public List<ProgramPathwayStepProgress> Steps { get; set; } = null!;
 
