@@ -5,26 +5,31 @@ using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.IdentityProvider.Extensions;
+using Yoma.Core.Domain.IdentityProvider.Interfaces;
 using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
 
 namespace Yoma.Core.Domain.Referral.Services
 {
-  //TODO: ReferralProgram_Expiration_WithinNextDays (sent to admin) - new job ProcessExpirationNotifications
-
   public class ProgramBackgroundService : IProgramBackgroundService
   {
     #region Class Variables
     private readonly ILogger<ProgramBackgroundService> _logger;
     private readonly ScheduleJobOptions _scheduleJobOptions;
 
+    private readonly IIdentityProviderClient _identityProviderClient;
+
     private readonly IUserService _userService;
     private readonly IProgramStatusService _programStatusService;
     private readonly ILinkMaintenanceService _linkMaintenanceService;
     private readonly IDistributedLockService _distributedLockService;
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly INotificationDeliveryService _notificationDeliveryService;
 
     private readonly IRepositoryBatchedValueContainsWithNavigation<Program> _programRepository;
 
@@ -38,22 +43,28 @@ namespace Yoma.Core.Domain.Referral.Services
       ILogger<ProgramBackgroundService> logger,
       IOptions<ScheduleJobOptions> scheduleJobOptions,
 
+      IIdentityProviderClient identityProviderClient,
+
       IUserService userService,
       IProgramStatusService programStatusService,
       ILinkMaintenanceService linkMaintenanceService,
       IDistributedLockService distributedLockService,
       IExecutionStrategyService executionStrategyService,
+      INotificationDeliveryService notificationDeliveryService,
 
       IRepositoryBatchedValueContainsWithNavigation<Program> programRepository)
     {
       _logger = logger ?? throw new ArgumentNullException(nameof(logger));
       _scheduleJobOptions = scheduleJobOptions.Value ?? throw new ArgumentNullException(nameof(scheduleJobOptions));
 
+      _identityProviderClient = identityProviderClient ?? throw new ArgumentNullException(nameof(identityProviderClient));
+
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _programStatusService = programStatusService ?? throw new ArgumentNullException(nameof(programStatusService));
       _linkMaintenanceService = linkMaintenanceService ?? throw new ArgumentNullException(nameof(linkMaintenanceService));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
+      _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
 
       _programRepository = programRepository ?? throw new ArgumentNullException(nameof(programRepository));
     }
@@ -111,8 +122,6 @@ namespace Yoma.Core.Domain.Referral.Services
 
                 _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) marked UnCompletable — broken pathway detected", item.Name, item.Id);
 
-                //TODO: ReferralProgram_UnCompletable (sent to admin)
-
                 break;
 
               case ProgramStatus.UnCompletable:
@@ -127,8 +136,6 @@ namespace Yoma.Core.Domain.Referral.Services
                     programIdsToExpire.Add(item.Id);
 
                     _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) expired instead of reactivation — end date reached {DateEnd:yyyy-MM-dd}", item.Name, item.Id, item.DateEnd);
-
-                    //TODO: NotificationType.ReferralProgram_Expiration_Expired (sent to admin)
 
                     break;
                   }
@@ -157,7 +164,7 @@ namespace Yoma.Core.Domain.Referral.Services
                   break;
                 }
 
-                if (item.DateModified.AddDays(_scheduleJobOptions.ReferralProgramHealthScheduleGracePeriodInDays) > now)
+                if (item.DateModified.AddDays(_scheduleJobOptions.ReferralProgramHealthScheduleExpirationGracePeriodInDays) > now)
                   break;
 
                 item.Status = ProgramStatus.Expired;
@@ -165,8 +172,6 @@ namespace Yoma.Core.Domain.Referral.Services
                 item.ModifiedByUserId = user.Id;
                 itemsToUpdate.Add(item);
                 programIdsToExpire.Add(item.Id);
-
-                //TODO: NotificationType.ReferralProgram_Expiration_Expired (sent to admin)
 
                 _logger.LogInformation("Program '{ProgramName}' ({ProgramId}) expired — un-completable beyond grace period (modified {DateModified:yyyy-MM-dd})", item.Name, item.Id, item.DateModified);
 
@@ -183,7 +188,7 @@ namespace Yoma.Core.Domain.Referral.Services
             {
               using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-              await _programRepository.Update(itemsToUpdate);
+              itemsToUpdate = await _programRepository.Update(itemsToUpdate);
 
               if (programIdsToExpire.Count > 0)
               {
@@ -201,12 +206,16 @@ namespace Yoma.Core.Domain.Referral.Services
             });
           }
 
+          var expiredPrograms = itemsToUpdate.Where(o => o.Status == ProgramStatus.Expired).ToList();
+          if (expiredPrograms.Count > 0) await SendNotification(NotificationType.ReferralProgram_Expiration_Expired, expiredPrograms);
+
+          var unCompletablePrograms = itemsToUpdate.Where(o => o.Status == ProgramStatus.UnCompletable).ToList();
+          if (unCompletablePrograms.Count > 0) await SendNotification(NotificationType.ReferralProgram_UnCompletable, unCompletablePrograms);
+
           if (executeUntil <= DateTimeOffset.UtcNow) break;
         }
 
         _logger.LogInformation("Processed program health");
-
-        //TODO: ReferralProgram_UnCompletable (sent to admin) - Escalations every 5 days + daily in last 3 days
       }
       catch (Exception ex)
       {
@@ -262,7 +271,7 @@ namespace Yoma.Core.Domain.Referral.Services
           {
             using var scope = TransactionScopeHelper.CreateReadCommitted(TransactionScopeOption.RequiresNew);
 
-            await _programRepository.Update(items);
+            items = await _programRepository.Update(items);
 
             //expires associated links and usages
             await _linkMaintenanceService.ExpireByProgramId(programIds, _logger);
@@ -280,6 +289,42 @@ namespace Yoma.Core.Domain.Referral.Services
       catch (Exception ex)
       {
         _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpiration), ex.Message);
+      }
+      finally
+      {
+        if (lockAcquired) await _distributedLockService.ReleaseLockAsync(lockIdentifier);
+      }
+    }
+
+    public async Task ProcessExpirationNotifications()
+    {
+      const string lockIdentifier = "referral_program_process_expiration_notifications";
+      var lockDuration = TimeSpan.FromHours(_scheduleJobOptions.DefaultScheduleMaxIntervalInHours) + TimeSpan.FromMinutes(_scheduleJobOptions.DistributedLockDurationBufferInMinutes);
+      var lockAcquired = false;
+
+      try
+      {
+        lockAcquired = await _distributedLockService.TryAcquireLockAsync(lockIdentifier, lockDuration);
+        if (!lockAcquired) return;
+
+        _logger.LogInformation("Processing program expiration notifications");
+
+        var datetimeFrom = DateTimeOffset.UtcNow;
+        var datetimeTo = datetimeFrom.AddDays(_scheduleJobOptions.ReferralProgramExpirationNotificationIntervalInDays);
+        var statusExpirableIds = Statuses_Expirable.Select(o => _programStatusService.GetByName(o.ToString()).Id).ToList();
+
+        var items = _programRepository.Query().Where(o => statusExpirableIds.Contains(o.StatusId) &&
+            o.DateEnd.HasValue && o.DateEnd.Value >= datetimeFrom && o.DateEnd.Value <= datetimeTo)
+            .OrderBy(o => o.DateEnd).Take(_scheduleJobOptions.ReferralProgramExpirationScheduleBatchSize).ToList();
+        if (items.Count == 0) return;
+
+        await SendNotification(NotificationType.ReferralProgram_Expiration_WithinNextDays, items);
+
+        _logger.LogInformation("Processed program expiration notifications");
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to execute {process}: {errorMessage}", nameof(ProcessExpirationNotifications), ex.Message);
       }
       finally
       {
@@ -358,7 +403,113 @@ namespace Yoma.Core.Domain.Referral.Services
     #region Private Members
     private async Task SendNotification(NotificationType type, List<Program> items)
     {
-      //TODO:
+      try
+      {
+        var superAdmins = await _identityProviderClient.ListByRole(Core.Constants.Role_Admin);
+        var recipients = superAdmins?.Select(o => new NotificationRecipient
+        {
+          Username = o.Username,
+          PhoneNumber = o.PhoneNumber,
+          PhoneNumberConfirmed = o.PhoneNumberVerified,
+          Email = o.Email,
+          EmailConfirmed = o.EmailVerified,
+          DisplayName = o.ToDisplayName()
+        }).ToList();
+
+        if (recipients == null || recipients.Count == 0)
+        {
+          _logger.LogWarning("No super admin users found to send notification of type '{NotificationType}'", type);
+          return;
+        }
+
+        NotificationBase? data = null;
+
+        switch (type)
+        {
+          case NotificationType.ReferralProgram_Expiration_Expired:
+          case NotificationType.ReferralProgram_Expiration_WithinNextDays:
+            data = new NotificationReferralProgramExpiration
+            {
+              WithinNextDays = _scheduleJobOptions.ReferralProgramExpirationNotificationIntervalInDays,
+              Programs = [.. items.Select(o => new NotificationReferralProgramExpirationItem
+              {
+                Name = o.Name,
+                DateStart = o.DateStart,
+                DateEnd = o.DateEnd,
+                URL = "TODO"
+              })]
+            };
+
+            await _notificationDeliveryService.Send(type, recipients, data);
+
+            break;
+
+          case NotificationType.ReferralProgram_UnCompletable:
+            var today = DateTimeOffset.UtcNow.Date;
+
+            // Just became Un-Completable today → immediate notification with full grace period
+            var itemsToday = items
+              .Where(o => o.DateModified.Date == today)
+              .ToList();
+
+            // Already Un-Completable before today → use the notification window
+            var itemsOlder = items
+              .Where(o => o.DateModified.Date < today)
+              .ToList();
+
+            var recipientDataGroups = new List<(List<NotificationRecipient> Recipients, NotificationReferralProgramUnCompletable Data)>();
+
+            if (itemsToday.Count > 0)
+            {
+              var dataToday = new NotificationReferralProgramUnCompletable
+              {
+                WithinNextDays = _scheduleJobOptions.ReferralProgramHealthScheduleExpirationGracePeriodInDays,
+                Programs = [.. itemsToday.Select(o => new NotificationReferralProgramUnCompletableItem
+              {
+                Name = o.Name,
+                DateUnCompletable = o.DateModified,
+                DateStart = o.DateStart,
+                DateEnd = o.DateEnd,
+                URL = "TODO"
+              })]
+              };
+
+              recipientDataGroups.Add((recipients, dataToday));
+            }
+
+            if (itemsOlder.Count > 0)
+            {
+              var dataOlder = new NotificationReferralProgramUnCompletable
+              {
+                WithinNextDays = _scheduleJobOptions.ReferralProgramHealthScheduleExpirationNotificationInDays,
+                Programs = [.. itemsOlder.Select(o => new NotificationReferralProgramUnCompletableItem
+              {
+                Name = o.Name,
+                DateUnCompletable = o.DateModified,
+                DateStart = o.DateStart,
+                DateEnd = o.DateEnd,
+                URL = "TODO"
+              })]
+              };
+
+              recipientDataGroups.Add((recipients, dataOlder));
+            }
+
+            if (recipientDataGroups.Count > 0)
+              await _notificationDeliveryService.Send(type, recipientDataGroups);
+
+            break;
+
+          default:
+            throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
+        }
+
+        _logger.LogInformation("Successfully sent notification");
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+      }
     }
     #endregion
   }

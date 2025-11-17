@@ -118,17 +118,15 @@ namespace Yoma.Core.Domain.Core.Models
 
     public string ReferralProgramExpirationSchedule { get; set; } = null!;
 
+    public string ReferralProgramExpirationNotificationSchedule { get; set; } = null!;
+
     // Recommended batch size: 100 programs per run.
     // Each program expiration cascades to all its links and link usages, potentially updating thousands of rows.
     // Keeping the batch size around 100 limits transaction size, reduces lock contention and WAL pressure,
     // while still providing good throughput for nightly expiration jobs.
     public int ReferralProgramExpirationScheduleBatchSize { get; set; }
 
-    public string ReferralProgramHealthSchedule { get; set; } = null!;
-
-    public int ReferralProgramHealthScheduleBatchSize { get; set; }
-
-    public int ReferralProgramHealthScheduleGracePeriodInDays { get; set; }
+    public int ReferralProgramExpirationNotificationIntervalInDays { get; set; }
 
     public string ReferralProgramDeletionSchedule { get; set; } = null!;
 
@@ -139,5 +137,13 @@ namespace Yoma.Core.Domain.Core.Models
     public string ReferralLinkUsageExpirationSchedule { get; set; } = null!;
 
     public int ReferralLinkUsageExpirationScheduleBatchSize { get; set; }
+
+    public string ReferralProgramHealthSchedule { get; set; } = null!;
+
+    public int ReferralProgramHealthScheduleBatchSize { get; set; }
+
+    public int ReferralProgramHealthScheduleExpirationGracePeriodInDays { get; set; }
+
+    public int ReferralProgramHealthScheduleExpirationNotificationInDays { get; set; }
   }
 }

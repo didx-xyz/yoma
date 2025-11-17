@@ -20,7 +20,7 @@ namespace Yoma.Core.Domain.Notification
     // sent to admin
     ReferralProgram_Expiration_Expired,          // program reached End Date (if specified) OR remained UnCompletable beyond the 15-day grace period (configurable) → program expired
     ReferralProgram_Expiration_WithinNextDays,   // program approaching End Date — sent once per day during the final 3 days (configurable) before expiration
-    ReferralProgram_UnCompletable,               // pathway became Un-Completable — send immediately, then every 5 days (configurable), and daily for the last 3 days (configurable) before the 15-day grace (configurable) period elapses
+    ReferralProgram_UnCompletable,               // pathway became Un-Completable — send immediately, then sent once per day during the final 5 days (configurable) before expiration
 
     // sent to referrer (youth)
     ReferralLink_Completed_ReferrerAwarded,      // a referee completed and the referrer received reward > 0 Zlto

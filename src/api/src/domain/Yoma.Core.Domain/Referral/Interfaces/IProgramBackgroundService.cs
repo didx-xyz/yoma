@@ -6,6 +6,8 @@ namespace Yoma.Core.Domain.Referral.Interfaces
 
     Task ProcessExpiration();
 
+    Task ProcessExpirationNotifications();
+
     Task ProcessDeletion();
   }
 }

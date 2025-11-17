@@ -4,11 +4,11 @@ namespace Yoma.Core.Domain.Notification.Models
 {
   public sealed class NotificationReferralProgramUnCompletable : NotificationBase
   {
-    [JsonProperty("gracePeriodDays")]
-    public int? GracePeriodDays { get; set; }
+    [JsonProperty("withinNextDays")]
+    public int? WithinNextDays { get; set; }
 
     [JsonProperty("programs")]
-    public List<NotificationReferralProgramExpirationItem> Programs { get; set; } = null!;
+    public List<NotificationReferralProgramUnCompletableItem> Programs { get; set; } = null!;
 
     public override List<NotificationBase> FlattenItems()
     {
@@ -19,7 +19,7 @@ namespace Yoma.Core.Domain.Notification.Models
       {
         SubjectSuffix = SubjectSuffix,
         RecipientDisplayName = RecipientDisplayName,
-        GracePeriodDays = GracePeriodDays,
+        WithinNextDays = WithinNextDays,
         Programs = [item]
       })];
     }

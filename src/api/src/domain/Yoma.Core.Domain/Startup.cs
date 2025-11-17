@@ -330,7 +330,11 @@ namespace Yoma.Core.Domain
         s => s.ProcessExpiration(), options.ReferralProgramExpirationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       RecurringJob.AddOrUpdate<IProgramBackgroundService>(
-        $"Referral Program Health ({ProgramBackgroundService.Statuses_HealthProbe.JoinNames()} – check completable state; grace {options.ReferralProgramHealthScheduleGracePeriodInDays} days)",
+        $"Referral Program Expiration Notifications ({ProgramBackgroundService.Statuses_Expirable.JoinNames()} ending within {options.ReferralProgramExpirationNotificationIntervalInDays} days)",
+        s => s.ProcessExpirationNotifications(), options.OpportunityExpirationNotificationSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
+      RecurringJob.AddOrUpdate<IProgramBackgroundService>(
+        $"Referral Program Health ({ProgramBackgroundService.Statuses_HealthProbe.JoinNames()} – check completable state; auto-expiring grace {options.ReferralProgramHealthScheduleExpirationGracePeriodInDays} days)",
         s => s.ProcessProgramHealth(), options.ReferralProgramHealthSchedule, new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
       RecurringJob.AddOrUpdate<IProgramBackgroundService>(
