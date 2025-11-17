@@ -12,7 +12,10 @@ import {
   IoArrowForward,
   IoAlertCircle,
   IoArrowUp,
+  IoPersonCircle,
+  IoShieldCheckmark,
 } from "react-icons/io5";
+import { FaRoad } from "react-icons/fa";
 import Link from "next/link";
 import type {
   ProgramInfo,
@@ -101,36 +104,105 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [detailsExpanded, setDetailsExpanded] = useState(false);
 
-  // Determine current status and next action
-  const progressStatus = useMemo(() => {
-    // Step 1: Link claimed (always completed if we're here)
-    const linkClaimed = true;
+  // Generate dynamic steps that match HelpReferee component
+  const steps = useMemo(() => {
+    const generatedSteps: Array<{
+      number: number;
+      title: string;
+      description: string;
+      icon: any;
+      completed: boolean;
+      isCurrentStep: boolean;
+    }> = [];
+    let stepNumber = 1;
+    let currentStepFound = false;
 
-    // Step 2: Program requirements
-    let requirementsComplete = true;
+    // Step 1: Register (with or without POH) - ALWAYS COMPLETED at this stage
+    const registrationCompleted = true; // Always completed if user is on this page
+    const pohCompleted = usage.proofOfPersonhoodCompleted ?? true; // Always completed at this stage
 
-    // Check Proof of Personhood
-    if (
-      program.proofOfPersonhoodRequired &&
-      !usage.proofOfPersonhoodCompleted
-    ) {
-      requirementsComplete = false;
+    if (program.proofOfPersonhoodRequired) {
+      generatedSteps.push({
+        number: stepNumber++,
+        title: "Register & Verify",
+        description: `Verified via ${usage.proofOfPersonhoodMethod === "OTP" ? "phone" : "social login"} on ${new Date(usage.dateClaimed).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+        icon: IoShieldCheckmark,
+        completed: true, // Always completed at this stage
+        isCurrentStep: false,
+      });
+    } else {
+      generatedSteps.push({
+        number: stepNumber++,
+        title: "Register",
+        description: `Joined ${new Date(usage.dateClaimed).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+        icon: IoPersonAdd,
+        completed: true, // Always completed at this stage
+        isCurrentStep: false,
+      });
     }
 
-    // Check Pathway
-    if (program.pathwayRequired && usage.pathway && !usage.pathwayComplete) {
-      requirementsComplete = false;
+    // Step 2: Complete Profile - ALWAYS COMPLETED at this stage
+    generatedSteps.push({
+      number: stepNumber++,
+      title: "Complete Profile",
+      description: "Profile completed successfully",
+      icon: IoPersonCircle,
+      completed: true, // Always completed at this stage
+      isCurrentStep: false,
+    });
+
+    // Step 3: Complete Pathway (conditional)
+    if (program.pathwayRequired) {
+      const pathwayCompleted = usage.pathwayComplete ?? false;
+      generatedSteps.push({
+        number: stepNumber++,
+        title: "Complete Pathway",
+        description: pathwayCompleted
+          ? "All pathway steps completed!"
+          : usage.pathway
+            ? `${usage.pathway.stepsCompleted} of ${usage.pathway.stepsTotal} steps completed (${usage.pathway.percentComplete}%)`
+            : "Complete all required steps",
+        icon: FaRoad,
+        completed: pathwayCompleted,
+        isCurrentStep: !pathwayCompleted && !currentStepFound,
+      });
+      if (!pathwayCompleted) {
+        currentStepFound = true;
+      }
     }
 
-    // Step 3: Rewards
+    // Step 4: Earn Rewards or Complete Onboarding
+    const allRequirementsMet =
+      !program.pathwayRequired || (usage.pathwayComplete ?? false);
     const rewardsEarned = usage.status === "Completed";
 
-    return {
-      linkClaimed,
-      requirementsComplete,
-      rewardsEarned,
-      currentStep: !linkClaimed ? 1 : !requirementsComplete ? 2 : 3,
-    };
+    if (program.zltoRewardReferee && program.zltoRewardReferee > 0) {
+      generatedSteps.push({
+        number: stepNumber++,
+        title: "Earn Rewards",
+        description: rewardsEarned
+          ? `${program.zltoRewardReferee} ZLTO earned!${usage.dateCompleted ? ` (${new Date(usage.dateCompleted).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})` : ""}`
+          : `Earn ${program.zltoRewardReferee} ZLTO`,
+        icon: IoTrophy,
+        completed: rewardsEarned,
+        isCurrentStep:
+          !currentStepFound && allRequirementsMet && !rewardsEarned,
+      });
+    } else {
+      generatedSteps.push({
+        number: stepNumber++,
+        title: "Complete Onboarding",
+        description: rewardsEarned
+          ? `Completed successfully!${usage.dateCompleted ? ` (${new Date(usage.dateCompleted).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})` : ""}`
+          : "Finish all requirements",
+        icon: IoRocket,
+        completed: rewardsEarned,
+        isCurrentStep:
+          !currentStepFound && allRequirementsMet && !rewardsEarned,
+      });
+    }
+
+    return generatedSteps;
   }, [usage, program]);
 
   return (
@@ -146,7 +218,7 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
               Your Journey So Far
             </h2>
             <p className="min-w-0 text-sm leading-relaxed text-gray-800">
-              {progressStatus.requirementsComplete
+              {steps.every((s) => s.completed)
                 ? "Track your journey"
                 : "Track your progress and see what's next"}
             </p>
@@ -177,237 +249,102 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
           {/* Timeline Overview */}
           <div className="flex justify-center md:pt-36">
             <ul className="timeline timeline-vertical timeline-snap-icon max-md:timeline-compact lg:timeline-horizontal">
-              {/* Step 1: Link Claimed */}
-              <li>
-                <div className="timeline-middle">
-                  <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-4 ${
-                      progressStatus.linkClaimed
-                        ? "bg-green-600 ring-green-100"
-                        : "bg-gray-400 ring-gray-100"
-                    }`}
-                  >
-                    {progressStatus.linkClaimed ? (
-                      <IoCheckmarkCircle className="h-6 w-6 text-white" />
-                    ) : (
-                      <IoPersonAdd className="h-6 w-6 text-white" />
-                    )}
-                  </div>
-                </div>
-                <div className="timeline-start mb-10 ml-8 md:mb-4 md:ml-0">
-                  <div
-                    className={`timeline-box group min-h-[120px] border-2 shadow-md transition-all ${
-                      progressStatus.linkClaimed
-                        ? "border-green-300 bg-gradient-to-br from-green-50 to-white"
-                        : "border-gray-300 bg-gradient-to-br from-gray-50 to-white"
-                    }`}
-                  >
-                    <div
-                      className={`mb-1 flex items-center gap-2 text-sm font-bold ${
-                        progressStatus.linkClaimed
-                          ? "text-green-600"
-                          : "text-gray-600"
-                      }`}
-                    >
-                      <span
-                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs text-white ${
-                          progressStatus.linkClaimed
-                            ? "bg-green-600"
-                            : "bg-gray-400"
-                        }`}
-                      >
-                        {progressStatus.linkClaimed ? (
-                          <IoCheckmark className="h-4 w-4" />
-                        ) : (
-                          "1"
-                        )}
-                      </span>
-                      Step 1
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">
-                      Link Claimed
-                    </h3>
-                    <p className="text-xs text-gray-600">
-                      {progressStatus.linkClaimed
-                        ? `Joined ${new Date(usage.dateClaimed).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
-                        : "Claim your referral link"}
-                    </p>
-                  </div>
-                </div>
-                <hr
-                  className={
-                    progressStatus.linkClaimed ? "bg-green-600" : "bg-gray-400"
-                  }
-                />
-              </li>
+              {steps.map((step, index) => {
+                const Icon = step.icon;
+                const isFirst = index === 0;
+                const isLast = index === steps.length - 1;
+                const prevStep = index > 0 ? steps[index - 1] : null;
 
-              {/* Step 2: Complete Requirements */}
-              <li>
-                <hr
-                  className={
-                    progressStatus.requirementsComplete
-                      ? "bg-green-600"
-                      : progressStatus.currentStep === 2
-                        ? "bg-blue-600"
-                        : "bg-gray-400"
-                  }
-                />
-                <div className="timeline-middle">
-                  <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-4 ${
-                      progressStatus.requirementsComplete
-                        ? "bg-green-600 ring-green-100"
-                        : progressStatus.currentStep === 2
-                          ? "bg-blue-600 ring-blue-100"
-                          : "bg-gray-400 ring-gray-100"
-                    }`}
-                  >
-                    {progressStatus.requirementsComplete ? (
-                      <IoCheckmarkCircle className="h-6 w-6 text-white" />
-                    ) : (
-                      <IoRocket className="h-6 w-6 text-white" />
+                return (
+                  <li key={step.number}>
+                    {!isFirst && (
+                      <hr
+                        className={
+                          prevStep?.completed ? "bg-green-600" : "bg-gray-400"
+                        }
+                      />
                     )}
-                  </div>
-                </div>
-                <div className="timeline-end mb-10 ml-8 md:mt-4 md:ml-0">
-                  <div
-                    className={`timeline-box group min-h-[120px] border-2 shadow-md transition-all ${
-                      progressStatus.requirementsComplete
-                        ? "border-green-300 bg-gradient-to-br from-green-50 to-white"
-                        : progressStatus.currentStep === 2
-                          ? "border-blue-300 bg-gradient-to-br from-blue-50 to-white"
-                          : "border-gray-300 bg-gradient-to-br from-gray-50 to-white"
-                    }`}
-                  >
-                    <div
-                      className={`mb-1 flex items-center gap-2 text-sm font-bold ${
-                        progressStatus.requirementsComplete
-                          ? "text-green-600"
-                          : progressStatus.currentStep === 2
-                            ? "text-blue-600"
-                            : "text-gray-600"
-                      }`}
-                    >
-                      <span
-                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs text-white ${
-                          progressStatus.requirementsComplete
-                            ? "bg-green-600"
-                            : progressStatus.currentStep === 2
-                              ? "bg-blue-600"
-                              : "bg-gray-400"
+                    <div className="timeline-middle">
+                      <div
+                        className={`flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-4 ${
+                          step.completed
+                            ? "bg-green-600 ring-green-100"
+                            : step.isCurrentStep
+                              ? "bg-orange-500 ring-orange-100"
+                              : "bg-gray-400 ring-gray-100"
                         }`}
                       >
-                        {progressStatus.requirementsComplete ? (
-                          <IoCheckmark className="h-4 w-4" />
+                        {step.completed ? (
+                          <IoCheckmarkCircle className="h-6 w-6 text-white" />
                         ) : (
-                          "2"
+                          <Icon className="h-6 w-6 text-white" />
                         )}
-                      </span>
-                      Step 2
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">
-                      Complete Pathway
-                    </h3>
-                    <p className="text-xs text-gray-600">
-                      {progressStatus.requirementsComplete
-                        ? "All requirements met!"
-                        : program.pathwayRequired && usage.pathway
-                          ? `${usage.pathway.stepsCompleted} of ${usage.pathway.stepsTotal} steps completed (${usage.pathway.percentComplete}%)`
-                          : "In progress..."}
-                    </p>
-                    {!progressStatus.requirementsComplete && (
-                      <div className="mt-2 flex items-center gap-1.5 rounded-md bg-orange-100 px-2 py-1">
-                        <IoArrowUp className="h-3.5 w-3.5 text-orange-600" />
-                        <span className="text-xs font-semibold text-orange-700">
-                          You are here
-                        </span>
                       </div>
-                    )}
-                  </div>
-                </div>
-
-                <hr
-                  className={
-                    progressStatus.requirementsComplete
-                      ? "bg-green-600"
-                      : progressStatus.currentStep === 2
-                        ? "bg-blue-600"
-                        : "bg-gray-400"
-                  }
-                />
-              </li>
-
-              {/* Step 3: Earn Rewards */}
-              <li>
-                <hr
-                  className={
-                    progressStatus.rewardsEarned
-                      ? "bg-green-600"
-                      : "bg-gray-400"
-                  }
-                />
-                <div className="timeline-middle">
-                  <div
-                    className={`flex h-12 w-12 items-center justify-center rounded-full shadow-lg ring-4 ${
-                      progressStatus.rewardsEarned
-                        ? "bg-green-600 ring-green-100"
-                        : "bg-gray-400 ring-gray-100"
-                    }`}
-                  >
-                    {progressStatus.rewardsEarned ? (
-                      <IoCheckmarkCircle className="h-6 w-6 text-white" />
-                    ) : (
-                      <IoTrophy className="h-6 w-6 text-white" />
-                    )}
-                  </div>
-                </div>
-                <div className="timeline-start mb-10 ml-8 md:mb-4 md:ml-0">
-                  <div
-                    className={`timeline-box group min-h-[120px] border-2 shadow-md transition-all ${
-                      progressStatus.rewardsEarned
-                        ? "border-green-300 bg-gradient-to-br from-green-50 to-white"
-                        : "border-gray-300 bg-gradient-to-br from-gray-50 to-white"
-                    }`}
-                  >
+                    </div>
                     <div
-                      className={`mb-1 flex items-center gap-2 text-sm font-bold ${
-                        progressStatus.rewardsEarned
-                          ? "text-green-600"
-                          : "text-gray-600"
-                      }`}
+                      className={`${index % 2 === 0 ? "timeline-start" : "timeline-end"} mb-10 ml-8 ${index % 2 === 0 ? "md:mb-4" : "md:mt-4"} md:ml-0`}
                     >
-                      <span
-                        className={`flex h-6 w-6 items-center justify-center rounded-full text-xs text-white ${
-                          progressStatus.rewardsEarned
-                            ? "bg-green-600"
-                            : "bg-gray-400"
+                      <div
+                        className={`timeline-box group min-h-[120px] border-2 shadow-md transition-all ${
+                          step.completed
+                            ? "border-green-300 bg-gradient-to-br from-green-50 to-white"
+                            : step.isCurrentStep
+                              ? "border-orange-300 bg-gradient-to-br from-orange-50 to-white"
+                              : "border-gray-300 bg-gradient-to-br from-gray-50 to-white"
                         }`}
                       >
-                        {progressStatus.rewardsEarned ? (
-                          <IoCheckmark className="h-4 w-4" />
-                        ) : (
-                          "3"
+                        <div
+                          className={`mb-1 flex items-center gap-2 text-sm font-bold ${
+                            step.completed
+                              ? "text-green-600"
+                              : step.isCurrentStep
+                                ? "text-orange-600"
+                                : "text-gray-600"
+                          }`}
+                        >
+                          <span
+                            className={`flex h-6 w-6 items-center justify-center rounded-full text-xs text-white ${
+                              step.completed
+                                ? "bg-green-600"
+                                : step.isCurrentStep
+                                  ? "bg-orange-500"
+                                  : "bg-gray-400"
+                            }`}
+                          >
+                            {step.completed ? (
+                              <IoCheckmark className="h-4 w-4" />
+                            ) : (
+                              step.number
+                            )}
+                          </span>
+                          Step {step.number}
+                        </div>
+                        <h3 className="text-lg font-bold text-gray-900 md:text-xl">
+                          {step.title}
+                        </h3>
+                        <p className="text-xs text-gray-600">
+                          {step.description}
+                        </p>
+                        {step.isCurrentStep && (
+                          <div className="mt-2 flex items-center gap-1.5 rounded-md bg-orange-100 px-2 py-1">
+                            <IoArrowUp className="h-3.5 w-3.5 text-orange-600" />
+                            <span className="text-xs font-semibold text-orange-700">
+                              You are here
+                            </span>
+                          </div>
                         )}
-                      </span>
-                      Step 3
+                      </div>
                     </div>
-                    <h3 className="text-lg font-bold text-gray-900 md:text-xl">
-                      {program.zltoRewardReferee
-                        ? "Earn Rewards!"
-                        : "Program Complete!"}
-                    </h3>
-                    <p className="text-xs text-gray-600">
-                      {progressStatus.rewardsEarned
-                        ? program.zltoRewardReferee
-                          ? `${program.zltoRewardReferee} ZLTO earned!`
-                          : "Completed successfully!"
-                        : program.zltoRewardReferee
-                          ? `Earn ${program.zltoRewardReferee} ZLTO`
-                          : "Complete all tasks"}
-                    </p>
-                  </div>
-                </div>
-              </li>
+                    {!isLast && (
+                      <hr
+                        className={
+                          step.completed ? "bg-green-600" : "bg-gray-400"
+                        }
+                      />
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           </div>
 
@@ -450,117 +387,41 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
               </div>
               <div className="rounded-lg border-2 border-gray-200 bg-white p-6">
                 <div className="space-y-4">
-                  {/* Link Claimed */}
-                  <div className="flex items-start gap-3">
-                    <IoCheckmarkCircle className="mt-1 h-6 w-6 flex-shrink-0 text-green-600" />
-                    <div className="flex-1">
-                      <h4 className="text-lg font-bold text-gray-900">
-                        Link Claimed
-                      </h4>
-                      <p className="text-sm text-gray-600">
-                        Claimed on{" "}
-                        {new Date(usage.dateClaimed).toLocaleDateString(
-                          "en-US",
-                          {
-                            year: "numeric",
-                            month: "long",
-                            day: "numeric",
-                          },
-                        )}
-                      </p>
-                    </div>
-                  </div>
+                  {steps.map((step) => {
+                    const Icon = step.icon;
+                    return (
+                      <div key={step.number} className="flex items-start gap-3">
+                        <div className="mt-1 flex-shrink-0">
+                          {step.completed ? (
+                            <IoCheckmarkCircle className="h-6 w-6 text-green-600" />
+                          ) : step.isCurrentStep ? (
+                            <IoEllipseOutline className="h-6 w-6 text-orange-500" />
+                          ) : (
+                            <IoEllipseOutline className="h-6 w-6 text-gray-400" />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-lg font-bold text-gray-900">
+                            {step.title}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {step.description}
+                          </p>
 
-                  {/* Proof of Person (if required) */}
-                  {program.proofOfPersonhoodRequired && (
-                    <div className="flex items-start gap-3">
-                      <IoCheckmarkCircle className="mt-1 h-6 w-6 flex-shrink-0 text-green-600" />
-                      <div className="flex-1">
-                        <h4 className="text-lg font-bold text-gray-900">
-                          Proof of Personhood Completed
-                        </h4>
-                        <p className="text-sm text-gray-600">
-                          Verified via{" "}
-                          {usage.proofOfPersonhoodMethod === "OTP"
-                            ? "phone number"
-                            : "social login"}{" "}
-                          during claim
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Pathway Progress (if required) */}
-                  {program.pathwayRequired && usage.pathway && (
-                    <div className="flex items-start gap-3">
-                      <div className="mt-1 flex-shrink-0">
-                        {usage.pathwayComplete ? (
-                          <IoCheckmarkCircle className="h-6 w-6 text-green-600" />
-                        ) : (
-                          <IoEllipseOutline className="h-6 w-6 text-blue-600" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-lg font-bold text-gray-900">
-                          Complete Pathway
-                        </h4>
-                        <p className="mb-3 text-sm text-gray-600">
-                          {usage.pathway.stepsCompleted} of{" "}
-                          {usage.pathway.stepsTotal} steps completed (
-                          {usage.pathway.percentComplete}%)
-                        </p>
-
-                        <div className="-ml-8">
-                          <ProgramPathwayProgressComponent
-                            pathway={usage.pathway}
-                          />
+                          {/* Show pathway details if this is the pathway step and it has data */}
+                          {step.title === "Complete Pathway" &&
+                            program.pathwayRequired &&
+                            usage.pathway && (
+                              <div className="mt-3 -ml-8">
+                                <ProgramPathwayProgressComponent
+                                  pathway={usage.pathway}
+                                />
+                              </div>
+                            )}
                         </div>
                       </div>
-                    </div>
-                  )}
-
-                  {/* Get Rewarded (if applicable) */}
-                  {program.zltoRewardReferee && (
-                    <div className="flex items-start gap-3">
-                      <div className="mt-1 flex-shrink-0">
-                        {progressStatus.rewardsEarned ? (
-                          <IoCheckmarkCircle className="h-6 w-6 text-green-600" />
-                        ) : (
-                          <IoEllipseOutline className="h-6 w-6 text-gray-400" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-lg font-bold text-gray-900">
-                          Get Rewarded
-                        </h4>
-                        {progressStatus.rewardsEarned ? (
-                          <>
-                            <p className="text-sm text-gray-600">
-                              {program.zltoRewardReferee} ZLTO earned and added
-                              to your wallet!
-                            </p>
-                            {usage.dateCompleted && (
-                              <p className="mt-1 text-xs text-gray-500">
-                                Completed on{" "}
-                                {new Date(
-                                  usage.dateCompleted,
-                                ).toLocaleDateString("en-US", {
-                                  year: "numeric",
-                                  month: "long",
-                                  day: "numeric",
-                                })}
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <p className="text-sm text-gray-600">
-                            Complete all requirements to earn{" "}
-                            {program.zltoRewardReferee} ZLTO
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })}
                 </div>
               </div>
             </div>

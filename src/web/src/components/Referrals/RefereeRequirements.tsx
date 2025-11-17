@@ -1,18 +1,32 @@
-import { useRef, useState } from "react";
+import { useRef, useState, useMemo } from "react";
 import {
   IoCheckmarkCircle,
   IoChevronDown,
   IoChevronUp,
   IoClipboardOutline,
-  IoFingerPrintOutline,
-  IoShieldCheckmarkOutline,
+  IoPersonCircle,
+  IoShieldCheckmark,
+  IoPersonAdd,
 } from "react-icons/io5";
+import { FaRoad } from "react-icons/fa";
 import type { ProgramInfo } from "~/api/models/referrals";
 import { ProgramPathwayView } from "./ProgramPathwayView";
 
 interface RefereeRequirementsProps {
   program: ProgramInfo;
   isExpanded?: boolean;
+}
+
+interface Requirement {
+  icon: any;
+  title: string;
+  description: string;
+  color: {
+    border: string;
+    bg: string;
+    bgGradient: string;
+    badge: string;
+  };
 }
 
 export const RefereeRequirements: React.FC<RefereeRequirementsProps> = ({
@@ -36,10 +50,70 @@ export const RefereeRequirements: React.FC<RefereeRequirementsProps> = ({
     }
   };
 
-  const hasProofOfPersonhood = program.proofOfPersonhoodRequired;
-  const hasPathway = program.pathwayRequired && program.pathway;
-  const requirementsCount =
-    (hasProofOfPersonhood ? 1 : 0) + (hasPathway ? 1 : 0);
+  // Generate dynamic requirements based on program configuration
+  const requirements = useMemo<Requirement[]>(() => {
+    const reqs: Requirement[] = [];
+
+    // Always show registration requirement
+    if (program.proofOfPersonhoodRequired) {
+      reqs.push({
+        icon: IoShieldCheckmark,
+        title: "Register & Verify Identity",
+        description:
+          "Sign in with Google/Facebook or register with your phone number (South Africa only) to verify you're a real person.",
+        color: {
+          border: "border-blue-200",
+          bg: "bg-blue-600",
+          bgGradient: "from-blue-50 to-white",
+          badge: "bg-blue-600",
+        },
+      });
+    } else {
+      reqs.push({
+        icon: IoPersonAdd,
+        title: "Register Account",
+        description: "Create your Yoma account to get started.",
+        color: {
+          border: "border-blue-200",
+          bg: "bg-blue-600",
+          bgGradient: "from-blue-50 to-white",
+          badge: "bg-blue-600",
+        },
+      });
+    }
+
+    // Always show profile completion requirement
+    reqs.push({
+      icon: IoPersonCircle,
+      title: "Complete Your Profile",
+      description:
+        "Fill in your personal information, settings, and optionally add a profile photo.",
+      color: {
+        border: "border-purple-200",
+        bg: "bg-purple-600",
+        bgGradient: "from-purple-50 to-white",
+        badge: "bg-purple-600",
+      },
+    });
+
+    // Conditionally add pathway requirement
+    if (program.pathwayRequired && program.pathway) {
+      reqs.push({
+        icon: FaRoad,
+        title: "Complete Pathway",
+        description:
+          "Finish all required steps and tasks in the learning pathway.",
+        color: {
+          border: "border-green-200",
+          bg: "bg-green",
+          bgGradient: "from-green-50 to-white",
+          badge: "bg-green",
+        },
+      });
+    }
+
+    return reqs;
+  }, [program]);
 
   return (
     <div
@@ -49,14 +123,15 @@ export const RefereeRequirements: React.FC<RefereeRequirementsProps> = ({
       {/* Header with Toggle */}
       <div className="mb-4 flex items-start justify-between gap-4">
         <div className="flex-1">
-          <h2 className="mb-2 flex items-center gap-2 text-xl font-bold text-orange-900">
-            <IoClipboardOutline className="h-6 w-6" />
-            What You Need to Do
+          <h2 className="mb-2 flex items-center gap-2 text-lg font-bold text-orange-900">
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-100 shadow-sm">
+              <IoClipboardOutline className="h-5 w-5 text-orange-600" />
+            </div>
+            What you need to do
           </h2>
           <p className="text-sm text-gray-700">
-            {requirementsCount === 0
-              ? "Review the steps to complete this program"
-              : `Complete ${requirementsCount} requirement${requirementsCount > 1 ? "s" : ""} to earn your rewards`}
+            {requirements.length} step{requirements.length > 1 ? "s" : ""} to
+            complete this program
           </p>
         </div>
         <button
@@ -80,118 +155,39 @@ export const RefereeRequirements: React.FC<RefereeRequirementsProps> = ({
 
       {/* Collapsible Content */}
       {isExpanded && (
-        <div className="animate-fade-in space-y-6">
-          {/* Requirements Overview */}
-          <div className="space-y-4">
-            {/* Proof of Personhood */}
-            {hasProofOfPersonhood && (
-              <div className="group rounded-lg border-2 border-blue-200 bg-gradient-to-br from-blue-50 to-white p-4 transition-all hover:shadow-md">
-                <div className="mb-3 flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-600 shadow-md">
-                    <IoFingerPrintOutline className="h-6 w-6 text-white" />
+        <div className="animate-fade-in space-y-3">
+          {requirements.map((req, index) => {
+            const Icon = req.icon;
+            return (
+              <div
+                key={index}
+                className={`group rounded-lg border-2 ${req.color.border} bg-gradient-to-br ${req.color.bgGradient} p-4 transition-all hover:shadow-md`}
+              >
+                <div className="flex items-start gap-3">
+                  <div
+                    className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${req.color.badge} shadow-md`}
+                  >
+                    <Icon className="h-5 w-5 text-white" />
                   </div>
                   <div className="flex-1">
-                    <h4 className="font-bold text-gray-900">
-                      Prove You're a Real Person
-                    </h4>
-                    <p className="text-xs text-gray-600">
-                      Required to prevent fraud and ensure fair rewards
-                    </p>
+                    <h5 className="mb-1 font-bold text-gray-900">
+                      {req.title}
+                    </h5>
+                    <p className="text-sm text-gray-700">{req.description}</p>
                   </div>
-                  <IoCheckmarkCircle className="h-6 w-6 text-gray-300" />
-                </div>
-                <div className="ml-13 space-y-2 text-sm text-gray-700">
-                  <p>
-                    <strong>How to do it:</strong>
-                  </p>
-                  <ul className="ml-5 list-disc space-y-1">
-                    <li>Login with Google or Facebook</li>
-                    <li>
-                      Register with a valid Phone Number (South Africa only)
-                    </li>
-                  </ul>
-                  <div className="mt-2">
-                    <p>
-                      <strong>Why it's needed:</strong>
-                    </p>
-                    <ul className="ml-5 list-disc space-y-1">
-                      <li>
-                        This protects the program from abuse and ensures
-                        everyone gets fair rewards.
-                      </li>
-                    </ul>
-                  </div>
-                  <div className="mt-3 rounded-md border border-blue-200 bg-blue-50 p-3">
-                    <p className="text-xs">
-                      <strong>💡 Tip:</strong> Choose whichever verification
-                      method is most convenient for you.
-                    </p>
-                  </div>
+                  <IoCheckmarkCircle className="h-6 w-6 flex-shrink-0 text-gray-300" />
                 </div>
               </div>
-            )}
+            );
+          })}
 
-            {/* Pathway */}
-            {hasPathway && program.pathway && (
-              <div className="group rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-white p-4 transition-all hover:shadow-md">
-                <div className="mb-3 flex items-center gap-3">
-                  <div className="bg-green flex h-10 w-10 items-center justify-center rounded-full shadow-md">
-                    <IoShieldCheckmarkOutline className="h-6 w-6 text-white" />
-                  </div>
-                  <div className="flex-1">
-                    <h4 className="font-bold text-gray-900">
-                      Complete Learning Pathway
-                    </h4>
-                    <p className="text-xs text-gray-800">
-                      Complete the activities and tasks in this learning
-                      pathway.
-                    </p>
-                  </div>
-                  <IoCheckmarkCircle className="h-6 w-6 text-gray-300" />
-                </div>
-                <div className="ml-13 space-y-2 text-sm text-gray-700">
-                  <p>
-                    <strong>How to complete:</strong>
-                  </p>
-                  <ul className="ml-5 list-disc space-y-1">
-                    <li>
-                      Some tasks require uploading proof of completion (photos,
-                      documents, etc.)
-                    </li>
-                    <li>
-                      Your submissions may be subject to review and verification
-                    </li>
-                    <li>
-                      You'll be notified at each stage of the verification
-                      process
-                    </li>
-                    <li>
-                      Monitor your progress in the dashboard to track your
-                      completion status
-                    </li>
-                  </ul>
-                  <div className="mt-3 rounded-md border border-green-200 bg-green-50 p-3">
-                    <p className="text-xs">
-                      <strong>💡 Tip:</strong> Take your time to learn and
-                      complete each step. The skills you gain are valuable!
-                    </p>
-                  </div>
-                  <ProgramPathwayView pathway={program.pathway} />
-                </div>
-              </div>
-            )}
-
-            {/* No Requirements */}
-            {requirementsCount === 0 && (
-              <div className="rounded-lg border-2 border-gray-200 bg-gray-50 p-6 text-center">
-                <IoCheckmarkCircle className="mx-auto mb-3 h-12 w-12 text-gray-400" />
-                <p className="text-gray-600">
-                  No specific requirements! Just claim the link to participate
-                  in this program.
-                </p>
-              </div>
-            )}
-          </div>
+          {/* Pathway Details */}
+          {program.pathwayRequired && program.pathway && (
+            <ProgramPathwayView
+              pathway={program.pathway}
+              className="rounded-lg border border-green-200 bg-green-50 p-4"
+            />
+          )}
         </div>
       )}
     </div>

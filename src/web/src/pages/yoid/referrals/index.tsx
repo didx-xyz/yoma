@@ -11,13 +11,7 @@ import Head from "next/head";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { FaPlus } from "react-icons/fa";
-import {
-  IoGift,
-  IoInformationCircleOutline,
-  IoStatsChart,
-  IoTrophy,
-  IoWarning,
-} from "react-icons/io5";
+import { IoGift, IoStatsChart, IoTrophy, IoWarning } from "react-icons/io5";
 import type {
   ProgramInfo,
   ProgramSearchResultsInfo,

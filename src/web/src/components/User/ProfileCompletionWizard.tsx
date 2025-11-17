@@ -1,11 +1,17 @@
 import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react";
 import { FcCamera, FcSettings, FcViewDetails } from "react-icons/fc";
 import { IoCheckmarkCircle } from "react-icons/io5";
+import { useSetAtom } from "jotai";
 import type { SettingsRequest } from "~/api/models/common";
 import type { UserProfile } from "~/api/models/user";
-import { getSettings, updateSettings } from "~/api/services/user";
+import {
+  getSettings,
+  updateSettings,
+  getUserProfile,
+} from "~/api/services/user";
 import { SETTING_USER_SETTINGS_CONFIGURED } from "~/lib/constants";
+import { userProfileAtom } from "~/lib/store";
 import analytics from "~/lib/analytics";
 import {
   getProfileCompletionStep,
@@ -28,8 +34,10 @@ export const ProfileCompletionWizard: React.FC<
   ProfileCompletionWizardProps
 > = ({ userProfile, onComplete, showHeader = true }) => {
   const queryClient = useQueryClient();
+  const setUserProfile = useSetAtom(userProfileAtom);
   const [currentStep, setCurrentStep] = useState<string>("profile");
   const [completedSteps, setCompletedSteps] = useState<string[]>([]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const {
     data: settingsData,
@@ -40,6 +48,18 @@ export const ProfileCompletionWizard: React.FC<
     queryFn: async () => await getSettings(),
     enabled: currentStep === "settings",
   });
+
+  const scrollToComponent = useCallback(() => {
+    if (containerRef.current) {
+      const elementPosition = containerRef.current.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - 100; // 100px offset
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth",
+      });
+    }
+  }, []);
 
   // Update current step based on profile state
   useEffect(() => {
@@ -59,18 +79,29 @@ export const ProfileCompletionWizard: React.FC<
     }
   }, [userProfile, onComplete]);
 
-  const handleProfileSubmit = useCallback((updatedUserProfile: UserProfile) => {
-    // Track analytics
-    analytics.trackEvent("profile_completion_step_completed", {
-      step: "profile",
-    });
+  const handleProfileSubmit = useCallback(
+    async (updatedUserProfile: UserProfile) => {
+      // Track analytics
+      analytics.trackEvent("profile_completion_step_completed", {
+        step: "profile",
+      });
 
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: "smooth" });
+      // Update atom with the updated profile
+      setUserProfile(updatedUserProfile);
 
-    // Move to next step
-    setCurrentStep("settings");
-  }, []);
+      // Invalidate userProfile query to ensure fresh data
+      await queryClient.invalidateQueries({
+        queryKey: ["userProfile"],
+      });
+
+      // Scroll to component
+      scrollToComponent();
+
+      // Move to next step
+      setCurrentStep("settings");
+    },
+    [scrollToComponent, setUserProfile, queryClient],
+  );
 
   const handleSettingsSubmit = useCallback(
     async (updatedSettings: SettingsRequest) => {
@@ -87,8 +118,8 @@ export const ProfileCompletionWizard: React.FC<
           settingsKeys: Object.keys(updatedSettings.settings),
         });
 
-        // Scroll to top
-        window.scrollTo({ top: 0, behavior: "smooth" });
+        // Scroll to component
+        scrollToComponent();
 
         // Invalidate query
         queryClient.invalidateQueries({
@@ -108,24 +139,35 @@ export const ProfileCompletionWizard: React.FC<
     [queryClient],
   );
 
-  const handlePhotoSubmit = useCallback(() => {
-    // Track analytics
-    analytics.trackEvent("profile_completion_step_completed", {
-      step: "photo",
-    });
+  const handlePhotoSubmit = useCallback(
+    async (updatedUserProfile: UserProfile) => {
+      // Track analytics
+      analytics.trackEvent("profile_completion_step_completed", {
+        step: "photo",
+      });
 
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: "smooth" });
+      // Update atom with the updated profile (includes new photo)
+      setUserProfile(updatedUserProfile);
 
-    // Mark as completed and finish
-    setCompletedSteps((prev) => [...prev, "photo"]);
-    setCurrentStep("complete");
+      // Invalidate userProfile query to ensure fresh data
+      await queryClient.invalidateQueries({
+        queryKey: ["userProfile"],
+      });
 
-    // Call onComplete if provided
-    if (onComplete) {
-      onComplete();
-    }
-  }, [onComplete]);
+      // Scroll to component
+      scrollToComponent();
+
+      // Mark as completed and finish
+      setCompletedSteps((prev) => [...prev, "photo"]);
+      setCurrentStep("complete");
+
+      // Call onComplete if provided
+      if (onComplete) {
+        onComplete();
+      }
+    },
+    [onComplete, scrollToComponent, setUserProfile, queryClient],
+  );
 
   const handleSkipSettings = useCallback(async () => {
     try {
@@ -143,8 +185,8 @@ export const ProfileCompletionWizard: React.FC<
         step: "settings",
       });
 
-      // Scroll to top
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      // Scroll to component
+      scrollToComponent();
 
       // Invalidate query
       queryClient.invalidateQueries({
@@ -159,7 +201,7 @@ export const ProfileCompletionWizard: React.FC<
       // Still move forward even if update fails
       setCurrentStep("photo");
     }
-  }, [queryClient]);
+  }, [queryClient, scrollToComponent]);
 
   const handleSkipPhoto = useCallback(() => {
     // Track analytics
@@ -167,8 +209,8 @@ export const ProfileCompletionWizard: React.FC<
       step: "photo",
     });
 
-    // Scroll to top
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Scroll to component
+    scrollToComponent();
 
     // Mark as completed and finish
     setCompletedSteps((prev) => [...prev, "photo"]);
@@ -177,7 +219,7 @@ export const ProfileCompletionWizard: React.FC<
     if (onComplete) {
       onComplete();
     }
-  }, [onComplete]);
+  }, [onComplete, scrollToComponent]);
 
   // If profile is complete, don't show anything
   if (currentStep === "complete") {
@@ -185,7 +227,10 @@ export const ProfileCompletionWizard: React.FC<
   }
 
   return (
-    <div className="rounded-xl border-4 border-blue-300 bg-gradient-to-br from-blue-50 via-indigo-50 to-white p-6 shadow-xl md:p-8">
+    <div
+      ref={containerRef}
+      className="rounded-xl border-4 border-blue-300 bg-gradient-to-br from-blue-50 via-indigo-50 to-white p-6 shadow-xl md:p-8"
+    >
       {/* Header */}
       {showHeader && (
         <div className="mb-6 text-center">

@@ -89,7 +89,7 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
           <div className="min-w-0 flex-1">
             {/* Title */}
             <h3
-              className={`mb-1 line-clamp-1 text-sm font-bold ${theme.textPrimary} ${onClick ? "hover:text-opacity-80 transition-colors" : ""}`}
+              className={`font-family-nunito mb-1 line-clamp-1 text-[16px] font-bold ${theme.textPrimary} ${onClick ? "hover:text-opacity-80 transition-colors" : ""}`}
             >
               {program.name}
             </h3>

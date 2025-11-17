@@ -152,7 +152,7 @@ export const StepInstructionHeader: React.FC<StepInstructionHeaderProps> = ({
   // For multiple steps, show detailed instruction
   return (
     <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-      <div className="flex flex-col items-center md:flex-row md:justify-between">
+      <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center gap-2">
           <span
             className={`flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${isCompleted ? "bg-blue-500 text-white" : "border-2 border-blue-400 bg-white text-blue-600"}`}

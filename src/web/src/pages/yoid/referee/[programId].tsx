@@ -107,7 +107,7 @@ const RefereeDashboard: NextPageWithLayout<{
   // Show success message if user just claimed the link
   useEffect(() => {
     if (router.query.claimed === "true") {
-      toast.success("🎉 Successfully claimed! Welcome to the program.");
+      toast.success("Successfully claimed! Welcome to the program. 🎉");
       // Remove the query parameter
       router.replace(`/yoid/referee/${programId}`, undefined, {
         shallow: true,
@@ -225,8 +225,11 @@ const RefereeDashboard: NextPageWithLayout<{
           (() => {
             const nextAction = getNextAction(usage, program);
 
-            // If no pathway required and all complete, show congratulations
-            if (!program.pathwayRequired && usage.proofOfPersonhoodCompleted) {
+            // If no pathway required and profile complete, show congratulations
+            if (
+              !program.pathwayRequired &&
+              (usage.proofOfPersonhoodCompleted ?? false)
+            ) {
               return (
                 <div className="shadow-custom mb-6 rounded-lg border-2 border-green-300 bg-gradient-to-br from-green-50 to-white p-6">
                   <div className="mb-4 flex items-start gap-6">

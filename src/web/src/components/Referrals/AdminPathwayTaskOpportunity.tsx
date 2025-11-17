@@ -8,10 +8,9 @@ interface AdminPathwayTaskOpportunityProps {
   mockOpportunity?: Opportunity;
 }
 
-const AdminPathwayTaskOpportunity: React.FC<AdminPathwayTaskOpportunityProps> = ({
-  opportunityId,
-  mockOpportunity,
-}) => {
+const AdminPathwayTaskOpportunity: React.FC<
+  AdminPathwayTaskOpportunityProps
+> = ({ opportunityId, mockOpportunity }) => {
   const { data: opportunity, isLoading } = useQuery<Opportunity>({
     queryKey: ["opportunity", opportunityId],
     queryFn: () => getOpportunityById(opportunityId),
@@ -24,7 +23,7 @@ const AdminPathwayTaskOpportunity: React.FC<AdminPathwayTaskOpportunityProps> = 
 
   if (isLoading && !mockOpportunity) {
     return (
-      <div className="flex h-[121.333px] items-center gap-2 text-sm text-gray-500">
+      <div className="flex h-[121.333px] items-center gap-2 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-500">
         <span className="loading loading-spinner loading-sm"></span>
         <span>Loading opportunity details...</span>
       </div>
@@ -33,7 +32,7 @@ const AdminPathwayTaskOpportunity: React.FC<AdminPathwayTaskOpportunityProps> = 
 
   if (!displayOpportunity) {
     return (
-      <div className="flex items-center gap-2 text-sm text-gray-500">
+      <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-3 text-sm text-gray-500">
         <span>⚠️</span>
         <span>Opportunity not found</span>
       </div>

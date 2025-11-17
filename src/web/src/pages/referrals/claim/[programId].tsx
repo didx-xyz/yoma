@@ -5,15 +5,7 @@ import Head from "next/head";
 import Image from "next/image";
 import { useRouter } from "next/router";
 import { useCallback, useState, useEffect, type ReactElement } from "react";
-import {
-  IoArrowForward,
-  IoCheckmarkCircle,
-  IoGift,
-  IoInformationCircleOutline,
-  IoLockClosed,
-  IoWarning,
-} from "react-icons/io5";
-import { toast } from "react-toastify";
+import { IoGift, IoLockClosed, IoWarning } from "react-icons/io5";
 import type { ErrorResponseItem } from "~/api/models/common";
 import type { ProgramInfo } from "~/api/models/referrals";
 import type { UserProfile } from "~/api/models/user";
@@ -203,6 +195,11 @@ const ReferralClaimPage: NextPageWithLayout<{
     try {
       await claimReferralLinkAsReferee(linkId);
 
+      // Refresh user profile to include new referral data
+      // This ensures UserMenu shows the referee dashboard link
+      const updatedProfile = await getUserProfile();
+      setUserProfile(updatedProfile);
+
       // Scroll to top before redirect
       window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -217,7 +214,7 @@ const ReferralClaimPage: NextPageWithLayout<{
 
       setClaimingAfterProfile(false);
     }
-  }, [linkId, programId, router, claimAttempted]);
+  }, [linkId, programId, router, claimAttempted, setUserProfile]);
 
   const handleProfileComplete = useCallback(() => {
     // After profile completion, perform the claim
@@ -363,14 +360,6 @@ const ReferralClaimPage: NextPageWithLayout<{
               )}
             </ul>
           </div>
-
-          {/* Program Details */}
-          <div className="mt-6">
-            <h3 className="mb-3 text-lg font-bold text-gray-900">
-              Program Information:
-            </h3>
-            <RefereeProgramDetails program={program} perspective="referee" />
-          </div>
         </div>
 
         {/* Become a Referrer Section */}
@@ -400,16 +389,18 @@ const ReferralClaimPage: NextPageWithLayout<{
         <div className="rounded-xl border-4 border-orange-200 bg-gradient-to-br from-orange-50 via-yellow-50 to-white p-8 shadow-xl">
           <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
             {!isAuthenticated && (
-              <div className="flex-1">
-                <h1 className="mb-2 text-lg font-bold text-orange-900 md:text-xl">
+              <div className="flex flex-1 flex-col gap-2">
+                <h1 className="mb-2x text-lg font-bold text-orange-900 md:text-xl">
                   🎁 You've Been Invited!
                 </h1>
-                <p className="md:text-basex text-sm text-gray-700">
-                  A friend has invited you to join{" "}
-                  <span className="font-bold text-orange-700">
-                    {program.name}
-                  </span>
+                <p className="md:text-basex mb-2 text-sm text-gray-700">
+                  A friend has invited you to join the following program:{" "}
                 </p>
+                <RefereeProgramDetails
+                  program={program}
+                  perspective="referee"
+                  isExpanded={false}
+                />
               </div>
             )}
             {isAuthenticated && needsProfileCompletion && (
@@ -452,23 +443,7 @@ const ReferralClaimPage: NextPageWithLayout<{
         {(!isAuthenticated || (isAuthenticated && !needsProfileCompletion)) && (
           <>
             {/* How It Works - Referee Perspective */}
-            <HelpReferee isExpanded={!isAuthenticated} />
-
-            <div>
-              {/* Program Details */}
-              <div className="mb-3">
-                <h3 className="flex items-center gap-2 text-base font-bold">
-                  <IoGift className="h-5 w-5 text-orange-400" />
-                  Program Details
-                </h3>
-              </div>
-
-              <RefereeProgramDetails
-                program={program}
-                perspective="referee"
-                isExpanded={false}
-              />
-            </div>
+            <HelpReferee isExpanded={!isAuthenticated} program={program} />
 
             {/* Requirements Section */}
             <RefereeRequirements

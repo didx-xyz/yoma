@@ -37,18 +37,16 @@ export const ProgramPathwayProgressComponent: React.FC<
   ProgramPathwayProgressComponentProps
 > = ({ pathway, mockOpportunities }) => {
   return (
-    <div className="flex min-w-0 flex-col gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+    <div className="flex w-full flex-col gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
       {/* Pathway Header */}
-      <h3 className="flex min-w-0 items-center gap-2 text-base font-semibold text-gray-900">
+      <h3 className="flex items-start gap-2 text-base font-semibold text-gray-900">
         <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-400 to-purple-600 text-white">
           <FaRoad className="h-3 w-3" />
         </span>
-        <span className="max-w-full min-w-0 truncate overflow-hidden">
-          {pathway.name}
-        </span>
+        <span className="break-words">{pathway.name}</span>
       </h3>
       {pathway.description && (
-        <p className="mt-1 max-w-full min-w-0 truncate overflow-hidden text-xs text-gray-600">
+        <p className="mt-1 text-xs break-words text-gray-600">
           {pathway.description}
         </p>
       )}
@@ -72,7 +70,7 @@ export const ProgramPathwayProgressComponent: React.FC<
       )}
 
       {pathway.steps && pathway.steps.length > 0 ? (
-        <div className="space-y-6 rounded-lg border border-gray-200 bg-white p-4">
+        <div className="w-full space-y-6 rounded-lg border border-gray-200 bg-white p-4">
           {/* Check if pathway has sequential order mode */}
           {(() => {
             const showNumberedSteps =
@@ -98,7 +96,7 @@ export const ProgramPathwayProgressComponent: React.FC<
                     step.orderMode === PathwayOrderMode.Sequential;
 
                   return (
-                    <div key={step.id} className="space-y-3">
+                    <div key={step.id} className="w-full space-y-3">
                       {/* Step Header */}
                       <div className="flex items-start gap-3">
                         {/* Step Number Badge */}
@@ -112,12 +110,12 @@ export const ProgramPathwayProgressComponent: React.FC<
                           />
                         </div>
 
-                        <div className="flex-1">
+                        <div className="min-w-0 flex-1">
                           <h4 className="text-sm font-semibold break-words text-gray-900">
                             {step.name}
                           </h4>
                           {step.description && (
-                            <p className="mt-1 text-xs text-gray-600">
+                            <p className="mt-1 text-xs break-words text-gray-600">
                               {step.description}
                             </p>
                           )}
@@ -141,7 +139,7 @@ export const ProgramPathwayProgressComponent: React.FC<
                       </div>
                       {/* Tasks Section */}
                       {step.tasks && step.tasks.length > 0 && (
-                        <div className="mt-2 ml-8 space-y-3">
+                        <div className="mt-2 w-full space-y-3 pl-8">
                           {/* Task Instruction Header */}
                           <TaskInstructionHeader
                             tasksLength={step.tasks.length}

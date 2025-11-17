@@ -439,7 +439,15 @@ export const Global: React.FC = () => {
             <div className="w-full">
               <UserProfileForm
                 userProfile={userProfile}
-                onSubmit={(updatedUserProfile) => {
+                onSubmit={async (updatedUserProfile) => {
+                  // update atom with new profile data
+                  setUserProfile(updatedUserProfile);
+
+                  // invalidate userProfile query to ensure all components get fresh data
+                  await queryClient.invalidateQueries({
+                    queryKey: ["userProfile"],
+                  });
+
                   // hide popup
                   setUpdateProfileDialogVisible(false);
 
@@ -543,7 +551,15 @@ export const Global: React.FC = () => {
             <div className="w-full">
               <UserProfileForm
                 userProfile={userProfile}
-                onSubmit={() => {
+                onSubmit={async (updatedUserProfile) => {
+                  // update atom with new profile data (includes photo)
+                  setUserProfile(updatedUserProfile);
+
+                  // invalidate userProfile query to ensure all components get fresh data
+                  await queryClient.invalidateQueries({
+                    queryKey: ["userProfile"],
+                  });
+
                   // hide popup
                   setPhotoUploadDialogVisible(false);
                 }}
