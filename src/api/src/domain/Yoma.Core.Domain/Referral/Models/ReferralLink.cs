@@ -29,9 +29,15 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public string? UserDisplayName { get; set; } = null!;
 
+    public string Username { get; set; } = null!; 
+
     public string? UserEmail { get; set; }
 
+    public bool? UserEmailConfirmed { get; set; }
+
     public string? UserPhoneNumber { get; set; }
+
+    public bool? UserPhoneNumberConfirmed { get; set; }
 
     public bool Blocked { get; set; }
 

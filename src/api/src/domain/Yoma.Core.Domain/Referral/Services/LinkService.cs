@@ -257,8 +257,11 @@ namespace Yoma.Core.Domain.Referral.Services
         ProgramCompletionLimitReferee = program.CompletionLimitReferee,
         UserId = user.Id,
         UserDisplayName = user.DisplayName,
+        Username = user.Email ?? user.PhoneNumber ?? string.Empty,
         UserEmail = user.Email,
+        UserEmailConfirmed = user.EmailConfirmed,
         UserPhoneNumber = user.PhoneNumber,
+        UserPhoneNumberConfirmed = user.PhoneNumberConfirmed,
         Blocked = false,
         StatusId = statusLinkActive.Id,
         Status = ReferralLinkStatus.Active

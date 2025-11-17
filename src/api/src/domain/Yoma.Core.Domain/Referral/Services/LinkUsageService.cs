@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using System.Transactions;
-using Yoma.Core.Domain.Core;
 using Yoma.Core.Domain.Core.Exceptions;
 using Yoma.Core.Domain.Core.Extensions;
 using Yoma.Core.Domain.Core.Helpers;
@@ -12,6 +11,10 @@ using Yoma.Core.Domain.Core.Models;
 using Yoma.Core.Domain.Entity.Interfaces;
 using Yoma.Core.Domain.MyOpportunity;
 using Yoma.Core.Domain.MyOpportunity.Interfaces;
+using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
+using Yoma.Core.Domain.Referral.Extensions;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -35,6 +38,8 @@ namespace Yoma.Core.Domain.Referral.Services
     private readonly IRewardService _rewardService;
     private readonly IDistributedLockService _distributedLockService;
     private readonly IExecutionStrategyService _executionStrategyService;
+    private readonly INotificationDeliveryService _notificationDeliveryService;
+    private readonly INotificationURLFactory _notificationURLFactory;
 
     private readonly ReferralLinkUsageSearchFilterValidator _referralLinkUsageSearchFilterValidator;
 
@@ -57,6 +62,8 @@ namespace Yoma.Core.Domain.Referral.Services
       IRewardService rewardService,
       IDistributedLockService distributedLockService,
       IExecutionStrategyService executionStrategyService,
+      INotificationDeliveryService notificationDeliveryService,
+      INotificationURLFactory notificationURLFactory,
 
       ReferralLinkUsageSearchFilterValidator referralLinkUsageSearchFilterValidator,
 
@@ -74,6 +81,8 @@ namespace Yoma.Core.Domain.Referral.Services
       _rewardService = rewardService ?? throw new ArgumentNullException(nameof(rewardService));
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
+      _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
+      _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));  
 
       _referralLinkUsageSearchFilterValidator = referralLinkUsageSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkUsageSearchFilterValidator));
 
@@ -91,7 +100,7 @@ namespace Yoma.Core.Domain.Referral.Services
 
       if (!ensureOwnership) return ToInfo(result, includeComputed);
 
-      if (allowAdminOverride && _httpContextAccessor.HttpContext!.User.IsInRole(Constants.Role_Admin)) return ToInfo(result, includeComputed);
+      if (allowAdminOverride && _httpContextAccessor.HttpContext!.User.IsInRole(Core.Constants.Role_Admin)) return ToInfo(result, includeComputed);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -338,17 +347,36 @@ namespace Yoma.Core.Domain.Referral.Services
       // Create first-time usage (DB unique index on (UserId, ProgramId) should enforce idempotency under race)
       var usage = new ReferralLinkUsage
       {
+        //persisted with create
         ProgramId = program.Id,
         LinkId = link.Id,
         UserId = user.Id,
         StatusId = _linkUsageStatusService.GetByName(ReferralLinkUsageStatus.Pending.ToString()).Id,
-        DateClaimed = DateTimeOffset.UtcNow
+
+        //meta-data for notifications
+        UserIdReferrer = link.UserId,
+        UsernameReferrer = link.Username,
+        UserDisplayNameReferrer = link.UserDisplayName,
+        UserEmailReferrer = link.UserEmail,
+        UserEmailConfirmedReferrer = link.UserEmailConfirmed,
+        UserPhoneNumberReferrer = link.UserPhoneNumber,
+        UserPhoneNumberConfirmedReferrer = link.UserPhoneNumberConfirmed,
+        Username = user.Username,
+        UserDisplayName = user.DisplayName,
+        UserEmail = user.Email,
+        UserEmailConfirmed = user.EmailConfirmed,
+        UserPhoneNumber = user.PhoneNumber,
+        UserPhoneNumberConfirmed = user.PhoneNumberConfirmed,
+        Status = ReferralLinkUsageStatus.Pending,
+        //DateClaimed equals (set in repo upon create and querying)
       };
 
-      await _linkUsageRepository.Create(usage);
+      usage = await _linkUsageRepository.Create(usage);
 
+      await SendNotification(NotificationType.ReferralUsage_Welcome, program, link, usage);
 
-      //TODO: NotificationType.ReferralUsage_Welcome (sent to referee / youth)
+      //process progress immediately if no pathway/proof required 
+      if (!program.PathwayRequired && !program.ProofOfPersonhoodRequired) await ProcessProgressByUserId(user.Id);
     }
 
     public async Task ProcessProgressByUserId(Guid userId)
@@ -638,8 +666,8 @@ namespace Yoma.Core.Domain.Referral.Services
             if ((rewardReferee ?? 0m) > 0m)
               await _rewardService.ScheduleRewardTransaction(myUsage.UserId, Reward.RewardTransactionEntityType.ReferralLinkUsage, myUsage.Id, rewardReferee!.Value);
 
-            //TODO: NotificationType.ReferralLink_Completed_ReferrerAwarded (sent to referrer / youth)
-            //TODO: NotificationType.ReferralUsage_Completion (sent to referee / youth)
+            await SendNotification(NotificationType.ReferralLink_Completed_ReferrerAwarded, program, link, myUsage);
+            await SendNotification(NotificationType.ReferralUsage_Completion, program, link, myUsage);
 
             scope.Complete();
           });
@@ -649,6 +677,104 @@ namespace Yoma.Core.Domain.Referral.Services
     #endregion
 
     #region Private Members
+    private async Task SendNotification(NotificationType type, Program program, ReferralLink link, ReferralLinkUsage usage)
+    {
+      try
+      {
+        List<NotificationRecipient>? recipients = null;
+        NotificationBase? data = null;
+
+        switch (type)
+        {
+          case NotificationType.ReferralLink_Completed_ReferrerAwarded: //sent to referrer (youth)
+            recipients = [new() { Username = usage.UsernameReferrer, PhoneNumber = usage.UserPhoneNumberReferrer, PhoneNumberConfirmed = usage.UserPhoneNumberConfirmedReferrer,
+                Email = usage.UserEmailReferrer, EmailConfirmed = usage.UserEmailConfirmedReferrer, DisplayName = usage.UserDisplayNameReferrer }];
+
+            if (usage.Status != ReferralLinkUsageStatus.Completed)
+              throw new InvalidOperationException($"Invalid status of '{usage.Status}'. Status of '{ReferralLinkUsageStatus.Completed}' expected");
+
+            if (usage.DateCompleted == null)
+              throw new InvalidOperationException($"'{usage.DateCompleted}' not set / value expected");
+
+            if (usage.ZltoRewardReferrer == null || usage.ZltoRewardReferrer <= 0)
+            {
+              _logger.LogInformation("Skipping sending notification of type '{notificationType}' to referrer '{usage.UsernameReferrer}' as no reward was awarded", type, usage.UsernameReferrer);
+              return;
+            }
+
+            data = new NotificationReferralLinkCompleted
+            {
+              DashboardURL = _notificationURLFactory.ReferralReferrerDashboardURL(type, usage.UserIdReferrer),
+              Links =
+              [
+                new NotificationReferralLinkCompletedItem
+                {
+                  Name = link.Name,
+                  ProgramName = program.Name,
+                  DateCompleted = usage.DateCompleted.Value,
+                  ZltoReward = program.ZltoRewardReferee,
+                  ZltoRewardTotal = link.ZltoRewardCumulative,
+                  CompletionTotal = link.CompletionTotal ?? 0
+                }
+              ]
+            };
+            break;
+
+          case NotificationType.ReferralUsage_Welcome: // sent to referee (youth)
+            recipients = [new() { Username = usage.Username, PhoneNumber = usage.UserPhoneNumber, PhoneNumberConfirmed = usage.UserPhoneNumberConfirmed,
+                Email = usage.UserEmail, EmailConfirmed = usage.UserEmailConfirmed, DisplayName = usage.UserDisplayName }];
+
+            data = new NotificationReferralUsageWelcome
+            {
+              YoIDURL = _notificationURLFactory.ReferralRefereeYoIDURL(type, program.Id),
+              LinkClaimURL = link.ClaimURL(_appSettings.AppBaseURL),
+              DateClaimed = usage.DateClaimed,
+              ProgramName = program.Name,
+              ProgramDateStart = program.DateStart,
+              ProgramDateEnd = program.DateEnd,
+              CompletionWindowInDays = program.CompletionWindowInDays,
+              ZltoReward = program.ZltoRewardReferee,
+              ProofOfPersonhoodRequired = program.ProofOfPersonhoodRequired,
+              PathwayRequired = program.PathwayRequired,
+            };
+
+            break;
+
+          case NotificationType.ReferralUsage_Completion: // sent to referee (youth)
+            recipients = [new() { Username = usage.Username, PhoneNumber = usage.UserPhoneNumber, PhoneNumberConfirmed = usage.UserPhoneNumberConfirmed,
+                Email = usage.UserEmail, EmailConfirmed = usage.UserEmailConfirmed, DisplayName = usage.UserDisplayName }];
+
+            if (usage.Status != ReferralLinkUsageStatus.Completed)
+              throw new InvalidOperationException($"Invalid status of '{usage.Status}'. Status of '{ReferralLinkUsageStatus.Completed}' expected");
+
+            if (usage.DateCompleted == null)
+              throw new InvalidOperationException($"'{usage.DateCompleted}' not set / value expected");
+
+            data = new NotificationReferralUsageCompletion
+            {
+              YoIDURL = _notificationURLFactory.ReferralRefereeYoIDURL(type, program.Id),
+              DateCompleted = usage.DateCompleted.Value,
+              DateClaimed = usage.DateClaimed,
+              ProgramName = program.Name,
+              ZltoReward = program.ZltoRewardReferee,
+            };
+
+            break;
+
+          default:
+            throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported");
+        }
+
+        await _notificationDeliveryService.Send(type, recipients, data);
+
+        _logger.LogInformation("Successfully sent notification");
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+      }
+    }
+
     private ReferralLinkUsageInfo ToInfo(ReferralLinkUsage item, bool includeComputed)
     {
       var result = new ReferralLinkUsageInfo
@@ -775,7 +901,7 @@ namespace Yoma.Core.Domain.Referral.Services
         // POP not required → pathway drives full 0–100%
         result.PercentComplete = Math.Clamp(result.Pathway.PercentComplete, 0, 100);
       }
-      
+
       return result;
     }
     #endregion

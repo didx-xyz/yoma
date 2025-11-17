@@ -8,7 +8,7 @@ namespace Yoma.Core.Domain.Notification.Models
     public DateTimeOffset DateStamp { get; set; }
 
     [JsonProperty("dateStampFormatted")]
-    public string DateEndFormatted => DateStamp.ToString("ddd, MMM dd, yyyy HH:mm");
+    public string DateStampFormatted => DateStamp.ToString("ddd, MMM dd, yyyy HH:mm");
 
     [JsonProperty("reason")]
     public string? Reason { get; set; }

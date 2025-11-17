@@ -4,7 +4,7 @@ namespace Yoma.Core.Domain.Notification.Models
 {
   public sealed class NotificationReferralLinkCompleted : NotificationBase
   {
-    [JsonProperty("dashboardURL")] //yoid/referrals
+    [JsonProperty("dashboardURL")]
     public string? DashboardURL { get; set; }
 
     [JsonProperty("links")]
@@ -72,6 +72,6 @@ namespace Yoma.Core.Domain.Notification.Models
     public string? ZltoRewardTotalFormatted => ZltoRewardTotal.HasValue ? ZltoRewardTotal.Value.ToString("0.00") : decimal.Zero.ToString("0.00");
 
     [JsonProperty("completionTotal")]
-    public int completionTotal { get; set; }
+    public int CompletionTotal { get; set; }
   }
 }

@@ -5,7 +5,7 @@ namespace Yoma.Core.Domain.Notification.Models
   public sealed class NotificationReferralUsageCompletion : NotificationBase
   {
     [JsonProperty("yoIDURL")]
-    public string? YoIDURL { get; set; } ///yoid/referee/[programId]
+    public string? YoIDURL { get; set; } 
 
     [JsonProperty("dateCompleted")]
     public DateTimeOffset DateCompleted { get; set; }

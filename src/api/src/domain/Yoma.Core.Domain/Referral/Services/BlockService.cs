@@ -1,9 +1,13 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 using System.Transactions;
 using Yoma.Core.Domain.Core.Helpers;
 using Yoma.Core.Domain.Core.Interfaces;
 using Yoma.Core.Domain.Entity.Interfaces;
+using Yoma.Core.Domain.Notification;
+using Yoma.Core.Domain.Notification.Interfaces;
+using Yoma.Core.Domain.Notification.Models;
 using Yoma.Core.Domain.Referral.Interfaces;
 using Yoma.Core.Domain.Referral.Interfaces.Lookups;
 using Yoma.Core.Domain.Referral.Models;
@@ -14,11 +18,14 @@ namespace Yoma.Core.Domain.Referral.Services
   public class BlockService : IBlockService
   {
     #region Class Variables
+    private readonly ILogger<BlockService> _logger;
+
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     private readonly IUserService _userService;
     private readonly IBlockReasonService _blockReasonService;
     private readonly ILinkMaintenanceService _linkMaintenanceService;
+    private readonly INotificationDeliveryService _notificationDeliveryService;
 
     private readonly BlockRequestValidator _blockRequestValidator;
     private readonly UnblockRequestValidator _unblockRequestValidator;
@@ -30,11 +37,14 @@ namespace Yoma.Core.Domain.Referral.Services
 
     #region Constructor
     public BlockService(
+      ILogger<BlockService> logger,
+
       IHttpContextAccessor httpContextAccessor,
 
       IUserService userService,
       IBlockReasonService blockReasonService,
       ILinkMaintenanceService linkMaintenanceService,
+      INotificationDeliveryService notificationDeliveryService,
 
       IExecutionStrategyService executionStrategyService,
 
@@ -43,11 +53,14 @@ namespace Yoma.Core.Domain.Referral.Services
 
       IRepository<Block> blockRepository)
     {
+      _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+
       _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
 
       _userService = userService ?? throw new ArgumentNullException(nameof(userService));
       _blockReasonService = blockReasonService ?? throw new ArgumentNullException(nameof(blockReasonService));
       _linkMaintenanceService = linkMaintenanceService ?? throw new ArgumentNullException(nameof(linkMaintenanceService));
+      _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
 
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
 
@@ -58,6 +71,7 @@ namespace Yoma.Core.Domain.Referral.Services
     }
     #endregion
 
+    #region Public Members
     public Block? GetByUserIdOrNull(Guid userId)
     {
       var user = _userService.GetById(userId, false, false);
@@ -107,9 +121,9 @@ namespace Yoma.Core.Domain.Referral.Services
       if (result == null)
         throw new InvalidOperationException("Block operation failed. Result expected but null");
 
-      return result;
+      await SendNotification(NotificationType.Referral_Blocked_Referrer, user, result);
 
-      //TODO: NotificationType.Referral_Blocked_Referrer (sent to referrer / youth)
+      return result;
     }
 
     public async Task Unblock(UnblockRequest request)
@@ -131,7 +145,43 @@ namespace Yoma.Core.Domain.Referral.Services
 
       await _blockRepository.Update(result);
 
-      //TODO: NotificationType.Referral_Unblocked_Referrer (sent to referrer / youth)
+      await SendNotification(NotificationType.Referral_Unblocked_Referrer, user, result);
     }
+    #endregion
+
+    #region Private Members
+    private async Task SendNotification(NotificationType type, Domain.Entity.Models.User user, Block block)
+    {
+      try
+      {
+        List<NotificationRecipient>? recipients = null;
+
+        recipients = type switch
+        {
+          NotificationType.Referral_Blocked_Referrer or
+          NotificationType.Referral_Unblocked_Referrer =>
+              [new() { Username = user.Username, PhoneNumber = user.PhoneNumber, PhoneNumberConfirmed = user.PhoneNumberConfirmed,
+                Email = user.Email, EmailConfirmed = user.EmailConfirmed, DisplayName = user.DisplayName }],
+
+          _ => throw new ArgumentOutOfRangeException(nameof(type), $"Type of '{type}' not supported"),
+        };
+
+        var data = new NotificationReferralBlock
+        {
+          DateStamp = DateTimeOffset.UtcNow,
+          Reason = $"{block.Reason}: {block.ReasonDescription}",
+          Comment = block.CommentBlock
+        };
+
+        await _notificationDeliveryService.Send(type, recipients, data);
+
+        _logger.LogInformation("Successfully sent notification");
+      }
+      catch (Exception ex)
+      {
+        _logger.LogError(ex, "Failed to send notification: {errorMessage}", ex.Message);
+      }
+    }
+    #endregion
   }
 }

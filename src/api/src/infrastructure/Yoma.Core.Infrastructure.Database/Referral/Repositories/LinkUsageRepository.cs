@@ -31,13 +31,19 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         LinkId = entity.LinkId,
         LinkName = entity.Link.Name,
         UserIdReferrer = entity.Link.UserId,
+        UsernameReferrer = entity.Link.User.Email ?? entity.Link.User.PhoneNumber ?? string.Empty, 
         UserDisplayNameReferrer = entity.Link.User.DisplayName,
         UserEmailReferrer = entity.Link.User.Email,
+        UserEmailConfirmedReferrer = entity.Link.User.EmailConfirmed,
         UserPhoneNumberReferrer = entity.Link.User.PhoneNumber,
+        UserPhoneNumberConfirmedReferrer = entity.Link.User.PhoneNumberConfirmed,
         UserId = entity.UserId,
+        Username = entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,  
         UserDisplayName = entity.User.DisplayName,
         UserEmail = entity.User.Email,
+        UserEmailConfirmed = entity.User.EmailConfirmed,
         UserPhoneNumber = entity.User.PhoneNumber,
+        UserPhoneNumberConfirmed = entity.User.PhoneNumberConfirmed,
         StatusId = entity.StatusId,
         Status = Enum.Parse<Domain.Referral.ReferralLinkUsageStatus>(entity.Status.Name, true),
         DateClaimed = entity.DateCreated,
@@ -94,6 +100,7 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
       items = [.. items.Zip(entities, (item, entity) =>
       {
         item.Id = entity.Id;
+        item.DateClaimed = entity.DateCreated;
         item.DateCreated = entity.DateCreated;
         item.DateModified = entity.DateModified;
         return item;

@@ -1,3 +1,4 @@
+
 namespace Yoma.Core.Domain.Referral.Models
 {
   /// <summary>
@@ -25,19 +26,29 @@ namespace Yoma.Core.Domain.Referral.Models
     #region Referrer Info (mapped to the link)
     public Guid UserIdReferrer { get; set; }
 
+    public string UsernameReferrer { get; set; } = null!;
+
     public string? UserDisplayNameReferrer { get; set; } = null!;
 
     public string? UserEmailReferrer { get; set; }
 
+    public bool? UserEmailConfirmedReferrer { get; set; } 
+
     public string? UserPhoneNumberReferrer { get; set; }
+
+    public bool? UserPhoneNumberConfirmedReferrer { get; set; }
     #endregion
 
     #region Referee Info (mapped to the usage)
     public Guid UserId { get; set; }
 
+    public string Username { get; set; } = null!; 
+
     public string? UserDisplayName { get; set; } = null!;
 
     public string? UserEmail { get; set; }
+
+    public bool? UserEmailConfirmed { get; set; }
 
     public string? UserPhoneNumber { get; set; }
 
@@ -51,8 +62,6 @@ namespace Yoma.Core.Domain.Referral.Models
     public decimal? ZltoRewardReferrer { get; set; }
 
     public decimal? ZltoRewardReferee { get; set; }
-
-    public decimal? ZltoRewardTotal => (ZltoRewardReferrer ?? 0) + (ZltoRewardReferee ?? 0);
 
     public DateTimeOffset DateClaimed { get; set; }
 

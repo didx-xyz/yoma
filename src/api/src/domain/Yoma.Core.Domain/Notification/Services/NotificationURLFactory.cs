@@ -23,6 +23,29 @@ namespace Yoma.Core.Domain.Notification.Services
     #endregion
 
     #region Public Members
+    public string ReferralRefereeYoIDURL(NotificationType notificationType, Guid programId)
+    {
+      if(programId == Guid.Empty)
+        throw new ArgumentNullException(nameof(programId)); 
+
+      return notificationType switch
+      {
+        NotificationType.ReferralUsage_Welcome or NotificationType.ReferralUsage_Completion => _appSettings.AppBaseURL.AppendPathSegment("yoid/referee").AppendPathSegment(programId).ToString(),
+        _ => throw new ArgumentOutOfRangeException(nameof(notificationType), $"Type of '{notificationType}' not supported"),
+      };
+    }
+
+    public string ReferralReferrerDashboardURL(NotificationType notificationType, Guid userId)
+    {
+      if (userId == Guid.Empty)
+        throw new ArgumentNullException(nameof(userId));
+      return notificationType switch
+      {
+        NotificationType.ReferralLink_Completed_ReferrerAwarded => _appSettings.AppBaseURL.AppendPathSegment("yoid/referrals").ToString(),
+        _ => throw new ArgumentOutOfRangeException(nameof(notificationType), $"Type of '{notificationType}' not supported"),
+      };
+    }
+
     public string ActionLinkVerifyActivatedItemUrl(NotificationType notificationType, Guid organizationId, Guid linkId)
     {
       if (organizationId == Guid.Empty)

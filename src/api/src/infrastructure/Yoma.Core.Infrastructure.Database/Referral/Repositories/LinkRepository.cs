@@ -44,9 +44,12 @@ namespace Yoma.Core.Infrastructure.Database.Referral.Repositories
         ProgramDescription = entity.Program.Description,
         ProgramCompletionLimitReferee = entity.Program.CompletionLimitReferee,
         UserId = entity.UserId,
+        Username = entity.User.Email ?? entity.User.PhoneNumber ?? string.Empty,
         UserDisplayName = entity.User.DisplayName,
         UserEmail = entity.User.Email,
+        UserEmailConfirmed = entity.User.EmailConfirmed,
         UserPhoneNumber = entity.User.PhoneNumber,
+        UserPhoneNumberConfirmed = entity.User.PhoneNumberConfirmed,
         Blocked = includeChildItems &&
             entity.User.Blocks != null &&
             entity.User.Blocks.Any(o => o.Active),

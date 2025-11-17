@@ -84,15 +84,34 @@ namespace Yoma.Core.Domain.Referral.Validators
           })
           .WithMessage("When rewards are set, add at least one completion cap (per referrer or program-wide).");
 
-      // Require at least one eligibility gate: POP or Pathway
+      // If rewards exist, require at least one gate: POP or Pathway
       RuleFor(x => x)
         .Must(m =>
         {
-          var proofRequired = m.ProofOfPersonhoodRequired == true;
-          var pathwayRequired = m.PathwayRequired;
-          return proofRequired || pathwayRequired;
+          var rewards = (m.ZltoRewardReferrer ?? 0m) + (m.ZltoRewardReferee ?? 0m) > 0m;
+          if (!rewards) return true;
+          return m.ProofOfPersonhoodRequired || m.PathwayRequired;
         })
-        .WithMessage("At least one eligibility gate must be enabled: Proof of Personhood or Pathway.");
+        .WithMessage("When rewards are set, enable Proof of Personhood or require a Pathway.");
+
+      // If program is marked as default, require POP or Pathway
+      RuleFor(x => x)
+        .Must(m =>
+        {
+          if (!m.IsDefault) return true;
+          return m.ProofOfPersonhoodRequired || m.PathwayRequired;
+        })
+        .WithMessage("Default programs must enable Proof of Personhood or require a Pathway.");
+
+      // If multiple links are allowed, require POP or a per-referrer cap (and optionally Pathway)
+      RuleFor(x => x)
+        .Must(m =>
+        {
+          if (!m.MultipleLinksAllowed) return true;
+          var hasPerReferrerCap = (m.CompletionLimitReferee ?? 0) > 0;
+          return m.ProofOfPersonhoodRequired || hasPerReferrerCap || m.PathwayRequired;
+        })
+        .WithMessage("When multiple links are allowed, enable Proof of Personhood, set a per-referrer cap, or require a Pathway.");
 
       RuleFor(x => x.DateStart)
           .NotEmpty()
