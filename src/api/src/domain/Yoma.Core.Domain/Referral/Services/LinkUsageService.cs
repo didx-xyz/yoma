@@ -48,9 +48,9 @@ namespace Yoma.Core.Domain.Referral.Services
     private const string Key_Prefix = "link_usage_process_progress";
 
     // Progress weight distribution for referral usage completion
-    private const decimal PercentComplete_Weight_YoIDProfileCompleted = 25m; // YoID Onboarded / Profile Completed
-    private const decimal PercentComplete_Weight_Pop = 25m; //Proof of Personhood
-    private const decimal PercentComplete_Weight_Pathway = 50m; //Pathway completion
+    private const decimal PercentComplete_Weight_YoIDOnboarded = 25m; // YoID onboarded / profile completed
+    private const decimal PercentComplete_Weight_Pop = 25m;           // Proof of Personhood
+    private const decimal PercentComplete_Weight_Pathway = 50m;       // Pathway completion
     #endregion
 
     #region Constructor
@@ -87,7 +87,7 @@ namespace Yoma.Core.Domain.Referral.Services
       _distributedLockService = distributedLockService ?? throw new ArgumentNullException(nameof(distributedLockService));
       _executionStrategyService = executionStrategyService ?? throw new ArgumentNullException(nameof(executionStrategyService));
       _notificationDeliveryService = notificationDeliveryService ?? throw new ArgumentNullException(nameof(notificationDeliveryService));
-      _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));  
+      _notificationURLFactory = notificationURLFactory ?? throw new ArgumentNullException(nameof(notificationURLFactory));
 
       _referralLinkUsageSearchFilterValidator = referralLinkUsageSearchFilterValidator ?? throw new ArgumentNullException(nameof(referralLinkUsageSearchFilterValidator));
 
@@ -818,47 +818,31 @@ namespace Yoma.Core.Domain.Referral.Services
       if (program.PathwayRequired && program.Pathway == null)
         throw new DataInconsistencyException("Pathway required but does not exist");
 
-      // No pathway configured
-      var yoIDOnboardedProfileCompleted = item.UserYoIDOnboarded == true;
-      var proofRequired = program.ProofOfPersonhoodRequired == true;
-      var pathwayRequired = program.PathwayRequired;
+      if (!item.UserYoIDOnboarded.HasValue || item.UserYoIDOnboarded.Value == false)
+        throw new DataInconsistencyException("User YoID onboarding status is not completed");
 
-      // NOTE:
-      // We intentionally do NOT factor YoID onboarding into this branch because:
-      // - A referral usage can ONLY exist if the user has already completed YoID onboarding.
-      // - Meaning: by the time we reach this logic, YoID is already guaranteed.
-      // - Therefore YoID adds no incremental value here and would always equal 100%.
-      //
-      // Summary:
-      // YoID affects progress only when additional gates (POP / Pathway) exist.
-      // Otherwise, we simply treat the program as fully complete.
-      if (program.Pathway == null)
+      // Nothing to complete: no POP and no Pathway required → always 100%
+      if (program.ProofOfPersonhoodRequired != true && !program.PathwayRequired)
       {
-        if (!proofRequired)
-        {
-          // No POP required and no pathway → nothing to complete → trivially 100%
-          result.PercentComplete = 100;
-          return result;
-        }
-
-        result.PercentComplete = result.ProofOfPersonhoodCompleted == true ? 100 : 0;
+        result.PercentComplete = 100m;
         return result;
       }
 
-      // NOTE:
+      // Pathway parsing / evaluation
       // Pathway StepsTotal, TasksTotal, Completed and PercentComplete are computed inline via property getters.
       // They are not stored values — each is dynamically calculated based on the current Steps/Tasks state.
-      result.Pathway = new ProgramPathwayProgress
-      {
-        Id = program.Pathway.Id,
-        Name = program.Pathway.Name,
-        Description = program.Pathway.Description,
-        Rule = program.Pathway.Rule,
-        OrderMode = program.Pathway.OrderMode,
-        IsCompletable = program.Pathway.IsCompletable,
-        Steps =
-        [
-           .. (program.Pathway.Steps ?? []).Select(s => new ProgramPathwayStepProgress
+      if (program.PathwayRequired)
+        result.Pathway = new ProgramPathwayProgress
+        {
+          Id = program.Pathway!.Id,
+          Name = program.Pathway.Name,
+          Description = program.Pathway.Description,
+          Rule = program.Pathway.Rule,
+          OrderMode = program.Pathway.OrderMode,
+          IsCompletable = program.Pathway.IsCompletable,
+          Steps =
+          [
+             .. (program.Pathway.Steps ?? []).Select(s => new ProgramPathwayStepProgress
           {
             Id = s.Id,
             Name = s.Name,
@@ -904,38 +888,43 @@ namespace Yoma.Core.Domain.Referral.Services
               })
             ]
           })
-        ]
-      };
+          ]
+        };
 
-      // Weighted model from percent complete
+      // Weighted progress model (0–100):
+      // - YoID onboarding:       25% (always counted)
+      // - Proof of Personhood:   25% (if required)
+      // - Pathway completion:    50% (if required)
+      //
+      // Progress dynamically scales based on which parts are active.
       var totalWeight = 0m;
       var points = 0m;
 
-      // YoID onboarding (profile completed) is always part of the picture once we have any gate
-      totalWeight += PercentComplete_Weight_YoIDProfileCompleted;
-      if (yoIDOnboardedProfileCompleted) points += PercentComplete_Weight_YoIDProfileCompleted;
+      // Always included: YoID is guaranteed at this point
+      totalWeight += PercentComplete_Weight_YoIDOnboarded;
+      points += PercentComplete_Weight_YoIDOnboarded;
 
-      // POP (only if required)
-      if (proofRequired)
+      // Proof of Personhood
+      if (program.ProofOfPersonhoodRequired == true)
       {
         totalWeight += PercentComplete_Weight_Pop;
-
         if (result.ProofOfPersonhoodCompleted == true)
           points += PercentComplete_Weight_Pop;
       }
 
-      // Pathway (only if required)
-      // Uses result.Pathway.PercentComplete (0–100) to contribute proportionally
-      if (pathwayRequired)
+      // Pathway 
+      if (program.PathwayRequired)
       {
         totalWeight += PercentComplete_Weight_Pathway;
 
-        var pathwayPercent = Math.Clamp(result.Pathway.PercentComplete, 0m, 100m);
+        var pathwayPercent = Math.Clamp(result.Pathway!.PercentComplete, 0m, 100m);
         points += pathwayPercent / 100m * PercentComplete_Weight_Pathway;
       }
 
-      // Safety: if no weights somehow ended up active, treat as fully complete
-      result.PercentComplete = totalWeight <= 0m ? 100m : Math.Round(points / totalWeight * 100m, 2);
+      // Final normalized percentage
+      result.PercentComplete = totalWeight <= 0m
+        ? 100m
+        : Math.Round(points / totalWeight * 100m, 2);
 
       return result;
     }
