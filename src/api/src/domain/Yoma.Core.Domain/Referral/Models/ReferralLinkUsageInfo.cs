@@ -1,3 +1,5 @@
+using Newtonsoft.Json;
+
 namespace Yoma.Core.Domain.Referral.Models
 {
   public class ReferralLinkUsageInfo
@@ -48,16 +50,27 @@ namespace Yoma.Core.Domain.Referral.Models
 
     public DateTimeOffset? DateExpired { get; set; }
 
+    // see ILinkUsageService.ToInfoParseProgress
+    #region Computed Properties 
+    // POP status (done or not), regardless of whether it's required
     public bool? ProofOfPersonhoodCompleted { get; set; }
 
-    public ProofOfPersonhoodMethod? ProofOfPersonhoodMethod { get; set; }
+    // POP method(s) used, regardless of requirement
+    public ProofOfPersonhoodMethod ProofOfPersonhoodMethod { get; set; }
 
-    public bool? PathwayCompleted => Pathway?.Completed;
+    // Pathway status if a pathway exists (null if none), regardless if whether it's required
+    public bool? PathwayCompleted { get; set; }
 
-    public bool Completed => ProofOfPersonhoodCompleted == true && PathwayCompleted == true;
+    [JsonIgnore]
+    // Internal effective completion state after applying required logic used to flip the Status to Completed (see ILinkUsageService.ProcessProgressByUserId)
+    // If a requirement (POP or Pathway) is not required → treated as completed.
+    // Otherwise reflects the actual completion state.
+    // null = not evaluated yet.
+    internal bool? EffectiveCompleted { get; set; }
 
     public decimal? PercentComplete { get; set; }
 
     public ProgramPathwayProgress? Pathway { get; set; }
+    #endregion
   }
 }

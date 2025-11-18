@@ -103,9 +103,9 @@ namespace Yoma.Core.Domain.Referral.Services
       var result = _linkUsageRepository.Query().SingleOrDefault(x => x.Id == id)
         ?? throw new EntityNotFoundException($"Referral link usage with Id '{id}' does not exist");
 
-      if (!ensureOwnership) return ToInfo(result, includeComputed);
+      if (!ensureOwnership) return ToInfoParseProgress(result, includeComputed);
 
-      if (allowAdminOverride && _httpContextAccessor.HttpContext!.User.IsInRole(Core.Constants.Role_Admin)) return ToInfo(result, includeComputed);
+      if (allowAdminOverride && _httpContextAccessor.HttpContext!.User.IsInRole(Core.Constants.Role_Admin)) return ToInfoParseProgress(result, includeComputed);
 
       var user = _userService.GetByUsername(HttpContextAccessorHelper.GetUsername(_httpContextAccessor, false), false, false);
 
@@ -113,7 +113,7 @@ namespace Yoma.Core.Domain.Referral.Services
         && result.UserIdReferrer != user.Id) //as referrer
         throw new SecurityException("Unauthorized");
 
-      return ToInfo(result, includeComputed);
+      return ToInfoParseProgress(result, includeComputed);
     }
 
     public ReferralLinkUsageInfo GetByProgramIdAsReferee(Guid programId, bool includeComputed)
@@ -131,7 +131,7 @@ namespace Yoma.Core.Domain.Referral.Services
       if (results.Count == 0)
         throw new EntityNotFoundException($"Referral link usage for program '{programId}' and the current user does not exist");
 
-      return ToInfo(results.Single(), includeComputed);
+      return ToInfoParseProgress(results.Single(), includeComputed);
     }
 
     public ReferralLinkUsageSearchResults SearchAsReferee(ReferralLinkUsageSearchFilter filter)
@@ -451,8 +451,8 @@ namespace Yoma.Core.Domain.Referral.Services
             }
 
             // Evaluate pathway completion
-            var usageProgress = ToInfo(myUsage, true);
-            if (!usageProgress.Completed)
+            var usageProgress = ToInfoParseProgress(myUsage, true);
+            if (usageProgress.EffectiveCompleted != true)
             {
               _logger.LogDebug("Referral progress: usage {UsageId} not completed yet; skipping", myUsage.Id);
 
@@ -481,16 +481,19 @@ namespace Yoma.Core.Domain.Referral.Services
               case ProgramStatus.Active:
                 // allowed, rewards allowed
                 _logger.LogDebug("Referral progress: program {ProgramId} ACTIVE for usage {UsageId}", program.Id, myUsage.Id);
+
                 break;
 
               case ProgramStatus.Inactive:
                 // do not punish in-flight; rewards allowed
                 _logger.LogDebug("Referral progress: program {ProgramId} INACTIVE (in-flight allowed) for usage {UsageId}", program.Id, myUsage.Id);
+
                 break;
 
               case ProgramStatus.UnCompletable:
                 // race condition: usage might have just completed; do not punish in-flight; rewards allowed
                 _logger.LogDebug("Referral progress: program {ProgramId} UNCOMPLETABLE (in-flight allowed) for usage {UsageId}", program.Id, myUsage.Id);
+
                 break;
 
               case ProgramStatus.Deleted:
@@ -501,8 +504,10 @@ namespace Yoma.Core.Domain.Referral.Services
                     $"Program {program.Id} is Deleted but link {link.Id} status is {link.Status}. " +
                     $"Expected link to be Cancelled by cascade. Usage {myUsage.Id} cannot be processed safely");
                 }
+
                 _logger.LogInformation("Referral progress: program {ProgramId} DELETED (in-flight allowed) for usage {UsageId}; link status {LinkStatus}",
                   program.Id, myUsage.Id, link.Status);
+
                 break;
 
               case ProgramStatus.LimitReached:
@@ -535,17 +540,20 @@ namespace Yoma.Core.Domain.Referral.Services
               case ReferralLinkStatus.Active:
                 // allowed, rewards allowed unless program suppressed
                 _logger.LogDebug("Referral progress: link {LinkId} ACTIVE for usage {UsageId}", link.Id, myUsage.Id);
+
                 break;
 
               case ReferralLinkStatus.Cancelled:
                 // do not punish in-flight; rewards allowed unless program suppressed
                 _logger.LogDebug("Referral progress: link {LinkId} CANCELLED (in-flight allowed) for usage {UsageId}", link.Id, myUsage.Id);
+
                 break;
 
               case ReferralLinkStatus.LimitReached:
                 // In-flight completions allowed; rewards suppressed
                 eligibleForRewards = false;
                 _logger.LogInformation("Referral progress: link {LinkId} LIMIT_REACHED → rewards suppressed for usage {UsageId}", link.Id, myUsage.Id);
+
                 break;
 
               case ReferralLinkStatus.Expired:
@@ -780,7 +788,7 @@ namespace Yoma.Core.Domain.Referral.Services
       }
     }
 
-    private ReferralLinkUsageInfo ToInfo(ReferralLinkUsage item, bool includeComputed)
+    private ReferralLinkUsageInfo ToInfoParseProgress(ReferralLinkUsage item, bool includeComputed)
     {
       var result = new ReferralLinkUsageInfo
       {
@@ -804,12 +812,12 @@ namespace Yoma.Core.Domain.Referral.Services
         ZltoRewardReferrer = item.ZltoRewardReferrer,
         ZltoRewardReferee = item.ZltoRewardReferee,
         DateCompleted = item.DateCompleted,
-        DateExpired = item.DateExpired,
-        ProofOfPersonhoodMethod = ProofOfPersonhoodMethod.None
+        DateExpired = item.DateExpired
       };
 
       if (!includeComputed) return result;
 
+      result.ProofOfPersonhoodMethod = ProofOfPersonhoodMethod.None; //default
       if (item.UserPhoneNumberConfirmed == true) result.ProofOfPersonhoodMethod |= ProofOfPersonhoodMethod.OTP;
       if (_userService.HasSocialIdentityProviders(item.UserId)) result.ProofOfPersonhoodMethod |= ProofOfPersonhoodMethod.SocialLogin;
       result.ProofOfPersonhoodCompleted = result.ProofOfPersonhoodMethod != ProofOfPersonhoodMethod.None;
@@ -819,30 +827,81 @@ namespace Yoma.Core.Domain.Referral.Services
         throw new DataInconsistencyException("Pathway required but does not exist");
 
       if (!item.UserYoIDOnboarded.HasValue || item.UserYoIDOnboarded.Value == false)
-        throw new DataInconsistencyException("User YoID onboarding status is not completed");
+        throw new DataInconsistencyException("Expected YoID onboarded but not completed");
 
       // Nothing to complete: no POP and no Pathway required → always 100%
-      if (program.ProofOfPersonhoodRequired != true && !program.PathwayRequired)
+      if (!program.ProofOfPersonhoodRequired && !program.PathwayRequired)
       {
         result.PercentComplete = 100m;
+        result.EffectiveCompleted = true;
         return result;
       }
 
       // Pathway parsing / evaluation
       // Pathway StepsTotal, TasksTotal, Completed and PercentComplete are computed inline via property getters.
       // They are not stored values — each is dynamically calculated based on the current Steps/Tasks state.
+      ToInfoParseProgressPathway(result, program);
+
+      // Weighted progress model (0–100):
+      // - YoID onboarding:       25% (always counted)
+      // - Proof of Personhood:   25% (if required)
+      // - Pathway completion:    50% (if required)
+      //
+      // Progress dynamically scales based on which parts are active.
+      var totalWeight = 0m;
+      var points = 0m;
+
+      // Always included: YoID is guaranteed at this point
+      totalWeight += PercentComplete_Weight_YoIDOnboarded;
+      points += PercentComplete_Weight_YoIDOnboarded;
+
+      // Proof of Personhood
+      if (program.ProofOfPersonhoodRequired == true)
+      {
+        totalWeight += PercentComplete_Weight_Pop;
+        if (result.ProofOfPersonhoodCompleted == true)
+          points += PercentComplete_Weight_Pop;
+      }
+
+      // Pathway 
       if (program.PathwayRequired)
-        result.Pathway = new ProgramPathwayProgress
-        {
-          Id = program.Pathway!.Id,
-          Name = program.Pathway.Name,
-          Description = program.Pathway.Description,
-          Rule = program.Pathway.Rule,
-          OrderMode = program.Pathway.OrderMode,
-          IsCompletable = program.Pathway.IsCompletable,
-          Steps =
-          [
-             .. (program.Pathway.Steps ?? []).Select(s => new ProgramPathwayStepProgress
+      {
+        //validated above; pathway must exists if required
+        totalWeight += PercentComplete_Weight_Pathway;
+
+        var pathwayPercent = Math.Clamp(result.Pathway!.PercentComplete, 0m, 100m);
+        points += pathwayPercent / 100m * PercentComplete_Weight_Pathway;
+      }
+
+      // Final normalized percentage
+      result.PercentComplete = totalWeight <= 0m
+        ? 100m
+        : Math.Round(points / totalWeight * 100m, 2);
+
+      result.EffectiveCompleted =
+        (!program.ProofOfPersonhoodRequired || result.ProofOfPersonhoodCompleted == true)
+        && (!program.PathwayRequired || result.PathwayCompleted == true);
+
+      return result;
+    }
+
+    private void ToInfoParseProgressPathway(ReferralLinkUsageInfo result, Program program)
+    {
+      //validated higher-up the stack; pathway must exists if required
+
+      if (program.Pathway == null) return;
+
+      result.Pathway = new ProgramPathwayProgress
+      {
+        Id = program.Pathway.Id,
+        Name = program.Pathway.Name,
+        Description = program.Pathway.Description,
+        Rule = program.Pathway.Rule,
+        OrderMode = program.Pathway.OrderMode,
+        IsCompletable = program.Pathway.IsCompletable,
+        Steps =
+        [
+           .. (program.Pathway.Steps ?? []).Select(s => new ProgramPathwayStepProgress
           {
             Id = s.Id,
             Name = s.Name,
@@ -888,45 +947,10 @@ namespace Yoma.Core.Domain.Referral.Services
               })
             ]
           })
-          ]
-        };
+        ]
+      };
 
-      // Weighted progress model (0–100):
-      // - YoID onboarding:       25% (always counted)
-      // - Proof of Personhood:   25% (if required)
-      // - Pathway completion:    50% (if required)
-      //
-      // Progress dynamically scales based on which parts are active.
-      var totalWeight = 0m;
-      var points = 0m;
-
-      // Always included: YoID is guaranteed at this point
-      totalWeight += PercentComplete_Weight_YoIDOnboarded;
-      points += PercentComplete_Weight_YoIDOnboarded;
-
-      // Proof of Personhood
-      if (program.ProofOfPersonhoodRequired == true)
-      {
-        totalWeight += PercentComplete_Weight_Pop;
-        if (result.ProofOfPersonhoodCompleted == true)
-          points += PercentComplete_Weight_Pop;
-      }
-
-      // Pathway 
-      if (program.PathwayRequired)
-      {
-        totalWeight += PercentComplete_Weight_Pathway;
-
-        var pathwayPercent = Math.Clamp(result.Pathway!.PercentComplete, 0m, 100m);
-        points += pathwayPercent / 100m * PercentComplete_Weight_Pathway;
-      }
-
-      // Final normalized percentage
-      result.PercentComplete = totalWeight <= 0m
-        ? 100m
-        : Math.Round(points / totalWeight * 100m, 2);
-
-      return result;
+      result.PathwayCompleted = result.Pathway.Completed;
     }
     #endregion
   }

@@ -8,9 +8,9 @@ namespace Yoma.Core.Domain.Referral.Extensions
     {
       ArgumentNullException.ThrowIfNull(usage, nameof(usage));
 
-      if (usage.Status != ReferralLinkUsageStatus.Completed || !usage.Completed || !usage.DateCompleted.HasValue)
+      if (usage.Status != ReferralLinkUsageStatus.Completed || !usage.DateCompleted.HasValue)
         throw new InvalidOperationException(
-          $"ReferralLinkUsageInfo {usage.Id} is not completed or DateCompleted is missing.");
+          $"Expected completed but link usage with {usage.Id} is not completed or date completed is not set");
 
       return (int)Math.Ceiling((usage.DateCompleted.Value - usage.DateClaimed).TotalHours);
     }
