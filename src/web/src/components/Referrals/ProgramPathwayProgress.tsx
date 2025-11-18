@@ -10,7 +10,7 @@ import {
   StepNumberBadge,
   TaskInstructionHeader,
 } from "./InstructionHeaders";
-import { FaRoad } from "react-icons/fa";
+import { PathwayHeader } from "./PathwayComponents";
 
 export interface ProgramPathwayProgressComponentProps {
   pathway: ProgramPathwayProgress;
@@ -23,17 +23,7 @@ export const ProgramPathwayProgressComponent: React.FC<
   return (
     <div className="flex w-full flex-col gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
       {/* Pathway Header */}
-      <h3 className="flex items-start gap-2 text-base font-semibold text-gray-900">
-        <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-purple-400 to-purple-600 text-white">
-          <FaRoad className="h-3 w-3" />
-        </span>
-        <span className="break-words">{pathway.name}</span>
-      </h3>
-      {pathway.description && (
-        <p className="mt-1 text-xs break-words text-gray-600">
-          {pathway.description}
-        </p>
-      )}
+      <PathwayHeader name={pathway.name} description={pathway.description} />
 
       {/* Non-Completable Pathway Warning */}
       {!pathway.isCompletable && (
@@ -52,7 +42,6 @@ export const ProgramPathwayProgressComponent: React.FC<
           </div>
         </div>
       )}
-
       {pathway.steps && pathway.steps.length > 0 ? (
         <div className="w-full space-y-6 rounded-lg border border-gray-200 bg-white p-4">
           {/* Check if pathway has sequential order mode */}

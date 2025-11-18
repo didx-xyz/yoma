@@ -220,6 +220,7 @@ export const ReferrerLinkDetails: React.FC<LinkDetailsProps> = ({
   // Large mode (default)
   return (
     <div className="rounded-lg bg-gradient-to-br from-green-50 to-white p-6 shadow-sm">
+      {displayLink.url}
       {/* Short URL */}
       {displayLink.shortURL && (
         <div className="mb-4">

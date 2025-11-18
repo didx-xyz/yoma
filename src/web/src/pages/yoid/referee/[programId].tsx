@@ -41,6 +41,7 @@ import { RefereeStatusBanner } from "~/components/Referrals/RefereeStatusBanner"
 import { Unauthorized } from "~/components/Status/Unauthorized";
 import { config } from "~/lib/react-query-config";
 import { authOptions } from "~/server/auth";
+import { handleUserSignOut } from "~/lib/authUtils";
 import { type NextPageWithLayout } from "../../_app";
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -222,170 +223,227 @@ const RefereeDashboard: NextPageWithLayout<{
         {usage.status === "Pending" &&
           (() => {
             const nextAction = getNextAction(usage, program);
+            const popRequired = program.proofOfPersonhoodRequired;
+            const popCompleted = usage.proofOfPersonhoodCompleted ?? false;
 
-            // If no pathway required and profile complete, show congratulations
-            if (
-              !program.pathwayRequired &&
-              (usage.proofOfPersonhoodCompleted ?? false)
-            ) {
-              return (
-                <div className="shadow-custom mb-6 rounded-lg border-2 border-green-300 bg-gradient-to-br from-green-50 to-white p-6">
-                  <div className="mb-4 flex items-start gap-6">
-                    <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50">
-                      <IoGift className="h-10 w-10 text-green-500" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="mb-2 flex items-center gap-3">
-                        <h3 className="text-xl font-bold text-green-900">
-                          Congratulations!
-                        </h3>
-                        <span className="text-xl">🎉</span>
-                      </div>
-                      <p className="mb-2 text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                        All Requirements Complete
-                      </p>
-                      <p className="text-sm leading-relaxed text-gray-800">
-                        You&apos;ve completed all requirements for this referral
-                        program!
-                        {program.zltoRewardReferee && (
-                          <>
-                            {" "}
-                            You&apos;ll receive {program.zltoRewardReferee} ZLTO
-                            once the program is finalized.
-                          </>
-                        )}
-                      </p>
-                      {program.zltoRewardReferee && (
-                        <div className="mt-4 rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
-                          <h4 className="mb-2 flex items-center gap-2 font-bold text-blue-900">
-                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600">
-                              <IoGift className="h-3 w-3 text-white" />
-                            </span>
-                            What&apos;s Next?
-                          </h4>
-                          <p className="text-sm text-gray-700">
-                            Once you receive your ZLTO rewards, visit the
-                            marketplace to spend them on amazing opportunities
-                            and experiences!
-                          </p>
-                          <Link
-                            href="/marketplace"
-                            className="btn btn-primary btn-sm mt-3"
-                          >
-                            Explore Marketplace
-                          </Link>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            }
+            // Show POP verification next action if required and not completed
+            const showPOPAction = popRequired && !popCompleted;
 
             // If pathway required, show next action
-            return nextAction ? (
-              <div
-                id="next-action"
-                className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
-              >
-                <div className="mb-4 flex items-start gap-6">
-                  <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50">
-                    <IoArrowForward className="h-10 w-10 text-orange-500" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="min-w-0 flex-1">
-                      <h2 className="text-xl font-bold text-orange-900">
-                        Your Next Step
-                      </h2>
-                      <p className="mb-2 min-w-0 truncate text-xs font-semibold tracking-wider text-gray-600 uppercase">
-                        {nextAction.step.name}
-                      </p>
-                      {nextAction.step.description && (
-                        <p className="min-w-0 truncate text-sm leading-relaxed text-gray-800">
-                          {nextAction.step.description}
+            return (
+              <>
+                {/* Proof of Personhood Verification */}
+                {showPOPAction && (
+                  <div
+                    id="next-action-pop"
+                    className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
+                  >
+                    <div className="mb-4 flex items-center gap-6">
+                      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50">
+                        <IoArrowForward className="h-10 w-10 text-orange-500" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h2 className="text-xl font-bold text-orange-900">
+                          Your Next Step: Verify Your Identity
+                        </h2>
+                        <p className="min-w-0 truncate text-xs font-semibold tracking-wider text-gray-600 uppercase">
+                          Required for this program
                         </p>
-                      )}
+                      </div>
+                    </div>
+                    <div>
+                      {/* Verification Instructions */}
+                      <div className="space-y-4">
+                        <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
+                          <h4 className="mb-3 flex items-center gap-2 font-bold text-blue-900">
+                            <IoInformationCircle className="h-6 w-6 text-blue-500" />
+                            How to Verify Your Identity
+                          </h4>
+                          <p className="mb-2 text-sm leading-relaxed text-gray-800">
+                            This program requires you to verify your identity to
+                            ensure all participants are real people.
+                          </p>
+                          <p className="mb-3 text-sm text-blue-900">
+                            Choose one of the following methods:
+                          </p>
+                          <div className="space-y-3">
+                            <div className="rounded-md border border-blue-300 bg-white p-3">
+                              <h5 className="mb-2 font-bold text-blue-900">
+                                Option 1: Phone Number Verification
+                              </h5>
+                              <ul className="ml-5 list-disc space-y-1 text-sm text-gray-700">
+                                <li>
+                                  Add a phone number to your account on the
+                                  profile page
+                                </li>
+                                <li>
+                                  <strong>Note:</strong> This will require you
+                                  to sign in again
+                                </li>
+                              </ul>
+                              <div className="mt-3">
+                                <Link
+                                  href="/user/profile"
+                                  className="btn btn-secondary btn-sm gap-2"
+                                >
+                                  <IoArrowForward className="h-4 w-4" />
+                                  Go to Profile
+                                </Link>
+                              </div>
+                            </div>
+                            <div className="rounded-md border border-blue-300 bg-white p-3">
+                              <h5 className="mb-2 font-bold text-blue-900">
+                                Option 2: Social Media Account
+                              </h5>
+                              <ul className="ml-5 list-disc space-y-1 text-sm text-gray-700">
+                                <li>
+                                  Link your social media account
+                                  (Google/Facebook)
+                                </li>
+                                <li>
+                                  <strong>Important:</strong> This will require
+                                  you to sign in again
+                                </li>
+                                <li>
+                                  <strong>Use the same email address</strong> to
+                                  continue this session
+                                </li>
+                                <li>
+                                  If you use a different email, you will be
+                                  recognized as a new user and will lose any
+                                  progress made so far
+                                </li>
+                              </ul>
+                              <div className="mt-3">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    handleUserSignOut(true, false, true)
+                                  }
+                                  className="btn btn-secondary btn-sm gap-2"
+                                >
+                                  <IoArrowForward className="h-4 w-4" />
+                                  Sign in with Social Media Account
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div>
-                  {/* Task Instructions */}
-                  <TaskInstructionHeader
-                    tasksLength={nextAction.tasks.length}
-                    rule={nextAction.step.rule}
-                    orderMode={nextAction.step.orderMode}
-                    isCompleted={false}
-                    color="green"
-                  />
-                  {/* Tasks List */}
-                  <PathwayTasksList
-                    tasks={nextAction.tasks.map((task, index) => ({
-                      id: task.id,
-                      entityType: "Opportunity" as PathwayTaskEntityType,
-                      completed: task.completed,
-                      isCompletable: task.isCompletable,
-                      opportunity: task.opportunityId
-                        ? {
-                            id: task.opportunityId,
-                            title: task.opportunityTitle,
-                            description: null,
-                            type: null,
-                            organizationId: null,
-                            organizationName: null,
-                            organizationLogoURL: null,
-                            summary: null,
-                            dateStart: null,
-                            dateEnd: null,
-                            url: null,
-                            zltoReward: null,
-                            yomaReward: null,
-                          }
-                        : null,
-                      order: index,
-                      orderDisplay: index + 1,
-                      dateCompleted: null,
-                      nonCompletableReason: null,
-                    }))}
-                    rule={nextAction.step.rule}
-                    orderMode={nextAction.step.orderMode}
-                    showActionButtons={true}
-                    color="green"
-                  />
-                  {/* Helpful Tips */}
-                  <div className="mt-6 rounded-lg border-2 border-green-200 bg-green-50 p-4">
-                    <h4 className="mb-3 flex items-center gap-2 font-bold text-green-900">
-                      <IoInformationCircle className="h-8 w-8 text-green-500" />
-                      How to Complete Your Tasks
-                    </h4>
-                    <ol className="ml-5 list-decimal space-y-2 text-sm text-green-900">
-                      <li>
-                        <strong>Click &quot;View Opportunity&quot;</strong>{" "}
-                        above to see the full details
-                      </li>
-                      <li>
-                        Read the requirements carefully and complete the
-                        activities
-                      </li>
-                      <li>
-                        <strong>Upload proof of completion</strong> (photos,
-                        documents, etc.) on the opportunity page
-                      </li>
-                      <li>
-                        Wait for verification - You&apos;ll be notified when
-                        someone has reviewed your submission.
-                      </li>
-                      <li>
-                        Check back here to track your progress - the checkmark
-                        will appear when verified!{" "}
-                        <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-[10px] font-bold text-white">
-                          ✓
-                        </span>
-                      </li>
-                    </ol>
+                )}
+
+                {/* OR Divider */}
+                {showPOPAction && nextAction && (
+                  <div className="mb-6 flex items-center gap-4">
+                    <div className="h-px flex-1 bg-gray-300" />
+                    <span className="text-sm font-bold text-gray-500">OR</span>
+                    <div className="h-px flex-1 bg-gray-300" />
                   </div>
-                </div>
-              </div>
-            ) : null;
+                )}
+
+                {/* Pathway Next Action */}
+                {nextAction && (
+                  <div
+                    id="next-action"
+                    className="shadow-custom mb-6 rounded-lg border-2 border-orange-300 bg-gradient-to-br from-orange-50 to-white p-6"
+                  >
+                    <div className="mb-4 flex items-center gap-6">
+                      <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-2xl bg-white shadow-lg ring-4 ring-white/50">
+                        <IoArrowForward className="h-10 w-10 text-orange-500" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="min-w-0 flex-1">
+                          <h2 className="min-w-0 truncate text-xl font-bold text-orange-900">
+                            Your Next Step: {nextAction.step.name}
+                          </h2>
+                          <p className="min-w-0 truncate text-xs font-semibold tracking-wider text-gray-600 uppercase">
+                            Required for this program
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      {/* Task Instructions */}
+                      <TaskInstructionHeader
+                        tasksLength={nextAction.tasks.length}
+                        rule={nextAction.step.rule}
+                        orderMode={nextAction.step.orderMode}
+                        isCompleted={false}
+                        color="green"
+                      />
+                      {/* Tasks List */}
+                      <PathwayTasksList
+                        tasks={nextAction.tasks.map((task, index) => ({
+                          id: task.id,
+                          entityType: "Opportunity" as PathwayTaskEntityType,
+                          completed: task.completed,
+                          isCompletable: task.isCompletable,
+                          opportunity: task.opportunityId
+                            ? {
+                                id: task.opportunityId,
+                                title: task.opportunityTitle,
+                                description: null,
+                                type: null,
+                                organizationId: null,
+                                organizationName: null,
+                                organizationLogoURL: null,
+                                summary: null,
+                                dateStart: null,
+                                dateEnd: null,
+                                url: null,
+                                zltoReward: null,
+                                yomaReward: null,
+                              }
+                            : null,
+                          order: index,
+                          orderDisplay: index + 1,
+                          dateCompleted: null,
+                          nonCompletableReason: null,
+                        }))}
+                        rule={nextAction.step.rule}
+                        orderMode={nextAction.step.orderMode}
+                        showActionButtons={true}
+                        color="green"
+                      />
+                      {/* Helpful Tips */}
+                      <div className="mt-6 rounded-lg border-2 border-green-200 bg-green-50 p-4">
+                        <h4 className="mb-3 flex items-center gap-2 font-bold text-green-900">
+                          <IoInformationCircle className="h-8 w-8 text-green-500" />
+                          How to Complete Your Tasks
+                        </h4>
+                        <ol className="ml-5 list-decimal space-y-2 text-sm text-green-900">
+                          <li>
+                            <strong>Click &quot;View Opportunity&quot;</strong>{" "}
+                            above to see the full details
+                          </li>
+                          <li>
+                            Read the requirements carefully and complete the
+                            activities
+                          </li>
+                          <li>
+                            <strong>Upload proof of completion</strong> (photos,
+                            documents, etc.) on the opportunity page
+                          </li>
+                          <li>
+                            Wait for verification - You&apos;ll be notified when
+                            someone has reviewed your submission.
+                          </li>
+                          <li>
+                            Check back here to track your progress - the
+                            checkmark will appear when verified!{" "}
+                            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-green-500 text-[10px] font-bold text-white">
+                              ✓
+                            </span>
+                          </li>
+                        </ol>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </>
+            );
           })()}
 
         {/* NEXT ACTION (COMPLETED) */}

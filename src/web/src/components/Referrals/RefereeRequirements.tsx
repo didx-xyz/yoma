@@ -60,7 +60,7 @@ export const RefereeRequirements: React.FC<RefereeRequirementsProps> = ({
         icon: IoShieldCheckmark,
         title: "Register & Verify Identity",
         description:
-          "Sign in with Google/Facebook or register with your phone number (South Africa only) to verify you're a real person.",
+          "Sign in with Google/Facebook or register with your phone number to verify you're a real person.",
         color: {
           border: "border-blue-200",
           bg: "bg-blue-600",

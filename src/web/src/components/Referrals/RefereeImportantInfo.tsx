@@ -37,8 +37,8 @@ export const RefereeImportantInfo: React.FC<RefereeImportantInfoProps> = ({
       icon: "🚫",
       title: "New Users Only",
       description: program.proofOfPersonhoodRequired
-        ? "This referral is for NEW users. If you&apos;re already a Yoma user, you&apos;re NOT eligible. New users must sign in with Google/Facebook or register with a phone number (South Africa only)."
-        : "This referral is for NEW users only. If you already have a Yoma account, you&apos;re NOT eligible to claim this link.",
+        ? "This referral is for NEW users. If you're already a Yoma user, you're NOT eligible. New users must sign in with Google/Facebook or register with a phone number."
+        : "This referral is for NEW users only. If you already have a Yoma account, you're NOT eligible to claim this link.",
       color: "red",
     });
 

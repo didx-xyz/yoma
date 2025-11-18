@@ -295,7 +295,7 @@ export const HelpReferee: React.FC<HelpRefereeProps> = ({
                           </span>
                           Step {step.number}
                         </div>
-                        <h3 className="text-sm leading-tight font-bold text-gray-900">
+                        <h3 className="text-base leading-tight font-bold text-gray-900">
                           {step.title}
                         </h3>
                         <p className="mt-2 text-xs leading-relaxed text-gray-600">

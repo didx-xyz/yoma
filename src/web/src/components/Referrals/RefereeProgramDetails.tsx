@@ -40,59 +40,60 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
     setShowDetails(!showDetails);
   };
 
-  // Theme colors based on perspective
-  const themeColors = {
-    referrer: {
-      border: "border-orange-200",
-      bg: "from-orange-50 to-white",
-      headerBg: "from-orange-50",
-      headerBorder: "border-orange-100",
-      textPrimary: "text-orange-900",
-      textSecondary: "text-orange-700",
-      buttonBorder: "border-orange-300",
-      buttonText: "text-orange-600",
-      buttonHover: "hover:bg-orange-100",
-      dividerBorder: "border-orange-100",
-    },
-    referee: {
-      border: "border-purple-200",
-      bg: "from-purple-50 to-white",
-      headerBg: "from-purple-50",
-      headerBorder: "border-purple-100",
-      textPrimary: "text-purple-900",
-      textSecondary: "text-purple-700",
-      buttonBorder: "border-purple-300",
-      buttonText: "text-purple-600",
-      buttonHover: "hover:bg-purple-100",
-      dividerBorder: "border-purple-100",
-    },
-  };
-
-  const theme = themeColors[perspective];
-
   return (
     <div
       className={`group overflow-hidden rounded-xl border-2 bg-gradient-to-br shadow-md transition-all hover:shadow-lg ${
         selected
-          ? `${theme.border.replace("200", "400")} ${theme.bg.replace("50", "100")}`
-          : `${theme.border} ${theme.bg}`
+          ? "border-orange-400 from-orange-100 to-white"
+          : "border-orange-200 from-orange-50 to-white"
       } ${className}`}
     >
       {/* Header Section */}
       <div
         onClick={onClick}
-        className={`border-b ${theme.headerBorder} bg-gradient-to-r ${theme.headerBg} to-transparent px-4 py-2 ${
+        className={`border-b border-orange-100 bg-gradient-to-r from-orange-50 to-transparent px-4 py-2 ${
           onClick ? "cursor-pointer" : ""
         }`}
       >
         <div className="flex items-start justify-between gap-3">
+          {/* Program Image or Placeholder Icon */}
+          <div className="flex-shrink-0">
+            {program.imageURL ? (
+              <Image
+                src={program.imageURL}
+                alt={program.name}
+                width={50}
+                height={50}
+                className="rounded-lg object-cover shadow-md"
+              />
+            ) : (
+              <div className="flex h-[50px] w-[50px] items-center justify-center rounded-lg bg-gradient-to-br from-orange-100 to-yellow-100 shadow-md">
+                <span className="text-3xl">🎯</span>
+              </div>
+            )}
+          </div>
+
           <div className="min-w-0 flex-1">
-            {/* Title */}
-            <h3
-              className={`font-family-nunito mb-1 line-clamp-1 text-[16px] font-bold ${theme.textPrimary} ${onClick ? "hover:text-opacity-80 transition-colors" : ""}`}
-            >
-              {program.name}
-            </h3>
+            {/* Title with Status Badge */}
+            <div className="mb-1 flex items-center gap-2">
+              <h3
+                className={`font-family-nunito line-clamp-1 flex-1 text-[16px] font-bold text-orange-900 ${onClick ? "hover:text-opacity-80 transition-colors" : ""}`}
+              >
+                {program.name}
+              </h3>
+              {/* Status Badge */}
+              <span
+                className={`badge badge-sm flex-shrink-0 ${
+                  program.status === "Active"
+                    ? "bg-green-100 text-green-700"
+                    : program.status === "Inactive"
+                      ? "bg-gray-100 text-gray-700"
+                      : "bg-red-100 text-red-700"
+                }`}
+              >
+                {program.status}
+              </span>
+            </div>
 
             {/* Description */}
             {program.description && (
@@ -101,19 +102,6 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
               </p>
             )}
           </div>
-
-          {/* Program Image - Compact size */}
-          {program.imageURL && (
-            <div className="flex-shrink-0">
-              <Image
-                src={program.imageURL}
-                alt={program.name}
-                width={60}
-                height={60}
-                className="rounded-lg object-cover shadow-md"
-              />
-            </div>
-          )}
         </div>
       </div>
 
@@ -136,7 +124,8 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                   onCreateLink?.();
                 }
               }}
-              className={`btn btn-sm gap-1 text-white shadow-md transition-all hover:scale-105 hover:shadow-lg ${
+              disabled={program.status !== "Active"}
+              className={`btn btn-sm gap-1 text-white shadow-md transition-all hover:scale-105 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100 ${
                 context === "select"
                   ? "border-orange-500 bg-gradient-to-r from-orange-500 to-yellow-500"
                   : "border-blue-600 bg-gradient-to-r from-blue-600 to-blue-500"
@@ -159,7 +148,7 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
           <button
             type="button"
             onClick={handleToggleDetails}
-            className={`btn btn-sm gap-1 ${theme.buttonBorder} bg-transparent ${theme.buttonText} ${theme.buttonHover} ${
+            className={`btn btn-sm gap-1 border-orange-300 bg-transparent text-orange-600 hover:bg-orange-100 ${
               perspective === "referee" || context === "preview"
                 ? "mx-auto"
                 : ""
@@ -181,14 +170,10 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
 
         {/* Expandable Details */}
         {showDetails && (
-          <div
-            className={`animate-fade-in mt-3 space-y-3 border-t ${theme.dividerBorder} pt-3`}
-          >
+          <div className="animate-fade-in mt-3 space-y-3 border-t border-orange-100 pt-3">
             {/* DETAILS Section */}
             <div className="space-y-2">
-              <h4 className={`text-xs font-bold ${theme.textPrimary}`}>
-                Details
-              </h4>
+              <h4 className="text-xs font-bold text-orange-900">Details</h4>
 
               {/* Rewards - Always show, even if none */}
               <div className="space-y-2">
@@ -272,15 +257,11 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                   className={`grid ${perspective === "referrer" ? "grid-cols-2" : "grid-cols-2"} gap-2`}
                 >
                   {perspective === "referrer" && (
-                    <div
-                      className={`rounded-lg border ${theme.border} bg-gradient-to-br ${theme.bg} p-2`}
-                    >
-                      <p
-                        className={`text-xs font-semibold ${theme.textSecondary}`}
-                      >
+                    <div className="rounded-lg border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-2">
+                      <p className="text-xs font-semibold text-orange-700">
                         Max Referrals
                       </p>
-                      <p className={`text-sm font-bold ${theme.textPrimary}`}>
+                      <p className="text-sm font-bold text-orange-900">
                         {program.completionLimitReferee === null ||
                         program.completionLimitReferee === 0
                           ? "Unlimited"
@@ -296,17 +277,13 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                   )}
 
                   {/* Completion Window */}
-                  <div
-                    className={`rounded-lg border ${theme.border} bg-gradient-to-br ${theme.bg} p-2`}
-                  >
-                    <p
-                      className={`text-xs font-semibold ${theme.textSecondary}`}
-                    >
+                  <div className="rounded-lg border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-2">
+                    <p className="text-xs font-semibold text-orange-700">
                       {perspective === "referrer"
                         ? "Completion Window"
                         : "Time to Complete"}
                     </p>
-                    <p className={`text-sm font-bold ${theme.textPrimary}`}>
+                    <p className="text-sm font-bold text-orange-900">
                       {program.completionWindowInDays !== null
                         ? `${program.completionWindowInDays} days`
                         : "No limit"}
@@ -323,17 +300,13 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
                   </div>
 
                   {/* Start Date */}
-                  <div
-                    className={`rounded-lg border ${theme.border} bg-gradient-to-br ${theme.bg} p-2`}
-                  >
-                    <p
-                      className={`text-xs font-semibold ${theme.textSecondary}`}
-                    >
+                  <div className="rounded-lg border border-orange-200 bg-gradient-to-br from-orange-50 to-white p-2">
+                    <p className="text-xs font-semibold text-orange-700">
                       {perspective === "referrer"
                         ? "Start Date"
                         : "Program Start Date"}
                     </p>
-                    <p className={`text-sm font-bold ${theme.textPrimary}`}>
+                    <p className="text-sm font-bold text-orange-900">
                       {new Date(program.dateStart).toLocaleDateString("en-US", {
                         month: "short",
                         day: "numeric",
@@ -351,8 +324,8 @@ export const RefereeProgramDetails: React.FC<ProgramDetailsProps> = ({
             </div>
 
             {/* REQUIREMENTS Section */}
-            <div className={`space-y-2 border-t ${theme.dividerBorder} pt-3`}>
-              <h4 className={`text-xs font-bold ${theme.textPrimary}`}>
+            <div className="space-y-2 border-t border-orange-100 pt-3">
+              <h4 className="text-xs font-bold text-orange-900">
                 {perspective === "referrer"
                   ? "Program Requirements"
                   : "What You Need to Do"}

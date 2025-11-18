@@ -1183,9 +1183,10 @@ const ReferralProgramForm: NextPageWithLayout<{
         } else {
           // For edit: go back to returnUrl or list
           void router.push(
-            returnUrl
-              ? decodeURIComponent(returnUrl.toString())
-              : "/admin/referrals",
+            getSafeUrl(
+              returnUrl ? decodeURIComponent(returnUrl.toString()) : undefined,
+              "/admin/referrals",
+            ),
           );
         }
       } catch (error) {

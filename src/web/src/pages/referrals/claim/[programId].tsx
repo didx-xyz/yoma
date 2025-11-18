@@ -3,7 +3,6 @@ import { useAtomValue, useSetAtom } from "jotai";
 import { type GetServerSidePropsContext } from "next";
 import { getServerSession } from "next-auth";
 import Head from "next/head";
-import Image from "next/image";
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { IoLockClosed, IoWarning } from "react-icons/io5";
@@ -390,11 +389,11 @@ const ReferralClaimPage: NextPageWithLayout<{
           <div className="flex flex-col items-center gap-4 md:flex-row md:justify-between">
             {!isAuthenticated && (
               <div className="flex flex-1 flex-col gap-2">
-                <h1 className="mb-2x text-lg font-bold text-orange-900 md:text-xl">
+                <h1 className="text-lg font-bold text-orange-900 md:text-xl">
                   🎁 You&apos;ve Been Invited!
                 </h1>
-                <p className="md:text-basex mb-2 text-sm text-gray-700">
-                  A friend has invited you to join the following program:{" "}
+                <p className="mb-2x text-sm text-gray-700">
+                  A friend has invited you to join the following program:
                 </p>
                 <RefereeProgramDetails
                   program={program}
@@ -403,28 +402,19 @@ const ReferralClaimPage: NextPageWithLayout<{
                 />
               </div>
             )}
+
             {isAuthenticated && needsProfileCompletion && (
-              <div className="flex-1">
-                <h1 className="mb-2 text-lg font-bold text-orange-900 md:text-xl">
+              <div className="flex flex-1 flex-col gap-2">
+                <h1 className="text-lg font-bold text-orange-900 md:text-xl">
                   🎁 Almost there!
                 </h1>
-                <p className="md:text-basex text-sm text-gray-700">
-                  Complete your profile to join{" "}
-                  <span className="font-bold text-orange-700">
-                    {program.name}
-                  </span>
+                <p className="mb-2x text-sm text-gray-700">
+                  Complete your profile to join the following program:
                 </p>
-              </div>
-            )}
-
-            {program.imageURL && (
-              <div className="flex-shrink-0">
-                <Image
-                  src={program.imageURL}
-                  alt={program.name}
-                  width={60}
-                  height={60}
-                  className="rounded-lg object-cover shadow-md"
+                <RefereeProgramDetails
+                  program={program}
+                  perspective="referee"
+                  isExpanded={false}
                 />
               </div>
             )}

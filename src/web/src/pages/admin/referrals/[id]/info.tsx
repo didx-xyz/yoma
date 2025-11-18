@@ -26,9 +26,9 @@ import {
   AdminReferralProgramActions,
 } from "~/components/Referrals/AdminReferralProgramActions";
 import {
-  ProgramInfo,
+  AdminProgramInfo,
   ProgramInfoFilterOptions,
-} from "~/components/Referrals/ProgramInfo";
+} from "~/components/Referrals/AdminProgramInfo";
 
 interface IParams extends ParsedUrlQuery {
   id: string;
@@ -169,7 +169,7 @@ const ReferralProgramInfo: NextPageWithLayout<{
 
           {/* Program Information Sections */}
           {program && (
-            <ProgramInfo
+            <AdminProgramInfo
               program={program}
               filterOptions={[
                 ProgramInfoFilterOptions.PROGRAM_INFO,

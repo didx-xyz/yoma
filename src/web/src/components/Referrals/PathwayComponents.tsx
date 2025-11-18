@@ -1,4 +1,5 @@
 import { IoWarning } from "react-icons/io5";
+import { FaRoad } from "react-icons/fa";
 import {
   PathwayCompletionRule,
   type ProgramPathwayStepInfo,
@@ -15,9 +16,26 @@ export const PathwayHeader: React.FC<PathwayHeaderProps> = ({
   description,
 }) => {
   return (
-    <div className="flex flex-col gap-2">
-      <h3 className="text-lg font-semibold text-gray-900">{name}</h3>
-      {description && <p className="text-sm text-gray-600">{description}</p>}
+    <div className="flex items-start justify-between gap-3">
+      {/* Pathway Icon */}
+      <div className="flex-shrink-0">
+        <div
+          className={`bg-green flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full shadow-md`}
+        >
+          <FaRoad className="h-5 w-5 text-white" />
+        </div>
+      </div>
+
+      <div className="min-w-0 flex-1">
+        {/* Title */}
+        <h3 className="font-family-nunito line-clamp-1 text-[16px] font-bold text-gray-900">
+          {name}
+        </h3>
+        {/* Description */}
+        {description && (
+          <p className="line-clamp-3 text-xs text-gray-600">{description}</p>
+        )}
+      </div>
     </div>
   );
 };

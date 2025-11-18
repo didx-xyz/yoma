@@ -431,14 +431,6 @@ export const HelpReferrer: React.FC<HelpReferrerProps> = ({
                             referral privileges and potential account
                             termination. See our{" "}
                             <a
-                              href="/help"
-                              target="_blank"
-                              className="underline hover:text-red-700"
-                            >
-                              Help
-                            </a>{" "}
-                            or{" "}
-                            <a
                               href="/terms"
                               target="_blank"
                               className="underline hover:text-red-700"
@@ -456,9 +448,13 @@ export const HelpReferrer: React.FC<HelpReferrerProps> = ({
 
               {/* Terms & Conditions */}
               <div className="border-gray-light border-t pt-4">
-                <button className="text-green hover:text-green-dark text-sm font-semibold underline transition-all hover:scale-105">
+                <a
+                  href="/terms"
+                  target="_blank"
+                  className="text-green hover:text-green-dark text-sm font-semibold underline transition-all hover:scale-105"
+                >
                   View Full Terms & Conditions
-                </button>
+                </a>
               </div>
 
               {/* Bottom Toggle Button */}

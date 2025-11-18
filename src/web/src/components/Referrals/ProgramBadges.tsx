@@ -16,7 +16,7 @@ const ProgramBadges: React.FC<ProgramBadgesProps> = ({
   if (!program) return null;
 
   return (
-    <div className="text-orange-dark mt-3 mb-2 space-y-1.5 text-xs font-bold md:my-2">
+    <div className="text-orange-dark mt-3xxx md:my-2xx mb-2 space-y-1.5 text-xs font-bold">
       {/* First Row: Blue Badges (Time & Limits & Requirements) */}
       {(program.completionWindowInDays ||
         program.completionLimitReferee ||

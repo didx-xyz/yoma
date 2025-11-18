@@ -7,28 +7,29 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import { useCallback, useState, type ReactElement } from "react";
 import { IoIosCheckmarkCircle, IoMdClose } from "react-icons/io";
+import Moment from "react-moment";
 import {
   ReferralLinkUsageStatus,
-  type ReferralLinkUsageSearchFilterAdmin,
-  type ReferralLinkUsageSearchResults,
   type Program,
   type ReferralLink,
+  type ReferralLinkUsageSearchFilterAdmin,
+  type ReferralLinkUsageSearchResults,
 } from "~/api/models/referrals";
 import {
-  searchReferralLinkUsagesAdmin,
-  getReferralProgramById,
   getReferralLinkById,
+  getReferralProgramById,
+  searchReferralLinkUsagesAdmin,
 } from "~/api/services/referrals";
 import CustomSlider from "~/components/Carousel/CustomSlider";
 import MainLayout from "~/components/Layout/Main";
 import NoRowsMessage from "~/components/NoRowsMessage";
 import { PageBackground } from "~/components/PageBackground";
 import { PaginationButtons } from "~/components/PaginationButtons";
+import { AdminReferralLinkUsageActions } from "~/components/Referrals/AdminReferralLinkUsageActions";
 import {
   ReferralLinkUsageFilterOptions,
   ReferralLinkUsageSearchFilters,
 } from "~/components/Referrals/AdminReferralLinkUsageSearchFilter";
-import { AdminReferralLinkUsageActions } from "~/components/Referrals/AdminReferralLinkUsageActions";
 import { InternalServerError } from "~/components/Status/InternalServerError";
 import { LoadingSkeleton } from "~/components/Status/LoadingSkeleton";
 import { Unauthenticated } from "~/components/Status/Unauthenticated";
@@ -38,7 +39,6 @@ import { config } from "~/lib/react-query-config";
 import { getSafeUrl, getThemeFromRole } from "~/lib/utils";
 import { type NextPageWithLayout } from "~/pages/_app";
 import { authOptions } from "~/server/auth";
-import Moment from "react-moment";
 
 // ⚠️ SSR
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -631,7 +631,7 @@ const ReferralLinkUsage: NextPageWithLayout<{
                           <p className="text-sm tracking-wider">
                             Pathways Completed
                           </p>
-                          {usage.pathwayComplete ? (
+                          {usage.pathwayCompleted ? (
                             <IoIosCheckmarkCircle className="text-green h-5 w-5" />
                           ) : (
                             <IoMdClose className="text-gray-dark h-5 w-5" />
@@ -763,7 +763,7 @@ const ReferralLinkUsage: NextPageWithLayout<{
                               </span>
                             </div>
                             <div className="flex items-center gap-1">
-                              {usage.pathwayComplete ? (
+                              {usage.pathwayCompleted ? (
                                 <IoIosCheckmarkCircle className="text-green h-4 w-4" />
                               ) : (
                                 <IoMdClose className="text-gray-dark h-4 w-4" />

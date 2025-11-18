@@ -232,6 +232,7 @@ const ReferralsDashboard: NextPageWithLayout<{
                 className="max-w-3xl !bg-transparent"
               />
             </div>
+
             {/* WELCOME SECTION */}
             <div className="shadow-custom rounded-lgx bg-gradient-to-br from-green-50 via-white to-blue-50 p-6">
               <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">

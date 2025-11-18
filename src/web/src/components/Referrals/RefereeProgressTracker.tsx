@@ -1,19 +1,19 @@
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
+import { FaRoad } from "react-icons/fa";
 import {
+  IoAlert,
+  IoAlertCircle,
+  IoCheckmark,
   IoCheckmarkCircle,
   IoChevronDown,
   IoChevronUp,
-  IoPersonAdd,
-  IoRocket,
-  IoTrophy,
-  IoCheckmark,
   IoEllipseOutline,
-  IoAlertCircle,
-  IoArrowUp,
+  IoPersonAdd,
   IoPersonCircle,
+  IoRocket,
   IoShieldCheckmark,
+  IoTrophy,
 } from "react-icons/io5";
-import { FaRoad } from "react-icons/fa";
 import type {
   ProgramInfo,
   ReferralLinkUsageInfo,
@@ -105,6 +105,7 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
       number: number;
       title: string;
       description: string;
+      descriptionLong: string;
       icon: any;
       completed: boolean;
       isCurrentStep: boolean;
@@ -112,21 +113,28 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
     let stepNumber = 1;
     let currentStepFound = false;
 
-    // Step 1: Register (with or without POP) - ALWAYS COMPLETED at this stage
+    // Step 1: Register (with or without POP)
     if (program.proofOfPersonhoodRequired) {
+      const popCompleted = usage.proofOfPersonhoodCompleted ?? false;
       generatedSteps.push({
         number: stepNumber++,
-        title: "Register & Verify",
-        description: `Verified via ${usage.proofOfPersonhoodMethod === "OTP" ? "phone" : "social login"} on ${new Date(usage.dateClaimed).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+        title: "Verify Identity",
+        description: popCompleted
+          ? `Verified via ${usage.proofOfPersonhoodMethod === "OTP" ? "phone" : "social login"} on ${new Date(usage.dateClaimed).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`
+          : "Verify your identity to continue",
+        descriptionLong: popCompleted
+          ? `You successfully verified your identity via ${usage.proofOfPersonhoodMethod === "OTP" ? "phone verification (OTP)" : "social login"} on ${new Date(usage.dateClaimed).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}. This confirms you are a real person and helps maintain the integrity of the referral program.`
+          : "You need to verify your identity to continue with this program. This helps ensure that all participants are real people and maintains the integrity of the referral system. This can be done by signing up with a social login (Google/Facebook) or phone verification (OTP). See your next step below for detailed instructions.",
         icon: IoShieldCheckmark,
-        completed: true, // Always completed at this stage
-        isCurrentStep: false,
+        completed: popCompleted,
+        isCurrentStep: !popCompleted,
       });
     } else {
       generatedSteps.push({
         number: stepNumber++,
         title: "Register",
         description: `Joined ${new Date(usage.dateClaimed).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`,
+        descriptionLong: `You successfully joined this program on ${new Date(usage.dateClaimed).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}. Welcome to the community!`,
         icon: IoPersonAdd,
         completed: true, // Always completed at this stage
         isCurrentStep: false,
@@ -138,6 +146,8 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
       number: stepNumber++,
       title: "Complete Profile",
       description: "Profile completed successfully",
+      descriptionLong:
+        "You have successfully completed your profile. This ensures that we have all the necessary information to provide you with the best experience and track your progress accurately.",
       icon: IoPersonCircle,
       completed: true, // Always completed at this stage
       isCurrentStep: false,
@@ -154,6 +164,11 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
           : usage.pathway
             ? `${usage.pathway.stepsCompleted} of ${usage.pathway.stepsTotal} steps completed (${usage.pathway.percentComplete}%)`
             : "Complete all required steps",
+        descriptionLong: pathwayCompleted
+          ? "Congratulations! You have successfully completed all the required pathway steps. This is a significant milestone in your journey."
+          : usage.pathway
+            ? `You have completed ${usage.pathway.stepsCompleted} out of ${usage.pathway.stepsTotal} required steps (${usage.pathway.percentComplete}% complete). Keep going to finish the pathway and unlock your rewards!`
+            : "This program requires you to complete all the steps in the learning pathway. Start working through the tasks to make progress.",
         icon: FaRoad,
         completed: pathwayCompleted,
         isCurrentStep: !pathwayCompleted && !currentStepFound,
@@ -175,6 +190,9 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
         description: rewardsEarned
           ? `${program.zltoRewardReferee} ZLTO earned!${usage.dateCompleted ? ` (${new Date(usage.dateCompleted).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})` : ""}`
           : `Earn ${program.zltoRewardReferee} ZLTO`,
+        descriptionLong: rewardsEarned
+          ? `Fantastic! You have successfully earned ${program.zltoRewardReferee} ZLTO tokens${usage.dateCompleted ? ` on ${new Date(usage.dateCompleted).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}. These tokens have been added to your wallet and can be used within the Yoma ecosystem.`
+          : `Complete all the requirements to earn ${program.zltoRewardReferee} ZLTO tokens. These digital tokens can be used to purchase items on the marketplace.`,
         icon: IoTrophy,
         completed: rewardsEarned,
         isCurrentStep:
@@ -187,6 +205,9 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
         description: rewardsEarned
           ? `Completed successfully!${usage.dateCompleted ? ` (${new Date(usage.dateCompleted).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })})` : ""}`
           : "Finish all requirements",
+        descriptionLong: rewardsEarned
+          ? `Congratulations! You have successfully completed the onboarding process${usage.dateCompleted ? ` on ${new Date(usage.dateCompleted).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}. You are now fully set up and ready to explore all the opportunities available to you.`
+          : "Complete all the requirements to finish your onboarding. This will unlock full access to all features and opportunities available in this program.",
         icon: IoRocket,
         completed: rewardsEarned,
         isCurrentStep:
@@ -212,7 +233,7 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
             <p className="min-w-0 text-sm leading-relaxed text-gray-800">
               {steps.every((s) => s.completed)
                 ? "Track your journey"
-                : "Track your progress and see what&apos;s next"}
+                : "Track your progress and see what's next"}
             </p>
           </div>
         </div>
@@ -317,11 +338,20 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
                         <p className="text-xs text-gray-600">
                           {step.description}
                         </p>
-                        {step.isCurrentStep && (
+
+                        {step.completed && (
+                          <div className="mt-2 flex items-center gap-1.5 rounded-md bg-green-100 px-2 py-1">
+                            <IoCheckmark className="h-3.5 w-3.5 text-green-600" />
+                            <span className="text-xs font-semibold text-green-700">
+                              You completed this step
+                            </span>
+                          </div>
+                        )}
+                        {step.isCurrentStep && !step.completed && (
                           <div className="mt-2 flex items-center gap-1.5 rounded-md bg-orange-100 px-2 py-1">
-                            <IoArrowUp className="h-3.5 w-3.5 text-orange-600" />
+                            <IoAlert className="h-3.5 w-3.5 text-orange-600" />
                             <span className="text-xs font-semibold text-orange-700">
-                              You are here
+                              This step is outstanding
                             </span>
                           </div>
                         )}
@@ -396,7 +426,7 @@ export const RefereeProgressTracker: React.FC<RefereeProgressTrackerProps> = ({
                             {step.title}
                           </h4>
                           <p className="text-sm text-gray-600">
-                            {step.description}
+                            {step.descriptionLong}
                           </p>
 
                           {/* Show pathway details if this is the pathway step and it has data */}
