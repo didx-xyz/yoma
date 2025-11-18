@@ -117,8 +117,8 @@ const CustomCarousel: React.FC<{
     >
       <div className="mb-2 flex flex-col gap-6">
         <div className="flex max-w-full flex-row px-2 md:max-w-7xl">
-          <div className="flex grow flex-col">
-            <div className="overflow-hidden text-lg font-semibold text-ellipsis whitespace-nowrap text-black md:max-w-[800px] md:text-xl">
+          <div className="flex min-w-0 grow flex-col">
+            <div className="max-w-full overflow-hidden text-lg font-semibold text-ellipsis whitespace-nowrap text-black md:text-xl">
               {title}
             </div>
             <div className="text-gray-dark">{description}</div>

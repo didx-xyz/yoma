@@ -27,7 +27,9 @@ import {
 import { listNewsFeeds, searchNewsArticles } from "~/api/services/newsfeed";
 import { ScrollableContainer } from "~/components/Carousel";
 import { HomeSearchInputLarge } from "~/components/Home/HomeSearchInputLarge";
-import PartnerLogos from "~/components/Home/PartnerLogos";
+import PartnerLogos, {
+  PartnerLogoOptions,
+} from "~/components/Home/PartnerLogos";
 import MainLayout from "~/components/Layout/Main";
 import { NewsArticleCard } from "~/components/News/NewsArticleCard";
 import { PAGE_SIZE_MINIMUM, THEME_WHITE } from "~/lib/constants";
@@ -506,7 +508,30 @@ const Home: NextPageWithLayout<{
               )}
 
               {/* PARTNERS */}
-              <PartnerLogos />
+              <PartnerLogos
+                options={[
+                  PartnerLogoOptions.GEN_UNLIMITED,
+                  PartnerLogoOptions.UNICEF,
+                  PartnerLogoOptions.ATINGI,
+                  PartnerLogoOptions.LEAP,
+                  PartnerLogoOptions.HOT,
+                  PartnerLogoOptions.CODING_NETWORK,
+                  PartnerLogoOptions.THINK_CODE,
+                  PartnerLogoOptions.YOMA,
+                  PartnerLogoOptions.ATLAS,
+                  PartnerLogoOptions.GEOVERSITY,
+                  PartnerLogoOptions.GOODWALL,
+                  PartnerLogoOptions.SKILLS,
+                  PartnerLogoOptions.RLABS,
+                  PartnerLogoOptions.SILULO,
+                  PartnerLogoOptions.DIGIFY,
+                  PartnerLogoOptions.EDC,
+                  PartnerLogoOptions.MICROSOFT,
+                  PartnerLogoOptions.YES,
+                  PartnerLogoOptions.WESSA,
+                  PartnerLogoOptions.AFRICA_UNION,
+                ]}
+              />
             </div>
           </section>
         </div>

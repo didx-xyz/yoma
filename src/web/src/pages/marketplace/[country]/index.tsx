@@ -486,17 +486,14 @@ const MarketplaceStoreCategories: NextPageWithLayout<{
     }
 
     return data_storeItems.map((category_storeItems, index) => (
-      <div
-        key={`category_${category_storeItems.category.id}_${index}`}
-        className="mb-8x md:mb-4x"
-      >
+      <div key={`category_${category_storeItems.category.id}_${index}`}>
         {category_storeItems.storeItems.map((storeItem, index2) => (
           <div
             key={`category_${category_storeItems.category.id}_${index}_${index2}`}
           >
             <CustomCarousel
               id={`CompletedOpportunities_CustomCarousel`}
-              title={category_storeItems.category.name}
+              title={`${category_storeItems.category.name} > ${storeItem.store?.name}`}
               data={storeItem.items.items}
               renderSlide={(item, index) => (
                 <ItemCardComponent
